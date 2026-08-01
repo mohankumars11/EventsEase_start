@@ -1,0 +1,57 @@
+[plugin:vite:react-babel] D:\EVENTEASE\EventsEase_start\src\pages\plan\PlanningWizard.jsx: Unexpected token, expected "," (22:36)
+  25 |
+D:/EVENTEASE/EventsEase_start/src/pages/plan/PlanningWizard.jsx:22:36
+20 |    'Help us find the right vendors in your area.',
+21 |    'Knowing your guest count helps us get accurate quotes.',
+22 |    'Select all services you need. We'll handle the rest.',
+   |                                                           ^
+23 |    'Your details stay private — only our team contacts you.',
+24 |  ]
+    at constructor (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:369:19)
+    at JSXParserMixin.raise (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:6620:19)
+    at JSXParserMixin.unexpected (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:6640:16)
+    at JSXParserMixin.expect (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:6920:12)
+    at JSXParserMixin.parseExprList (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12170:14)
+    at JSXParserMixin.parseArrayLike (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12086:26)
+    at JSXParserMixin.parseExprAtom (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:11361:23)
+    at JSXParserMixin.parseExprAtom (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:4780:20)
+    at JSXParserMixin.parseExprSubscripts (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:11102:23)
+    at JSXParserMixin.parseUpdate (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:11087:21)
+    at JSXParserMixin.parseMaybeUnary (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:11067:23)
+    at JSXParserMixin.parseMaybeUnaryOrPrivate (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10920:61)
+    at JSXParserMixin.parseExprOps (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10925:23)
+    at JSXParserMixin.parseMaybeConditional (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10902:23)
+    at JSXParserMixin.parseMaybeAssign (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10852:21)
+    at D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10821:39
+    at JSXParserMixin.allowInAnd (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12450:16)
+    at JSXParserMixin.parseMaybeAssignAllowIn (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:10821:17)
+    at JSXParserMixin.parseVar (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:13413:91)
+    at JSXParserMixin.parseVarStatement (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:13259:10)
+    at JSXParserMixin.parseStatementContent (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12880:23)
+    at JSXParserMixin.parseStatementLike (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12796:17)
+    at JSXParserMixin.parseModuleItem (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12773:17)
+    at JSXParserMixin.parseBlockOrModuleBlockBody (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:13345:36)
+    at JSXParserMixin.parseBlockBody (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:13338:10)
+    at JSXParserMixin.parseProgram (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12651:10)
+    at JSXParserMixin.parseTopLevel (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:12641:25)
+    at JSXParserMixin.parse (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:14517:25)
+    at parse (D:\EVENTEASE\EventsEase_start\node_modules\@babel\parser\lib\index.js:14551:38)
+    at parser (D:\EVENTEASE\EventsEase_start\node_modules\@babel\core\lib\parser\index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (D:\EVENTEASE\EventsEase_start\node_modules\@babel\core\lib\transformation\normalize-file.js:51:37)
+    at normalizeFile.next (<anonymous>)
+    at run (D:\EVENTEASE\EventsEase_start\node_modules\@babel\core\lib\transformation\index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (D:\EVENTEASE\EventsEase_start\node_modules\@babel\core\lib\transform.js:22:33)
+    at transform.next (<anonymous>)
+    at step (D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:261:32)
+    at D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:273:13
+    at async.call.result.err.err (D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:223:11)
+    at D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:189:28
+    at D:\EVENTEASE\EventsEase_start\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+    at D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:113:33
+    at step (D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:287:14)
+    at D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:273:13
+    at async.call.result.err.err (D:\EVENTEASE\EventsEase_start\node_modules\gensync\index.js:223:11
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.
