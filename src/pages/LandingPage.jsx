@@ -253,7 +253,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           3. WHAT ARE YOU CELEBRATING?
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-white">
+      <section id="services" className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
 
           <div className="text-center mb-12 reveal">
@@ -298,7 +298,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           4. ONE REQUEST. EVERYTHING ARRANGED.
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-cream">
+      <section id="how-it-works" className="py-20 px-4 bg-cream">
         <div className="max-w-5xl mx-auto">
 
           <div className="text-center mb-12 reveal">
@@ -433,7 +433,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           7. FESTIVAL FOODS & RITUALS
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-gradient-to-br from-saffron-50 to-amber-50">
+      <section id="festivals" className="py-20 px-4 bg-gradient-to-br from-saffron-50 to-amber-50">
         <div className="max-w-6xl mx-auto">
 
           <div className="text-center mb-12 reveal">

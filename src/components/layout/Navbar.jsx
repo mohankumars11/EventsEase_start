@@ -1,21 +1,35 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import ProfileDropdown from '../ui/ProfileDropdown'
 
 const NAV_LINKS = [
-  { label: 'Celebrations', to: '/#celebrations' },
-  { label: 'How It Works',  to: '/#how-it-works'  },
-  { label: 'Services',      to: '/#services'       },
-  { label: 'Inspiration',   to: '/#festivals'      },
+  { label: 'Celebrations', hash: 'celebrations' },
+  { label: 'How It Works',  hash: 'how-it-works'  },
+  { label: 'Services',      hash: 'services'       },
+  { label: 'Inspiration',   hash: 'festivals'      },
 ]
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
+  const location   = useLocation()
+
+  function scrollToSection(hash) {
+    setMenuOpen(false)
+    if (location.pathname !== '/') {
+      navigate('/')
+      // after navigation, wait for render then scroll
+      setTimeout(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    } else {
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 20) }
@@ -55,14 +69,14 @@ export default function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden lg:flex items-center gap-0.5">
-            {NAV_LINKS.map(({ label, to }) => (
-              <Link
+            {NAV_LINKS.map(({ label, hash }) => (
+              <button
                 key={label}
-                to={to}
+                onClick={() => scrollToSection(hash)}
                 className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
               >
                 {label}
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -124,15 +138,14 @@ export default function Navbar() {
         menuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="border-t border-plum-800 bg-plum-900 px-4 py-4 flex flex-col gap-1">
-          {NAV_LINKS.map(({ label, to }) => (
-            <Link
+          {NAV_LINKS.map(({ label, hash }) => (
+            <button
               key={label}
-              to={to}
-              className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => scrollToSection(hash)}
+              className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors w-full text-left"
             >
               {label}
-            </Link>
+            </button>
           ))}
 
           <div className="border-t border-plum-800 my-2" />
