@@ -1,37 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
-const RESEND_SECONDS = 30
+const RESEND_SECONDS = 60
 
-function phoneOtpErrorMessage(msg = '') {
+function otpErrorMessage(msg = '') {
   const m = msg.toLowerCase()
-  if (m.includes('unsupported') || m.includes('not supported') || m.includes('provider') || m.includes('disabled'))
-    return 'Phone OTP is not configured on this project yet. Please use "Continue with Google" to sign in, or ask the admin to enable SMS in Supabase.'
-  if (m.includes('rate') || m.includes('too many'))
-    return 'Too many OTP requests. Please wait a few minutes and try again.'
-  if (m.includes('invalid') || m.includes('format'))
-    return 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.'
-  return msg || 'Could not send OTP. Please try again.'
-}
-
-function normalizePhone(raw) {
-  return `+91${raw.replace(/\D/g, '').slice(-10)}`
+  if (m.includes('rate') || m.includes('too many')) return 'Too many attempts. Please wait a minute and try again.'
+  if (m.includes('expired'))                         return 'This code has expired. Please request a new one.'
+  if (m.includes('invalid') || m.includes('wrong'))  return "That code doesn't look right. Please try again."
+  if (m.includes('email'))                           return 'Please enter a valid email address.'
+  return msg || 'Something went wrong. Please try again.'
 }
 
 export default function LoginPage() {
-  const { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, user, profile } = useAuth()
+  const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
 
-  const [step, setStep]               = useState('phone') // phone | otp
-  const [phone, setPhone]             = useState('')
+  const [step, setStep]               = useState('email')  // email | otp
+  const [email, setEmail]             = useState('')
   const [otp, setOtp]                 = useState(['', '', '', '', '', ''])
   const [loading, setLoading]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]             = useState(null)
   const [resendTimer, setResendTimer] = useState(0)
+  const [resendSent, setResendSent]   = useState(false)
   const otpRefs = useRef([])
 
   useEffect(() => {
@@ -50,26 +45,23 @@ export default function LoginPage() {
     else                       navigate('/dashboard/customer', { replace: true })
   }
 
-  function validatePhone(val) {
-    return /^[6-9]\d{9}$/.test(val.replace(/\D/g, ''))
+  function isValidEmail(val) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())
   }
 
   async function handleSendOtp(e) {
     e?.preventDefault()
     setError(null)
-    const digits = phone.replace(/\D/g, '')
-    if (!validatePhone(digits)) {
-      setError('Enter a valid 10-digit Indian mobile number.')
-      return
-    }
+    if (!isValidEmail(email)) { setError('Please enter a valid email address.'); return }
     setLoading(true)
     try {
-      await sendPhoneOtp(normalizePhone(digits))
+      await sendEmailOtp(email.trim().toLowerCase())
       setStep('otp')
       setResendTimer(RESEND_SECONDS)
+      setResendSent(false)
       setTimeout(() => otpRefs.current[0]?.focus(), 100)
     } catch (err) {
-      setError(phoneOtpErrorMessage(err?.message))
+      setError(otpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }
@@ -105,16 +97,28 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const digits = phone.replace(/\D/g, '')
-      await verifyPhoneOtp(normalizePhone(digits), code)
-      // onAuthStateChange will fire and fetchProfile → redirect happens via useEffect
+      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      // onAuthStateChange fires → fetchProfile → useEffect redirects
     } catch (err) {
-      const msg = err?.message ?? ''
-      if (msg.includes('expired'))     setError('This code has expired. Please request a new one.')
-      else if (msg.includes('invalid')) setError("That code doesn't look right. Please try again.")
-      else setError('Verification failed. Please try again.')
+      setError(otpErrorMessage(err?.message))
       setOtp(['', '', '', '', '', ''])
       otpRefs.current[0]?.focus()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    setLoading(true)
+    setError(null)
+    try {
+      await sendEmailOtp(email.trim().toLowerCase())
+      setResendTimer(RESEND_SECONDS)
+      setResendSent(true)
+      setOtp(['', '', '', '', '', ''])
+      otpRefs.current[0]?.focus()
+    } catch (err) {
+      setError(otpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }
@@ -127,12 +131,10 @@ export default function LoginPage() {
     catch (err) { setError(err?.message ?? 'Google sign-in failed.'); setGoogleLoading(false) }
   }
 
-  const maskedPhone = `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`
-
   return (
     <div className="min-h-screen flex">
 
-      {/* Left brand panel (desktop) */}
+      {/* Left brand panel */}
       <div className="hidden md:flex md:w-5/12 flex-col justify-between p-12 bg-plum-900">
         <Link to="/" className="inline-flex items-center gap-3">
           <span className="w-10 h-10 bg-saffron-400 rounded-xl flex items-center justify-center font-bold text-xl text-plum-950 font-display">S</span>
@@ -166,33 +168,35 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {step === 'phone' && (
+          {/* ── Step: Email input ── */}
+          {step === 'email' && (
             <>
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
-              <p className="text-gray-500 text-sm mb-8">Let's get you back to your celebration.</p>
+              <p className="text-gray-500 text-sm mb-8">We'll send a one-time code to your email.</p>
 
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile number</label>
-                  <div className="flex gap-2">
-                    <span className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-500 text-sm bg-gray-50 shrink-0 flex items-center">+91</span>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(null) }}
-                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400 text-lg tracking-wider"
-                      placeholder="98765 43210"
-                      autoComplete="tel"
-                      inputMode="numeric"
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError(null) }}
+                      className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
+                      placeholder="you@example.com"
+                      autoComplete="email"
                       autoFocus
+                      inputMode="email"
                     />
                   </div>
                 </div>
 
                 {error && <ErrorBox message={error} />}
 
-                <button type="submit" disabled={loading} className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
-                  {loading ? 'Sending OTP…' : 'Send OTP →'}
+                <button type="submit" disabled={loading}
+                  className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
+                  {loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
               </form>
 
@@ -211,21 +215,30 @@ export default function LoginPage() {
             </>
           )}
 
+          {/* ── Step: OTP entry ── */}
           {step === 'otp' && (
             <>
-              <button onClick={() => { setStep('phone'); setOtp(['','','','','','']); setError(null) }}
+              <button onClick={() => { setStep('email'); setOtp(['','','','','','']); setError(null) }}
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-plum-600 mb-6 transition-colors">
-                <ArrowLeft size={15} /> Change number
+                <ArrowLeft size={15} /> Change email
               </button>
 
-              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your phone.</h1>
-              <p className="text-gray-500 text-sm mb-8">
-                We've sent a 6-digit code to <span className="font-semibold text-gray-700">{maskedPhone}</span>
+              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your inbox.</h1>
+              <p className="text-gray-500 text-sm mb-2">
+                We sent a 6-digit code to{' '}
+                <span className="font-semibold text-gray-700">{email}</span>
               </p>
+              <p className="text-xs text-gray-400 mb-8">Check your spam folder if you don't see it within a minute.</p>
+
+              {resendSent && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 mb-4">
+                  <CheckCircle2 size={14} /> New code sent! Check your inbox.
+                </div>
+              )}
 
               <form onSubmit={handleVerifyOtp} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Enter verification code</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Enter 6-digit code</label>
                   <div className="flex gap-2 justify-between" onPaste={handleOtpPaste}>
                     {otp.map((digit, i) => (
                       <input
@@ -257,14 +270,15 @@ export default function LoginPage() {
                     <RefreshCw size={13} /> Resend code in {resendTimer}s
                   </p>
                 ) : (
-                  <button onClick={handleSendOtp} disabled={loading}
+                  <button onClick={handleResend} disabled={loading}
                     className="text-sm text-plum-600 font-semibold hover:underline disabled:opacity-50">
-                    Resend OTP
+                    Resend code
                   </button>
                 )}
               </div>
             </>
           )}
+
         </div>
       </div>
     </div>

@@ -1,24 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
-const RESEND_SECONDS = 30
+const RESEND_SECONDS = 60
 
-function phoneOtpErrorMessage(msg = '') {
+function otpErrorMessage(msg = '') {
   const m = msg.toLowerCase()
-  if (m.includes('unsupported') || m.includes('not supported') || m.includes('provider') || m.includes('disabled'))
-    return 'Phone OTP is not configured yet. Please use "Continue with Google" to sign up instead.'
-  if (m.includes('rate') || m.includes('too many'))
-    return 'Too many OTP requests. Please wait a few minutes and try again.'
-  if (m.includes('invalid') || m.includes('format'))
-    return 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.'
-  return msg || 'Could not send OTP. Please try again.'
-}
-
-function normalizePhone(raw) {
-  return `+91${raw.replace(/\D/g, '').slice(-10)}`
+  if (m.includes('rate') || m.includes('too many')) return 'Too many attempts. Please wait a minute and try again.'
+  if (m.includes('expired'))                         return 'This code has expired. Please request a new one.'
+  if (m.includes('invalid') || m.includes('wrong'))  return "That code doesn't look right. Please try again."
+  return msg || 'Something went wrong. Please try again.'
 }
 
 const TRUST_POINTS = [
@@ -28,19 +21,21 @@ const TRUST_POINTS = [
 ]
 
 export default function SignupPage() {
-  const { sendPhoneOtp, verifyPhoneOtp, completeProfile, signInWithGoogle, user, profile } = useAuth()
+  const { sendEmailOtp, verifyEmailOtp, completeProfile, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
 
   // steps: role → info → otp
   const [step, setStep]               = useState('role')
-  const [role, setRole]               = useState(null)          // 'customer' | 'vendor'
+  const [role, setRole]               = useState(null)
   const [fullName, setFullName]       = useState('')
-  const [phone, setPhone]             = useState('')
+  const [email, setEmail]             = useState('')
+  const [phone, setPhone]             = useState('')          // optional, for profile only
   const [otp, setOtp]                 = useState(['','','','','',''])
   const [loading, setLoading]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]             = useState(null)
   const [resendTimer, setResendTimer] = useState(0)
+  const [resendSent, setResendSent]   = useState(false)
   const otpRefs = useRef([])
 
   useEffect(() => {
@@ -59,6 +54,10 @@ export default function SignupPage() {
     else                    navigate('/dashboard/customer', { replace: true })
   }
 
+  function isValidEmail(val) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())
+  }
+
   function handleRoleSelect(r) {
     setRole(r)
     setStep('info')
@@ -68,17 +67,17 @@ export default function SignupPage() {
   async function handleSendOtp(e) {
     e?.preventDefault()
     setError(null)
-    if (!fullName.trim())               return setError('Please enter your full name.')
-    const digits = phone.replace(/\D/g, '')
-    if (!/^[6-9]\d{9}$/.test(digits))  return setError('Enter a valid 10-digit Indian mobile number.')
+    if (!fullName.trim())        return setError('Please enter your full name.')
+    if (!isValidEmail(email))    return setError('Please enter a valid email address.')
     setLoading(true)
     try {
-      await sendPhoneOtp(normalizePhone(digits))
+      await sendEmailOtp(email.trim().toLowerCase())
       setStep('otp')
       setResendTimer(RESEND_SECONDS)
+      setResendSent(false)
       setTimeout(() => otpRefs.current[0]?.focus(), 100)
     } catch (err) {
-      setError(phoneOtpErrorMessage(err?.message))
+      setError(otpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }
@@ -114,18 +113,33 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
-      const digits = phone.replace(/\D/g, '')
-      await verifyPhoneOtp(normalizePhone(digits), code)
-      // OTP verified → create/update profile with name + role
-      await completeProfile({ fullName, role, phone: normalizePhone(digits) })
-      // redirect happens via useEffect after profile is set
+      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      // Email verified → save profile with name + role + optional phone
+      const phoneFormatted = phone.trim()
+        ? (phone.trim().startsWith('+') ? phone.trim() : `+91${phone.replace(/\D/g, '')}`)
+        : null
+      await completeProfile({ fullName, role, phone: phoneFormatted })
+      // redirect fires via useEffect after profile is set
     } catch (err) {
-      const msg = err?.message ?? ''
-      if (msg.includes('expired'))      setError('This code has expired. Please request a new one.')
-      else if (msg.includes('invalid')) setError("That code doesn't look right. Please try again.")
-      else setError('Verification failed. Please try again.')
+      setError(otpErrorMessage(err?.message))
       setOtp(['','','','','',''])
       otpRefs.current[0]?.focus()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    setLoading(true)
+    setError(null)
+    try {
+      await sendEmailOtp(email.trim().toLowerCase())
+      setResendTimer(RESEND_SECONDS)
+      setResendSent(true)
+      setOtp(['','','','','',''])
+      otpRefs.current[0]?.focus()
+    } catch (err) {
+      setError(otpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }
@@ -137,8 +151,6 @@ export default function SignupPage() {
     try { await signInWithGoogle() }
     catch (err) { setError(err?.message ?? 'Google sign-in failed.'); setGoogleLoading(false) }
   }
-
-  const maskedPhone = `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`
 
   return (
     <div className="min-h-screen flex">
@@ -184,10 +196,8 @@ export default function SignupPage() {
               <p className="text-gray-500 text-sm mb-8">How would you like to get started?</p>
 
               <div className="space-y-3 mb-8">
-                <button
-                  onClick={() => handleRoleSelect('customer')}
-                  className="w-full text-left p-5 border-2 border-gray-200 rounded-2xl hover:border-plum-400 hover:bg-plum-50 transition-all group"
-                >
+                <button onClick={() => handleRoleSelect('customer')}
+                  className="w-full text-left p-5 border-2 border-gray-200 rounded-2xl hover:border-plum-400 hover:bg-plum-50 transition-all group">
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">🎉</span>
                     <div>
@@ -197,10 +207,8 @@ export default function SignupPage() {
                   </div>
                 </button>
 
-                <button
-                  onClick={() => handleRoleSelect('vendor')}
-                  className="w-full text-left p-5 border-2 border-gray-200 rounded-2xl hover:border-saffron-400 hover:bg-saffron-50 transition-all group"
-                >
+                <button onClick={() => handleRoleSelect('vendor')}
+                  className="w-full text-left p-5 border-2 border-gray-200 rounded-2xl hover:border-saffron-400 hover:bg-saffron-50 transition-all group">
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">🤝</span>
                     <div>
@@ -228,7 +236,7 @@ export default function SignupPage() {
             </>
           )}
 
-          {/* ── Step: Name + Phone ── */}
+          {/* ── Step: Name + Email ── */}
           {step === 'info' && (
             <>
               <button onClick={() => { setStep('role'); setError(null) }}
@@ -240,16 +248,12 @@ export default function SignupPage() {
                 {role === 'vendor' ? 'Create your partner account.' : 'Create your account.'}
               </h1>
               <p className="text-gray-500 text-sm mb-8">
-                {role === 'vendor'
-                  ? "You'll complete your business profile after verifying your number."
-                  : "We'll send a verification code to your mobile."}
+                We'll send a verification code to your email.
               </p>
 
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    {role === 'vendor' ? 'Your name' : 'Full name'}
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full name</label>
                   <input
                     type="text"
                     value={fullName}
@@ -261,14 +265,32 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile number</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError(null) }}
+                      className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
+                      placeholder="priya@example.com"
+                      autoComplete="email"
+                      inputMode="email"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Mobile number <span className="font-normal text-gray-400">(optional — for WhatsApp updates)</span>
+                  </label>
                   <div className="flex gap-2">
                     <span className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-500 text-sm bg-gray-50 shrink-0 flex items-center">+91</span>
                     <input
                       type="tel"
                       value={phone}
                       onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(null) }}
-                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400 text-lg tracking-wider"
+                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
                       placeholder="98765 43210"
                       inputMode="numeric"
                     />
@@ -279,7 +301,7 @@ export default function SignupPage() {
 
                 <button type="submit" disabled={loading}
                   className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
-                  {loading ? 'Sending OTP…' : 'Send OTP →'}
+                  {loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
               </form>
 
@@ -295,17 +317,25 @@ export default function SignupPage() {
             <>
               <button onClick={() => { setStep('info'); setOtp(['','','','','','']); setError(null) }}
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-plum-600 mb-6 transition-colors">
-                <ArrowLeft size={15} /> Change number
+                <ArrowLeft size={15} /> Change email
               </button>
 
-              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your phone.</h1>
-              <p className="text-gray-500 text-sm mb-8">
-                We've sent a 6-digit code to <span className="font-semibold text-gray-700">{maskedPhone}</span>
+              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your inbox.</h1>
+              <p className="text-gray-500 text-sm mb-2">
+                We sent a 6-digit code to{' '}
+                <span className="font-semibold text-gray-700">{email}</span>
               </p>
+              <p className="text-xs text-gray-400 mb-8">Check your spam folder if you don't see it within a minute.</p>
+
+              {resendSent && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 mb-4">
+                  <CheckCircle2 size={14} /> New code sent! Check your inbox.
+                </div>
+              )}
 
               <form onSubmit={handleVerifyOtp} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Verification code</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">6-digit verification code</label>
                   <div className="flex gap-2 justify-between" onPaste={handleOtpPaste}>
                     {otp.map((digit, i) => (
                       <input
@@ -334,12 +364,12 @@ export default function SignupPage() {
               <div className="text-center mt-4">
                 {resendTimer > 0 ? (
                   <p className="text-sm text-gray-400 flex items-center justify-center gap-1.5">
-                    <RefreshCw size={13} /> Resend code in {resendTimer}s
+                    <RefreshCw size={13} /> Resend in {resendTimer}s
                   </p>
                 ) : (
-                  <button onClick={handleSendOtp} disabled={loading}
+                  <button onClick={handleResend} disabled={loading}
                     className="text-sm text-plum-600 font-semibold hover:underline disabled:opacity-50">
-                    Resend OTP
+                    Resend code
                   </button>
                 )}
               </div>

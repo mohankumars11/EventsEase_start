@@ -53,7 +53,26 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
-  // ── Phone OTP ─────────────────────────────────────────
+  // ── Email OTP (primary auth — free, no SMS provider needed) ──
+  async function sendEmailOtp(email) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    })
+    if (error) throw error
+  }
+
+  async function verifyEmailOtp(email, token) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    })
+    if (error) throw error
+    return data
+  }
+
+  // ── Phone OTP (kept for future use when SMS provider is ready) ─
   async function sendPhoneOtp(phone) {
     const { error } = await supabase.auth.signInWithOtp({ phone })
     if (error) throw error
@@ -61,9 +80,7 @@ export function AuthProvider({ children }) {
 
   async function verifyPhoneOtp(phone, token) {
     const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
+      phone, token, type: 'sms',
     })
     if (error) throw error
     return data
@@ -146,6 +163,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading,
+      sendEmailOtp, verifyEmailOtp,
       sendPhoneOtp, verifyPhoneOtp, completeProfile,
       signIn, signUp, signOut, signInWithGoogle, fetchProfile,
     }}>
