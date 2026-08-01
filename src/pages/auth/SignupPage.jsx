@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail, Inbox } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
@@ -38,8 +38,10 @@ export default function SignupPage() {
   const [resendSent, setResendSent]   = useState(false)
   const otpRefs = useRef([])
 
+  // Only auto-redirect if they land here already authenticated
+  // Don't redirect mid-OTP flow
   useEffect(() => {
-    if (user && profile) redirectByRole(profile.role)
+    if (user && profile && step === 'role') redirectByRole(profile.role)
   }, [user, profile])
 
   useEffect(() => {
@@ -114,16 +116,19 @@ export default function SignupPage() {
     setError(null)
     try {
       await verifyEmailOtp(email.trim().toLowerCase(), code)
-      // Email verified → save profile with name + role + optional phone
       const phoneFormatted = phone.trim()
         ? (phone.trim().startsWith('+') ? phone.trim() : `+91${phone.replace(/\D/g, '')}`)
         : null
       await completeProfile({ fullName, role, phone: phoneFormatted })
-      // redirect fires via useEffect after profile is set
+      // Explicit redirect — don't wait for useEffect
+      const target = role === 'vendor' ? '/onboarding/vendor'
+                   : role === 'admin'  ? '/dashboard/admin'
+                   :                     '/dashboard/customer'
+      navigate(target, { replace: true })
     } catch (err) {
       setError(otpErrorMessage(err?.message))
       setOtp(['','','','','',''])
-      otpRefs.current[0]?.focus()
+      setTimeout(() => otpRefs.current[0]?.focus(), 50)
     } finally {
       setLoading(false)
     }
@@ -320,12 +325,18 @@ export default function SignupPage() {
                 <ArrowLeft size={15} /> Change email
               </button>
 
-              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your inbox.</h1>
-              <p className="text-gray-500 text-sm mb-2">
-                We sent a 6-digit code to{' '}
-                <span className="font-semibold text-gray-700">{email}</span>
-              </p>
-              <p className="text-xs text-gray-400 mb-8">Check your spam folder if you don't see it within a minute.</p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-plum-50 rounded-full flex items-center justify-center shrink-0">
+                  <Inbox size={22} className="text-plum-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-display font-bold text-gray-900">Check your inbox!</h1>
+                  <p className="text-gray-500 text-xs mt-0.5">6-digit code sent to <span className="font-semibold text-gray-700">{email}</span></p>
+                </div>
+              </div>
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-6">
+                Didn't receive it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+              </div>
 
               {resendSent && (
                 <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 mb-4">

@@ -48,7 +48,7 @@ function OverviewTab({ event, onRefresh }) {
   const { profile } = useAuth()
   const [newStatus,   setNewStatus]   = useState(event.status ?? '')
   const [newPriority, setNewPriority] = useState(event.priority ?? 'NORMAL')
-  const [coordId,     setCoordId]     = useState(event.coordinator_id ?? '')
+  const [coordId,     setCoordId]     = useState(event.assigned_coordinator ?? '')
   const [admins,      setAdmins]      = useState([])
   const [services,    setServices]    = useState([])
   const [notes,       setNotes]       = useState([])
@@ -152,7 +152,7 @@ function OverviewTab({ event, onRefresh }) {
         <SectionCard title="Event Details">
           <div className="space-y-2.5 text-sm">
             <Row icon={<Calendar size={14} />}  label="Date"    value={event.event_date ? formatDate(event.event_date) : '—'} />
-            <Row icon={<Calendar size={14} />}  label="Time"    value={event.event_time ?? '—'} />
+            <Row icon={<Calendar size={14} />}  label="Time"    value={event.start_time ?? '—'} />
             <Row icon={<MapPin size={14} />}    label="City"    value={event.city ?? '—'} />
             <Row icon={<MapPin size={14} />}    label="Area"    value={event.area ?? '—'} />
             <Row icon={<MapPin size={14} />}    label="Venue"   value={event.venue_name ?? '—'} />
@@ -217,8 +217,8 @@ function OverviewTab({ event, onRefresh }) {
             {admins.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
           </select>
           <button
-            onClick={() => updateField('coordinator_id', coordId || null, 'coordinator')}
-            disabled={saving.coordinator || coordId === (event.coordinator_id ?? '')}
+            onClick={() => updateField('assigned_coordinator', coordId || null, 'coordinator')}
+            disabled={saving.coordinator || coordId === (event.assigned_coordinator ?? '')}
             className="btn-plum w-full py-2 text-sm"
           >
             {saving.coordinator ? 'Assigning…' : 'Assign'}
@@ -327,7 +327,7 @@ function VendorSourcingTab({ event }) {
       event_service_id:    addVendorFor,
       vendor_name:         vendorForm.name.trim(),
       vendor_phone:        vendorForm.phone.trim(),
-      category:            vendorForm.category.trim(),
+      vendor_category:     vendorForm.category.trim(),
       quoted_amount:       vendorForm.quoted_amount ? Number(vendorForm.quoted_amount) : null,
       availability_status: vendorForm.availability.trim() || 'pending',
       quote_status:        'pending',
@@ -356,9 +356,9 @@ function VendorSourcingTab({ event }) {
     if (!svcForm.service_name.trim()) return
     setBusy(true)
     await supabase.from('event_services').insert({
-      event_id:     event.id,
-      category:     svcForm.category.trim(),
-      service_name: svcForm.service_name.trim(),
+      event_id:         event.id,
+      service_category: svcForm.category.trim(),
+      service_name:     svcForm.service_name.trim(),
     })
     setSvcForm({ category: '', service_name: '' })
     setAddSvcOpen(false)
@@ -414,7 +414,7 @@ function VendorSourcingTab({ event }) {
                   <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
                     {v.vendor_phone && <span>{v.vendor_phone}</span>}
                     {v.quoted_amount && <span>Quoted: {formatINR(v.quoted_amount)}</span>}
-                    {v.negotiated_amount && <span>Negotiated: {formatINR(v.negotiated_amount)}</span>}
+                    {v.sambramo_negotiated_amount && <span>Negotiated: {formatINR(v.sambramo_negotiated_amount)}</span>}
                     {v.quote_status && <span className="capitalize">{v.quote_status}</span>}
                   </div>
                 </div>
@@ -518,7 +518,7 @@ function ProposalTab({ event }) {
     if (data) {
       setProposal(data)
       setItems(data.event_proposal_items ?? [])
-      setCoordFee(data.coordination_fee ?? '')
+      setCoordFee(data.sambramo_coordination_fee ?? '')
       setDiscount(data.discount ?? '')
       setMessage(data.customer_message ?? '')
     }
@@ -544,7 +544,7 @@ function ProposalTab({ event }) {
       .map(v => ({
         _key:            Math.random().toString(36).slice(2),
         description:     v.event_services?.service_name ?? v.category ?? '',
-        vendor_cost:     v.negotiated_amount ?? v.quoted_amount ?? '',
+        vendor_cost:     v.sambramo_negotiated_amount ?? v.quoted_amount ?? '',
         customer_price:  '',
         quantity:        1,
       }))
@@ -566,7 +566,7 @@ function ProposalTab({ event }) {
     const payload = {
       event_id:          event.id,
       status:            sendToCustomer ? 'SENT' : 'DRAFT',
-      coordination_fee:  Number(coordFee) || 0,
+      sambramo_coordination_fee: Number(coordFee) || 0,
       discount:          Number(discount) || 0,
       subtotal,
       total_amount:      total,
@@ -586,7 +586,7 @@ function ProposalTab({ event }) {
       const lineItems = items.map(it => ({
         proposal_id:    proposalId,
         description:    it.description,
-        vendor_cost:    Number(it.vendor_cost) || null,
+        vendor_cost:    Number(it.vendor_cost) || 0,
         customer_price: Number(it.customer_price) || 0,
         quantity:       Number(it.quantity) || 1,
       }))
@@ -664,8 +664,8 @@ function ProposalTab({ event }) {
 
           <div className="border-t border-gray-100 pt-3 space-y-1 text-sm text-right">
             <div className="text-gray-500">Subtotal: <span className="font-medium text-gray-900">{formatINR(proposal.subtotal)}</span></div>
-            {proposal.coordination_fee > 0 && (
-              <div className="text-gray-500">Coordination fee: <span className="font-medium text-gray-900">+{formatINR(proposal.coordination_fee)}</span></div>
+            {proposal.sambramo_coordination_fee > 0 && (
+              <div className="text-gray-500">Coordination fee: <span className="font-medium text-gray-900">+{formatINR(proposal.sambramo_coordination_fee)}</span></div>
             )}
             {proposal.discount > 0 && (
               <div className="text-gray-500">Discount: <span className="font-medium text-green-700">−{formatINR(proposal.discount)}</span></div>
@@ -972,15 +972,15 @@ function PaymentsTab({ event }) {
   useEffect(() => { fetchPayments() }, [fetchPayments])
 
   const totalReceived = payments
-    .filter(p => p.status === 'ADMIN_VERIFIED' && p.type !== 'vendor_payment' && p.type !== 'refund')
+    .filter(p => p.status === 'ADMIN_VERIFIED' && p.payment_type !== 'vendor_payment' && p.payment_type !== 'refund')
     .reduce((s, p) => s + Number(p.amount || 0), 0)
 
   const totalPending = payments
-    .filter(p => ['PENDING', 'CUSTOMER_CLAIMED_PAID'].includes(p.status) && p.type !== 'vendor_payment')
+    .filter(p => ['PENDING', 'CUSTOMER_CLAIMED_PAID'].includes(p.status) && p.payment_type !== 'vendor_payment')
     .reduce((s, p) => s + Number(p.amount || 0), 0)
 
   const vendorPaid = payments
-    .filter(p => p.type === 'vendor_payment' && p.status === 'ADMIN_VERIFIED')
+    .filter(p => p.payment_type === 'vendor_payment' && p.status === 'ADMIN_VERIFIED')
     .reduce((s, p) => s + Number(p.amount || 0), 0)
 
   async function recordPayment() {
@@ -989,8 +989,8 @@ function PaymentsTab({ event }) {
     await supabase.from('event_payments').insert({
       event_id:              event.id,
       amount:                Number(form.amount),
-      type:                  form.type,
-      method:                form.method,
+      payment_type:          form.type,
+      payment_method:        form.method,
       transaction_reference: form.transaction_reference.trim() || null,
       notes:                 form.notes.trim() || null,
       status:                'PENDING',
@@ -1041,8 +1041,8 @@ function PaymentsTab({ event }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-gray-900 text-sm">{formatINR(pmt.amount)}</span>
-                    <span className="text-xs text-gray-500 capitalize">{pmt.type?.replace(/_/g, ' ')}</span>
-                    <span className="text-xs text-gray-400">via {pmt.method}</span>
+                    <span className="text-xs text-gray-500 capitalize">{pmt.payment_type?.replace(/_/g, ' ')}</span>
+                    <span className="text-xs text-gray-400">via {pmt.payment_method}</span>
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
                     {formatDate(pmt.created_at)}
@@ -1239,7 +1239,7 @@ export default function AdminEventDetail() {
     setError(null)
     const { data, error: err } = await supabase
       .from('events')
-      .select('*, profiles(full_name, email, phone, preferred_contact)')
+      .select('*, profiles(full_name, email, phone)')
       .eq('id', eventId)
       .single()
 

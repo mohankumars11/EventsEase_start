@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail, Inbox } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
@@ -9,9 +9,9 @@ const RESEND_SECONDS = 60
 function otpErrorMessage(msg = '') {
   const m = msg.toLowerCase()
   if (m.includes('rate') || m.includes('too many')) return 'Too many attempts. Please wait a minute and try again.'
-  if (m.includes('expired'))                         return 'This code has expired. Please request a new one.'
-  if (m.includes('invalid') || m.includes('wrong'))  return "That code doesn't look right. Please try again."
-  if (m.includes('email'))                           return 'Please enter a valid email address.'
+  if (m.includes('expired'))                         return 'This code has expired. Click "Resend code" to get a new one.'
+  if (m.includes('invalid') || m.includes('otp'))   return 'Incorrect code. Please check your email and try again.'
+  if (m.includes('not found') || m.includes('user')) return 'No account found with this email. Please sign up first.'
   return msg || 'Something went wrong. Please try again.'
 }
 
@@ -19,18 +19,19 @@ export default function LoginPage() {
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
 
-  const [step, setStep]               = useState('email')  // email | otp
+  const [step, setStep]               = useState('email')   // email | sent | otp
   const [email, setEmail]             = useState('')
   const [otp, setOtp]                 = useState(['', '', '', '', '', ''])
   const [loading, setLoading]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]             = useState(null)
   const [resendTimer, setResendTimer] = useState(0)
-  const [resendSent, setResendSent]   = useState(false)
   const otpRefs = useRef([])
 
+  // Only redirect if already signed-in when user FIRST lands on this page
+  // Do NOT redirect during OTP flow (step !== 'email')
   useEffect(() => {
-    if (user && profile) redirectByRole(profile.role)
+    if (user && profile && step === 'email') redirectByRole(profile.role)
   }, [user, profile])
 
   useEffect(() => {
@@ -56,15 +57,18 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await sendEmailOtp(email.trim().toLowerCase())
-      setStep('otp')
+      setStep('sent')
       setResendTimer(RESEND_SECONDS)
-      setResendSent(false)
-      setTimeout(() => otpRefs.current[0]?.focus(), 100)
     } catch (err) {
       setError(otpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleEnterCode() {
+    setStep('otp')
+    setTimeout(() => otpRefs.current[0]?.focus(), 100)
   }
 
   function handleOtpChange(index, value) {
@@ -98,11 +102,12 @@ export default function LoginPage() {
     setError(null)
     try {
       await verifyEmailOtp(email.trim().toLowerCase(), code)
-      // onAuthStateChange fires → fetchProfile → useEffect redirects
+      // Navigate to /dashboard — DashboardRedirect will route by role once profile loads
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(otpErrorMessage(err?.message))
       setOtp(['', '', '', '', '', ''])
-      otpRefs.current[0]?.focus()
+      setTimeout(() => otpRefs.current[0]?.focus(), 50)
     } finally {
       setLoading(false)
     }
@@ -114,9 +119,8 @@ export default function LoginPage() {
     try {
       await sendEmailOtp(email.trim().toLowerCase())
       setResendTimer(RESEND_SECONDS)
-      setResendSent(true)
       setOtp(['', '', '', '', '', ''])
-      otpRefs.current[0]?.focus()
+      if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 50)
     } catch (err) {
       setError(otpErrorMessage(err?.message))
     } finally {
@@ -168,11 +172,11 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* ── Step: Email input ── */}
+          {/* ── Step 1: Email input ── */}
           {step === 'email' && (
             <>
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
-              <p className="text-gray-500 text-sm mb-8">We'll send a one-time code to your email.</p>
+              <p className="text-gray-500 text-sm mb-8">Enter your email — we'll send you a login code.</p>
 
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
@@ -183,7 +187,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={e => { setEmail(e.target.value); setError(null) }}
-                      className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
+                      className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400 text-base"
                       placeholder="you@example.com"
                       autoComplete="email"
                       autoFocus
@@ -215,31 +219,84 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* ── Step: OTP entry ── */}
-          {step === 'otp' && (
-            <>
-              <button onClick={() => { setStep('email'); setOtp(['','','','','','']); setError(null) }}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-plum-600 mb-6 transition-colors">
-                <ArrowLeft size={15} /> Change email
+          {/* ── Step 2: Email sent confirmation ── */}
+          {step === 'sent' && (
+            <div className="text-center">
+              {/* Animated envelope */}
+              <div className="w-20 h-20 bg-plum-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
+                <Inbox size={36} className="text-plum-600" />
+              </div>
+
+              <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">Check your email!</h1>
+              <p className="text-gray-600 text-sm mb-1">
+                We sent a 6-digit login code to:
+              </p>
+              <p className="text-plum-700 font-semibold text-base mb-6 break-all">{email}</p>
+
+              {/* Steps guide */}
+              <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-6">
+                {[
+                  { n: '1', text: 'Open your email inbox' },
+                  { n: '2', text: 'Look for an email from Sambramo' },
+                  { n: '3', text: 'Copy the 6-digit code in the email' },
+                  { n: '4', text: 'Come back here and enter the code' },
+                ].map(({ n, text }) => (
+                  <div key={n} className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-plum-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{n}</span>
+                    <span className="text-sm text-gray-700">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-6">
+                Didn't receive it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+              </div>
+
+              {error && <ErrorBox message={error} className="mb-4 text-left" />}
+
+              <button
+                onClick={handleEnterCode}
+                className="btn-plum w-full py-3.5 text-base mb-3"
+              >
+                I have the code — Enter it →
               </button>
 
-              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Check your inbox.</h1>
-              <p className="text-gray-500 text-sm mb-2">
-                We sent a 6-digit code to{' '}
-                <span className="font-semibold text-gray-700">{email}</span>
+              <div className="flex items-center justify-between">
+                <button onClick={() => { setStep('email'); setError(null) }}
+                  className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-plum-600 transition-colors">
+                  <ArrowLeft size={14} /> Change email
+                </button>
+                {resendTimer > 0 ? (
+                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                    <RefreshCw size={11} /> Resend in {resendTimer}s
+                  </p>
+                ) : (
+                  <button onClick={handleResend} disabled={loading}
+                    className="text-sm text-plum-600 font-semibold hover:underline disabled:opacity-50">
+                    Resend code
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: OTP input ── */}
+          {step === 'otp' && (
+            <>
+              <button onClick={() => { setStep('sent'); setError(null) }}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-plum-600 mb-6 transition-colors">
+                <ArrowLeft size={15} /> Back
+              </button>
+
+              <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Enter the code.</h1>
+              <p className="text-gray-500 text-sm mb-6">
+                6-digit code sent to <span className="font-semibold text-gray-700">{email}</span>
               </p>
-              <p className="text-xs text-gray-400 mb-8">Check your spam folder if you don't see it within a minute.</p>
 
-              {resendSent && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 mb-4">
-                  <CheckCircle2 size={14} /> New code sent! Check your inbox.
-                </div>
-              )}
-
-              <form onSubmit={handleVerifyOtp} className="space-y-6">
+              <form onSubmit={handleVerifyOtp} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Enter 6-digit code</label>
-                  <div className="flex gap-2 justify-between" onPaste={handleOtpPaste}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Verification code</label>
+                  <div className="flex gap-2" onPaste={handleOtpPaste}>
                     {otp.map((digit, i) => (
                       <input
                         key={i}
@@ -250,24 +307,37 @@ export default function LoginPage() {
                         value={digit}
                         onChange={e => handleOtpChange(i, e.target.value)}
                         onKeyDown={e => handleOtpKeyDown(i, e)}
-                        className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
+                        className="flex-1 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
                       />
                     ))}
                   </div>
+                  <p className="text-xs text-gray-400 mt-2">Tip: You can paste the code directly.</p>
                 </div>
 
                 {error && <ErrorBox message={error} />}
 
                 <button type="submit" disabled={loading || otp.join('').length < 6}
                   className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
-                  {loading ? 'Verifying…' : 'Verify & Continue →'}
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                      </svg>
+                      Verifying…
+                    </span>
+                  ) : 'Verify & Sign In →'}
                 </button>
               </form>
 
-              <div className="text-center mt-4">
+              <div className="flex items-center justify-between mt-4">
+                <button onClick={() => { setStep('sent'); setError(null) }}
+                  className="text-sm text-gray-500 hover:text-plum-600 transition-colors">
+                  ← Instructions
+                </button>
                 {resendTimer > 0 ? (
-                  <p className="text-sm text-gray-400 flex items-center justify-center gap-1.5">
-                    <RefreshCw size={13} /> Resend code in {resendTimer}s
+                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                    <RefreshCw size={11} /> Resend in {resendTimer}s
                   </p>
                 ) : (
                   <button onClick={handleResend} disabled={loading}
@@ -285,9 +355,9 @@ export default function LoginPage() {
   )
 }
 
-function ErrorBox({ message }) {
+function ErrorBox({ message, className = '' }) {
   return (
-    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+    <div className={`flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 ${className}`}>
       <AlertCircle size={15} className="mt-0.5 shrink-0" />{message}
     </div>
   )

@@ -558,7 +558,7 @@ export default function AdminDashboard() {
 
   async function assignToMe(eventId) {
     if (!profile?.id) return
-    await supabase.from('events').update({ coordinator_id: profile.id }).eq('id', eventId)
+    await supabase.from('events').update({ assigned_coordinator: profile.id }).eq('id', eventId)
     fetchAll()
   }
 
