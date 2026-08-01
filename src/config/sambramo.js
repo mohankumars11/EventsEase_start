@@ -3,9 +3,9 @@ export const BRAND = {
   name: 'Sambramo',
   tagline: 'Your Moment. Our Magic.',
   promise: 'You Celebrate. We Handle Everything.',
-  supportPhone: '+91 98765 00001',
+  supportPhone: '+91 97392 76592',
   supportEmail: 'hello@sambramo.in',
-  whatsappNumber: '919876500001',
+  whatsappNumber: '919739276592',
   primaryCity: 'Bengaluru',
   servicedCities: ['Bengaluru', 'Mumbai', 'Delhi', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata', 'Jaipur', 'Ahmedabad', 'Surat'],
 }

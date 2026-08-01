@@ -8,10 +8,11 @@ const RESEND_SECONDS = 60
 
 function otpErrorMessage(msg = '') {
   const m = msg.toLowerCase()
+  if (m.includes('not allowed') || m.includes('not found'))
+    return "No account found with this email. Try “Continue with Google” below, or sign up."
   if (m.includes('rate') || m.includes('too many')) return 'Too many attempts. Please wait a minute and try again.'
   if (m.includes('expired'))                         return 'This code has expired. Click "Resend code" to get a new one.'
-  if (m.includes('invalid') || m.includes('otp'))   return 'Incorrect code. Please check your email and try again.'
-  if (m.includes('not found') || m.includes('user')) return 'No account found with this email. Please sign up first.'
+  if (m.includes('invalid'))                          return 'Incorrect code. Please check your email and try again.'
   return msg || 'Something went wrong. Please try again.'
 }
 
@@ -56,7 +57,7 @@ export default function LoginPage() {
     if (!isValidEmail(email)) { setError('Please enter a valid email address.'); return }
     setLoading(true)
     try {
-      await sendEmailOtp(email.trim().toLowerCase())
+      await sendEmailOtp(email.trim().toLowerCase(), { shouldCreateUser: false })
       setStep('sent')
       setResendTimer(RESEND_SECONDS)
     } catch (err) {
@@ -117,7 +118,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      await sendEmailOtp(email.trim().toLowerCase())
+      await sendEmailOtp(email.trim().toLowerCase(), { shouldCreateUser: false })
       setResendTimer(RESEND_SECONDS)
       setOtp(['', '', '', '', '', ''])
       if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 50)

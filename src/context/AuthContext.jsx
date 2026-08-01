@@ -54,11 +54,11 @@ export function AuthProvider({ children }) {
   }
 
   // ── Email OTP (primary auth — free, no SMS provider needed) ──
-  async function sendEmailOtp(email) {
+  async function sendEmailOtp(email, { shouldCreateUser = true } = {}) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser,
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
