@@ -99,7 +99,7 @@ ALTER TABLE service_enquiries     ENABLE ROW LEVEL SECURITY;
 -- Vendors can read their own subscription
 CREATE POLICY "vendor reads own subscription"
   ON vendor_subscriptions FOR SELECT
-  USING (vendor_id IN (SELECT id FROM vendors WHERE owner_id = auth.uid()));
+  USING (vendor_id IN (SELECT id FROM vendors WHERE profile_id = auth.uid()));
 
 -- Customers manage their own cart
 CREATE POLICY "customer manages own cart items"
