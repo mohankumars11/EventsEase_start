@@ -19,7 +19,7 @@ const stepSubs = [
   'Give us the date so we can start planning early.',
   'Help us find the right vendors in your area.',
   'Knowing your guest count helps us get accurate quotes.',
-  'Select all services you need. We'll handle the rest.',
+  "Select all services you need. We'll handle the rest.",
   'Your details stay private — only our team contacts you.',
 ]
 
@@ -106,8 +106,6 @@ export default function PlanningWizard() {
       setSubmitting(false)
     }
   }
-
-  const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100
 
   return (
     <div className="min-h-screen bg-plum-950 flex flex-col lg:flex-row">
