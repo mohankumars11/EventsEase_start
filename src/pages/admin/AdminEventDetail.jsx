@@ -1239,7 +1239,7 @@ export default function AdminEventDetail() {
     setError(null)
     const { data, error: err } = await supabase
       .from('events')
-      .select('*, profiles(full_name, email, phone)')
+      .select('*, profiles!customer_id(full_name, email, phone)')
       .eq('id', eventId)
       .single()
 

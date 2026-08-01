@@ -527,7 +527,7 @@ export default function AdminDashboard() {
     const [evRes, propRes] = await Promise.all([
       supabase
         .from('events')
-        .select('*, profiles(full_name, email, phone)')
+        .select('*, profiles!customer_id(full_name, email, phone)')
         .order('created_at', { ascending: false }),
       supabase.from('event_proposals').select('total_amount'),
     ])
