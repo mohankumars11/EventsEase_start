@@ -1,209 +1,225 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Calendar, MapPin, Users, ArrowRight, Sparkles, Phone } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { useCart } from '../../context/CartContext'
-import { EVENT_LIST, UPCOMING_FESTIVALS } from '../../data/eventServicesData'
-import VendorCard from '../../components/customer/VendorCard'
-import FestivalBanner from '../../components/customer/FestivalBanner'
-import CustomerLayout from '../../components/customer/CustomerLayout'
+import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND } from '../../config/sambramo'
+import { FESTIVALS } from '../../data/festivals'
 
-function daysUntil(dateStr) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  return Math.ceil((new Date(dateStr) - today) / 86400000)
-}
-
-const nextFest = [...UPCOMING_FESTIVALS]
-  .map(f => ({ ...f, days: daysUntil(f.date) }))
-  .filter(f => f.days >= 0)
-  .sort((a, b) => a.days - b.days)[0]
+const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
 
 export default function CustomerHome() {
-  const { profile } = useAuth()
-  const { totalCount } = useCart()
+  const { profile, user } = useAuth()
   const navigate = useNavigate()
+  const [events, setEvents]   = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const [featured, setFeatured] = useState([])
-  const [topRated, setTopRated] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const firstName = profile?.full_name?.split(' ')[0] ?? (user?.user_metadata?.name?.split(' ')[0]) ?? 'there'
 
   useEffect(() => {
-    Promise.all([
-      supabase.from('vendors').select('*, vendor_photos(photo_url, is_cover)').eq('is_featured', true).limit(6),
-      supabase.from('vendors').select('*, vendor_photos(photo_url, is_cover)').gt('rating_avg', 0).order('rating_avg', { ascending: false }).limit(6),
-    ]).then(([f, r]) => {
-      setFeatured(f.data ?? [])
-      setTopRated(r.data ?? [])
-      setLoading(false)
-    })
-  }, [])
+    if (!user) return
+    supabase
+      .from('events')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(3)
+      .then(({ data }) => { setEvents(data ?? []); setLoading(false) })
+  }, [user])
 
-  const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
+  const activeEvents  = events.filter(e => ACTIVE_STATUSES.includes(e.status))
+  const hasActive     = activeEvents.length > 0
 
   return (
-    <CustomerLayout>
-      <FestivalBanner />
+    <div className="min-h-screen bg-gray-50">
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-10">
-
-        {/* ── Greeting + festival alert ───────────────────── */}
-        <section>
-          {nextFest && nextFest.days <= 30 && (
-            <div className="mb-5 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl shadow-lg">
-              <span className="text-3xl animate-bounce">{nextFest.emoji}</span>
-              <div>
-                <p className="font-bold text-sm">{nextFest.name} is in {nextFest.days} day{nextFest.days !== 1 ? 's' : ''}!</p>
-                <p className="text-white/80 text-xs">Book your vendors now before they fill up.</p>
-              </div>
-              <button
-                onClick={() => navigate('/dashboard/customer/browse')}
-                className="ml-auto px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold whitespace-nowrap"
-              >
-                Book now →
-              </button>
-            </div>
-          )}
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">
-            Hello, {firstName}! 👋
-          </h1>
-          <p className="text-gray-500 text-base">What are you celebrating? We'll take care of the rest.</p>
-
-          <button
-            onClick={() => navigate('/dashboard/customer/browse')}
-            className="mt-4 w-full flex items-center gap-3 px-5 py-4 bg-white rounded-2xl border-2 border-orange-100 shadow-sm text-gray-400 text-sm hover:border-amber-300 hover:shadow-md transition-all text-left"
+      {/* ── Hero greeting bar ─────────────────────────── */}
+      <div className="bg-gradient-to-r from-plum-900 via-plum-800 to-plum-900 px-4 sm:px-6 py-10">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-saffron-400 text-sm font-semibold mb-1">Welcome back</p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">
+              Hello, {firstName}! ✨
+            </h1>
+            <p className="text-plum-300 text-sm mt-2">
+              {hasActive
+                ? `You have ${activeEvents.length} active celebration${activeEvents.length > 1 ? 's' : ''} in progress.`
+                : 'Ready to plan your next unforgettable moment?'}
+            </p>
+          </div>
+          <Link
+            to="/plan"
+            className="shrink-0 inline-flex items-center gap-2 bg-saffron-400 hover:bg-saffron-500 text-plum-950 font-bold px-6 py-3 rounded-2xl transition-all shadow-lg text-sm"
           >
-            <Search size={18} className="text-amber-400 shrink-0" />
-            Search by vendor name, city, or service…
-            <span className="ml-auto text-xs bg-gray-100 px-2 py-1 rounded-lg text-gray-400">Browse all</span>
-          </button>
-        </section>
+            <Sparkles size={16} />
+            Plan a Celebration
+          </Link>
+        </div>
+      </div>
 
-        {/* ── EVENT CARDS ─────────────────────────────────── */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-900">Book Your Celebration</h2>
-              <p className="text-sm text-gray-400 mt-0.5">Click an event — see all services, packages & vendors</p>
-            </div>
-            <span className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
-              <Sparkles size={13} /> {EVENT_LIST.length} events
-            </span>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            {EVENT_LIST.map(ev => (
-              <button
-                key={ev.id}
-                onClick={() => navigate(`/dashboard/customer/events/${ev.id}`)}
-                className="group relative overflow-hidden rounded-2xl text-left cursor-pointer hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-              >
-                <div className={`bg-gradient-to-br ${ev.gradient} p-5 sm:p-6 min-h-[130px] flex flex-col justify-between`}>
-                  {/* Decorative blobs */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-black/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-
-                  <div className="relative text-5xl sm:text-6xl group-hover:scale-110 transition-transform duration-300 drop-shadow-lg self-start">
-                    {ev.emoji}
-                  </div>
-
-                  <div className="relative mt-3">
-                    <p className="font-extrabold text-white text-sm sm:text-base leading-tight drop-shadow">
-                      {ev.name}
-                    </p>
-                    <p className="text-white/70 text-xs mt-0.5">
-                      {ev.services.length} services · {ev.packages.length} packages
-                    </p>
-                  </div>
-
-                  <div className="absolute bottom-3 right-3 w-7 h-7 bg-white/25 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold">→</span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* ── HOW IT WORKS ────────────────────────────────── */}
-        <section className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-100">
-          <h3 className="text-xs font-bold text-amber-700 mb-4 uppercase tracking-wider">How it works</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {[
-              { icon: '🎯', title: 'Pick your event', sub: 'Choose from 6 event types' },
-              { icon: '🛒', title: 'Add services', sub: 'Individual or full packages' },
-              { icon: '🎉', title: 'We handle the rest', sub: 'Vendors quote within 24h' },
-            ].map((s, i) => (
-              <div key={i}>
-                <div className="text-3xl mb-2">{s.icon}</div>
-                <p className="text-xs font-semibold text-gray-800">{s.title}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5 hidden sm:block">{s.sub}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FEATURED VENDORS ────────────────────────────── */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-900">⭐ Featured Vendors</h2>
-              <p className="text-sm text-gray-400">Handpicked for quality and reliability</p>
-            </div>
-            <button onClick={() => navigate('/dashboard/customer/browse')} className="text-sm text-amber-600 font-semibold hover:text-amber-700">See all →</button>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {[1,2,3].map(i => (
-                <div key={i} className="card h-64 animate-pulse">
-                  <div className="h-44 bg-gray-100 rounded-t-2xl" />
-                  <div className="p-4 space-y-2"><div className="h-3 bg-gray-100 rounded w-2/3" /><div className="h-3 bg-gray-100 rounded w-1/2" /></div>
-                </div>
-              ))}
-            </div>
-          ) : featured.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {featured.map(v => <VendorCard key={v.id} vendor={v} />)}
-            </div>
-          ) : (
-            <div className="text-center py-10 card">
-              <p className="text-gray-400 text-sm">Featured vendors coming soon</p>
-              <button onClick={() => navigate('/dashboard/customer/browse')} className="mt-2 text-amber-600 text-sm font-semibold">Browse all vendors →</button>
-            </div>
-          )}
-        </section>
-
-        {/* ── TOP RATED ───────────────────────────────────── */}
-        {!loading && topRated.length > 0 && (
+        {/* ── Active celebrations ───────────────────────── */}
+        {!loading && activeEvents.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-extrabold text-gray-900">🏆 Top Rated</h2>
-                <p className="text-sm text-gray-400">Highest customer ratings this month</p>
-              </div>
-              <button onClick={() => navigate('/dashboard/customer/browse')} className="text-sm text-amber-600 font-semibold hover:text-amber-700">See all →</button>
+              <h2 className="text-lg font-bold text-gray-900">Active Celebrations</h2>
+              <Link to="/dashboard/customer/events" className="text-sm text-plum-600 font-semibold hover:text-plum-700">
+                View all →
+              </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {topRated.map(v => <VendorCard key={v.id} vendor={v} />)}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {activeEvents.map(e => <ActiveEventCard key={e.id} event={e} />)}
             </div>
           </section>
         )}
 
-      </div>
+        {/* ── Plan new / empty state ────────────────────── */}
+        <section className="bg-gradient-to-br from-plum-900 to-plum-800 rounded-3xl p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-saffron-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-plum-600/30 rounded-full translate-y-1/2 -translate-x-1/2" />
+          <div className="relative">
+            <div className="text-5xl mb-3">🎉</div>
+            <h2 className="font-display text-2xl font-bold text-white mb-2">
+              Plan Your Next Celebration
+            </h2>
+            <p className="text-plum-300 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+              Tell us what you're celebrating. Sambramo handles vendors, decoration, food, photography — everything.
+            </p>
+            <Link
+              to="/plan"
+              className="inline-flex items-center gap-2 bg-saffron-400 hover:bg-saffron-500 text-plum-950 font-bold px-8 py-3.5 rounded-2xl transition-all shadow-lg"
+            >
+              Start Planning <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
 
-      {/* Floating cart button */}
-      {totalCount > 0 && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-30">
-          <button
-            onClick={() => navigate('/dashboard/customer/cart')}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-amber-500 text-white font-bold shadow-2xl hover:bg-amber-600 animate-bounce"
-          >
-            🛒 Cart ({totalCount})
-          </button>
+        {/* ── Celebration types ─────────────────────────── */}
+        <section>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">What are you celebrating?</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {EVENT_TYPES.slice(0, 8).map(et => (
+              <button
+                key={et.id}
+                onClick={() => navigate(`/plan?type=${et.id}`)}
+                className="bg-white rounded-2xl p-4 text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+              >
+                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{et.emoji}</div>
+                <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Festival specials ─────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Festival Specials</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {FESTIVALS.slice(0, 5).map(f => (
+              <Link
+                key={f.id}
+                to={`/festivals/${f.id}`}
+                className="shrink-0 w-36 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md transition-all"
+              >
+                <div
+                  className="h-20 flex items-center justify-center text-4xl"
+                  style={{ background: `linear-gradient(135deg, ${f.gradientFrom}, ${f.gradientTo})` }}
+                >
+                  {f.emoji}
+                </div>
+                <div className="p-3 bg-white">
+                  <p className="font-semibold text-xs text-gray-800">{f.name}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ── How Sambramo works ────────────────────────── */}
+        <section className="bg-white rounded-3xl border border-gray-100 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-5">How Sambramo works</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { emoji: '✨', title: 'Tell us your dream', sub: 'Fill a quick 2-min form' },
+              { emoji: '🔍', title: 'We plan everything', sub: 'Our team gets to work' },
+              { emoji: '📋', title: 'You approve the plan', sub: 'Review & say yes' },
+              { emoji: '🎉', title: 'Celebrate!', sub: 'We handle every detail' },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="w-12 h-12 bg-plum-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-2">{s.emoji}</div>
+                <p className="text-sm font-semibold text-gray-800">{s.title}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Contact support ───────────────────────────── */}
+        <section className="bg-green-50 border border-green-100 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="font-bold text-gray-900 mb-1">Need help with your celebration?</p>
+            <p className="text-sm text-gray-500">Our concierge team is available Mon–Sat, 9am–8pm.</p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <a
+              href={`https://wa.me/${BRAND.whatsappNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            >
+              WhatsApp
+            </a>
+            <a
+              href={`tel:${BRAND.supportPhone}`}
+              className="flex items-center gap-2 bg-white border border-gray-200 hover:border-plum-300 text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            >
+              <Phone size={14} /> Call
+            </a>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  )
+}
+
+function ActiveEventCard({ event }) {
+  const navigate = useNavigate()
+  const type     = EVENT_TYPES.find(et => et.id === event.event_type)
+  const status   = EVENT_STATUSES[event.status]
+  const css      = STATUS_CSS[event.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
+  const emoji    = EVENT_TYPE_EMOJIS[event.event_type] ?? '🎊'
+
+  return (
+    <button
+      onClick={() => navigate('/dashboard/customer/events')}
+      className="bg-white rounded-2xl border border-gray-100 p-4 text-left hover:shadow-md hover:border-plum-200 transition-all w-full"
+    >
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-10 h-10 bg-plum-50 rounded-xl flex items-center justify-center text-xl shrink-0">{emoji}</div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-800 text-sm capitalize">{type?.label ?? event.event_type}</p>
+          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full mt-0.5 ${css.bg} ${css.text}`}>
+            {status?.icon} {status?.label}
+          </span>
         </div>
-      )}
-    </CustomerLayout>
+      </div>
+      <div className="flex gap-3 text-xs text-gray-400">
+        {event.event_date && (
+          <span className="flex items-center gap-1"><Calendar size={11} />{new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+        )}
+        {event.city && (
+          <span className="flex items-center gap-1"><MapPin size={11} />{event.city}</span>
+        )}
+        {event.guest_count && (
+          <span className="flex items-center gap-1"><Users size={11} />{event.guest_count}</span>
+        )}
+      </div>
+    </button>
   )
 }

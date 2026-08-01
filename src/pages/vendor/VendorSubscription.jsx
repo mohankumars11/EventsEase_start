@@ -96,7 +96,7 @@ export default function VendorSubscription() {
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Choose your plan</h1>
         <p className="text-gray-500 text-sm">
-          Grow your event business on EventEase. Cancel anytime.
+          Partner with Sambramo's concierge team. Cancel anytime.
         </p>
 
         {/* Free slots banner */}
@@ -182,7 +182,7 @@ export default function VendorSubscription() {
           { q: 'How does the free plan work?', a: 'The first 500 vendors who sign up get a free account forever — no credit card required. Once those slots are taken, new vendors choose a paid plan.' },
           { q: 'Can I switch plans?', a: 'Yes, upgrade or downgrade at any time. Changes take effect from the next billing cycle.' },
           { q: 'Is there a setup fee?', a: 'No setup fee. You only pay the monthly subscription amount.' },
-          { q: 'How do I accept payments?', a: 'Payments from customers are handled directly between you and the customer. EventEase facilitates enquiries and bookings.' },
+          { q: 'How do I accept payments?', a: 'Payments are coordinated through the Sambramo concierge team, who manages all customer interactions.' },
         ].map(({ q, a }) => (
           <details key={q} className="group">
             <summary className="cursor-pointer text-sm font-semibold text-gray-800 list-none flex items-center justify-between gap-2">

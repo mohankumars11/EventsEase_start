@@ -25,11 +25,29 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase
+    let { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
+
+    if (!data) {
+      // Google OAuth users: trigger may not have run yet — upsert profile now
+      const { data: { user } } = await supabase.auth.getUser()
+      const meta = user?.user_metadata ?? {}
+      const { data: upserted } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: user?.email ?? null,
+          full_name: meta.full_name ?? meta.name ?? null,
+          role: 'customer',
+        })
+        .select()
+        .single()
+      data = upserted
+    }
+
     setProfile(data)
     setLoading(false)
   }

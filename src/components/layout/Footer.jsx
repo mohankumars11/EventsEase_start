@@ -1,42 +1,65 @@
 import { Link } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400 mt-auto">
+    <footer className="bg-plum-950 text-plum-400 mt-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div>
-            <Link to="/" className="flex items-center gap-2 font-bold text-xl text-white mb-3">
-              <span className="w-7 h-7 bg-marigold-500 rounded-lg flex items-center justify-center text-white">
-                <Sparkles size={14} />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <Link to="/" className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-saffron-400 rounded-lg flex items-center justify-center">
+                <span className="text-plum-950 font-display font-black text-sm">S</span>
+              </div>
+              <span className="font-display font-bold text-xl text-white">
+                Sambr<span className="text-saffron-400">amo</span>
               </span>
-              Event<span className="text-marigold-400">Ease</span>
             </Link>
-            <p className="text-sm leading-relaxed">
-              Connecting families with trusted local vendors for every celebration across India.
+            <p className="text-sm leading-relaxed text-plum-400 max-w-xs">
+              You celebrate. We handle everything. India's first human-assisted concierge celebration service.
             </p>
+            <div className="flex gap-3 mt-4">
+              <a href="https://wa.me/919876500001" target="_blank" rel="noopener noreferrer"
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition-colors">
+                WhatsApp Us
+              </a>
+              <a href="tel:+919876500001"
+                className="px-4 py-2 bg-plum-800 hover:bg-plum-700 text-white text-xs font-semibold rounded-xl transition-colors">
+                Call Us
+              </a>
+            </div>
           </div>
 
+          {/* Celebrations */}
           <div>
-            <h4 className="text-white font-semibold mb-3 text-sm">For Customers</h4>
+            <h4 className="text-white font-semibold mb-3 text-sm">Celebrations</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/signup" className="hover:text-marigold-400 transition-colors">Browse vendors</Link></li>
-              <li><Link to="/signup" className="hover:text-marigold-400 transition-colors">Book services</Link></li>
+              <li><Link to="/plan?type=birthday" className="hover:text-saffron-400 transition-colors">Birthday</Link></li>
+              <li><Link to="/plan?type=wedding" className="hover:text-saffron-400 transition-colors">Wedding</Link></li>
+              <li><Link to="/plan?type=anniversary" className="hover:text-saffron-400 transition-colors">Anniversary</Link></li>
+              <li><Link to="/plan?type=baby-shower" className="hover:text-saffron-400 transition-colors">Baby Shower</Link></li>
+              <li><Link to="/plan?type=festival" className="hover:text-saffron-400 transition-colors">Festival</Link></li>
+              <li><Link to="/plan" className="hover:text-saffron-400 transition-colors">All celebrations →</Link></li>
             </ul>
           </div>
 
+          {/* Company */}
           <div>
-            <h4 className="text-white font-semibold mb-3 text-sm">For Vendors</h4>
+            <h4 className="text-white font-semibold mb-3 text-sm">Company</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/signup" className="hover:text-marigold-400 transition-colors">List your business</Link></li>
-              <li><Link to="/signup" className="hover:text-marigold-400 transition-colors">Grow with EventEase</Link></li>
+              <li><Link to="/#how-it-works" className="hover:text-saffron-400 transition-colors">How it works</Link></li>
+              <li><Link to="/#celebrations" className="hover:text-saffron-400 transition-colors">Celebrations</Link></li>
+              <li><Link to="/#festivals" className="hover:text-saffron-400 transition-colors">Festival specials</Link></li>
+              <li><Link to="/login" className="hover:text-saffron-400 transition-colors">Sign in</Link></li>
+              <li><Link to="/plan" className="hover:text-saffron-400 transition-colors">Plan a celebration</Link></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-6 text-xs text-center">
-          © {new Date().getFullYear()} EventEase. Made with ❤️ for Indian celebrations.
+        <div className="border-t border-plum-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <p>© {new Date().getFullYear()} Sambramo. Made with love for Indian celebrations.</p>
+          <p className="text-plum-600">Your Moment. Our Magic.</p>
         </div>
       </div>
     </footer>
