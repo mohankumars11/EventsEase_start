@@ -8,6 +8,7 @@ import Footer from './components/layout/Footer'
 import LandingPage        from './pages/LandingPage'
 import SignupPage          from './pages/auth/SignupPage'
 import LoginPage           from './pages/auth/LoginPage'
+import AuthCallbackPage    from './pages/auth/AuthCallbackPage'
 import FestivalDetailPage  from './pages/FestivalDetailPage'
 import PlanningWizard      from './pages/plan/PlanningWizard'
 import PlanConfirmation    from './pages/plan/PlanConfirmation'
@@ -87,8 +88,9 @@ function AppRoutes() {
     <Routes>
       {/* ── Public ─────────────────────────────────── */}
       <Route path="/"       element={<AppShell><LandingPage /></AppShell>} />
-      <Route path="/signup" element={<AppShell><SignupPage /></AppShell>} />
-      <Route path="/login"  element={<AppShell><LoginPage /></AppShell>} />
+      <Route path="/signup"         element={<AppShell><SignupPage /></AppShell>} />
+      <Route path="/login"          element={<AppShell><LoginPage /></AppShell>} />
+      <Route path="/auth/callback"  element={<AuthCallbackPage />} />
 
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />

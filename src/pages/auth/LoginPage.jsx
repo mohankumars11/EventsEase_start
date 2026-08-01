@@ -222,33 +222,27 @@ export default function LoginPage() {
           {/* ── Step 2: Email sent confirmation ── */}
           {step === 'sent' && (
             <div className="text-center">
-              {/* Animated envelope */}
               <div className="w-20 h-20 bg-plum-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
                 <Mail size={36} className="text-plum-600" />
               </div>
 
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">Check your email!</h1>
-              <p className="text-gray-600 text-sm mb-1">
-                We sent a 6-digit login code to:
-              </p>
+              <p className="text-gray-600 text-sm mb-1">We sent a login email to:</p>
               <p className="text-plum-700 font-semibold text-base mb-6 break-all">{email}</p>
 
-              {/* Steps guide */}
-              <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-6">
-                {[
-                  { n: '1', text: 'Open your email inbox' },
-                  { n: '2', text: 'Look for an email from Sambramo' },
-                  { n: '3', text: 'Copy the 6-digit code in the email' },
-                  { n: '4', text: 'Come back here and enter the code' },
-                ].map(({ n, text }) => (
-                  <div key={n} className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-plum-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{n}</span>
-                    <span className="text-sm text-gray-700">{text}</span>
-                  </div>
-                ))}
+              {/* Two-path instructions */}
+              <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-4 mb-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Option A — Sign-in link</p>
+                  <p className="text-sm text-gray-700">Click the <strong>"Sign in"</strong> button inside the email. Your browser will sign you in automatically.</p>
+                </div>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Option B — 6-digit code</p>
+                  <p className="text-sm text-gray-700">If the email shows a 6-digit number, copy it and click <strong>"I have the code"</strong> below.</p>
+                </div>
               </div>
 
-              <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-6">
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-5">
                 Didn't receive it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
               </div>
 
@@ -258,7 +252,7 @@ export default function LoginPage() {
                 onClick={handleEnterCode}
                 className="btn-plum w-full py-3.5 text-base mb-3"
               >
-                I have the code — Enter it →
+                I have a 6-digit code →
               </button>
 
               <div className="flex items-center justify-between">
@@ -273,7 +267,7 @@ export default function LoginPage() {
                 ) : (
                   <button onClick={handleResend} disabled={loading}
                     className="text-sm text-plum-600 font-semibold hover:underline disabled:opacity-50">
-                    Resend code
+                    Resend email
                   </button>
                 )}
               </div>
