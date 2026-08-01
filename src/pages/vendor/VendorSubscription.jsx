@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Zap, Crown, Star, Users } from 'lucide-react'
+import { CheckCircle2, Zap, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 
@@ -9,14 +9,14 @@ const TIERS = [
     name: 'Starter',
     emoji: '🌱',
     price: 0,
-    billingNote: 'Free — forever for first 500 vendors',
+    billingNote: 'Free — forever for first 500 partners',
     badge: null,
     badgeColor: '',
     features: [
       'Listed in search results',
       'Up to 3 portfolio photos',
       'Receive up to 5 enquiries/month',
-      'Basic vendor profile page',
+      'Basic partner profile page',
       'Customer reviews & ratings',
     ],
     cta: 'Current plan',
@@ -30,13 +30,13 @@ const TIERS = [
     price: 499,
     billingNote: '₹499/month · billed monthly',
     badge: '★ Popular',
-    badgeColor: 'bg-amber-500 text-white',
+    badgeColor: 'bg-saffron-500 text-white',
     features: [
       'Priority listing in search',
       'Up to 15 portfolio photos',
       'Unlimited enquiries',
-      'Featured vendor badge',
-      'Appear in "Featured Vendors" on home',
+      'Featured partner badge',
+      'Appear in "Featured Partners" on home',
       'Customer reviews & ratings',
       'WhatsApp enquiry notifications',
     ],
@@ -69,9 +69,8 @@ const TIERS = [
 ]
 
 export default function VendorSubscription() {
-  const [vendorCount, setVendorCount]   = useState(null)
-  const [currentTier, setCurrentTier]   = useState('free')
-  const [upgrading, setUpgrading]       = useState(null)
+  const [vendorCount, setVendorCount] = useState(null)
+  const [upgrading, setUpgrading]     = useState(null)
 
   useEffect(() => {
     supabase.from('vendors').select('id', { count: 'exact', head: true }).then(({ count }) => {
@@ -80,7 +79,6 @@ export default function VendorSubscription() {
   }, [])
 
   const slotsLeft = vendorCount !== null ? Math.max(0, 500 - vendorCount) : null
-  const freeSlotsFull = vendorCount !== null && vendorCount >= 500
 
   function handleUpgrade(tierId) {
     setUpgrading(tierId)
@@ -107,7 +105,7 @@ export default function VendorSubscription() {
               <span>🎉 <strong>{slotsLeft} free slots</strong> remaining — join now, pay nothing!</span>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full text-sm font-semibold text-amber-700">
+            <div className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-plum-50 border border-plum-200 rounded-full text-sm font-semibold text-plum-700">
               <Zap size={15} />
               <span>All 500 free slots are taken — choose a paid plan to get listed.</span>
             </div>
@@ -122,8 +120,8 @@ export default function VendorSubscription() {
             key={tier.id}
             className={`rounded-2xl border p-6 flex flex-col gap-4 ${
               tier.highlight
-                ? 'border-amber-400 ring-2 ring-amber-200 shadow-lg'
-                : 'border-orange-100 bg-white shadow-sm'
+                ? 'border-saffron-400 ring-2 ring-saffron-200 shadow-lg'
+                : 'border-plum-100 bg-white shadow-sm'
             }`}
           >
             {/* Header */}
@@ -141,7 +139,10 @@ export default function VendorSubscription() {
                 {tier.price === 0 ? (
                   <span className="text-3xl font-extrabold text-gray-900">Free</span>
                 ) : (
-                  <span className="text-3xl font-extrabold text-amber-700">{formatINR(tier.price)}<span className="text-base font-normal text-gray-400">/mo</span></span>
+                  <span className="text-3xl font-extrabold text-plum-700">
+                    {formatINR(tier.price)}
+                    <span className="text-base font-normal text-gray-400">/mo</span>
+                  </span>
                 )}
               </div>
               <p className="text-xs text-gray-400 mt-0.5">{tier.billingNote}</p>
@@ -165,7 +166,7 @@ export default function VendorSubscription() {
                 tier.ctaDisabled
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : tier.highlight
-                  ? 'bg-amber-500 text-white hover:bg-amber-600'
+                  ? 'bg-saffron-500 text-white hover:bg-saffron-600'
                   : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -179,14 +180,27 @@ export default function VendorSubscription() {
       <div className="card p-6 space-y-4">
         <h3 className="font-bold text-gray-800">Common questions</h3>
         {[
-          { q: 'How does the free plan work?', a: 'The first 500 vendors who sign up get a free account forever — no credit card required. Once those slots are taken, new vendors choose a paid plan.' },
-          { q: 'Can I switch plans?', a: 'Yes, upgrade or downgrade at any time. Changes take effect from the next billing cycle.' },
-          { q: 'Is there a setup fee?', a: 'No setup fee. You only pay the monthly subscription amount.' },
-          { q: 'How do I accept payments?', a: 'Payments are coordinated through the Sambramo concierge team, who manages all customer interactions.' },
+          {
+            q: 'How does the free plan work?',
+            a: 'The first 500 partners who sign up get a free account forever — no credit card required. Once those slots are taken, new partners choose a paid plan.',
+          },
+          {
+            q: 'Can I switch plans?',
+            a: 'Yes, upgrade or downgrade at any time. Changes take effect from the next billing cycle.',
+          },
+          {
+            q: 'Is there a setup fee?',
+            a: 'No setup fee. You only pay the monthly subscription amount.',
+          },
+          {
+            q: 'How do I receive bookings?',
+            a: "Bookings are coordinated through Sambramo's concierge team, who matches your services to the right celebrations and manages all customer communication on your behalf.",
+          },
         ].map(({ q, a }) => (
           <details key={q} className="group">
             <summary className="cursor-pointer text-sm font-semibold text-gray-800 list-none flex items-center justify-between gap-2">
-              {q} <span className="text-gray-400 group-open:rotate-180 transition-transform">▾</span>
+              {q}
+              <span className="text-gray-400 group-open:rotate-180 transition-transform">▾</span>
             </summary>
             <p className="text-sm text-gray-500 mt-2 leading-relaxed">{a}</p>
           </details>

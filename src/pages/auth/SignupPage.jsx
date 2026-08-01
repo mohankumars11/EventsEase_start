@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Sparkles, Eye, EyeOff, AlertCircle, Info } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
+import { BRAND } from '../../config/sambramo'
 
-const INDIAN_CITIES = [
-  'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
-  'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Nagpur',
-  'Coimbatore', 'Kochi', 'Visakhapatnam', 'Indore', 'Bhopal', 'Patna',
-  'Vadodara', 'Thiruvananthapuram',
+const TRUST_POINTS = [
+  'Human concierge team',
+  'Zero hassle planning',
+  'Every detail handled',
 ]
 
 export default function SignupPage() {
-  const [searchParams]   = useSearchParams()
   const { signUp, signInWithGoogle, user, profile } = useAuth()
   const navigate         = useNavigate()
 
@@ -21,13 +20,13 @@ export default function SignupPage() {
     email:     '',
     phone:     '',
     password:  '',
-    role:      searchParams.get('role') === 'vendor' ? 'vendor' : 'customer',
+    role:      'customer',
     city:      '',
   })
-  const [showPassword, setShowPassword]     = useState(false)
-  const [loading, setLoading]               = useState(false)
-  const [googleLoading, setGoogleLoading]   = useState(false)
-  const [error, setError]                   = useState(null)
+  const [showPassword, setShowPassword]   = useState(false)
+  const [loading, setLoading]             = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError]                 = useState(null)
 
   useEffect(() => {
     if (user && profile) redirectByRole(profile.role)
@@ -48,10 +47,10 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
 
-    if (!form.fullName.trim())                      return setError('Please enter your full name.')
-    if (!form.phone.match(/^[6-9]\d{9}$/))          return setError('Enter a valid 10-digit Indian mobile number.')
-    if (form.password.length < 6)                   return setError('Password must be at least 6 characters.')
-    if (!form.city)                                  return setError('Please select your city.')
+    if (!form.fullName.trim())             return setError('Please enter your full name.')
+    if (!form.phone.match(/^[6-9]\d{9}$/)) return setError('Enter a valid 10-digit Indian mobile number.')
+    if (form.password.length < 6)          return setError('Password must be at least 6 characters.')
+    if (!form.city)                        return setError('Please select your city.')
 
     setLoading(true)
     try {
@@ -77,111 +76,126 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-marigold-50 via-cream to-orange-50 flex items-start justify-center py-12 px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex">
 
-        {/* ── Logo ─────────────────────────────────────── */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 font-bold text-2xl text-gray-900">
-            <span className="w-9 h-9 bg-marigold-500 rounded-xl flex items-center justify-center text-white shadow">
-              <Sparkles size={18} />
-            </span>
-            Event<span className="text-marigold-600">Ease</span>
-          </Link>
-          <p className="text-gray-500 text-sm mt-2">Create your account to get started</p>
+      {/* ── Left panel (desktop only) ──────────────────────── */}
+      <div className="hidden md:flex md:w-1/2 flex-col justify-between p-12 bg-plum-900">
+
+        {/* Logo */}
+        <Link to="/" className="inline-flex items-center gap-3">
+          <span className="w-10 h-10 bg-saffron-400 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+            S
+          </span>
+          <span className="text-2xl font-bold text-white font-display">
+            Sambr<span className="text-saffron-400">amo</span>
+          </span>
+        </Link>
+
+        {/* Tagline + trust points */}
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-4xl font-display font-bold text-white leading-snug">
+              Your Moment.<br />Our Magic.
+            </h2>
+            <p className="text-plum-300 mt-3 text-lg">
+              India's human-assisted concierge celebration marketplace.
+            </p>
+          </div>
+          <ul className="space-y-4">
+            {TRUST_POINTS.map(point => (
+              <li key={point} className="flex items-center gap-3 text-plum-200">
+                <CheckCircle2 size={18} className="text-saffron-400 shrink-0" />
+                <span className="text-base">{point}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="card p-7 shadow-lg">
+        <p className="text-plum-600 text-xs">
+          &copy; {new Date().getFullYear()} Sambramo. All rights reserved.
+        </p>
+      </div>
 
-          {/* ── Role toggle ───────────────────────────────── */}
-          <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => setForm(p => ({ ...p, role: 'customer' }))}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                form.role === 'customer'
-                  ? 'bg-white shadow text-marigold-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🛍️ I want to book services
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm(p => ({ ...p, role: 'vendor' }))}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                form.role === 'vendor'
-                  ? 'bg-white shadow text-marigold-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🏪 I'm a service provider
-            </button>
+      {/* ── Right panel ────────────────────────────────────── */}
+      <div className="flex-1 flex items-start justify-center px-6 py-12 bg-white overflow-y-auto">
+        <div className="w-full max-w-md">
+
+          {/* Mobile logo */}
+          <div className="flex md:hidden justify-center mb-8">
+            <Link to="/" className="inline-flex items-center gap-2">
+              <span className="w-9 h-9 bg-saffron-400 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow">
+                S
+              </span>
+              <span className="text-xl font-bold text-gray-900 font-display">
+                Sambr<span className="text-plum-600">amo</span>
+              </span>
+            </Link>
           </div>
 
-          {/* ── Google sign-in (quick option) ─────────────── */}
-          <div className="mb-4">
+          <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">
+            Start your celebration journey
+          </h1>
+          <p className="text-gray-500 text-sm mb-8">
+            Create your account and let us handle the rest
+          </p>
+
+          {/* ── Google sign-in ──────────────────────────────── */}
+          <div className="mb-5">
             <GoogleSignInButton
               onClick={handleGoogleSignIn}
               loading={googleLoading}
               fullWidth={true}
-              label={`Sign up with Google as ${form.role === 'vendor' ? 'Vendor' : 'Customer'}`}
+              label="Sign up with Google"
             />
           </div>
 
-          {/* ── Google note ───────────────────────────────── */}
-          <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 mb-5 text-xs text-blue-700">
-            <Info size={13} className="mt-0.5 shrink-0" />
-            <span>
-              With Google sign-in we'll set up your profile after sign-in.
-              You can choose your role and complete your details on the next step.
-            </span>
-          </div>
-
-          {/* ── OR divider ───────────────────────────────── */}
+          {/* ── OR divider ──────────────────────────────────── */}
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">or sign up with email</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* ── Email form ───────────────────────────────── */}
+          {/* ── Form ────────────────────────────────────────── */}
           <form onSubmit={handleSubmit} className="space-y-4">
+
             <div>
-              <label className="label">Full name</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full name</label>
               <input
                 name="fullName"
                 value={form.fullName}
                 onChange={handleChange}
-                className="input"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
                 placeholder="Priya Sharma"
                 required
               />
             </div>
 
             <div>
-              <label className="label">Email address</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
               <input
                 name="email"
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className="input"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
                 placeholder="priya@example.com"
                 required
               />
             </div>
 
             <div>
-              <label className="label">Mobile number</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile number</label>
               <div className="flex gap-2">
-                <span className="input w-14 text-center text-gray-500 shrink-0">+91</span>
+                <span className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-500 text-sm shrink-0 bg-gray-50">
+                  +91
+                </span>
                 <input
                   name="phone"
                   type="tel"
                   value={form.phone}
                   onChange={handleChange}
-                  className="input"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
                   placeholder="9876543210"
                   maxLength={10}
                   required
@@ -190,24 +204,30 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="label">City</label>
-              <select name="city" value={form.city} onChange={handleChange} className="input" required>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">City</label>
+              <select
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-plum-400 text-gray-900"
+                required
+              >
                 <option value="">Select your city</option>
-                {INDIAN_CITIES.map(c => (
+                {BRAND.servicedCities.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
               <div className="relative">
                 <input
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={handleChange}
-                  className="input pr-10"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-plum-400 text-gray-900 placeholder-gray-400"
                   placeholder="Min. 6 characters"
                   required
                 />
@@ -222,7 +242,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* ── Error ────────────────────────────────── */}
+            {/* ── Error ───────────────────────────────────── */}
             {error && (
               <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -233,18 +253,17 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="btn-primary w-full py-3 text-base mt-2"
+              className="btn-plum w-full py-3 text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading
-                ? 'Creating account…'
-                : `Create ${form.role === 'vendor' ? 'vendor' : 'customer'} account`}
+              {loading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-5">
+          {/* ── Footer link ─────────────────────────────────── */}
+          <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-marigold-600 font-semibold hover:underline">
-              Log in
+            <Link to="/login" className="text-plum-600 font-semibold hover:underline">
+              Sign in
             </Link>
           </p>
         </div>
