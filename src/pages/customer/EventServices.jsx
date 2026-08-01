@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ShoppingCart, Plus, Check, ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
-import { useCart } from '../../context/CartContext'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
@@ -10,11 +9,8 @@ export default function EventServices() {
   const { eventId } = useParams()
   const navigate = useNavigate()
   const event = EVENT_DATA[eventId]
-  const { dispatch, hasItem, hasPkg, totalCount } = useCart()
-
-  const [activeTab, setActiveTab]       = useState('services') // 'services' | 'packages'
-  const [addedKey, setAddedKey]         = useState(null)
-  const [expandedCat, setExpandedCat]   = useState(null)
+  const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
+  const [expandedCat, setExpandedCat] = useState(null)
 
   if (!event) {
     return (
@@ -26,24 +22,6 @@ export default function EventServices() {
         </div>
       </CustomerLayout>
     )
-  }
-
-  function addService(svc) {
-    dispatch({ type: 'ADD_SERVICE', eventId: event.id, eventName: event.name, service: svc })
-    const k = `${event.id}__${svc.id}`
-    setAddedKey(k)
-    setTimeout(() => setAddedKey(null), 1500)
-  }
-
-  function removeService(svc) {
-    dispatch({ type: 'REMOVE_ITEM', key: `${event.id}__${svc.id}` })
-  }
-
-  function addPackage(pkg) {
-    dispatch({ type: 'ADD_PACKAGE', eventId: event.id, eventName: event.name, pkg })
-    const k = `pkg__${event.id}__${pkg.id}`
-    setAddedKey(k)
-    setTimeout(() => setAddedKey(null), 1500)
   }
 
   // Group services by category
@@ -83,7 +61,7 @@ export default function EventServices() {
               {event.packages.length} ready packages
             </span>
             <span className="px-3 py-1.5 bg-white/20 rounded-full text-xs font-semibold backdrop-blur">
-              Instant booking
+              Sambramo organizes everything
             </span>
           </div>
         </div>
@@ -97,7 +75,7 @@ export default function EventServices() {
               onClick={() => setActiveTab('services')}
               className={`px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'services'
-                  ? 'border-amber-500 text-amber-700'
+                  ? 'border-saffron-500 text-saffron-700'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -107,25 +85,23 @@ export default function EventServices() {
               onClick={() => setActiveTab('packages')}
               className={`px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'packages'
-                  ? 'border-amber-500 text-amber-700'
+                  ? 'border-saffron-500 text-saffron-700'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <span className="flex items-center gap-1.5">
                 <Package size={14} /> Complete Packages
-                <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Save more</span>
+                <span className="ml-1 px-1.5 py-0.5 bg-saffron-100 text-saffron-700 rounded text-[10px] font-bold">Save more</span>
               </span>
             </button>
           </div>
-          {totalCount > 0 && (
-            <button
-              onClick={() => navigate('/dashboard/customer/cart')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600"
-            >
-              <ShoppingCart size={15} />
-              Cart ({totalCount})
-            </button>
-          )}
+          <button
+            onClick={() => navigate('/plan?type=' + eventId)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-plum-700 text-white font-semibold text-sm hover:bg-plum-800"
+          >
+            <Sparkles size={15} />
+            Plan with Sambramo
+          </button>
         </div>
       </div>
 
@@ -135,7 +111,7 @@ export default function EventServices() {
         {activeTab === 'services' && (
           <div className="space-y-6">
             <p className="text-sm text-gray-500">
-              Pick exactly what you need — mix and match from any category. Add to cart and we'll match you with the best vendors.
+              Pick exactly what you need — mix and match from any category. Sambramo will organize this for you.
             </p>
 
             {categories.map(cat => {
@@ -161,8 +137,6 @@ export default function EventServices() {
                   {expandedCat !== cat && (
                     <div className="divide-y divide-gray-50">
                       {svcs.map(svc => {
-                        const added = hasItem(event.id, svc.id)
-                        const justAdded = addedKey === `${event.id}__${svc.id}`
                         return (
                           <div key={svc.id} className="flex items-center justify-between gap-4 px-5 py-4">
                             <div className="flex items-center gap-3 min-w-0">
@@ -170,26 +144,16 @@ export default function EventServices() {
                               <div className="min-w-0">
                                 <p className="font-semibold text-gray-900 text-sm">{svc.name}</p>
                                 <p className="text-xs text-gray-500 truncate">{svc.desc}</p>
-                                <p className="text-xs text-amber-600 font-medium mt-0.5">{svc.priceHint}</p>
+                                <p className="text-xs text-saffron-600 font-medium mt-0.5">{svc.priceHint}</p>
                               </div>
                             </div>
-                            {added ? (
-                              <button
-                                onClick={() => removeService(svc)}
-                                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-100 text-green-700 font-semibold text-xs hover:bg-red-50 hover:text-red-600 transition-colors"
-                              >
-                                <Check size={13} />
-                                {justAdded ? 'Added!' : 'Added'}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => addService(svc)}
-                                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold text-xs hover:bg-amber-600 transition-colors"
-                              >
-                                <Plus size={13} />
-                                Add
-                              </button>
-                            )}
+                            <button
+                              onClick={() => navigate('/plan?type=' + eventId)}
+                              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-saffron-500 text-white font-semibold text-xs hover:bg-saffron-600 transition-colors"
+                            >
+                              <Sparkles size={13} />
+                              Plan with Sambramo
+                            </button>
                           </div>
                         )
                       })}
@@ -199,17 +163,15 @@ export default function EventServices() {
               )
             })}
 
-            {totalCount > 0 && (
-              <div className="sticky bottom-20 md:bottom-4 flex justify-center pointer-events-none">
-                <button
-                  onClick={() => navigate('/dashboard/customer/cart')}
-                  className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-amber-500 text-white font-bold text-base shadow-2xl hover:bg-amber-600"
-                >
-                  <ShoppingCart size={18} />
-                  View cart · {totalCount} item{totalCount > 1 ? 's' : ''}
-                </button>
-              </div>
-            )}
+            <div className="sticky bottom-20 md:bottom-4 flex justify-center pointer-events-none">
+              <button
+                onClick={() => navigate('/plan?type=' + eventId)}
+                className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-plum-700 text-white font-bold text-base shadow-2xl hover:bg-plum-800"
+              >
+                <Sparkles size={18} />
+                Plan with Sambramo →
+              </button>
+            </div>
           </div>
         )}
 
@@ -217,12 +179,10 @@ export default function EventServices() {
         {activeTab === 'packages' && (
           <div className="space-y-5">
             <p className="text-sm text-gray-500 mb-2">
-              Pre-curated bundles — save time, save money, and get everything in one go.
+              Pre-curated bundles — save time, save money, and Sambramo handles every detail.
             </p>
 
             {event.packages.map(pkg => {
-              const added = hasPkg(event.id, pkg.id)
-              const justAdded = addedKey === `pkg__${event.id}__${pkg.id}`
               const pkgServices = event.services.filter(s => pkg.includes.includes(s.id))
 
               return (
@@ -242,7 +202,7 @@ export default function EventServices() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs text-gray-400 mb-0.5">Starts from</p>
-                      <p className="text-xl font-extrabold text-amber-700">{formatINR(pkg.price_min)}</p>
+                      <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
                       <p className="text-xs text-gray-400">up to {formatINR(pkg.price_max)}</p>
                     </div>
                   </div>
@@ -256,40 +216,23 @@ export default function EventServices() {
                     ))}
                   </div>
 
-                  <div className="flex gap-3">
-                    {added ? (
-                      <button
-                        onClick={() => dispatch({ type: 'REMOVE_PACKAGE', key: `pkg__${event.id}__${pkg.id}` })}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-100 text-green-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        <Check size={16} /> {justAdded ? 'Package added!' : 'Added to cart'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => addPackage(pkg)}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600"
-                      >
-                        <ShoppingCart size={16} /> Add complete package
-                      </button>
-                    )}
-                    <button
-                      onClick={() => navigate('/dashboard/customer/cart')}
-                      className="px-5 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50"
-                    >
-                      View cart
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => navigate('/plan?type=' + eventId)}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-plum-700 text-white font-bold hover:bg-plum-800 transition-colors"
+                  >
+                    <Sparkles size={16} /> Plan this with Sambramo
+                  </button>
                 </div>
               )
             })}
 
-            <div className="card p-5 border-dashed border-2 border-amber-300 bg-amber-50 text-center">
-              <Sparkles size={24} className="text-amber-500 mx-auto mb-2" />
+            <div className="card p-5 border-dashed border-2 border-saffron-300 bg-saffron-50 text-center">
+              <Sparkles size={24} className="text-saffron-500 mx-auto mb-2" />
               <h4 className="font-bold text-gray-800 mb-1">Need something custom?</h4>
               <p className="text-sm text-gray-500 mb-4">Can't find the right package? Browse individual services and build your own combination.</p>
               <button
                 onClick={() => setActiveTab('services')}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600"
+                className="px-6 py-2.5 rounded-xl bg-saffron-500 text-white font-semibold text-sm hover:bg-saffron-600"
               >
                 Browse individual services →
               </button>

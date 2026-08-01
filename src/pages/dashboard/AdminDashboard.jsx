@@ -182,7 +182,7 @@ function EventsTable({
                           onClick={() => navigate(`/dashboard/admin/events/${ev.id}`)}
                           className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors"
                         >
-                          Open
+                          View Details
                         </button>
                         {ev.profiles?.phone && (
                           <>

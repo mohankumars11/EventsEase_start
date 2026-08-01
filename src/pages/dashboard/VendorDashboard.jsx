@@ -1,4 +1,5 @@
-import { ImagePlus, ClipboardList, Star, TrendingUp, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ImagePlus, ClipboardList, Star, TrendingUp, ChevronRight, CheckCircle2, AlertCircle, LogOut } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const QUICK_ACTIONS = [
@@ -6,7 +7,7 @@ const QUICK_ACTIONS = [
     title:    'Complete your profile',
     desc:     'Add photos, description & pricing',
     icon:     ImagePlus,
-    color:    'bg-marigold-50 text-marigold-600',
+    color:    'bg-saffron-50 text-saffron-600',
     badge:    'Important',
     badgeColor: 'bg-crimson-100 text-crimson-600',
   },
@@ -49,9 +50,16 @@ const PLAN_FEATURES = [
 ]
 
 export default function VendorDashboard() {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
+  const businessName = profile?.business_name ?? profile?.company_name ?? profile?.full_name ?? 'Your Business'
   const completedSteps = ONBOARDING_STEPS.filter(s => s.done).length
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/')
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
@@ -59,31 +67,39 @@ export default function VendorDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName} 🏪</h1>
+          <p className="text-plum-700 font-semibold text-base mt-0.5">{businessName}</p>
           <p className="text-gray-500 text-sm mt-1">
-            Your vendor dashboard — manage your profile, enquiries, and bookings.
+            Your Sambramo vendor dashboard — manage your profile, enquiries, and bookings.
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-plum-100 text-plum-700 rounded-full text-xs font-semibold">
             Vendor account
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
             Free plan
           </span>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full text-xs font-semibold transition-colors"
+          >
+            <LogOut size={13} />
+            Sign out
+          </button>
         </div>
       </div>
 
       {/* Onboarding checklist */}
-      <section className="card p-6 border-marigold-200 bg-marigold-50/40">
+      <section className="card p-6 border-saffron-200 bg-saffron-50/40">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900">Get your profile ready</h2>
-          <span className="text-xs font-semibold text-marigold-700">{completedSteps}/{ONBOARDING_STEPS.length} done</span>
+          <span className="text-xs font-semibold text-saffron-700">{completedSteps}/{ONBOARDING_STEPS.length} done</span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-marigold-100 rounded-full h-2 mb-5">
+        <div className="w-full bg-saffron-100 rounded-full h-2 mb-5">
           <div
-            className="bg-marigold-500 h-2 rounded-full transition-all"
+            className="bg-saffron-500 h-2 rounded-full transition-all"
             style={{ width: `${(completedSteps / ONBOARDING_STEPS.length) * 100}%` }}
           />
         </div>
@@ -93,11 +109,11 @@ export default function VendorDashboard() {
             <div key={label} className={`flex items-center gap-3 text-sm ${done ? 'text-gray-500' : 'text-gray-800'}`}>
               {done
                 ? <CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                : <AlertCircle  size={16} className="text-marigold-400 shrink-0" />
+                : <AlertCircle  size={16} className="text-saffron-400 shrink-0" />
               }
               <span className={done ? 'line-through' : ''}>{label}</span>
               {!done && (
-                <span className="ml-auto text-xs px-2 py-0.5 bg-marigold-100 text-marigold-700 rounded-full cursor-not-allowed opacity-60">
+                <span className="ml-auto text-xs px-2 py-0.5 bg-saffron-100 text-saffron-700 rounded-full cursor-not-allowed opacity-60">
                   Coming soon
                 </span>
               )}
@@ -154,14 +170,14 @@ export default function VendorDashboard() {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Subscription plans</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {PLAN_FEATURES.map(({ plan, price, features }) => (
-            <div key={plan} className={`card p-5 ${plan === 'Growth' ? 'border-marigold-400 ring-2 ring-marigold-200' : ''}`}>
+            <div key={plan} className={`card p-5 ${plan === 'Growth' ? 'border-saffron-400 ring-2 ring-saffron-200' : ''}`}>
               {plan === 'Growth' && (
-                <span className="inline-block text-xs font-bold bg-marigold-500 text-white px-2 py-0.5 rounded-full mb-3">
+                <span className="inline-block text-xs font-bold bg-saffron-500 text-white px-2 py-0.5 rounded-full mb-3">
                   Popular
                 </span>
               )}
               <div className="font-bold text-gray-900 text-lg">{plan}</div>
-              <div className="text-marigold-600 font-semibold mt-1 mb-4">{price}</div>
+              <div className="text-saffron-600 font-semibold mt-1 mb-4">{price}</div>
               <ul className="space-y-1.5">
                 {features.map(f => (
                   <li key={f} className="flex items-start gap-2 text-xs text-gray-600">
