@@ -171,7 +171,8 @@ export default function PlanningWizard() {
           service_category: s,
           status:           'REQUIRED',
         }))
-        await supabase.from('event_services').insert(svcRows)
+        const { error: svcErr } = await supabase.from('event_services').insert(svcRows)
+        if (svcErr) console.error('Failed to save selected services:', svcErr)
       }
 
       navigate(`/plan/confirmation?eventId=${data.id}`)

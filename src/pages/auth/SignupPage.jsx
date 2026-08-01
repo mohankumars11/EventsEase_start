@@ -347,7 +347,7 @@ export default function SignupPage() {
               <form onSubmit={handleVerifyOtp} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">6-digit verification code</label>
-                  <div className="flex gap-2 justify-between" onPaste={handleOtpPaste}>
+                  <div className="flex gap-2" onPaste={handleOtpPaste}>
                     {otp.map((digit, i) => (
                       <input
                         key={i}
@@ -358,7 +358,7 @@ export default function SignupPage() {
                         value={digit}
                         onChange={e => handleOtpChange(i, e.target.value)}
                         onKeyDown={e => handleOtpKeyDown(i, e)}
-                        className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
+                        className="flex-1 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
                       />
                     ))}
                   </div>
