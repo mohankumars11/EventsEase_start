@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BRAND } from '../../config/sambramo'
 
 export default function Footer() {
   return (
@@ -20,11 +21,11 @@ export default function Footer() {
               You celebrate. We handle everything. India's first human-assisted concierge celebration service.
             </p>
             <div className="flex gap-3 mt-4">
-              <a href="https://wa.me/919876500001" target="_blank" rel="noopener noreferrer"
+              <a href={`https://wa.me/${BRAND.whatsappNumber}`} target="_blank" rel="noopener noreferrer"
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition-colors">
                 WhatsApp Us
               </a>
-              <a href="tel:+919876500001"
+              <a href={`tel:${BRAND.supportPhone}`}
                 className="px-4 py-2 bg-plum-800 hover:bg-plum-700 text-white text-xs font-semibold rounded-xl transition-colors">
                 Call Us
               </a>
