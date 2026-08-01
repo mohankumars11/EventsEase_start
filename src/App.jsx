@@ -5,12 +5,15 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 
 // Public
-import LandingPage      from './pages/LandingPage'
-import SignupPage        from './pages/auth/SignupPage'
-import LoginPage         from './pages/auth/LoginPage'
-import FestivalDetailPage from './pages/FestivalDetailPage'
+import LandingPage        from './pages/LandingPage'
+import SignupPage          from './pages/auth/SignupPage'
+import LoginPage           from './pages/auth/LoginPage'
+import FestivalDetailPage  from './pages/FestivalDetailPage'
+import PlanningWizard      from './pages/plan/PlanningWizard'
+import PlanConfirmation    from './pages/plan/PlanConfirmation'
 
 // Customer
+import MyEvents       from './pages/customer/MyEvents'
 import CustomerHome   from './pages/customer/CustomerHome'
 import BrowseVendors  from './pages/customer/BrowseVendors'
 import VendorProfile  from './pages/customer/VendorProfile'
@@ -20,8 +23,9 @@ import EventServices  from './pages/customer/EventServices'
 import Cart           from './pages/customer/Cart'
 
 // Vendor & Admin
-import VendorDashboard from './pages/dashboard/VendorDashboard'
-import AdminDashboard  from './pages/dashboard/AdminDashboard'
+import VendorDashboard  from './pages/dashboard/VendorDashboard'
+import AdminDashboard   from './pages/dashboard/AdminDashboard'
+import AdminEventDetail from './pages/admin/AdminEventDetail'
 
 // ── Route guard ─────────────────────────────────────────
 function ProtectedRoute({ children, allowedRoles }) {
@@ -88,6 +92,10 @@ function AppRoutes() {
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
 
+      {/* ── Planning wizard (public) ────────────────── */}
+      <Route path="/plan"               element={<PlanningWizard />} />
+      <Route path="/plan/confirmation"  element={<PlanConfirmation />} />
+
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
@@ -124,6 +132,11 @@ function AppRoutes() {
           <CustomerShell><Cart /></CustomerShell>
         </ProtectedRoute>
       } />
+      <Route path="/dashboard/customer/events" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <CustomerShell><MyEvents /></CustomerShell>
+        </ProtectedRoute>
+      } />
 
       {/* ── Vendor ─────────────────────────────────── */}
       <Route path="/dashboard/vendor" element={
@@ -136,6 +149,11 @@ function AppRoutes() {
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <AppShell><AdminDashboard /></AppShell>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/admin/events/:eventId" element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AppShell><AdminEventDetail /></AppShell>
         </ProtectedRoute>
       } />
 

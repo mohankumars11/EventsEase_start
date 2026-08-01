@@ -1,36 +1,30 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Sparkles, ShoppingCart } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { useCart } from '../../context/CartContext'
 import GoogleSignInButton from '../ui/GoogleSignInButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 
 const NAV_LINKS = [
-  { label: 'Browse',        to: '/signup' },
-  { label: 'Categories',    to: '/signup' },
-  { label: 'How It Works',  to: '/#how-it-works' },
-  { label: 'For Providers', to: '/signup?role=vendor' },
+  { label: 'Celebrations', to: '/#celebrations' },
+  { label: 'How It Works',  to: '/#how-it-works'  },
+  { label: 'Services',      to: '/#services'       },
+  { label: 'Inspiration',   to: '/#festivals'      },
 ]
 
 export default function Navbar() {
   const { user, profile, signOut, signInWithGoogle } = useAuth()
-  const { totalCount }  = useCart()
-  const [menuOpen, setMenuOpen]       = useState(false)
-  const [scrolled, setScrolled]       = useState(false)
+  const [menuOpen, setMenuOpen]         = useState(false)
+  const [scrolled, setScrolled]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const navigate = useNavigate()
 
-  /* ── Scroll listener for glassmorphism ────────────── */
   useEffect(() => {
-    function onScroll() {
-      setScrolled(window.scrollY > 20)
-    }
+    function onScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  /* ── Helpers ──────────────────────────────────────── */
   function dashboardLink() {
     if (!profile) return '/dashboard'
     if (profile.role === 'vendor') return '/dashboard/vendor'
@@ -42,66 +36,65 @@ export default function Navbar() {
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true)
-    try {
-      await signInWithGoogle()
-    } catch (err) {
-      console.error('Google sign-in failed:', err)
-    } finally {
-      setGoogleLoading(false)
-    }
+    try { await signInWithGoogle() }
+    catch (err) { console.error('Google sign-in failed:', err) }
+    finally { setGoogleLoading(false) }
   }
 
-  /* ── Dynamic nav classes ──────────────────────────── */
   const navClass = scrolled
-    ? 'bg-white/80 backdrop-blur-md shadow-md border-transparent'
-    : 'bg-white border-b border-orange-100 shadow-sm'
+    ? 'bg-plum-950/90 backdrop-blur-md shadow-lg border-transparent'
+    : 'bg-plum-950 border-b border-plum-800'
+
+  const linkClass = scrolled
+    ? 'text-plum-200 hover:text-white hover:bg-plum-800'
+    : 'text-plum-300 hover:text-white hover:bg-plum-800'
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${navClass}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
 
-          {/* ── Logo ──────────────────────────────────── */}
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl text-gray-900 shrink-0">
-            <span className="w-8 h-8 bg-marigold-500 rounded-xl flex items-center justify-center text-white shadow-sm">
-              <Sparkles size={16} />
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-8 h-8 bg-saffron-400 rounded-lg flex items-center justify-center">
+              <span className="text-plum-950 font-display font-black text-sm leading-none">S</span>
+            </div>
+            <span className="font-display font-bold text-xl text-white tracking-tight">
+              Sambr<span className="text-saffron-400">amo</span>
             </span>
-            Event<span className="text-marigold-600">Ease</span>
           </Link>
 
-          {/* ── Desktop nav links ──────────────────────── */}
-          <div className="hidden lg:flex items-center gap-1">
+          {/* Desktop nav links */}
+          <div className="hidden lg:flex items-center gap-0.5">
             {NAV_LINKS.map(({ label, to }) => (
               <Link
                 key={label}
                 to={to}
-                className="text-sm font-medium text-gray-600 hover:text-marigold-600 px-3 py-2 rounded-lg hover:bg-orange-50 transition-colors"
+                className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
               >
                 {label}
               </Link>
             ))}
           </div>
 
-          {/* ── Desktop right section ─────────────────── */}
+          {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
-                {/* Cart — customers only */}
                 {isCustomer && (
                   <Link
-                    to="/dashboard/customer/cart"
-                    className="relative p-2 text-gray-500 hover:text-marigold-600 hover:bg-orange-50 rounded-lg transition-colors"
-                    title="Cart"
+                    to="/dashboard/customer/events"
+                    className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
                   >
-                    <ShoppingCart size={20} />
-                    {totalCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-crimson-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {totalCount > 9 ? '9+' : totalCount}
-                      </span>
-                    )}
+                    My Celebrations
                   </Link>
                 )}
-
+                <Link
+                  to="/plan"
+                  className="btn-cta text-sm"
+                >
+                  Plan a Celebration
+                </Link>
                 <ProfileDropdown
                   profile={profile}
                   onSignOut={signOut}
@@ -112,7 +105,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-gray-600 hover:text-marigold-600 px-3 py-2 rounded-lg transition-colors"
+                  className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg transition-colors"
                 >
                   Log in
                 </Link>
@@ -120,96 +113,81 @@ export default function Navbar() {
                   onClick={handleGoogleSignIn}
                   loading={googleLoading}
                   fullWidth={false}
-                  label="Sign in with Google"
+                  label="Sign in"
                 />
-                <Link to="/signup" className="btn-primary text-sm">
-                  Get started
+                <Link to="/plan" className="btn-cta text-sm">
+                  Plan a Celebration
                 </Link>
               </>
             )}
           </div>
 
-          {/* ── Mobile: cart + hamburger ───────────────── */}
-          <div className="flex items-center gap-2 md:hidden">
-            {isCustomer && (
-              <Link
-                to="/dashboard/customer/cart"
-                className="relative p-2 text-gray-500 hover:text-marigold-600"
-              >
-                <ShoppingCart size={20} />
-                {totalCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-crimson-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {totalCount > 9 ? '9+' : totalCount}
-                  </span>
-                )}
-              </Link>
-            )}
-            <button
-              className="p-2 rounded-lg text-gray-500 hover:bg-orange-50 transition-colors"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-lg text-plum-300 hover:text-white hover:bg-plum-800 transition-colors"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </div>
 
-      {/* ── Mobile menu ───────────────────────────────── */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${
-          menuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="border-t border-orange-100 bg-white/95 backdrop-blur-sm px-4 py-4 flex flex-col gap-2">
-          {/* Nav links */}
+      {/* Mobile menu */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ${
+        menuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+      }`}>
+        <div className="border-t border-plum-800 bg-plum-900 px-4 py-4 flex flex-col gap-1">
           {NAV_LINKS.map(({ label, to }) => (
             <Link
               key={label}
               to={to}
-              className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:bg-orange-50 hover:text-marigold-700 transition-colors"
+              className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
               onClick={() => setMenuOpen(false)}
             >
               {label}
             </Link>
           ))}
 
-          <div className="border-t border-gray-100 my-1" />
+          <div className="border-t border-plum-800 my-2" />
 
           {user ? (
             <>
-              {/* User info strip */}
               <div className="flex items-center gap-3 px-3 py-2">
-                <span className="w-9 h-9 rounded-full bg-marigold-500 flex items-center justify-center text-white text-sm font-bold">
+                <div className="w-9 h-9 rounded-full bg-saffron-400 flex items-center justify-center text-plum-950 text-sm font-bold font-display">
                   {profile?.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
-                </span>
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{profile?.full_name ?? 'My Account'}</p>
-                  <p className="text-xs text-gray-500">{profile?.email}</p>
+                  <p className="text-sm font-semibold text-white">{profile?.full_name ?? 'My Account'}</p>
+                  <p className="text-xs text-plum-400">{profile?.email}</p>
                 </div>
               </div>
-
+              {isCustomer && (
+                <Link
+                  to="/dashboard/customer/events"
+                  className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  My Celebrations
+                </Link>
+              )}
               <Link
                 to={dashboardLink()}
-                className="btn-secondary w-full justify-start"
+                className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 Dashboard
               </Link>
-
-              {isCustomer && (
-                <Link
-                  to="/dashboard/customer/bookings"
-                  className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:bg-orange-50 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  My Bookings
-                </Link>
-              )}
-
+              <Link
+                to="/plan"
+                className="btn-cta text-sm w-full text-center mt-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                Plan a Celebration
+              </Link>
               <button
                 onClick={() => { signOut(); navigate('/'); setMenuOpen(false) }}
-                className="w-full text-left text-sm font-medium text-crimson-600 py-2.5 px-3 rounded-lg hover:bg-red-50 transition-colors"
+                className="w-full text-left text-sm font-medium text-rose-400 py-2.5 px-3 rounded-lg hover:bg-plum-800 transition-colors"
               >
                 Sign out
               </button>
@@ -221,20 +199,20 @@ export default function Navbar() {
                 loading={googleLoading}
                 fullWidth={true}
               />
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-2 mt-2">
                 <Link
                   to="/login"
-                  className="btn-secondary flex-1"
+                  className="flex-1 text-sm font-medium text-center text-plum-200 border border-plum-700 py-2.5 px-3 rounded-xl hover:bg-plum-800 hover:text-white transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
                   Log in
                 </Link>
                 <Link
-                  to="/signup"
-                  className="btn-primary flex-1"
+                  to="/plan"
+                  className="btn-cta flex-1 text-sm text-center"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Sign up
+                  Plan Now
                 </Link>
               </div>
             </>

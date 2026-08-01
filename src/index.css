@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,7 @@
     scroll-behavior: smooth;
   }
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Manrope', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     @apply bg-cream text-gray-800;
   }
@@ -17,7 +17,7 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-marigold-500 text-white font-semibold text-sm shadow-sm hover:bg-marigold-600 hover:shadow-lg hover:shadow-marigold-200 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-plum-600 text-white font-semibold text-sm shadow-sm hover:bg-plum-700 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-gray-700 font-semibold text-sm border border-gray-200 shadow-sm hover:bg-orange-50 hover:border-orange-200 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
@@ -25,11 +25,24 @@
   .btn-crimson {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-crimson-600 text-white font-semibold text-sm shadow-sm hover:bg-crimson-700 active:bg-crimson-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
+  .btn-plum {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-plum-600 text-white font-semibold text-sm shadow-sm hover:bg-plum-700 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-cta {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #7c3aed, #d97706);
+  }
+  .btn-cta {
+    @apply inline-flex items-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-gray-900 font-bold rounded-2xl px-7 py-3.5 transition-all duration-200 hover:shadow-xl hover:shadow-saffron-200/50 hover:-translate-y-0.5 active:translate-y-0 text-base;
+  }
+  .btn-plum {
+    @apply inline-flex items-center gap-2 bg-plum-600 hover:bg-plum-700 text-white font-semibold rounded-xl px-5 py-2.5 transition-all duration-200 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5;
+  }
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-orange-100;
   }
   .input {
-    @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-marigold-400 focus:border-transparent transition;
+    @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400 focus:border-transparent transition;
   }
   .label {
     @apply block text-sm font-medium text-gray-700 mb-1;
@@ -42,6 +55,12 @@
   }
   .glass-nav {
     @apply bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm;
+  }
+  .tag {
+    @apply inline-block px-3 py-1 bg-plum-50 text-plum-700 text-xs font-semibold rounded-full;
+  }
+  .sambramo-hero-gradient {
+    background: linear-gradient(135deg, #2e1065 0%, #4c1d95 30%, #7c3aed 60%, #d946ef 100%);
   }
 }
 
@@ -63,12 +82,12 @@
 
   /* ── Card hover ──────────────────────────────────────── */
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange-100/50;
+    @apply transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-plum-100/50;
   }
 
   /* ── Gradient text ───────────────────────────────────── */
   .gradient-text {
-    background: linear-gradient(135deg, #d97706, #c0392b);
+    background: linear-gradient(135deg, #7c3aed, #d946ef);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -77,7 +96,7 @@
   /* ── Float animation ─────────────────────────────────── */
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-8px); }
+    50%       { transform: translateY(-10px); }
   }
   .float { animation: float 3s ease-in-out infinite; }
 
@@ -95,7 +114,7 @@
     100% { background-position:  200% center; }
   }
   .shimmer-text {
-    background: linear-gradient(90deg, #d97706 0%, #f59e0b 30%, #fbbf24 50%, #f59e0b 70%, #d97706 100%);
+    background: linear-gradient(90deg, #7c3aed 0%, #a56eff 30%, #d946ef 50%, #a56eff 70%, #7c3aed 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -123,6 +142,27 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .animate-fade-in-up { animation: fade-in-up 0.5s ease forwards; }
+
+  /* ── Fade up ─────────────────────────────────────────── */
+  @keyframes fade-up {
+    0%   { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-up { animation: fade-up 0.6s ease forwards; }
+
+  /* ── Fade in ─────────────────────────────────────────── */
+  @keyframes fade-in {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .animate-fade-in { animation: fade-in 0.4s ease forwards; }
+
+  /* ── Count up ────────────────────────────────────────── */
+  @keyframes count-up {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-count-up { animation: count-up 0.4s ease forwards; }
 
   /* ── Hide scrollbar ──────────────────────────────────── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
