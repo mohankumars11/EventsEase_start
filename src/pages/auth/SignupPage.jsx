@@ -6,6 +6,17 @@ import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
 const RESEND_SECONDS = 30
 
+function phoneOtpErrorMessage(msg = '') {
+  const m = msg.toLowerCase()
+  if (m.includes('unsupported') || m.includes('not supported') || m.includes('provider') || m.includes('disabled'))
+    return 'Phone OTP is not configured yet. Please use "Continue with Google" to sign up instead.'
+  if (m.includes('rate') || m.includes('too many'))
+    return 'Too many OTP requests. Please wait a few minutes and try again.'
+  if (m.includes('invalid') || m.includes('format'))
+    return 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.'
+  return msg || 'Could not send OTP. Please try again.'
+}
+
 function normalizePhone(raw) {
   return `+91${raw.replace(/\D/g, '').slice(-10)}`
 }
@@ -67,7 +78,7 @@ export default function SignupPage() {
       setResendTimer(RESEND_SECONDS)
       setTimeout(() => otpRefs.current[0]?.focus(), 100)
     } catch (err) {
-      setError(err?.message ?? 'Could not send OTP. Please try again.')
+      setError(phoneOtpErrorMessage(err?.message))
     } finally {
       setLoading(false)
     }

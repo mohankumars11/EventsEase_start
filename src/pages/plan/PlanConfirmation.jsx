@@ -89,10 +89,10 @@ export default function PlanConfirmation() {
                   <p className="text-white text-sm font-medium">~{event.guest_count} guests</p>
                 </div>
               )}
-              {event.budget_label && (
+              {(event.budget_text || event.budget_label) && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Budget</p>
-                  <p className="text-white text-sm font-medium">{event.budget_label}</p>
+                  <p className="text-white text-sm font-medium">{event.budget_text ?? event.budget_label}</p>
                 </div>
               )}
               {event.customer_name && (

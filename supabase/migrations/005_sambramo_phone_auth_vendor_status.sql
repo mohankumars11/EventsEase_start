@@ -83,7 +83,7 @@ BEGIN
     WHERE tablename = 'events' AND policyname = 'customers_read_own_events'
   ) THEN
     CREATE POLICY customers_read_own_events ON events
-      FOR SELECT USING (user_id = auth.uid());
+      FOR SELECT USING (customer_id = auth.uid());
   END IF;
 END;
 $$;
@@ -95,7 +95,7 @@ BEGIN
     WHERE tablename = 'events' AND policyname = 'customers_insert_own_events'
   ) THEN
     CREATE POLICY customers_insert_own_events ON events
-      FOR INSERT WITH CHECK (user_id = auth.uid());
+      FOR INSERT WITH CHECK (customer_id = auth.uid());
   END IF;
 END;
 $$;
