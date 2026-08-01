@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail, Inbox } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 
@@ -224,7 +224,7 @@ export default function LoginPage() {
             <div className="text-center">
               {/* Animated envelope */}
               <div className="w-20 h-20 bg-plum-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
-                <Inbox size={36} className="text-plum-600" />
+                <Mail size={36} className="text-plum-600" />
               </div>
 
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">Check your email!</h1>
