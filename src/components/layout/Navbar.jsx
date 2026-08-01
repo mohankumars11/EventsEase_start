@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import GoogleSignInButton from '../ui/GoogleSignInButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 
 const NAV_LINKS = [
@@ -13,10 +12,9 @@ const NAV_LINKS = [
 ]
 
 export default function Navbar() {
-  const { user, profile, signOut, signInWithGoogle } = useAuth()
-  const [menuOpen, setMenuOpen]         = useState(false)
-  const [scrolled, setScrolled]         = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const { user, profile, signOut } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -34,20 +32,11 @@ export default function Navbar() {
 
   const isCustomer = profile?.role === 'customer'
 
-  async function handleGoogleSignIn() {
-    setGoogleLoading(true)
-    try { await signInWithGoogle() }
-    catch (err) { console.error('Google sign-in failed:', err) }
-    finally { setGoogleLoading(false) }
-  }
-
   const navClass = scrolled
     ? 'bg-plum-950/90 backdrop-blur-md shadow-lg border-transparent'
     : 'bg-plum-950 border-b border-plum-800'
 
-  const linkClass = scrolled
-    ? 'text-plum-200 hover:text-white hover:bg-plum-800'
-    : 'text-plum-300 hover:text-white hover:bg-plum-800'
+  const linkClass = 'text-plum-300 hover:text-white hover:bg-plum-800'
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${navClass}`}>
@@ -89,10 +78,7 @@ export default function Navbar() {
                     My Celebrations
                   </Link>
                 )}
-                <Link
-                  to="/plan"
-                  className="btn-cta text-sm"
-                >
+                <Link to="/plan" className="btn-cta text-sm">
                   Plan a Celebration
                 </Link>
                 <ProfileDropdown
@@ -107,14 +93,14 @@ export default function Navbar() {
                   to="/login"
                   className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg transition-colors"
                 >
-                  Log in
+                  Login
                 </Link>
-                <GoogleSignInButton
-                  onClick={handleGoogleSignIn}
-                  loading={googleLoading}
-                  fullWidth={false}
-                  label="Sign in"
-                />
+                <Link
+                  to="/signup"
+                  className="text-sm font-semibold text-plum-950 bg-saffron-400 hover:bg-saffron-500 px-4 py-2 rounded-lg transition-colors"
+                >
+                  Sign Up
+                </Link>
                 <Link to="/plan" className="btn-cta text-sm">
                   Plan a Celebration
                 </Link>
@@ -159,7 +145,7 @@ export default function Navbar() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-white">{profile?.full_name ?? 'My Account'}</p>
-                  <p className="text-xs text-plum-400">{profile?.email}</p>
+                  <p className="text-xs text-plum-400">{profile?.email ?? profile?.phone ?? ''}</p>
                 </div>
               </div>
               {isCustomer && (
@@ -194,27 +180,29 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <GoogleSignInButton
-                onClick={() => { handleGoogleSignIn(); setMenuOpen(false) }}
-                loading={googleLoading}
-                fullWidth={true}
-              />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2">
                 <Link
                   to="/login"
                   className="flex-1 text-sm font-medium text-center text-plum-200 border border-plum-700 py-2.5 px-3 rounded-xl hover:bg-plum-800 hover:text-white transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Log in
+                  Login
                 </Link>
                 <Link
-                  to="/plan"
-                  className="btn-cta flex-1 text-sm text-center"
+                  to="/signup"
+                  className="flex-1 text-sm font-semibold text-center text-plum-950 bg-saffron-400 hover:bg-saffron-500 py-2.5 px-3 rounded-xl transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Plan Now
+                  Sign Up
                 </Link>
               </div>
+              <Link
+                to="/plan"
+                className="btn-cta text-sm w-full text-center mt-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                Plan a Celebration
+              </Link>
             </>
           )}
         </div>

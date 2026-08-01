@@ -23,6 +23,7 @@ import EventServices  from './pages/customer/EventServices'
 import Cart           from './pages/customer/Cart'
 
 // Vendor & Admin
+import VendorOnboarding from './pages/onboarding/VendorOnboarding'
 import VendorDashboard  from './pages/dashboard/VendorDashboard'
 import AdminDashboard   from './pages/dashboard/AdminDashboard'
 import AdminEventDetail from './pages/admin/AdminEventDetail'
@@ -135,6 +136,13 @@ function AppRoutes() {
       <Route path="/dashboard/customer/events" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <CustomerShell><MyEvents /></CustomerShell>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Vendor onboarding ──────────────────────── */}
+      <Route path="/onboarding/vendor" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <VendorOnboarding />
         </ProtectedRoute>
       } />
 

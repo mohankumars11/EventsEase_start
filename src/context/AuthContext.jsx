@@ -32,17 +32,18 @@ export function AuthProvider({ children }) {
       .single()
 
     if (!data) {
-      // Google OAuth users: trigger may not have run yet — upsert profile now
-      const { data: { user } } = await supabase.auth.getUser()
-      const meta = user?.user_metadata ?? {}
+      // New user (Google OAuth or phone OTP) — create profile safely
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const meta = authUser?.user_metadata ?? {}
       const { data: upserted } = await supabase
         .from('profiles')
         .upsert({
-          id: userId,
-          email: user?.email ?? null,
-          full_name: meta.full_name ?? meta.name ?? null,
-          role: 'customer',
-        })
+          id:         userId,
+          email:      authUser?.email ?? null,
+          full_name:  meta.full_name ?? meta.name ?? null,
+          phone:      authUser?.phone ?? null,
+          role:       'customer',
+        }, { onConflict: 'id' })
         .select()
         .single()
       data = upserted
@@ -52,62 +53,90 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
-  async function signUp({ email, password, fullName, phone, role, city }) {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+  // ── Phone OTP ─────────────────────────────────────────
+  async function sendPhoneOtp(phone) {
+    const { error } = await supabase.auth.signInWithOtp({ phone })
     if (error) throw error
+  }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      full_name: fullName,
+  async function verifyPhoneOtp(phone, token) {
+    const { data, error } = await supabase.auth.verifyOtp({
       phone,
-      email,
-      role,
-      city,
+      token,
+      type: 'sms',
     })
-    if (profileError) throw profileError
-
-    if (role === 'vendor') {
-      await supabase.from('vendors').insert({
-        profile_id: data.user.id,
-        business_name: fullName,
-        subscription_plan: 'free',
-      })
-    }
-
+    if (error) throw error
     return data
   }
 
+  // ── Profile completion after phone OTP ───────────────
+  async function completeProfile({ fullName, role, city, phone }) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) throw new Error('Not authenticated')
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert({
+        id:        authUser.id,
+        full_name: fullName,
+        role:      role ?? 'customer',
+        city:      city ?? null,
+        phone:     phone ?? authUser.phone ?? null,
+        email:     authUser.email ?? null,
+      }, { onConflict: 'id' })
+      .select()
+      .single()
+
+    if (error) throw error
+    setProfile(data)
+    return data
+  }
+
+  // ── Email / password (kept for admin access) ─────────
   async function signIn({ email, password }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }
 
-  /**
-   * Google OAuth sign-in.
-   *
-   * Prerequisites:
-   *   1. Enable Google provider in Supabase Dashboard → Authentication → Providers.
-   *   2. Add your Google Client ID & Secret from Google Cloud Console.
-   *   3. Add the Supabase callback URL as an authorized redirect URI in GCP.
-   *
-   * After a successful OAuth flow Supabase redirects the user to /dashboard.
-   * The onAuthStateChange listener above will fire and load the profile.
-   */
+  async function signUp({ email, password, fullName, phone, role, city }) {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) throw error
+
+    const { error: profileError } = await supabase.from('profiles').upsert({
+      id:        data.user.id,
+      full_name: fullName,
+      phone:     phone ? `+91${phone}` : null,
+      email,
+      role,
+      city,
+    }, { onConflict: 'id' })
+    if (profileError) throw profileError
+
+    if (role === 'vendor') {
+      await supabase.from('vendors').upsert({
+        profile_id:    data.user.id,
+        business_name: fullName,
+        status:        'PENDING_REVIEW',
+      }, { onConflict: 'profile_id' })
+    }
+
+    return data
+  }
+
+  // ── Google OAuth ──────────────────────────────────────
   async function signInWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
+        redirectTo:  `${window.location.origin}/dashboard`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     })
     if (error) throw error
   }
 
+  // ── Sign out ──────────────────────────────────────────
   async function signOut() {
     await supabase.auth.signOut()
     setUser(null)
@@ -115,9 +144,11 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, profile, loading, signUp, signIn, signOut, fetchProfile, signInWithGoogle }}
-    >
+    <AuthContext.Provider value={{
+      user, profile, loading,
+      sendPhoneOtp, verifyPhoneOtp, completeProfile,
+      signIn, signUp, signOut, signInWithGoogle, fetchProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   )

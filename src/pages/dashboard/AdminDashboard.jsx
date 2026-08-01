@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { id: 'proposals',       label: 'Proposals',        emoji: '📋' },
   { id: 'confirmed',       label: 'Confirmed Events', emoji: '✅' },
   { id: 'upcoming',        label: 'Upcoming Events',  emoji: '📅' },
+  { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
 ]
 
@@ -332,6 +333,173 @@ function RevenueContent({ events, proposalValue }) {
   )
 }
 
+/* ── Vendor status badge ───────────────────────────────────────── */
+const VENDOR_STATUS_CSS = {
+  PENDING_REVIEW: { bg: 'bg-amber-100',   text: 'text-amber-700'  },
+  APPROVED:       { bg: 'bg-green-100',   text: 'text-green-700'  },
+  REJECTED:       { bg: 'bg-red-100',     text: 'text-red-700'    },
+  SUSPENDED:      { bg: 'bg-gray-100',    text: 'text-gray-600'   },
+}
+
+/* ── Vendor management tab ─────────────────────────────────────── */
+function VendorsContent() {
+  const [vendors, setVendors]     = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(null)
+  const [acting, setActing]       = useState(null)
+  const [filterStatus, setFilter] = useState('')
+
+  useEffect(() => { fetchVendors() }, [])
+
+  async function fetchVendors() {
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase
+      .from('vendors')
+      .select('*, profiles(full_name, email, phone)')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setVendors(data ?? [])
+    setLoading(false)
+  }
+
+  async function updateStatus(vendorId, status, reason = null) {
+    setActing(vendorId + status)
+    const patch = { status }
+    if (reason) patch.rejection_reason = reason
+    const { error: err } = await supabase
+      .from('vendors')
+      .update(patch)
+      .eq('id', vendorId)
+    if (err) { alert('Error: ' + err.message) }
+    else { await fetchVendors() }
+    setActing(null)
+  }
+
+  const displayed = filterStatus ? vendors.filter(v => v.status === filterStatus) : vendors
+  const pending   = vendors.filter(v => v.status === 'PENDING_REVIEW').length
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchVendors} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">🤝 Vendor Management</h2>
+          {pending > 0 && (
+            <p className="text-sm text-amber-600 font-medium mt-0.5">{pending} partner{pending !== 1 ? 's' : ''} awaiting review</p>
+          )}
+        </div>
+        <select
+          value={filterStatus}
+          onChange={e => setFilter(e.target.value)}
+          className="input text-sm py-2 w-auto pr-8"
+        >
+          <option value="">All statuses</option>
+          {['PENDING_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED'].map(s => (
+            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+          ))}
+        </select>
+      </div>
+
+      {displayed.length === 0 ? (
+        <div className="card p-14 text-center">
+          <div className="text-4xl mb-3">🤝</div>
+          <p className="text-gray-500 text-sm font-medium">No vendors found.</p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {['Business', 'Category', 'City', 'Contact', 'Status', 'Actions'].map(col => (
+                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {displayed.map(vendor => {
+                  const css = VENDOR_STATUS_CSS[vendor.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
+                  const isActing = acting?.startsWith(vendor.id)
+                  return (
+                    <tr key={vendor.id} className="hover:bg-purple-50/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-900 text-sm leading-tight">{vendor.business_name}</div>
+                        <div className="text-gray-400 text-[11px] mt-0.5">{vendor.profiles?.full_name ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600">{vendor.category ?? '—'}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600">{vendor.city ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs text-gray-600">{vendor.profiles?.phone ?? '—'}</div>
+                        <div className="text-[11px] text-gray-400">{vendor.profiles?.email ?? ''}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
+                          {vendor.status?.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {vendor.status !== 'APPROVED' && (
+                            <button
+                              onClick={() => updateStatus(vendor.id, 'APPROVED')}
+                              disabled={isActing}
+                              className="px-2.5 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {vendor.status !== 'REJECTED' && (
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Reason for rejection (optional):')
+                                if (reason !== null) updateStatus(vendor.id, 'REJECTED', reason || null)
+                              }}
+                              disabled={isActing}
+                              className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          )}
+                          {vendor.status === 'APPROVED' && (
+                            <button
+                              onClick={() => updateStatus(vendor.id, 'SUSPENDED')}
+                              disabled={isActing}
+                              className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
+            <p className="text-xs text-gray-400">{displayed.length} vendor{displayed.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Main AdminDashboard component ─────────────────────────────── */
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -595,6 +763,8 @@ export default function AdminDashboard() {
                   <EventsTable events={filteredEvents} {...tableProps} />
                 </div>
               )}
+
+              {activeNav === 'vendors' && <VendorsContent />}
 
               {activeNav === 'revenue' && (
                 <RevenueContent events={events} proposalValue={proposalValue} />
