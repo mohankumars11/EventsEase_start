@@ -113,6 +113,20 @@ export default function CustomerHome() {
           </div>
         </section>
 
+        {/* ── Individual services shortcut ──────────────── */}
+        <section className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
+            <p className="text-sm text-gray-500">Browse individual vendors — decorators, caterers, photographers and more — and request a quote directly.</p>
+          </div>
+          <Link
+            to="/dashboard/customer/browse"
+            className="shrink-0 inline-flex items-center gap-2 bg-plum-50 hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+          >
+            Browse services →
+          </Link>
+        </section>
+
         {/* ── Festival specials ─────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-4">

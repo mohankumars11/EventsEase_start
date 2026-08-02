@@ -208,17 +208,17 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           2. STORY FLOW  (dark — continues from hero)
       ══════════════════════════════════════════════ */}
-      <section id="celebrations" className="py-20 px-4 bg-plum-950">
+      <section className="py-20 px-4 bg-plum-950">
         <div className="max-w-5xl mx-auto">
 
           <div className="text-center mb-14 reveal">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-5">
-              You shouldn't be managing your celebration.
+              Your celebration deserves your full presence.
             </h2>
             <p className="text-white/60 text-lg max-w-2xl mx-auto leading-relaxed">
-              Planning an event means calling 10 vendors, comparing quotes,
-              coordinating timings, and still worrying on the day.
-              There's a better way.
+              Ten vendor calls, a dozen quotes to compare, timings to coordinate —
+              we've done it a thousand times. Let us do it for you too, so you can
+              just be there for the moment.
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           3. WHAT ARE YOU CELEBRATING?
       ══════════════════════════════════════════════ */}
-      <section id="services" className="py-20 px-4 bg-white">
+      <section id="celebrations" className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
 
           <div className="text-center mb-12 reveal">
@@ -298,7 +298,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           4. ONE REQUEST. EVERYTHING ARRANGED.
       ══════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-20 px-4 bg-cream">
+      <section id="services" className="py-20 px-4 bg-cream">
         <div className="max-w-5xl mx-auto">
 
           <div className="text-center mb-12 reveal">
@@ -393,7 +393,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           6. HOW SAMBRAMO WORKS
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-white">
+      <section id="how-it-works" className="py-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
 
           <div className="text-center mb-16 reveal">

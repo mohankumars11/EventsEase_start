@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
@@ -23,6 +23,8 @@ const TRUST_POINTS = [
 export default function SignupPage() {
   const { sendEmailOtp, verifyEmailOtp, completeProfile, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from
 
   // steps: role → info → otp
   const [step, setStep]               = useState('role')
@@ -53,6 +55,7 @@ export default function SignupPage() {
   function redirectByRole(r) {
     if (r === 'vendor')     navigate('/onboarding/vendor', { replace: true })
     else if (r === 'admin') navigate('/dashboard/admin',   { replace: true })
+    else if (from)          navigate(from.pathname + (from.search ?? ''), { replace: true })
     else                    navigate('/dashboard/customer', { replace: true })
   }
 
@@ -123,6 +126,7 @@ export default function SignupPage() {
       // Explicit redirect — don't wait for useEffect
       const target = role === 'vendor' ? '/onboarding/vendor'
                    : role === 'admin'  ? '/dashboard/admin'
+                   : from              ? from.pathname + (from.search ?? '')
                    :                     '/dashboard/customer'
       navigate(target, { replace: true })
     } catch (err) {
@@ -197,6 +201,16 @@ export default function SignupPage() {
           {/* ── Step: Role selection ── */}
           {step === 'role' && (
             <>
+              {from?.pathname === '/plan' && (
+                <div className="mb-6 p-4 bg-saffron-50 border border-saffron-200 rounded-2xl">
+                  <p className="text-sm font-semibold text-plum-900">
+                    You're a few steps closer to your seamless celebration. ✨
+                  </p>
+                  <p className="text-xs text-plum-700 mt-1">
+                    Create your account — it takes a minute, and we handle everything from here.
+                  </p>
+                </div>
+              )}
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Join Sambramo.</h1>
               <p className="text-gray-500 text-sm mb-8">How would you like to get started?</p>
 

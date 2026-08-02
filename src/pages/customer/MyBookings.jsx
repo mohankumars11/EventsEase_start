@@ -94,7 +94,7 @@ export default function MyBookings() {
             <p className="text-sm text-gray-400 mb-5">
               Find a vendor for your next celebration and send a quote request.
             </p>
-            <button onClick={() => navigate('/dashboard/customer')} className="btn-primary">
+            <button onClick={() => navigate('/dashboard/customer/browse')} className="btn-primary">
               Browse vendors
             </button>
           </div>

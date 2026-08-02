@@ -85,12 +85,20 @@ export default function Navbar() {
             {user ? (
               <>
                 {isCustomer && (
-                  <Link
-                    to="/dashboard/customer/events"
-                    className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
-                  >
-                    My Celebrations
-                  </Link>
+                  <>
+                    <Link
+                      to="/dashboard/customer/events"
+                      className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
+                    >
+                      My Celebrations
+                    </Link>
+                    <Link
+                      to="/dashboard/customer/browse"
+                      className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
+                    >
+                      Browse Services
+                    </Link>
+                  </>
                 )}
                 <Link to="/plan" className="btn-cta text-sm">
                   Plan a Celebration
@@ -162,13 +170,22 @@ export default function Navbar() {
                 </div>
               </div>
               {isCustomer && (
-                <Link
-                  to="/dashboard/customer/events"
-                  className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  My Celebrations
-                </Link>
+                <>
+                  <Link
+                    to="/dashboard/customer/events"
+                    className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    My Celebrations
+                  </Link>
+                  <Link
+                    to="/dashboard/customer/browse"
+                    className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Browse Services
+                  </Link>
+                </>
               )}
               <Link
                 to={dashboardLink()}

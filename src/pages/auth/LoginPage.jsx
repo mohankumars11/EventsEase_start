@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
@@ -19,6 +19,8 @@ function otpErrorMessage(msg = '') {
 export default function LoginPage() {
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from
 
   const [step, setStep]               = useState('email')   // email | sent | otp
   const [email, setEmail]             = useState('')
@@ -42,9 +44,10 @@ export default function LoginPage() {
   }, [resendTimer])
 
   function redirectByRole(role) {
-    if (role === 'vendor')     navigate('/dashboard/vendor',   { replace: true })
-    else if (role === 'admin') navigate('/dashboard/admin',    { replace: true })
-    else                       navigate('/dashboard/customer', { replace: true })
+    if (from)                  navigate(from.pathname + (from.search ?? ''), { replace: true })
+    else if (role === 'vendor') navigate('/dashboard/vendor',   { replace: true })
+    else if (role === 'admin')  navigate('/dashboard/admin',    { replace: true })
+    else                        navigate('/dashboard/customer', { replace: true })
   }
 
   function isValidEmail(val) {
@@ -103,8 +106,10 @@ export default function LoginPage() {
     setError(null)
     try {
       await verifyEmailOtp(email.trim().toLowerCase(), code)
-      // Navigate to /dashboard — DashboardRedirect will route by role once profile loads
-      navigate('/dashboard', { replace: true })
+      // If redirected here from a gated page (e.g. /plan), go back there.
+      // Otherwise /dashboard — DashboardRedirect will route by role once profile loads.
+      if (from) navigate(from.pathname + (from.search ?? ''), { replace: true })
+      else      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(otpErrorMessage(err?.message))
       setOtp(['', '', '', '', '', ''])
@@ -176,6 +181,16 @@ export default function LoginPage() {
           {/* ── Step 1: Email input ── */}
           {step === 'email' && (
             <>
+              {from?.pathname === '/plan' && (
+                <div className="mb-6 p-4 bg-saffron-50 border border-saffron-200 rounded-2xl">
+                  <p className="text-sm font-semibold text-plum-900">
+                    You're just a few steps from a seamless celebration. ✨
+                  </p>
+                  <p className="text-xs text-plum-700 mt-1">
+                    Sign in and let's pick up right where you left off.
+                  </p>
+                </div>
+              )}
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
               <p className="text-gray-500 text-sm mb-8">Enter your email — we'll send you a login code.</p>
 

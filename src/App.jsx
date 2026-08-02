@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import ChatWidget from './components/customer/ChatWidget'
 
 // Public
 import LandingPage        from './pages/LandingPage'
@@ -32,6 +33,7 @@ import AdminEventDetail from './pages/admin/AdminEventDetail'
 // ── Route guard ─────────────────────────────────────────
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, profile, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -44,7 +46,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     )
   }
 
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
     if (profile.role === 'vendor') return <Navigate to="/dashboard/vendor"   replace />
@@ -79,6 +81,7 @@ function CustomerShell({ children }) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1">{children}</main>
+      <ChatWidget />
     </div>
   )
 }
@@ -95,9 +98,17 @@ function AppRoutes() {
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
 
-      {/* ── Planning wizard (public) ────────────────── */}
-      <Route path="/plan"               element={<PlanningWizard />} />
-      <Route path="/plan/confirmation"  element={<PlanConfirmation />} />
+      {/* ── Planning wizard (requires login) ────────── */}
+      <Route path="/plan" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <PlanningWizard />
+        </ProtectedRoute>
+      } />
+      <Route path="/plan/confirmation" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <PlanConfirmation />
+        </ProtectedRoute>
+      } />
 
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
