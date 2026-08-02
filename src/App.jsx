@@ -21,7 +21,9 @@ import BrowseVendors  from './pages/customer/BrowseVendors'
 import VendorProfile  from './pages/customer/VendorProfile'
 import RequestQuote   from './pages/customer/RequestQuote'
 import MyBookings     from './pages/customer/MyBookings'
+import ServicesPicker from './pages/customer/ServicesPicker'
 import EventServices  from './pages/customer/EventServices'
+import PoojaItems     from './pages/customer/PoojaItems'
 import Cart           from './pages/customer/Cart'
 
 // Vendor & Admin
@@ -136,9 +138,19 @@ function AppRoutes() {
           <CustomerShell><MyBookings /></CustomerShell>
         </ProtectedRoute>
       } />
+      <Route path="/dashboard/customer/services" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <CustomerShell><ServicesPicker /></CustomerShell>
+        </ProtectedRoute>
+      } />
       <Route path="/dashboard/customer/events/:eventId" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <CustomerShell><EventServices /></CustomerShell>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/customer/pooja-items" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <CustomerShell><PoojaItems /></CustomerShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/cart" element={

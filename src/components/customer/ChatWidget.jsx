@@ -8,6 +8,7 @@ const GREETING = "Hi! How can I help you today? 👋"
 const MAIN_OPTIONS = [
   { label: '🎉 Plan a new celebration',         action: 'plan' },
   { label: '🔍 Browse individual services',     action: 'browse' },
+  { label: '🪔 Pooja items',                     action: 'pooja' },
   { label: '📋 Track my request',               action: 'track' },
   { label: '✨ What services do you offer?',     action: 'services' },
   { label: '💬 Talk to our team',                action: 'human' },
@@ -33,8 +34,12 @@ export default function ChatWidget() {
         setTimeout(() => navigate('/plan'), 400)
         break
       case 'browse':
-        say("Sure — here are vendors you can book directly, no full planning needed.")
-        setTimeout(() => navigate('/dashboard/customer/browse'), 400)
+        say("Sure — pick your function or festival and choose exactly what you need.")
+        setTimeout(() => navigate('/dashboard/customer/services'), 400)
+        break
+      case 'pooja':
+        say("Here's everything for your pooja — diyas, samagri, flowers and more.")
+        setTimeout(() => navigate('/dashboard/customer/pooja-items'), 400)
         break
       case 'track':
         say("Here's the status of everything you've submitted so far.")

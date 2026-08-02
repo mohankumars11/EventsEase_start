@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 
 const CartContext = createContext(null)
 
@@ -9,11 +11,20 @@ function cartReducer(state, action) {
       if (state.items.find(i => i.key === key)) return state
       return {
         ...state,
-        items: [...state.items, { key, eventId: action.eventId, eventName: action.eventName, service: action.service, qty: 1 }],
+        items: [...state.items, {
+          key, eventId: action.eventId, eventName: action.eventName,
+          service: action.service, qty: 1,
+        }],
       }
     }
     case 'REMOVE_ITEM':
       return { ...state, items: state.items.filter(i => i.key !== action.key) }
+
+    case 'SET_QTY':
+      return {
+        ...state,
+        items: state.items.map(i => i.key === action.key ? { ...i, qty: Math.max(1, action.qty) } : i),
+      }
 
     case 'ADD_PACKAGE': {
       const key = `pkg__${action.eventId}__${action.pkg.id}`
@@ -44,7 +55,8 @@ const INITIAL = { items: [], packages: [], eventDates: {} }
 const STORAGE_KEY = 'ee_cart_v1'
 
 export function CartProvider({ children }) {
-  const [cart, dispatch] = useReducer(cartReducer, INITIAL, () => {
+  const { user } = useAuth()
+  const [cart, rawDispatch] = useReducer(cartReducer, INITIAL, () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       return saved ? JSON.parse(saved) : INITIAL
@@ -57,12 +69,103 @@ export function CartProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
   }, [cart])
 
+  // Load the customer's saved cart from Supabase once they're known.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    ;(async () => {
+      const [{ data: items }, { data: packages }] = await Promise.all([
+        supabase.from('cart_items').select('*').eq('customer_id', user.id),
+        supabase.from('cart_packages').select('*').eq('customer_id', user.id),
+      ])
+      if (cancelled) return
+      rawDispatch({
+        type: 'HYDRATE',
+        state: {
+          eventDates: {},
+          items: (items ?? []).map(r => ({
+            key: `${r.event_id}__${r.service_id}`,
+            eventId: r.event_id,
+            eventName: r.event_name,
+            qty: r.qty ?? 1,
+            service: { id: r.service_id, name: r.service_name, emoji: r.service_emoji, priceMin: r.unit_price, priceMax: r.unit_price, priceHint: r.unit_price ? `₹${r.unit_price}` : '' },
+          })),
+          packages: (packages ?? []).map(r => ({
+            key: `pkg__${r.event_id}__${r.package_id}`,
+            eventId: r.event_id,
+            eventName: r.event_name,
+            pkg: { id: r.package_id, name: r.package_name, price_min: r.price_min, price_max: r.price_max },
+          })),
+        },
+      })
+    })()
+    return () => { cancelled = true }
+  }, [user])
+
+  // Wrap dispatch: update local state immediately, persist to Supabase in the background.
+  const dispatch = useCallback((action) => {
+    rawDispatch(action)
+    if (!user) return
+
+    switch (action.type) {
+      case 'ADD_SERVICE':
+        supabase.from('cart_items').upsert({
+          customer_id:   user.id,
+          event_id:      action.eventId,
+          event_name:    action.eventName,
+          service_id:    action.service.id,
+          service_name:  action.service.name,
+          service_emoji: action.service.emoji,
+          unit_price:    action.service.priceMin ?? null,
+          qty: 1,
+        }, { onConflict: 'customer_id,event_id,service_id' }).then()
+        break
+      case 'REMOVE_ITEM': {
+        const [eventId, serviceId] = action.key.split('__')
+        supabase.from('cart_items').delete()
+          .eq('customer_id', user.id).eq('event_id', eventId).eq('service_id', serviceId).then()
+        break
+      }
+      case 'SET_QTY': {
+        const [eventId, serviceId] = action.key.split('__')
+        supabase.from('cart_items').update({ qty: Math.max(1, action.qty) })
+          .eq('customer_id', user.id).eq('event_id', eventId).eq('service_id', serviceId).then()
+        break
+      }
+      case 'ADD_PACKAGE':
+        supabase.from('cart_packages').upsert({
+          customer_id:  user.id,
+          event_id:     action.eventId,
+          event_name:   action.eventName,
+          package_id:   action.pkg.id,
+          package_name: action.pkg.name,
+          price_min:    action.pkg.price_min ?? null,
+          price_max:    action.pkg.price_max ?? null,
+        }, { onConflict: 'customer_id,event_id,package_id' }).then()
+        break
+      case 'REMOVE_PACKAGE': {
+        const [, eventId, packageId] = action.key.split('__')
+        supabase.from('cart_packages').delete()
+          .eq('customer_id', user.id).eq('event_id', eventId).eq('package_id', packageId).then()
+        break
+      }
+      case 'CLEAR':
+        supabase.from('cart_items').delete().eq('customer_id', user.id).then()
+        supabase.from('cart_packages').delete().eq('customer_id', user.id).then()
+        break
+      default:
+        break
+    }
+  }, [user])
+
   const totalCount = cart.items.length + cart.packages.length
   const hasItem = (eventId, serviceId) => cart.items.some(i => i.key === `${eventId}__${serviceId}`)
   const hasPkg  = (eventId, pkgId)     => cart.packages.some(p => p.key === `pkg__${eventId}__${pkgId}`)
+  const total = cart.items.reduce((sum, i) => sum + (i.service.priceMin ?? 0) * i.qty, 0)
+    + cart.packages.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
 
   return (
-    <CartContext.Provider value={{ cart, dispatch, totalCount, hasItem, hasPkg }}>
+    <CartContext.Provider value={{ cart, dispatch, totalCount, hasItem, hasPkg, total }}>
       {children}
     </CartContext.Provider>
   )

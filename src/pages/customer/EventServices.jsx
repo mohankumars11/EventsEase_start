@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
+import { useCart } from '../../context/CartContext'
 
 export default function EventServices() {
   const { eventId } = useParams()
@@ -11,6 +12,7 @@ export default function EventServices() {
   const event = EVENT_DATA[eventId]
   const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
   const [expandedCat, setExpandedCat] = useState(null)
+  const { dispatch, hasItem, hasPkg, totalCount } = useCart()
 
   if (!event) {
     return (
@@ -95,13 +97,27 @@ export default function EventServices() {
               </span>
             </button>
           </div>
-          <button
-            onClick={() => navigate('/plan?type=' + eventId)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-plum-700 text-white font-semibold text-sm hover:bg-plum-800"
-          >
-            <Sparkles size={15} />
-            Plan with Sambramo
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/dashboard/customer/cart')}
+              className="relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-plum-300 transition-colors"
+            >
+              <ShoppingCart size={15} />
+              Cart
+              {totalCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {totalCount > 9 ? '9+' : totalCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => navigate('/plan?type=' + eventId)}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-plum-700 text-white font-semibold text-sm hover:bg-plum-800"
+            >
+              <Sparkles size={15} />
+              Or let us plan it all
+            </button>
+          </div>
         </div>
       </div>
 
@@ -137,6 +153,7 @@ export default function EventServices() {
                   {expandedCat !== cat && (
                     <div className="divide-y divide-gray-50">
                       {svcs.map(svc => {
+                        const inCart = hasItem(eventId, svc.id)
                         return (
                           <div key={svc.id} className="flex items-center justify-between gap-4 px-5 py-4">
                             <div className="flex items-center gap-3 min-w-0">
@@ -148,11 +165,16 @@ export default function EventServices() {
                               </div>
                             </div>
                             <button
-                              onClick={() => navigate('/plan?type=' + eventId)}
-                              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-saffron-500 text-white font-semibold text-xs hover:bg-saffron-600 transition-colors"
+                              onClick={() => !inCart && dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: svc })}
+                              disabled={inCart}
+                              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors ${
+                                inCart
+                                  ? 'bg-green-50 text-green-700 border border-green-200 cursor-default'
+                                  : 'bg-saffron-500 text-white hover:bg-saffron-600'
+                              }`}
                             >
-                              <Sparkles size={13} />
-                              Plan with Sambramo
+                              {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}
+                              {inCart ? 'Added' : 'Add to Cart'}
                             </button>
                           </div>
                         )
@@ -163,15 +185,17 @@ export default function EventServices() {
               )
             })}
 
-            <div className="sticky bottom-20 md:bottom-4 flex justify-center pointer-events-none">
-              <button
-                onClick={() => navigate('/plan?type=' + eventId)}
-                className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-plum-700 text-white font-bold text-base shadow-2xl hover:bg-plum-800"
-              >
-                <Sparkles size={18} />
-                Plan with Sambramo →
-              </button>
-            </div>
+            {totalCount > 0 && (
+              <div className="sticky bottom-20 md:bottom-4 flex justify-center pointer-events-none">
+                <button
+                  onClick={() => navigate('/dashboard/customer/cart')}
+                  className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-plum-700 text-white font-bold text-base shadow-2xl hover:bg-plum-800"
+                >
+                  <ShoppingCart size={18} />
+                  View Cart ({totalCount}) →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -184,6 +208,7 @@ export default function EventServices() {
 
             {event.packages.map(pkg => {
               const pkgServices = event.services.filter(s => pkg.includes.includes(s.id))
+              const inCart = hasPkg(eventId, pkg.id)
 
               return (
                 <div key={pkg.id} className={`card p-6 ${pkg.color}`}>
@@ -217,10 +242,16 @@ export default function EventServices() {
                   </div>
 
                   <button
-                    onClick={() => navigate('/plan?type=' + eventId)}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-plum-700 text-white font-bold hover:bg-plum-800 transition-colors"
+                    onClick={() => !inCart && dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg })}
+                    disabled={inCart}
+                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-colors ${
+                      inCart
+                        ? 'bg-green-50 text-green-700 border-2 border-green-200 cursor-default'
+                        : 'bg-plum-700 text-white hover:bg-plum-800'
+                    }`}
                   >
-                    <Sparkles size={16} /> Plan this with Sambramo
+                    {inCart ? <Check size={16} /> : <ShoppingCart size={16} />}
+                    {inCart ? 'Added to Cart' : 'Add Package to Cart'}
                   </button>
                 </div>
               )

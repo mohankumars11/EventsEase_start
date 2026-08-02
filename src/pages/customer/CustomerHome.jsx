@@ -113,18 +113,32 @@ export default function CustomerHome() {
           </div>
         </section>
 
-        {/* ── Individual services shortcut ──────────────── */}
-        <section className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
-            <p className="text-sm text-gray-500">Browse individual vendors — decorators, caterers, photographers and more — and request a quote directly.</p>
+        {/* ── Individual services + pooja items shortcuts ─ */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col justify-between gap-4">
+            <div>
+              <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
+              <p className="text-sm text-gray-500">Pick your function or festival and choose exactly what you need — cooks, decorations, photography and more.</p>
+            </div>
+            <Link
+              to="/dashboard/customer/services"
+              className="self-start inline-flex items-center gap-2 bg-plum-50 hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+            >
+              Browse services →
+            </Link>
           </div>
-          <Link
-            to="/dashboard/customer/browse"
-            className="shrink-0 inline-flex items-center gap-2 bg-plum-50 hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-          >
-            Browse services →
-          </Link>
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col justify-between gap-4">
+            <div>
+              <p className="font-bold text-gray-900 mb-1">Planning a pooja?</p>
+              <p className="text-sm text-gray-500">Diyas, samagri, flowers, a pandit booking — everything needed for your ritual, delivered.</p>
+            </div>
+            <Link
+              to="/dashboard/customer/pooja-items"
+              className="self-start inline-flex items-center gap-2 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+            >
+              Browse pooja items →
+            </Link>
+          </div>
         </section>
 
         {/* ── Festival specials ─────────────────────────── */}

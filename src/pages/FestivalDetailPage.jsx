@@ -1,14 +1,27 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles, Star } from 'lucide-react'
 import { FESTIVALS } from '../data/festivals'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { fetchUnsplashPhoto } from '../lib/unsplash'
 
 export default function FestivalDetailPage() {
   useScrollReveal()
   const { id }   = useParams()
   const navigate = useNavigate()
+  const [photo, setPhoto] = useState(null)
 
   const festival = FESTIVALS.find(f => f.id === id)
+
+  useEffect(() => {
+    setPhoto(null)
+    if (!festival) return
+    let cancelled = false
+    fetchUnsplashPhoto(`${festival.name} festival India celebration`).then(p => {
+      if (!cancelled) setPhoto(p)
+    })
+    return () => { cancelled = true }
+  }, [id])
 
   if (!festival) {
     return (
@@ -35,7 +48,14 @@ export default function FestivalDetailPage() {
       ═══════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden pt-16 pb-20 px-4"
-        style={{ background: heroGradient }}
+        style={photo
+          ? {
+              backgroundImage: `linear-gradient(135deg, ${gradientFrom}cc 0%, ${gradientTo}cc 100%), url(${photo.url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : { background: heroGradient }
+        }
       >
         {/* Decorative blobs */}
         <div
@@ -58,8 +78,14 @@ export default function FestivalDetailPage() {
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center">
-          {/* Big emoji */}
-          <div className="text-7xl sm:text-8xl mb-5 float inline-block">{emoji}</div>
+          {/* Emoji — full-size hero art when no photo, small accent badge when one loads */}
+          {photo ? (
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-3xl mb-5">
+              {emoji}
+            </div>
+          ) : (
+            <div className="text-7xl sm:text-8xl mb-5 float inline-block">{emoji}</div>
+          )}
 
           {/* Name */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
@@ -98,6 +124,17 @@ export default function FestivalDetailPage() {
             <Sparkles size={18} /> Plan This {name}
           </Link>
         </div>
+
+        {photo && (
+          <a
+            href={photo.photographerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-3 right-4 text-[11px] text-white/60 hover:text-white/90 transition-colors"
+          >
+            Photo by {photo.photographerName} on Unsplash
+          </a>
+        )}
       </section>
 
       {/* ═══════════════════════════════════════════════
