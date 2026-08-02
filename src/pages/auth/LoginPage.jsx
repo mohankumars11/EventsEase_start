@@ -291,7 +291,7 @@ export default function LoginPage() {
               <form onSubmit={handleVerifyOtp} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Verification code</label>
-                  <div className="flex gap-2" onPaste={handleOtpPaste}>
+                  <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
                     {otp.map((digit, i) => (
                       <input
                         key={i}
@@ -302,7 +302,7 @@ export default function LoginPage() {
                         value={digit}
                         onChange={e => handleOtpChange(i, e.target.value)}
                         onKeyDown={e => handleOtpKeyDown(i, e)}
-                        className="flex-1 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
+                        className="flex-1 max-w-[52px] h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-plum-500 focus:ring-2 focus:ring-plum-100 transition-all"
                       />
                     ))}
                   </div>
