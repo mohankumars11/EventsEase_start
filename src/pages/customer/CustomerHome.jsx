@@ -134,7 +134,7 @@ export default function CustomerHome() {
               <p className="text-sm text-gray-500">Diyas, samagri, flowers, a pandit booking — everything needed for your ritual, delivered.</p>
             </div>
             <Link
-              to="/dashboard/customer/pooja-items"
+              to="/shop/Pooja%20%26%20Essentials"
               className="self-start inline-flex items-center gap-2 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
             >
               Browse pooja items →

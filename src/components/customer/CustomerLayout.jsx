@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Search, ClipboardList, ShoppingCart } from 'lucide-react'
+import { Home, Search, ClipboardList, ShoppingCart, ShoppingBag } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
 const TABS = [
@@ -7,6 +7,7 @@ const TABS = [
   { label: 'Services', icon: Search,        path: '/dashboard/customer/services' },
   { label: 'Bookings', icon: ClipboardList, path: '/dashboard/customer/bookings' },
   { label: 'Cart',     icon: ShoppingCart,  path: '/dashboard/customer/cart'     },
+  { label: 'Orders',   icon: ShoppingBag,   path: '/dashboard/customer/orders'   },
 ]
 
 export default function CustomerLayout({ children }) {

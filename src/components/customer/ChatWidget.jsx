@@ -39,7 +39,7 @@ export default function ChatWidget() {
         break
       case 'pooja':
         say("Here's everything for your pooja — diyas, samagri, flowers and more.")
-        setTimeout(() => navigate('/dashboard/customer/pooja-items'), 400)
+        setTimeout(() => navigate('/shop/Pooja%20%26%20Essentials'), 400)
         break
       case 'track':
         say("Here's the status of everything you've submitted so far.")

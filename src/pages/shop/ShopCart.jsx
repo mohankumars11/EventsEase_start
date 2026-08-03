@@ -92,11 +92,11 @@ export default function ShopCart() {
           <h2 className="text-2xl font-bold text-gray-900">Order placed! 🎉</h2>
           <p className="text-gray-500 text-sm">Order #{placedOrderId?.slice(0, 8).toUpperCase()} — we'll get it ready for delivery.</p>
           <div className="flex flex-col gap-2.5">
-            <button onClick={() => navigate('/shop')} className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
-              Continue Shopping
+            <button onClick={() => navigate('/dashboard/customer/orders')} className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+              View My Orders
             </button>
-            <button onClick={() => navigate('/dashboard/customer')} className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
-              Back to home
+            <button onClick={() => navigate('/shop')} className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
+              Continue Shopping
             </button>
           </div>
         </div>

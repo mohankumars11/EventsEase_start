@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import { useCart } from '../../context/CartContext'
+import ProductImage from '../../components/shop/ProductImage'
 
 export default function ShopCategory() {
   const { category } = useParams()
@@ -47,8 +48,11 @@ export default function ShopCategory() {
             {products.map(p => {
               const inCart = hasProduct(p.id)
               return (
-                <div key={p.id} className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col">
-                  <Link to={`/shop/product/${p.id}`} className="text-5xl mb-3 text-center">{p.emoji}</Link>
+                <div key={p.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+                  <Link to={`/shop/product/${p.id}`}>
+                    <ProductImage query={p.name} emoji={p.emoji} className="w-full h-36" />
+                  </Link>
+                  <div className="p-5 flex flex-col flex-1">
                   <Link to={`/shop/product/${p.id}`} className="font-semibold text-gray-900 text-sm mb-1 hover:text-plum-700">{p.name}</Link>
                   <p className="text-xs text-gray-500 mb-3 flex-1">{p.description}</p>
                   <div className="flex items-center justify-between">
@@ -64,6 +68,7 @@ export default function ShopCategory() {
                       {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}
                       {inCart ? 'Added' : 'Add'}
                     </button>
+                  </div>
                   </div>
                 </div>
               )

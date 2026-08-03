@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingCart, Check, Minus, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
+import ProductImage from '../../components/shop/ProductImage'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -40,9 +41,7 @@ export default function ProductDetail() {
         </button>
 
         <div className="bg-white rounded-3xl border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
-          <div className="text-9xl text-center bg-gray-50 rounded-2xl flex items-center justify-center py-12">
-            {product.emoji}
-          </div>
+          <ProductImage query={product.name} emoji={product.emoji} className="w-full h-64 sm:h-full rounded-2xl" />
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">{product.category}</span>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>

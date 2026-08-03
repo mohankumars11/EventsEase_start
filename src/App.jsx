@@ -27,7 +27,7 @@ import RequestQuote   from './pages/customer/RequestQuote'
 import MyBookings     from './pages/customer/MyBookings'
 import ServicesPicker from './pages/customer/ServicesPicker'
 import EventServices  from './pages/customer/EventServices'
-import PoojaItems     from './pages/customer/PoojaItems'
+import MyOrders       from './pages/customer/MyOrders'
 import Cart           from './pages/customer/Cart'
 
 // Vendor & Admin
@@ -162,9 +162,11 @@ function AppRoutes() {
           <CustomerShell><EventServices /></CustomerShell>
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/customer/pooja-items" element={
+      {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
+      <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
+      <Route path="/dashboard/customer/orders" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><PoojaItems /></CustomerShell>
+          <MyOrders />
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/cart" element={

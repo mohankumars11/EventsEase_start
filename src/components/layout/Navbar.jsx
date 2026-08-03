@@ -102,10 +102,10 @@ export default function Navbar() {
                       Browse Services
                     </Link>
                     <Link
-                      to="/dashboard/customer/pooja-items"
+                      to="/dashboard/customer/orders"
                       className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
                     >
-                      Pooja Items
+                      My Orders
                     </Link>
                   </>
                 )}
@@ -202,11 +202,11 @@ export default function Navbar() {
                     Browse Services
                   </Link>
                   <Link
-                    to="/dashboard/customer/pooja-items"
+                    to="/dashboard/customer/orders"
                     className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Pooja Items
+                    My Orders
                   </Link>
                 </>
               )}
