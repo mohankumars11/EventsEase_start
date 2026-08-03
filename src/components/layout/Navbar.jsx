@@ -78,6 +78,9 @@ export default function Navbar() {
                 {label}
               </button>
             ))}
+            <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
+              Shop
+            </Link>
           </div>
 
           {/* Desktop right */}
@@ -161,6 +164,13 @@ export default function Navbar() {
               {label}
             </button>
           ))}
+          <Link
+            to="/shop"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors w-full text-left"
+          >
+            Shop
+          </Link>
 
           <div className="border-t border-plum-800 my-2" />
 

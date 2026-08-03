@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND } from '../../config/sambramo'
 import { FESTIVALS } from '../../data/festivals'
+import { SHOP_CATEGORIES } from '../../config/shop'
 
 const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
 
@@ -138,6 +139,30 @@ export default function CustomerHome() {
             >
               Browse pooja items →
             </Link>
+          </div>
+        </section>
+
+        {/* ── Shop teaser ────────────────────────────────── */}
+        <section className="bg-white rounded-3xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-bold text-gray-900">Need something today?</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Cakes, gifts, flowers & hampers — delivered.</p>
+            </div>
+            <Link to="/shop" className="text-sm font-semibold text-plum-600 hover:text-plum-700 shrink-0">
+              Visit Shop →
+            </Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {SHOP_CATEGORIES.map(cat => (
+              <Link
+                key={cat.id}
+                to={`/shop/${encodeURIComponent(cat.id)}`}
+                className="inline-flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+              >
+                {cat.emoji} {cat.label}
+              </Link>
+            ))}
           </div>
         </section>
 

@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
+import { SHOP_CATEGORIES } from '../config/shop'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -200,6 +201,26 @@ export default function LandingPage() {
               <span key={text} className="flex items-center gap-2">
                 {icon} {text}
               </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          1B. SHOP TEASER (secondary to Plan My Celebration)
+      ══════════════════════════════════════════════ */}
+      <section className="py-8 px-4 bg-plum-900 border-t border-plum-800">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-4">
+          <p className="text-plum-300 text-sm font-medium shrink-0">Need something for a celebration today?</p>
+          <div className="flex flex-wrap justify-center gap-2 flex-1">
+            {SHOP_CATEGORIES.map(cat => (
+              <Link
+                key={cat.id}
+                to={`/shop/${encodeURIComponent(cat.id)}`}
+                className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-plum-200 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+              >
+                {cat.emoji} {cat.label}
+              </Link>
             ))}
           </div>
         </div>

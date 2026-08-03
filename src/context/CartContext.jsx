@@ -40,18 +40,45 @@ function cartReducer(state, action) {
     case 'SET_EVENT_DATE':
       return { ...state, eventDates: { ...state.eventDates, [action.eventId]: action.date } }
 
+    // Shop products: local-only, separate from the Supabase-persisted
+    // service/package cart above (see Phase 3 plan — orders don't mix
+    // with event bookings).
+    case 'ADD_PRODUCT': {
+      const key = `prod__${action.product.id}`
+      if (state.products.find(p => p.key === key)) {
+        return {
+          ...state,
+          products: state.products.map(p => p.key === key ? { ...p, qty: p.qty + 1 } : p),
+        }
+      }
+      return { ...state, products: [...state.products, { key, product: action.product, qty: 1 }] }
+    }
+    case 'REMOVE_PRODUCT':
+      return { ...state, products: state.products.filter(p => p.key !== action.key) }
+
+    case 'SET_PRODUCT_QTY':
+      return {
+        ...state,
+        products: state.products.map(p => p.key === action.key ? { ...p, qty: Math.max(1, action.qty) } : p),
+      }
+
+    case 'CLEAR_PRODUCTS':
+      return { ...state, products: [] }
+
     case 'CLEAR':
-      return { items: [], packages: [], eventDates: {} }
+      return { items: [], packages: [], eventDates: {}, products: state.products }
 
     case 'HYDRATE':
-      return action.state
+      // Merge, don't replace — products are local-only and must survive
+      // hydration of the Supabase-backed items/packages.
+      return { ...state, ...action.state, products: state.products }
 
     default:
       return state
   }
 }
 
-const INITIAL = { items: [], packages: [], eventDates: {} }
+const INITIAL = { items: [], packages: [], eventDates: {}, products: [] }
 const STORAGE_KEY = 'ee_cart_v1'
 
 export function CartProvider({ children }) {
@@ -164,8 +191,15 @@ export function CartProvider({ children }) {
   const total = cart.items.reduce((sum, i) => sum + (i.service.priceMin ?? 0) * i.qty, 0)
     + cart.packages.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
 
+  const productCount = cart.products.reduce((sum, p) => sum + p.qty, 0)
+  const productTotal = cart.products.reduce((sum, p) => sum + p.product.price * p.qty, 0)
+  const hasProduct = (productId) => cart.products.some(p => p.key === `prod__${productId}`)
+
   return (
-    <CartContext.Provider value={{ cart, dispatch, totalCount, hasItem, hasPkg, total }}>
+    <CartContext.Provider value={{
+      cart, dispatch, totalCount, hasItem, hasPkg, total,
+      productCount, productTotal, hasProduct,
+    }}>
       {children}
     </CartContext.Provider>
   )

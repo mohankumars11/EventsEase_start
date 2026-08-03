@@ -13,6 +13,10 @@ import AuthCallbackPage    from './pages/auth/AuthCallbackPage'
 import FestivalDetailPage  from './pages/FestivalDetailPage'
 import PlanningWizard      from './pages/plan/PlanningWizard'
 import PlanConfirmation    from './pages/plan/PlanConfirmation'
+import Shop                from './pages/shop/Shop'
+import ShopCategory        from './pages/shop/ShopCategory'
+import ProductDetail       from './pages/shop/ProductDetail'
+import ShopCart            from './pages/shop/ShopCart'
 
 // Customer
 import MyEvents       from './pages/customer/MyEvents'
@@ -99,6 +103,16 @@ function AppRoutes() {
 
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
+
+      {/* ── Shop (public browsing, checkout requires login) ── */}
+      <Route path="/shop" element={<AppShell><Shop /></AppShell>} />
+      <Route path="/shop/cart" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <AppShell><ShopCart /></AppShell>
+        </ProtectedRoute>
+      } />
+      <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
+      <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
       {/* ── Planning wizard (requires login) ────────── */}
       <Route path="/plan" element={

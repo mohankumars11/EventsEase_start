@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { id: 'confirmed',       label: 'Confirmed Events', emoji: '✅' },
   { id: 'upcoming',        label: 'Upcoming Events',  emoji: '📅' },
   { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
+  { id: 'orders',          label: 'Shop Orders',      emoji: '🛍️' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
 ]
 
@@ -500,6 +501,136 @@ function VendorsContent() {
   )
 }
 
+/* ── Order status badge ────────────────────────────────────────── */
+const ORDER_STATUS_CSS = {
+  placed:     { bg: 'bg-blue-100',   text: 'text-blue-700'  },
+  processing: { bg: 'bg-amber-100',  text: 'text-amber-700' },
+  dispatched: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  delivered:  { bg: 'bg-green-100',  text: 'text-green-700' },
+  cancelled:  { bg: 'bg-red-100',    text: 'text-red-700'   },
+}
+const ORDER_STATUS_FLOW = ['placed', 'processing', 'dispatched', 'delivered']
+
+/* ── Shop orders tab ────────────────────────────────────────────── */
+function OrdersContent() {
+  const [orders, setOrders]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const [acting, setActing]   = useState(null)
+
+  useEffect(() => { fetchOrders() }, [])
+
+  async function fetchOrders() {
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase
+      .from('orders')
+      .select('*, order_items(*), profiles!customer_id(full_name, phone)')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setOrders(data ?? [])
+    setLoading(false)
+  }
+
+  async function advanceStatus(order) {
+    const idx = ORDER_STATUS_FLOW.indexOf(order.status)
+    const next = ORDER_STATUS_FLOW[idx + 1]
+    if (!next) return
+    setActing(order.id)
+    const { error: err } = await supabase.from('orders').update({ status: next }).eq('id', order.id)
+    if (err) alert('Error: ' + err.message)
+    else await fetchOrders()
+    setActing(null)
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchOrders} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold text-gray-900">🛍️ Shop Orders</h2>
+
+      {orders.length === 0 ? (
+        <div className="card p-14 text-center">
+          <div className="text-4xl mb-3">🛍️</div>
+          <p className="text-gray-500 text-sm font-medium">No orders yet.</p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {['Order', 'Customer', 'Items', 'Total', 'Payment', 'Status', 'Actions'].map(col => (
+                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {orders.map(order => {
+                  const css = ORDER_STATUS_CSS[order.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
+                  const next = ORDER_STATUS_FLOW[ORDER_STATUS_FLOW.indexOf(order.status) + 1]
+                  return (
+                    <tr key={order.id} className="hover:bg-purple-50/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-mono text-xs font-semibold text-gray-900">#{order.id.slice(0, 8).toUpperCase()}</div>
+                        <div className="text-gray-400 text-[11px] mt-0.5">{formatDate(order.created_at)}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs text-gray-700">{order.profiles?.full_name ?? '—'}</div>
+                        <div className="text-[11px] text-gray-400">{order.profiles?.phone ?? order.address?.phone ?? ''}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600">
+                        {order.order_items?.length ?? 0} item{order.order_items?.length !== 1 ? 's' : ''}
+                      </td>
+                      <td className="px-4 py-3 text-xs font-semibold text-gray-900">{formatINR(order.total)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[11px] font-semibold ${order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-400'}`}>
+                          {order.payment_status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {next && order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => advanceStatus(order)}
+                            disabled={acting === order.id}
+                            className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50"
+                          >
+                            Mark {next}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
+            <p className="text-xs text-gray-400">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Main AdminDashboard component ─────────────────────────────── */
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -765,6 +896,8 @@ export default function AdminDashboard() {
               )}
 
               {activeNav === 'vendors' && <VendorsContent />}
+
+              {activeNav === 'orders' && <OrdersContent />}
 
               {activeNav === 'revenue' && (
                 <RevenueContent events={events} proposalValue={proposalValue} />
