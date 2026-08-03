@@ -6,6 +6,7 @@ import { formatINR } from '../../utils/format'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import { useCart } from '../../context/CartContext'
 import ProductImage from '../../components/shop/ProductImage'
+import RatingBadge from '../../components/reviews/RatingBadge'
 
 export default function ShopCategory() {
   const { category } = useParams()
@@ -54,6 +55,7 @@ export default function ShopCategory() {
                   </Link>
                   <div className="p-5 flex flex-col flex-1">
                   <Link to={`/shop/product/${p.id}`} className="font-semibold text-gray-900 text-sm mb-1 hover:text-plum-700">{p.name}</Link>
+                  <RatingBadge subjectType="product" subjectId={p.id} className="mb-1.5" />
                   <p className="text-xs text-gray-500 mb-3 flex-1">{p.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-plum-700 text-sm">{formatINR(p.price)}</span>

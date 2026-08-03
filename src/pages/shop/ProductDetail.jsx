@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Check, Minus, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
 import ProductImage from '../../components/shop/ProductImage'
+import RatingBadge from '../../components/reviews/RatingBadge'
+import RatingBreakdown from '../../components/reviews/RatingBreakdown'
+import ReviewCard from '../../components/reviews/ReviewCard'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -12,12 +15,24 @@ export default function ProductDetail() {
   const { dispatch, hasProduct, cart } = useCart()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState([])
 
   useEffect(() => {
     setLoading(true)
     supabase.from('products').select('*').eq('id', id).single()
       .then(({ data }) => { setProduct(data); setLoading(false) })
   }, [id])
+
+  const loadReviews = useCallback(() => {
+    supabase.from('reviews_catalog').select('*')
+      .eq('subject_type', 'product').eq('subject_id', id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setReviews(data ?? []))
+  }, [id])
+
+  useEffect(() => { loadReviews() }, [loadReviews])
+
+  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
   if (loading) return <div className="min-h-screen bg-cream flex items-center justify-center text-gray-400 text-sm">Loading…</div>
 
@@ -45,6 +60,7 @@ export default function ProductDetail() {
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">{product.category}</span>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
+            <RatingBadge subjectType="product" subjectId={product.id} size="sm" className="mb-3" />
             <p className="text-sm text-gray-500 mb-4 flex-1">{product.description}</p>
             <p className="text-3xl font-extrabold text-plum-700 mb-6">{formatINR(product.price)}</p>
 
@@ -79,6 +95,19 @@ export default function ProductDetail() {
               </button>
             )}
           </div>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-gray-100 p-8 mt-6">
+          <h2 className="font-bold text-gray-900 mb-5">Ratings &amp; Reviews</h2>
+          <RatingBreakdown reviews={reviews} avgRating={avgRating} />
+          {reviews.length > 0 && (
+            <div className="mt-6">
+              {reviews.map(r => <ReviewCard key={r.id} review={r} onVoted={loadReviews} />)}
+            </div>
+          )}
+          {reviews.length === 0 && (
+            <p className="text-sm text-gray-400 mt-5">No reviews yet — be the first once you've received this order.</p>
+          )}
         </div>
       </div>
     </div>

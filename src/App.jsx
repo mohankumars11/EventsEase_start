@@ -29,6 +29,7 @@ import MyBookings     from './pages/customer/MyBookings'
 import ServicesPicker from './pages/customer/ServicesPicker'
 import EventServices  from './pages/customer/EventServices'
 import MyOrders       from './pages/customer/MyOrders'
+import MyRequests     from './pages/customer/MyRequests'
 import Cart           from './pages/customer/Cart'
 
 // Vendor & Admin
@@ -171,6 +172,11 @@ function AppRoutes() {
       <Route path="/dashboard/customer/orders" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <MyOrders />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/customer/requests" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <MyRequests />
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/cart" element={

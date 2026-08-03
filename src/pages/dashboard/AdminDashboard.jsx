@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { id: 'upcoming',        label: 'Upcoming Events',  emoji: '📅' },
   { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
   { id: 'orders',          label: 'Shop Orders',      emoji: '🛍️' },
+  { id: 'reviews',         label: 'Reviews',          emoji: '⭐' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
 ]
 
@@ -631,6 +632,129 @@ function OrdersContent() {
   )
 }
 
+/* ── Reviews tab ────────────────────────────────────────────────── */
+function ReviewsContent() {
+  const [reviews, setReviews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const [replyingId, setReplyingId] = useState(null)
+  const [replyText, setReplyText]   = useState('')
+  const [saving, setSaving]   = useState(false)
+
+  useEffect(() => { fetchReviews() }, [])
+
+  async function fetchReviews() {
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase
+      .from('reviews_catalog')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setReviews(data ?? [])
+    setLoading(false)
+  }
+
+  function startReply(review) {
+    setReplyingId(review.id)
+    setReplyText(review.admin_reply ?? '')
+  }
+
+  async function submitReply(reviewId) {
+    setSaving(true)
+    const { error: err } = await supabase
+      .from('reviews_catalog')
+      .update({ admin_reply: replyText.trim() || null, admin_reply_at: new Date().toISOString() })
+      .eq('id', reviewId)
+    if (err) alert('Error: ' + err.message)
+    else { setReplyingId(null); await fetchReviews() }
+    setSaving(false)
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchReviews} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold text-gray-900">⭐ Customer Reviews</h2>
+
+      {reviews.length === 0 ? (
+        <div className="card p-14 text-center">
+          <div className="text-4xl mb-3">⭐</div>
+          <p className="text-gray-500 text-sm font-medium">No reviews yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reviews.map(r => (
+            <div key={r.id} className="card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900 text-sm">{r.customer_name}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-semibold uppercase">{r.subject_type}</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">{r.subject_name} · {formatDate(r.created_at)}</p>
+                </div>
+                <span className="text-amber-500 font-bold text-sm shrink-0">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+              </div>
+              {r.comment && <p className="text-sm text-gray-700 mt-2">{r.comment}</p>}
+
+              {r.admin_reply && replyingId !== r.id && (
+                <div className="mt-3 ml-2 pl-3 border-l-2 border-plum-200 bg-plum-50/50 rounded-r-lg py-2 pr-3">
+                  <p className="text-xs font-bold text-plum-700 mb-0.5">Your response</p>
+                  <p className="text-xs text-gray-600">{r.admin_reply}</p>
+                </div>
+              )}
+
+              {replyingId === r.id ? (
+                <div className="mt-3 space-y-2">
+                  <textarea
+                    value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    className="w-full min-h-[70px] resize-none px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-300"
+                    placeholder="Write a response…"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => submitReply(r.id)}
+                      disabled={saving}
+                      className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50"
+                    >
+                      {saving ? 'Saving…' : 'Save reply'}
+                    </button>
+                    <button
+                      onClick={() => setReplyingId(null)}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startReply(r)}
+                  className="text-xs font-semibold text-plum-600 hover:text-plum-700 mt-3"
+                >
+                  {r.admin_reply ? 'Edit reply' : 'Reply'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Main AdminDashboard component ─────────────────────────────── */
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -898,6 +1022,7 @@ export default function AdminDashboard() {
               {activeNav === 'vendors' && <VendorsContent />}
 
               {activeNav === 'orders' && <OrdersContent />}
+              {activeNav === 'reviews' && <ReviewsContent />}
 
               {activeNav === 'revenue' && (
                 <RevenueContent events={events} proposalValue={proposalValue} />

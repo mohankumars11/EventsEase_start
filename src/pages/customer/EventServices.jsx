@@ -6,6 +6,7 @@ import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
+import RatingBadge from '../../components/reviews/RatingBadge'
 import { useCart } from '../../context/CartContext'
 
 export default function EventServices() {
@@ -175,7 +176,10 @@ export default function EventServices() {
                               <div className="min-w-0">
                                 <p className="font-semibold text-gray-900 text-sm">{svc.name}</p>
                                 <p className="text-xs text-gray-500 truncate">{svc.desc}</p>
-                                <p className="text-xs text-saffron-600 font-medium mt-0.5">{svc.priceHint}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <p className="text-xs text-saffron-600 font-medium">{svc.priceHint}</p>
+                                  <RatingBadge subjectType="service" subjectId={svc.id} />
+                                </div>
                               </div>
                             </div>
                             <button
@@ -238,6 +242,7 @@ export default function EventServices() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">{pkg.tagline}</p>
+                      <RatingBadge subjectType="package" subjectId={pkg.id} className="mt-1" />
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs text-gray-400 mb-0.5">Starts from</p>

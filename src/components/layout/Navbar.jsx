@@ -208,6 +208,13 @@ export default function Navbar() {
                   >
                     My Orders
                   </Link>
+                  <Link
+                    to="/dashboard/customer/requests"
+                    className="text-sm font-medium text-plum-200 py-2.5 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    My Requests
+                  </Link>
                 </>
               )}
               <Link

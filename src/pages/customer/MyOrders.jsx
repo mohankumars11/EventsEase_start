@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, Star } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
+import ReviewModal from '../../components/reviews/ReviewModal'
 
 const STATUS_CSS = {
   placed:     { bg: 'bg-blue-100',   text: 'text-blue-700'  },
@@ -18,6 +19,8 @@ export default function MyOrders() {
   const { user } = useAuth()
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
+  const [myReviews, setMyReviews] = useState([])
+  const [reviewing, setReviewing] = useState(null) // { subject, source }
 
   useEffect(() => {
     if (!user) return
@@ -28,6 +31,18 @@ export default function MyOrders() {
       .order('created_at', { ascending: false })
       .then(({ data }) => { setOrders(data ?? []); setLoading(false) })
   }, [user])
+
+  function loadMyReviews() {
+    if (!user) return
+    supabase.from('reviews_catalog').select('order_id, subject_id')
+      .eq('customer_id', user.id).eq('subject_type', 'product')
+      .then(({ data }) => setMyReviews(data ?? []))
+  }
+  useEffect(loadMyReviews, [user])
+
+  function hasReviewed(orderId, productId) {
+    return myReviews.some(r => r.order_id === orderId && r.subject_id === String(productId))
+  }
 
   return (
     <CustomerLayout>
@@ -62,11 +77,28 @@ export default function MyOrders() {
                       {order.status}
                     </span>
                   </div>
-                  <div className="space-y-1 mb-3">
+                  <div className="space-y-1.5 mb-3">
                     {(order.order_items ?? []).map(item => (
-                      <div key={item.id} className="flex justify-between text-sm text-gray-700">
+                      <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
                         <span>{item.product_name} × {item.qty}</span>
-                        <span>{formatINR(item.subtotal)}</span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span>{formatINR(item.subtotal)}</span>
+                          {order.status === 'delivered' && item.product_id && (
+                            hasReviewed(order.id, item.product_id) ? (
+                              <span className="text-xs text-green-600 font-medium">Reviewed</span>
+                            ) : (
+                              <button
+                                onClick={() => setReviewing({
+                                  subject: { type: 'product', id: item.product_id, name: item.product_name },
+                                  source: { orderId: order.id },
+                                })}
+                                className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700"
+                              >
+                                <Star size={12} /> Rate &amp; Review
+                              </button>
+                            )
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -82,6 +114,15 @@ export default function MyOrders() {
           </div>
         )}
       </div>
+
+      {reviewing && (
+        <ReviewModal
+          subject={reviewing.subject}
+          source={reviewing.source}
+          onClose={() => setReviewing(null)}
+          onSubmitted={loadMyReviews}
+        />
+      )}
     </CustomerLayout>
   )
 }
