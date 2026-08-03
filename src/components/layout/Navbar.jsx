@@ -132,7 +132,7 @@ export default function Navbar() {
                 >
                   Sign Up
                 </Link>
-                <Link to="/plan" className="btn-cta text-sm">
+                <Link to="/login" className="btn-cta text-sm">
                   Plan a Celebration
                 </Link>
               </>
@@ -250,7 +250,7 @@ export default function Navbar() {
                 </Link>
               </div>
               <Link
-                to="/plan"
+                to="/login"
                 className="btn-cta text-sm w-full text-center mt-1"
                 onClick={() => setMenuOpen(false)}
               >

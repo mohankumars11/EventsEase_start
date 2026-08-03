@@ -142,18 +142,25 @@ export default function CustomerHome() {
               </span>
             </div>
           </Link>
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col justify-between gap-4">
-            <div>
-              <p className="font-bold text-gray-900 mb-1">Planning a pooja?</p>
-              <p className="text-sm text-gray-500">Diyas, samagri, flowers, a pandit booking — everything needed for your ritual, delivered.</p>
+          <Link
+            to="/shop/Pooja%20%26%20Essentials"
+            className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col"
+          >
+            <ProductImage
+              query="Indian pooja thali diya samagri ritual items"
+              emoji="🪔"
+              className="w-full h-36"
+            />
+            <div className="p-6 flex flex-col justify-between gap-4 flex-1">
+              <div>
+                <p className="font-bold text-gray-900 mb-1">Planning a pooja?</p>
+                <p className="text-sm text-gray-500">Diyas, samagri, flowers, a pandit booking — everything needed for your ritual, delivered.</p>
+              </div>
+              <span className="self-start inline-flex items-center gap-2 bg-saffron-50 group-hover:bg-saffron-100 text-saffron-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                Browse pooja items →
+              </span>
             </div>
-            <Link
-              to="/shop/Pooja%20%26%20Essentials"
-              className="self-start inline-flex items-center gap-2 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-            >
-              Browse pooja items →
-            </Link>
-          </div>
+          </Link>
         </section>
 
         {/* ── Shop teaser ────────────────────────────────── */}

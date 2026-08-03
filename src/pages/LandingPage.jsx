@@ -5,6 +5,7 @@ import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
 import { SHOP_CATEGORIES } from '../config/shop'
+import { useAuth } from '../context/AuthContext'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -107,11 +108,18 @@ const FAQS = [
 export default function LandingPage() {
   useScrollReveal()
   const navigate    = useNavigate()
+  const { user }    = useAuth()
   const [openFaq,     setOpenFaq]     = useState(null)
   const [activeBudget, setActiveBudget] = useState(null)
 
-  /** Navigate to /plan with optional pre-selected params */
+  /**
+   * Navigate to /plan with optional pre-selected params — but only once
+   * signed in. A logged-out visitor goes straight to /login with no
+   * "from" state, so after a successful login they land on their
+   * dashboard rather than resuming into the wizard mid-click.
+   */
   function toPlan(params = {}) {
+    if (!user) { navigate('/login'); return }
     const qs = new URLSearchParams(params).toString()
     navigate('/plan' + (qs ? '?' + qs : ''))
   }
