@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { EVENT_LIST } from '../../data/eventServicesData'
 import CustomerLayout from '../../components/customer/CustomerLayout'
+import ProductImage from '../../components/shop/ProductImage'
 
 export default function ServicesPicker() {
   const navigate = useNavigate()
@@ -21,12 +22,14 @@ export default function ServicesPicker() {
             <button
               key={ev.id}
               onClick={() => navigate(`/dashboard/customer/events/${ev.id}`)}
-              className={`text-left rounded-2xl p-5 border-2 ${ev.borderColor} ${ev.bgColor} hover:shadow-md hover:-translate-y-0.5 transition-all group`}
+              className={`text-left rounded-2xl border-2 ${ev.borderColor} ${ev.bgColor} overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group`}
             >
-              <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{ev.emoji}</div>
-              <p className={`font-bold text-sm ${ev.textColor}`}>{ev.name}</p>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{ev.tagline}</p>
-              <p className="text-[11px] text-gray-400 mt-2">{ev.services.length} services · {ev.packages.length} packages</p>
+              <ProductImage query={`Indian ${ev.name} celebration`} emoji={ev.emoji} className="w-full h-28" />
+              <div className="p-5">
+                <p className={`font-bold text-sm ${ev.textColor}`}>{ev.name}</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{ev.tagline}</p>
+                <p className="text-[11px] text-gray-400 mt-2">{ev.services.length} services · {ev.packages.length} packages</p>
+              </div>
             </button>
           ))}
         </div>

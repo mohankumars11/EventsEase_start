@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag, Trash2, Minus, Plus, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
@@ -25,8 +25,21 @@ export default function ShopCart() {
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
   const [placedOrderId, setPlacedOrderId] = useState(null)
+  const [isFirstOrder, setIsFirstOrder] = useState(null) // null = still checking
 
-  const deliveryFee = productTotal >= FREE_DELIVERY_THRESHOLD || productTotal === 0 ? 0 : DELIVERY_FEE
+  // Free delivery is a first-order acquisition offer, not a blanket
+  // subsidy (a flat "always free above ₹999" erodes margin on every
+  // repeat order with no incremental benefit — the discount only needs
+  // to do its job once, to get someone to try the Shop).
+  useEffect(() => {
+    if (!user) return
+    supabase.from('orders').select('id', { count: 'exact', head: true })
+      .eq('customer_id', user.id).eq('payment_status', 'paid')
+      .then(({ count }) => setIsFirstOrder((count ?? 0) === 0))
+  }, [user])
+
+  const qualifiesForFreeDelivery = isFirstOrder && productTotal >= FREE_DELIVERY_THRESHOLD
+  const deliveryFee = productTotal === 0 || qualifiesForFreeDelivery ? 0 : DELIVERY_FEE
   const total = productTotal + deliveryFee
   const addressValid = address.name && address.phone && address.line && address.city && address.pincode
 
@@ -177,8 +190,14 @@ export default function ShopCart() {
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span><span>{deliveryFee === 0 ? 'FREE' : formatINR(deliveryFee)}</span>
               </div>
-              {deliveryFee > 0 && (
-                <p className="text-xs text-gray-400">Free delivery on orders above {formatINR(FREE_DELIVERY_THRESHOLD)}</p>
+              {deliveryFee > 0 && isFirstOrder && (
+                <p className="text-xs text-gray-400">Free delivery on your first order above {formatINR(FREE_DELIVERY_THRESHOLD)} — add {formatINR(FREE_DELIVERY_THRESHOLD - productTotal)} more to qualify</p>
+              )}
+              {deliveryFee === 0 && qualifiesForFreeDelivery && (
+                <p className="text-xs text-green-600 font-medium">🎉 Free delivery unlocked on your first order!</p>
+              )}
+              {deliveryFee > 0 && isFirstOrder === false && (
+                <p className="text-xs text-gray-400">Free delivery is a first-order welcome offer</p>
               )}
               <div className="flex justify-between text-base font-bold text-gray-900 border-t border-amber-200 pt-2">
                 <span>Total</span><span>{formatINR(total)}</span>

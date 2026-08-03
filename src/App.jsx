@@ -4,6 +4,7 @@ import { CartProvider } from './context/CartContext'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
+import FestivalBanner from './components/customer/FestivalBanner'
 
 // Public
 import LandingPage        from './pages/LandingPage'
@@ -76,8 +77,10 @@ function AppShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+      <FestivalBanner />
       <main className="flex-1">{children}</main>
       <Footer />
+      <ChatWidget />
     </div>
   )
 }
@@ -86,6 +89,7 @@ function CustomerShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+      <FestivalBanner />
       <main className="flex-1">{children}</main>
       <ChatWidget />
     </div>

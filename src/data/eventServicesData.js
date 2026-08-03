@@ -6,16 +6,22 @@
 // final customer-facing prices. priceHint is the display string derived
 // from the same numbers so they can't drift apart.
 
+// Dates are approximate (lunar-calendar festivals shift year to year) —
+// good enough for "X days away" messaging, not claimed as astronomically
+// precise. Update these annually; a real fix is an admin-editable
+// festival calendar (blueprint section 45), out of scope for now.
+// "daysOut" is intentionally NOT stored here — FestivalBanner computes
+// it live from `date`, so this data can't go stale silently again.
 export const UPCOMING_FESTIVALS = [
-  { name: 'Raksha Bandhan',   date: '2025-08-09', emoji: '🪢', daysOut: 16 },
-  { name: 'Independence Day', date: '2025-08-15', emoji: '🇮🇳', daysOut: 22 },
-  { name: 'Janmashtami',      date: '2025-08-16', emoji: '🪈', daysOut: 23 },
-  { name: 'Ganesh Chaturthi', date: '2025-08-27', emoji: '🐘', daysOut: 34 },
-  { name: 'Navratri',         date: '2025-10-02', emoji: '💃', daysOut: 70 },
-  { name: 'Dussehra',         date: '2025-10-12', emoji: '🏹', daysOut: 80 },
-  { name: 'Diwali',           date: '2025-10-20', emoji: '🪔', daysOut: 88 },
-  { name: 'Christmas',        date: '2025-12-25', emoji: '🎄', daysOut: 154 },
-  { name: "New Year's Eve",   date: '2025-12-31', emoji: '🎆', daysOut: 160 },
+  { name: 'Independence Day', date: '2026-08-15', emoji: '🇮🇳' },
+  { name: 'Raksha Bandhan',   date: '2026-08-28', emoji: '🪢' },
+  { name: 'Janmashtami',      date: '2026-09-04', emoji: '🪈' },
+  { name: 'Ganesh Chaturthi', date: '2026-09-14', emoji: '🐘' },
+  { name: 'Navratri',         date: '2026-10-11', emoji: '💃' },
+  { name: 'Dussehra',         date: '2026-10-20', emoji: '🏹' },
+  { name: 'Diwali',           date: '2026-11-08', emoji: '🪔' },
+  { name: 'Christmas',        date: '2026-12-25', emoji: '🎄' },
+  { name: "New Year's Eve",   date: '2026-12-31', emoji: '🎆' },
 ]
 
 // All possible service definitions (reused across events)

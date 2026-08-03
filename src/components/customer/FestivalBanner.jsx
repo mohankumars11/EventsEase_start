@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
 
 // Calculates days from today to a date string
@@ -25,6 +26,7 @@ function urgencyLabel(days) {
 
 export default function FestivalBanner() {
   const scrollRef = useRef(null)
+  const navigate = useNavigate()
 
   // Auto-scroll the ticker
   useEffect(() => {
@@ -46,6 +48,14 @@ export default function FestivalBanner() {
 
   const upcoming = UPCOMING_FESTIVALS.map(f => ({ ...f, days: daysUntil(f.date) })).filter(f => f.days >= 0).slice(0, 9)
 
+  // Only a handful of festivals have a full detail page today (festivals.js) —
+  // route to it when one exists, otherwise fall back to festival shopping.
+  const DETAIL_PAGE_IDS = { 'Ganesh Chaturthi': 'ganesh-chaturthi', 'Navratri': 'navratri', 'Diwali': 'diwali', 'Christmas': 'christmas' }
+  function goToFestival(name) {
+    const id = DETAIL_PAGE_IDS[name]
+    navigate(id ? `/festivals/${id}` : '/shop/Pooja%20%26%20Essentials')
+  }
+
   return (
     <div className="bg-white border-b border-orange-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-3">
@@ -59,6 +69,7 @@ export default function FestivalBanner() {
           {[...upcoming, ...upcoming].map((f, i) => (
             <div
               key={i}
+              onClick={() => goToFestival(f.name)}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0 cursor-pointer hover:shadow-sm transition-shadow ${urgencyColor(f.days)}`}
             >
               <span>{f.emoji}</span>
@@ -67,8 +78,11 @@ export default function FestivalBanner() {
             </div>
           ))}
         </div>
-        <button className="shrink-0 text-xs text-amber-600 font-semibold hover:text-amber-700 whitespace-nowrap hidden sm:block">
-          Plan now →
+        <button
+          onClick={() => navigate('/shop/Pooja%20%26%20Essentials')}
+          className="shrink-0 text-xs text-amber-600 font-semibold hover:text-amber-700 whitespace-nowrap hidden sm:block"
+        >
+          Shop festival essentials →
         </button>
       </div>
     </div>
