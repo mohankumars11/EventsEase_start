@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
+import LocationAutocomplete from '../../components/common/LocationAutocomplete'
 
 const PAYMENT_METHODS = [
   { id: 'upi',       label: 'UPI' },
@@ -20,7 +21,7 @@ export default function ShopCart() {
   const { cart, dispatch, productCount, productTotal } = useCart()
 
   const [step, setStep] = useState('cart') // cart | payment | done
-  const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', pincode: '' })
+  const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', area: '', pincode: '', lat: null, lon: null })
   const [method, setMethod] = useState('upi')
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
@@ -176,10 +177,12 @@ export default function ShopCart() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input placeholder="Full name" value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                   <input placeholder="Phone number" value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-                  <input placeholder="Address line" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="sm:col-span-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-                  <input placeholder="City" value={address.city} onChange={e => setAddress(a => ({ ...a, city: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-                  <input placeholder="Pincode" value={address.pincode} onChange={e => setAddress(a => ({ ...a, pincode: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                  <input placeholder="Address line (house/flat, street)" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="sm:col-span-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                 </div>
+                <LocationAutocomplete
+                  value={{ city: address.city, area: address.area, pincode: address.pincode }}
+                  onChange={loc => setAddress(a => ({ ...a, city: loc.city, area: loc.area, pincode: loc.pincode || a.pincode, lat: loc.lat, lon: loc.lon }))}
+                />
               </div>
             )}
 

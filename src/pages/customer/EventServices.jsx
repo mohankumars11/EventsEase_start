@@ -4,6 +4,8 @@ import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Che
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
+import ProductImage from '../../components/shop/ProductImage'
+import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import { useCart } from '../../context/CartContext'
 
 export default function EventServices() {
@@ -12,7 +14,18 @@ export default function EventServices() {
   const event = EVENT_DATA[eventId]
   const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
   const [expandedCat, setExpandedCat] = useState(null)
-  const { dispatch, hasItem, hasPkg, totalCount } = useCart()
+  const [pendingAdd, setPendingAdd]   = useState(null) // { kind: 'service'|'package', payload }
+  const { dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
+
+  function confirmAdd(details) {
+    if (!pendingAdd) return
+    if (pendingAdd.kind === 'service') {
+      dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: pendingAdd.payload, details })
+    } else {
+      dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: pendingAdd.payload, details })
+    }
+    setPendingAdd(null)
+  }
 
   if (!event) {
     return (
@@ -135,6 +148,7 @@ export default function EventServices() {
               const isOpen = expandedCat === null || expandedCat === cat
               return (
                 <div key={cat} className="card overflow-hidden">
+                  <ProductImage query={`Indian ${cat} ${event.name} celebration`} emoji={svcs[0].emoji} className="w-full h-24" />
                   <button
                     onClick={() => setExpandedCat(isOpen && expandedCat === cat ? null : cat)}
                     className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -165,7 +179,7 @@ export default function EventServices() {
                               </div>
                             </div>
                             <button
-                              onClick={() => !inCart && dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: svc })}
+                              onClick={() => !inCart && setPendingAdd({ kind: 'service', payload: svc })}
                               disabled={inCart}
                               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors ${
                                 inCart
@@ -242,7 +256,7 @@ export default function EventServices() {
                   </div>
 
                   <button
-                    onClick={() => !inCart && dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg })}
+                    onClick={() => !inCart && setPendingAdd({ kind: 'package', payload: pkg })}
                     disabled={inCart}
                     className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-colors ${
                       inCart
@@ -271,6 +285,15 @@ export default function EventServices() {
           </div>
         )}
       </div>
+
+      {pendingAdd && (
+        <BookingDetailsModal
+          itemLabel={pendingAdd.payload.name}
+          defaults={getEventDetails(eventId)}
+          onConfirm={confirmAdd}
+          onClose={() => setPendingAdd(null)}
+        />
+      )}
     </CustomerLayout>
   )
 }

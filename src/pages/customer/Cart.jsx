@@ -1,19 +1,21 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Trash2, ShoppingCart, Package, ArrowLeft, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle } from 'lucide-react'
+import { Trash2, ShoppingCart, Package, ArrowLeft, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle, Calendar, Clock, Users, MapPin, Pencil } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
+import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 
 export default function Cart() {
-  const { cart, dispatch, totalCount, total } = useCart()
+  const { cart, dispatch, totalCount, total, getEventDetails } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [checkoutDone, setCheckoutDone] = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [error, setError]               = useState(null)
+  const [editingEvent, setEditingEvent] = useState(null) // eventId currently being edited
 
   const hasAnything = cart.items.length > 0 || cart.packages.length > 0
 
@@ -28,19 +30,34 @@ export default function Cart() {
     byEvent[p.eventId].packages.push(p)
   })
 
+  function applyDetailsToEvent(eventId, details) {
+    const data = byEvent[eventId]
+    if (!data) return
+    ;[...data.services, ...data.packages].forEach(i => {
+      dispatch({ type: 'SET_ITEM_DETAILS', key: i.key, details })
+    })
+    setEditingEvent(null)
+  }
+
   async function proceedToEnquiry() {
     setSubmitting(true)
     setError(null)
     try {
-      const rows = Object.entries(byEvent).map(([eventId, data]) => ({
-        customer_id: user.id,
-        event_id:    eventId,
-        event_name:  data.name,
-        event_date:  cart.eventDates[eventId] || null,
-        services:    data.services.map(i => ({ id: i.service.id, name: i.service.name, emoji: i.service.emoji, qty: i.qty, unit_price: i.service.priceMin ?? null })),
-        packages:    data.packages.map(p => ({ id: p.pkg.id, name: p.pkg.name, price_min: p.pkg.price_min, price_max: p.pkg.price_max })),
-        status: 'open',
-      }))
+      const rows = Object.entries(byEvent).map(([eventId, data]) => {
+        const details = getEventDetails(eventId)
+        return {
+          customer_id: user.id,
+          event_id:    eventId,
+          event_name:  data.name,
+          event_date:  details?.date || cart.eventDates[eventId] || null,
+          start_time:  details?.time || null,
+          guest_count: details?.guestCount || null,
+          location:    details?.location || null,
+          services:    data.services.map(i => ({ id: i.service.id, name: i.service.name, emoji: i.service.emoji, qty: i.qty, unit_price: i.service.priceMin ?? null, details: i.details })),
+          packages:    data.packages.map(p => ({ id: p.pkg.id, name: p.pkg.name, price_min: p.pkg.price_min, price_max: p.pkg.price_max, details: p.details })),
+          status: 'open',
+        }
+      })
 
       const { error: err } = await supabase.from('service_enquiries').insert(rows)
       if (err) throw err
@@ -119,10 +136,32 @@ export default function Cart() {
           <div className="space-y-6">
             {Object.entries(byEvent).map(([eventId, data]) => (
               <div key={eventId} className="card overflow-hidden">
-                <div className="px-5 py-3 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                <div className="px-5 py-3 bg-amber-50 border-b border-amber-100 flex items-center justify-between gap-2">
                   <span className="font-bold text-amber-800 text-sm">{data.name}</span>
                   <span className="text-xs text-amber-600">{data.services.length + data.packages.length} item{data.services.length + data.packages.length !== 1 ? 's' : ''}</span>
                 </div>
+                {getEventDetails(eventId) && (
+                  <div className="px-5 py-2.5 bg-amber-50/50 border-b border-amber-100 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {getEventDetails(eventId).date && (
+                      <span className="flex items-center gap-1 text-xs text-amber-700"><Calendar size={12} />{new Date(getEventDetails(eventId).date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    )}
+                    {getEventDetails(eventId).time && (
+                      <span className="flex items-center gap-1 text-xs text-amber-700"><Clock size={12} />{getEventDetails(eventId).time}</span>
+                    )}
+                    {getEventDetails(eventId).guestCount && (
+                      <span className="flex items-center gap-1 text-xs text-amber-700"><Users size={12} />{getEventDetails(eventId).guestCount} guests</span>
+                    )}
+                    {getEventDetails(eventId).location?.area && (
+                      <span className="flex items-center gap-1 text-xs text-amber-700"><MapPin size={12} />{getEventDetails(eventId).location.area}, {getEventDetails(eventId).location.city}</span>
+                    )}
+                    <button
+                      onClick={() => setEditingEvent(eventId)}
+                      className="flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-900 ml-auto"
+                    >
+                      <Pencil size={11} /> Edit
+                    </button>
+                  </div>
+                )}
 
                 {/* Packages */}
                 {data.packages.map(p => (
@@ -190,22 +229,12 @@ export default function Cart() {
               </div>
             ))}
 
-            {/* Event date per event */}
-            <div className="card p-5 space-y-4">
-              <h3 className="font-bold text-gray-800 text-sm">📅 Set your event date(s)</h3>
-              {Object.entries(byEvent).map(([eventId, data]) => (
-                <div key={eventId}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">{data.name}</label>
-                  <input
-                    type="date"
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={e => dispatch({ type: 'SET_EVENT_DATE', eventId, date: e.target.value })}
-                    value={cart.eventDates[eventId] ?? ''}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  />
-                </div>
-              ))}
-            </div>
+            {Object.keys(byEvent).some(eventId => !getEventDetails(eventId)) && (
+              <div className="flex items-start gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                Some items are missing event details — reopen them from the services page to add a date, time, guest count and location.
+              </div>
+            )}
 
             {/* Summary */}
             <div className="card p-5 bg-amber-50 border-amber-200 space-y-3">
@@ -247,6 +276,15 @@ export default function Cart() {
           </div>
         )}
       </div>
+
+      {editingEvent && (
+        <BookingDetailsModal
+          itemLabel={byEvent[editingEvent]?.name}
+          defaults={getEventDetails(editingEvent)}
+          onConfirm={details => applyDetailsToEvent(editingEvent, details)}
+          onClose={() => setEditingEvent(null)}
+        />
+      )}
     </CustomerLayout>
   )
 }

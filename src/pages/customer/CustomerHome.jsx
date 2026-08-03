@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND } from '../../config/sambramo'
 import { FESTIVALS } from '../../data/festivals'
 import { SHOP_CATEGORIES } from '../../config/shop'
+import ProductImage from '../../components/shop/ProductImage'
 
 const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
 
@@ -116,18 +117,31 @@ export default function CustomerHome() {
 
         {/* ── Individual services + pooja items shortcuts ─ */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col justify-between gap-4">
-            <div>
-              <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
-              <p className="text-sm text-gray-500">Pick your function or festival and choose exactly what you need — cooks, decorations, photography and more.</p>
+          <Link
+            to="/dashboard/customer/services"
+            className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col"
+          >
+            <ProductImage
+              query="Indian event cooks decoration photography setup"
+              emoji="🛍️"
+              className="w-full h-36"
+            />
+            <div className="p-6 flex flex-col justify-between gap-4 flex-1">
+              <div>
+                <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
+                <p className="text-sm text-gray-500">Pick your function or festival and choose exactly what you need.</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-gray-400">
+                  <span>🍳 Cooks</span>
+                  <span>🎈 Decor</span>
+                  <span>📸 Photography</span>
+                  <span>🪔 Pooja</span>
+                </div>
+              </div>
+              <span className="self-start inline-flex items-center gap-2 bg-plum-50 group-hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                Browse services →
+              </span>
             </div>
-            <Link
-              to="/dashboard/customer/services"
-              className="self-start inline-flex items-center gap-2 bg-plum-50 hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-            >
-              Browse services →
-            </Link>
-          </div>
+          </Link>
           <div className="bg-white rounded-3xl border border-gray-100 p-6 flex flex-col justify-between gap-4">
             <div>
               <p className="font-bold text-gray-900 mb-1">Planning a pooja?</p>
