@@ -26,6 +26,18 @@ function urgencyLabel(days) {
 
 const HAS_DETAIL_PAGE = new Set(FESTIVALS.map(f => f.id))
 
+// Festivals without a real detail page route straight into the Shop
+// category + occasion tag that actually matches what someone needs for
+// that festival — e.g. Raksha Bandhan -> Gifts filtered to "Rakhi" —
+// instead of a generic catch-all or a dead end into the planning wizard.
+const FESTIVAL_SHOP_ROUTE = {
+  'independence-day': { category: 'Party Essentials' },
+  'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
+  'janmashtami':       { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
+  'dussehra':          { category: 'Pooja & Essentials', occasion: 'Navratri' },
+  'new-years-eve':     { category: 'Hampers', occasion: 'New Year' },
+}
+
 export default function FestivalBanner() {
   const scrollRef = useRef(null)
   const navigate = useNavigate()
@@ -51,10 +63,17 @@ export default function FestivalBanner() {
   const upcoming = UPCOMING_FESTIVALS.map(f => ({ ...f, days: daysUntil(f.date) })).filter(f => f.days >= 0).slice(0, 9)
 
   // Every festival routes to something about itself — its real detail
-  // page when one exists, otherwise straight into the planning wizard
-  // pre-filled for that festival. Never a generic unrelated fallback.
+  // page when one exists, otherwise the Shop category/occasion that
+  // actually matches it. Never a generic unrelated fallback.
   function goToFestival(id) {
-    navigate(HAS_DETAIL_PAGE.has(id) ? `/festivals/${id}` : `/plan?type=festival&festival=${id}`)
+    if (HAS_DETAIL_PAGE.has(id)) { navigate(`/festivals/${id}`); return }
+    const route = FESTIVAL_SHOP_ROUTE[id]
+    if (route) {
+      const qs = route.occasion ? `?occasion=${encodeURIComponent(route.occasion)}` : ''
+      navigate(`/shop/${encodeURIComponent(route.category)}${qs}`)
+    } else {
+      navigate(`/plan?type=festival&festival=${id}`)
+    }
   }
 
   return (

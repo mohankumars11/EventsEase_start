@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -12,9 +12,11 @@ import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 export default function ShopCategory() {
   const { category } = useParams()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { dispatch, hasProduct, productCount } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [occasion, setOccasion] = useState(searchParams.get('occasion') ?? 'All')
 
   const meta = SHOP_CATEGORIES.find(c => c.id === category)
 
@@ -23,6 +25,23 @@ export default function ShopCategory() {
     supabase.from('products').select('*').eq('category', category).order('name')
       .then(({ data }) => { setProducts(data ?? []); setLoading(false) })
   }, [category])
+
+  // Re-sync the occasion filter when arriving via a deep link (e.g. an
+  // "upcoming festival" card routing straight into "Diwali" within Hampers).
+  useEffect(() => {
+    setOccasion(searchParams.get('occasion') ?? 'All')
+  }, [category, searchParams])
+
+  const occasions = useMemo(
+    () => [...new Set(products.map(p => p.occasion).filter(Boolean))].sort(),
+    [products]
+  )
+  const filteredProducts = occasion === 'All' ? products : products.filter(p => p.occasion === occasion)
+
+  function selectOccasion(o) {
+    setOccasion(o)
+    setSearchParams(o === 'All' ? {} : { occasion: o }, { replace: true })
+  }
 
   return (
     <div className="min-h-screen bg-cream">
@@ -43,11 +62,31 @@ export default function ShopCategory() {
           </Link>
         </div>
 
+        {!loading && occasions.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['All', ...occasions].map(o => (
+              <button
+                key={o}
+                onClick={() => selectOccasion(o)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  occasion === o
+                    ? 'bg-plum-700 border-plum-700 text-white'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                }`}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <p className="text-sm text-gray-400">Loading…</p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="text-sm text-gray-400 py-10 text-center">No items tagged "{occasion}" yet in {meta?.label ?? category}.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(p => {
+            {filteredProducts.map(p => {
               const inCart = hasProduct(p.id)
               return (
                 <div key={p.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">

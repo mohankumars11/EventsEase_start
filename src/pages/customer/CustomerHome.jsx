@@ -17,16 +17,18 @@ const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS',
 // routed there; everything else routes to the most relevant Shop category —
 // e.g. Raksha Bandhan -> Gifts, since there's no dedicated Rakhi page.
 const FESTIVAL_DETAIL_IDS = new Set(['ganesh-chaturthi', 'navratri', 'diwali', 'christmas'])
-const FESTIVAL_SHOP_FALLBACK = {
-  'independence-day': 'Party Essentials',
-  'raksha-bandhan':    'Gifts',
-  'janmashtami':        'Pooja & Essentials',
-  'dussehra':            'Pooja & Essentials',
-  'new-years-eve':        'Party Essentials',
+const FESTIVAL_SHOP_ROUTE = {
+  'independence-day': { category: 'Party Essentials' },
+  'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
+  'janmashtami':       { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
+  'dussehra':          { category: 'Pooja & Essentials', occasion: 'Navratri' },
+  'new-years-eve':     { category: 'Hampers', occasion: 'New Year' },
 }
 function festivalHref(f) {
   if (FESTIVAL_DETAIL_IDS.has(f.id)) return `/festivals/${f.id}`
-  return `/shop/${encodeURIComponent(FESTIVAL_SHOP_FALLBACK[f.id] ?? 'Gifts')}`
+  const route = FESTIVAL_SHOP_ROUTE[f.id] ?? { category: 'Gifts' }
+  const qs = route.occasion ? `?occasion=${encodeURIComponent(route.occasion)}` : ''
+  return `/shop/${encodeURIComponent(route.category)}${qs}`
 }
 function daysUntil(dateStr) {
   const today = new Date()
