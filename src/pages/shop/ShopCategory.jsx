@@ -7,6 +7,7 @@ import { SHOP_CATEGORIES } from '../../config/shop'
 import { useCart } from '../../context/CartContext'
 import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
+import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 
 export default function ShopCategory() {
   const { category } = useParams()
@@ -75,6 +76,15 @@ export default function ShopCategory() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {!loading && products.length > 0 && (
+          <div className="mt-6">
+            <ReviewsScroller
+              subjects={products.map(p => ({ type: 'product', id: p.id, name: p.name }))}
+              title={`What customers say about ${meta?.label ?? category}`}
+            />
           </div>
         )}
       </div>

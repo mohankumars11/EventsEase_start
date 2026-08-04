@@ -105,11 +105,13 @@ export default function CustomerHome() {
               <button
                 key={et.id}
                 onClick={() => navigate(`/plan?type=${et.id}`)}
-                className="bg-white rounded-2xl p-4 text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                className="bg-white rounded-2xl overflow-hidden text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
               >
-                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{et.emoji}</div>
-                <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
-                <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
+                <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-20" />
+                <div className="p-3">
+                  <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
+                </div>
               </button>
             ))}
           </div>
@@ -199,12 +201,7 @@ export default function CustomerHome() {
                 to={`/festivals/${f.id}`}
                 className="shrink-0 w-36 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md transition-all"
               >
-                <div
-                  className="h-20 flex items-center justify-center text-4xl"
-                  style={{ background: `linear-gradient(135deg, ${f.gradientFrom}, ${f.gradientTo})` }}
-                >
-                  {f.emoji}
-                </div>
+                <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" />
                 <div className="p-3 bg-white">
                   <p className="font-semibold text-xs text-gray-800">{f.name}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>

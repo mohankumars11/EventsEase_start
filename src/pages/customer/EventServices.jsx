@@ -7,6 +7,7 @@ import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import RatingBadge from '../../components/reviews/RatingBadge'
+import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import { useCart } from '../../context/CartContext'
 
 export default function EventServices() {
@@ -48,6 +49,11 @@ export default function EventServices() {
   }, {})
 
   const categories = Object.keys(byCategory)
+
+  const feedbackSubjects = [
+    ...event.services.map(s => ({ type: 'service', id: s.id, name: s.name })),
+    ...event.packages.map(p => ({ type: 'package', id: p.id, name: p.name })),
+  ]
 
   return (
     <CustomerLayout>
@@ -289,6 +295,10 @@ export default function EventServices() {
             </div>
           </div>
         )}
+
+        <div className="mt-6">
+          <ReviewsScroller subjects={feedbackSubjects} title={`What customers say about ${event.name}`} />
+        </div>
       </div>
 
       {pendingAdd && (

@@ -101,7 +101,7 @@ export default function ProductDetail() {
           <h2 className="font-bold text-gray-900 mb-5">Ratings &amp; Reviews</h2>
           <RatingBreakdown reviews={reviews} avgRating={avgRating} />
           {reviews.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>
               {reviews.map(r => <ReviewCard key={r.id} review={r} onVoted={loadReviews} />)}
             </div>
           )}

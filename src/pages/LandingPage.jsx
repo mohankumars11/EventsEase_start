@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -6,6 +6,7 @@ import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
 import { SHOP_CATEGORIES } from '../config/shop'
 import { useAuth } from '../context/AuthContext'
+import { fetchUnsplashPhoto } from '../lib/unsplash'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -294,23 +295,15 @@ export default function LandingPage() {
 
           {/* 3-col grid (desktop), 2-col (tablet), 1-col (mobile) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-            {EVENT_TYPES.slice(0, 9).map((type, i) => {
-              const gradient = EVENT_GRADIENTS[type.id] ?? 'from-gray-400 to-gray-600'
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => toPlan({ type: type.id })}
-                  className={`reveal reveal-delay-${Math.min(i + 1, 4)} group relative rounded-2xl overflow-hidden bg-gradient-to-br ${gradient} p-7 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl`}
-                >
-                  <span className="text-5xl block mb-4">{type.emoji}</span>
-                  <h3 className="font-serif text-xl font-bold text-white mb-1">{type.label}</h3>
-                  <p className="text-white/80 text-sm leading-relaxed">{type.tagline}</p>
-                  <div className="absolute bottom-5 right-5 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ArrowRight size={14} className="text-white" />
-                  </div>
-                </button>
-              )
-            })}
+            {EVENT_TYPES.slice(0, 9).map((type, i) => (
+              <CelebrationCard
+                key={type.id}
+                type={type}
+                gradient={EVENT_GRADIENTS[type.id] ?? 'from-gray-400 to-gray-600'}
+                delay={Math.min(i + 1, 4)}
+                onClick={() => toPlan({ type: type.id })}
+              />
+            ))}
           </div>
 
           <div className="text-center">
@@ -614,11 +607,51 @@ export default function LandingPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CelebrationCard sub-component — real photo with a gradient
+   fallback + dark overlay so the white title/tagline stay legible
+   over any photo (same compositing pattern as FestivalDetailPage).
+═══════════════════════════════════════════════════════════ */
+function CelebrationCard({ type, gradient, delay, onClick }) {
+  const [photo, setPhoto] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto(`Indian ${type.label} celebration`).then(p => { if (!cancelled) setPhoto(p) })
+    return () => { cancelled = true }
+  }, [type.id])
+
+  return (
+    <button
+      onClick={onClick}
+      className={`reveal reveal-delay-${delay} group relative rounded-2xl overflow-hidden ${photo ? '' : `bg-gradient-to-br ${gradient}`} p-7 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl`}
+      style={photo ? { backgroundImage: `url(${photo.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+    >
+      {photo && <div className="absolute inset-0 bg-black/45 group-hover:bg-black/35 transition-colors" />}
+      <div className="relative">
+        <span className="text-5xl block mb-4">{type.emoji}</span>
+        <h3 className="font-serif text-xl font-bold text-white mb-1">{type.label}</h3>
+        <p className="text-white/80 text-sm leading-relaxed">{type.tagline}</p>
+        <div className="absolute bottom-0 right-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <ArrowRight size={14} className="text-white" />
+        </div>
+      </div>
+    </button>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
    FestivalCard sub-component
 ═══════════════════════════════════════════════════════════ */
 function FestivalCard({ festival, delay, onPlan }) {
   const [hovered, setHovered] = useState(false)
+  const [photo, setPhoto] = useState(null)
   const { name, emoji, gradientFrom, gradientTo, month, foods } = festival
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto(`${name} festival India celebration`).then(p => { if (!cancelled) setPhoto(p) })
+    return () => { cancelled = true }
+  }, [name])
 
   return (
     <div
@@ -630,10 +663,13 @@ function FestivalCard({ festival, delay, onPlan }) {
       tabIndex={0}
       onKeyDown={e => e.key === 'Enter' && onPlan()}
     >
-      {/* Gradient header */}
+      {/* Photo (or gradient fallback) header */}
       <div
         className="h-28 flex items-center justify-center relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)` }}
+        style={photo
+          ? { backgroundImage: `linear-gradient(135deg, ${gradientFrom}99 0%, ${gradientTo}99 100%), url(${photo.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)` }
+        }
       >
         <span className="text-4xl group-hover:scale-110 transition-transform duration-300">
           {emoji}
