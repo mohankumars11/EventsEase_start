@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, Calendar, Clock, Users, MapPin, Star } from 'lucide-react'
+import { ClipboardList, Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ReviewModal from '../../components/reviews/ReviewModal'
+import ReasonModal from '../../components/customer/ReasonModal'
 
 const STATUS_CSS = {
   open:      { bg: 'bg-blue-100',  text: 'text-blue-700',  label: 'Under review' },
   responded: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Quote ready' },
   closed:    { bg: 'bg-green-100', text: 'text-green-700', label: 'Completed' },
+  cancelled: { bg: 'bg-red-100',   text: 'text-red-700',   label: 'Cancelled' },
 }
+
+const CANCEL_REASONS = ['Changed my mind', 'Found another option', 'Requested by mistake', 'Other']
 
 export default function MyRequests() {
   const { user } = useAuth()
@@ -19,8 +23,9 @@ export default function MyRequests() {
   const [loading, setLoading] = useState(true)
   const [myReviews, setMyReviews] = useState([])
   const [reviewing, setReviewing] = useState(null) // { subject, source }
+  const [actionModal, setActionModal] = useState(null) // { kind: 'cancel'|'complaint', enquiry }
 
-  useEffect(() => {
+  const loadEnquiries = useCallback(() => {
     if (!user) return
     supabase
       .from('service_enquiries')
@@ -29,6 +34,25 @@ export default function MyRequests() {
       .order('created_at', { ascending: false })
       .then(({ data }) => { setEnquiries(data ?? []); setLoading(false) })
   }, [user])
+  useEffect(loadEnquiries, [loadEnquiries])
+
+  async function handleCancel({ reason, message }) {
+    const { error } = await supabase.from('service_enquiries')
+      .update({ status: 'cancelled', cancellation_reason: message ? `${reason} — ${message}` : reason })
+      .eq('id', actionModal.enquiry.id)
+    if (error) throw error
+    loadEnquiries()
+  }
+
+  async function handleComplaint({ message }) {
+    const { error } = await supabase.from('complaints').insert({
+      customer_id: user.id,
+      subject_type: 'enquiry',
+      enquiry_id: actionModal.enquiry.id,
+      message,
+    })
+    if (error) throw error
+  }
 
   function loadMyReviews() {
     if (!user) return
@@ -132,6 +156,27 @@ export default function MyRequests() {
                       </div>
                     ))}
                   </div>
+
+                  {enq.status === 'cancelled' && enq.cancellation_reason && (
+                    <p className="text-xs text-red-600 mt-2">Cancelled — {enq.cancellation_reason}</p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+                    {enq.status === 'open' && (
+                      <button
+                        onClick={() => setActionModal({ kind: 'cancel', enquiry: enq })}
+                        className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                      >
+                        <XCircle size={13} /> Cancel Request
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setActionModal({ kind: 'complaint', enquiry: enq })}
+                      className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600"
+                    >
+                      <MessageCircleWarning size={13} /> Report a Problem
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -145,6 +190,28 @@ export default function MyRequests() {
           source={reviewing.source}
           onClose={() => setReviewing(null)}
           onSubmitted={loadMyReviews}
+        />
+      )}
+
+      {actionModal?.kind === 'cancel' && (
+        <ReasonModal
+          title="Cancel this request?"
+          itemLabel={actionModal.enquiry.event_name}
+          reasons={CANCEL_REASONS}
+          submitLabel="Cancel Request"
+          onSubmit={handleCancel}
+          onClose={() => setActionModal(null)}
+        />
+      )}
+      {actionModal?.kind === 'complaint' && (
+        <ReasonModal
+          title="Report a problem"
+          itemLabel={actionModal.enquiry.event_name}
+          messageRequired
+          messagePlaceholder="What went wrong?"
+          submitLabel="Send to Support"
+          onSubmit={handleComplaint}
+          onClose={() => setActionModal(null)}
         />
       )}
     </CustomerLayout>

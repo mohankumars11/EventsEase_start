@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
   { id: 'orders',          label: 'Shop Orders',      emoji: '🛍️' },
   { id: 'reviews',         label: 'Reviews',          emoji: '⭐' },
+  { id: 'support',         label: 'Support',          emoji: '🛟' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
 ]
 
@@ -755,6 +756,254 @@ function ReviewsContent() {
   )
 }
 
+/* ── Support tab: returns, complaints, service requests ──────────── */
+const SUPPORT_PILLS = [
+  { id: 'returns',   label: 'Returns',          emoji: '↩️' },
+  { id: 'complaints', label: 'Complaints',      emoji: '⚠️' },
+  { id: 'requests',  label: 'Service Requests', emoji: '📋' },
+]
+
+function SupportContent() {
+  const [pill, setPill] = useState('returns')
+  const [returns, setReturns]     = useState([])
+  const [complaints, setComplaints] = useState([])
+  const [enquiries, setEnquiries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const [acting, setActing]   = useState(null)
+  const [replyingId, setReplyingId] = useState(null)
+  const [replyText, setReplyText]   = useState('')
+
+  useEffect(() => { fetchAll() }, [])
+
+  async function fetchAll() {
+    setLoading(true)
+    setError(null)
+    const [r1, r2, r3] = await Promise.all([
+      supabase.from('return_requests').select('*, orders(id,total), profiles!customer_id(full_name, phone)').order('requested_at', { ascending: false }),
+      supabase.from('complaints').select('*, profiles!customer_id(full_name, phone)').order('created_at', { ascending: false }),
+      supabase.from('service_enquiries').select('*').order('created_at', { ascending: false }),
+    ])
+    if (r1.error) { setError(r1.error.message); setLoading(false); return }
+    if (r2.error) { setError(r2.error.message); setLoading(false); return }
+    if (r3.error) { setError(r3.error.message); setLoading(false); return }
+    setReturns(r1.data ?? [])
+    setComplaints(r2.data ?? [])
+    setEnquiries(r3.data ?? [])
+    setLoading(false)
+  }
+
+  async function resolveReturn(id, status) {
+    setActing(id)
+    const { error: err } = await supabase.from('return_requests').update({ status, resolved_at: new Date().toISOString() }).eq('id', id)
+    if (!err && status === 'refunded') {
+      const row = returns.find(r => r.id === id)
+      if (row) await supabase.from('orders').update({ payment_status: 'refunded' }).eq('id', row.order_id)
+    }
+    if (err) alert('Error: ' + err.message)
+    else await fetchAll()
+    setActing(null)
+  }
+
+  function startReply(item) {
+    setReplyingId(item.id)
+    setReplyText(item.admin_reply ?? '')
+  }
+
+  async function submitComplaintReply(id, status) {
+    setActing(id)
+    const { error: err } = await supabase.from('complaints')
+      .update({ admin_reply: replyText.trim() || null, status, resolved_at: status === 'resolved' ? new Date().toISOString() : null })
+      .eq('id', id)
+    if (err) alert('Error: ' + err.message)
+    else { setReplyingId(null); await fetchAll() }
+    setActing(null)
+  }
+
+  async function advanceEnquiry(id, status) {
+    setActing(id)
+    const { error: err } = await supabase.from('service_enquiries').update({ status }).eq('id', id)
+    if (err) alert('Error: ' + err.message)
+    else await fetchAll()
+    setActing(null)
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchAll} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold text-gray-900">🛟 Support</h2>
+
+      <div className="flex gap-2">
+        {SUPPORT_PILLS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setPill(p.id)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              pill === p.id ? 'bg-plum-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {p.emoji} {p.label}
+            {p.id === 'returns' && returns.filter(r => r.status === 'requested').length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px]">{returns.filter(r => r.status === 'requested').length}</span>
+            )}
+            {p.id === 'complaints' && complaints.filter(c => c.status === 'open').length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px]">{complaints.filter(c => c.status === 'open').length}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {pill === 'returns' && (
+        returns.length === 0 ? (
+          <div className="card p-14 text-center"><p className="text-gray-500 text-sm font-medium">No return requests.</p></div>
+        ) : (
+          <div className="space-y-3">
+            {returns.map(r => (
+              <div key={r.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{r.profiles?.full_name ?? '—'}</p>
+                    <p className="text-xs text-gray-400">Order #{r.order_id.slice(0, 8).toUpperCase()} · {formatINR(r.orders?.total)} · {formatDate(r.requested_at)}</p>
+                    <p className="text-sm text-gray-700 mt-1.5">{r.reason}{r.comment ? ` — ${r.comment}` : ''}</p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    r.status === 'requested' ? 'bg-amber-100 text-amber-700' :
+                    r.status === 'refunded'  ? 'bg-green-100 text-green-700' :
+                    r.status === 'rejected'  ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                  }`}>{r.status}</span>
+                </div>
+                {r.status === 'requested' && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => resolveReturn(r.id, 'refunded')} disabled={acting === r.id}
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
+                      Approve &amp; Refund
+                    </button>
+                    <button onClick={() => resolveReturn(r.id, 'rejected')} disabled={acting === r.id}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 disabled:opacity-50">
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {pill === 'complaints' && (
+        complaints.length === 0 ? (
+          <div className="card p-14 text-center"><p className="text-gray-500 text-sm font-medium">No complaints.</p></div>
+        ) : (
+          <div className="space-y-3">
+            {complaints.map(c => (
+              <div key={c.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 text-sm">{c.profiles?.full_name ?? '—'}</p>
+                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-semibold uppercase">{c.subject_type}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(c.created_at)}</p>
+                    <p className="text-sm text-gray-700 mt-1.5">{c.message}</p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    c.status === 'open' ? 'bg-red-100 text-red-700' :
+                    c.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  }`}>{c.status}</span>
+                </div>
+
+                {c.admin_reply && replyingId !== c.id && (
+                  <div className="mt-3 ml-2 pl-3 border-l-2 border-plum-200 bg-plum-50/50 rounded-r-lg py-2 pr-3">
+                    <p className="text-xs font-bold text-plum-700 mb-0.5">Your response</p>
+                    <p className="text-xs text-gray-600">{c.admin_reply}</p>
+                  </div>
+                )}
+
+                {replyingId === c.id ? (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      className="w-full min-h-[70px] resize-none px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-300"
+                      placeholder="Write a response…"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => submitComplaintReply(c.id, 'in_progress')} disabled={acting === c.id}
+                        className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                        Save &amp; keep open
+                      </button>
+                      <button onClick={() => submitComplaintReply(c.id, 'resolved')} disabled={acting === c.id}
+                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
+                        Save &amp; resolve
+                      </button>
+                      <button onClick={() => setReplyingId(null)} className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => startReply(c)} className="text-xs font-semibold text-plum-600 hover:text-plum-700 mt-3">
+                    {c.admin_reply ? 'Edit reply' : 'Reply'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {pill === 'requests' && (
+        enquiries.length === 0 ? (
+          <div className="card p-14 text-center"><p className="text-gray-500 text-sm font-medium">No service requests yet.</p></div>
+        ) : (
+          <div className="space-y-3">
+            {enquiries.map(e => (
+              <div key={e.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{e.event_name}</p>
+                    <p className="text-xs text-gray-400">{formatDate(e.created_at)} · {(e.services?.length ?? 0)} service(s), {(e.packages?.length ?? 0)} package(s)</p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    e.status === 'open' ? 'bg-blue-100 text-blue-700' :
+                    e.status === 'responded' ? 'bg-amber-100 text-amber-700' :
+                    e.status === 'closed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>{e.status}</span>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {e.status === 'open' && (
+                    <button onClick={() => advanceEnquiry(e.id, 'responded')} disabled={acting === e.id}
+                      className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                      Mark Responded
+                    </button>
+                  )}
+                  {e.status === 'responded' && (
+                    <button onClick={() => advanceEnquiry(e.id, 'closed')} disabled={acting === e.id}
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
+                      Mark Closed
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 /* ── Main AdminDashboard component ─────────────────────────────── */
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -1023,6 +1272,7 @@ export default function AdminDashboard() {
 
               {activeNav === 'orders' && <OrdersContent />}
               {activeNav === 'reviews' && <ReviewsContent />}
+              {activeNav === 'support' && <SupportContent />}
 
               {activeNav === 'revenue' && (
                 <RevenueContent events={events} proposalValue={proposalValue} />

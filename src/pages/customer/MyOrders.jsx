@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Star } from 'lucide-react'
+import { ShoppingBag, Star, XCircle, RotateCcw, MessageCircleWarning } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ReviewModal from '../../components/reviews/ReviewModal'
+import ReasonModal from '../../components/customer/ReasonModal'
 
 const STATUS_CSS = {
   placed:     { bg: 'bg-blue-100',   text: 'text-blue-700'  },
@@ -15,14 +16,26 @@ const STATUS_CSS = {
   cancelled:  { bg: 'bg-red-100',    text: 'text-red-700'   },
 }
 
+const CANCEL_REASONS = ['Changed my mind', 'Found a better price', 'Ordered by mistake', 'Taking too long', 'Other']
+const RETURN_REASONS = ['Damaged or defective', 'Wrong item received', 'Not as described', 'No longer needed', 'Other']
+
+const RETURN_STATUS_LABEL = {
+  requested: 'Return requested — pending review',
+  approved:  'Return approved',
+  rejected:  'Return request declined',
+  refunded:  'Refunded',
+}
+
 export default function MyOrders() {
   const { user } = useAuth()
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
   const [myReviews, setMyReviews] = useState([])
   const [reviewing, setReviewing] = useState(null) // { subject, source }
+  const [returns, setReturns] = useState([])
+  const [actionModal, setActionModal] = useState(null) // { kind: 'cancel'|'return'|'complaint', order }
 
-  useEffect(() => {
+  const loadOrders = useCallback(() => {
     if (!user) return
     supabase
       .from('orders')
@@ -31,6 +44,14 @@ export default function MyOrders() {
       .order('created_at', { ascending: false })
       .then(({ data }) => { setOrders(data ?? []); setLoading(false) })
   }, [user])
+  useEffect(loadOrders, [loadOrders])
+
+  const loadReturns = useCallback(() => {
+    if (!user) return
+    supabase.from('return_requests').select('*').eq('customer_id', user.id)
+      .then(({ data }) => setReturns(data ?? []))
+  }, [user])
+  useEffect(loadReturns, [loadReturns])
 
   function loadMyReviews() {
     if (!user) return
@@ -42,6 +63,41 @@ export default function MyOrders() {
 
   function hasReviewed(orderId, productId) {
     return myReviews.some(r => r.order_id === orderId && r.subject_id === String(productId))
+  }
+
+  function returnFor(orderId) {
+    return returns.find(r => r.order_id === orderId)
+  }
+
+  async function handleCancel({ reason, message }) {
+    const { error } = await supabase.from('orders').update({
+      status: 'cancelled',
+      cancellation_reason: message ? `${reason} — ${message}` : reason,
+      cancelled_at: new Date().toISOString(),
+    }).eq('id', actionModal.order.id)
+    if (error) throw error
+    loadOrders()
+  }
+
+  async function handleReturn({ reason, message }) {
+    const { error } = await supabase.from('return_requests').insert({
+      order_id: actionModal.order.id,
+      customer_id: user.id,
+      reason,
+      comment: message || null,
+    })
+    if (error) throw error
+    loadReturns()
+  }
+
+  async function handleComplaint({ message }) {
+    const { error } = await supabase.from('complaints').insert({
+      customer_id: user.id,
+      subject_type: 'order',
+      order_id: actionModal.order.id,
+      message,
+    })
+    if (error) throw error
   }
 
   return (
@@ -108,6 +164,40 @@ export default function MyOrders() {
                     </span>
                     <span className="font-bold text-gray-900">{formatINR(order.total)}</span>
                   </div>
+
+                  {order.status === 'cancelled' && order.cancellation_reason && (
+                    <p className="text-xs text-red-600 mt-2">Cancelled — {order.cancellation_reason}</p>
+                  )}
+                  {returnFor(order.id) && (
+                    <p className="text-xs text-purple-600 mt-2 font-medium">
+                      {RETURN_STATUS_LABEL[returnFor(order.id).status]}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+                    {['placed', 'processing'].includes(order.status) && (
+                      <button
+                        onClick={() => setActionModal({ kind: 'cancel', order })}
+                        className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                      >
+                        <XCircle size={13} /> Cancel Order
+                      </button>
+                    )}
+                    {order.status === 'delivered' && !returnFor(order.id) && (
+                      <button
+                        onClick={() => setActionModal({ kind: 'return', order })}
+                        className="flex items-center gap-1 text-xs font-semibold text-purple-600 hover:text-purple-700"
+                      >
+                        <RotateCcw size={13} /> Request Return/Refund
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setActionModal({ kind: 'complaint', order })}
+                      className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600"
+                    >
+                      <MessageCircleWarning size={13} /> Report a Problem
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -121,6 +211,38 @@ export default function MyOrders() {
           source={reviewing.source}
           onClose={() => setReviewing(null)}
           onSubmitted={loadMyReviews}
+        />
+      )}
+
+      {actionModal?.kind === 'cancel' && (
+        <ReasonModal
+          title="Cancel this order?"
+          itemLabel={`Order #${actionModal.order.id.slice(0, 8).toUpperCase()}`}
+          reasons={CANCEL_REASONS}
+          submitLabel="Cancel Order"
+          onSubmit={handleCancel}
+          onClose={() => setActionModal(null)}
+        />
+      )}
+      {actionModal?.kind === 'return' && (
+        <ReasonModal
+          title="Request a return or refund"
+          itemLabel={`Order #${actionModal.order.id.slice(0, 8).toUpperCase()}`}
+          reasons={RETURN_REASONS}
+          submitLabel="Submit Request"
+          onSubmit={handleReturn}
+          onClose={() => setActionModal(null)}
+        />
+      )}
+      {actionModal?.kind === 'complaint' && (
+        <ReasonModal
+          title="Report a problem"
+          itemLabel={`Order #${actionModal.order.id.slice(0, 8).toUpperCase()}`}
+          messageRequired
+          messagePlaceholder="What went wrong?"
+          submitLabel="Send to Support"
+          onSubmit={handleComplaint}
+          onClose={() => setActionModal(null)}
         />
       )}
     </CustomerLayout>
