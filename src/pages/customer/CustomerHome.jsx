@@ -66,26 +66,30 @@ export default function CustomerHome() {
     <div className="min-h-screen bg-gray-50">
 
       {/* ── Hero greeting bar ─────────────────────────── */}
-      <div className="bg-gradient-to-r from-plum-900 via-plum-800 to-plum-900 px-4 sm:px-6 py-10">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-saffron-400 text-sm font-semibold mb-1">Welcome back</p>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">
-              Hello, {firstName}! ✨
-            </h1>
-            <p className="text-plum-300 text-sm mt-2">
-              {hasActive
-                ? `You have ${activeEvents.length} active celebration${activeEvents.length > 1 ? 's' : ''} in progress.`
-                : 'Ready to plan your next unforgettable moment?'}
-            </p>
-          </div>
-          <Link
-            to="/plan"
-            className="shrink-0 inline-flex items-center gap-2 bg-saffron-400 hover:bg-saffron-500 text-plum-950 font-bold px-6 py-3 rounded-2xl transition-all shadow-lg text-sm"
-          >
-            <Sparkles size={16} />
-            Plan a Celebration
-          </Link>
+      <div className="bg-gradient-to-r from-plum-900 via-plum-800 to-plum-900 px-4 sm:px-6 py-8">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-saffron-400 text-sm font-semibold mb-1">Welcome back</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">
+            Hello, {firstName}! ✨
+          </h1>
+          <p className="text-plum-300 text-sm mt-2 mb-6">
+            {hasActive
+              ? `You have ${activeEvents.length} active celebration${activeEvents.length > 1 ? 's' : ''} in progress.`
+              : 'Ready to plan your next unforgettable moment?'}
+          </p>
+
+          {upcoming.length > 0 && (
+            <>
+              <p className="text-plum-300 text-xs font-semibold uppercase tracking-wider mb-3">Coming up on the calendar</p>
+              <SlideCarousel>
+                {upcoming.map(f => (
+                  <div key={f.id} className="shrink-0 w-48 sm:w-56 snap-center">
+                    <UpcomingCard festival={f} />
+                  </div>
+                ))}
+              </SlideCarousel>
+            </>
+          )}
         </div>
       </div>
 
@@ -100,9 +104,13 @@ export default function CustomerHome() {
                 View all →
               </Link>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {activeEvents.map(e => <ActiveEventCard key={e.id} event={e} />)}
-            </div>
+            <SlideCarousel>
+              {activeEvents.map(e => (
+                <div key={e.id} className="shrink-0 w-72 snap-center">
+                  <ActiveEventCard event={e} />
+                </div>
+              ))}
+            </SlideCarousel>
           </section>
         )}
 
@@ -206,17 +214,13 @@ export default function CustomerHome() {
               Visit Shop →
             </Link>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <SlideCarousel>
             {SHOP_CATEGORIES.map(cat => (
-              <Link
-                key={cat.id}
-                to={`/shop/${encodeURIComponent(cat.id)}`}
-                className="inline-flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
-              >
-                {cat.emoji} {cat.label}
-              </Link>
+              <div key={cat.id} className="shrink-0 w-32 sm:w-36 snap-center">
+                <ShopMiniCard category={cat} />
+              </div>
             ))}
-          </div>
+          </SlideCarousel>
         </section>
 
         {/* ── Festival specials ─────────────────────────── */}
@@ -224,21 +228,22 @@ export default function CustomerHome() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Festival Specials</h2>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {FESTIVALS.slice(0, 5).map(f => (
-              <Link
-                key={f.id}
-                to={`/festivals/${f.id}`}
-                className="shrink-0 w-36 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md transition-all"
-              >
-                <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" />
-                <div className="p-3 bg-white">
-                  <p className="font-semibold text-xs text-gray-800">{f.name}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>
-                </div>
-              </Link>
+          <SlideCarousel>
+            {FESTIVALS.map(f => (
+              <div key={f.id} className="shrink-0 w-36 snap-center">
+                <Link
+                  to={`/festivals/${f.id}`}
+                  className="block rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                >
+                  <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" />
+                  <div className="p-3 bg-white">
+                    <p className="font-semibold text-xs text-gray-800">{f.name}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>
+                  </div>
+                </Link>
+              </div>
             ))}
-          </div>
+          </SlideCarousel>
         </section>
 
         {/* ── How Sambramo works ────────────────────────── */}
@@ -322,5 +327,74 @@ function ActiveEventCard({ event }) {
         )}
       </div>
     </button>
+  )
+}
+
+function urgencyLabel(days) {
+  if (days === 0) return 'Today!'
+  if (days === 1) return 'Tomorrow!'
+  return `${days} days to go`
+}
+
+/* Hero's "Coming up on the calendar" card — real photo, dark overlay for
+   legible text (same compositing pattern used on the landing page), a
+   live days-to-go badge, and a CTA routed to whichever destination
+   actually makes sense for that festival (detail page or Shop). */
+function UpcomingCard({ festival }) {
+  const navigate = useNavigate()
+  const [photo, setPhoto] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto(`${festival.name} festival India celebration`).then(p => { if (!cancelled) setPhoto(p) })
+    return () => { cancelled = true }
+  }, [festival.id])
+
+  const isDetailPage = FESTIVAL_DETAIL_IDS.has(festival.id)
+
+  return (
+    <button
+      onClick={() => navigate(festivalHref(festival))}
+      className="group relative w-full h-44 rounded-2xl overflow-hidden text-left transition-transform duration-300 hover:scale-[1.02]"
+      style={photo ? { backgroundImage: `url(${photo.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { background: 'linear-gradient(135deg,#3b0764,#7c3aed)' }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
+      <div className="relative h-full flex flex-col justify-between p-3.5">
+        <span className="self-start inline-flex items-center gap-1 bg-saffron-400 text-plum-950 text-[11px] font-bold px-2.5 py-1 rounded-full">
+          <Clock size={11} /> {urgencyLabel(festival.days)}
+        </span>
+        <div>
+          <p className="text-white font-bold text-base leading-tight flex items-center gap-1.5">
+            <span>{festival.emoji}</span> {festival.name}
+          </p>
+          <span className="inline-flex items-center gap-1 text-saffron-300 text-xs font-semibold mt-1.5 group-hover:gap-2 transition-all">
+            {isDetailPage ? 'Plan this festival' : 'Shop now'} <ArrowRight size={12} />
+          </span>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+/* Light-themed real-photo card for the "Need something today?" Shop strip. */
+const SHOP_MINI_QUERIES = {
+  'Cakes':              'chocolate birthday cake slice',
+  'Gifts':               'wrapped gift box present ribbon',
+  'Flowers':              'flower bouquet fresh',
+  'Hampers':              'wicker gift basket fruit',
+  'Party Essentials':      'balloons party decoration',
+  'Pooja & Essentials':     'pooja thali diya India',
+}
+function ShopMiniCard({ category }) {
+  return (
+    <Link
+      to={`/shop/${encodeURIComponent(category.id)}`}
+      className="group flex flex-col h-32 bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+    >
+      <ProductImage query={SHOP_MINI_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full flex-1 min-h-0" />
+      <div className="px-2 py-2 text-center shrink-0">
+        <p className="text-gray-700 text-xs font-semibold group-hover:text-plum-700 transition-colors truncate">{category.label}</p>
+      </div>
+    </Link>
   )
 }
