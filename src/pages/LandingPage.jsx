@@ -133,7 +133,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           1. HERO
       ══════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-plum-950 via-plum-900 to-berry-900 pt-24 pb-20 px-4">
+      <section className="relative overflow-hidden bg-gradient-to-br from-plum-950 via-plum-900 to-berry-900 pt-8 sm:pt-14 md:pt-20 pb-10 sm:pb-14 md:pb-20 px-4">
 
         {/* Animated blob decorations */}
         <div
@@ -169,25 +169,25 @@ export default function LandingPage() {
         <div className="relative max-w-4xl mx-auto text-center">
 
           {/* Tag */}
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 mb-8 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 mb-4 sm:mb-6 md:mb-8 backdrop-blur-sm">
             ✨ India's Celebration Concierge
           </div>
 
           {/* H1 */}
-          <h1 className="font-serif text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-6">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
             Your Moment.
             <br />
             <span className="text-saffron-400">Our Magic.</span>
           </h1>
 
           {/* Sub-headline */}
-          <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-5 sm:mb-8 md:mb-10 leading-relaxed">
             From birthdays and baby showers to weddings and everything in between,
             tell us what you're celebrating. We'll take care of every detail.
           </p>
 
           {/* CTA pair */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-9 md:mb-12">
             <button
               onClick={() => toPlan()}
               className="btn-cta"
@@ -220,7 +220,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════
           1B. SHOP TEASER (secondary to Plan My Celebration)
       ══════════════════════════════════════════════ */}
-      <section className="py-10 px-4 bg-plum-900 border-t border-plum-800">
+      <section className="py-6 sm:py-8 md:py-10 px-4 bg-plum-900 border-t border-plum-800">
         <div className="max-w-4xl mx-auto">
           <p className="text-plum-300 text-sm font-medium mb-4">Need something for a celebration today?</p>
           <SlideCarousel>
@@ -628,15 +628,37 @@ const SHOP_TEASER_QUERIES = {
 }
 
 function ShopTeaserCard({ category }) {
+  const [photo, setPhoto] = useState(null)
+  const [done, setDone]   = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto(SHOP_TEASER_QUERIES[category.id] ?? category.label).then(p => {
+      if (cancelled) return
+      setPhoto(p)
+      setDone(true)
+    })
+    return () => { cancelled = true }
+  }, [category.id])
+
   return (
     <Link
       to={`/shop/${encodeURIComponent(category.id)}`}
       className="group flex flex-col h-40 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30"
     >
       <div className="relative flex-1 min-h-0">
-        <ProductImage query={SHOP_TEASER_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none" />
-        <span className="absolute bottom-1.5 left-2 text-xl drop-shadow-lg">{category.emoji}</span>
+        {photo ? (
+          <>
+            <img src={photo.url} alt={photo.alt} loading="lazy" className="w-full h-full object-cover" />
+            {/* Badge only shown over a real photo — the fallback tile below already carries the emoji, so showing both at once would duplicate it. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none" />
+            <span className="absolute bottom-1.5 left-2 text-xl drop-shadow-lg">{category.emoji}</span>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className={`text-3xl transition-opacity ${done ? 'opacity-100' : 'opacity-40 animate-pulse'}`}>{category.emoji}</span>
+          </div>
+        )}
       </div>
       <div className="px-2 py-2 text-center shrink-0">
         <p className="text-plum-100 text-xs font-semibold group-hover:text-white transition-colors truncate">{category.label}</p>
