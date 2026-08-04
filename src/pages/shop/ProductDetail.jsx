@@ -1,21 +1,26 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageSquareText } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageSquareText, Star } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
 import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
+import ReviewModal from '../../components/reviews/ReviewModal'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { dispatch, hasProduct, cart } = useCart()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState([])
+  const [eligibleOrderId, setEligibleOrderId] = useState(null) // a delivered order containing this product, not yet reviewed
+  const [reviewing, setReviewing] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -31,6 +36,20 @@ export default function ProductDetail() {
   }, [id])
 
   useEffect(() => { loadReviews() }, [loadReviews])
+
+  // Can this customer review this product right now? — they need a
+  // delivered order containing it that they haven't already reviewed.
+  const checkEligibility = useCallback(() => {
+    if (!user) { setEligibleOrderId(null); return }
+    supabase.from('orders').select('id, status, order_items!inner(product_id)')
+      .eq('customer_id', user.id).eq('status', 'delivered').eq('order_items.product_id', id)
+      .then(({ data }) => {
+        const alreadyReviewed = reviews.some(r => r.customer_id === user.id)
+        setEligibleOrderId(!alreadyReviewed && data?.length > 0 ? data[0].id : null)
+      })
+  }, [user, id, reviews])
+
+  useEffect(() => { checkEligibility() }, [checkEligibility])
 
   const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
@@ -98,9 +117,19 @@ export default function ProductDetail() {
         </div>
 
         <div className="bg-white rounded-3xl border border-gray-100 p-8 mt-6">
-          <h2 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-            <MessageSquareText size={18} className="text-plum-500" /> Customer Feedback
-          </h2>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h2 className="font-bold text-gray-900 flex items-center gap-2">
+              <MessageSquareText size={18} className="text-plum-500" /> Customer Feedback
+            </h2>
+            {eligibleOrderId && (
+              <button
+                onClick={() => setReviewing(true)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg"
+              >
+                <Star size={13} /> Rate &amp; Review
+              </button>
+            )}
+          </div>
           <RatingBreakdown reviews={reviews} avgRating={avgRating} />
           {reviews.length > 0 && (
             <div className="mt-6 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>
@@ -112,6 +141,15 @@ export default function ProductDetail() {
           )}
         </div>
       </div>
+
+      {reviewing && (
+        <ReviewModal
+          subject={{ type: 'product', id: product.id, name: product.name }}
+          source={{ orderId: eligibleOrderId }}
+          onClose={() => setReviewing(false)}
+          onSubmitted={() => { loadReviews(); checkEligibility() }}
+        />
+      )}
     </div>
   )
 }

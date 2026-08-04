@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check } from 'lucide-react'
+import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check, Star } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
@@ -8,15 +8,21 @@ import ProductImage from '../../components/shop/ProductImage'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
+import ReviewModal from '../../components/reviews/ReviewModal'
 import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 
 export default function EventServices() {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const event = EVENT_DATA[eventId]
   const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
   const [expandedCat, setExpandedCat] = useState(null)
   const [pendingAdd, setPendingAdd]   = useState(null) // { kind: 'service'|'package', payload }
+  const [reviewing, setReviewing]     = useState(null) // { subject, source }
+  const [eligible, setEligible]       = useState({}) // `${type}__${id}` -> enquiryId
   const { dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
 
   function confirmAdd(details) {
@@ -28,6 +34,25 @@ export default function EventServices() {
     }
     setPendingAdd(null)
   }
+
+  // Can this customer review a given service/package right now? — they
+  // need a closed enquiry that included it, not yet reviewed.
+  const checkEligibility = useCallback(async () => {
+    if (!user) { setEligible({}); return }
+    const [{ data: enquiries }, { data: myReviews }] = await Promise.all([
+      supabase.from('service_enquiries').select('id, services, packages').eq('customer_id', user.id).eq('status', 'closed'),
+      supabase.from('reviews_catalog').select('subject_type, subject_id').eq('customer_id', user.id).in('subject_type', ['service', 'package']),
+    ])
+    const map = {}
+    for (const enq of enquiries ?? []) {
+      for (const svc of enq.services ?? []) map[`service__${svc.id}`] = enq.id
+      for (const pkg of enq.packages ?? []) map[`package__${pkg.id}`] = enq.id
+    }
+    for (const r of myReviews ?? []) delete map[`${r.subject_type}__${r.subject_id}`]
+    setEligible(map)
+  }, [user])
+
+  useEffect(() => { checkEligibility() }, [checkEligibility])
 
   if (!event) {
     return (
@@ -188,18 +213,31 @@ export default function EventServices() {
                                 </div>
                               </div>
                             </div>
-                            <button
-                              onClick={() => !inCart && setPendingAdd({ kind: 'service', payload: svc })}
-                              disabled={inCart}
-                              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors ${
-                                inCart
-                                  ? 'bg-green-50 text-green-700 border border-green-200 cursor-default'
-                                  : 'bg-saffron-500 text-white hover:bg-saffron-600'
-                              }`}
-                            >
-                              {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}
-                              {inCart ? 'Added' : 'Add to Cart'}
-                            </button>
+                            <div className="shrink-0 flex flex-col items-end gap-1.5">
+                              <button
+                                onClick={() => !inCart && setPendingAdd({ kind: 'service', payload: svc })}
+                                disabled={inCart}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors ${
+                                  inCart
+                                    ? 'bg-green-50 text-green-700 border border-green-200 cursor-default'
+                                    : 'bg-saffron-500 text-white hover:bg-saffron-600'
+                                }`}
+                              >
+                                {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}
+                                {inCart ? 'Added' : 'Add to Cart'}
+                              </button>
+                              {eligible[`service__${svc.id}`] && (
+                                <button
+                                  onClick={() => setReviewing({
+                                    subject: { type: 'service', id: svc.id, name: svc.name },
+                                    source: { enquiryId: eligible[`service__${svc.id}`] },
+                                  })}
+                                  className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700"
+                                >
+                                  <Star size={11} /> Rate &amp; Review
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -248,7 +286,20 @@ export default function EventServices() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">{pkg.tagline}</p>
-                      <RatingBadge subjectType="package" subjectId={pkg.id} className="mt-1" />
+                      <div className="flex items-center gap-3 mt-1">
+                        <RatingBadge subjectType="package" subjectId={pkg.id} />
+                        {eligible[`package__${pkg.id}`] && (
+                          <button
+                            onClick={() => setReviewing({
+                              subject: { type: 'package', id: pkg.id, name: pkg.name },
+                              source: { enquiryId: eligible[`package__${pkg.id}`] },
+                            })}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700"
+                          >
+                            <Star size={11} /> Rate &amp; Review
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs text-gray-400 mb-0.5">Starts from</p>
@@ -307,6 +358,15 @@ export default function EventServices() {
           defaults={getEventDetails(eventId)}
           onConfirm={confirmAdd}
           onClose={() => setPendingAdd(null)}
+        />
+      )}
+
+      {reviewing && (
+        <ReviewModal
+          subject={reviewing.subject}
+          source={reviewing.source}
+          onClose={() => setReviewing(null)}
+          onSubmitted={checkEligibility}
         />
       )}
     </CustomerLayout>
