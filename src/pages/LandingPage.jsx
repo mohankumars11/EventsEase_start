@@ -169,33 +169,42 @@ export default function LandingPage() {
           style={{ animationDelay: '5s' }}
         />
 
-        {/* Floating real photos — confetti / diya / flower / cake, no emoji */}
+        {/* Heart-shaped clip path, defined once, reused by every floating photo below */}
+        <svg width="0" height="0" className="absolute">
+          <defs>
+            <clipPath id="heartClip" clipPathUnits="objectBoundingBox">
+              <path d="M0.5,1 C0.5,1 0,0.619 0,0.336 C0,0.1505 0.1329,0 0.2969,0 C0.3844,0 0.464,0.04473 0.5,0.1146 C0.536,0.04473 0.6156,0 0.7031,0 C0.8671,0 1,0.1505 1,0.336 C1,0.619 0.5,1 0.5,1 Z" />
+            </clipPath>
+          </defs>
+        </svg>
+
+        {/* Floating real photos — confetti / diya / flower / cake, no emoji, heart-shaped */}
         {heroPhotos.confetti && (
           <img
             src={heroPhotos.confetti.url} alt=""
-            className="hidden sm:block absolute left-[5%] top-28 w-12 h-12 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '0s' }}
+            className="block absolute left-[5%] top-24 sm:top-28 w-10 h-10 sm:w-12 sm:h-12 object-cover shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '0s', clipPath: 'url(#heartClip)' }}
           />
         )}
         {heroPhotos.diya && (
           <img
             src={heroPhotos.diya.url} alt=""
-            className="hidden sm:block absolute right-[6%] top-36 w-14 h-14 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '1s' }}
+            className="block absolute right-[6%] top-32 sm:top-36 w-11 h-11 sm:w-14 sm:h-14 object-cover shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '1s', clipPath: 'url(#heartClip)' }}
           />
         )}
         {heroPhotos.flower && (
           <img
             src={heroPhotos.flower.url} alt=""
-            className="hidden sm:block absolute left-[8%] bottom-16 w-12 h-12 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '0.5s' }}
+            className="block absolute left-[8%] bottom-14 sm:bottom-16 w-10 h-10 sm:w-12 sm:h-12 object-cover shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '0.5s', clipPath: 'url(#heartClip)' }}
           />
         )}
         {heroPhotos.cake && (
           <img
             src={heroPhotos.cake.url} alt=""
-            className="hidden sm:block absolute right-[10%] bottom-10 w-11 h-11 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '1.5s' }}
+            className="block absolute right-[10%] bottom-8 sm:bottom-10 w-9 h-9 sm:w-11 sm:h-11 object-cover shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '1.5s', clipPath: 'url(#heartClip)' }}
           />
         )}
 
