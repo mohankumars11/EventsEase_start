@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext'
 const TABS = [
   { label: 'Home',     icon: Home,          path: '/dashboard/customer'          },
   { label: 'Services', icon: Search,        path: '/dashboard/customer/services' },
-  { label: 'Bookings', icon: ClipboardList, path: '/dashboard/customer/bookings' },
+  { label: 'Requests', icon: ClipboardList, path: '/dashboard/customer/requests' },
   { label: 'Cart',     icon: ShoppingCart,  path: '/dashboard/customer/cart'     },
   { label: 'Orders',   icon: ShoppingBag,   path: '/dashboard/customer/orders'   },
 ]

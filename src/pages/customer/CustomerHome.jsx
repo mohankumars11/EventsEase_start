@@ -126,33 +126,42 @@ export default function CustomerHome() {
             <p className="text-plum-300 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
               Tell us what you're celebrating. Sambramo handles vendors, decoration, food, photography — everything.
             </p>
-            <Link
-              to="/plan"
-              className="inline-flex items-center gap-2 bg-saffron-400 hover:bg-saffron-500 text-plum-950 font-bold px-8 py-3.5 rounded-2xl transition-all shadow-lg"
-            >
-              Start Planning <ArrowRight size={16} />
-            </Link>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+              <Link
+                to="/plan"
+                className="inline-flex items-center justify-center gap-2 bg-saffron-400 hover:bg-saffron-500 text-plum-950 font-bold px-8 py-3.5 rounded-2xl transition-all shadow-lg"
+              >
+                Start Planning <ArrowRight size={16} />
+              </Link>
+              <Link
+                to="/dashboard/customer/services"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold px-8 py-3.5 rounded-2xl transition-all backdrop-blur-sm"
+              >
+                🛍️ Individual Services &amp; Packages
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ── Celebration types ─────────────────────────── */}
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">What are you celebrating?</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <SlideCarousel>
             {EVENT_TYPES.slice(0, 8).map(et => (
-              <button
-                key={et.id}
-                onClick={() => navigate(`/plan?type=${et.id}`)}
-                className="bg-white rounded-2xl overflow-hidden text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
-              >
-                <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-20" />
-                <div className="p-3">
-                  <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
-                </div>
-              </button>
+              <div key={et.id} className="shrink-0 w-40 sm:w-44 snap-center">
+                <button
+                  onClick={() => navigate(`/plan?type=${et.id}`)}
+                  className="w-full bg-white rounded-2xl overflow-hidden text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                >
+                  <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-24" />
+                  <div className="p-3">
+                    <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
+                  </div>
+                </button>
+              </div>
             ))}
-          </div>
+          </SlideCarousel>
         </section>
 
         {/* ── Individual services + pooja items shortcuts ─ */}

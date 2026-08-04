@@ -86,15 +86,15 @@ export default function Cart() {
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left space-y-1">
             <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">What happens next</p>
             <p className="text-sm text-gray-600">① Our team reviews your requirements</p>
-            <p className="text-sm text-gray-600">② You receive confirmed pricing in My Bookings</p>
+            <p className="text-sm text-gray-600">② You receive confirmed pricing in My Requests</p>
             <p className="text-sm text-gray-600">③ Confirm and we handle the rest</p>
           </div>
           <div className="flex flex-col gap-2.5">
             <button
-              onClick={() => navigate('/dashboard/customer/bookings')}
+              onClick={() => navigate('/dashboard/customer/requests')}
               className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600"
             >
-              Track in My Bookings
+              Track in My Requests
             </button>
             <button
               onClick={() => navigate('/dashboard/customer')}
