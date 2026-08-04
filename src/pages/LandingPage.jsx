@@ -114,23 +114,6 @@ export default function LandingPage() {
   const { user }    = useAuth()
   const [openFaq,     setOpenFaq]     = useState(null)
   const [activeBudget, setActiveBudget] = useState(null)
-  const [categoryPhotos, setCategoryPhotos] = useState({})
-
-  // One small real photo per service category (not per chip — 8 fetches,
-  // cached, instead of 40+) so the chip cloud shows real imagery without
-  // hammering the Unsplash rate limit.
-  useEffect(() => {
-    let cancelled = false
-    Promise.all(
-      SERVICE_CATEGORIES.map(cat =>
-        fetchUnsplashPhoto(`${cat.category} event service India`).then(p => [cat.category, p])
-      )
-    ).then(entries => {
-      if (cancelled) return
-      setCategoryPhotos(Object.fromEntries(entries.filter(([, p]) => p)))
-    })
-    return () => { cancelled = true }
-  }, [])
 
   /**
    * Navigate to /plan with optional pre-selected params — but only once
@@ -348,24 +331,19 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Service chip cloud — all 40+ services, small real photo per category */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {ALL_SERVICES.map((svc, i) => {
-              const photo = categoryPhotos[svc.category]
-              return (
-                <div
-                  key={`${svc.name}-${i}`}
-                  className={`reveal reveal-delay-${(i % 4) + 1} flex items-center gap-2 bg-white shadow-sm border border-gray-100 rounded-full pl-2 pr-4 py-2 text-sm font-medium text-gray-700`}
-                >
-                  {photo ? (
-                    <img src={photo.url} alt="" loading="lazy" className="w-6 h-6 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <span className="w-6 h-6 flex items-center justify-center shrink-0">{svc.emoji}</span>
-                  )}
-                  <span>{svc.name}</span>
-                </div>
-              )
-            })}
+          {/* Service grid — all 40+ services, each with its own real photo.
+              Grid (not flex-wrap pills) so rows stay perfectly aligned on
+              mobile instead of ragged centered wrapping. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-12">
+            {ALL_SERVICES.map((svc, i) => (
+              <div
+                key={`${svc.name}-${i}`}
+                className={`reveal reveal-delay-${(i % 4) + 1} bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden text-center`}
+              >
+                <ProductImage query={`${svc.name} ${svc.category} India`} emoji={svc.emoji} className="w-full h-16" />
+                <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2">{svc.name}</p>
+              </div>
+            ))}
           </div>
 
           <div className="text-center reveal">
@@ -634,13 +612,22 @@ export default function LandingPage() {
    ShopTeaserCard sub-component — small photo-topped card for the
    "Need something for a celebration today?" shop-category strip.
 ═══════════════════════════════════════════════════════════ */
+const SHOP_TEASER_QUERIES = {
+  'Cakes':              'birthday celebration cake dessert',
+  'Gifts':               'gift box present ribbon',
+  'Flowers':              'flower bouquet fresh',
+  'Hampers':              'gift hamper basket',
+  'Party Essentials':      'balloons party decoration',
+  'Pooja & Essentials':     'pooja thali diya India',
+}
+
 function ShopTeaserCard({ category }) {
   return (
     <Link
       to={`/shop/${encodeURIComponent(category.id)}`}
       className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-colors group"
     >
-      <ProductImage query={`${category.label} celebration India`} emoji={category.emoji} className="w-full h-20" />
+      <ProductImage query={SHOP_TEASER_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full h-20" />
       <div className="p-2.5 text-center">
         <p className="text-plum-100 text-xs font-semibold group-hover:text-white transition-colors">{category.label}</p>
       </div>
