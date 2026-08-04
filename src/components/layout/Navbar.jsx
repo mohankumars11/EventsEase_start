@@ -69,7 +69,7 @@ export default function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden lg:flex items-center gap-0.5">
-            {NAV_LINKS.map(({ label, hash }) => (
+            {!user && NAV_LINKS.map(({ label, hash }) => (
               <button
                 key={label}
                 onClick={() => scrollToSection(hash)}
@@ -155,7 +155,7 @@ export default function Navbar() {
         menuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="border-t border-plum-800 bg-plum-900 px-4 py-4 flex flex-col gap-1">
-          {NAV_LINKS.map(({ label, hash }) => (
+          {!user && NAV_LINKS.map(({ label, hash }) => (
             <button
               key={label}
               onClick={() => scrollToSection(hash)}

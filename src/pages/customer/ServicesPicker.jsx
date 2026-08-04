@@ -1,10 +1,23 @@
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Search, X } from 'lucide-react'
 import { EVENT_LIST } from '../../data/eventServicesData'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
 
 export default function ServicesPicker() {
   const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return EVENT_LIST
+    return EVENT_LIST.filter(ev =>
+      ev.name.toLowerCase().includes(q) ||
+      ev.tagline?.toLowerCase().includes(q) ||
+      ev.services.some(s => s.name.toLowerCase().includes(q))
+    )
+  }, [query])
 
   return (
     <CustomerLayout>
@@ -17,8 +30,31 @@ export default function ServicesPicker() {
           </p>
         </div>
 
+        <div className="relative mb-6 max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search celebrations or services…"
+            className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-400 focus:border-transparent"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+
+        {filtered.length === 0 ? (
+          <p className="text-sm text-gray-400 py-10 text-center">No matches for "{query}" — try a different search.</p>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {EVENT_LIST.map(ev => (
+          {filtered.map(ev => (
             <button
               key={ev.id}
               onClick={() => navigate(`/dashboard/customer/events/${ev.id}`)}
@@ -33,6 +69,7 @@ export default function ServicesPicker() {
             </button>
           ))}
         </div>
+        )}
       </div>
     </CustomerLayout>
   )

@@ -132,7 +132,7 @@ function EventCard({ event }) {
 
         {/* CTA button */}
         <button
-          onClick={() => navigate(`/dashboard/customer/events/${event.id}`)}
+          onClick={() => navigate(`/dashboard/customer/events/${event.event_type}`)}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             isAction
               ? 'bg-plum-600 text-white hover:bg-plum-700 shadow-md shadow-plum-200'
