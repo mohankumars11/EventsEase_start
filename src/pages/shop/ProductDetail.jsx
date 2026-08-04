@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Check, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageSquareText } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
@@ -98,7 +98,9 @@ export default function ProductDetail() {
         </div>
 
         <div className="bg-white rounded-3xl border border-gray-100 p-8 mt-6">
-          <h2 className="font-bold text-gray-900 mb-5">Ratings &amp; Reviews</h2>
+          <h2 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+            <MessageSquareText size={18} className="text-plum-500" /> Customer Feedback
+          </h2>
           <RatingBreakdown reviews={reviews} avgRating={avgRating} />
           {reviews.length > 0 && (
             <div className="mt-6 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>

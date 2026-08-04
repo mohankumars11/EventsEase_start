@@ -41,8 +41,7 @@ export default function ReviewsScroller({ subjects = [], title = 'Customer Feedb
 
   const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
-  if (loading) return null
-  if (reviews.length === 0) return null
+  if (loading || subjects.length === 0) return null
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 p-6">
@@ -50,16 +49,22 @@ export default function ReviewsScroller({ subjects = [], title = 'Customer Feedb
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
           <MessageSquareText size={18} className="text-plum-500" /> {title}
         </h2>
-        <StarRating value={avgRating} count={reviews.length} size="sm" />
+        {reviews.length > 0 && <StarRating value={avgRating} count={reviews.length} size="sm" />}
       </div>
-      <p className="text-xs text-gray-400 mb-4">{reviews.length} review{reviews.length !== 1 ? 's' : ''} from real customers</p>
 
-      {/* Fixed-height scroll box — this scrolls, the page doesn't. */}
-      <div className="overflow-y-auto pr-1" style={{ maxHeight }}>
-        {reviews.map(r => (
-          <ReviewCard key={r.id} review={r} onVoted={load} />
-        ))}
-      </div>
+      {reviews.length === 0 ? (
+        <p className="text-sm text-gray-400 mt-3">No reviews yet — be the first once you've received your order.</p>
+      ) : (
+        <>
+          <p className="text-xs text-gray-400 mb-4">{reviews.length} review{reviews.length !== 1 ? 's' : ''} from real customers</p>
+          {/* Fixed-height scroll box — this scrolls, the page doesn't. */}
+          <div className="overflow-y-auto pr-1" style={{ maxHeight }}>
+            {reviews.map(r => (
+              <ReviewCard key={r.id} review={r} onVoted={load} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
