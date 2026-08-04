@@ -22,6 +22,14 @@ const ALL_SERVICES = SERVICE_CATEGORIES.flatMap(cat =>
   cat.services.map(svc => ({ emoji: cat.emoji, category: cat.category, name: svc }))
 )
 
+/** Real photos for the hero's floating corner decorations — no emoji. */
+const HERO_FLOAT_QUERIES = {
+  confetti: 'confetti party celebration colorful',
+  diya:     'diya oil lamp diwali India',
+  flower:   'hibiscus flower pink India',
+  cake:     'birthday cake celebration slice',
+}
+
 /**
  * Per-event-type gradient — landing page only.
  * Keyed by EVENT_TYPES[].id from sambramo config.
@@ -114,6 +122,19 @@ export default function LandingPage() {
   const { user }    = useAuth()
   const [openFaq,     setOpenFaq]     = useState(null)
   const [activeBudget, setActiveBudget] = useState(null)
+  const [heroPhotos, setHeroPhotos] = useState({})
+
+  // Real floating photos for the hero corners — replaces the emoji.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      Object.entries(HERO_FLOAT_QUERIES).map(([key, q]) => fetchUnsplashPhoto(q).then(p => [key, p]))
+    ).then(entries => {
+      if (cancelled) return
+      setHeroPhotos(Object.fromEntries(entries.filter(([, p]) => p)))
+    })
+    return () => { cancelled = true }
+  }, [])
 
   /**
    * Navigate to /plan with optional pre-selected params — but only once
@@ -148,23 +169,35 @@ export default function LandingPage() {
           style={{ animationDelay: '5s' }}
         />
 
-        {/* Floating emoji corners */}
-        <span
-          className="absolute left-[5%] top-28 text-3xl float pointer-events-none select-none"
-          style={{ animationDelay: '0s' }}
-        >🎉</span>
-        <span
-          className="absolute right-[6%] top-36 text-4xl float pointer-events-none select-none"
-          style={{ animationDelay: '1s' }}
-        >🪔</span>
-        <span
-          className="absolute left-[8%] bottom-16 text-3xl float pointer-events-none select-none"
-          style={{ animationDelay: '0.5s' }}
-        >🌺</span>
-        <span
-          className="absolute right-[10%] bottom-10 text-2xl float pointer-events-none select-none"
-          style={{ animationDelay: '1.5s' }}
-        >🎂</span>
+        {/* Floating real photos — confetti / diya / flower / cake, no emoji */}
+        {heroPhotos.confetti && (
+          <img
+            src={heroPhotos.confetti.url} alt=""
+            className="hidden sm:block absolute left-[5%] top-28 w-12 h-12 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '0s' }}
+          />
+        )}
+        {heroPhotos.diya && (
+          <img
+            src={heroPhotos.diya.url} alt=""
+            className="hidden sm:block absolute right-[6%] top-36 w-14 h-14 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '1s' }}
+          />
+        )}
+        {heroPhotos.flower && (
+          <img
+            src={heroPhotos.flower.url} alt=""
+            className="hidden sm:block absolute left-[8%] bottom-16 w-12 h-12 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '0.5s' }}
+          />
+        )}
+        {heroPhotos.cake && (
+          <img
+            src={heroPhotos.cake.url} alt=""
+            className="hidden sm:block absolute right-[10%] bottom-10 w-11 h-11 rounded-full object-cover ring-2 ring-white/30 shadow-lg float pointer-events-none select-none"
+            style={{ animationDelay: '1.5s' }}
+          />
+        )}
 
         <div className="relative max-w-4xl mx-auto text-center">
 
