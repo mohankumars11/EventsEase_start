@@ -1,14 +1,38 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, Users, ArrowRight, Sparkles, Phone } from 'lucide-react'
+import { Calendar, MapPin, Users, ArrowRight, Phone, Clock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND } from '../../config/sambramo'
 import { FESTIVALS } from '../../data/festivals'
+import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import ProductImage from '../../components/shop/ProductImage'
+import SlideCarousel from '../../components/common/SlideCarousel'
+import { fetchUnsplashPhoto } from '../../lib/unsplash'
 
 const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
+
+// Festivals with a real detail page (same mapping as FestivalBanner.jsx) get
+// routed there; everything else routes to the most relevant Shop category —
+// e.g. Raksha Bandhan -> Gifts, since there's no dedicated Rakhi page.
+const FESTIVAL_DETAIL_IDS = new Set(['ganesh-chaturthi', 'navratri', 'diwali', 'christmas'])
+const FESTIVAL_SHOP_FALLBACK = {
+  'independence-day': 'Party Essentials',
+  'raksha-bandhan':    'Gifts',
+  'janmashtami':        'Pooja & Essentials',
+  'dussehra':            'Pooja & Essentials',
+  'new-years-eve':        'Party Essentials',
+}
+function festivalHref(f) {
+  if (FESTIVAL_DETAIL_IDS.has(f.id)) return `/festivals/${f.id}`
+  return `/shop/${encodeURIComponent(FESTIVAL_SHOP_FALLBACK[f.id] ?? 'Gifts')}`
+}
+function daysUntil(dateStr) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.ceil((new Date(dateStr) - today) / 86400000)
+}
 
 export default function CustomerHome() {
   const { profile, user } = useAuth()
@@ -31,6 +55,12 @@ export default function CustomerHome() {
 
   const activeEvents  = events.filter(e => ACTIVE_STATUSES.includes(e.status))
   const hasActive     = activeEvents.length > 0
+
+  const upcoming = UPCOMING_FESTIVALS
+    .map(f => ({ ...f, days: daysUntil(f.date) }))
+    .filter(f => f.days >= 0)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 6)
 
   return (
     <div className="min-h-screen bg-gray-50">

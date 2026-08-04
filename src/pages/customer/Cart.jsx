@@ -172,9 +172,13 @@ export default function Cart() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-900 text-sm">{p.pkg.name}</p>
-                        <p className="text-xs text-gray-400">Complete package{p.pkg.includes ? ` · ${p.pkg.includes.length} services included` : ''}</p>
+                        <p className="text-xs text-gray-400">
+                          {p.pkg.type === 'hamper'
+                            ? `🎁 Gift hamper · ${p.pkg.items?.length ?? 0} items`
+                            : `Complete package${p.pkg.includes ? ` · ${p.pkg.includes.length} services included` : ''}`}
+                        </p>
                         <p className="text-xs text-amber-600 font-semibold mt-0.5">
-                          {formatINR(p.pkg.price_min)} – {formatINR(p.pkg.price_max)}
+                          {p.pkg.price_min === p.pkg.price_max ? formatINR(p.pkg.price_min) : `${formatINR(p.pkg.price_min)} – ${formatINR(p.pkg.price_max)}`}
                         </p>
                       </div>
                     </div>

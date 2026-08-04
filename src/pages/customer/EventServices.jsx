@@ -269,11 +269,17 @@ export default function EventServices() {
             </p>
 
             {event.packages.map(pkg => {
-              const pkgServices = event.services.filter(s => pkg.includes.includes(s.id))
+              const isHamper = pkg.type === 'hamper'
+              const pkgServices = isHamper ? [] : event.services.filter(s => pkg.includes.includes(s.id))
               const inCart = hasPkg(eventId, pkg.id)
 
               return (
-                <div key={pkg.id} className={`card p-6 ${pkg.color}`}>
+                <div key={pkg.id} className={`card p-6 relative ${pkg.color}`}>
+                  {isHamper && (
+                    <span className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-saffron-400 to-pink-400 text-white shadow">
+                      🎁 Best Offer — Book &amp; Get This Free Extra
+                    </span>
+                  )}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -302,19 +308,32 @@ export default function EventServices() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs text-gray-400 mb-0.5">Starts from</p>
-                      <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
-                      <p className="text-xs text-gray-400">up to {formatINR(pkg.price_max)}</p>
+                      {isHamper ? (
+                        <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-400 mb-0.5">Starts from</p>
+                          <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
+                          <p className="text-xs text-gray-400">up to {formatINR(pkg.price_max)}</p>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Services included */}
+                  {/* Services / hamper items included */}
                   <div className="flex flex-wrap gap-1.5 mb-5">
-                    {pkgServices.map(s => (
-                      <span key={s.id} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
-                        {s.emoji} {s.name}
-                      </span>
-                    ))}
+                    {isHamper
+                      ? pkg.items.map(item => (
+                          <span key={item} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
+                            🎁 {item}
+                          </span>
+                        ))
+                      : pkgServices.map(s => (
+                          <span key={s.id} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
+                            {s.emoji} {s.name}
+                          </span>
+                        ))
+                    }
                   </div>
 
                   <button

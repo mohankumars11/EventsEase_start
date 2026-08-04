@@ -35,7 +35,7 @@ export default function FestivalDetailPage() {
   const {
     name, tagline, emoji, gradientFrom, gradientTo, accentHex,
     month, duration, region, description, emotionalHook,
-    foods, rituals, services, menuPackages, customizationOptions,
+    foods, rituals, services, menuPackages, giftHampers, customizationOptions,
   } = festival
 
   const heroGradient = `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`
@@ -315,6 +315,62 @@ export default function FestivalDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════
+          SECTION 4B — Gift Hampers (book & get this free)
+      ═══════════════════════════════════════════════ */}
+      {giftHampers?.length > 0 && (
+        <section className="py-16 px-4" style={{ background: `linear-gradient(135deg, ${gradientFrom}10 0%, ${gradientTo}10 100%)` }}>
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-10 reveal">
+              <span
+                className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
+                style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
+              >
+                🎁 Special Offer
+              </span>
+              <h2 className="section-title">Book {name} & Get This Free</h2>
+              <p className="section-subtitle">A festive gift hamper on us — no extra planning needed</p>
+            </div>
+
+            {giftHampers.map(hamper => (
+              <div
+                key={hamper.name}
+                className="reveal relative rounded-2xl border-2 p-6 sm:p-8 bg-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-6"
+                style={{ borderColor: accentHex }}
+              >
+                {hamper.highlight && (
+                  <span
+                    className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white shadow"
+                    style={{ background: heroGradient }}
+                  >
+                    {hamper.highlight}
+                  </span>
+                )}
+                <div className="flex-1">
+                  <h3 className="font-bold text-xl text-gray-900 mb-1">{hamper.name}</h3>
+                  <p className="text-2xl font-extrabold mb-3" style={{ color: accentHex }}>{hamper.price}</p>
+                  <ul className="flex flex-wrap gap-2">
+                    {hamper.items.map(item => (
+                      <li key={item} className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-full px-3 py-1">
+                        <CheckCircle size={13} style={{ color: accentHex }} className="shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link
+                  to={`/plan?type=festival&festival=${id}`}
+                  className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+                  style={{ background: heroGradient }}
+                >
+                  Claim This Offer <ChevronRight size={14} />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════
           SECTION 5 — Customization

@@ -158,6 +158,15 @@ export const FESTIVALS = [
       },
     ],
 
+    giftHampers: [
+      {
+        name: 'Diwali Sweets & Diya Hamper',
+        price: '₹1,299',
+        items: ['Assorted mithai box', 'Decorative diya set', 'Rangoli colors', 'Scented candles'],
+        highlight: 'Book & get this free',
+      },
+    ],
+
     customizationOptions: [
       'Dietary preferences (Jain/Vegan/Gluten-free)',
       'Regional cuisine style (North/South/West Indian)',
@@ -314,6 +323,15 @@ export const FESTIVALS = [
       },
     ],
 
+    giftHampers: [
+      {
+        name: 'Holi Celebration Hamper',
+        price: '₹899',
+        items: ['Organic gulal colors', 'Pichkari', 'Thandai mix', 'Gujiya sweets box'],
+        highlight: 'Book & get this free',
+      },
+    ],
+
     customizationOptions: [
       'Organic and natural color stations',
       'Kid-friendly food options',
@@ -456,6 +474,15 @@ export const FESTIVALS = [
       },
     ],
 
+    giftHampers: [
+      {
+        name: 'Navratri Festive Hamper',
+        price: '₹1,199',
+        items: ['Dandiya sticks', 'Sweets box', 'Fresh flowers', 'Decorative lamp'],
+        highlight: 'Book & get this free',
+      },
+    ],
+
     customizationOptions: [
       'Strict Navratri fasting menu (no onion/garlic)',
       'Send-home prasad boxes for guests',
@@ -591,6 +618,15 @@ export const FESTIVALS = [
       },
     ],
 
+    giftHampers: [
+      {
+        name: 'Ganesh Chaturthi Hamper',
+        price: '₹1,499',
+        items: ['Eco-friendly Ganesha idol', 'Modak box', 'Fresh flowers', 'Decoration set'],
+        highlight: 'Book & get this free',
+      },
+    ],
+
     customizationOptions: [
       'Sattvic menu (no onion/garlic)',
       'Eco-friendly idol and decoration options',
@@ -723,6 +759,15 @@ export const FESTIVALS = [
         price: '₹700–₹1,000 per head',
         items: ['Full 26-dish Sadya', 'All 3 Payasam varieties', 'Pradhaman', 'Special banana leaf service', 'Welcome banana chips & tender coconut'],
         highlight: 'Authentic Kerala feast',
+      },
+    ],
+
+    giftHampers: [
+      {
+        name: 'Onam Sadya Hamper',
+        price: '₹1,299',
+        items: ['Pookalam flower kit', 'Traditional sweets box', 'Payasam mix', 'Banana chips pack'],
+        highlight: 'Book & get this free',
       },
     ],
 
@@ -888,6 +933,15 @@ export const FESTIVALS = [
       },
     ],
 
+    giftHampers: [
+      {
+        name: 'Eid Celebration Hamper',
+        price: '₹1,399',
+        items: ['Sheer khurma mix', 'Dates box', 'Attar perfume', 'Eid greeting card'],
+        highlight: 'Book & get this free',
+      },
+    ],
+
     customizationOptions: [
       'Halal-certified meat only',
       'Vegetarian Eid menu option',
@@ -1037,6 +1091,15 @@ export const FESTIVALS = [
         price: '₹1,000–₹1,500 per head',
         items: ['Whole Roast Turkey/Chicken', 'Rum Balls', 'Plum Cake Station', 'Live Dessert Counter', 'Mulled Wine Bar', 'Star Cookie Station', 'Cheese Board'],
         highlight: 'Premium experience',
+      },
+    ],
+
+    giftHampers: [
+      {
+        name: 'Christmas Gift Hamper',
+        price: '₹1,599',
+        items: ['Plum cake', 'Ornaments set', 'Chocolate box', 'Christmas card'],
+        highlight: 'Book & get this free',
       },
     ],
 
@@ -1196,6 +1259,15 @@ export const FESTIVALS = [
         price: '₹380–₹550 per head',
         items: ['Pongal Cooking Ceremony', 'Full South Indian Thali', 'Gajak & Chikki Station', 'Til Ladoo Gifting', 'Fresh Sugarcane Juice', 'Community Khichdi'],
         highlight: 'Authentic harvest experience',
+      },
+    ],
+
+    giftHampers: [
+      {
+        name: 'Pongal Festive Hamper',
+        price: '₹1,099',
+        items: ['Pongal rice & jaggery kit', 'Fresh sugarcane', 'Fresh flowers', 'Traditional sweets box'],
+        highlight: 'Book & get this free',
       },
     ],
 
