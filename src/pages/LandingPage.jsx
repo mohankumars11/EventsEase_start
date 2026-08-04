@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowRight, Sparkles } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
@@ -229,6 +229,9 @@ export default function LandingPage() {
                 <ShopTeaserCard category={cat} />
               </div>
             ))}
+            <div className="shrink-0 w-36 sm:w-40 snap-center">
+              <ComingSoonCard />
+            </div>
           </SlideCarousel>
         </div>
       </section>
@@ -609,14 +612,17 @@ export default function LandingPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ShopTeaserCard sub-component — small photo-topped card for the
+   ShopTeaserCard sub-component — photo-topped card for the
    "Need something for a celebration today?" shop-category strip.
+   Fixed total height so every card (including ComingSoonCard) lines
+   up perfectly in the carousel row; emoji badge overlaps the photo's
+   bottom edge for a bit of visual polish over a plain image+label card.
 ═══════════════════════════════════════════════════════════ */
 const SHOP_TEASER_QUERIES = {
-  'Cakes':              'birthday celebration cake dessert',
-  'Gifts':               'gift box present ribbon',
+  'Cakes':              'chocolate birthday cake slice',
+  'Gifts':               'wrapped gift box present ribbon',
   'Flowers':              'flower bouquet fresh',
-  'Hampers':              'gift hamper basket',
+  'Hampers':              'wicker gift basket fruit',       // "hamper" alone matches laundry hampers on Unsplash
   'Party Essentials':      'balloons party decoration',
   'Pooja & Essentials':     'pooja thali diya India',
 }
@@ -625,13 +631,46 @@ function ShopTeaserCard({ category }) {
   return (
     <Link
       to={`/shop/${encodeURIComponent(category.id)}`}
-      className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-colors group"
+      className="group flex flex-col h-40 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30"
     >
-      <ProductImage query={SHOP_TEASER_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full h-20" />
-      <div className="p-2.5 text-center">
-        <p className="text-plum-100 text-xs font-semibold group-hover:text-white transition-colors">{category.label}</p>
+      <div className="relative flex-1 min-h-0">
+        <ProductImage query={SHOP_TEASER_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full h-full" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none" />
+        <span className="absolute bottom-1.5 left-2 text-xl drop-shadow-lg">{category.emoji}</span>
+      </div>
+      <div className="px-2 py-2 text-center shrink-0">
+        <p className="text-plum-100 text-xs font-semibold group-hover:text-white transition-colors truncate">{category.label}</p>
       </div>
     </Link>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ComingSoonCard — teaser at the end of the shop-category strip
+   telling customers the catalog keeps growing.
+═══════════════════════════════════════════════════════════ */
+function ComingSoonCard() {
+  const [photo, setPhoto] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto('surprise gift sparkle celebration').then(p => { if (!cancelled) setPhoto(p) })
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <div className="relative flex flex-col h-40 rounded-2xl overflow-hidden border-2 border-dashed border-saffron-400/40">
+      {photo
+        ? <img src={photo.url} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+        : <div className="absolute inset-0 bg-plum-800" />
+      }
+      <div className="absolute inset-0 bg-gradient-to-b from-plum-950/60 via-plum-950/75 to-plum-950/90" />
+      <div className="relative flex-1 flex flex-col items-center justify-center gap-1.5 p-3 text-center">
+        <Sparkles size={22} className="text-saffron-400 animate-pulse" />
+        <p className="text-saffron-300 text-xs font-bold leading-tight">Many more on the way!</p>
+        <p className="text-plum-300 text-[10px]">Keep watching ✨</p>
+      </div>
+    </div>
   )
 }
 
