@@ -9,7 +9,7 @@ import CustomerLayout from '../../components/customer/CustomerLayout'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 
 export default function Cart() {
-  const { cart, dispatch, totalCount, total, getEventDetails } = useCart()
+  const { cart, dispatch, totalCount, getEventDetails } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [checkoutDone, setCheckoutDone] = useState(false)
@@ -18,6 +18,9 @@ export default function Cart() {
   const [editingEvent, setEditingEvent] = useState(null) // eventId currently being edited
 
   const hasAnything = cart.items.length > 0 || cart.packages.length > 0
+  const hamperItems = cart.packages.filter(p => p.pkg.type === 'hamper')
+  const hamperTotal = hamperItems.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
+  const hasQuoteItems = cart.items.length > 0 || cart.packages.some(p => p.pkg.type !== 'hamper')
 
   // Group items by event
   const byEvent = {}
@@ -178,7 +181,7 @@ export default function Cart() {
                             : `Complete package${p.pkg.includes ? ` · ${p.pkg.includes.length} services included` : ''}`}
                         </p>
                         <p className="text-xs text-amber-600 font-semibold mt-0.5">
-                          {p.pkg.price_min === p.pkg.price_max ? formatINR(p.pkg.price_min) : `${formatINR(p.pkg.price_min)} – ${formatINR(p.pkg.price_max)}`}
+                          {p.pkg.type === 'hamper' ? formatINR(p.pkg.price_min) : 'Custom quote'}
                         </p>
                       </div>
                     </div>
@@ -199,9 +202,7 @@ export default function Cart() {
                       <div className="min-w-0">
                         <p className="font-medium text-gray-800 text-sm">{item.service.name}</p>
                         {item.service.desc && <p className="text-xs text-gray-400 truncate">{item.service.desc}</p>}
-                        <p className="text-xs text-amber-600 font-medium mt-0.5">
-                          {item.service.priceMin ? formatINR(item.service.priceMin) : item.service.priceHint}
-                        </p>
+                        <p className="text-xs text-plum-500 font-medium mt-0.5">Custom quote</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -251,13 +252,19 @@ export default function Cart() {
                 <span>Packages</span>
                 <span className="font-medium">{cart.packages.length}</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-gray-900 border-t border-amber-200 pt-3">
-                <span>Estimated total</span>
-                <span>{formatINR(total)}+</span>
-              </div>
-              <p className="text-xs text-gray-500">
-                Estimated from typical market rates — our team confirms final pricing after reviewing your requirements.
-              </p>
+              {hamperItems.length > 0 && (
+                <div className="flex justify-between text-sm text-gray-600 border-t border-amber-200 pt-3">
+                  <span>🎁 Gift hampers (fixed price)</span>
+                  <span className="font-semibold text-gray-900">{formatINR(hamperTotal)}</span>
+                </div>
+              )}
+              {hasQuoteItems ? (
+                <p className="text-xs text-gray-500 pt-1">
+                  💬 No price shown for services &amp; packages on purpose — our team reviews your exact requirements and sends you one final quoted price in <strong>My Requests</strong>. Nothing is charged now.
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 pt-1">Fixed price — no quote needed.</p>
+              )}
             </div>
 
             {error && (

@@ -208,7 +208,7 @@ export default function EventServices() {
                                 <p className="font-semibold text-gray-900 text-sm">{svc.name}</p>
                                 <p className="text-xs text-gray-500 truncate">{svc.desc}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <p className="text-xs text-saffron-600 font-medium">{svc.priceHint}</p>
+                                  <p className="text-xs text-plum-500 font-medium">Custom quote</p>
                                   <RatingBadge subjectType="service" subjectId={svc.id} />
                                 </div>
                               </div>
@@ -311,11 +311,10 @@ export default function EventServices() {
                       {isHamper ? (
                         <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
                       ) : (
-                        <>
-                          <p className="text-xs text-gray-400 mb-0.5">Starts from</p>
-                          <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
-                          <p className="text-xs text-gray-400">up to {formatINR(pkg.price_max)}</p>
-                        </>
+                        <div className="px-3 py-1.5 rounded-lg bg-plum-50 border border-plum-100">
+                          <p className="text-xs font-semibold text-plum-600">Custom quote</p>
+                          <p className="text-[10px] text-gray-400">after we review your needs</p>
+                        </div>
                       )}
                     </div>
                   </div>

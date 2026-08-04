@@ -283,7 +283,7 @@ export default function FestivalDetailPage() {
                 <p
                   className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-white/80' : 'text-marigold-600'}`}
                 >
-                  {pkg.price}
+                  Custom quote — priced to your guest count &amp; needs
                 </p>
 
                 <ul className="space-y-2 mb-6">
@@ -308,7 +308,7 @@ export default function FestivalDetailPage() {
                   }`}
                   style={pkg.highlight ? { color: gradientFrom } : { borderColor: accentHex, color: accentHex }}
                 >
-                  Book This Menu <ChevronRight size={14} />
+                  Request a Quote <ChevronRight size={14} />
                 </Link>
               </div>
             ))}

@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning } from 'lucide-react'
+import { ClipboardList, Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning, MessageCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
+import { BRAND } from '../../config/sambramo'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
@@ -113,7 +114,6 @@ export default function MyRequests() {
                       <div key={svc.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
                         <span>{svc.emoji} {svc.name}{svc.qty > 1 ? ` × ${svc.qty}` : ''}</span>
                         <div className="flex items-center gap-3 shrink-0">
-                          {svc.unit_price && <span className="text-xs text-gray-400">{formatINR(svc.unit_price)}</span>}
                           {canReview && (
                             hasReviewed(enq.id, 'service', svc.id) ? (
                               <span className="text-xs text-green-600 font-medium">Reviewed</span>
@@ -136,7 +136,7 @@ export default function MyRequests() {
                       <div key={pkg.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
                         <span>📦 {pkg.name}</span>
                         <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs text-gray-400">{formatINR(pkg.price_min)}+</span>
+                          {pkg.type === 'hamper' && <span className="text-xs text-gray-400">{formatINR(pkg.price_min)}</span>}
                           {canReview && (
                             hasReviewed(enq.id, 'package', pkg.id) ? (
                               <span className="text-xs text-green-600 font-medium">Reviewed</span>
@@ -159,6 +159,26 @@ export default function MyRequests() {
 
                   {enq.status === 'cancelled' && enq.cancellation_reason && (
                     <p className="text-xs text-red-600 mt-2">Cancelled — {enq.cancellation_reason}</p>
+                  )}
+
+                  {enq.quoted_price && (enq.status === 'responded' || enq.status === 'closed') && (
+                    <div className="mt-3 p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-saffron-50 border border-amber-200">
+                      <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-0.5">💰 Your Quote</p>
+                      <p className="text-2xl font-extrabold text-gray-900">{formatINR(enq.quoted_price)}</p>
+                      {enq.quote_notes && <p className="text-xs text-gray-600 mt-1.5">{enq.quote_notes}</p>}
+                      {enq.status === 'responded' && (
+                        <a
+                          href={`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(
+                            `Hi Sambramo! I'd like to accept the quote of ${formatINR(enq.quoted_price)} for my "${enq.event_name}" request. Please confirm next steps.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+                        >
+                          <MessageCircle size={15} /> Accept &amp; Proceed
+                        </a>
+                      )}
+                    </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-gray-50">
