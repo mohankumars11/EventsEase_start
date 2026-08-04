@@ -67,21 +67,26 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden lg:flex items-center gap-0.5">
-            {!user && NAV_LINKS.map(({ label, hash }) => (
-              <button
-                key={label}
-                onClick={() => scrollToSection(hash)}
-                className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
-              >
-                {label}
-              </button>
-            ))}
-            <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
-              Shop
-            </Link>
-          </div>
+          {/* Desktop nav links — logged-out only. Logged-in customers get
+              their own consistent link row below (Shop included there),
+              so the same set of links doesn't split across two different
+              breakpoints and appear/disappear independently. */}
+          {!user && (
+            <div className="hidden lg:flex items-center gap-0.5">
+              {NAV_LINKS.map(({ label, hash }) => (
+                <button
+                  key={label}
+                  onClick={() => scrollToSection(hash)}
+                  className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
+                >
+                  {label}
+                </button>
+              ))}
+              <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
+                Shop
+              </Link>
+            </div>
+          )}
 
           {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
@@ -89,6 +94,12 @@ export default function Navbar() {
               <>
                 {isCustomer && (
                   <>
+                    <Link
+                      to="/shop"
+                      className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
+                    >
+                      Shop
+                    </Link>
                     <Link
                       to="/dashboard/customer/events"
                       className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
@@ -106,6 +117,12 @@ export default function Navbar() {
                       className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
                     >
                       My Orders
+                    </Link>
+                    <Link
+                      to={dashboardLink()}
+                      className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
+                    >
+                      Dashboard
                     </Link>
                   </>
                 )}
