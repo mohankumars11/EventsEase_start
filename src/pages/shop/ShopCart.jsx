@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
+import { IS_CONFIGURED as RAZORPAY_CONFIGURED, createRazorpayOrder, openCheckout, verifyRazorpayPayment } from '../../lib/payment/razorpayProvider'
 import LocationAutocomplete from '../../components/common/LocationAutocomplete'
 
 const PAYMENT_METHODS = [
@@ -43,6 +44,69 @@ export default function ShopCart() {
   const deliveryFee = productTotal === 0 || qualifiesForFreeDelivery ? 0 : DELIVERY_FEE
   const total = productTotal + deliveryFee
   const addressValid = address.name && address.phone && address.line && address.city && address.pincode
+
+  async function createPendingOrder(paymentStatus) {
+    const { data: order, error: orderErr } = await supabase.from('orders').insert({
+      customer_id: user.id,
+      status: 'placed',
+      subtotal: productTotal,
+      delivery_fee: deliveryFee,
+      discount: 0,
+      total,
+      address,
+      payment_status: paymentStatus,
+    }).select('id').single()
+    if (orderErr) throw orderErr
+
+    const items = cart.products.map(p => ({
+      order_id: order.id,
+      product_id: p.product.id,
+      product_name: p.product.name,
+      unit_price: p.product.price,
+      qty: p.qty,
+      subtotal: p.product.price * p.qty,
+    }))
+    const { error: itemsErr } = await supabase.from('order_items').insert(items)
+    if (itemsErr) throw itemsErr
+    return order.id
+  }
+
+  // Real gateway: create the order in our DB first (so the amount Razorpay
+  // charges is always read from a trusted server-side row, not a client-
+  // supplied number), open the real checkout widget — UPI intent for
+  // PhonePe/Google Pay/Paytm/BHIM/etc, UPI ID, QR, cards, netbanking, all
+  // handled by Razorpay — then verify the signature server-side before the
+  // order is ever marked paid.
+  async function payWithRazorpay() {
+    setPaying(true)
+    setError(null)
+    try {
+      const orderId = await createPendingOrder('pending')
+      const { razorpayOrderId, amount, currency, keyId } = await createRazorpayOrder(orderId)
+      const result = await openCheckout({
+        razorpayOrderId, amount, currency, keyId,
+        name: address.name, contact: address.phone,
+        orderLabel: `Order #${orderId.slice(0, 8).toUpperCase()}`,
+      })
+      await verifyRazorpayPayment({
+        orderId,
+        razorpay_order_id: result.razorpay_order_id,
+        razorpay_payment_id: result.razorpay_payment_id,
+        razorpay_signature: result.razorpay_signature,
+      })
+      dispatch({ type: 'CLEAR_PRODUCTS' })
+      setPlacedOrderId(orderId)
+      setStep('done')
+    } catch (err) {
+      if (err.message === 'DISMISSED') {
+        setError("Payment cancelled — nothing was charged. Your order is saved as pending; you can find it under My Orders.")
+      } else {
+        setError(err.message || 'Something went wrong with payment.')
+      }
+    } finally {
+      setPaying(false)
+    }
+  }
 
   async function runPayment(outcome) {
     setPaying(true)
@@ -223,7 +287,25 @@ export default function ShopCart() {
               </button>
             )}
 
-            {step === 'payment' && (
+            {step === 'payment' && RAZORPAY_CONFIGURED && (
+              <div className="card p-5 space-y-4">
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold">
+                  <ShieldAlert size={15} /> Secure payment via Razorpay — UPI (PhonePe, Google Pay, Paytm & more), cards, netbanking
+                </div>
+                <button
+                  onClick={payWithRazorpay}
+                  disabled={paying}
+                  className="w-full py-4 rounded-2xl bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold text-base shadow-lg"
+                >
+                  {paying ? 'Opening secure checkout…' : `Pay ${formatINR(total)}`}
+                </button>
+                <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 hover:text-gray-600">
+                  ← Back to address
+                </button>
+              </div>
+            )}
+
+            {step === 'payment' && !RAZORPAY_CONFIGURED && (
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 font-semibold">
                   <ShieldAlert size={15} /> TEST PAYMENT — no real money is charged
