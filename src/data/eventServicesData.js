@@ -12,16 +12,20 @@
 // festival calendar (blueprint section 45), out of scope for now.
 // "daysOut" is intentionally NOT stored here — FestivalBanner computes
 // it live from `date`, so this data can't go stale silently again.
+// `id` matches FESTIVALS[].id (src/data/festivals.js) when a full detail
+// page exists for that festival; otherwise it's just a routing slug used
+// to pre-fill the planning wizard — either way every festival here routes
+// to something about *itself*, never a generic fallback.
 export const UPCOMING_FESTIVALS = [
-  { name: 'Independence Day', date: '2026-08-15', emoji: '🇮🇳' },
-  { name: 'Raksha Bandhan',   date: '2026-08-28', emoji: '🪢' },
-  { name: 'Janmashtami',      date: '2026-09-04', emoji: '🪈' },
-  { name: 'Ganesh Chaturthi', date: '2026-09-14', emoji: '🐘' },
-  { name: 'Navratri',         date: '2026-10-11', emoji: '💃' },
-  { name: 'Dussehra',         date: '2026-10-20', emoji: '🏹' },
-  { name: 'Diwali',           date: '2026-11-08', emoji: '🪔' },
-  { name: 'Christmas',        date: '2026-12-25', emoji: '🎄' },
-  { name: "New Year's Eve",   date: '2026-12-31', emoji: '🎆' },
+  { id: 'independence-day', name: 'Independence Day', date: '2026-08-15', emoji: '🇮🇳' },
+  { id: 'raksha-bandhan',   name: 'Raksha Bandhan',   date: '2026-08-28', emoji: '🪢' },
+  { id: 'janmashtami',      name: 'Janmashtami',      date: '2026-09-04', emoji: '🪈' },
+  { id: 'ganesh-chaturthi', name: 'Ganesh Chaturthi', date: '2026-09-14', emoji: '🐘' },
+  { id: 'navratri',         name: 'Navratri',         date: '2026-10-11', emoji: '💃' },
+  { id: 'dussehra',         name: 'Dussehra',         date: '2026-10-20', emoji: '🏹' },
+  { id: 'diwali',           name: 'Diwali',           date: '2026-11-08', emoji: '🪔' },
+  { id: 'christmas',        name: 'Christmas',        date: '2026-12-25', emoji: '🎄' },
+  { id: 'new-years-eve',    name: "New Year's Eve",   date: '2026-12-31', emoji: '🎆' },
 ]
 
 // All possible service definitions (reused across events)

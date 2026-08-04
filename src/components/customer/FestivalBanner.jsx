@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
+import { FESTIVALS } from '../../data/festivals'
+import { fetchUnsplashPhoto } from '../../lib/unsplash'
 
 // Calculates days from today to a date string
 function daysUntil(dateStr) {
@@ -19,10 +21,10 @@ function urgencyColor(days) {
 function urgencyLabel(days) {
   if (days === 0) return 'Today!'
   if (days === 1) return 'Tomorrow!'
-  if (days <= 7)  return `${days} days`
-  if (days <= 30) return `${days} days`
   return `${days} days`
 }
+
+const HAS_DETAIL_PAGE = new Set(FESTIVALS.map(f => f.id))
 
 export default function FestivalBanner() {
   const scrollRef = useRef(null)
@@ -48,17 +50,16 @@ export default function FestivalBanner() {
 
   const upcoming = UPCOMING_FESTIVALS.map(f => ({ ...f, days: daysUntil(f.date) })).filter(f => f.days >= 0).slice(0, 9)
 
-  // Only a handful of festivals have a full detail page today (festivals.js) —
-  // route to it when one exists, otherwise fall back to festival shopping.
-  const DETAIL_PAGE_IDS = { 'Ganesh Chaturthi': 'ganesh-chaturthi', 'Navratri': 'navratri', 'Diwali': 'diwali', 'Christmas': 'christmas' }
-  function goToFestival(name) {
-    const id = DETAIL_PAGE_IDS[name]
-    navigate(id ? `/festivals/${id}` : '/shop/Pooja%20%26%20Essentials')
+  // Every festival routes to something about itself — its real detail
+  // page when one exists, otherwise straight into the planning wizard
+  // pre-filled for that festival. Never a generic unrelated fallback.
+  function goToFestival(id) {
+    navigate(HAS_DETAIL_PAGE.has(id) ? `/festivals/${id}` : `/plan?type=festival&festival=${id}`)
   }
 
   return (
     <div className="bg-white border-b border-orange-100">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 hidden sm:block">Upcoming</span>
         <div
           ref={scrollRef}
@@ -67,15 +68,7 @@ export default function FestivalBanner() {
         >
           {/* Duplicate for seamless loop */}
           {[...upcoming, ...upcoming].map((f, i) => (
-            <div
-              key={i}
-              onClick={() => goToFestival(f.name)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0 cursor-pointer hover:shadow-sm transition-shadow ${urgencyColor(f.days)}`}
-            >
-              <span>{f.emoji}</span>
-              <span>{f.name}</span>
-              <span className="opacity-70">· {urgencyLabel(f.days)}</span>
-            </div>
+            <FestivalChip key={i} festival={f} onClick={() => goToFestival(f.id)} />
           ))}
         </div>
         <button
@@ -85,6 +78,31 @@ export default function FestivalBanner() {
           Shop festival essentials →
         </button>
       </div>
+    </div>
+  )
+}
+
+function FestivalChip({ festival, onClick }) {
+  const [photo, setPhoto] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUnsplashPhoto(`${festival.name} festival India`).then(p => { if (!cancelled) setPhoto(p) })
+    return () => { cancelled = true }
+  }, [festival.name])
+
+  return (
+    <div
+      onClick={onClick}
+      className={`flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border shrink-0 cursor-pointer hover:shadow-sm transition-shadow ${urgencyColor(festival.days)}`}
+    >
+      {photo ? (
+        <img src={photo.url} alt="" loading="lazy" className="w-5 h-5 rounded-full object-cover shrink-0" />
+      ) : (
+        <span className="w-5 h-5 flex items-center justify-center shrink-0 text-sm">{festival.emoji}</span>
+      )}
+      <span className="font-serif font-semibold text-[13px] leading-none">{festival.name}</span>
+      <span className="opacity-70 text-[11px] leading-none">· {urgencyLabel(festival.days)}</span>
     </div>
   )
 }

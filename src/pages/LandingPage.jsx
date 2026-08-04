@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight, Sparkles } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -21,6 +21,13 @@ import ProductImage from '../components/shop/ProductImage'
 const ALL_SERVICES = SERVICE_CATEGORIES.flatMap(cat =>
   cat.services.map(svc => ({ emoji: cat.emoji, category: cat.category, name: svc }))
 )
+
+/** ALL_SERVICES split into 3 even rows for the self-scrolling roller. */
+const SERVICE_ROWS = (() => {
+  const rows = [[], [], []]
+  ALL_SERVICES.forEach((svc, i) => rows[i % 3].push(svc))
+  return rows
+})()
 
 /** Real photos for the hero's floating corner decorations — no emoji. */
 const HERO_FLOAT_QUERIES = {
@@ -210,38 +217,46 @@ export default function LandingPage() {
 
         <div className="relative max-w-4xl mx-auto text-center">
 
-          {/* Tag */}
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 mb-4 sm:mb-6 md:mb-8 backdrop-blur-sm">
-            ✨ India's Celebration Concierge
-          </div>
+          {/* Sleek glass card — the hero's centerpiece */}
+          <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] shadow-2xl shadow-black/40 px-6 sm:px-10 md:px-16 py-8 sm:py-12 md:py-16 mb-8 sm:mb-10 overflow-hidden">
+            {/* Accent glow line + corner sparkle */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1 rounded-full bg-gradient-to-r from-saffron-300 via-saffron-400 to-saffron-300" />
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-saffron-400/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-berry-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* H1 */}
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
-            Your Moment.
-            <br />
-            <span className="text-saffron-400">Our Magic.</span>
-          </h1>
+            {/* Tag */}
+            <div className="relative inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 mb-4 sm:mb-6 md:mb-8 backdrop-blur-sm">
+              ✨ India's Celebration Concierge
+            </div>
 
-          {/* Sub-headline */}
-          <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-5 sm:mb-8 md:mb-10 leading-relaxed">
-            From birthdays and baby showers to weddings and everything in between,
-            tell us what you're celebrating. We'll take care of every detail.
-          </p>
+            {/* H1 */}
+            <h1 className="relative font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
+              Your Moment.
+              <br />
+              <span className="text-saffron-400">Our Magic.</span>
+            </h1>
 
-          {/* CTA pair */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-9 md:mb-12">
-            <button
-              onClick={() => toPlan()}
-              className="btn-cta"
-            >
-              Plan My Celebration ✨
-            </button>
-            <a
-              href="#celebrations"
-              className="inline-flex items-center gap-2 border border-white/20 text-white rounded-2xl px-6 py-3.5 text-base font-semibold hover:bg-white/10 transition-colors"
-            >
-              Explore Celebrations
-            </a>
+            {/* Sub-headline */}
+            <p className="relative text-white/70 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-5 sm:mb-8 md:mb-10 leading-relaxed">
+              From birthdays and baby showers to weddings and everything in between,
+              tell us what you're celebrating. We'll take care of every detail.
+            </p>
+
+            {/* CTA pair */}
+            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              <button
+                onClick={() => toPlan()}
+                className="btn-cta"
+              >
+                Plan My Celebration ✨
+              </button>
+              <a
+                href="#celebrations"
+                className="inline-flex items-center gap-2 border border-white/20 text-white rounded-2xl px-6 py-3.5 text-base font-semibold hover:bg-white/10 transition-colors"
+              >
+                Explore Celebrations
+              </a>
+            </div>
           </div>
 
           {/* Trust badges */}
@@ -376,18 +391,13 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Service grid — all 40+ services, each with its own real photo.
-              Grid (not flex-wrap pills) so rows stay perfectly aligned on
-              mobile instead of ragged centered wrapping. */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-12">
-            {ALL_SERVICES.map((svc, i) => (
-              <div
-                key={`${svc.name}-${i}`}
-                className={`reveal reveal-delay-${(i % 4) + 1} bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden text-center`}
-              >
-                <ProductImage query={`${svc.name} ${svc.category} India`} emoji={svc.emoji} className="w-full h-16" />
-                <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2">{svc.name}</p>
-              </div>
+          {/* Service roller — all 40+ services, each with its own real photo.
+              Three self-scrolling rows (alternating direction) instead of a
+              grid, so browsing never requires scrolling the page — only the
+              rows move, continuously, and pause on hover/touch. */}
+          <div className="space-y-3 mb-12 reveal">
+            {SERVICE_ROWS.map((row, i) => (
+              <AutoScrollRow key={i} items={row} reverse={i % 2 === 1} />
             ))}
           </div>
 
@@ -649,6 +659,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AutoScrollRow — a row that scrolls itself, continuously, in a
+   seamless loop (same requestAnimationFrame technique as
+   FestivalBanner's ticker), pausing on hover/touch. Alternating
+   `reverse` per row is what makes a multi-row "roller" read as
+   deliberate rather than a single stalled marquee.
+═══════════════════════════════════════════════════════════ */
+function AutoScrollRow({ items, reverse = false, speed = 0.4 }) {
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    let frame
+    let pos = reverse ? el.scrollWidth / 2 : 0
+    el.scrollLeft = pos
+    function tick() {
+      pos += reverse ? -speed : speed
+      const half = el.scrollWidth / 2
+      if (!reverse && pos >= half) pos = 0
+      if (reverse && pos <= 0) pos = half
+      el.scrollLeft = pos
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    const pause  = () => cancelAnimationFrame(frame)
+    const resume = () => { frame = requestAnimationFrame(tick) }
+    el.addEventListener('mouseenter', pause)
+    el.addEventListener('mouseleave', resume)
+    el.addEventListener('touchstart', pause, { passive: true })
+    el.addEventListener('touchend', resume)
+    return () => {
+      cancelAnimationFrame(frame)
+      el.removeEventListener('mouseenter', pause)
+      el.removeEventListener('mouseleave', resume)
+      el.removeEventListener('touchstart', pause)
+      el.removeEventListener('touchend', resume)
+    }
+  }, [reverse, speed])
+
+  return (
+    <div ref={scrollRef} className="flex gap-3 overflow-x-hidden scrollbar-hide" style={{ scrollBehavior: 'auto' }}>
+      {[...items, ...items].map((svc, i) => (
+        <div
+          key={`${svc.name}-${i}`}
+          className="shrink-0 w-28 bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden text-center"
+        >
+          <ProductImage query={`${svc.name} ${svc.category} India`} emoji={svc.emoji} className="w-full h-16" />
+          <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2 truncate">{svc.name}</p>
+        </div>
+      ))}
     </div>
   )
 }
