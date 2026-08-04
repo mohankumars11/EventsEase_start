@@ -7,6 +7,7 @@ import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
 import { SHOP_CATEGORIES } from '../config/shop'
 import { useAuth } from '../context/AuthContext'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
+import SlideCarousel from '../components/common/SlideCarousel'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -14,10 +15,10 @@ import { fetchUnsplashPhoto } from '../lib/unsplash'
 
 /**
  * Flatten nested SERVICE_CATEGORIES into individual chips.
- * Each category has a category-level emoji used for all its services.
+ * Each category has a category-level emoji/photo used for all its services.
  */
 const ALL_SERVICES = SERVICE_CATEGORIES.flatMap(cat =>
-  cat.services.map(svc => ({ emoji: cat.emoji, name: svc }))
+  cat.services.map(svc => ({ emoji: cat.emoji, category: cat.category, name: svc }))
 )
 
 /**
@@ -112,6 +113,23 @@ export default function LandingPage() {
   const { user }    = useAuth()
   const [openFaq,     setOpenFaq]     = useState(null)
   const [activeBudget, setActiveBudget] = useState(null)
+  const [categoryPhotos, setCategoryPhotos] = useState({})
+
+  // One small real photo per service category (not per chip — 8 fetches,
+  // cached, instead of 40+) so the chip cloud shows real imagery without
+  // hammering the Unsplash rate limit.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      SERVICE_CATEGORIES.map(cat =>
+        fetchUnsplashPhoto(`${cat.category} event service India`).then(p => [cat.category, p])
+      )
+    ).then(entries => {
+      if (cancelled) return
+      setCategoryPhotos(Object.fromEntries(entries.filter(([, p]) => p)))
+    })
+    return () => { cancelled = true }
+  }, [])
 
   /**
    * Navigate to /plan with optional pre-selected params — but only once
@@ -293,18 +311,19 @@ export default function LandingPage() {
             <p className="text-gray-500 text-lg">Every occasion has a story. Tell us yours.</p>
           </div>
 
-          {/* 3-col grid (desktop), 2-col (tablet), 1-col (mobile) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+          {/* Slide instead of scroll — swipe, drag, or use the arrow buttons */}
+          <SlideCarousel className="mb-10 px-1">
             {EVENT_TYPES.slice(0, 9).map((type, i) => (
-              <CelebrationCard
-                key={type.id}
-                type={type}
-                gradient={EVENT_GRADIENTS[type.id] ?? 'from-gray-400 to-gray-600'}
-                delay={Math.min(i + 1, 4)}
-                onClick={() => toPlan({ type: type.id })}
-              />
+              <div key={type.id} className="shrink-0 w-64 sm:w-72 snap-center">
+                <CelebrationCard
+                  type={type}
+                  gradient={EVENT_GRADIENTS[type.id] ?? 'from-gray-400 to-gray-600'}
+                  delay={Math.min(i + 1, 4)}
+                  onClick={() => toPlan({ type: type.id })}
+                />
+              </div>
             ))}
-          </div>
+          </SlideCarousel>
 
           <div className="text-center">
             <Link
@@ -332,17 +351,24 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Service chip cloud — all 40+ services */}
+          {/* Service chip cloud — all 40+ services, small real photo per category */}
           <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {ALL_SERVICES.map((svc, i) => (
-              <div
-                key={`${svc.name}-${i}`}
-                className={`reveal reveal-delay-${(i % 4) + 1} flex items-center gap-2 bg-white shadow-sm border border-gray-100 rounded-full px-4 py-2 text-sm font-medium text-gray-700`}
-              >
-                <span>{svc.emoji}</span>
-                <span>{svc.name}</span>
-              </div>
-            ))}
+            {ALL_SERVICES.map((svc, i) => {
+              const photo = categoryPhotos[svc.category]
+              return (
+                <div
+                  key={`${svc.name}-${i}`}
+                  className={`reveal reveal-delay-${(i % 4) + 1} flex items-center gap-2 bg-white shadow-sm border border-gray-100 rounded-full pl-2 pr-4 py-2 text-sm font-medium text-gray-700`}
+                >
+                  {photo ? (
+                    <img src={photo.url} alt="" loading="lazy" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <span className="w-6 h-6 flex items-center justify-center shrink-0">{svc.emoji}</span>
+                  )}
+                  <span>{svc.name}</span>
+                </div>
+              )
+            })}
           </div>
 
           <div className="text-center reveal">
@@ -467,16 +493,17 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <SlideCarousel className="px-1">
             {FESTIVALS.map((f, i) => (
-              <FestivalCard
-                key={f.id}
-                festival={f}
-                delay={Math.min((i % 4) + 1, 4)}
-                onPlan={() => toPlan({ type: 'festival', festival: f.id })}
-              />
+              <div key={f.id} className="shrink-0 w-64 sm:w-72 snap-center">
+                <FestivalCard
+                  festival={f}
+                  delay={Math.min((i % 4) + 1, 4)}
+                  onPlan={() => toPlan({ type: 'festival', festival: f.id })}
+                />
+              </div>
             ))}
-          </div>
+          </SlideCarousel>
         </div>
       </section>
 
@@ -623,7 +650,7 @@ function CelebrationCard({ type, gradient, delay, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`reveal reveal-delay-${delay} group relative rounded-2xl overflow-hidden ${photo ? '' : `bg-gradient-to-br ${gradient}`} p-7 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl`}
+      className={`reveal reveal-delay-${delay} group relative w-full h-56 rounded-2xl overflow-hidden ${photo ? '' : `bg-gradient-to-br ${gradient}`} p-7 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl`}
       style={photo ? { backgroundImage: `url(${photo.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
     >
       {photo && <div className="absolute inset-0 bg-black/45 group-hover:bg-black/35 transition-colors" />}
