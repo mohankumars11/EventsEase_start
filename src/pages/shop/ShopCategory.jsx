@@ -91,7 +91,7 @@ export default function ShopCategory() {
               return (
                 <div key={p.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
                   <Link to={`/shop/product/${p.id}`}>
-                    <ProductImage query={p.name} emoji={p.emoji} className="w-full h-36" />
+                    <ProductImage src={p.image_url} query={p.name} emoji={p.emoji} className="w-full h-36" />
                   </Link>
                   <div className="p-5 flex flex-col flex-1">
                   <Link to={`/shop/product/${p.id}`} className="font-semibold text-gray-900 text-sm mb-1 hover:text-plum-700">{p.name}</Link>

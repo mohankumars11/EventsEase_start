@@ -75,7 +75,7 @@ export default function ProductDetail() {
         </button>
 
         <div className="bg-white rounded-3xl border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
-          <ProductImage query={product.name} emoji={product.emoji} className="w-full h-64 sm:h-full rounded-2xl" />
+          <ProductImage src={product.image_url} query={product.name} emoji={product.emoji} className="w-full h-64 sm:h-full rounded-2xl" />
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">{product.category}</span>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>

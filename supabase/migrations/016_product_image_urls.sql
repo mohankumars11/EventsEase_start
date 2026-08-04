@@ -1,0 +1,22 @@
+-- ============================================================
+-- Migration 016: Pre-resolved product image URLs.
+--
+-- Root cause of "images missing" at this catalog size: ShopCategory.jsx
+-- rendered <ProductImage query={p.name}> per product, meaning a single
+-- category page (up to 67 items) fired 50-70 *live* Unsplash searches
+-- at once from every visitor's browser — instantly exceeding Unsplash's
+-- 50 requests/hour free-tier limit, so most products fell back to emoji.
+--
+-- Fix: resolve one real photo per (category, occasion) group ONCE,
+-- offline, respecting the rate limit, and store the URL directly on
+-- the product row. The Shop UI then renders that stored URL with a
+-- plain <img> — zero runtime API calls, so it scales to any catalog
+-- size for any number of visitors.
+--
+-- This migration only adds the column. The UPDATE statements that
+-- populate image_url are generated separately (once Unsplash's hourly
+-- quota resets) and appended as migration 017.
+-- Run this in: Supabase Dashboard → SQL Editor
+-- ============================================================
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
