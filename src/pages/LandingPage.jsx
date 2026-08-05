@@ -77,15 +77,20 @@ const TRUST_POINTS = [
   { emoji: '💡', title: 'Transparent proposals',    desc: "See what you're paying for before confirming" },
 ]
 
+// Calibrated to real package pricing (eventServicesData.js) — the
+// cheapest full-service package anywhere in the catalog starts around
+// ₹15,000 (e.g. an intimate anniversary dinner), so a bracket like
+// "Under ₹5,000" was never a real option and undercut the "we quote
+// after understanding your needs" message right above this section.
 const BUDGET_RANGES = [
-  'Under ₹5,000',
-  '₹5,000 – ₹10,000',
-  '₹10,000 – ₹25,000',
-  '₹25,000 – ₹50,000',
-  '₹50,000 – ₹1,00,000',
+  '₹15,000 – ₹30,000',
+  '₹30,000 – ₹60,000',
+  '₹60,000 – ₹1,00,000',
   '₹1,00,000 – ₹2,50,000',
   '₹2,50,000 – ₹5,00,000',
-  'Above ₹5,00,000',
+  '₹5,00,000 – ₹10,00,000',
+  '₹10,00,000 – ₹25,00,000',
+  'Above ₹25,00,000',
 ]
 
 const FAQS = [
