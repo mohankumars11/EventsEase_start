@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/layout/Navbar'
+import BackToHomeButton from './components/layout/BackToHomeButton'
 import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
 import FestivalBanner from './components/customer/FestivalBanner'
@@ -79,6 +80,7 @@ function AppShell({ children }) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <FestivalBanner />
+      <BackToHomeButton />
       <main className="flex-1">{children}</main>
       <Footer />
       <ChatWidget />
@@ -91,6 +93,7 @@ function CustomerShell({ children }) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <FestivalBanner />
+      <BackToHomeButton />
       <main className="flex-1">{children}</main>
       <ChatWidget />
     </div>
