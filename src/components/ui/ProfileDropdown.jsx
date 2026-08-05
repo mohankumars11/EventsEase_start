@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Calendar, ClipboardList, LogOut, ChevronDown, User, Star } from 'lucide-react'
+import { LayoutDashboard, Calendar, ClipboardList, LayoutGrid, Package, LogOut, ChevronDown, User, Star } from 'lucide-react'
 
 export default function ProfileDropdown({ profile, onSignOut, dashboardLink }) {
   const [open, setOpen]         = useState(false)
@@ -94,6 +94,8 @@ export default function ProfileDropdown({ profile, onSignOut, dashboardLink }) {
             {isCustomer && (
               <>
                 <Item to="/dashboard/customer/events" icon={<Calendar size={15} />} label="My Celebrations" onClick={() => setOpen(false)} />
+                <Item to="/dashboard/customer/services" icon={<LayoutGrid size={15} />} label="Browse Services" onClick={() => setOpen(false)} />
+                <Item to="/dashboard/customer/orders" icon={<Package size={15} />} label="My Orders" onClick={() => setOpen(false)} />
                 <Item to="/dashboard/customer/requests" icon={<ClipboardList size={15} />} label="My Requests" onClick={() => setOpen(false)} />
               </>
             )}

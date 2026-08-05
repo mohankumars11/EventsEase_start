@@ -25,18 +25,16 @@
   .btn-crimson {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-crimson-600 text-white font-semibold text-sm shadow-sm hover:bg-crimson-700 active:bg-crimson-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .btn-plum {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-plum-600 text-white font-semibold text-sm shadow-sm hover:bg-plum-700 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
+  /* One definition each. Both .btn-cta and .btn-plum used to be declared
+     twice in this file; the second silently overrode the first, which is
+     why the gradient CTA never rendered and why every `btn-cta w-full`
+     button (mobile menu, auth forms) sat left-aligned — the surviving
+     rule had no `justify-center`. */
   .btn-cta {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #7c3aed, #d97706);
-  }
-  .btn-cta {
-    @apply inline-flex items-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-gray-900 font-bold rounded-2xl px-7 py-3.5 transition-all duration-200 hover:shadow-xl hover:shadow-saffron-200/50 hover:-translate-y-0.5 active:translate-y-0 text-base;
+    @apply inline-flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-gray-900 font-bold rounded-2xl px-7 py-3.5 min-h-[44px] transition-all duration-200 hover:shadow-xl hover:shadow-saffron-200/50 hover:-translate-y-0.5 active:translate-y-0 text-base disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-plum {
-    @apply inline-flex items-center gap-2 bg-plum-600 hover:bg-plum-700 text-white font-semibold rounded-xl px-5 py-2.5 transition-all duration-200 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center gap-2 bg-plum-600 hover:bg-plum-700 text-white font-semibold rounded-xl px-5 py-2.5 min-h-[44px] transition-all duration-200 hover:shadow-lg hover:shadow-plum-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-orange-100;
@@ -167,4 +165,58 @@
   /* ── Hide scrollbar ──────────────────────────────────── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Marquee ─────────────────────────────────────────
+     CSS-driven infinite ticker. Replaces the old
+     requestAnimationFrame loops that wrote `scrollLeft` every
+     frame — those forced a layout on each tick and, because they
+     kept resetting scroll position, made the row impossible to
+     swipe by hand on a touch device. A transform animation is
+     compositor-only and leaves the underlying scroll container
+     free for the user. */
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes marquee-reverse {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee var(--marquee-duration, 40s) linear infinite;
+  }
+  .marquee-track-reverse { animation-name: marquee-reverse; }
+  /* Pause when the pointer is over it, or while a touch drag is
+     in progress, so a customer can actually read/tap an item. */
+  .marquee-viewport:hover .marquee-track,
+  .marquee-viewport:focus-within .marquee-track { animation-play-state: paused; }
+
+  /* ── Safe areas (notches / iOS home indicator) ───────── */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  /* Clears the fixed mobile tab bar so the last element on a page
+     is never trapped underneath it. */
+  .pb-bottom-nav { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
+  @screen md { .pb-bottom-nav { padding-bottom: 0; } }
+}
+
+/* ── Reduced motion ────────────────────────────────────
+   The landing page runs several always-on animations (blobs,
+   floats, tickers). Honour the OS-level preference instead of
+   forcing them on everyone. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .marquee-track,
+  .float,
+  .blob,
+  .shimmer-text,
+  .animate-spin-slow {
+    animation: none !important;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }

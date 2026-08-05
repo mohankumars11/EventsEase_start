@@ -17,7 +17,14 @@ const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS',
 // Festivals with a real detail page (same mapping as FestivalBanner.jsx) get
 // routed there; everything else routes to the most relevant Shop category —
 // e.g. Raksha Bandhan -> Gifts, since there's no dedicated Rakhi page.
-const FESTIVAL_DETAIL_IDS = new Set(['ganesh-chaturthi', 'navratri', 'diwali', 'christmas'])
+//
+// Derived from the festival data, not hand-listed. The hardcoded set here
+// named only four of the eight festivals that actually have detail pages,
+// so an upcoming Holi, Onam, Eid or Pongal card said "Shop now" and
+// dumped the customer into a generic Gifts listing instead of opening the
+// festival page that existed all along — and the list silently rotted
+// further every time a festival was added to data/festivals.js.
+const FESTIVAL_DETAIL_IDS = new Set(FESTIVALS.map(f => f.id))
 const FESTIVAL_SHOP_ROUTE = {
   'independence-day': { category: 'Party Essentials', occasion: 'Independence Day' },
   'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
@@ -167,69 +174,20 @@ export default function CustomerHome() {
           </SlideCarousel>
         </section>
 
-        {/* ── Shop + pooja items shortcuts ──────────────── */}
-        {/* Deliberately NOT another "Individual Services" card — that
-            choice is already offered once, in the hero card above, as
-            the secondary option next to "Start Planning". Repeating it
-            here with different wording was the exact redundancy that
-            makes two destinations feel like four. This row instead
-            covers a third, genuinely different intent: buy something
-            now, no quote or planning involved. */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link
-            to="/shop"
-            className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col"
-          >
-            <ProductImage
-              query="gift box cake flowers celebration delivery"
-              emoji="🛍️"
-              className="w-full h-36"
-            />
-            <div className="p-6 flex flex-col justify-between gap-4 flex-1">
-              <div>
-                <p className="font-bold text-gray-900 mb-1">Need it delivered today?</p>
-                <p className="text-sm text-gray-500">Cakes, gifts, flowers & hampers — no planning needed, just add to cart.</p>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-gray-400">
-                  <span>🎂 Cakes</span>
-                  <span>🎁 Gifts</span>
-                  <span>💐 Flowers</span>
-                  <span>🧺 Hampers</span>
-                </div>
-              </div>
-              <span className="self-start inline-flex items-center gap-2 bg-plum-50 group-hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                Shop now →
-              </span>
-            </div>
-          </Link>
-          <Link
-            to="/shop/Pooja%20%26%20Essentials"
-            className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col"
-          >
-            <ProductImage
-              query="Indian pooja thali diya samagri ritual items"
-              emoji="🪔"
-              className="w-full h-36"
-            />
-            <div className="p-6 flex flex-col justify-between gap-4 flex-1">
-              <div>
-                <p className="font-bold text-gray-900 mb-1">Planning a pooja?</p>
-                <p className="text-sm text-gray-500">Diyas, samagri, flowers, a pandit booking — everything needed for your ritual, delivered.</p>
-              </div>
-              <span className="self-start inline-flex items-center gap-2 bg-saffron-50 group-hover:bg-saffron-100 text-saffron-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                Browse pooja items →
-              </span>
-            </div>
-          </Link>
-        </section>
-
-        <ReferAndEarn />
-
-        {/* ── Shop teaser ────────────────────────────────── */}
+        {/* ── Shop ───────────────────────────────────────
+            One section, not two. This page previously ran a pair of
+            large "Need it delivered today?" / "Planning a pooja?" cards
+            and then, four rows later, a second block headed "Need
+            something today?" selling the same six categories with the
+            same subtitle — the customer met the shop three times on one
+            screen and couldn't tell the destinations apart. The category
+            row covers every intent the big cards did, including pooja,
+            in a quarter of the vertical space. */}
         <section className="bg-white rounded-3xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="min-w-0">
               <h2 className="font-bold text-gray-900">Need something today?</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Cakes, gifts, flowers & hampers — delivered.</p>
+              <p className="text-sm text-gray-500 mt-0.5">Cakes, gifts, flowers, pooja items — delivered, no planning needed.</p>
             </div>
             <Link to="/shop" className="text-sm font-semibold text-plum-600 hover:text-plum-700 shrink-0">
               Visit Shop →
@@ -243,6 +201,8 @@ export default function CustomerHome() {
             ))}
           </SlideCarousel>
         </section>
+
+        <ReferAndEarn />
 
         {/* ── Festival specials ─────────────────────────── */}
         <section>

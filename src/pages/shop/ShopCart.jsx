@@ -6,7 +6,8 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
-import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
+import { createOrder as createTestOrder, initiatePayment, verifyPayment, IS_TEST_MODE } from '../../lib/payment/testPaymentProvider'
+import { BRAND } from '../../config/sambramo'
 import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
 import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker'
 import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
@@ -526,10 +527,38 @@ export default function ShopCart() {
               </div>
             )}
 
-            {step === 'payment' && !UPI_CONFIGURED && (
+            {/* Production build with no payment method configured. Tell
+                the customer the truth and give them a human to talk to —
+                the alternative that used to render here was the test
+                harness's "Simulate Success" button, which would have
+                created a genuine paid order for free. */}
+            {step === 'payment' && !UPI_CONFIGURED && !IS_TEST_MODE && (
+              <div className="card p-5 space-y-4">
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  <ShieldAlert size={15} className="mt-0.5 shrink-0" />
+                  <span>
+                    Online payment is temporarily unavailable. Your cart is saved —
+                    message us and we'll complete this order with you directly.
+                  </span>
+                </div>
+                <a
+                  href={`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(`Hi Sambramo — I'd like to place a shop order for ${formatINR(total)}.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center py-3.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm"
+                >
+                  Complete my order on WhatsApp
+                </a>
+                <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 hover:text-gray-600">
+                  ← Back to address
+                </button>
+              </div>
+            )}
+
+            {step === 'payment' && !UPI_CONFIGURED && IS_TEST_MODE && (
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 font-semibold">
-                  <ShieldAlert size={15} /> TEST PAYMENT — no real money is charged
+                  <ShieldAlert size={15} /> TEST PAYMENT — dev build only, no real money is charged
                 </div>
                 <div className="flex gap-2">
                   {PAYMENT_METHODS.map(m => (

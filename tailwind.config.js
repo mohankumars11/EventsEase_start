@@ -30,42 +30,6 @@ export default {
         },
         cream: '#FFF8F0',
         plum: {
-          50:  '#f8f0ff',
-          100: '#f0deff',
-          200: '#e0bdff',
-          300: '#cc94ff',
-          400: '#b066ff',
-          500: '#9140ef',
-          600: '#7c2fd6',
-          700: '#651fad',
-          800: '#4e1688',
-          900: '#380e65',
-        },
-        saffron: {
-          50:  '#fff8ec',
-          100: '#fff0d0',
-          200: '#ffde99',
-          300: '#ffc85f',
-          400: '#ffb030',
-          500: '#f59500',
-          600: '#d97900',
-          700: '#b55c00',
-          800: '#8f4400',
-          900: '#6b3200',
-        },
-        berry: {
-          50:  '#fef0f8',
-          100: '#fcddf4',
-          200: '#fab7e8',
-          300: '#f787d4',
-          400: '#f050b8',
-          500: '#e22e9e',
-          600: '#bf1882',
-          700: '#9c136a',
-          800: '#7c1054',
-          900: '#4a0830',
-        },
-        plum: {
           50:  '#f5f0ff',
           100: '#ede0ff',
           200: '#dbc4ff',
@@ -104,7 +68,11 @@ export default {
         },
       },
       fontFamily: {
-        sans:    ['Inter', 'system-ui', 'sans-serif'],
+        // Manrope is the font actually loaded in index.html and applied to
+        // <body>; `sans` pointed at Inter, which is never fetched, so any
+        // `font-sans` element silently fell back to system-ui and looked
+        // different from the rest of the page.
+        sans:    ['Manrope', 'system-ui', 'sans-serif'],
         serif:   ['Playfair Display', 'Georgia', 'serif'],
         display: ['Playfair Display', 'Georgia', 'serif'],
         body:    ['Manrope', 'Inter', 'system-ui', 'sans-serif'],

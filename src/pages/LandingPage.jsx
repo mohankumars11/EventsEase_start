@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight, Sparkles, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
-import ProductImage from '../components/shop/ProductImage'
 import StarRating from '../components/reviews/StarRating'
 
 /* ═══════════════════════════════════════════════════════════
@@ -144,15 +143,26 @@ export default function LandingPage() {
   }, [])
 
   /**
-   * Navigate to /plan with optional pre-selected params — but only once
-   * signed in. A logged-out visitor goes straight to /login with no
-   * "from" state, so after a successful login they land on their
-   * dashboard rather than resuming into the wizard mid-click.
+   * Navigate to /plan with optional pre-selected params.
+   *
+   * A guest is sent to /login *carrying the destination* in router state.
+   * LoginPage already knows how to resume a `from` location — it even
+   * shows a "let's pick up where you left off" note for /plan — but this
+   * function used to call `navigate('/login')` with no state at all. So
+   * someone who tapped "Wedding", or a specific budget bracket, signed in
+   * and landed on an empty dashboard with their choice thrown away, and
+   * had to find and re-make it. That is the single largest drop-off point
+   * on the page: every hero CTA, all nine celebration cards, all eight
+   * budget chips and both closing CTAs funnel through here.
    */
   function toPlan(params = {}) {
-    if (!user) { navigate('/login'); return }
     const qs = new URLSearchParams(params).toString()
-    navigate('/plan' + (qs ? '?' + qs : ''))
+    const to = '/plan' + (qs ? '?' + qs : '')
+    if (!user) {
+      navigate('/login', { state: { from: { pathname: '/plan', search: qs ? '?' + qs : '' } } })
+      return
+    }
+    navigate(to)
   }
 
   return (
@@ -733,50 +743,51 @@ function CustomerVoices() {
    `reverse` per row is what makes a multi-row "roller" read as
    deliberate rather than a single stalled marquee.
 ═══════════════════════════════════════════════════════════ */
-function AutoScrollRow({ items, reverse = false, speed = 0.4 }) {
-  const scrollRef = useRef(null)
+/**
+ * One tile per service. Deliberately emoji-on-gradient rather than a
+ * photo: these render at 112×64 inside a strip that is always moving, so
+ * a cropped stock photo is unreadable at that size — while costing one
+ * live Unsplash search each. Forty-six services duplicated for the loop
+ * meant ~92 requests from this component alone, against a 50-per-hour
+ * quota shared with the whole site, which is why the rest of the page's
+ * imagery kept collapsing to fallbacks. The photo budget now goes to the
+ * large cards where a photo actually carries the design.
+ */
+const CATEGORY_TINTS = {
+  Venue:         'from-plum-100 to-plum-50',
+  Decoration:    'from-berry-100 to-berry-50',
+  Food:          'from-saffron-100 to-saffron-50',
+  Entertainment: 'from-sky-100 to-sky-50',
+  Photography:   'from-emerald-100 to-emerald-50',
+  Personal:      'from-rose-100 to-rose-50',
+  Rentals:       'from-amber-100 to-amber-50',
+  Other:         'from-indigo-100 to-indigo-50',
+}
 
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    let frame
-    let pos = reverse ? el.scrollWidth / 2 : 0
-    el.scrollLeft = pos
-    function tick() {
-      pos += reverse ? -speed : speed
-      const half = el.scrollWidth / 2
-      if (!reverse && pos >= half) pos = 0
-      if (reverse && pos <= 0) pos = half
-      el.scrollLeft = pos
-      frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    const pause  = () => cancelAnimationFrame(frame)
-    const resume = () => { frame = requestAnimationFrame(tick) }
-    el.addEventListener('mouseenter', pause)
-    el.addEventListener('mouseleave', resume)
-    el.addEventListener('touchstart', pause, { passive: true })
-    el.addEventListener('touchend', resume)
-    return () => {
-      cancelAnimationFrame(frame)
-      el.removeEventListener('mouseenter', pause)
-      el.removeEventListener('mouseleave', resume)
-      el.removeEventListener('touchstart', pause)
-      el.removeEventListener('touchend', resume)
-    }
-  }, [reverse, speed])
+function AutoScrollRow({ items, reverse = false }) {
+  // Slower rows for longer content keeps every row's apparent speed the
+  // same regardless of how many services landed in it.
+  const duration = Math.max(30, items.length * 4)
 
   return (
-    <div ref={scrollRef} className="flex gap-3 overflow-x-hidden scrollbar-hide" style={{ scrollBehavior: 'auto' }}>
-      {[...items, ...items].map((svc, i) => (
-        <div
-          key={`${svc.name}-${i}`}
-          className="shrink-0 w-28 bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden text-center"
-        >
-          <ProductImage query={`${svc.name} ${svc.category} India`} emoji={svc.emoji} className="w-full h-16" />
-          <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2 truncate">{svc.name}</p>
-        </div>
-      ))}
+    <div className="marquee-viewport overflow-hidden">
+      <div
+        className={`marquee-track gap-3 ${reverse ? 'marquee-track-reverse' : ''}`}
+        style={{ '--marquee-duration': `${duration}s` }}
+      >
+        {[...items, ...items].map((svc, i) => (
+          <div
+            key={`${svc.name}-${i}`}
+            aria-hidden={i >= items.length || undefined}
+            className="shrink-0 w-28 bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden text-center"
+          >
+            <div className={`w-full h-16 flex items-center justify-center bg-gradient-to-br ${CATEGORY_TINTS[svc.category] ?? 'from-gray-100 to-gray-50'}`}>
+              <span className="text-2xl">{svc.emoji}</span>
+            </div>
+            <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2 truncate">{svc.name}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -903,7 +914,6 @@ function CelebrationCard({ type, gradient, delay, onClick }) {
    FestivalCard sub-component
 ═══════════════════════════════════════════════════════════ */
 function FestivalCard({ festival, delay, onPlan }) {
-  const [hovered, setHovered] = useState(false)
   const [photo, setPhoto] = useState(null)
   const { name, emoji, gradientFrom, gradientTo, month, foods } = festival
 
@@ -913,15 +923,16 @@ function FestivalCard({ festival, delay, onPlan }) {
     return () => { cancelled = true }
   }, [name])
 
+  // A real <button>, not a div with role="button". The card previously
+  // also carried a hover-revealed overlay repeating the same "Plan this
+  // festival →" label that is already printed in the card body — two
+  // controls doing one job, and the overlay was invisible on touch,
+  // where most of this traffic is.
   return (
-    <div
-      className={`reveal reveal-delay-${delay} group relative bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <button
+      type="button"
+      className={`reveal reveal-delay-${delay} group relative w-full text-left bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-plum-500 focus-visible:ring-offset-2`}
       onClick={onPlan}
-      role="button"
-      tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onPlan()}
     >
       {/* Photo (or gradient fallback) header */}
       <div
@@ -959,22 +970,6 @@ function FestivalCard({ festival, delay, onPlan }) {
           Plan this festival →
         </span>
       </div>
-
-      {/* Hover overlay CTA */}
-      <div
-        className="absolute inset-0 flex items-end p-4 pointer-events-none transition-opacity duration-200"
-        style={{
-          background: `linear-gradient(to top, ${gradientFrom}cc 0%, transparent 55%)`,
-          opacity: hovered ? 1 : 0,
-        }}
-      >
-        <button
-          className="pointer-events-auto w-full text-center text-white text-sm font-bold py-2.5 bg-white/20 rounded-xl backdrop-blur-sm"
-          onClick={e => { e.stopPropagation(); onPlan() }}
-        >
-          Plan this festival →
-        </button>
-      </div>
-    </div>
+    </button>
   )
 }

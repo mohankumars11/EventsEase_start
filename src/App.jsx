@@ -1,59 +1,74 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { ToastProvider } from './context/ToastContext'
 import Navbar from './components/layout/Navbar'
 import BackToHomeButton from './components/layout/BackToHomeButton'
+import BottomNav from './components/layout/BottomNav'
+import ScrollRestoration from './components/layout/ScrollRestoration'
+import ErrorBoundary from './components/layout/ErrorBoundary'
 import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
 import FestivalBanner from './components/customer/FestivalBanner'
 
-// Public
-import LandingPage        from './pages/LandingPage'
-import SignupPage          from './pages/auth/SignupPage'
-import LoginPage           from './pages/auth/LoginPage'
-import AuthCallbackPage    from './pages/auth/AuthCallbackPage'
-import FestivalDetailPage  from './pages/FestivalDetailPage'
-import PlanningWizard      from './pages/plan/PlanningWizard'
-import PlanConfirmation    from './pages/plan/PlanConfirmation'
-import Shop                from './pages/shop/Shop'
-import ShopCategory        from './pages/shop/ShopCategory'
-import ProductDetail       from './pages/shop/ProductDetail'
-import ShopCart            from './pages/shop/ShopCart'
+// The landing page is the entry point for essentially all first-time
+// traffic, so it stays in the main bundle — code-splitting it would only
+// add a round-trip before anything renders.
+import LandingPage from './pages/LandingPage'
+
+// Everything else is split per route. Previously all 25 pages shipped in
+// one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
+// admin operations console, the vendor dashboard and the checkout flow
+// before they could read the headline. Each of these now loads only when
+// someone actually navigates to it.
+const SignupPage         = lazy(() => import('./pages/auth/SignupPage'))
+const LoginPage          = lazy(() => import('./pages/auth/LoginPage'))
+const AuthCallbackPage   = lazy(() => import('./pages/auth/AuthCallbackPage'))
+const FestivalDetailPage = lazy(() => import('./pages/FestivalDetailPage'))
+const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
+const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
+const Shop               = lazy(() => import('./pages/shop/Shop'))
+const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
+const ProductDetail      = lazy(() => import('./pages/shop/ProductDetail'))
+const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 
 // Customer
-import MyEvents       from './pages/customer/MyEvents'
-import CustomerHome   from './pages/customer/CustomerHome'
-import BrowseVendors  from './pages/customer/BrowseVendors'
-import VendorProfile  from './pages/customer/VendorProfile'
-import RequestQuote   from './pages/customer/RequestQuote'
-import MyBookings     from './pages/customer/MyBookings'
-import ServicesPicker from './pages/customer/ServicesPicker'
-import EventServices  from './pages/customer/EventServices'
-import MyOrders       from './pages/customer/MyOrders'
-import MyRequests     from './pages/customer/MyRequests'
-import Cart           from './pages/customer/Cart'
+const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
+const CustomerHome   = lazy(() => import('./pages/customer/CustomerHome'))
+const BrowseVendors  = lazy(() => import('./pages/customer/BrowseVendors'))
+const VendorProfile  = lazy(() => import('./pages/customer/VendorProfile'))
+const RequestQuote   = lazy(() => import('./pages/customer/RequestQuote'))
+const MyBookings     = lazy(() => import('./pages/customer/MyBookings'))
+const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
+const EventServices  = lazy(() => import('./pages/customer/EventServices'))
+const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
+const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
+const Cart           = lazy(() => import('./pages/customer/Cart'))
 
 // Vendor & Admin
-import VendorOnboarding from './pages/onboarding/VendorOnboarding'
-import VendorDashboard  from './pages/dashboard/VendorDashboard'
-import AdminDashboard   from './pages/dashboard/AdminDashboard'
-import AdminEventDetail from './pages/admin/AdminEventDetail'
+const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
+const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
+const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
+const AdminEventDetail = lazy(() => import('./pages/admin/AdminEventDetail'))
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-cream">
+      <div className="flex flex-col items-center gap-3 text-gray-400">
+        <div className="w-8 h-8 border-4 border-saffron-400 border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm">Loading…</span>
+      </div>
+    </div>
+  )
+}
 
 // ── Route guard ─────────────────────────────────────────
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, profile, loading } = useAuth()
   const location = useLocation()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <div className="flex flex-col items-center gap-3 text-gray-400">
-          <div className="w-8 h-8 border-4 border-marigold-400 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm">Loading…</span>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
 
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />
 
@@ -75,62 +90,92 @@ function DashboardRedirect() {
   return <Navigate to="/dashboard/customer" replace />
 }
 
+/**
+ * Marketing / browsing chrome: header, festival ticker, footer, chat.
+ * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
+ * row of a page is never hidden underneath it.
+ */
+/**
+ * Wraps page content so a crash inside one page doesn't take the header,
+ * navigation and footer down with it — the customer keeps a way out.
+ *
+ * Keyed by pathname so the boundary remounts on navigation: without that,
+ * once a route errored the boundary would stay in its error state and
+ * every subsequent page would render the fallback too.
+ */
+function PageBoundary({ children }) {
+  const { pathname } = useLocation()
+  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+}
+
 function AppShell({ children }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
       <FestivalBanner />
       <BackToHomeButton />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
       <Footer />
       <ChatWidget />
     </div>
   )
 }
 
+/** Signed-in customer chrome — same as AppShell minus the marketing footer. */
 function CustomerShell({ children }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
       <FestivalBanner />
       <BackToHomeButton />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
       <ChatWidget />
     </div>
   )
 }
 
+/**
+ * Auth screens draw their own full-height split layout, complete with
+ * brand panel and logo. Wrapping them in AppShell stacked a second logo,
+ * a festival ticker, a "Back to Home" link, a marketing footer and a chat
+ * bubble around a screen whose entire job is a single focused decision.
+ */
+function BareShell({ children }) {
+  return <div className="min-h-screen"><PageBoundary>{children}</PageBoundary></div>
+}
+
 function AppRoutes() {
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       {/* ── Public ─────────────────────────────────── */}
       <Route path="/"       element={<AppShell><LandingPage /></AppShell>} />
-      <Route path="/signup"         element={<AppShell><SignupPage /></AppShell>} />
-      <Route path="/login"          element={<AppShell><LoginPage /></AppShell>} />
-      <Route path="/auth/callback"  element={<AuthCallbackPage />} />
+      <Route path="/signup"         element={<BareShell><SignupPage /></BareShell>} />
+      <Route path="/login"          element={<BareShell><LoginPage /></BareShell>} />
+      <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
 
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
 
       {/* ── Shop (public browsing, checkout requires login) ── */}
       <Route path="/shop" element={<AppShell><Shop /></AppShell>} />
-      <Route path="/shop/cart" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <AppShell><ShopCart /></AppShell>
-        </ProtectedRoute>
-      } />
+      {/* Public: a guest can build and review a cart, and is asked to sign
+          in at checkout. Gating the cart page itself bounced anyone who
+          tapped the cart icon straight to /login, which reads as "your
+          items are gone" and is the classic way to lose a basket. */}
+      <Route path="/shop/cart" element={<AppShell><ShopCart /></AppShell>} />
       <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
       <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
       {/* ── Planning wizard (requires login) ────────── */}
       <Route path="/plan" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <PlanningWizard />
+          <BareShell><PlanningWizard /></BareShell>
         </ProtectedRoute>
       } />
       <Route path="/plan/confirmation" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <PlanConfirmation />
+          <BareShell><PlanConfirmation /></BareShell>
         </ProtectedRoute>
       } />
 
@@ -172,14 +217,16 @@ function AppRoutes() {
       } />
       {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
       <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
+      {/* These two rendered bare — no header, no way out except the page's
+          own in-content links. Same shell as every other customer page. */}
       <Route path="/dashboard/customer/orders" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <MyOrders />
+          <CustomerShell><MyOrders /></CustomerShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/requests" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <MyRequests />
+          <CustomerShell><MyRequests /></CustomerShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/cart" element={
@@ -196,7 +243,7 @@ function AppRoutes() {
       {/* ── Vendor onboarding ──────────────────────── */}
       <Route path="/onboarding/vendor" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <VendorOnboarding />
+          <BareShell><VendorOnboarding /></BareShell>
         </ProtectedRoute>
       } />
 
@@ -222,6 +269,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<DashboardRedirect />} />
       <Route path="*"          element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
 
@@ -230,7 +278,11 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <AppRoutes />
+          <ToastProvider>
+            <ScrollRestoration />
+            <AppRoutes />
+            <BottomNav />
+          </ToastProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

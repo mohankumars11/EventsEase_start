@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { useToast, friendlyError } from '../../context/ToastContext'
 import { EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS } from '../../config/sambramo'
 import { formatDate, formatINR } from '../../utils/format'
 
@@ -346,6 +347,7 @@ const VENDOR_STATUS_CSS = {
 
 /* ── Vendor management tab ─────────────────────────────────────── */
 function VendorsContent() {
+  const toast = useToast()
   const [vendors, setVendors]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState(null)
@@ -374,8 +376,11 @@ function VendorsContent() {
       .from('vendors')
       .update(patch)
       .eq('id', vendorId)
-    if (err) { alert('Error: ' + err.message) }
-    else { await fetchVendors() }
+    if (err) { toast.error(friendlyError(err, 'Could not update this vendor.')) }
+    else {
+      toast.success(`Vendor ${status.toLowerCase().replace(/_/g, ' ')}.`)
+      await fetchVendors()
+    }
     setActing(null)
   }
 
@@ -515,6 +520,7 @@ const ORDER_STATUS_FLOW = ['placed', 'processing', 'dispatched', 'delivered']
 
 /* ── Shop orders tab ────────────────────────────────────────────── */
 function OrdersContent() {
+  const toast = useToast()
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -540,8 +546,11 @@ function OrdersContent() {
     if (!next) return
     setActing(order.id)
     const { error: err } = await supabase.from('orders').update({ status: next }).eq('id', order.id)
-    if (err) alert('Error: ' + err.message)
-    else await fetchOrders()
+    if (err) toast.error(friendlyError(err, 'Could not move this order forward.'))
+    else {
+      toast.success(`Order #${order.id.slice(0, 8).toUpperCase()} → ${next}.`)
+      await fetchOrders()
+    }
     setActing(null)
   }
 
@@ -553,8 +562,11 @@ function OrdersContent() {
     if (!confirm(`Confirm ₹${order.total} was received via UPI for order #${order.id.slice(0, 8).toUpperCase()}?`)) return
     setActing(order.id)
     const { error: err } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id)
-    if (err) alert('Error: ' + err.message)
-    else await fetchOrders()
+    if (err) toast.error(friendlyError(err, 'Could not mark this order paid.'))
+    else {
+      toast.success(`Payment confirmed for #${order.id.slice(0, 8).toUpperCase()}.`)
+      await fetchOrders()
+    }
     setActing(null)
   }
 
@@ -659,6 +671,7 @@ function OrdersContent() {
 
 /* ── Reviews tab ────────────────────────────────────────────────── */
 function ReviewsContent() {
+  const toast = useToast()
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -691,8 +704,12 @@ function ReviewsContent() {
       .from('reviews_catalog')
       .update({ admin_reply: replyText.trim() || null, admin_reply_at: new Date().toISOString() })
       .eq('id', reviewId)
-    if (err) alert('Error: ' + err.message)
-    else { setReplyingId(null); await fetchReviews() }
+    if (err) toast.error(friendlyError(err, 'Could not save your reply.'))
+    else {
+      toast.success('Reply published.')
+      setReplyingId(null)
+      await fetchReviews()
+    }
     setSaving(false)
   }
 
@@ -788,6 +805,7 @@ const SUPPORT_PILLS = [
 ]
 
 function SupportContent() {
+  const toast = useToast()
   const [pill, setPill] = useState('returns')
   const [returns, setReturns]     = useState([])
   const [complaints, setComplaints] = useState([])
@@ -827,8 +845,11 @@ function SupportContent() {
       const row = returns.find(r => r.id === id)
       if (row) await supabase.from('orders').update({ payment_status: 'refunded' }).eq('id', row.order_id)
     }
-    if (err) alert('Error: ' + err.message)
-    else await fetchAll()
+    if (err) toast.error(friendlyError(err, 'Could not update this return request.'))
+    else {
+      toast.success(status === 'refunded' ? 'Marked refunded — the order was updated too.' : `Return marked ${status}.`)
+      await fetchAll()
+    }
     setActing(null)
   }
 
@@ -842,16 +863,23 @@ function SupportContent() {
     const { error: err } = await supabase.from('complaints')
       .update({ admin_reply: replyText.trim() || null, status, resolved_at: status === 'resolved' ? new Date().toISOString() : null })
       .eq('id', id)
-    if (err) alert('Error: ' + err.message)
-    else { setReplyingId(null); await fetchAll() }
+    if (err) toast.error(friendlyError(err, 'Could not save your reply.'))
+    else {
+      toast.success(status === 'resolved' ? 'Complaint resolved.' : 'Reply sent.')
+      setReplyingId(null)
+      await fetchAll()
+    }
     setActing(null)
   }
 
   async function advanceEnquiry(id, status) {
     setActing(id)
     const { error: err } = await supabase.from('service_enquiries').update({ status }).eq('id', id)
-    if (err) alert('Error: ' + err.message)
-    else await fetchAll()
+    if (err) toast.error(friendlyError(err, 'Could not update this enquiry.'))
+    else {
+      toast.success(`Enquiry marked ${status}.`)
+      await fetchAll()
+    }
     setActing(null)
   }
 
@@ -863,7 +891,7 @@ function SupportContent() {
 
   async function sendQuote(id) {
     const price = Number(quotePrice)
-    if (!price || price <= 0) { alert('Enter a valid quote amount.'); return }
+    if (!price || price <= 0) { toast.error('Enter a quote amount greater than zero.'); return }
     setActing(id)
     const { error: err } = await supabase.from('service_enquiries').update({
       quoted_price: price,
@@ -871,8 +899,12 @@ function SupportContent() {
       quoted_at: new Date().toISOString(),
       status: 'responded',
     }).eq('id', id)
-    if (err) alert('Error: ' + err.message)
-    else { setQuotingId(null); await fetchAll() }
+    if (err) toast.error(friendlyError(err, 'Could not send this quote.'))
+    else {
+      toast.success(`Quote of ${formatINR(price)} sent to the customer.`)
+      setQuotingId(null)
+      await fetchAll()
+    }
     setActing(null)
   }
 

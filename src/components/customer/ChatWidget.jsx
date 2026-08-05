@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MessageCircle, X, Sparkles } from 'lucide-react'
 import { BRAND, SERVICE_CATEGORIES } from '../../config/sambramo'
@@ -19,6 +19,13 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([{ from: 'bot', text: GREETING }])
   const [showOptions, setShowOptions] = useState(true)
+  const endRef = useRef(null)
+
+  // The transcript never scrolled itself, so after four or five replies
+  // the newest message sat below the fold and the panel looked frozen.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages, showOptions])
 
   function say(text) {
     setMessages(m => [...m, { from: 'bot', text }])
@@ -65,9 +72,10 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[60]">
+    // Sits above the mobile tab bar rather than on top of the Cart tab.
+    <div className="fixed right-4 sm:right-5 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-5 z-[60]">
       {open && (
-        <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-sm h-[28rem] max-h-[calc(100dvh-7rem)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+        <div className="mb-3 w-[calc(100vw-2rem)] max-w-sm h-[28rem] max-h-[calc(100dvh-13rem)] md:max-h-[calc(100dvh-7rem)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-plum-900 px-5 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
@@ -103,6 +111,7 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
+            <div ref={endRef} />
           </div>
 
           {/* Quick replies */}

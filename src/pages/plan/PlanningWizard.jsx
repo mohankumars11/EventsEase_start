@@ -4,6 +4,7 @@ import { CheckCircle2, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { EVENT_TYPES, BUDGET_OPTIONS, SERVICE_CATEGORIES, BRAND } from '../../config/sambramo'
 import { useAuth } from '../../context/AuthContext'
+import { friendlyError } from '../../context/ToastContext'
 
 const TOTAL_STEPS = 6
 
@@ -50,6 +51,14 @@ export default function PlanningWizard() {
   const [error, setError]       = useState(null)
   const [animating, setAnimating] = useState(false)
 
+  // The landing page's eight budget chips navigate here as
+  // `/plan?budget=<label>`, and its festival cards add `?festival=<id>`.
+  // Only `type` was ever read, so a visitor who picked a budget bracket
+  // watched that choice vanish and had to make it again at step 6 — the
+  // exact re-work the pre-selection existed to avoid.
+  const presetBudget = BUDGET_OPTIONS.find(b => b.label === searchParams.get('budget'))
+  const presetFestival = searchParams.get('festival')
+
   const [form, setForm] = useState({
     event_type:        searchParams.get('type') || '',
     event_date:        '',
@@ -58,13 +67,17 @@ export default function PlanningWizard() {
     style_preference:  '',
     guest_count:       '',
     services:          [],
-    budget_text:       '',
-    budget_min:        null,
-    budget_max:        null,
+    budget_text:       presetBudget?.label ?? '',
+    budget_min:        presetBudget?.min ?? null,
+    budget_max:        presetBudget?.max ?? null,
     customer_name:     profile?.full_name || '',
     customer_phone:    profile?.phone?.replace('+91', '') || '',
     customer_email:    profile?.email || '',
-    special_requirements: '',
+    // Carry the festival through so the coordinator sees which one this
+    // request came from instead of a bare "Festival" event type.
+    special_requirements: presetFestival
+      ? `Festival: ${presetFestival.replace(/-/g, ' ')}`
+      : '',
   })
 
   // Pre-fill from profile when it loads
@@ -98,13 +111,23 @@ export default function PlanningWizard() {
     }))
   }
 
+  // An Indian mobile number is 10 digits starting 6–9. The old check was
+  // just `!!form.customer_phone`, so a single stray digit passed and the
+  // request was saved as "+915". For a business whose entire promise is
+  // "a coordinator will call you", an unreachable number isn't a
+  // validation nicety — it's a lead that can never be served.
+  const phoneDigits = form.customer_phone.replace(/\D/g, '').slice(-10)
+  const phoneValid  = /^[6-9]\d{9}$/.test(phoneDigits)
+  const emailValid  = !form.customer_email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim())
+  const nameValid   = form.customer_name.trim().length >= 2
+
   function canNext() {
     if (step === 1) return !!form.event_type
     if (step === 2) return !!form.event_date
     if (step === 3) return !!form.city
     if (step === 4) return !!form.guest_count
     if (step === 5) return true
-    if (step === 6) return !!(form.customer_name && form.customer_phone && form.budget_text)
+    if (step === 6) return nameValid && phoneValid && emailValid && !!form.budget_text
     return true
   }
 
@@ -177,7 +200,10 @@ export default function PlanningWizard() {
 
       navigate(`/plan/confirmation?eventId=${data.id}`)
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.')
+      // Raw Postgres text ("null value in column … violates not-null
+      // constraint") is not something to show a customer at the end of a
+      // six-step form.
+      setError(friendlyError(err, "We couldn't submit your request just now. Please try again."))
       setSubmitting(false)
     }
   }
@@ -188,13 +214,19 @@ export default function PlanningWizard() {
     <div className="min-h-screen bg-plum-950 flex flex-col lg:flex-row">
 
       {/* ── Left panel ─────────────────────────────────── */}
-      <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 p-8 lg:p-12 flex flex-col justify-between">
-        <div>
-          <div className="text-saffron-400 font-display text-2xl font-bold mb-1">Sambramo</div>
-          <p className="text-plum-400 text-xs">Your Moment. Our Magic.</p>
+      {/* On a phone this panel stacks above the form, so everything in it
+          is height the customer must scroll past before reaching the first
+          option. Padding is tightened and the running summary is hidden
+          below lg — it duplicates what the form already shows, and pushing
+          the actual questions below the fold on the primary conversion
+          flow is the costliest place in the app to waste a screen. */}
+      <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 px-5 py-5 lg:p-12 flex flex-col justify-between">
+        <div className="flex items-baseline gap-2">
+          <div className="text-saffron-400 font-display text-xl lg:text-2xl font-bold">Sambramo</div>
+          <p className="text-plum-400 text-xs hidden sm:block">Your Moment. Our Magic.</p>
         </div>
 
-        <div className="my-8 space-y-6">
+        <div className="mt-4 lg:my-8 space-y-3 lg:space-y-6">
           {/* Step counter */}
           <div className="text-plum-400 text-xs font-body uppercase tracking-widest">
             Step {step} of {TOTAL_STEPS}
@@ -202,10 +234,10 @@ export default function PlanningWizard() {
 
           {/* Step title */}
           <div>
-            <h1 className="text-white font-display text-3xl lg:text-4xl font-bold leading-tight mb-3">
+            <h1 className="text-white font-display text-2xl lg:text-4xl font-bold leading-tight mb-1.5 lg:mb-3">
               {STEPS[step - 1].title}
             </h1>
-            <p className="text-plum-300 text-base leading-relaxed">
+            <p className="text-plum-300 text-sm lg:text-base leading-relaxed">
               {STEPS[step - 1].sub}
             </p>
           </div>
@@ -224,7 +256,7 @@ export default function PlanningWizard() {
 
           {/* Live summary of choices */}
           {(selectedType || form.event_date || form.city || form.guest_count) && (
-            <div className="bg-white/5 rounded-2xl p-4 space-y-2 border border-white/10">
+            <div className="hidden lg:block bg-white/5 rounded-2xl p-4 space-y-2 border border-white/10">
               <p className="text-plum-400 text-xs uppercase tracking-wider mb-2">Your celebration</p>
               {selectedType && (
                 <div className="flex items-center gap-2 text-sm text-plum-200">
@@ -265,7 +297,12 @@ export default function PlanningWizard() {
           )}
         </div>
 
-        <p className="text-plum-600 text-xs">Need help? {BRAND.supportPhone}</p>
+        <a
+          href={`tel:${BRAND.supportPhone}`}
+          className="hidden lg:block text-plum-600 hover:text-plum-400 text-xs transition-colors"
+        >
+          Need help? {BRAND.supportPhone}
+        </a>
       </div>
 
       {/* ── Right panel ─────────────────────────────────── */}
@@ -291,7 +328,7 @@ export default function PlanningWizard() {
                     <div className="font-semibold text-sm text-plum-900">{et.label}</div>
                     <div className="text-xs text-gray-500 mt-1 leading-tight">{et.tagline}</div>
                     {selected && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-saffron-400 rounded-full flex items-center justify-center animate-scale-in">
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-saffron-400 rounded-full flex items-center justify-center animate-fade-in">
                         <CheckCircle2 size={12} className="text-white" />
                       </div>
                     )}
@@ -522,10 +559,20 @@ export default function PlanningWizard() {
                       placeholder="9876543210"
                       value={form.customer_phone.replace('+91', '')}
                       onChange={e => setField('customer_phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-plum-900 focus:outline-none focus:border-saffron-400 transition-colors"
+                      className={`flex-1 border-2 rounded-xl px-4 py-3 text-plum-900 focus:outline-none transition-colors ${
+                        phoneDigits.length > 0 && !phoneValid
+                          ? 'border-red-300 focus:border-red-400'
+                          : 'border-gray-200 focus:border-saffron-400'
+                      }`}
                       inputMode="numeric"
+                      autoComplete="tel-national"
                     />
                   </div>
+                  {phoneDigits.length > 0 && !phoneValid && (
+                    <p className="text-xs text-red-600 mt-1.5">
+                      Enter a 10-digit Indian mobile number so our coordinator can reach you.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Email <span className="font-normal text-gray-400">(optional)</span></label>
@@ -534,8 +581,14 @@ export default function PlanningWizard() {
                     placeholder="you@example.com"
                     value={form.customer_email}
                     onChange={e => setField('customer_email', e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-plum-900 focus:outline-none focus:border-saffron-400 transition-colors"
+                    className={`w-full border-2 rounded-xl px-4 py-3 text-plum-900 focus:outline-none transition-colors ${
+                      emailValid ? 'border-gray-200 focus:border-saffron-400' : 'border-red-300 focus:border-red-400'
+                    }`}
+                    autoComplete="email"
                   />
+                  {!emailValid && (
+                    <p className="text-xs text-red-600 mt-1.5">That email doesn't look right — check for a typo.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Anything specific? <span className="font-normal text-gray-400">(optional)</span></label>

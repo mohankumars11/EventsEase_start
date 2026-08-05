@@ -1,29 +1,44 @@
 import { ImagePlus, ClipboardList, Star, TrendingUp, ChevronRight, CheckCircle2, AlertCircle, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { BRAND } from '../../config/sambramo'
+
+// Every card and plan button on this page used to be `disabled` with
+// `cursor-not-allowed` — seven controls a vendor could see, want, and
+// never press, under a "coming soon" caption. Sambramo runs a
+// human-assisted concierge model today, so the honest version of each of
+// these actions is a real conversation with the team. Each now opens
+// WhatsApp with the request already written, which is exactly how the
+// business services vendors right now.
+function whatsappHref(message) {
+  return `https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(message)}`
+}
 
 const QUICK_ACTIONS = [
   {
     title:    'Complete your profile',
-    desc:     'Add photos, description & pricing',
+    desc:     'Send us photos, description & pricing — we set it up for you',
     icon:     ImagePlus,
     color:    'bg-saffron-50 text-saffron-600',
     badge:    'Important',
     badgeColor: 'bg-crimson-100 text-crimson-600',
+    message:  "Hi Sambramo — I'd like to complete my vendor profile. I have photos, pricing and a description ready.",
   },
   {
     title:    'View enquiries',
-    desc:     'Respond to customer booking requests',
+    desc:     'Ask the team for any customer requests waiting on you',
     icon:     ClipboardList,
     color:    'bg-blue-50 text-blue-600',
     badge:    null,
+    message:  'Hi Sambramo — are there any customer enquiries waiting for my business?',
   },
   {
     title:    'My reviews',
-    desc:     'See what customers are saying',
+    desc:     'Hear what customers said about your last events',
     icon:     Star,
     color:    'bg-yellow-50 text-yellow-600',
     badge:    null,
+    message:  'Hi Sambramo — could you share the customer feedback from my recent events?',
   },
   {
     title:    'Upgrade plan',
@@ -32,6 +47,7 @@ const QUICK_ACTIONS = [
     color:    'bg-green-50 text-green-600',
     badge:    'Free now',
     badgeColor: 'bg-green-100 text-green-700',
+    message:  "Hi Sambramo — I'd like to hear about upgrading my vendor plan.",
   },
 ]
 
@@ -126,8 +142,14 @@ export default function VendorDashboard() {
       <section>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Quick actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {QUICK_ACTIONS.map(({ title, desc, icon: Icon, color, badge, badgeColor }) => (
-            <div key={title} className="card p-5 flex items-center gap-4 opacity-70 cursor-not-allowed">
+          {QUICK_ACTIONS.map(({ title, desc, icon: Icon, color, badge, badgeColor, message }) => (
+            <a
+              key={title}
+              href={whatsappHref(message)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="card p-5 flex items-center gap-4 hover:border-plum-200 hover:shadow-md transition-all group"
+            >
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                 <Icon size={20} />
               </div>
@@ -140,11 +162,13 @@ export default function VendorDashboard() {
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
               </div>
-              <ChevronRight size={16} className="text-gray-300 shrink-0" />
-            </div>
+              <ChevronRight size={16} className="text-gray-300 group-hover:text-plum-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </a>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-3 text-center">Full vendor tools coming soon</p>
+        <p className="text-xs text-gray-400 mt-3 text-center">
+          Self-serve vendor tools are on the way — until then your Sambramo coordinator handles these directly on WhatsApp.
+        </p>
       </section>
 
       {/* Stats placeholder */}
@@ -186,9 +210,20 @@ export default function VendorDashboard() {
                   </li>
                 ))}
               </ul>
-              <button disabled className="btn-secondary w-full mt-5 text-xs opacity-50 cursor-not-allowed">
-                {plan === 'Free' ? 'Current plan' : 'Upgrade — coming soon'}
-              </button>
+              {plan === 'Free' ? (
+                <div className="w-full mt-5 text-xs font-semibold text-center text-gray-400 border border-gray-100 rounded-xl py-2.5">
+                  Current plan
+                </div>
+              ) : (
+                <a
+                  href={whatsappHref(`Hi Sambramo — I'd like to upgrade my vendor plan to ${plan} (${price}).`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary w-full mt-5 text-xs"
+                >
+                  Upgrade to {plan}
+                </a>
+              )}
             </div>
           ))}
         </div>

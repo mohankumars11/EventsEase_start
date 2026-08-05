@@ -107,7 +107,7 @@ export default function BrowseVendors() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="card p-5 mb-5 border-marigold-200 animate-[fadeIn_.15s_ease]">
+          <div className="card p-5 mb-5 border-marigold-200 animate-fade-in">
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-gray-800 text-sm">Refine results</span>
               <div className="flex items-center gap-3">
