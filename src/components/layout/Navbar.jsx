@@ -119,6 +119,12 @@ export default function Navbar() {
                       My Orders
                     </Link>
                     <Link
+                      to="/dashboard/customer/requests"
+                      className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
+                    >
+                      My Requests
+                    </Link>
+                    <Link
                       to={dashboardLink()}
                       className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg hover:bg-plum-800 transition-colors"
                     >
