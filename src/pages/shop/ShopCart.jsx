@@ -9,6 +9,7 @@ import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
 import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
 import LocationAutocomplete from '../../components/common/LocationAutocomplete'
+import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
 
 const PAYMENT_METHODS = [
   { id: 'upi',       label: 'UPI' },
@@ -332,18 +333,18 @@ export default function ShopCart() {
                 )}
 
                 <div className="grid grid-cols-3 gap-2">
-                  <a href={upiLinks.gpay} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
-                    <span className="text-2xl">🅖</span> Google Pay
+                  <a href={upiLinks.gpay} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <GooglePayIcon className="w-9 h-9" /> Google Pay
                   </a>
-                  <a href={upiLinks.phonepe} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
-                    <span className="text-2xl">📱</span> PhonePe
+                  <a href={upiLinks.phonepe} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <PhonePeIcon className="w-9 h-9" /> PhonePe
                   </a>
-                  <a href={upiLinks.paytm} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
-                    <span className="text-2xl">💳</span> Paytm
+                  <a href={upiLinks.paytm} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <PaytmIcon className="w-9 h-9" /> Paytm
                   </a>
                 </div>
-                <a href={upiLinks.upi} className="block w-full text-center py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50">
-                  Other UPI app (BHIM & more)
+                <a href={upiLinks.upi} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50">
+                  <UpiIcon className="w-6 h-6" /> Other UPI app (BHIM & more)
                 </a>
 
                 <div className="flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 rounded-xl">
