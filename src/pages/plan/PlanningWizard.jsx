@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { EVENT_TYPES, BUDGET_OPTIONS, SERVICE_CATEGORIES, BRAND } from '../../config/sambramo'
 import { useAuth } from '../../context/AuthContext'
 import { friendlyError } from '../../context/ToastContext'
+import SambramoLogo from '../../components/ui/SambramoLogo'
 
 const TOTAL_STEPS = 6
 
@@ -221,9 +222,8 @@ export default function PlanningWizard() {
           the actual questions below the fold on the primary conversion
           flow is the costliest place in the app to waste a screen. */}
       <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 px-5 py-5 lg:p-12 flex flex-col justify-between">
-        <div className="flex items-baseline gap-2">
-          <div className="text-saffron-400 font-display text-xl lg:text-2xl font-bold">Sambramo</div>
-          <p className="text-plum-400 text-xs hidden sm:block">Your Moment. Our Magic.</p>
+        <div className="flex items-center gap-2">
+          <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:block" />
         </div>
 
         <div className="mt-4 lg:my-8 space-y-3 lg:space-y-6">

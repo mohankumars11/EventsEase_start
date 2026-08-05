@@ -14,28 +14,53 @@ export default function SambramoLogo({
   // 'onDark' for the plum navbar and footer, 'onLight' for cream and white.
   ground  = 'onDark',
   caption = false,
+  /**
+   * The caption is ~45 characters. Set at once it is wider than the wordmark
+   * it sits under, so in tight rails (the navbar especially, where it competes
+   * with the links and the CTA) the caller hides it at small breakpoints
+   * rather than letting it push the row into overflow.
+   */
+  captionClassName = '',
   className = '',
 }) {
   const wordColor = ground === 'onDark' ? 'text-white' : 'text-plum-950'
-  const capColor  = ground === 'onDark' ? 'text-plum-400' : 'text-plum-700'
+  const capColor  = ground === 'onDark' ? 'text-plum-300' : 'text-plum-600'
 
   // Playfair at display weight already carries the name; the optical size of
   // the wordmark is tied to the mark so the lockup scales as one object.
   const wordSize = size >= 40 ? 'text-3xl' : size >= 30 ? 'text-xl' : 'text-lg'
+  const capSize  = size >= 40 ? 'text-[10px]' : 'text-[9px]'
+
+  // Gap between mark and wordmark, in px. The caption is indented by exactly
+  // this plus the mark width so its left edge lands on the wordmark's left
+  // edge at any size — hardcoding a Tailwind padding step would only line up
+  // at one of them.
+  const GAP = 10
 
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <SambramoMark size={size} />
-      <span className="flex flex-col leading-none">
-        <span className={`font-display font-bold tracking-tight ${wordSize} ${wordColor}`}>
+    // The mark pairs with the wordmark in its own row, and the caption hangs
+    // beneath that row. Centering the mark against a column that contained
+    // both lines dropped it to sit between them, so the mark drifted off the
+    // name as soon as a caption was switched on.
+    <span className={`inline-flex flex-col ${className}`}>
+      <span className="inline-flex items-center" style={{ gap: `${GAP}px` }}>
+        <SambramoMark size={size} className="shrink-0" />
+        <span className={`font-display font-bold tracking-tight leading-none ${wordSize} ${wordColor}`}>
           {BRAND.name}
         </span>
-        {caption && (
-          <span className={`mt-1.5 text-[10px] font-medium tracking-[0.14em] uppercase ${capColor}`}>
-            {BRAND.tagline}
-          </span>
-        )}
       </span>
+
+      {/* The caption is deliberately allowed to wrap. Pinned to one line it
+          overflowed the centred mobile logo on narrow phones and scrolled the
+          page sideways; the navbar keeps it on one line via shrink-0. */}
+      {caption && (
+        <span
+          style={{ paddingLeft: `${size + GAP}px` }}
+          className={`mt-1.5 ${capSize} font-semibold leading-snug tracking-[0.12em] uppercase ${capColor} ${captionClassName}`}
+        >
+          {BRAND.tagline}
+        </span>
+      )}
     </span>
   )
 }

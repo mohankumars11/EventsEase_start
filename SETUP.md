@@ -1,4 +1,4 @@
-# EventEase — Setup Guide
+# Sambramo — Setup Guide
 
 ## Prerequisites
 

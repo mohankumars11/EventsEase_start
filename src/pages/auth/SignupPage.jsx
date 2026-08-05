@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
+import SambramoLogo from '../../components/ui/SambramoLogo'
 
 const RESEND_SECONDS = 60
 
@@ -175,8 +176,7 @@ export default function SignupPage() {
       {/* Left brand panel */}
       <div className="hidden md:flex md:w-5/12 flex-col justify-between p-12 bg-plum-900">
         <Link to="/" className="inline-flex items-center gap-3">
-          <span className="w-10 h-10 bg-saffron-400 rounded-xl flex items-center justify-center font-bold text-xl text-plum-950 font-display">S</span>
-          <span className="text-2xl font-bold text-white font-display">Sambr<span className="text-saffron-400">amo</span></span>
+          <SambramoLogo size={40} ground="onDark" caption />
         </Link>
         <div className="space-y-6">
           <div>
@@ -201,8 +201,7 @@ export default function SignupPage() {
           {/* Mobile logo */}
           <div className="flex md:hidden justify-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2">
-              <span className="w-9 h-9 bg-saffron-400 rounded-xl flex items-center justify-center font-bold text-lg text-plum-950 font-display">S</span>
-              <span className="text-xl font-bold text-gray-900 font-display">Sambr<span className="text-plum-600">amo</span></span>
+              <SambramoLogo size={36} ground="onLight" caption />
             </Link>
           </div>
 

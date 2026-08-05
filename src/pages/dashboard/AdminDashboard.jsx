@@ -7,7 +7,8 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useToast, friendlyError } from '../../context/ToastContext'
-import { EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS } from '../../config/sambramo'
+import { EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS, BRAND } from '../../config/sambramo'
+import SambramoMark from '../../components/ui/SambramoMark'
 import { formatDate, formatINR } from '../../utils/format'
 
 /* ── Sidebar navigation items ──────────────────────────────────── */
@@ -1279,9 +1280,15 @@ export default function AdminDashboard() {
       >
         {/* Sidebar header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
-          <div>
-            <div className="text-sm font-bold text-gray-900 leading-tight">Sambramo Operations</div>
-            <div className="text-[11px] text-gray-400">Your Moment. Our Magic.</div>
+          <div className="flex items-center gap-2">
+            <SambramoMark size={26} />
+            <div>
+              <div className="text-sm font-bold text-gray-900 leading-tight">Sambramo Operations</div>
+              {/* Internal console: the customer-facing caption would be
+                  marketing copy in a tool, so this keeps the signature line
+                  and only stops hardcoding it. */}
+              <div className="text-[11px] text-gray-400">{BRAND.signature}</div>
+            </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -1333,9 +1340,10 @@ export default function AdminDashboard() {
           >
             <Menu size={22} />
           </button>
+          <SambramoMark size={26} className="shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="font-bold text-gray-900 text-base leading-tight">Sambramo Operations</div>
-            <div className="text-xs text-gray-400">Your Moment. Our Magic.</div>
+            <div className="text-xs text-gray-400">{BRAND.signature}</div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="hidden sm:block text-xs text-gray-500">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import SambramoLogo from '../../components/ui/SambramoLogo'
 
 const CATEGORIES = [
   'Catering & Food',
@@ -160,8 +161,7 @@ export default function VendorOnboarding() {
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
-            <span className="w-9 h-9 bg-saffron-400 rounded-xl flex items-center justify-center font-bold text-lg text-plum-950 font-display">S</span>
-            <span className="text-xl font-bold text-gray-900 font-display">Sambr<span className="text-plum-600">amo</span></span>
+            <SambramoLogo size={36} ground="onLight" caption />
           </div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Set up your partner profile</h1>
           <p className="text-gray-500 text-sm mt-1">Our team will review and approve your profile within 24–48 hours.</p>

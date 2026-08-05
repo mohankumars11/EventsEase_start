@@ -79,7 +79,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to={user ? dashboardLink() : '/'} className="shrink-0">
-            <SambramoLogo size={32} ground="onDark" />
+            {/* The caption only appears from xl up. Below that the nav links
+                and the CTA already own the row, and a 45-character descriptor
+                pushes the whole bar into overflow. */}
+            <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden xl:block" />
           </Link>
 
           {/* Desktop nav links */}
