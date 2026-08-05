@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingBag, Trash2, Minus, Plus, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Trash2, Minus, Plus, CheckCircle2, AlertCircle, ShieldAlert, Tag, X } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -37,6 +37,11 @@ export default function ShopCart() {
   const [copied, setCopied] = useState(false)
   const [tappedApp, setTappedApp] = useState(null)
 
+  const [couponInput, setCouponInput] = useState('')
+  const [coupon, setCoupon] = useState(null) // { coupon_id, code, discount_amount, message }
+  const [couponError, setCouponError] = useState(null)
+  const [applyingCoupon, setApplyingCoupon] = useState(false)
+
   // Free delivery is a first-order acquisition offer, not a blanket
   // subsidy (a flat "always free above ₹999" erodes margin on every
   // repeat order with no incremental benefit — the discount only needs
@@ -50,8 +55,43 @@ export default function ShopCart() {
 
   const qualifiesForFreeDelivery = isFirstOrder && productTotal >= FREE_DELIVERY_THRESHOLD
   const deliveryFee = productTotal === 0 || qualifiesForFreeDelivery ? 0 : DELIVERY_FEE
-  const total = productTotal + deliveryFee
+  const discountAmount = coupon?.discount_amount ?? 0
+  const total = Math.max(0, productTotal + deliveryFee - discountAmount)
   const addressValid = address.name && address.phone && address.line && address.city && address.pincode
+
+  async function applyCoupon() {
+    if (!couponInput.trim()) return
+    setApplyingCoupon(true)
+    setCouponError(null)
+    try {
+      const { data, error: err } = await supabase.rpc('validate_coupon', {
+        p_code: couponInput.trim(),
+        p_order_total: productTotal,
+        p_customer_id: user.id,
+      })
+      if (err) throw err
+      if (!data?.valid) { setCouponError(data?.message || 'Invalid coupon code.'); setCoupon(null); return }
+      setCoupon(data)
+    } catch (err) {
+      setCouponError(err.message || 'Could not validate this coupon.')
+      setCoupon(null)
+    } finally {
+      setApplyingCoupon(false)
+    }
+  }
+
+  function removeCoupon() {
+    setCoupon(null)
+    setCouponInput('')
+    setCouponError(null)
+  }
+
+  // Redemption only happens once an order is actually placed — an
+  // abandoned cart never burns a coupon's use.
+  async function redeemAppliedCoupon() {
+    if (!coupon) return
+    await supabase.rpc('redeem_coupon', { p_coupon_id: coupon.coupon_id })
+  }
 
   async function createPendingOrder(paymentStatus) {
     const { data: order, error: orderErr } = await supabase.from('orders').insert({
@@ -59,7 +99,7 @@ export default function ShopCart() {
       status: 'placed',
       subtotal: productTotal,
       delivery_fee: deliveryFee,
-      discount: 0,
+      discount: discountAmount,
       total,
       address,
       payment_status: paymentStatus,
@@ -73,9 +113,11 @@ export default function ShopCart() {
       unit_price: p.product.price,
       qty: p.qty,
       subtotal: p.product.price * p.qty,
+      customization: p.customization ?? null,
     }))
     const { error: itemsErr } = await supabase.from('order_items').insert(items)
     if (itemsErr) throw itemsErr
+    await redeemAppliedCoupon()
     return order.id
   }
 
@@ -145,7 +187,7 @@ export default function ShopCart() {
         status: 'placed',
         subtotal: productTotal,
         delivery_fee: deliveryFee,
-        discount: 0,
+        discount: discountAmount,
         total,
         address,
         payment_status: 'paid',
@@ -160,9 +202,11 @@ export default function ShopCart() {
         unit_price: p.product.price,
         qty: p.qty,
         subtotal: p.product.price * p.qty,
+        customization: p.customization ?? null,
       }))
       const { error: itemsErr } = await supabase.from('order_items').insert(items)
       if (itemsErr) throw itemsErr
+      await redeemAppliedCoupon()
 
       dispatch({ type: 'CLEAR_PRODUCTS' })
       setPlacedOrderId(order.id)
@@ -234,6 +278,9 @@ export default function ShopCart() {
                     <div className="min-w-0">
                       <p className="font-medium text-gray-800 text-sm">{p.product.name}</p>
                       <p className="text-xs text-amber-600 font-medium mt-0.5">{formatINR(p.product.price)}</p>
+                      {p.customization && (
+                        <p className="text-xs text-gray-400 mt-1 italic truncate max-w-[220px]">"{p.customization}"</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -269,6 +316,40 @@ export default function ShopCart() {
               </div>
             )}
 
+            {step === 'cart' && (
+              <div className="card p-5 space-y-3">
+                <h3 className="font-bold text-gray-800 text-sm flex items-center gap-1.5"><Tag size={14} className="text-amber-500" /> Have a coupon?</h3>
+                {coupon ? (
+                  <div className="flex items-center justify-between gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-green-700">{coupon.code}</p>
+                      <p className="text-xs text-green-600">{coupon.message} — you save {formatINR(coupon.discount_amount)}</p>
+                    </div>
+                    <button onClick={removeCoupon} className="shrink-0 p-1.5 text-green-600 hover:text-green-800">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null) }}
+                      placeholder="Enter coupon code"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={applyingCoupon || !couponInput.trim()}
+                      className="px-4 py-2.5 rounded-xl bg-plum-700 hover:bg-plum-800 disabled:opacity-40 text-white font-semibold text-sm"
+                    >
+                      {applyingCoupon ? 'Checking…' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+              </div>
+            )}
+
             <div className="card p-5 bg-amber-50 border-amber-200 space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal</span><span>{formatINR(productTotal)}</span>
@@ -276,6 +357,11 @@ export default function ShopCart() {
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span><span>{deliveryFee === 0 ? 'FREE' : formatINR(deliveryFee)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-600 font-medium">
+                  <span>Coupon ({coupon.code})</span><span>-{formatINR(discountAmount)}</span>
+                </div>
+              )}
               {deliveryFee > 0 && isFirstOrder && (
                 <p className="text-xs text-gray-400">Free delivery on your first order above {formatINR(FREE_DELIVERY_THRESHOLD)} — add {formatINR(FREE_DELIVERY_THRESHOLD - productTotal)} more to qualify</p>
               )}

@@ -52,13 +52,19 @@ function cartReducer(state, action) {
     // with event bookings).
     case 'ADD_PRODUCT': {
       const key = `prod__${action.product.id}`
-      if (state.products.find(p => p.key === key)) {
+      const existing = state.products.find(p => p.key === key)
+      if (existing) {
         return {
           ...state,
-          products: state.products.map(p => p.key === key ? { ...p, qty: p.qty + 1 } : p),
+          products: state.products.map(p => p.key === key
+            ? { ...p, qty: p.qty + (action.qty ?? 1), customization: action.customization ?? p.customization }
+            : p),
         }
       }
-      return { ...state, products: [...state.products, { key, product: action.product, qty: 1 }] }
+      return {
+        ...state,
+        products: [...state.products, { key, product: action.product, qty: action.qty ?? 1, customization: action.customization ?? null }],
+      }
     }
     case 'REMOVE_PRODUCT':
       return { ...state, products: state.products.filter(p => p.key !== action.key) }
@@ -67,6 +73,12 @@ function cartReducer(state, action) {
       return {
         ...state,
         products: state.products.map(p => p.key === action.key ? { ...p, qty: Math.max(1, action.qty) } : p),
+      }
+
+    case 'SET_PRODUCT_CUSTOMIZATION':
+      return {
+        ...state,
+        products: state.products.map(p => p.key === action.key ? { ...p, customization: action.customization } : p),
       }
 
     case 'CLEAR_PRODUCTS':

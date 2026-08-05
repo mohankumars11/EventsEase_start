@@ -31,7 +31,7 @@ const HAS_DETAIL_PAGE = new Set(FESTIVALS.map(f => f.id))
 // that festival — e.g. Raksha Bandhan -> Gifts filtered to "Rakhi" —
 // instead of a generic catch-all or a dead end into the planning wizard.
 const FESTIVAL_SHOP_ROUTE = {
-  'independence-day': { category: 'Party Essentials' },
+  'independence-day': { category: 'Party Essentials', occasion: 'Independence Day' },
   'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
   'janmashtami':       { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
   'dussehra':          { category: 'Pooja & Essentials', occasion: 'Navratri' },

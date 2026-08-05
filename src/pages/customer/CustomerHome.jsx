@@ -9,6 +9,7 @@ import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import ProductImage from '../../components/shop/ProductImage'
 import SlideCarousel from '../../components/common/SlideCarousel'
+import ReferAndEarn from '../../components/customer/ReferAndEarn'
 import { fetchUnsplashPhoto } from '../../lib/unsplash'
 
 const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
@@ -18,7 +19,7 @@ const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS',
 // e.g. Raksha Bandhan -> Gifts, since there's no dedicated Rakhi page.
 const FESTIVAL_DETAIL_IDS = new Set(['ganesh-chaturthi', 'navratri', 'diwali', 'christmas'])
 const FESTIVAL_SHOP_ROUTE = {
-  'independence-day': { category: 'Party Essentials' },
+  'independence-day': { category: 'Party Essentials', occasion: 'Independence Day' },
   'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
   'janmashtami':       { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
   'dussehra':          { category: 'Pooja & Essentials', occasion: 'Navratri' },
@@ -213,6 +214,8 @@ export default function CustomerHome() {
             </div>
           </Link>
         </section>
+
+        <ReferAndEarn />
 
         {/* ── Shop teaser ────────────────────────────────── */}
         <section className="bg-white rounded-3xl border border-gray-100 p-6">

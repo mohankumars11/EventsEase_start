@@ -5,11 +5,13 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
+import { CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
 import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
 import ReviewModal from '../../components/reviews/ReviewModal'
+import CustomizeModal from '../../components/shop/CustomizeModal'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -21,6 +23,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([])
   const [eligibleOrderId, setEligibleOrderId] = useState(null) // a delivered order containing this product, not yet reviewed
   const [reviewing, setReviewing] = useState(false)
+  const [customizing, setCustomizing] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -107,7 +110,7 @@ export default function ProductDetail() {
               </div>
             ) : (
               <button
-                onClick={() => dispatch({ type: 'ADD_PRODUCT', product })}
+                onClick={() => CUSTOMIZABLE_CATEGORIES[product.category] ? setCustomizing(true) : dispatch({ type: 'ADD_PRODUCT', product })}
                 className="flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-white font-bold py-3.5 rounded-xl"
               >
                 <ShoppingCart size={17} /> Add to Cart
@@ -148,6 +151,18 @@ export default function ProductDetail() {
           source={{ orderId: eligibleOrderId }}
           onClose={() => setReviewing(false)}
           onSubmitted={() => { loadReviews(); checkEligibility() }}
+        />
+      )}
+
+      {customizing && (
+        <CustomizeModal
+          product={product}
+          fieldConfig={CUSTOMIZABLE_CATEGORIES[product.category]}
+          onClose={() => setCustomizing(false)}
+          onConfirm={({ qty, customization }) => {
+            dispatch({ type: 'ADD_PRODUCT', product, qty, customization })
+            setCustomizing(false)
+          }}
         />
       )}
     </div>

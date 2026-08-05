@@ -26,6 +26,14 @@ export default function SignupPage() {
   const location = useLocation()
   const from = location.state?.from
 
+  // Capture a referral code from a shared link (?ref=CODE) before the
+  // signup flow (email OTP or Google) navigates away from this URL —
+  // AuthContext resolves and applies it once the profile is created.
+  useEffect(() => {
+    const ref = new URLSearchParams(location.search).get('ref')
+    if (ref) localStorage.setItem('ee_pending_ref', ref.toUpperCase())
+  }, [location.search])
+
   // steps: role → info → otp
   const [step, setStep]               = useState('role')
   const [role, setRole]               = useState(null)

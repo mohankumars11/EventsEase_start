@@ -49,8 +49,32 @@ export function AuthProvider({ children }) {
       data = upserted
     }
 
+    data = await applyPendingReferral(data)
     setProfile(data)
     setLoading(false)
+  }
+
+  // Single point every signup path passes through (email OTP's
+  // completeProfile below, Google OAuth's upsert above, legacy
+  // signUp) — resolves a ?ref= code stashed in localStorage by
+  // SignupPage into the referrer's id, once, the first time this
+  // profile is seen with no referred_by set yet.
+  async function applyPendingReferral(profileRow) {
+    if (!profileRow || profileRow.referred_by) return profileRow
+    const pending = localStorage.getItem('ee_pending_ref')
+    if (!pending) return profileRow
+    localStorage.removeItem('ee_pending_ref')
+
+    const { data: referrerId } = await supabase.rpc('resolve_referral_code', { p_code: pending })
+    if (!referrerId || referrerId === profileRow.id) return profileRow
+
+    const { data: updated } = await supabase
+      .from('profiles')
+      .update({ referred_by: referrerId })
+      .eq('id', profileRow.id)
+      .select()
+      .single()
+    return updated ?? profileRow
   }
 
   // ── Email OTP (primary auth — free, no SMS provider needed) ──

@@ -6,6 +6,17 @@ import { useCart } from '../../context/CartContext'
 import { supabase } from '../../lib/supabase'
 import ProductImage from '../../components/shop/ProductImage'
 
+// Independence Day (Aug 15) is real, near-term, and — unlike the rest
+// of the festival calendar — had zero tagged products before this pass.
+// A live countdown, not a static banner, is what makes "it's coming"
+// actually true instead of a stale claim.
+const INDEPENDENCE_DAY = '2026-08-15'
+function daysUntil(dateStr) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.ceil((new Date(dateStr) - today) / 86400000)
+}
+
 // Real photo per category — same query set used by ShopMiniCard on the
 // customer home page, kept consistent so the same category always shows
 // the same photo everywhere it appears.
@@ -44,12 +55,14 @@ const OCCASION_SHORTCUTS = [
   { label: 'New Year',         emoji: '🎉', category: 'Hampers',            occasion: 'New Year',         query: 'new year hamper celebration' },
   { label: 'Ganesh Chaturthi', emoji: '🐘', category: 'Pooja & Essentials', occasion: 'Ganesh Chaturthi', query: 'ganesh chaturthi idol clay' },
   { label: 'Corporate',        emoji: '💼', category: 'Hampers',            occasion: 'Corporate',        query: 'corporate gift hamper premium' },
+  { label: 'Independence Day', emoji: '🇮🇳', category: 'Hampers',            occasion: 'Independence Day', query: 'indian flag tricolor celebration' },
 ]
 
 export default function Shop() {
   const navigate = useNavigate()
   const { productCount } = useCart()
   const [counts, setCounts] = useState({})
+  const daysToIndependenceDay = daysUntil(INDEPENDENCE_DAY)
 
   useEffect(() => {
     supabase.from('products').select('category').then(({ data }) => {
@@ -87,6 +100,27 @@ export default function Shop() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-12">
+
+        {/* ── Independence Day countdown ────────────────── */}
+        {daysToIndependenceDay >= 0 && daysToIndependenceDay <= 21 && (
+          <Link
+            to={`/shop/Hampers?occasion=${encodeURIComponent('Independence Day')}`}
+            className="group flex items-center justify-between gap-4 bg-gradient-to-r from-orange-500 via-white to-green-600 rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-3xl shrink-0">🇮🇳</span>
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 text-sm sm:text-base">
+                  {daysToIndependenceDay === 0 ? "It's Independence Day today!" : `Independence Day is in ${daysToIndependenceDay} day${daysToIndependenceDay === 1 ? '' : 's'}`}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-700">Tricolor cakes, hampers, decor & more — shop patriotic favourites</p>
+              </div>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1 text-plum-900 text-xs sm:text-sm font-bold bg-white/70 group-hover:bg-white px-3 py-2 rounded-xl transition-colors">
+              Shop now <ArrowRight size={14} />
+            </span>
+          </Link>
+        )}
 
         {/* ── Shop by occasion ─────────────────────────── */}
         <section>
