@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
-import { IS_CONFIGURED as RAZORPAY_CONFIGURED, createRazorpayOrder, openCheckout, verifyRazorpayPayment } from '../../lib/payment/razorpayProvider'
+import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
 import LocationAutocomplete from '../../components/common/LocationAutocomplete'
 
 const PAYMENT_METHODS = [
@@ -28,6 +28,12 @@ export default function ShopCart() {
   const [error, setError] = useState(null)
   const [placedOrderId, setPlacedOrderId] = useState(null)
   const [isFirstOrder, setIsFirstOrder] = useState(null) // null = still checking
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
+
+  const [upiOrderId, setUpiOrderId] = useState(null)
+  const [upiLinks, setUpiLinks] = useState(null)
+  const [qrDataUrl, setQrDataUrl] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   // Free delivery is a first-order acquisition offer, not a blanket
   // subsidy (a flat "always free above ₹999" erodes margin on every
@@ -71,41 +77,43 @@ export default function ShopCart() {
     return order.id
   }
 
-  // Real gateway: create the order in our DB first (so the amount Razorpay
-  // charges is always read from a trusted server-side row, not a client-
-  // supplied number), open the real checkout widget — UPI intent for
-  // PhonePe/Google Pay/Paytm/BHIM/etc, UPI ID, QR, cards, netbanking, all
-  // handled by Razorpay — then verify the signature server-side before the
-  // order is ever marked paid.
-  async function payWithRazorpay() {
+  // Direct UPI: no gateway involved. We create the order first (so there's
+  // a real ID to use as the transaction reference), then build deep links
+  // straight into Google Pay, PhonePe, Paytm, and any other UPI app —
+  // pointed at Sambramo's own UPI ID — plus a QR code for desktop. There's
+  // no callback to confirm success, so the order sits as payment_status
+  // 'pending' until an admin checks their UPI app/bank and marks it paid.
+  async function startUpiPayment() {
     setPaying(true)
     setError(null)
     try {
       const orderId = await createPendingOrder('pending')
-      const { razorpayOrderId, amount, currency, keyId } = await createRazorpayOrder(orderId)
-      const result = await openCheckout({
-        razorpayOrderId, amount, currency, keyId,
-        name: address.name, contact: address.phone,
-        orderLabel: `Order #${orderId.slice(0, 8).toUpperCase()}`,
+      setUpiOrderId(orderId)
+      const links = buildAppUpiLinks({
+        amount: total,
+        note: `Sambramo order ${orderId.slice(0, 8).toUpperCase()}`,
+        txnRef: orderId,
       })
-      await verifyRazorpayPayment({
-        orderId,
-        razorpay_order_id: result.razorpay_order_id,
-        razorpay_payment_id: result.razorpay_payment_id,
-        razorpay_signature: result.razorpay_signature,
-      })
-      dispatch({ type: 'CLEAR_PRODUCTS' })
-      setPlacedOrderId(orderId)
-      setStep('done')
+      setUpiLinks(links)
+      setQrDataUrl(await generateQrDataUrl(links.upi))
     } catch (err) {
-      if (err.message === 'DISMISSED') {
-        setError("Payment cancelled — nothing was charged. Your order is saved as pending; you can find it under My Orders.")
-      } else {
-        setError(err.message || 'Something went wrong with payment.')
-      }
+      setError(err.message || 'Could not start payment.')
     } finally {
       setPaying(false)
     }
+  }
+
+  function confirmUpiPaymentDone() {
+    dispatch({ type: 'CLEAR_PRODUCTS' })
+    setPlacedOrderId(upiOrderId)
+    setPendingConfirmation(true)
+    setStep('done')
+  }
+
+  function copyUpiId() {
+    navigator.clipboard.writeText(UPI_ID)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   async function runPayment(outcome) {
@@ -167,8 +175,13 @@ export default function ShopCart() {
           <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
             <CheckCircle2 size={48} className="text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Order placed! 🎉</h2>
-          <p className="text-gray-500 text-sm">Order #{placedOrderId?.slice(0, 8).toUpperCase()} — we'll get it ready for delivery.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{pendingConfirmation ? 'Order received! 🎉' : 'Order placed! 🎉'}</h2>
+          <p className="text-gray-500 text-sm">
+            Order #{placedOrderId?.slice(0, 8).toUpperCase()}
+            {pendingConfirmation
+              ? " — we'll confirm your UPI payment shortly and get it ready for delivery."
+              : " — we'll get it ready for delivery."}
+          </p>
           <div className="flex flex-col gap-2.5">
             <button onClick={() => navigate('/dashboard/customer/orders')} className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
               View My Orders
@@ -287,17 +300,17 @@ export default function ShopCart() {
               </button>
             )}
 
-            {step === 'payment' && RAZORPAY_CONFIGURED && (
+            {step === 'payment' && UPI_CONFIGURED && !upiOrderId && (
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold">
-                  <ShieldAlert size={15} /> Secure payment via Razorpay — UPI (PhonePe, Google Pay, Paytm & more), cards, netbanking
+                  <ShieldAlert size={15} /> Pay directly via UPI — Google Pay, PhonePe, Paytm or any UPI app
                 </div>
                 <button
-                  onClick={payWithRazorpay}
+                  onClick={startUpiPayment}
                   disabled={paying}
                   className="w-full py-4 rounded-2xl bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold text-base shadow-lg"
                 >
-                  {paying ? 'Opening secure checkout…' : `Pay ${formatINR(total)}`}
+                  {paying ? 'Preparing payment…' : `Pay ${formatINR(total)}`}
                 </button>
                 <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 hover:text-gray-600">
                   ← Back to address
@@ -305,7 +318,55 @@ export default function ShopCart() {
               </div>
             )}
 
-            {step === 'payment' && !RAZORPAY_CONFIGURED && (
+            {step === 'payment' && UPI_CONFIGURED && upiOrderId && upiLinks && (
+              <div className="card p-5 space-y-4">
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold">
+                  <ShieldAlert size={15} /> Scan or tap to pay {formatINR(total)} to Sambramo
+                </div>
+
+                {qrDataUrl && (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <img src={qrDataUrl} alt="UPI QR code" className="w-48 h-48 rounded-xl border border-gray-200" />
+                    <p className="text-xs text-gray-400">Scan with any UPI app</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  <a href={upiLinks.gpay} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <span className="text-2xl">🅖</span> Google Pay
+                  </a>
+                  <a href={upiLinks.phonepe} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <span className="text-2xl">📱</span> PhonePe
+                  </a>
+                  <a href={upiLinks.paytm} className="flex flex-col items-center gap-1 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                    <span className="text-2xl">💳</span> Paytm
+                  </a>
+                </div>
+                <a href={upiLinks.upi} className="block w-full text-center py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50">
+                  Other UPI app (BHIM & more)
+                </a>
+
+                <div className="flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 rounded-xl">
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-gray-400">Pay manually to UPI ID</p>
+                    <p className="text-sm font-mono font-semibold text-gray-800 truncate">{UPI_ID}</p>
+                  </div>
+                  <button onClick={copyUpiId} className="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-100">
+                    {copied ? 'Copied ✓' : 'Copy'}
+                  </button>
+                </div>
+
+                <button
+                  onClick={confirmUpiPaymentDone}
+                  className="w-full py-4 rounded-2xl bg-plum-700 hover:bg-plum-800 text-white font-bold text-base shadow-lg"
+                >
+                  I've completed the payment
+                </button>
+                <p className="text-[11px] text-gray-400 text-center">We'll confirm your payment against our UPI account and update your order shortly.</p>
+              </div>
+            )}
+
+            {step === 'payment' && !UPI_CONFIGURED && (
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 font-semibold">
                   <ShieldAlert size={15} /> TEST PAYMENT — no real money is charged

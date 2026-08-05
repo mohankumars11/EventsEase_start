@@ -545,6 +545,19 @@ function OrdersContent() {
     setActing(null)
   }
 
+  // Direct-UPI orders have no gateway callback, so a customer tapping
+  // "I've completed the payment" only creates a payment_status='pending'
+  // order — this is the manual step where an admin, after checking the
+  // UPI app/bank statement for that amount, confirms it actually arrived.
+  async function markPaid(order) {
+    if (!confirm(`Confirm ₹${order.total} was received via UPI for order #${order.id.slice(0, 8).toUpperCase()}?`)) return
+    setActing(order.id)
+    const { error: err } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id)
+    if (err) alert('Error: ' + err.message)
+    else await fetchOrders()
+    setActing(null)
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
@@ -608,15 +621,26 @@ function OrdersContent() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {next && order.status !== 'cancelled' && (
-                          <button
-                            onClick={() => advanceStatus(order)}
-                            disabled={acting === order.id}
-                            className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50"
-                          >
-                            Mark {next}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {order.payment_status === 'pending' && (
+                            <button
+                              onClick={() => markPaid(order)}
+                              disabled={acting === order.id}
+                              className="px-2.5 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                            >
+                              Mark Paid
+                            </button>
+                          )}
+                          {next && order.status !== 'cancelled' && (
+                            <button
+                              onClick={() => advanceStatus(order)}
+                              disabled={acting === order.id}
+                              className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50"
+                            >
+                              Mark {next}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
