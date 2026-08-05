@@ -35,6 +35,7 @@ export default function ShopCart() {
   const [upiLinks, setUpiLinks] = useState(null)
   const [qrDataUrl, setQrDataUrl] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [tappedApp, setTappedApp] = useState(null)
 
   // Free delivery is a first-order acquisition offer, not a blanket
   // subsidy (a flat "always free above ₹999" erodes margin on every
@@ -109,6 +110,10 @@ export default function ShopCart() {
     setPlacedOrderId(upiOrderId)
     setPendingConfirmation(true)
     setStep('done')
+  }
+
+  function openUpiApp(appName) {
+    setTappedApp(appName)
   }
 
   function copyUpiId() {
@@ -322,34 +327,50 @@ export default function ShopCart() {
             {step === 'payment' && UPI_CONFIGURED && upiOrderId && upiLinks && (
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold">
-                  <ShieldAlert size={15} /> Scan or tap to pay {formatINR(total)} to Sambramo
+                  <ShieldAlert size={15} /> Step 1 — Tap an app below to pay {formatINR(total)} to Sambramo
                 </div>
 
                 {qrDataUrl && (
                   <div className="flex flex-col items-center gap-2 py-2">
                     <img src={qrDataUrl} alt="UPI QR code" className="w-48 h-48 rounded-xl border border-gray-200" />
-                    <p className="text-xs text-gray-400">Scan with any UPI app</p>
+                    <p className="text-xs text-gray-400">Or scan with any UPI app</p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-3 gap-2">
-                  <a href={upiLinks.gpay} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                  <a
+                    href={upiLinks.gpay}
+                    onClick={() => openUpiApp('Google Pay')}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold text-gray-700 ${tappedApp === 'Google Pay' ? 'border-plum-500 bg-plum-50' : 'border-gray-200 hover:border-plum-400'}`}
+                  >
                     <GooglePayIcon className="w-9 h-9" /> Google Pay
                   </a>
-                  <a href={upiLinks.phonepe} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                  <a
+                    href={upiLinks.phonepe}
+                    onClick={() => openUpiApp('PhonePe')}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold text-gray-700 ${tappedApp === 'PhonePe' ? 'border-plum-500 bg-plum-50' : 'border-gray-200 hover:border-plum-400'}`}
+                  >
                     <PhonePeIcon className="w-9 h-9" /> PhonePe
                   </a>
-                  <a href={upiLinks.paytm} className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 border-gray-200 hover:border-plum-400 text-xs font-semibold text-gray-700">
+                  <a
+                    href={upiLinks.paytm}
+                    onClick={() => openUpiApp('Paytm')}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold text-gray-700 ${tappedApp === 'Paytm' ? 'border-plum-500 bg-plum-50' : 'border-gray-200 hover:border-plum-400'}`}
+                  >
                     <PaytmIcon className="w-9 h-9" /> Paytm
                   </a>
                 </div>
-                <a href={upiLinks.upi} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50">
+                <a
+                  href={upiLinks.upi}
+                  onClick={() => openUpiApp('your UPI app')}
+                  className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-semibold ${tappedApp === 'your UPI app' ? 'border-plum-500 bg-plum-50 text-plum-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                >
                   <UpiIcon className="w-6 h-6" /> Other UPI app (BHIM & more)
                 </a>
 
                 <div className="flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 rounded-xl">
                   <div className="min-w-0">
-                    <p className="text-[11px] text-gray-400">Pay manually to UPI ID</p>
+                    <p className="text-[11px] text-gray-400">Or pay manually to UPI ID</p>
                     <p className="text-sm font-mono font-semibold text-gray-800 truncate">{UPI_ID}</p>
                   </div>
                   <button onClick={copyUpiId} className="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-100">
@@ -357,13 +378,21 @@ export default function ShopCart() {
                   </button>
                 </div>
 
-                <button
-                  onClick={confirmUpiPaymentDone}
-                  className="w-full py-4 rounded-2xl bg-plum-700 hover:bg-plum-800 text-white font-bold text-base shadow-lg"
-                >
-                  I've completed the payment
-                </button>
-                <p className="text-[11px] text-gray-400 text-center">We'll confirm your payment against our UPI account and update your order shortly.</p>
+                <div className={`rounded-xl border p-4 space-y-3 ${tappedApp ? 'border-plum-200 bg-plum-50' : 'border-gray-100 bg-gray-50'}`}>
+                  <p className={`text-xs font-semibold ${tappedApp ? 'text-plum-700' : 'text-gray-400'}`}>
+                    {tappedApp
+                      ? `Step 2 — You've been redirected to ${tappedApp}. Complete the payment there, then come back to this tab.`
+                      : 'Step 2 — After you pay, come back to this tab.'}
+                  </p>
+                  <button
+                    onClick={confirmUpiPaymentDone}
+                    disabled={!tappedApp}
+                    className="w-full py-4 rounded-2xl bg-plum-700 hover:bg-plum-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base shadow-lg"
+                  >
+                    Payment Completed
+                  </button>
+                  <p className="text-[11px] text-gray-400 text-center">We'll confirm your payment against our UPI account and update your order shortly.</p>
+                </div>
               </div>
             )}
 
