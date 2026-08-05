@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp, ArrowRight, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowRight, Sparkles, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
 import { SHOP_CATEGORIES } from '../config/shop'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
 import ProductImage from '../components/shop/ProductImage'
+import StarRating from '../components/reviews/StarRating'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -66,13 +68,6 @@ const HOW_STEPS = [
   { num: '02', title: 'We plan',      desc: 'Our team finds the right services and vendors.' },
   { num: '03', title: 'You approve',  desc: 'We present a complete plan and transparent proposal.' },
   { num: '04', title: 'We handle it', desc: 'We coordinate the details while you enjoy your people.' },
-]
-
-const FLOW_NODES = [
-  { emoji: '👤', label: 'Customer',         desc: 'You share your celebration details' },
-  { emoji: '🤝', label: 'Sambramo',         desc: 'Your dedicated coordinator' },
-  { emoji: '🏪', label: 'Vendors',          desc: 'Venues, caterers, decorators & more' },
-  { emoji: '🎉', label: 'Your Celebration', desc: 'Everything comes together' },
 ]
 
 const TRUST_POINTS = [
@@ -294,6 +289,30 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
+          1C. WHY NO PRICES? — trust reassurance for the
+          quote-after-requirements model, placed early since
+          "no visible pricing" can otherwise read as a red flag
+          to a brand-new visitor.
+      ══════════════════════════════════════════════ */}
+      <section className="py-10 px-4 bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+          <div className="shrink-0 w-14 h-14 rounded-2xl bg-plum-50 flex items-center justify-center">
+            <MessageCircleQuestion size={26} className="text-plum-600" />
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <h2 className="font-bold text-gray-900 text-lg mb-1">Wondering why there's no price tag?</h2>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              A birthday for 20 and a wedding for 400 don't cost the same — so we don't guess. Tell us what you need,
+              we source real quotes from vendors on your behalf, and you get one clear final price. Free to ask, no obligation.
+            </p>
+          </div>
+          <div className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-plum-600 bg-plum-50 px-3 py-1.5 rounded-full">
+            <ShieldCheck size={14} /> No fee to enquire
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
           2. STORY FLOW  (dark — continues from hero)
       ══════════════════════════════════════════════ */}
       <section className="py-20 px-4 bg-plum-950">
@@ -332,9 +351,31 @@ export default function LandingPage() {
           </div>
 
           {/* Signature statement */}
-          <p className="text-center font-serif text-2xl md:text-3xl italic text-saffron-400 reveal">
+          <p className="text-center font-serif text-2xl md:text-3xl italic text-saffron-400 reveal mb-16">
             "That's the Sambramo difference."
           </p>
+
+          {/* Four trust points */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
+            {TRUST_POINTS.map((pt, i) => (
+              <div
+                key={pt.title}
+                className={`reveal reveal-delay-${i + 1} flex items-start gap-4 p-5 bg-white/10 rounded-2xl border border-white/10`}
+              >
+                <span className="text-2xl shrink-0 mt-0.5">{pt.emoji}</span>
+                <div>
+                  <h3 className="font-bold text-white text-sm mb-1">{pt.title}</h3>
+                  <p className="text-white/70 text-xs leading-relaxed">{pt.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center reveal">
+            <button onClick={() => toPlan()} className="btn-cta">
+              Tell us about your celebration
+            </button>
+          </div>
         </div>
       </section>
 
@@ -410,65 +451,6 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          5. TECHNOLOGY FINDS IT. HUMANS MAKE IT HAPPEN.
-      ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-plum-900">
-        <div className="max-w-5xl mx-auto">
-
-          <div className="text-center mb-14 reveal">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-5">
-              Technology finds it. Humans make it happen.
-            </h2>
-            <p className="text-white/70 text-lg max-w-2xl mx-auto leading-relaxed">
-              Sambramo isn't just an app that sends you vendor numbers. A real Sambramo
-              team understands your celebration, coordinates with vendors and stays with
-              you through the event.
-            </p>
-          </div>
-
-          {/* Customer → Sambramo → Vendors → Celebration flow */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-0 mb-16 reveal">
-            {FLOW_NODES.map((node, i) => (
-              <div key={node.label} className="flex items-center gap-2 md:gap-0">
-                <div className="flex flex-col items-center p-5 bg-white/10 rounded-2xl border border-white/10 min-w-[140px] text-center backdrop-blur-sm">
-                  <span className="text-3xl mb-2">{node.emoji}</span>
-                  <span className="font-bold text-white text-sm">{node.label}</span>
-                  <span className="text-white/50 text-xs mt-1 leading-tight">{node.desc}</span>
-                </div>
-                {i < FLOW_NODES.length - 1 && (
-                  <span className="text-white/30 text-xl md:mx-4 rotate-90 md:rotate-0 shrink-0 select-none">
-                    →
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Four trust points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
-            {TRUST_POINTS.map((pt, i) => (
-              <div
-                key={pt.title}
-                className={`reveal reveal-delay-${i + 1} flex items-start gap-4 p-5 bg-white/10 rounded-2xl border border-white/10`}
-              >
-                <span className="text-2xl shrink-0 mt-0.5">{pt.emoji}</span>
-                <div>
-                  <h3 className="font-bold text-white text-sm mb-1">{pt.title}</h3>
-                  <p className="text-white/70 text-xs leading-relaxed">{pt.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center reveal">
-            <button onClick={() => toPlan()} className="btn-cta">
-              Tell us about your celebration
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
           6. HOW SAMBRAMO WORKS
       ══════════════════════════════════════════════ */}
       <section id="how-it-works" className="py-20 px-4 bg-white">
@@ -536,6 +518,13 @@ export default function LandingPage() {
           </SlideCarousel>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════
+          7B. CUSTOMER VOICES — real reviews_catalog data,
+          honest at any volume. Placed right before the final
+          budget/CTA push, where trust reinforcement matters most.
+      ══════════════════════════════════════════════ */}
+      <CustomerVoices />
 
       {/* ══════════════════════════════════════════════
           8. BUDGET
@@ -660,6 +649,72 @@ export default function LandingPage() {
       </section>
 
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CustomerVoices — real reviews_catalog data, nothing fabricated.
+   Renders nothing at all if there are genuinely zero reviews yet
+   (an empty "testimonials" section would be worse than none); scales
+   from a single honest review up to a full carousel as real
+   feedback accumulates — no fake "thousands of happy customers".
+═══════════════════════════════════════════════════════════ */
+function CustomerVoices() {
+  const [reviews, setReviews] = useState(null) // null = loading, [] = none
+
+  useEffect(() => {
+    let cancelled = false
+    supabase.from('reviews_catalog')
+      .select('*')
+      .not('comment', 'is', null)
+      .order('rating', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => { if (!cancelled) setReviews(data ?? []) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (!reviews || reviews.length === 0) return null
+
+  const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+
+  return (
+    <section className="py-20 px-4 bg-white">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12 reveal">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            Real voices, real celebrations
+          </h2>
+          <div className="flex items-center justify-center gap-2">
+            <StarRating value={avg} count={reviews.length} size="md" />
+          </div>
+        </div>
+
+        <SlideCarousel>
+          {reviews.map(r => (
+            <div key={r.id} className="shrink-0 w-72 snap-center">
+              <div className="h-full flex flex-col bg-cream rounded-2xl border border-orange-100 p-5">
+                <div className="flex items-center gap-1 text-amber-400 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={14} fill={i < r.rating ? 'currentColor' : 'none'} className={i < r.rating ? '' : 'text-gray-200'} strokeWidth={i < r.rating ? 0 : 1.5} />
+                  ))}
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed flex-1">"{r.comment}"</p>
+                <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-orange-100">
+                  <div className="w-8 h-8 rounded-full bg-plum-100 text-plum-700 flex items-center justify-center font-bold text-xs shrink-0">
+                    {r.customer_name?.charAt(0)?.toUpperCase() ?? 'S'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{r.customer_name}</p>
+                    <p className="text-[11px] text-gray-400 truncate">on {r.subject_name}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </SlideCarousel>
+      </div>
+    </section>
   )
 }
 
