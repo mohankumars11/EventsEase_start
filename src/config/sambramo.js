@@ -1,8 +1,19 @@
 // SAMBRAMO Brand Configuration
 export const BRAND = {
   name: 'Sambramo',
-  tagline: 'Your Moment. Our Magic.',
-  promise: 'You Celebrate. We Handle Everything.',
+  // Three lines, three jobs — they are not interchangeable.
+  //
+  // `tagline` is the descriptor that rides with the logo and answers "what is
+  // this?" in one read. It names both halves of the business deliberately:
+  // the concierge *arranges* (sources vendors, negotiates, coordinates) and
+  // the shop *delivers* (cakes, hampers, flowers, pooja and party essentials).
+  // "Arranged" also carries the floral sense, which ties back to the mark.
+  //
+  // `signature` is the emotional line used on hero panels, where the job is
+  // feeling rather than explanation.
+  tagline:   'Celebrations, arranged. Essentials, delivered.',
+  signature: 'Your Moment. Our Magic.',
+  promise:   'You Celebrate. We Handle Everything.',
   supportPhone: '+91 97392 76592',
   supportEmail: 'hello@sambramo.in',
   whatsappNumber: '919739276592',
