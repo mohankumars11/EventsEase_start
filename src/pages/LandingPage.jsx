@@ -242,8 +242,11 @@ export default function LandingPage() {
               tell us what you're celebrating. We'll take care of every detail.
             </p>
 
-            {/* CTA pair */}
-            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            {/* Single primary CTA — a second equal-weight button here would
+                split attention on the one decision that matters most on
+                this screen. "Explore" is offered below as a quiet,
+                subordinate scroll cue instead of a competing pill. */}
+            <div className="relative flex flex-col items-center justify-center gap-3">
               <button
                 onClick={() => toPlan()}
                 className="btn-cta"
@@ -252,9 +255,9 @@ export default function LandingPage() {
               </button>
               <a
                 href="#celebrations"
-                className="inline-flex items-center gap-2 border border-white/20 text-white rounded-2xl px-6 py-3.5 text-base font-semibold hover:bg-white/10 transition-colors"
+                className="inline-flex items-center gap-1.5 text-white/50 hover:text-white/80 text-sm font-medium transition-colors"
               >
-                Explore Celebrations
+                or explore celebrations first <ChevronDown size={14} />
               </a>
             </div>
           </div>

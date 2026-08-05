@@ -167,30 +167,37 @@ export default function CustomerHome() {
           </SlideCarousel>
         </section>
 
-        {/* ── Individual services + pooja items shortcuts ─ */}
+        {/* ── Shop + pooja items shortcuts ──────────────── */}
+        {/* Deliberately NOT another "Individual Services" card — that
+            choice is already offered once, in the hero card above, as
+            the secondary option next to "Start Planning". Repeating it
+            here with different wording was the exact redundancy that
+            makes two destinations feel like four. This row instead
+            covers a third, genuinely different intent: buy something
+            now, no quote or planning involved. */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
-            to="/dashboard/customer/services"
+            to="/shop"
             className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col"
           >
             <ProductImage
-              query="Indian event cooks decoration photography setup"
+              query="gift box cake flowers celebration delivery"
               emoji="🛍️"
               className="w-full h-36"
             />
             <div className="p-6 flex flex-col justify-between gap-4 flex-1">
               <div>
-                <p className="font-bold text-gray-900 mb-1">Just need one thing, not a whole plan?</p>
-                <p className="text-sm text-gray-500">Pick your function or festival and choose exactly what you need.</p>
+                <p className="font-bold text-gray-900 mb-1">Need it delivered today?</p>
+                <p className="text-sm text-gray-500">Cakes, gifts, flowers & hampers — no planning needed, just add to cart.</p>
                 <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-gray-400">
-                  <span>🍳 Cooks</span>
-                  <span>🎈 Decor</span>
-                  <span>📸 Photography</span>
-                  <span>🪔 Pooja</span>
+                  <span>🎂 Cakes</span>
+                  <span>🎁 Gifts</span>
+                  <span>💐 Flowers</span>
+                  <span>🧺 Hampers</span>
                 </div>
               </div>
               <span className="self-start inline-flex items-center gap-2 bg-plum-50 group-hover:bg-plum-100 text-plum-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                Browse services →
+                Shop now →
               </span>
             </div>
           </Link>

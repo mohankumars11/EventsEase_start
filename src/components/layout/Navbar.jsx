@@ -133,7 +133,7 @@ export default function Navbar() {
                   </>
                 )}
                 <Link to="/plan" className="btn-cta text-sm">
-                  Plan a Celebration
+                  Plan My Celebration
                 </Link>
                 <ProfileDropdown
                   profile={profile}
@@ -156,7 +156,7 @@ export default function Navbar() {
                   Sign Up
                 </Link>
                 <Link to="/login" className="btn-cta text-sm">
-                  Plan a Celebration
+                  Plan My Celebration
                 </Link>
               </>
             )}
@@ -252,7 +252,7 @@ export default function Navbar() {
                 className="btn-cta text-sm w-full text-center mt-1"
                 onClick={() => setMenuOpen(false)}
               >
-                Plan a Celebration
+                Plan My Celebration
               </Link>
               <button
                 onClick={() => { signOut(); navigate('/'); setMenuOpen(false) }}
@@ -284,7 +284,7 @@ export default function Navbar() {
                 className="btn-cta text-sm w-full text-center mt-1"
                 onClick={() => setMenuOpen(false)}
               >
-                Plan a Celebration
+                Plan My Celebration
               </Link>
             </>
           )}
