@@ -19,7 +19,7 @@ export default function Cart() {
 
   const hasAnything = cart.items.length > 0 || cart.packages.length > 0
   const hamperItems = cart.packages.filter(p => p.pkg.type === 'hamper')
-  const hamperTotal = hamperItems.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
+  const hamperTotal = hamperItems.reduce((sum, p) => sum + (p.complimentary ? 0 : (p.pkg.price_min ?? 0)), 0)
   const hasQuoteItems = cart.items.length > 0 || cart.packages.some(p => p.pkg.type !== 'hamper')
 
   // Group items by event
@@ -57,7 +57,7 @@ export default function Cart() {
           guest_count: details?.guestCount || null,
           location:    details?.location || null,
           services:    data.services.map(i => ({ id: i.service.id, name: i.service.name, emoji: i.service.emoji, qty: i.qty, unit_price: i.service.priceMin ?? null, details: i.details })),
-          packages:    data.packages.map(p => ({ id: p.pkg.id, name: p.pkg.name, price_min: p.pkg.price_min, price_max: p.pkg.price_max, details: p.details })),
+          packages:    data.packages.map(p => ({ id: p.pkg.id, name: p.pkg.name, type: p.pkg.type, price_min: p.pkg.price_min, price_max: p.pkg.price_max, details: p.details, complimentary: !!p.complimentary })),
           status: 'open',
         }
       })
@@ -180,8 +180,8 @@ export default function Cart() {
                             ? `🎁 Gift hamper · ${p.pkg.items?.length ?? 0} items`
                             : `Complete package${p.pkg.includes ? ` · ${p.pkg.includes.length} services included` : ''}`}
                         </p>
-                        <p className="text-xs text-amber-600 font-semibold mt-0.5">
-                          {p.pkg.type === 'hamper' ? formatINR(p.pkg.price_min) : 'Custom quote'}
+                        <p className={`text-xs font-semibold mt-0.5 ${p.complimentary ? 'text-green-600' : 'text-amber-600'}`}>
+                          {p.complimentary ? 'FREE 🎁' : (p.pkg.type === 'hamper' ? formatINR(p.pkg.price_min) : 'Custom quote')}
                         </p>
                       </div>
                     </div>
@@ -254,8 +254,8 @@ export default function Cart() {
               </div>
               {hamperItems.length > 0 && (
                 <div className="flex justify-between text-sm text-gray-600 border-t border-amber-200 pt-3">
-                  <span>🎁 Gift hampers (fixed price)</span>
-                  <span className="font-semibold text-gray-900">{formatINR(hamperTotal)}</span>
+                  <span>🎁 Gift hampers</span>
+                  <span className="font-semibold text-gray-900">{hamperTotal > 0 ? formatINR(hamperTotal) : 'FREE'}</span>
                 </div>
               )}
               {hasQuoteItems ? (

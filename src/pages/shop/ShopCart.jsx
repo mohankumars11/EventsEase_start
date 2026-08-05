@@ -8,8 +8,9 @@ import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment } from '../../lib/payment/testPaymentProvider'
 import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
-import LocationAutocomplete from '../../components/common/LocationAutocomplete'
+import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker'
 import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
+import { getAddressErrors, scrubDigits } from '../../utils/validators'
 
 const PAYMENT_METHODS = [
   { id: 'upi',       label: 'UPI' },
@@ -23,7 +24,8 @@ export default function ShopCart() {
   const { cart, dispatch, productCount, productTotal } = useCart()
 
   const [step, setStep] = useState('cart') // cart | payment | done
-  const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', area: '', pincode: '', lat: null, lon: null })
+  const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', pincode: '', lat: null, lon: null })
+  const [addressTouched, setAddressTouched] = useState(false)
   const [method, setMethod] = useState('upi')
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
@@ -57,7 +59,20 @@ export default function ShopCart() {
   const deliveryFee = productTotal === 0 || qualifiesForFreeDelivery ? 0 : DELIVERY_FEE
   const discountAmount = coupon?.discount_amount ?? 0
   const total = Math.max(0, productTotal + deliveryFee - discountAmount)
-  const addressValid = address.name && address.phone && address.line && address.city && address.pincode
+  const addressErrors = getAddressErrors(address)
+  const addressValid = Object.keys(addressErrors).length === 0
+
+  function handleProceed() {
+    if (!addressValid) { setAddressTouched(true); return }
+    setStep('payment')
+  }
+
+  // The cart page is public so a guest never loses a basket at the door,
+  // but an order needs an account — it's written against `user.id`, and
+  // the customer has to be able to find it again under My Orders. The ask
+  // happens here, at the last possible moment, with the cart preserved
+  // (it lives in localStorage) and the return trip already set up.
+  const signInToCheckout = { pathname: '/shop/cart', search: '' }
 
   async function applyCoupon() {
     if (!couponInput.trim()) return
@@ -305,18 +320,33 @@ export default function ShopCart() {
               <div className="card p-5 space-y-4">
                 <h3 className="font-bold text-gray-800 text-sm">📍 Delivery Address</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input placeholder="Full name" value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-                  <input placeholder="Phone number" value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: e.target.value }))} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-                  <input placeholder="Address line (house/flat, street)" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="sm:col-span-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                  <div>
+                    <input placeholder="Full name" value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    {addressTouched && addressErrors.name && <p className="text-xs text-red-600 mt-1">{addressErrors.name}</p>}
+                  </div>
+                  <div>
+                    <input placeholder="Phone number" inputMode="numeric" value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: scrubDigits(e.target.value, 10) }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    {addressTouched && addressErrors.phone && <p className="text-xs text-red-600 mt-1">{addressErrors.phone}</p>}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <input placeholder="Address line (house/flat, street)" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    {addressTouched && addressErrors.line && <p className="text-xs text-red-600 mt-1">{addressErrors.line}</p>}
+                  </div>
                 </div>
-                <LocationAutocomplete
-                  value={{ city: address.city, area: address.area, pincode: address.pincode }}
-                  onChange={loc => setAddress(a => ({ ...a, city: loc.city, area: loc.area, pincode: loc.pincode || a.pincode, lat: loc.lat, lon: loc.lon }))}
+                <DeliveryLocationPicker
+                  value={{ lat: address.lat, lon: address.lon, city: address.city, pincode: address.pincode, line: address.line }}
+                  onChange={patch => setAddress(a => ({ ...a, ...patch }))}
                 />
+                {addressTouched && (addressErrors.city || addressErrors.pincode) && (
+                  <p className="text-xs text-red-600">{addressErrors.city || addressErrors.pincode}</p>
+                )}
               </div>
             )}
 
-            {step === 'cart' && (
+            {/* Coupon validation is per-customer (validate_coupon takes
+                p_customer_id), so it can't run for a guest — offering the
+                field anyway would just produce an error on Apply. */}
+            {step === 'cart' && user && (
               <div className="card p-5 space-y-3">
                 <h3 className="font-bold text-gray-800 text-sm flex items-center gap-1.5"><Tag size={14} className="text-amber-500" /> Have a coupon?</h3>
                 {coupon ? (
@@ -383,13 +413,27 @@ export default function ShopCart() {
             )}
 
             {step === 'cart' && (
-              <button
-                onClick={() => addressValid && setStep('payment')}
-                disabled={!addressValid}
-                className="w-full py-4 rounded-2xl bg-plum-700 disabled:opacity-40 text-white font-bold text-base hover:bg-plum-800 shadow-lg"
-              >
-                Proceed to Payment
-              </button>
+              user ? (
+                <button
+                  onClick={handleProceed}
+                  className="w-full py-4 rounded-2xl bg-plum-700 text-white font-bold text-base hover:bg-plum-800 shadow-lg"
+                >
+                  Proceed to Payment
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <Link
+                    to="/login"
+                    state={{ from: signInToCheckout }}
+                    className="flex w-full items-center justify-center py-4 rounded-2xl bg-plum-700 text-white font-bold text-base hover:bg-plum-800 shadow-lg"
+                  >
+                    Sign in to checkout
+                  </Link>
+                  <p className="text-center text-xs text-gray-400">
+                    Your cart is saved — you'll come straight back here.
+                  </p>
+                </div>
+              )
             )}
 
             {step === 'payment' && UPI_CONFIGURED && !upiOrderId && (

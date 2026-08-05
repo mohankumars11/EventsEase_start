@@ -136,7 +136,11 @@ export default function MyRequests() {
                       <div key={pkg.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
                         <span>📦 {pkg.name}</span>
                         <div className="flex items-center gap-3 shrink-0">
-                          {pkg.type === 'hamper' && <span className="text-xs text-gray-400">{formatINR(pkg.price_min)}</span>}
+                          {pkg.type === 'hamper' && (
+                            pkg.complimentary
+                              ? <span className="text-xs text-green-600 font-semibold">FREE</span>
+                              : <span className="text-xs text-gray-400">{formatINR(pkg.price_min)}</span>
+                          )}
                           {canReview && (
                             hasReviewed(enq.id, 'package', pkg.id) ? (
                               <span className="text-xs text-green-600 font-medium">Reviewed</span>

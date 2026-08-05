@@ -31,7 +31,10 @@ function cartReducer(state, action) {
       if (state.packages.find(p => p.key === key)) return state
       return {
         ...state,
-        packages: [...state.packages, { key, eventId: action.eventId, eventName: action.eventName, pkg: action.pkg, details: action.details ?? null }],
+        packages: [...state.packages, {
+          key, eventId: action.eventId, eventName: action.eventName, pkg: action.pkg,
+          details: action.details ?? null, complimentary: !!action.complimentary,
+        }],
       }
     }
     case 'REMOVE_PACKAGE':
@@ -143,6 +146,7 @@ export function CartProvider({ children }) {
             eventName: r.event_name,
             pkg: { id: r.package_id, name: r.package_name, price_min: r.price_min, price_max: r.price_max },
             details: r.booking_date ? { date: r.booking_date, time: r.booking_time, guestCount: r.guest_count, location: r.location } : null,
+            complimentary: r.complimentary ?? false,
           })),
         },
       })
@@ -193,6 +197,7 @@ export function CartProvider({ children }) {
           package_name: action.pkg.name,
           price_min:    action.pkg.price_min ?? null,
           price_max:    action.pkg.price_max ?? null,
+          complimentary: !!action.complimentary,
           booking_date: action.details?.date ?? null,
           booking_time: action.details?.time || null,
           guest_count:  action.details?.guestCount ?? null,
@@ -240,16 +245,34 @@ export function CartProvider({ children }) {
   const getEventDetails = (eventId) =>
     [...cart.items, ...cart.packages].find(i => i.eventId === eventId && i.details)?.details ?? null
   const total = cart.items.reduce((sum, i) => sum + (i.service.priceMin ?? 0) * i.qty, 0)
-    + cart.packages.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
+    + cart.packages.reduce((sum, p) => sum + (p.complimentary ? 0 : (p.pkg.price_min ?? 0)), 0)
 
   const productCount = cart.products.reduce((sum, p) => sum + p.qty, 0)
   const productTotal = cart.products.reduce((sum, p) => sum + p.product.price * p.qty, 0)
   const hasProduct = (productId) => cart.products.some(p => p.key === `prod__${productId}`)
 
+  // Everything the customer has put aside, across both carts. The header
+  // badge needs this: `totalCount` counts only services and packages, so
+  // adding a cake to the shop cart used to leave the badge reading 0.
+  const cartCount = totalCount + productCount
+
+  // The app has two genuinely different carts — shop products (delivered
+  // goods) and event services/packages (quoted work) — and one cart icon
+  // in the header. Send people to whichever one actually has their stuff
+  // in it, preferring products since that's the checkout-now flow.
+  // A guest always goes to the public shop cart: the event-services cart
+  // is customer-only, so pointing a signed-out visitor at it would bounce
+  // them to the login screen from a tap on a cart icon.
+  const cartPath = !user || productCount > 0
+    ? '/shop/cart'
+    : totalCount > 0
+      ? '/dashboard/customer/cart'
+      : '/shop/cart'
+
   return (
     <CartContext.Provider value={{
       cart, dispatch, totalCount, hasItem, hasPkg, total, getEventDetails,
-      productCount, productTotal, hasProduct,
+      productCount, productTotal, hasProduct, cartCount, cartPath,
     }}>
       {children}
     </CartContext.Provider>

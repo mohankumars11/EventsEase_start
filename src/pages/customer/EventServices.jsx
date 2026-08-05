@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check, Star } from 'lucide-react'
+import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check, Star, Pencil } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { formatINR } from '../../utils/format'
 import CustomerLayout from '../../components/customer/CustomerLayout'
@@ -21,18 +21,57 @@ export default function EventServices() {
   const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
   const [expandedCat, setExpandedCat] = useState(null)
   const [pendingAdd, setPendingAdd]   = useState(null) // { kind: 'service'|'package', payload }
+  const [editingDetails, setEditingDetails] = useState(false)
   const [reviewing, setReviewing]     = useState(null) // { subject, source }
   const [eligible, setEligible]       = useState({}) // `${type}__${id}` -> enquiryId
-  const { dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
+  const { cart, dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
+
+  // Booking details (date/time/guests/location) only need to be asked once
+  // per event — getEventDetails(eventId) is non-null the moment the first
+  // item for this event has them, so it doubles as "has this event already
+  // been set up" without any separate tracked flag.
+  function handleAddClick(kind, payload) {
+    const existing = getEventDetails(eventId)
+    if (!existing) { setPendingAdd({ kind, payload }); return }
+    if (kind === 'service') {
+      dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: payload, details: existing })
+    } else {
+      dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: payload, details: existing })
+    }
+  }
 
   function confirmAdd(details) {
     if (!pendingAdd) return
+    const isFirstAdd = getEventDetails(eventId) === null
     if (pendingAdd.kind === 'service') {
       dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: pendingAdd.payload, details })
     } else {
       dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: pendingAdd.payload, details })
     }
+    // Single-hamper events get their free gift auto-attached the moment
+    // this event's first real item is confirmed — no separate click, no
+    // second modal. Multi-tier events (birthday) skip this; the customer
+    // picks a tier via selectHamper instead.
+    if (isFirstAdd) {
+      const hampers = event.packages.filter(p => p.type === 'hamper')
+      if (hampers.length === 1 && !hasPkg(eventId, hampers[0].id)) {
+        dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: hampers[0], details, complimentary: true })
+      }
+    }
     setPendingAdd(null)
+  }
+
+  function handleUpdateDetails(details) {
+    ;[...cart.items, ...cart.packages]
+      .filter(i => i.eventId === eventId)
+      .forEach(i => dispatch({ type: 'SET_ITEM_DETAILS', key: i.key, details }))
+    setEditingDetails(false)
+  }
+
+  function selectHamper(hamper) {
+    const existing = cart.packages.find(p => p.eventId === eventId && p.pkg.type === 'hamper')
+    if (existing) dispatch({ type: 'REMOVE_PACKAGE', key: existing.key })
+    dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: hamper, details: getEventDetails(eventId), complimentary: true })
   }
 
   // Can this customer review a given service/package right now? — they
@@ -74,6 +113,8 @@ export default function EventServices() {
   }, {})
 
   const categories = Object.keys(byCategory)
+  const realPackages = event.packages.filter(p => p.type !== 'hamper')
+  const hampers = event.packages.filter(p => p.type === 'hamper')
 
   const feedbackSubjects = [
     ...event.services.map(s => ({ type: 'service', id: s.id, name: s.name })),
@@ -168,6 +209,17 @@ export default function EventServices() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
 
+        {getEventDetails(eventId) && (
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={() => setEditingDetails(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800"
+            >
+              <Pencil size={12} /> Change event details
+            </button>
+          </div>
+        )}
+
         {/* ── INDIVIDUAL SERVICES TAB ─────────────────────── */}
         {activeTab === 'services' && (
           <div className="space-y-6">
@@ -215,7 +267,7 @@ export default function EventServices() {
                             </div>
                             <div className="shrink-0 flex flex-col items-end gap-1.5">
                               <button
-                                onClick={() => !inCart && setPendingAdd({ kind: 'service', payload: svc })}
+                                onClick={() => !inCart && handleAddClick('service', svc)}
                                 disabled={inCart}
                                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors ${
                                   inCart
@@ -268,18 +320,12 @@ export default function EventServices() {
               Pre-curated bundles — save time, save money, and Sambramo handles every detail.
             </p>
 
-            {event.packages.map(pkg => {
-              const isHamper = pkg.type === 'hamper'
-              const pkgServices = isHamper ? [] : event.services.filter(s => pkg.includes.includes(s.id))
+            {realPackages.map(pkg => {
+              const pkgServices = event.services.filter(s => pkg.includes.includes(s.id))
               const inCart = hasPkg(eventId, pkg.id)
 
               return (
                 <div key={pkg.id} className={`card p-6 relative ${pkg.color}`}>
-                  {isHamper && (
-                    <span className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-saffron-400 to-pink-400 text-white shadow">
-                      🎁 Best Offer — Book &amp; Get This Free Extra
-                    </span>
-                  )}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -308,35 +354,24 @@ export default function EventServices() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      {isHamper ? (
-                        <p className="text-xl font-extrabold text-saffron-700">{formatINR(pkg.price_min)}</p>
-                      ) : (
-                        <div className="px-3 py-1.5 rounded-lg bg-plum-50 border border-plum-100">
-                          <p className="text-xs font-semibold text-plum-600">Custom quote</p>
-                          <p className="text-[10px] text-gray-400">after we review your needs</p>
-                        </div>
-                      )}
+                      <div className="px-3 py-1.5 rounded-lg bg-plum-50 border border-plum-100">
+                        <p className="text-xs font-semibold text-plum-600">Custom quote</p>
+                        <p className="text-[10px] text-gray-400">after we review your needs</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Services / hamper items included */}
+                  {/* Services included */}
                   <div className="flex flex-wrap gap-1.5 mb-5">
-                    {isHamper
-                      ? pkg.items.map(item => (
-                          <span key={item} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
-                            🎁 {item}
-                          </span>
-                        ))
-                      : pkgServices.map(s => (
-                          <span key={s.id} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
-                            {s.emoji} {s.name}
-                          </span>
-                        ))
-                    }
+                    {pkgServices.map(s => (
+                      <span key={s.id} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
+                        {s.emoji} {s.name}
+                      </span>
+                    ))}
                   </div>
 
                   <button
-                    onClick={() => !inCart && setPendingAdd({ kind: 'package', payload: pkg })}
+                    onClick={() => !inCart && handleAddClick('package', pkg)}
                     disabled={inCart}
                     className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-colors ${
                       inCart
@@ -350,6 +385,63 @@ export default function EventServices() {
                 </div>
               )
             })}
+
+            {hampers.length === 1 && (
+              <div className="card p-5 flex items-center justify-between gap-4 bg-gradient-to-r from-saffron-50 to-pink-50 border-saffron-200">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-3xl shrink-0">{hampers[0].emoji}</span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-sm">{hampers[0].name}</p>
+                    <p className="text-xs text-gray-500 truncate">{hampers[0].items.join(' · ')}</p>
+                  </div>
+                </div>
+                <span className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${
+                  hasPkg(eventId, hampers[0].id) ? 'bg-green-100 text-green-700' : 'bg-white text-saffron-700 border border-saffron-300'
+                }`}>
+                  {hasPkg(eventId, hampers[0].id) ? 'Added as your free gift ✓' : '🎁 Free with your booking'}
+                </span>
+              </div>
+            )}
+
+            {hampers.length > 1 && (
+              <div className="space-y-3">
+                <h4 className="font-bold text-gray-800 text-sm">🎁 Choose your free gift</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {hampers.map(h => {
+                    const selected = hasPkg(eventId, h.id)
+                    return (
+                      <div key={h.id} className={`card p-5 space-y-3 ${selected ? 'border-2 border-saffron-400' : ''}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{h.emoji}</span>
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">{h.name}</p>
+                            <p className="text-xs text-saffron-600 font-semibold">Worth {formatINR(h.price_min)} — FREE</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {h.items.map(item => (
+                            <span key={item} className="flex items-center gap-1 px-2.5 py-1 bg-white/70 border border-white rounded-full text-xs font-medium text-gray-700">
+                              🎁 {item}
+                            </span>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => !selected && selectHamper(h)}
+                          disabled={selected}
+                          className={`w-full py-2.5 rounded-xl font-bold text-sm transition-colors ${
+                            selected
+                              ? 'bg-green-50 text-green-700 border-2 border-green-200 cursor-default'
+                              : 'bg-saffron-500 text-white hover:bg-saffron-600'
+                          }`}
+                        >
+                          {selected ? 'Selected as your free gift ✓' : 'Select as free gift'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="card p-5 border-dashed border-2 border-saffron-300 bg-saffron-50 text-center">
               <Sparkles size={24} className="text-saffron-500 mx-auto mb-2" />
@@ -376,6 +468,15 @@ export default function EventServices() {
           defaults={getEventDetails(eventId)}
           onConfirm={confirmAdd}
           onClose={() => setPendingAdd(null)}
+        />
+      )}
+
+      {editingDetails && (
+        <BookingDetailsModal
+          itemLabel={event.name}
+          defaults={getEventDetails(eventId)}
+          onConfirm={handleUpdateDetails}
+          onClose={() => setEditingDetails(false)}
         />
       )}
 
