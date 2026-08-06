@@ -1,4 +1,15 @@
 // SAMBRAMO Brand Configuration
+
+// Both brand lines are needed in two forms: as one sentence (a <title>, a
+// footer, a meta description) and as the halves that the logo lockup sets
+// either side of a pulli and the hero sets either side of a line break.
+//
+// The halves are the source and the sentences are derived, so the two forms
+// physically cannot disagree. Holding both as separate literals is how the
+// codebase ended up with four different wordings of the same sentence.
+const TAGLINE_PARTS   = ['Celebrations, arranged', 'Essentials, delivered']
+const SIGNATURE_PARTS = ['Your Moment.', 'Our Magic.']
+
 export const BRAND = {
   name: 'Sambramo',
   // Three lines, three jobs — they are not interchangeable.
@@ -11,13 +22,13 @@ export const BRAND = {
   //
   // `signature` is the emotional line used on hero panels, where the job is
   // feeling rather than explanation.
-  tagline:   'Celebrations, arranged. Essentials, delivered.',
+  tagline:   TAGLINE_PARTS.join('. ') + '.',
   // The same line as two halves, so the lockup can set them either side of a
   // pulli — the saffron dot at the centre of the kolam — instead of a full
   // stop. Kept as data rather than split from the string above, because the
   // punctuation that reads correctly in a <title> is not the punctuation that
   // reads correctly under a logo.
-  taglineParts: ['Celebrations, arranged', 'Essentials, delivered'],
+  taglineParts: TAGLINE_PARTS,
   // The line that rides under the wordmark in the app's own chrome — the
   // navbar and the wizard header. `tagline` is the right line for the footer
   // and the auth panels, where a first-time visitor still needs telling what
@@ -35,12 +46,12 @@ export const BRAND = {
   // under the wordmark on a 360px phone — which is why the caption no longer
   // has to be hidden there.
   emotion:   'Every emotion, valued',
-  signature: 'Your Moment. Our Magic.',
-  // The signature as two halves. The hero and both auth panels set the second
-  // sentence in saffron on its own line, so every one of them had the string
-  // typed out by hand and split around markup — three copies of the brand's
-  // single most repeated line, free to drift apart and already drifting.
-  signatureParts: ['Your Moment.', 'Our Magic.'],
+  // The hero and both auth panels set the second sentence in saffron on its
+  // own line, so every one of them had this string typed out by hand and split
+  // around markup — three copies of the brand's most repeated line, each free
+  // to drift.
+  signature: SIGNATURE_PARTS.join(' '),
+  signatureParts: SIGNATURE_PARTS,
   // The one-sentence "what is this?", for the footer, the auth panels and the
   // <meta description>. There were four different versions of this sentence in
   // the codebase, and they disagreed on the two words that matter most:
