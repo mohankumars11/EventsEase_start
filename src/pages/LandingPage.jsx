@@ -4,12 +4,12 @@ import { ChevronDown, ChevronUp, ArrowRight, Sparkles, MessageCircleQuestion, Sh
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
-import { SHOP_CATEGORIES } from '../config/shop'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
 import StarRating from '../components/reviews/StarRating'
+import { PathFork, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -246,23 +246,35 @@ export default function LandingPage() {
               <span className="text-saffron-400">Our Magic.</span>
             </h1>
 
-            {/* Sub-headline */}
+            {/* Sub-headline — now names both halves of the business. A
+                visitor who needs a cake tomorrow had no way of knowing from
+                this screen that we sell one. */}
             <p className="relative text-white/70 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-5 sm:mb-8 md:mb-10 leading-relaxed">
-              From birthdays and baby showers to weddings and everything in between,
-              tell us what you're celebrating. We'll take care of every detail.
+              Tell us what you're celebrating and we'll arrange the whole thing —
+              or shop cakes, flowers, hampers and pooja essentials, delivered to
+              your door.
             </p>
 
-            {/* Single primary CTA — a second equal-weight button here would
-                split attention on the one decision that matters most on
-                this screen. "Explore" is offered below as a quiet,
-                subordinate scroll cue instead of a competing pill. */}
+            {/* Planning stays the single primary action: it is the highest
+                value path and the rest of the page is built around it. Shop
+                sits beside it as a deliberately lighter outline button rather
+                than a second gradient pill, so the second audience has a door
+                without the first losing its focus. */}
             <div className="relative flex flex-col items-center justify-center gap-3">
-              <button
-                onClick={() => toPlan()}
-                className="btn-cta"
-              >
-                Plan My Celebration ✨
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={() => toPlan()}
+                  className="btn-cta"
+                >
+                  Plan My Celebration ✨
+                </button>
+                <Link
+                  to="/shop"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 hover:bg-white/15 backdrop-blur-sm text-white font-semibold px-6 py-3.5 transition-colors"
+                >
+                  🎂 Shop essentials
+                </Link>
+              </div>
               <a
                 href="#celebrations"
                 className="inline-flex items-center gap-1.5 text-white/50 hover:text-white/80 text-sm font-medium transition-colors"
@@ -288,23 +300,14 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          1B. SHOP TEASER (secondary to Plan My Celebration)
+          1B. THE FORK — plan, or shop
+
+          This replaced a row of 144px thumbnails. Shopping is half the
+          business and it was being presented as a footnote, so a visitor
+          who arrived wanting to buy something had to deduce that we sell
+          anything at all.
       ══════════════════════════════════════════════ */}
-      <section className="py-6 sm:py-8 md:py-10 px-4 bg-plum-900 border-t border-plum-800">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-plum-300 text-sm font-medium mb-4">Need something for a celebration today?</p>
-          <SlideCarousel>
-            {SHOP_CATEGORIES.map(cat => (
-              <div key={cat.id} className="shrink-0 w-36 sm:w-40 snap-center">
-                <ShopTeaserCard category={cat} />
-              </div>
-            ))}
-            <div className="shrink-0 w-36 sm:w-40 snap-center">
-              <ComingSoonCard />
-            </div>
-          </SlideCarousel>
-        </div>
-      </section>
+      <PathFork onPlan={() => toPlan()} />
 
       {/* ══════════════════════════════════════════════
           1C. WHY NO PRICES? — trust reassurance for the
@@ -467,6 +470,16 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════
+          5B. THE SHOP
+
+          Placed straight after the event services, so the page reads as
+          one offer with two halves: here is what we arrange for you, and
+          here is what we simply send you.
+      ══════════════════════════════════════════════ */}
+      <ShopCategoryGrid />
+      <OccasionRail />
 
       {/* ══════════════════════════════════════════════
           6. HOW SAMBRAMO WORKS
@@ -787,91 +800,6 @@ function AutoScrollRow({ items, reverse = false }) {
             <p className="text-xs font-medium text-gray-700 leading-tight px-2 py-2 truncate">{svc.name}</p>
           </div>
         ))}
-      </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ShopTeaserCard sub-component — photo-topped card for the
-   "Need something for a celebration today?" shop-category strip.
-   Fixed total height so every card (including ComingSoonCard) lines
-   up perfectly in the carousel row; emoji badge overlaps the photo's
-   bottom edge for a bit of visual polish over a plain image+label card.
-═══════════════════════════════════════════════════════════ */
-const SHOP_TEASER_QUERIES = {
-  'Cakes':              'chocolate birthday cake slice',
-  'Gifts':               'wrapped gift box present ribbon',
-  'Flowers':              'flower bouquet fresh',
-  'Hampers':              'wicker gift basket fruit',       // "hamper" alone matches laundry hampers on Unsplash
-  'Party Essentials':      'balloons party decoration',
-  'Pooja & Essentials':     'pooja thali diya India',
-}
-
-function ShopTeaserCard({ category }) {
-  const [photo, setPhoto] = useState(null)
-  const [done, setDone]   = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    fetchUnsplashPhoto(SHOP_TEASER_QUERIES[category.id] ?? category.label).then(p => {
-      if (cancelled) return
-      setPhoto(p)
-      setDone(true)
-    })
-    return () => { cancelled = true }
-  }, [category.id])
-
-  return (
-    <Link
-      to={`/shop/${encodeURIComponent(category.id)}`}
-      className="group flex flex-col h-40 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30"
-    >
-      <div className="relative flex-1 min-h-0">
-        {photo ? (
-          <>
-            <img src={photo.url} alt={photo.alt} loading="lazy" className="w-full h-full object-cover" />
-            {/* Badge only shown over a real photo — the fallback tile below already carries the emoji, so showing both at once would duplicate it. */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none" />
-            <span className="absolute bottom-1.5 left-2 text-xl drop-shadow-lg">{category.emoji}</span>
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className={`text-3xl transition-opacity ${done ? 'opacity-100' : 'opacity-40 animate-pulse'}`}>{category.emoji}</span>
-          </div>
-        )}
-      </div>
-      <div className="px-2 py-2 text-center shrink-0">
-        <p className="text-plum-100 text-xs font-semibold group-hover:text-white transition-colors truncate">{category.label}</p>
-      </div>
-    </Link>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ComingSoonCard — teaser at the end of the shop-category strip
-   telling customers the catalog keeps growing.
-═══════════════════════════════════════════════════════════ */
-function ComingSoonCard() {
-  const [photo, setPhoto] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetchUnsplashPhoto('surprise gift sparkle celebration').then(p => { if (!cancelled) setPhoto(p) })
-    return () => { cancelled = true }
-  }, [])
-
-  return (
-    <div className="relative flex flex-col h-40 rounded-2xl overflow-hidden border-2 border-dashed border-saffron-400/40">
-      {photo
-        ? <img src={photo.url} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-        : <div className="absolute inset-0 bg-plum-800" />
-      }
-      <div className="absolute inset-0 bg-gradient-to-b from-plum-950/60 via-plum-950/75 to-plum-950/90" />
-      <div className="relative flex-1 flex flex-col items-center justify-center gap-1.5 p-3 text-center">
-        <Sparkles size={22} className="text-saffron-400 animate-pulse" />
-        <p className="text-saffron-300 text-xs font-bold leading-tight">Many more on the way!</p>
-        <p className="text-plum-300 text-[10px]">Keep watching ✨</p>
       </div>
     </div>
   )

@@ -50,15 +50,26 @@ export default function SambramoLogo({
         </span>
       </span>
 
-      {/* The caption is deliberately allowed to wrap. Pinned to one line it
-          overflowed the centred mobile logo on narrow phones and scrolled the
-          page sideways; the navbar keeps it on one line via shrink-0. */}
+      {/* Indented to the wordmark's left edge, and set as two halves either
+          side of a pulli rather than a full stop — the dot at the centre of
+          the kolam, doing the punctuation. It is the one place the mark's
+          geometry reappears in the type. */}
       {caption && (
         <span
           style={{ paddingLeft: `${size + GAP}px` }}
-          className={`mt-1.5 ${capSize} font-semibold leading-snug tracking-[0.12em] uppercase ${capColor} ${captionClassName}`}
+          className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug tracking-[0.11em] uppercase ${capColor} ${captionClassName}`}
         >
-          {BRAND.tagline}
+          {BRAND.taglineParts.map((part, i) => (
+            <span key={part} className="flex items-center gap-1.5 whitespace-nowrap">
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="inline-block w-[3px] h-[3px] rotate-45 bg-saffron-400 shrink-0"
+                />
+              )}
+              {part}
+            </span>
+          ))}
         </span>
       )}
     </span>

@@ -12,6 +12,12 @@ export const BRAND = {
   // `signature` is the emotional line used on hero panels, where the job is
   // feeling rather than explanation.
   tagline:   'Celebrations, arranged. Essentials, delivered.',
+  // The same line as two halves, so the lockup can set them either side of a
+  // pulli — the saffron dot at the centre of the kolam — instead of a full
+  // stop. Kept as data rather than split from the string above, because the
+  // punctuation that reads correctly in a <title> is not the punctuation that
+  // reads correctly under a logo.
+  taglineParts: ['Celebrations, arranged', 'Essentials, delivered'],
   signature: 'Your Moment. Our Magic.',
   promise:   'You Celebrate. We Handle Everything.',
   supportPhone: '+91 97392 76592',

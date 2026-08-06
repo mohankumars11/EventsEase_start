@@ -79,10 +79,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to={user ? dashboardLink() : '/'} className="shrink-0">
-            {/* The caption only appears from xl up. Below that the nav links
-                and the CTA already own the row, and a 45-character descriptor
-                pushes the whole bar into overflow. */}
-            <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden xl:block" />
+            {/* Hidden only on the narrowest phones, where the bar has to hold
+                the cart and the menu button in ~340px and there is genuinely
+                no room. Everywhere else the caption rides under the name. */}
+            <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:flex" />
           </Link>
 
           {/* Desktop nav links */}

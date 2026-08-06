@@ -223,7 +223,7 @@ export default function PlanningWizard() {
           flow is the costliest place in the app to waste a screen. */}
       <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 px-5 py-5 lg:p-12 flex flex-col justify-between">
         <div className="flex items-center gap-2">
-          <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:block" />
+          <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:flex" />
         </div>
 
         <div className="mt-4 lg:my-8 space-y-3 lg:space-y-6">
