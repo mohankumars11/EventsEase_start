@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
@@ -11,6 +11,7 @@ import ErrorBoundary from './components/layout/ErrorBoundary'
 import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
 import FestivalBanner from './components/customer/FestivalBanner'
+import ServiceAreaBanner from './components/customer/ServiceAreaBanner'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
@@ -26,6 +27,7 @@ const SignupPage         = lazy(() => import('./pages/auth/SignupPage'))
 const LoginPage          = lazy(() => import('./pages/auth/LoginPage'))
 const AuthCallbackPage   = lazy(() => import('./pages/auth/AuthCallbackPage'))
 const FestivalDetailPage = lazy(() => import('./pages/FestivalDetailPage'))
+const PlanHub            = lazy(() => import('./pages/plan/PlanHub'))
 const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const Shop               = lazy(() => import('./pages/shop/Shop'))
@@ -91,6 +93,20 @@ function DashboardRedirect() {
 }
 
 /**
+ * Keeps old /dashboard/customer/events/:eventId links working now that the
+ * catalog lives at /services/:eventId. A bare <Navigate> cannot interpolate a
+ * route param, so this reads it and rebuilds the path.
+ *
+ * Note the sibling /dashboard/customer/events (MyEvents) still resolves: React
+ * Router ranks a static segment above a dynamic one, so the two coexist exactly
+ * as they did before.
+ */
+function LegacyEventRedirect() {
+  const { eventId } = useParams()
+  return <Navigate to={`/services/${eventId}`} replace />
+}
+
+/**
  * Marketing / browsing chrome: header, festival ticker, footer, chat.
  * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
  * row of a page is never hidden underneath it.
@@ -112,6 +128,7 @@ function AppShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
+      <ServiceAreaBanner />
       <FestivalBanner />
       <BackToHomeButton />
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
@@ -126,6 +143,7 @@ function CustomerShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
+      <ServiceAreaBanner />
       <FestivalBanner />
       <BackToHomeButton />
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
@@ -167,18 +185,30 @@ function AppRoutes() {
       <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
       <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
-      {/* ── Planning wizard ─────────────────────────────
-          Open to guests on purpose. Asking someone to make an account
-          before they have been told what it costs — on a page whose whole
-          argument is "free to ask, no obligation" — is the single most
-          expensive door in the funnel, and it was inconsistent besides:
-          the shop lets you browse and fill a cart unauthenticated.
+      {/* ── Planning ────────────────────────────────────
+          /plan is the hub every "plan" button in the app lands on, and it
+          offers the two ways to actually engage: hand the occasion over to
+          a coordinator, or browse the services and packages yourself. It
+          gets AppShell because it is a browsing page and needs the header,
+          footer and phone tab bar around it.
 
-          Login is now requested at submit, where there is something to
-          save and a reason a person can see. The wizard holds the answers
-          across the round trip.
+          /plan/custom is the six-step wizard, which keeps BareShell — it is
+          a focused flow and the chrome would only compete with it.
+
+          Both are open to guests on purpose. Asking someone to make an
+          account before they have been told what it costs — on a page whose
+          whole argument is "free to ask, no obligation" — is the most
+          expensive door in the funnel, and it was inconsistent besides: the
+          shop lets you browse and fill a cart unauthenticated. Login is
+          requested at submit, where there is something to save and a reason
+          a person can see.
       ══════════════════════════════════════════════ */}
-      <Route path="/plan" element={<BareShell><PlanningWizard /></BareShell>} />
+      <Route path="/plan" element={<AppShell><PlanHub /></AppShell>} />
+      <Route path="/plan/custom" element={<BareShell><PlanningWizard /></BareShell>} />
+
+      {/* ── Services & packages catalog (public) ────── */}
+      <Route path="/services" element={<AppShell><ServicesPicker /></AppShell>} />
+      <Route path="/services/:eventId" element={<AppShell><EventServices /></AppShell>} />
       <Route path="/plan/confirmation" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <BareShell><PlanConfirmation /></BareShell>
@@ -211,16 +241,12 @@ function AppRoutes() {
           <CustomerShell><MyBookings /></CustomerShell>
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/customer/services" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><ServicesPicker /></CustomerShell>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/customer/events/:eventId" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><EventServices /></CustomerShell>
-        </ProtectedRoute>
-      } />
+      {/* The catalog used to live under /dashboard/customer behind a login, so
+          15 occasions, 39 services and every priced package were unreachable
+          from the public site — half the business, invisible. Same rule as the
+          shop now: browse freely, sign in when you add something. */}
+      <Route path="/dashboard/customer/services" element={<Navigate to="/services" replace />} />
+      <Route path="/dashboard/customer/events/:eventId" element={<LegacyEventRedirect />} />
       {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
       <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
       {/* These two rendered bare — no header, no way out except the page's

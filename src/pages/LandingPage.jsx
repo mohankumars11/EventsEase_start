@@ -11,6 +11,7 @@ import StarRating from '../components/reviews/StarRating'
 import { PathFork, OldWayBand, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
 import KolamSticker, { KolamClipDefs } from '../components/landing/KolamSticker'
 import HeroTicker from '../components/landing/HeroTicker'
+import { ShopPills, TrustRow } from '../components/landing/HeroProof'
 import SalesNudge from '../components/landing/SalesNudge'
 import { KOLAM_PATH } from '../components/ui/SambramoMark'
 
@@ -106,7 +107,7 @@ const FAQS = [
   },
   {
     q: 'What cities do you serve?',
-    a: "We primarily serve Bengaluru. We're expanding — submit your request and we'll do our best to help.",
+    a: "We're live in Bengaluru and Mysore as part of our pilot launch. Not in your city yet? Let us know from the banner at the top of the site and we'll notify you the moment we launch there.",
   },
   {
     q: 'How long does it take to get a proposal?',
@@ -228,14 +229,24 @@ export default function LandingPage() {
               <span className="text-saffron-400 shimmer-saffron">Our Magic.</span>
             </h1>
 
-            {/* Sub-headline — now names both halves of the business. A
-                visitor who needs a cake tomorrow had no way of knowing from
-                this screen that we sell one. */}
-            <p className="relative text-white/70 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-5 sm:mb-8 md:mb-10 leading-relaxed">
-              Tell us what you're celebrating and we'll arrange the whole thing —
-              or shop cakes, flowers, hampers and pooja essentials, delivered to
-              your door.
+            {/* Sub-headline, in two tiers rather than one run-on sentence.
+                It was a single muted paragraph doing two unrelated jobs in
+                one breath — explaining the concierge and listing the shop —
+                so neither landed and the whole block read as filler.
+
+                The promise now takes the brand's display face (Playfair
+                italic, already loaded for the logo wordmark) at a size that
+                can carry it; the shop half drops to a quiet support line and
+                hands off to the pills, where it becomes something you can
+                actually tap instead of a list you have to read. */}
+            <p className="relative font-serif italic text-xl sm:text-2xl md:text-[1.75rem] text-white/90 leading-snug max-w-2xl mx-auto mb-3 sm:mb-4">
+              Tell us what you're celebrating — we'll arrange every last detail.
             </p>
+            <p className="relative text-white/60 text-sm sm:text-base max-w-xl mx-auto mb-4 sm:mb-5">
+              Or shop for the day itself, delivered to your door.
+            </p>
+
+            <ShopPills />
 
             {/* Planning stays the single primary action: it is the highest
                 value path and the rest of the page is built around it. Shop
@@ -257,27 +268,17 @@ export default function LandingPage() {
                   🎂 Shop essentials
                 </Link>
               </div>
-              <a
-                href="#celebrations"
-                className="inline-flex items-center gap-1.5 text-white/50 hover:text-white/80 text-sm font-medium transition-colors"
-              >
-                or explore celebrations first <ChevronDown size={14} />
-              </a>
+              {/* The "or explore celebrations first" scroll cue used to sit
+                  here. The pills above already signal there is more below,
+                  and PathFork lands immediately after this section — so it
+                  was a third competing instruction on a screen that only
+                  needs two, and dropping it pays back the height the pills
+                  cost on mobile. */}
             </div>
           </div>
 
-          {/* Trust badges */}
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-white/60 text-sm">
-            {[
-              ['🤝', 'A real team handles your request'],
-              ['📞', 'Personal coordinator assigned'],
-              ['✅', 'Transparent proposals'],
-            ].map(([icon, text]) => (
-              <span key={text} className="flex items-center gap-2">
-                {icon} {text}
-              </span>
-            ))}
-          </div>
+          {/* Trust row */}
+          <TrustRow />
         </div>
       </section>
 

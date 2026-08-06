@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import { isPilotCity } from '../../utils/cityPilot'
+import ComingSoonCity from '../common/ComingSoonCity'
 
 // Vite doesn't resolve Leaflet's default marker icon URLs from its CSS —
 // point them at the bundled assets directly, once.
@@ -161,6 +163,10 @@ export default function DeliveryLocationPicker({ value, onChange }) {
           className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
         />
       </div>
+
+      {value?.city?.trim() && !isPilotCity(value.city) && (
+        <ComingSoonCity city={value.city} source="shop_delivery" />
+      )}
     </div>
   )
 }

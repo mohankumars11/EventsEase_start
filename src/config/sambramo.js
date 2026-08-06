@@ -25,9 +25,46 @@ export const BRAND = {
   whatsappNumber: '919739276592',
   primaryCity: 'Bengaluru',
   servicedCities: ['Bengaluru', 'Mumbai', 'Delhi', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata', 'Jaipur', 'Ahmedabad', 'Surat'],
+  // Pilot launch: the only cities actually bookable right now. Every city
+  // picker in the app restricts to this list; `servicedCities` above stays
+  // as the longer-term roadmap, not what's live today.
+  pilotCities: ['Bengaluru', 'Mysore'],
 }
 
 export const MVP_MODE = true  // Human-assisted concierge model
+
+/**
+ * One string per role, not per surface.
+ *
+ * "Plan My Celebration" had drifted into two variants across five places and the
+ * shop had four near-identical labels ("Shop essentials" / "Shop the essentials" /
+ * "Browse the shop" / "See the full shop"), all pointing at the same destination.
+ * Different words for one destination is what makes an app feel like several apps.
+ *
+ * The action/navigation split is deliberate rather than an oversight: a header
+ * button is a wayfinding label and should stay plain, while a hero button is a
+ * sales moment and earns the warmth. Both land on the same hub, so there is no
+ * ambiguity about where you end up.
+ */
+export const CTA = {
+  planAction: 'Plan My Celebration ✨',   // hero and marketing surfaces → the hub
+  planNav:    'Plan a celebration',       // header, footer, tab bar → the hub
+  catalog:    'Browse services & packages',
+  catalogNav: 'Services & packages',
+  shop:       'Shop the essentials',
+}
+
+/**
+ * Individual service prices stay hidden for now.
+ *
+ * The package ranges are whole-job numbers and read correctly on their own, but
+ * the per-service priceHint strings are unit-bearing — "₹250 – ₹800/plate",
+ * "₹1,500 – ₹3,000/person", "₹50 – ₹200/seat". Someone scanning a list reads the
+ * first number as the price of catering, which is a worse impression than showing
+ * nothing. Flip this once the estimates have had the review the data file asks for
+ * and the units render as their own token.
+ */
+export const SHOW_SERVICE_PRICES = false
 
 export const EVENT_TYPES = [
   { id: 'birthday',          label: 'Birthday',          emoji: '🎂', tagline: 'Another year. Another beautiful memory.' },

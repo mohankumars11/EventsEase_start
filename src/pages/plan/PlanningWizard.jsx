@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { EVENT_TYPES, BUDGET_OPTIONS, SERVICE_CATEGORIES, BRAND } from '../../config/sambramo'
 import { useAuth } from '../../context/AuthContext'
 import { friendlyError } from '../../context/ToastContext'
+import { isPilotCity } from '../../utils/cityPilot'
+import ComingSoonCity from '../../components/common/ComingSoonCity'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 
 const TOTAL_STEPS = 6
@@ -151,7 +153,7 @@ export default function PlanningWizard() {
   function canNext() {
     if (step === 1) return !!form.event_type
     if (step === 2) return !!form.event_date
-    if (step === 3) return !!form.city
+    if (step === 3) return isPilotCity(form.city)
     if (step === 4) return !!form.guest_count
     if (step === 5) return true
     if (step === 6) return nameValid && phoneValid && emailValid && !!form.budget_text
@@ -194,7 +196,12 @@ export default function PlanningWizard() {
         // Storage unavailable — sign-in still works, the answers are just
         // not recoverable, so don't block the flow on it.
       }
-      navigate('/login', { state: { from: { pathname: '/plan' } } })
+      // Must be '/plan/custom', not '/plan'. Sending them back to the hub
+      // would mean this component never remounts, the restore effect above
+      // never runs, and six steps of answers look lost.
+      navigate('/login', {
+        state: { from: { pathname: '/plan/custom', search: searchParams.toString() ? `?${searchParams}` : '' } },
+      })
       return
     }
 
@@ -263,8 +270,20 @@ export default function PlanningWizard() {
           the actual questions below the fold on the primary conversion
           flow is the costliest place in the app to waste a screen. */}
       <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 px-5 py-5 lg:p-12 flex flex-col justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:flex" />
+          {/* Only on the first step, before any answers exist. The hub is a
+              choice between this and browsing the catalog yourself, and
+              someone who realises one question in that they picked the wrong
+              door should not have to use the browser's back button. */}
+          {step === 1 && (
+            <Link
+              to="/plan"
+              className="shrink-0 text-plum-400 hover:text-white text-xs font-medium transition-colors"
+            >
+              ← Other ways to plan
+            </Link>
+          )}
         </div>
 
         <div className="mt-4 lg:my-8 space-y-3 lg:space-y-6">
@@ -437,10 +456,13 @@ export default function PlanningWizard() {
                   autoFocus
                 >
                   <option value="">Select your city</option>
-                  {BRAND.servicedCities.map(c => <option key={c} value={c}>{c}</option>)}
-                  <option value="Other">Other city</option>
+                  {BRAND.pilotCities.map(c => <option key={c} value={c}>{c}{c === 'Mysore' ? ' 🆕' : ''}</option>)}
+                  <option value="Other">My city isn't listed</option>
                 </select>
               </div>
+              {form.city === 'Other' && (
+                <ComingSoonCity source="plan_wizard" />
+              )}
               <div>
                 <label className="block text-sm font-semibold text-plum-800 mb-2">Venue type in mind? <span className="font-normal text-gray-400">(optional)</span></label>
                 <div className="grid grid-cols-2 gap-2">

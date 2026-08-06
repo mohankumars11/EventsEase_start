@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { id: 'reviews',         label: 'Reviews',          emoji: '⭐' },
   { id: 'support',         label: 'Support',          emoji: '🛟' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
+  { id: 'city_demand',     label: 'City Demand',      emoji: '🗺️' },
 ]
 
 const TABLE_TABS = ['All', 'New', 'In Progress', 'Proposals', 'Confirmed', 'Completed']
@@ -334,6 +335,95 @@ function RevenueContent({ events, proposalValue }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ── City demand (pilot-launch waitlist) tab ───────────────────── */
+function CityDemandContent() {
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
+
+  useEffect(() => { fetchRequests() }, [])
+
+  async function fetchRequests() {
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase
+      .from('city_interest_requests')
+      .select('city, created_at')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setRequests(data ?? [])
+    setLoading(false)
+  }
+
+  const byCity = useMemo(() => {
+    const map = {}
+    for (const r of requests) {
+      const key = r.city.trim()
+      if (!map[key]) map[key] = { city: key, count: 0, latest: r.created_at }
+      map[key].count += 1
+      if (r.created_at > map[key].latest) map[key].latest = r.created_at
+    }
+    return Object.values(map).sort((a, b) => b.count - a.count)
+  }, [requests])
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchRequests} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900">🗺️ City Demand</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {requests.length} request{requests.length !== 1 ? 's' : ''} from customers outside Bengaluru &amp; Mysore
+        </p>
+      </div>
+
+      {byCity.length === 0 ? (
+        <div className="card p-14 text-center">
+          <div className="text-4xl mb-3">🗺️</div>
+          <p className="text-gray-500 text-sm font-medium">No city requests yet.</p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {['City', 'Requests', 'Most recent'].map(col => (
+                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {byCity.map(({ city, count, latest }) => (
+                  <tr key={city} className="hover:bg-purple-50/30 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-gray-900">{city}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2.5 py-1 rounded-full bg-plum-100 text-plum-700 font-bold text-xs">{count}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{formatDate(latest)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1415,6 +1505,8 @@ export default function AdminDashboard() {
               {activeNav === 'revenue' && (
                 <RevenueContent events={events} proposalValue={proposalValue} />
               )}
+
+              {activeNav === 'city_demand' && <CityDemandContent />}
             </>
           )}
         </main>

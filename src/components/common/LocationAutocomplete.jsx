@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Loader2, ChevronDown } from 'lucide-react'
+import { MapPin, Loader2, ChevronDown, Sparkles } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
+import ComingSoonCity from './ComingSoonCity'
 
-const CITIES = [...BRAND.servicedCities, 'Other']
+// Pilot launch: only these two are real, selectable options — everything
+// else routes to the "notify me" flow below instead of a fake city chip.
+const CITIES = BRAND.pilotCities
 
 // Free, no-API-key place search. Good enough for current traffic; swap for
 // Google Places/Mapbox later if volume and precision demands grow.
@@ -26,6 +29,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [otherCity, setOtherCity] = useState(null) // null = not in this mode; string = what they typed
   const debounceRef = useRef(null)
   const boxRef = useRef(null)
 
@@ -85,18 +89,47 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
           <button
             key={c}
             type="button"
-            onClick={() => { setCity(c); setQuery(''); setResults([]); onChange({ city: c, area: '', label: '', pincode }) }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              city === c
+            onClick={() => { setOtherCity(null); setCity(c); setQuery(''); setResults([]); onChange({ city: c, area: '', label: '', pincode }) }}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              otherCity === null && city === c
                 ? 'bg-amber-500 border-amber-500 text-white'
                 : 'bg-white border-gray-200 text-gray-600 hover:border-amber-300'
             }`}
           >
             {c}
+            {c === 'Mysore' && (
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                otherCity === null && city === c ? 'bg-white/25 text-white' : 'bg-saffron-100 text-saffron-700'
+              }`}>
+                <Sparkles size={9} /> NEW
+              </span>
+            )}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => { setOtherCity(''); setCity(''); setQuery(''); setResults([]) }}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+            otherCity !== null
+              ? 'bg-gray-800 border-gray-800 text-white'
+              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+          }`}
+        >
+          My city isn't listed
+        </button>
       </div>
 
+      {otherCity !== null ? (
+        <div className="space-y-2.5">
+          <input
+            value={otherCity}
+            onChange={e => setOtherCity(e.target.value)}
+            placeholder="Which city?"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+          <ComingSoonCity city={otherCity} source="venue_location" />
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div ref={boxRef} className="relative sm:col-span-2">
           <div className="relative">
@@ -144,6 +177,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
           className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
         />
       </div>
+      )}
     </div>
   )
 }
