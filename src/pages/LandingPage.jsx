@@ -9,7 +9,11 @@ import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
 import StarRating from '../components/reviews/StarRating'
-import { PathFork, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
+import { PathFork, OldWayBand, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
+import KolamSticker, { KolamClipDefs } from '../components/landing/KolamSticker'
+import HeroTicker from '../components/landing/HeroTicker'
+import SalesNudge from '../components/landing/SalesNudge'
+import { KOLAM_PATH } from '../components/ui/SambramoMark'
 
 /* ═══════════════════════════════════════════════════════════
    Derived / static data
@@ -186,44 +190,19 @@ export default function LandingPage() {
           style={{ animationDelay: '5s' }}
         />
 
-        {/* Heart-shaped clip path, defined once, reused by every floating photo below */}
-        <svg width="0" height="0" className="absolute">
-          <defs>
-            <clipPath id="heartClip" clipPathUnits="objectBoundingBox">
-              <path d="M0.5,1 C0.5,1 0,0.619 0,0.336 C0,0.1505 0.1329,0 0.2969,0 C0.3844,0 0.464,0.04473 0.5,0.1146 C0.536,0.04473 0.6156,0 0.7031,0 C0.8671,0 1,0.1505 1,0.336 C1,0.619 0.5,1 0.5,1 Z" />
-            </clipPath>
-          </defs>
-        </svg>
+        {/* Floating real photos, cut to the mark rather than to a heart — a
+            heart belongs to no brand in particular, the kolam belongs to
+            this one. Defined once, reused by all four stickers. */}
+        <KolamClipDefs />
 
-        {/* Floating real photos — confetti / diya / flower / cake, no emoji, heart-shaped */}
-        {heroPhotos.confetti && (
-          <img
-            src={heroPhotos.confetti.url} alt=""
-            className="block absolute left-[5%] top-24 sm:top-28 w-10 h-10 sm:w-12 sm:h-12 object-cover shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '0s', clipPath: 'url(#heartClip)' }}
-          />
-        )}
-        {heroPhotos.diya && (
-          <img
-            src={heroPhotos.diya.url} alt=""
-            className="block absolute right-[6%] top-32 sm:top-36 w-11 h-11 sm:w-14 sm:h-14 object-cover shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '1s', clipPath: 'url(#heartClip)' }}
-          />
-        )}
-        {heroPhotos.flower && (
-          <img
-            src={heroPhotos.flower.url} alt=""
-            className="block absolute left-[8%] bottom-14 sm:bottom-16 w-10 h-10 sm:w-12 sm:h-12 object-cover shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '0.5s', clipPath: 'url(#heartClip)' }}
-          />
-        )}
-        {heroPhotos.cake && (
-          <img
-            src={heroPhotos.cake.url} alt=""
-            className="block absolute right-[10%] bottom-8 sm:bottom-10 w-9 h-9 sm:w-11 sm:h-11 object-cover shadow-lg float pointer-events-none select-none"
-            style={{ animationDelay: '1.5s', clipPath: 'url(#heartClip)' }}
-          />
-        )}
+        <KolamSticker photo={heroPhotos.confetti} delay="0s"
+          size="w-11 h-11 sm:w-14 sm:h-14" className="left-[5%] top-24 sm:top-28" />
+        <KolamSticker photo={heroPhotos.diya} delay="1s"
+          size="w-12 h-12 sm:w-16 sm:h-16" className="right-[6%] top-32 sm:top-36" />
+        <KolamSticker photo={heroPhotos.flower} delay="0.5s"
+          size="w-11 h-11 sm:w-14 sm:h-14" className="left-[8%] bottom-14 sm:bottom-16" />
+        <KolamSticker photo={heroPhotos.cake} delay="1.5s"
+          size="w-10 h-10 sm:w-12 sm:h-12" className="right-[10%] bottom-8 sm:bottom-10" />
 
         <div className="relative max-w-4xl mx-auto text-center">
 
@@ -234,16 +213,29 @@ export default function LandingPage() {
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-saffron-400/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-berry-500/20 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Tag */}
-            <div className="relative inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 mb-4 sm:mb-6 md:mb-8 backdrop-blur-sm">
-              ✨ India's Celebration Concierge
-            </div>
+            {/* The mark, blown up and turned almost all the way down behind
+                the card. At this size it stops reading as a logo and starts
+                reading as the rangoli it came from — the card sits on the
+                threshold drawing rather than on an empty pane of glass. */}
+            <svg
+              viewBox="-3 -3 70 70" aria-hidden="true"
+              className="absolute -right-16 -bottom-20 w-72 h-72 sm:w-96 sm:h-96 text-white opacity-[0.04] pointer-events-none"
+            >
+              <path d={KOLAM_PATH} fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+            </svg>
 
-            {/* H1 */}
+            {/* The prompt rotates through three things you would plan and
+                three you would simply buy, so the hero shows the shape of
+                the business instead of naming a category. */}
+            <HeroTicker />
+
+            {/* H1 — the signature line stays put. "Our Magic" picks up the
+                existing shimmer utility so the promise half of the sentence
+                is the half that moves. */}
             <h1 className="relative font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
               Your Moment.
               <br />
-              <span className="text-saffron-400">Our Magic.</span>
+              <span className="text-saffron-400 shimmer-saffron">Our Magic.</span>
             </h1>
 
             {/* Sub-headline — now names both halves of the business. A
@@ -308,6 +300,10 @@ export default function LandingPage() {
           anything at all.
       ══════════════════════════════════════════════ */}
       <PathFork onPlan={() => toPlan()} />
+
+      {/* The same case the nudge makes, made to everyone who scrolls rather
+          than only to whoever happens to be drifting when it fires. */}
+      <OldWayBand onPlan={() => toPlan()} />
 
       {/* ══════════════════════════════════════════════
           1C. WHY NO PRICES? — trust reassurance for the
@@ -678,6 +674,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Last, and outside the flow — it is fixed-position and must not sit
+          inside a section that could clip it. */}
+      <SalesNudge onPlan={() => toPlan()} />
 
     </div>
   )
