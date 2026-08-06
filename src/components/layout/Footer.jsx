@@ -13,8 +13,12 @@ export default function Footer() {
             <Link to="/" className="inline-block mb-3">
               <SambramoLogo size={40} ground="onDark" caption />
             </Link>
+            {/* Was "India's *first* human-assisted concierge celebration
+                service" — a superlative that appeared on this one surface and
+                nowhere else. Too isolated to work as a position, and still
+                large enough to have to defend. */}
             <p className="text-sm leading-relaxed text-plum-400 max-w-xs">
-              You celebrate. We handle everything. India's first human-assisted concierge celebration service.
+              {BRAND.tagline} {BRAND.descriptor}.
             </p>
             <div className="flex gap-3 mt-4">
               <a href={`https://wa.me/${BRAND.whatsappNumber}`} target="_blank" rel="noopener noreferrer"
@@ -75,8 +79,11 @@ export default function Footer() {
             {BRAND.supportEmail}
           </a>
           <div>
-            <span className="block text-plum-500 text-xs mb-0.5">Serving</span>
-            {BRAND.primaryCity} &amp; nearby
+            {/* Said "Bengaluru & nearby", which stopped being true the moment
+                booking was restricted to the pilot list — and "nearby" is
+                exactly the vagueness someone in Hosur would read as a yes. */}
+            <span className="block text-plum-500 text-xs mb-0.5">Live in (pilot)</span>
+            {BRAND.pilotCities.join(' & ')}
           </div>
         </div>
 

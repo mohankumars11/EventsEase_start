@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 
@@ -152,8 +153,10 @@ export default function LoginPage() {
         </Link>
         <div className="space-y-6">
           <div>
-            <h2 className="text-4xl font-display font-bold text-white leading-snug">Your Moment.<br />Our Magic.</h2>
-            <p className="text-plum-300 mt-3 text-base leading-relaxed">India's human-assisted concierge celebration service.</p>
+            <h2 className="text-4xl font-display font-bold text-white leading-snug">
+              {BRAND.signatureParts[0]}<br />{BRAND.signatureParts[1]}
+            </h2>
+            <p className="text-plum-300 mt-3 text-base leading-relaxed">{BRAND.descriptor}.</p>
           </div>
           <ul className="space-y-3">
             {['Human concierge team', 'Zero hassle planning', 'Every detail handled'].map(p => (

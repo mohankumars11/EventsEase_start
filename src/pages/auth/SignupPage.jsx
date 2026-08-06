@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 
@@ -180,8 +181,13 @@ export default function SignupPage() {
         </Link>
         <div className="space-y-6">
           <div>
-            <h2 className="text-4xl font-display font-bold text-white leading-snug">Your Moment.<br />Our Magic.</h2>
-            <p className="text-plum-300 mt-3 text-base leading-relaxed">India's human-assisted concierge celebration marketplace.</p>
+            <h2 className="text-4xl font-display font-bold text-white leading-snug">
+              {BRAND.signatureParts[0]}<br />{BRAND.signatureParts[1]}
+            </h2>
+            {/* Was "…celebration marketplace" — the word the business stopped
+                being at the concierge pivot, still selling the old company to
+                every brand-new customer at the exact moment they sign up. */}
+            <p className="text-plum-300 mt-3 text-base leading-relaxed">{BRAND.descriptor}.</p>
           </div>
           <ul className="space-y-3">
             {TRUST_POINTS.map(p => (

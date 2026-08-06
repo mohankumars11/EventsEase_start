@@ -36,7 +36,26 @@ export const BRAND = {
   // has to be hidden there.
   emotion:   'Every emotion, valued',
   signature: 'Your Moment. Our Magic.',
-  promise:   'You Celebrate. We Handle Everything.',
+  // The signature as two halves. The hero and both auth panels set the second
+  // sentence in saffron on its own line, so every one of them had the string
+  // typed out by hand and split around markup — three copies of the brand's
+  // single most repeated line, free to drift apart and already drifting.
+  signatureParts: ['Your Moment.', 'Our Magic.'],
+  // The one-sentence "what is this?", for the footer, the auth panels and the
+  // <meta description>. There were four different versions of this sentence in
+  // the codebase, and they disagreed on the two words that matter most:
+  //
+  //   Footer      "India's *first* human-assisted concierge celebration service"
+  //   LoginPage   "India's human-assisted concierge celebration service"
+  //   SignupPage  "India's human-assisted concierge celebration *marketplace*"
+  //   index.html  "India's concierge celebration service"
+  //
+  // "Marketplace" is what the product stopped being at the concierge pivot —
+  // the signup page was still selling the old company to every new customer.
+  // "First" is an unverifiable superlative that appeared on exactly one surface,
+  // which is the worst place for a claim like that: too weak to be a position,
+  // strong enough to be challenged.
+  descriptor: "India's human-assisted concierge celebration service",
   supportPhone: '+91 97392 76592',
   supportEmail: 'hello@sambramo.in',
   whatsappNumber: '919739276592',

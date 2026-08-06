@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
-import { EVENT_TYPES, SERVICE_CATEGORIES, CTA } from '../config/sambramo'
+import { BRAND, EVENT_TYPES, SERVICE_CATEGORIES, CTA } from '../config/sambramo'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
@@ -220,13 +220,13 @@ export default function LandingPage() {
                 the business instead of naming a category. */}
             <HeroTicker />
 
-            {/* H1 — the signature line stays put. "Our Magic" picks up the
-                existing shimmer utility so the promise half of the sentence
-                is the half that moves. */}
+            {/* H1 — the signature line, read from BRAND rather than typed
+                out here. The second half picks up the shimmer utility so the
+                promise half of the sentence is the half that moves. */}
             <h1 className="relative font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
-              Your Moment.
+              {BRAND.signatureParts[0]}
               <br />
-              <span className="text-saffron-400 shimmer-saffron">Our Magic.</span>
+              <span className="text-saffron-400 shimmer-saffron">{BRAND.signatureParts[1]}</span>
             </h1>
 
             {/* Sub-headline, in two tiers rather than one run-on sentence.
