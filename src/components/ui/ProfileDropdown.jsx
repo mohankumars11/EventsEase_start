@@ -94,7 +94,7 @@ export default function ProfileDropdown({ profile, onSignOut, dashboardLink }) {
             {isCustomer && (
               <>
                 <Item to="/dashboard/customer/events" icon={<Calendar size={15} />} label="My Celebrations" onClick={() => setOpen(false)} />
-                <Item to="/dashboard/customer/services" icon={<LayoutGrid size={15} />} label="Browse Services" onClick={() => setOpen(false)} />
+                <Item to="/services" icon={<LayoutGrid size={15} />} label="Services &amp; packages" onClick={() => setOpen(false)} />
                 <Item to="/dashboard/customer/orders" icon={<Package size={15} />} label="My Orders" onClick={() => setOpen(false)} />
                 <Item to="/dashboard/customer/requests" icon={<ClipboardList size={15} />} label="My Requests" onClick={() => setOpen(false)} />
               </>

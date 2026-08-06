@@ -18,6 +18,23 @@ export const BRAND = {
   // punctuation that reads correctly in a <title> is not the punctuation that
   // reads correctly under a logo.
   taglineParts: ['Celebrations, arranged', 'Essentials, delivered'],
+  // The line that rides under the wordmark in the app's own chrome — the
+  // navbar and the wizard header. `tagline` is the right line for the footer
+  // and the auth panels, where a first-time visitor still needs telling what
+  // this is; on a bar you see on every screen for months it is 45 characters
+  // of explanation you have already read, and it sets wider than the wordmark
+  // it hangs under. This one is a feeling, not an explanation, which is the
+  // job the chrome actually has once you are inside the product.
+  //
+  // The wording was arrived at rather than chosen. "Valuing the emotions" is
+  // the thought, but "the emotions" is a category noun in English — it points
+  // at emotion in the abstract, not at the customer's, so the line reads
+  // clinical exactly where it needs to read warm. Dropping the article and
+  // taking the descriptor's own "<noun>, <verbed>" construction says the same
+  // thing in the voice the brand already speaks, and 21 characters still fits
+  // under the wordmark on a 360px phone — which is why the caption no longer
+  // has to be hidden there.
+  emotion:   'Every emotion, valued',
   signature: 'Your Moment. Our Magic.',
   promise:   'You Celebrate. We Handle Everything.',
   supportPhone: '+91 97392 76592',

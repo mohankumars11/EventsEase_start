@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BRAND } from '../../config/sambramo'
+import { BRAND, CTA } from '../../config/sambramo'
 import SambramoLogo from '../ui/SambramoLogo'
 
 export default function Footer() {
@@ -52,8 +52,12 @@ export default function Footer() {
               <li><Link to="/#celebrations" className="hover:text-saffron-400 transition-colors">Celebrations</Link></li>
               <li><Link to="/#festivals" className="hover:text-saffron-400 transition-colors">Festival specials</Link></li>
               <li><Link to="/shop" className="hover:text-saffron-400 transition-colors">Shop</Link></li>
+              {/* The catalog is public now and had no discoverability outside
+                  the hub — a whole half of the offer with nothing pointing at
+                  it from the one place people look for a site map. */}
+              <li><Link to="/services" className="hover:text-saffron-400 transition-colors">{CTA.catalogNav}</Link></li>
               <li><Link to="/login" className="hover:text-saffron-400 transition-colors">Sign in</Link></li>
-              <li><Link to="/plan" className="hover:text-saffron-400 transition-colors">Plan a celebration</Link></li>
+              <li><Link to="/plan" className="hover:text-saffron-400 transition-colors">{CTA.planNav}</Link></li>
             </ul>
           </div>
         </div>
@@ -77,8 +81,11 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-plum-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <p>© {new Date().getFullYear()} Sambramo. Made with love for Indian celebrations.</p>
-          <p className="text-plum-600">Your Moment. Our Magic.</p>
+          <p>
+            © {new Date().getFullYear()} Sambramo. All rights reserved.
+            <span className="text-plum-600"> · Made with love for Indian celebrations.</span>
+          </p>
+          <p className="text-plum-600">{BRAND.signature}</p>
         </div>
       </div>
     </footer>

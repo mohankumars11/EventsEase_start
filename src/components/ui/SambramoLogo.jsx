@@ -2,6 +2,17 @@ import { BRAND } from '../../config/sambramo'
 import SambramoMark from './SambramoMark'
 
 /**
+ * The two lines that can hang under the wordmark, as the phrases they are set
+ * from. `descriptor` is the two-part "what is this?" line; `emotion` is one
+ * phrase, so the pulli that separates the descriptor's halves opens the line
+ * instead — the mark's centre dot doing the same job in both.
+ */
+const CAPTION_PARTS = {
+  descriptor: () => BRAND.taglineParts,
+  emotion:    () => [BRAND.emotion],
+}
+
+/**
  * Mark + wordmark lockup.
  *
  * The wordmark stays a single colour. The old header split it as
@@ -13,23 +24,48 @@ export default function SambramoLogo({
   size    = 32,
   // 'onDark' for the plum navbar and footer, 'onLight' for cream and white.
   ground  = 'onDark',
+  /**
+   * false, or which line to hang under the wordmark:
+   *
+   *   'descriptor' — "Celebrations, arranged ◆ Essentials, delivered". ~45
+   *                  characters, so it sets wider than the wordmark and needs
+   *                  a rail with room: the footer, the auth panels.
+   *   'emotion'    — "Every emotion, valued". Short enough to sit under the
+   *                  wordmark unhidden at any width, which is what the navbar
+   *                  and the wizard header need.
+   *
+   * `true` stays a synonym for 'descriptor' so existing callers read the same.
+   */
   caption = false,
   /**
-   * The caption is ~45 characters. Set at once it is wider than the wordmark
-   * it sits under, so in tight rails (the navbar especially, where it competes
-   * with the links and the CTA) the caller hides it at small breakpoints
-   * rather than letting it push the row into overflow.
+   * Escape hatch for a caller whose rail is tighter than the line it asked
+   * for — e.g. 'hidden min-[360px]:flex' to drop the caption on the narrowest
+   * phones rather than let it push the row into overflow.
    */
   captionClassName = '',
   className = '',
 }) {
   const wordColor = ground === 'onDark' ? 'text-white' : 'text-plum-950'
-  const capColor  = ground === 'onDark' ? 'text-plum-300' : 'text-plum-600'
+
+  const mode  = caption === true ? 'descriptor' : caption
+  const parts = mode ? CAPTION_PARTS[mode]?.() : null
+
+  // The emotional line is the one thing on the bar that is there to be felt
+  // rather than read past, and it is a fifth the length of the descriptor —
+  // so it can afford a step more size and a step more contrast without
+  // starting to compete with the name above it.
+  const isEmotion = mode === 'emotion'
+
+  const capColor = ground === 'onDark'
+    ? (isEmotion ? 'text-plum-200' : 'text-plum-300')
+    : (isEmotion ? 'text-plum-700' : 'text-plum-600')
 
   // Playfair at display weight already carries the name; the optical size of
   // the wordmark is tied to the mark so the lockup scales as one object.
   const wordSize = size >= 40 ? 'text-3xl' : size >= 30 ? 'text-xl' : 'text-lg'
-  const capSize  = size >= 40 ? 'text-[10px]' : 'text-[9px]'
+  const capSize  = isEmotion
+    ? (size >= 40 ? 'text-[11px]' : 'text-[10px]')
+    : (size >= 40 ? 'text-[10px]' : 'text-[9px]')
 
   // Gap between mark and wordmark, in px. The caption is indented by exactly
   // this plus the mark width so its left edge lands on the wordmark's left
@@ -50,18 +86,20 @@ export default function SambramoLogo({
         </span>
       </span>
 
-      {/* Indented to the wordmark's left edge, and set as two halves either
-          side of a pulli rather than a full stop — the dot at the centre of
-          the kolam, doing the punctuation. It is the one place the mark's
-          geometry reappears in the type. */}
-      {caption && (
+      {/* Indented to the wordmark's left edge, and punctuated with a pulli
+          rather than a full stop — the dot at the centre of the kolam, set
+          between the descriptor's halves or ahead of the single emotional
+          phrase. It is the one place the mark's geometry reappears in the
+          type, so it earns the extra element either way. */}
+      {parts && (
         <span
           style={{ paddingLeft: `${size + GAP}px` }}
-          className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug tracking-[0.11em] uppercase ${capColor} ${captionClassName}`}
+          className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug ${isEmotion ? 'tracking-[0.12em]' : 'tracking-[0.11em]'} uppercase ${capColor} ${captionClassName}`}
         >
-          {BRAND.taglineParts.map((part, i) => (
+          {parts.map((part, i) => (
             <span key={part} className="flex items-center gap-1.5 whitespace-nowrap">
-              {i > 0 && (
+              {/* Separator between halves; opening mark when there is only one. */}
+              {(i > 0 || parts.length === 1) && (
                 <span
                   aria-hidden="true"
                   className="inline-block w-[3px] h-[3px] rotate-45 bg-saffron-400 shrink-0"

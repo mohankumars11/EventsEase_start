@@ -1,13 +1,24 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search, X } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Search, X, Sparkles } from 'lucide-react'
 import { EVENT_LIST } from '../../data/eventServicesData'
+import { useAuth } from '../../context/AuthContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
 
 export default function ServicesPicker() {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
+  const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+
+  // The hub sends ?type= here whenever it could not resolve the occasion to a
+  // catalog page — a festival, or "something else". Rather than dumping the
+  // visitor on an unfiltered list of fifteen, seed the search with what they
+  // told us so the page opens already looking for it.
+  const [query, setQuery] = useState(() => {
+    const seed = searchParams.get('q') || searchParams.get('festival') || searchParams.get('type') || ''
+    return seed.replace(/[-_]/g, ' ')
+  })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -29,6 +40,21 @@ export default function ServicesPicker() {
             cooks, priests, pooja items, decorations and more. Add only what you want.
           </p>
         </div>
+
+        {/* A guest arrives here cold, with no dashboard around the page to
+            explain it and no sign that the other door exists. */}
+        {!user && (
+          <div className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl bg-plum-50 border border-plum-100 px-4 py-3 text-sm">
+            <span className="text-plum-900 font-semibold">Browse freely — nothing to fill in.</span>
+            <span className="text-plum-700">You only sign in when you add something.</span>
+            <Link
+              to="/plan/custom"
+              className="ml-auto inline-flex items-center gap-1.5 font-bold text-plum-700 hover:text-plum-900 whitespace-nowrap"
+            >
+              <Sparkles size={14} /> Or let us plan the whole thing →
+            </Link>
+          </div>
+        )}
 
         <div className="relative mb-6 max-w-md">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -57,7 +83,7 @@ export default function ServicesPicker() {
           {filtered.map(ev => (
             <button
               key={ev.id}
-              onClick={() => navigate(`/dashboard/customer/events/${ev.id}`)}
+              onClick={() => navigate(`/services/${ev.id}`)}
               className={`text-left rounded-2xl border-2 ${ev.borderColor} ${ev.bgColor} overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group`}
             >
               <ProductImage query={`Indian ${ev.name} celebration`} emoji={ev.emoji} className="w-full h-28" />

@@ -90,10 +90,32 @@ function cartReducer(state, action) {
     case 'CLEAR':
       return { items: [], packages: [], eventDates: {}, products: state.products }
 
-    case 'HYDRATE':
-      // Merge, don't replace — products are local-only and must survive
-      // hydration of the Supabase-backed items/packages.
-      return { ...state, ...action.state, products: state.products }
+    case 'HYDRATE': {
+      // Merge by key rather than replace. `...action.state` protected products
+      // but still overwrote items and packages wholesale, which loses anything
+      // added locally before the server rows arrive.
+      //
+      // That race is now reachable: a guest who adds a service is sent to sign
+      // in, and on return the restore and this hydration both fire on the same
+      // `user` transition. If the restore landed first its item was wiped from
+      // local state — the row was already on its way to Supabase, so it came
+      // back on the next reload, but the customer watched their item vanish at
+      // the exact moment they signed in to save it.
+      //
+      // Server rows win on conflict: they carry the canonical price and booking
+      // details. Local-only rows survive. Order no longer matters.
+      const mergeByKey = (local, remote) => {
+        const fromServer = new Set(remote.map(r => r.key))
+        return [...remote, ...local.filter(l => !fromServer.has(l.key))]
+      }
+      return {
+        ...state,
+        eventDates: { ...state.eventDates, ...action.state.eventDates },
+        items:      mergeByKey(state.items,    action.state.items    ?? []),
+        packages:   mergeByKey(state.packages, action.state.packages ?? []),
+        products:   state.products,
+      }
+    }
 
     default:
       return state

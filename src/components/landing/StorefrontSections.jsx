@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, Truck, ShieldCheck, Sparkles } from 'lucide-react'
 import { SHOP_CATEGORIES, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+import { CTA } from '../../config/sambramo'
 import {
   CATEGORY_PHOTO, CATEGORY_PHOTO_QUERY, OCCASION_CARDS, occasionPhoto,
   PLAN_REEL, SHOP_REEL,
@@ -184,7 +185,7 @@ export function PathFork({ onPlan }) {
                 to="/shop"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-plum-600 text-plum-700 hover:bg-plum-600 hover:text-white font-bold px-6 py-3.5 transition-colors"
               >
-                Browse the shop <ArrowRight size={17} />
+                {CTA.shop} <ArrowRight size={17} />
               </Link>
             </div>
           </div>
@@ -298,7 +299,7 @@ export function ShopCategoryGrid() {
             to="/shop"
             className="inline-flex items-center gap-1.5 text-plum-700 hover:text-plum-900 font-semibold text-sm"
           >
-            See the full shop <ArrowRight size={16} />
+            {CTA.shop} <ArrowRight size={16} />
           </Link>
         </div>
 

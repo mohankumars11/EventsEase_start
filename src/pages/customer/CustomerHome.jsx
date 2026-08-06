@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, Users, ArrowRight, Phone, Clock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND } from '../../config/sambramo'
+import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND, CTA } from '../../config/sambramo'
 import { FESTIVALS } from '../../data/festivals'
 import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
 import { SHOP_CATEGORIES } from '../../config/shop'
@@ -144,10 +144,10 @@ export default function CustomerHome() {
                 Start Planning <ArrowRight size={16} />
               </Link>
               <Link
-                to="/dashboard/customer/services"
+                to="/services"
                 className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold px-8 py-3.5 rounded-2xl transition-all backdrop-blur-sm"
               >
-                🛍️ Individual Services &amp; Packages
+                🛍️ {CTA.catalogNav}
               </Link>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function CustomerHome() {
               <p className="text-sm text-gray-500 mt-0.5">Cakes, gifts, flowers, pooja items — delivered, no planning needed.</p>
             </div>
             <Link to="/shop" className="text-sm font-semibold text-plum-600 hover:text-plum-700 shrink-0">
-              Visit Shop →
+              {CTA.shop} →
             </Link>
           </div>
           <SlideCarousel>

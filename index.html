@@ -8,7 +8,12 @@
     <meta name="description" content="Sambramo — celebrations, arranged and essentials, delivered. India's concierge celebration service: a real coordinator plans your event, and a shop stocked with cakes, hampers, flowers and pooja essentials covers everything else." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- The ital axis matters: the hero's lead line is set in Playfair
+         italic. src/index.css already imports it with italic, but this tag
+         requested upright only — two disagreeing requests for the same
+         family is how you end up with a browser-synthesised oblique instead
+         of the real cut. Both now ask for the same thing. -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>Sambramo — Celebrations, arranged. Essentials, delivered.</title>
   </head>
   <body>

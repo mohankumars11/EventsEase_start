@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
-import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
+import { EVENT_TYPES, SERVICE_CATEGORIES, CTA } from '../config/sambramo'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
@@ -265,7 +265,7 @@ export default function LandingPage() {
                   to="/shop"
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 hover:bg-white/15 backdrop-blur-sm text-white font-semibold px-6 py-3.5 transition-colors"
                 >
-                  🎂 Shop essentials
+                  🎂 {CTA.shop}
                 </Link>
               </div>
               {/* The "or explore celebrations first" scroll cue used to sit

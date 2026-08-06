@@ -131,7 +131,7 @@ export default function Cart() {
             <div className="text-6xl">🛒</div>
             <h3 className="font-bold text-gray-700">Your cart is empty</h3>
             <p className="text-sm text-gray-400">Browse a function or festival and add the services you need.</p>
-            <Link to="/dashboard/customer/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+            <Link to="/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
               Browse services
             </Link>
           </div>

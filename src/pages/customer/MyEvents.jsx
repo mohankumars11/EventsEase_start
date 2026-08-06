@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Sparkles, Calendar, MapPin, Users, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { toCatalogId } from '../../data/occasionMap'
 import { useAuth } from '../../context/AuthContext'
 import {
   BRAND, EVENT_TYPE_EMOJIS, EVENT_TYPE_GRADIENTS,
@@ -132,7 +133,14 @@ function EventCard({ event }) {
 
         {/* CTA button */}
         <button
-          onClick={() => navigate(`/dashboard/customer/events/${event.event_type}`)}
+          // event_type holds a wizard id ('baby-shower'), while the catalog is
+          // keyed by its own ('baby_shower') — so this used to route to a page
+          // that rendered "Event not found". Occasions the catalog has no page
+          // for fall back to its index rather than a dead URL.
+          onClick={() => {
+            const catalogId = toCatalogId(event.event_type)
+            navigate(catalogId ? `/services/${catalogId}` : '/services')
+          }}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             isAction
               ? 'bg-plum-600 text-white hover:bg-plum-700 shadow-md shadow-plum-200'

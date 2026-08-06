@@ -180,7 +180,7 @@ export default function LoginPage() {
           {/* ── Step 1: Email input ── */}
           {step === 'email' && (
             <>
-              {from?.pathname === '/plan' && (
+              {from?.pathname?.startsWith('/plan') && (
                 <div className="mb-6 p-4 bg-saffron-50 border border-saffron-200 rounded-2xl">
                   <p className="text-sm font-semibold text-plum-900">
                     You're just a few steps from a seamless celebration. ✨

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft, Package, Sparkles, ChevronDown, ChevronUp, ShoppingCart, Check, Star, Pencil } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
-import { formatINR } from '../../utils/format'
+import { toWizardType } from '../../data/occasionMap'
+import { formatINR, formatINRRange } from '../../utils/format'
+import { SHOW_SERVICE_PRICES, BRAND } from '../../config/sambramo'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
@@ -13,9 +15,14 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 
+// Where a guest's pending add waits while they sign in. Session scoped, same
+// reasoning as the wizard's draft: one visit's intent, not a standing order.
+const CART_INTENT_KEY = 'sambramo_cart_intent'
+
 export default function EventServices() {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const event = EVENT_DATA[eventId]
   const [activeTab, setActiveTab]     = useState('services') // 'services' | 'packages'
@@ -26,27 +33,36 @@ export default function EventServices() {
   const [eligible, setEligible]       = useState({}) // `${type}__${id}` -> enquiryId
   const { cart, dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
 
-  // Booking details (date/time/guests/location) only need to be asked once
-  // per event — getEventDetails(eventId) is non-null the moment the first
-  // item for this event has them, so it doubles as "has this event already
-  // been set up" without any separate tracked flag.
-  function handleAddClick(kind, payload) {
-    const existing = getEventDetails(eventId)
-    if (!existing) { setPendingAdd({ kind, payload }); return }
-    if (kind === 'service') {
-      dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: payload, details: existing })
-    } else {
-      dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: payload, details: existing })
+  /**
+   * The one place anything reaches the cart from this page.
+   *
+   * Both entry points funnel through here so the signed-out check lives in a
+   * single spot — this page is public now, and a guard duplicated across two
+   * handlers is a guard that will eventually disagree with itself.
+   */
+  function commitAdd(kind, payload, details) {
+    // The prompt fires here rather than on the button, deliberately: by this
+    // point the visitor has already given us the date and the venue, so it
+    // reads as "sign in to save this" instead of "prove who you are before
+    // you may look". Same reasoning as the wizard, which asks at submit.
+    if (!user) {
+      try {
+        sessionStorage.setItem(CART_INTENT_KEY, JSON.stringify({ eventId, kind, payload, details }))
+      } catch {
+        // Storage unavailable — signing in still works, the item just is not
+        // recoverable, so don't block the journey on it.
+      }
+      navigate('/login', {
+        state: { from: { pathname: location.pathname, search: location.search } },
+      })
+      return
     }
-  }
 
-  function confirmAdd(details) {
-    if (!pendingAdd) return
     const isFirstAdd = getEventDetails(eventId) === null
-    if (pendingAdd.kind === 'service') {
-      dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: pendingAdd.payload, details })
+    if (kind === 'service') {
+      dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: payload, details })
     } else {
-      dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: pendingAdd.payload, details })
+      dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: payload, details })
     }
     // Single-hamper events get their free gift auto-attached the moment
     // this event's first real item is confirmed — no separate click, no
@@ -58,8 +74,44 @@ export default function EventServices() {
         dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: hampers[0], details, complimentary: true })
       }
     }
+  }
+
+  // Booking details (date/time/guests/location) only need to be asked once
+  // per event — getEventDetails(eventId) is non-null the moment the first
+  // item for this event has them, so it doubles as "has this event already
+  // been set up" without any separate tracked flag.
+  function handleAddClick(kind, payload) {
+    const existing = getEventDetails(eventId)
+    if (!existing) { setPendingAdd({ kind, payload }); return }
+    commitAdd(kind, payload, existing)
+  }
+
+  function confirmAdd(details) {
+    if (!pendingAdd) return
+    commitAdd(pendingAdd.kind, pendingAdd.payload, details)
     setPendingAdd(null)
   }
+
+  // Finish what a guest started, once they come back signed in.
+  //
+  // Guarded on the event id because the intent is keyed to this page: signing
+  // in from somewhere else entirely should not drop a stranger's item into
+  // this cart. Cleared on read so a later visit starts clean.
+  useEffect(() => {
+    if (!user || !event) return
+    let intent
+    try {
+      const raw = sessionStorage.getItem(CART_INTENT_KEY)
+      if (!raw) return
+      intent = JSON.parse(raw)
+      sessionStorage.removeItem(CART_INTENT_KEY)
+    } catch {
+      return
+    }
+    if (intent?.eventId !== eventId) return
+    commitAdd(intent.kind, intent.payload, intent.details)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, eventId, event])
 
   function handleUpdateDetails(details) {
     ;[...cart.items, ...cart.packages]
@@ -99,7 +151,7 @@ export default function EventServices() {
         <div className="text-center py-20">
           <div className="text-5xl mb-4">🤔</div>
           <h2 className="font-bold text-gray-700 mb-2">Event not found</h2>
-          <Link to="/dashboard/customer" className="btn-primary">Go back home</Link>
+          <Link to="/services" className="btn-primary">Browse all occasions</Link>
         </div>
       </CustomerLayout>
     )
@@ -127,7 +179,7 @@ export default function EventServices() {
       <div className={`bg-gradient-to-r ${event.heroGradient} text-white`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
           <button
-            onClick={() => navigate('/dashboard/customer')}
+            onClick={() => navigate('/services')}
             className="flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-5"
           >
             <ArrowLeft size={15} /> All events
@@ -184,20 +236,27 @@ export default function EventServices() {
             </button>
           </div>
           <div className="flex items-center gap-2">
+            {/* The services cart is customer-only, and under the add-to-cart
+                login rule a guest can never have anything in it — so pointing
+                a signed-out visitor at it would only bounce them to /login
+                from a button that promises a cart. The global header cart
+                still covers them. */}
+            {user && (
+              <button
+                onClick={() => navigate('/dashboard/customer/cart')}
+                className="relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-plum-300 transition-colors"
+              >
+                <ShoppingCart size={15} />
+                Cart
+                {totalCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {totalCount > 9 ? '9+' : totalCount}
+                  </span>
+                )}
+              </button>
+            )}
             <button
-              onClick={() => navigate('/dashboard/customer/cart')}
-              className="relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-plum-300 transition-colors"
-            >
-              <ShoppingCart size={15} />
-              Cart
-              {totalCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {totalCount > 9 ? '9+' : totalCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => navigate('/plan?type=' + eventId)}
+              onClick={() => navigate('/plan/custom?type=' + toWizardType(eventId))}
               className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-plum-700 text-white font-semibold text-sm hover:bg-plum-800"
             >
               <Sparkles size={15} />
@@ -260,7 +319,14 @@ export default function EventServices() {
                                 <p className="font-semibold text-gray-900 text-sm">{svc.name}</p>
                                 <p className="text-xs text-gray-500 truncate">{svc.desc}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <p className="text-xs text-plum-500 font-medium">Custom quote</p>
+                                  {/* Per-service hints carry their unit inside the
+                                      string ("₹250 – ₹800/plate"), so shown in a
+                                      scannable list the first number reads as the
+                                      price of catering. Behind a flag until the
+                                      unit is its own field. */}
+                                  <p className="text-xs text-plum-500 font-medium">
+                                    {SHOW_SERVICE_PRICES && svc.priceHint ? svc.priceHint : 'Custom quote'}
+                                  </p>
                                   <RatingBadge subjectType="service" subjectId={svc.id} />
                                 </div>
                               </div>
@@ -299,7 +365,7 @@ export default function EventServices() {
               )
             })}
 
-            {totalCount > 0 && (
+            {user && totalCount > 0 && (
               <div className="sticky bottom-20 md:bottom-4 flex justify-center pointer-events-none">
                 <button
                   onClick={() => navigate('/dashboard/customer/cart')}
@@ -318,6 +384,11 @@ export default function EventServices() {
           <div className="space-y-5">
             <p className="text-sm text-gray-500 mb-2">
               Pre-curated bundles — save time, save money, and Sambramo handles every detail.
+            </p>
+            <p className="text-xs text-gray-500 bg-plum-50 border border-plum-100 rounded-xl px-3 py-2 mb-4 leading-relaxed">
+              Ranges are indicative, for {BRAND.primaryCity}. Your final price is confirmed
+              once we know your date, guest count and venue — and you approve it before
+              anything is booked.
             </p>
 
             {realPackages.map(pkg => {
@@ -353,10 +424,17 @@ export default function EventServices() {
                         )}
                       </div>
                     </div>
+                    {/* A self-serve catalog that prints "Custom quote" on every
+                        card is the enquiry form with extra steps — the whole
+                        point of browsing yourself is seeing what things cost.
+                        A range is not a quote, and the caveat above the list
+                        says so plainly. */}
                     <div className="text-right shrink-0">
                       <div className="px-3 py-1.5 rounded-lg bg-plum-50 border border-plum-100">
-                        <p className="text-xs font-semibold text-plum-600">Custom quote</p>
-                        <p className="text-[10px] text-gray-400">after we review your needs</p>
+                        <p className="text-[10px] text-gray-400 leading-tight">Typical range</p>
+                        <p className="text-xs font-bold text-plum-700 whitespace-nowrap">
+                          {formatINRRange(pkg.price_min, pkg.price_max)}
+                        </p>
                       </div>
                     </div>
                   </div>

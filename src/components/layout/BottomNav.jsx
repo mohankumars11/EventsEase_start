@@ -30,7 +30,13 @@ export default function BottomNav() {
 
   // Full-screen focused flows own the whole viewport — a tab bar under a
   // multi-step wizard or a checkout invites people to abandon halfway.
-  const HIDDEN_ON = ['/plan', '/login', '/signup', '/auth/callback', '/onboarding']
+  //
+  // /plan is deliberately not in this list any more. It used to be the wizard,
+  // but it is now the hub — a browsing page a phone visitor arrives at from the
+  // Plan tab itself, and hiding the bar there would strand them with no way to
+  // reach Home, Shop or Cart. The prefix match means listing '/plan/custom'
+  // covers the wizard without covering its parent.
+  const HIDDEN_ON = ['/plan/custom', '/plan/confirmation', '/login', '/signup', '/auth/callback', '/onboarding']
   if (HIDDEN_ON.some(p => pathname === p || pathname.startsWith(p + '/'))) return null
 
   const home = user ? '/dashboard/customer' : '/'

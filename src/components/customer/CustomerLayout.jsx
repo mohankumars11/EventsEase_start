@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Home, Search, ClipboardList, ShoppingCart, ShoppingBag } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
 
 const TABS = [
   { label: 'Home',     icon: Home,          path: '/dashboard/customer'          },
-  { label: 'Services', icon: Search,        path: '/dashboard/customer/services' },
+  { label: 'Services', icon: Search,        path: '/services'                    },
   { label: 'Requests', icon: ClipboardList, path: '/dashboard/customer/requests' },
   { label: 'Cart',     icon: ShoppingCart,  path: '/dashboard/customer/cart'     },
   { label: 'Orders',   icon: ShoppingBag,   path: '/dashboard/customer/orders'   },
@@ -13,6 +14,16 @@ const TABS = [
 export default function CustomerLayout({ children }) {
   const { pathname } = useLocation()
   const { totalCount } = useCart()
+  const { user } = useAuth()
+
+  // The services catalog is public now, so this layout renders for signed-out
+  // visitors too — and none of this chrome suits them. Four of the five tabs
+  // bounce a guest to /login, and the mobile bar below is a second fixed nav
+  // that would sit underneath the global BottomNav on the same screen.
+  //
+  // Guests get the bare page inside AppShell, which already supplies the
+  // header, footer and tab bar. Signed-in users see exactly what they did.
+  if (!user) return <>{children}</>
 
   function isActive(path) {
     if (path === '/dashboard/customer') return pathname === path

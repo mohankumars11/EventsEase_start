@@ -208,7 +208,7 @@ export default function SignupPage() {
           {/* ── Step: Role selection ── */}
           {step === 'role' && (
             <>
-              {from?.pathname === '/plan' && (
+              {from?.pathname?.startsWith('/plan') && (
                 <div className="mb-6 p-4 bg-saffron-50 border border-saffron-200 rounded-2xl">
                   <p className="text-sm font-semibold text-plum-900">
                     You're a few steps closer to your seamless celebration. ✨

@@ -81,7 +81,7 @@ export default function MyRequests() {
           <div className="text-center py-16 space-y-4">
             <div className="text-5xl">📋</div>
             <h3 className="font-bold text-gray-700">No requests yet</h3>
-            <Link to="/dashboard/customer/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+            <Link to="/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
               Browse services
             </Link>
           </div>

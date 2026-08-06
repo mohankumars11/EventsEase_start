@@ -271,7 +271,15 @@ export default function PlanningWizard() {
           flow is the costliest place in the app to waste a screen. */}
       <div className="lg:w-2/5 bg-gradient-to-br from-plum-900 to-plum-950 px-5 py-5 lg:p-12 flex flex-col justify-between">
         <div className="flex items-center justify-between gap-2">
-          <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:flex" />
+          {/* Same choice as the navbar: this is chrome above a form someone is
+              already filling in, so the line under the name is the feeling,
+              not the explanation. */}
+          <SambramoLogo
+            size={32}
+            ground="onDark"
+            caption="emotion"
+            captionClassName="hidden min-[360px]:flex"
+          />
           {/* Only on the first step, before any answers exist. The hub is a
               choice between this and browsing the catalog yourself, and
               someone who realises one question in that they picked the wrong

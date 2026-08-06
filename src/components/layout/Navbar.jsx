@@ -5,11 +5,17 @@ import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import SambramoLogo from '../ui/SambramoLogo'
+import { CTA } from '../../config/sambramo'
 
+// "Services" used to scroll to a section of the landing page. Now that the
+// catalog is a real public page, two things called Services in one header
+// would be exactly the ambiguity this header is meant to remove — so the
+// label owns the destination and the landing section keeps its anchor for
+// anyone who scrolls to it.
 const NAV_LINKS = [
   { label: 'Celebrations', hash: 'celebrations' },
   { label: 'How It Works',  hash: 'how-it-works'  },
-  { label: 'Services',      hash: 'services'       },
+  { label: 'Services',      to:   '/services'     },
   { label: 'Inspiration',   hash: 'festivals'      },
 ]
 
@@ -79,22 +85,38 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to={user ? dashboardLink() : '/'} className="shrink-0">
-            {/* Hidden only on the narrowest phones, where the bar has to hold
-                the cart and the menu button in ~340px and there is genuinely
-                no room. Everywhere else the caption rides under the name. */}
-            <SambramoLogo size={32} ground="onDark" caption captionClassName="hidden sm:flex" />
+            {/* The emotional line, not the descriptor. This bar is on every
+                screen of the product, and by the second visit the "what is
+                this?" line is 45 characters you read past — the footer and the
+                auth panels still carry it for the people who need it.
+                Being a fifth as long, it also stops being the thing that
+                overflowed: it was hidden below 640px, and now only the very
+                narrowest phones, where the bar also holds the cart and the
+                menu button, have to drop it. */}
+            <SambramoLogo
+              size={32}
+              ground="onDark"
+              caption="emotion"
+              captionClassName="hidden min-[360px]:flex"
+            />
           </Link>
 
           {/* Desktop nav links */}
           <div className="hidden lg:flex items-center gap-0.5">
-            {!user && NAV_LINKS.map(({ label, hash }) => (
-              <button
-                key={label}
-                onClick={() => scrollToSection(hash)}
-                className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
-              >
-                {label}
-              </button>
+            {!user && NAV_LINKS.map(({ label, hash, to }) => (
+              to ? (
+                <Link key={label} to={to} className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
+                  {label}
+                </Link>
+              ) : (
+                <button
+                  key={label}
+                  onClick={() => scrollToSection(hash)}
+                  className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}
+                >
+                  {label}
+                </button>
+              )
             ))}
             {!user && (
               <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
@@ -114,7 +136,7 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link to="/plan" className="btn-cta text-sm px-5 py-2.5">
-                  Plan My Celebration
+                  {CTA.planNav}
                 </Link>
                 <ProfileDropdown
                   profile={profile}
@@ -131,7 +153,7 @@ export default function Navbar() {
                   Login
                 </Link>
                 <Link to="/plan" className="btn-cta text-sm px-5 py-2.5">
-                  Plan My Celebration
+                  {CTA.planNav}
                 </Link>
               </>
             )}
@@ -158,14 +180,18 @@ export default function Navbar() {
         menuOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="border-t border-plum-800 bg-plum-900 px-4 py-4 flex flex-col gap-1">
-          {!user && NAV_LINKS.map(({ label, hash }) => (
-            <button
-              key={label}
-              onClick={() => scrollToSection(hash)}
-              className="text-sm font-medium text-plum-200 py-3 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors w-full text-left"
-            >
-              {label}
-            </button>
+          {!user && NAV_LINKS.map(({ label, hash, to }) => (
+            to ? (
+              <MobileLink key={label} to={to}>{label}</MobileLink>
+            ) : (
+              <button
+                key={label}
+                onClick={() => scrollToSection(hash)}
+                className="text-sm font-medium text-plum-200 py-3 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors w-full text-left"
+              >
+                {label}
+              </button>
+            )
           ))}
 
           {user ? (
@@ -184,7 +210,7 @@ export default function Navbar() {
 
               {isCustomer && (
                 <>
-                  <MobileLink to="/dashboard/customer/services">Browse Services</MobileLink>
+                  <MobileLink to="/services">Services &amp; packages</MobileLink>
                   <MobileLink to="/dashboard/customer/orders">My Orders</MobileLink>
                   <MobileLink to="/dashboard/customer/requests">My Requests</MobileLink>
                 </>
