@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles, Star } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles } from 'lucide-react'
 import { FESTIVALS } from '../data/festivals'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { fetchUnsplashPhoto } from '../lib/unsplash'

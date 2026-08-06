@@ -167,12 +167,18 @@ function AppRoutes() {
       <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
       <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
-      {/* ── Planning wizard (requires login) ────────── */}
-      <Route path="/plan" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <BareShell><PlanningWizard /></BareShell>
-        </ProtectedRoute>
-      } />
+      {/* ── Planning wizard ─────────────────────────────
+          Open to guests on purpose. Asking someone to make an account
+          before they have been told what it costs — on a page whose whole
+          argument is "free to ask, no obligation" — is the single most
+          expensive door in the funnel, and it was inconsistent besides:
+          the shop lets you browse and fill a cart unauthenticated.
+
+          Login is now requested at submit, where there is something to
+          save and a reason a person can see. The wizard holds the answers
+          across the round trip.
+      ══════════════════════════════════════════════ */}
+      <Route path="/plan" element={<BareShell><PlanningWizard /></BareShell>} />
       <Route path="/plan/confirmation" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <BareShell><PlanConfirmation /></BareShell>

@@ -42,6 +42,11 @@ function daysUntil(dateStr) {
   return diff
 }
 
+// Where a guest's half-finished answers wait while they sign in. Session
+// scoped rather than localStorage: this is one visit's work in progress, not
+// something to resurrect on a laptop three weeks later.
+const DRAFT_KEY = 'sambramo_plan_draft'
+
 export default function PlanningWizard() {
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
@@ -80,6 +85,27 @@ export default function PlanningWizard() {
       ? `Festival: ${presetFestival.replace(/-/g, ' ')}`
       : '',
   })
+
+  // Put a guest's answers back after they have signed in.
+  //
+  // Runs before the profile prefill below can matter, and clears the draft
+  // immediately so a later visit in the same tab starts clean rather than
+  // reopening someone's last request. Restoring the step too means they land
+  // on the review screen they were already looking at, not back at step 1.
+  useEffect(() => {
+    if (!user) return
+    let draft
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      draft = JSON.parse(raw)
+      sessionStorage.removeItem(DRAFT_KEY)
+    } catch {
+      return
+    }
+    if (draft?.form) setForm(f => ({ ...f, ...draft.form }))
+    if (draft?.step) setStep(draft.step)
+  }, [user])
 
   // Pre-fill from profile when it loads
   useEffect(() => {
@@ -157,6 +183,21 @@ export default function PlanningWizard() {
 
   async function handleSubmit() {
     if (!canNext() || submitting) return
+
+    // A guest has just filled in six steps. Rather than lose that, park it
+    // and send them to sign in — LoginPage already knows how to resume a
+    // `from` location, and the effect above puts the answers back.
+    if (!user) {
+      try {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step }))
+      } catch {
+        // Storage unavailable — sign-in still works, the answers are just
+        // not recoverable, so don't block the flow on it.
+      }
+      navigate('/login', { state: { from: { pathname: '/plan' } } })
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {

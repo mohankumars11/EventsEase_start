@@ -129,8 +129,18 @@ export default function SalesNudge({ onPlan }) {
     <div
       role="region"
       aria-label="A suggestion from Sambramo"
+      // Two fixed neighbours already own this corner, and the nudge has to
+      // clear both rather than sit under them:
+      //   BottomNav   — md:hidden, fixed bottom-0, z-50, ~56px + safe area.
+      //   ChatWidget  — z-[60], bottom-[4.75rem] on mobile, bottom-5 from md.
+      // Breakpoints match BottomNav's md:hidden, not sm — switching at sm left
+      // a 640–767px window where the nav covered these buttons. The stacking
+      // order is deliberate too: navigation and support outrank a promo, so
+      // the nudge stays at z-40 and moves out of the way instead of climbing
+      // over them.
       className={[
-        'fixed z-40 inset-x-3 bottom-3 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[26rem]',
+        'fixed z-40 inset-x-3 bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))]',
+        'md:inset-x-auto md:right-5 md:bottom-24 md:w-[26rem]',
         'rounded-2xl bg-plum-950 text-white shadow-2xl shadow-black/50 border border-plum-700',
         'transition-all duration-200 motion-reduce:transition-none',
         leaving ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0',

@@ -2,9 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, Truck, ShieldCheck, Sparkles } from 'lucide-react'
 import { SHOP_CATEGORIES, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
-import { CATEGORY_PHOTO, CATEGORY_PHOTO_QUERY, OCCASION_CARDS, occasionPhoto } from '../../config/imagery'
+import {
+  CATEGORY_PHOTO, CATEGORY_PHOTO_QUERY, OCCASION_CARDS, occasionPhoto,
+  PLAN_REEL, SHOP_REEL,
+} from '../../config/imagery'
 import SlideCarousel from '../common/SlideCarousel'
 import RuntimePhoto from './RuntimePhoto'
+import PhotoReel from './PhotoReel'
 
 /**
  * Written out rather than built with `reveal-delay-${n}`. These live in
@@ -101,20 +105,13 @@ export function PathFork({ onPlan }) {
 
           {/* Plan */}
           <div className="reveal group relative rounded-3xl overflow-hidden bg-plum-950 text-white flex flex-col card-hover">
-            {/* The fade is a child of the photo rather than a sibling pinned
-                to a matching top-52/top-60 offset, so the photo's height can
-                change without leaving the gradient floating. */}
-            <div className="relative">
-              <Photo
-                src={occasionPhoto({ category: 'Hampers', occasion: 'Wedding' })}
-                alt="A wedding celebration being set up"
-                emoji="🎊"
-                tint="from-plum-800 to-berry-900"
-                className="h-52 sm:h-60"
-                sizes="(min-width: 768px) 50vw, 100vw"
-              />
-              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-plum-950/0 to-plum-950 pointer-events-none" />
-            </div>
+            <PhotoReel
+              frames={PLAN_REEL}
+              emoji="🎊"
+              tint="from-plum-800 to-berry-900"
+              className="h-52 sm:h-60"
+              sizes="(min-width: 768px) 50vw, 100vw"
+            />
 
             <div className="p-6 sm:p-8 flex flex-col flex-1">
               <span className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-wider uppercase text-saffron-300 bg-saffron-400/10 border border-saffron-400/25 rounded-full px-3 py-1 mb-4">
@@ -147,13 +144,15 @@ export function PathFork({ onPlan }) {
 
           {/* Shop */}
           <div className="reveal reveal-delay-1 group relative rounded-3xl overflow-hidden bg-cream border border-amber-100 flex flex-col card-hover">
-            <Photo
-              src={CATEGORY_PHOTO['Cakes']}
-              alt="A celebration cake ready to be delivered"
+            <PhotoReel
+              frames={SHOP_REEL}
               emoji="🎂"
               tint="from-amber-200 to-rose-200"
               className="h-52 sm:h-60"
               sizes="(min-width: 768px) 50vw, 100vw"
+              // Offset from the plan card's cadence so the two never flip in
+              // lockstep, which reads as one animation rather than two cards.
+              intervalMs={3700}
             />
 
             <div className="p-6 sm:p-8 flex flex-col flex-1">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, ShieldCheck, Star, ChevronLeft, ChevronRight, Phone } from 'lucide-react'
+import { ArrowLeft, MapPin, ShieldCheck, Star, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINRRange, formatDate } from '../../utils/format'
 import { StarDisplay } from '../../components/customer/StarRating'

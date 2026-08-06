@@ -105,3 +105,32 @@ export const OCCASION_CARDS = [
 export function occasionPhoto(card) {
   return CATALOGUE_PHOTOS[card.category]?.[card.occasion] ?? null
 }
+
+/**
+ * Reels for the two cards on the fork.
+ *
+ * A single still cannot answer "what do you actually do?" — one cake said we
+ * sell cakes. Each frame carries its own label so the picture and the caption
+ * change together, which turns the card into a short, silent list of the
+ * range instead of decoration. Ordered to open on the least expected item, so
+ * the first thing a returning visitor sees is not always the same.
+ */
+export const PLAN_REEL = [
+  { src: CATALOGUE_PHOTOS['Flowers']['Wedding'],     label: 'Décor & florals' },
+  { src: CATALOGUE_PHOTOS['Cakes']['Birthday'],      label: 'Birthdays' },
+  { src: CATALOGUE_PHOTOS['Hampers']['Wedding'],     label: 'Weddings & return gifts' },
+  { src: CATALOGUE_PHOTOS['Cakes']['Baby Shower'],   label: 'Baby showers' },
+  { src: CATALOGUE_PHOTOS['Hampers']['Diwali'],      label: 'Festivals & pooja' },
+  { src: CATALOGUE_PHOTOS['Flowers']['Anniversary'], label: 'Anniversaries' },
+  { src: CATALOGUE_PHOTOS['Hampers']['Corporate'],   label: 'Corporate events' },
+]
+
+export const SHOP_REEL = [
+  { src: CATALOGUE_PHOTOS['Cakes']['Birthday'],        label: 'Cakes, made to order' },
+  { src: CATALOGUE_PHOTOS['Flowers']['Anniversary'],   label: 'Fresh bouquets' },
+  { src: CATALOGUE_PHOTOS['Hampers']['Diwali'],        label: 'Festive hampers' },
+  { src: CATALOGUE_PHOTOS['Gifts']['Rakhi'],           label: 'Rakhi & gifting' },
+  { src: CATALOGUE_PHOTOS['Flowers']['Daily & Pooja'], label: 'Pooja flowers, daily' },
+  { src: CATALOGUE_PHOTOS['Cakes']['Photo Cake'],      label: 'Photo cakes' },
+  { src: CATALOGUE_PHOTOS['Gifts']['Corporate'],       label: 'Corporate gifting' },
+]

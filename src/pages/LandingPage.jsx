@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp, ArrowRight, Sparkles, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowRight, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
 import { EVENT_TYPES, SERVICE_CATEGORIES } from '../config/sambramo'
-import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
@@ -129,7 +128,6 @@ const FAQS = [
 export default function LandingPage() {
   useScrollReveal()
   const navigate    = useNavigate()
-  const { user }    = useAuth()
   const [openFaq,     setOpenFaq]     = useState(null)
   const [activeBudget, setActiveBudget] = useState(null)
   const [heroPhotos, setHeroPhotos] = useState({})
@@ -149,24 +147,16 @@ export default function LandingPage() {
   /**
    * Navigate to /plan with optional pre-selected params.
    *
-   * A guest is sent to /login *carrying the destination* in router state.
-   * LoginPage already knows how to resume a `from` location — it even
-   * shows a "let's pick up where you left off" note for /plan — but this
-   * function used to call `navigate('/login')` with no state at all. So
-   * someone who tapped "Wedding", or a specific budget bracket, signed in
-   * and landed on an empty dashboard with their choice thrown away, and
-   * had to find and re-make it. That is the single largest drop-off point
-   * on the page: every hero CTA, all nine celebration cards, all eight
-   * budget chips and both closing CTAs funnel through here.
+   * Everything on this page funnels through here — every hero CTA, all nine
+   * celebration cards, all eight budget chips and both closing CTAs — which
+   * is why it no longer diverts guests to /login first. Being asked to make
+   * an account before hearing a price, on a page whose argument is "free to
+   * ask, no obligation", lost people at the door for nothing: the wizard
+   * needs an account only at submit, and asks then.
    */
   function toPlan(params = {}) {
     const qs = new URLSearchParams(params).toString()
-    const to = '/plan' + (qs ? '?' + qs : '')
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: '/plan', search: qs ? '?' + qs : '' } } })
-      return
-    }
-    navigate(to)
+    navigate('/plan' + (qs ? '?' + qs : ''))
   }
 
   return (
