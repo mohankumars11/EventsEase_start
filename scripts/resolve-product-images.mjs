@@ -272,6 +272,45 @@ async function fetchProducts(categories, onlyMissing = false) {
   return res.json()
 }
 
+/**
+ * Photo IDs already assigned to products in the database.
+ *
+ * The in-run dedup set only knows about the current pass. Pexels caps a free
+ * key at 200 requests/hour against a ~370-product catalogue, so the shop can
+ * only ever be filled across several runs — and without this, run two happily
+ * re-assigns photos run one already used. That is migration 017's bug
+ * returning by a side door, which is why it is checked against the live rows
+ * rather than against the generated files.
+ *
+ * Both sources embed the photo id in the URL path:
+ *   https://images.pexels.com/photos/12345/pexels-photo-12345.jpeg
+ *   https://images.unsplash.com/photo-1664032655802-ef0a6895619a
+ */
+function photoIdFromUrl(url) {
+  const pexels = url.match(/images\.pexels\.com\/photos\/(\d+)\//)
+  if (pexels) return `pexels:${pexels[1]}`
+  const unsplash = url.match(/images\.unsplash\.com\/(photo-[A-Za-z0-9_-]+)/)
+  if (unsplash) return `unsplash:${unsplash[1]}`
+  return null
+}
+
+async function fetchAssignedPhotoIds() {
+  const base = process.env.VITE_SUPABASE_URL
+  const key  = process.env.VITE_SUPABASE_ANON_KEY
+  const res  = await fetch(
+    `${base}/rest/v1/products?select=image_url&image_url=not.is.null`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+  )
+  if (!res.ok) return new Set()
+
+  const ids = new Set()
+  for (const row of await res.json()) {
+    const id = photoIdFromUrl(row.image_url ?? '')
+    if (id) ids.add(id)
+  }
+  return ids
+}
+
 /* ── SQL emission ───────────────────────────────────────────────────── */
 const sqlStr = v => (v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`)
 
@@ -385,9 +424,16 @@ async function main() {
   // Gifts and Hampers on the first real run, and a shopper who sees the
   // same picture on "Rose Bouquet" and "Rose Hamper" has been told nothing
   // about either. One photo, one product, shop-wide.
-  const used = new Set()
+  // Seeded with everything the shop already points at, so photos are never
+  // reused across separate runs of this script.
+  const used = await fetchAssignedPhotoIds()
+  if (used.size) console.log(`(${used.size} photos already in use, will not be reassigned)\n`)
+
   const resolved = []
   const failed = []
+  // Set when the source cuts us off mid-catalogue, so the landing-page
+  // imagery module below knows this run does not describe the whole shop.
+  let truncated = false
 
   for (const [i, product] of products.entries()) {
     // Three tiers, narrowest first. A long specific query is what gets a
@@ -421,7 +467,9 @@ async function main() {
     }
 
     if (rateLimited) {
-      console.error(`\n⚠  Rate limited after ${i} products. Re-run later with --limit to continue.`)
+      console.error(`\n⚠  Rate limited after ${i} of ${products.length} products.`)
+      console.error('   Apply the SQL below, then re-run with --only-missing once the quota resets.')
+      truncated = true
       break
     }
     if (!photo) {
@@ -473,9 +521,22 @@ async function main() {
   writeFileSync(sqlPath, buildSql(resolved, args.source), 'utf8')
   console.log(`\nWrote ${sqlPath}`)
 
-  // Only regenerate landing imagery on a full run — a --category pass would
-  // otherwise blank out every category it did not touch.
-  if (!args.categories.length && args.limit === Infinity) {
+  // Only regenerate landing imagery on a genuinely complete run. Any partial
+  // pass writes a module missing whole categories: --category is the obvious
+  // one, but --only-missing is just as partial (it deliberately skips every
+  // product already resolved) and a rate-limited run is partial by accident.
+  // imagery.js merges this over its hardcoded fallbacks, so a truncated file
+  // degrades rather than breaks — but it would still silently misrepresent
+  // itself as the source of truth, which is the exact failure this module
+  // was introduced to end.
+  const isFullRun =
+    !args.categories.length &&
+    args.limit === Infinity &&
+    !args.onlyMissing &&
+    !failed.length &&
+    !truncated
+
+  if (isFullRun) {
     const imageryPath = resolve(ROOT, 'src/config/generatedImagery.js')
     writeFileSync(imageryPath, buildImageryModule(resolved), 'utf8')
     console.log(`Wrote ${imageryPath}`)
