@@ -158,10 +158,18 @@ export default function ShopCategory() {
             {sortedProducts.map(p => {
               const inCart = hasProduct(p.id)
               const cartLine = cart.products.find(c => c.key === `prod__${p.id}`)
+              // `group` drives the slow hover zoom inside ProductImage.
               return (
-                <div key={p.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
-                  <Link to={`/shop/product/${p.id}`}>
-                    <ProductImage src={p.image_url} query={p.name} emoji={p.emoji} className="w-full h-36" />
+                <div key={p.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+                  <Link to={`/shop/product/${p.id}`} className="block">
+                    <ProductImage
+                      src={p.image_url}
+                      query={p.name}
+                      emoji={p.emoji}
+                      alt={p.image_alt}
+                      className="w-full h-36"
+                      cinematic
+                    />
                   </Link>
                   <div className="p-5 flex flex-col flex-1">
                   <Link to={`/shop/product/${p.id}`} className="font-semibold text-gray-900 text-sm mb-1 hover:text-plum-700">{p.name}</Link>

@@ -7,6 +7,7 @@ import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
 import { CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
 import ProductImage from '../../components/shop/ProductImage'
+import ImageSourceBadge from '../../components/shop/ImageSourceBadge'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
@@ -78,12 +79,40 @@ export default function ProductDetail() {
         </button>
 
         <div className="bg-white rounded-3xl border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
-          <ProductImage src={product.image_url} query={product.name} emoji={product.emoji} className="w-full h-64 sm:h-full rounded-2xl" />
+          {/* The hero drifts continuously and carries the source badge —
+              a customer decides here, so this is where the photo has to
+              both look its best and say what it actually is. */}
+          <ProductImage
+            src={product.image_url}
+            query={product.name}
+            emoji={product.emoji}
+            alt={product.image_alt || product.name}
+            className="w-full h-64 sm:h-full rounded-2xl"
+            drift
+            scrim
+            priority
+          >
+            <ImageSourceBadge
+              source={product.image_source}
+              className="absolute bottom-3 left-3"
+            />
+          </ProductImage>
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">{product.category}</span>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
             <RatingBadge subjectType="product" subjectId={product.id} size="sm" className="mb-3" />
             <p className="text-sm text-gray-500 mb-4 flex-1">{product.description}</p>
+
+            {/* The badge on the photo says which kind of photo it is; this
+                says what that means for the order. Stated before the price
+                and the Add to Cart button, not after. */}
+            {product.image_source !== 'actual' && (
+              <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                The photo shows a similar item. What you receive will match the
+                name, size and description above — the exact decoration may vary.
+              </p>
+            )}
+
             <p className="text-3xl font-extrabold text-plum-700 mb-6">{formatINR(product.price)}</p>
 
             {inCart ? (

@@ -7,6 +7,9 @@ import {
 // Lazy so `recharts` is a separate chunk fetched only when the Revenue view
 // is opened, rather than 376 KB every operator pays to see any other tab.
 const RevenueTrendChart = lazy(() => import('../../components/admin/RevenueTrendChart'))
+// Same reasoning: the catalogue editor pulls in the image upload/compression
+// path and is opened by one operator occasionally, not on every dashboard load.
+const AdminCatalog = lazy(() => import('../../components/admin/AdminCatalog'))
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useToast, friendlyError } from '../../context/ToastContext'
@@ -31,6 +34,7 @@ const NAV_ITEMS = [
   { id: 'upcoming',        label: 'Upcoming Events',  emoji: '📅' },
   { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
   { id: 'orders',          label: 'Shop Orders',      emoji: '🛍️' },
+  { id: 'catalog',         label: 'Catalog',          emoji: '🖼️' },
   { id: 'customers',       label: 'Customers',        emoji: '👥' },
   { id: 'reviews',         label: 'Reviews',          emoji: '⭐' },
   { id: 'support',         label: 'Support',          emoji: '🛟' },
@@ -2010,6 +2014,17 @@ export default function AdminDashboard() {
               {activeNav === 'vendors' && <VendorsContent />}
 
               {activeNav === 'orders' && <OrdersContent />}
+
+              {activeNav === 'catalog' && (
+                <Suspense fallback={
+                  <div className="h-48 flex items-center justify-center gap-3 text-gray-400">
+                    <Loader2 className="animate-spin text-plum-600" size={28} />
+                    <span className="text-sm">Loading catalogue…</span>
+                  </div>
+                }>
+                  <AdminCatalog />
+                </Suspense>
+              )}
               {activeNav === 'customers' && <CustomersContent />}
               {activeNav === 'reviews' && <ReviewsContent />}
               {activeNav === 'support' && <SupportContent />}

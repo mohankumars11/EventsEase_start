@@ -1,19 +1,27 @@
 // Real photography for the storefront.
 //
-// These URLs are lifted from migration 017, which already went through a
-// curation pass against the live catalogue — every one of them is the photo a
-// real product row points at, so a card on the landing page and the product it
-// links to show the same thing. Pulling them from a module rather than the
-// Unsplash search API matters: the runtime helper in lib/unsplash.js is capped
-// at 24 live searches per page load to stay inside the free tier, and a
-// storefront that needs three dozen photos above the fold would spend that
-// budget before the first section finished painting.
+// Pulling these from a module rather than the Unsplash search API matters: the
+// runtime helper in lib/unsplash.js is capped at 24 live searches per page load
+// to stay inside the free tier, and a storefront that needs three dozen photos
+// above the fold would spend that budget before the first section finished
+// painting.
 //
-// Party Essentials and Pooja & Essentials have no rows in 017 — that migration
-// ran out of rate-limit budget before reaching them. Those two fall back to the
-// runtime fetch, and to their emoji if that fails.
+// ── Where these values come from ──────────────────────────────────────────
+// The FALLBACK map below was copied by hand out of migration 017. That copy
+// was the problem: it has no link to the database, so when migration 021
+// filled in Party Essentials and Pooja & Essentials, this file went on
+// declaring both as having no photo. A landing-page card could show one thing
+// and the product it linked to show another.
+//
+// So the hardcoded values are now only a floor. generatedImagery.js is written
+// by scripts/resolve-product-images.mjs in the same pass that produces the
+// per-product image_url values, and is layered on top — meaning the landing
+// page and the shop cannot disagree once that script has been run. Until then
+// this file behaves exactly as it always did.
 
-export const CATALOGUE_PHOTOS = {
+import { GENERATED_CATALOGUE_PHOTOS, GENERATED_CATEGORY_PHOTO } from './generatedImagery'
+
+const FALLBACK_CATALOGUE_PHOTOS = {
   "Cakes": {
     "Birthday": 'https://images.unsplash.com/photo-1664032655802-ef0a6895619a?auto=format&fit=crop&w=800&q=70',
     "Wedding": 'https://images.unsplash.com/photo-1503525642560-ecca5e2e49e9?auto=format&fit=crop&w=800&q=70',
@@ -70,17 +78,52 @@ export const CATALOGUE_PHOTOS = {
   },
 }
 
-/** The lead photo for each shop category card. */
-export const CATEGORY_PHOTO = {
-  'Cakes':              CATALOGUE_PHOTOS['Cakes']['Birthday'],
-  'Gifts':              CATALOGUE_PHOTOS['Gifts']['Diwali'],
-  'Flowers':            CATALOGUE_PHOTOS['Flowers']['Anniversary'],
-  'Hampers':            CATALOGUE_PHOTOS['Hampers']['Diwali'],
-  'Party Essentials':   null,  // no catalogue photo yet — falls back to runtime fetch
-  'Pooja & Essentials': null,
+/**
+ * Generated values win per (category, occasion); anything the resolver hasn't
+ * covered keeps its hardcoded value. Shallow-merging one level down rather
+ * than replacing whole categories means a partial run (`--category Cakes`)
+ * can't blank out everything it didn't touch.
+ */
+export const CATALOGUE_PHOTOS = Object.entries(GENERATED_CATALOGUE_PHOTOS).reduce(
+  (acc, [category, byOccasion]) => ({
+    ...acc,
+    [category]: { ...(acc[category] ?? {}), ...byOccasion },
+  }),
+  { ...FALLBACK_CATALOGUE_PHOTOS }
+)
+
+/**
+ * The lead photo for each shop category card.
+ *
+ * Party Essentials and Pooja & Essentials are no longer hardcoded to null.
+ * They were null because migration 017 ran out of Unsplash quota before
+ * reaching them — a condition that stopped being true two migrations later
+ * and that nothing here could notice. Now any category the resolver has
+ * covered resolves to a real photo automatically, and CATEGORY_PHOTO_QUERY
+ * below remains the fallback for one that hasn't.
+ */
+const LEAD_OCCASION = {
+  'Cakes':   'Birthday',
+  'Gifts':   'Diwali',
+  'Flowers': 'Anniversary',
+  'Hampers': 'Diwali',
 }
 
-/** Runtime search terms for the two categories 017 never reached. */
+const CATEGORY_IDS = [
+  'Cakes', 'Gifts', 'Flowers', 'Hampers', 'Party Essentials', 'Pooja & Essentials',
+]
+
+export const CATEGORY_PHOTO = Object.fromEntries(
+  CATEGORY_IDS.map(category => [
+    category,
+    CATALOGUE_PHOTOS[category]?.[LEAD_OCCASION[category]]
+      ?? GENERATED_CATEGORY_PHOTO[category]
+      ?? Object.values(CATALOGUE_PHOTOS[category] ?? {})[0]
+      ?? null,
+  ])
+)
+
+/** Runtime search terms for any category the resolver hasn't covered. */
 export const CATEGORY_PHOTO_QUERY = {
   'Party Essentials':   'birthday party balloons decoration colourful',
   'Pooja & Essentials': 'indian puja thali brass diya marigold',

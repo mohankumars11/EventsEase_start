@@ -134,7 +134,7 @@ export default function Shop() {
                 className="group shrink-0 w-24 flex flex-col items-center gap-2"
               >
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-saffron-400 transition-colors shadow-sm">
-                  <ProductImage query={o.query} emoji={o.emoji} className="w-full h-full" />
+                  <ProductImage query={o.query} emoji={o.emoji} className="w-full h-full" cinematic />
                 </div>
                 <p className="text-xs font-semibold text-gray-700 text-center leading-tight group-hover:text-plum-700 transition-colors">{o.label}</p>
               </Link>
@@ -153,7 +153,7 @@ export default function Shop() {
                 to={`/shop/${encodeURIComponent(cat.id)}`}
                 className="group relative h-48 rounded-3xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <ProductImage query={CATEGORY_QUERIES[cat.id] ?? cat.label} emoji={cat.emoji} className="absolute inset-0 w-full h-full" />
+                <ProductImage query={CATEGORY_QUERIES[cat.id] ?? cat.label} emoji={cat.emoji} className="absolute inset-0 w-full h-full" cinematic />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/0 group-hover:from-black/90 transition-colors" />
 
                 {counts[cat.id] && (

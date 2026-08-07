@@ -210,6 +210,27 @@
   .marquee-viewport:hover .marquee-track,
   .marquee-viewport:focus-within .marquee-track { animation-play-state: paused; }
 
+  /* ── Ken Burns (product hero) ────────────────────────
+     A slow, continuous push-in on the product detail photo. The
+     shop sells things people buy on feel — a cake, a bouquet —
+     and a still catalogue grid reads as a spreadsheet. This is
+     deliberately slower and shallower than a typical Ken Burns:
+     22s and 12% so it registers as depth rather than as movement
+     competing with the Add to Cart button.
+
+     translate3d keeps it on the compositor. The hover variant on
+     the grid cards is a Tailwind transition, not a keyframe —
+     only the always-on hero needs this. */
+  @keyframes ken-burns {
+    0%   { transform: scale(1.02) translate3d(0, 0, 0); }
+    50%  { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
+    100% { transform: scale(1.02) translate3d(0, 0, 0); }
+  }
+  .ken-burns {
+    animation: ken-burns 22s ease-in-out infinite;
+    will-change: transform;
+  }
+
   /* ── Safe areas (notches / iOS home indicator) ───────── */
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
   /* Clears the fixed mobile tab bar so the last element on a page
@@ -229,12 +250,20 @@
   .blob,
   .shimmer-text,
   .shimmer-saffron,
-  .animate-spin-slow {
+  .animate-spin-slow,
+  .ken-burns {
     animation: none !important;
   }
   .reveal {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+  /* Product photos: keep the fade (it prevents a flash of empty
+     tile) but drop every zoom. `.product-photo` still needs its
+     opacity transition, so this cannot be `transition: none`. */
+  .product-photo {
+    transform: none !important;
+    transition-property: opacity !important;
   }
 }

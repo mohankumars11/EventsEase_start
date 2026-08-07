@@ -163,7 +163,7 @@ export default function CustomerHome() {
                   onClick={() => navigate(`/plan?type=${et.id}`)}
                   className="w-full bg-white rounded-2xl overflow-hidden text-left border border-gray-100 hover:border-plum-300 hover:shadow-md hover:-translate-y-0.5 transition-all group"
                 >
-                  <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-24" />
+                  <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-24" cinematic />
                   <div className="p-3">
                     <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
                     <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
@@ -214,9 +214,9 @@ export default function CustomerHome() {
               <div key={f.id} className="shrink-0 w-36 snap-center">
                 <Link
                   to={`/festivals/${f.id}`}
-                  className="block rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  className="group block rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
                 >
-                  <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" />
+                  <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" cinematic />
                   <div className="p-3 bg-white">
                     <p className="font-semibold text-xs text-gray-800">{f.name}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>
@@ -372,7 +372,7 @@ function ShopMiniCard({ category }) {
       to={`/shop/${encodeURIComponent(category.id)}`}
       className="group flex flex-col h-32 bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
-      <ProductImage query={SHOP_MINI_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full flex-1 min-h-0" />
+      <ProductImage query={SHOP_MINI_QUERIES[category.id] ?? category.label} emoji={category.emoji} className="w-full flex-1 min-h-0" cinematic />
       <div className="px-2 py-2 text-center shrink-0">
         <p className="text-gray-700 text-xs font-semibold group-hover:text-plum-700 transition-colors truncate">{category.label}</p>
       </div>
