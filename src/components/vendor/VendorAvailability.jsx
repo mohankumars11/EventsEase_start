@@ -200,6 +200,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
 
         <div className="grid grid-cols-2 gap-3 pt-1 border-t border-orange-100">
           <NumberRule
+            key={`lead-${vendor?.lead_time_days ?? 2}`}
             id="lead-time"
             label="Shortest notice"
             suffix="days"
@@ -210,6 +211,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
             onCommit={v => saveRules({ lead_time_days: v })}
           />
           <NumberRule
+            key={`perday-${vendor?.max_events_per_day ?? 1}`}
             id="per-day"
             label="Events per day"
             suffix="max"

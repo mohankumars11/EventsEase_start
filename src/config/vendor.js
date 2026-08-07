@@ -8,6 +8,42 @@
  */
 
 /**
+ * The trades a partner can sign up as.
+ *
+ * Deliberately not SERVICE_CATEGORIES from config/sambramo.js: that list is how
+ * a *customer* shops ("Food", "Decoration"), and this is what a *business*
+ * calls itself ("Catering & Food", "Mehendi Artist"). One list forced to serve
+ * both would make a mehendi artist register as "Personal".
+ *
+ * It lives here rather than inside VendorOnboarding because the starter
+ * suggestions on the price-list screen are keyed by these exact strings — with
+ * the list in one file and the keys in another, renaming "Cake & Desserts"
+ * silently drops a baker back to the generic starters and nothing fails loudly.
+ */
+export const VENDOR_CATEGORIES = [
+  'Catering & Food',
+  'Photography',
+  'Videography',
+  'Decoration & Floral',
+  'Venue',
+  'DJ & Music',
+  'Live Entertainment',
+  'Bridal Makeup & Hair',
+  'Wedding Planning',
+  'Tent & Furniture',
+  'Invitation & Printing',
+  'Transportation',
+  'Event Lighting',
+  'Cake & Desserts',
+  'Mehendi Artist',
+  'Anchor & MC',
+  'Sound & AV',
+  'Valet Parking',
+  'Security Services',
+  'Other',
+]
+
+/**
  * What a price buys.
  *
  * A bare number on a price list is unusable to whoever has to quote from it:

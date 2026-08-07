@@ -1,37 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import { BRAND } from '../../config/sambramo'
+import { VENDOR_CATEGORIES } from '../../config/vendor'
 
-const CATEGORIES = [
-  'Catering & Food',
-  'Photography',
-  'Videography',
-  'Decoration & Floral',
-  'Venue',
-  'DJ & Music',
-  'Live Entertainment',
-  'Bridal Makeup & Hair',
-  'Wedding Planning',
-  'Tent & Furniture',
-  'Invitation & Printing',
-  'Transportation',
-  'Event Lighting',
-  'Cake & Desserts',
-  'Mehendi Artist',
-  'Anchor & MC',
-  'Sound & AV',
-  'Valet Parking',
-  'Security Services',
-  'Other',
-]
+const CATEGORIES = VENDOR_CATEGORIES
 
-const CITIES = [
-  'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai',
-  'Pune', 'Kolkata', 'Ahmedabad', 'Jaipur', 'Surat',
-]
+/**
+ * Only the cities Sambramo actually operates in.
+ *
+ * This offered all ten of `servicedCities` — the roadmap list — so a decorator
+ * in Surat could complete onboarding in full and then never be matched with
+ * anything, because every customer-side city picker is restricted to the pilot
+ * (see the note on BRAND.pilotCities). Recruiting a partner into a city you
+ * cannot send them work in is worse than turning them away.
+ */
+const CITIES = BRAND.pilotCities
 
 const TOTAL_STEPS = 3
 
@@ -75,6 +62,53 @@ export default function VendorOnboarding() {
     website_url:      '',
     instagram_url:    '',
   })
+
+  /**
+   * The existing row, if there is one — and whether we've looked yet.
+   *
+   * This form is no longer only a first-run wizard: the dashboard's Account tab
+   * links here to edit. Without prefilling, "Edit" would open an empty form and
+   * the upsert at the end would blank every field the vendor didn't retype.
+   * `existing` is also what decides whether to touch `status` at all.
+   */
+  const [existing, setExisting] = useState(null)
+  const [hydrating, setHydrating] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id) { setHydrating(false); return }
+
+    supabase
+      .from('vendors')
+      .select('*')
+      .eq('profile_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        if (data) {
+          setExisting(data)
+          setForm({
+            business_name:    data.business_name ?? '',
+            category:         data.category ?? '',
+            description:      data.description ?? '',
+            // A city that is no longer in the pilot must not be preselected
+            // into a <select> that has no such option — the field would look
+            // filled while submitting an empty string.
+            city:             CITIES.includes(data.city) ? data.city : '',
+            area:             data.area ?? '',
+            pincode:          data.pincode ?? '',
+            years_experience: data.years_experience?.toString() ?? '',
+            starting_price:   data.starting_price?.toString() ?? '',
+            service_areas:    (data.service_areas ?? []).filter(c => CITIES.includes(c)),
+            website_url:      data.website_url ?? '',
+            instagram_url:    data.instagram_url ?? '',
+          })
+        }
+        setHydrating(false)
+      })
+
+    return () => { cancelled = true }
+  }, [user?.id])
 
   function set(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -138,7 +172,12 @@ export default function VendorOnboarding() {
         service_areas:    form.service_areas,
         website_url:      form.website_url.trim() || null,
         instagram_url:    form.instagram_url.trim() || null,
-        status:           'PENDING_REVIEW',
+        // Status is set on creation only. An approved partner editing their
+        // area or adding an Instagram handle must not be knocked back to
+        // PENDING_REVIEW — that would take their listing off the platform as a
+        // side effect of fixing a typo, and nothing on screen would say so.
+        // Re-review after a material change is a coordinator's call to make.
+        ...(existing ? {} : { status: 'PENDING_REVIEW' }),
       }
 
       const { error: vendorErr } = await supabase
@@ -163,10 +202,22 @@ export default function VendorOnboarding() {
           <div className="inline-flex items-center gap-2 mb-3">
             <SambramoLogo size={36} ground="onLight" caption />
           </div>
-          <h1 className="text-2xl font-display font-bold text-gray-900">Set up your partner profile</h1>
-          <p className="text-gray-500 text-sm mt-1">Our team will review and approve your profile within 24–48 hours.</p>
+          <h1 className="text-2xl font-display font-bold text-gray-900">
+            {existing ? 'Your partner profile' : 'Set up your partner profile'}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {existing
+              ? 'Change anything and save — your listing and calendar stay as they are.'
+              : 'Our team will review and approve your profile within 24–48 hours.'}
+          </p>
         </div>
 
+        {hydrating ? (
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center gap-3 text-gray-400">
+            <Loader2 className="animate-spin text-plum-600" size={26} />
+            <span className="text-sm">Loading your details…</span>
+          </div>
+        ) : (
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
           <StepIndicator current={step} total={TOTAL_STEPS} />
 
@@ -280,10 +331,13 @@ export default function VendorOnboarding() {
                 </Field>
 
                 <div className="bg-plum-50 border border-plum-100 rounded-2xl p-4">
-                  <p className="text-sm font-semibold text-plum-800 mb-1">What happens next?</p>
+                  <p className="text-sm font-semibold text-plum-800 mb-1">
+                    {existing ? 'Next: your list and your calendar' : 'What happens next?'}
+                  </p>
                   <p className="text-xs text-plum-600 leading-relaxed">
-                    After you submit, our team reviews your profile within 24–48 hours.
-                    Once approved, you'll receive celebration requests from Sambramo's concierge team.
+                    {existing
+                      ? 'Saving these details does not change your approval status. What you offer and when you can work are set on your dashboard.'
+                      : "After you submit, our team reviews your profile within 24–48 hours. You can add what you offer and set your working days straight away — both go live the moment you're approved."}
                   </p>
                 </div>
               </div>
@@ -311,12 +365,15 @@ export default function VendorOnboarding() {
               ) : (
                 <button type="submit" disabled={loading}
                   className="flex-1 btn-cta py-3 text-sm disabled:opacity-60 disabled:cursor-not-allowed">
-                  {loading ? 'Submitting…' : 'Submit for review →'}
+                  {loading
+                    ? 'Saving…'
+                    : existing ? 'Save changes' : 'Submit for review →'}
                 </button>
               )}
             </div>
           </form>
         </div>
+        )}
       </div>
     </div>
   )
