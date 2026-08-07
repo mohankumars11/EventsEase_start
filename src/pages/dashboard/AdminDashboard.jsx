@@ -2,14 +2,21 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Menu, X, Phone, MessageCircle, Loader2, AlertCircle,
-  TrendingUp,
+  TrendingUp, TrendingDown, ChevronDown, ChevronUp, Users, Search, Mail,
 } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS, BRAND } from '../../config/sambramo'
+import { SHOP_CATEGORIES } from '../../config/shop'
 import SambramoMark from '../../components/ui/SambramoMark'
 import { formatDate, formatINR } from '../../utils/format'
+
+// Dataviz-skill validated categorical order (adjacent-pair CVD/contrast
+// gates pass for 6 slots) — fixed order, one hue per shop category,
+// never reassigned when a category has zero sales.
+const CATEGORY_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300']
 
 /* ── Sidebar navigation items ──────────────────────────────────── */
 const NAV_ITEMS = [
@@ -22,6 +29,7 @@ const NAV_ITEMS = [
   { id: 'upcoming',        label: 'Upcoming Events',  emoji: '📅' },
   { id: 'vendors',         label: 'Vendors',          emoji: '🤝' },
   { id: 'orders',          label: 'Shop Orders',      emoji: '🛍️' },
+  { id: 'customers',       label: 'Customers',        emoji: '👥' },
   { id: 'reviews',         label: 'Reviews',          emoji: '⭐' },
   { id: 'support',         label: 'Support',          emoji: '🛟' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
@@ -296,42 +304,310 @@ function OverviewContent({
 }
 
 /* ── Revenue tab ───────────────────────────────────────────────── */
+function KpiTile({ label, value, delta, sub }) {
+  const isUp = typeof delta === 'number' && delta >= 0
+  return (
+    <div className="card p-5">
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{label}</div>
+      <div className="text-2xl font-bold text-gray-900 break-words">{value}</div>
+      <div className="flex items-center gap-1.5 mt-1.5 min-h-[16px]">
+        {typeof delta === 'number' && (
+          <span className={`flex items-center gap-0.5 text-xs font-bold ${isUp ? 'text-green-600' : 'text-red-600'}`}>
+            {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {Math.abs(delta)}%
+          </span>
+        )}
+        {sub && <span className="text-xs text-gray-400">{sub}</span>}
+      </div>
+    </div>
+  )
+}
+
+function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+
 function RevenueContent({ events, proposalValue }) {
   const completedCount = events.filter(e => e.status === 'COMPLETED').length
   const confirmedCount = events.filter(e => ['CONFIRMED', 'APPROVED'].includes(e.status)).length
 
-  return (
-    <div className="space-y-6 max-w-3xl">
-      <h2 className="text-lg font-bold text-gray-900">📊 Revenue Overview</h2>
+  const [orders, setOrders]           = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
+  const [expandedCategory, setExpandedCategory] = useState(null)
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card p-6 text-center">
-          <div className="text-2xl font-bold text-plum-700 mb-1 break-words">{formatINR(proposalValue)}</div>
-          <div className="text-sm font-medium text-gray-700">Total Proposals Value</div>
-          <div className="text-xs text-gray-400 mt-1">Sum of all proposal amounts</div>
-        </div>
-        <div className="card p-6 text-center">
-          <div className="text-3xl font-bold text-teal-700 mb-1">{confirmedCount}</div>
-          <div className="text-sm font-medium text-gray-700">Confirmed Events</div>
-          <div className="text-xs text-gray-400 mt-1">Approved &amp; confirmed</div>
-        </div>
-        <div className="card p-6 text-center">
-          <div className="text-3xl font-bold text-emerald-700 mb-1">{completedCount}</div>
-          <div className="text-sm font-medium text-gray-700">Completed Events</div>
-          <div className="text-xs text-gray-400 mt-1">Successfully delivered</div>
+  useEffect(() => { fetchSales() }, [])
+
+  async function fetchSales() {
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase
+      .from('orders')
+      .select('id, total, status, payment_status, created_at, order_items(product_name, category, unit_price, qty, subtotal)')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setOrders(data ?? [])
+    setLoading(false)
+  }
+
+  // Flatten paid orders' line items — only paid orders count as real
+  // revenue, matching how OrdersContent treats payment_status elsewhere.
+  const paidItems = useMemo(() => {
+    return orders
+      .filter(o => o.payment_status === 'paid')
+      .flatMap(o => (o.order_items ?? []).map(i => ({ ...i, order_id: o.id, created_at: o.created_at })))
+  }, [orders])
+
+  const shopRevenue = paidItems.reduce((s, i) => s + (i.subtotal ?? 0), 0)
+  const totalRevenue = shopRevenue + proposalValue
+
+  function sumBetween(from, to) {
+    return paidItems
+      .filter(i => { const t = new Date(i.created_at); return t >= from && t < to })
+      .reduce((s, i) => s + (i.subtotal ?? 0), 0)
+  }
+  function pctDelta(curr, prev) {
+    if (prev === 0) return curr > 0 ? 100 : 0
+    return Math.round(((curr - prev) / prev) * 100)
+  }
+
+  const todayStart     = startOfDay(new Date())
+  const tomorrowStart  = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1)
+  const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+  const weekStart      = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7)
+  const prevWeekStart  = new Date(weekStart);  prevWeekStart.setDate(prevWeekStart.getDate() - 7)
+  const monthStart     = new Date(todayStart); monthStart.setDate(monthStart.getDate() - 30)
+  const prevMonthStart = new Date(monthStart); prevMonthStart.setDate(prevMonthStart.getDate() - 30)
+
+  const todayRevenue     = sumBetween(todayStart, tomorrowStart)
+  const yesterdayRevenue = sumBetween(yesterdayStart, todayStart)
+  const weekRevenue      = sumBetween(weekStart, tomorrowStart)
+  const prevWeekRevenue  = sumBetween(prevWeekStart, weekStart)
+  const monthRevenue     = sumBetween(monthStart, tomorrowStart)
+  const prevMonthRevenue = sumBetween(prevMonthStart, monthStart)
+
+  // One row per known shop category, in the fixed CATEGORY_COLORS order —
+  // zero-sale categories still render (at 0) rather than disappearing, so
+  // the color→category mapping never shifts as sales come in.
+  const categoryRevenue = useMemo(() => {
+    const map = {}
+    for (const item of paidItems) {
+      const cat = item.category || 'Uncategorized'
+      if (!map[cat]) map[cat] = { revenue: 0, qty: 0, orderIds: new Set() }
+      map[cat].revenue += item.subtotal ?? 0
+      map[cat].qty += item.qty ?? 0
+      map[cat].orderIds.add(item.order_id)
+    }
+    return SHOP_CATEGORIES.map((c, idx) => ({
+      id: c.id, label: c.label, emoji: c.emoji, color: CATEGORY_COLORS[idx],
+      revenue: map[c.id]?.revenue ?? 0,
+      qty: map[c.id]?.qty ?? 0,
+      orders: map[c.id]?.orderIds.size ?? 0,
+    })).sort((a, b) => b.revenue - a.revenue)
+  }, [paidItems])
+
+  const maxCategoryRevenue   = Math.max(1, ...categoryRevenue.map(c => c.revenue))
+  const totalCategoryRevenue = categoryRevenue.reduce((s, c) => s + c.revenue, 0) || 1
+
+  function topProductsForCategory(catId) {
+    const map = {}
+    for (const item of paidItems) {
+      if ((item.category || 'Uncategorized') !== catId) continue
+      if (!map[item.product_name]) map[item.product_name] = { name: item.product_name, revenue: 0, qty: 0 }
+      map[item.product_name].revenue += item.subtotal ?? 0
+      map[item.product_name].qty += item.qty ?? 0
+    }
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+  }
+
+  const topProducts = useMemo(() => {
+    const map = {}
+    for (const item of paidItems) {
+      if (!map[item.product_name]) map[item.product_name] = { name: item.product_name, category: item.category || 'Uncategorized', revenue: 0, qty: 0 }
+      map[item.product_name].revenue += item.subtotal ?? 0
+      map[item.product_name].qty += item.qty ?? 0
+    }
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 10)
+  }, [paidItems])
+
+  const trendData = useMemo(() => {
+    const days = []
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(todayStart); d.setDate(d.getDate() - i)
+      const next = new Date(d); next.setDate(next.getDate() + 1)
+      days.push({ date: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), revenue: sumBetween(d, next) })
+    }
+    return days
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paidItems])
+
+  const funnel = ['placed', 'processing', 'dispatched', 'delivered'].map(s => ({
+    status: s, count: orders.filter(o => o.status === s).length,
+  }))
+  const paymentBreakdown = ['paid', 'pending', 'failed'].map(s => ({
+    status: s, count: orders.filter(o => o.payment_status === s).length,
+  }))
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchSales} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <h2 className="text-lg font-bold text-gray-900">📊 Sales &amp; Revenue</h2>
+
+      {/* KPI ticker */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiTile label="Total Revenue" value={formatINR(totalRevenue)} sub="Shop + event proposals" />
+        <KpiTile label="Today" value={formatINR(todayRevenue)} delta={pctDelta(todayRevenue, yesterdayRevenue)} sub="vs yesterday" />
+        <KpiTile label="This Week" value={formatINR(weekRevenue)} delta={pctDelta(weekRevenue, prevWeekRevenue)} sub="vs prior 7 days" />
+        <KpiTile label="This Month" value={formatINR(monthRevenue)} delta={pctDelta(monthRevenue, prevMonthRevenue)} sub="vs prior 30 days" />
+      </div>
+
+      {/* Revenue trend */}
+      <div className="card p-5">
+        <h3 className="font-bold text-gray-900 mb-4">Shop Revenue — Last 30 Days</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#2a78d6" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="#2a78d6" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#898781' }} axisLine={{ stroke: '#c3c2b7' }} tickLine={false} interval={4} />
+            <YAxis tick={{ fontSize: 11, fill: '#898781' }} axisLine={false} tickLine={false} width={50}
+              tickFormatter={v => v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`} />
+            <Tooltip formatter={v => formatINR(v)} contentStyle={{ borderRadius: 8, border: '1px solid #e1e0d9', fontSize: 12 }} />
+            <Area type="monotone" dataKey="revenue" stroke="#2a78d6" strokeWidth={2} fill="url(#revenueFill)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Category breakdown with click-to-drill-down */}
+      <div className="card p-5">
+        <h3 className="font-bold text-gray-900 mb-3">Revenue by Category</h3>
+        <div className="space-y-1">
+          {categoryRevenue.map(cat => {
+            const pct = Math.round((cat.revenue / totalCategoryRevenue) * 100)
+            const barPct = Math.round((cat.revenue / maxCategoryRevenue) * 100)
+            const isOpen = expandedCategory === cat.id
+            const products = isOpen ? topProductsForCategory(cat.id) : []
+            return (
+              <div key={cat.id} className="border-b border-gray-50 last:border-0">
+                <button
+                  onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
+                  className="w-full flex items-center gap-3 py-3 text-left hover:bg-gray-50/60 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <span className="text-xl shrink-0">{cat.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="font-semibold text-gray-800 text-sm truncate">{cat.label}</span>
+                      <span className="font-bold text-gray-900 text-sm shrink-0">{formatINR(cat.revenue)}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: cat.color }} />
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0 w-9 text-right">{pct}%</span>
+                  {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
+                </button>
+                {isOpen && (
+                  <div className="pb-3 pl-9 pr-2 space-y-1.5">
+                    {products.length === 0 ? (
+                      <p className="text-xs text-gray-400 py-2">No paid sales yet in this category.</p>
+                    ) : products.map(p => (
+                      <div key={p.name} className="flex items-center justify-between text-xs text-gray-600 py-1">
+                        <span className="truncate">{p.name} <span className="text-gray-400">× {p.qty}</span></span>
+                        <span className="font-semibold text-gray-800 shrink-0 ml-2">{formatINR(p.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      <div className="card p-5 border-amber-100 bg-amber-50">
-        <div className="flex gap-3">
-          <TrendingUp className="text-amber-600 shrink-0 mt-0.5" size={18} />
-          <div>
-            <p className="text-sm font-semibold text-amber-800">Revenue metrics grow as events are completed.</p>
-            <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-              Proposal values represent potential revenue. Track actual received payments
-              in the Payments tab of each event. Coordinator fees and margins are visible
-              in individual proposals.
-            </p>
+      {/* Top products */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Top Products</h3>
+        </div>
+        {topProducts.length === 0 ? (
+          <p className="text-center text-gray-400 text-sm py-10">No paid orders yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {['Product', 'Category', 'Units Sold', 'Revenue'].map(col => (
+                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {topProducts.map(p => (
+                  <tr key={p.name} className="hover:bg-purple-50/30 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-gray-900">{p.name}</td>
+                    <td className="px-4 py-3 text-gray-500">{p.category}</td>
+                    <td className="px-4 py-3 text-gray-600">{p.qty}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900">{formatINR(p.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Order funnel */}
+      <div className="card p-5">
+        <h3 className="font-bold text-gray-900 mb-4">Order Funnel</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {funnel.map(f => (
+            <div key={f.status} className="text-center p-3 rounded-xl bg-gray-50">
+              <div className="text-xl font-bold text-gray-900">{f.count}</div>
+              <div className="text-xs text-gray-500 capitalize mt-0.5">{f.status}</div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {paymentBreakdown.map(p => (
+            <div key={p.status} className={`text-center p-3 rounded-xl ${p.status === 'paid' ? 'bg-green-50' : p.status === 'failed' ? 'bg-red-50' : 'bg-amber-50'}`}>
+              <div className={`text-xl font-bold ${p.status === 'paid' ? 'text-green-700' : p.status === 'failed' ? 'text-red-700' : 'text-amber-700'}`}>{p.count}</div>
+              <div className="text-xs text-gray-500 capitalize mt-0.5">{p.status}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Event services revenue — unchanged logic from before, restyled */}
+      <div>
+        <h3 className="font-bold text-gray-900 mb-3">Event Services Revenue</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card p-6 text-center">
+            <div className="text-2xl font-bold text-plum-700 mb-1 break-words">{formatINR(proposalValue)}</div>
+            <div className="text-sm font-medium text-gray-700">Total Proposals Value</div>
+            <div className="text-xs text-gray-400 mt-1">Sum of all proposal amounts</div>
+          </div>
+          <div className="card p-6 text-center">
+            <div className="text-3xl font-bold text-teal-700 mb-1">{confirmedCount}</div>
+            <div className="text-sm font-medium text-gray-700">Confirmed Events</div>
+            <div className="text-xs text-gray-400 mt-1">Approved &amp; confirmed</div>
+          </div>
+          <div className="card p-6 text-center">
+            <div className="text-3xl font-bold text-emerald-700 mb-1">{completedCount}</div>
+            <div className="text-sm font-medium text-gray-700">Completed Events</div>
+            <div className="text-xs text-gray-400 mt-1">Successfully delivered</div>
           </div>
         </div>
       </div>
@@ -434,6 +710,252 @@ const VENDOR_STATUS_CSS = {
   APPROVED:       { bg: 'bg-green-100',   text: 'text-green-700'  },
   REJECTED:       { bg: 'bg-red-100',     text: 'text-red-700'    },
   SUSPENDED:      { bg: 'bg-gray-100',    text: 'text-gray-600'   },
+}
+
+/* ── Customer 360 tab ───────────────────────────────────────────── */
+function CustomersContent() {
+  const [profiles, setProfiles] = useState([])
+  const [orders, setOrders]     = useState([])
+  const [events, setEvents]     = useState([])
+  const [reviews, setReviews]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
+  const [search, setSearch]     = useState('')
+  const [sortBy, setSortBy]     = useState('spend')
+  const [selected, setSelected] = useState(null)
+
+  useEffect(() => { fetchAll() }, [])
+
+  async function fetchAll() {
+    setLoading(true)
+    setError(null)
+    const [p, o, e, r] = await Promise.all([
+      supabase.from('profiles').select('id, full_name, phone, email, city, created_at').eq('role', 'customer').order('created_at', { ascending: false }),
+      supabase.from('orders').select('id, customer_id, total, payment_status, created_at, order_items(product_name, qty, subtotal)').order('created_at', { ascending: false }),
+      supabase.from('events').select('id, customer_id, event_type, status, created_at').order('created_at', { ascending: false }),
+      supabase.from('reviews_catalog').select('id, customer_id, created_at').order('created_at', { ascending: false }),
+    ])
+    if (p.error) { setError(p.error.message); setLoading(false); return }
+    if (o.error) { setError(o.error.message); setLoading(false); return }
+    if (e.error) { setError(e.error.message); setLoading(false); return }
+    if (r.error) { setError(r.error.message); setLoading(false); return }
+    setProfiles(p.data ?? [])
+    setOrders(o.data ?? [])
+    setEvents(e.data ?? [])
+    setReviews(r.data ?? [])
+    setLoading(false)
+  }
+
+  const customers = useMemo(() => {
+    const list = profiles.map(prof => {
+      const myOrders  = orders.filter(o => o.customer_id === prof.id)
+      const paidOrders = myOrders.filter(o => o.payment_status === 'paid')
+      const myEvents  = events.filter(e => e.customer_id === prof.id)
+      const myReviews = reviews.filter(r => r.customer_id === prof.id)
+      const activityDates = [...myOrders.map(o => o.created_at), ...myEvents.map(e => e.created_at)]
+      return {
+        ...prof,
+        orders: myOrders,
+        events: myEvents,
+        reviews: myReviews,
+        orderCount: myOrders.length,
+        totalSpend: paidOrders.reduce((s, o) => s + (o.total ?? 0), 0),
+        eventCount: myEvents.length,
+        lastActivity: activityDates.length ? activityDates.sort().at(-1) : null,
+      }
+    })
+    const q = search.trim().toLowerCase()
+    const filtered = q
+      ? list.filter(c => c.full_name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q))
+      : list
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'spend')  return b.totalSpend - a.totalSpend
+      if (sortBy === 'orders') return b.orderCount - a.orderCount
+      if (sortBy === 'events') return b.eventCount - a.eventCount
+      if (sortBy === 'name')   return (a.full_name ?? '').localeCompare(b.full_name ?? '')
+      return new Date(b.created_at) - new Date(a.created_at)
+    })
+  }, [profiles, orders, events, reviews, search, sortBy])
+
+  const selectedCustomer = customers.find(c => c.id === selected)
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-plum-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+  if (error) return (
+    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <AlertCircle size={18} />{error}
+      <button onClick={fetchAll} className="font-semibold hover:underline ml-auto">Retry</button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">👥 Customers</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{customers.length} customer{customers.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search name, phone, email"
+              className="input text-sm py-2 pl-8 w-56"
+            />
+          </div>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input text-sm py-2 w-auto pr-8">
+            <option value="spend">Sort: Total spend</option>
+            <option value="orders">Sort: Orders</option>
+            <option value="events">Sort: Events</option>
+            <option value="name">Sort: Name</option>
+            <option value="joined">Sort: Newest</option>
+          </select>
+        </div>
+      </div>
+
+      {customers.length === 0 ? (
+        <div className="card p-14 text-center">
+          <div className="text-4xl mb-3">👥</div>
+          <p className="text-gray-500 text-sm font-medium">No customers found.</p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[760px]">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {['Customer', 'City', 'Joined', 'Orders', 'Spend', 'Events', 'Last activity'].map(col => (
+                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {customers.map(c => (
+                  <tr key={c.id} onClick={() => setSelected(c.id)} className="hover:bg-purple-50/30 transition-colors cursor-pointer">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-gray-900 text-sm">{c.full_name || 'Unnamed'}</div>
+                      <div className="text-xs text-gray-400">{c.phone || c.email || '—'}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{c.city || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{formatDate(c.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-700">{c.orderCount}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900">{formatINR(c.totalSpend)}</td>
+                    <td className="px-4 py-3 text-gray-700">{c.eventCount}</td>
+                    <td className="px-4 py-3 text-gray-500">{c.lastActivity ? formatDate(c.lastActivity) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {selectedCustomer && <CustomerDetailPanel customer={selectedCustomer} onClose={() => setSelected(null)} />}
+    </div>
+  )
+}
+
+function CustomerDetailPanel({ customer, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white">
+          <div>
+            <h3 className="font-bold text-gray-900">{customer.full_name || 'Unnamed customer'}</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Customer since {formatDate(customer.created_at)}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={20} /></button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          <div className="flex flex-wrap gap-2">
+            {customer.phone && (
+              <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-semibold hover:bg-gray-100">
+                <Phone size={12} /> {customer.phone}
+              </a>
+            )}
+            {customer.phone && (
+              <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100">
+                <MessageCircle size={12} /> WhatsApp
+              </a>
+            )}
+            {customer.email && (
+              <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-semibold hover:bg-gray-100">
+                <Mail size={12} /> {customer.email}
+              </a>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 rounded-xl bg-gray-50">
+              <div className="text-lg font-bold text-gray-900">{formatINR(customer.totalSpend)}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Total spend</div>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-gray-50">
+              <div className="text-lg font-bold text-gray-900">{customer.orderCount}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Orders</div>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-gray-50">
+              <div className="text-lg font-bold text-gray-900">{customer.eventCount}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Events</div>
+            </div>
+          </div>
+
+          {customer.orders.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Order history</h4>
+              <div className="space-y-2">
+                {customer.orders.map(o => (
+                  <div key={o.id} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 text-xs">
+                    <div>
+                      <span className="font-semibold text-gray-800">{(o.order_items ?? []).length} item{(o.order_items ?? []).length !== 1 ? 's' : ''}</span>
+                      <span className="text-gray-400 ml-2">{formatDate(o.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full font-semibold ${o.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{o.payment_status}</span>
+                      <span className="font-bold text-gray-900">{formatINR(o.total)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {customer.events.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Event bookings</h4>
+              <div className="space-y-2">
+                {customer.events.map(e => (
+                  <div key={e.id} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 text-xs">
+                    <span className="font-semibold text-gray-800 capitalize">{e.event_type?.replace(/-/g, ' ')}</span>
+                    <span className={`px-2 py-0.5 rounded-full font-semibold ${STATUS_CSS[e.status]?.bg ?? 'bg-gray-100'} ${STATUS_CSS[e.status]?.text ?? 'text-gray-600'}`}>
+                      {EVENT_STATUSES[e.status]?.label ?? e.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {customer.reviews.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Reviews written</h4>
+              <p className="text-xs text-gray-500">{customer.reviews.length} review{customer.reviews.length !== 1 ? 's' : ''} submitted</p>
+            </div>
+          )}
+
+          {customer.orders.length === 0 && customer.events.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-4">No activity yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /* ── Vendor management tab ─────────────────────────────────────── */
@@ -1499,6 +2021,7 @@ export default function AdminDashboard() {
               {activeNav === 'vendors' && <VendorsContent />}
 
               {activeNav === 'orders' && <OrdersContent />}
+              {activeNav === 'customers' && <CustomersContent />}
               {activeNav === 'reviews' && <ReviewsContent />}
               {activeNav === 'support' && <SupportContent />}
 
