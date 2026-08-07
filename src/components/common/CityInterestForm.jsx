@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Bell, Check, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { friendlyError } from '../../context/ToastContext'
 
 function storageKey(city) {
   return `sambramo_city_interest_${city.trim().toLowerCase()}`
@@ -43,7 +44,7 @@ export default function CityInterestForm({ city: initialCity = '', source, locke
       localStorage.setItem(storageKey(trimmed), '1')
       setSubmitted(true)
     } catch (err) {
-      setError(err.message || "Couldn't submit that — please try again.")
+      setError(friendlyError(err, "Couldn't submit that — please try again."))
     } finally {
       setSubmitting(false)
     }

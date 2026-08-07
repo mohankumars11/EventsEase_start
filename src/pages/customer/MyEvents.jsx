@@ -9,6 +9,7 @@ import {
   STATUS_ORDER, EVENT_STATUSES,
 } from '../../config/sambramo'
 import { formatDate } from '../../utils/format'
+import { friendlyError } from '../../context/ToastContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
 /* ── Status messages shown to customers ────────────────────────── */
@@ -187,7 +188,7 @@ export default function MyEvents() {
       .eq('customer_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data, error: err }) => {
-        if (err) setError(err.message)
+        if (err) setError(friendlyError(err, "We couldn't load your celebrations just now."))
         else setEvents(data ?? [])
         setLoading(false)
       })

@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Menu, X, Phone, MessageCircle, Loader2, AlertCircle,
   TrendingUp, TrendingDown, ChevronDown, ChevronUp, Users, Search, Mail,
 } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+// Lazy so `recharts` is a separate chunk fetched only when the Revenue view
+// is opened, rather than 376 KB every operator pays to see any other tab.
+const RevenueTrendChart = lazy(() => import('../../components/admin/RevenueTrendChart'))
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useToast, friendlyError } from '../../context/ToastContext'
@@ -473,22 +475,9 @@ function RevenueContent({ events, proposalValue }) {
       {/* Revenue trend */}
       <div className="card p-5">
         <h3 className="font-bold text-gray-900 mb-4">Shop Revenue — Last 30 Days</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2a78d6" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#2a78d6" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#898781' }} axisLine={{ stroke: '#c3c2b7' }} tickLine={false} interval={4} />
-            <YAxis tick={{ fontSize: 11, fill: '#898781' }} axisLine={false} tickLine={false} width={50}
-              tickFormatter={v => v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`} />
-            <Tooltip formatter={v => formatINR(v)} contentStyle={{ borderRadius: 8, border: '1px solid #e1e0d9', fontSize: 12 }} />
-            <Area type="monotone" dataKey="revenue" stroke="#2a78d6" strokeWidth={2} fill="url(#revenueFill)" />
-          </AreaChart>
-        </ResponsiveContainer>
+        <Suspense fallback={<div className="h-[220px] flex items-center justify-center text-sm text-gray-400">Loading chart…</div>}>
+          <RevenueTrendChart data={trendData} />
+        </Suspense>
       </div>
 
       {/* Category breakdown with click-to-drill-down */}

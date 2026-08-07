@@ -8,6 +8,7 @@ import { formatINR } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment, IS_TEST_MODE } from '../../lib/payment/testPaymentProvider'
 import { BRAND } from '../../config/sambramo'
+import { friendlyError } from '../../context/ToastContext'
 import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
 import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker'
 import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
@@ -89,7 +90,7 @@ export default function ShopCart() {
       if (!data?.valid) { setCouponError(data?.message || 'Invalid coupon code.'); setCoupon(null); return }
       setCoupon(data)
     } catch (err) {
-      setCouponError(err.message || 'Could not validate this coupon.')
+      setCouponError(friendlyError(err, 'Could not validate this coupon.'))
       setCoupon(null)
     } finally {
       setApplyingCoupon(false)
@@ -159,7 +160,7 @@ export default function ShopCart() {
       setUpiLinks(links)
       setQrDataUrl(await generateQrDataUrl(links.upi))
     } catch (err) {
-      setError(err.message || 'Could not start payment.')
+      setError(friendlyError(err, 'Could not start payment. Please try again.'))
     } finally {
       setPaying(false)
     }
@@ -232,7 +233,10 @@ export default function ShopCart() {
       setPlacedOrderId(order.id)
       setStep('done')
     } catch (err) {
-      setError(err.message || 'Something went wrong placing your order.')
+      // Raw Postgres text ("null value in column … violates not-null
+      // constraint") at the moment someone is trying to pay is the worst
+      // place in the product to leak an implementation detail.
+      setError(friendlyError(err, 'Something went wrong placing your order. No payment was taken.'))
     } finally {
       setPaying(false)
     }

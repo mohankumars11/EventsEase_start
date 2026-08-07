@@ -38,10 +38,6 @@ const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
 const CustomerHome   = lazy(() => import('./pages/customer/CustomerHome'))
-const BrowseVendors  = lazy(() => import('./pages/customer/BrowseVendors'))
-const VendorProfile  = lazy(() => import('./pages/customer/VendorProfile'))
-const RequestQuote   = lazy(() => import('./pages/customer/RequestQuote'))
-const MyBookings     = lazy(() => import('./pages/customer/MyBookings'))
 const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
 const EventServices  = lazy(() => import('./pages/customer/EventServices'))
 const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
@@ -107,11 +103,6 @@ function LegacyEventRedirect() {
 }
 
 /**
- * Marketing / browsing chrome: header, festival ticker, footer, chat.
- * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
- * row of a page is never hidden underneath it.
- */
-/**
  * Wraps page content so a crash inside one page doesn't take the header,
  * navigation and footer down with it — the customer keeps a way out.
  *
@@ -124,6 +115,11 @@ function PageBoundary({ children }) {
   return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
 }
 
+/**
+ * Public / pre-login chrome: header, festival ticker, footer, chat.
+ * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
+ * row of a page is never hidden underneath it.
+ */
 function AppShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen pb-bottom-nav">
@@ -138,8 +134,25 @@ function AppShell({ children }) {
   )
 }
 
-/** Signed-in customer chrome — same as AppShell minus the marketing footer. */
-function CustomerShell({ children }) {
+/**
+ * Signed-in chrome — AppShell minus the marketing footer.
+ *
+ * The footer is a sales surface: a sitemap, two "call us" buttons, a list of
+ * celebration types and the pilot-city notice. All of it exists to convince
+ * someone who has not signed up yet. Past the login it is 400px of scroll at
+ * the bottom of every screen, selling the product to the person already using
+ * it — and worse, on the vendor and admin dashboards it hung "Plan a birthday"
+ * links under an operations console, which is not what those two roles are
+ * here to do.
+ *
+ * So the rule is the door, not the role: public browsing (landing, shop, plan
+ * hub, catalog, festivals) keeps the footer because those pages still have to
+ * sell and still need a sitemap. Everything under /dashboard drops it — the
+ * header, the profile menu and the phone tab bar are the navigation once you
+ * are inside, and contact details live in the profile menu and the chat widget
+ * that stays on screen here.
+ */
+function DashboardShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
@@ -218,29 +231,26 @@ function AppRoutes() {
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><CustomerHome /></CustomerShell>
+          <DashboardShell><CustomerHome /></DashboardShell>
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/customer/browse" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><BrowseVendors /></CustomerShell>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/customer/vendors/:vendorId" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><VendorProfile /></CustomerShell>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/customer/vendors/:vendorId/quote" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><RequestQuote /></CustomerShell>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/customer/bookings" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><MyBookings /></CustomerShell>
-        </ProtectedRoute>
-      } />
+      {/* /dashboard/customer/browse, /vendors/:id, /vendors/:id/quote and
+          /bookings are gone, along with the four pages behind them.
+
+          They were the pre-pivot marketplace: browse vendors → open a vendor
+          profile → request a quote → track the booking. Sambramo stopped being
+          that at the concierge pivot — a coordinator sources vendors now, and
+          the customer never picks one — so the flow contradicted the product it
+          shipped alongside, still wearing the old marigold palette.
+
+          Nothing anywhere linked into it. The four pages linked only to each
+          other, a closed island you could reach solely by typing a URL, which
+          is exactly why it survived unnoticed. Redirecting to /services (the
+          catalog that replaced it) so any bookmarked link still lands somewhere
+          true rather than on the landing page's catch-all. */}
+      <Route path="/dashboard/customer/browse"   element={<Navigate to="/services" replace />} />
+      <Route path="/dashboard/customer/bookings" element={<Navigate to="/dashboard/customer/events" replace />} />
+      <Route path="/dashboard/customer/vendors/*" element={<Navigate to="/services" replace />} />
       {/* The catalog used to live under /dashboard/customer behind a login, so
           15 occasions, 39 services and every priced package were unreachable
           from the public site — half the business, invisible. Same rule as the
@@ -253,22 +263,22 @@ function AppRoutes() {
           own in-content links. Same shell as every other customer page. */}
       <Route path="/dashboard/customer/orders" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><MyOrders /></CustomerShell>
+          <DashboardShell><MyOrders /></DashboardShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/requests" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><MyRequests /></CustomerShell>
+          <DashboardShell><MyRequests /></DashboardShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/cart" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><Cart /></CustomerShell>
+          <DashboardShell><Cart /></DashboardShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/events" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <CustomerShell><MyEvents /></CustomerShell>
+          <DashboardShell><MyEvents /></DashboardShell>
         </ProtectedRoute>
       } />
 
@@ -282,19 +292,19 @@ function AppRoutes() {
       {/* ── Vendor ─────────────────────────────────── */}
       <Route path="/dashboard/vendor" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <AppShell><VendorDashboard /></AppShell>
+          <DashboardShell><VendorDashboard /></DashboardShell>
         </ProtectedRoute>
       } />
 
       {/* ── Admin ──────────────────────────────────── */}
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <AppShell><AdminDashboard /></AppShell>
+          <DashboardShell><AdminDashboard /></DashboardShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/admin/events/:eventId" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <AppShell><AdminEventDetail /></AppShell>
+          <DashboardShell><AdminEventDetail /></DashboardShell>
         </ProtectedRoute>
       } />
 

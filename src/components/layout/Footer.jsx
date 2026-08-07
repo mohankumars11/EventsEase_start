@@ -13,12 +13,20 @@ export default function Footer() {
             <Link to="/" className="inline-block mb-3">
               <SambramoLogo size={40} ground="onDark" caption />
             </Link>
-            {/* Was "India's *first* human-assisted concierge celebration
-                service" — a superlative that appeared on this one surface and
-                nowhere else. Too isolated to work as a position, and still
-                large enough to have to defend. */}
+            {/* Was "{BRAND.tagline} {BRAND.descriptor}." — but `tagline` is
+                exactly the line the lockup above already sets under the
+                wordmark, so the last thing on the page read "Celebrations,
+                arranged ◆ Essentials, delivered" and then, one line lower,
+                "Celebrations, arranged. Essentials, delivered." The caption is
+                the better placement of the two: it is part of the mark. This
+                line keeps only the half the caption does not say.
+
+                (Earlier it also claimed India's *first* human-assisted
+                concierge service — a superlative on one surface and nowhere
+                else, too isolated to be a position and still large enough to
+                have to defend.) */}
             <p className="text-sm leading-relaxed text-plum-400 max-w-xs">
-              {BRAND.tagline} {BRAND.descriptor}.
+              {BRAND.descriptor}.
             </p>
             <div className="flex gap-3 mt-4">
               <a href={`https://wa.me/${BRAND.whatsappNumber}`} target="_blank" rel="noopener noreferrer"

@@ -15,10 +15,39 @@ const CAPTION_PARTS = {
 /**
  * Mark + wordmark lockup.
  *
- * The wordmark stays a single colour. The old header split it as
- * "Sambr" + "amo" in saffron, which broke the name at an arbitrary point and
- * put the accent in competition with the mark; the saffron now lives only in
- * the pulli at the centre of the kolam, so the name reads as one word.
+ * ── The lockup ──────────────────────────────────────────────
+ * Mark on the left, and a column to its right holding the wordmark with the
+ * caption hung under it. One rule governs the whole thing: the mark is
+ * vertically centred on that column, and it is sized to stand as tall as the
+ * column is. That is what makes it a lockup rather than three elements that
+ * happen to be near each other.
+ *
+ * It used to be built the other way round — a column of [row(mark, wordmark)]
+ * + [caption], with the caption pushed right by `paddingLeft: size + GAP` to
+ * land under the wordmark. Two things were wrong with that. The indent was
+ * arithmetic standing in for alignment: it only agreed with the wordmark's
+ * left edge because the number was recomputed from the same gap, and nothing
+ * held it there. And with the caption outside the mark's row, the mark was
+ * centred on the wordmark alone, so as soon as a caption appeared the lockup
+ * grew a second line the mark knew nothing about and sat visibly high against
+ * it — top-left heavy, with the caption trailing off the bottom right.
+ *
+ * Now the caption is the wordmark's sibling in one column, so their left
+ * edges are the same edge and cannot drift; and the mark is centred on both.
+ *
+ * ── The mark's size ─────────────────────────────────────────
+ * `size` is the mark's height with no caption. With one, the mark scales up
+ * to bracket the taller stack — a mark that stays at wordmark height next to
+ * two lines of type reads as an icon sitting beside some text, which is the
+ * one thing a lockup must not look like.
+ *
+ * ── The turn ────────────────────────────────────────────────
+ * On hover the mark rotates a quarter turn. The kolam has four-fold symmetry
+ * — rotating it 90° about its centre maps it exactly onto itself — so it
+ * turns without ever becoming a different shape. The gradient rides with it,
+ * which is the only part you actually see move. It costs one transform and
+ * it is the sort of detail that reads as a brand having been made rather
+ * than assembled.
  */
 export default function SambramoLogo({
   size    = 32,
@@ -67,49 +96,54 @@ export default function SambramoLogo({
     ? (size >= 40 ? 'text-[11px]' : 'text-[10px]')
     : (size >= 40 ? 'text-[10px]' : 'text-[9px]')
 
-  // Gap between mark and wordmark, in px. The caption is indented by exactly
-  // this plus the mark width so its left edge lands on the wordmark's left
-  // edge at any size — hardcoding a Tailwind padding step would only line up
-  // at one of them.
-  const GAP = 10
+  // 1.28 is the wordmark-plus-caption stack measured against the wordmark
+  // alone at every size this component is called at — the mark ends up a
+  // hair taller than the type it stands beside, which is where a mark wants
+  // to sit. Rounded so the SVG lands on whole pixels.
+  const markSize = parts ? Math.round(size * 1.28) : size
+
+  // Optical gap: a wider mark needs a little more air before the name, and
+  // tying it to the mark keeps the proportion identical at 32px and at 52px.
+  const gap = Math.round(markSize * 0.3)
 
   return (
-    // The mark pairs with the wordmark in its own row, and the caption hangs
-    // beneath that row. Centering the mark against a column that contained
-    // both lines dropped it to sit between them, so the mark drifted off the
-    // name as soon as a caption was switched on.
-    <span className={`inline-flex flex-col ${className}`}>
-      <span className="inline-flex items-center" style={{ gap: `${GAP}px` }}>
-        <SambramoMark size={size} className="shrink-0" />
+    <span className={`group/logo inline-flex items-center ${className}`} style={{ gap: `${gap}px` }}>
+      <SambramoMark
+        size={markSize}
+        className="shrink-0 transition-transform duration-700 ease-out group-hover/logo:rotate-90"
+      />
+
+      {/* Wordmark and caption in one column — this is what puts their left
+          edges on the same line, and what the mark is centred against. */}
+      <span className="inline-flex flex-col min-w-0">
         <span className={`font-display font-bold tracking-tight leading-none ${wordSize} ${wordColor}`}>
           {BRAND.name}
         </span>
-      </span>
 
-      {/* Indented to the wordmark's left edge, and punctuated with a pulli
-          rather than a full stop — the dot at the centre of the kolam, set
-          between the descriptor's halves or ahead of the single emotional
-          phrase. It is the one place the mark's geometry reappears in the
-          type, so it earns the extra element either way. */}
-      {parts && (
-        <span
-          style={{ paddingLeft: `${size + GAP}px` }}
-          className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug ${isEmotion ? 'tracking-[0.12em]' : 'tracking-[0.11em]'} uppercase ${capColor} ${captionClassName}`}
-        >
-          {parts.map((part, i) => (
-            <span key={part} className="flex items-center gap-1.5 whitespace-nowrap">
-              {/* Separator between halves; opening mark when there is only one. */}
-              {(i > 0 || parts.length === 1) && (
-                <span
-                  aria-hidden="true"
-                  className="inline-block w-[3px] h-[3px] rotate-45 bg-saffron-400 shrink-0"
-                />
-              )}
-              {part}
-            </span>
-          ))}
-        </span>
-      )}
+        {/* Punctuated with a pulli rather than a full stop — the dot at the
+            centre of the kolam, set between the descriptor's halves or ahead
+            of the single emotional phrase. It is the one place the mark's
+            geometry reappears in the type, so it earns the extra element
+            either way. */}
+        {parts && (
+          <span
+            className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug ${isEmotion ? 'tracking-[0.12em]' : 'tracking-[0.11em]'} uppercase ${capColor} ${captionClassName}`}
+          >
+            {parts.map((part, i) => (
+              <span key={part} className="flex items-center gap-1.5 whitespace-nowrap">
+                {/* Separator between halves; opening mark when there is only one. */}
+                {(i > 0 || parts.length === 1) && (
+                  <span
+                    aria-hidden="true"
+                    className="inline-block w-[3px] h-[3px] rotate-45 bg-saffron-400 shrink-0"
+                  />
+                )}
+                {part}
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
     </span>
   )
 }

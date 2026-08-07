@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
+import { friendlyError } from '../../context/ToastContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 
@@ -68,7 +69,7 @@ export default function Cart() {
       dispatch({ type: 'CLEAR' })
       setCheckoutDone(true)
     } catch (err) {
-      setError(err.message || 'Something went wrong submitting your requirements. Please try again.')
+      setError(friendlyError(err, 'Something went wrong submitting your requirements. Please try again.'))
     } finally {
       setSubmitting(false)
     }

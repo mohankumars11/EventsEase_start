@@ -58,19 +58,26 @@ const EVENT_GRADIENTS = {
   'get-together':    'from-blue-400 to-cyan-500',
 }
 
+/**
+ * The one telling of how this works, and the page's `#how-it-works` anchor.
+ *
+ * There used to be a second: a numbered "How Sambramo Works" band lower down
+ * that said 01 Tell us / 02 We plan / 03 You approve / 04 We handle it — the
+ * same four steps as the first four here, in the same order, in the same
+ * words, roughly a thousand pixels apart. Between them the OldWayBand makes
+ * the same argument a third time in prose ("You describe it once, to a
+ * person… we call the vendors… one transparent proposal"). Told once it is a
+ * promise; told three times on one scroll it reads as padding, and the
+ * numbered version was the weakest of the three — four steps of grey text
+ * under 96px numerals, no imagery, and it ended on "we handle it" rather than
+ * on the customer celebrating.
+ */
 const STORY_STEPS = [
-  { emoji: '🗣️', title: 'Tell us',       desc: 'Share your vision in minutes' },
-  { emoji: '🔍', title: 'We plan',       desc: 'Our team finds the right vendors' },
-  { emoji: '📋', title: 'You approve',   desc: 'Review a clear, complete proposal' },
-  { emoji: '🤝', title: 'We handle it',  desc: 'We coordinate everything for you' },
-  { emoji: '🎉', title: 'You celebrate', desc: 'Just enjoy your day' },
-]
-
-const HOW_STEPS = [
-  { num: '01', title: 'Tell us',      desc: 'Your date, place, people, budget and dream.' },
-  { num: '02', title: 'We plan',      desc: 'Our team finds the right services and vendors.' },
-  { num: '03', title: 'You approve',  desc: 'We present a complete plan and transparent proposal.' },
-  { num: '04', title: 'We handle it', desc: 'We coordinate the details while you enjoy your people.' },
+  { emoji: '🗣️', title: 'Tell us',       desc: 'Your date, place, people and what you picture' },
+  { emoji: '🔍', title: 'We plan',       desc: 'Our team sources vendors and compares quotes' },
+  { emoji: '📋', title: 'You approve',   desc: 'One clear, complete proposal — the fee stated in it' },
+  { emoji: '🤝', title: 'We handle it',  desc: 'We coordinate every detail on the day' },
+  { emoji: '🎉', title: 'You celebrate', desc: 'Just be there for the moment' },
 ]
 
 const TRUST_POINTS = [
@@ -78,22 +85,6 @@ const TRUST_POINTS = [
   { emoji: '🏪', title: 'Multiple services',        desc: 'Venue, decoration, food, photography, entertainment and more' },
   { emoji: '📞', title: 'Vendor coordination',      desc: "We coordinate with vendors so you don't have to" },
   { emoji: '💡', title: 'Transparent proposals',    desc: "See what you're paying for before confirming" },
-]
-
-// Calibrated to real package pricing (eventServicesData.js) — the
-// cheapest full-service package anywhere in the catalog starts around
-// ₹15,000 (e.g. an intimate anniversary dinner), so a bracket like
-// "Under ₹5,000" was never a real option and undercut the "we quote
-// after understanding your needs" message right above this section.
-const BUDGET_RANGES = [
-  '₹15,000 – ₹30,000',
-  '₹30,000 – ₹60,000',
-  '₹60,000 – ₹1,00,000',
-  '₹1,00,000 – ₹2,50,000',
-  '₹2,50,000 – ₹5,00,000',
-  '₹5,00,000 – ₹10,00,000',
-  '₹10,00,000 – ₹25,00,000',
-  'Above ₹25,00,000',
 ]
 
 const FAQS = [
@@ -129,8 +120,7 @@ const FAQS = [
 export default function LandingPage() {
   useScrollReveal()
   const navigate    = useNavigate()
-  const [openFaq,     setOpenFaq]     = useState(null)
-  const [activeBudget, setActiveBudget] = useState(null)
+  const [openFaq,    setOpenFaq]    = useState(null)
   const [heroPhotos, setHeroPhotos] = useState({})
 
   // Real floating photos for the hero corners — replaces the emoji.
@@ -149,8 +139,8 @@ export default function LandingPage() {
    * Navigate to /plan with optional pre-selected params.
    *
    * Everything on this page funnels through here — every hero CTA, all nine
-   * celebration cards, all eight budget chips and both closing CTAs — which
-   * is why it no longer diverts guests to /login first. Being asked to make
+   * celebration cards and the closing CTA — which is why it no longer
+   * diverts guests to /login first. Being asked to make
    * an account before hearing a price, on a page whose argument is "free to
    * ask, no obligation", lost people at the door for nothing: the wizard
    * needs an account only at submit, and asks then.
@@ -322,11 +312,24 @@ export default function LandingPage() {
 
       {/* ══════════════════════════════════════════════
           2. STORY FLOW  (dark — continues from hero)
+
+          Carries `#how-it-works` now that the numbered band that used to own
+          that anchor is gone. The header's "How It Works" link and the
+          footer's both point here, which is where the five steps live —
+          moving the id rather than dropping it keeps those two links working
+          instead of scrolling people to the top of the page.
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-plum-950">
+      <section id="how-it-works" className="py-20 px-4 bg-plum-950">
         <div className="max-w-5xl mx-auto">
 
           <div className="text-center mb-14 reveal">
+            {/* Eyebrow, in the same register as the other section labels. It
+                is what tells someone who arrived by clicking "How It Works"
+                that they have landed in the right place — the headline under
+                it is a feeling, not a signpost. */}
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-saffron-400 mb-3">
+              How Sambramo works
+            </p>
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-5">
               Your celebration deserves your full presence.
             </h2>
@@ -459,7 +462,7 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          5B. THE SHOP
+          5. THE SHOP
 
           Placed straight after the event services, so the page reads as
           one offer with two halves: here is what we arrange for you, and
@@ -469,47 +472,7 @@ export default function LandingPage() {
       <OccasionRail />
 
       {/* ══════════════════════════════════════════════
-          6. HOW SAMBRAMO WORKS
-      ══════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-20 px-4 bg-white">
-        <div className="max-w-5xl mx-auto">
-
-          <div className="text-center mb-16 reveal">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-gray-900">
-              How Sambramo Works
-            </h2>
-          </div>
-
-          <div className="relative">
-            {/* Horizontal connecting line (desktop) */}
-            <div
-              className="absolute top-[3.25rem] left-[12.5%] right-[12.5%] h-0.5 bg-plum-100 hidden md:block"
-              aria-hidden="true"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-              {HOW_STEPS.map((step, i) => (
-                <div
-                  key={step.num}
-                  className={`reveal reveal-delay-${i + 1} flex flex-col items-center text-center`}
-                >
-                  {/* Large number */}
-                  <div className="relative z-10 mb-4">
-                    <span className="font-serif text-8xl font-extrabold text-plum-100 leading-none select-none">
-                      {step.num}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-base mb-2">{step.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          7. FESTIVAL FOODS & RITUALS
+          6. FESTIVAL FOODS & RITUALS
       ══════════════════════════════════════════════ */}
       <section id="festivals" className="py-20 px-4 bg-gradient-to-br from-saffron-50 to-amber-50">
         <div className="max-w-6xl mx-auto">
@@ -538,59 +501,53 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          7B. CUSTOMER VOICES — real reviews_catalog data,
+          7. CUSTOMER VOICES — real reviews_catalog data,
           honest at any volume. Placed right before the final
           budget/CTA push, where trust reinforcement matters most.
       ══════════════════════════════════════════════ */}
       <CustomerVoices />
 
       {/* ══════════════════════════════════════════════
-          8. BUDGET
+          8. BUDGET — one statement, no numbers.
+
+          This was eight tappable price brackets, ₹15,000–₹30,000 up to
+          "Above ₹25,00,000", each of which pre-filled the wizard. Three
+          problems with putting them here. They are a price list on a page
+          that spends a whole section above explaining why there is no price
+          list ("A birthday for 20 and a wedding for 400 don't cost the
+          same — so we don't guess"), so the page argued with itself. They
+          anchor: a visitor who has never priced a wedding reads ₹15,000 as
+          the price of a celebration rather than the floor of the cheapest
+          package in the catalog. And they ask the hardest question on the
+          page — what is your budget — of someone who has not yet been told
+          what anything costs, which is a strange thing to answer before
+          talking to anyone.
+
+          The wizard still asks for a budget, in its own step, after the
+          occasion and the guest count have made the question answerable.
+          That is the right place for it. What belongs here is the promise,
+          which is the one line that survived.
+
+          Statement only, no button: the dark CTA immediately below already
+          carries the action, and two CTAs a screen apart compete rather
+          than compound. This reads as the quiet beat before that.
       ══════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-3xl mx-auto">
-
-          <div className="text-center mb-12 reveal">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              Beautiful celebrations at the budget you're comfortable with.
-            </h2>
-            <p className="text-gray-500 text-lg">
-              Tell us your comfort zone. We'll work within it.
-            </p>
-          </div>
-
-          {/* 8 budget chips — 2 rows of 4 */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 reveal">
-            {BUDGET_RANGES.map((label) => (
-              <button
-                key={label}
-                onClick={() => {
-                  setActiveBudget(label)
-                  toPlan({ budget: label })
-                }}
-                className={`card text-sm font-semibold px-3 py-3.5 text-center transition-all duration-200 hover:border-saffron-300 hover:shadow-md ${
-                  activeBudget === label
-                    ? 'border-saffron-400 bg-saffron-50 text-saffron-700 shadow-md'
-                    : 'text-gray-700'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <p className="text-center text-gray-500 text-sm mb-8 reveal">
-            We've planned celebrations at every budget. What matters is that your day is perfect.
-          </p>
-
-          <div className="text-center reveal">
-            <button
-              onClick={() => toPlan()}
-              className="btn-plum text-base px-8 py-4 rounded-2xl"
-            >
-              Start planning — it's free
-            </button>
-          </div>
+      <section className="py-20 sm:py-24 px-4 bg-white">
+        <div className="max-w-3xl mx-auto text-center reveal">
+          {/* The mark's own dot, set as a small rule — the same saffron
+              punctuation the logo caption uses, doing the job a horizontal
+              divider would do more loudly. */}
+          <span
+            aria-hidden="true"
+            className="block w-1.5 h-1.5 rotate-45 bg-saffron-400 mb-7 mx-auto"
+          />
+          {/* Left to wrap on its own rather than broken with a <br>: a hard
+              break placed for a 1280px viewport lands mid-phrase on a phone,
+              and this line has no natural hinge to hang one on. The measure
+              does the work instead. */}
+          <h2 className="font-serif text-3xl md:text-[2.75rem] md:leading-[1.15] font-bold text-gray-900 text-balance max-w-2xl mx-auto">
+            Beautiful celebrations at the budget you're comfortable with.
+          </h2>
         </div>
       </section>
 
