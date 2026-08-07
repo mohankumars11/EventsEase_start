@@ -9,8 +9,9 @@
  * `WHERE category = 'Cakes' AND occasion = 'Birthday'` — so every birthday
  * cake in the shop shares a single stock photo. This script replaces that
  * with a per-row assignment, and its single most important behaviour is
- * DEDUPLICATION: no two products in the same category may receive the same
- * photograph. That is precisely what 017 got wrong.
+ * DEDUPLICATION: no two products anywhere in the shop may receive the same
+ * photograph. That is precisely what 017 got wrong. The run aborts rather
+ * than emit a duplicate.
  *
  * How it runs
  * -----------
@@ -29,6 +30,10 @@
  *   --dry-run          Print the plan; write no files.
  *   --category <name>  Restrict to one category (repeatable).
  *   --limit <n>        Stop after n products. Useful against the rate limit.
+ *   --only-missing     Only rows this resolver has never touched. Pexels
+ *                      allows 200 requests/hour and the catalogue is ~344
+ *                      products, so a full run WILL be cut short; apply the
+ *                      SQL it produced, wait an hour, then resume with this.
  *   --source <p|u>     'pexels' (default) or 'unsplash'.
  *   --out <path>       Output SQL path.
  *
@@ -60,10 +65,11 @@ loadEnv()
 
 /* ── args ───────────────────────────────────────────────────────────── */
 function parseArgs(argv) {
-  const out = { dryRun: false, categories: [], limit: Infinity, source: 'pexels', out: null }
+  const out = { dryRun: false, categories: [], limit: Infinity, source: 'pexels', out: null, onlyMissing: false }
   for (let i = 0; i < argv.length; i++) {
     switch (argv[i]) {
       case '--dry-run':  out.dryRun = true; break
+      case '--only-missing': out.onlyMissing = true; break
       case '--category': out.categories.push(argv[++i]); break
       case '--limit':    out.limit = Number(argv[++i]); break
       case '--source':   out.source = argv[++i].startsWith('u') ? 'unsplash' : 'pexels'; break
@@ -80,6 +86,9 @@ Resolve one distinct HD photo per product and emit the assigning SQL.
                      Cakes | Gifts | Flowers | Hampers |
                      "Party Essentials" | "Pooja & Essentials"
   --limit <n>        Stop after n products.
+  --only-missing     Only products this resolver has never touched.
+                     Use to resume after a rate limit, once the
+                     generated SQL from the previous run is applied.
   --source <name>    pexels (default, 200 req/hr) | unsplash (50 req/hr)
   --out <path>       Output SQL path.
 
@@ -237,15 +246,25 @@ async function searchUnsplash(query) {
 }
 
 /* ── Catalog read ───────────────────────────────────────────────────── */
-async function fetchProducts(categories) {
+async function fetchProducts(categories, onlyMissing = false) {
   const base = process.env.VITE_SUPABASE_URL
   const key  = process.env.VITE_SUPABASE_ANON_KEY
   if (!base || !key) throw new Error('VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing from .env')
 
   let url = `${base}/rest/v1/products?select=id,name,category,occasion,description`
             + `&order=category.asc,name.asc`
+
+  // Resume after a rate limit. image_credit is the marker: this resolver
+  // always writes one, and the category-wide URLs from migrations 017/021
+  // never had it. So "credit is null" means "this row has never had a
+  // photo of its own" — exactly the set worth spending quota on.
+  if (onlyMissing) url += `&image_credit=is.null`
   if (categories.length) {
-    url += `&category=in.(${categories.map(c => `"${c}"`).join(',')})`
+    // Each name must be percent-encoded: "Pooja & Essentials" contains an
+    // ampersand, which otherwise ends the query parameter and leaves
+    // PostgREST parsing an unterminated in.() list.
+    const list = categories.map(c => `"${encodeURIComponent(c)}"`).join(',')
+    url += `&category=in.(${list})`
   }
 
   const res = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } })
@@ -353,16 +372,20 @@ async function main() {
     process.exit(1)
   }
 
-  const products = (await fetchProducts(args.categories)).slice(0, args.limit)
+  const products = (await fetchProducts(args.categories, args.onlyMissing)).slice(0, args.limit)
   if (!products.length) {
     console.error('No products matched. Check --category spelling against the CHECK constraint.')
     process.exit(1)
   }
   console.log(`Resolving ${products.length} products from ${args.source}…\n`)
 
-  // Dedup is scoped per category: a cake and a hamper may legitimately
-  // share a festive table shot, but two cakes may never share a photo.
-  const usedByCategory = new Map()
+  // Dedup is GLOBAL, not per-category. Scoping it per category was the
+  // first instinct — a bouquet and a hamper might reasonably share a
+  // festive table shot — but it produced 12 shared photos across Flowers,
+  // Gifts and Hampers on the first real run, and a shopper who sees the
+  // same picture on "Rose Bouquet" and "Rose Hamper" has been told nothing
+  // about either. One photo, one product, shop-wide.
+  const used = new Set()
   const resolved = []
   const failed = []
 
@@ -379,7 +402,6 @@ async function main() {
       CATEGORY_TERM[product.category] ?? product.category,
     ].filter((q, idx, all) => q && all.indexOf(q) === idx)
 
-    const used = usedByCategory.get(product.category) ?? new Set()
     let photo = null
     let query = tiers[0]
     let rateLimited = false
@@ -412,7 +434,6 @@ async function main() {
     }
 
     used.add(photo.id)
-    usedByCategory.set(product.category, used)
     resolved.push({ product, photo, query })
     console.log(`  ✓  ${product.name}\n       ${query}\n       ${photo.id}`)
 
@@ -428,14 +449,15 @@ async function main() {
 
   // A duplicate here means the dedup pass failed, which is the one bug that
   // would reproduce migration 017's problem. Fail loudly rather than emit it.
+  // Keyed on the URL alone, matching the global dedup above.
   const urls = new Map()
   for (const r of resolved) {
-    const seen = urls.get(`${r.product.category}|${r.photo.url}`)
+    const seen = urls.get(r.photo.url)
     if (seen) {
       console.error(`\n✗ DUPLICATE: "${seen}" and "${r.product.name}" share a photo. Aborting.`)
       process.exit(1)
     }
-    urls.set(`${r.product.category}|${r.photo.url}`, r.product.name)
+    urls.set(r.photo.url, r.product.name)
   }
 
   if (args.dryRun) {
