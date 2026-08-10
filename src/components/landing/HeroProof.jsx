@@ -124,23 +124,43 @@ const POINTS = [
   },
 ]
 
+/**
+ * Two layouts, because three tiles across a 375px screen is not a layout.
+ *
+ * ── What was wrong ────────────────────────────────────────────────────────
+ * It was one grid at every width: three cards, each a centred icon over a
+ * centred title, with the explanatory line hidden below `sm`. At 375px that
+ * left three ~105px columns carrying "One coordinator", "Proposal in 24–48
+ * hrs" and "Free to ask" — the middle one wrapping to three ragged lines
+ * against its neighbours' one, so the row sat visibly off-balance directly
+ * under the primary CTA. And hiding `desc` meant the phone got the headline
+ * without the thing that makes it mean anything.
+ *
+ * ── What it is now ────────────────────────────────────────────────────────
+ * Phones get one row per claim: icon on the left, title and description
+ * beside it, reading as three short sentences instead of three cramped
+ * columns. Nothing is hidden, and left-aligned rows cost less height than
+ * centred cards because the text uses the full width instead of wrapping at
+ * a third of it.
+ *
+ * From `sm` it becomes the three-across row it always wanted to be, at a
+ * width where three columns genuinely fit and the description has room.
+ */
 export function TrustRow() {
   return (
-    // Three across at every width. Stacking them on mobile would add ~180px
-    // directly below the primary CTA, on the one screen that can least
-    // afford the height — so phones get icon and title, and the supporting
-    // line appears from sm up where there is room for it.
-    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-left sm:text-center">
       {POINTS.map(({ icon: Icon, title, desc }) => (
         <div
           key={title}
-          className="flex flex-col items-center text-center gap-1.5 sm:gap-2 bg-white/[0.07] border border-white/10 rounded-2xl p-3 sm:p-4 backdrop-blur-sm"
+          className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 bg-white/[0.07] border border-white/10 rounded-2xl px-3.5 py-3 sm:p-4 backdrop-blur-sm"
         >
-          <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-saffron-400/15 text-saffron-300 flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-xl bg-saffron-400/15 text-saffron-300 flex items-center justify-center shrink-0">
             <Icon size={16} aria-hidden="true" />
           </span>
-          <p className="text-white text-[11px] sm:text-sm font-bold leading-tight">{title}</p>
-          <p className="hidden sm:block text-white/55 text-xs leading-snug">{desc}</p>
+          <div className="min-w-0">
+            <p className="text-white text-[13px] sm:text-sm font-bold leading-tight">{title}</p>
+            <p className="text-white/55 text-[11px] sm:text-xs leading-snug mt-0.5">{desc}</p>
+          </div>
         </div>
       ))}
     </div>

@@ -4,6 +4,7 @@ import { X, ArrowRight, ArrowLeft, Sparkles, Check, Camera } from 'lucide-react'
 import { SAMPLES_BY_EVENT, FEATURED_SAMPLES, SAMPLE_TOTALS } from '../../config/decorSamples'
 import { toWizardType } from '../../data/occasionMap'
 import { formatINRRange } from '../../utils/format'
+import { SHOW_SERVICE_PRICES } from '../../config/sambramo'
 import ImageSourceBadge from '../shop/ImageSourceBadge'
 
 /**
@@ -48,6 +49,33 @@ function shopCategoryFor(sample) {
 
 function planHref(sample) {
   return `/plan?type=${encodeURIComponent(toWizardType(sample.eventId))}`
+}
+
+const TIER_LABEL = ['', 'Simple setup', 'Fuller setup', 'The grand version']
+
+/**
+ * The scale that stands in for a price.
+ *
+ * Three ticks, filled to the setup's tier, scoped to its own occasion. It
+ * answers "is this the small one or the big one" — which is the only thing
+ * the rupee range was really being read for — without printing a figure
+ * before a vendor has quoted one. See tierFor() in config/decorSamples.js.
+ *
+ * The visible ticks are decorative and hidden from assistive tech; the label
+ * beside them carries the meaning in words, so this is never a rating a
+ * screen reader has to infer from three rupee signs.
+ */
+function TierScale({ tier, className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span aria-hidden="true" className="inline-flex items-center gap-0.5 font-bold leading-none">
+        {[1, 2, 3].map(n => (
+          <span key={n} className={n <= tier ? 'text-plum-700' : 'text-gray-300'}>₹</span>
+        ))}
+      </span>
+      <span className="text-[11px] font-semibold text-gray-500">{TIER_LABEL[tier]}</span>
+    </span>
+  )
 }
 
 function shopHref(sample) {
@@ -140,9 +168,13 @@ function SampleCard({ sample, onOpen, showOccasion = true, eager = false }) {
         <p className="text-gray-500 text-xs leading-snug line-clamp-2 mb-3">{sample.blurb}</p>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-plum-700 font-bold text-xs sm:text-sm">
-            {formatINRRange(sample.priceMin, sample.priceMax)}
-          </span>
+          {SHOW_SERVICE_PRICES ? (
+            <span className="text-plum-700 font-bold text-xs sm:text-sm">
+              {formatINRRange(sample.priceMin, sample.priceMax)}
+            </span>
+          ) : (
+            <TierScale tier={sample.tier} />
+          )}
           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-400 group-hover:text-plum-600 group-hover:gap-1.5 transition-all">
             See what's in it <ArrowRight size={12} />
           </span>
@@ -299,30 +331,45 @@ function SampleOverlay({ sample, onClose, onPrev, onNext }) {
                     </span>
                     <span className="block text-xs text-gray-500 leading-snug">{svc.desc}</span>
                   </span>
+                  {/* Matches how EventServices renders the same field. Those
+                      priceHint strings are unit-bearing — "₹250 – ₹800/plate",
+                      "₹50 – ₹200/seat" — and somebody scanning a list reads
+                      the first number as the price of the whole line. That is
+                      what SHOW_SERVICE_PRICES is false about. */}
                   <span className="shrink-0 text-xs font-semibold text-gray-400 whitespace-nowrap">
-                    {svc.priceHint}
+                    {SHOW_SERVICE_PRICES && svc.priceHint ? svc.priceHint : 'Quoted for you'}
                   </span>
                 </li>
               ))}
             </ul>
 
-            {total > 0 && (
+            {SHOW_SERVICE_PRICES && total > 0 ? (
               <div className="flex items-baseline justify-between gap-3 pt-3 border-t border-amber-100">
                 <span className="text-sm font-bold text-gray-900">Typical range</span>
                 <span className="text-base font-bold text-plum-700">
                   {formatINRRange(sample.priceMin, sample.priceMax)}
                 </span>
               </div>
+            ) : (
+              /* What replaces the number.
+                 Not silence — silence is what makes a visitor assume the
+                 answer is "expensive". The scale says which of the four
+                 setups this is, and the line under it converts the missing
+                 price into the thing that is actually true and actually
+                 attractive: asking costs nothing and the answer comes back
+                 in writing, fast. */
+              <div className="pt-3 border-t border-amber-100">
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                  <span className="text-sm font-bold text-gray-900">Scale of this setup</span>
+                  <TierScale tier={sample.tier} />
+                </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Priced once we know your space, date and guest count — because a setup for
+                  20 and one for 400 are not the same job. Free to ask, quote in 24–48 hrs,
+                  and the fee is stated in it.
+                </p>
+              </div>
             )}
-
-            {/* The estimate caveat is stated where the number is, not in a
-                footer. eventServicesData labels its own figures as researched
-                estimates; repeating that here is the difference between a
-                guide price and a quote a customer thinks they have been given. */}
-            <p className="text-[11px] text-gray-400 leading-relaxed mt-2">
-              An estimate for this scope, not a quote — the real figure depends on your
-              venue, size and date. We source it and put it in writing, free.
-            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

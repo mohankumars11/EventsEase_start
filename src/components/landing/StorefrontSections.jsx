@@ -196,87 +196,18 @@ export function PathFork({ onPlan }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   1B. The contrast band
+   1B. The contrast band — moved
+   ───────────────────────────────────────────────────────────
+   OldWayBand lived here: a two-column "Doing it yourself" vs "With
+   Sambramo" section. Its argument, and its exact wording, are now slides one
+   and two of components/landing/StoryDeck.jsx, which tells the same case in
+   one screen instead of a full-height band.
+
+   Deleted rather than left exported-but-unused. Two copies of the same
+   marketing copy in one repo is how the four contradicting descriptors this
+   project already had to reconcile got started — one of them still called
+   the product a marketplace.
 ═══════════════════════════════════════════════════════════ */
-
-/**
- * The same argument the dismissible nudge makes, except nobody has to be
- * interrupted to read it.
- *
- * A popup reaches whoever happens to be drifting when it fires; this reaches
- * everyone who scrolls, and it can be far more specific because it has room.
- * Both halves of the business share one frustration — the effort is spread
- * across a dozen phone calls or a Saturday in traffic — so the two columns
- * name that effort in the reader's own words before offering the alternative.
- */
-const OLD_WAY = [
-  { icon: '🔍', text: 'Fourteen tabs open, comparing decorators you have never heard of' },
-  { icon: '📞', text: 'Nine calls, four callbacks, two vendors who ghost you' },
-  { icon: '🧾', text: 'Quotes that change once they hear the word "wedding"' },
-  { icon: '🚗', text: 'A Saturday lost to the market for cake, flowers and pooja items' },
-]
-
-const OUR_WAY = [
-  { icon: '💬', text: 'One conversation. You describe it once, to a person.' },
-  { icon: '🤝', text: 'We call the vendors, compare them and negotiate for you' },
-  { icon: '🧮', text: 'One transparent proposal — the fee is in it, stated upfront' },
-  { icon: '📦', text: 'Everything else arrives at your door, priced before you buy' },
-]
-
-export function OldWayBand({ onPlan }) {
-  return (
-    <section className="py-16 sm:py-20 px-4 bg-plum-950">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-10 sm:mb-14 reveal">
-          <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-saffron-400 mb-3">
-            Sound familiar?
-          </p>
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-3">
-            You are not bad at this. It is genuinely exhausting.
-          </h2>
-          <p className="text-white/60 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Planning a celebration in India means being a project manager for a
-            month. That is the part we take.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-5 sm:gap-6 reveal reveal-delay-1">
-          <div className="rounded-3xl border border-plum-800 bg-plum-900/40 p-6 sm:p-8">
-            <h3 className="text-plum-300 font-bold text-sm tracking-wide uppercase mb-5">
-              Doing it yourself
-            </h3>
-            <ul className="space-y-4">
-              {OLD_WAY.map(item => (
-                <li key={item.text} className="flex gap-3 text-plum-200/80 text-sm leading-relaxed">
-                  <span aria-hidden="true" className="text-base shrink-0 grayscale opacity-60">{item.icon}</span>
-                  {item.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-3xl border border-saffron-400/30 bg-gradient-to-br from-plum-900 to-berry-900/60 p-6 sm:p-8">
-            <h3 className="text-saffron-400 font-bold text-sm tracking-wide uppercase mb-5">
-              With Sambramo
-            </h3>
-            <ul className="space-y-4">
-              {OUR_WAY.map(item => (
-                <li key={item.text} className="flex gap-3 text-white text-sm leading-relaxed">
-                  <span aria-hidden="true" className="text-base shrink-0">{item.icon}</span>
-                  {item.text}
-                </li>
-              ))}
-            </ul>
-
-            <button onClick={onPlan} className="btn-cta w-full justify-center mt-7">
-              Hand it over ✨
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
 
 /* ═══════════════════════════════════════════════════════════
    2. Shop categories — real photographs, not thumbnails

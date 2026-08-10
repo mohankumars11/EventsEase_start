@@ -608,17 +608,63 @@ function assertSamples() {
 assertSamples()
 
 /**
- * One sample, fully resolved: copy, photo, price band and the service rows it
- * is built from (so the card can name them without a second lookup).
+ * Where a setup sits within its own occasion, on a three-tick scale.
+ *
+ * ── Why the gallery shows this instead of the rupee band ──────────────────
+ * The band is still computed, and it is still correct arithmetic over the
+ * numbers in eventServicesData. It is not shown, for three reasons that all
+ * point the same way:
+ *
+ *   1. config/sambramo.js has already decided this. SHOW_SERVICE_PRICES is
+ *      false, and the note on it says to flip it "once the estimates have had
+ *      the review the data file asks for". That review has not happened, and
+ *      summing unreviewed estimates does not make them reviewed — it
+ *      compounds them.
+ *   2. The landing page argues against it in its own words. "A birthday for
+ *      20 and a wedding for 400 don't cost the same — so we don't guess" sits
+ *      one section above this gallery. A printed range is a guess.
+ *   3. A range anchors on its floor. Somebody who reads "₹7,000 – ₹80,000"
+ *      remembers ₹7,000 and hears every real quote as a markup off it. This
+ *      is the same reasoning that removed the eight budget brackets from the
+ *      landing page.
+ *
+ * A tier answers the question the number was there to answer — is this the
+ * simple one or the grand one — without printing a figure anybody can hold us
+ * to before a vendor has quoted it.
+ *
+ * Scaled within the occasion, not across all of them: a wedding's cheapest
+ * setup costs more than a birthday's grandest, so one global scale would put
+ * every birthday at one tick and every wedding at three, which tells a
+ * customer nothing about the choice actually in front of them.
+ */
+function tierFor(eventId, sample, band) {
+  const peers = DECOR_SAMPLES[eventId] ?? []
+  const ceiling = Math.max(...peers.map(s => priceBand(eventId, s).priceMin), 1)
+  const ratio = band.priceMin / ceiling
+
+  if (ratio <= 0.34) return 1
+  if (ratio <= 0.67) return 2
+  return 3
+}
+
+/**
+ * One sample, fully resolved: copy, photo, tier and the service rows it is
+ * built from (so the card can name them without a second lookup).
  */
 function resolve(eventId, sample) {
   const event = EVENT_DATA[eventId]
   const byId  = Object.fromEntries(event.services.map(s => [s.id, s]))
   const photo = GENERATED_DECOR_PHOTOS[`${eventId}/${sample.id}`] ?? null
+  const band  = priceBand(eventId, sample)
 
   return {
     ...sample,
-    ...priceBand(eventId, sample),
+    // Computed and carried, but not rendered while SHOW_SERVICE_PRICES is
+    // false — see tierFor() above. Keeping it here means the day those
+    // estimates get their review, showing them is a UI change and not a
+    // re-derivation.
+    ...band,
+    tier: tierFor(eventId, sample, band),
     eventId,
     eventName: event.name,
     emoji:     event.icon ?? event.emoji,

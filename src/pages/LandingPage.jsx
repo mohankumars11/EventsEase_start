@@ -1,18 +1,19 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp, ArrowRight, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
+import { ChevronDown, ChevronUp, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { FESTIVALS } from '../data/festivals'
-import { BRAND, EVENT_TYPES, SERVICE_CATEGORIES, CTA } from '../config/sambramo'
+import { BRAND, SERVICE_CATEGORIES, CTA } from '../config/sambramo'
 import { supabase } from '../lib/supabase'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 import SlideCarousel from '../components/common/SlideCarousel'
 import StarRating from '../components/reviews/StarRating'
-import { PathFork, OldWayBand, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
+import { PathFork, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
 import KolamSticker, { KolamClipDefs } from '../components/landing/KolamSticker'
 import HeroTicker from '../components/landing/HeroTicker'
 import { ShopRail, TrustRow } from '../components/landing/HeroProof'
 import SalesNudge from '../components/landing/SalesNudge'
+import StoryDeck from '../components/landing/StoryDeck'
 import { KOLAM_PATH } from '../components/ui/SambramoMark'
 
 /* ═══════════════════════════════════════════════════════════
@@ -41,92 +42,6 @@ const HERO_FLOAT_QUERIES = {
   flower:   'hibiscus flower pink India',
   cake:     'birthday cake celebration slice',
 }
-
-/**
- * Per-event-type gradient — landing page only.
- * Keyed by EVENT_TYPES[].id from sambramo config.
- */
-const EVENT_GRADIENTS = {
-  'birthday':        'from-amber-400 to-orange-500',
-  'baby-shower':     'from-pink-400 to-rose-500',
-  'naming-ceremony': 'from-violet-400 to-purple-600',
-  'anniversary':     'from-rose-400 to-pink-600',
-  'housewarming':    'from-emerald-400 to-teal-500',
-  'engagement':      'from-indigo-400 to-blue-600',
-  'wedding':         'from-purple-400 to-fuchsia-600',
-  'festival':        'from-orange-400 to-amber-600',
-  'get-together':    'from-blue-400 to-cyan-500',
-}
-
-/**
- * The one telling of how this works, and the page's `#how-it-works` anchor.
- *
- * There used to be a second: a numbered "How Sambramo Works" band lower down
- * that said 01 Tell us / 02 We plan / 03 You approve / 04 We handle it — the
- * same four steps as the first four here, in the same order, in the same
- * words, roughly a thousand pixels apart. Between them the OldWayBand makes
- * the same argument a third time in prose ("You describe it once, to a
- * person… we call the vendors… one transparent proposal"). Told once it is a
- * promise; told three times on one scroll it reads as padding, and the
- * numbered version was the weakest of the three — four steps of grey text
- * under 96px numerals, no imagery, and it ended on "we handle it" rather than
- * on the customer celebrating.
- */
-const STORY_STEPS = [
-  { emoji: '🗣️', title: 'Tell us',       desc: 'Your date, place, people and what you picture' },
-  { emoji: '🔍', title: 'We plan',       desc: 'Our team sources vendors and compares quotes' },
-  { emoji: '📋', title: 'You approve',   desc: 'One clear, complete proposal — the fee stated in it' },
-  { emoji: '🤝', title: 'We handle it',  desc: 'We coordinate every detail on the day' },
-  { emoji: '🎉', title: 'You celebrate', desc: 'Just be there for the moment' },
-]
-
-/**
- * The décor gallery, split out of the initial bundle.
- *
- * It is the only section on this page that needs EVENT_DATA — 15 occasions of
- * services, packages and price bands — plus its own 60 photo records. Bundled
- * with the landing page that is ~16.5 kB gzipped of the critical path, spent
- * on a section that begins four screens down and that a bouncing visitor
- * never reaches.
- *
- * `/services/:eventId` is already a lazy route and imports the same component,
- * so Rollup emits one shared chunk rather than two copies: whichever of the
- * two is reached first pays for it, and the second gets it from cache.
- */
-const DecorSampleShowcase = lazy(() =>
-  import('../components/landing/DecorSampleGallery').then(m => ({ default: m.DecorSampleShowcase }))
-)
-
-/**
- * Holds the section's ground while its chunk arrives.
- *
- * Sized rather than empty, and painted in the section's own background: a
- * null fallback would let the four sections below it jump up and then back
- * down as the chunk lands, which is a worse artefact than the wait itself —
- * and it would do so right as somebody is scrolling through the space.
- */
-function ShowcaseFallback() {
-  return (
-    <section aria-hidden="true" className="py-16 sm:py-20 px-4 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="h-4 w-32 rounded bg-gray-100 mb-4" />
-        <div className="h-9 w-2/3 max-w-lg rounded bg-gray-100 mb-8" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-64 rounded-2xl bg-gray-50 border border-gray-100" />
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-const TRUST_POINTS = [
-  { emoji: '🤝', title: 'Human-assisted planning',  desc: 'A real Sambramo coordinator handles your request' },
-  { emoji: '🏪', title: 'Multiple services',        desc: 'Venue, decoration, food, photography, entertainment and more' },
-  { emoji: '📞', title: 'Vendor coordination',      desc: "We coordinate with vendors so you don't have to" },
-  { emoji: '💡', title: 'Transparent proposals',    desc: "See what you're paying for before confirming" },
-]
 
 const FAQS = [
   {
@@ -324,10 +239,6 @@ export default function LandingPage() {
       ══════════════════════════════════════════════ */}
       <PathFork onPlan={() => toPlan()} />
 
-      {/* The same case the nudge makes, made to everyone who scrolls rather
-          than only to whoever happens to be drifting when it fires. */}
-      <OldWayBand onPlan={() => toPlan()} />
-
       {/* ══════════════════════════════════════════════
           1C. WHY NO PRICES? — trust reassurance for the
           quote-after-requirements model, placed early since
@@ -358,131 +269,42 @@ export default function LandingPage() {
           Placed immediately after the "why is there no price tag?" band, and
           the pairing is the point: that band explains why we cannot print a
           price, and this one answers the question it leaves behind — then
-          what does a setup look like, and roughly what does that scope cost.
-          Explanation followed by evidence, rather than explanation followed
-          by another explanation.
+          what does a setup actually look like. Explanation followed by
+          evidence, rather than explanation followed by another explanation.
+
+          It also absorbed the "What are you celebrating?" carousel that used
+          to sit lower down: nine gradient tiles linking to /plan?type=…, one
+          per occasion. This gallery already carries an occasion chip for every
+          one of those, over photographs of the actual setups rather than an
+          emoji on a gradient, and every card routes to the same wizard. Two
+          sections asking "which occasion?" a thousand pixels apart is one
+          section and a scroll.
       ══════════════════════════════════════════════ */}
       <Suspense fallback={<ShowcaseFallback />}>
         <DecorSampleShowcase />
       </Suspense>
 
       {/* ══════════════════════════════════════════════
-          2. STORY FLOW  (dark — continues from hero)
+          2. THE ARGUMENT, AS A DECK
 
-          Carries `#how-it-works` now that the numbered band that used to own
-          that anchor is gone. The header's "How It Works" link and the
-          footer's both point here, which is where the five steps live —
-          moving the id rather than dropping it keeps those two links working
-          instead of scrolling people to the top of the page.
+          This one section replaced three: the OldWayBand contrast band that
+          sat above, a five-step "how it works" flow with a four-tile trust
+          grid under it, and the "What are you celebrating?" carousel below.
+          Roughly three screens of scrolling to deliver four ideas — on a page
+          that asks for another dozen screens after them, and whose own
+          comments already noted the argument was being told three times.
+
+          As slides it is one screen, it advances itself, and it stops the
+          moment anybody touches it. The occasion carousel folded upward into
+          the décor gallery, which asks the same question over photographs of
+          real setups instead of emoji on gradients.
+
+          It carries `#how-it-works`: the header and footer both link there,
+          and the five steps now live on slide three.
       ══════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-20 px-4 bg-plum-950">
-        <div className="max-w-5xl mx-auto">
-
-          <div className="text-center mb-14 reveal">
-            {/* Eyebrow, in the same register as the other section labels. It
-                is what tells someone who arrived by clicking "How It Works"
-                that they have landed in the right place — the headline under
-                it is a feeling, not a signpost. */}
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-saffron-400 mb-3">
-              How Sambramo works
-            </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-5">
-              Your celebration deserves your full presence.
-            </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto leading-relaxed">
-              Ten vendor calls, a dozen quotes to compare, timings to coordinate —
-              we've done it a thousand times. Let us do it for you too, so you can
-              just be there for the moment.
-            </p>
-          </div>
-
-          {/* 5-step visual story */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-16">
-            {STORY_STEPS.map((step, i) => (
-              <div
-                key={step.title}
-                className={`reveal reveal-delay-${Math.min(i + 1, 4)} relative flex flex-col items-center text-center p-5 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm`}
-              >
-                <span className="text-4xl mb-3">{step.emoji}</span>
-                <h3 className="font-bold text-white text-sm mb-1">{step.title}</h3>
-                <p className="text-white/60 text-xs leading-relaxed">{step.desc}</p>
-
-                {/* Arrow connector between cards (desktop) */}
-                {i < 4 && (
-                  <span className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 items-center justify-center bg-plum-800 rounded-full text-white/50 text-sm">
-                    →
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Signature statement */}
-          <p className="text-center font-serif text-2xl md:text-3xl italic text-saffron-400 reveal mb-16">
-            "That's the Sambramo difference."
-          </p>
-
-          {/* Four trust points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
-            {TRUST_POINTS.map((pt, i) => (
-              <div
-                key={pt.title}
-                className={`reveal reveal-delay-${i + 1} flex items-start gap-4 p-5 bg-white/10 rounded-2xl border border-white/10`}
-              >
-                <span className="text-2xl shrink-0 mt-0.5">{pt.emoji}</span>
-                <div>
-                  <h3 className="font-bold text-white text-sm mb-1">{pt.title}</h3>
-                  <p className="text-white/70 text-xs leading-relaxed">{pt.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center reveal">
-            <button onClick={() => toPlan()} className="btn-cta">
-              Tell us about your celebration
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          3. WHAT ARE YOU CELEBRATING?
-      ══════════════════════════════════════════════ */}
-      <section id="celebrations" className="py-20 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-
-          <div className="text-center mb-12 reveal">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              What are you celebrating?
-            </h2>
-            <p className="text-gray-500 text-lg">Every occasion has a story. Tell us yours.</p>
-          </div>
-
-          {/* Slide instead of scroll — swipe, drag, or use the arrow buttons */}
-          <SlideCarousel className="mb-10 px-1">
-            {EVENT_TYPES.slice(0, 9).map((type, i) => (
-              <div key={type.id} className="shrink-0 w-64 sm:w-72 snap-center">
-                <CelebrationCard
-                  type={type}
-                  gradient={EVENT_GRADIENTS[type.id] ?? 'from-gray-400 to-gray-600'}
-                  delay={Math.min(i + 1, 4)}
-                  onClick={() => toPlan({ type: type.id })}
-                />
-              </div>
-            ))}
-          </SlideCarousel>
-
-          <div className="text-center">
-            <Link
-              to="/plan"
-              className="text-plum-600 font-semibold hover:text-plum-700 transition-colors text-base"
-            >
-              Tell us about something else →
-            </Link>
-          </div>
-        </div>
-      </section>
+      <div id="how-it-works">
+        <StoryDeck onPlan={() => toPlan()} />
+      </div>
 
       {/* ══════════════════════════════════════════════
           4. ONE REQUEST. EVERYTHING ARRANGED.
@@ -806,39 +628,6 @@ function AutoScrollRow({ items, reverse = false }) {
         ))}
       </div>
     </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CelebrationCard sub-component — real photo with a gradient
-   fallback + dark overlay so the white title/tagline stay legible
-   over any photo (same compositing pattern as FestivalDetailPage).
-═══════════════════════════════════════════════════════════ */
-function CelebrationCard({ type, gradient, delay, onClick }) {
-  const [photo, setPhoto] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetchUnsplashPhoto(`Indian ${type.label} celebration`).then(p => { if (!cancelled) setPhoto(p) })
-    return () => { cancelled = true }
-  }, [type.id])
-
-  return (
-    <button
-      onClick={onClick}
-      className={`reveal reveal-delay-${delay} group relative w-full h-56 rounded-2xl overflow-hidden ${photo ? '' : `bg-gradient-to-br ${gradient}`} p-7 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl`}
-      style={photo ? { backgroundImage: `url(${photo.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-    >
-      {photo && <div className="absolute inset-0 bg-black/45 group-hover:bg-black/35 transition-colors" />}
-      <div className="relative">
-        <span className="text-5xl block mb-4">{type.emoji}</span>
-        <h3 className="font-serif text-xl font-bold text-white mb-1">{type.label}</h3>
-        <p className="text-white/80 text-sm leading-relaxed">{type.tagline}</p>
-        <div className="absolute bottom-0 right-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ArrowRight size={14} className="text-white" />
-        </div>
-      </div>
-    </button>
   )
 }
 

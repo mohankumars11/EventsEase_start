@@ -195,6 +195,19 @@
     animation: pop-in 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  /* ── Story deck tick ─────────────────────────────────
+     The active slide's progress bar, filling across its dwell.
+     Duration is set inline from SLIDE_MS so the two can never
+     drift apart. Width only, and on a 4px bar inside a fixed
+     parent, so it cannot reflow anything around it. */
+  @keyframes deck-tick {
+    from { width: 0%; }
+    to   { width: 100%; }
+  }
+  .deck-tick {
+    animation: deck-tick linear forwards;
+  }
+
   /* ── Count up ────────────────────────────────────────── */
   @keyframes count-up {
     0%   { opacity: 0; transform: translateY(8px); }
@@ -282,6 +295,13 @@
      movement, keep an almost-instant fade. */
   .animate-pop-in {
     animation-duration: 0.01ms !important;
+  }
+  /* The deck does not auto-advance under this preference, so the
+     tick has nothing to count down. Show it filled rather than
+     animating to nowhere. */
+  .deck-tick {
+    animation: none !important;
+    width: 100% !important;
   }
   .reveal {
     opacity: 1 !important;
