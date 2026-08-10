@@ -13,6 +13,8 @@ import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDa
 import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker'
 import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
 import { getAddressErrors, scrubDigits } from '../../utils/validators'
+import FulfilmentNote from '../../components/shop/FulfilmentNote'
+import { describeSelections } from '../../config/cakeCustomizer'
 
 const PAYMENT_METHODS = [
   { id: 'upi',       label: 'UPI' },
@@ -23,7 +25,7 @@ const PAYMENT_METHODS = [
 export default function ShopCart() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { cart, dispatch, productCount, productTotal } = useCart()
+  const { cart, dispatch, productCount, productTotal, lineUnitPrice } = useCart()
 
   const [step, setStep] = useState('cart') // cart | payment | done
   const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', pincode: '', lat: null, lon: null })
@@ -110,6 +112,36 @@ export default function ShopCart() {
     await supabase.rpc('redeem_coupon', { p_coupon_id: coupon.coupon_id })
   }
 
+  // One definition of an order line, used by both payment paths — they had
+  // drifted apart already once, and a configured cake has to serialise
+  // identically whether it was paid for by UPI or by the test gateway.
+  //
+  // `unit_price` is the price actually charged: for a configured cake that is
+  // the chosen weight's price plus every add-on, not the catalogue price. The
+  // choices themselves go into `customization` (TEXT, migration 019) as plain
+  // readable lines, because the reader is whoever is packing the box. A
+  // free-text gift message from CustomizeModal lands in the same column, so
+  // the two are joined rather than one overwriting the other.
+  function buildOrderItems(orderId) {
+    return cart.products.map(p => {
+      const unitPrice = lineUnitPrice(p)
+      const configured = p.optionLines ? describeSelections(p.optionLines) : null
+      const customization = [configured, p.customization].filter(Boolean).join('\n') || null
+
+      return {
+        order_id:      orderId,
+        product_id:    p.product.id,
+        product_name:  p.product.name,
+        category:      p.product.category ?? null,
+        occasion:      p.product.occasion ?? null,
+        unit_price:    unitPrice,
+        qty:           p.qty,
+        subtotal:      unitPrice * p.qty,
+        customization,
+      }
+    })
+  }
+
   async function createPendingOrder(paymentStatus) {
     const { data: order, error: orderErr } = await supabase.from('orders').insert({
       customer_id: user.id,
@@ -123,18 +155,7 @@ export default function ShopCart() {
     }).select('id').single()
     if (orderErr) throw orderErr
 
-    const items = cart.products.map(p => ({
-      order_id: order.id,
-      product_id: p.product.id,
-      product_name: p.product.name,
-      category: p.product.category ?? null,
-      occasion: p.product.occasion ?? null,
-      unit_price: p.product.price,
-      qty: p.qty,
-      subtotal: p.product.price * p.qty,
-      customization: p.customization ?? null,
-    }))
-    const { error: itemsErr } = await supabase.from('order_items').insert(items)
+    const { error: itemsErr } = await supabase.from('order_items').insert(buildOrderItems(order.id))
     if (itemsErr) throw itemsErr
     await redeemAppliedCoupon()
     return order.id
@@ -214,18 +235,7 @@ export default function ShopCart() {
       }).select('id').single()
       if (orderErr) throw orderErr
 
-      const items = cart.products.map(p => ({
-        order_id: order.id,
-        product_id: p.product.id,
-        product_name: p.product.name,
-        category: p.product.category ?? null,
-        occasion: p.product.occasion ?? null,
-        unit_price: p.product.price,
-        qty: p.qty,
-        subtotal: p.product.price * p.qty,
-        customization: p.customization ?? null,
-      }))
-      const { error: itemsErr } = await supabase.from('order_items').insert(items)
+      const { error: itemsErr } = await supabase.from('order_items').insert(buildOrderItems(order.id))
       if (itemsErr) throw itemsErr
       await redeemAppliedCoupon()
 
@@ -256,6 +266,7 @@ export default function ShopCart() {
               ? " — we'll confirm your UPI payment shortly and get it ready for delivery."
               : " — we'll get it ready for delivery."}
           </p>
+          <FulfilmentNote variant="card" className="text-left" />
           <div className="flex flex-col gap-2.5">
             <button onClick={() => navigate('/dashboard/customer/orders')} className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
               View My Orders
@@ -296,12 +307,33 @@ export default function ShopCart() {
           <div className="space-y-6">
             <div className="card overflow-hidden">
               {cart.products.map(p => (
-                <div key={p.key} className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-50 last:border-0">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div key={p.key} className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-50 last:border-0">
+                  <div className="flex items-start gap-3 min-w-0">
                     <span className="text-2xl shrink-0">{p.product.emoji}</span>
                     <div className="min-w-0">
                       <p className="font-medium text-gray-800 text-sm">{p.product.name}</p>
-                      <p className="text-xs text-amber-600 font-medium mt-0.5">{formatINR(p.product.price)}</p>
+                      <p className="text-xs text-amber-600 font-medium mt-0.5">
+                        {formatINR(lineUnitPrice(p))}
+                        {/* Two lines of the same cake, configured differently,
+                            look like a duplicate unless the difference is on
+                            screen — and the price difference is the part that
+                            gets queried. */}
+                        {p.unitPrice != null && p.unitPrice !== p.product.price && (
+                          <span className="text-gray-400 font-normal"> · {formatINR(p.product.price)} + extras</span>
+                        )}
+                      </p>
+                      {p.optionLines && (
+                        <ul className="mt-1.5 space-y-0.5">
+                          {p.optionLines
+                            .filter(l => l.isText || l.price > 0 || ['weight', 'flavour', 'egg', 'shape'].includes(l.groupId))
+                            .map((l, i) => (
+                              <li key={`${l.groupId}-${i}`} className="text-[11px] text-gray-500 leading-snug">
+                                {l.isText ? <span className="italic">“{l.label}”</span> : l.label}
+                                {l.price > 0 && <span className="text-gray-400"> +{formatINR(l.price)}</span>}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
                       {p.customization && (
                         <p className="text-xs text-gray-400 mt-1 italic truncate max-w-[220px]">"{p.customization}"</p>
                       )}
@@ -414,6 +446,10 @@ export default function ShopCart() {
                 <span>Total</span><span>{formatINR(total)}</span>
               </div>
             </div>
+
+            {/* Last chance to tell someone who they're actually buying from,
+                before they hand over money. */}
+            <FulfilmentNote variant="card" />
 
             {error && (
               <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

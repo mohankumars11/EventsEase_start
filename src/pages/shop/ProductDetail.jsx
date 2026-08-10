@@ -13,12 +13,15 @@ import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import CustomizeModal from '../../components/shop/CustomizeModal'
+import CakeCustomizeSheet, { VegMark } from '../../components/shop/CakeCustomizeSheet'
+import FulfilmentNote from '../../components/shop/FulfilmentNote'
+import { cakeFacts } from '../../data/cakeStyles'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { dispatch, hasProduct, cart } = useCart()
+  const { dispatch, hasProduct, productLines, productQtyFor } = useCart()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState([])
@@ -68,8 +71,10 @@ export default function ProductDetail() {
     )
   }
 
-  const inCart = hasProduct(product.id)
-  const cartLine = cart.products.find(p => p.key === `prod__${product.id}`)
+  const inCart   = hasProduct(product.id)
+  const cartLine = productLines(product.id)[0]
+  const isCake   = product.category === 'Cakes'
+  const facts    = isCake ? cakeFacts(product) : null
 
   return (
     <div className="min-h-screen bg-cream">
@@ -98,10 +103,32 @@ export default function ProductDetail() {
             />
           </ProductImage>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">{product.category}</span>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
+            <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">
+              {product.occasion ? `${product.category} · ${product.occasion}` : product.category}
+            </span>
+            <div className="flex items-start gap-2 mb-2">
+              {facts?.veg && <VegMark className="mt-2" />}
+              <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+            </div>
             <RatingBadge subjectType="product" subjectId={product.id} size="sm" className="mb-3" />
-            <p className="text-sm text-gray-500 mb-4 flex-1">{product.description}</p>
+            <p className="text-sm text-gray-500 mb-3">{product.description}</p>
+
+            {facts && (facts.serves || facts.diets.length > 0) && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                {facts.serves && (
+                  <span className="text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1">
+                    Serves {facts.serves}
+                  </span>
+                )}
+                {facts.diets.map(d => (
+                  <span key={d.id} className="text-[11px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2.5 py-1">
+                    {d.label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex-1" />
 
             {/* The badge on the photo says which kind of photo it is; this
                 says what that means for the order. Stated before the price
@@ -113,9 +140,43 @@ export default function ProductDetail() {
               </p>
             )}
 
-            <p className="text-3xl font-extrabold text-plum-700 mb-6">{formatINR(product.price)}</p>
+            <p className="text-3xl font-extrabold text-plum-700 mb-1">
+              {isCake && <span className="text-base font-semibold text-gray-400 mr-1.5">from</span>}
+              {formatINR(product.price)}
+            </p>
+            {isCake && (
+              <p className="text-xs text-gray-400 mb-4">
+                Final price depends on the size, flavour and extras you pick.
+              </p>
+            )}
 
-            {inCart ? (
+            {/* Who is responsible for the box, stated before the button that
+                commits to it — not in a footer after the fact. */}
+            <FulfilmentNote className="mb-4" />
+
+            {isCake ? (
+              // A cake with no weight, flavour or egg preference chosen is not
+              // an order anyone can bake, so there is no bare "Add to cart"
+              // path for one. Already having a cake in the cart doesn't change
+              // that: the second one is usually configured differently, which
+              // is exactly why it gets its own line.
+              <div className="space-y-2">
+                <button
+                  onClick={() => setCustomizing(true)}
+                  className="w-full flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-white font-bold py-3.5 rounded-xl"
+                >
+                  <ShoppingCart size={17} /> {inCart ? 'Add another, your way' : 'Choose options'}
+                </button>
+                {inCart && (
+                  <Link
+                    to="/shop/cart"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 font-bold text-sm hover:bg-green-100"
+                  >
+                    <Check size={15} /> {productQtyFor(product.id)} in cart — view cart
+                  </Link>
+                )}
+              </div>
+            ) : inCart ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center border-2 border-gray-200 rounded-xl">
                   <button
@@ -183,7 +244,16 @@ export default function ProductDetail() {
         />
       )}
 
-      {customizing && (
+      {customizing && (isCake ? (
+        <CakeCustomizeSheet
+          product={product}
+          onClose={() => setCustomizing(false)}
+          onConfirm={({ qty, unitPrice, lines, signature }) => {
+            dispatch({ type: 'ADD_PRODUCT', product, qty, unitPrice, lines, signature })
+            setCustomizing(false)
+          }}
+        />
+      ) : (
         <CustomizeModal
           product={product}
           fieldConfig={CUSTOMIZABLE_CATEGORIES[product.category]}
@@ -193,7 +263,7 @@ export default function ProductDetail() {
             setCustomizing(false)
           }}
         />
-      )}
+      ))}
     </div>
   )
 }

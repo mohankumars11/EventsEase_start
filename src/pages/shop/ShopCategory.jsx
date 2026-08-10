@@ -20,7 +20,7 @@ export default function ShopCategory() {
   const { category } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { cart, dispatch, hasProduct, productCount } = useCart()
+  const { dispatch, hasProduct, productLines, productCount } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [occasion, setOccasion] = useState(searchParams.get('occasion') ?? 'All')
@@ -157,7 +157,12 @@ export default function ShopCategory() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedProducts.map(p => {
               const inCart = hasProduct(p.id)
-              const cartLine = cart.products.find(c => c.key === `prod__${p.id}`)
+              // One product can occupy several cart lines once it has been
+              // configured (cakes), so the stepper drives the first line and
+              // the cart page is where multiple configurations get managed.
+              // Nothing in this category is configurable today, so in practice
+              // there is exactly one.
+              const cartLine = productLines(p.id)[0]
               // `group` drives the slow hover zoom inside ProductImage.
               return (
                 <div key={p.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">

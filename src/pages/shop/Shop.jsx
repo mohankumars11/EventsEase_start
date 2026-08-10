@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingBag, ArrowRight, Truck, ShieldCheck, Sparkles } from 'lucide-react'
-import { SHOP_CATEGORIES } from '../../config/shop'
+import { ShoppingBag, ArrowRight, Truck, ShieldCheck, Sparkles, BadgeCheck } from 'lucide-react'
+import { SHOP_CATEGORIES, FULFILMENT } from '../../config/shop'
 import { useCart } from '../../context/CartContext'
 import { supabase } from '../../lib/supabase'
 import ProductImage from '../../components/shop/ProductImage'
@@ -180,7 +180,12 @@ export default function Shop() {
           {[
             { icon: Truck,       title: 'Fast delivery',    desc: 'Same-day in most areas' },
             { icon: ShieldCheck, title: 'Secure UPI',       desc: 'Pay via Google Pay, PhonePe & more' },
-            { icon: Sparkles,    title: 'Real products',    desc: 'What you see is what arrives' },
+            // Replaces "Real products — what you see is what arrives", which
+            // this shop cannot honestly claim: it is pre-launch, sources per
+            // order, and labels every photo "Representative image" for exactly
+            // that reason (migration 023). The promise it can make is about
+            // who is answerable for the order, and that one is true.
+            { icon: BadgeCheck,  title: FULFILMENT.short,   desc: 'On behalf of our partner bakers & vendors' },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-4">
               <div className="w-10 h-10 rounded-xl bg-plum-50 flex items-center justify-center shrink-0">

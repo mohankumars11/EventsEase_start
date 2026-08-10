@@ -32,6 +32,7 @@ const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const Shop               = lazy(() => import('./pages/shop/Shop'))
 const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
+const CakeShop           = lazy(() => import('./pages/shop/CakeShop'))
 const ProductDetail      = lazy(() => import('./pages/shop/ProductDetail'))
 const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 
@@ -196,6 +197,14 @@ function AppRoutes() {
           items are gone" and is the classic way to lose a basket. */}
       <Route path="/shop/cart" element={<AppShell><ShopCart /></AppShell>} />
       <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
+      {/* Cakes get their own storefront: the category carries 50-odd occasion
+          tags and every item is configurable, neither of which ShopCategory's
+          flat chip row and one-tap Add can express. Listed before the generic
+          route for readability — React Router ranks the static segment above
+          the dynamic one regardless of order. Existing deep links of the form
+          /shop/Cakes?occasion=Birthday still work; CakeShop reads the same
+          search param. */}
+      <Route path="/shop/Cakes" element={<AppShell><CakeShop /></AppShell>} />
       <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
       {/* ── Planning ────────────────────────────────────

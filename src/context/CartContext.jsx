@@ -53,8 +53,19 @@ function cartReducer(state, action) {
     // Shop products: local-only, separate from the Supabase-persisted
     // service/package cart above (see Phase 3 plan — orders don't mix
     // with event bookings).
+    //
+    // A cake carries a configuration (weight, flavour, egg, shape, message,
+    // add-ons), and two differently-configured cakes are two different things
+    // to bake. So the line key is the product id PLUS a signature of the
+    // choices when there are any: without that suffix, adding a 2kg red
+    // velvet after a 1kg vanilla would find the same `prod__<id>` key and
+    // silently merge them into a quantity of two — one of which the customer
+    // never ordered. `signature` comes from selectionSignature() in
+    // config/cakeCustomizer.
     case 'ADD_PRODUCT': {
-      const key = `prod__${action.product.id}`
+      const key = action.signature
+        ? `prod__${action.product.id}__${action.signature}`
+        : `prod__${action.product.id}`
       const existing = state.products.find(p => p.key === key)
       if (existing) {
         return {
@@ -66,7 +77,19 @@ function cartReducer(state, action) {
       }
       return {
         ...state,
-        products: [...state.products, { key, product: action.product, qty: action.qty ?? 1, customization: action.customization ?? null }],
+        products: [...state.products, {
+          key,
+          product: action.product,
+          qty: action.qty ?? 1,
+          customization: action.customization ?? null,
+          // Present only on a configured line. `unitPrice` is the price
+          // actually charged — base weight price plus add-ons — and is what
+          // the cart, the totals and order_items.unit_price all read. It is
+          // stored rather than recomputed so that changing cakeCustomizer.js
+          // can never re-price a cart someone already filled.
+          unitPrice:   action.unitPrice ?? null,
+          optionLines: action.lines ?? null,
+        }],
       }
     }
     case 'REMOVE_PRODUCT':
@@ -270,8 +293,17 @@ export function CartProvider({ children }) {
     + cart.packages.reduce((sum, p) => sum + (p.complimentary ? 0 : (p.pkg.price_min ?? 0)), 0)
 
   const productCount = cart.products.reduce((sum, p) => sum + p.qty, 0)
-  const productTotal = cart.products.reduce((sum, p) => sum + p.product.price * p.qty, 0)
-  const hasProduct = (productId) => cart.products.some(p => p.key === `prod__${productId}`)
+  // `unitPrice` is the configured price of a customised line; a plain product
+  // has none and falls back to the catalogue price. The fallback also covers
+  // carts saved to localStorage before configurable cakes existed.
+  const lineUnitPrice = (line) => line.unitPrice ?? line.product.price
+  const productTotal = cart.products.reduce((sum, p) => sum + lineUnitPrice(p) * p.qty, 0)
+
+  // One product can now occupy several lines, one per configuration, so
+  // "is this in the cart?" can no longer be a key lookup.
+  const productLines  = (productId) => cart.products.filter(p => p.product.id === productId)
+  const hasProduct    = (productId) => productLines(productId).length > 0
+  const productQtyFor = (productId) => productLines(productId).reduce((sum, p) => sum + p.qty, 0)
 
   // Everything the customer has put aside, across both carts. The header
   // badge needs this: `totalCount` counts only services and packages, so
@@ -294,7 +326,8 @@ export function CartProvider({ children }) {
   return (
     <CartContext.Provider value={{
       cart, dispatch, totalCount, hasItem, hasPkg, total, getEventDetails,
-      productCount, productTotal, hasProduct, cartCount, cartPath,
+      productCount, productTotal, hasProduct, productLines, productQtyFor,
+      lineUnitPrice, cartCount, cartPath,
     }}>
       {children}
     </CartContext.Provider>
