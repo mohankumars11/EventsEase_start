@@ -172,6 +172,29 @@
   }
   .animate-fade-in { animation: fade-in 0.4s ease forwards; }
 
+  /* ── Pop in (overlays, toasts, nudges) ───────────────
+     The fast entrance, for anything that appears in response
+     to something the user just did.
+
+     Everything else in this file is scene-setting — a section
+     easing in as you scroll it, a photo fading up — and 400 to
+     600ms is right for that. A toast confirming a tap is not
+     scene-setting: at 500ms the confirmation lands after the
+     thumb has already moved on, which reads as lag rather than
+     as polish, and people press the button a second time.
+
+     120ms is about the shortest duration that still reads as a
+     movement rather than a flicker. Only opacity and transform
+     are touched, so this stays on the compositor and costs the
+     same whatever is underneath it. */
+  @keyframes pop-in {
+    0%   { opacity: 0; transform: translateY(6px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+  .animate-pop-in {
+    animation: pop-in 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* ── Count up ────────────────────────────────────────── */
   @keyframes count-up {
     0%   { opacity: 0; transform: translateY(8px); }
@@ -253,6 +276,12 @@
   .animate-spin-slow,
   .ken-burns {
     animation: none !important;
+  }
+  /* Overlays and toasts still need to arrive — suppressing the
+     animation outright would make them blink into place. Cut the
+     movement, keep an almost-instant fade. */
+  .animate-pop-in {
+    animation-duration: 0.01ms !important;
   }
   .reveal {
     opacity: 1 !important;

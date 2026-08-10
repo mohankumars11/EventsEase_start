@@ -52,7 +52,7 @@ export default function HeroTicker() {
   const prompt = PROMPTS[index]
 
   return (
-    <div className="relative inline-flex items-center justify-center mb-4 sm:mb-6 md:mb-8">
+    <div className="relative inline-flex items-center justify-center mb-3 sm:mb-4">
       <span
         className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-sm font-semibold rounded-full px-4 py-1.5 backdrop-blur-sm"
         // The live region is polite and the whole chip is one atomic update,

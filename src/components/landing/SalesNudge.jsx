@@ -30,8 +30,24 @@ const DISMISS_KEY = 'sambramo_nudge_dismissed_until'
 const SHOWN_KEY   = 'sambramo_nudge_shown'
 const SNOOZE_MS   = 7 * 24 * 60 * 60 * 1000
 
-const MIN_DWELL_MS   = 7000
-const SCROLL_TRIGGER = 0.45
+/**
+ * How long someone must have been here, and how far down, before the nudge
+ * may fire.
+ *
+ * Brought in from 7000ms / 45% to 2500ms / 22%. The reasoning above still
+ * holds — do not interrupt on arrival, never cover the page — but 45% of this
+ * page is a long way down: it sits past the fork, the contrast band and the
+ * décor gallery, so the nudge was reaching people who had already read the
+ * entire argument and reaching almost nobody else. 22% is past the fork,
+ * which is the first point at which "plan or shop" has been put to the reader
+ * and the nudge has something to be relevant about.
+ *
+ * The dwell floor is what keeps this off a stopwatch: a fast scroll to 22%
+ * inside 2.5s still will not fire it, so somebody flinging down the page is
+ * not ambushed mid-gesture.
+ */
+const MIN_DWELL_MS   = 2500
+const SCROLL_TRIGGER = 0.22
 
 const VARIANTS = {
   plan: {
@@ -65,6 +81,7 @@ function snoozed() {
 export default function SalesNudge({ onPlan }) {
   const [variant, setVariant] = useState(null)
   const [leaving, setLeaving] = useState(false)
+  const [entered, setEntered] = useState(false)
   const mounted = useRef(Date.now())
 
   const dismiss = useCallback(() => {
@@ -72,8 +89,26 @@ export default function SalesNudge({ onPlan }) {
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now() + SNOOZE_MS))
     } catch { /* storage unavailable — the session guard still holds */ }
-    setTimeout(() => setVariant(null), 220)
+    setTimeout(() => setVariant(null), 150)
   }, [])
+
+  /**
+   * Slide it in rather than having it appear already arrived.
+   *
+   * The panel previously mounted at full opacity — `leaving` animated the
+   * exit and nothing animated the entrance — so a card simply existed in the
+   * corner between one frame and the next. That reads as a rendering glitch,
+   * not as something offered, and it is the version people reflexively close.
+   *
+   * Two nested rAFs so the browser has committed the pre-transition style
+   * before the class flips; one frame is not reliably enough, and a dropped
+   * transition puts us straight back to the popping version.
+   */
+  useEffect(() => {
+    if (!variant) return
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)))
+    return () => cancelAnimationFrame(id)
+  }, [variant])
 
   useEffect(() => {
     if (snoozed()) return
@@ -142,8 +177,11 @@ export default function SalesNudge({ onPlan }) {
         'fixed z-40 inset-x-3 bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))]',
         'md:inset-x-auto md:right-5 md:bottom-24 md:w-[26rem]',
         'rounded-2xl bg-plum-950 text-white shadow-2xl shadow-black/50 border border-plum-700',
-        'transition-all duration-200 motion-reduce:transition-none',
-        leaving ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0',
+        // Only opacity and transform, so this stays on the compositor —
+        // `transition-all` on a fixed, backdrop-heavy panel animates layout
+        // properties nothing here changes and costs a paint per frame for it.
+        'transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none',
+        leaving || !entered ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0',
       ].join(' ')}
     >
       <div className="relative p-5 sm:p-6">

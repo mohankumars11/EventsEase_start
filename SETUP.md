@@ -40,6 +40,21 @@ VITE_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+### d) Allowlist the auth redirect URLs
+
+Email OTP and Google sign-in both redirect back to `window.location.origin`
+(see `src/context/AuthContext.jsx`) — Supabase rejects any origin it has not
+been told about. In **Supabase Dashboard → Authentication → URL Configuration**:
+
+- **Site URL:** `https://sambramoh.vercel.app`
+- **Redirect URLs:** add both
+  - `https://sambramoh.vercel.app/**`
+  - `http://localhost:5173/**` (for local dev)
+
+Google's own OAuth console keeps pointing at
+`https://<project>.supabase.co/auth/v1/callback` — that one does *not* change
+with the app's domain.
+
 ---
 
 ## 3. Run the dev server
@@ -71,6 +86,11 @@ npm run build
 ```
 
 The output is in `dist/` — deploy to Vercel, Netlify, or any static host.
+
+Production is served from **https://sambramoh.vercel.app** (Vercel project
+`sambramoh`, git-linked to `main`). If you rename the Vercel project, the
+default domain changes with it — update the Supabase redirect allowlist in
+step 2(d) at the same time, or sign-in breaks on the new domain.
 
 ---
 

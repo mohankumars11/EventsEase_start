@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, X, Sparkles } from 'lucide-react'
 import { EVENT_LIST } from '../../data/eventServicesData'
+import { leadSample, SAMPLES_BY_EVENT } from '../../config/decorSamples'
 import { useAuth } from '../../context/AuthContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductImage from '../../components/shop/ProductImage'
@@ -80,20 +81,38 @@ export default function ServicesPicker() {
           <p className="text-sm text-gray-400 py-10 text-center">No matches for "{query}" — try a different search.</p>
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(ev => (
-            <button
-              key={ev.id}
-              onClick={() => navigate(`/services/${ev.id}`)}
-              className={`text-left rounded-2xl border-2 ${ev.borderColor} ${ev.bgColor} overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group`}
-            >
-              <ProductImage query={`Indian ${ev.name} celebration`} emoji={ev.emoji} className="w-full h-28" />
-              <div className="p-5">
-                <p className={`font-bold text-sm ${ev.textColor}`}>{ev.name}</p>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{ev.tagline}</p>
-                <p className="text-[11px] text-gray-400 mt-2">{ev.services.length} services · {ev.packages.length} packages</p>
-              </div>
-            </button>
-          ))}
+          {filtered.map(ev => {
+            // The occasion's own décor setup, already resolved and committed
+            // in config/decorSamples. This card used to run a live Unsplash
+            // search — fifteen cards, fifteen of the 24 searches
+            // lib/unsplash.js permits per page load, to fetch a photograph
+            // this repo already holds. ProductImage still takes the query as
+            // its fallback for an occasion with no samples yet.
+            const lead = leadSample(ev.id)
+            return (
+              <button
+                key={ev.id}
+                onClick={() => navigate(`/services/${ev.id}`)}
+                className={`text-left rounded-2xl border-2 ${ev.borderColor} ${ev.bgColor} overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group`}
+              >
+                <ProductImage
+                  src={lead?.photo}
+                  alt={lead?.alt}
+                  query={`Indian ${ev.name} celebration`}
+                  emoji={ev.emoji}
+                  className="w-full h-28"
+                />
+                <div className="p-5">
+                  <p className={`font-bold text-sm ${ev.textColor}`}>{ev.name}</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{ev.tagline}</p>
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    {ev.services.length} services · {ev.packages.length} packages
+                    {lead && ` · ${SAMPLES_BY_EVENT[ev.id].length} décor samples`}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
         </div>
         )}
       </div>

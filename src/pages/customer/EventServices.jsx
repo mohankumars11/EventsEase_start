@@ -11,6 +11,7 @@ import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import ReviewModal from '../../components/reviews/ReviewModal'
+import { EventDecorSamples } from '../../components/landing/DecorSampleGallery'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -204,6 +205,16 @@ export default function EventServices() {
               Sambramo organizes everything
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Décor samples, above the line items.
+          "What does it look like" is the question somebody asks before "what
+          is in it", and the tab bar below answers only the second one. This
+          sits outside the sticky element so it scrolls away normally. */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+          <EventDecorSamples eventId={eventId} />
         </div>
       </div>
 

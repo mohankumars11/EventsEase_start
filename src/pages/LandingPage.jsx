@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ArrowRight, MessageCircleQuestion, ShieldCheck, Star } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -11,7 +11,7 @@ import StarRating from '../components/reviews/StarRating'
 import { PathFork, OldWayBand, ShopCategoryGrid, OccasionRail } from '../components/landing/StorefrontSections'
 import KolamSticker, { KolamClipDefs } from '../components/landing/KolamSticker'
 import HeroTicker from '../components/landing/HeroTicker'
-import { ShopPills, TrustRow } from '../components/landing/HeroProof'
+import { ShopRail, TrustRow } from '../components/landing/HeroProof'
 import SalesNudge from '../components/landing/SalesNudge'
 import { KOLAM_PATH } from '../components/ui/SambramoMark'
 
@@ -79,6 +79,47 @@ const STORY_STEPS = [
   { emoji: '🤝', title: 'We handle it',  desc: 'We coordinate every detail on the day' },
   { emoji: '🎉', title: 'You celebrate', desc: 'Just be there for the moment' },
 ]
+
+/**
+ * The décor gallery, split out of the initial bundle.
+ *
+ * It is the only section on this page that needs EVENT_DATA — 15 occasions of
+ * services, packages and price bands — plus its own 60 photo records. Bundled
+ * with the landing page that is ~16.5 kB gzipped of the critical path, spent
+ * on a section that begins four screens down and that a bouncing visitor
+ * never reaches.
+ *
+ * `/services/:eventId` is already a lazy route and imports the same component,
+ * so Rollup emits one shared chunk rather than two copies: whichever of the
+ * two is reached first pays for it, and the second gets it from cache.
+ */
+const DecorSampleShowcase = lazy(() =>
+  import('../components/landing/DecorSampleGallery').then(m => ({ default: m.DecorSampleShowcase }))
+)
+
+/**
+ * Holds the section's ground while its chunk arrives.
+ *
+ * Sized rather than empty, and painted in the section's own background: a
+ * null fallback would let the four sections below it jump up and then back
+ * down as the chunk lands, which is a worse artefact than the wait itself —
+ * and it would do so right as somebody is scrolling through the space.
+ */
+function ShowcaseFallback() {
+  return (
+    <section aria-hidden="true" className="py-16 sm:py-20 px-4 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="h-4 w-32 rounded bg-gray-100 mb-4" />
+        <div className="h-9 w-2/3 max-w-lg rounded bg-gray-100 mb-8" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl bg-gray-50 border border-gray-100" />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 const TRUST_POINTS = [
   { emoji: '🤝', title: 'Human-assisted planning',  desc: 'A real Sambramo coordinator handles your request' },
@@ -187,8 +228,11 @@ export default function LandingPage() {
 
         <div className="relative max-w-4xl mx-auto text-center">
 
-          {/* Sleek glass card — the hero's centerpiece */}
-          <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] shadow-2xl shadow-black/40 px-6 sm:px-10 md:px-16 py-8 sm:py-12 md:py-16 mb-8 sm:mb-10 overflow-hidden">
+          {/* Sleek glass card — the hero's centerpiece.
+              Padding pulled in from py-8/12/16 and the block below reordered;
+              see the note above the CTA row for what the height was being
+              spent on and why it is worth less than the fold. */}
+          <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] shadow-2xl shadow-black/40 px-6 sm:px-10 md:px-14 py-7 sm:py-9 md:py-11 mb-6 sm:mb-8 overflow-hidden">
             {/* Accent glow line + corner sparkle */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1 rounded-full bg-gradient-to-r from-saffron-300 via-saffron-400 to-saffron-300" />
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-saffron-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -213,58 +257,56 @@ export default function LandingPage() {
             {/* H1 — the signature line, read from BRAND rather than typed
                 out here. The second half picks up the shimmer utility so the
                 promise half of the sentence is the half that moves. */}
-            <h1 className="relative font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-5 md:mb-6">
+            <h1 className="relative font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-3 sm:mb-4">
               {BRAND.signatureParts[0]}
               <br />
               <span className="text-saffron-400 shimmer-saffron">{BRAND.signatureParts[1]}</span>
             </h1>
 
-            {/* Sub-headline, in two tiers rather than one run-on sentence.
-                It was a single muted paragraph doing two unrelated jobs in
-                one breath — explaining the concierge and listing the shop —
-                so neither landed and the whole block read as filler.
-
-                The promise now takes the brand's display face (Playfair
-                italic, already loaded for the logo wordmark) at a size that
-                can carry it; the shop half drops to a quiet support line and
-                hands off to the pills, where it becomes something you can
-                actually tap instead of a list you have to read. */}
-            <p className="relative font-serif italic text-xl sm:text-2xl md:text-[1.75rem] text-white/90 leading-snug max-w-2xl mx-auto mb-3 sm:mb-4">
+            {/* One promise, not two.
+                This used to be two stacked paragraphs — the concierge line in
+                display italic, then a muted "Or shop for the day itself,
+                delivered to your door." The second was doing no work the rail
+                at the bottom of the card does not do better: it announced a
+                shop in prose immediately above six tappable shop categories.
+                Cutting it takes ~44px off every phone and loses nothing. */}
+            <p className="relative font-serif italic text-xl sm:text-2xl md:text-[1.75rem] text-white/90 leading-snug max-w-2xl mx-auto mb-5 sm:mb-6">
               Tell us what you're celebrating — we'll arrange every last detail.
             </p>
-            <p className="relative text-white/60 text-sm sm:text-base max-w-xl mx-auto mb-4 sm:mb-5">
-              Or shop for the day itself, delivered to your door.
-            </p>
-
-            <ShopPills />
 
             {/* Planning stays the single primary action: it is the highest
                 value path and the rest of the page is built around it. Shop
                 sits beside it as a deliberately lighter outline button rather
                 than a second gradient pill, so the second audience has a door
-                without the first losing its focus. */}
-            <div className="relative flex flex-col items-center justify-center gap-3">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={() => toPlan()}
-                  className="btn-cta"
-                >
-                  Plan My Celebration ✨
-                </button>
-                <Link
-                  to="/shop"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 hover:bg-white/15 backdrop-blur-sm text-white font-semibold px-6 py-3.5 transition-colors"
-                >
-                  🎂 {CTA.shop}
-                </Link>
-              </div>
-              {/* The "or explore celebrations first" scroll cue used to sit
-                  here. The pills above already signal there is more below,
-                  and PathFork lands immediately after this section — so it
-                  was a third competing instruction on a screen that only
-                  needs two, and dropping it pays back the height the pills
-                  cost on mobile. */}
+                without the first losing its focus.
+
+                ── Why these are now side by side on a phone ─────────────────
+                Stacked, the two buttons plus their gap cost ~120px, and they
+                sat under three wrapped rows of category pills — so on a 667px
+                screen the primary CTA of the entire site landed below the
+                fold. Two short labels fit one row at 375px, the pills became
+                the rail underneath, and the button people came to press is
+                back on the first screen. That is the whole trade: the card
+                lost about 270px of height and lost no content, because
+                everything cut was said twice. */}
+            <div className="relative flex flex-row items-stretch justify-center gap-2.5 sm:gap-3">
+              <button onClick={() => toPlan()} className="btn-cta flex-1 sm:flex-initial justify-center whitespace-nowrap px-4 sm:px-7">
+                <span className="sm:hidden">Plan mine ✨</span>
+                <span className="hidden sm:inline">Plan My Celebration ✨</span>
+              </button>
+              <Link
+                to="/shop"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 hover:bg-white/15 backdrop-blur-sm text-white font-semibold px-4 sm:px-6 py-3.5 transition-colors whitespace-nowrap"
+              >
+                🎂 <span className="sm:hidden">Shop</span>
+                <span className="hidden sm:inline">{CTA.shop}</span>
+              </Link>
             </div>
+
+            {/* The shop categories, as a rail rather than a wrapping pill
+                block — below the CTAs now, where it reads as the storefront's
+                own navigation instead of an obstacle in front of the buttons. */}
+            <ShopRail />
           </div>
 
           {/* Trust row */}
@@ -309,6 +351,20 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════
+          1D. DECORATION SAMPLES
+
+          Placed immediately after the "why is there no price tag?" band, and
+          the pairing is the point: that band explains why we cannot print a
+          price, and this one answers the question it leaves behind — then
+          what does a setup look like, and roughly what does that scope cost.
+          Explanation followed by evidence, rather than explanation followed
+          by another explanation.
+      ══════════════════════════════════════════════ */}
+      <Suspense fallback={<ShowcaseFallback />}>
+        <DecorSampleShowcase />
+      </Suspense>
 
       {/* ══════════════════════════════════════════════
           2. STORY FLOW  (dark — continues from hero)

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { UserRound, Timer, ShieldCheck, ArrowRight } from 'lucide-react'
 import { SHOP_CATEGORIES } from '../../config/shop'
+import { CATEGORY_PHOTO } from '../../config/imagery'
 
 /**
  * The two proof blocks inside the hero card: what we sell, and why to
@@ -9,8 +10,8 @@ import { SHOP_CATEGORIES } from '../../config/shop'
 
 /**
  * "Party Essentials" and "Pooja & Essentials" set at full length wrap the
- * pill row to three or four lines on a 375px screen. Shortened for display
- * only — the link still carries the real category id.
+ * row on a 375px screen. Shortened for display only — the link still
+ * carries the real category id.
  */
 const SHORT_LABEL = {
   'Party Essentials':   'Party',
@@ -28,33 +29,67 @@ const SHORT_LABEL = {
  * Driven off SHOP_CATEGORIES rather than a hardcoded list, because a
  * hardcoded list is precisely how it drifted to four-of-six; a seventh
  * category added to config now appears here on its own.
+ *
+ * ── Why this is a scrolling rail and not a wrapping pill block ────────────
+ * As pills it wrapped to three rows on a phone and cost roughly 90px of the
+ * one screen that can least afford it — and those 90px sat directly above the
+ * primary CTA, which is the element it was pushing off the fold.
+ *
+ * One non-wrapping row fixes the height, and once it is one row the honest
+ * form for it is the rail every marketplace already uses: a photograph per
+ * category rather than an emoji, scrolled horizontally with the thumb. It is
+ * shorter, it shows the actual goods, and it is a gesture people already know.
+ * The photos are the same module constants the storefront cards use, so the
+ * rail cannot show a different cake from the one the category page opens on.
  */
-export function ShopPills() {
-  const pill = 'inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap'
-
+export function ShopRail() {
   return (
-    <div className="relative flex flex-wrap items-center justify-center gap-2 mb-6 sm:mb-8">
-      {SHOP_CATEGORIES.map(cat => (
-        <Link
-          key={cat.id}
-          to={`/shop/${encodeURIComponent(cat.id)}`}
-          className={`${pill} bg-white/10 border-white/15 text-white/85 hover:bg-white/20 hover:text-white`}
-        >
-          <span aria-hidden="true">{cat.emoji}</span>
-          {SHORT_LABEL[cat.id] ?? cat.label}
-        </Link>
-      ))}
+    <div className="relative -mx-6 sm:mx-0 mt-5 sm:mt-6 pt-5 border-t border-white/10">
+      <div className="flex sm:flex-wrap sm:justify-center gap-3 sm:gap-4 overflow-x-auto scrollbar-hide px-6 sm:px-0 pb-1">
+        {SHOP_CATEGORIES.map(cat => (
+          <Link
+            key={cat.id}
+            to={`/shop/${encodeURIComponent(cat.id)}`}
+            className="group shrink-0 flex flex-col items-center gap-1.5 w-14"
+          >
+            <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white/10 border border-white/20 group-hover:border-saffron-400/70 transition-colors">
+              {/* The emoji is the floor, not the fallback of last resort: it
+                  sits underneath at all times so a slow or failed photo shows
+                  a designed circle rather than an empty ring. */}
+              <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-lg">
+                {cat.emoji}
+              </span>
+              {CATEGORY_PHOTO[cat.id] && (
+                <img
+                  src={CATEGORY_PHOTO[cat.id]}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="relative w-full h-full object-cover"
+                />
+              )}
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-semibold text-white/75 group-hover:text-white transition-colors whitespace-nowrap">
+              {SHORT_LABEL[cat.id] ?? cat.label}
+            </span>
+          </Link>
+        ))}
 
-      {/* The catalogue is still growing, and saying so is the difference
-          between "this is all they have" and "worth checking back". */}
-      <Link
-        to="/shop"
-        className={`${pill} bg-saffron-400/15 border-saffron-400/30 text-saffron-200 hover:bg-saffron-400/25 hover:text-saffron-100`}
-      >
-        <span aria-hidden="true">✨</span>
-        more every week
-        <ArrowRight size={12} aria-hidden="true" />
-      </Link>
+        {/* The catalogue is still growing, and saying so is the difference
+            between "this is all they have" and "worth checking back". */}
+        <Link to="/shop" className="group shrink-0 flex flex-col items-center gap-1.5 w-14">
+          <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-saffron-400/15 border border-dashed border-saffron-400/50 text-saffron-300 group-hover:bg-saffron-400/25 transition-colors">
+            <ArrowRight size={16} aria-hidden="true" />
+          </span>
+          {/* Deliberately not a count. The Shop hero prints "600+ items" and
+              resolve-product-images.mjs puts the catalogue at ~344 rows — one
+              of those two is wrong, and the hero of the whole site is not the
+              place to repeat a number nobody has reconciled. */}
+          <span className="text-[10px] sm:text-[11px] font-semibold text-saffron-300 group-hover:text-saffron-200 transition-colors whitespace-nowrap">
+            See all
+          </span>
+        </Link>
+      </div>
     </div>
   )
 }

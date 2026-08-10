@@ -26,7 +26,8 @@ that was the pre-pivot model and its pages have been removed.
 - **Supabase** — Postgres, Auth (email OTP + Google OAuth), RLS
 - **React Router 6** with per-route code splitting
 - **recharts** — admin analytics only, lazy-loaded
-- **Deploy:** Vercel, git-linked to `main`. `vercel.json` rewrites all non-`/api`
+- **Deploy:** Vercel, git-linked to `main`, served at
+  **https://sambramoh.vercel.app**. `vercel.json` rewrites all non-`/api`
   paths to `index.html` for client-side routing.
 
 ---

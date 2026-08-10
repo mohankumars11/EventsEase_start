@@ -57,7 +57,13 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={id}
-              className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-2xl border shadow-lg animate-fade-in-up ${v.ring} ${v.bg}`}
+              // animate-pop-in (120ms), not animate-fade-in-up (500ms). A
+              // toast is a reply to something the user just pressed, and at
+              // half a second the reply arrives after the thumb has moved on
+              // — which is what made operators press the button twice, the
+              // exact duplicate-submit problem this component was built to
+              // stop. See the note on .animate-pop-in in index.css.
+              className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-2xl border shadow-lg animate-pop-in ${v.ring} ${v.bg}`}
             >
               <Icon size={17} className={`mt-0.5 shrink-0 ${v.iconFg}`} />
               <p className={`flex-1 text-sm font-medium leading-snug ${v.fg}`}>{message}</p>

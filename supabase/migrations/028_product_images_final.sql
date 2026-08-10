@@ -32,6 +32,7 @@ UPDATE products SET
   image_alt        = 'Chic baby shower decor featuring teddy bears, balloons, and sweet treats in an indoor setting.',
   image_credit     = 'Photo by Jonathan Nenemann on Pexels',
   image_source     = 'stock',
+
   image_updated_at = now()
 WHERE id = '46442bb0-f965-45d2-8f8c-3e274079bd09';
 

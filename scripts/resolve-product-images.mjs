@@ -44,23 +44,16 @@
  *   UNSPLASH_ACCESS_KEY                         — fallback source
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+// Shared with generate-cake-catalog.mjs — above all the dedup set, which
+// only works if both generators consult the same live list of photo ids.
+import {
+  ROOT, loadEnv, searchPexels, searchUnsplash, fetchAssignedPhotoIds,
+  supabaseHeaders, sqlStr, dedupeWords, pacingMs, sleep,
+} from './lib/photos.mjs'
 
-/* ── .env, without adding a dependency ──────────────────────────────── */
-function loadEnv() {
-  const path = resolve(ROOT, '.env')
-  if (!existsSync(path)) return
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i)
-    if (!m) continue
-    const value = m[2].replace(/^["'](.*)["']$/, '$1')
-    if (!(m[1] in process.env)) process.env[m[1]] = value
-  }
-}
 loadEnv()
 
 /* ── args ───────────────────────────────────────────────────────────── */
@@ -159,25 +152,6 @@ const NOISE = /\([^)]*\)/g
 
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-// A theme hint already names the product type ("…birthday cake"), and so
-// does the category term ("cake dessert food photography"), which produced
-// queries like "pink fondant doll birthday cake cake dessert food
-// photography". Repeated words don't help the search and make the --dry-run
-// output hard to read.
-function dedupeWords(text) {
-  const seen = new Set()
-  return text
-    .split(/\s+/)
-    .filter(word => {
-      const key = word.toLowerCase().replace(/[^a-z0-9]/g, '')
-      if (!key) return true          // punctuation-only tokens pass through
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .join(' ')
-}
-
 function buildQuery(product) {
   const base = product.name.replace(NOISE, ' ').replace(/\s+/g, ' ').trim()
 
@@ -197,59 +171,9 @@ function buildQuery(product) {
   return dedupeWords(parts.join(' ').replace(/\s+/g, ' ').trim())
 }
 
-/* ── Photo sources ──────────────────────────────────────────────────────
- * Both return an array of candidates so the dedup pass can walk past a
- * photo that is already spoken for. Pexels is the default: 200 requests/
- * hour against Unsplash's 50, and its licence permits commercial use
- * without mandatory attribution (we store credit anyway).
- */
-const PER_PAGE = 10
-
-async function searchPexels(query) {
-  const key = process.env.PEXELS_API_KEY
-  if (!key) throw new Error('PEXELS_API_KEY is not set. Get one free at https://www.pexels.com/api/')
-
-  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}`
-              + `&per_page=${PER_PAGE}&orientation=landscape`
-  const res = await fetch(url, { headers: { Authorization: key } })
-  if (res.status === 429) throw new Error('RATE_LIMIT')
-  if (!res.ok) return []
-
-  const data = await res.json()
-  return (data.photos ?? []).map(p => ({
-    id:     `pexels:${p.id}`,
-    // large2x is ~1880px wide — the HD requirement. `large` is 940px and
-    // visibly soft on a retina product hero.
-    url:    p.src.large2x,
-    alt:    p.alt || null,
-    credit: `Photo by ${p.photographer} on Pexels`,
-  }))
-}
-
-async function searchUnsplash(query) {
-  const key = process.env.UNSPLASH_ACCESS_KEY || process.env.VITE_UNSPLASH_ACCESS_KEY
-  if (!key) throw new Error('UNSPLASH_ACCESS_KEY is not set.')
-
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}`
-              + `&per_page=${PER_PAGE}&orientation=landscape`
-  const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } })
-  if (res.status === 403 || res.status === 429) throw new Error('RATE_LIMIT')
-  if (!res.ok) return []
-
-  const data = await res.json()
-  return (data.results ?? []).map(p => ({
-    id:     `unsplash:${p.id}`,
-    url:    `${p.urls.raw}&fm=jpg&w=1600&q=80&fit=max`,
-    alt:    p.alt_description || null,
-    credit: `Photo by ${p.user.name} on Unsplash`,
-  }))
-}
-
 /* ── Catalog read ───────────────────────────────────────────────────── */
 async function fetchProducts(categories, onlyMissing = false) {
-  const base = process.env.VITE_SUPABASE_URL
-  const key  = process.env.VITE_SUPABASE_ANON_KEY
-  if (!base || !key) throw new Error('VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing from .env')
+  const { base, headers } = supabaseHeaders()
 
   let url = `${base}/rest/v1/products?select=id,name,category,occasion,description`
             + `&order=category.asc,name.asc`
@@ -267,53 +191,12 @@ async function fetchProducts(categories, onlyMissing = false) {
     url += `&category=in.(${list})`
   }
 
-  const res = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } })
+  const res = await fetch(url, { headers })
   if (!res.ok) throw new Error(`Supabase read failed: ${res.status} ${await res.text()}`)
   return res.json()
 }
 
-/**
- * Photo IDs already assigned to products in the database.
- *
- * The in-run dedup set only knows about the current pass. Pexels caps a free
- * key at 200 requests/hour against a ~370-product catalogue, so the shop can
- * only ever be filled across several runs — and without this, run two happily
- * re-assigns photos run one already used. That is migration 017's bug
- * returning by a side door, which is why it is checked against the live rows
- * rather than against the generated files.
- *
- * Both sources embed the photo id in the URL path:
- *   https://images.pexels.com/photos/12345/pexels-photo-12345.jpeg
- *   https://images.unsplash.com/photo-1664032655802-ef0a6895619a
- */
-function photoIdFromUrl(url) {
-  const pexels = url.match(/images\.pexels\.com\/photos\/(\d+)\//)
-  if (pexels) return `pexels:${pexels[1]}`
-  const unsplash = url.match(/images\.unsplash\.com\/(photo-[A-Za-z0-9_-]+)/)
-  if (unsplash) return `unsplash:${unsplash[1]}`
-  return null
-}
-
-async function fetchAssignedPhotoIds() {
-  const base = process.env.VITE_SUPABASE_URL
-  const key  = process.env.VITE_SUPABASE_ANON_KEY
-  const res  = await fetch(
-    `${base}/rest/v1/products?select=image_url&image_url=not.is.null`,
-    { headers: { apikey: key, Authorization: `Bearer ${key}` } }
-  )
-  if (!res.ok) return new Set()
-
-  const ids = new Set()
-  for (const row of await res.json()) {
-    const id = photoIdFromUrl(row.image_url ?? '')
-    if (id) ids.add(id)
-  }
-  return ids
-}
-
 /* ── SQL emission ───────────────────────────────────────────────────── */
-const sqlStr = v => (v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`)
-
 function buildSql(rows, source) {
   const stamp = new Date().toISOString().slice(0, 10)
   const byCategory = rows.reduce((acc, r) => {
@@ -463,7 +346,7 @@ async function main() {
       const pick = candidates.find(c => !used.has(c.id))
       if (pick) { photo = pick; query = tier; break }
       // Only pay for a broader search if the narrow one found nothing usable.
-      await new Promise(r => setTimeout(r, args.source === 'unsplash' ? 1200 : 350))
+      await sleep(pacingMs(args.source))
     }
 
     if (rateLimited) {
@@ -486,7 +369,7 @@ async function main() {
     console.log(`  ✓  ${product.name}\n       ${query}\n       ${photo.id}`)
 
     // Stay under 200 req/hr on Pexels, 50 on Unsplash.
-    await new Promise(r => setTimeout(r, args.source === 'unsplash' ? 1200 : 350))
+    await sleep(pacingMs(args.source))
   }
 
   console.log(`\n${resolved.length} resolved, ${failed.length} unresolved.`)
