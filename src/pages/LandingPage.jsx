@@ -43,6 +43,47 @@ const HERO_FLOAT_QUERIES = {
   cake:     'birthday cake celebration slice',
 }
 
+/**
+ * The décor gallery, split out of the initial bundle.
+ *
+ * It is the only section on this page that needs EVENT_DATA — 15 occasions of
+ * services, packages and price bands — plus its own 60 photo records. Bundled
+ * with the landing page that is ~16.5 kB gzipped of the critical path, spent
+ * on a section that begins several screens down and that a bouncing visitor
+ * never reaches.
+ *
+ * `/services/:eventId` is already a lazy route and imports the same component,
+ * so Rollup emits one shared chunk rather than two copies: whichever of the
+ * two is reached first pays for it, and the second gets it from cache.
+ */
+const DecorSampleShowcase = lazy(() =>
+  import('../components/landing/DecorSampleGallery').then(m => ({ default: m.DecorSampleShowcase }))
+)
+
+/**
+ * Holds the section's ground while its chunk arrives.
+ *
+ * Sized rather than empty, and painted in the section's own background: a
+ * null fallback would let the sections below it jump up and then back down as
+ * the chunk lands, which is a worse artefact than the wait itself — and it
+ * would do so right as somebody is scrolling through the space.
+ */
+function ShowcaseFallback() {
+  return (
+    <section aria-hidden="true" className="py-16 sm:py-20 px-4 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="h-4 w-32 rounded bg-gray-100 mb-4" />
+        <div className="h-9 w-2/3 max-w-lg rounded bg-gray-100 mb-8" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl bg-gray-50 border border-gray-100" />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 const FAQS = [
   {
     q: 'How does Sambramo work?',
