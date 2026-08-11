@@ -1,56 +1,81 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Ticket, Truck } from 'lucide-react'
+import { ArrowRight, Ticket, Truck, Heart, BadgeCheck, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
-import { FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+import { FREE_DELIVERY_THRESHOLD, SHOP_CATEGORIES } from '../../config/shop'
 import ProductImage from '../shop/ProductImage'
 import { formatINR } from '../../utils/format'
 
 /**
- * Actual things you can buy, on the front screen.
+ * The shop, on the front screen — as a shelf you can buy from.
  *
- * The home screen's shop presence was five category tiles — "Cakes",
- * "Flowers", "Gifts" — which is a table of contents, not a shop. Nothing with
- * a price on it appeared until you had tapped through into a category, so the
- * half of the business that can be bought in one tap was represented on the
- * front page by five words and no products.
+ * Two rewrites' worth of problems, both about honesty of representation:
  *
- * That is the wrong way round for the cheapest thing Sambramo sells. A ₹899
- * cake is the transaction most likely to be somebody's first, and a first
- * transaction is what makes the second one — the celebration — possible. It
- * should be visible, priced, and one tap from the front door.
+ * First it was five category tiles. A table of contents with no prices, so
+ * the half of the business you can buy in one tap was represented by five
+ * words and nothing to buy.
  *
- * ── Real data only ─────────────────────────────────────────────────────
- * Products come from the `products` table and prices are theirs. The discount
- * ribbon is a live coupon from the `coupons` table, matched to each item's own
- * price by bestOfferFor — the same helper, the same rule and the same visual
- * language the storefront's own cards use, so a red badge means one thing
- * everywhere in the app. No coupon, no ribbon.
+ * Then it was a rail sorted by price ascending — which is how it ended up
+ * being *entirely pooja essentials*. Those are genuinely the cheapest things
+ * in the catalogue, so "cheapest first" quietly turned a general shop into a
+ * pooja shop, and a customer looking for a cake concluded we do not sell one.
+ * That is the trap with any single-axis sort over a mixed catalogue: it looks
+ * like a ranking and behaves like a filter.
  *
- * Sorted by price ascending: the rail's job is to show that this is
- * affordable and immediate, which the cheapest four items do better than the
- * most expensive four.
+ * So the shelf is now built per category — the cheapest item from Cakes,
+ * Gifts, Flowers, Pooja and Party Essentials — which guarantees the grid
+ * shows the *range* of the shop rather than one corner of it, whatever the
+ * price data does later.
+ *
+ * ── The grid, not the rail ─────────────────────────────────────────────
+ * Two per row, same as the occasions above it. A horizontal scroller hides
+ * everything past the second card behind a swipe; the grid puts the whole
+ * shelf on the screen you are already scrolling, and the two sections then
+ * read as one page instead of two different widgets.
+ *
+ * ── What each card says ────────────────────────────────────────────────
+ * Price, a live coupon if one applies, and how far the order is from free
+ * delivery — computed against the real FREE_DELIVERY_THRESHOLD, not asserted.
+ * Everything on the card is a fact from the database or from config; nothing
+ * is decorative.
  */
-export default function ShopPicksRail({ limit = 8 }) {
-  const [products, setProducts] = useState([])
+export default function ShopPicksRail() {
+  const [picks, setPicks] = useState([])
   const offers = usePublicOffers()
 
   useEffect(() => {
     let cancelled = false
-    supabase
-      .from('products')
-      .select('id, name, category, price, image_url, occasion')
-      .order('price', { ascending: true })
-      .limit(limit)
-      .then(({ data }) => { if (!cancelled) setProducts(data ?? []) })
-    return () => { cancelled = true }
-  }, [limit])
 
-  // Renders nothing rather than an empty shelf: a heading over a blank strip
-  // reads as a broken page, and this is the one section whose contents depend
-  // on a network call that can legitimately return nothing.
-  if (products.length === 0) return null
+    /**
+     * One representative per category, so the shelf spans the shop.
+     *
+     * Queried per category rather than with a single `limit(8)`: one query
+     * ordered by price returns whichever category happens to be cheapest,
+     * which is exactly the failure this component had. Five small indexed
+     * lookups are worth a grid that actually represents the catalogue.
+     */
+    Promise.all(
+      SHOP_CATEGORIES.map(cat =>
+        supabase
+          .from('products')
+          .select('id, name, category, price, image_url, occasion')
+          .eq('category', cat.id)
+          .order('price', { ascending: true })
+          .limit(1)
+          .then(({ data }) => data?.[0] ?? null)
+      )
+    ).then(rows => {
+      if (!cancelled) setPicks(rows.filter(Boolean))
+    })
+
+    return () => { cancelled = true }
+  }, [])
+
+  // Nothing rather than an empty shelf: a heading over a blank strip reads as
+  // a broken page, and this is the one section whose contents depend on a
+  // network call that can legitimately come back empty.
+  if (picks.length === 0) return null
 
   return (
     <section aria-labelledby="picks-heading">
@@ -60,7 +85,7 @@ export default function ShopPicksRail({ limit = 8 }) {
             Delivered to your door
           </h2>
           <p className="mt-0.5 text-[11px] text-white/50">
-            Cakes, flowers and gifts — order one on its own, no celebration required.
+            Cakes, gifts, flowers, pooja and party — order one on its own, no celebration required.
           </p>
         </div>
         <Link
@@ -71,60 +96,119 @@ export default function ShopPicksRail({ limit = 8 }) {
         </Link>
       </div>
 
-      <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x scroll-pl-4">
-        {products.map(p => {
+      <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+        {picks.map(p => {
           const offer = bestOfferFor(p.price, offers)
           const offerLabel = offer
             ? offer.discount_type === 'percent'
               ? `${Number(offer.discount_value)}% OFF`
               : `${formatINR(offer.discount_value)} OFF`
             : null
+          const toFreeDelivery = FREE_DELIVERY_THRESHOLD - Number(p.price)
 
           return (
             <Link
               key={p.id}
               to={`/shop/product/${p.id}`}
-              className="home-card flex w-[142px] shrink-0 snap-start flex-col"
+              className="home-card group flex flex-col"
             >
               <span className="relative block">
                 <ProductImage
                   src={p.image_url}
                   query={`${p.name} ${p.category}`}
                   className="aspect-square w-full"
+                  cinematic
                 />
                 {offerLabel && (
-                  <span className="absolute left-0 top-2 rounded-r-md bg-chilli-600 py-0.5 pl-1.5 pr-2 text-[9px] font-extrabold text-white shadow">
+                  <span className="absolute left-0 top-2.5 rounded-r-lg bg-chilli-600 py-1 pl-2 pr-2.5 text-[10px] font-extrabold text-white shadow-lg">
                     {offerLabel}
                   </span>
                 )}
+                {/* Which shelf this came from — the point of the grid is that
+                    all five are represented, which only reads if each card
+                    says which one it is. */}
+                <span className="absolute right-2 top-2 rounded-lg bg-black/45 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
+                  {p.category}
+                </span>
               </span>
 
               <span className="flex flex-1 flex-col p-2.5">
-                <span className="block text-[11.5px] font-bold leading-snug text-gray-900 line-clamp-2">
+                <span className="block text-[12px] font-bold leading-snug text-gray-900 line-clamp-2">
                   {p.name}
                 </span>
 
-                <span className="mt-1.5 flex items-baseline gap-1">
-                  <span className="text-[14px] font-extrabold leading-none text-gray-900">
+                <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-plum-600">
+                  <BadgeCheck size={10} className="shrink-0" />
+                  Delivered by Sambramo
+                </span>
+
+                <span className="mt-2 flex items-end justify-between gap-1">
+                  <span className="text-[15px] font-extrabold leading-none text-gray-900">
                     {formatINR(p.price)}
+                  </span>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-forest-700 text-white transition-transform group-hover:translate-x-0.5">
+                    <ChevronRight size={14} strokeWidth={2.8} />
                   </span>
                 </span>
 
                 {offer ? (
-                  <span className="mt-1.5 flex items-center gap-1 text-[9.5px] font-bold text-chilli-700">
-                    <Ticket size={9} className="shrink-0" />
-                    <span className="truncate">Code {offer.code}</span>
+                  <span className="mt-2 flex items-center gap-1 rounded-lg bg-chilli-50 px-2 py-1 text-[9.5px] font-bold text-chilli-700">
+                    <Ticket size={10} className="shrink-0" />
+                    <span className="truncate">Use code {offer.code}</span>
+                  </span>
+                ) : toFreeDelivery > 0 ? (
+                  <span className="mt-2 flex items-center gap-1 rounded-lg bg-forest-50 px-2 py-1 text-[9.5px] font-bold text-forest-700">
+                    <Truck size={10} className="shrink-0" />
+                    <span className="truncate">{formatINR(toFreeDelivery)} more, free delivery</span>
                   </span>
                 ) : (
-                  <span className="mt-1.5 flex items-center gap-1 text-[9.5px] font-semibold text-gray-400">
-                    <Truck size={9} className="shrink-0" />
-                    <span className="truncate">Free over {formatINR(FREE_DELIVERY_THRESHOLD)}</span>
+                  <span className="mt-2 flex items-center gap-1 rounded-lg bg-forest-50 px-2 py-1 text-[9.5px] font-bold text-forest-700">
+                    <Truck size={10} className="shrink-0" />
+                    <span className="truncate">Free delivery</span>
                   </span>
                 )}
               </span>
             </Link>
           )
         })}
+      </div>
+
+      {/* Every shelf, still one tap away.
+          This replaces the separate "Need it today?" block of five photo
+          tiles that used to sit further down the page. That section showed
+          the same five categories this grid already samples, with no prices —
+          so the page named the shop twice and sold from it once. Chips keep
+          the direct route to a category without spending another screen of
+          height repeating what is directly above them. */}
+      <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
+        {SHOP_CATEGORIES.map(cat => (
+          <Link
+            key={cat.id}
+            to={`/shop/${encodeURIComponent(cat.id)}`}
+            className="home-chip shrink-0 bg-white/10 text-white/80 ring-1 ring-white/15"
+          >
+            <span aria-hidden="true">{cat.emoji}</span> {cat.label}
+          </Link>
+        ))}
+        <Link
+          to="/shop"
+          className="home-chip shrink-0 bg-saffron-400 text-plum-950"
+        >
+          See all <ArrowRight size={11} />
+        </Link>
+      </div>
+
+      {/* The line that says who packs it. The shop's whole pitch on this
+          screen is that a person handles the order rather than a warehouse,
+          and that is the reason to buy a cake here instead of anywhere else. */}
+      <div className="mt-3 px-4">
+        <p className="flex items-start gap-2 rounded-2xl bg-white/[0.07] px-3.5 py-2.5 text-[11px] leading-relaxed text-white/65 ring-1 ring-white/10">
+          <Heart size={13} className="mt-0.5 shrink-0 text-saffron-300" />
+          <span>
+            Packed by hand by our team, checked before it leaves, and delivered on the
+            day you asked for — with a note if you want one.
+          </span>
+        </p>
       </div>
     </section>
   )

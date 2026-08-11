@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, Clock, ChevronRight, Store, PhoneCall,
+  ArrowRight, Clock, ChevronRight, PhoneCall,
   MessageCircle, SearchX, CalendarHeart, ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -12,6 +12,7 @@ import { FESTIVALS } from '../data/festivals'
 import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
 import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
+import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
 import OffersRail from '../components/shop/OffersRail'
@@ -82,14 +83,6 @@ function urgency(days) {
   if (days === 0) return 'Today'
   if (days === 1) return 'Tomorrow'
   return `${days} days`
-}
-
-const SHOP_QUERIES = {
-  'Cakes':              'chocolate birthday cake slice',
-  'Gifts':              'wrapped gift box present ribbon',
-  'Flowers':            'flower bouquet fresh',
-  'Party Essentials':   'balloons party decoration',
-  'Pooja & Essentials': 'pooja thali diya India',
 }
 
 export default function HomeScreen() {
@@ -165,6 +158,9 @@ export default function HomeScreen() {
   // A returning customer sees what's next for them before the pitch.
   if (activeEvents.length > 0) slides.reverse()
 
+  // The festival rail advances itself; `upcoming` is capped at 8.
+  const festivalRail = useAutoScrollRail(upcoming.length)
+
   const searching = query.trim().length >= 2
 
   return (
@@ -191,6 +187,17 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
+          {/* ── The six scales of celebration ─────────────────────────
+              Replaces PackageRail, which put "Grand Celebration Birthday,
+              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
+              screen of a birthday decision shown to someone who has not said
+              they are planning a birthday, repeated once per occasion.
+
+              The tiers are the axis customers actually start on: nobody thinks
+              "I want the premium package", they think "there'll be about sixty
+              people". One rail serves every occasion. */}
+          <TierRail offer={bestOfferFor(50000, offers)} />
+
           {/* ── What are we celebrating ───────────────────────────────
               Was a horizontal rail of 72×72 thumbnails with a caption under
               each. At that size the photograph was a smudge, so fifteen
@@ -212,11 +219,14 @@ export default function HomeScreen() {
               </p>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 px-4">
-              {OCCASIONS.map(o => (
+              {OCCASIONS.map((o, i) => (
                 <OccasionCard
                   key={o.id}
                   occasion={o}
                   offer={bestOfferFor(o.fromPrice, offers)}
+                  /* Each card starts its rotation a beat after the one
+                     before, so the grid never flips as one block. */
+                  stagger={i * 260}
                 />
               ))}
             </div>
@@ -228,17 +238,6 @@ export default function HomeScreen() {
           {/* ── Real products, priced, one tap from the front door ──── */}
           <ShopPicksRail />
 
-          {/* ── The six scales of celebration ─────────────────────────
-              Replaces PackageRail, which put "Grand Celebration Birthday,
-              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
-              screen of a birthday decision shown to someone who has not said
-              they are planning a birthday, repeated once per occasion.
-
-              The tiers are the axis customers actually start on: nobody thinks
-              "I want the premium package", they think "there'll be about sixty
-              people". One rail serves every occasion. */}
-          <TierRail offer={bestOfferFor(50000, offers)} />
-
           {/* ── Festivals, counting down ────────────────────────────── */}
           {upcoming.length > 0 && (
             <section aria-labelledby="festival-heading">
@@ -248,7 +247,14 @@ export default function HomeScreen() {
                 </h2>
                 <p className="mt-0.5 text-[11px] text-white/50">The calendar, with enough notice to do it properly.</p>
               </div>
-              <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x scroll-pl-4">
+              {/* Moves on its own, same contract as the tier deck: on a phone
+                  two of these eight are visible and nothing says the rest are
+                  there. Stops for good at the first touch. */}
+              <div
+                ref={festivalRail.ref}
+                {...festivalRail.handlers}
+                className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x snap-mandatory scroll-pl-4"
+              >
                 {upcoming.map(f => (
                   <Link
                     key={f.id}
@@ -280,55 +286,18 @@ export default function HomeScreen() {
                   </Link>
                 ))}
               </div>
+              <div className="mt-1 flex justify-center gap-1.5" aria-hidden="true">
+                {upcoming.map((f, i) => (
+                  <span
+                    key={f.id}
+                    className={`h-1 rounded-full transition-all duration-300 ${
+                      i === festivalRail.active ? 'w-4 bg-saffron-400' : 'w-1 bg-white/25'
+                    }`}
+                  />
+                ))}
+              </div>
             </section>
           )}
-
-          {/* ── The shop ────────────────────────────────────────────── */}
-          <section aria-labelledby="shop-heading" className="px-4">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <h2 id="shop-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-white">
-                  <Store size={16} className="text-forest-300" /> Need it today?
-                </h2>
-                <p className="mt-0.5 text-[11px] text-white/50">Cakes, gifts, flowers and pooja essentials — no planning required.</p>
-              </div>
-              <Link to="/shop" className="shrink-0 text-[11px] font-bold text-saffron-300">
-                {CTA.shop} →
-              </Link>
-            </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-2.5">
-              {SHOP_CATEGORIES.map(cat => (
-                <Link
-                  key={cat.id}
-                  to={`/shop/${encodeURIComponent(cat.id)}`}
-                  className="group relative h-24 overflow-hidden rounded-2xl ring-1 ring-white/10"
-                >
-                  <ProductImage
-                    query={SHOP_QUERIES[cat.id] ?? cat.label}
-                    emoji={cat.emoji}
-                    className="absolute inset-0 h-full w-full"
-                    cinematic
-                  />
-                  <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-plum-950/90 to-transparent" />
-                  <span className="absolute inset-x-0 bottom-0 truncate p-2 text-[10px] font-extrabold text-white">
-                    {cat.label}
-                  </span>
-                </Link>
-              ))}
-              <Link
-                to="/shop"
-                className="flex h-24 flex-col items-center justify-center gap-1 rounded-2xl bg-white/[0.06] text-white ring-1 ring-white/10 transition-transform active:scale-95"
-              >
-                <ChevronRight size={18} className="text-saffron-300" />
-                <span className="text-[10px] font-extrabold">See all</span>
-              </Link>
-            </div>
-          </section>
-
-          <div className="px-4">
-            <ReferAndEarn />
-          </div>
 
           {/* ── How this works ──────────────────────────────────────
               Signed-out visitors get the full explanation; signed-in

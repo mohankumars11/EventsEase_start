@@ -1,5 +1,25 @@
 import { EVENT_DATA } from './eventServicesData'
 import { CELEBRATION_TIERS } from './celebrationTiers'
+import { GENERATED_DECOR_PHOTOS } from '../config/generatedDecorSamples'
+
+/**
+ * The photographs for one occasion, already resolved and committed.
+ *
+ * GENERATED_DECOR_PHOTOS is keyed `occasionId/variant` — "birthday/balloon-arch",
+ * "birthday/dessert-table" — with exactly four per occasion across all fifteen,
+ * which happens to line up one-to-one with EVENT_DATA's ids.
+ *
+ * These are static URLs, so a card can cycle through all four for free. The
+ * alternative — ProductImage's live `query` search — is capped at 24 lookups
+ * per page load app-wide, and fifteen occasions times four frames is sixty.
+ */
+function photosFor(occasionId) {
+  const prefix = `${occasionId}/`
+  return Object.entries(GENERATED_DECOR_PHOTOS)
+    .filter(([key]) => key.startsWith(prefix))
+    .map(([, photo]) => photo?.url)
+    .filter(Boolean)
+}
 
 /**
  * Everything Sambramo can be asked for, in the two shapes a customer thinks in.
@@ -79,6 +99,8 @@ export const OCCASIONS = Object.values(EVENT_DATA).map(e => ({
   emoji: e.emoji ?? e.icon,
   tagline: e.tagline,
   gradient: e.heroGradient ?? e.gradient,
+  /** Four real photographs of this occasion, for the card to cycle. */
+  photos: photosFor(e.id),
   serviceCount: e.services.length,
   // Hampers are add-ons, not celebrations you can book on their own — counting
   // them would inflate "4 packages" on an occasion that really offers two.

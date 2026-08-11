@@ -277,6 +277,72 @@ export const CELEBRATION_TIERS = [
     accent: 'border-red-200 bg-gradient-to-br from-red-50 to-amber-50',
     badge: 'bg-gradient-to-r from-red-500 to-amber-500 text-white',
   },
+  /**
+   * The two largest scales.
+   *
+   * Named deliberately without religious or dynastic reference. "Royal
+   * Mysuru / Arasu Vaibhava" above is a place and its palace tradition, which
+   * reads as heritage rather than faith and is fine; but a ladder that keeps
+   * climbing on royal or devotional imagery starts to exclude the customer
+   * who does not see themselves in it. These two are secular and purely
+   * descriptive: a great assembly, and a sea of people. Both are ordinary
+   * Kannada, which is the register the rest of the ladder already speaks
+   * (Aptaru, Manetumba, Nimma Kanasu).
+   */
+  {
+    id: 'maha_samavesha',
+    name: 'The Grand Assembly',
+    localName: 'Maha Samavesha',
+    emoji: '🎪',
+    tagline: 'A whole community, seated and served',
+    description:
+      'Convention scale. Multiple serving lines running at once, a marquee big enough that nobody eats standing, and a crew sized so two thousand people are through dinner without a queue forming.',
+    guests: { min: 1200, max: 2000, typical: 1600 },
+    coordinationFee: 100000,
+    defaultDecor: 'royal_marquee',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'videography', 'dj', 'emcee', 'transport', 'bouncers', 'live_music', 'makeup'],
+    coordination: 'A lead coordinator, section managers and a standing crew on site for the full setup, event and teardown',
+    onSiteManager: true,
+    menuAllowance: { welcome: 5, starters: 9, mains: 7, curries: 9, accompaniments: 12, sweets: 6, counters: 5 },
+    highlights: [
+      'Multiple parallel serving lines, so no queue forms',
+      'Marquee, stage and full floral installation',
+      'Five or more live counters',
+      'Crowd flow, parking and guest hospitality planned in advance',
+      'Multi-camera video with a same-day edit',
+    ],
+    accent: 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-sky-50',
+    badge: 'bg-gradient-to-r from-indigo-500 to-sky-500 text-white',
+  },
+  {
+    id: 'jana_sagara',
+    name: 'Sea of People',
+    localName: 'Jana Sagara',
+    emoji: '🌊',
+    tagline: 'The scale where logistics is the event',
+    description:
+      'Past a certain size the food is the easy part. This is a planned operation: staggered seating, its own water and power, a medical point, and a control desk that knows where every one of your guests is meant to be.',
+    // Finite on purpose. tierForGuests() walks this list and hands anything
+    // past the last band to BESPOKE_TIER, which carries no price — an
+    // open-ended `max: null` here would break that comparison and silently
+    // price a 10,000-guest event off a 3,500-guest tier.
+    guests: { min: 2000, max: 3500, typical: 2600 },
+    coordinationFee: 160000,
+    defaultDecor: 'royal_marquee',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'videography', 'dj', 'emcee', 'transport', 'bouncers', 'live_music', 'makeup'],
+    coordination: 'A full operations team: event director, section leads, a control desk and crew across every shift',
+    onSiteManager: true,
+    menuAllowance: { welcome: 6, starters: 10, mains: 8, curries: 10, accompaniments: 14, sweets: 7, counters: 6 },
+    highlights: [
+      'Staggered seating in batches, so nobody waits standing',
+      'Independent water, power backup and a medical point',
+      'Six or more live counters with dedicated replenishment',
+      'Parking, crowd marshals and a control desk on site',
+      'Full photo and video crew with drone coverage',
+    ],
+    accent: 'border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-50',
+    badge: 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white',
+  },
 ]
 
 /**
@@ -292,10 +358,13 @@ export const BESPOKE_TIER = {
   name: 'Beyond This',
   localName: 'Nimma Kanasu',
   emoji: '✨',
-  tagline: 'More than 1,200 guests, or nothing on this page fits',
+  tagline: 'More than 3,500 guests, or nothing on this page fits',
   description:
     'Multi-day weddings, corporate flagships, anything with its own logistics. We will not put an automatic number on this — a coordinator builds it with you and you see every line before you agree to any of it.',
-  guests: { min: 1200, max: null },
+  // Tracks the top of CELEBRATION_TIERS. Was 1,200 when Royal Mysuru was the
+  // last rung; the ladder now prices to 3,500, so the honest exit starts
+  // above that.
+  guests: { min: 3500, max: null },
   accent: 'border-plum-200 bg-plum-50',
   badge: 'bg-plum-100 text-plum-700',
 }

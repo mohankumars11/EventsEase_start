@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom'
 import { Users, Lock, ArrowRight, Check, Ticket } from 'lucide-react'
 import { CELEBRATION_TIERS, LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { formatINR } from '../../utils/format'
+import { useAutoScrollRail } from '../../hooks/useAutoScrollRail'
 
 /**
- * The six scales of celebration — Aptaru through Royal Mysuru.
+ * The eight scales of celebration — Aptaru through Jana Sagara.
  *
  * This replaces PackageRail, which showed one package per occasion ("Grand
  * Celebration", "Popular") on the home screen. Two things were wrong with that
@@ -20,8 +21,8 @@ import { formatINR } from '../../utils/format'
  * customer actually starts on. Nobody opens this app thinking "I want the
  * premium package"; they think "there'll be about sixty people". The tiers are
  * indexed exactly that way, they are occasion-agnostic so one rail serves
- * everybody, and they were already real data — the six of them drive the price
- * builder's whole calculation and no customer had ever been shown them.
+ * everybody, and they were already real data — they drive the price builder's
+ * whole calculation and no customer had ever been shown them.
  *
  * ── Prices ─────────────────────────────────────────────────────────────
  * `coordinationFee` is the one number a tier owns outright: the fixed human
@@ -37,6 +38,10 @@ import { formatINR } from '../../utils/format'
  * actually be produced — not to a payment for something not yet configured.
  */
 export default function TierRail({ offer }) {
+  // The rail advances itself — see useAutoScrollRail for why it uses the
+  // real scroll container and why it never resumes after a touch.
+  const { ref: trackRef, active, handlers } = useAutoScrollRail(CELEBRATION_TIERS.length)
+
   const offerLabel = offer
     ? offer.discount_type === 'percent'
       ? `${Number(offer.discount_value)}% off`
@@ -57,7 +62,11 @@ export default function TierRail({ offer }) {
         </p>
       </div>
 
-      <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x scroll-pl-4">
+      <div
+        ref={trackRef}
+        {...handlers}
+        className="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x snap-mandatory scroll-pl-4"
+      >
         {CELEBRATION_TIERS.map(t => (
           <Link
             key={t.id}
@@ -126,8 +135,21 @@ export default function TierRail({ offer }) {
         ))}
       </div>
 
+      {/* Where you are in the deck. Also the only hint, on a phone, that
+          there are eight of these rather than the two on screen. */}
+      <div className="mt-1 flex justify-center gap-1.5" aria-hidden="true">
+        {CELEBRATION_TIERS.map((t, i) => (
+          <span
+            key={t.id}
+            className={`h-1 rounded-full transition-all duration-300 ${
+              i === active ? 'w-4 bg-saffron-400' : 'w-1 bg-white/25'
+            }`}
+          />
+        ))}
+      </div>
+
       {/* The destination of the ladder, stated once under it rather than
-          repeated on six cards. */}
+          repeated on every card. */}
       <div className="px-4">
         <Link
           to="/plan/build"

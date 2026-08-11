@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { BadgeCheck, Ticket, ArrowRight } from 'lucide-react'
-import ProductImage from '../shop/ProductImage'
+import RotatingPhoto from './RotatingPhoto'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -32,7 +32,7 @@ import { formatINR } from '../../utils/format'
  * thing on both halves of the business. When no coupon applies, no ribbon: an
  * empty offer slot is better than a decorative one nobody can redeem.
  */
-export default function OccasionCard({ occasion, offer }) {
+export default function OccasionCard({ occasion, offer, stagger = 0 }) {
   const o = occasion
 
   // What the ribbon says. Percent coupons are stated as the percentage
@@ -46,11 +46,17 @@ export default function OccasionCard({ occasion, offer }) {
   return (
     <Link to={`/services/${o.id}`} className="home-card group flex flex-col">
       <span className="relative block">
-        <ProductImage
-          query={`Indian ${o.name} celebration decoration party`}
+        {/* Four real photographs of this occasion, cross-fading, rather than
+            one still. A single stock frame says we own a stock photo; four
+            says we have done this, which is what makes somebody picture their
+            own day. `stagger` keeps the fifteen cards from flipping in
+            unison, which reads as the page glitching. */}
+        <RotatingPhoto
+          photos={o.photos}
           emoji={o.emoji}
+          alt={`${o.name} arranged by Sambramo`}
           className="aspect-[5/4] w-full"
-          cinematic
+          stagger={stagger}
         />
         {/* Bottom scrim so the title stays readable over any photo the
             resolver returns — the images are searched, not art-directed, so
