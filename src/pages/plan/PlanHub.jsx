@@ -14,6 +14,8 @@ import PlanAppBar from '../../components/plan/PlanAppBar'
 import ServiceShelf from '../../components/plan/ServiceShelf'
 import PerksDeck from '../../components/plan/PerksDeck'
 import OffersRail from '../../components/shop/OffersRail'
+import OccasionCard from '../../components/home/OccasionCard'
+import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 
 /**
  * The plan hub — everything Sambramo can be asked for, on one screen.
@@ -55,6 +57,7 @@ export default function PlanHub() {
   const [searchParams] = useSearchParams()
   const { totalCount, cartPath } = useCart()
   const { city, chosen } = useCity()
+  const offers = usePublicOffers()
   const [query, setQuery] = useState('')
 
   const meta = occasionMeta(searchParams.get('type'), searchParams.get('festival'))
@@ -157,38 +160,16 @@ export default function PlanHub() {
               </p>
             </div>
           ) : (
+            // The same card the home screen uses. One occasion should not look
+            // like two different products depending on which screen you met it
+            // on.
             <div className="mt-3 grid grid-cols-2 gap-3 px-4">
               {matchedOccasions.map(o => (
-                <Link
+                <OccasionCard
                   key={o.id}
-                  to={`/services/${o.id}`}
-                  className="home-card group flex flex-col p-3.5"
-                >
-                  <span className="text-[26px] leading-none" aria-hidden="true">{o.emoji}</span>
-                  <span className="mt-2 block text-[14px] font-extrabold leading-tight text-gray-900">
-                    {o.name}
-                  </span>
-                  <span className="mt-0.5 block text-[10px] leading-snug text-gray-500 line-clamp-2">
-                    {o.tagline}
-                  </span>
-
-                  <span className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold text-gray-400">
-                    <span>{o.serviceCount} services</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{o.packageCount} packages</span>
-                  </span>
-
-                  {/* The entry price, from real package data. "Starting at" is
-                      the number that decides whether someone taps at all. */}
-                  {Number.isFinite(o.fromPrice) && (
-                    <span className="mt-2 flex items-center justify-between gap-1 rounded-xl bg-plum-50 px-2.5 py-1.5">
-                      <span className="text-[10px] font-semibold text-plum-500">from</span>
-                      <span className="text-[12px] font-extrabold text-plum-800">
-                        {formatINR(o.fromPrice)}
-                      </span>
-                    </span>
-                  )}
-                </Link>
+                  occasion={o}
+                  offer={bestOfferFor(o.fromPrice, offers)}
+                />
               ))}
             </div>
           )}

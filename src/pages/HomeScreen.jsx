@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, Sparkles, Clock, ChevronRight, Store, PhoneCall,
+  ArrowRight, Clock, ChevronRight, Store, PhoneCall,
   MessageCircle, SearchX, CalendarHeart, ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -9,8 +9,9 @@ import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
 import { SHOP_CATEGORIES } from '../config/shop'
 import { FESTIVALS } from '../data/festivals'
-import { UPCOMING_FESTIVALS, EVENT_DATA } from '../data/eventServicesData'
-import { usePublicOffers } from '../hooks/usePublicOffers'
+import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
+import { OCCASIONS } from '../data/planCatalog'
+import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
 import OffersRail from '../components/shop/OffersRail'
@@ -19,7 +20,9 @@ import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import PromoDeck from '../components/home/PromoDeck'
-import EventOfferCard from '../components/home/EventOfferCard'
+import OccasionCard from '../components/home/OccasionCard'
+import TierRail from '../components/home/TierRail'
+import ShopPicksRail from '../components/home/ShopPicksRail'
 import ReferAndEarn from '../components/customer/ReferAndEarn'
 
 /**
@@ -188,34 +191,33 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
-          {/* ── What are we celebrating ─────────────────────────────── */}
+          {/* ── What are we celebrating ───────────────────────────────
+              Was a horizontal rail of 72×72 thumbnails with a caption under
+              each. At that size the photograph was a smudge, so fifteen
+              occasions read as fifteen identical grey squares; nothing said
+              what one costs or included; and being a scroller, eleven of them
+              were behind a swipe most people never make.
+
+              A two-per-row grid fixes all three at once — the photo becomes
+              legible, there is room for the price and a live coupon, and every
+              occasion is reachable by scrolling the page you are already
+              scrolling. */}
           <section aria-labelledby="occasions-heading">
             <div className="px-4">
               <h2 id="occasions-heading" className="text-[15px] font-extrabold text-white">
                 What are we celebrating?
               </h2>
               <p className="mt-0.5 text-[11px] text-white/50">
-                Pick the occasion — we'll take it from there.
+                Every one of these, arranged end to end — pick yours.
               </p>
             </div>
-            <div className="mt-3 flex gap-3.5 overflow-x-auto px-4 pb-2 scrollbar-hide scroll-pl-4">
-              {EVENT_TYPES.filter(t => t.id !== 'other').map(et => (
-                <Link
-                  key={et.id}
-                  to={`/plan?type=${et.id}`}
-                  className="group flex w-[72px] shrink-0 flex-col items-center gap-1.5"
-                >
-                  <span className="relative block h-[72px] w-[72px] overflow-hidden rounded-2xl ring-2 ring-white/15 transition-all group-hover:ring-saffron-400 group-active:scale-95">
-                    <ProductImage
-                      query={`Indian ${et.label} celebration decoration`}
-                      emoji={et.emoji}
-                      className="h-full w-full"
-                      cinematic
-                    />
-                    <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-plum-950/75 to-transparent" />
-                  </span>
-                  <span className="text-center text-[10px] font-bold leading-tight text-white/80">{et.label}</span>
-                </Link>
+            <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+              {OCCASIONS.map(o => (
+                <OccasionCard
+                  key={o.id}
+                  occasion={o}
+                  offer={bestOfferFor(o.fromPrice, offers)}
+                />
               ))}
             </div>
           </section>
@@ -223,8 +225,19 @@ export default function HomeScreen() {
           {/* ── Live shop coupons ───────────────────────────────────── */}
           <OffersRail />
 
-          {/* ── Packages: the concierge's own "offers" ──────────────── */}
-          <PackageRail />
+          {/* ── Real products, priced, one tap from the front door ──── */}
+          <ShopPicksRail />
+
+          {/* ── The six scales of celebration ─────────────────────────
+              Replaces PackageRail, which put "Grand Celebration Birthday,
+              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
+              screen of a birthday decision shown to someone who has not said
+              they are planning a birthday, repeated once per occasion.
+
+              The tiers are the axis customers actually start on: nobody thinks
+              "I want the premium package", they think "there'll be about sixty
+              people". One rail serves every occasion. */}
+          <TierRail offer={bestOfferFor(50000, offers)} />
 
           {/* ── Festivals, counting down ────────────────────────────── */}
           {upcoming.length > 0 && (
@@ -329,45 +342,6 @@ export default function HomeScreen() {
 
       <StickyCartBar />
     </div>
-  )
-}
-
-/* ── Packages ─────────────────────────────────────────────────────────── */
-function PackageRail() {
-  // One package per event type, favouring the one people actually book, so
-  // the rail is a spread of occasions rather than three tiers of birthday.
-  const picks = useMemo(() => {
-    const out = []
-    for (const event of Object.values(EVENT_DATA)) {
-      if (!event?.packages?.length || !event.name) continue
-      const pkg = event.packages.find(p => p.popular)
-        ?? event.packages.find(p => p.type !== 'hamper')
-        ?? event.packages[0]
-      if (pkg) out.push({ pkg, event })
-    }
-    return out.slice(0, 10)
-  }, [])
-
-  if (picks.length === 0) return null
-
-  return (
-    <section aria-labelledby="pkg-heading" style={{ scrollMarginTop: 'var(--home-appbar-h, 7.75rem)' }}>
-      <div className="px-4">
-        <h2 id="pkg-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-white">
-          <Sparkles size={16} className="text-saffron-300" /> Arranged by Sambramo
-        </h2>
-        <p className="mt-0.5 text-[11px] text-white/50">
-          Whole celebrations, one price, one team. Tap to see everything included.
-        </p>
-      </div>
-      <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-3 scrollbar-hide snap-x scroll-pl-4">
-        {picks.map(({ pkg, event }, i) => (
-          <div key={`${event.id}-${pkg.id}`} className="w-[212px] shrink-0 snap-start">
-            <EventOfferCard pkg={pkg} event={event} stagger={i * 420} />
-          </div>
-        ))}
-      </div>
-    </section>
   )
 }
 
