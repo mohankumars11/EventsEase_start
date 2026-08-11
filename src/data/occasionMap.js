@@ -1,6 +1,7 @@
 import { EVENT_DATA } from './eventServicesData'
 import { EVENT_TYPES } from '../config/sambramo'
 import { FESTIVALS } from './festivals'
+import { entryPriceFor, PACKAGE_COUNT } from './occasionPackages'
 
 /**
  * Translation between the app's two occasion vocabularies.
@@ -99,7 +100,6 @@ export function occasionMeta(type, festivalId) {
   const entry = catalogId ? EVENT_DATA[catalogId] : null
 
   if (entry) {
-    const packages = entry.packages.filter(p => p.type !== 'hamper')
     return {
       known:         true,
       catalogId,
@@ -108,7 +108,8 @@ export function occasionMeta(type, festivalId) {
       tagline:       entry.tagline,
       heroGradient:  entry.heroGradient,
       serviceCount:  entry.services.length,
-      packageCount:  packages.length,
+      // The eight scales, the same ladder every occasion is sold on.
+      packageCount:  PACKAGE_COUNT,
     }
   }
 
@@ -159,9 +160,6 @@ export const CATALOG_TOTALS = {
     Object.values(EVENT_DATA).flatMap(e => e.services.map(s => s.id))
   ).size,
   cheapestPackage: Math.min(
-    ...Object.values(EVENT_DATA)
-      .flatMap(e => e.packages.filter(p => p.type !== 'hamper'))
-      .map(p => p.price_min)
-      .filter(Number.isFinite)
+    ...Object.keys(EVENT_DATA).map(entryPriceFor).filter(Number.isFinite)
   ),
 }

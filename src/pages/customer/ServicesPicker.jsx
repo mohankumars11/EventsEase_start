@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, X, Sparkles } from 'lucide-react'
 import { EVENT_LIST } from '../../data/eventServicesData'
+import { PACKAGE_COUNT } from '../../data/occasionPackages'
 import { leadSample, SAMPLES_BY_EVENT } from '../../config/decorSamples'
 import { useAuth } from '../../context/AuthContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
@@ -106,7 +107,7 @@ export default function ServicesPicker() {
                   <p className={`font-bold text-sm ${ev.textColor}`}>{ev.name}</p>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{ev.tagline}</p>
                   <p className="text-[11px] text-gray-400 mt-2">
-                    {ev.services.length} services · {ev.packages.length} packages
+                    {ev.services.length} services · {PACKAGE_COUNT} scales
                     {lead && ` · ${SAMPLES_BY_EVENT[ev.id].length} décor samples`}
                   </p>
                 </div>

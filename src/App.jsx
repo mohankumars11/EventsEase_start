@@ -334,7 +334,19 @@ function AppRoutes() {
 
       {/* ── Services & packages catalog (public) ────── */}
       <Route path="/services" element={<AppShell><ServicesPicker /></AppShell>} />
-      <Route path="/services/:eventId" element={<AppShell><EventServices /></AppShell>} />
+      {/* The occasion page draws its own chrome, the same as home, /shop and
+          /plan. On AppShell it arrived under the marketing navbar, a "Pilot —
+          Bengaluru — somewhere else? [notify me]" bar, a "Back to Home" link
+          and a 400px sitemap footer — so somebody who had just tapped
+          "Birthday" on the home screen was met with a form inviting them to
+          register interest in a different city, and a footer selling cakes and
+          pooja samagri under a page about their party.
+
+          It now carries its own bar (one exit, the occasion, the city, the
+          cart) and its own footer (EventFooter: what we commit to, what
+          happens after you send it, a human to call) — the reassurance that
+          page actually needs, rather than a sitemap. */}
+      <Route path="/services/:eventId" element={<ScreenShell><EventServices /></ScreenShell>} />
       <Route path="/plan/confirmation" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <BareShell><PlanConfirmation /></BareShell>

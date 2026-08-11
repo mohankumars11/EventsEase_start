@@ -19,9 +19,22 @@ export default function Cart() {
   const [editingEvent, setEditingEvent] = useState(null) // eventId currently being edited
 
   const hasAnything = cart.items.length > 0 || cart.packages.length > 0
-  const hamperItems = cart.packages.filter(p => p.pkg.type === 'hamper')
-  const hamperTotal = hamperItems.reduce((sum, p) => sum + (p.complimentary ? 0 : (p.pkg.price_min ?? 0)), 0)
-  const hasQuoteItems = cart.items.length > 0 || cart.packages.some(p => p.pkg.type !== 'hamper')
+
+  /**
+   * What the scales in this cart add up to, as a band.
+   *
+   * A package used to be a hand-written bundle with an invented range, so this
+   * summary could only ever say "Custom quote". A package is now a priced
+   * celebration tier — the estimate came out of the same quote engine the
+   * builder uses — so the cart can state the band it was quoted, which is the
+   * number the customer already saw and expects to see again here.
+   *
+   * Still an estimate, and still says so: the coordinator confirms it against
+   * the real date, venue and headcount before anything is booked.
+   */
+  const pkgLow  = cart.packages.reduce((sum, p) => sum + (p.pkg.price_min ?? 0), 0)
+  const pkgHigh = cart.packages.reduce((sum, p) => sum + (p.pkg.price_max ?? p.pkg.price_min ?? 0), 0)
+  const hasPackageEstimate = cart.packages.length > 0 && pkgLow > 0
 
   // Group items by event
   const byEvent = {}
@@ -175,14 +188,17 @@ export default function Cart() {
                         <Package size={18} className="text-purple-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm">{p.pkg.name}</p>
-                        <p className="text-xs text-gray-400">
-                          {p.pkg.type === 'hamper'
-                            ? `🎁 Gift hamper · ${p.pkg.items?.length ?? 0} items`
-                            : `Complete package${p.pkg.includes ? ` · ${p.pkg.includes.length} services included` : ''}`}
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {p.pkg.emoji ? `${p.pkg.emoji} ` : ''}{p.pkg.name}
                         </p>
-                        <p className={`text-xs font-semibold mt-0.5 ${p.complimentary ? 'text-green-600' : 'text-amber-600'}`}>
-                          {p.complimentary ? 'FREE 🎁' : (p.pkg.type === 'hamper' ? formatINR(p.pkg.price_min) : 'Custom quote')}
+                        <p className="text-xs text-gray-400">
+                          {p.pkg.typicalGuests ? `Around ${p.pkg.typicalGuests} guests` : 'Complete celebration'}
+                          {p.pkg.includes?.length ? ` · ${p.pkg.includes.length} services included` : ''}
+                        </p>
+                        <p className="text-xs font-semibold mt-0.5 text-amber-600">
+                          {Number.isFinite(p.pkg.price_min) && Number.isFinite(p.pkg.price_max)
+                            ? `Est. ${formatINR(p.pkg.price_min)} – ${formatINR(p.pkg.price_max)}`
+                            : 'Custom quote'}
                         </p>
                       </div>
                     </div>
@@ -253,19 +269,20 @@ export default function Cart() {
                 <span>Packages</span>
                 <span className="font-medium">{cart.packages.length}</span>
               </div>
-              {hamperItems.length > 0 && (
-                <div className="flex justify-between text-sm text-gray-600 border-t border-amber-200 pt-3">
-                  <span>🎁 Gift hampers</span>
-                  <span className="font-semibold text-gray-900">{hamperTotal > 0 ? formatINR(hamperTotal) : 'FREE'}</span>
+              {hasPackageEstimate && (
+                <div className="flex justify-between gap-3 text-sm text-gray-600 border-t border-amber-200 pt-3">
+                  <span>Estimated for the scales you picked</span>
+                  <span className="font-semibold text-gray-900 text-right">
+                    {formatINR(pkgLow)} – {formatINR(pkgHigh)}
+                  </span>
                 </div>
               )}
-              {hasQuoteItems ? (
-                <p className="text-xs text-gray-500 pt-1">
-                  💬 No price shown for services &amp; packages on purpose — our team reviews your exact requirements and sends you one final quoted price in <strong>My Requests</strong>. Nothing is charged now.
-                </p>
-              ) : (
-                <p className="text-xs text-gray-500 pt-1">Fixed price — no quote needed.</p>
-              )}
+              <p className="text-xs text-gray-500 pt-1">
+                💬 Individual services are quoted rather than listed — our team reviews your exact
+                requirements and sends one final price in <strong>My Requests</strong>.
+                {hasPackageEstimate && ' The band above is the estimate you were shown, not a locked quote.'}
+                {' '}Nothing is charged now.
+              </p>
             </div>
 
             {error && (

@@ -1,5 +1,6 @@
 import { EVENT_DATA } from './eventServicesData'
 import { CELEBRATION_TIERS } from './celebrationTiers'
+import { entryPriceFor, PACKAGE_COUNT } from './occasionPackages'
 import { GENERATED_DECOR_PHOTOS } from '../config/generatedDecorSamples'
 
 /**
@@ -102,13 +103,13 @@ export const OCCASIONS = Object.values(EVENT_DATA).map(e => ({
   /** Four real photographs of this occasion, for the card to cycle. */
   photos: photosFor(e.id),
   serviceCount: e.services.length,
-  // Hampers are add-ons, not celebrations you can book on their own — counting
-  // them would inflate "4 packages" on an occasion that really offers two.
-  packageCount: e.packages.filter(p => p.type !== 'hamper').length,
-  // The honest entry price for this occasion: the cheapest real package.
-  fromPrice: Math.min(
-    ...e.packages.filter(p => p.type !== 'hamper').map(p => p.price_min).filter(Number.isFinite)
-  ),
+  // Every occasion offers the same eight scales — that is the point of a
+  // ladder. The count used to differ per occasion because the packages were
+  // hand-written and some occasions had simply had fewer of them typed out.
+  packageCount: PACKAGE_COUNT,
+  // The honest entry price: the cheapest real booking at the smallest rung,
+  // computed for this occasion's own cuisine, decor and services.
+  fromPrice: entryPriceFor(e.id),
 }))
   // Cheapest entry first, so the grid opens with the most approachable
   // celebrations rather than with weddings.

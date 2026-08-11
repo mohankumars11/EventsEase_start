@@ -106,6 +106,100 @@
            px-3.5 py-2 text-xs font-bold transition-colors;
   }
 
+  /* ── Occasion pages (/services/:eventId) ───────────────────────────
+     The same festival-night ground as home, tinted by the occasion.
+
+     Home is one screen with one mood, so its lights are baked into
+     .home-canvas. An occasion page is fifteen screens, and a birthday and a
+     griha pravesh arriving in identical plum is the thing that made the old
+     page read as a template with a name swapped into it. So the three lights
+     are variables, set inline from config/occasionTheme.js, and the ground
+     underneath them stays constant — the room is the same, the lamps in it are
+     not.
+
+     The fallback values are the home canvas's own, so an occasion the theme
+     table has not been taught yet renders as plum rather than as a black
+     rectangle. */
+  .event-canvas {
+    --event-a: rgba(124, 58, 237, 0.40);
+    --event-b: rgba(245, 158, 11, 0.20);
+    --event-c: rgba(217, 70, 239, 0.16);
+    --coupon-notch: #120420;
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(95% 55% at 50% -8%,  var(--event-a) 0%, transparent 62%),
+      radial-gradient(60% 38% at 88% 12%,  var(--event-b) 0%, transparent 58%),
+      radial-gradient(72% 46% at 4% 40%,   var(--event-c) 0%, transparent 60%),
+      linear-gradient(180deg, #240740 0%, #180529 46%, #0e0318 100%);
+    background-attachment: fixed;
+  }
+  /* A faint engineering grid over the top third. It is what makes the page
+     read as *built* rather than as a poster — the brief asked for something
+     futuristic, and a grid is the cheapest honest way to say "this is a
+     configurator" without adding a single element to the DOM. Masked out
+     before it reaches the content, so nothing is ever read through it. */
+  .event-canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
+  }
+  .event-appbar {
+    background: linear-gradient(180deg, #240740 0%, #1d0635 100%);
+  }
+  /* The light card on the occasion ground. Same geometry as .home-card so the
+     two screens are one app; the lift on hover is a touch stronger because
+     these cards are the thing being chosen rather than browsed past. */
+  .event-card {
+    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
+           shadow-[0_2px_12px_-6px_rgba(14,3,24,0.6)]
+           transition-[transform,box-shadow] duration-300
+           hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(14,3,24,0.85)];
+  }
+  .event-glass {
+    @apply rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+  }
+  /* A chip in the occasion's own colour, on a light card. Written as a class
+     rather than an inline style so the flat grey can sit underneath as a
+     fallback — `color-mix` is well supported now but a chip that renders with
+     no background at all is not a failure worth risking for a tint. */
+  .event-tint {
+    background: #f3f4f6;
+    background: color-mix(in srgb, var(--event-ink) 10%, white);
+    color: var(--event-ink);
+  }
+  /* The selected scale. A conic sweep around the card's edge, drawn in the
+     border box only — the tier ladder is eight near-identical cards and the
+     selection has to be visible from across the page, not inferred from a
+     slightly different shade of ring. */
+  .event-halo {
+    position: relative;
+  }
+  .event-halo::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--halo-angle, 0deg),
+      var(--event-glow, #f59e0b),
+      rgba(255, 255, 255, 0.85),
+      var(--event-glow, #f59e0b),
+      rgba(255, 255, 255, 0.2),
+      var(--event-glow, #f59e0b)
+    );
+    animation: halo-spin 6s linear infinite;
+  }
+
   /* ── Storefront (/shop) ────────────────────────────────────────────
      The marketplace surface. Deep green ground, red reserved for
      savings. Scoped to the shop rather than dropped into the shared
@@ -374,6 +468,62 @@
     animation: deck-tick linear forwards;
   }
 
+  /* ── Occasion page motion ────────────────────────────
+     Three animations, each doing one job the redesign needs.
+
+     `halo-spin` turns the selected tier's conic border. An angle can only be
+     animated if the browser knows it is an angle, hence the @property — where
+     that is unsupported the gradient simply sits still, which is a static
+     coloured edge rather than a broken one.
+
+     `rise-in` is the staggered entrance for a grid of cards. The delay is a
+     variable set inline from the index, so twenty cards arrive as a wave
+     instead of as one block appearing — the difference between a page that
+     loaded and a page that was built for you.
+
+     `sheen` is the diagonal light that crosses a card on hover. Transform and
+     opacity only, so a grid of forty stays on the compositor. */
+  @property --halo-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes halo-spin {
+    to { --halo-angle: 360deg; }
+  }
+
+  @keyframes rise-in {
+    0%   { opacity: 0; transform: translateY(18px) scale(0.985); }
+    100% { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+  .rise-in {
+    opacity: 0;
+    animation: rise-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  @keyframes sheen {
+    0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+    35%  { opacity: 0.65; }
+    100% { transform: translateX(220%)  skewX(-18deg); opacity: 0; }
+  }
+  .sheen-on-hover { position: relative; overflow: hidden; }
+  .sheen-on-hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    opacity: 0;
+  }
+  .sheen-on-hover:hover::after,
+  .sheen-on-hover:focus-visible::after {
+    animation: sheen 0.9s ease forwards;
+  }
+
   /* ── Count up ────────────────────────────────────────── */
   @keyframes count-up {
     0%   { opacity: 0; transform: translateY(8px); }
@@ -523,6 +673,19 @@
   .animate-pulse-ring,
   .ken-burns {
     animation: none !important;
+  }
+  /* The occasion page's own motion. The halo becomes a still coloured edge
+     (the selection is still obvious), the sheen never fires, and the card
+     entrance resolves immediately rather than being suppressed — a card that
+     never animates in must still be visible, and `.rise-in` starts at
+     opacity 0. */
+  .event-halo::after,
+  .sheen-on-hover::after {
+    animation: none !important;
+  }
+  .rise-in {
+    animation: none !important;
+    opacity: 1;
   }
   /* The rotator stops advancing under this preference (see
      useReducedMotion in DetailRotator) and renders every line at
