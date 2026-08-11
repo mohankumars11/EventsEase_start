@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
+import { ChatProvider } from './context/ChatContext'
 import CitySheet from './components/common/CitySheet'
 import Navbar from './components/layout/Navbar'
 import BackToHomeButton from './components/layout/BackToHomeButton'
@@ -12,7 +13,6 @@ import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
-import FestivalBanner from './components/customer/FestivalBanner'
 import ServiceAreaBanner from './components/customer/ServiceAreaBanner'
 
 // The landing page is the entry point for essentially all first-time
@@ -119,20 +119,27 @@ function PageBoundary({ children }) {
 }
 
 /**
- * Public / pre-login chrome: header, festival ticker, footer, chat.
+ * Public / pre-login chrome: header, pilot-city bar, footer.
  * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
  * row of a page is never hidden underneath it.
+ *
+ * The scrolling festival ticker used to sit between the two bars, on every
+ * page in the app. It is gone. Home already runs a full festival rail — eight
+ * occasions, each with a countdown, a photo and its own route — so the ticker
+ * was the same content a second time, in a worse form: a 20s marquee is the
+ * one element on a page that never stops moving, it sat directly above the
+ * content on screens that had nothing to do with festivals, and a chip you
+ * have to hit while it slides is a target that moves out from under the
+ * thumb. Anything that needs a festival links to /festivals/:id directly.
  */
 function AppShell({ children }) {
   return (
     <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
       <ServiceAreaBanner />
-      <FestivalBanner />
       <BackToHomeButton />
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
       <Footer />
-      <ChatWidget />
     </div>
   )
 }
@@ -160,10 +167,8 @@ function DashboardShell({ children }) {
     <div className="flex flex-col min-h-screen pb-bottom-nav">
       <Navbar />
       <ServiceAreaBanner />
-      <FestivalBanner />
       <BackToHomeButton />
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
-      <ChatWidget />
     </div>
   )
 }
@@ -195,19 +200,21 @@ function BareShell({ children }) {
  * navigation. ChatWidget stays: support is the one piece of global chrome a
  * shopper actually reaches for mid-purchase.
  *
- * Deliberately not applied to /shop/cart or /shop/product/:id, which are
- * still the light-ground design and read correctly inside the standard shell.
+ * Deliberately not applied to /shop/product/:id, which is still the
+ * light-ground design and reads correctly inside the standard shell.
  *
  * Home joined it when the landing page and the customer dashboard collapsed
  * into one screen: it draws the same kind of sticky app bar, and stacking the
  * marketing navbar above a bar that already carries the city, the search and
  * the cart produced the identical duplication it does on /shop.
+ *
+ * The checkout joined it as well, for the strongest version of the same
+ * reason — see the /shop/cart route.
  */
 function ScreenShell({ children }) {
   return (
     <div className="flex min-h-screen flex-col pb-bottom-nav">
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
-      <ChatWidget />
     </div>
   )
 }
@@ -413,15 +420,23 @@ export default function App() {
         <CityProvider>
           <CartProvider>
             <ToastProvider>
+              <ChatProvider>
               <ScrollRestoration />
               <AppRoutes />
               <BottomNav />
+              {/* One assistant for the whole app, opened by the Help tab in
+                  BottomNav. It used to be mounted inside three separate
+                  shells, which is why it floated over the page: a component
+                  living inside the layout it must not disturb has nowhere to
+                  go but on top of it. */}
+              <ChatWidget />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —
                   so the control is identical everywhere and no page has to
                   own a copy of it. */}
               <CitySheet />
+              </ChatProvider>
             </ToastProvider>
           </CartProvider>
         </CityProvider>

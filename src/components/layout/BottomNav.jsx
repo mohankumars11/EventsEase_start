@@ -1,7 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, CalendarHeart, ShoppingBag } from 'lucide-react'
+import { Home, Store, Sparkles, CalendarHeart, ShoppingBag, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
+import { useChat } from '../../context/ChatContext'
+import { isFocusedRoute } from '../../config/chrome'
 
 /**
  * Phone-first primary navigation.
@@ -23,6 +25,7 @@ import { useCart } from '../../context/CartContext'
 export default function BottomNav() {
   const { user, profile } = useAuth()
   const { cartCount, cartPath } = useCart()
+  const { open: chatOpen, toggleChat } = useChat()
   const { pathname } = useLocation()
 
   const role = profile?.role
@@ -36,8 +39,8 @@ export default function BottomNav() {
   // Plan tab itself, and hiding the bar there would strand them with no way to
   // reach Home, Shop or Cart. The prefix match means listing '/plan/custom'
   // covers the wizard without covering its parent.
-  const HIDDEN_ON = ['/plan/custom', '/plan/confirmation', '/login', '/signup', '/auth/callback', '/onboarding']
-  if (HIDDEN_ON.some(p => pathname === p || pathname.startsWith(p + '/'))) return null
+  // The list is shared with the chat panel now — see config/chrome.js.
+  if (isFocusedRoute(pathname)) return null
 
   const home = user ? '/dashboard/customer' : '/'
 
@@ -57,12 +60,23 @@ export default function BottomNav() {
    */
   const celebrations = user ? '/dashboard/customer/events' : '/services'
 
+  /**
+   * Help is a tab, not a floating bubble.
+   *
+   * It used to be a 56px circle pinned over the bottom-right of every screen,
+   * which meant it covered the cart bar's "View cart", the builder's submit
+   * row and the corner of every modal — the exact buttons a thumb reaches for
+   * in the corner it rests in. In the bar it is in a strip the app already
+   * reserves, so it can never sit on top of anything, and it is still one tap
+   * from wherever you are.
+   */
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
     { to: '/shop',         icon: Store,         label: 'Shop' },
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
     { to: celebrations,    icon: CalendarHeart, label: user ? 'Events' : 'Occasions' },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
+    { action: toggleChat,  icon: MessageCircle, label: 'Help', active: chatOpen },
   ]
 
   function isActive(to) {
@@ -75,9 +89,51 @@ export default function BottomNav() {
       className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-safe shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]"
       aria-label="Primary"
     >
-      <ul className="flex items-stretch justify-around px-1">
-        {tabs.map(({ to, icon: Icon, label, primary, badge }) => {
-          const active = isActive(to)
+      <ul className="flex items-stretch justify-around px-0.5">
+        {tabs.map(({ to, icon: Icon, label, primary, badge, action, active: forcedActive }) => {
+          const active = forcedActive ?? isActive(to)
+
+          // What every tab looks like inside, whether it navigates or opens
+          // the assistant — so the one button in this bar can never drift
+          // away from the five links beside it.
+          const inner = (
+            <>
+              <span className="relative">
+                <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+                {badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {badge > 9 ? '9+' : badge}
+                  </span>
+                )}
+              </span>
+              <span className={`text-[10px] leading-none ${active ? 'font-bold' : 'font-medium'}`}>
+                {label}
+              </span>
+              {active && (
+                <span className="absolute top-0 w-8 h-0.5 rounded-full bg-saffron-400" />
+              )}
+            </>
+          )
+
+          const tabClass = `relative flex w-full flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 rounded-xl transition-colors ${
+            active ? 'text-plum-700' : 'text-gray-400 active:text-plum-600'
+          }`
+
+          if (action) {
+            return (
+              <li key={label} className="flex-1">
+                <button
+                  type="button"
+                  onClick={action}
+                  aria-expanded={active}
+                  aria-label={active ? 'Close the assistant' : 'Open the assistant'}
+                  className={tabClass}
+                >
+                  {inner}
+                </button>
+              </li>
+            )
+          }
 
           if (primary) {
             return (
@@ -101,24 +157,9 @@ export default function BottomNav() {
               <Link
                 to={to}
                 aria-current={active ? 'page' : undefined}
-                className={`relative flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 rounded-xl transition-colors ${
-                  active ? 'text-plum-700' : 'text-gray-400 active:text-plum-600'
-                }`}
+                className={tabClass}
               >
-                <span className="relative">
-                  <Icon size={20} strokeWidth={active ? 2.4 : 2} />
-                  {badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
-                      {badge > 9 ? '9+' : badge}
-                    </span>
-                  )}
-                </span>
-                <span className={`text-[10px] leading-none ${active ? 'font-bold' : 'font-medium'}`}>
-                  {label}
-                </span>
-                {active && (
-                  <span className="absolute top-0 w-8 h-0.5 rounded-full bg-saffron-400" />
-                )}
+                {inner}
               </Link>
             </li>
           )

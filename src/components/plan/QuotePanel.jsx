@@ -110,7 +110,7 @@ export default function QuotePanel({
 
   const body = (
     <>
-      <div className="px-5 py-4 bg-gradient-to-br from-plum-700 to-plum-800 text-white">
+      <div className="shrink-0 px-5 py-4 bg-gradient-to-br from-plum-700 to-plum-800 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">
@@ -136,7 +136,13 @@ export default function QuotePanel({
         </div>
       </div>
 
-      <div className={`divide-y divide-gray-100 overflow-y-auto ${isSheet ? 'max-h-[45vh]' : ''}`}>
+      {/* The breakdown is the ONLY part that scrolls. It used to be capped at
+          45vh inside a sheet that was itself anchored above the tab bar with
+          no ceiling, so on a phone the total, the header and — depending on
+          how many lines the quote had — the "Get this confirmed" button were
+          pushed off the top of the screen with no way to scroll to them.
+          Header and footer are pinned now and this takes what is left. */}
+      <div className={`divide-y divide-gray-100 overflow-y-auto ${isSheet ? 'min-h-0 flex-1' : ''}`}>
         {lines.map(line => (
           <div key={line.key} className="flex items-start justify-between gap-3 px-5 py-3">
             <div className="min-w-0">
@@ -194,7 +200,7 @@ export default function QuotePanel({
         )}
       </div>
 
-      <div className="px-5 py-4 space-y-3 border-t border-gray-100 pb-safe">
+      <div className="shrink-0 px-5 py-4 space-y-3 border-t border-gray-100 pb-safe">
         <p className="flex items-start gap-2 text-[11px] text-gray-500 leading-relaxed">
           <Info size={13} className="mt-0.5 shrink-0 text-gray-400" />
           <span>
@@ -227,27 +233,32 @@ export default function QuotePanel({
 
   if (!isSheet) return <div className="card overflow-hidden">{body}</div>
 
+  /* The expanded sheet owns the whole viewport, not a slot above the tab bar.
+     It is a modal dialog, so it covers the tab bar (z-50) and the desktop
+     chat dock (z-45) rather than leaving live buttons lit around its edges,
+     and it is capped at 92dvh so the grab handle and the price are always on
+     screen no matter how long the breakdown gets. */
   return (
-    <>
+    <div className="lg:hidden fixed inset-0 z-[60] flex flex-col justify-end">
       <button
         aria-label="Close the estimate"
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-black/50"
+        className="absolute inset-0 bg-black/50"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Estimated total"
-        className="relative z-50 rounded-t-2xl bg-white overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.25)]"
+        className="relative flex max-h-[92dvh] flex-col rounded-t-2xl bg-white overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.25)]"
       >
         {/* A grab handle. It does nothing on its own, and that is fine — it is
             the universal "this panel moves" signal, and it makes the header
             read as dismissable before anybody hunts for the X. */}
-        <div className="flex justify-center pt-2 pb-1">
+        <div className="shrink-0 flex justify-center pt-2 pb-1">
           <span className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
         {body}
       </div>
-    </>
+    </div>
   )
 }

@@ -772,8 +772,13 @@ export default function PlanningWizard() {
           )}
         </div>
 
-        {/* ── Nav footer ─────────────────────────────────── */}
-        <div className="border-t border-gray-100 px-8 lg:px-12 py-5 flex items-center justify-between bg-gray-50">
+        {/* ── Nav footer ─────────────────────────────────────
+            Sticky on a phone. Steps 5 and 6 are a screen and a half of chips
+            and fields, and a static footer meant Continue sat below all of
+            it — so the way forward was invisible exactly when the step looked
+            most like a wall. It stays in the flow on desktop, where the panel
+            is already the height of the viewport. */}
+        <div className="sticky bottom-0 z-10 border-t border-gray-100 px-8 lg:px-12 py-4 lg:py-5 pb-safe flex items-center justify-between bg-gray-50/95 backdrop-blur">
           <button
             onClick={goBack}
             disabled={step === 1 || animating}

@@ -605,25 +605,40 @@ export default function CelebrationBuilder() {
         </div>
       </div>
 
-      {/* Phone: the number is pinned to the bottom and expands into the full
-          breakdown. `above-bottom-nav` clears the app's fixed tab bar and
-          `pr-chat-dock` clears the chat launcher, which otherwise landed on
-          the submit button at the right end of this row. */}
-      {showQuote && (
-        <div className={`lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock ${
-          sheetOpen ? '' : 'bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]'
-        }`}>
+      {/* Phone: the price is one pinned row — `above-bottom-nav` clears the
+          app's tab bar, `pr-chat-dock` clears the desktop chat launcher in
+          the md–lg band where this bar is still on screen and the launcher
+          sits in the same corner.
+
+          Tapping Review swaps this row for the full sheet, which positions
+          itself (a modal over the whole viewport, see QuotePanel) rather than
+          growing upward out of this slot — that is what used to push the
+          total and the confirm button off the top of the screen. */}
+      {showQuote && !sheetOpen && (
+        <div className="lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
           <QuotePanel
             variant="sheet"
+            expanded={false}
             quote={quote}
             blocked={blocked}
             submitting={submitting}
             onSubmit={() => submit()}
-            expanded={sheetOpen}
             onToggleExpanded={() => setSheetOpen(true)}
             onClose={() => setSheetOpen(false)}
           />
         </div>
+      )}
+
+      {showQuote && sheetOpen && (
+        <QuotePanel
+          variant="sheet"
+          expanded
+          quote={quote}
+          blocked={blocked}
+          submitting={submitting}
+          onSubmit={() => submit()}
+          onClose={() => setSheetOpen(false)}
+        />
       )}
     </div>
   )

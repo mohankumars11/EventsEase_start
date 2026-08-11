@@ -145,6 +145,87 @@
     @apply shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full
            text-xs font-bold border transition-colors whitespace-nowrap;
   }
+
+  /* ── Checkout (/shop/cart) ────────────────────────────────────────
+     The cart is the last room of the storefront, not a different building,
+     so it keeps the shop's deep green ground rather than reverting to the
+     app's cream. Leaving /shop for the cart used to swap a dark marketplace
+     for a flat cream form with a marketing footer under it, which reads as
+     having been handed off to another website at the exact moment someone
+     is about to pay.
+
+     It is not a copy of .shop-canvas either. The storefront's ground is a
+     single crown of green behind a dense grid of photos; here the grid is
+     gone and there are four or five white panels floating on a mostly empty
+     page, so the ground has to carry the room by itself. Three lights do
+     that: an emerald crown overhead, a marigold lamp off the top-right
+     corner (the brand's saffron, and the warm end of a celebration), and a
+     low plum wash on the left that ties back to the concierge side of the
+     product. It settles to near-black at the bottom so the sticky total bar
+     has something to sit against.
+
+     `fixed` attachment so the lights stay put while the page scrolls under
+     them — the panels move, the room does not. */
+  .checkout-canvas {
+    --coupon-notch: #041a14;
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(100% 55% at 50% -10%, rgba(28, 133, 96, 0.55) 0%, transparent 60%),
+      radial-gradient(55% 32% at 88% 6%,    rgba(245, 158, 11, 0.22) 0%, transparent 62%),
+      radial-gradient(65% 42% at 2% 34%,    rgba(124, 58, 237, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #0b3d2e 0%, #072a20 44%, #041a14 100%);
+    background-attachment: fixed;
+  }
+  /* Two offset dot grids — a warm one and a cool one — which at 26px read as
+     a string of far-off lights rather than as a texture you can name. Masked
+     away below the fold so it never competes with the order summary, and
+     drawn in CSS so it costs no request and no image. */
+  .checkout-canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px),
+      radial-gradient(rgba(252, 211, 77, 0.11) 1px, transparent 1.3px);
+    background-size: 26px 26px, 26px 26px;
+    background-position: 0 0, 13px 13px;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
+  }
+  /* Opaque for the same reason .shop-appbar is: the stepper sticks directly
+     beneath it, and any alpha at the seam shows a card sliding between the
+     two bars as a smudge. */
+  .checkout-appbar {
+    background: linear-gradient(180deg, #0e523c 0%, #0b3d2e 100%);
+  }
+  /* Every panel on the checkout is white. The ground is decorative, the
+     panels are where someone types their address and reads a price — the
+     one place in this design that must not be clever. */
+  .checkout-card {
+    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
+           shadow-[0_18px_40px_-24px_rgba(4,26,20,0.9)];
+  }
+  /* For the things that belong to the room rather than to the form —
+     the trust row, the footer, the recap strip. */
+  .checkout-glass {
+    @apply rounded-2xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+  }
+  /* The header strip that opens every panel. Geometry and the sheen live
+     here; the tint is passed per-section by the caller, because the colour
+     is what tells the sections apart at a glance. */
+  .checkout-head {
+    @apply relative flex items-center gap-3 px-4 sm:px-5 py-3.5;
+  }
+  .checkout-head::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(104deg, transparent 34%, rgba(255, 255, 255, 0.5) 48%, transparent 60%);
+  }
 }
 
 @layer utilities {
@@ -398,33 +479,30 @@
   .above-bottom-nav { bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
   @screen md { .above-bottom-nav { bottom: 0; } }
 
-  /* ── The chat launcher's dock ─────────────────────────
-     One corner, the same on every screen, that nothing else may
-     occupy. Before this the launcher picked its own offsets and
-     landed on top of whatever else lived at the bottom right —
-     the cart bar's "View cart" button, the quote sheet's submit,
-     and the corner of every modal.
+  /* ── The desktop chat launcher's dock ─────────────────
+     On a phone the assistant is a tab in the bottom bar, so nothing
+     floats over the page at all. Desktop has no tab bar and an empty
+     bottom-right corner, so the launcher parks there.
 
-     Two halves to the contract:
-       .chat-dock     — where the launcher parks (just above the
-                        mobile tab bar; bottom-right from md).
+       .chat-dock     — where the desktop launcher sits. `hidden
+                        md:flex` on the button keeps it off phones.
        .pr-chat-dock  — the clearance a full-width bottom bar keeps
-                        on its right so its own buttons stay clear
-                        of it. Dropped at lg, where the centred bars
-                        are nowhere near the corner any more.
+                        on its right so its own buttons never end up
+                        under the launcher. Only md–lg needs it: below
+                        md there is no launcher, and from lg the
+                        centred bars are nowhere near the corner.
 
-     z-45 is deliberate: above page content and the cart bar, below
-     the tab bar (z-50) and every modal/sheet (z-50+). Support never
-     outranks navigation or the dialog someone is currently in. */
+     z-45: above page content and the cart bar, below the tab bar
+     (z-50) and every modal/sheet (z-50+). Support never outranks
+     navigation or the dialog someone is currently in. */
   .chat-dock {
     position: fixed;
-    right: 0.75rem;
-    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    right: 1.25rem;
+    bottom: 1.25rem;
     z-index: 45;
   }
-  @screen md { .chat-dock { right: 1.25rem; bottom: 1.25rem; } }
 
-  .pr-chat-dock { padding-right: 4.25rem; }
+  .pr-chat-dock { padding-right: 0.75rem; }
   @screen md { .pr-chat-dock { padding-right: 5.5rem; } }
   @screen lg { .pr-chat-dock { padding-right: 1rem; } }
 }

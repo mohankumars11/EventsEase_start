@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { MessageCircle, X, Sparkles, Send } from 'lucide-react'
 import { BRAND, EVENT_TYPES } from '../../config/sambramo'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import { FESTIVALS } from '../../data/festivals'
+import { useChat } from '../../context/ChatContext'
+import { isFocusedRoute } from '../../config/chrome'
 
 const GREETING = "Hi! How can I help you today? 👋 Type what you need, or tap an option below."
 
@@ -133,12 +135,18 @@ let uid = 0
 function nextId() { return ++uid }
 
 export default function ChatWidget() {
-  const [open, setOpen] = useState(false)
+  const { open, closeChat, toggleChat } = useChat()
+  const { pathname } = useLocation()
   const [messages, setMessages] = useState([{ id: nextId(), from: 'bot', text: GREETING }])
   const [input, setInput] = useState('')
   const [botTyping, setBotTyping] = useState(false)
   const endRef = useRef(null)
   const inputRef = useRef(null)
+
+  // Tapping a link inside the panel navigates — and leaving the sheet up over
+  // the page somebody just asked to see would defeat the point of sending
+  // them there.
+  useEffect(() => { closeChat() }, [pathname, closeChat])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -146,17 +154,24 @@ export default function ChatWidget() {
 
   // Autofocus the input the moment the panel opens — a chat window that
   // opens without the cursor already in the box makes people hunt for it.
+  //
+  // Desktop only: on a phone this raises the keyboard over a sheet that is
+  // already only 70% of the screen, so the greeting and the quick actions —
+  // the things most people tap instead of typing — get pushed out of sight.
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 250)
+    if (!open) return
+    if (!window.matchMedia('(min-width: 768px)').matches) return
+    const t = setTimeout(() => inputRef.current?.focus(), 250)
+    return () => clearTimeout(t)
   }, [open])
 
   // Esc closes the panel, matching every other overlay in the app.
   useEffect(() => {
     if (!open) return
-    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') closeChat() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, closeChat])
 
   function respond(rule) {
     setBotTyping(true)
@@ -198,15 +213,35 @@ export default function ChatWidget() {
     }
   }
 
+  // Focused screens — the wizard, the login — own the whole viewport, and the
+  // tab bar that carries the Help entry is gone there too. See config/chrome.js.
+  if (isFocusedRoute(pathname)) return null
+
   return (
-    // `chat-dock` (index.css) owns the position, the z-index and the
-    // clearance every other bottom-fixed bar reserves for it. Nothing about
-    // where this sits is decided here any more — that is the whole point:
-    // one dock, defined once, identical on every route, so the launcher can
-    // never drift onto someone else's buttons again.
-    <div className="chat-dock">
+    <>
+      {/* Phone: a sheet that sits ON TOP of the page but ABOVE the tab bar,
+          so the Help tab that opened it stays visible and tapping it again
+          closes it. The backdrop stops at the tab bar for the same reason,
+          and closes the panel wherever else it is tapped.
+
+          Desktop: no tab bar exists, so the launcher lives in the `chat-dock`
+          corner (index.css) and the panel opens above it. */}
       {open && (
-        <div className="mb-3 w-[calc(100vw-1.5rem)] max-w-sm h-[32rem] max-h-[calc(100dvh-12rem)] md:max-h-[calc(100dvh-7rem)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+        <button
+          type="button"
+          aria-label="Close the assistant"
+          onClick={closeChat}
+          className="md:hidden fixed inset-x-0 top-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-[52] bg-black/40"
+        />
+      )}
+
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Sambramo Assistant"
+          className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-[55] h-[70dvh] max-h-[calc(100dvh-7rem)] rounded-t-3xl bg-white shadow-2xl border border-gray-100 flex flex-col overflow-hidden
+                     md:inset-x-auto md:right-5 md:bottom-[5.5rem] md:z-[45] md:w-[22rem] md:h-[32rem] md:rounded-3xl"
+        >
           {/* Header */}
           <div className="bg-plum-900 px-5 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
@@ -220,7 +255,7 @@ export default function ChatWidget() {
               </div>
             </div>
             <button
-              onClick={() => setOpen(false)}
+              onClick={closeChat}
               className="text-plum-300 hover:text-white transition-colors p-1"
               aria-label="Close chat"
             >
@@ -323,18 +358,18 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* The launcher. Slightly smaller on a phone than on a desktop — it is
-          parked over live content there, and 52px is still a comfortable
-          thumb target while giving back the 4px that made it read as an
-          obstacle. `ml-auto` keeps it pinned to the dock's right edge, since
-          the open panel above it is far wider than the button. */}
+      {/* Desktop launcher only — `hidden md:flex`.
+          On a phone the Help tab in the bottom bar is the launcher, so there
+          is deliberately nothing floating over the page there. Desktop has no
+          tab bar and an empty bottom-right corner, and the two bars that do
+          reach it (`pr-chat-dock`) keep their buttons clear of it. */}
       <button
-        onClick={() => setOpen(o => !o)}
-        className="ml-auto w-[3.25rem] h-[3.25rem] md:w-14 md:h-14 rounded-full bg-saffron-400 hover:bg-saffron-500 shadow-xl flex items-center justify-center transition-all hover:scale-105"
+        onClick={toggleChat}
+        className="chat-dock hidden md:flex w-14 h-14 rounded-full bg-saffron-400 hover:bg-saffron-500 shadow-xl items-center justify-center transition-all hover:scale-105"
         aria-label={open ? 'Close chat' : 'Open chat'}
       >
         {open ? <X size={22} className="text-plum-950" /> : <MessageCircle size={22} className="text-plum-950" />}
       </button>
-    </div>
+    </>
   )
 }
