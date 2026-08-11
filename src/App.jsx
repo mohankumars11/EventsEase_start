@@ -2,7 +2,9 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
+import CitySheet from './components/common/CitySheet'
 import Navbar from './components/layout/Navbar'
 import BackToHomeButton from './components/layout/BackToHomeButton'
 import BottomNav from './components/layout/BottomNav'
@@ -386,13 +388,25 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CartProvider>
-          <ToastProvider>
-            <ScrollRestoration />
-            <AppRoutes />
-            <BottomNav />
-          </ToastProvider>
-        </CartProvider>
+        {/* City wraps the cart, not the other way round: what is deliverable,
+            what it costs and who fulfils it are all functions of the city, so
+            the cart may need to read it. Nothing in CityProvider reads the
+            cart. */}
+        <CityProvider>
+          <CartProvider>
+            <ToastProvider>
+              <ScrollRestoration />
+              <AppRoutes />
+              <BottomNav />
+              {/* One sheet for the whole app, mounted above the routes. Any
+                  surface raises it through `openCityPicker()` — the two app
+                  bars, the storefront's serviceability strip, the plan hub —
+                  so the control is identical everywhere and no page has to
+                  own a copy of it. */}
+              <CitySheet />
+            </ToastProvider>
+          </CartProvider>
+        </CityProvider>
       </AuthProvider>
     </BrowserRouter>
   )

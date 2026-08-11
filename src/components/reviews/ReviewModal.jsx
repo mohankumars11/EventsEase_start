@@ -68,7 +68,7 @@ export default function ReviewModal({ subject, source, onClose, onSubmitted }) {
             <textarea
               value={comment}
               onChange={e => setComment(e.target.value)}
-              className="w-full min-h-[90px] resize-none px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full min-h-[90px] resize-none px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
               placeholder="What did you like? What could be better?"
             />
           </div>

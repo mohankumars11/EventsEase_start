@@ -1,7 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, MapPin, ShoppingBag, X, ChevronDown } from 'lucide-react'
+import { Search, ShoppingBag, X } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
+import CityButton from '../common/CityButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
@@ -82,20 +83,26 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
         <div className="flex items-center gap-3">
           <SambramoMark size={30} className="shrink-0" />
 
-          <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1 text-[13px] font-extrabold leading-tight text-white">
-              <MapPin size={13} className="text-saffron-300" />
-              {BRAND.primaryCity}
-              <ChevronDown size={12} className="text-white/40" />
-            </p>
-            <p className="truncate text-[11px] text-white/50">
-              {/* Short enough to survive a 360px screen. The long version
+          {/* The city, and now actually a control. This used to be a <p> with
+              a ChevronDown drawn beside it — the icon promised a picker that
+              did not exist, and the city itself was the hardcoded
+              BRAND.primaryCity, so a Mysore customer was told "Bengaluru" on
+              the app's front screen.
+
+              The subtitle is still the greeting, which is this surface's line
+              to give; CityButton overrides it only when the chosen city is
+              one we cannot serve. */}
+          <CityButton
+            subtitle={
+              firstName
+                ? `Welcome back, ${firstName}`
+                /* Short enough to survive a 360px screen. The long version
                    ("Arranging celebrations in Bengaluru & Mysore") truncated
                    mid-city, which turned a statement of coverage into a
-                   statement of one city and an ellipsis. */}
-              {firstName ? `Welcome back, ${firstName}` : `Live in ${BRAND.pilotCities.join(' & ')}`}
-            </p>
-          </div>
+                   statement of one city and an ellipsis. */
+                : `Live in ${BRAND.pilotCities.join(' & ')}`
+            }
+          />
 
           <Link
             to={cartPath}

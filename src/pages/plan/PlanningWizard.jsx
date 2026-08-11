@@ -5,7 +5,8 @@ import { supabase } from '../../lib/supabase'
 import { EVENT_TYPES, BUDGET_OPTIONS, SERVICE_CATEGORIES, BRAND } from '../../config/sambramo'
 import { useAuth } from '../../context/AuthContext'
 import { friendlyError } from '../../context/ToastContext'
-import { isPilotCity } from '../../utils/cityPilot'
+import { isLiveCity, LIVE_CITIES } from '../../config/cities'
+import { useCity } from '../../context/CityContext'
 import ComingSoonCity from '../../components/common/ComingSoonCity'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 
@@ -53,6 +54,7 @@ export default function PlanningWizard() {
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, profile } = useAuth()
+  const { city: chosenCity, chosen: cityChosen } = useCity()
 
   const [step, setStep]         = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -71,7 +73,20 @@ export default function PlanningWizard() {
     event_type:        searchParams.get('type') || '',
     event_date:        '',
     start_time:        '',
-    city:              profile?.city || '',
+    /**
+     * The chosen city wins over the profile's.
+     *
+     * `profile.city` is whatever was captured at signup and may be months
+     * old; the picker is a deliberate statement the customer made in this
+     * app, possibly seconds ago, and it is what every other screen is
+     * currently showing them. Making them re-select it here — on a wizard
+     * step that blocks progress until a live city is chosen — is asking a
+     * question the app bar above already displays the answer to.
+     *
+     * Gated on `chosen` so an unpicked fallback never silently becomes the
+     * customer's stated event city.
+     */
+    city:              (cityChosen ? chosenCity : '') || profile?.city || '',
     style_preference:  '',
     guest_count:       '',
     services:          [],
@@ -153,7 +168,7 @@ export default function PlanningWizard() {
   function canNext() {
     if (step === 1) return !!form.event_type
     if (step === 2) return !!form.event_date
-    if (step === 3) return isPilotCity(form.city)
+    if (step === 3) return isLiveCity(form.city)
     if (step === 4) return !!form.guest_count
     if (step === 5) return true
     if (step === 6) return nameValid && phoneValid && emailValid && !!form.budget_text
@@ -464,7 +479,15 @@ export default function PlanningWizard() {
                   autoFocus
                 >
                   <option value="">Select your city</option>
-                  {BRAND.pilotCities.map(c => <option key={c} value={c}>{c}{c === 'Mysore' ? ' 🆕' : ''}</option>)}
+                  {/* Was `BRAND.pilotCities` with a ` 🆕` hardcoded onto
+                      whichever entry equalled 'Mysore' — a fact about the
+                      launch written into a JSX conditional, where it would
+                      still be labelling Mysore "new" a year from now and
+                      would never label the actual next city. The list reads
+                      from cities.js like everything else does now. */}
+                  {LIVE_CITIES.map(c => (
+                    <option key={c.slug} value={c.name}>{c.name}</option>
+                  ))}
                   <option value="Other">My city isn't listed</option>
                 </select>
               </div>

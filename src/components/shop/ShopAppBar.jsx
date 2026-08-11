@@ -1,8 +1,10 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, MapPin, ShoppingBag, X, ArrowLeft } from 'lucide-react'
+import { Search, ShoppingBag, X, ArrowLeft } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
+import CityButton from '../common/CityButton'
 import { useCart } from '../../context/CartContext'
+import { useCity } from '../../context/CityContext'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { BRAND } from '../../config/sambramo'
 
@@ -36,6 +38,7 @@ export default function ShopAppBar({
   subtitle,
 }) {
   const { cartCount, cartPath } = useCart()
+  const { cityRecord } = useCity()
   const reduced = useReducedMotion()
   const [hint, setHint] = useState(0)
   const [focused, setFocused] = useState(false)
@@ -84,27 +87,31 @@ export default function ShopAppBar({
             <SambramoMark size={30} className="shrink-0" />
           )}
 
-          <div className="min-w-0 flex-1">
-            {title ? (
-              <>
-                <p className="truncate text-[15px] font-extrabold leading-tight text-white">{title}</p>
-                {subtitle && <p className="truncate text-[11px] text-white/50">{subtitle}</p>}
-              </>
-            ) : (
-              <>
-                <p className="flex items-center gap-1 text-[13px] font-extrabold leading-tight text-white">
-                  <MapPin size={13} className="text-saffron-300" />
-                  {BRAND.primaryCity}
-                </p>
-                {/* Pilot cities are the only places this can actually deliver.
-                    Saying so in the bar beats letting someone fill a cart and
-                    find out at the address field. */}
-                <p className="truncate text-[11px] text-white/50">
-                  Delivering across {BRAND.pilotCities.join(' & ')}
-                </p>
-              </>
-            )}
-          </div>
+          {title ? (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-extrabold leading-tight text-white">{title}</p>
+              {subtitle && <p className="truncate text-[11px] text-white/50">{subtitle}</p>}
+            </div>
+          ) : (
+            /* The same control as the home bar, in the same slot, opening the
+               same sheet. It used to be a static <p> printing the hardcoded
+               BRAND.primaryCity with no chevron — so the storefront asserted a
+               delivery city the shopper had never chosen and could not change,
+               while the home screen two taps away drew a chevron next to it.
+
+               Naming the chosen city rather than the pilot list matters most
+               here: "Delivering across Bengaluru & Mysore" is true of the
+               company but says nothing about *this* cart, and letting someone
+               fill one before finding out at the address field is how a
+               basket gets abandoned. */
+            <CityButton
+              subtitle={
+                cityRecord
+                  ? `Delivering across ${cityRecord.name}`
+                  : `Delivering across ${BRAND.pilotCities.join(' & ')}`
+              }
+            />
+          )}
 
           <Link
             to={cartPath}

@@ -125,7 +125,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
             value={otherCity}
             onChange={e => setOtherCity(e.target.value)}
             placeholder="Which city?"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
           />
           <ComingSoonCity city={otherCity} source="venue_location" />
         </div>
@@ -140,7 +140,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
               value={query}
               onChange={e => handleQueryChange(e.target.value)}
               onFocus={() => results.length > 0 && setOpen(true)}
-              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400 disabled:bg-gray-50 disabled:text-gray-400"
             />
             {loading
               ? <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 animate-spin" />
@@ -174,7 +174,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
           placeholder="Pincode"
           value={pincode}
           onChange={e => handlePincodeChange(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
         />
       </div>
       )}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingBag, Trash2, Minus, Plus, CheckCircle2, AlertCircle, ShieldAlert, Tag, X } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Trash2, Minus, Plus, CheckCircle2, AlertCircle, ShieldAlert, Tag, X, CalendarDays } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
+import { useCity } from '../../context/CityContext'
 import { supabase } from '../../lib/supabase'
-import { formatINR } from '../../utils/format'
+import { formatINR, todayISO, humanDate } from '../../utils/format'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { createOrder as createTestOrder, initiatePayment, verifyPayment, IS_TEST_MODE } from '../../lib/payment/testPaymentProvider'
 import { BRAND } from '../../config/sambramo'
@@ -26,9 +27,32 @@ export default function ShopCart() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { cart, dispatch, productCount, productTotal, lineUnitPrice } = useCart()
+  // `chosen` gates the seed below: an unchosen city is the app's fallback
+  // guess, and silently pre-filling a delivery address with a guess is how a
+  // parcel goes to the wrong city with the customer's own name on it.
+  //
+  // Serviceability deliberately is not read here. getAddressErrors already
+  // validates the address's own city against the live list, and the address is
+  // where the parcel actually goes. Guarding on the *preference* too would
+  // block a Bengaluru customer from sending a gift to a Bengaluru address
+  // because they had set their own city to somewhere we don't cover yet.
+  const { city: chosenCity, chosen: citySeeded } = useCity()
 
   const [step, setStep] = useState('cart') // cart | payment | done
-  const [address, setAddress] = useState({ name: '', phone: '', line: '', city: '', pincode: '', lat: null, lon: null })
+  /**
+   * The city is seeded from the customer's chosen city rather than starting
+   * blank. They told the app where they are — in the app bar, in the delivery
+   * slip, or by letting it find them — and asking again at checkout is asking
+   * a question we already have the answer to, at the exact point where extra
+   * fields cost orders. Still fully editable: the delivery address is not
+   * always the address you live at, which is especially true of a shop that
+   * sells gifts.
+   */
+  const [address, setAddress] = useState(() => ({
+    name: '', phone: '', line: '',
+    city: chosenCity && citySeeded ? chosenCity : '',
+    pincode: '', lat: null, lon: null,
+  }))
   const [addressTouched, setAddressTouched] = useState(false)
   const [method, setMethod] = useState('upi')
   const [paying, setPaying] = useState(false)
@@ -64,7 +88,34 @@ export default function ShopCart() {
   const discountAmount = coupon?.discount_amount ?? 0
   const total = Math.max(0, productTotal + deliveryFee - discountAmount)
   const addressErrors = getAddressErrors(address)
-  const addressValid = Object.keys(addressErrors).length === 0
+
+  // When the order is needed. Captured on the storefront by DeliverySlip and
+  // confirmed here, because it is the one delivery fact this shop never asked
+  // for: the whole catalogue is occasions — birthdays, festivals, anniversaries
+  // — and an occasion without a date cannot be fulfilled. It was previously
+  // chased down over WhatsApp after the customer had already paid.
+  const neededOn = cart.deliveryDate ?? ''
+  const dateError = !neededOn
+    ? 'Tell us the date you need this'
+    : neededOn < todayISO()
+      ? 'That date has already passed'
+      : null
+
+  const addressValid = Object.keys(addressErrors).length === 0 && !dateError
+
+  /**
+   * One delivery payload, used by both payment paths — the same reasoning
+   * buildOrderItems already carries: these two had drifted apart once, and an
+   * order must serialise identically whether it was paid by UPI or the test
+   * gateway.
+   *
+   * `neededOn` rides inside the existing `address` JSONB column rather than a
+   * new one. orders.address is already JSONB (migration 009), so this ships
+   * without a schema change — which matters, because migrations here are
+   * applied by hand and code that depends on an unapplied one is code that
+   * breaks in production only.
+   */
+  const deliveryAddress = { ...address, neededOn: neededOn || null }
 
   function handleProceed() {
     if (!addressValid) { setAddressTouched(true); return }
@@ -150,7 +201,7 @@ export default function ShopCart() {
       delivery_fee: deliveryFee,
       discount: discountAmount,
       total,
-      address,
+      address: deliveryAddress,
       payment_status: paymentStatus,
     }).select('id').single()
     if (orderErr) throw orderErr
@@ -229,7 +280,7 @@ export default function ShopCart() {
         delivery_fee: deliveryFee,
         discount: discountAmount,
         total,
-        address,
+        address: deliveryAddress,
         payment_status: 'paid',
         payment_ref: result.paymentRef,
       }).select('id').single()
@@ -365,15 +416,15 @@ export default function ShopCart() {
                 <h3 className="font-bold text-gray-800 text-sm">📍 Delivery Address</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <input placeholder="Full name" value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    <input placeholder="Full name" value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className="input" />
                     {addressTouched && addressErrors.name && <p className="text-xs text-red-600 mt-1">{addressErrors.name}</p>}
                   </div>
                   <div>
-                    <input placeholder="Phone number" inputMode="numeric" value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: scrubDigits(e.target.value, 10) }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    <input placeholder="Phone number" inputMode="numeric" value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: scrubDigits(e.target.value, 10) }))} className="input" />
                     {addressTouched && addressErrors.phone && <p className="text-xs text-red-600 mt-1">{addressErrors.phone}</p>}
                   </div>
                   <div className="sm:col-span-2">
-                    <input placeholder="Address line (house/flat, street)" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                    <input placeholder="Address line (house/flat, street)" value={address.line} onChange={e => setAddress(a => ({ ...a, line: e.target.value }))} className="input" />
                     {addressTouched && addressErrors.line && <p className="text-xs text-red-600 mt-1">{addressErrors.line}</p>}
                   </div>
                 </div>
@@ -384,6 +435,39 @@ export default function ShopCart() {
                 {addressTouched && (addressErrors.city || addressErrors.pincode) && (
                   <p className="text-xs text-red-600">{addressErrors.city || addressErrors.pincode}</p>
                 )}
+
+                {/* ── When it's needed ──────────────────────────────────
+                    The question this shop never asked. Every item in it is
+                    for an occasion on a specific day, and the date was
+                    previously chased over WhatsApp after payment — by which
+                    point "I needed it yesterday" is not a solvable problem.
+
+                    Pre-filled from the storefront's delivery slip when they
+                    set it there, so most people arrive with this answered
+                    and simply see it confirmed. */}
+                <div className="pt-1">
+                  <label htmlFor="needed-on" className="label flex items-center gap-1.5">
+                    <CalendarDays size={13} className="text-plum-500" />
+                    When do you need this?
+                  </label>
+                  <input
+                    id="needed-on"
+                    type="date"
+                    value={neededOn}
+                    min={todayISO()}
+                    onChange={e => dispatch({ type: 'SET_DELIVERY_DATE', date: e.target.value || null })}
+                    className="input"
+                  />
+                  {neededOn && !dateError && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Needed <span className="font-semibold text-gray-700">{humanDate(neededOn)}</span> — we'll
+                      confirm the delivery window with you once the order is in.
+                    </p>
+                  )}
+                  {addressTouched && dateError && (
+                    <p className="mt-1 text-xs text-red-600">{dateError}</p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -409,7 +493,7 @@ export default function ShopCart() {
                       value={couponInput}
                       onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null) }}
                       placeholder="Enter coupon code"
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-plum-400"
                     />
                     <button
                       onClick={applyCoupon}

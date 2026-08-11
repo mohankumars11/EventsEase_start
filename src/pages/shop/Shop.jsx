@@ -10,6 +10,7 @@ import OffersRail from '../../components/shop/OffersRail'
 import HowWeServe from '../../components/shop/HowWeServe'
 import PaymentStrip from '../../components/shop/PaymentStrip'
 import StickyCartBar from '../../components/shop/StickyCartBar'
+import DeliverySlip from '../../components/shop/DeliverySlip'
 import MarketProductCard from '../../components/shop/MarketProductCard'
 import DetailRotator from '../../components/shop/DetailRotator'
 import { useProductAdd } from '../../components/shop/useProductAdd'
@@ -109,7 +110,14 @@ export default function Shop() {
       {searching ? (
         <SearchResults query={query.trim()} />
       ) : (
-        <div className="mx-auto max-w-3xl space-y-8 pb-32 pt-5">
+        <div className="mx-auto max-w-3xl space-y-8 pb-32 pt-4">
+
+          {/* ── Where and when ─────────────────────────────────────────
+              Above everything, because it qualifies everything below it.
+              The shop was organised around occasions and never asked what
+              day the occasion was, or let the shopper confirm the city it
+              was delivering to — both were discovered after checkout. */}
+          <DeliverySlip className="!mt-0" />
 
           {/* ── Live promise ticker ────────────────────────────────────
               The three things the storefront guarantees, one at a time.

@@ -14,6 +14,7 @@ import ReviewModal from '../../components/reviews/ReviewModal'
 import { EventDecorSamples } from '../../components/landing/DecorSampleGallery'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
+import { useCity } from '../../context/CityContext'
 import { supabase } from '../../lib/supabase'
 
 // Where a guest's pending add waits while they sign in. Session scoped, same
@@ -33,6 +34,7 @@ export default function EventServices() {
   const [reviewing, setReviewing]     = useState(null) // { subject, source }
   const [eligible, setEligible]       = useState({}) // `${type}__${id}` -> enquiryId
   const { cart, dispatch, hasItem, hasPkg, totalCount, getEventDetails } = useCart()
+  const { city, openCityPicker } = useCity()
 
   /**
    * The one place anything reaches the cart from this page.
@@ -396,10 +398,20 @@ export default function EventServices() {
             <p className="text-sm text-gray-500 mb-2">
               Pre-curated bundles — save time, save money, and Sambramo handles every detail.
             </p>
+            {/* Named the hardcoded BRAND.primaryCity, so a Mysore customer
+                read a price disclaimer scoped to a city they had not chosen
+                and could not see they weren't in. A price is a per-city fact;
+                it should cite the city the customer actually set. */}
             <p className="text-xs text-gray-500 bg-plum-50 border border-plum-100 rounded-xl px-3 py-2 mb-4 leading-relaxed">
-              Ranges are indicative, for {BRAND.primaryCity}. Your final price is confirmed
-              once we know your date, guest count and venue — and you approve it before
-              anything is booked.
+              Ranges are indicative, for{' '}
+              <button
+                onClick={openCityPicker}
+                className="font-semibold text-plum-700 underline decoration-plum-300 underline-offset-2 hover:text-plum-900"
+              >
+                {city}
+              </button>
+              . Your final price is confirmed once we know your date, guest count and
+              venue — and you approve it before anything is booked.
             </p>
 
             {/* The ranges above are honest but four times wider than the

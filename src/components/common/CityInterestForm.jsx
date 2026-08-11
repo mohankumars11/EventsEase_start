@@ -76,7 +76,7 @@ export default function CityInterestForm({ city: initialCity = '', source, locke
           onChange={e => setCity(e.target.value)}
           placeholder="Your city"
           aria-label="Your city"
-          className="flex-1 min-w-0 sm:w-36 sm:flex-none max-w-[14rem] px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="flex-1 min-w-0 sm:w-36 sm:flex-none max-w-[14rem] px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
         />
       )}
       <button

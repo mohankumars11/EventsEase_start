@@ -1,5 +1,7 @@
 // SAMBRAMO Brand Configuration
 
+import { LIVE_CITIES, DEFAULT_CITY } from './cities'
+
 // Both brand lines are needed in two forms: as one sentence (a <title>, a
 // footer, a meta description) and as the halves that the logo lockup sets
 // either side of a pulli and the hero sets either side of a line break.
@@ -70,12 +72,22 @@ export const BRAND = {
   supportPhone: '+91 97392 76592',
   supportEmail: 'hello@sambramo.in',
   whatsappNumber: '919739276592',
-  primaryCity: 'Bengaluru',
+  // Both of these are now derived from config/cities.js, which is the one
+  // place a city is described. They were literals here, which is how the app
+  // ended up printing a hardcoded "Bengaluru" into two app bars and spelling
+  // "Bengaluru & Mysore" by hand inside a validator message.
+  //
+  // `primaryCity` is the *fallback* — where a visitor who has not chosen yet
+  // is assumed to be. It is not "the city the customer is in": that is a
+  // per-customer preference and lives in CityContext. Reach for the context
+  // in anything a customer sees; reach for this only when there is no
+  // customer yet (SEO copy, a <meta> tag, a seed value).
+  primaryCity: DEFAULT_CITY.name,
   servicedCities: ['Bengaluru', 'Mumbai', 'Delhi', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata', 'Jaipur', 'Ahmedabad', 'Surat'],
   // Pilot launch: the only cities actually bookable right now. Every city
   // picker in the app restricts to this list; `servicedCities` above stays
   // as the longer-term roadmap, not what's live today.
-  pilotCities: ['Bengaluru', 'Mysore'],
+  pilotCities: LIVE_CITIES.map(c => c.name),
 }
 
 export const MVP_MODE = true  // Human-assisted concierge model

@@ -60,7 +60,7 @@ export default function BookingDetailsModal({ itemLabel, defaults, onConfirm, on
                 min={today}
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
               />
             </div>
             <div>
@@ -71,7 +71,7 @@ export default function BookingDetailsModal({ itemLabel, defaults, onConfirm, on
                 type="time"
                 value={time}
                 onChange={e => setTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
               />
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function BookingDetailsModal({ itemLabel, defaults, onConfirm, on
               placeholder="Or enter an exact number"
               value={guestCount}
               onChange={e => setGuestCount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
             />
           </div>
 

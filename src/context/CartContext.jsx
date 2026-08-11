@@ -107,11 +107,31 @@ function cartReducer(state, action) {
         products: state.products.map(p => p.key === action.key ? { ...p, customization: action.customization } : p),
       }
 
+    /**
+     * When the shop order is needed.
+     *
+     * The storefront is organised entirely around occasions — festival
+     * countdowns, "what are we celebrating", 50-odd occasion tags on the cake
+     * catalogue — and yet nothing anywhere asked what day the thing was for.
+     * You could order a birthday cake and never say when the birthday was;
+     * the question first came up in a WhatsApp message after the order landed.
+     *
+     * It lives on the cart rather than in a preference context because it is a
+     * property of *this order*, not a standing fact about the customer: the
+     * city they are in persists for months, the date they need a cake changes
+     * every time they buy one. Cleared with the products for the same reason.
+     *
+     * Deliberately local-only, like the products themselves — no Supabase
+     * column, so this needs no migration to work.
+     */
+    case 'SET_DELIVERY_DATE':
+      return { ...state, deliveryDate: action.date ?? null }
+
     case 'CLEAR_PRODUCTS':
-      return { ...state, products: [] }
+      return { ...state, products: [], deliveryDate: null }
 
     case 'CLEAR':
-      return { items: [], packages: [], eventDates: {}, products: state.products }
+      return { items: [], packages: [], eventDates: {}, products: state.products, deliveryDate: state.deliveryDate }
 
     case 'HYDRATE': {
       // Merge by key rather than replace. `...action.state` protected products
@@ -145,7 +165,7 @@ function cartReducer(state, action) {
   }
 }
 
-const INITIAL = { items: [], packages: [], eventDates: {}, products: [] }
+const INITIAL = { items: [], packages: [], eventDates: {}, products: [], deliveryDate: null }
 const STORAGE_KEY = 'ee_cart_v1'
 
 export function CartProvider({ children }) {
@@ -153,7 +173,11 @@ export function CartProvider({ children }) {
   const [cart, rawDispatch] = useReducer(cartReducer, INITIAL, () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : INITIAL
+      // Spread over INITIAL rather than returning the parsed object directly:
+      // a cart saved by an earlier build has no `deliveryDate` key, and
+      // returning it bare would leave the field `undefined` for every
+      // returning customer until they next cleared their basket.
+      return saved ? { ...INITIAL, ...JSON.parse(saved) } : INITIAL
     } catch {
       return INITIAL
     }

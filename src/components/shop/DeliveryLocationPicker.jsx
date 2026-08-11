@@ -5,14 +5,19 @@ import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { isPilotCity } from '../../utils/cityPilot'
+import { isLiveCity, DEFAULT_CITY } from '../../config/cities'
+import { useCity } from '../../context/CityContext'
 import ComingSoonCity from '../common/ComingSoonCity'
 
 // Vite doesn't resolve Leaflet's default marker icon URLs from its CSS —
 // point them at the bundled assets directly, once.
 L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow })
 
-const DEFAULT_CENTER = [12.9716, 77.5946] // Bengaluru — just a starting viewport, not a guess at the user's location
+// Fallback viewport only, for a visitor who has not chosen a city — the
+// component prefers the customer's chosen city's coordinates (see below).
+// Still just a starting viewport, never a guess at the user's exact location:
+// no marker is placed until they drop one.
+const DEFAULT_CENTER = [DEFAULT_CITY.coords.lat, DEFAULT_CITY.coords.lon]
 
 async function reverseGeocode(lat, lon) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`
@@ -30,6 +35,10 @@ async function reverseGeocode(lat, lon) {
  * onChange(patch) — called with a partial update to merge into the address
  */
 export default function DeliveryLocationPicker({ value, onChange }) {
+  // Open on the customer's own city. The map used to start over Bengaluru for
+  // everyone, so a Mysore customer's first act was always to pan 140km across
+  // the state before they could drop a pin — on a phone, on a tile map.
+  const { cityRecord } = useCity()
   const mapElRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
@@ -78,7 +87,11 @@ export default function DeliveryLocationPicker({ value, onChange }) {
 
   useEffect(() => {
     if (mapRef.current || !mapElRef.current) return
-    const initialCenter = value?.lat && value?.lon ? [value.lat, value.lon] : DEFAULT_CENTER
+    const initialCenter = value?.lat && value?.lon
+      ? [value.lat, value.lon]
+      : cityRecord
+        ? [cityRecord.coords.lat, cityRecord.coords.lon]
+        : DEFAULT_CENTER
     const map = L.map(mapElRef.current).setView(initialCenter, value?.lat ? 16 : 11)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
@@ -134,7 +147,7 @@ export default function DeliveryLocationPicker({ value, onChange }) {
           type="button"
           onClick={useCurrentLocation}
           disabled={locating}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 disabled:opacity-60"
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-50 border border-plum-200 text-plum-700 text-xs font-semibold hover:bg-plum-100 disabled:opacity-60"
         >
           {locating ? <Loader2 size={13} className="animate-spin" /> : <LocateFixed size={13} />}
           {locating ? 'Locating…' : 'Use current location'}
@@ -153,18 +166,18 @@ export default function DeliveryLocationPicker({ value, onChange }) {
           placeholder="City"
           value={value?.city ?? ''}
           onChange={e => onChange({ city: e.target.value })}
-          className="sm:col-span-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="sm:col-span-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
         />
         <input
           placeholder="Pincode"
           inputMode="numeric"
           value={value?.pincode ?? ''}
           onChange={e => onChange({ pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-          className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
         />
       </div>
 
-      {value?.city?.trim() && !isPilotCity(value.city) && (
+      {value?.city?.trim() && !isLiveCity(value.city) && (
         <ComingSoonCity city={value.city} source="shop_delivery" />
       )}
     </div>

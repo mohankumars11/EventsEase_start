@@ -47,7 +47,7 @@ export default function CustomizeModal({ product, fieldConfig, onClose, onConfir
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value.slice(0, 200))}
-              className="w-full min-h-[80px] resize-none px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full min-h-[80px] resize-none px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
               placeholder={fieldConfig.placeholder}
             />
             <p className="text-[11px] text-gray-400 mt-1 text-right">{message.length}/200</p>
