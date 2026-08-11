@@ -39,6 +39,8 @@ import {
 } from '../data/celebrationTiers'
 import { CUISINE_BY_ID, COURSES, dishesFor } from '../data/cuisineMenus'
 import { DECOR_LEVEL_BY_ID, DECOR_THEMES, DECOR_ADDONS, decorStretch } from '../data/decorPackages'
+import { SERVICE_BY_ID, serviceCost, defaultQty } from '../data/servicePricing'
+import { taxFor, TAX_LABEL } from '../data/taxes'
 
 const round10 = n => Math.round(n / 10) * 10
 const round500 = n => Math.round(n / 500) * 500
@@ -162,6 +164,8 @@ export function buildQuote({
   decorLevelId,
   themeId,
   addonIds = [],
+  serviceIds = [],
+  serviceQty = {},
   mode = 'full',
   includeCatering = true,
   includeDecor = true,
@@ -178,7 +182,16 @@ export function buildQuote({
   const decor = decorCostFor({ level, themeId, addonIds, guestCount: guests })
   const coordination = tier.coordinationFee
 
-  const subtotal = coordination + decor.total + cateringTotal
+  const services = serviceIds
+    .map(id => SERVICE_BY_ID[id])
+    .filter(Boolean)
+    .map(s => {
+      const qty = serviceQty[s.id] ?? defaultQty(s, guests)
+      return { service: s, qty, amount: serviceCost(s, guests, qty) }
+    })
+  const servicesTotal = services.reduce((sum, s) => sum + s.amount, 0)
+
+  const subtotal = coordination + decor.total + cateringTotal + servicesTotal
 
   // The discount is only real when there is actually a bundle to discount.
   // Applying it to a decor-only booking would be a 10% price cut in exchange
@@ -201,7 +214,20 @@ export function buildQuote({
   const discountedSubtotal = subtotal - bundleAmount
 
   const platformFeeAmount = Math.round(discountedSubtotal * PLATFORM_FEE_RATE)
-  const total = discountedSubtotal + platformFeeAmount
+  const preTax = discountedSubtotal + platformFeeAmount
+
+  // Tax is computed on the DISCOUNTED component values, not on the headline
+  // ones — you are not taxed on money you were never charged. The discount is
+  // spread across the components in proportion to their size so each slab is
+  // applied to what that component actually costs after the saving.
+  const share = subtotal > 0 ? discountedSubtotal / subtotal : 1
+  const tax = taxFor({
+    cateringBase: cateringTotal * share,
+    servicesBase: (decor.total + servicesTotal) * share,
+    platformBase: coordination * share + platformFeeAmount,
+  })
+
+  const total = preTax + tax.total
 
   return {
     tier,
@@ -210,11 +236,15 @@ export function buildQuote({
     plate,
     catering: { perPlate: plate.perPlate, guests, total: cateringTotal },
     decor: { level, ...decor },
+    services,
+    servicesTotal,
     coordination,
     subtotal,
     bundle: { applied: bundleRate > 0, rate: bundleRate, amount: bundleAmount },
     discountedSubtotal,
     platformFee: { rate: PLATFORM_FEE_RATE, amount: platformFeeAmount },
+    preTax,
+    tax: { ...tax, label: TAX_LABEL },
     total,
     perGuest: guests ? Math.round(total / guests) : 0,
     range: {
@@ -260,6 +290,19 @@ export function quoteLines(quote) {
       lines.push({ key: `addon_${addon.id}`, label: addon.name, detail: 'Add-on', amount: addon.price })
     }
   }
+  for (const { service, qty, amount } of quote.services) {
+    lines.push({
+      key: `svc_${service.id}`,
+      label: `${service.emoji} ${service.name}`,
+      detail: service.unit === 'per_guest'
+        ? `₹${service.base} per guest × ${quote.guests}`
+        : service.unit === 'per_unit'
+          ? `${qty} × ₹${service.base} per ${service.unitLabel ?? 'unit'}`
+          : service.scales ? `Scaled to ${quote.guests} guests` : 'For the event',
+      amount,
+    })
+  }
+
   lines.push({
     key: 'coordination',
     label: `Coordination — ${quote.tier.name}`,
@@ -290,7 +333,11 @@ export function quoteToText(quote, { menu, cuisine, vegOnly } = {}) {
     out.push(`Full-celebration saving (${Math.round(quote.bundle.rate * 100)}%): −₹${quote.bundle.amount.toLocaleString('en-IN')}`)
   }
   out.push(`Sambramo platform fee (${Math.round(quote.platformFee.rate * 100)}%): ₹${quote.platformFee.amount.toLocaleString('en-IN')}`)
-  out.push(`Estimated total: ₹${quote.range.low.toLocaleString('en-IN')} – ₹${quote.range.high.toLocaleString('en-IN')}`)
+  for (const part of quote.tax.parts) {
+    out.push(`GST on ${part.label} @ ${Math.round(part.rate * 100)}%: ₹${part.amount.toLocaleString('en-IN')}`)
+  }
+  out.push(`Estimated total incl. taxes: ₹${quote.range.low.toLocaleString('en-IN')} – ₹${quote.range.high.toLocaleString('en-IN')}`)
+  out.push('(Estimate, not a locked quote — the final figure may vary slightly.)')
 
   if (cuisine && menu) {
     out.push('')

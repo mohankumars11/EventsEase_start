@@ -63,6 +63,22 @@ export const PLATFORM_FEE_RATE = 0.02
 export const BUNDLE_DISCOUNT_RATE = 0.10
 
 /**
+ * What it costs to hold a quote and a date.
+ *
+ * Small on purpose. This is not a deposit and it is not a down payment on the
+ * event — it buys the customer a coordinator who stops shopping the date to
+ * anyone else while they confirm, and it buys Sambramo a signal that this
+ * enquiry is real. Price it like a booking fee and it starts doing the job of
+ * a deposit, which it cannot do: there is no signed supplier behind the
+ * estimate yet, so the money would be holding a number nobody has agreed to.
+ *
+ * It is adjusted against the final invoice, and refundable — both of which are
+ * stated on the screen that asks for it, in those words. If either stops being
+ * true, that screen has to change in the same commit as this constant.
+ */
+export const LOCK_AMOUNT = 1000
+
+/**
  * How much a plate costs to put out, relative to the mid-size job the cuisine
  * rates are quoted for (150–350 guests).
  *
@@ -104,6 +120,17 @@ export function batchBandFor(guestCount) {
  *
  * `defaultDecor` names the decor level that comes as standard; the customer can
  * move up or down from it without leaving the tier.
+ *
+ * `includedServices` is what the tier pre-selects from servicePricing.js, and
+ * it is what makes a tier a curated package rather than a label. These are
+ * priced into the quote at their normal rate — they are included in the sense
+ * that they are already chosen and already counted, not in the sense that they
+ * are free. Anything here can be unticked, which is the point: a family with
+ * their own photographer should not be paying for ours.
+ *
+ * The list has to keep matching `highlights` below it. A tier that promises
+ * "photography through the main hours" in its highlights and does not carry
+ * `photography` here is a tier whose price is missing a photographer.
  */
 export const CELEBRATION_TIERS = [
   {
@@ -117,6 +144,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 10, max: 30, typical: 25 },
     coordinationFee: 1500,
     defaultDecor: 'home_touch',
+    includedServices: ['dining', 'cleanup'],
     coordination: 'A coordinator on WhatsApp, from booking to the day itself',
     onSiteManager: false,
     menuAllowance: { welcome: 1, starters: 2, mains: 2, curries: 2, accompaniments: 3, sweets: 1, counters: 0 },
@@ -139,6 +167,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 30, max: 75, typical: 60 },
     coordinationFee: 3500,
     defaultDecor: 'classic',
+    includedServices: ['dining', 'cleanup', 'cake'],
     coordination: 'A coordinator on WhatsApp, plus a call the evening before',
     onSiteManager: false,
     menuAllowance: { welcome: 1, starters: 3, mains: 3, curries: 3, accompaniments: 4, sweets: 2, counters: 0 },
@@ -161,6 +190,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 75, max: 150, typical: 120 },
     coordinationFee: 7500,
     defaultDecor: 'signature',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'dj'],
     popular: true,
     coordination: 'A named coordinator, venue visit included, reachable on call',
     onSiteManager: false,
@@ -185,6 +215,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 150, max: 300, typical: 220 },
     coordinationFee: 15000,
     defaultDecor: 'signature',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'videography', 'dj'],
     coordination: 'A named coordinator plus an on-site manager for the full day',
     onSiteManager: true,
     menuAllowance: { welcome: 2, starters: 5, mains: 4, curries: 5, accompaniments: 6, sweets: 3, counters: 2 },
@@ -208,6 +239,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 300, max: 600, typical: 450 },
     coordinationFee: 30000,
     defaultDecor: 'grand_stage',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'videography', 'dj', 'emcee', 'transport', 'bouncers'],
     coordination: 'A coordinator, an on-site manager and a setup crew from the night before',
     onSiteManager: true,
     menuAllowance: { welcome: 3, starters: 6, mains: 5, curries: 6, accompaniments: 8, sweets: 4, counters: 3 },
@@ -231,6 +263,7 @@ export const CELEBRATION_TIERS = [
     guests: { min: 600, max: 1200, typical: 800 },
     coordinationFee: 60000,
     defaultDecor: 'royal_marquee',
+    includedServices: ['dining', 'cleanup', 'cake', 'photography', 'videography', 'dj', 'emcee', 'transport', 'bouncers', 'live_music', 'makeup'],
     coordination: 'A dedicated team: lead coordinator, floor managers, and a crew on site for three days',
     onSiteManager: true,
     menuAllowance: { welcome: 4, starters: 8, mains: 6, curries: 8, accompaniments: 10, sweets: 5, counters: 4 },

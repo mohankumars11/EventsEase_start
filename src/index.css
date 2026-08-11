@@ -391,6 +391,12 @@
      is never trapped underneath it. */
   .pb-bottom-nav { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
   @screen md { .pb-bottom-nav { padding-bottom: 0; } }
+  /* The same clearance, for something FIXED above the tab bar rather than
+     padded away from it — the celebration builder's price sheet sits here.
+     Without this it would render underneath the tab bar on a phone, hiding
+     its own submit button. */
+  .above-bottom-nav { bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
+  @screen md { .above-bottom-nav { bottom: 0; } }
 }
 
 /* ── Reduced motion ────────────────────────────────────
