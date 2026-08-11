@@ -60,6 +60,43 @@ export function sizeFactor(guestCount) {
  * `qtyFor` on a per_unit service answers "how many of these does an event this
  * size need" so the customer never has to work out how many guards 400 guests
  * take. They can still override it.
+ *
+ * ── Where these numbers come from (checked Aug 2026) ───────────────────
+ * Every `base` below was validated against published Bengaluru 2026 vendor
+ * pricing. Most were already right and were left alone; five were under the
+ * market and were raised. Recording the evidence here because the failure
+ * mode with a price table is that somebody adjusts a number by feel and
+ * nobody can later tell which figures were researched and which were guessed.
+ *
+ *   photography  25,000 → 35,000   budget wedding coverage starts 40–80k in
+ *                                  Bengaluru; full-day 50k–2.5L. The old base
+ *                                  sat under the floor of the cheapest real
+ *                                  package quoted anywhere in the city.
+ *   videography  35,000 → 45,000   30k–5L, most couples 60k–1.5L
+ *   dj           18,000 → 22,000   DJ with sound 25k–1L; PA alone 30k–2L
+ *   live_music   45,000 → 55,000   5-piece band 50k–1.5L before sound
+ *   makeup       12,000 → 15,000   freelance 8–15k, established 20–35k,
+ *                                  premium 25–50k
+ *
+ * Confirmed correct, deliberately unchanged:
+ *
+ *   cleanup      6,000    2–3BHK deep clean runs 4–10k; an event venue is
+ *                         bigger, which `scales: true` already handles
+ *   priest       6,000    Bengaluru purohit bookings start ~4,100 with samagri
+ *   bouncers     2,200    guards bill 300–500/hour, so ~8 hours lands here
+ *   venue       60,000    halls quote per plate (350–5,000); 60k is the
+ *                         mid-range hall hire this model approximates
+ *
+ * These are the *base* before `sizeFactor`, so the quote for a 600-guest
+ * wedding is well above the figure written here — which is why a base that
+ * merely touches the bottom of the market band is not automatically wrong.
+ *
+ * Sources: velvetknot.in, itsmy.wedding, weddingclickz.com, buddyonstage.com,
+ * mjgorgeous.com, zoopgo.com, ifsservice.com, smartpuja.com (2026 guides).
+ *
+ * The matching customer-facing ranges live on SVC in eventServicesData.js and
+ * were moved in the same commit — a base outside its own displayed range is
+ * the one inconsistency a customer can actually catch.
  */
 export const SERVICE_GROUPS = [
   {
@@ -82,9 +119,9 @@ export const SERVICE_GROUPS = [
     label: 'Photos & video',
     hint: 'The part you still have in twenty years',
     services: [
-      { id: 'photography', name: 'Photography', emoji: '📸', unit: 'fixed', base: 25000, scales: true,
+      { id: 'photography', name: 'Photography', emoji: '📸', unit: 'fixed', base: 35000, scales: true,
         desc: 'Candid and portrait coverage, edited album' },
-      { id: 'videography', name: 'Videography', emoji: '🎬', unit: 'fixed', base: 35000, scales: true,
+      { id: 'videography', name: 'Videography', emoji: '🎬', unit: 'fixed', base: 45000, scales: true,
         desc: 'Cinematic 4K film, highlights reel' },
       { id: 'photobooth', name: 'Photo booth', emoji: '🤳', unit: 'fixed', base: 12000, scales: false,
         desc: 'Props and instant prints your guests take home' },
@@ -97,9 +134,9 @@ export const SERVICE_GROUPS = [
     label: 'Music & entertainment',
     hint: 'What keeps the room going',
     services: [
-      { id: 'dj', name: 'DJ & sound system', emoji: '🎵', unit: 'fixed', base: 18000, scales: true,
+      { id: 'dj', name: 'DJ & sound system', emoji: '🎵', unit: 'fixed', base: 22000, scales: true,
         desc: 'Console, PA, sub-woofers and an operator' },
-      { id: 'live_music', name: 'Live band or classical', emoji: '🎸', unit: 'fixed', base: 45000, scales: false,
+      { id: 'live_music', name: 'Live band or classical', emoji: '🎸', unit: 'fixed', base: 55000, scales: false,
         desc: 'Live band, classical ensemble, Bollywood or folk' },
       { id: 'drum', name: 'Dhol / nadaswaram / percussion', emoji: '🥁', unit: 'fixed', base: 8000, scales: false,
         desc: 'Traditional welcome for the entrance or procession' },
@@ -133,7 +170,7 @@ export const SERVICE_GROUPS = [
     label: 'Looking after people',
     hint: 'The things guests notice when they are missing',
     services: [
-      { id: 'makeup', name: 'Makeup & hair styling', emoji: '💄', unit: 'fixed', base: 12000, scales: false,
+      { id: 'makeup', name: 'Makeup & hair styling', emoji: '💄', unit: 'fixed', base: 15000, scales: false,
         desc: 'Professional artist for the family' },
       { id: 'bridal_wear', name: 'Bridal / groom styling', emoji: '👰', unit: 'fixed', base: 25000, scales: false,
         desc: 'Makeup, draping and a styling team on the day' },
