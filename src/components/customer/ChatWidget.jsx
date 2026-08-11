@@ -22,9 +22,10 @@ const FESTIVAL_LINKS = FESTIVALS.map(f => ({ label: f.name, emoji: f.emoji, path
 
 const SHOP_CATEGORY_KEYWORDS = {
   'Cakes':              ['cake', 'cakes'],
-  'Gifts':               ['gift', 'gifts', 'present'],
+  // Hamper words resolve to Gifts: the two categories are one shelf now
+  // (migration 031), so 'hamper' must not lead to a page that no longer exists.
+  'Gifts':               ['gift', 'gifts', 'present', 'hamper', 'hampers', 'basket'],
   'Flowers':              ['flower', 'flowers', 'bouquet', 'rose', 'roses'],
-  'Hampers':              ['hamper', 'hampers', 'basket'],
   'Party Essentials':      ['balloon', 'balloons', 'decoration', 'decorations', 'party essentials', 'banner'],
   'Pooja & Essentials':     ['pooja', 'puja', 'diya', 'diyas', 'samagri', 'ritual'],
 }

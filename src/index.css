@@ -60,6 +60,40 @@
   .sambramo-hero-gradient {
     background: linear-gradient(135deg, #2e1065 0%, #4c1d95 30%, #7c3aed 60%, #d946ef 100%);
   }
+
+  /* ── Storefront (/shop) ────────────────────────────────────────────
+     The marketplace surface. Deep green ground, red reserved for
+     savings. Scoped to the shop rather than dropped into the shared
+     button classes, so nothing outside /shop changes colour. */
+  .shop-canvas {
+    background:
+      radial-gradient(120% 60% at 50% 0%, #0e523c 0%, #0b3d2e 42%, #072a20 100%);
+  }
+  .shop-appbar {
+    background: linear-gradient(180deg, #0b3d2e 0%, #0b3d2eF2 70%, #0b3d2eE6 100%);
+  }
+  /* One card treatment, used by every product tile in the shop. The
+     ring rather than a border keeps the 1px hairline from eating a
+     pixel of the photo at the top corners. */
+  .shop-card {
+    @apply relative bg-white rounded-3xl ring-1 ring-black/5 overflow-hidden
+           shadow-[0_2px_10px_-6px_rgba(4,26,20,0.35)]
+           transition-[transform,box-shadow] duration-300
+           hover:shadow-[0_18px_38px_-18px_rgba(4,26,20,0.55)] hover:-translate-y-1;
+  }
+  /* ADD button. Sits half-out of the photo's bottom edge, thumb-height
+     above the card's own bottom — the position every food marketplace
+     converged on because it is reachable without covering the price. */
+  .shop-add-btn {
+    @apply inline-flex items-center justify-center gap-1 min-w-[76px] min-h-[36px]
+           px-3.5 rounded-xl bg-white text-chilli-600 text-xs font-extrabold tracking-wide
+           ring-1 ring-chilli-200 shadow-[0_6px_16px_-6px_rgba(198,40,40,0.5)]
+           active:scale-95 transition-transform;
+  }
+  .shop-chip {
+    @apply shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full
+           text-xs font-bold border transition-colors whitespace-nowrap;
+  }
 }
 
 @layer utilities {
@@ -215,6 +249,27 @@
   }
   .animate-count-up { animation: count-up 0.4s ease forwards; }
 
+  /* ── Rotating detail line (storefront cards) ─────────
+     One card, several things worth knowing about the item —
+     the offer, who delivers it, how it's paid for, what it
+     serves. A static card either drops four of them or turns
+     into a wall of grey 10px type nobody reads.
+
+     Only the incoming line is animated: it rises into place
+     and the previous one is gone by then. Departures board,
+     not a carousel — no crossfade means no frame where two
+     lines are both half-visible and neither is readable.
+     Transform + opacity only, so a grid of thirty of these
+     stays on the compositor. */
+  @keyframes fact-swap {
+    0%   { opacity: 0; transform: translateY(70%); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .fact-swap { animation: fact-swap 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  /* ── Safe areas (top notch, for the sticky app bar) ─── */
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
   /* ── Hide scrollbar ──────────────────────────────────── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -287,9 +342,16 @@
   .shimmer-text,
   .shimmer-saffron,
   .animate-spin-slow,
+  .animate-sheen,
+  .animate-pulse-ring,
   .ken-burns {
     animation: none !important;
   }
+  /* The rotator stops advancing under this preference (see
+     useReducedMotion in DetailRotator) and renders every line at
+     once instead, so nothing is lost — this only kills the entrance
+     for the first paint. */
+  .fact-swap { animation: none !important; }
   /* Overlays and toasts still need to arrive — suppressing the
      animation outright would make them blink into place. Cut the
      movement, keep an almost-instant fade. */

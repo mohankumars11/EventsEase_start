@@ -205,6 +205,10 @@ function AppRoutes() {
           /shop/Cakes?occasion=Birthday still work; CakeShop reads the same
           search param. */}
       <Route path="/shop/Cakes" element={<AppShell><CakeShop /></AppShell>} />
+      {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
+          festival banners, the chat widget, anything a customer bookmarked — so
+          it redirects rather than falling through to an empty category page. */}
+      <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
       <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
 
       {/* ── Planning ────────────────────────────────────

@@ -33,7 +33,7 @@ const FESTIVAL_SHOP_ROUTE = {
   'raksha-bandhan':    { category: 'Gifts', occasion: 'Rakhi' },
   'janmashtami':       { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
   'dussehra':          { category: 'Pooja & Essentials', occasion: 'Navratri' },
-  'new-years-eve':     { category: 'Hampers', occasion: 'New Year' },
+  'new-years-eve':     { category: 'Gifts', occasion: 'New Year' },
 }
 
 export default function FestivalBanner() {

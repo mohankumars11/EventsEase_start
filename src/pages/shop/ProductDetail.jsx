@@ -13,9 +13,10 @@ import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import CustomizeModal from '../../components/shop/CustomizeModal'
-import CakeCustomizeSheet, { VegMark } from '../../components/shop/CakeCustomizeSheet'
+import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
 import { cakeFacts } from '../../data/cakeStyles'
+import { isCustomizable } from '../../config/customizers'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -73,8 +74,10 @@ export default function ProductDetail() {
 
   const inCart   = hasProduct(product.id)
   const cartLine = productLines(product.id)[0]
-  const isCake   = product.category === 'Cakes'
-  const facts    = isCake ? cakeFacts(product) : null
+  // Cakes, party decor, pooja kits and gifts all open the full sheet; a
+  // category with no builder falls back to the simple message modal.
+  const configurable = isCustomizable(product.category)
+  const facts        = product.category === 'Cakes' ? cakeFacts(product) : null
 
   return (
     <div className="min-h-screen bg-cream">
@@ -141,12 +144,12 @@ export default function ProductDetail() {
             )}
 
             <p className="text-3xl font-extrabold text-plum-700 mb-1">
-              {isCake && <span className="text-base font-semibold text-gray-400 mr-1.5">from</span>}
+              {configurable && <span className="text-base font-semibold text-gray-400 mr-1.5">from</span>}
               {formatINR(product.price)}
             </p>
-            {isCake && (
+            {configurable && (
               <p className="text-xs text-gray-400 mb-4">
-                Final price depends on the size, flavour and extras you pick.
+                Final price depends on the options and extras you pick.
               </p>
             )}
 
@@ -154,12 +157,13 @@ export default function ProductDetail() {
                 commits to it — not in a footer after the fact. */}
             <FulfilmentNote className="mb-4" />
 
-            {isCake ? (
-              // A cake with no weight, flavour or egg preference chosen is not
-              // an order anyone can bake, so there is no bare "Add to cart"
-              // path for one. Already having a cake in the cart doesn't change
-              // that: the second one is usually configured differently, which
-              // is exactly why it gets its own line.
+            {configurable ? (
+              // A cake with no weight or flavour chosen, a balloon arch with
+              // nobody assigned to hang it, a havan kit with no tradition — none
+              // of those is an order anyone can fulfil, so configurable products
+              // have no bare "Add to cart" path. Already having one in the cart
+              // doesn't change that: the second is usually configured
+              // differently, which is exactly why it gets its own line.
               <div className="space-y-2">
                 <button
                   onClick={() => setCustomizing(true)}
@@ -244,8 +248,8 @@ export default function ProductDetail() {
         />
       )}
 
-      {customizing && (isCake ? (
-        <CakeCustomizeSheet
+      {customizing && (configurable ? (
+        <ProductCustomizeSheet
           product={product}
           onClose={() => setCustomizing(false)}
           onConfirm={({ qty, unitPrice, lines, signature }) => {

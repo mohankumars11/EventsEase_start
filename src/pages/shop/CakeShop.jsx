@@ -14,7 +14,7 @@ import { cakeFacts, CAKE_STYLES } from '../../data/cakeStyles'
 import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
-import CakeCustomizeSheet, { VegMark } from '../../components/shop/CakeCustomizeSheet'
+import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
 
 /**
@@ -415,7 +415,7 @@ export default function CakeShop() {
       </div>
 
       {customizing && (
-        <CakeCustomizeSheet
+        <ProductCustomizeSheet
           product={customizing}
           onClose={() => setCustomizing(null)}
           onConfirm={({ qty, unitPrice, lines, signature }) => {

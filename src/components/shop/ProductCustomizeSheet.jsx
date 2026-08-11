@@ -2,22 +2,28 @@ import { useState, useMemo, useEffect } from 'react'
 import { X, Minus, Plus, Check, Info, Leaf } from 'lucide-react'
 import { formatINR } from '../../utils/format'
 import {
-  buildCakeOptionGroups, defaultSelections, computeCakeOrder, selectionSignature,
-} from '../../config/cakeCustomizer'
+  buildOptionGroups, defaultSelections, computeOrder, selectionSignature,
+} from '../../config/customizers'
 import { cakeFacts } from '../../data/cakeStyles'
 import ProductImage from './ProductImage'
 import ImageSourceBadge from './ImageSourceBadge'
 import FulfilmentNote from './FulfilmentNote'
 
 /**
- * Configure a cake before it goes in the cart.
+ * Configure a product before it goes in the cart.
  *
- * A cake is not a product you add — it is a product you specify. Weight,
- * flavour, egg or eggless, shape, the message piped on top, the candle, the
- * card, and whether it arrives at midnight are all decisions the customer has
- * to make and the kitchen has to be told, and every one of them changes the
- * price. CustomizeModal (a quantity stepper and one free-text box) can carry
- * a gift message on a hamper; it cannot carry this.
+ * These are not things you add — they are things you specify. A cake has a
+ * weight, a flavour, an egg preference and a message piped on top; a balloon
+ * arch has a colour theme and the question of who climbs the ladder; a havan
+ * kit has a tradition, a muhurat and a gotra for the sankalp; a hamper has a
+ * tier and a handwritten card. Every one of those is a decision the customer
+ * has to make, the fulfiller has to be told, and most of them change the
+ * price. CustomizeModal — a quantity stepper and one free-text box — cannot
+ * carry any of it.
+ *
+ * The sheet itself knows none of those specifics. It renders whatever
+ * `buildOptionGroups` returns for the product's category, so a new category
+ * is a new builder and nothing here changes.
  *
  * ── Why the price is in the button ─────────────────────────────────────
  * Every selection updates the total on the confirm button itself, live. The
@@ -25,19 +31,22 @@ import FulfilmentNote from './FulfilmentNote'
  * up as ₹1,412 two screens later, and the customer is right to be annoyed.
  *
  * ── Why it is a bottom sheet ───────────────────────────────────────────
- * There are eleven groups. A centred dialog with that much inside it becomes
- * a scrolling box floating in the middle of a scrolling page on a phone,
- * where most of this shop is used. The sheet pins the header and the total to
- * the frame and lets only the options move.
+ * There can be a dozen groups. A centred dialog with that much inside it
+ * becomes a scrolling box floating in the middle of a scrolling page on a
+ * phone, where most of this shop is used. The sheet pins the header and the
+ * total to the frame and lets only the options move.
  */
-export default function CakeCustomizeSheet({ product, onClose, onConfirm }) {
-  const groups = useMemo(() => buildCakeOptionGroups(product), [product])
+export default function ProductCustomizeSheet({ product, onClose, onConfirm }) {
+  const groups = useMemo(() => buildOptionGroups(product), [product])
   const [selections, setSelections] = useState(() => defaultSelections(groups))
   const [qty, setQty] = useState(1)
 
-  const facts = useMemo(() => cakeFacts(product), [product])
+  // Cake-only facts (veg mark, serving size). Everything else in this sheet is
+  // category-agnostic; these two are worth the special case because they are
+  // the first things a cake buyer looks for.
+  const facts = useMemo(() => (product.category === 'Cakes' ? cakeFacts(product) : null), [product])
   const order = useMemo(
-    () => computeCakeOrder(product, groups, selections),
+    () => computeOrder(product, groups, selections),
     [product, groups, selections]
   )
 
@@ -114,11 +123,11 @@ export default function CakeCustomizeSheet({ product, onClose, onConfirm }) {
 
         <div className="px-5 pt-4 pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-start gap-2">
-            {facts.veg && <VegMark className="mt-1" />}
+            {facts?.veg && <VegMark className="mt-1" />}
             <div className="min-w-0">
               <h3 className="font-bold text-gray-900 leading-snug">{product.name}</h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                {[product.occasion, facts.serves, facts.pieces && `${facts.pieces} pieces`]
+                {[product.occasion, facts?.serves, facts?.pieces && `${facts.pieces} pieces`]
                   .filter(Boolean).join(' · ')}
               </p>
             </div>

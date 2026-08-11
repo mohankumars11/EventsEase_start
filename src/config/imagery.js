@@ -136,17 +136,29 @@ export const CATEGORY_PHOTO_QUERY = {
  */
 export const OCCASION_CARDS = [
   { occasion: 'Birthday',     category: 'Cakes',   label: 'Birthday',     blurb: 'Cakes, balloons and the candles' },
-  { occasion: 'Diwali',       category: 'Hampers', label: 'Diwali',       blurb: 'Hampers, diyas and sweets' },
+  { occasion: 'Diwali',       category: 'Gifts',   label: 'Diwali',       blurb: 'Hampers, diyas and sweets' },
   { occasion: 'Anniversary',  category: 'Flowers', label: 'Anniversary',  blurb: 'Bouquets and something to unwrap' },
-  { occasion: 'Wedding',      category: 'Hampers', label: 'Wedding',      blurb: 'Return gifts and trousseau hampers' },
+  { occasion: 'Wedding',      category: 'Gifts',   label: 'Wedding',      blurb: 'Return gifts and trousseau hampers' },
   { occasion: 'Rakhi',        category: 'Gifts',   label: 'Rakhi',        blurb: 'Rakhis, sweets and courier-safe boxes' },
   { occasion: 'Baby Shower',  category: 'Cakes',   label: 'Baby Shower',  blurb: 'Pastel cakes and keepsakes' },
   { occasion: 'Housewarming', category: 'Gifts',   label: 'Housewarming', blurb: 'Home gifts and pooja basics' },
-  { occasion: 'Corporate',    category: 'Hampers', label: 'Corporate',    blurb: 'Bulk hampers, GST invoiced' },
+  { occasion: 'Corporate',    category: 'Gifts',   label: 'Corporate',    blurb: 'Bulk hampers, GST invoiced' },
 ]
 
+// Gifts and Hampers are one category now (migration 031), but the photo map
+// was built when they were two — the Wedding and Corporate shots live under
+// 'Hampers' and there is no 'Gifts' equivalent. Falling through the aliases
+// keeps every occasion card illustrated instead of silently dropping to the
+// emoji tile.
+const PHOTO_FALLBACK = { 'Gifts': ['Gifts', 'Hampers'] }
+
 export function occasionPhoto(card) {
-  return CATALOGUE_PHOTOS[card.category]?.[card.occasion] ?? null
+  const categories = PHOTO_FALLBACK[card.category] ?? [card.category]
+  for (const category of categories) {
+    const photo = CATALOGUE_PHOTOS[category]?.[card.occasion]
+    if (photo) return photo
+  }
+  return null
 }
 
 /**

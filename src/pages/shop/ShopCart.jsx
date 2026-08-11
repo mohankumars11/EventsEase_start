@@ -14,7 +14,7 @@ import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker
 import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
 import { getAddressErrors, scrubDigits } from '../../utils/validators'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
-import { describeSelections } from '../../config/cakeCustomizer'
+import { describeSelections, summaryLines } from '../../config/customizers'
 
 const PAYMENT_METHODS = [
   { id: 'upi',       label: 'UPI' },
@@ -324,8 +324,11 @@ export default function ShopCart() {
                       </p>
                       {p.optionLines && (
                         <ul className="mt-1.5 space-y-0.5">
-                          {p.optionLines
-                            .filter(l => l.isText || l.price > 0 || ['weight', 'flavour', 'egg', 'shape'].includes(l.groupId))
+                          {/* summaryLines picks by role, not by a hard-coded
+                              list of cake group ids — a party setup choice and
+                              a pooja tradition are just as much part of what
+                              was ordered. */}
+                          {summaryLines(p.optionLines)
                             .map((l, i) => (
                               <li key={`${l.groupId}-${i}`} className="text-[11px] text-gray-500 leading-snug">
                                 {l.isText ? <span className="italic">“{l.label}”</span> : l.label}

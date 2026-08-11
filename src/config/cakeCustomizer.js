@@ -25,7 +25,8 @@
 // finishing surcharges are benchmarked to the going rate at established
 // Indian bakery chains, the same basis as the catalogue's own prices.
 
-import { cakeFacts } from '../data/cakeStyles'
+import { cakeFacts, servesFor } from '../data/cakeStyles'
+import { scaledOptions } from './customizers/engine'
 
 /* ── Weight ─────────────────────────────────────────────────────────────
  * Multipliers are relative to 1kg. A product priced at 1.5kg is re-based
@@ -34,8 +35,6 @@ import { cakeFacts } from '../data/cakeStyles'
  */
 const WEIGHT_MULTIPLIER = { 0.5: 0.62, 1: 1, 1.5: 1.45, 2: 1.88, 3: 2.72, 4: 3.55, 5: 4.4 }
 const WEIGHT_STEPS = [0.5, 1, 1.5, 2, 3, 5]
-
-const roundTo10 = n => Math.round(n / 10) * 10
 
 /* ── Flavour ────────────────────────────────────────────────────────────
  * Surcharges are absolute, against a plain vanilla sponge. They are then
@@ -192,35 +191,22 @@ export function buildCakeOptionGroups(product) {
   /* Weight — only where a weight is a meaningful thing to change. A box of
      cupcakes or a jar set is sold by the piece. */
   if (facts.form.resizable && facts.weightKg) {
-    const baseMult = WEIGHT_MULTIPLIER[facts.weightKg] ?? facts.weightKg
-    const steps = WEIGHT_STEPS.includes(facts.weightKg)
-      ? WEIGHT_STEPS
-      : [...new Set([...WEIGHT_STEPS, facts.weightKg])].sort((a, b) => a - b)
-
     groups.push({
       id: 'weight',
       label: 'Choose the size',
       hint: 'A kilo cuts into 8–10 party slices',
       type: 'single',
       required: true,
-      options: steps.map(kg => {
-        // The cake's own weight is its catalogue price exactly — never a
-        // rounded recomputation of it. Rounding to ₹10 turned a ₹1,199 cake
-        // into ₹1,200 the moment the sheet opened, which is a broken promise
-        // for one rupee.
-        const price = kg === facts.weightKg
-          ? product.price
-          : roundTo10(product.price * ((WEIGHT_MULTIPLIER[kg] ?? kg) / baseMult))
-        return {
-          id: String(kg),
-          label: `${kg} kg`,
-          note: cakeFacts({ name: `(${kg}kg)` }).serves,
-          // The weight group replaces the base price outright rather than
-          // adding to it — see computeCakeOrder.
-          absolute: price,
-          price: price - product.price,
-          default: kg === facts.weightKg,
-        }
+      role: 'spec',
+      // `absolute` pricing, re-based so the cake's own weight costs exactly
+      // its catalogue price — see scaledOptions.
+      options: scaledOptions({
+        steps: WEIGHT_STEPS,
+        multipliers: WEIGHT_MULTIPLIER,
+        current: facts.weightKg,
+        price: product.price,
+        label: kg => `${kg} kg`,
+        note: kg => servesFor(kg),
       }),
     })
   } else if (facts.pieces) {
@@ -236,6 +222,7 @@ export function buildCakeOptionGroups(product) {
   const baseFlavour = detectFlavour(product)
   groups.push({
     id: 'flavour',
+    role: 'spec',
     label: 'Pick a flavour',
     hint: `${baseFlavour.label} is what's pictured`,
     type: 'single',
@@ -256,6 +243,7 @@ export function buildCakeOptionGroups(product) {
   if (eggLocked) {
     groups.push({
       id: 'egg',
+    role: 'spec',
       label: 'Egg preference',
       type: 'info',
       text: 'This cake is made eggless — pure veg.',
@@ -280,6 +268,7 @@ export function buildCakeOptionGroups(product) {
   if (facts.form.shapeable) {
     groups.push({
       id: 'shape',
+    role: 'spec',
       label: 'Shape',
       type: 'single',
       required: true,
@@ -290,6 +279,7 @@ export function buildCakeOptionGroups(product) {
   /* Message on the cake */
   groups.push({
     id: 'message',
+    role: 'note',
     label: 'Message on the cake',
     hint: 'Piped by hand — keep it short so it fits',
     type: 'text',
@@ -301,6 +291,7 @@ export function buildCakeOptionGroups(product) {
   if (facts.style.id === 'photo') {
     groups.push({
       id: 'photo',
+    role: 'addon',
       label: 'Your photo',
       type: 'info',
       text: 'The edible photo print is included. We’ll message you on WhatsApp for the picture right after you order.',
@@ -319,6 +310,7 @@ export function buildCakeOptionGroups(product) {
   /* Toppers — occasion-aware wording. */
   groups.push({
     id: 'topper',
+    role: 'addon',
     label: 'Cake topper',
     type: 'multi',
     max: 2,
@@ -330,10 +322,11 @@ export function buildCakeOptionGroups(product) {
     ],
   })
 
-  groups.push({ id: 'candles', label: 'Candles', type: 'multi', max: 2, options: CANDLES })
+  groups.push({ id: 'candles', role: 'addon', label: 'Candles', type: 'multi', max: 2, options: CANDLES })
 
   groups.push({
     id: 'card',
+    role: 'addon',
     label: 'Greeting card',
     type: 'multi',
     max: 2,
@@ -344,11 +337,12 @@ export function buildCakeOptionGroups(product) {
     ],
   })
 
-  groups.push({ id: 'party', label: 'Party essentials', type: 'multi', max: 3, options: PARTY_ESSENTIALS })
-  groups.push({ id: 'gift',  label: 'Make it a gift',   type: 'multi', max: 2, options: GIFT_ADDONS })
+  groups.push({ id: 'party', role: 'addon', label: 'Party essentials', type: 'multi', max: 3, options: PARTY_ESSENTIALS })
+  groups.push({ id: 'gift', role: 'addon',  label: 'Make it a gift',   type: 'multi', max: 2, options: GIFT_ADDONS })
 
   groups.push({
     id: 'delivery',
+    role: 'schedule',
     label: 'When should it arrive?',
     type: 'single',
     required: true,
@@ -358,101 +352,7 @@ export function buildCakeOptionGroups(product) {
   return groups
 }
 
-/* ── Selections ─────────────────────────────────────────────────────── */
 
-export function defaultSelections(groups) {
-  const out = {}
-  for (const g of groups) {
-    if (g.type === 'single') out[g.id] = (g.options.find(o => o.default) ?? g.options[0]).id
-    else if (g.type === 'multi') out[g.id] = []
-    else if (g.type === 'text') out[g.id] = ''
-  }
-  return out
-}
-
-/**
- * Price and describe a configured cake.
- *
- * The weight group is `absolute`: picking 2kg *replaces* the base price
- * rather than adding a delta to it, because the base price already is a
- * price for a specific weight. Everything else adds. Getting this wrong in
- * the other direction — treating weight as an add-on — is how a 2kg cake ends
- * up costing base + 2kg instead of 2kg.
- */
-export function computeCakeOrder(product, groups, selections) {
-  let base = Number(product.price) || 0
-  const lines = []
-
-  for (const group of groups) {
-    if (group.type === 'single') {
-      const option = group.options.find(o => o.id === selections[group.id])
-      if (!option) continue
-      if (option.absolute != null) {
-        base = option.absolute
-        lines.push({ groupId: group.id, groupLabel: group.label, label: option.label, price: null })
-      } else {
-        if (option.price) lines.push({ groupId: group.id, groupLabel: group.label, label: option.label, price: option.price })
-        // A ₹0 default still belongs in the summary — "Eggless" and "Round"
-        // are facts about the order, not silent non-choices.
-        else lines.push({ groupId: group.id, groupLabel: group.label, label: option.label, price: 0 })
-      }
-    } else if (group.type === 'multi') {
-      for (const id of selections[group.id] ?? []) {
-        const option = group.options.find(o => o.id === id)
-        if (option) lines.push({ groupId: group.id, groupLabel: group.label, label: option.label, price: option.price ?? 0 })
-      }
-    } else if (group.type === 'text') {
-      const value = (selections[group.id] ?? '').trim()
-      if (value) lines.push({ groupId: group.id, groupLabel: group.label, label: value, price: 0, isText: true })
-    }
-  }
-
-  const addOnTotal = lines.reduce((sum, l) => sum + (l.price ?? 0), 0)
-  return { base, addOnTotal, unitPrice: base + addOnTotal, lines }
-}
-
-/**
- * A stable identity for one configuration.
- *
- * Two cakes that differ only in flavour are two different products to the
- * kitchen and must be two different cart lines — otherwise adding a second,
- * differently-configured cake silently overwrites the first. Sorting the
- * multi-select arrays keeps the key stable regardless of the order boxes
- * were ticked in.
- */
-export function selectionSignature(selections) {
-  const parts = Object.keys(selections).sort().map(key => {
-    const value = selections[key]
-    if (Array.isArray(value)) return `${key}:${[...value].sort().join('+')}`
-    return `${key}:${String(value ?? '').trim()}`
-  })
-  // Short, stable, and only ever compared for equality — a cheap FNV-style
-  // hash is enough, and keeps localStorage cart keys readable.
-  let hash = 0
-  for (const ch of parts.join('|')) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return hash.toString(36)
-}
-
-/**
- * The configuration as the kitchen will read it, for
- * order_items.customization.
- *
- * Human-readable on purpose: the reader is whoever is packing the box. The
- * cake's own specification goes on one line, add-ons are itemised, and the
- * piped message is quoted first because it is the thing most often got wrong.
- */
-export function describeSelections(lines) {
-  const spec = lines.filter(l => ['weight', 'flavour', 'egg', 'shape'].includes(l.groupId)).map(l => l.label)
-  const message = lines.find(l => l.groupId === 'message')
-  const delivery = lines.find(l => l.groupId === 'delivery')
-  const addOns = lines.filter(l =>
-    !['weight', 'flavour', 'egg', 'shape', 'message', 'delivery'].includes(l.groupId)
-  )
-
-  const out = []
-  if (message)      out.push(`Message on cake: "${message.label}"`)
-  if (spec.length)  out.push(spec.join(' · '))
-  if (addOns.length) out.push(`Add-ons: ${addOns.map(a => a.label).join(', ')}`)
-  if (delivery)     out.push(`Delivery: ${delivery.label}`)
-  return out.join('\n')
-}
+// Selection handling, pricing and the order note now live in
+// ./customizers/engine.js — every category needs them, and a cake file
+// is the wrong place for a hamper to import them from.

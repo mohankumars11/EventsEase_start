@@ -62,6 +62,26 @@ for (const file of walk('src')) {
     defined.add(m[1])
   }
 
+  // Shorthand destructuring, the other half of the same pattern:
+  //   [{ Icon: GooglePayIcon, label }, …].map(({ Icon, label }) => <Icon …/>)
+  // Here the binding is named `Icon` on both sides, so the renamed-pair rule
+  // above never sees it. PaymentStrip.jsx does exactly this and was reported
+  // as a crash that does not exist — a false positive in a pre-deploy gate is
+  // expensive, because the next real one gets waved through.
+  const destructured = [
+    ...src.matchAll(/\(\s*\{([^{}]*)\}\s*\)\s*=>/g),        // ({ Icon, label }) =>
+    ...src.matchAll(/(?:const|let|var)\s*\{([^{}]*)\}\s*=/g), // const { Icon } =
+  ]
+  for (const m of destructured) {
+    for (const token of m[1].split(',')) {
+      // Take the bound name: `Icon` from `Icon`, and from `icon: Icon` the
+      // right-hand side, which the rule above already covers but is harmless
+      // to repeat.
+      const name = token.split(':').pop().split('=')[0].trim()
+      if (/^[A-Z][A-Za-z0-9_]*$/.test(name)) defined.add(name)
+    }
+  }
+
   for (const name of used) {
     if (defined.has(name)) continue
     console.error(`${relative('.', file)}: <${name}> is used but never imported or declared`)
