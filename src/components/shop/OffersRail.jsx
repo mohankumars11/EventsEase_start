@@ -138,9 +138,13 @@ function OfferTile({ offer, copied, onCopy }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-white/20 blur-md animate-sheen"
       />
-      {/* Perforation, so the tile reads as a coupon and not as an ad. */}
-      <span aria-hidden="true" className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-forest-900" />
-      <span aria-hidden="true" className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-forest-900" />
+      {/* Perforation, so the tile reads as a coupon and not as an ad. Painted
+          in the host canvas's own ground (--coupon-notch) because this rail
+          runs on both the green storefront and the plum home. */}
+      <span aria-hidden="true" className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
+            style={{ background: 'var(--coupon-notch, #072a20)' }} />
+      <span aria-hidden="true" className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
+            style={{ background: 'var(--coupon-notch, #072a20)' }} />
 
       <div className="relative">
         <p className="text-white font-extrabold text-xl leading-none tracking-tight">

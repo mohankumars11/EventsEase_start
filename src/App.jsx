@@ -16,7 +16,7 @@ import ServiceAreaBanner from './components/customer/ServiceAreaBanner'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import LandingPage from './pages/LandingPage'
+import HomeScreen from './pages/HomeScreen'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -38,7 +38,6 @@ const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
-const CustomerHome   = lazy(() => import('./pages/customer/CustomerHome'))
 const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
 const EventServices  = lazy(() => import('./pages/customer/EventServices'))
 const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
@@ -177,7 +176,7 @@ function BareShell({ children }) {
 }
 
 /**
- * The storefront browse screens, which draw their own chrome.
+ * The app screens that draw their own chrome — home and the storefront.
  *
  * Same reasoning as BareShell, for the same symptom. /shop opens with a
  * sticky app bar carrying the delivery city, a search field and the cart —
@@ -195,8 +194,13 @@ function BareShell({ children }) {
  *
  * Deliberately not applied to /shop/cart or /shop/product/:id, which are
  * still the light-ground design and read correctly inside the standard shell.
+ *
+ * Home joined it when the landing page and the customer dashboard collapsed
+ * into one screen: it draws the same kind of sticky app bar, and stacking the
+ * marketing navbar above a bar that already carries the city, the search and
+ * the cart produced the identical duplication it does on /shop.
  */
-function StoreShell({ children }) {
+function ScreenShell({ children }) {
   return (
     <div className="flex min-h-screen flex-col pb-bottom-nav">
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
@@ -210,7 +214,19 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
     <Routes>
       {/* ── Public ─────────────────────────────────── */}
-      <Route path="/"       element={<AppShell><LandingPage /></AppShell>} />
+      {/* One home, signed in or signed out.
+          `/` and `/dashboard/customer` render the same screen: the two used to
+          be a marketing landing page and a "customer home" that sold the
+          planner, listed celebration types, pushed the shop and ran a festival
+          rail — the same four things in two layouts. Signing in replaced the
+          app you had just learned with another one doing the same job.
+          HomeScreen changes its contents by auth state instead.
+
+          /dashboard/customer stays routed rather than redirecting: it is in
+          the wild in the tab bar, in post-login redirects, in the profile menu
+          and in anything a customer has bookmarked. It keeps its guard, so the
+          signed-out variant is only ever reachable at `/`. */}
+      <Route path="/"       element={<ScreenShell><HomeScreen /></ScreenShell>} />
       <Route path="/signup"         element={<BareShell><SignupPage /></BareShell>} />
       <Route path="/login"          element={<BareShell><LoginPage /></BareShell>} />
       <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
@@ -219,7 +235,7 @@ function AppRoutes() {
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
 
       {/* ── Shop (public browsing, checkout requires login) ── */}
-      <Route path="/shop" element={<StoreShell><Shop /></StoreShell>} />
+      <Route path="/shop" element={<ScreenShell><Shop /></ScreenShell>} />
       {/* Public: a guest can build and review a cart, and is asked to sign
           in at checkout. Gating the cart page itself bounced anyone who
           tapped the cart icon straight to /login, which reads as "your
@@ -233,12 +249,12 @@ function AppRoutes() {
           the dynamic one regardless of order. Existing deep links of the form
           /shop/Cakes?occasion=Birthday still work; CakeShop reads the same
           search param. */}
-      <Route path="/shop/Cakes" element={<StoreShell><CakeShop /></StoreShell>} />
+      <Route path="/shop/Cakes" element={<ScreenShell><CakeShop /></ScreenShell>} />
       {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
           festival banners, the chat widget, anything a customer bookmarked — so
           it redirects rather than falling through to an empty category page. */}
       <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
-      <Route path="/shop/:category" element={<StoreShell><ShopCategory /></StoreShell>} />
+      <Route path="/shop/:category" element={<ScreenShell><ShopCategory /></ScreenShell>} />
 
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it
@@ -273,7 +289,7 @@ function AppRoutes() {
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <DashboardShell><CustomerHome /></DashboardShell>
+          <ScreenShell><HomeScreen /></ScreenShell>
         </ProtectedRoute>
       } />
       {/* /dashboard/customer/browse, /vendors/:id, /vendors/:id/quote and

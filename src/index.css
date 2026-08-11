@@ -61,11 +61,57 @@
     background: linear-gradient(135deg, #2e1065 0%, #4c1d95 30%, #7c3aed 60%, #d946ef 100%);
   }
 
+  /* ── Home (the app's front screen) ─────────────────────────────────
+     Festival night: deep aubergine, a violet bloom overhead and a warm
+     marigold glow off to one side — the colour of a courtyard strung with
+     lights, which is the product.
+
+     Deliberately not the storefront's green. The two surfaces do different
+     jobs and a customer should know which one they are on before they read a
+     word: green is the shop (fresh, transactional, priced), plum is the
+     concierge (evening, occasion, arranged for you). Both carry the same
+     saffron accent, so they read as one brand rather than two apps. */
+  .home-canvas {
+    /* The colour a coupon tile punches its notches out in. The offers rail is
+       shared with the storefront, and its perforations were painted the shop's
+       green — on plum that read as two green dots stuck to the tile rather
+       than as holes in it. Each canvas declares its own ground here. */
+    --coupon-notch: #1c0733;
+    background:
+      radial-gradient(95% 55% at 50% -8%,  rgba(124, 58, 237, 0.38) 0%, transparent 62%),
+      radial-gradient(60% 38% at 88% 12%,  rgba(245, 158, 11, 0.20) 0%, transparent 58%),
+      radial-gradient(70% 45% at 6% 42%,   rgba(217, 70, 239, 0.16) 0%, transparent 60%),
+      linear-gradient(180deg, #2b0b52 0%, #1c0733 46%, #120420 100%);
+    background-attachment: fixed;
+  }
+  .home-appbar {
+    background: linear-gradient(180deg, #2b0b52 0%, #260a49 100%);
+  }
+  /* The light card used on the home canvas. Same geometry as .shop-card so
+     the two surfaces feel like one app, different shadow colour so it sits
+     on plum rather than floating over it. */
+  .home-card {
+    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
+           shadow-[0_2px_10px_-6px_rgba(18,4,32,0.5)]
+           transition-[transform,box-shadow] duration-300
+           hover:-translate-y-1 hover:shadow-[0_18px_38px_-18px_rgba(18,4,32,0.75)];
+  }
+  /* The glass card, for anything that should stay part of the night sky —
+     section wrappers, trust blocks, the live-event strip. */
+  .home-glass {
+    @apply rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+  }
+  .home-chip {
+    @apply shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full
+           px-3.5 py-2 text-xs font-bold transition-colors;
+  }
+
   /* ── Storefront (/shop) ────────────────────────────────────────────
      The marketplace surface. Deep green ground, red reserved for
      savings. Scoped to the shop rather than dropped into the shared
      button classes, so nothing outside /shop changes colour. */
   .shop-canvas {
+    --coupon-notch: #072a20;
     background:
       radial-gradient(120% 60% at 50% 0%, #0e523c 0%, #0b3d2e 42%, #072a20 100%);
   }
@@ -274,6 +320,18 @@
 
   /* ── Safe areas (top notch, for the sticky app bar) ─── */
   .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+  /* ── Search fields ───────────────────────────────────
+     `type="search"` gets the right keyboard and the right enter key on a
+     phone, and in exchange Chromium draws its own clear button inside the
+     field. Both app bars already render one, positioned and sized to match
+     the rest of the UI, so the native control appeared as a second X a few
+     pixels from the first. Suppress theirs, keep ours. */
+  input[type='search']::-webkit-search-cancel-button,
+  input[type='search']::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
 
   /* ── Hide scrollbar ──────────────────────────────────── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
