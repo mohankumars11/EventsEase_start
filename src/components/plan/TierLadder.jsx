@@ -13,6 +13,13 @@ import { CELEBRATION_TIERS, BESPOKE_TIER } from '../../data/celebrationTiers'
  * Guest count drives the highlight rather than the other way round: type 220
  * and Special Day lights up. People know their guest list before they know
  * what to call the event, so the number is the way in.
+ *
+ * ── Discrete taps say so ────────────────────────────────────────────────
+ * The quick-count chips pass a second argument, and the builder uses it to
+ * open the confirmation dialog (see TierMatchDialog). Typing into the field
+ * does not — a dialog between "2" and "220" would fire three times on the
+ * way to one number. The distinction is "the user completed an act" versus
+ * "the user is mid-keystroke", and only the first deserves an interruption.
  */
 export default function TierLadder({ guestCount, onGuestCount, selectedId, onSelect, suggestedId }) {
   return (
@@ -40,7 +47,7 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
               <button
                 key={n}
                 type="button"
-                onClick={() => onGuestCount(n)}
+                onClick={() => onGuestCount(n, true)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                   guestCount === n
                     ? 'bg-plum-700 text-white border-plum-700'
@@ -63,11 +70,24 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
               key={tier.id}
               type="button"
               onClick={() => onSelect(tier.id)}
-              className={`w-full text-left card p-5 transition-all ${tier.accent} ${
-                selected ? 'ring-2 ring-plum-500 ring-offset-2' : 'hover:shadow-md'
+              aria-pressed={selected}
+              className={`w-full text-left card overflow-hidden transition-all ${tier.accent} ${
+                selected ? 'ring-2 ring-plum-600 ring-offset-2 shadow-md' : 'hover:shadow-md'
               }`}
             >
-              <div className="flex items-start justify-between gap-4">
+              {/* The chosen scale gets a banner, not a badge in a corner.
+                  A moved highlight among six near-identical cards is what
+                  made this screen read as "it picked its own option" — the
+                  selection has to announce itself in words, at the top of
+                  the card, where the eye lands first. */}
+              {selected && (
+                <span className="block bg-plum-700 px-5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
+                  <Check size={12} className="inline -mt-0.5 mr-1" />
+                  Your scale
+                </span>
+              )}
+
+              <div className="flex items-start justify-between gap-4 p-5">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="text-2xl">{tier.emoji}</span>
@@ -102,9 +122,9 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
                       {tier.guests.min}–{tier.guests.max}
                     </p>
                   </div>
-                  {selected && (
-                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-plum-700">
-                      <Check size={12} /> Selected
+                  {!selected && (
+                    <span className="mt-2 inline-block text-[11px] font-bold text-plum-700">
+                      Choose →
                     </span>
                   )}
                 </div>

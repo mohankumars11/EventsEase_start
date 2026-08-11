@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, ShieldCheck,
+  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, ShieldCheck, Receipt,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +10,7 @@ import { BRAND } from '../../config/sambramo'
 import { EVENT_DATA, EVENT_LIST } from '../../data/eventServicesData'
 import { CELEBRATION_TIERS, TIER_BY_ID, BOOKING_MODES, tierForGuests, LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { CUISINES, CUISINE_BY_ID, defaultMenu } from '../../data/cuisineMenus'
+import { DECOR_LEVEL_BY_ID } from '../../data/decorPackages'
 import { ALL_SERVICES } from '../../data/servicePricing'
 import { buildQuote, quoteToText, checkMinimums } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
@@ -19,6 +20,9 @@ import MenuBuilder from '../../components/plan/MenuBuilder'
 import DecorChooser from '../../components/plan/DecorChooser'
 import ServicePicker from '../../components/plan/ServicePicker'
 import QuotePanel from '../../components/plan/QuotePanel'
+import ReviewBoard from '../../components/plan/ReviewBoard'
+import TierMatchDialog from '../../components/plan/TierMatchDialog'
+import BuilderActionBar from '../../components/plan/BuilderActionBar'
 import LockPayment from '../../components/plan/LockPayment'
 
 /**
@@ -33,21 +37,33 @@ import LockPayment from '../../components/plan/LockPayment'
  * ── The mobile rules, which drove the layout ────────────────────────────
  * Nearly all of this traffic is a phone, mid-evening, one thumb. So:
  *
- *   The price is never off screen, and never in the way. On desktop it is a
- *   sticky column. On a phone it is a single-row bar — price and a way in —
- *   that opens into a dismissable sheet. The first cut shipped the desktop
- *   panel with `position: fixed` and it ate half the screen with no way to
- *   close it; a persistent element earns only the height it needs to be
- *   glanced at, and everything else waits behind a tap.
+ *   Forward motion is pinned, not buried. The way to the next step is in a
+ *   fixed bar at the bottom of the screen, always one thumb-reach away. It
+ *   used to be a button under the step's content, which on the Food step
+ *   meant scrolling past forty dish tiles after every single choice — and on
+ *   the last step it did not exist at all, leaving Back as the only visible
+ *   control on a screen whose job was to finish.
+ *
+ *   The price is never off screen, and never in the way. It shares that same
+ *   bar as one line, and tapping it goes to the review STEP. Two earlier cuts
+ *   got this wrong in opposite directions: a `position: fixed` desktop panel
+ *   that ate half the screen, then a sheet that covered the page. A pinned
+ *   element earns the height it needs to be glanced at, and no more.
+ *
+ *   Review is the last step, not a modal that can ambush you mid-flow. It is
+ *   the longest content in the builder and it belongs on a page that scrolls
+ *   normally with nothing behind it to hide. See ReviewBoard.
+ *
+ *   Anything the app decides on the customer's behalf gets stated and agreed
+ *   to. The guest count picks the scale, and it used to do it silently: you
+ *   tapped 220 and a highlight moved somewhere in a list you had scrolled
+ *   past. Now it opens TierMatchDialog — this is your circle, here is what
+ *   comes with it, here is the way on.
  *
  *   The estimate does not appear until an occasion is chosen. A quote object
  *   exists from the first render (the guest count defaults, the tier follows
  *   it), but a five-figure number shown to somebody who has answered nothing
  *   reads as invented.
- *
- *   One decision per step, five steps, and the step bar scrolls horizontally
- *   rather than shrinking to unreadable. Forward motion is a full-width button
- *   at the bottom of the content, where the thumb already is.
  *
  *   Native <select> for every dropdown — Android opens its own picker, which
  *   is better than anything hand-rolled and already accessible.
@@ -66,12 +82,20 @@ import LockPayment from '../../components/plan/LockPayment'
 // standing order to be resurrected on another device three weeks later.
 const DRAFT_KEY = 'sambramo_builder_draft'
 
+/**
+ * The steps, in order, ending at review.
+ *
+ * `short` is what the forward button says ("Next: Décor"), because "Next:
+ * Everything else" sets two lines on a 360px phone and the arrow stops
+ * looking like part of the same control.
+ */
 const STEPS = [
-  { id: 'occasion', label: 'Occasion', icon: Sparkles },
-  { id: 'scale', label: 'Scale', icon: Users },
-  { id: 'food', label: 'Food', icon: UtensilsCrossed },
-  { id: 'decor', label: 'Décor', icon: Palette },
-  { id: 'services', label: 'Everything else', icon: ListChecks },
+  { id: 'occasion', label: 'Occasion',        short: 'Occasion', icon: Sparkles },
+  { id: 'scale',    label: 'Scale',           short: 'Scale',    icon: Users },
+  { id: 'food',     label: 'Food',            short: 'Food',     icon: UtensilsCrossed },
+  { id: 'decor',    label: 'Décor',           short: 'Décor',    icon: Palette },
+  { id: 'services', label: 'Everything else', short: 'Extras',   icon: ListChecks },
+  { id: 'review',   label: 'Review & send',   short: 'Review',   icon: Receipt },
 ]
 
 export default function CelebrationBuilder() {
@@ -104,12 +128,17 @@ export default function CelebrationBuilder() {
   const [error, setError] = useState(null)
   const [enquiryId, setEnquiryId] = useState(null)
   const [lockClaimed, setLockClaimed] = useState(false)
-  const [sheetOpen, setSheetOpen] = useState(false)
+
+  // The scale waiting to be agreed to. Holds an id rather than a boolean so
+  // the dialog can offer a switch ("your 450 guests suggest Grand") without
+  // having already applied it behind the customer's back.
+  const [tierPrompt, setTierPrompt] = useState(null)
 
   const event = EVENT_DATA[eventId]
   const occasionName = eventId === 'other'
     ? (otherOccasion.trim() || 'Custom celebration')
     : event?.name ?? 'Celebration'
+  const occasionEmoji = eventId === 'other' ? '✏️' : event?.emoji ?? '🎊'
 
   const suggestedId = useMemo(() => tierForGuests(guestCount)?.id, [guestCount])
   const tier = TIER_BY_ID[tierId]
@@ -191,7 +220,87 @@ export default function CelebrationBuilder() {
    * an occasion. Everything after that (scale, menu, decor, services) refines a
    * number that is already on screen and already moving.
    */
-  const showQuote = !!quote && !!eventId && (eventId !== 'other' || !!otherOccasion.trim())
+  const occasionAnswered = !!eventId && (eventId !== 'other' || !!otherOccasion.trim())
+  const showQuote = !!quote && occasionAnswered
+
+  /**
+   * The steps that actually apply to this configuration.
+   *
+   * Turning catering off does not grey out Food, it removes it — so "next"
+   * means the next real question rather than the next array index, and the
+   * old `while (disabled) next++` walk disappears along with the off-by-one
+   * it was one edit away from.
+   */
+  const flow = useMemo(
+    () => STEPS.filter(s =>
+      !(s.id === 'food' && !includeCatering) && !(s.id === 'decor' && !includeDecor)),
+    [includeCatering, includeDecor],
+  )
+  const flowIndex = flow.findIndex(s => s.id === step)
+
+  // Standing on a step that just left the flow (catering switched off while
+  // reading the menu) is a blank screen with no way out. Land on Extras,
+  // which is where the switch that caused it lives.
+  useEffect(() => {
+    if (step === 'done') return
+    if (!flow.some(s => s.id === step)) setStep('services')
+  }, [flow, step])
+
+  /* ── Moving between steps ─────────────────────────────────────────── */
+
+  // Each step is a fresh question, so it starts at the top of itself rather
+  // than wherever the previous step's scroll position happened to be.
+  // `scroll-mt` on the anchor keeps the sticky step bar from covering the
+  // first card.
+  const contentRef = useRef(null)
+  const lastStep = useRef(step)
+  useEffect(() => {
+    // Compares the step rather than counting renders, so StrictMode's second
+    // mount in development does not scroll a page nobody has moved through.
+    if (lastStep.current === step) return
+    lastStep.current = step
+    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [step])
+
+  const goTo = useCallback(id => setStep(id), [])
+
+  const goNext = useCallback((fromId) => {
+    const i = flow.findIndex(s => s.id === (fromId ?? step))
+    const next = flow[i + 1]
+    if (next) setStep(next.id)
+  }, [flow, step])
+
+  const goBack = useCallback(() => {
+    const previous = flow[flowIndex - 1]
+    if (previous) setStep(previous.id)
+  }, [flow, flowIndex])
+
+  /* ── Scale, decided out loud ──────────────────────────────────────── */
+
+  /**
+   * A guest count arriving from a chip is a completed decision and opens the
+   * confirmation; one arriving from the keyboard is not, and does not. Both
+   * update the price immediately either way.
+   */
+  const handleGuestCount = useCallback((n, discrete = false) => {
+    setGuestCount(n)
+    if (!discrete) return
+    const suggestion = tierForGuests(n)
+    if (suggestion && suggestion.id !== 'bespoke') setTierPrompt(suggestion.id)
+  }, [])
+
+  const handleTierSelect = useCallback(id => {
+    setTierId(id)
+    setTierTouched(true)
+    setTierPrompt(id)
+  }, [])
+
+  const confirmTier = useCallback(id => {
+    setTierId(id)
+    setTierTouched(true)
+    setTierPrompt(null)
+    goNext('scale')
+  }, [goNext])
 
   function toggleService(id) {
     setServicesTouched(true)
@@ -383,11 +492,38 @@ export default function CelebrationBuilder() {
     )
   }
 
-  const stepIndex = STEPS.findIndex(s => s.id === step)
-  const isLastStep = stepIndex === STEPS.length - 1
+  /* ── What each step has to show for itself ───────────────────────── */
+  const level = DECOR_LEVEL_BY_ID[decorLevelId]
+  const cuisine = CUISINE_BY_ID[cuisineId]
+  const done = {
+    occasion: occasionAnswered,
+    scale:    !!tier,
+    food:     !!cuisine,
+    decor:    !!level,
+    services: serviceIds.length > 0,
+    review:   false,
+  }
+  const summary = {
+    occasion: occasionAnswered ? occasionName : null,
+    scale:    tier ? `${tier.name} · ${guestCount}` : null,
+    food:     cuisine ? cuisine.name : null,
+    decor:    level ? level.name : null,
+    services: serviceIds.length ? `${serviceIds.length} picked` : null,
+    review:   showQuote ? `${formatINR(quote.range.low)}+` : null,
+  }
+
+  const isReview = step === 'review'
+  const nextStep = flow[flowIndex + 1]
+  const primaryLabel = isReview
+    ? (submitting ? 'Sending…' : 'Get this confirmed')
+    : nextStep ? `Next: ${nextStep.short}` : 'Review'
+  const primaryDisabled = isReview
+    ? (submitting || !!blocked)
+    : (step === 'occasion' && !occasionAnswered)
+  const onPrimary = isReview ? () => submit() : () => goNext()
 
   return (
-    <div className={`bg-cream min-h-screen lg:pb-8 ${showQuote ? 'pb-28' : 'pb-8'}`}>
+    <div className="bg-cream min-h-screen pb-28 lg:pb-8">
       {/* Hero */}
       <div className={`bg-gradient-to-r ${event?.heroGradient ?? 'from-plum-700 via-plum-600 to-saffron-500'} text-white`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
@@ -435,36 +571,56 @@ export default function CelebrationBuilder() {
         </div>
       </div>
 
-      {/* Step bar — scrolls sideways rather than shrinking to unreadable */}
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+      {/* Step bar — scrolls sideways rather than shrinking to unreadable.
+          Each chip carries what was decided there, so the bar doubles as a
+          running summary and "where am I / what have I answered" needs no
+          scrolling to answer. */}
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto flex overflow-x-auto scrollbar-hide">
-          {STEPS.map((s, i) => {
+          {STEPS.map(s => {
             const Icon = s.icon
-            const disabled = (s.id === 'food' && !includeCatering) || (s.id === 'decor' && !includeDecor)
+            const off = !flow.some(f => f.id === s.id)
+            const locked = s.id === 'review' && !showQuote
+            const disabled = off || locked
+            const active = step === s.id
+            const complete = done[s.id]
             return (
               <button
                 key={s.id}
-                onClick={() => !disabled && setStep(s.id)}
+                onClick={() => !disabled && goTo(s.id)}
                 disabled={disabled}
-                className={`shrink-0 px-4 py-3.5 min-h-[52px] text-sm font-semibold border-b-2 flex items-center gap-1.5 disabled:opacity-30 ${
-                  step === s.id ? 'border-saffron-500 text-saffron-700' : 'border-transparent text-gray-500'
-                }`}
+                aria-current={active ? 'step' : undefined}
+                className={`shrink-0 px-4 py-2.5 min-h-[56px] text-left border-b-2 disabled:opacity-30 ${
+                  active ? 'border-saffron-500 bg-saffron-50/60' : 'border-transparent'
+                } ${s.id === 'review' ? 'border-l border-l-gray-200 ml-1' : ''}`}
               >
-                <Icon size={14} />
-                {s.label}
+                <span className={`flex items-center gap-1.5 text-sm font-semibold ${
+                  active ? 'text-saffron-700' : complete ? 'text-gray-700' : 'text-gray-500'
+                }`}>
+                  {complete && !active
+                    ? <CheckCircle2 size={14} className="text-green-600" />
+                    : <Icon size={14} />}
+                  {s.label}
+                </span>
+                <span className="block text-[10px] font-medium text-gray-400 truncate max-w-[130px]">
+                  {off ? 'switched off' : summary[s.id] ?? '—'}
+                </span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5">
+      <div
+        ref={contentRef}
+        className="scroll-mt-24 max-w-6xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        <div className={isReview ? 'lg:col-span-3 space-y-5' : 'lg:col-span-2 space-y-5'}>
           {step === 'occasion' && (
             <>
               <OccasionPicker
                 eventId={eventId}
-                onEvent={id => { setEventId(id); if (id && id !== 'other') setStep('scale') }}
+                onEvent={id => { setEventId(id); if (id && id !== 'other') goNext('occasion') }}
                 otherText={otherOccasion}
                 onOtherText={setOtherOccasion}
               />
@@ -480,10 +636,10 @@ export default function CelebrationBuilder() {
           {step === 'scale' && (
             <TierLadder
               guestCount={guestCount}
-              onGuestCount={setGuestCount}
+              onGuestCount={handleGuestCount}
               selectedId={tierId}
               suggestedId={suggestedId}
-              onSelect={id => { setTierId(id); setTierTouched(true) }}
+              onSelect={handleTierSelect}
             />
           )}
 
@@ -530,114 +686,86 @@ export default function CelebrationBuilder() {
             />
           )}
 
-          {/* When and where — asked at the end, because neither changes the
-              price and putting them first is how a pricing page turns back
-              into an enquiry form. */}
-          {isLastStep && (
-            <div className="card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="event-date" className="block text-sm font-bold text-gray-800 mb-1.5">Date (if you know it)</label>
-                <input
-                  id="event-date"
-                  type="date"
-                  value={eventDate}
-                  onChange={e => setEventDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 10)}
-                  className="w-full min-h-[52px] px-4 py-3 rounded-xl border-2 border-gray-200 text-base focus:border-saffron-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="event-city" className="block text-sm font-bold text-gray-800 mb-1.5">City</label>
-                <select
-                  id="event-city"
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  className="w-full min-h-[52px] px-4 py-3 rounded-xl border-2 border-gray-200 text-base bg-white focus:border-saffron-400 focus:outline-none"
-                >
-                  {BRAND.pilotCities.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <p className="mt-1 text-[11px] text-gray-400">
-                  {BRAND.pilotCities.join(' and ')} only for now.
-                </p>
-              </div>
-            </div>
+          {/* Date and city live on the review, not on a build step — neither
+              changes the price, and asking them first is how a pricing page
+              turns back into an enquiry form. */}
+          {isReview && (
+            <ReviewBoard
+              quote={showQuote ? quote : null}
+              blocked={blocked}
+              submitting={submitting}
+              onSubmit={() => submit()}
+              onEdit={goTo}
+              occasionName={occasionName}
+              occasionEmoji={occasionEmoji}
+              mode={mode}
+              cuisine={includeCatering ? cuisine : null}
+              menu={menu}
+              vegOnly={vegOnly}
+              specialRequests={specialRequests}
+              cateringOn={includeCatering}
+              decorOn={includeDecor}
+              eventDate={eventDate}
+              onEventDate={setEventDate}
+              city={city}
+              onCity={setCity}
+            />
           )}
 
           {error && (
             <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>
           )}
 
-          <div className="flex gap-3">
-            {stepIndex > 0 && (
-              <button
-                onClick={() => setStep(STEPS[stepIndex - 1].id)}
-                className="px-5 min-h-[52px] rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600"
-              >
-                Back
-              </button>
-            )}
-            {!isLastStep && (
-              <button
-                onClick={() => {
-                  let next = stepIndex + 1
-                  while (next < STEPS.length &&
-                    ((STEPS[next].id === 'food' && !includeCatering) || (STEPS[next].id === 'decor' && !includeDecor))) next++
-                  setStep(STEPS[Math.min(next, STEPS.length - 1)].id)
-                }}
-                className="flex-1 min-h-[52px] rounded-xl bg-plum-700 text-white text-base font-bold active:bg-plum-800"
-              >
-                Next →
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop: the number stays beside the choices. */}
-        <div className="hidden lg:block lg:col-span-1">
-          <div className="lg:sticky lg:top-20">
-            <QuotePanel
-              quote={showQuote ? quote : null}
-              blocked={blocked}
-              submitting={submitting}
-              onSubmit={() => submit()}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Phone: the price is one pinned row — `above-bottom-nav` clears the
-          app's tab bar, `pr-chat-dock` clears the desktop chat launcher in
-          the md–lg band where this bar is still on screen and the launcher
-          sits in the same corner.
-
-          Tapping Review swaps this row for the full sheet, which positions
-          itself (a modal over the whole viewport, see QuotePanel) rather than
-          growing upward out of this slot — that is what used to push the
-          total and the confirm button off the top of the screen. */}
-      {showQuote && !sheetOpen && (
-        <div className="lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-          <QuotePanel
-            variant="sheet"
-            expanded={false}
-            quote={quote}
-            blocked={blocked}
-            submitting={submitting}
-            onSubmit={() => submit()}
-            onToggleExpanded={() => setSheetOpen(true)}
-            onClose={() => setSheetOpen(false)}
+          {/* Desktop keeps an inline pair as well as the sticky column —
+              the phone gets the fixed bar below. */}
+          <BuilderActionBar
+            variant="inline"
+            canGoBack={flowIndex > 0}
+            onBack={goBack}
+            primaryLabel={primaryLabel}
+            onPrimary={onPrimary}
+            primaryDisabled={primaryDisabled}
           />
         </div>
-      )}
 
-      {showQuote && sheetOpen && (
-        <QuotePanel
-          variant="sheet"
-          expanded
-          quote={quote}
-          blocked={blocked}
-          submitting={submitting}
-          onSubmit={() => submit()}
-          onClose={() => setSheetOpen(false)}
+        {/* Desktop: the number stays beside the choices — except on review,
+            which already is the number, itemised. */}
+        {!isReview && (
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="lg:sticky lg:top-24">
+              <QuotePanel
+                quote={showQuote ? quote : null}
+                blocked={blocked}
+                primaryLabel="Review everything"
+                onPrimary={() => goTo('review')}
+                primaryDisabled={!showQuote}
+                footnote="Free to send. Nothing to pay to get a confirmed quote."
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <BuilderActionBar
+        variant="fixed"
+        canGoBack={flowIndex > 0}
+        onBack={goBack}
+        primaryLabel={primaryLabel}
+        onPrimary={onPrimary}
+        primaryDisabled={primaryDisabled}
+        quote={isReview ? null : (showQuote ? quote : null)}
+        onOpenReview={() => goTo('review')}
+        hint={isReview ? 'Check it over, then send it.' : undefined}
+      />
+
+      {tierPrompt && (
+        <TierMatchDialog
+          tierId={tierPrompt}
+          currentTierId={tierId}
+          guestCount={guestCount}
+          nextLabel={(flow[flow.findIndex(s => s.id === 'scale') + 1] ?? {}).short ?? 'Review'}
+          onConfirm={confirmTier}
+          onDismiss={() => setTierPrompt(null)}
         />
       )}
     </div>
