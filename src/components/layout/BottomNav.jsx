@@ -40,13 +40,28 @@ export default function BottomNav() {
   if (HIDDEN_ON.some(p => pathname === p || pathname.startsWith(p + '/'))) return null
 
   const home = user ? '/dashboard/customer' : '/'
-  const celebrations = user ? '/dashboard/customer/events' : '/login'
+
+  /**
+   * The fourth tab is a destination, never a login.
+   *
+   * It used to read "Sign in" for signed-out visitors and route to /login —
+   * a permanent tab, in the primary navigation, on every screen, whose only
+   * function was to interrupt. It also contradicted the rest of the app: the
+   * shop, the planner and the catalogue are all deliberately open to guests,
+   * and login is asked at the one moment there is something to save. A tab
+   * bar advertising the door is the opposite of that decision.
+   *
+   * Signed-out visitors get the occasions catalogue instead, which is the
+   * thing the tab's calendar icon actually suggests and a place worth going.
+   * Signed-in customers keep their own celebrations.
+   */
+  const celebrations = user ? '/dashboard/customer/events' : '/services'
 
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
     { to: '/shop',         icon: Store,         label: 'Shop' },
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
-    { to: celebrations,    icon: CalendarHeart, label: user ? 'Events' : 'Sign in' },
+    { to: celebrations,    icon: CalendarHeart, label: user ? 'Events' : 'Occasions' },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
   ]
 

@@ -69,6 +69,28 @@ export default function PlanningWizard() {
   const presetBudget = BUDGET_OPTIONS.find(b => b.label === searchParams.get('budget'))
   const presetFestival = searchParams.get('festival')
 
+  /**
+   * Services chosen before arriving here.
+   *
+   * The plan hub now lets somebody pick individual services — a cook, a
+   * decorator, a photographer — without committing to an occasion, and sends
+   * them here to turn that into a request. Those picks arrive as
+   * `?services=Personal Cooks,Theme Decoration`.
+   *
+   * Names, not catalogue ids, because `form.services` is a list of display
+   * strings that gets written to the enquiry and read by a human coordinator.
+   * Passing `cooks,decor` would have stored two slugs nobody outside the
+   * codebase can interpret.
+   *
+   * Anything not in SERVICE_CATEGORIES still round-trips: step 5 renders the
+   * extras as their own group (see "Already chosen" there), so a customer can
+   * always see and remove what they arrived with.
+   */
+  const presetServices = (searchParams.get('services') ?? '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
   const [form, setForm] = useState({
     event_type:        searchParams.get('type') || '',
     event_date:        '',
@@ -89,7 +111,7 @@ export default function PlanningWizard() {
     city:              (cityChosen ? chosenCity : '') || profile?.city || '',
     style_preference:  '',
     guest_count:       '',
-    services:          [],
+    services:          presetServices,
     budget_text:       presetBudget?.label ?? '',
     budget_min:        presetBudget?.min ?? null,
     budget_max:        presetBudget?.max ?? null,
@@ -145,6 +167,11 @@ export default function PlanningWizard() {
   }, [])
 
   function setField(key, value) { setForm(f => ({ ...f, [key]: value })) }
+
+  // Selected services with no chip of their own in SERVICE_CATEGORIES —
+  // i.e. anything that arrived from the plan hub's wider catalogue.
+  const CHIP_SERVICES = new Set(SERVICE_CATEGORIES.flatMap(c => c.services))
+  const extraServices = form.services.filter(s => !CHIP_SERVICES.has(s))
 
   function toggleService(svc) {
     setForm(f => ({
@@ -565,6 +592,33 @@ export default function PlanningWizard() {
                 Select everything you need. Don't worry if you're unsure — our team will help you finalize.
               </p>
               <div className="space-y-5">
+                {/* What they picked on the plan hub.
+                    SERVICE_CATEGORIES is a curated chip list and the hub's
+                    catalogue is wider, so a service like "Personal Cooks"
+                    arrives selected but has no chip to render it. Without this
+                    group it would be invisible here and still submitted — the
+                    customer would see "1 service selected" and no way to tell
+                    which, or to remove it. */}
+                {extraServices.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">✅</span>
+                      <span className="font-semibold text-plum-800 text-sm">Already chosen</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {extraServices.map(svc => (
+                        <button
+                          key={svc}
+                          onClick={() => toggleService(svc)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-saffron-400 bg-saffron-400 text-plum-950 text-xs font-medium shadow-sm transition-all duration-150"
+                        >
+                          <CheckCircle2 size={11} />{svc}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {SERVICE_CATEGORIES.map(cat => (
                   <div key={cat.category}>
                     <div className="flex items-center gap-2 mb-2">

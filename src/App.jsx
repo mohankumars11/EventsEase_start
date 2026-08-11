@@ -277,7 +277,25 @@ function AppRoutes() {
           requested at submit, where there is something to save and a reason
           a person can see.
       ══════════════════════════════════════════════ */}
-      <Route path="/plan" element={<AppShell><PlanHub /></AppShell>} />
+      {/* /plan draws its own app bar, exactly as home and the storefront do.
+          It was on AppShell, which stacked the marketing navbar, the pilot-city
+          banner, a scrolling festival ticker, a "Back to Home" link and a 400px
+          marketing footer around it. Three specific faults, all reported from
+          the live site:
+
+            · the city appeared twice — once in the banner's "Set your city",
+              once again inside the page — and the banner's notify-me form
+              invited a customer who had just tapped "Plan a celebration" to
+              sign up for a different city instead;
+            · the festival ticker scrolled Independence Day and Raksha Bandhan
+              across the top of a page about planning a wedding;
+            · and because home and /shop had already moved to app bars, tapping
+              "Plan a celebration" swapped one design language for another
+              mid-journey, which reads as landing on a different website.
+
+          ScreenShell keeps the phone tab bar and the chat widget and nothing
+          else. */}
+      <Route path="/plan" element={<ScreenShell><PlanHub /></ScreenShell>} />
       <Route path="/plan/custom" element={<BareShell><PlanningWizard /></BareShell>} />
       {/* The third door, and the only one that answers "what will this cost"
           before a human is involved: pick a scale, build the menu dish by
