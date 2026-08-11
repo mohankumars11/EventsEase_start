@@ -92,7 +92,10 @@ export default function OffersRail() {
 
       <div
         ref={railRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 pb-1"
+        // `scroll-pl-4` so a snapped tile lands at the page's left margin
+        // rather than flush against the screen edge — without it the drift
+        // scrolls the rail's own padding away and the first tile looks cut off.
+        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-pl-4 px-4 pb-1"
       >
         {offers.map(o => (
           <OfferTile

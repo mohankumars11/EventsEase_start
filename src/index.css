@@ -69,8 +69,13 @@
     background:
       radial-gradient(120% 60% at 50% 0%, #0e523c 0%, #0b3d2e 42%, #072a20 100%);
   }
+  /* Opaque, not translucent. The bar is sticky and the filter row sticks
+     directly under it, so any alpha at the bottom edge showed product cards
+     sliding under the search field as a grey smudge between the two bars —
+     legible as a rendering fault rather than as depth. The blur stays for the
+     safe-area strip above it. */
   .shop-appbar {
-    background: linear-gradient(180deg, #0b3d2e 0%, #0b3d2eF2 70%, #0b3d2eE6 100%);
+    background: linear-gradient(180deg, #0e523c 0%, #0b3d2e 100%);
   }
   /* One card treatment, used by every product tile in the shop. The
      ring rather than a border keeps the 1px hairline from eating a

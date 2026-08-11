@@ -53,9 +53,11 @@ export default function MarketProductCard({
       key: 'offer',
       icon: Ticket,
       tone: 'offer',
-      text: offer.discount_type === 'percent'
-        ? `${Number(offer.discount_value)}% off with ${offer.code}`
-        : `${formatINR(offer.discount_value)} off with ${offer.code}`,
+      // The ribbon on the photo already states the amount, so this line
+      // spends its width on the code instead — "15% off with INDEPENDENCE15"
+      // truncated to "…INDEPEND…" on a 170px card, which is the one part a
+      // customer has to be able to read and type.
+      text: `Use code ${offer.code}`,
     },
     { key: 'fulfil', icon: BadgeCheck, tone: 'trust', text: FULFILMENT.short },
     orderCount > 0 && {
@@ -142,10 +144,15 @@ export default function MarketProductCard({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-3 pt-2.5">
+      {/* `pt-5` clears the ADD button, which hangs 16px past the seam into
+          this block. The alternative — reserving a right-hand gutter on the
+          title — cost 64px on every line of a two-line name on a 170px card,
+          so "Baby Welcome Gift Box" truncated to "Baby Welcome Gi…" while the
+          space it needed sat empty three lines below. */}
+      <div className="flex flex-1 flex-col p-3 pt-5">
         <Link
           to={`/shop/product/${p.id}`}
-          className="line-clamp-2 pr-16 text-[13px] font-bold leading-snug text-gray-900 hover:text-forest-700"
+          className="line-clamp-2 text-[13px] font-bold leading-snug text-gray-900 hover:text-forest-700"
         >
           {p.name}
         </Link>

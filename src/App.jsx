@@ -176,6 +176,35 @@ function BareShell({ children }) {
   return <div className="min-h-screen"><PageBoundary>{children}</PageBoundary></div>
 }
 
+/**
+ * The storefront browse screens, which draw their own chrome.
+ *
+ * Same reasoning as BareShell, for the same symptom. /shop opens with a
+ * sticky app bar carrying the delivery city, a search field and the cart —
+ * and AppShell was stacking the marketing navbar, the pilot-city banner, the
+ * festival ticker and a "Back to Home" link on top of it. That is roughly
+ * 470px of chrome before the first product, two cart buttons, and the
+ * delivery city stated twice in different words. It also broke the sticky
+ * filter row, which positions itself against the top of the viewport.
+ *
+ * The footer goes too. Its job on a public page is a sitemap and a sales
+ * pitch; the storefront now ends with the same information in its own voice
+ * — how the service works, who delivers, how to pay — and the tab bar is the
+ * navigation. ChatWidget stays: support is the one piece of global chrome a
+ * shopper actually reaches for mid-purchase.
+ *
+ * Deliberately not applied to /shop/cart or /shop/product/:id, which are
+ * still the light-ground design and read correctly inside the standard shell.
+ */
+function StoreShell({ children }) {
+  return (
+    <div className="flex min-h-screen flex-col pb-bottom-nav">
+      <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
+      <ChatWidget />
+    </div>
+  )
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -190,7 +219,7 @@ function AppRoutes() {
       <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
 
       {/* ── Shop (public browsing, checkout requires login) ── */}
-      <Route path="/shop" element={<AppShell><Shop /></AppShell>} />
+      <Route path="/shop" element={<StoreShell><Shop /></StoreShell>} />
       {/* Public: a guest can build and review a cart, and is asked to sign
           in at checkout. Gating the cart page itself bounced anyone who
           tapped the cart icon straight to /login, which reads as "your
@@ -204,12 +233,12 @@ function AppRoutes() {
           the dynamic one regardless of order. Existing deep links of the form
           /shop/Cakes?occasion=Birthday still work; CakeShop reads the same
           search param. */}
-      <Route path="/shop/Cakes" element={<AppShell><CakeShop /></AppShell>} />
+      <Route path="/shop/Cakes" element={<StoreShell><CakeShop /></StoreShell>} />
       {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
           festival banners, the chat widget, anything a customer bookmarked — so
           it redirects rather than falling through to an empty category page. */}
       <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
-      <Route path="/shop/:category" element={<AppShell><ShopCategory /></AppShell>} />
+      <Route path="/shop/:category" element={<StoreShell><ShopCategory /></StoreShell>} />
 
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it

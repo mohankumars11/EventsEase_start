@@ -1,21 +1,27 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, ShoppingCart, Search, X, Sparkles, Heart, Flame, ArrowDownNarrowWide,
-  MessageCircle, ChevronRight, Check, Plus,
+  X, Sparkles, Heart, Flame, ArrowDownNarrowWide, MessageCircle, ChevronRight,
+  Check, Plus, Ticket, BadgeCheck, Users, Leaf, PenLine,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
 import { BRAND } from '../../config/sambramo'
+import { FULFILMENT } from '../../config/shop'
 import { CAKE_OCCASION_PHOTOS } from '../../config/generatedCakeOccasionPhotos'
 import { buildOccasionGroups, occasionLabel, occasionEmoji } from '../../data/cakeOccasions'
 import { cakeFacts, CAKE_STYLES } from '../../data/cakeStyles'
+import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
+import { useIncremental } from '../../components/shop/useIncremental'
 import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
-import FulfilmentNote from '../../components/shop/FulfilmentNote'
+import ShopAppBar from '../../components/shop/ShopAppBar'
+import StickyCartBar from '../../components/shop/StickyCartBar'
+import HowWeServe from '../../components/shop/HowWeServe'
+import DetailRotator from '../../components/shop/DetailRotator'
 
 /**
  * The cake storefront.
@@ -44,9 +50,9 @@ const SORTS = [
 ]
 
 export default function CakeShop() {
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { productCount, hasProduct, productQtyFor, dispatch } = useCart()
+  const { hasProduct, productQtyFor, dispatch } = useCart()
+  const offers = usePublicOffers()
 
   const [products, setProducts] = useState([])
   const [loading, setLoading]   = useState(true)
@@ -118,6 +124,9 @@ export default function CakeShop() {
     return list
   }, [enriched, occasion, style, vegOnly, query, sort, ratings, orders])
 
+  // 215 cakes is not a first paint. Render a screenful and extend on scroll.
+  const { items: shown, hasMore, showMore, remaining, sentinelRef } = useIncremental(visible)
+
   function selectOccasion(next) {
     setOccasion(next)
     setSearchParams(next === 'All' ? {} : { occasion: next }, { replace: true })
@@ -136,66 +145,57 @@ export default function CakeShop() {
   )}`
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="shop-canvas min-h-screen pb-bottom-nav">
+      <ShopAppBar
+        backTo="/shop"
+        title="🎂 Cakes"
+        subtitle={loading ? 'Loading…' : `${products.length} cakes · made to order`}
+        query={query}
+        onQueryChange={setQuery}
+      />
 
-      {/* ── Sticky search bar ─────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-cream/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-2.5">
-          <button
-            onClick={() => navigate('/shop')}
-            aria-label="All categories"
-            className="shrink-0 text-gray-400 hover:text-gray-700"
-          >
-            <ArrowLeft size={20} />
-          </button>
-
-          <div className="relative flex-1 min-w-0">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search cakes, flavours, occasions"
-              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-saffron-400"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery('')}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600"
-              >
-                <X size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Eggless is the first question at any Indian bakery counter, so it
-              is a switch in the header rather than a filter three taps down. */}
+      {/* ── Sticky filter row ──────────────────────────────────────────
+          Eggless keeps its place of honour — it is the first question at any
+          Indian bakery counter — but as the leading chip of the filter row
+          rather than a cramped icon in the header, where at 360px it had to
+          hide its own label. `top` is the app bar's measured height. */}
+      <div
+        className="sticky z-30 border-b border-white/5 bg-forest-900/90 backdrop-blur-md"
+        style={{ top: 'var(--shop-appbar-h, 7.75rem)' }}
+      >
+        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide">
           <button
             onClick={() => setVegOnly(v => !v)}
             aria-pressed={vegOnly}
-            className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-bold transition-colors ${
-              vegOnly ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-500'
+            className={`shop-chip ${
+              vegOnly ? 'border-green-400 bg-green-50 text-green-800' : 'border-white/15 bg-white/5 text-white/70'
             }`}
           >
-            <VegMark /> <span className="hidden sm:inline">Eggless</span>
+            <VegMark /> Eggless
           </button>
-
-          <Link
-            to="/shop/cart"
-            aria-label="Cart"
-            className="shrink-0 relative p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-plum-300"
-          >
-            <ShoppingCart size={16} />
-            {productCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-saffron-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {productCount}
-              </span>
-            )}
-          </Link>
+          {SORTS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSort(s.id)}
+              aria-pressed={sort === s.id}
+              className={`shop-chip ${
+                sort === s.id
+                  ? 'border-saffron-400 bg-saffron-400 text-forest-900'
+                  : 'border-white/15 bg-white/5 text-white/70'
+              }`}
+            >
+              <s.icon size={12} strokeWidth={2.6} /> {s.label}
+            </button>
+          ))}
+          {filtersActive && (
+            <button onClick={clearFilters} className="shop-chip border-chilli-400/40 bg-chilli-500/15 text-chilli-200">
+              <X size={12} strokeWidth={2.6} /> Clear
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-10">
+      <div className="mx-auto max-w-3xl px-4 py-6 space-y-10">
 
         {/* ── Two promises, side by side ─────────────────────────────
             Left: the catalogue can do more than a round sponge.
@@ -215,7 +215,7 @@ export default function CakeShop() {
               className="absolute inset-0 w-full h-full"
               cinematic
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-plum-950/90 via-plum-900/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-forest-950/92 via-forest-900/65 to-transparent" />
             {/* Absolute, not `relative h-full`. ProductImage hard-codes
                 `relative` on its own wrapper and that wins over any position
                 class passed in, so the photo sits in normal flow and takes the
@@ -225,7 +225,7 @@ export default function CakeShop() {
             <div className="absolute inset-0 flex flex-col justify-center p-5">
               <h3 className="font-serif text-xl font-bold text-white leading-tight">Designer<br />cakes</h3>
               <p className="text-white/70 text-xs mt-1.5 max-w-[60%]">Fondant, sculpted and tiered — built to a brief</p>
-              <span className="mt-3 inline-flex items-center gap-1 self-start bg-white text-plum-900 text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2 transition-all">
+              <span className="mt-3 inline-flex items-center gap-1 self-start bg-white text-forest-800 text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2 transition-all">
                 Explore <ChevronRight size={13} />
               </span>
             </div>
@@ -245,7 +245,7 @@ export default function CakeShop() {
               className="absolute inset-0 w-full h-full"
               cinematic
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-berry-900/90 via-berry-900/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-chilli-900/92 via-chilli-800/60 to-transparent" />
             <div className="absolute inset-0 flex flex-col justify-center p-5">
               <h3 className="font-serif text-xl font-bold text-white leading-tight">Something<br />entirely yours</h3>
               <p className="text-white/70 text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
@@ -260,14 +260,14 @@ export default function CakeShop() {
         {!loading && occasionGroups.length > 0 && (
           <section>
             <div className="flex items-end justify-between gap-3 mb-1">
-              <h2 className="text-lg font-bold text-gray-900">Cakes for every celebration</h2>
+              <h2 className="text-[15px] font-extrabold text-white">Cakes for every celebration</h2>
               {occasion !== 'All' && (
-                <button onClick={() => selectOccasion('All')} className="text-xs font-semibold text-plum-600 hover:text-plum-800 shrink-0">
+                <button onClick={() => selectOccasion('All')} className="shrink-0 text-[11px] font-bold text-saffron-300">
                   Show all
                 </button>
               )}
             </div>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="mb-5 text-[11px] text-white/50">
               Every moment worth marking — from a first birthday to an apology.
             </p>
 
@@ -275,8 +275,8 @@ export default function CakeShop() {
               {occasionGroups.map(group => (
                 <div key={group.id}>
                   <div className="flex items-baseline gap-2 mb-2.5">
-                    <h3 className="text-sm font-bold text-gray-800">{group.label}</h3>
-                    <span className="text-xs text-gray-400 truncate">{group.blurb}</span>
+                    <h3 className="text-[13px] font-extrabold text-white">{group.label}</h3>
+                    <span className="truncate text-[11px] text-white/40">{group.blurb}</span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
                     {group.occasions.map(o => {
@@ -287,8 +287,8 @@ export default function CakeShop() {
                           onClick={() => selectOccasion(active ? 'All' : o.id)}
                           className="group shrink-0 w-[4.5rem] flex flex-col items-center gap-1.5"
                         >
-                          <span className={`relative w-[4.5rem] h-[4.5rem] rounded-2xl overflow-hidden border-2 transition-colors ${
-                            active ? 'border-saffron-500' : 'border-gray-100 group-hover:border-saffron-300'
+                          <span className={`relative w-[4.5rem] h-[4.5rem] rounded-2xl overflow-hidden ring-2 transition-all group-active:scale-95 ${
+                            active ? 'ring-saffron-400' : 'ring-white/15 group-hover:ring-saffron-300'
                           }`}>
                             <ProductImage
                               src={CAKE_OCCASION_PHOTOS[o.id]}
@@ -306,8 +306,8 @@ export default function CakeShop() {
                               </span>
                             )}
                           </span>
-                          <span className={`text-[11px] font-semibold text-center leading-tight ${
-                            active ? 'text-saffron-700' : 'text-gray-600 group-hover:text-plum-700'
+                          <span className={`text-center text-[10px] font-bold leading-tight ${
+                            active ? 'text-saffron-300' : 'text-white/75'
                           }`}>
                             {o.label}
                           </span>
@@ -325,43 +325,30 @@ export default function CakeShop() {
         <section ref={gridRef} className="scroll-mt-20">
           <div className="flex items-end justify-between gap-3 mb-3">
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 truncate">
+              <h2 className="truncate text-[15px] font-extrabold text-white">
                 {occasion === 'All' ? 'All cakes' : `${occasionEmoji(occasion)} ${occasionLabel(occasion)}`}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-[11px] text-white/50">
                 {loading ? 'Loading…' : `${visible.length} cake${visible.length === 1 ? '' : 's'}`}
                 {vegOnly && ' · eggless only'}
               </p>
             </div>
-            {filtersActive && (
-              <button onClick={clearFilters} className="shrink-0 flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-800">
-                <X size={12} /> Clear filters
-              </button>
-            )}
           </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {SORTS.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setSort(s.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                  sort === s.id ? 'bg-saffron-500 border-saffron-500 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-saffron-300'
-                }`}
-              >
-                <s.icon size={12} /> {s.label}
-              </button>
-            ))}
-          </div>
-
+          {/* Style is a second axis on top of occasion, so it stays with the
+              results rather than joining the sticky bar — that row is already
+              at its width budget on a 360px screen. */}
           {availableStyles.length > 1 && (
-            <div className="flex flex-wrap gap-1.5 mb-5">
+            <div className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {[{ id: 'All', label: 'Every style', emoji: '✨' }, ...availableStyles].map(s => (
                 <button
                   key={s.id}
                   onClick={() => setStyle(s.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                    style === s.id ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                  aria-pressed={style === s.id}
+                  className={`shop-chip ${
+                    style === s.id
+                      ? 'border-white bg-white text-forest-900'
+                      : 'border-white/15 bg-white/5 text-white/70'
                   }`}
                 >
                   {s.emoji} {s.label}
@@ -371,13 +358,17 @@ export default function CakeShop() {
           )}
 
           {loading ? (
-            <p className="text-sm text-gray-400 py-10 text-center">Loading cakes…</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-60 animate-pulse rounded-3xl bg-white/5" />
+              ))}
+            </div>
           ) : visible.length === 0 ? (
             <div className="text-center py-14 space-y-3">
               <div className="text-4xl">🎂</div>
-              <p className="text-sm text-gray-500">Nothing matches that combination yet.</p>
+              <p className="text-sm text-white/60">Nothing matches that combination yet.</p>
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                <button onClick={clearFilters} className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                <button onClick={clearFilters} className="rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white ring-1 ring-white/15">
                   Clear filters
                 </button>
                 <a
@@ -391,20 +382,34 @@ export default function CakeShop() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {visible.map(p => (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {shown.map((p, i) => (
                 <CakeCard
                   key={p.id}
                   cake={p}
+                  offer={bestOfferFor(p.price, offers)}
+                  orderCount={orders[p.id] ?? 0}
+                  stagger={i * 260}
                   inCartQty={hasProduct(p.id) ? productQtyFor(p.id) : 0}
                   onCustomize={() => setCustomizing(p)}
                 />
               ))}
             </div>
           )}
+
+        {hasMore && (
+          <div ref={sentinelRef} className="pt-5 text-center">
+            <button
+              onClick={showMore}
+              className="rounded-xl bg-white/10 px-5 py-3 text-xs font-bold text-white ring-1 ring-white/15 active:scale-95 transition-transform"
+            >
+              Show {Math.min(remaining, 24)} more
+            </button>
+          </div>
+        )}
         </section>
 
-        <FulfilmentNote variant="card" />
+        <HowWeServe />
 
         {!loading && products.length > 0 && (
           <ReviewsScroller
@@ -431,80 +436,100 @@ export default function CakeShop() {
           }}
         />
       )}
+
+      <StickyCartBar />
     </div>
   )
 }
 
 /* ── One cake ─────────────────────────────────────────────────────────── */
-function CakeCard({ cake, inCartQty, onCustomize }) {
+function CakeCard({ cake, offer, orderCount = 0, stagger = 0, inCartQty, onCustomize }) {
   const { facts } = cake
 
+  // The same rotating line as every other card in the shop, carrying the
+  // facts only a cake has — what it serves, whether it's eggless, which
+  // style it is — instead of the three grey pills that used to sit under
+  // the description and push the price below the fold on a two-up grid.
+  const rotatorFacts = [
+    offer && {
+      key: 'offer', icon: Ticket, tone: 'offer',
+      text: `Use code ${offer.code}`,
+    },
+    { key: 'fulfil', icon: BadgeCheck, tone: 'trust', text: FULFILMENT.short },
+    orderCount > 0 && {
+      key: 'orders', icon: Flame, tone: 'offer',
+      text: `Ordered ${orderCount} ${orderCount === 1 ? 'time' : 'times'}`,
+    },
+    facts.serves && { key: 'serves', icon: Users, text: `Serves ${facts.serves.replace(' people', '')}` },
+    ...facts.diets.map(d => ({ key: `diet-${d.id}`, icon: Leaf, tone: 'trust', text: d.short })),
+    { key: 'custom', icon: PenLine, text: 'Weight, flavour & message — your call' },
+  ]
+
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+    <article className="shop-card group flex flex-col">
       <Link to={`/shop/product/${cake.id}`} className="block relative">
         <ProductImage
           src={cake.image_url}
           query={cake.name}
           emoji={cake.emoji}
           alt={cake.image_alt}
-          className="w-full h-36"
+          className="w-full aspect-[4/3]"
           cinematic
         />
+        <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/45 to-transparent" />
+
+        {offer && (
+          <span className="absolute left-2 top-2 rounded-lg bg-chilli-600 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-sm">
+            {offer.discount_type === 'percent'
+              ? `${Number(offer.discount_value)}% off`
+              : `${formatINR(offer.discount_value)} off`}
+          </span>
+        )}
         {facts.style.id !== 'classic' && (
-          <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-plum-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <span className="absolute right-2 top-2 max-w-[55%] truncate rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-forest-800 backdrop-blur-sm">
             {facts.style.emoji} {facts.style.label}
           </span>
         )}
       </Link>
 
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-start gap-1.5 mb-1">
-          {facts.veg && <VegMark className="mt-1" />}
-          <Link to={`/shop/product/${cake.id}`} className="font-semibold text-gray-900 text-sm leading-snug hover:text-plum-700">
+      {/* Always the customiser, never a bare add — a cake with no weight,
+          flavour or egg preference chosen is not an order anyone can bake.
+          Once one is in the cart the button keeps letting you configure
+          another, because the second cake is usually a different one. */}
+      <div className="relative">
+        <div className="absolute -top-5 right-3 z-10">
+          <button
+            onClick={onCustomize}
+            className={`shop-add-btn ${inCartQty > 0 ? 'text-forest-700 ring-forest-200' : ''}`}
+            aria-label={inCartQty > 0 ? `Add another ${cake.name}, ${inCartQty} already in cart` : `Choose options for ${cake.name}`}
+          >
+            {inCartQty > 0 ? <>{inCartQty} in cart · ADD</> : <>ADD <Plus size={12} strokeWidth={3} /></>}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-3 pt-5">
+        <div className="flex items-start gap-1.5">
+          {facts.veg && <VegMark className="mt-0.5 shrink-0" />}
+          <Link
+            to={`/shop/product/${cake.id}`}
+            className="line-clamp-2 text-[13px] font-bold leading-snug text-gray-900 hover:text-forest-700"
+          >
             {cake.name}
           </Link>
         </div>
 
-        <RatingBadge subjectType="product" subjectId={cake.id} className="mb-1.5" />
+        <RatingBadge subjectType="product" subjectId={cake.id} className="mt-1" />
 
-        <p className="text-xs text-gray-500 mb-2 flex-1">{cake.description}</p>
+        <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-snug text-gray-400">{cake.description}</p>
 
-        {(facts.serves || facts.diets.length > 0) && (
-          <div className="flex flex-wrap items-center gap-1 mb-3">
-            {facts.serves && (
-              <span className="text-[10px] font-semibold text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-2 py-0.5">
-                Serves {facts.serves.replace(' people', '')}
-              </span>
-            )}
-            {facts.diets.map(d => (
-              <span key={d.id} className="text-[10px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5">
-                {d.short}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-end justify-between gap-2">
-          <div className="min-w-0">
-            <span className="block font-bold text-plum-700 text-sm">{formatINR(cake.price)}</span>
-            <span className="block text-[10px] text-gray-400 leading-tight">customisable</span>
-          </div>
-          {/* Always the customiser, never a bare add — a cake with no weight,
-              flavour or egg preference chosen is not an order anyone can bake.
-              Once one is in the cart the button keeps letting you configure
-              another, because the second cake is usually a different one. */}
-          <button
-            onClick={onCustomize}
-            className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs border-2 transition-colors ${
-              inCartQty > 0
-                ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
-                : 'border-saffron-500 bg-saffron-500 text-white hover:bg-saffron-600'
-            }`}
-          >
-            {inCartQty > 0 ? <>{inCartQty} in cart · Add</> : <>ADD <Plus size={12} strokeWidth={3} /></>}
-          </button>
+        <div className="mt-2 flex items-baseline gap-1.5">
+          <span className="text-[15px] font-extrabold text-forest-800">{formatINR(cake.price)}</span>
+          <span className="text-[10px] font-semibold text-gray-400">onwards</span>
         </div>
+
+        <DetailRotator facts={rotatorFacts} stagger={stagger} className="mt-1.5" />
       </div>
-    </div>
+    </article>
   )
 }

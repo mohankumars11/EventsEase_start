@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, MapPin, ShoppingBag, X, ArrowLeft } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
@@ -40,6 +40,26 @@ export default function ShopAppBar({
   const [hint, setHint] = useState(0)
   const [focused, setFocused] = useState(false)
   const inputRef = useRef(null)
+  const barRef = useRef(null)
+
+  // Publish the bar's real height as a custom property, so anything that has
+  // to stick underneath it (the category filter row) can position against a
+  // measurement instead of a magic number. The bar's height changes with the
+  // notch inset, the search field's presence and the browser's font size —
+  // three things a hardcoded `top-[7.75rem]` gets wrong on somebody's phone,
+  // leaving either a gap or a filter row hidden behind the search box.
+  useLayoutEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    const publish = () => {
+      document.documentElement.style.setProperty('--shop-appbar-h', `${el.offsetHeight}px`)
+    }
+    publish()
+    if (typeof ResizeObserver === 'undefined') return
+    const obs = new ResizeObserver(publish)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   useEffect(() => {
     if (reduced || focused || query) return
@@ -48,7 +68,7 @@ export default function ShopAppBar({
   }, [reduced, focused, query])
 
   return (
-    <header className="shop-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
+    <header ref={barRef} className="shop-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
       <div className="mx-auto max-w-3xl px-4 pb-3 pt-3">
         {/* ── Row 1: where to, who we are, what's in the bag ── */}
         <div className="flex items-center gap-3">

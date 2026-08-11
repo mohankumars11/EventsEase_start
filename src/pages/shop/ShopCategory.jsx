@@ -11,6 +11,7 @@ import MarketProductCard from '../../components/shop/MarketProductCard'
 import HowWeServe from '../../components/shop/HowWeServe'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import { useProductAdd } from '../../components/shop/useProductAdd'
+import { useIncremental } from '../../components/shop/useIncremental'
 
 const SORTS = [
   { id: 'default', label: 'Featured',     icon: Sparkles },
@@ -111,6 +112,10 @@ export default function ShopCategory() {
     setSearchParams(o === 'All' ? {} : { occasion: o }, { replace: true })
   }
 
+  // Render a screenful at a time — this shelf runs to 122 items after the
+  // Hampers merge, and every card carries a photo.
+  const { items: shown, hasMore, showMore, remaining, sentinelRef } = useIncremental(sortedProducts)
+
   const occasionLabel = occasion === 'All' ? null : occasionMetaFor(category, occasion).label
   const filtered = occasion !== 'All' || query.trim().length > 0
 
@@ -125,11 +130,15 @@ export default function ShopCategory() {
       />
 
       {/* ── Sticky filter row ───────────────────────────────────────────
-          `top` is the app bar's own height so the two stack rather than
-          overlap. Horizontally scrollable: four sorts plus an occasion pill
-          do not fit across a 360px screen and wrapping them would push the
+          `top` is the app bar's measured height (published as a custom
+          property by ShopAppBar) so the two stack rather than overlap on any
+          screen. Horizontally scrollable: four sorts plus an occasion pill do
+          not fit across a 360px screen, and wrapping them would push the
           first product below the fold. */}
-      <div className="sticky top-[7.25rem] z-30 border-b border-white/5 bg-forest-900/90 backdrop-blur-md">
+      <div
+        className="sticky z-30 border-b border-white/5 bg-forest-900/90 backdrop-blur-md"
+        style={{ top: 'var(--shop-appbar-h, 7.75rem)' }}
+      >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide">
           {occasionGroups.length > 0 && (
             <button
@@ -203,7 +212,7 @@ export default function ShopCategory() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {sortedProducts.map((p, i) => (
+            {shown.map((p, i) => (
               <MarketProductCard
                 key={p.id}
                 product={p}
@@ -213,6 +222,17 @@ export default function ShopCategory() {
                 onAdd={() => addProduct(p)}
               />
             ))}
+          </div>
+        )}
+
+        {hasMore && (
+          <div ref={sentinelRef} className="pt-5 text-center">
+            <button
+              onClick={showMore}
+              className="rounded-xl bg-white/10 px-5 py-3 text-xs font-bold text-white ring-1 ring-white/15 active:scale-95 transition-transform"
+            >
+              Show {Math.min(remaining, 24)} more
+            </button>
           </div>
         )}
 
