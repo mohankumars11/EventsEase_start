@@ -1,0 +1,209 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   The celebration builder's own ground.  (/plan/build)
+
+   ── Why this is a file and not a block in index.css ─────────────────────
+   It should be a block in index.css, next to .home-canvas, .shop-canvas and
+   .checkout-canvas — that is where every other surface declares its ground,
+   and this is deliberately written in the same shape so it can be pasted in
+   whole when it gets there.
+
+   It is separate today for one reason: index.css currently carries a large
+   in-flight change (the occasion-page redesign — .event-canvas, .event-card,
+   .event-halo, the rise-in and sheen keyframes) that is not mine and is not
+   finished. Adding to that file would mean committing someone else's
+   half-done work to get mine live. Vite imports this from the page
+   component, which costs one extra request in dev and nothing at all in the
+   build, and keeps the two changes separable.
+
+   ── Why plain CSS and not @apply ────────────────────────────────────────
+   Same reason. @apply resolves against Tailwind's layers, and a file outside
+   index.css that participates in @layer components is exactly the sort of
+   thing that works until someone reorders an import. Plain properties have
+   no ordering opinion.
+
+   ── The visual argument ─────────────────────────────────────────────────
+   The builder was flat cream while the rest of the app moved onto lit dark
+   grounds with light cards floating on them. That is not only inconsistent,
+   it is the wrong ground for this screen specifically: a configurator's job
+   is to make the thing being configured feel valuable, and a white page with
+   grey cards makes a ₹4,00,000 wedding look like a tax form. Dark ground,
+   light cards, one warm light source — the celebration is the lit object.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* The lit room. Three coloured lights over a deep plum-to-near-black fall,
+   fixed so the lights stay put while the content scrolls past them — the
+   page reads as content moving through a room rather than a very tall
+   gradient sliding by. */
+.plan-canvas {
+  --plan-notch: #1a0730;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(95% 50% at 50% -6%, rgba(124, 58, 237, 0.42) 0%, transparent 62%),
+    radial-gradient(58% 36% at 90% 10%, rgba(245, 158, 11, 0.22) 0%, transparent 58%),
+    radial-gradient(70% 44% at 2% 38%, rgba(217, 70, 239, 0.15) 0%, transparent 60%),
+    linear-gradient(180deg, #2a0849 0%, #1a0730 46%, #0d0217 100%);
+  background-attachment: fixed;
+}
+
+/* A faint grid over the top third. It is what makes the page read as *built*
+   rather than as a poster, which is the right note for a configurator.
+   Masked out well before it reaches the cards, so no text is ever read
+   through it. */
+.plan-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 32%, transparent 58%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 32%, transparent 58%);
+}
+
+/* Glass, for the chrome that sits ON the ground rather than on a card: the
+   mode picker, the step rail, the pinned action bar. Deliberately not used
+   for anything a customer reads a price off — text on translucency over a
+   moving gradient is a contrast bug waiting for the one scroll position
+   where it fails. */
+.plan-glass {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* The sticky step rail and the pinned action bar need to be opaque enough to
+   read against whatever scrolls under them, which glass alone is not. */
+.plan-bar {
+  background: linear-gradient(180deg, rgba(26, 7, 48, 0.94) 0%, rgba(20, 5, 38, 0.96) 100%);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* ── The offer ticket ──────────────────────────────────────────────────
+   A coupon should look like a coupon. The two notches and the perforation
+   are the whole reason these read as "something to take" at a glance rather
+   than as four more cards in a page already full of cards.
+
+   The notches are solid-filled rather than mask cut-outs. A real cut-out
+   needs mask-composite, which is still inconsistent enough across engines
+   that the failure mode is a card with two white blobs on it — and the
+   ground behind them here is close enough to flat at any one card's height
+   that a solid fill is indistinguishable. Same call the occasion page made
+   with its --coupon-notch. */
+.plan-ticket {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 2px 14px -6px rgba(13, 2, 23, 0.7);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+@media (hover: hover) {
+  .plan-ticket:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 44px -22px rgba(13, 2, 23, 0.9);
+  }
+}
+/* The notches are measured from the BOTTOM, not the top. The stub carrying
+   the code is a fixed height; everything above it grows with the copy. Pin
+   the notches to the top and they drift off the perforation the moment one
+   ticket's blurb wraps to a third line. */
+.plan-ticket::before,
+.plan-ticket::after {
+  content: '';
+  position: absolute;
+  bottom: var(--stub-h, 3.25rem);
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: var(--plan-notch, #1a0730);
+  transform: translateY(50%);
+}
+.plan-ticket::before { left: -0.5625rem; }
+.plan-ticket::after { right: -0.5625rem; }
+
+/* The perforation between the ticket's value and its code, sitting on the
+   same line the notches are centred on. A real element rather than a border
+   on the stub, so the dashes can be inset past the notches. */
+.plan-perf {
+  height: var(--stub-h, 3.25rem);
+  border-top: 2px dashed #e5e7eb;
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────
+   Two effects, both compositor-only (transform and opacity), because these
+   run on grids of a dozen-plus cards on a mid-range Android. */
+
+/* Staggered entrance. The delay is set inline from the index, so a row of
+   cards arrives as a wave rather than as one block — the difference between
+   a page that loaded and a page that was assembled for you. */
+@keyframes plan-rise {
+  0%   { opacity: 0; transform: translateY(16px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.plan-rise {
+  opacity: 0;
+  animation: plan-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* A slow diagonal light across the ticket, so the offers rail has one thing
+   on it that moves. Runs on its own rather than on hover: the rail is a
+   phone surface first and there is no hover on a phone. */
+@keyframes plan-shine {
+  0%, 62%  { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
+  70%      { opacity: 0.5; }
+  100%     { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+}
+.plan-shine { position: relative; overflow: hidden; }
+.plan-shine::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  opacity: 0;
+  animation: plan-shine 5.5s ease-in-out infinite;
+  animation-delay: var(--shine-delay, 0ms);
+}
+
+/* A ring that says "this is the one you picked" from across the page, for
+   the tier ladder — eight near-identical cards where the selection cannot be
+   left to a slightly different shade of border. */
+.plan-chosen {
+  box-shadow:
+    0 0 0 2px rgba(245, 158, 11, 0.95),
+    0 0 0 6px rgba(245, 158, 11, 0.18),
+    0 20px 40px -20px rgba(13, 2, 23, 0.9);
+}
+
+/* Hide a scrollbar on the horizontal rails without hiding the ability to
+   scroll them. index.css has .scrollbar-hide; repeated here so this file
+   stands alone if it is ever used before that one loads. */
+.plan-rail-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.plan-rail-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Reduced motion ────────────────────────────────────────────────────
+   The entrance resolves immediately rather than being suppressed: .plan-rise
+   starts at opacity 0, so simply cancelling the animation would leave every
+   card invisible. That is the bug this block exists to not have. */
+@media (prefers-reduced-motion: reduce) {
+  .plan-rise {
+    animation: none;
+    opacity: 1;
+  }
+  .plan-shine::after { animation: none; }
+  .plan-ticket { transition: none; }
+  .plan-ticket:hover { transform: none; }
+  .plan-canvas { background-attachment: scroll; }
+}

@@ -62,7 +62,7 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
       </div>
 
       <div className="space-y-3">
-        {CELEBRATION_TIERS.map(tier => {
+        {CELEBRATION_TIERS.map((tier, i) => {
           const selected = selectedId === tier.id
           const suggested = suggestedId === tier.id && !selected
           return (
@@ -71,8 +71,18 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
               type="button"
               onClick={() => onSelect(tier.id)}
               aria-pressed={selected}
-              className={`w-full text-left card overflow-hidden transition-all ${tier.accent} ${
-                selected ? 'ring-2 ring-plum-600 ring-offset-2 shadow-md' : 'hover:shadow-md'
+              style={{ '--rise-delay': `${i * 55}ms` }}
+              /* White card, tinted accent — not a tinted card.
+                 The ladder used to paint each tier's pastel across the whole
+                 card, which on a light page was merely bland and on the dark
+                 ground the builder moved to reads as eight washed-out blocks
+                 in eight different colours. The accent still does its job of
+                 telling the tiers apart; it just does it on the emoji tile
+                 and the guest badge, where colour identifies rather than
+                 decorates, and the card itself stays the same crisp white as
+                 every other card on the page. */
+              className={`plan-rise w-full text-left card overflow-hidden bg-white transition-all ${
+                selected ? 'plan-chosen' : 'hover:shadow-lg'
               }`}
             >
               {/* The chosen scale gets a banner, not a badge in a corner.
@@ -81,7 +91,7 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
                   selection has to announce itself in words, at the top of
                   the card, where the eye lands first. */}
               {selected && (
-                <span className="block bg-plum-700 px-5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
+                <span className="block bg-gradient-to-r from-saffron-500 to-amber-500 px-5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
                   <Check size={12} className="inline -mt-0.5 mr-1" />
                   Your scale
                 </span>
@@ -90,7 +100,9 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
               <div className="flex items-start justify-between gap-4 p-5">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-2xl">{tier.emoji}</span>
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xl ${tier.accent}`}>
+                      {tier.emoji}
+                    </span>
                     <h3 className="text-lg font-bold text-gray-900">{tier.name}</h3>
                     <span className="text-xs text-gray-400 font-medium italic">{tier.localName}</span>
                     {tier.popular && (
@@ -116,8 +128,8 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <div className="px-3 py-1.5 rounded-lg bg-white/80 border border-white">
-                    <p className="text-[10px] text-gray-400 leading-tight">Guests</p>
+                  <div className={`px-3 py-1.5 rounded-lg border ${tier.accent}`}>
+                    <p className="text-[10px] text-gray-500 leading-tight">Guests</p>
                     <p className="text-sm font-bold text-gray-800 whitespace-nowrap">
                       {tier.guests.min}–{tier.guests.max}
                     </p>
@@ -134,9 +146,11 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
         })}
 
         {/* The honest exit. No price, on purpose — see BESPOKE_TIER. */}
-        <div className={`card p-5 ${BESPOKE_TIER.accent}`}>
+        <div className="card bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">{BESPOKE_TIER.emoji}</span>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xl ${BESPOKE_TIER.accent}`}>
+              {BESPOKE_TIER.emoji}
+            </span>
             <h3 className="text-lg font-bold text-gray-900">{BESPOKE_TIER.name}</h3>
             <span className="text-xs text-gray-400 font-medium italic">{BESPOKE_TIER.localName}</span>
           </div>

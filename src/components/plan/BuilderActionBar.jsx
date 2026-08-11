@@ -43,8 +43,8 @@ export default function BuilderActionBar({
       aria-label="Back a step"
       className={
         isFixed
-          ? 'shrink-0 w-11 h-11 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-500 active:bg-gray-100'
-          : 'shrink-0 px-5 min-h-[52px] rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 active:bg-gray-50'
+          ? 'shrink-0 w-11 h-11 rounded-xl ring-1 ring-white/15 bg-white/10 flex items-center justify-center text-white/70 active:bg-white/20'
+          : 'shrink-0 px-5 min-h-[52px] rounded-xl ring-1 ring-white/15 bg-white/10 text-sm font-semibold text-white/80 active:bg-white/20'
       }
     >
       {isFixed ? <ArrowLeft size={18} /> : 'Back'}
@@ -56,7 +56,7 @@ export default function BuilderActionBar({
       type="button"
       onClick={onPrimary}
       disabled={primaryDisabled}
-      className={`min-h-[52px] rounded-xl bg-plum-700 text-white font-bold flex items-center justify-center gap-1.5 px-4 active:bg-plum-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${
+      className={`min-h-[52px] rounded-xl bg-gradient-to-r from-saffron-500 to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 px-4 shadow-lg shadow-amber-900/30 active:from-saffron-600 active:to-amber-600 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed transition-all ${
         isFixed ? 'shrink-0 text-sm' : 'flex-1 text-base'
       }`}
     >
@@ -75,7 +75,7 @@ export default function BuilderActionBar({
   }
 
   return (
-    <div className="lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock border-t-2 border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <div className="plan-bar lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.5)]">
       <div className="flex items-center gap-2 px-3 py-2.5 pb-safe">
         {back}
 
@@ -87,15 +87,15 @@ export default function BuilderActionBar({
             onClick={onOpenReview}
             className="min-w-0 flex-1 text-left py-1 active:opacity-70"
           >
-            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/45 font-bold">
               <Receipt size={10} /> Estimate · incl. taxes
             </span>
-            <span className="block text-sm font-extrabold text-gray-900 truncate">
+            <span className="block text-sm font-extrabold text-white truncate">
               {formatINR(quote.range.low)} – {formatINR(quote.range.high)}
             </span>
           </button>
         ) : (
-          <span className="min-w-0 flex-1 text-[11px] leading-snug text-gray-400">
+          <span className="min-w-0 flex-1 text-[11px] leading-snug text-white/45">
             {hint ?? 'The estimate appears here once you pick an occasion.'}
           </span>
         )}

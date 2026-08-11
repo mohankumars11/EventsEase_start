@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import {
   Pencil, Info, TrendingDown, Receipt, Users, UtensilsCrossed, Palette,
-  ListChecks, Sparkles, CalendarDays, MapPin, Leaf, ShieldCheck,
+  ListChecks, Sparkles, CalendarDays, MapPin, Leaf, ShieldCheck, Ticket,
 } from 'lucide-react'
 import { formatINR } from '../../utils/format'
 import { BOOKING_MODES } from '../../data/celebrationTiers'
@@ -53,7 +53,7 @@ export default function ReviewBoard({
   quote, blocked, submitting, onSubmit, onEdit,
   occasionName, occasionEmoji, mode,
   cuisine, menu, vegOnly, specialRequests, cateringOn, decorOn,
-  eventDate, onEventDate, city, onCity,
+  eventDate, onEventDate, city, onCity, offer, onClearOffer,
 }) {
   // Dish ids → names, course by course. Done here rather than in the JSX so
   // an empty course disappears entirely instead of rendering a bare heading.
@@ -121,7 +121,7 @@ export default function ReviewBoard({
             inside the first and last card rather than dangling into space. */}
         <span
           aria-hidden="true"
-          className="absolute left-[15px] sm:left-[19px] top-6 bottom-6 w-px bg-gradient-to-b from-plum-200 via-plum-200 to-transparent"
+          className="absolute left-[15px] sm:left-[19px] top-6 bottom-6 w-px bg-gradient-to-b from-saffron-400/60 via-white/20 to-transparent"
         />
 
         <div className="space-y-4">
@@ -405,6 +405,36 @@ export default function ReviewBoard({
             </p>
           </div>
         </div>
+
+        {/* The claimed coupon sits BELOW the total and is not subtracted from
+            it, which is the honest arrangement: this page shows what the
+            configuration costs, and the discount is applied to the document a
+            coordinator sends back. Showing it as a struck-through line here
+            would be inventing a number no system has agreed to. */}
+        {offer && (
+          <div className="flex items-start justify-between gap-3 border-t border-dashed border-gray-200 bg-saffron-50 px-5 py-3.5">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-sm font-bold text-saffron-800">
+                <Ticket size={14} /> {offer.name} — {offer.headline}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-saffron-700/80">
+                {offer.code && <span className="font-mono font-bold">{offer.code}</span>}
+                {offer.code && ' · '}
+                Goes with your request. Your coordinator takes it off the confirmed quote — it is not in the
+                estimate above.
+              </p>
+            </div>
+            {onClearOffer && (
+              <button
+                type="button"
+                onClick={onClearOffer}
+                className="shrink-0 -mr-1 min-h-[44px] px-2.5 text-xs font-bold text-saffron-800 underline underline-offset-2"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Send it ────────────────────────────────────────────────── */}
@@ -463,8 +493,11 @@ function Node({ n, icon: Icon, title, children, onEdit, muted }) {
     <section className="relative">
       <span
         aria-hidden="true"
-        className={`absolute -left-9 sm:-left-11 top-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-extrabold ring-4 ring-cream ${
-          muted ? 'bg-gray-200 text-gray-500' : 'bg-plum-700 text-white'
+        /* The ring is the page's ground, not cream — it exists to punch the
+           node out of the spine rule behind it, so it has to match whatever
+           it is drawn on. See planBuilder.css. */
+        className={`absolute -left-9 sm:-left-11 top-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-extrabold ring-4 ring-[#1a0730] ${
+          muted ? 'bg-white/15 text-white/60' : 'bg-saffron-500 text-white'
         }`}
       >
         {n}

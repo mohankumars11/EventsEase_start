@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, ShieldCheck, Receipt,
+  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, ShieldCheck, Receipt, Gift,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -12,9 +12,12 @@ import { CELEBRATION_TIERS, TIER_BY_ID, BOOKING_MODES, tierForGuests, LOCK_AMOUN
 import { CUISINES, CUISINE_BY_ID, defaultMenu } from '../../data/cuisineMenus'
 import { DECOR_LEVEL_BY_ID } from '../../data/decorPackages'
 import { ALL_SERVICES } from '../../data/servicePricing'
+import { OFFER_BY_ID, offerAvailability, offerToNote } from '../../data/celebrationOffers'
 import { buildQuote, quoteToText, checkMinimums } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
 import OccasionPicker from '../../components/plan/OccasionPicker'
+import OffersRail from '../../components/plan/OffersRail'
+import RewardsCard from '../../components/plan/RewardsCard'
 import TierLadder from '../../components/plan/TierLadder'
 import MenuBuilder from '../../components/plan/MenuBuilder'
 import DecorChooser from '../../components/plan/DecorChooser'
@@ -24,6 +27,10 @@ import ReviewBoard from '../../components/plan/ReviewBoard'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import BuilderActionBar from '../../components/plan/BuilderActionBar'
 import LockPayment from '../../components/plan/LockPayment'
+// This page's own ground and its ticket/motion styles. Separate from
+// index.css only because that file is carrying an unrelated in-flight change
+// — see the header of planBuilder.css.
+import '../../styles/planBuilder.css'
 
 /**
  * Build a celebration and watch the price move.
@@ -110,7 +117,15 @@ export default function CelebrationBuilder() {
   const [otherOccasion, setOtherOccasion] = useState('')
   const [mode, setMode] = useState(searchParams.get('mode') === 'individual' ? 'individual' : 'full')
   const [guestCount, setGuestCount] = useState(Number(searchParams.get('guests')) || 120)
-  const [tierId, setTierId] = useState(null)
+  // `?tier=` arrives from the occasion page, where the customer has already
+  // chosen a scale off the priced ladder. Landing them on the builder and
+  // silently re-deriving the tier from the guest count would undo a decision
+  // they just made — see `tierTouched` below, which is seeded true for exactly
+  // that reason.
+  const [tierId, setTierId] = useState(() => {
+    const requested = searchParams.get('tier')
+    return requested && TIER_BY_ID[requested] ? requested : null
+  })
   const [cuisineId, setCuisineId] = useState(null)
   const [vegOnly, setVegOnly] = useState(true)
   const [menu, setMenu] = useState({})
@@ -128,6 +143,13 @@ export default function CelebrationBuilder() {
   const [error, setError] = useState(null)
   const [enquiryId, setEnquiryId] = useState(null)
   const [lockClaimed, setLockClaimed] = useState(false)
+
+  // The one coupon claimed, by id. One at a time on purpose: the terms say
+  // so, and two stacked percentages on an estimate nobody has confirmed is a
+  // promise this business cannot keep. It changes no number on this page —
+  // it rides along in the coordinator's note and comes off the confirmed
+  // quote. See data/celebrationOffers.js.
+  const [appliedOfferId, setAppliedOfferId] = useState(null)
 
   // The scale waiting to be agreed to. Holds an id rather than a boolean so
   // the dialog can offer a switch ("your 450 guests suggest Grand") without
@@ -147,7 +169,7 @@ export default function CelebrationBuilder() {
   // it stops — somebody who deliberately chose Close Circle for 90 guests
   // because they want a small setup at a big function should not have that
   // undone by typing one more digit into the guest field.
-  const [tierTouched, setTierTouched] = useState(false)
+  const [tierTouched, setTierTouched] = useState(() => !!tierId)
   useEffect(() => {
     if (tierTouched) return
     if (suggestedId && suggestedId !== 'bespoke') setTierId(suggestedId)
@@ -246,6 +268,16 @@ export default function CelebrationBuilder() {
     if (!flow.some(s => s.id === step)) setStep('services')
   }, [flow, step])
 
+  // An offer can stop qualifying after it was claimed — claim the early bird,
+  // then move the date inside sixty days. Leaving the ticket showing "Claimed"
+  // would send a coordinator a discount the customer is no longer owed, and
+  // they would be the one to take that conversation. It releases itself.
+  useEffect(() => {
+    if (!appliedOfferId) return
+    const offer = OFFER_BY_ID[appliedOfferId]
+    if (offer && !offerAvailability(offer, { eventDate }).ok) setAppliedOfferId(null)
+  }, [appliedOfferId, eventDate])
+
   /* ── Moving between steps ─────────────────────────────────────────── */
 
   // Each step is a fresh question, so it starts at the top of itself rather
@@ -311,6 +343,7 @@ export default function CelebrationBuilder() {
     const state = draftOverride ?? {
       eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu, specialRequests,
       decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor, eventDate, city,
+      appliedOfferId,
     }
     const liveQuote = buildQuote(state)
     if (!liveQuote) return
@@ -333,10 +366,19 @@ export default function CelebrationBuilder() {
         ? (state.otherOccasion?.trim() || 'Custom celebration')
         : EVENT_DATA[state.eventId]?.name ?? 'Custom celebration'
 
+      // A claimed coupon becomes real HERE and nowhere else — the note is the
+      // whole mechanism, so it carries the code and the instruction to apply
+      // it rather than just the name. Re-checked against the state actually
+      // being submitted, so an early-bird claimed and then invalidated by a
+      // date change cannot reach a coordinator as a live discount.
+      const offer = OFFER_BY_ID[state.appliedOfferId]
+      const offerIsValid = offer && offerAvailability(offer, { eventDate: state.eventDate }).ok
+
       const notes = [
         quoteToText(liveQuote, { menu: state.menu, cuisine, vegOnly: state.vegOnly }),
         state.specialRequests ? `\nSPECIAL REQUESTS\n  ${state.specialRequests}` : '',
         `\nBooked as: ${BOOKING_MODES[state.mode].name}`,
+        offerIsValid ? offerToNote(offer) : '',
       ].join('\n')
 
       // Only columns that exist before migration 034 go in this insert. The
@@ -390,7 +432,8 @@ export default function CelebrationBuilder() {
       setSubmitting(false)
     }
   }, [user, navigate, location, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
-      specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor, eventDate, city])
+      specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
+      eventDate, city, appliedOfferId])
 
   /**
    * Record that the customer says they paid.
@@ -436,6 +479,7 @@ export default function CelebrationBuilder() {
     setServiceIds(draft.serviceIds ?? []); setServiceQty(draft.serviceQty ?? {})
     setIncludeCatering(draft.includeCatering); setIncludeDecor(draft.includeDecor)
     setEventDate(draft.eventDate ?? ''); setCity(draft.city ?? BRAND.pilotCities[0])
+    setAppliedOfferId(draft.appliedOfferId ?? null)
     setTierTouched(true); setDecorTouched(true); setServicesTouched(true)
     submit(draft)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -444,20 +488,29 @@ export default function CelebrationBuilder() {
   /* ── Sent ─────────────────────────────────────────────────────────── */
   if (step === 'done') {
     return (
-      <div className="bg-cream min-h-screen">
+      <div className="plan-canvas min-h-screen">
         <div className="max-w-lg mx-auto px-4 py-10 space-y-5">
-          <div className="text-center space-y-3">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 size={44} className="text-green-500" />
+          <div className="plan-rise text-center space-y-3">
+            <div className="w-20 h-20 bg-emerald-400/15 ring-1 ring-emerald-400/30 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 size={44} className="text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Sent to a coordinator 🎉</h2>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <h2 className="text-2xl font-extrabold text-white">Sent to a coordinator 🎉</h2>
+            <p className="text-white/60 text-sm leading-relaxed">
               Your {occasionName.toLowerCase()} — {tier?.name}, {guestCount} guests, menu, décor and services — is with
               our team. Nothing gets booked until you approve the confirmed quote.
             </p>
             {quote && (
-              <p className="text-sm font-bold text-gray-800">
-                Estimate: {formatINR(quote.range.low)} – {formatINR(quote.range.high)} incl. taxes
+              <p className="plan-glass inline-block rounded-xl px-4 py-2 text-sm font-bold text-white">
+                {formatINR(quote.range.low)} – {formatINR(quote.range.high)} incl. taxes
+              </p>
+            )}
+            {/* The coupon is restated after sending, because "did my discount
+                actually go through" is the first thing somebody wonders once
+                the form is gone. */}
+            {OFFER_BY_ID[appliedOfferId] && (
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400/15 px-3 py-1.5 text-xs font-bold text-saffron-300 ring-1 ring-saffron-400/30">
+                <Gift size={13} />
+                {OFFER_BY_ID[appliedOfferId].headline} sent with your request
               </p>
             )}
           </div>
@@ -481,9 +534,11 @@ export default function CelebrationBuilder() {
             />
           )}
 
+          <RewardsCard occasionName={occasionName} />
+
           <div className="flex flex-col gap-2 pt-2">
             <Link to="/dashboard/customer/requests" className="btn-primary text-center">Track this request</Link>
-            <Link to="/services" className="text-sm font-semibold text-center text-plum-700">
+            <Link to="/services" className="text-sm font-semibold text-center text-saffron-300">
               Browse services &amp; packages
             </Link>
           </div>
@@ -522,61 +577,117 @@ export default function CelebrationBuilder() {
     : (step === 'occasion' && !occasionAnswered)
   const onPrimary = isReview ? () => submit() : () => goNext()
 
+  const doneCount = flow.filter(s => done[s.id]).length
+  const progressPct = Math.round((doneCount / Math.max(1, flow.length - 1)) * 100)
+
   return (
-    <div className="bg-cream min-h-screen pb-28 lg:pb-8">
-      {/* Hero */}
-      <div className={`bg-gradient-to-r ${event?.heroGradient ?? 'from-plum-700 via-plum-600 to-saffron-500'} text-white`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
+    <div className="plan-canvas min-h-screen pb-28 lg:pb-8">
+      {/* ── Hero ───────────────────────────────────────────────────────
+          The occasion's own gradient rides as a translucent wash over the
+          page's ground rather than as an opaque band across it. An opaque
+          band is what made the old header read as a separate website stacked
+          on top of the builder; at 55% the canvas shows through and the two
+          are one room with a lit end. */}
+      <div className="relative overflow-hidden">
+        {/* Faded out at the bottom rather than stopped. A wash that simply
+            ends draws a hard horizontal rule across the page and puts the
+            header back in its own box, which is the thing the translucency
+            was for in the first place. */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-br opacity-55 [mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] [-webkit-mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] ${
+            event?.heroGradient ?? 'from-plum-700 via-plum-600 to-saffron-500'
+          }`}
+          aria-hidden="true"
+        />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-8">
           <button
             onClick={() => navigate(routeEventId ? `/services/${routeEventId}` : '/plan')}
-            className="flex items-center gap-1.5 text-white/70 text-sm mb-3 min-h-[36px]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-white/80 text-sm mb-4 min-h-[36px] ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-black/30"
           >
             <ArrowLeft size={15} /> {routeEventId && event ? `Back to ${event.name}` : 'Back to planning'}
           </button>
-          <h1 className="text-xl sm:text-3xl font-extrabold drop-shadow">
-            {eventId ? `Build your ${occasionName.toLowerCase()}` : 'Build your celebration'} — see the price as you go
+
+          <p className="plan-rise inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15">
+            <Sparkles size={12} className="text-saffron-300" />
+            {occasionEmoji} {eventId ? occasionName : 'Live estimate'}
+          </p>
+
+          <h1 className="plan-rise mt-3 text-2xl sm:text-4xl font-extrabold text-white leading-[1.1] max-w-3xl" style={{ '--rise-delay': '60ms' }}>
+            {eventId ? `Build your ${occasionName.toLowerCase()}` : 'Build your celebration'}
+            <span className="block bg-gradient-to-r from-saffron-300 via-amber-200 to-saffron-400 bg-clip-text text-transparent">
+              and watch the price move.
+            </span>
           </h1>
+
           {/* Counts derived, never typed. Three of these numbers were already
               wrong once between writing the copy and adding a service. */}
-          <p className="text-white/80 mt-1.5 text-sm max-w-2xl">
-            {EVENT_LIST.length} occasions, {CELEBRATION_TIERS.length} scales, {CUISINES.length} cuisines
-            and {ALL_SERVICES.length} services. Choose yours and the estimate updates on every tap — taxes
-            included, nothing hidden.
+          <div className="plan-rise mt-4 flex flex-wrap gap-2" style={{ '--rise-delay': '120ms' }}>
+            {[
+              [EVENT_LIST.length, 'occasions'],
+              [CELEBRATION_TIERS.length, 'scales'],
+              [CUISINES.length, 'cuisines'],
+              [ALL_SERVICES.length, 'services'],
+            ].map(([n, label]) => (
+              <span key={label} className="plan-glass rounded-xl px-3 py-1.5 text-xs text-white/70">
+                <strong className="text-white font-extrabold">{n}</strong> {label}
+              </span>
+            ))}
+          </div>
+          <p className="plan-rise mt-3 max-w-2xl text-sm text-white/60" style={{ '--rise-delay': '160ms' }}>
+            Every tap updates the estimate — taxes included, nothing hidden, no call needed to see a number.
           </p>
         </div>
       </div>
 
-      {/* Which door */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {Object.values(BOOKING_MODES).map(m => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setMode(m.id)}
-              aria-pressed={mode === m.id}
-              className={`text-left px-4 py-3 min-h-[72px] rounded-xl border-2 transition-colors ${
-                mode === m.id ? 'border-plum-600 bg-plum-50' : 'border-gray-200'
-              }`}
-            >
-              <p className="font-bold text-gray-900 text-sm">{m.emoji} {m.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{m.blurb}</p>
-              {m.bundleDiscount > 0 && (
-                <p className="text-[11px] font-bold text-green-700 mt-1">
-                  Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
-                </p>
-              )}
-            </button>
-          ))}
-        </div>
+      {/* ── Offers ─────────────────────────────────────────────────────
+          High on the page because that is where a saving changes whether
+          somebody starts, not whether they finish. */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-6">
+        <OffersRail
+          appliedId={appliedOfferId}
+          onApply={setAppliedOfferId}
+          eventDate={eventDate}
+          bundleSaving={showQuote && quote.bundle.applied ? quote.bundle.amount : 0}
+        />
       </div>
 
-      {/* Step bar — scrolls sideways rather than shrinking to unreadable.
-          Each chip carries what was decided there, so the bar doubles as a
-          running summary and "where am I / what have I answered" needs no
-          scrolling to answer. */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto flex overflow-x-auto scrollbar-hide">
+      {/* ── Which door ─────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {Object.values(BOOKING_MODES).map((m, i) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => setMode(m.id)}
+            aria-pressed={mode === m.id}
+            style={{ '--rise-delay': `${200 + i * 70}ms` }}
+            className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
+              mode === m.id
+                ? 'bg-white shadow-lg ring-2 ring-saffron-400'
+                : 'plan-glass text-white hover:bg-white/10'
+            }`}
+          >
+            <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-white'}`}>
+              {m.emoji} {m.name}
+            </p>
+            <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-white/55'}`}>{m.blurb}</p>
+            {m.bundleDiscount > 0 && (
+              <p className={`text-[11px] font-bold mt-1 ${mode === m.id ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
+              </p>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Step rail ──────────────────────────────────────────────────
+          Scrolls sideways rather than shrinking to unreadable, and each chip
+          carries what was decided there — so the rail doubles as a running
+          summary and "where am I / what have I answered" needs no scrolling
+          to answer. The hairline under it fills as steps complete: on a
+          six-step flow people want to know how much is left before they
+          commit to starting. */}
+      <div className="sticky top-0 z-20 plan-bar border-b border-white/10 shadow-lg shadow-black/20">
+        <div className="max-w-6xl mx-auto flex overflow-x-auto plan-rail-scroll">
           {STEPS.map(s => {
             const Icon = s.icon
             const off = !flow.some(f => f.id === s.id)
@@ -590,24 +701,32 @@ export default function CelebrationBuilder() {
                 onClick={() => !disabled && goTo(s.id)}
                 disabled={disabled}
                 aria-current={active ? 'step' : undefined}
-                className={`shrink-0 px-4 py-2.5 min-h-[56px] text-left border-b-2 disabled:opacity-30 ${
-                  active ? 'border-saffron-500 bg-saffron-50/60' : 'border-transparent'
-                } ${s.id === 'review' ? 'border-l border-l-gray-200 ml-1' : ''}`}
+                className={`shrink-0 px-4 py-2.5 min-h-[58px] text-left transition-colors disabled:opacity-25 ${
+                  active ? 'bg-white/10' : 'hover:bg-white/5'
+                } ${s.id === 'review' ? 'ml-1 border-l border-white/10' : ''}`}
               >
                 <span className={`flex items-center gap-1.5 text-sm font-semibold ${
-                  active ? 'text-saffron-700' : complete ? 'text-gray-700' : 'text-gray-500'
+                  active ? 'text-saffron-300' : complete ? 'text-white/85' : 'text-white/45'
                 }`}>
                   {complete && !active
-                    ? <CheckCircle2 size={14} className="text-green-600" />
+                    ? <CheckCircle2 size={14} className="text-emerald-400" />
                     : <Icon size={14} />}
                   {s.label}
                 </span>
-                <span className="block text-[10px] font-medium text-gray-400 truncate max-w-[130px]">
+                <span className={`block text-[10px] font-medium truncate max-w-[130px] ${
+                  active ? 'text-saffron-200/70' : 'text-white/35'
+                }`}>
                   {off ? 'switched off' : summary[s.id] ?? '—'}
                 </span>
               </button>
             )
           })}
+        </div>
+        <div className="h-0.5 bg-white/10">
+          <div
+            className="h-full bg-gradient-to-r from-saffron-400 to-amber-300 transition-[width] duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
       </div>
 
@@ -689,6 +808,8 @@ export default function CelebrationBuilder() {
           {/* Date and city live on the review, not on a build step — neither
               changes the price, and asking them first is how a pricing page
               turns back into an enquiry form. */}
+          {isReview && <RewardsCard occasionName={occasionName} />}
+
           {isReview && (
             <ReviewBoard
               quote={showQuote ? quote : null}
@@ -705,6 +826,8 @@ export default function CelebrationBuilder() {
               specialRequests={specialRequests}
               cateringOn={includeCatering}
               decorOn={includeDecor}
+              offer={OFFER_BY_ID[appliedOfferId] ?? null}
+              onClearOffer={() => setAppliedOfferId(null)}
               eventDate={eventDate}
               onEventDate={setEventDate}
               city={city}
