@@ -205,6 +205,29 @@ export default function PlanHub() {
           </Link>
         </div>
 
+        {/* ── The price question, answered without a door ─────────────────
+            Deliberately a strip and not a third card. The two doors above are
+            a choice about HOW you want to engage; "what does this cost" is not
+            a third way to engage, it is the question people are holding while
+            they read both cards. A strip answers it without re-opening the
+            fork the page exists to close.
+
+            Weighted above the shop strip because the intent is far closer: a
+            visitor asking the price is planning, not shopping. */}
+        <Link
+          to={meta.catalogId ? `/plan/build/${meta.catalogId}` : '/plan/build'}
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl bg-saffron-50 border-2 border-saffron-200 px-5 py-4 text-center hover:border-saffron-400 hover:shadow-sm transition-all"
+        >
+          <span aria-hidden="true">🧮</span>
+          <span className="text-gray-700 text-sm">
+            <strong>Want the number first?</strong> Pick your scale, build the menu dish by dish, choose the décor —
+            the estimate updates as you go.
+          </span>
+          <span className="text-saffron-700 font-bold text-sm inline-flex items-center gap-1">
+            Build &amp; price it <ArrowRight size={14} />
+          </span>
+        </Link>
+
         {/* ── Door C — the shop, at a third of the weight ─────────────────
             Anyone who arrived from the landing page already chose "plan" over
             "shop", so a third equal card would re-ask a settled question — the

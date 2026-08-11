@@ -402,6 +402,23 @@ export default function EventServices() {
               anything is booked.
             </p>
 
+            {/* The ranges above are honest but four times wider than the
+                decision they have to support — "₹8,00,000 to ₹25,00,000" tells
+                a family with 200 guests nothing. The builder narrows it with
+                the three inputs that actually move the number, so it is
+                offered right here, at the moment somebody reads a range and
+                thinks "yes, but what about MY event". */}
+            <button
+              onClick={() => navigate(`/plan/build/${eventId}`)}
+              className="w-full mb-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-xl bg-saffron-50 border-2 border-saffron-200 px-4 py-3.5 text-center hover:border-saffron-400 transition-colors"
+            >
+              <span aria-hidden="true">🧮</span>
+              <span className="text-sm text-gray-700">
+                <strong>Want a number for your guest count?</strong> Pick a scale, build the menu, choose the décor.
+              </span>
+              <span className="text-saffron-700 font-bold text-sm">Build &amp; price it →</span>
+            </button>
+
             {realPackages.map(pkg => {
               const pkgServices = event.services.filter(s => pkg.includes.includes(s.id))
               const inCart = hasPkg(eventId, pkg.id)

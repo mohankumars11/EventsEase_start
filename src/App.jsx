@@ -29,6 +29,7 @@ const AuthCallbackPage   = lazy(() => import('./pages/auth/AuthCallbackPage'))
 const FestivalDetailPage = lazy(() => import('./pages/FestivalDetailPage'))
 const PlanHub            = lazy(() => import('./pages/plan/PlanHub'))
 const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
+const CelebrationBuilder = lazy(() => import('./pages/plan/CelebrationBuilder'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const Shop               = lazy(() => import('./pages/shop/Shop'))
 const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
@@ -276,6 +277,14 @@ function AppRoutes() {
       ══════════════════════════════════════════════ */}
       <Route path="/plan" element={<AppShell><PlanHub /></AppShell>} />
       <Route path="/plan/custom" element={<BareShell><PlanningWizard /></BareShell>} />
+      {/* The third door, and the only one that answers "what will this cost"
+          before a human is involved: pick a scale, build the menu dish by
+          dish, pick the decor, and watch the estimate move. Public for the
+          same reason the wizard and the catalog are — a price behind a login
+          is a price nobody sees. Login is asked at send, where there is
+          something to save. */}
+      <Route path="/plan/build" element={<AppShell><CelebrationBuilder /></AppShell>} />
+      <Route path="/plan/build/:eventId" element={<AppShell><CelebrationBuilder /></AppShell>} />
 
       {/* ── Services & packages catalog (public) ────── */}
       <Route path="/services" element={<AppShell><ServicesPicker /></AppShell>} />
