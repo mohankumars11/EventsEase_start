@@ -249,8 +249,27 @@ function AppRoutes() {
       {/* Public: a guest can build and review a cart, and is asked to sign
           in at checkout. Gating the cart page itself bounced anyone who
           tapped the cart icon straight to /login, which reads as "your
-          items are gone" and is the classic way to lose a basket. */}
-      <Route path="/shop/cart" element={<AppShell><ShopCart /></AppShell>} />
+          items are gone" and is the classic way to lose a basket.
+
+          ── Why the checkout has no site chrome ──────────────────────
+          It was on AppShell, so a customer one tap from paying got, stacked
+          above the thing they came to do: the marketing navbar, a "Pilot —
+          Bengaluru — somewhere else? [notify me]" bar, a marquee of festivals
+          sliding sideways, a "Back to Home" link — and beneath it a 400px
+          footer offering birthdays, weddings, baby showers, a sitemap, two
+          contact buttons and the pilot notice a second time.
+
+          Every one of those is a way out of a checkout, and two actively
+          argued with it: the banner invited someone mid-purchase to register
+          interest in a city we don't serve, and the ticker moved continuously
+          beside a form they were typing an address into. No storefront of any
+          size ships its full site header on its checkout, and this is why.
+
+          The page draws its own instead — CheckoutHeader (one exit, the
+          brand, a padlock, a three-step rail) and CheckoutFooter (payment
+          methods, the refund promise, a human to call). The tab bar stays: it
+          is the app's navigation, not the marketing site's. */}
+      <Route path="/shop/cart" element={<ScreenShell><ShopCart /></ScreenShell>} />
       <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
       {/* Cakes get their own storefront: the category carries 50-odd occasion
           tags and every item is configurable, neither of which ShopCategory's
