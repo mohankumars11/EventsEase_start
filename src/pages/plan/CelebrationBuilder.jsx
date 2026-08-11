@@ -33,10 +33,17 @@ import LockPayment from '../../components/plan/LockPayment'
  * ── The mobile rules, which drove the layout ────────────────────────────
  * Nearly all of this traffic is a phone, mid-evening, one thumb. So:
  *
- *   The price is never off screen. On desktop it is a sticky column; on a
- *   phone it is a bar pinned to the bottom that expands into the full
- *   breakdown. A builder where you have to scroll to find out what you have
- *   done is a builder people abandon.
+ *   The price is never off screen, and never in the way. On desktop it is a
+ *   sticky column. On a phone it is a single-row bar — price and a way in —
+ *   that opens into a dismissable sheet. The first cut shipped the desktop
+ *   panel with `position: fixed` and it ate half the screen with no way to
+ *   close it; a persistent element earns only the height it needs to be
+ *   glanced at, and everything else waits behind a tap.
+ *
+ *   The estimate does not appear until an occasion is chosen. A quote object
+ *   exists from the first render (the guest count defaults, the tier follows
+ *   it), but a five-figure number shown to somebody who has answered nothing
+ *   reads as invented.
  *
  *   One decision per step, five steps, and the step bar scrolls horizontally
  *   rather than shrinking to unreadable. Forward motion is a full-width button
@@ -169,6 +176,22 @@ export default function CelebrationBuilder() {
       mode, guestCount, decorTotal: quote?.decor.total ?? 0, includeCatering, includeDecor,
     })
   }, [eventId, otherOccasion, mode, guestCount, quote, includeCatering, includeDecor, cuisineId, decorLevelId, serviceIds])
+
+  /**
+   * When the price is allowed on screen at all.
+   *
+   * The guest count defaults to 120 and the tier auto-follows it, so a quote
+   * object exists on the very first render — before the customer has told us
+   * what they are even celebrating. Showing a five-figure estimate to somebody
+   * who has not answered a single question makes the number look invented,
+   * which is the opposite of what a transparent price is for. On a phone it was
+   * also parking a panel over the first question being asked.
+   *
+   * So the estimate waits for the one prerequisite that makes it meaningful:
+   * an occasion. Everything after that (scale, menu, decor, services) refines a
+   * number that is already on screen and already moving.
+   */
+  const showQuote = !!quote && !!eventId && (eventId !== 'other' || !!otherOccasion.trim())
 
   function toggleService(id) {
     setServicesTouched(true)
@@ -364,7 +387,7 @@ export default function CelebrationBuilder() {
   const isLastStep = stepIndex === STEPS.length - 1
 
   return (
-    <div className="bg-cream min-h-screen pb-40 lg:pb-8">
+    <div className={`bg-cream min-h-screen lg:pb-8 ${showQuote ? 'pb-28' : 'pb-8'}`}>
       {/* Hero */}
       <div className={`bg-gradient-to-r ${event?.heroGradient ?? 'from-plum-700 via-plum-600 to-saffron-500'} text-white`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
@@ -572,32 +595,34 @@ export default function CelebrationBuilder() {
         {/* Desktop: the number stays beside the choices. */}
         <div className="hidden lg:block lg:col-span-1">
           <div className="lg:sticky lg:top-20">
-            <QuotePanel quote={quote} blocked={blocked} submitting={submitting} onSubmit={() => submit()} />
+            <QuotePanel
+              quote={showQuote ? quote : null}
+              blocked={blocked}
+              submitting={submitting}
+              onSubmit={() => submit()}
+            />
           </div>
         </div>
       </div>
 
       {/* Phone: the number is pinned to the bottom and expands into the full
           breakdown. `bottom-bottom-nav` clears the app's fixed tab bar. */}
-      <div className="lg:hidden fixed inset-x-0 z-30 above-bottom-nav">
-        {sheetOpen && (
-          <button
-            aria-label="Close breakdown"
-            onClick={() => setSheetOpen(false)}
-            className="fixed inset-0 bg-black/40"
-          />
-        )}
-        <div className="relative bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      {showQuote && (
+        <div className={`lg:hidden fixed inset-x-0 z-30 above-bottom-nav ${
+          sheetOpen ? '' : 'bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]'
+        }`}>
           <QuotePanel
+            variant="sheet"
             quote={quote}
             blocked={blocked}
             submitting={submitting}
             onSubmit={() => submit()}
             expanded={sheetOpen}
-            onToggleExpanded={() => setSheetOpen(o => !o)}
+            onToggleExpanded={() => setSheetOpen(true)}
+            onClose={() => setSheetOpen(false)}
           />
         </div>
-      </div>
+      )}
     </div>
   )
 }
