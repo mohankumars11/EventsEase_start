@@ -199,10 +199,14 @@ export default function ChatWidget() {
   }
 
   return (
-    // Sits above the mobile tab bar rather than on top of the Cart tab.
-    <div className="fixed right-4 sm:right-5 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-5 z-[60]">
+    // `chat-dock` (index.css) owns the position, the z-index and the
+    // clearance every other bottom-fixed bar reserves for it. Nothing about
+    // where this sits is decided here any more — that is the whole point:
+    // one dock, defined once, identical on every route, so the launcher can
+    // never drift onto someone else's buttons again.
+    <div className="chat-dock">
       {open && (
-        <div className="mb-3 w-[calc(100vw-2rem)] max-w-sm h-[32rem] max-h-[calc(100dvh-13rem)] md:max-h-[calc(100dvh-7rem)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+        <div className="mb-3 w-[calc(100vw-1.5rem)] max-w-sm h-[32rem] max-h-[calc(100dvh-12rem)] md:max-h-[calc(100dvh-7rem)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-plum-900 px-5 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
@@ -319,10 +323,14 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Floating toggle button */}
+      {/* The launcher. Slightly smaller on a phone than on a desktop — it is
+          parked over live content there, and 52px is still a comfortable
+          thumb target while giving back the 4px that made it read as an
+          obstacle. `ml-auto` keeps it pinned to the dock's right edge, since
+          the open panel above it is far wider than the button. */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-14 h-14 rounded-full bg-saffron-400 hover:bg-saffron-500 shadow-xl flex items-center justify-center transition-all hover:scale-105"
+        className="ml-auto w-[3.25rem] h-[3.25rem] md:w-14 md:h-14 rounded-full bg-saffron-400 hover:bg-saffron-500 shadow-xl flex items-center justify-center transition-all hover:scale-105"
         aria-label={open ? 'Close chat' : 'Open chat'}
       >
         {open ? <X size={22} className="text-plum-950" /> : <MessageCircle size={22} className="text-plum-950" />}

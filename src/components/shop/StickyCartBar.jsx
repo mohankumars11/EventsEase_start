@@ -26,7 +26,10 @@ export default function StickyCartBar() {
 
   return (
     <div
-      className="animate-pop-in fixed inset-x-0 z-40 px-3 md:px-4 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:bottom-5"
+      // `pr-chat-dock` is the clearance the chat launcher owns in this
+      // corner (index.css). Without it the launcher sat squarely on top of
+      // the "View cart" button — the one tap this bar exists for.
+      className="animate-pop-in fixed inset-x-0 z-40 pl-3 md:pl-4 pr-chat-dock bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:bottom-5"
       role="region"
       aria-label="Cart summary"
     >

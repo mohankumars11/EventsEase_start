@@ -397,6 +397,36 @@
      its own submit button. */
   .above-bottom-nav { bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
   @screen md { .above-bottom-nav { bottom: 0; } }
+
+  /* ── The chat launcher's dock ─────────────────────────
+     One corner, the same on every screen, that nothing else may
+     occupy. Before this the launcher picked its own offsets and
+     landed on top of whatever else lived at the bottom right —
+     the cart bar's "View cart" button, the quote sheet's submit,
+     and the corner of every modal.
+
+     Two halves to the contract:
+       .chat-dock     — where the launcher parks (just above the
+                        mobile tab bar; bottom-right from md).
+       .pr-chat-dock  — the clearance a full-width bottom bar keeps
+                        on its right so its own buttons stay clear
+                        of it. Dropped at lg, where the centred bars
+                        are nowhere near the corner any more.
+
+     z-45 is deliberate: above page content and the cart bar, below
+     the tab bar (z-50) and every modal/sheet (z-50+). Support never
+     outranks navigation or the dialog someone is currently in. */
+  .chat-dock {
+    position: fixed;
+    right: 0.75rem;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    z-index: 45;
+  }
+  @screen md { .chat-dock { right: 1.25rem; bottom: 1.25rem; } }
+
+  .pr-chat-dock { padding-right: 4.25rem; }
+  @screen md { .pr-chat-dock { padding-right: 5.5rem; } }
+  @screen lg { .pr-chat-dock { padding-right: 1rem; } }
 }
 
 /* ── Reduced motion ────────────────────────────────────

@@ -167,7 +167,8 @@ export default function SalesNudge({ onPlan }) {
       // Two fixed neighbours already own this corner, and the nudge has to
       // clear both rather than sit under them:
       //   BottomNav   — md:hidden, fixed bottom-0, z-50, ~56px + safe area.
-      //   ChatWidget  — z-[60], bottom-[4.75rem] on mobile, bottom-5 from md.
+      //   ChatWidget  — the `chat-dock` corner in index.css: z-45, bottom
+      //                 4.75rem on mobile, bottom-5 from md, ~52–56px tall.
       // Breakpoints match BottomNav's md:hidden, not sm — switching at sm left
       // a 640–767px window where the nav covered these buttons. The stacking
       // order is deliberate too: navigation and support outrank a promo, so

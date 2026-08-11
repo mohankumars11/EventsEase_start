@@ -606,9 +606,11 @@ export default function CelebrationBuilder() {
       </div>
 
       {/* Phone: the number is pinned to the bottom and expands into the full
-          breakdown. `bottom-bottom-nav` clears the app's fixed tab bar. */}
+          breakdown. `above-bottom-nav` clears the app's fixed tab bar and
+          `pr-chat-dock` clears the chat launcher, which otherwise landed on
+          the submit button at the right end of this row. */}
       {showQuote && (
-        <div className={`lg:hidden fixed inset-x-0 z-30 above-bottom-nav ${
+        <div className={`lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock ${
           sheetOpen ? '' : 'bg-white border-t-2 border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]'
         }`}>
           <QuotePanel
