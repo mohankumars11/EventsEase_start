@@ -23,6 +23,7 @@ import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import PromoDeck from '../components/home/PromoDeck'
+import BrandFilm from '../components/home/BrandFilm'
 import OccasionCard from '../components/home/OccasionCard'
 import TierRail from '../components/home/TierRail'
 import ShopPicksRail from '../components/home/ShopPicksRail'
@@ -189,6 +190,25 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
+          {/* ── The four-second film ──────────────────────────────────
+              Everything else above the fold argues — a tier, a price, a
+              coupon, a countdown. None of it shows what any of it is for.
+              This does, in four one-second beats, and its tap target moves
+              with the story: the planner on beat one, a gift you can send
+              tonight by beat four.
+
+              It sits in a different place depending on who is looking, and
+              that is the whole reason it isn't just dropped in the list:
+
+                signed out   directly under the deck. A cold visitor has to
+                             want the thing before being asked for a date,
+                             and this is the only element on the page that
+                             makes them want it.
+                signed in    under the date check. They are already sold —
+                             pushing their most useful control down by 250px
+                             to re-pitch them would be a straight loss. */}
+          {!user && <BrandFilm />}
+
           {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single
               most useful thing an enquiry can carry sat behind a step most
@@ -196,6 +216,8 @@ export default function HomeScreen() {
               question, not a month grid: a calendar is something you open,
               not something you live next to on a phone screen. */}
           <DateCheckCard />
+
+          {user && <BrandFilm />}
 
           {/* ── The six scales of celebration ─────────────────────────
               Replaces PackageRail, which put "Grand Celebration Birthday,
