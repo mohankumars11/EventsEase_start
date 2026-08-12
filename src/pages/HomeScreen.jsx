@@ -13,6 +13,7 @@ import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
 import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
+import DatesFillingFast from '../components/landing/DatesFillingFast'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
 import OffersRail from '../components/shop/OffersRail'
@@ -298,6 +299,15 @@ export default function HomeScreen() {
               </div>
             </section>
           )}
+
+          {/* ── Dates filling fast ──────────────────────────────────
+              Straight after the festival rail, which has just put the
+              calendar in the reader's head — this says what that calendar
+              costs you if you wait. Renders nothing when no date is
+              genuinely under pressure, and every claim on it is either a
+              fact about the calendar or a real count of real enquiries
+              against a real ceiling. See lib/demand.js. */}
+          <DatesFillingFast />
 
           {/* ── How this works ──────────────────────────────────────
               Signed-out visitors get the full explanation; signed-in

@@ -46,6 +46,9 @@ const LAST_FEW_RATIO = 0.70
  * real count against a real ceiling. It's slate rather than red: red reads as
  * an error the customer caused, and this is just a full day.
  */
+// `chip` is for the light surfaces (the wizard, the date sheet); `chipDark`
+// for the plum home screen, which is a different ground and needs its own
+// contrast rather than a light chip dropped onto dark and left unreadable.
 export const DEMAND_TONES = {
   OPEN: {
     key: 'OPEN',
@@ -54,6 +57,8 @@ export const DEMAND_TONES = {
     dot: 'bg-emerald-500',
     cell: 'bg-white text-gray-700 border-gray-200 hover:border-plum-300',
     chip: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    chipDark: 'bg-emerald-400/10 text-emerald-200 border-emerald-400/25',
+    accentDark: 'text-emerald-300',
   },
   BOOKING_UP: {
     key: 'BOOKING_UP',
@@ -62,6 +67,8 @@ export const DEMAND_TONES = {
     dot: 'bg-amber-500',
     cell: 'bg-amber-50 text-amber-900 border-amber-200 hover:border-amber-400',
     chip: 'bg-amber-50 text-amber-800 border-amber-200',
+    chipDark: 'bg-amber-400/10 text-amber-200 border-amber-400/25',
+    accentDark: 'text-amber-300',
   },
   IN_DEMAND: {
     key: 'IN_DEMAND',
@@ -70,6 +77,8 @@ export const DEMAND_TONES = {
     dot: 'bg-saffron-500',
     cell: 'bg-saffron-50 text-saffron-900 border-saffron-300 hover:border-saffron-500',
     chip: 'bg-saffron-100 text-saffron-800 border-saffron-300',
+    chipDark: 'bg-saffron-400/15 text-saffron-200 border-saffron-400/30',
+    accentDark: 'text-saffron-300',
   },
   PEAK: {
     key: 'PEAK',
@@ -78,6 +87,8 @@ export const DEMAND_TONES = {
     dot: 'bg-plum-600',
     cell: 'bg-plum-50 text-plum-900 border-plum-300 ring-1 ring-saffron-300 hover:border-plum-500',
     chip: 'bg-plum-100 text-plum-800 border-plum-300',
+    chipDark: 'bg-saffron-400/20 text-saffron-100 border-saffron-400/40',
+    accentDark: 'text-saffron-300',
   },
   LAST_FEW: {
     key: 'LAST_FEW',
@@ -86,6 +97,8 @@ export const DEMAND_TONES = {
     dot: 'bg-saffron-600',
     cell: 'bg-saffron-100 text-saffron-900 border-saffron-400 ring-1 ring-saffron-400 hover:border-saffron-600',
     chip: 'bg-saffron-200 text-saffron-900 border-saffron-400',
+    chipDark: 'bg-saffron-400/25 text-saffron-100 border-saffron-400/50',
+    accentDark: 'text-saffron-200',
   },
   AT_CAPACITY: {
     key: 'AT_CAPACITY',
@@ -94,6 +107,8 @@ export const DEMAND_TONES = {
     dot: 'bg-slate-400',
     cell: 'bg-slate-100 text-slate-500 border-slate-300 hover:border-slate-400',
     chip: 'bg-slate-100 text-slate-600 border-slate-300',
+    chipDark: 'bg-white/5 text-white/50 border-white/15',
+    accentDark: 'text-white/50',
   },
 }
 
