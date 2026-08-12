@@ -14,6 +14,7 @@ import HeroTicker from '../components/landing/HeroTicker'
 import { ShopRail, TrustRow } from '../components/landing/HeroProof'
 import SalesNudge from '../components/landing/SalesNudge'
 import StoryDeck from '../components/landing/StoryDeck'
+import DatesFillingFast from '../components/landing/DatesFillingFast'
 import { KOLAM_PATH } from '../components/ui/SambramoMark'
 
 /* ═══════════════════════════════════════════════════════════
@@ -418,6 +419,17 @@ export default function LandingPage() {
           </SlideCarousel>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════
+          6B. DATES FILLING FAST
+
+          Straight after the festivals, which have just put the calendar in
+          the reader's head — this says what that calendar costs you if you
+          wait. Renders nothing when no date is genuinely under pressure,
+          and every claim on it is either a fact about the calendar or a
+          real count of real enquiries. See lib/demand.js.
+      ══════════════════════════════════════════════ */}
+      <DatesFillingFast />
 
       {/* ══════════════════════════════════════════════
           7. CUSTOMER VOICES — real reviews_catalog data,

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { CheckCircle2, Sparkles } from 'lucide-react'
+import { CheckCircle2, Sparkles, CalendarDays } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { EVENT_TYPES, BUDGET_OPTIONS, SERVICE_CATEGORIES, BRAND } from '../../config/sambramo'
 import { useAuth } from '../../context/AuthContext'
@@ -9,6 +9,10 @@ import { isLiveCity, LIVE_CITIES } from '../../config/cities'
 import { useCity } from '../../context/CityContext'
 import ComingSoonCity from '../../components/common/ComingSoonCity'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import EventDateSheet from '../../components/plan/EventDateSheet'
+import { useDateDemand } from '../../hooks/useDateDemand'
+import { demandForDate, slotByKey, indexDemandRows, daysBetween } from '../../lib/demand'
+import { todayISO } from '../../utils/format'
 
 const TOTAL_STEPS = 6
 
@@ -38,11 +42,12 @@ const VENUE_OPTIONS = [
   { label: 'Not decided yet',    emoji: '💭' },
 ]
 
-// Days until event date
+// Days until the event. Parsed field by field via demand.js rather than with
+// `new Date('2026-11-22')`, which is read as UTC midnight and so counts a day
+// short anywhere east of Greenwich — all of India included.
 function daysUntil(dateStr) {
   if (!dateStr) return null
-  const diff = Math.ceil((new Date(dateStr) - new Date()) / 86400000)
-  return diff
+  return daysBetween(todayISO(), dateStr)
 }
 
 // Where a guest's half-finished answers wait while they sign in. Session
@@ -60,6 +65,7 @@ export default function PlanningWizard() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState(null)
   const [animating, setAnimating] = useState(false)
+  const [dateSheetOpen, setDateSheetOpen] = useState(false)
 
   // The landing page's eight budget chips navigate here as
   // `/plan?budget=<label>`, and its festival cards add `?festival=<id>`.
@@ -93,8 +99,18 @@ export default function PlanningWizard() {
 
   const [form, setForm] = useState({
     event_type:        searchParams.get('type') || '',
-    event_date:        '',
+    // The landing page's "dates filling fast" band links here with the date
+    // already chosen, so somebody who tapped a specific Saturday there does
+    // not have to find it again.
+    event_date:        searchParams.get('date') || '',
     start_time:        '',
+    // Time of day as a bucket the customer actually thinks in. start_time and
+    // end_time are derived from it at submit so everything already reading
+    // those columns keeps working.
+    time_slot:         '',
+    flexible_date:     false,
+    date_window_days:  null,
+    intake_status:     'ACCEPTED',
     /**
      * The chosen city wins over the profile's.
      *
@@ -194,7 +210,9 @@ export default function PlanningWizard() {
 
   function canNext() {
     if (step === 1) return !!form.event_type
-    if (step === 2) return !!form.event_date
+    // Both, not just the date. A request that says "the 22nd" without saying
+    // morning or evening cannot be quoted without a phone call first.
+    if (step === 2) return !!form.event_date && !!form.time_slot
     if (step === 3) return isLiveCity(form.city)
     if (step === 4) return !!form.guest_count
     if (step === 5) return true
@@ -225,6 +243,13 @@ export default function PlanningWizard() {
   const selectedType = EVENT_TYPES.find(et => et.id === form.event_type)
   const days         = daysUntil(form.event_date)
 
+  const { demandByDate, peaks } = useDateDemand(form.city || null)
+  const demandCtx = useMemo(
+    () => ({ today: todayISO(), city: form.city, demandByDate, peaks }),
+    [form.city, demandByDate, peaks],
+  )
+  const dateInfo = form.event_date ? demandForDate(form.event_date, demandCtx) : null
+
   async function handleSubmit() {
     if (!canNext() || submitting) return
 
@@ -250,10 +275,36 @@ export default function PlanningWizard() {
     setSubmitting(true)
     setError(null)
     try {
+      const slot = slotByKey(form.time_slot)
+
+      // Re-check capacity now, not just when the date was picked. Six steps
+      // take a few minutes and the date can fill in between — better to take
+      // the request onto the waitlist and say so than to promise a day we
+      // can no longer staff.
+      let intakeStatus = form.intake_status || 'ACCEPTED'
+      if (intakeStatus === 'ACCEPTED' && form.event_date) {
+        try {
+          const fresh = await supabase.rpc('date_demand', {
+            p_from: form.event_date, p_to: form.event_date, p_city: form.city || null,
+          })
+          const row = indexDemandRows(fresh.data ?? []).get(form.event_date)
+          if (row?.capacity && row.consumed >= row.capacity) intakeStatus = 'WAITLIST'
+        } catch {
+          // The check is a courtesy, not a gate. If it fails, take the
+          // request — a coordinator sorting out one over-booked date beats
+          // losing a completed six-step form.
+        }
+      }
+
       const payload = {
         event_type:           form.event_type,
         event_date:           form.event_date || null,
-        start_time:           form.start_time || null,
+        start_time:           slot?.start ?? form.start_time ?? null,
+        end_time:             slot?.end ?? null,
+        time_slot:            form.time_slot || null,
+        flexible_date:        !!form.flexible_date,
+        date_window_days:     form.flexible_date ? (form.date_window_days ?? null) : null,
+        intake_status:        intakeStatus,
         city:                 form.city,
         style_preference:     form.style_preference || null,
         guest_count:          parseInt(form.guest_count) || null,
@@ -270,11 +321,27 @@ export default function PlanningWizard() {
         customer_id:          user?.id ?? null,
       }
 
-      const { data, error: dbErr } = await supabase
+      // Migration 035 is applied by hand in the Supabase SQL editor, and
+      // `git push` does not run it. If the code lands first, the columns
+      // below don't exist yet and Postgres answers 42703 — so retry once
+      // without them rather than failing a completed six-step form. The
+      // request still arrives; it just carries less until 035 is applied.
+      const NEW_COLUMNS = ['time_slot', 'end_time', 'flexible_date', 'date_window_days', 'intake_status']
+      let { data, error: dbErr } = await supabase
         .from('events')
         .insert(payload)
         .select('id, event_code')
         .single()
+      if (dbErr?.code === '42703') {
+        const fallback = { ...payload }
+        for (const col of NEW_COLUMNS) delete fallback[col]
+        console.warn('events is missing migration 035 columns — submitting without them.')
+        ;({ data, error: dbErr } = await supabase
+          .from('events')
+          .insert(fallback)
+          .select('id, event_code')
+          .single())
+      }
       if (dbErr) throw dbErr
 
       // Save services to event_services table
@@ -375,11 +442,23 @@ export default function PlanningWizard() {
                 </div>
               )}
               {form.event_date && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
-                  <span>📅</span>
-                  <span>{new Date(form.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  {days !== null && days > 0 && (
-                    <span className="text-saffron-400 text-xs font-semibold">{days}d away</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-plum-200">
+                    <span>📅</span>
+                    <span>{new Date(form.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    {days !== null && days > 0 && (
+                      <span className="text-saffron-400 text-xs font-semibold">{days}d away</span>
+                    )}
+                  </div>
+                  {/* The reason to hurry, carried through the remaining four
+                      steps rather than left behind on step 2. */}
+                  {dateInfo && dateInfo.tone.key !== 'OPEN' && (
+                    <p className="text-xs text-saffron-300 pl-6">
+                      {dateInfo.showCount ? dateInfo.headline : dateInfo.tone.label}
+                    </p>
+                  )}
+                  {form.time_slot && (
+                    <p className="text-xs text-plum-300 pl-6">{slotByKey(form.time_slot)?.label}</p>
                   )}
                 </div>
               )}
@@ -449,48 +528,92 @@ export default function PlanningWizard() {
           )}
 
           {/* Step 2: Date */}
+          {/* The date and the part of the day are both required here. Without
+              a date a coordinator cannot check a single vendor, and "start
+              time (optional)" meant most requests arrived without one — so
+              "morning or evening?" became a phone call before any real work
+              could start. */}
           {step === 2 && (
-            <div className="max-w-md space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-plum-800 mb-2">Event date *</label>
-                <input
-                  type="date"
-                  value={form.event_date}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={e => setField('event_date', e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-plum-900 focus:outline-none focus:border-saffron-400 transition-colors text-lg"
-                  autoFocus
-                />
-                {days !== null && days > 0 && (
-                  <div className="mt-3 flex items-center gap-3 p-3 bg-saffron-50 rounded-xl border border-saffron-100">
-                    <span className="text-2xl">🗓️</span>
-                    <div>
-                      <p className="text-sm font-semibold text-plum-800">
-                        {days} day{days !== 1 ? 's' : ''} to plan
-                      </p>
-                      <p className="text-xs text-plum-500">
-                        {days >= 30
-                          ? 'Great — plenty of time to make it perfect!'
-                          : days >= 14
-                            ? 'Good lead time — we\'ll get right on it.'
-                            : 'Tight timeline — we\'ll fast-track this for you.'}
-                      </p>
-                    </div>
-                  </div>
+            <div className="max-w-md space-y-5">
+              <button
+                type="button"
+                onClick={() => setDateSheetOpen(true)}
+                className={[
+                  'w-full text-left rounded-2xl border-2 px-4 py-4 transition-colors',
+                  form.event_date
+                    ? 'border-saffron-300 bg-saffron-50 hover:border-saffron-400'
+                    : 'border-dashed border-gray-300 hover:border-plum-400 bg-white',
+                ].join(' ')}
+              >
+                {form.event_date ? (
+                  <>
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-lg font-bold text-plum-900">
+                        {new Date(form.event_date).toLocaleDateString('en-IN', {
+                          weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+                        })}
+                      </span>
+                      <span className="text-xs font-semibold text-plum-600 underline shrink-0">Change</span>
+                    </span>
+                    <span className="block text-sm text-plum-600 mt-0.5">
+                      {slotByKey(form.time_slot)?.label ?? 'Pick a time of day'}
+                      {form.flexible_date && form.date_window_days
+                        ? ` · flexible ± ${form.date_window_days} days`
+                        : ''}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex items-center gap-2 text-lg font-bold text-plum-900">
+                      <CalendarDays size={20} className="text-plum-600" />
+                      Choose your date
+                    </span>
+                    <span className="block text-sm text-gray-500 mt-0.5">
+                      See which dates are filling up before you pick
+                    </span>
+                  </>
                 )}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-plum-800 mb-2">Preferred start time <span className="font-normal text-gray-400">(optional)</span></label>
-                <input
-                  type="time"
-                  value={form.start_time}
-                  onChange={e => setField('start_time', e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-plum-900 focus:outline-none focus:border-saffron-400 transition-colors"
-                />
-              </div>
-              <div className="bg-plum-50 rounded-2xl p-4 text-sm text-plum-700">
-                <span className="font-semibold">Pro tip:</span> Booking 2+ weeks in advance gives us more vendor options and better pricing.
-              </div>
+              </button>
+
+              {/* The same tone the calendar showed, restated here so the
+                  reason to hurry survives closing the sheet. */}
+              {dateInfo && (
+                <div className={`rounded-2xl border p-4 ${dateInfo.tone.chip}`}>
+                  <p className="text-sm font-bold mb-0.5">
+                    {dateInfo.showCount ? dateInfo.headline : dateInfo.tone.label}
+                  </p>
+                  <p className="text-xs leading-relaxed opacity-90">{dateInfo.subtext}</p>
+                  {form.intake_status === 'WAITLIST' && (
+                    <p className="text-xs mt-2 font-semibold">
+                      You're on the list for this date — we'll call you if a spot opens.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!form.time_slot && form.event_date && (
+                <p className="text-sm text-crimson-600 font-medium">
+                  Pick a time of day to continue — it decides which vendors we can even ask.
+                </p>
+              )}
+
+              {days !== null && days > 0 && (
+                <div className="flex items-center gap-3 p-3 bg-plum-50 rounded-xl border border-plum-100">
+                  <span className="text-2xl">🗓️</span>
+                  <div>
+                    <p className="text-sm font-semibold text-plum-800">
+                      {days} day{days !== 1 ? 's' : ''} to plan
+                    </p>
+                    <p className="text-xs text-plum-500">
+                      {days >= 30
+                        ? 'Great — plenty of time to make it perfect!'
+                        : days >= 14
+                          ? 'Good lead time — we\'ll get right on it.'
+                          : 'Tight timeline — we\'ll fast-track this for you.'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -821,6 +944,14 @@ export default function PlanningWizard() {
           )}
         </div>
       </div>
+
+      <EventDateSheet
+        open={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        city={form.city || null}
+        value={form}
+        onConfirm={picked => setForm(f => ({ ...f, ...picked }))}
+      />
     </div>
   )
 }
