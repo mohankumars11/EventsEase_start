@@ -36,6 +36,7 @@ import { CUISINE_BY_ID, defaultMenu } from './cuisineMenus'
 import { DECOR_LEVEL_BY_ID } from './decorPackages'
 import { SERVICE_BY_ID } from './servicePricing'
 import { EVENT_DATA } from './eventServicesData'
+import { tierContentFor } from './occasionTierContent'
 import { buildQuote } from '../utils/quote'
 
 /**
@@ -122,7 +123,9 @@ export const OCCASION_PROFILES = {
   sangeet: {
     cuisine: 'north_indian',
     vegOnly: false,
-    essentials: ['dj', 'photography'],
+    // Mehendi is half the occasion's own name, so it rides on every tier
+    // rather than appearing only where a generic rung happens to include it.
+    essentials: ['dj', 'photography', 'mehendi'],
     signature: ['A real dance floor with lights and sound', 'Mehendi artists working through the evening', 'Performances rehearsed rather than improvised'],
     promise: 'The night before the vows, with a floor that fills and a running order somebody else is holding.',
   },
@@ -143,7 +146,7 @@ export const OCCASION_PROFILES = {
   retirement: {
     cuisine: 'karnataka',
     vegOnly: false,
-    essentials: ['memory_wall', 'photography'],
+    essentials: ['memory_wall', 'photography', 'av_setup'],
     signature: ['A tribute wall of the years', 'A stage for the speeches and the felicitation', 'A meal the colleagues and the family both enjoy'],
     promise: 'A send-off that says something, without a colleague having to organise it in their own time.',
   },
@@ -259,14 +262,21 @@ function priceTier(eventId, tier) {
 
   const quote = quoteAt(eventId, tier, typicalGuests)
   const floor = quoteAt(eventId, tier, tier.guests.min)
+  const serviceIds = tierServicesFor(eventId, tier)
 
   return {
     ...tier,
+    // The rung's generic words, replaced by this occasion's. `description` and
+    // `highlights` on the tier itself describe a wedding-shaped event, because
+    // that is the only celebration one generic sentence can describe; spread
+    // after ...tier so the occasion's copy wins on every surface that renders a
+    // priced tier. See occasionTierContent.js.
+    ...tierContentFor(eventId, tier, serviceIds),
     eventId,
     cuisine,
     vegOnly,
     decor: DECOR_LEVEL_BY_ID[tier.defaultDecor] ?? null,
-    services: tierServicesFor(eventId, tier).map(id => SERVICE_BY_ID[id]).filter(Boolean),
+    services: serviceIds.map(id => SERVICE_BY_ID[id]).filter(Boolean),
     quote,
     typicalGuests,
     /** The cheapest real booking at this rung, for this occasion. */

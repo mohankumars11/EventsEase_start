@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { Check, Users, ArrowRight, X, Sparkles } from 'lucide-react'
 import { TIER_BY_ID } from '../../data/celebrationTiers'
+import { tierContentFor } from '../../data/occasionTierContent'
+import { tierServicesFor } from '../../data/occasionPackages'
 
 /**
  * "You're in this circle." — the moment a scale gets decided.
@@ -31,9 +33,15 @@ import { TIER_BY_ID } from '../../data/celebrationTiers'
  * deliberately chosen). The second must never overwrite the first silently:
  * somebody who picked Close Circle for 90 guests on purpose gets asked, and
  * "keep what I had" is a real button, not a dismiss X they have to guess at.
+ *
+ * ── "What this circle brings with it" has to mean THIS circle ───────────
+ * The list under that heading came off the tier, which describes the ladder
+ * generically. So a baby shower that landed on Royal Mysuru was told its scale
+ * brings a mandap — at the exact moment the dialog is asking the customer to
+ * agree to the scale. `eventId` makes the list the occasion's own.
  */
 export default function TierMatchDialog({
-  tierId, currentTierId, guestCount, nextLabel, onConfirm, onDismiss,
+  tierId, eventId, currentTierId, guestCount, nextLabel, onConfirm, onDismiss,
 }) {
   // Escape closes, and the page behind holds still while it is open. Same
   // rule as any other cover: whichever gesture the user reaches for first
@@ -54,6 +62,9 @@ export default function TierMatchDialog({
 
   const current = currentTierId && currentTierId !== tierId ? TIER_BY_ID[currentTierId] : null
   const fits = guestCount >= tier.guests.min && guestCount <= tier.guests.max
+  const content = eventId
+    ? tierContentFor(eventId, tier, tierServicesFor(eventId, tier))
+    : tier
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center">
@@ -110,7 +121,7 @@ export default function TierMatchDialog({
             What this circle brings with it
           </p>
           <ul className="mt-2 space-y-1.5">
-            {tier.highlights.map(h => (
+            {content.highlights.map(h => (
               <li key={h} className="flex items-start gap-2 text-sm text-gray-600">
                 <Check size={14} className="mt-0.5 shrink-0 text-green-600" />
                 {h}

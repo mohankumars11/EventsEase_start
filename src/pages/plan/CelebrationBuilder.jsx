@@ -754,6 +754,7 @@ export default function CelebrationBuilder() {
 
           {step === 'scale' && (
             <TierLadder
+              eventId={eventId}
               guestCount={guestCount}
               onGuestCount={handleGuestCount}
               selectedId={tierId}
@@ -884,6 +885,7 @@ export default function CelebrationBuilder() {
       {tierPrompt && (
         <TierMatchDialog
           tierId={tierPrompt}
+          eventId={eventId}
           currentTierId={tierId}
           guestCount={guestCount}
           nextLabel={(flow[flow.findIndex(s => s.id === 'scale') + 1] ?? {}).short ?? 'Review'}

@@ -131,6 +131,15 @@ export function batchBandFor(guestCount) {
  * The list has to keep matching `highlights` below it. A tier that promises
  * "photography through the main hours" in its highlights and does not carry
  * `photography` here is a tier whose price is missing a photographer.
+ *
+ * ── `description` and `highlights` are the OCCASION-LESS copy ───────────
+ * They are what a rung says on the home rail, where the customer has not told
+ * us what they are celebrating yet, so they must stay true of any celebration
+ * at this size — no mandap, no cake table, no homa. The moment an occasion is
+ * known, both fields are replaced by data/occasionTierContent.js, which knows
+ * that Royal Mysuru means a marquee and a mandap for a wedding, a marquee and
+ * a ritual stage for an upanayanam, and an LED wall and a control desk for a
+ * corporate annual day. Keep these lines generic; put the specifics there.
  */
 export const CELEBRATION_TIERS = [
   {
@@ -150,7 +159,7 @@ export const CELEBRATION_TIERS = [
     menuAllowance: { welcome: 1, starters: 2, mains: 2, curries: 2, accompaniments: 3, sweets: 1, counters: 0 },
     highlights: [
       'Cooked and served at your home or hall',
-      'Simple, well-finished decor at the entrance and cake table',
+      'Simple, well-finished decor at the entrance and the main table',
       'One coordinator you can message any time',
     ],
     accent: 'border-emerald-200 bg-emerald-50',
@@ -268,7 +277,7 @@ export const CELEBRATION_TIERS = [
     onSiteManager: true,
     menuAllowance: { welcome: 4, starters: 8, mains: 6, curries: 8, accompaniments: 10, sweets: 5, counters: 4 },
     highlights: [
-      'Marquee, mandap and full floral installation',
+      'Marquee, stage and full floral installation',
       'Banana-leaf service with a serving team per section',
       'Four or more live counters',
       'Multi-camera video, drone and same-day edit',

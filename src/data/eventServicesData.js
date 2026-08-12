@@ -149,6 +149,10 @@ export const EVENT_DATA = {
       SVC.venue, SVC.floral, SVC.decor, SVC.lighting, SVC.tent,
       SVC.pooja, SVC.priest, SVC.catering, SVC.cooks, SVC.menu, SVC.dining,
       SVC.cake, SVC.welcome_drinks, SVC.photography, SVC.videography,
+      // Nadaswaram. It was missing from all three Vedic rites below, which is
+      // why the scale cards could not offer the one piece of a namakarana,
+      // upanayanam or seemantham that families ask about by name.
+      SVC.live_music,
       SVC.return_gifts, SVC.invitations, SVC.cleanup,
     ],
   },
@@ -327,7 +331,8 @@ export const EVENT_DATA = {
     services: [
       SVC.venue, SVC.floral, SVC.decor, SVC.tent,
       SVC.pooja, SVC.priest, SVC.catering, SVC.cooks, SVC.menu, SVC.dining,
-      SVC.photography, SVC.videography, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.photography, SVC.videography, SVC.live_music,
+      SVC.return_gifts, SVC.invitations, SVC.cleanup,
     ],
   },
 
@@ -349,7 +354,7 @@ export const EVENT_DATA = {
       SVC.venue, SVC.floral, SVC.decor, SVC.balloon_arch,
       SVC.pooja, SVC.priest, SVC.catering, SVC.menu, SVC.dining,
       SVC.cake, SVC.welcome_drinks, SVC.photography, SVC.videography,
-      SVC.mehendi, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.live_music, SVC.mehendi, SVC.return_gifts, SVC.invitations, SVC.cleanup,
     ],
   },
 
@@ -368,7 +373,11 @@ export const EVENT_DATA = {
     tagline: 'Celebrating a lifetime of hard work',
     description: 'A heartfelt send-off honouring years of dedication, with the people who mattered most along the way.',
     services: [
-      SVC.venue, SVC.decor, SVC.lighting, SVC.stage,
+      // av_setup is not optional dressing on a send-off: the tribute film and
+      // the citation are the middle twenty minutes of the event, and both need
+      // a screen and a working mic. It was missing here, so the scale cards
+      // could not honestly promise either — see occasionTierContent.js.
+      SVC.venue, SVC.decor, SVC.lighting, SVC.stage, SVC.av_setup,
       SVC.catering, SVC.menu, SVC.dining, SVC.cake, SVC.welcome_drinks,
       SVC.live_music, SVC.emcee, SVC.photography, SVC.videography,
       SVC.memory_wall, SVC.gifting, SVC.invitations, SVC.cleanup,

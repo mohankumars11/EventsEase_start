@@ -121,15 +121,20 @@ export default function TierPackageCard({
             </div>
           </div>
 
-          {/* ── What this rung gets you ───────────────────────
-              The occasion's own signature moments deliberately do NOT repeat
-              here. They are stated once in the page header; printed again on
-              each of eight cards they became three identical lines rendered
-              twenty-four times, which trains the eye to skip the block that
-              actually differs between rungs. What makes a card occasion-
-              specific is underneath it and is real: this occasion's cuisine,
-              its decor level and its services (a purohit on a namakarana, a
-              DJ on a birthday, AV on a corporate event). */}
+          {/* ── What this rung gets you, for THIS occasion ────
+              These lines used to come off the tier, which describes the ladder
+              generically — so a baby shower at 800 guests was sold a mandap
+              and a naming ceremony at 450 was sold three live counters and a
+              dessert station. They are now written per occasion per scale in
+              data/occasionTierContent.js and merged in by priceTier(), which
+              is why a homa kunda appears on an upanayanam card and an LED
+              screen on a corporate one.
+
+              The occasion's `signature` moments still deliberately do NOT
+              repeat here. They are stated once in the page header; printed
+              again on each of eight cards they became three identical lines
+              rendered twenty-four times, which trains the eye to skip the
+              block that actually differs between rungs. */}
           <ul className="mt-3.5 space-y-1">
             {tier.highlights.map(h => (
               <li key={h} className="flex items-start gap-1.5 text-[12px] leading-snug text-gray-600">

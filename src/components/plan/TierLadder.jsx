@@ -1,5 +1,7 @@
 import { Check, Users, Sparkles } from 'lucide-react'
 import { CELEBRATION_TIERS, BESPOKE_TIER } from '../../data/celebrationTiers'
+import { tierContentFor } from '../../data/occasionTierContent'
+import { tierServicesFor } from '../../data/occasionPackages'
 
 /**
  * The scale picker.
@@ -20,8 +22,17 @@ import { CELEBRATION_TIERS, BESPOKE_TIER } from '../../data/celebrationTiers'
  * does not — a dialog between "2" and "220" would fire three times on the
  * way to one number. The distinction is "the user completed an act" versus
  * "the user is mid-keystroke", and only the first deserves an interruption.
+ *
+ * ── The cards describe the occasion, not a wedding ──────────────────────
+ * `eventId` comes from the step before this one, and it changes what each rung
+ * says it contains. The tier's own `description` and `highlights` are generic
+ * — floral installations, banana-leaf service, a designed stage — which is
+ * right on the home rail, where nobody has said what they are celebrating yet,
+ * and wrong here, where they have. tierContentFor() swaps them for this
+ * occasion's. Without an eventId (someone deep-linked straight to
+ * /plan/build) the generic copy still stands.
  */
-export default function TierLadder({ guestCount, onGuestCount, selectedId, onSelect, suggestedId }) {
+export default function TierLadder({ eventId, guestCount, onGuestCount, selectedId, onSelect, suggestedId }) {
   return (
     <div className="space-y-5">
       <div className="card p-5">
@@ -65,6 +76,9 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
         {CELEBRATION_TIERS.map((tier, i) => {
           const selected = selectedId === tier.id
           const suggested = suggestedId === tier.id && !selected
+          const content = eventId
+            ? tierContentFor(eventId, tier, tierServicesFor(eventId, tier))
+            : tier
           return (
             <button
               key={tier.id}
@@ -115,10 +129,10 @@ export default function TierLadder({ guestCount, onGuestCount, selectedId, onSel
                     )}
                   </div>
                   <p className="text-sm font-medium text-gray-700">{tier.tagline}</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">{tier.description}</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">{content.description}</p>
 
                   <ul className="mt-3 space-y-1">
-                    {tier.highlights.map(h => (
+                    {content.highlights.map(h => (
                       <li key={h} className="flex items-start gap-1.5 text-xs text-gray-600">
                         <Check size={12} className="mt-0.5 shrink-0 text-green-600" />
                         {h}
