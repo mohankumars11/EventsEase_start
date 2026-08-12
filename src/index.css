@@ -660,6 +660,7 @@
   .marquee-viewport:hover .marquee-track,
   .marquee-viewport:focus-within .marquee-track { animation-play-state: paused; }
 
+
   /* ── Ken Burns (product hero) ────────────────────────
      A slow, continuous push-in on the product detail photo. The
      shop sells things people buy on feel — a cake, a bouquet —
@@ -879,6 +880,56 @@
   .film-item-4 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.72s both, film-float 4.5s ease-in-out 1.9s infinite; }
   .film-item-5 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.92s both, film-float 4.0s ease-in-out 2.1s infinite; }
 
+  /* ── The makers beat ───────────────────────────────── */
+  /* The doll arrives, overshoots, settles, then sways on a long ease. The
+     sway is the point: a turned wooden object photographed on a turntable
+     never sits perfectly still, and 2.5 degrees is enough to read as an
+     object under a light rather than a sticker on a background. Anything
+     more and it looks like it is falling over. */
+  @keyframes film-turn-in {
+    0%   { opacity: 0; transform: translateY(26px) rotate(-7deg) scale(0.9); }
+    60%  { opacity: 1; transform: translateY(-3px) rotate(2deg)  scale(1.02); }
+    100% { opacity: 1; transform: translateY(0)    rotate(0deg)  scale(1); }
+  }
+  @keyframes film-turn-sway {
+    0%, 100% { transform: rotate(-2.5deg); }
+    50%      { transform: rotate(2.5deg); }
+  }
+  .film-turn {
+    animation: film-turn-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both,
+               film-turn-sway 4.2s ease-in-out 0.9s infinite;
+  }
+
+  /* The light pass. soft-light rather than screen, so it tints the surface
+     it crosses instead of washing it out — foil goes warmer, shell goes
+     cooler, cream stays cream. On a dark ground this would be invisible;
+     on the lit grounds it is exactly the sweep you get moving a lamp across
+     lacquer. */
+  @keyframes film-iridescent {
+    0%   { opacity: 0;    transform: translateX(-70%) skewX(-14deg); }
+    22%  { opacity: 0.55; }
+    72%  { opacity: 0.55; }
+    100% { opacity: 0;    transform: translateX(280%) skewX(-14deg); }
+  }
+  .film-iridescent {
+    position: absolute;
+    top: -10%;
+    bottom: -10%;
+    left: 0;
+    width: 34%;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 214, 170, 0.55) 28%,
+      rgba(196, 224, 255, 0.5) 52%,
+      rgba(255, 192, 232, 0.45) 74%,
+      transparent 100%
+    );
+    animation: film-iridescent 7.5s ease-in-out infinite;
+  }
+
   /* ── Beat 3: the packing ───────────────────────────── */
   @keyframes film-lid {
     0%   { opacity: 0; transform: translateY(-30px); }
@@ -951,8 +1002,9 @@
     0%   { opacity: 0; transform: translateX(46px); }
     100% { opacity: 1; transform: translateX(0); }
   }
-  .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
-  .film-hand-take { transform-box: fill-box; animation: film-hand-take 0.8s cubic-bezier(0.16,1,0.3,1) 0.32s both; }
+  /* The giving hand leads, the receiving hand answers it. */
+  .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.12s both; }
+  .film-hand-take { transform-box: fill-box; animation: film-hand-take 0.8s cubic-bezier(0.16,1,0.3,1) 0.38s both; }
 
   /* The box crosses the gap and then hangs, held between them. */
   @keyframes film-pass {
@@ -960,10 +1012,15 @@
     60%  { opacity: 1; transform: translate(2px, -3px)  rotate(1.5deg); }
     100% { opacity: 1; transform: translate(0, 0)       rotate(0deg); }
   }
+  /* Starts almost with the giving hand, not 400ms after it. At the old delay
+     the hands had both landed and the caption had fully resolved while the
+     box was still at zero opacity — so for about half a second the frame was
+     two people reaching at nothing, which is the one thing this beat must
+     never show. The box now travels as the hands arrive to meet it. */
   .film-pass {
     transform-box: fill-box;
-    animation: film-pass 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both,
-               film-float 2.8s ease-in-out 1.4s infinite;
+    animation: film-pass 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both,
+               film-float 2.8s ease-in-out 1.25s infinite;
   }
 
   /* ── Beat 5: the opening ───────────────────────────── */
@@ -1051,10 +1108,11 @@
      listed; the ones whose resting state is mid-flight (the departing
      lid, the box crossing between two hands) are pinned by the block
      below instead, to where the eye expects them. */
-  .film-mote, .film-line,
+  .film-mote, .film-line, .film-iridescent,
   .film-bloom, .film-land, .film-flame, .film-twinkle,
   .film-orbit-1, .film-orbit-2, .film-orbit-3,
   .film-item-1, .film-item-2, .film-item-3, .film-item-4, .film-item-5,
+  .film-turn,
   .film-lid, .film-ribbon, .film-bow, .film-tag, .film-foil, .film-sheen-band,
   .film-route, .film-hand-give, .film-hand-take, .film-pass,
   .film-lid-off, .film-burst, .film-rays, .film-lift {
@@ -1065,9 +1123,11 @@
   /* Drawn strokes have to be completed, not left at their start offset. */
   .film-ribbon,
   .film-route { stroke-dashoffset: 0; }
-  /* The specular band is a highlight over satin that is already gold —
-     frozen in place it reads as a scratch, so it simply does not show. */
-  .film-sheen-band { opacity: 0; }
+  /* Both light passes are highlights over surfaces that already read —
+     frozen in place the satin band is a scratch and the prismatic sweep is
+     a smear across a third of the card, so neither shows. */
+  .film-sheen-band,
+  .film-iridescent { opacity: 0; }
   /* Grain is texture, not motion, and the vignette is a gradient — both
      stay. Removing them would leave the storyboard flatter than the film
      it stands in for, which is the opposite of the point. */

@@ -98,6 +98,22 @@ const BEATS = [
     Art: OccasionArt,
   },
   {
+    /* Placed before the hamper on purpose. The arc now runs makers →
+       assembly → wrap → delivery → opening, so the film answers "where does
+       this come from" before "what does it cost me", which is the order a
+       gift buyer actually asks in. It is also the only beat a national
+       gifting site cannot copy: Channapatna is on the road between the two
+       cities we are live in. */
+    key: 'craft',
+    chapter: 'Handmade',
+    line: 'Coconut shell, clay and wood',
+    sub: 'Pieces they keep, not packaging they bin.',
+    cta: 'Explore the shop',
+    to: '/shop',
+    ground: 'radial-gradient(120% 100% at 68% 8%, #fbf7ee 0%, #eee3cf 50%, #d8c8ac 100%)',
+    Art: CraftArt,
+  },
+  {
     key: 'chosen',
     chapter: 'The hamper',
     line: 'Chosen piece by piece',
@@ -235,6 +251,15 @@ export default function BrandFilm() {
         >
           <Art />
         </span>
+
+        {/* The light pass. A wide prismatic band crossing the card on a slow
+            loop, in soft-light so it tints rather than whitens — the sheen
+            you get sweeping a real light across lacquer, foil and shell.
+            It is the whole "futuristic" budget, spent on one restrained
+            effect: anything more literal (scanlines, HUD chrome, neon) would
+            fight the craft the beats are about, and gimmicks date faster than
+            anything else on a home screen. */}
+        <span aria-hidden="true" className="film-iridescent" />
 
         {/* Grain over everything including the art — grain under the subject
             is a texture, grain over it is a photograph. */}
@@ -395,6 +420,47 @@ function FilmDefs() {
           <stop offset="0%"   stopColor="#e0a877" />
           <stop offset="60%"  stopColor="#c98a55" />
           <stop offset="100%" stopColor="#a06a3c" />
+        </linearGradient>
+
+        {/* ── Craft materials ────────────────────────────────────────
+            Turned and lacquered wood, coconut shell, fired clay, jute
+            and leaf. Each is a real material with a real behaviour:
+            shell is dark and glossy with a hard specular, clay is matte
+            and drinks light, jute is flat and fibrous. Giving them
+            different falloffs is what stops six objects looking like
+            six recolours of the same plastic. */}
+        <linearGradient id="sf-wood" x1="0" y1="0" x2="0.5" y2="1">
+          <stop offset="0%"   stopColor="#f3ddb8" />
+          <stop offset="52%"  stopColor="#dcbb87" />
+          <stop offset="100%" stopColor="#b98f5b" />
+        </linearGradient>
+        <linearGradient id="sf-shell" x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0%"   stopColor="#7a4a2b" />
+          <stop offset="34%"  stopColor="#4a2a17" />
+          <stop offset="72%"  stopColor="#2e180d" />
+          <stop offset="100%" stopColor="#3f2415" />
+        </linearGradient>
+        <linearGradient id="sf-clay" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%"   stopColor="#d38b5c" />
+          <stop offset="60%"  stopColor="#b5643c" />
+          <stop offset="100%" stopColor="#8c4526" />
+        </linearGradient>
+        <linearGradient id="sf-jute" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%"   stopColor="#e5cfa4" />
+          <stop offset="60%"  stopColor="#cbb07c" />
+          <stop offset="100%" stopColor="#a68a58" />
+        </linearGradient>
+        <linearGradient id="sf-leaf" x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0%"   stopColor="#7fae63" />
+          <stop offset="100%" stopColor="#3f6b39" />
+        </linearGradient>
+        <linearGradient id="sf-lac-a" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#e8623f" />
+          <stop offset="100%" stopColor="#b83a20" />
+        </linearGradient>
+        <linearGradient id="sf-lac-b" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#2f9c8a" />
+          <stop offset="100%" stopColor="#14675b" />
         </linearGradient>
 
         <radialGradient id="sf-warm">
@@ -618,6 +684,107 @@ function ChosenArt() {
   )
 }
 
+/* Beat — the makers. Coconut shell, fired clay, turned wood, jute and leaf.
+ *
+ * The hero is a lathe-turned, lacquered wooden doll, which is not a generic
+ * "craft" shape: it is the Channapatna form, made on the road between
+ * Bengaluru and Mysore — the two cities Sambramo is actually live in. A brand
+ * selling celebration in Karnataka has a local craft tradition sitting right
+ * there, and using a generic teddy or a wrapped parcel here would throw away
+ * the one thing a national gifting site cannot copy.
+ *
+ * It sways rather than sits, on a long ease, so it reads as a turntable
+ * product shot instead of a sticker — that plus the travelling specular is
+ * what makes a flat vector feel like an object under a light.
+ *
+ * The materials are deliberately unmatched: glossy shell, matte clay, fibrous
+ * jute. Six objects with one surface behaviour look like six recolours of the
+ * same plastic, which is the exact failure this beat exists to argue against.
+ */
+function CraftArt() {
+  return (
+    <svg viewBox="0 0 200 120" className={ART} role="presentation">
+      {/* the bench they sit on */}
+      <path d="M40 103 h168" stroke="#c4a887" strokeWidth="1.4" opacity="0.55" />
+
+      {/* leaves, behind everything — the eco note, stated once and quietly */}
+      <g className="film-item film-item-5">
+        <path d="M104 46 q5 -13 3 -21" stroke="#5c8a4a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        {[[100, 34, -38], [111, 30, 30], [103, 24, -14], [112, 40, 52]].map(([x, y, r], i) => (
+          <ellipse key={i} cx={x} cy={y} rx="3.6" ry="6.2" fill="url(#sf-leaf)" transform={`rotate(${r} ${x} ${y})`} />
+        ))}
+      </g>
+
+      {/* coconut-shell bowl */}
+      <g className="film-item film-item-2">
+        <Shadow cx={76} cy={92} rx={17} ry={3.4} opacity={0.42} />
+        <path d="M60 74 A16 16 0 0 0 92 74 Z" fill="url(#sf-shell)" />
+        <ellipse cx="76" cy="74" rx="16" ry="4.4" fill="#241109" />
+        {[[70, 72.5, '#c98a3d'], [76, 71, '#e0a95c'], [82, 72.5, '#a8672c']].map(([x, y, c], i) => (
+          <circle key={i} cx={x} cy={y} r="3.4" fill={c} />
+        ))}
+        {/* the hard specular that says "polished shell" and not "brown bowl" */}
+        <path d="M63 78 q3 7 9 10" stroke="#e8c9a0" strokeWidth="1.6" fill="none" opacity="0.42" strokeLinecap="round" />
+        <path d="M60 74 A16 4.4 0 0 0 92 74" stroke="#8a5a35" strokeWidth="1" fill="none" opacity="0.7" />
+      </g>
+
+      {/* the doll */}
+      <g className="film-pivot film-turn" style={{ transformOrigin: '118px 98px' }}>
+        <Shadow cx={118} cy={101} rx={21} ry={3.6} opacity={0.45} />
+        {/* body, tapering to the base like a turned piece */}
+        <path d="M108 54 L128 54 L136 94 Q136 98 132 98 L104 98 Q100 98 100 94 Z" fill="url(#sf-wood)" />
+        {/* lacquer bands, cut to follow the taper */}
+        <path d="M106 64 L130 64 L131.2 70 L104.8 70 Z" fill="url(#sf-lac-a)" />
+        <path d="M103.2 78 L132.8 78 L134 84 L102 84 Z" fill="url(#sf-lac-b)" />
+        <path d="M101.6 88 L134.4 88 L135.2 92 L100.8 92 Z" fill="#e8a33d" opacity="0.9" />
+        {/* the light down one side of a round object */}
+        <path d="M110 56 L106 96" stroke="#fff6e0" strokeWidth="2.4" opacity="0.3" strokeLinecap="round" />
+        <path d="M130 56 L133 92" stroke="#7a5730" strokeWidth="2" opacity="0.28" strokeLinecap="round" />
+
+        <rect x="113.5" y="50" width="9" height="6" rx="1.5" fill="#c9a06a" />
+        <circle cx="118" cy="43" r="10" fill="url(#sf-wood)" />
+        <path d="M108 43 A10 10 0 0 1 128 43 Z" fill="url(#sf-lac-a)" />
+        <circle cx="114.6" cy="45" r="1.35" fill="#3a2318" />
+        <circle cx="121.4" cy="45" r="1.35" fill="#3a2318" />
+        <path d="M115 48.6 q3 2.4 6 0" stroke="#3a2318" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+        <circle cx="118" cy="38.4" r="1.2" fill="#b83a20" />
+        <ellipse cx="114.2" cy="41.4" rx="1.8" ry="1.2" fill="#fff6e0" opacity="0.45" />
+      </g>
+
+      {/* terracotta diya, lit */}
+      <g className="film-item film-item-3">
+        <Shadow cx={162} cy={97} rx={15} ry={3} opacity={0.4} />
+        <path d="M148 86 q14 12 28 0 q-14 6 -28 0 Z" fill="url(#sf-clay)" />
+        <path d="M148 86 q14 6 28 0" stroke="#e0a276" strokeWidth="1.2" fill="none" opacity="0.75" />
+        <path d="M173 84 q4 -1 6 -3" stroke="#6b3a1f" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <g className="film-pivot film-flame" style={{ transformOrigin: '180px 81px' }}>
+          <path d="M180 70 C183.2 74 184.4 76.2 184.4 78 C184.4 80.6 182.4 82.4 180 82.4 C177.6 82.4 175.6 80.6 175.6 78 C175.6 76.2 176.8 74 180 70 Z" fill="#f59e0b" filter="url(#sf-soft)" />
+          <path d="M180 74.5 C181.7 76.6 182.1 77.7 182.1 78.6 C182.1 79.9 181.2 80.9 180 80.9 C178.8 80.9 177.9 79.9 177.9 78.6 C177.9 77.7 178.3 76.6 180 74.5 Z" fill="#fff3cd" />
+        </g>
+      </g>
+
+      {/* jute pouch, bleeding off the right edge */}
+      <g className="film-item film-item-4">
+        <Shadow cx={196} cy={99} rx={16} ry={3} opacity={0.35} />
+        <path d="M182 68 h30 v26 q0 6 -6 6 h-18 q-6 0 -6 -6 Z" fill="url(#sf-jute)" />
+        {[0, 1, 2, 3, 4].map(i => (
+          <path key={i} d={`M182 ${72 + i * 6} h30`} stroke="#a68a58" strokeWidth="0.7" opacity="0.4" />
+        ))}
+        <path d="M181 70 h32" stroke="url(#sf-satin)" strokeWidth="3.4" strokeLinecap="round" />
+        <path d="M188 62 q6 -7 12 0 q-6 4 -12 0 Z" fill="#cbb07c" />
+      </g>
+
+      {[
+        { x: 56, y: 30, d: '1.1s' }, { x: 142, y: 22, d: '1.35s' }, { x: 92, y: 62, d: '1.6s' },
+      ].map(s => (
+        <g key={s.d} className="film-pivot film-twinkle" style={{ animationDelay: s.d, transformOrigin: `${s.x + 5}px ${s.y + 5}px` }}>
+          <path d={STAR} transform={`translate(${s.x} ${s.y})`} fill="#b8862f" />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 /* Beat 3 — the packing. Lid on, satin cross drawn, bow tied, tag hung.
    The satin keeps catching light for the whole dwell. */
 function WrapArt() {
@@ -792,7 +959,9 @@ function Storyboard() {
       <ol className="grid grid-cols-2 gap-3">
         {BEATS.map((b, i) => {
           const { Art } = b
-          const wide = i === BEATS.length - 1
+          // The last panel only spans both columns when the count is odd —
+          // otherwise it wraps to a new row and leaves a hole in the grid.
+          const wide = i === BEATS.length - 1 && BEATS.length % 2 === 1
           return (
             <li key={b.key} className={wide ? 'col-span-2' : undefined}>
               <Link
