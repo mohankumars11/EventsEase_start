@@ -36,6 +36,15 @@ export const INTEREST_FLOOR = 3
 /** Above this, the date gets the stronger treatment. Still just a count. */
 export const INTEREST_HIGH = 8
 
+/**
+ * ── Which surface these classes are for ──────────────────────────────
+ *
+ * `cell` and `chip` are **light-surface** classes: the calendar sheet is
+ * white, and so is the wizard step that repeats the same line. They were
+ * written for a dark panel and rendered `text-teal-100` on white in the
+ * wizard, which was invisible — one set of classes cannot serve both, so the
+ * dark panel keeps its own in `chipDark` / `accentDark`.
+ */
 export const INTEREST_LEVELS = {
   NONE: {
     key: 'NONE',
@@ -43,7 +52,7 @@ export const INTEREST_LEVELS = {
     // The default for most of the year. A calendar where 340 days shout is a
     // calendar nobody scans — the same reasoning as the vendor-side OPEN cell.
     dot: '',
-    cell: 'bg-white/5 text-white/85 border-white/10 hover:border-teal-400/50',
+    cell: 'bg-white text-plum-900 border-gray-200 hover:border-teal-500 hover:bg-teal-50',
     chip: '',
     chipDark: '',
     accentDark: 'text-white/50',
@@ -52,9 +61,9 @@ export const INTEREST_LEVELS = {
     key: 'INTEREST',
     rank: 1,
     label: 'People are asking',
-    dot: 'bg-teal-400',
-    cell: 'bg-teal-400/15 text-teal-100 border-teal-400/40 hover:border-teal-300',
-    chip: 'bg-teal-400/15 text-teal-100 border-teal-400/30',
+    dot: 'bg-teal-500',
+    cell: 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-500',
+    chip: 'bg-teal-50 text-teal-800 border-teal-200',
     chipDark: 'bg-teal-400/15 text-teal-200 border-teal-400/30',
     accentDark: 'text-teal-300',
   },
@@ -62,9 +71,9 @@ export const INTEREST_LEVELS = {
     key: 'HIGH_INTEREST',
     rank: 2,
     label: 'In demand',
-    dot: 'bg-teal-300',
-    cell: 'bg-teal-400/30 text-white border-teal-300/60 ring-1 ring-teal-300/40 hover:border-teal-200',
-    chip: 'bg-teal-400/25 text-teal-50 border-teal-300/40',
+    dot: 'bg-teal-600',
+    cell: 'bg-teal-100 text-teal-900 border-teal-300 hover:border-teal-600',
+    chip: 'bg-teal-100 text-teal-900 border-teal-300',
     chipDark: 'bg-teal-400/25 text-teal-100 border-teal-300/40',
     accentDark: 'text-teal-200',
   },
