@@ -313,6 +313,33 @@ export function tierForOccasion(eventId, tierId) {
   return tiersForOccasion(eventId).find(t => t.id === tierId) ?? null
 }
 
+/**
+ * One rung, priced at the headcount the customer actually typed.
+ *
+ * tiersForOccasion() prices every rung twice — at its floor and at its typical
+ * headcount — because a card in a ladder has to answer "can I start here" and
+ * "what would mine cost" without knowing anything about the reader. The moment
+ * the reader tells us they have 340 guests, both of those become the wrong
+ * number: the typical for Special Day is 220, and quoting 220 to somebody who
+ * said 340 is quoting a different event.
+ *
+ * So this is the same pricing pass, at an arbitrary count. It is what lets the
+ * occasion page's header move when the guest field moves — before this existed,
+ * "Starting at ₹26,750" was the same figure whether you were planning for
+ * twenty people or two thousand, which is the definition of a static page.
+ *
+ * Not memoised on purpose. The ladder cache above exists because eight rungs
+ * are priced on every render of a page that re-renders constantly; this is one
+ * rung, called from a useMemo keyed on (occasion, tier, guests), and a module
+ * cache keyed on a free-typed integer is an unbounded map for no gain.
+ */
+export function quoteForOccasion(eventId, tierId, guests) {
+  const tier = TIER_BY_ID[tierId]
+  const count = Number(guests) || 0
+  if (!tier || count < 1) return null
+  return quoteAt(eventId, tier, count)
+}
+
 /** The honest exit past the top rung — no price, on purpose. */
 export { BESPOKE_TIER, TIER_BY_ID }
 

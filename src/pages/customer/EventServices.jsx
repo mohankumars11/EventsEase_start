@@ -1,21 +1,26 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import {
-  ArrowLeft, ShoppingCart, Sparkles, Users, Pencil, LayoutGrid, Package,
+  ArrowLeft, ShoppingCart, Sparkles, Pencil, LayoutGrid, Package,
   Search, ChevronRight, MapPin, ShieldCheck, X,
 } from 'lucide-react'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { toWizardType } from '../../data/occasionMap'
-import { tiersForOccasion, profileFor, tierAsPackage, BESPOKE_TIER } from '../../data/occasionPackages'
+import {
+  tiersForOccasion, profileFor, tierAsPackage, quoteForOccasion, BESPOKE_TIER,
+} from '../../data/occasionPackages'
 import { tierForGuests } from '../../data/celebrationTiers'
 import { occasionThemeVars } from '../../config/occasionTheme'
-import { formatINR } from '../../utils/format'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import { EventDecorSamples } from '../../components/landing/DecorSampleGallery'
 import ServiceOptionCard from '../../components/event/ServiceOptionCard'
 import TierPackageCard from '../../components/event/TierPackageCard'
+import OccasionPulse from '../../components/event/OccasionPulse'
+import GuestScaleDial from '../../components/event/GuestScaleDial'
+import TwoDoors from '../../components/event/TwoDoors'
+import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import EventFooter from '../../components/layout/EventFooter'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -51,6 +56,34 @@ import { supabase } from '../../lib/supabase'
  *     packages are the eight scales, priced for this occasion through the same
  *     engine the builder uses — see data/occasionPackages.js.
  *
+ * ── The second pass: it had stopped being static and started being dead ──
+ * The redesign above fixed what the page *said*. It did not fix that, having
+ * said it, the page then sat there. Four things followed from that:
+ *
+ *   · The header's three tiles — eight scales, "starting at ₹26,750", a
+ *     service count — were constants. They were the same figures for a
+ *     customer planning for twenty people and one planning for two thousand,
+ *     which means they answered neither. They are now one live block that
+ *     reprices against the headcount through the same buildQuote() the builder
+ *     runs. See OccasionPulse.
+ *
+ *   · The three signature moments cost two or three wrapped rows to say three
+ *     things. They now share one rotating line with everything else the header
+ *     wants to claim — eight facts in the height of one.
+ *
+ *   · The guest control told you your scale in a grey sentence, referring to
+ *     one of eight cards you had not scrolled to yet. The ladder is drawn now,
+ *     with your rung lit and every rung tappable, and crossing a boundary
+ *     opens TierMatchDialog — the same "this is your circle, here is what
+ *     comes with it, here is the way on" the builder uses. It fires on
+ *     deliberate acts only, never between "2" and "220".
+ *
+ *   · Complete-celebration versus individual-service is the decision this page
+ *     exists to put in front of somebody, and it was a 56px tab strip three
+ *     screens down. It is now stated at the front as two offers, the primary
+ *     one carrying the live estimate. See TwoDoors. The sticky strip survives
+ *     as a switch for when you are deep in a list.
+ *
  * Everything here is generic over EVENT_DATA, so all fifteen occasions get it.
  * Nothing on this page is birthday-specific in code; it is birthday-specific in
  * data, which is the only way fifteen pages stay in step.
@@ -62,6 +95,11 @@ const CART_INTENT_KEY = 'sambramo_cart_intent'
 
 /** The headcount the page opens on before anyone has said anything. */
 const DEFAULT_GUESTS = 120
+
+/** Run once the state change that preceded it has been committed and painted. */
+function afterPaint(fn) {
+  requestAnimationFrame(() => requestAnimationFrame(fn))
+}
 
 export default function EventServices() {
   const { eventId } = useParams()
@@ -82,16 +120,27 @@ export default function EventServices() {
   ) // 'packages' | 'services'
   const [guestCount, setGuestCount] = useState(DEFAULT_GUESTS)
   const [tierTouched, setTierTouched] = useState(false)
-  const [selectedTier, setSelectedTier] = useState(null)
+  // Seeded from the default headcount rather than left null for the effect
+  // below to fill in. Null meant the header rendered "tell us the headcount"
+  // for one frame before the estimate replaced it — a flash of the empty
+  // state on a page that already knows the answer.
+  const [selectedTier, setSelectedTier] = useState(() => tierForGuests(DEFAULT_GUESTS)?.id ?? null)
+  const [tierPrompt, setTierPrompt]  = useState(null)
   const [query, setQuery]           = useState('')
   const [pendingAdd, setPendingAdd] = useState(null)
   const [editingDetails, setEditingDetails] = useState(false)
   const [reviewing, setReviewing]   = useState(null)
   const [eligible, setEligible]     = useState({})
 
+  // Where "see the scales" and "browse the services" actually land. Without
+  // it, choosing a door from the top of the page swaps content two screens
+  // below the viewport and looks like nothing happened.
+  const contentRef = useRef(null)
+
   const profile = useMemo(() => profileFor(eventId), [eventId])
   const tiers   = useMemo(() => (event ? tiersForOccasion(eventId) : []), [event, eventId])
   const suggestedTierId = useMemo(() => tierForGuests(guestCount)?.id ?? null, [guestCount])
+  const bespoke = suggestedTierId === BESPOKE_TIER.id
 
   // The guest count picks the scale until the customer overrides it, and then
   // it stops. Somebody who deliberately chose Close Circle for ninety guests
@@ -101,6 +150,72 @@ export default function EventServices() {
     if (tierTouched) return
     if (suggestedTierId && suggestedTierId !== BESPOKE_TIER.id) setSelectedTier(suggestedTierId)
   }, [suggestedTierId, tierTouched])
+
+  /** The rung the header, the doors and the dialog are all talking about. */
+  const activeTier = useMemo(
+    () => tiers.find(t => t.id === selectedTier) ?? null,
+    [tiers, selectedTier]
+  )
+
+  /**
+   * The estimate, at the headcount actually typed.
+   *
+   * The priced ladder quotes each rung at its own typical count, which is the
+   * only thing a card can do before the customer has said anything. Once they
+   * have, quoting them the typical is quoting somebody else's event — so the
+   * header and the primary door reprice against the real number. Memoised on
+   * the three inputs because this is a full buildQuote() pass and the guest
+   * field re-renders the page on every keystroke.
+   */
+  const liveQuote = useMemo(
+    () => (activeTier && !bespoke ? quoteForOccasion(eventId, activeTier.id, guestCount) : null),
+    [eventId, activeTier, guestCount, bespoke]
+  )
+
+  /**
+   * A deliberate act on the guest control — released slider, stepper, blur, or
+   * a tapped rung.
+   *
+   * The dialog fires only when the scale actually moves, or when a rung was
+   * tapped by name. Stepping 120 → 145 → 170 stays inside The Full Celebration
+   * and says nothing; crossing 150 changes what is on the plate, what decor
+   * comes as standard and which services are pre-ticked, and a change of that
+   * size made on the customer's behalf has to be stated rather than inferred
+   * from a highlight moving in a list they have not scrolled to. Same rule the
+   * builder follows — see TierMatchDialog.
+   */
+  const commitGuests = useCallback((next, explicitTierId) => {
+    const n = Math.max(0, Math.round(next) || 0)
+    setGuestCount(n)
+    const resolved = explicitTierId ?? tierForGuests(n)?.id ?? null
+    if (!resolved || resolved === BESPOKE_TIER.id) { setTierPrompt(null); return }
+    if (explicitTierId || resolved !== selectedTier) setTierPrompt(resolved)
+  }, [selectedTier])
+
+  /** Agreeing to a scale: adopt it, show it, and get out of the way. */
+  const confirmTier = useCallback(tierId => {
+    setSelectedTier(tierId)
+    // Only counts as an override if it is NOT what the headcount suggested.
+    // Marking it touched after somebody agreed with the suggestion would
+    // freeze the ladder for the rest of the visit.
+    setTierTouched(tierId !== (tierForGuests(guestCount)?.id ?? null))
+    setTierPrompt(null)
+    setActiveTab('packages')
+    // Two frames, not one. The rung being scrolled to may not exist yet — the
+    // services tab was possibly open — and TierMatchDialog pins `body`
+    // overflow while it is mounted. One frame gets React's commit; the second
+    // guarantees the dialog's cleanup has released the scroll before we ask
+    // the page to move.
+    afterPaint(() => {
+      document.getElementById(`tier-${tierId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [guestCount])
+
+  /** Picking a door from the top of the page. */
+  const chooseDoor = useCallback(tab => {
+    setActiveTab(tab)
+    afterPaint(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }, [])
 
   /**
    * The one place anything reaches the cart from this page.
@@ -205,6 +320,10 @@ export default function EventServices() {
     setQuery('')
     setTierTouched(false)
     setGuestCount(DEFAULT_GUESTS)
+    // A scale dialog left open across an occasion change would be asking the
+    // customer to agree to a griha pravesh's Special Day while the page
+    // behind it has become a birthday.
+    setTierPrompt(null)
   }, [eventId])
 
   if (!event) {
@@ -319,110 +438,70 @@ export default function EventServices() {
             </p>
           </div>
 
-          {/* Three facts about this celebration, not about the catalogue.
-              The old strip said "24 services available · 5 ready packages ·
-              Sambramo organizes everything", which is a description of a
-              database. */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <Fact
-              label="Scales to pick from"
-              value={String(tiers.length)}
-              sub={`${tiers[0]?.guests.min ?? 10}–${tiers[tiers.length - 1]?.guests.max ?? 3500} guests`}
-              delay={60}
+          {/* ── The live answer ─────────────────────────────
+              Three static tiles used to sit here — eight scales, a floor
+              price, a service count — under three signature pills that
+              wrapped to two or three rows on a phone. Six lines of the most
+              valuable space on the page, none of which changed no matter
+              what the customer did. This is the same space, repriced against
+              the headcount below it, with the signature moments folded into
+              its rotating line. See OccasionPulse. */}
+          <div className="rise-in mt-4" style={{ '--rise-delay': '160ms' }}>
+            <OccasionPulse
+              event={event}
+              profile={profile}
+              tier={bespoke ? BESPOKE_TIER : activeTier}
+              tierCount={tiers.length}
+              guestCount={guestCount}
+              quote={liveQuote}
+              entryPrice={entryPrice}
+              bespoke={bespoke}
             />
-            <Fact
-              label="Starting at"
-              value={Number.isFinite(entryPrice) ? formatINR(entryPrice) : '—'}
-              sub="incl. taxes, all in"
-              delay={120}
-            />
-            <Fact
-              label="Services we arrange"
-              value={String(event.services.length)}
-              sub="each one bookable alone"
-              delay={180}
-            />
-          </div>
-
-          {/* The three things somebody planning this occasion is picturing. */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {profile.signature.map((s, i) => (
-              <span
-                key={s}
-                className="rise-in inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5 text-[11.5px] font-semibold text-white/75 ring-1 ring-white/10"
-                style={{ '--rise-delay': `${220 + i * 70}ms` }}
-              >
-                <Sparkles size={10} style={{ color: 'var(--event-glow)' }} />
-                {s}
-              </span>
-            ))}
           </div>
         </section>
 
-        {/* ── The one number that decides everything below ──── */}
-        <section className="event-glass rise-in mt-5 p-4" style={{ '--rise-delay': '260ms' }}>
-          <div className="flex items-center gap-2">
-            <Users size={15} style={{ color: 'var(--event-glow)' }} />
-            <p className="text-[13px] font-extrabold text-white">How many people are coming?</p>
-          </div>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-white/50">
-            A rough number is enough. It is the single thing that moves the price most, and every
-            figure on this page recalculates as you change it.
-          </p>
+        {/* ── The one number that decides everything below ────
+            The number field, six arbitrary preset chips and a sentence
+            naming the resulting scale are now one control that draws the
+            ladder and lights the rung you are standing on. See
+            GuestScaleDial; the quiet/committed split is what keeps the
+            scale dialog from firing between "2" and "220". */}
+        <div className="mt-5">
+          <GuestScaleDial
+            guestCount={guestCount}
+            tiers={tiers}
+            matchedTierId={suggestedTierId}
+            selectedTierId={selectedTier}
+            bespoke={bespoke}
+            onQuietChange={setGuestCount}
+            onCommit={commitGuests}
+          />
+        </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              inputMode="numeric"
-              value={guestCount || ''}
-              onChange={e => setGuestCount(Math.max(0, Number(e.target.value) || 0))}
-              aria-label="Expected guest count"
-              className="w-24 rounded-xl bg-white/10 px-3 py-2 text-[15px] font-extrabold text-white ring-1 ring-white/15 focus:outline-none focus:ring-2"
-              style={{ '--tw-ring-color': 'var(--event-glow)' }}
-            />
-            <div className="flex flex-wrap gap-1.5">
-              {[25, 60, 120, 220, 450, 800].map(n => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => { setGuestCount(n); setTierTouched(false) }}
-                  className={`rounded-lg px-2.5 py-1.5 text-[11.5px] font-extrabold transition-colors ${
-                    guestCount === n
-                      ? 'text-gray-900'
-                      : 'bg-white/10 text-white/70 ring-1 ring-white/10 hover:bg-white/20'
-                  }`}
-                  style={guestCount === n ? { background: 'var(--event-glow)' } : undefined}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {suggestedTierId && (
-            <p className="mt-2.5 text-[11px] text-white/55">
-              {guestCount} guests puts you in{' '}
-              <strong className="font-extrabold text-white">
-                {tiers.find(t => t.id === suggestedTierId)?.name ?? BESPOKE_TIER.name}
-              </strong>
-              {tierTouched && selectedTier !== suggestedTierId && (
-                <>
-                  {' '}— you have chosen{' '}
-                  <strong className="font-extrabold text-white">
-                    {tiers.find(t => t.id === selectedTier)?.name}
-                  </strong>{' '}
-                  instead, which is fine.
-                </>
-              )}
-            </p>
-          )}
-        </section>
+        {/* ── The two doors, at the front ────────────────────
+            This is the decision the page exists to put in front of somebody,
+            and it used to be a 56px tab strip three screens down. Stated
+            here as two offers, the primary one carrying the live estimate.
+            The sticky strip below survives for flipping between them once
+            you are deep in a list. */}
+        <div className="rise-in mt-5" style={{ '--rise-delay': '320ms' }}>
+          <TwoDoors
+            event={event}
+            tiers={tiers}
+            tier={activeTier}
+            quote={liveQuote}
+            entryPrice={entryPrice}
+            guestCount={guestCount}
+            bespoke={bespoke}
+            active={activeTab}
+            onChoose={chooseDoor}
+          />
+        </div>
 
         {/* ── See it before you book it ──────────────────────
             "What does it look like" is the question people ask before "what
             is in it", and the tabs below answer only the second one. */}
-        <section className="rise-in mt-6" style={{ '--rise-delay': '300ms' }}>
+        <section className="rise-in mt-6" style={{ '--rise-delay': '360ms' }}>
           <div className="event-glass overflow-hidden p-4">
             {/* EventDecorSamples was written for a white page, so its own
                 heading and caption are near-black. Recoloured by direct-child
@@ -437,10 +516,14 @@ export default function EventServices() {
         </section>
       </div>
 
-      {/* ── The two doors ───────────────────────────────────── */}
-      {/* Sticks directly under the app bar, which is 56px tall (a 36px control
+      {/* ── The doors again, as a switch ─────────────────────
+          Sticks directly under the app bar, which is 56px tall (a 36px control
           plus its 10px padding either side). */}
-      <div className="sticky top-[56px] z-20 mt-6 border-y border-white/10 bg-[#180529]/90 backdrop-blur">
+      <div
+        ref={contentRef}
+        className="sticky top-[56px] z-20 mt-6 border-y border-white/10 bg-[#180529]/90 backdrop-blur"
+        style={{ scrollMarginTop: '56px' }}
+      >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">
           <TabButton
             active={activeTab === 'packages'}
@@ -494,23 +577,29 @@ export default function EventServices() {
               </p>
             </div>
 
+            {/* The anchor lives on a wrapper rather than on the card so
+                TierPackageCard stays a presentational component. The scroll
+                margin clears the app bar and the sticky tab strip stacked
+                above it — 56px each — or the rung the customer just agreed
+                to lands underneath both of them. */}
             {tiers.map((tier, i) => (
-              <TierPackageCard
-                key={tier.id}
-                tier={tier}
-                eventId={eventId}
-                index={i}
-                selected={selectedTier === tier.id}
-                suggested={suggestedTierId === tier.id}
-                onSelect={() => { setSelectedTier(tier.id); setTierTouched(true); setGuestCount(tier.typicalGuests) }}
-                inCart={hasPkg(eventId, tier.id)}
-                onAdd={() => handleAdd('package', tierAsPackage(tier))}
-                reviewEnquiryId={eligible[`package__${tier.id}`]}
-                onReview={() => setReviewing({
-                  subject: { type: 'package', id: tier.id, name: tier.name },
-                  source: { enquiryId: eligible[`package__${tier.id}`] },
-                })}
-              />
+              <div key={tier.id} id={`tier-${tier.id}`} style={{ scrollMarginTop: '116px' }}>
+                <TierPackageCard
+                  tier={tier}
+                  eventId={eventId}
+                  index={i}
+                  selected={selectedTier === tier.id}
+                  suggested={suggestedTierId === tier.id}
+                  onSelect={() => commitGuests(tier.typicalGuests, tier.id)}
+                  inCart={hasPkg(eventId, tier.id)}
+                  onAdd={() => handleAdd('package', tierAsPackage(tier))}
+                  reviewEnquiryId={eligible[`package__${tier.id}`]}
+                  onReview={() => setReviewing({
+                    subject: { type: 'package', id: tier.id, name: tier.name },
+                    source: { enquiryId: eligible[`package__${tier.id}`] },
+                  })}
+                />
+              </div>
             ))}
 
             {/* The honest exit past the top rung. No price, on purpose. */}
@@ -699,21 +788,31 @@ export default function EventServices() {
           onSubmitted={checkEligibility}
         />
       )}
+
+      {/* ── "You're in this circle" ─────────────────────────
+          The same dialog the builder uses, on the page most customers reach
+          first. The guest count decides the scale, and a decision that sets
+          the dish allowance, the decor level and the pre-ticked services is
+          not something to make on somebody's behalf in silence — it gets
+          named, shown, and agreed to, with the way onward on the button.
+          Occasion-aware, so a baby shower that lands on Royal Mysuru is not
+          told its scale brings a mandap. */}
+      {tierPrompt && (
+        <TierMatchDialog
+          tierId={tierPrompt}
+          eventId={eventId}
+          currentTierId={selectedTier}
+          guestCount={guestCount}
+          nextLabel="See what is in it"
+          onConfirm={confirmTier}
+          onDismiss={() => setTierPrompt(null)}
+        />
+      )}
     </div>
   )
 }
 
 /* ── Small pieces ─────────────────────────────────────────────────────── */
-
-function Fact({ label, value, sub, delay = 0 }) {
-  return (
-    <div className="event-glass rise-in p-3" style={{ '--rise-delay': `${delay}ms` }}>
-      <p className="text-[9px] font-bold uppercase tracking-wide text-white/40">{label}</p>
-      <p className="mt-0.5 text-[17px] font-extrabold leading-tight text-white">{value}</p>
-      <p className="text-[9.5px] leading-tight text-white/40">{sub}</p>
-    </div>
-  )
-}
 
 function TabButton({ active, onClick, icon: Icon, label, sub }) {
   return (

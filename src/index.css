@@ -200,6 +200,71 @@
     animation: halo-spin 6s linear infinite;
   }
 
+  /* ── The guest-count track (occasion pages) ───────────────────────
+     A range input is the honest control for "how big is this" — the ladder
+     is a continuum and a number field makes you guess at it — but the
+     browser default is a grey groove with a grey puck, which on this dark
+     ground is invisible twice over. Styled here rather than inline because
+     the thumb and the track are pseudo-elements no style prop can reach.
+
+     The filled portion is painted from `--fill`, set inline by the component
+     as a percentage, so the track fills in the occasion's own colour without
+     a second element behind it. Vendor blocks are written out separately on
+     purpose: a selector list containing an unrecognised vendor pseudo-element
+     is dropped whole by every engine, so combining them would silently style
+     nothing anywhere. */
+  .scale-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 22px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .scale-slider:focus-visible { outline: none; }
+
+  .scale-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, var(--event-glow, #f59e0b) var(--fill, 0%), rgba(255, 255, 255, 0.14) var(--fill, 0%));
+  }
+  .scale-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .scale-slider::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--event-glow, #f59e0b);
+  }
+
+  .scale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    margin-top: -7px; /* centres a 20px thumb on a 6px track */
+    border-radius: 999px;
+    background: #fff;
+    border: 3px solid var(--event-glow, #f59e0b);
+    box-shadow: 0 2px 10px rgba(14, 3, 24, 0.55);
+    transition: transform 0.15s ease;
+  }
+  .scale-slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 999px;
+    background: #fff;
+    border: 3px solid var(--event-glow, #f59e0b);
+    box-shadow: 0 2px 10px rgba(14, 3, 24, 0.55);
+    transition: transform 0.15s ease;
+  }
+  .scale-slider:active::-webkit-slider-thumb,
+  .scale-slider:focus-visible::-webkit-slider-thumb { transform: scale(1.18); }
+  .scale-slider:active::-moz-range-thumb,
+  .scale-slider:focus-visible::-moz-range-thumb { transform: scale(1.18); }
+
   /* ── Storefront (/shop) ────────────────────────────────────────────
      The marketplace surface. Deep green ground, red reserved for
      savings. Scoped to the shop rather than dropped into the shared

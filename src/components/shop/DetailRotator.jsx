@@ -26,12 +26,21 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  *
  * `facts` entries: { key, icon?: LucideIcon, text, tone?: 'default'|'offer'|'trust' }
  * Falsy entries are dropped, so callers can inline conditionals.
+ *
+ * `lineClassName` overrides the type and colour of the line itself. The tones
+ * below are the storefront's — grey on a white tile — and the occasion pages
+ * run this same rotator on a dark ground, where every one of them is
+ * unreadable. Appended rather than replaced so a caller only has to name what
+ * differs, and `height` lets a caller that sets a larger type size grow the
+ * clipping window with it.
  */
 export default function DetailRotator({
   facts = [],
   interval = 2800,
   stagger = 0,
   className = '',
+  lineClassName = '',
+  height = 18,
 }) {
   const items = facts.filter(Boolean)
   const reduced = useReducedMotion()
@@ -69,7 +78,7 @@ export default function DetailRotator({
     return (
       <ul className={`flex flex-wrap gap-x-3 gap-y-1 ${className}`}>
         {items.map(f => (
-          <li key={f.key}><FactLine fact={f} /></li>
+          <li key={f.key}><FactLine fact={f} lineClassName={lineClassName} /></li>
         ))}
       </ul>
     )
@@ -79,12 +88,16 @@ export default function DetailRotator({
   // the card — or the grid row it sits in — jump.
   const fact = items[i % items.length]
   return (
-    <div ref={ref} className={`relative h-[18px] overflow-hidden ${className}`}>
+    <div
+      ref={ref}
+      className={`relative overflow-hidden ${className}`}
+      style={{ height: `${height}px` }}
+    >
       {/* The rotation is decoration over content that is stated elsewhere on
           the card or its product page; announcing every 2.8s tick would make
           the page unusable with a screen reader. */}
       <div key={fact.key} className="fact-swap absolute inset-0 flex items-center" aria-hidden="true">
-        <FactLine fact={fact} />
+        <FactLine fact={fact} lineClassName={lineClassName} />
       </div>
       <span className="sr-only">{items.map(f => f.text).join('. ')}</span>
     </div>
@@ -97,10 +110,13 @@ const TONES = {
   trust:   'text-forest-600',
 }
 
-function FactLine({ fact }) {
+function FactLine({ fact, lineClassName = '' }) {
   const Icon = fact.icon
   return (
-    <span className={`flex items-center gap-1.5 text-[11px] font-semibold leading-none truncate ${TONES[fact.tone] ?? TONES.default}`}>
+    <span
+      className={`flex items-center gap-1.5 text-[11px] font-semibold leading-none truncate ${TONES[fact.tone] ?? TONES.default} ${lineClassName}`}
+      style={fact.color ? { color: fact.color } : undefined}
+    >
       {Icon && <Icon size={12} className="shrink-0" strokeWidth={2.4} />}
       <span className="truncate">{fact.text}</span>
     </span>
