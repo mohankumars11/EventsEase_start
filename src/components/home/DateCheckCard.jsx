@@ -186,14 +186,28 @@ export default function DateCheckCard() {
   return (
     <>
       <section aria-labelledby="date-check-heading" className="px-4">
+        {/* ── The ground ──────────────────────────────────────────────
+            This was `.home-card`, which is `bg-white` — while every line of
+            type inside it is `text-white`. The title and the body were
+            therefore white on white and had been invisible on the front page:
+            all a customer saw was a floating teal button and a coloured
+            eyebrow. The whole card is written for a dark surface, so the fix
+            is to give it one rather than to repaint six spans.
+
+            Teal into plum, because this card's own note argues for teal — far
+            from the plum ground, unused elsewhere on this screen, and reading
+            professional rather than promotional. The gradient keeps it part
+            of the night sky instead of a white slab punched through it, and
+            the ring is what stops it dissolving into the canvas. */}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="home-card group relative block w-full overflow-hidden p-2.5 text-left"
+          className="group relative block w-full overflow-hidden rounded-3xl p-2.5 text-left ring-1 ring-teal-300/25 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.95)] transition-transform active:scale-[0.995]"
+          style={{ background: 'linear-gradient(135deg, #0b3b39 0%, #11243f 48%, #1d0838 100%)' }}
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-teal-400/10 blur-2xl"
+            className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-teal-400/20 blur-2xl"
           />
 
           <span className="flex items-center gap-2.5">

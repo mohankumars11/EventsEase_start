@@ -65,28 +65,36 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
           className="animate-fade-in block"
           style={{ background: slide.background }}
         >
-          <div className="relative flex min-h-[142px] items-center gap-3 px-5 py-5">
+          {/* ── Sizing ────────────────────────────────────────────────
+              Deliberately trimmed from 142px and 26px type. Home now runs two
+              rotating panels back to back — this deck and the gifting film —
+              and they were competing at the same weight, which reads as two
+              adverts rather than a hierarchy. The film is the brand and gets
+              the height; this is the utility rail (plan / festival / coupon)
+              and only has to be a legible, tappable headline. Everything the
+              trim saves goes straight into the panel underneath. */}
+          <div className="relative flex min-h-[118px] items-center gap-3 px-4 py-4">
             {/* The art is a big soft emoji rather than a photograph: this deck
                 changes every five seconds and a stock photo that swaps that
                 often reads as a slideshow of adverts. */}
-            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[104px] leading-none opacity-25 blur-[0.5px]">
+            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[86px] leading-none opacity-25 blur-[0.5px]">
               {slide.art}
             </span>
 
             <div className="relative min-w-0 flex-1">
               {slide.eyebrow && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
                   {slide.eyebrow}
                 </span>
               )}
-              <p className="mt-2 font-serif text-[26px] font-extrabold leading-[1.05] text-white drop-shadow-sm">
+              <p className="mt-1.5 font-serif text-[21px] font-extrabold leading-[1.04] text-white drop-shadow-sm">
                 {slide.title}
               </p>
-              <p className="mt-1.5 max-w-[85%] text-[12px] font-medium leading-snug text-white/80">
+              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-white/80">
                 {slide.body}
               </p>
-              <span className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[12px] font-extrabold text-plum-900 shadow-sm">
-                {slide.cta} <ArrowRight size={13} strokeWidth={3} />
+              <span className="mt-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-[11px] font-extrabold text-plum-900 shadow-sm">
+                {slide.cta} <ArrowRight size={12} strokeWidth={3} />
               </span>
             </div>
           </div>

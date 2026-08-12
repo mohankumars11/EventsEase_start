@@ -180,7 +180,7 @@ export default function BrandFilm() {
         ref={stage}
         to={current.to}
         aria-label={`${current.line} — ${current.cta}`}
-        className="group relative block h-[176px] overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)] sm:h-[206px]"
+        className="group relative block h-[226px] overflow-hidden rounded-3xl ring-1 ring-white/12 shadow-[0_22px_50px_-26px_rgba(0,0,0,0.95)] sm:h-[268px]"
         /* Hold on hover AND on pointer-down. The second matters most: the
            href changes every beat and a thumb takes ~200ms to land, so
            freezing at touch-start is what makes the beat you aimed at the
@@ -227,7 +227,11 @@ export default function BrandFilm() {
         <span
           key={current.key}
           aria-hidden="true"
-          className="absolute right-[-8px] top-1/2 -translate-y-1/2 sm:right-[-4px]"
+          /* Pushed well off the right edge on purpose. The drawing kept its
+             new size; it just had to sit where the words are not, or its left
+             third straddled the copy column and the headline read over a box.
+             More bleed, not less product. */
+          className="absolute right-[-30px] top-1/2 -translate-y-1/2 sm:right-[-16px]"
         >
           <Art />
         </span>
@@ -250,31 +254,33 @@ export default function BrandFilm() {
              middle, and is fully clear by 82% — text legible, product lit. */
           style={{
             background:
-              `linear-gradient(90deg, rgba(${PAPER},0.97) 0%, rgba(${PAPER},0.93) 30%, rgba(${PAPER},0.55) 52%, rgba(${PAPER},0.12) 70%, rgba(${PAPER},0) 86%)`,
+              `linear-gradient(90deg, rgba(${PAPER},0.98) 0%, rgba(${PAPER},0.95) 34%, rgba(${PAPER},0.6) 56%, rgba(${PAPER},0.14) 74%, rgba(${PAPER},0) 88%)`,
           }}
         />
 
         <span
           key={`cap-${current.key}`}
-          className="absolute inset-y-0 left-0 flex w-[54%] flex-col justify-center p-4 sm:w-[57%]"
+          className="absolute inset-y-0 left-0 flex w-[56%] flex-col justify-center p-4 sm:w-[57%]"
         >
           {/* Dark type on a lit surface. The eyebrow is a burnt amber rather
               than the saffron used elsewhere on Home: saffron-300 is tuned to
               carry on plum and turns to mud on cream. */}
-          <span className="film-line block text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#a15c11] sm:text-[10px] sm:tracking-[0.18em]">
+          <span className="film-line block text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#a15c11] sm:text-[11px] sm:tracking-[0.2em]">
             {current.chapter}
           </span>
-          <span className="film-line film-line-2 mt-1 block font-serif text-[19px] font-extrabold leading-[1.06] text-[#2b0f52] sm:text-[26px]">
+          {/* 23px broke "Wrapped, carded, ribboned" over three lines in a
+              200px column and shoved the button into the product. */}
+          <span className="film-line film-line-2 mt-1.5 block font-serif text-[21px] font-extrabold leading-[1.04] text-[#2b0f52] sm:text-[29px]">
             {current.line}
           </span>
           {/* The supporting line is the first thing to go when the column is
               narrow — the headline and the button are the payload. */}
-          <span className="film-line film-line-3 mt-1 hidden text-[11px] font-medium leading-snug text-[#6b5b4a] sm:block">
+          <span className="film-line film-line-3 mt-1.5 block text-[11px] font-medium leading-snug text-[#6b5b4a] sm:text-[12px]">
             {current.sub}
           </span>
           <span className="film-line film-line-3 mt-2.5">
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-plum-900 px-3 py-1.5 text-[11px] font-extrabold text-white shadow-[0_6px_16px_-6px_rgba(43,15,82,0.8)]">
-              {current.cta} <ArrowRight size={12} strokeWidth={3} />
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-plum-900 px-3.5 py-2 text-[12px] font-extrabold text-white shadow-[0_8px_20px_-6px_rgba(43,15,82,0.85)]">
+              {current.cta} <ArrowRight size={13} strokeWidth={3} />
             </span>
           </span>
         </span>
@@ -458,7 +464,7 @@ function Bokeh() {
 // keeps the whole subject in the clear zone on a phone; sm+ has the room to
 // go big. It still overhangs the right edge on purpose — a product shot that
 // stops politely inside a border reads as clip-art.
-const ART = 'h-[128px] w-[214px] sm:h-[172px] sm:w-[287px]'
+const ART = 'h-[172px] w-[287px] sm:h-[210px] sm:w-[350px]'
 const HEART = 'M6 11 C-1 6.6 0 1.5 3 1.5 C4.6 1.5 5.6 2.6 6 3.4 C6.4 2.6 7.4 1.5 9 1.5 C12 1.5 13 6.6 6 11 Z'
 const STAR  = 'M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z'
 

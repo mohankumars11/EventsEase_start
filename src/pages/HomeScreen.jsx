@@ -214,6 +214,25 @@ export default function HomeScreen() {
                              re-pitch them would be a straight loss. */}
           {!user && <BrandFilm />}
 
+          {/* ── The six scales of celebration ─────────────────────────
+              Replaces PackageRail, which put "Grand Celebration Birthday,
+              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
+              screen of a birthday decision shown to someone who has not said
+              they are planning a birthday, repeated once per occasion.
+
+              The tiers are the axis customers actually start on: nobody thinks
+              "I want the premium package", they think "there'll be about sixty
+              people". One rail serves every occasion.
+
+              Moved above the date check. It used to sit fourth, behind the
+              deck, the film and the date card, which on a phone put the only
+              thing on Home carrying a real scale, a real price and a live
+              coupon below the fold — so the page asked for a date before it
+              had once said what the thing costs. Sequence now runs the way
+              the decision does: what this is (film) → what it costs
+              (tiers) → when is it (date). */}
+          <TierRail offer={bestOfferFor(50000, offers)} />
+
           {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single
               most useful thing an enquiry can carry sat behind a step most
@@ -223,17 +242,6 @@ export default function HomeScreen() {
           <DateCheckCard />
 
           {user && <BrandFilm />}
-
-          {/* ── The six scales of celebration ─────────────────────────
-              Replaces PackageRail, which put "Grand Celebration Birthday,
-              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
-              screen of a birthday decision shown to someone who has not said
-              they are planning a birthday, repeated once per occasion.
-
-              The tiers are the axis customers actually start on: nobody thinks
-              "I want the premium package", they think "there'll be about sixty
-              people". One rail serves every occasion. */}
-          <TierRail offer={bestOfferFor(50000, offers)} />
 
           {/* ── What are we celebrating ───────────────────────────────
               Was a horizontal rail of 72×72 thumbnails with a caption under
