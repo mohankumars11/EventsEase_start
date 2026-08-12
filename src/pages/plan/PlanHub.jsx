@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import {
+  CalendarCheck,
   ArrowRight, ShieldCheck, Phone, Users, Star, SearchX,
 } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
 import { occasionMeta } from '../../data/occasionMap'
+import { slotByKey } from '../../lib/demand'
+import { humanDate } from '../../utils/format'
 import { OCCASIONS, CATALOG_STATS } from '../../data/planCatalog'
 import { useCart } from '../../context/CartContext'
 import { useCity } from '../../context/CityContext'
@@ -64,6 +67,10 @@ export default function PlanHub() {
   const qs = searchParams.toString()
   const wizardHref = '/plan/custom' + (qs ? `?${qs}` : '')
 
+  // Carried in from the home screen's date card.
+  const pickedDate = humanDate(searchParams.get('date'))
+  const pickedSlot = slotByKey(searchParams.get('slot'))?.label ?? null
+
   const [hasDraft] = useState(() => {
     try { return !!sessionStorage.getItem(DRAFT_KEY) } catch { return false }
   })
@@ -122,6 +129,21 @@ export default function PlanHub() {
             piece of it. Asking is free, and you approve every rupee before anything
             is booked.
           </p>
+
+          {/* Somebody who picked their date on the home screen arrives here
+              to a question about something else. Without this the date looks
+              discarded and they pick it again inside the wizard. It rides on
+              the query string, which wizardHref already forwards. */}
+          {pickedDate && (
+            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-saffron-400/15 px-3 py-2 ring-1 ring-saffron-400/30">
+              <CalendarCheck size={15} className="shrink-0 text-saffron-300" />
+              <p className="text-[12px] leading-tight text-white/85">
+                <span className="font-extrabold text-white">{pickedDate}</span>
+                {pickedSlot ? ` · ${pickedSlot}` : ''} saved
+                <span className="text-white/55"> — now pick what we're celebrating.</span>
+              </p>
+            </div>
+          )}
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="home-chip bg-white/10 text-white/75 ring-1 ring-white/15">
