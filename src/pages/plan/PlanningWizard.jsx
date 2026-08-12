@@ -479,7 +479,25 @@ export default function PlanningWizard() {
 
           {/* Step 1: Event type */}
           {step === 1 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
+            <div className="max-w-2xl space-y-4">
+              {/* Somebody who picked their date on the home screen arrives
+                  here to a question about something else. Without this the
+                  date looks discarded and they pick it again on step 2. */}
+              {form.event_date && (
+                <div className="flex items-center gap-2.5 rounded-2xl border border-saffron-200 bg-saffron-50 px-4 py-2.5">
+                  <CheckCircle2 size={16} className="shrink-0 text-saffron-600" />
+                  <p className="text-sm text-plum-800">
+                    <span className="font-bold">
+                      {new Date(form.event_date).toLocaleDateString('en-IN', {
+                        weekday: 'short', day: 'numeric', month: 'long',
+                      })}
+                    </span>
+                    {form.time_slot ? ` · ${slotByKey(form.time_slot)?.label}` : ''} saved.
+                    <span className="text-plum-500"> Now — what are we celebrating?</span>
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {EVENT_TYPES.map(et => {
                 const selected = form.event_type === et.id
                 return (
@@ -503,6 +521,7 @@ export default function PlanningWizard() {
                   </button>
                 )
               })}
+              </div>
             </div>
           )}
 

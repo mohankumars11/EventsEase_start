@@ -13,7 +13,7 @@ import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
 import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
-import PlanDateCard from '../components/home/PlanDateCard'
+import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
@@ -189,12 +189,13 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
-          {/* ── Pick the day, right here ──────────────────────────────
+          {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single
               most useful thing an enquiry can carry sat behind a step most
-              browsers never reached. It is the front door's own card now,
-              and the choice travels into the wizard. */}
-          <PlanDateCard />
+              browsers never reached. Asking here is the fix — but as a
+              question, not a month grid: a calendar is something you open,
+              not something you live next to on a phone screen. */}
+          <DateCheckCard />
 
           {/* ── The six scales of celebration ─────────────────────────
               Replaces PackageRail, which put "Grand Celebration Birthday,

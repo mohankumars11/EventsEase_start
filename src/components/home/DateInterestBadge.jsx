@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Flame, X, ArrowRight, Users } from 'lucide-react'
+import { TrendingUp, X, ArrowRight, Users } from 'lucide-react'
 import { useDateInterest } from '../../hooks/useDateDemand'
 import { busiestDates } from '../../lib/demand'
 import { humanDate } from '../../utils/format'
@@ -81,16 +81,17 @@ export default function DateInterestBadge() {
             ref={panelRef}
             tabIndex={-1}
             role="dialog"
-            aria-label="Dates people are asking about"
+            aria-label="Dates in high demand"
             className="pointer-events-auto mx-4 mb-2 w-[min(24rem,calc(100vw-2rem))] animate-pop-in rounded-2xl border border-plum-700 bg-plum-950 p-4 shadow-2xl shadow-black/50 outline-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[13px] font-extrabold text-white">
-                  Dates people are asking about
+                  These dates are in high demand
                 </p>
                 <p className="mt-0.5 text-[11px] text-white/50">
-                  Real enquiries{city ? ` in ${city}` : ''} — tell us yours before the vendors go.
+                  Enquiries are coming in{city ? ` across ${city}` : ''}. Check your event date
+                  and book with us before the vendors are committed.
                 </p>
               </div>
               <button
@@ -127,7 +128,7 @@ export default function DateInterestBadge() {
               onClick={() => setOpen(false)}
               className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-saffron-400 py-2.5 text-[12px] font-extrabold text-plum-950"
             >
-              Check your own date <ArrowRight size={13} />
+              Check your event date <ArrowRight size={13} />
             </Link>
           </div>
         )}
@@ -139,12 +140,12 @@ export default function DateInterestBadge() {
           className="pointer-events-auto mb-3 flex items-center gap-2 rounded-full bg-saffron-400 px-4 py-2.5 text-[12px] font-extrabold text-plum-950 shadow-lg shadow-black/30"
         >
           <span className="relative flex items-center">
-            <Flame size={14} />
+            <TrendingUp size={14} />
             {!open && (
               <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-crimson-600 animate-pulse-ring" />
             )}
           </span>
-          {dates.length} {dates.length === 1 ? 'date is' : 'dates are'} filling fast
+          {dates.length} {dates.length === 1 ? 'date' : 'dates'} in high demand
         </button>
       </div>
     </>
