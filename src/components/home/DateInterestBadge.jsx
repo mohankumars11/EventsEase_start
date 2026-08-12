@@ -19,6 +19,11 @@ import { useCity } from '../../context/CityContext'
  * dismissal within a session. The pill is the whole nudge, and tapping is
  * the only thing that expands it.
  *
+ * Every link here goes to /plan, not to the wizard. Landing on "What are you
+ * celebrating? Step 1 of 6" after tapping a date is a form arriving out of
+ * nowhere; /plan asks the same question with the occasions, the offers and
+ * the prices around it, and carries the date through on the query string.
+ *
  * ── Nothing here is invented ─────────────────────────────────────────
  *
  * Every date listed cleared the real-interest floor in lib/demand.js, and
@@ -108,7 +113,7 @@ export default function DateInterestBadge() {
               {dates.map(d => (
                 <Link
                   key={d.iso}
-                  to={`/plan/custom?date=${d.iso}`}
+                  to={`/plan?date=${d.iso}`}
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10 transition-colors hover:bg-white/10"
                 >
@@ -124,7 +129,7 @@ export default function DateInterestBadge() {
             </div>
 
             <Link
-              to="/plan/custom"
+              to="/plan"
               onClick={() => setOpen(false)}
               className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-2.5 text-[12px] font-extrabold text-plum-950"
             >
