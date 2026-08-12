@@ -168,7 +168,7 @@ export default function EventDateSheet({
           {/* One line, and only when there is something on the calendar to
               explain. No legend of states that mostly don't exist. */}
           <p className="mt-3 pt-3 border-t border-orange-100 text-[11px] text-gray-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-berry-500 shrink-0" />
             Dates other families are already asking about
           </p>
 
