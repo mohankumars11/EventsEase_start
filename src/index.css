@@ -660,6 +660,22 @@
   .marquee-viewport:hover .marquee-track,
   .marquee-viewport:focus-within .marquee-track { animation-play-state: paused; }
 
+  /* ── Promise ticker (plan hub header) ────────────────
+     The strip runs full-bleed so cards travel in from off
+     screen. Without a mask they appear and vanish at a hard
+     vertical edge, which reads as a clipped element rather
+     than as motion continuing past the frame — the fade lets
+     a card resolve into view and dissolve out of it.
+
+     A mask rather than gradient overlays because the ground
+     under this strip is the home canvas's fixed multi-stop
+     gradient: any solid or semi-solid overlay would have to
+     guess that colour, and would be visibly wrong the moment
+     the page scrolls. */
+  .promise-ticker {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
+  }
 
   /* ── Ken Burns (product hero) ────────────────────────
      A slow, continuous push-in on the product detail photo. The

@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import {
   CalendarCheck, CalendarSearch, CalendarPlus,
-  ArrowRight, ShieldCheck, Phone, Users, Star, SearchX,
+  ArrowRight, Phone, SearchX,
 } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
 import { occasionMeta } from '../../data/occasionMap'
 import { slotByKey } from '../../lib/demand'
 import { humanDate } from '../../utils/format'
-import { OCCASIONS, CATALOG_STATS } from '../../data/planCatalog'
+import { OCCASIONS } from '../../data/planCatalog'
 import { useCart } from '../../context/CartContext'
 import { useCity } from '../../context/CityContext'
 import { useEventDate, setEventDate, clearEventDate } from '../../hooks/useEventDate'
@@ -16,6 +16,7 @@ import EventDateSheet from '../../components/plan/EventDateSheet'
 import PlanAppBar from '../../components/plan/PlanAppBar'
 import ServiceShelf from '../../components/plan/ServiceShelf'
 import PerksDeck from '../../components/plan/PerksDeck'
+import PromiseTicker from '../../components/plan/PromiseTicker'
 import OffersRail from '../../components/shop/OffersRail'
 import OccasionCard from '../../components/home/OccasionCard'
 import TierRail from '../../components/home/TierRail'
@@ -160,10 +161,12 @@ export default function PlanHub() {
         )}
 
         {/* ── The welcome ──────────────────────────────────────────────
-            Names the customer's situation back to them and states the two
-            promises that actually reduce hesitation — it costs nothing to
-            ask, and a person is accountable. The old page opened by asking
-            them to categorise themselves instead. */}
+            Names the customer's situation back to them. Everything that used
+            to follow the headline in prose — the catalogue size, the entry
+            price, and the three promises that reduce hesitation — is in the
+            moving strip below it now (see PromiseTicker), which says the same
+            seven things in a fifth of the height and gets the occasion grid
+            above the fold on a phone. */}
         <header className="px-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-saffron-300">
             {meta.known ? `Planning ${meta.label?.toLowerCase()}` : 'Tell us the occasion'}
@@ -173,12 +176,11 @@ export default function PlanHub() {
               ? `Let's make this ${meta.label?.toLowerCase()} yours.`
               : "What are we celebrating?"}
           </h1>
-          <p className="mt-2 text-[13px] leading-relaxed text-white/65">
-            {CATALOG_STATS.occasions} occasions, {CATALOG_STATS.services} services
-            {chosen ? ` in ${city}` : ''} — book the whole celebration or a single
-            piece of it. Asking is free, and you approve every rupee before anything
-            is booked.
-          </p>
+
+          {/* Full-bleed inside a padded header: the strip has to reach both
+              screen edges or cards appear to spawn 16px in from nowhere,
+              which is the one thing that makes a ticker look broken. */}
+          <PromiseTicker city={chosen ? city : null} className="-mx-4 mt-3" />
 
           {/* ── The date, and the way out of it ────────────────────────
               Somebody who picked their date on the home screen arrives here
@@ -237,17 +239,6 @@ export default function PlanHub() {
             </button>
           )}
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="home-chip bg-white/10 text-white/75 ring-1 ring-white/15">
-              <ShieldCheck size={12} className="text-saffron-300" /> No advance to enquire
-            </span>
-            <span className="home-chip bg-white/10 text-white/75 ring-1 ring-white/15">
-              <Users size={12} className="text-saffron-300" /> One coordinator, one number
-            </span>
-            <span className="home-chip bg-white/10 text-white/75 ring-1 ring-white/15">
-              <Star size={12} className="text-saffron-300" /> Vetted local vendors
-            </span>
-          </div>
         </header>
 
         {/* Live coupons — the same rail the storefront runs, so an offer is
