@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { TrendingUp, X, ArrowRight, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { TrendingUp, X, ArrowRight, Users, CalendarSearch } from 'lucide-react'
+import EventDateSheet from '../plan/EventDateSheet'
 import { useDateInterest } from '../../hooks/useDateDemand'
 import { busiestDates } from '../../lib/demand'
 import { humanDate } from '../../utils/format'
 import { useCity } from '../../context/CityContext'
+import { useEventDate, setEventDate, planHrefFor } from '../../hooks/useEventDate'
 
 /**
  * A standing pill that says how many dates people are already asking about,
@@ -19,10 +21,19 @@ import { useCity } from '../../context/CityContext'
  * dismissal within a session. The pill is the whole nudge, and tapping is
  * the only thing that expands it.
  *
- * Every link here goes to /plan, not to the wizard. Landing on "What are you
- * celebrating? Step 1 of 6" after tapping a date is a form arriving out of
- * nowhere; /plan asks the same question with the occasions, the offers and
- * the prices around it, and carries the date through on the query string.
+ * ── Tapping opens the calendar, it does not leave the page ───────────
+ *
+ * "Check your date" used to navigate to /plan, which answers a question the
+ * customer had not asked yet: they came here to look at *their* date, and
+ * arrived on a screen about occasions with no calendar on it. The date is
+ * what this panel is about, so tapping anything here opens the calendar over
+ * the home screen — and a listed date opens it already sitting on that day,
+ * so a customer curious about 22 Nov can see it in its month with the rest of
+ * the calendar around it, and move off it if it does not suit.
+ *
+ * Only once a date *and* a time of day are chosen does anyone leave: then it
+ * goes to /plan, with the date saved (see useEventDate) so every other
+ * calendar in the app already knows it.
  *
  * ── Nothing here is invented ─────────────────────────────────────────
  *
@@ -37,11 +48,16 @@ import { useCity } from '../../context/CityContext'
 const DISMISS_KEY = 'sambramo_date_badge_dismissed'
 
 export default function DateInterestBadge() {
+  const navigate = useNavigate()
   const { city: cityName, chosen } = useCity()
   const city = chosen ? cityName : null
   const { interestByDate } = useDateInterest(city)
+  const saved = useEventDate()
 
   const [open, setOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  // What the calendar opens on: a tapped date, or whatever was already saved.
+  const [seed, setSeed] = useState(null)
   const [dismissed, setDismissed] = useState(() => {
     try { return sessionStorage.getItem(DISMISS_KEY) === '1' } catch { return false }
   })
@@ -65,6 +81,19 @@ export default function DateInterestBadge() {
     setOpen(false)
     setDismissed(true)
     try { sessionStorage.setItem(DISMISS_KEY, '1') } catch { /* storage off; fine */ }
+  }
+
+  /** Open the calendar — on `iso` if a listed date was tapped, else on the
+   *  date already saved, else on nothing. The panel closes underneath it. */
+  function openCalendar(iso) {
+    setSeed(iso ? { ...(saved ?? {}), event_date: iso } : saved)
+    setSheetOpen(true)
+    setOpen(false)
+  }
+
+  function handleConfirm(picked) {
+    setEventDate(picked)
+    navigate(planHrefFor(picked))
   }
 
   // No real interest anywhere, or the customer closed it this session.
@@ -95,8 +124,8 @@ export default function DateInterestBadge() {
                   These dates are in high demand
                 </p>
                 <p className="mt-0.5 text-[11px] text-white/50">
-                  Enquiries are coming in{city ? ` across ${city}` : ''}. Check your event date
-                  and book with us before the Masters are committed.
+                  Enquiries are coming in{city ? ` across ${city}` : ''}. Open any date to
+                  see it in the calendar — yours may be quieter.
                 </p>
               </div>
               <button
@@ -111,11 +140,11 @@ export default function DateInterestBadge() {
 
             <div className="mt-3 space-y-1.5">
               {dates.map(d => (
-                <Link
+                <button
                   key={d.iso}
-                  to={`/plan?date=${d.iso}`}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10 transition-colors hover:bg-white/10"
+                  type="button"
+                  onClick={() => openCalendar(d.iso)}
+                  className="flex w-full items-center gap-3 rounded-xl bg-white/5 px-3 py-2 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10"
                 >
                   <span className="text-[12px] font-extrabold text-white">
                     {humanDate(d.iso)}
@@ -124,17 +153,23 @@ export default function DateInterestBadge() {
                     <Users size={9} />{d.headline}
                   </span>
                   <ArrowRight size={13} className="ml-auto shrink-0 text-white/30" />
-                </Link>
+                </button>
               ))}
             </div>
 
-            <Link
-              to="/plan"
-              onClick={() => setOpen(false)}
-              className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-2.5 text-[12px] font-extrabold text-plum-950"
+            {/* The way in for somebody whose date is not on the list — which
+                is most people, and the reason this panel exists at all. */}
+            <button
+              type="button"
+              onClick={() => openCalendar(null)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-2.5 text-[12px] font-extrabold text-plum-950"
             >
-              Check your date <ArrowRight size={13} />
-            </Link>
+              <CalendarSearch size={13} />
+              {saved?.event_date ? 'Change your date' : 'Check your date'}
+            </button>
+            <p className="mt-1.5 text-center text-[10px] text-white/40">
+              Every date is open — pick yours and we'll hold the Masters.
+            </p>
           </div>
         )}
 
@@ -153,6 +188,14 @@ export default function DateInterestBadge() {
           {dates.length} {dates.length === 1 ? 'date' : 'dates'} in high demand
         </button>
       </div>
+
+      <EventDateSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        city={city}
+        value={seed}
+        onConfirm={handleConfirm}
+      />
     </>
   )
 }

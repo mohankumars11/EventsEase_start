@@ -11,6 +11,7 @@ import ComingSoonCity from '../../components/common/ComingSoonCity'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import EventDateSheet from '../../components/plan/EventDateSheet'
 import { useDateInterest } from '../../hooks/useDateDemand'
+import { getEventDate, setEventDate } from '../../hooks/useEventDate'
 import { interestForDate, slotByKey, daysBetween } from '../../lib/demand'
 import { todayISO } from '../../utils/format'
 
@@ -97,19 +98,31 @@ export default function PlanningWizard() {
     .map(s => s.trim())
     .filter(Boolean)
 
+  /**
+   * The date, from the link or from wherever else in the app it was picked.
+   *
+   * The query string wins — a link carrying a date means that date — and the
+   * shared store answers when there isn't one. `seed` is only the stored pick
+   * if it is about the *same* day, so the flexibility window travels with its
+   * own date and never gets stapled onto a different one.
+   */
+  const storedDate = getEventDate()
+  const seedDate = searchParams.get('date') || storedDate?.event_date || ''
+  const seed = storedDate?.event_date && storedDate.event_date === seedDate ? storedDate : null
+
   const [form, setForm] = useState({
     event_type:        searchParams.get('type') || '',
     // The home screen's plan card and the floating date badge both link here
     // with the day already chosen, so somebody who picked a Saturday on the
     // front door does not have to find it again.
-    event_date:        searchParams.get('date') || '',
+    event_date:        seedDate,
     start_time:        '',
     // Time of day as a bucket the customer actually thinks in. start_time and
     // end_time are derived from it at submit so everything already reading
     // those columns keeps working.
-    time_slot:         searchParams.get('slot') || '',
-    flexible_date:     false,
-    date_window_days:  null,
+    time_slot:         searchParams.get('slot') || seed?.time_slot || '',
+    flexible_date:     !!seed?.flexible_date,
+    date_window_days:  seed?.date_window_days ?? null,
     /**
      * The chosen city wins over the profile's.
      *
@@ -941,7 +954,9 @@ export default function PlanningWizard() {
         onClose={() => setDateSheetOpen(false)}
         city={form.city || null}
         value={form}
-        onConfirm={picked => setForm(f => ({ ...f, ...picked }))}
+        // Back to the shared store as well, so changing the date here is the
+        // date the home screen shows afterwards.
+        onConfirm={picked => { setEventDate(picked); setForm(f => ({ ...f, ...picked })) }}
       />
     </div>
   )

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import {
-  CalendarCheck,
+  CalendarCheck, CalendarSearch, CalendarPlus,
   ArrowRight, ShieldCheck, Phone, Users, Star, SearchX,
 } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
@@ -11,6 +11,8 @@ import { humanDate } from '../../utils/format'
 import { OCCASIONS, CATALOG_STATS } from '../../data/planCatalog'
 import { useCart } from '../../context/CartContext'
 import { useCity } from '../../context/CityContext'
+import { useEventDate, setEventDate, clearEventDate } from '../../hooks/useEventDate'
+import EventDateSheet from '../../components/plan/EventDateSheet'
 import PlanAppBar from '../../components/plan/PlanAppBar'
 import ServiceShelf from '../../components/plan/ServiceShelf'
 import PerksDeck from '../../components/plan/PerksDeck'
@@ -56,24 +58,72 @@ import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 const DRAFT_KEY = 'sambramo_plan_draft'
 
 export default function PlanHub() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { totalCount, cartPath } = useCart()
   const { city, chosen } = useCity()
   const offers = usePublicOffers()
   const [query, setQuery] = useState('')
+  const [dateSheetOpen, setDateSheetOpen] = useState(false)
 
   const meta = occasionMeta(searchParams.get('type'), searchParams.get('festival'))
 
-  const qs = searchParams.toString()
-  const wizardHref = '/plan/custom' + (qs ? `?${qs}` : '')
+  /**
+   * The date, from whichever of the two places has it.
+   *
+   * The URL wins because it is the more specific statement — somebody who
+   * followed a link with a date on it means *that* date. Otherwise the shared
+   * store answers, so arriving here from anywhere else in the app still shows
+   * the day already chosen instead of asking a third time.
+   */
+  const saved = useEventDate()
+  const urlDate = searchParams.get('date')
+  const picked = urlDate
+    ? { event_date: urlDate, time_slot: searchParams.get('slot') || '' }
+    : saved
 
-  // Carried in from the home screen's date card.
-  const pickedDate = humanDate(searchParams.get('date'))
-  const pickedSlot = slotByKey(searchParams.get('slot'))?.label ?? null
+  const pickedDate = humanDate(picked?.event_date)
+  const pickedSlot = slotByKey(picked?.time_slot)?.label ?? null
+
+  // Forward the date into the wizard even when it came from the store rather
+  // than the link, so step 2 opens on it.
+  const wizardParams = new URLSearchParams(searchParams)
+  if (picked?.event_date) {
+    wizardParams.set('date', picked.event_date)
+    if (picked.time_slot) wizardParams.set('slot', picked.time_slot)
+  }
+  const wizardHref = '/plan/custom' + (wizardParams.toString() ? `?${wizardParams}` : '')
 
   const [hasDraft] = useState(() => {
     try { return !!sessionStorage.getItem(DRAFT_KEY) } catch { return false }
   })
+
+  // A date arriving on the link is a choice like any other — remember it, so
+  // the home card and the wizard's calendar both open on it afterwards.
+  useEffect(() => {
+    if (urlDate && urlDate !== saved?.event_date) {
+      setEventDate({ event_date: urlDate, time_slot: searchParams.get('slot') || '' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlDate])
+
+  function handlePickedDate(next) {
+    setEventDate(next)
+    const params = new URLSearchParams(searchParams)
+    params.set('date', next.event_date)
+    if (next.time_slot) params.set('slot', next.time_slot)
+    else params.delete('slot')
+    setSearchParams(params, { replace: true })
+  }
+
+  // Not a dead end: dropping the date leaves the page exactly as it was for
+  // somebody who has not picked one yet, and the wizard will ask later.
+  function forgetDate() {
+    clearEventDate()
+    const params = new URLSearchParams(searchParams)
+    params.delete('date')
+    params.delete('slot')
+    setSearchParams(params, { replace: true })
+  }
 
   // An escape hatch for ad landing pages that want to skip straight to the form.
   if (searchParams.get('go') === 'custom') return <Navigate to={wizardHref} replace />
@@ -130,19 +180,61 @@ export default function PlanHub() {
             is booked.
           </p>
 
-          {/* Somebody who picked their date on the home screen arrives here
+          {/* ── The date, and the way out of it ────────────────────────
+              Somebody who picked their date on the home screen arrives here
               to a question about something else. Without this the date looks
-              discarded and they pick it again inside the wizard. It rides on
-              the query string, which wizardHref already forwards. */}
-          {pickedDate && (
-            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-saffron-400/15 px-3 py-2 ring-1 ring-saffron-400/30">
-              <CalendarCheck size={15} className="shrink-0 text-saffron-300" />
-              <p className="text-[12px] leading-tight text-white/85">
-                <span className="font-extrabold text-white">{pickedDate}</span>
-                {pickedSlot ? ` · ${pickedSlot}` : ''} saved
-                <span className="text-white/55"> — now pick what we're celebrating.</span>
+              discarded and they pick it again inside the wizard.
+
+              The two buttons are the point: a date shown with no way to
+              change it reads as a commitment made on the customer's behalf,
+              and the ones who are not sure yet — most of them — stall here
+              rather than carry on. Both ways out are one tap, and neither
+              costs them the rest of the page. */}
+          {pickedDate ? (
+            <div className="mt-3 rounded-2xl bg-teal-400/10 p-3 ring-1 ring-teal-300/30">
+              <p className="flex items-center gap-2 text-[12px] leading-tight text-white/85">
+                <CalendarCheck size={15} className="shrink-0 text-teal-300" />
+                <span>
+                  <span className="font-extrabold text-white">{pickedDate}</span>
+                  {pickedSlot ? ` · ${pickedSlot}` : ''} saved
+                  <span className="text-white/55"> — now pick what we're celebrating.</span>
+                </span>
               </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDateSheetOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-teal-400 px-3 py-1.5 text-[11px] font-extrabold text-plum-950"
+                >
+                  <CalendarSearch size={12} /> Change or compare dates
+                </button>
+                <button
+                  type="button"
+                  onClick={forgetDate}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/75 ring-1 ring-white/15"
+                >
+                  I'll decide the date later
+                </button>
+              </div>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDateSheetOpen(true)}
+              className="mt-3 flex w-full items-center gap-2.5 rounded-2xl bg-white/5 px-3 py-2.5 text-left ring-1 ring-white/15 transition-colors hover:bg-white/10"
+            >
+              <CalendarPlus size={16} className="shrink-0 text-teal-300" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12px] font-extrabold text-white">
+                  Have a date in mind?
+                </span>
+                <span className="block text-[11px] leading-tight text-white/55">
+                  Check it in the calendar — every date is open, and telling us early
+                  is what lets us hold the Masters.
+                </span>
+              </span>
+              <ArrowRight size={14} className="shrink-0 text-white/30" />
+            </button>
           )}
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -242,6 +334,17 @@ export default function PlanHub() {
           </div>
         </section>
       </div>
+
+      {/* The same calendar the home screen opens — one date picker in the
+          app, so what it says about a date cannot depend on where you met
+          it. */}
+      <EventDateSheet
+        open={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        city={chosen ? city : null}
+        value={picked}
+        onConfirm={handlePickedDate}
+      />
     </div>
   )
 }

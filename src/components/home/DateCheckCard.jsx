@@ -5,6 +5,7 @@ import EventDateSheet from '../plan/EventDateSheet'
 import { useDateInterest } from '../../hooks/useDateDemand'
 import { busiestDates } from '../../lib/demand'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useEventDate, setEventDate, planHrefFor } from '../../hooks/useEventDate'
 import { useCity } from '../../context/CityContext'
 import { CATALOGUE_PHOTOS } from '../../config/imagery'
 
@@ -94,6 +95,8 @@ export default function DateCheckCard() {
   const [open, setOpen] = useState(false)
   const [i, setI] = useState(0)
   const reduced = useReducedMotion()
+  // Whatever was picked anywhere else in the app, so the calendar opens on it.
+  const saved = useEventDate()
   const { interestByDate } = useDateInterest(city)
 
   const hot = useMemo(
@@ -173,14 +176,15 @@ export default function DateCheckCard() {
   const slide = slides[i] ?? slides[0]
 
   /**
-   * Onward to the occasion picker, not the six-step form. /plan asks the
-   * same question with the offers and prices around it, and forwards this
-   * query string into the wizard when the customer is ready for it.
+   * Save it everywhere, then on to the occasion picker.
+   *
+   * Saving first is what stops the next calendar asking again; planHrefFor is
+   * the single rule for where a chosen date goes — /plan, the occasion
+   * picker, never step 1 of the six-step form.
    */
   function handleConfirm(picked) {
-    const params = new URLSearchParams({ date: picked.event_date })
-    if (picked.time_slot) params.set('slot', picked.time_slot)
-    navigate(`/plan?${params}`)
+    setEventDate(picked)
+    navigate(planHrefFor(picked))
   }
 
   return (
@@ -250,7 +254,7 @@ export default function DateCheckCard() {
           <span className="mt-2 flex items-center gap-2">
             <span className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-1.5 text-[11px] font-extrabold text-plum-950">
               <CalendarSearch size={12} />
-              Check your date
+              {saved?.event_date ? 'Change your date' : 'Check your date'}
               <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
             </span>
             <span className="flex shrink-0 gap-1" aria-hidden="true">
@@ -271,7 +275,7 @@ export default function DateCheckCard() {
         open={open}
         onClose={() => setOpen(false)}
         city={city}
-        value={{}}
+        value={saved}
         onConfirm={handleConfirm}
       />
     </>
