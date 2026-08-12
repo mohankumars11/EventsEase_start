@@ -16,7 +16,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS, BRAND } from '../../config/sambramo'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import SambramoMark from '../../components/ui/SambramoMark'
-import DateDemandAdmin from '../../components/admin/DateDemandAdmin'
+import DateConsole from '../../components/admin/DateConsole'
 import { formatDate, formatINR } from '../../utils/format'
 
 // Dataviz-skill validated categorical order (adjacent-pair CVD/contrast
@@ -41,7 +41,7 @@ const NAV_ITEMS = [
   { id: 'support',         label: 'Support',          emoji: '🛟' },
   { id: 'revenue',         label: 'Revenue',          emoji: '📊' },
   { id: 'city_demand',     label: 'City Demand',      emoji: '🗺️' },
-  { id: 'dates',           label: 'Date Demand',      emoji: '📆' },
+  { id: 'dates',           label: 'Dates',            emoji: '📅' },
 ]
 
 const TABLE_TABS = ['All', 'New', 'In Progress', 'Proposals', 'Confirmed', 'Completed']
@@ -2037,7 +2037,7 @@ export default function AdminDashboard() {
 
               {activeNav === 'city_demand' && <CityDemandContent />}
 
-              {activeNav === 'dates' && <DateDemandAdmin />}
+              {activeNav === 'dates' && <DateConsole />}
             </>
           )}
         </main>
