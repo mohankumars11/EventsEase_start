@@ -722,240 +722,284 @@
   @screen lg { .pr-chat-dock { padding-right: 1rem; } }
 
   /* ── BrandFilm ───────────────────────────────────────
-     The home hero's four-second loop (components/home/BrandFilm).
-     Every rule below is transform or opacity only, so the whole
-     film stays on the compositor and never triggers layout —
-     which is the entire reason it can run above the fold on a
-     mid-range Android without costing scroll smoothness.
+     The home hero's gifting film (components/home/BrandFilm).
+     Every rule is transform or opacity only, so the whole thing
+     stays on the compositor and never triggers layout — the
+     reason it can run above the fold on a mid-range Android
+     without costing scroll smoothness.
 
-     Timing budget per beat is 1000ms (BEAT_MS in the component), and
-     it splits in two:
+     ── The timing contract ──────────────────────────────
+     BEAT_MS is 2400. The first cut ran at 1000 and read as a
+     flicker: you registered that something moved without ever
+     reading it. Each beat now splits three ways:
 
-       the subject   the cake, the bow, the parcel, the lid coming off.
-                     Must be fully resolved by ~850ms. A subject still
-                     moving when the cut lands is the difference between
-                     a film and a stutter — the first cut of this had a
-                     gift tag that arrived at 1120ms and was therefore
-                     never once seen in place.
-       decoration    twinkles, ripples, the doorbell, the sheen. These
-                     end at opacity 0 anyway, so being clipped mid-fade
-                     costs nothing and they are allowed to tail past the
-                     cut.
+       0–150ms      the cut lands, ground still cross-fading
+       150–1400ms   the subject arrives and resolves
+       1400–2400ms  the settled frame, which is what people
+                    actually look at — and which must NOT be
+                    still, or the panel dies for a full second
 
-     Change BEAT_MS and the subject delays have to move with it.
+     That last third is why most rules below carry a second,
+     looping animation after the entrance (comma-separated, with
+     its own delay). Slower pacing without sustained motion is
+     just a slideshow with longer gaps.
 
-     Two transform-boxes are in play and the difference matters:
-
-       fill-box   origin is the element's own bounding box. Used for
-                  anything whose pivot is "the middle of itself" — the
-                  parcel that rotates as it travels, the pin that drops.
-       view-box   origin is the 0 0 200 120 canvas. Used wherever the
-                  JSX names an explicit pivot in those coordinates —
-                  a flame hinges at its wick (100 40), not at the
-                  centre of the teardrop. `.film-pivot` marks those.
-
-     Neither is the default: an untagged CSS transform on an SVG child
-     pivots about the SVG root's top-left, so a rotating bow swings in
-     from off-canvas. */
+     ── The two transform-boxes ──────────────────────────
+       fill-box   origin is the element's own bounding box, for
+                  anything pivoting about the middle of itself.
+       view-box   origin is the 0 0 200 120 canvas, for anything
+                  whose pivot the JSX names in those coordinates
+                  — a flame hinges at its wick, not at the centre
+                  of the teardrop. `.film-pivot` marks those.
+     Neither is the default: an untagged transform on an SVG child
+     pivots about the SVG root's top-left corner. */
   .film-pivot { transform-box: view-box; }
 
-  /* Ambient: motes rising through the whole film, never remounted.
-     The travel is in px, not %, because a percentage translate on a
-     5px dot is 5px of travel — it has to clear the card, so it is
-     sized against the tallest the card gets (248px) plus its own
-     start offset. --mote-o is the dot's own peak opacity, set inline;
-     it lives in the keyframe because the keyframe owns opacity for
-     the fade in and out at either end. */
+  /* Ambient motes. Travel is in px because a percentage translate
+     on a 5px dot is 5px of travel; sized against the tallest the
+     card gets. --mote-o is the dot's peak opacity, set inline. */
   @keyframes film-mote {
     0%   { opacity: 0; transform: translateY(0) scale(0.6); }
     14%  { opacity: var(--mote-o, 0.22); }
     84%  { opacity: var(--mote-o, 0.22); }
-    100% { opacity: 0; transform: translateY(-268px) scale(1.2); }
+    100% { opacity: 0; transform: translateY(-262px) scale(1.2); }
   }
   .film-mote { bottom: -12px; animation: film-mote linear infinite; }
 
-  /* Corner falloff, so the caption's lower third has something to
-     sit on whichever ground is showing. */
+  /* A lens vignette on a lit surface, not a dark scrim: the grounds are
+     cream now, so this is the falloff at the edge of a softbox — warm and
+     shallow. At the old 62% black it turned every corner to mud. */
   .film-vignette {
-    background: radial-gradient(120% 100% at 50% 40%, transparent 40%, rgba(46, 16, 101, 0.55) 100%);
+    background: radial-gradient(125% 100% at 58% 40%, transparent 42%, rgba(92, 58, 26, 0.20) 100%);
     pointer-events: none;
   }
 
-  /* Caption: three lines arriving in reading order. */
+  /* Film grain. The single cheapest cue that something is a
+     photograph rather than a diagram — the flat-vector look was
+     the main reason the first cut read as a cartoon. Kept very
+     low; above ~7% it stops being grain and starts being noise
+     over the type. */
+  .film-grain {
+    pointer-events: none;
+    opacity: 0.055;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Caption: three lines in reading order. */
   @keyframes film-line {
-    0%   { opacity: 0; transform: translateY(9px); }
+    0%   { opacity: 0; transform: translateY(10px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .film-line   { animation: film-line 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .film-line-2 { animation-delay: 0.07s; }
-  .film-line-3 { animation-delay: 0.14s; }
+  .film-line   { animation: film-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .film-line-2 { animation-delay: 0.10s; }
+  .film-line-3 { animation-delay: 0.20s; }
+
+  /* The two shared sustained motions: a slow drift and a slow
+     breathe. Used with their own delays so nothing in a frame
+     moves in step with anything else. */
+  @keyframes film-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+  @keyframes film-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.025); }
+  }
 
   /* ── Beat 1: the occasion ──────────────────────────── */
   @keyframes film-bloom {
-    0%   { opacity: 0;    transform: scale(0.6); }
-    60%  { opacity: 1;    transform: scale(1.06); }
-    100% { opacity: 0.85; transform: scale(1); }
+    0%   { opacity: 0;    transform: scale(0.55); }
+    30%  { opacity: 1;    transform: scale(1.06); }
+    55%  { opacity: 0.9;  transform: scale(1); }
+    100% { opacity: 0.95; transform: scale(1.04); }
   }
-  .film-bloom { transform-box: fill-box; transform-origin: center; animation: film-bloom 0.9s ease-out both; }
+  .film-bloom { transform-box: fill-box; transform-origin: center; animation: film-bloom 2.4s ease-out both; }
 
   @keyframes film-land {
-    0%   { opacity: 0; transform: translateY(26px) scale(0.94); }
-    70%  { opacity: 1; transform: translateY(-3px) scale(1.01); }
+    0%   { opacity: 0; transform: translateY(30px) scale(0.93); }
+    55%  { opacity: 1; transform: translateY(-4px) scale(1.012); }
     100% { opacity: 1; transform: translateY(0)    scale(1); }
   }
-  .film-land { transform-box: fill-box; transform-origin: center bottom; animation: film-land 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .film-land {
+    transform-box: fill-box; transform-origin: center bottom;
+    animation: film-land 0.85s cubic-bezier(0.16, 1, 0.3, 1) both,
+               film-float 3.4s ease-in-out 0.95s infinite;
+  }
 
-  /* Catches at 0.35s, then breathes. Scale from the wick, not the tip. */
-  @keyframes film-flame {
+  /* Catches, then breathes for the rest of the beat. */
+  @keyframes film-flame-in {
     0%   { opacity: 0; transform: scale(0.2, 0.1); }
-    30%  { opacity: 1; transform: scale(1.1, 1.15); }
-    45%  { opacity: 1; transform: scale(0.94, 0.96) translateX(0.6px); }
-    65%  { opacity: 1; transform: scale(1.04, 1.06) translateX(-0.6px); }
+    45%  { opacity: 1; transform: scale(1.12, 1.18); }
     100% { opacity: 1; transform: scale(1, 1); }
   }
-  /* Origin comes from the JSX (the wick), not from here — see the
-     view-box note above. Same for every other .film-pivot rule. */
-  .film-flame { animation: film-flame 0.5s ease-out 0.3s both; }
+  @keyframes film-flicker {
+    0%, 100% { transform: scale(1, 1)       translateX(0); }
+    25%      { transform: scale(0.94, 1.06) translateX(0.5px); }
+    50%      { transform: scale(1.05, 0.97) translateX(-0.4px); }
+    75%      { transform: scale(0.97, 1.03) translateX(0.3px); }
+  }
+  .film-flame {
+    animation: film-flame-in 0.55s ease-out 0.45s both,
+               film-flicker 1.1s ease-in-out 1s infinite;
+  }
 
   @keyframes film-twinkle {
-    0%   { opacity: 0; transform: scale(0.2) rotate(-40deg); }
-    45%  { opacity: 1; transform: scale(1.15) rotate(0deg); }
-    100% { opacity: 0.65; transform: scale(0.9) rotate(12deg); }
+    0%   { opacity: 0;    transform: scale(0.2) rotate(-45deg); }
+    40%  { opacity: 1;    transform: scale(1.18) rotate(0deg); }
+    100% { opacity: 0.55; transform: scale(0.85) rotate(16deg); }
   }
-  .film-twinkle { animation: film-twinkle 0.5s ease-out both; }
+  .film-twinkle { animation: film-twinkle 0.9s ease-out both; }
 
-  /* ── Beat 2: the wrap ──────────────────────────────── */
-  /* Two things drop in before the lid lands on top of them. The
-     0.34s lid start is deliberately just after the second drop
-     settles — any later and the box sits open looking unfinished. */
-  @keyframes film-drop {
-    0%   { opacity: 0; transform: translateY(-46px) scale(0.8); }
-    70%  { opacity: 1; transform: translateY(3px)   scale(1.04); }
-    100% { opacity: 1; transform: translateY(0)     scale(1); }
+  /* The other celebrations, each on its own period so the group
+     never pulses as one block. */
+  @keyframes film-orbit {
+    0%   { opacity: 0; transform: translateY(14px) scale(0.85); }
+    45%  { opacity: 1; transform: translateY(0)    scale(1); }
+    100% { opacity: 1; transform: translateY(0)    scale(1); }
   }
-  .film-drop-1 { transform-box: fill-box; animation: film-drop 0.24s cubic-bezier(0.34, 1.4, 0.5, 1) 0.02s both; }
-  .film-drop-2 { transform-box: fill-box; animation: film-drop 0.24s cubic-bezier(0.34, 1.4, 0.5, 1) 0.12s both; }
+  .film-orbit-1, .film-orbit-2, .film-orbit-3 { transform-box: fill-box; transform-origin: center; }
+  .film-orbit-1 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both, film-float 3.8s ease-in-out 1.05s infinite; }
+  .film-orbit-2 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both, film-float 4.6s ease-in-out 1.25s infinite; }
+  .film-orbit-3 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.65s both, film-float 4.1s ease-in-out 1.45s infinite; }
 
+  /* ── Beat 2: the picking ───────────────────────────── */
+  /* Five things arrive one after another, then drift. The stagger
+     is the point: a hamper assembled all at once is a graphic, a
+     hamper assembled item by item is somebody choosing. */
+  @keyframes film-item-in {
+    0%   { opacity: 0; transform: translateY(-34px) rotate(-6deg) scale(0.9); }
+    65%  { opacity: 1; transform: translateY(3px)   rotate(1deg)  scale(1.02); }
+    100% { opacity: 1; transform: translateY(0)     rotate(0deg)  scale(1); }
+  }
+  .film-item { transform-box: fill-box; transform-origin: center bottom; }
+  .film-item-1 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.12s both, film-float 3.6s ease-in-out 1.3s infinite; }
+  .film-item-2 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.32s both, film-float 4.2s ease-in-out 1.5s infinite; }
+  .film-item-3 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.52s both, film-float 3.9s ease-in-out 1.7s infinite; }
+  .film-item-4 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.72s both, film-float 4.5s ease-in-out 1.9s infinite; }
+  .film-item-5 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.92s both, film-float 4.0s ease-in-out 2.1s infinite; }
+
+  /* ── Beat 3: the packing ───────────────────────────── */
   @keyframes film-lid {
-    0%   { opacity: 0; transform: translateY(-26px); }
+    0%   { opacity: 0; transform: translateY(-30px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .film-lid { transform-box: fill-box; animation: film-lid 0.22s cubic-bezier(0.34, 1.3, 0.6, 1) 0.3s both; }
+  .film-lid { transform-box: fill-box; animation: film-lid 0.45s cubic-bezier(0.34, 1.2, 0.6, 1) 0.22s both; }
 
-  /* The ribbon draws rather than appears. pathLength="100" on the
-     path means the dash maths is in percent and stays correct if
-     the geometry is ever redrawn. */
+  /* pathLength="100" puts the dash maths in percent, so the draw
+     stays correct if the geometry is ever redrawn. */
   @keyframes film-ribbon {
     0%   { stroke-dashoffset: 100; }
     100% { stroke-dashoffset: 0; }
   }
-  .film-ribbon   { stroke-dasharray: 100; animation: film-ribbon 0.2s ease-out 0.44s both; }
-  .film-ribbon-2 { animation-delay: 0.52s; }
+  .film-ribbon   { stroke-dasharray: 100; animation: film-ribbon 0.4s ease-out 0.72s both; }
+  .film-ribbon-2 { animation-delay: 0.92s; }
+
+  /* The specular band travelling down the satin for the rest of
+     the beat. This is what stops gold reading as yellow plastic. */
+  @keyframes film-sheen-band {
+    0%   { stroke-dashoffset: 70;  opacity: 0; }
+    18%  { opacity: 0.6; }
+    82%  { opacity: 0.6; }
+    100% { stroke-dashoffset: -70; opacity: 0; }
+  }
+  .film-sheen-band {
+    stroke-dasharray: 16 200;
+    animation: film-sheen-band 1.5s ease-in-out 1.15s infinite;
+  }
 
   @keyframes film-bow {
-    0%   { opacity: 0; transform: scale(0.2) rotate(-25deg); }
-    60%  { opacity: 1; transform: scale(1.12) rotate(4deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    0%   { opacity: 0; transform: scale(0.25) rotate(-22deg); }
+    55%  { opacity: 1; transform: scale(1.1)  rotate(3deg); }
+    100% { opacity: 1; transform: scale(1)    rotate(0deg); }
   }
-  .film-bow { animation: film-bow 0.26s cubic-bezier(0.34, 1.5, 0.6, 1) 0.58s both; }
+  .film-bow {
+    animation: film-bow 0.42s cubic-bezier(0.34, 1.5, 0.6, 1) 1.18s both,
+               film-breathe 3s ease-in-out 1.7s infinite;
+  }
+
+  /* The foil wordmark catches light a beat after the lid lands. */
+  @keyframes film-foil {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .film-foil { animation: film-foil 0.5s ease-out 0.66s both; }
 
   @keyframes film-tag {
-    0%   { opacity: 0; transform: translate(-8px, 4px) rotate(-8deg); }
+    0%   { opacity: 0; transform: translate(-10px, 5px) rotate(-10deg); }
     100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
   }
-  .film-tag { transform-box: fill-box; animation: film-tag 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both; }
-
-  @keyframes film-sheen-sweep {
-    0%   { opacity: 0; transform: translateX(0)    skewX(-18deg); }
-    30%  { opacity: 0.16; }
-    100% { opacity: 0; transform: translateX(260px) skewX(-18deg); }
+  .film-tag {
+    transform-box: fill-box;
+    animation: film-tag 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.42s both,
+               film-float 3.2s ease-in-out 1.95s infinite;
   }
-  .film-sheen-sweep { animation: film-sheen-sweep 0.6s ease-out 0.5s both; }
 
-  /* ── Beat 3: the run ───────────────────────────────── */
+  /* ── Beat 4: the handover ──────────────────────────── */
   @keyframes film-route {
     0%   { stroke-dashoffset: 100; opacity: 0; }
-    12%  { opacity: 1; }
-    100% { stroke-dashoffset: 0;   opacity: 1; }
+    15%  { opacity: 0.85; }
+    100% { stroke-dashoffset: 0;   opacity: 0.85; }
   }
-  /* Two dasharrays fight here: the dotted texture ("1 7", set on the
-     element) and the reveal. Animating the offset alone slides the
-     dots along the curve, which reads as motion in the road itself —
-     the parcel is what should move — so the reveal is a mask-free
-     compromise: the dots march the same direction and the same speed
-     as the parcel that follows them. */
-  .film-route { animation: film-route 0.5s linear both; }
+  .film-route { animation: film-route 0.75s linear both; }
 
-  /* The parcel rides the quadratic the dashes describe: P0 (18 94),
-     control (84 38), P2 (128 78), sampled at t = 0, .25, .5, .75, 1 and
-     expressed as offsets from P0. Change the `d` in the JSX and these
-     five stops have to be re-sampled off the new curve, or the parcel
-     drifts off its own road. */
-  @keyframes film-travel {
-    0%   { opacity: 0; transform: translate(0, 0) rotate(-8deg); }
-    10%  { opacity: 1; }
-    25%  { transform: translate(31.6px, -22px) rotate(-4deg); }
-    50%  { transform: translate(60.5px, -32px) rotate(0deg); }
-    75%  { transform: translate(86.6px, -30px) rotate(4deg); }
-    100% { opacity: 1; transform: translate(110px, -16px) rotate(0deg); }
-  }
-  .film-travel { transform-box: fill-box; animation: film-travel 0.55s cubic-bezier(0.4, 0, 0.3, 1) 0.05s both; }
-
-  @keyframes film-door {
-    0%   { opacity: 0; transform: translateX(10px); }
+  @keyframes film-hand-give {
+    0%   { opacity: 0; transform: translateX(-46px); }
     100% { opacity: 1; transform: translateX(0); }
   }
-  .film-door { transform-box: fill-box; animation: film-door 0.35s ease-out both; }
-
-  @keyframes film-pin {
-    0%   { opacity: 0; transform: translateY(-30px) scale(0.7); }
-    70%  { opacity: 1; transform: translateY(4px)   scale(1.06); }
-    100% { opacity: 1; transform: translateY(0)     scale(1); }
+  @keyframes film-hand-take {
+    0%   { opacity: 0; transform: translateX(46px); }
+    100% { opacity: 1; transform: translateX(0); }
   }
-  .film-pin { transform-box: fill-box; transform-origin: center bottom; animation: film-pin 0.32s cubic-bezier(0.34, 1.4, 0.5, 1) 0.53s both; }
+  .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+  .film-hand-take { transform-box: fill-box; animation: film-hand-take 0.8s cubic-bezier(0.16,1,0.3,1) 0.32s both; }
 
-  @keyframes film-ripple {
-    0%   { opacity: 0.9; transform: scale(0.3); }
-    100% { opacity: 0;   transform: scale(2.4); }
+  /* The box crosses the gap and then hangs, held between them. */
+  @keyframes film-pass {
+    0%   { opacity: 0; transform: translate(-34px, 6px) rotate(-7deg); }
+    60%  { opacity: 1; transform: translate(2px, -3px)  rotate(1.5deg); }
+    100% { opacity: 1; transform: translate(0, 0)       rotate(0deg); }
   }
-  .film-ripple { transform-box: fill-box; transform-origin: center; animation: film-ripple 0.42s ease-out 0.58s both; }
-
-  @keyframes film-ring {
-    0%   { opacity: 0.65; transform: scale(0.4); }
-    100% { opacity: 0;    transform: scale(1.7); }
+  .film-pass {
+    transform-box: fill-box;
+    animation: film-pass 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both,
+               film-float 2.8s ease-in-out 1.4s infinite;
   }
-  .film-ring { transform-box: fill-box; transform-origin: center; animation: film-ring 0.5s ease-out both; }
 
-  /* ── Beat 4: the moment ────────────────────────────── */
+  /* ── Beat 5: the opening ───────────────────────────── */
   @keyframes film-lid-off {
     0%   { opacity: 1; transform: translateY(0)     rotate(0deg)   scale(1); }
-    55%  { opacity: 1; transform: translateY(-34px) rotate(-11deg) scale(1.02); }
-    100% { opacity: 0; transform: translateY(-52px) rotate(-18deg) scale(1.04); }
+    50%  { opacity: 1; transform: translateY(-38px) rotate(-12deg) scale(1.02); }
+    100% { opacity: 0; transform: translateY(-62px) rotate(-21deg) scale(1.05); }
   }
-  .film-lid-off { animation: film-lid-off 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .film-lid-off { animation: film-lid-off 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both; }
 
   @keyframes film-burst {
-    0%   { opacity: 0;    transform: scale(0.35); }
-    40%  { opacity: 1;    transform: scale(1.08); }
-    100% { opacity: 0.75; transform: scale(1); }
+    0%   { opacity: 0;   transform: scale(0.35); }
+    35%  { opacity: 1;   transform: scale(1.1); }
+    100% { opacity: 0.8; transform: scale(1.02); }
   }
-  .film-burst { transform-box: fill-box; transform-origin: center; animation: film-burst 0.6s ease-out 0.14s both; }
+  .film-burst {
+    transform-box: fill-box; transform-origin: center;
+    animation: film-burst 0.85s ease-out 0.28s both,
+               film-breathe 2.6s ease-in-out 1.15s infinite;
+  }
 
   @keyframes film-rays {
-    0%   { opacity: 0;    transform: scale(0.4)  rotate(-8deg); }
-    45%  { opacity: 0.55; transform: scale(1.02) rotate(0deg); }
-    100% { opacity: 0.3;  transform: scale(1)    rotate(5deg); }
+    0%   { opacity: 0;    transform: scale(0.4)  rotate(-10deg); }
+    40%  { opacity: 0.55; transform: scale(1.03) rotate(0deg); }
+    100% { opacity: 0.34; transform: scale(1)    rotate(9deg); }
   }
-  .film-rays { animation: film-rays 0.8s ease-out 0.1s both; }
+  .film-rays { animation: film-rays 2.2s ease-out 0.2s both; }
 
-  /* Hearts leave the box and keep going. Staggered inline so three
-     of them read as three separate reactions rather than a volley. */
+  /* Hearts leave the box and keep going. Staggered inline so four
+     read as four reactions rather than one volley. */
   @keyframes film-lift {
-    0%   { opacity: 0;   transform: translateY(14px) scale(0.4); }
-    25%  { opacity: 1;   transform: translateY(0)    scale(1.05); }
-    100% { opacity: 0;   transform: translateY(-42px) scale(0.85); }
+    0%   { opacity: 0; transform: translateY(16px)  scale(0.4); }
+    22%  { opacity: 1; transform: translateY(0)     scale(1.06); }
+    100% { opacity: 0; transform: translateY(-52px) scale(0.82); }
   }
-  .film-lift { transform-box: fill-box; transform-origin: center bottom; animation: film-lift 0.62s cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+  .film-lift { transform-box: fill-box; transform-origin: center bottom; animation: film-lift 1.1s cubic-bezier(0.3, 0.8, 0.4, 1) both; }
 }
 
 /* ── Reduced motion ────────────────────────────────────
@@ -1000,29 +1044,33 @@
     animation-duration: 0.01ms !important;
   }
   /* BrandFilm switches to its storyboard under this preference (see
-     the component), so what's left to do here is make the four still
-     drawings render at their resting state instead of at frame zero
-     — several of them start at opacity 0 or scale 0.2, which would
-     leave a storyboard of empty boxes. The parcel and the departing
-     lid are the exception: their resting state is mid-flight, so they
-     are pinned to where the eye expects them, at the start of the run
-     and still on the box. */
-  .film-mote,
+     the component), so what is left to do here is make the five still
+     drawings render at their resting state rather than at frame zero
+     — most of them start at opacity 0 or scale 0.2, which would leave
+     a storyboard of empty panels. Every animated class in the film is
+     listed; the ones whose resting state is mid-flight (the departing
+     lid, the box crossing between two hands) are pinned by the block
+     below instead, to where the eye expects them. */
+  .film-mote, .film-line,
   .film-bloom, .film-land, .film-flame, .film-twinkle,
-  .film-drop-1, .film-drop-2, .film-lid, .film-ribbon, .film-bow,
-  .film-tag, .film-sheen-sweep,
-  .film-route, .film-travel, .film-door, .film-pin, .film-ripple, .film-ring,
-  .film-lid-off, .film-burst, .film-rays, .film-lift,
-  .film-line {
+  .film-orbit-1, .film-orbit-2, .film-orbit-3,
+  .film-item-1, .film-item-2, .film-item-3, .film-item-4, .film-item-5,
+  .film-lid, .film-ribbon, .film-bow, .film-tag, .film-foil, .film-sheen-band,
+  .film-route, .film-hand-give, .film-hand-take, .film-pass,
+  .film-lid-off, .film-burst, .film-rays, .film-lift {
     animation: none !important;
     opacity: 1;
     transform: none;
   }
-  .film-ribbon { stroke-dashoffset: 0; }
-  /* The two that would otherwise sit on top of what they reveal. */
-  .film-sheen-sweep,
-  .film-ripple,
-  .film-ring { opacity: 0; }
+  /* Drawn strokes have to be completed, not left at their start offset. */
+  .film-ribbon,
+  .film-route { stroke-dashoffset: 0; }
+  /* The specular band is a highlight over satin that is already gold —
+     frozen in place it reads as a scratch, so it simply does not show. */
+  .film-sheen-band { opacity: 0; }
+  /* Grain is texture, not motion, and the vignette is a gradient — both
+     stay. Removing them would leave the storyboard flatter than the film
+     it stands in for, which is the opposite of the point. */
 
   /* The deck does not auto-advance under this preference, so the
      tick has nothing to count down. Show it filled rather than

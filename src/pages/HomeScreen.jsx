@@ -190,23 +190,28 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
-          {/* ── The four-second film ──────────────────────────────────
+          {/* ── The gifting film ──────────────────────────────────────
               Everything else above the fold argues — a tier, a price, a
               coupon, a countdown. None of it shows what any of it is for.
-              This does, in four one-second beats, and its tap target moves
-              with the story: the planner on beat one, a gift you can send
-              tonight by beat four.
+              This does, in five beats, and its tap target moves with the
+              story: the planner on beat one, a hamper you can send tonight
+              by beat five.
 
-              It sits in a different place depending on who is looking, and
-              that is the whole reason it isn't just dropped in the list:
+              It carries no section heading, unlike everything below it.
+              That is deliberate and it is the second thing that got fixed
+              here: a heading plus a subtitle plus the panel came to ~250px
+              of hero for one idea, and the panel already opens with its own
+              chapter label. A hero that has to be introduced isn't a hero.
+
+              It also sits in a different place depending on who is looking:
 
                 signed out   directly under the deck. A cold visitor has to
                              want the thing before being asked for a date,
                              and this is the only element on the page that
                              makes them want it.
                 signed in    under the date check. They are already sold —
-                             pushing their most useful control down by 250px
-                             to re-pitch them would be a straight loss. */}
+                             pushing their most useful control down to
+                             re-pitch them would be a straight loss. */}
           {!user && <BrandFilm />}
 
           {/* ── Check the date ────────────────────────────────────────
