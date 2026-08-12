@@ -13,7 +13,8 @@ import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
 import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
-import DatesFillingFast from '../components/landing/DatesFillingFast'
+import PlanDateCard from '../components/home/PlanDateCard'
+import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
 import OffersRail from '../components/shop/OffersRail'
@@ -188,6 +189,13 @@ export default function HomeScreen() {
 
           <PromoDeck slides={slides} />
 
+          {/* ── Pick the day, right here ──────────────────────────────
+              The date was question two of a six-step form, so the single
+              most useful thing an enquiry can carry sat behind a step most
+              browsers never reached. It is the front door's own card now,
+              and the choice travels into the wizard. */}
+          <PlanDateCard />
+
           {/* ── The six scales of celebration ─────────────────────────
               Replaces PackageRail, which put "Grand Celebration Birthday,
               ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
@@ -300,15 +308,6 @@ export default function HomeScreen() {
             </section>
           )}
 
-          {/* ── Dates filling fast ──────────────────────────────────
-              Straight after the festival rail, which has just put the
-              calendar in the reader's head — this says what that calendar
-              costs you if you wait. Renders nothing when no date is
-              genuinely under pressure, and every claim on it is either a
-              fact about the calendar or a real count of real enquiries
-              against a real ceiling. See lib/demand.js. */}
-          <DatesFillingFast />
-
           {/* ── How this works ──────────────────────────────────────
               Signed-out visitors get the full explanation; signed-in
               customers have already been through it and get the support
@@ -320,6 +319,10 @@ export default function HomeScreen() {
       )}
 
       <StickyCartBar />
+
+      {/* Stays on screen rather than being scrolled past once. Renders
+          nothing until real enquiries exist to point at. */}
+      <DateInterestBadge />
     </div>
   )
 }

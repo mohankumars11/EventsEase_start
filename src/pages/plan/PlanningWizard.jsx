@@ -10,8 +10,8 @@ import { useCity } from '../../context/CityContext'
 import ComingSoonCity from '../../components/common/ComingSoonCity'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import EventDateSheet from '../../components/plan/EventDateSheet'
-import { useDateDemand } from '../../hooks/useDateDemand'
-import { demandForDate, slotByKey, indexDemandRows, daysBetween } from '../../lib/demand'
+import { useDateInterest } from '../../hooks/useDateDemand'
+import { interestForDate, slotByKey, daysBetween } from '../../lib/demand'
 import { todayISO } from '../../utils/format'
 
 const TOTAL_STEPS = 6
@@ -99,18 +99,17 @@ export default function PlanningWizard() {
 
   const [form, setForm] = useState({
     event_type:        searchParams.get('type') || '',
-    // The landing page's "dates filling fast" band links here with the date
-    // already chosen, so somebody who tapped a specific Saturday there does
-    // not have to find it again.
+    // The home screen's plan card and the floating date badge both link here
+    // with the day already chosen, so somebody who picked a Saturday on the
+    // front door does not have to find it again.
     event_date:        searchParams.get('date') || '',
     start_time:        '',
     // Time of day as a bucket the customer actually thinks in. start_time and
     // end_time are derived from it at submit so everything already reading
     // those columns keeps working.
-    time_slot:         '',
+    time_slot:         searchParams.get('slot') || '',
     flexible_date:     false,
     date_window_days:  null,
-    intake_status:     'ACCEPTED',
     /**
      * The chosen city wins over the profile's.
      *
@@ -243,12 +242,12 @@ export default function PlanningWizard() {
   const selectedType = EVENT_TYPES.find(et => et.id === form.event_type)
   const days         = daysUntil(form.event_date)
 
-  const { demandByDate, peaks } = useDateDemand(form.city || null)
-  const demandCtx = useMemo(
-    () => ({ today: todayISO(), city: form.city, demandByDate, peaks }),
-    [form.city, demandByDate, peaks],
+  const { interestByDate } = useDateInterest(form.city || null)
+  const interestCtx = useMemo(
+    () => ({ interestByDate, city: form.city }),
+    [interestByDate, form.city],
   )
-  const dateInfo = form.event_date ? demandForDate(form.event_date, demandCtx) : null
+  const dateInfo = form.event_date ? interestForDate(form.event_date, interestCtx) : null
 
   async function handleSubmit() {
     if (!canNext() || submitting) return
@@ -277,25 +276,6 @@ export default function PlanningWizard() {
     try {
       const slot = slotByKey(form.time_slot)
 
-      // Re-check capacity now, not just when the date was picked. Six steps
-      // take a few minutes and the date can fill in between — better to take
-      // the request onto the waitlist and say so than to promise a day we
-      // can no longer staff.
-      let intakeStatus = form.intake_status || 'ACCEPTED'
-      if (intakeStatus === 'ACCEPTED' && form.event_date) {
-        try {
-          const fresh = await supabase.rpc('date_demand', {
-            p_from: form.event_date, p_to: form.event_date, p_city: form.city || null,
-          })
-          const row = indexDemandRows(fresh.data ?? []).get(form.event_date)
-          if (row?.capacity && row.consumed >= row.capacity) intakeStatus = 'WAITLIST'
-        } catch {
-          // The check is a courtesy, not a gate. If it fails, take the
-          // request — a coordinator sorting out one over-booked date beats
-          // losing a completed six-step form.
-        }
-      }
-
       const payload = {
         event_type:           form.event_type,
         event_date:           form.event_date || null,
@@ -304,7 +284,6 @@ export default function PlanningWizard() {
         time_slot:            form.time_slot || null,
         flexible_date:        !!form.flexible_date,
         date_window_days:     form.flexible_date ? (form.date_window_days ?? null) : null,
-        intake_status:        intakeStatus,
         city:                 form.city,
         style_preference:     form.style_preference || null,
         guest_count:          parseInt(form.guest_count) || null,
@@ -326,7 +305,7 @@ export default function PlanningWizard() {
       // below don't exist yet and Postgres answers 42703 — so retry once
       // without them rather than failing a completed six-step form. The
       // request still arrives; it just carries less until 035 is applied.
-      const NEW_COLUMNS = ['time_slot', 'end_time', 'flexible_date', 'date_window_days', 'intake_status']
+      const NEW_COLUMNS = ['time_slot', 'end_time', 'flexible_date', 'date_window_days']
       let { data, error: dbErr } = await supabase
         .from('events')
         .insert(payload)
@@ -452,9 +431,9 @@ export default function PlanningWizard() {
                   </div>
                   {/* The reason to hurry, carried through the remaining four
                       steps rather than left behind on step 2. */}
-                  {dateInfo && dateInfo.tone.key !== 'OPEN' && (
+                  {dateInfo?.showCount && (
                     <p className="text-xs text-saffron-300 pl-6">
-                      {dateInfo.showCount ? dateInfo.headline : dateInfo.tone.label}
+                      {dateInfo.headline} already
                     </p>
                   )}
                   {form.time_slot && (
@@ -575,19 +554,12 @@ export default function PlanningWizard() {
                 )}
               </button>
 
-              {/* The same tone the calendar showed, restated here so the
-                  reason to hurry survives closing the sheet. */}
-              {dateInfo && (
-                <div className={`rounded-2xl border p-4 ${dateInfo.tone.chip}`}>
-                  <p className="text-sm font-bold mb-0.5">
-                    {dateInfo.showCount ? dateInfo.headline : dateInfo.tone.label}
-                  </p>
+              {/* Restated here so the reason to hurry survives closing the
+                  sheet. Only ever appears when real enquiries back it. */}
+              {dateInfo?.showCount && (
+                <div className={`rounded-2xl border p-4 ${dateInfo.level.chip}`}>
+                  <p className="text-sm font-bold mb-0.5">{dateInfo.headline} for this date</p>
                   <p className="text-xs leading-relaxed opacity-90">{dateInfo.subtext}</p>
-                  {form.intake_status === 'WAITLIST' && (
-                    <p className="text-xs mt-2 font-semibold">
-                      You're on the list for this date — we'll call you if a spot opens.
-                    </p>
-                  )}
                 </div>
               )}
 
