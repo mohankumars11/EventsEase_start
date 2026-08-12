@@ -91,7 +91,7 @@ export default function DateInterestBadge() {
                 </p>
                 <p className="mt-0.5 text-[11px] text-white/50">
                   Enquiries are coming in{city ? ` across ${city}` : ''}. Check your event date
-                  and book with us before the vendors are committed.
+                  and book with us before the Masters are committed.
                 </p>
               </div>
               <button
@@ -126,9 +126,9 @@ export default function DateInterestBadge() {
             <Link
               to="/plan/custom"
               onClick={() => setOpen(false)}
-              className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-berry-400 py-2.5 text-[12px] font-extrabold text-plum-950"
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-2.5 text-[12px] font-extrabold text-plum-950"
             >
-              Check your event date <ArrowRight size={13} />
+              Check your date <ArrowRight size={13} />
             </Link>
           </div>
         )}
@@ -137,7 +137,7 @@ export default function DateInterestBadge() {
           type="button"
           onClick={() => setOpen(v => !v)}
           aria-expanded={open}
-          className="pointer-events-auto mb-3 flex items-center gap-2 rounded-full bg-berry-400 px-4 py-2.5 text-[12px] font-extrabold text-plum-950 shadow-lg shadow-black/30"
+          className="pointer-events-auto mb-3 flex items-center gap-2 rounded-full bg-teal-400 px-4 py-2.5 text-[12px] font-extrabold text-plum-950 shadow-lg shadow-black/30"
         >
           <span className="relative flex items-center">
             <TrendingUp size={14} />

@@ -43,7 +43,7 @@ export const INTEREST_LEVELS = {
     // The default for most of the year. A calendar where 340 days shout is a
     // calendar nobody scans — the same reasoning as the vendor-side OPEN cell.
     dot: '',
-    cell: 'bg-white text-gray-700 border-gray-200 hover:border-plum-300',
+    cell: 'bg-white/5 text-white/85 border-white/10 hover:border-teal-400/50',
     chip: '',
     chipDark: '',
     accentDark: 'text-white/50',
@@ -52,21 +52,21 @@ export const INTEREST_LEVELS = {
     key: 'INTEREST',
     rank: 1,
     label: 'People are asking',
-    dot: 'bg-berry-500',
-    cell: 'bg-berry-50 text-berry-900 border-berry-300 hover:border-berry-500',
-    chip: 'bg-berry-50 text-berry-800 border-berry-200',
-    chipDark: 'bg-berry-400/20 text-berry-200 border-berry-400/30',
-    accentDark: 'text-berry-200',
+    dot: 'bg-teal-400',
+    cell: 'bg-teal-400/15 text-teal-100 border-teal-400/40 hover:border-teal-300',
+    chip: 'bg-teal-400/15 text-teal-100 border-teal-400/30',
+    chipDark: 'bg-teal-400/15 text-teal-200 border-teal-400/30',
+    accentDark: 'text-teal-300',
   },
   HIGH_INTEREST: {
     key: 'HIGH_INTEREST',
     rank: 2,
     label: 'In demand',
-    dot: 'bg-berry-600',
-    cell: 'bg-berry-100 text-berry-900 border-berry-400 ring-1 ring-berry-300 hover:border-berry-600',
-    chip: 'bg-berry-100 text-berry-800 border-berry-300',
-    chipDark: 'bg-berry-400/30 text-berry-100 border-berry-400/50',
-    accentDark: 'text-berry-200',
+    dot: 'bg-teal-300',
+    cell: 'bg-teal-400/30 text-white border-teal-300/60 ring-1 ring-teal-300/40 hover:border-teal-200',
+    chip: 'bg-teal-400/25 text-teal-50 border-teal-300/40',
+    chipDark: 'bg-teal-400/25 text-teal-100 border-teal-300/40',
+    accentDark: 'text-teal-200',
   },
 }
 
@@ -171,6 +171,51 @@ export function busiestDates(ctx = {}, { from, horizon = 150, limit = 8 } = {}) 
     .sort((a, b) => (b.count - a.count) || a.iso.localeCompare(b.iso))
     .slice(0, limit)
     .sort((a, b) => a.iso.localeCompare(b.iso))
+}
+
+/**
+ * Short notice, stated honestly — and never as a refusal.
+ *
+ * There is no booking limit anywhere in this feature: every date is accepted,
+ * including tomorrow's. But a celebration needs decorators, cooks and
+ * purohits who commit their week in advance, and pretending three days is the
+ * same as three months would only move the disappointment from the enquiry
+ * form to a phone call. So a close date says so, and still takes the booking.
+ *
+ * Two tiers, from what actually constrains sourcing:
+ *   ≤ 1 day   nothing can be arranged from a standing start; it depends
+ *             entirely on who happens to be free tomorrow.
+ *   ≤ 7 days  a normal week's notice. Doable, but the pick is whoever has
+ *             not already committed their weekend.
+ * Past a week it says nothing, because past a week there is nothing to warn
+ * about — and a warning on every date is a warning nobody reads.
+ */
+export const NOTICE_TIERS = [
+  {
+    key: 'VERY_SHORT',
+    maxDays: 1,
+    label: 'Very short notice',
+    line: "At this notice our Masters are hard to source — send it anyway and a coordinator will call you straight back to see what's possible.",
+  },
+  {
+    key: 'SHORT',
+    maxDays: 7,
+    label: 'Short notice',
+    line: "Fewer of our Masters will be free at a week's notice, but we'll get you the best of whoever is.",
+  },
+]
+
+export function noticeForDate(iso, todayISOStr) {
+  const today = todayISOStr ?? isoOf(new Date())
+  const days = daysBetween(today, iso)
+  if (days == null || days < 0) return null
+  const tier = NOTICE_TIERS.find(t => days <= t.maxDays)
+  if (!tier) return null
+  return {
+    ...tier,
+    days,
+    when: days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`,
+  }
 }
 
 /** Turn date_demand() rows into the Map interestForDate expects. */

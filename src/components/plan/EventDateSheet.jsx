@@ -1,24 +1,32 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, Calendar, Clock, Sparkles, ArrowRight, Users } from 'lucide-react'
+import { X, CalendarDays, Clock, ArrowRight, Users, Zap } from 'lucide-react'
 import MonthGrid from '../common/MonthGrid'
 import { useDateInterest } from '../../hooks/useDateDemand'
-import { TIME_SLOTS, interestForDate, parseISO } from '../../lib/demand'
-import { toISODate, humanDate } from '../../utils/format'
+import { TIME_SLOTS, interestForDate, noticeForDate, parseISO } from '../../lib/demand'
+import { humanDate } from '../../utils/format'
 
 /**
  * Pick the day, and the part of the day.
  *
  * The date is the single most valuable thing an enquiry can carry — without
- * it a coordinator cannot check a vendor, quote a price, or hold anything —
+ * it a coordinator cannot check a Master, quote a price, or hold anything —
  * so this asks for it properly instead of leaving a bare `<input type="date">`
  * to be skipped.
  *
+ * ── Dark, like the screen it opens from ──────────────────────────────
+ *
+ * It used to be a white sheet. The shop's sheets are white because the shop
+ * is a light surface; this one opens off the plum home screen, so a white
+ * panel arrived as a slab of a different application. It now carries the
+ * same ground as the card that opened it.
+ *
  * ── Every date is available ──────────────────────────────────────────
  *
- * Nothing is blocked, greyed or refused. The only mark a date can carry is
- * how many families have already asked about it, and only once that is a
- * real number worth showing. A calendar where most days are flagged is one
- * customers stop reading, so most days here are deliberately plain.
+ * Nothing is blocked, greyed or refused, and the copy never uses the word
+ * "available" of a date — implying some days are available says the rest are
+ * not, which is both untrue and the opposite of what this is selling. The
+ * only mark a date carries is how many families have asked about it, and
+ * only once that is a real number worth showing.
  */
 
 export default function EventDateSheet({
@@ -70,6 +78,7 @@ export default function EventDateSheet({
   }, [open])
 
   const info = selected ? interestForDate(selected, ctx) : null
+  const notice = selected ? noticeForDate(selected) : null
   const canConfirm = !!selected && !!slot
 
   if (!open) return null
@@ -86,7 +95,7 @@ export default function EventDateSheet({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       role="dialog"
       aria-modal="true"
@@ -95,25 +104,26 @@ export default function EventDateSheet({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-pop-in outline-none"
+        className="animate-pop-in flex max-h-[92vh] w-full flex-col rounded-t-3xl bg-plum-950 shadow-2xl shadow-black/60 outline-none ring-1 ring-white/10 sm:max-h-[88vh] sm:max-w-lg sm:rounded-3xl"
       >
-        <div className="shrink-0 px-5 pt-3 pb-4 border-b border-orange-100">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-300 sm:hidden" />
+        <div className="shrink-0 border-b border-white/10 px-5 pb-4 pt-3">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/25 sm:hidden" />
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="font-serif text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Calendar size={18} className="text-plum-600" />
+              <h2 className="flex items-center gap-2 font-serif text-xl font-bold text-white">
+                <CalendarDays size={18} className="text-teal-300" />
                 When is the celebration?
               </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Every date is open — your date is what lets us hold vendors for you.
+              {/* Positive framing on purpose: we take every date. */}
+              <p className="mt-0.5 text-[12px] text-white/55">
+                We take bookings on any date — yours is what lets us hold the Masters.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="-mr-2 rounded-lg p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
             >
               <X size={18} />
             </button>
@@ -129,7 +139,7 @@ export default function EventDateSheet({
               // The past is history, not a choice. Every future date is live.
               if (isPast) {
                 return (
-                  <div className="w-full h-full rounded-xl flex items-center justify-center text-xs text-gray-300">
+                  <div className="flex h-full w-full items-center justify-center rounded-xl text-xs text-white/20">
                     {date.getDate()}
                   </div>
                 )
@@ -147,44 +157,51 @@ export default function EventDateSheet({
                   aria-label={title}
                   aria-pressed={isSelected}
                   className={[
-                    'w-full h-full rounded-xl border text-xs font-semibold relative transition-colors',
-                    'flex flex-col items-center justify-center gap-0.5',
+                    'relative flex h-full w-full flex-col items-center justify-center gap-0.5',
+                    'rounded-xl border text-xs font-semibold transition-colors',
                     day.level.cell,
-                    isSelected ? 'ring-2 ring-plum-500 ring-offset-1' : '',
-                    isToday && !isSelected ? 'ring-1 ring-plum-300' : '',
+                    isSelected ? 'ring-2 ring-teal-300 ring-offset-2 ring-offset-plum-950' : '',
+                    isToday && !isSelected ? 'ring-1 ring-white/30' : '',
                   ].join(' ')}
                 >
                   {date.getDate()}
                   {/* Only marked dates carry a dot. Most days show nothing,
                       which is what keeps the mark meaning something. */}
                   {day.showCount
-                    ? <span className={`w-1 h-1 rounded-full ${day.level.dot}`} />
-                    : <span className="w-1 h-1" />}
+                    ? <span className={`h-1 w-1 rounded-full ${day.level.dot}`} />
+                    : <span className="h-1 w-1" />}
                 </button>
               )
             }}
           />
 
-          {/* One line, and only when there is something on the calendar to
-              explain. No legend of states that mostly don't exist. */}
-          <p className="mt-3 pt-3 border-t border-orange-100 text-[11px] text-gray-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-berry-500 shrink-0" />
+          <p className="mt-3 flex items-center gap-1.5 border-t border-white/10 pt-3 text-[11px] text-white/40">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-teal-400" />
             Dates other families are already asking about
           </p>
 
+          {notice && (
+            <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3.5">
+              <p className="flex items-center gap-1.5 text-sm font-bold text-amber-200">
+                <Zap size={14} />{notice.label} — that's {notice.when}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-amber-100/75">{notice.line}</p>
+            </div>
+          )}
+
           {info?.showCount && (
             <div className={`mt-4 rounded-2xl border p-4 ${info.level.chip}`}>
-              <p className="text-sm font-bold mb-0.5 flex items-center gap-1.5">
+              <p className="mb-0.5 flex items-center gap-1.5 text-sm font-bold">
                 <Users size={14} />{info.headline} for {humanDate(selected)}
               </p>
-              <p className="text-xs leading-relaxed opacity-90">{info.subtext}</p>
+              <p className="text-xs leading-relaxed opacity-85">{info.subtext}</p>
             </div>
           )}
 
           <div className="mt-5">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2 flex items-center gap-1.5">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-white/50">
               <Clock size={13} />
-              What time of day? <span className="text-crimson-600">*</span>
+              What time of day? <span className="text-teal-300">*</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
               {TIME_SLOTS.map(s => (
@@ -194,14 +211,14 @@ export default function EventDateSheet({
                   onClick={() => setSlot(s.key)}
                   aria-pressed={slot === s.key}
                   className={[
-                    'px-3 py-2.5 rounded-xl border text-left transition-colors',
+                    'rounded-xl border px-3 py-2.5 text-left transition-colors',
                     slot === s.key
-                      ? 'bg-plum-600 text-white border-plum-600'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-plum-300',
+                      ? 'border-teal-300 bg-teal-400 text-plum-950'
+                      : 'border-white/10 bg-white/5 text-white/85 hover:border-teal-400/50',
                   ].join(' ')}
                 >
                   <span className="block text-sm font-bold">{s.emoji} {s.label}</span>
-                  <span className={`block text-[11px] ${slot === s.key ? 'text-white/75' : 'text-gray-400'}`}>
+                  <span className={`block text-[11px] ${slot === s.key ? 'text-plum-950/70' : 'text-white/45'}`}>
                     {s.hint}
                   </span>
                 </button>
@@ -212,32 +229,32 @@ export default function EventDateSheet({
           {/* Still requires a target date. Someone genuinely undecided would
               otherwise abandon the form entirely, and a date with a window on
               it is far more useful to a coordinator than no date at all. */}
-          <label className="mt-4 flex items-start gap-2.5 p-3 rounded-xl bg-cream border border-orange-100 cursor-pointer">
+          <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
             <input
               type="checkbox"
               checked={flexible}
               onChange={e => setFlexible(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-plum-600"
+              className="mt-0.5 h-4 w-4 accent-teal-400"
             />
             <span className="flex-1">
-              <span className="block text-sm font-semibold text-gray-800">
+              <span className="block text-sm font-semibold text-white">
                 I'm flexible around this date
               </span>
-              <span className="block text-xs text-gray-500 mt-0.5">
-                We'll look either side of it — often that's how we get you a better vendor.
+              <span className="mt-0.5 block text-xs text-white/50">
+                We'll look either side of it — often that's how we get you a better Master.
               </span>
               {flexible && (
-                <span className="flex gap-1.5 mt-2">
+                <span className="mt-2 flex gap-1.5">
                   {[3, 7].map(w => (
                     <button
                       key={w}
                       type="button"
                       onClick={e => { e.preventDefault(); setWindowDays(w) }}
                       className={[
-                        'px-2.5 py-1 rounded-full text-xs font-bold border transition-colors',
+                        'rounded-full border px-2.5 py-1 text-xs font-bold transition-colors',
                         windowDays === w
-                          ? 'bg-plum-600 text-white border-plum-600'
-                          : 'bg-white border-gray-200 text-gray-600',
+                          ? 'border-teal-300 bg-teal-400 text-plum-950'
+                          : 'border-white/15 bg-white/5 text-white/70',
                       ].join(' ')}
                     >
                       ± {w} days
@@ -249,20 +266,19 @@ export default function EventDateSheet({
           </label>
         </div>
 
-        <div className="shrink-0 px-5 py-4 border-t border-orange-100 bg-white sm:rounded-b-3xl">
+        <div className="shrink-0 border-t border-white/10 px-5 py-4 sm:rounded-b-3xl">
           <button
             type="button"
             onClick={confirm}
             disabled={!canConfirm}
-            className="w-full btn-cta justify-center flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-400 py-3 text-[13px] font-extrabold text-plum-950 transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
           >
             {!selected ? 'Pick a date'
               : !slot ? 'Pick a time of day'
               : (
                 <>
-                  <Sparkles size={16} />
-                  Use this date
-                  <ArrowRight size={16} />
+                  Continue with {humanDate(selected)}
+                  <ArrowRight size={15} />
                 </>
               )}
           </button>

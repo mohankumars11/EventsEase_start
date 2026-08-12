@@ -25,11 +25,20 @@ import { CATALOGUE_PHOTOS } from '../../config/imagery'
  *
  * ── Colour ───────────────────────────────────────────────────────────
  *
- * Berry, not saffron. The yellow was the app's generic CTA accent, so this
- * card read as one more of the same on a screen that already has several;
- * berry-400 on plum is both further from the ground and unused elsewhere on
- * this screen, which is what makes it findable. Dark text on a light berry
- * chip clears contrast comfortably at 11px, which white-on-berry does not.
+ * Teal. Saffron is the app's generic CTA accent, so this card read as one
+ * more yellow button on a screen that already has several; berry replaced it
+ * and read as pink, which is not the register a concierge sells in. Teal is
+ * far from the plum ground, unused elsewhere on this screen, and reads
+ * professional rather than promotional. Dark text on teal-400 clears
+ * contrast comfortably at 11px, which white on it does not.
+ *
+ * ── Why it never says "available dates" ──────────────────────────────
+ *
+ * Advertising the dates we are free on tells a customer we are busy on the
+ * rest. That is both untrue — we take any date — and a scarcity claim
+ * pointed the wrong way, at our own supply instead of at demand. So the card
+ * asks about *their* date and reports demand around it, and the word
+ * "available" appears nowhere in the customer-facing copy.
  *
  * ── What it is allowed to claim ──────────────────────────────────────
  *
@@ -67,7 +76,7 @@ function seasonSlide(now = new Date()) {
       emoji: '💍',
       img: photo('Flowers', 'Wedding'),
       eyebrow: inSeason ? s.label : 'Coming up',
-      tone: 'bg-berry-400/20 text-berry-200',
+      accent: 'text-teal-300',
       title: inSeason ? s.title : s.soon,
       body: s.body,
     }
@@ -101,11 +110,11 @@ export default function DateCheckCard() {
       const total = hot.reduce((n, d) => n + d.count, 0)
       out.push({
         key: 'demand', emoji: '🔥', img: photo('Hampers', 'Wedding'),
-        eyebrow: 'High demand', tone: 'bg-berry-400/20 text-berry-200',
+        eyebrow: 'High demand', accent: 'text-teal-300',
         title: hot.length === 1
           ? 'One date is in high demand'
           : `${hot.length} dates are in high demand`,
-        body: `${total} enquiries already${city ? ` in ${city}` : ''} — check yours before the vendors are committed.`,
+        body: `${total} enquiries already${city ? ` in ${city}` : ''} — check yours before the Masters are committed.`,
       })
     }
 
@@ -113,8 +122,8 @@ export default function DateCheckCard() {
     // what the card is before it starts selling.
     out.push({
       key: 'check', emoji: '📅', img: photo('Cakes', 'Birthday'),
-      eyebrow: 'Check first', tone: 'bg-white/15 text-white/85',
-      title: 'Is your date still open?',
+      eyebrow: 'Check first', accent: 'text-white/60',
+      title: 'Is your date still free?',
       body: 'Check the day you have in mind before you plan anything else.',
     })
 
@@ -124,27 +133,27 @@ export default function DateCheckCard() {
     out.push(
       {
         key: 'weekend', emoji: '🗓️', img: photo('Flowers', 'Wedding'),
-        eyebrow: 'Weekends', tone: 'bg-teal-400/20 text-teal-200',
+        eyebrow: 'Weekends', accent: 'text-teal-300',
         title: 'Weekends book first',
         body: 'Saturdays are the first thing families ask for.',
       },
       {
         key: 'hold', emoji: '🔒', img: photo('Hampers', 'Diwali'),
-        eyebrow: 'Hold your slot', tone: 'bg-berry-400/20 text-berry-200',
+        eyebrow: 'Hold your slot', accent: 'text-teal-300',
         title: 'Tell us the date, we hold the team',
-        body: 'A coordinator is reserved for your day the moment we know it.',
+        body: 'A coordinator and your Masters are held the moment we know it.',
       },
       {
         key: 'free', emoji: '🤝', img: photo('Flowers', 'Anniversary'),
-        eyebrow: 'No cost', tone: 'bg-emerald-400/20 text-emerald-200',
+        eyebrow: 'No cost', accent: 'text-emerald-300',
         title: 'Free to enquire',
         body: 'One coordinator, one price, and you approve every rupee.',
       },
       {
         key: 'early', emoji: '⏳', img: photo('Cakes', 'Baby Shower'),
-        eyebrow: 'Lead time', tone: 'bg-sky-400/20 text-sky-200',
+        eyebrow: 'Lead time', accent: 'text-sky-300',
         title: 'The earlier we know, the more we hold',
-        body: 'Decorators and caterers commit weeks ahead.',
+        body: 'Our decor and catering Masters commit weeks ahead.',
       },
     )
     return out
@@ -184,7 +193,7 @@ export default function DateCheckCard() {
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-berry-400/10 blur-2xl"
+            className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-teal-400/10 blur-2xl"
           />
 
           <span className="flex items-center gap-2.5">
@@ -204,16 +213,19 @@ export default function DateCheckCard() {
             </span>
 
             {/* Height-locked so a two-line body never resizes the card
-                mid-rotation and shoves the page under the reader's thumb. */}
-            <span className="h-[42px] min-w-0 flex-1 overflow-hidden">
+                mid-rotation and shoves the page under the reader's thumb.
+                Centred rather than top-aligned: a pill plus two lines never
+                fitted the box and the third line clipped. The eyebrow is
+                plain coloured text now — same signal, none of the padding. */}
+            <span className="flex h-[46px] min-w-0 flex-1 flex-col justify-center overflow-hidden">
               <span key={slide.key} className="block animate-fade-in">
-                <span className={`inline-block rounded px-1.5 py-px text-[9px] font-extrabold uppercase tracking-wide ${slide.tone}`}>
+                <span className={`block text-[9px] font-extrabold uppercase leading-none tracking-[0.12em] ${slide.accent}`}>
                   {slide.eyebrow}
                 </span>
-                <span id="date-check-heading" className="mt-0.5 block truncate text-[13px] font-extrabold text-white">
+                <span id="date-check-heading" className="mt-1 block truncate text-[13px] font-extrabold leading-tight text-white">
                   {slide.title}
                 </span>
-                <span className="block truncate text-[10px] leading-tight text-white/70">
+                <span className="mt-0.5 block truncate text-[10px] leading-tight text-white/60">
                   {slide.body}
                 </span>
               </span>
@@ -222,9 +234,9 @@ export default function DateCheckCard() {
 
           {/* The one thing that never moves. */}
           <span className="mt-2 flex items-center gap-2">
-            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-berry-400 py-1.5 text-[11px] font-extrabold text-plum-950">
+            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-1.5 text-[11px] font-extrabold text-plum-950">
               <CalendarSearch size={12} />
-              Available dates
+              Check your date
               <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
             </span>
             <span className="flex shrink-0 gap-1" aria-hidden="true">
@@ -232,7 +244,7 @@ export default function DateCheckCard() {
                 <span
                   key={s.key}
                   className={`h-1 rounded-full transition-all duration-300 ${
-                    n === i ? 'w-3 bg-berry-400' : 'w-1 bg-white/25'
+                    n === i ? 'w-3 bg-teal-400' : 'w-1 bg-white/25'
                   }`}
                 />
               ))}
