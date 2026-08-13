@@ -103,6 +103,10 @@ export const SERVICE_GROUPS = [
     id: 'core',
     label: 'The basics',
     hint: 'Most celebrations need these',
+    surface: 'bg-gradient-to-br from-slate-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-slate-400 to-slate-600',
+    tile: 'bg-slate-50 text-slate-600 ring-slate-200/70',
+    ink: 'text-slate-700',
     services: [
       { id: 'venue', name: 'Venue booking', emoji: '🏛️', unit: 'fixed', base: 60000, scales: true,
         desc: 'Banquet hall, garden, rooftop or lawn', note: 'Skip this if you have your own venue or are at home' },
@@ -118,6 +122,10 @@ export const SERVICE_GROUPS = [
     id: 'memories',
     label: 'Photos & video',
     hint: 'The part you still have in twenty years',
+    surface: 'bg-gradient-to-br from-sky-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-sky-400 to-blue-600',
+    tile: 'bg-sky-50 text-sky-700 ring-sky-200/70',
+    ink: 'text-sky-700',
     services: [
       { id: 'photography', name: 'Photography', emoji: '📸', unit: 'fixed', base: 35000, scales: true,
         desc: 'Candid and portrait coverage, edited album' },
@@ -133,6 +141,10 @@ export const SERVICE_GROUPS = [
     id: 'entertainment',
     label: 'Music & entertainment',
     hint: 'What keeps the room going',
+    surface: 'bg-gradient-to-br from-fuchsia-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-fuchsia-400 to-purple-600',
+    tile: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200/70',
+    ink: 'text-fuchsia-700',
     services: [
       { id: 'dj', name: 'DJ & sound system', emoji: '🎵', unit: 'fixed', base: 22000, scales: true,
         desc: 'Console, PA, sub-woofers and an operator' },
@@ -156,6 +168,10 @@ export const SERVICE_GROUPS = [
     id: 'ritual',
     label: 'Rituals & tradition',
     hint: 'Booked most for poojas, weddings and namakarana',
+    surface: 'bg-gradient-to-br from-amber-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-amber-400 to-orange-600',
+    tile: 'bg-amber-50 text-amber-700 ring-amber-200/70',
+    ink: 'text-amber-700',
     services: [
       { id: 'priest', name: 'Priest / purohit', emoji: '🙏', unit: 'fixed', base: 6000, scales: false,
         desc: 'Experienced purohit for the rite, in your language' },
@@ -169,6 +185,10 @@ export const SERVICE_GROUPS = [
     id: 'people',
     label: 'Looking after people',
     hint: 'The things guests notice when they are missing',
+    surface: 'bg-gradient-to-br from-emerald-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-emerald-400 to-teal-600',
+    tile: 'bg-emerald-50 text-emerald-700 ring-emerald-200/70',
+    ink: 'text-emerald-700',
     services: [
       { id: 'makeup', name: 'Makeup & hair styling', emoji: '💄', unit: 'fixed', base: 15000, scales: false,
         desc: 'Professional artist for the family' },
@@ -189,6 +209,10 @@ export const SERVICE_GROUPS = [
     id: 'takeaway',
     label: 'What guests take home',
     hint: 'Priced per guest, so it moves with your headcount',
+    surface: 'bg-gradient-to-br from-rose-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-rose-400 to-pink-600',
+    tile: 'bg-rose-50 text-rose-700 ring-rose-200/70',
+    ink: 'text-rose-700',
     services: [
       { id: 'return_gifts', name: 'Return gifts', emoji: '🎁', unit: 'per_guest', base: 150,
         desc: 'Packed and labelled, one per guest' },
@@ -206,6 +230,35 @@ export const SERVICE_GROUPS = [
 
 export const ALL_SERVICES = SERVICE_GROUPS.flatMap(g => g.services)
 export const SERVICE_BY_ID = Object.fromEntries(ALL_SERVICES.map(s => [s.id, s]))
+
+/**
+ * Which group a service belongs to, and therefore what colour it is.
+ *
+ * ── Why the groups carry a palette ──────────────────────────────────────
+ * The service list is thirty-nine white rows. Scrolling it, every card looks
+ * like the one above it, so finding "the photographer" means reading names
+ * until one matches — and the grouping that would have helped (`label`) is
+ * only a heading somebody has already scrolled past.
+ *
+ * Colouring by GROUP rather than by service is what makes that a system
+ * instead of a paint chart: six hues for six kinds of thing, so photography
+ * and videography look related because they are, and a customer who has
+ * learnt that blue means "photos and video" can find the next one without
+ * reading at all. Thirty-nine individual colours would carry no information —
+ * with nothing shared between them there is nothing to learn.
+ *
+ * Same construction rule as the tier palette in celebrationTiers.js:
+ * `surface` is a wash that reaches white before the body copy, `spine` is the
+ * one place the colour is saturated, `tile` sits behind the emoji, and `ink`
+ * is for a label, never a paragraph.
+ */
+export const GROUP_BY_SERVICE_ID = Object.fromEntries(
+  SERVICE_GROUPS.flatMap(g => g.services.map(s => [s.id, g])),
+)
+
+export function groupForService(serviceId) {
+  return GROUP_BY_SERVICE_ID[serviceId] ?? SERVICE_GROUPS[0]
+}
 
 /** How many units of a per_unit service an event this size needs. */
 export function defaultQty(service, guestCount) {

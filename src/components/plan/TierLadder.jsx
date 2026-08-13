@@ -203,8 +203,10 @@ export default function TierLadder({
                 and a customer is right to read that as one of them lying. */}
             {liveQuote && (
               <div className="mt-3.5 rounded-xl bg-white/85 px-4 py-3 ring-1 ring-black/5">
+                {/* The name stands on its own — "a full The Full Celebration"
+                    is what prefixing it produces on half the ladder. */}
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
-                  A full {chosen.name}, for {guestCount} guests
+                  {chosen.name} — everything in, for {guestCount} guests
                 </p>
                 <p className="mt-0.5 text-2xl font-extrabold leading-none text-gray-900">
                   {formatINR(liveQuote.range.low)} – {formatINR(liveQuote.range.high)}

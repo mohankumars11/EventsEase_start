@@ -80,6 +80,7 @@ export default function GuestScaleDial({
   bespoke = false,
   onQuietChange,
   onCommit,
+  verdict = null,
 }) {
   const step = stepFor(guestCount)
 
@@ -228,6 +229,15 @@ export default function GuestScaleDial({
         A rough number is enough — tap a rung to jump to it. Everything on this page reprices as
         you move.
       </p>
+
+      {/* ── The verdict ────────────────────────────────────────
+          Rendered inside this control rather than beside it, because the
+          complaint it answers is precisely that the answer was somewhere
+          else. Nine 40px segments with no room for a word between them
+          cannot say "you are in The Full Celebration"; a card attached to
+          the bottom of the same control can, and does, on every keystroke.
+          See ScaleVerdict. */}
+      {verdict}
     </section>
   )
 }

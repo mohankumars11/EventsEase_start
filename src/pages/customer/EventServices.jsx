@@ -19,6 +19,7 @@ import ServiceOptionCard from '../../components/event/ServiceOptionCard'
 import TierPackageCard from '../../components/event/TierPackageCard'
 import OccasionPulse from '../../components/event/OccasionPulse'
 import GuestScaleDial from '../../components/event/GuestScaleDial'
+import ScaleVerdict from '../../components/event/ScaleVerdict'
 import TwoDoors from '../../components/event/TwoDoors'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import EventFooter from '../../components/layout/EventFooter'
@@ -187,10 +188,15 @@ export default function EventServices() {
   const commitGuests = useCallback((next, explicitTierId) => {
     const n = Math.max(0, Math.round(next) || 0)
     setGuestCount(n)
-    const resolved = explicitTierId ?? tierForGuests(n)?.id ?? null
-    if (!resolved || resolved === BESPOKE_TIER.id) { setTierPrompt(null); return }
-    if (explicitTierId || resolved !== selectedTier) setTierPrompt(resolved)
-  }, [selectedTier])
+    // Only a rung tapped BY NAME opens the dialog now. Crossing a boundary
+    // used to open it too, which was the old answer to "the page picked my
+    // scale silently" — but it fires mid-decision, covers the ladder being
+    // read, and by the third one it is dismissed unread. ScaleVerdict states
+    // the same thing permanently, in words, under the control that caused it,
+    // so there is no longer a silence for a modal to fill.
+    if (!explicitTierId || explicitTierId === BESPOKE_TIER.id) { setTierPrompt(null); return }
+    setTierPrompt(explicitTierId)
+  }, [])
 
   /** Agreeing to a scale: adopt it, show it, and get out of the way. */
   const confirmTier = useCallback(tierId => {
@@ -210,6 +216,23 @@ export default function EventServices() {
       document.getElementById(`tier-${tierId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }, [guestCount])
+
+  /**
+   * Show me that scale, without adopting it.
+   *
+   * The verdict's "See what's included" — the half of the audience that wants
+   * to read the detail before committing to anything. Separate from
+   * confirmTier() on purpose: looking at a rung is not choosing it, and a page
+   * that treats a glance as a decision is a page people stop glancing at.
+   */
+  const showTier = useCallback(tierId => {
+    setActiveTab('packages')
+    afterPaint(() => {
+      document
+        .getElementById(tierId ? `tier-${tierId}` : 'tier-bespoke')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
 
   /** Picking a door from the top of the page. */
   const chooseDoor = useCallback(tab => {
@@ -475,6 +498,18 @@ export default function EventServices() {
             bespoke={bespoke}
             onQuietChange={setGuestCount}
             onCommit={commitGuests}
+            verdict={
+              <ScaleVerdict
+                tier={bespoke ? BESPOKE_TIER : activeTier}
+                quote={liveQuote}
+                guestCount={guestCount}
+                eventId={eventId}
+                bespoke={bespoke}
+                suggested={bespoke ? null : tiers.find(t => t.id === suggestedTierId) ?? null}
+                onAdoptSuggested={() => confirmTier(suggestedTierId)}
+                onSeeDetails={() => showTier(bespoke ? null : activeTier?.id)}
+              />
+            }
           />
         </div>
 
@@ -602,8 +637,10 @@ export default function EventServices() {
               </div>
             ))}
 
-            {/* The honest exit past the top rung. No price, on purpose. */}
-            <div className="event-glass p-5">
+            {/* The honest exit past the top rung. No price, on purpose.
+                Anchored so the verdict can scroll a customer past the ladder
+                to it, which is where a 6,000-guest count belongs. */}
+            <div id="tier-bespoke" style={{ scrollMarginTop: '116px' }} className="event-glass p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-2xl" aria-hidden="true">{BESPOKE_TIER.emoji}</span>
                 <h3 className="text-[16px] font-extrabold text-white">{BESPOKE_TIER.name}</h3>

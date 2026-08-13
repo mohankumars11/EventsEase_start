@@ -7,7 +7,7 @@ import { serviceOptionsFor, optionCountFor } from '../../data/serviceOptions'
 import { isBookable } from '../../data/singleService'
 import { CUISINES, CUISINE_GROUPS, CUISINE_BY_ID, COURSES, dishesFor } from '../../data/cuisineMenus'
 import { VISIBLE_DECOR_LEVELS, DECOR_THEMES, DECOR_ADDONS } from '../../data/decorPackages'
-import { serviceCost, serviceUnitLabel, defaultQty } from '../../data/servicePricing'
+import { serviceCost, serviceUnitLabel, defaultQty, groupForService } from '../../data/servicePricing'
 import { perPlateFor, decorCostFor } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
 import RatingBadge from '../reviews/RatingBadge'
@@ -48,23 +48,29 @@ export default function ServiceOptionCard({
 }) {
   const [open, setOpen] = useState(false)
   const options = serviceOptionsFor(service.id)
+  // The kind of thing this is — photos, food, ritual — and therefore its
+  // colour. Six hues across thirty-nine services, so the palette teaches
+  // something instead of merely decorating. See groupForService().
+  const group = groupForService(service.id)
 
   return (
     <div
-      className="event-card rise-in"
+      className={`event-card rise-in ${group.surface ?? ''}`}
       style={{ '--rise-delay': `${Math.min(index, 12) * 45}ms` }}
     >
+      <span className={`absolute inset-y-0 left-0 z-10 w-1.5 ${group.spine ?? ''}`} aria-hidden="true" />
+
       {/* ── The row ────────────────────────────────────────────── */}
       <button
         type="button"
         onClick={() => options && setOpen(o => !o)}
         aria-expanded={options ? open : undefined}
         disabled={!options}
-        className={`flex w-full items-start gap-3 p-4 text-left transition-colors ${
-          options ? 'hover:bg-gray-50' : 'cursor-default'
+        className={`flex w-full items-start gap-3 py-4 pl-6 pr-4 text-left transition-colors ${
+          options ? 'hover:bg-black/[0.03]' : 'cursor-default'
         }`}
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-xl ring-1 ring-black/5">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl ring-1 ${group.tile ?? 'bg-gray-50 ring-black/5'}`}>
           {service.emoji}
         </span>
 
@@ -98,7 +104,7 @@ export default function ServiceOptionCard({
 
       {/* ── What is actually inside it ─────────────────────────── */}
       {open && options && (
-        <div className="animate-fade-in border-t border-gray-100 bg-gray-50/70 px-4 py-4">
+        <div className="animate-fade-in border-t border-black/5 bg-white/70 py-4 pl-6 pr-4">
           {options.blurb && (
             <p className="mb-3.5 flex items-start gap-1.5 text-[12px] leading-relaxed text-gray-600">
               <Info size={12} className="mt-0.5 shrink-0 text-gray-400" />
