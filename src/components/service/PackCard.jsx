@@ -1,5 +1,6 @@
 import { Check, Star, Minus, Plus, Info } from 'lucide-react'
 import OptionArt from './OptionArt'
+import ImageSourceBadge from '../shop/ImageSourceBadge'
 import { packCost, packUnitLabel, defaultPackQty } from '../../data/servicePacks'
 import { PACK_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'
@@ -25,6 +26,7 @@ import { formatINR } from '../../utils/format'
 export default function PackCard({
   pack, guestCount, selected, qty, onSelect, onQty, index = 0,
 }) {
+  const photo = PACK_PHOTOS[pack.id]
   const count = qty ?? defaultPackQty(pack, guestCount)
   const total = packCost(pack, guestCount, count)
   const isUnit = pack.unit === 'unit'
@@ -48,7 +50,7 @@ export default function PackCard({
           emoji={pack.emoji}
           height={96}
           seed={index + pack.name.length}
-          photo={PACK_PHOTOS[pack.id]}
+          photo={photo}
           alt={`${pack.name} — representative photograph`}
         >
           {pack.popular && (
@@ -60,6 +62,15 @@ export default function PackCard({
             <span className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-saffron-400 text-plum-950 shadow-md">
               <Check size={13} strokeWidth={3.5} />
             </span>
+          )}
+          {/* Same non-negotiable rule as every other image in this app — see
+              the note in ThemeCard and the header of DecorSampleGallery. */}
+          {photo?.url && (
+            <ImageSourceBadge
+              source={photo.source}
+              size="sm"
+              className="absolute bottom-2 left-2 !px-1.5 !py-0 !text-[8.5px] !gap-0.5"
+            />
           )}
         </OptionArt>
 

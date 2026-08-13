@@ -1,5 +1,6 @@
 import { Check, Star } from 'lucide-react'
 import OptionArt from './OptionArt'
+import ImageSourceBadge from '../shop/ImageSourceBadge'
 import { themeCost } from '../../data/decorThemes'
 import { THEME_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'
@@ -25,6 +26,7 @@ import { formatINR } from '../../utils/format'
  */
 export default function ThemeCard({ theme, scaleId, guestCount, selected, onSelect, index = 0 }) {
   const cost = themeCost(theme, scaleId, guestCount)
+  const photo = THEME_PHOTOS[theme.id]
 
   return (
     <button
@@ -40,7 +42,7 @@ export default function ThemeCard({ theme, scaleId, guestCount, selected, onSele
         tint={theme.tint}
         emoji={theme.emoji}
         seed={index + theme.name.length}
-        photo={THEME_PHOTOS[theme.id]}
+        photo={photo}
         alt={`${theme.name} — representative photograph of a similar setup`}
       >
         {theme.popular && (
@@ -52,6 +54,19 @@ export default function ThemeCard({ theme, scaleId, guestCount, selected, onSele
           <span className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-saffron-400 text-plum-950 shadow-md">
             <Check size={13} strokeWidth={3.5} />
           </span>
+        )}
+        {/* On the image, on every card. DecorSampleGallery states the rule and
+            calls it non-negotiable: Sambramo has delivered nothing, every
+            photograph here is a licensed lookalike, and a grid of 89 unbadged
+            stock photos is precisely the "our recent work" impression that
+            component refuses to give. Bottom-left, where the art's own shadow
+            already sits, so it does not fight the "Most booked" flag. */}
+        {photo?.url && (
+          <ImageSourceBadge
+            source={photo.source}
+            size="sm"
+            className="absolute bottom-2 left-2 !px-1.5 !py-0 !text-[8.5px] !gap-0.5"
+          />
         )}
       </OptionArt>
 

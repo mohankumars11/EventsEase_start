@@ -161,6 +161,14 @@ export default function MenuComposer({
           {CUISINES.length} kitchens. Every dish under each one is listed, and every
           one is available.
         </p>
+        {/* The picker tiles are 110px wide — too small for the badge that sits
+            on every other image in this app — so the same statement is made
+            once for the row. The rule is not negotiable (see the header of
+            DecorSampleGallery); only where it is printed changes. */}
+        <p className="mt-1 text-[10.5px] leading-snug text-white/35">
+          Photographs are of similar meals, not of food we have served — we are
+          pre-launch. The dishes listed are what actually goes on your table.
+        </p>
 
         <div className="mt-3 space-y-2.5">
           {CUISINE_GROUPS.map(group => (
