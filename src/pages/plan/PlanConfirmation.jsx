@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { BRAND, CUSTOMER_TIMELINE, EVENT_TYPES } from '../../config/sambramo'
+import { LOCK_AMOUNT } from '../../data/celebrationTiers'
+import { formatINR } from '../../utils/format'
+import PriceLock from '../../components/plan/PriceLock'
 
 export default function PlanConfirmation() {
   const [params] = useSearchParams()
@@ -18,6 +21,27 @@ export default function PlanConfirmation() {
       .single()
       .then(({ data }) => setEvent(data))
   }, [eventId])
+
+  /**
+   * Record the claim on the event row.
+   *
+   * Migration 038 adds these columns and is applied by hand in the Supabase
+   * SQL editor — `git push` does not run it. Until it is applied Postgres
+   * answers 42703 and this logs and moves on: the customer still gets the
+   * honest "a person is checking for it" panel, and the coordinator still
+   * reconciles by hand, which is what happens anyway since UPI tells this app
+   * nothing. Never worth failing in front of somebody who has just paid.
+   */
+  async function claimLock() {
+    if (!eventId) return
+    const { error: err } = await supabase.from('events').update({
+      lock_payment_status: 'claimed',
+      lock_payment_amount: LOCK_AMOUNT,
+      lock_payment_ref:    eventId,
+      lock_claimed_at:     new Date().toISOString(),
+    }).eq('id', eventId)
+    if (err) console.warn('Price-lock claim not recorded (migration 038 applied?):', err.message)
+  }
 
   const eventType = event ? EVENT_TYPES.find(et => et.id === event.event_type) : null
 
@@ -129,6 +153,31 @@ export default function PlanConfirmation() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── The hold ─────────────────────────────────────────
+            The wizard collects a date and a budget but never produces a
+            quote, so this is framed on the date rather than on a price that
+            does not exist yet — promising to "lock your price" on a screen
+            that has never shown one would be selling a number nobody has
+            calculated. The ₹1,000 is the same money doing the same job as in
+            the builder: it stops the date being offered to anyone else while
+            a coordinator prices the request. */}
+        {/* max-w-md rather than the page's max-w-2xl: this is the same panel
+            the builder and the cart end on, and at 672px its disclaimer runs
+            to lines twice the length of theirs and the QR floats in a field of
+            white. One width everywhere it appears. */}
+        <div className="mx-auto mb-8 max-w-md">
+          <PriceLock
+            reference={eventId}
+            headline={`Hold your date for ${formatINR(LOCK_AMOUNT)}`}
+            blurb="Your coordinator stops offering this date to anyone else while they price your request. Adjusted against your final invoice — and refunded in full if you decide not to go ahead."
+            claimedBody={`UPI does not tell us automatically when money arrives, so a person is matching your ${formatINR(LOCK_AMOUNT)} against the bank. You will get a message once it is confirmed and your date is held. It is adjusted against your final invoice, and refundable.`}
+            onClaim={claimLock}
+            onSkip={() => navigate('/dashboard/customer/events')}
+            skipLabel="Not now — just send the request"
+            whatsappText={`Hi Sambramo, I'd like to hold my date (ref ${eventId?.slice(0, 8)?.toUpperCase() ?? ''}). Please send me payment details.`}
+          />
         </div>
 
         {/* CTAs */}

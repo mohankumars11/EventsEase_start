@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, ShieldCheck, Receipt, Gift,
+  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, Receipt, Gift,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -27,7 +27,7 @@ import QuotePanel from '../../components/plan/QuotePanel'
 import ReviewBoard from '../../components/plan/ReviewBoard'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import BuilderActionBar from '../../components/plan/BuilderActionBar'
-import LockPayment from '../../components/plan/LockPayment'
+import PriceLock from '../../components/plan/PriceLock'
 // This page's own ground and its ticket/motion styles. Separate from
 // index.css only because that file is carrying an unrelated in-flight change
 // — see the header of planBuilder.css.
@@ -538,24 +538,14 @@ export default function CelebrationBuilder() {
             )}
           </div>
 
-          {lockClaimed ? (
-            <div className="card p-5 text-center space-y-2 border-2 border-green-200 bg-green-50">
-              <ShieldCheck size={28} className="text-green-600 mx-auto" />
-              <p className="font-bold text-gray-900">Payment noted — we are checking for it now</p>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                UPI does not tell us automatically when money arrives, so a person is matching your{' '}
-                {formatINR(LOCK_AMOUNT)} against the bank. You will get a message once it is confirmed and your date is
-                held. It is adjusted against your final invoice, and refundable.
-              </p>
-            </div>
-          ) : (
-            <LockPayment
-              enquiryId={enquiryId}
-              quote={quote}
-              onClaimed={claimLock}
-              onSkip={() => navigate('/dashboard/customer/requests')}
-            />
-          )}
+          <PriceLock
+            reference={enquiryId}
+            quote={quote}
+            claimed={lockClaimed}
+            onClaim={claimLock}
+            onSkip={() => navigate('/dashboard/customer/requests')}
+            whatsappText={`Hi Sambramo, I'd like to hold my quote (ref ${enquiryId?.slice(0, 8)?.toUpperCase() ?? ''}) — ${tier?.name ?? ''} for ${guestCount} guests.`}
+          />
 
           <RewardsCard occasionName={occasionName} />
 

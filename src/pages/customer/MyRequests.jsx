@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning, MessageCircle } from 'lucide-react'
+import { Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning, MessageCircle, ShieldCheck } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
@@ -8,6 +8,8 @@ import { BRAND } from '../../config/sambramo'
 import AppBar from '../../components/layout/AppBar'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
+import PriceLock from '../../components/plan/PriceLock'
+import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 
 const STATUS_CSS = {
   open:      { bg: 'bg-blue-100',  text: 'text-blue-700',  label: 'Under review' },
@@ -18,6 +20,18 @@ const STATUS_CSS = {
 
 const CANCEL_REASONS = ['Changed my mind', 'Found another option', 'Requested by mistake', 'Other']
 
+/**
+ * Where this request stands on the price lock.
+ *
+ * Reads as 'none' when the column is absent, which is what happens on a
+ * database where migration 034 has not been applied yet — the offer still
+ * shows, the claim write fails quietly, and a coordinator reconciles by hand
+ * exactly as they do for every other UPI payment in this app.
+ */
+function lockState(enq) {
+  return enq.lock_payment_status ?? 'none'
+}
+
 export default function MyRequests() {
   const { user } = useAuth()
   const [enquiries, setEnquiries] = useState([])
@@ -25,6 +39,7 @@ export default function MyRequests() {
   const [myReviews, setMyReviews] = useState([])
   const [reviewing, setReviewing] = useState(null) // { subject, source }
   const [actionModal, setActionModal] = useState(null) // { kind: 'cancel'|'complaint', enquiry }
+  const [locking, setLocking] = useState(null)         // enquiry id whose lock panel is open
 
   const loadEnquiries = useCallback(() => {
     if (!user) return
@@ -53,6 +68,29 @@ export default function MyRequests() {
       message,
     })
     if (error) throw error
+  }
+
+  /**
+   * Hold a request that has already been sent.
+   *
+   * The lock is offered at the end of every flow, but "the end" is a screen
+   * somebody closes — and the decision to hold a date is exactly the one a
+   * family talks over for a day first. Without this the only way back to it
+   * was to rebuild the whole configuration, so the offer effectively expired
+   * the moment the tab did.
+   *
+   * Best-effort, and reloads so the row shows the claimed state from the
+   * database rather than from a local flag that a refresh would forget.
+   */
+  async function claimLock(enquiryId) {
+    const { error } = await supabase.from('service_enquiries').update({
+      lock_payment_status: 'claimed',
+      lock_payment_amount: LOCK_AMOUNT,
+      lock_payment_ref:    enquiryId,
+      lock_claimed_at:     new Date().toISOString(),
+    }).eq('id', enquiryId)
+    if (error) console.warn('Price-lock claim not recorded (migration 034 applied?):', error.message)
+    loadEnquiries()
   }
 
   function loadMyReviews() {
@@ -197,6 +235,62 @@ export default function MyRequests() {
                         </a>
                       )}
                     </div>
+                  )}
+
+                  {/* ── The price hold ─────────────────────────────
+                      Only while the request is still open and unheld: once a
+                      coordinator has answered, the number to act on is the
+                      quote above, not a hold on an estimate they have already
+                      replaced. */}
+                  {enq.status === 'open' && lockState(enq) === 'none' && (
+                    locking === enq.id ? (
+                      <div className="mt-3">
+                        <PriceLock
+                          reference={enq.id}
+                          headline={`Hold this price for ${formatINR(LOCK_AMOUNT)}`}
+                          onClaim={() => claimLock(enq.id)}
+                          onSkip={() => setLocking(null)}
+                          skipLabel="Not now"
+                          whatsappText={`Hi Sambramo, I'd like to hold my request (ref ${enq.id.slice(0, 8).toUpperCase()}) for "${enq.event_name}". Please send me payment details.`}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setLocking(enq.id)}
+                        className="mt-3 flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-saffron-50 px-4 py-3 text-left transition-colors hover:border-amber-300"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-gray-900">
+                            🔒 Hold this price for {formatINR(LOCK_AMOUNT)}
+                          </span>
+                          <span className="block text-xs leading-snug text-gray-500">
+                            Stops your date being offered to anyone else. Adjusted against your final
+                            invoice, refunded if you don't go ahead.
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-xs font-bold text-amber-700">Pay</span>
+                      </button>
+                    )
+                  )}
+
+                  {lockState(enq) === 'claimed' && (
+                    <p className="mt-3 flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+                      <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                      <span>
+                        <strong>{formatINR(enq.lock_payment_amount ?? LOCK_AMOUNT)} hold recorded.</strong> A person is
+                        matching it against the bank — you'll get a message once it is confirmed.
+                      </span>
+                    </p>
+                  )}
+
+                  {lockState(enq) === 'confirmed' && (
+                    <p className="mt-3 flex items-start gap-2 rounded-2xl bg-green-50 px-4 py-3 text-xs leading-relaxed text-green-800">
+                      <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                      <span>
+                        <strong>Your date is held.</strong> {formatINR(enq.lock_payment_amount ?? LOCK_AMOUNT)} received
+                        and adjusted against your final invoice.
+                      </span>
+                    </p>
                   )}
 
                   <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-gray-50">

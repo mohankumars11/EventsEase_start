@@ -8,15 +8,28 @@ import { formatINR } from '../../utils/format'
 import { friendlyError } from '../../context/ToastContext'
 import AppBar from '../../components/layout/AppBar'
 import BookingSheet from '../../components/customer/BookingSheet'
+import PriceLock from '../../components/plan/PriceLock'
+import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 
 export default function Cart() {
   const { cart, dispatch, totalCount, getEventDetails } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [checkoutDone, setCheckoutDone] = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [error, setError]               = useState(null)
   const [editingEvent, setEditingEvent] = useState(null) // eventId currently being edited
+
+  /**
+   * What was just sent — ids and the estimate — captured before the cart is
+   * emptied.
+   *
+   * The confirmation screen used to be a boolean, which was enough when all
+   * it had to say was "sent". It now offers the price lock, and that needs
+   * two things the cleared cart no longer holds: the enquiry ids to record a
+   * claim against, and the band the customer was quoted so the panel can
+   * name what the ₹1,000 is holding.
+   */
+  const [sent, setSent] = useState(null) // { ids: string[], low, high }
 
   const hasAnything = cart.items.length > 0 || cart.packages.length > 0
 
@@ -140,11 +153,25 @@ export default function Cart() {
         }
       })
 
-      const { error: err } = await supabase.from('service_enquiries').insert(rows)
+      // `.select('id')` so the confirmation screen can offer the price lock
+      // against the rows it just created. Without the ids there is nothing to
+      // record a claim on, which is how this screen ended up being the one
+      // ending that never mentioned the lock at all.
+      const { data: inserted, error: err } = await supabase
+        .from('service_enquiries')
+        .insert(rows)
+        .select('id')
       if (err) throw err
 
+      const estimateLow  = pkgLow + servicesTotal
+      const estimateHigh = (pkgHigh || pkgLow) + servicesTotal
+
       dispatch({ type: 'CLEAR' })
-      setCheckoutDone(true)
+      setSent({
+        ids:  (inserted ?? []).map(r => r.id),
+        low:  estimateLow  > 0 ? estimateLow  : null,
+        high: estimateHigh > 0 ? estimateHigh : null,
+      })
     } catch (err) {
       setError(friendlyError(err, 'Something went wrong submitting your requirements. Please try again.'))
     } finally {
@@ -152,7 +179,25 @@ export default function Cart() {
     }
   }
 
-  if (checkoutDone) {
+  /**
+   * Record the claim against every enquiry this send created.
+   *
+   * One cart can be several enquiries — one per event — and the ₹1,000 holds
+   * the request as it was sent, so all of them carry the claim and the same
+   * reference. Best-effort by design: see PriceLock.
+   */
+  async function claimLock() {
+    if (!sent?.ids?.length) return
+    const { error: err } = await supabase.from('service_enquiries').update({
+      lock_payment_status: 'claimed',
+      lock_payment_amount: LOCK_AMOUNT,
+      lock_payment_ref:    sent.ids[0],
+      lock_claimed_at:     new Date().toISOString(),
+    }).in('id', sent.ids)
+    if (err) console.warn('Price-lock claim not recorded (migration 034 applied?):', err.message)
+  }
+
+  if (sent) {
     return (
       <div className="min-h-screen bg-cream pb-bottom-nav">
         {/* No back arrow and no cart icon on the confirmation: the cart it
@@ -169,12 +214,34 @@ export default function Cart() {
             Your requirements have been submitted. Our concierge team will review everything
             and get back to you with confirmed pricing within 24 hours.
           </p>
+          {sent.low && (
+            <p className="inline-block rounded-xl bg-white px-4 py-2 text-sm font-bold text-gray-800 ring-1 ring-amber-200">
+              {sent.high && sent.high !== sent.low
+                ? `${formatINR(sent.low)} – ${formatINR(sent.high)}`
+                : formatINR(sent.low)}{' '}
+              <span className="font-medium text-gray-400">estimated</span>
+            </p>
+          )}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left space-y-1">
             <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">What happens next</p>
             <p className="text-sm text-gray-600">① Our team reviews your requirements</p>
             <p className="text-sm text-gray-600">② You receive confirmed pricing in My Requests</p>
             <p className="text-sm text-gray-600">③ Confirm and we handle the rest</p>
           </div>
+
+          {/* The hold, offered here rather than only in the builder.
+              This is the ending that the eight scales reach when they are
+              added from an occasion page, and it used to say "no payment now"
+              and stop — so the price lock existed for one route through the
+              app and was invisible on the one most customers take. */}
+          <PriceLock
+            reference={sent.ids[0]}
+            headline={`Hold this price for ${formatINR(LOCK_AMOUNT)}`}
+            onClaim={claimLock}
+            onSkip={() => navigate('/dashboard/customer/requests')}
+            whatsappText={`Hi Sambramo, I'd like to hold my request (ref ${sent.ids[0]?.slice(0, 8)?.toUpperCase() ?? ''}). Please send me payment details.`}
+          />
+
           <div className="flex flex-col gap-2.5">
             <button
               onClick={() => navigate('/dashboard/customer/requests')}
@@ -463,7 +530,8 @@ export default function Cart() {
               {!submitting && <ChevronRight size={18} />}
             </button>
             <p className="text-xs text-center text-gray-400">
-              No payment now — we'll confirm pricing and you decide before anything is booked.
+              Nothing is charged to send this — we'll confirm pricing and you decide before anything is
+              booked. You can optionally hold your date for {formatINR(LOCK_AMOUNT)} on the next screen.
               {!user && ' Your cart is saved on this device until you sign in.'}
             </p>
           </div>
