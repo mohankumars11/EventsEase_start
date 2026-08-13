@@ -14,7 +14,7 @@
 // A photograph of real work is added by hand with source 'actual'; the
 // resolver will never overwrite one.
 //
-// Resolved 2026-08-13 from pexels. 89 setups, 16 cuisines, 104 packages.
+// Resolved 2026-08-13 from pexels. 89 setups, 16 cuisines, 144 packages.
 
 export const THEME_PHOTOS = {
   "anand_karaj": {
@@ -653,6 +653,42 @@ export const CUISINE_PHOTOS = {
 }
 
 export const PACK_PHOTOS = {
+  "av_basic": {
+    url:    "https://images.pexels.com/photos/9034760/pexels-photo-9034760.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Professional business meeting with a presentation using visual infographics on a projector screen.",
+    credit: "Photo by RDNE Stock project on Pexels",
+    source: "stock",
+  },
+  "av_conference": {
+    url:    "https://images.pexels.com/photos/16985184/pexels-photo-16985184.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Spacious and modern event hall with projection screen setup, perfect for celebrations and conferences.",
+    credit: "Photo by Matheus Bertelli on Pexels",
+    source: "stock",
+  },
+  "av_hybrid": {
+    url:    "https://images.pexels.com/photos/28683737/pexels-photo-28683737.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A speaker engages with an audience in a modern conference setup. Interactive screens enhance the presentation.",
+    credit: "Photo by Viridiana Rivera on Pexels",
+    source: "stock",
+  },
+  "bar_flair": {
+    url:    "https://images.pexels.com/photos/4485356/pexels-photo-4485356.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Skilled bartender shaking a cocktail mixer at a bar counter, surrounded by spirits and bar tools.",
+    credit: "Photo by Adventure Studio on Pexels",
+    source: "stock",
+  },
+  "bar_full": {
+    url:    "https://images.pexels.com/photos/36870867/pexels-photo-36870867.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Three bartenders in a bar setting, discussing cocktails, surrounded by liquor bottles.",
+    credit: "Photo by Anil  Sharma on Pexels",
+    source: "stock",
+  },
+  "bar_mocktail": {
+    url:    "https://images.pexels.com/photos/13103501/pexels-photo-13103501.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Bartender stirring a vibrant fruit cocktail at a cozy bar counter with fresh lemons.",
+    credit: "Photo by Sarazh  Izmailov on Pexels",
+    source: "stock",
+  },
   "baraat_basic": {
     url:    "https://images.pexels.com/photos/35457634/pexels-photo-35457634.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Joyful Indian groom on a horse during a vibrant outdoor wedding procession.",
@@ -711,6 +747,12 @@ export const PACK_PHOTOS = {
     url:    "https://images.pexels.com/photos/38928309/pexels-photo-38928309.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Bride getting makeup done indoors by a stylist wearing a mask.",
     credit: "Photo by sunaina ravikumar on Pexels",
+    source: "stock",
+  },
+  "bridal_trousseau": {
+    url:    "https://images.pexels.com/photos/35457635/pexels-photo-35457635.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Indian bride getting ready with help, adorned in intricate jewelry and henna.",
+    credit: "Photo by Aalap Creation on Pexels",
     source: "stock",
   },
   "cake_cream_1kg": {
@@ -785,6 +827,24 @@ export const PACK_PHOTOS = {
     credit: "Photo by Ge  R. Moraes on Pexels",
     source: "stock",
   },
+  "clean_basic": {
+    url:    "https://images.pexels.com/photos/18263208/pexels-photo-18263208.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Energetic party scene in black and white, capturing diverse interactions with a focus on cleaning in motion.",
+    credit: "Photo by Jonas Wilson on Pexels",
+    source: "stock",
+  },
+  "clean_deep": {
+    url:    "https://images.pexels.com/photos/6197121/pexels-photo-6197121.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Two women cleaning a modern kitchen, wiping glass surfaces and mopping the floor.",
+    credit: "Photo by Tima Miroshnichenko on Pexels",
+    source: "stock",
+  },
+  "clean_green": {
+    url:    "https://images.pexels.com/photos/33520761/pexels-photo-33520761.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Cleaning staff with leaf blower managing trash in a park after a public event.",
+    credit: "Photo by Sergio Zhukov on Pexels",
+    source: "stock",
+  },
   "cool_heaters": {
     url:    "https://images.pexels.com/photos/2821729/pexels-photo-2821729.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "A cozy outdoor dining area with patio heaters, tables, and chairs under ambient lighting.",
@@ -801,6 +861,54 @@ export const PACK_PHOTOS = {
     url:    "https://images.pexels.com/photos/17155843/pexels-photo-17155843.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Close-up of cooling fans in a server room, showcasing technology and efficiency.",
     credit: "Photo by panumas nikhomkhai on Pexels",
+    source: "stock",
+  },
+  "counter_chaat": {
+    url:    "https://images.pexels.com/photos/11157601/pexels-photo-11157601.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A team of chefs preparing a diverse array of dishes on a kitchen counter indoors.",
+    credit: "Photo by Amar  Preciado on Pexels",
+    source: "stock",
+  },
+  "counter_dosa": {
+    url:    "https://images.pexels.com/photos/8093394/pexels-photo-8093394.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Chef preparing dumplings on a countertop with bamboo steamers in an indoor kitchen setting.",
+    credit: "Photo by Mikhail Nilov on Pexels",
+    source: "stock",
+  },
+  "counter_grill": {
+    url:    "https://images.pexels.com/photos/18215050/pexels-photo-18215050.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A chef in a New Delhi market grills food at an outdoor stall, showcasing vibrant street food culture.",
+    credit: "Photo by Yogendra  Singh on Pexels",
+    source: "stock",
+  },
+  "counter_pasta_global": {
+    url:    "https://images.pexels.com/photos/5907596/pexels-photo-5907596.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Faceless women in aprons cooking delicious pasta with fresh tomatoes standing at counter in modern kitchen",
+    credit: "Photo by Katerina Holmes on Pexels",
+    source: "stock",
+  },
+  "dessert_candy_cart": {
+    url:    "https://images.pexels.com/photos/12330182/pexels-photo-12330182.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A charming vintage cotton candy and popcorn cart outdoors in a park setting offering nostalgic street food.",
+    credit: "Photo by Şüheda Yassıkaya on Pexels",
+    source: "stock",
+  },
+  "dessert_icecream": {
+    url:    "https://images.pexels.com/photos/18003564/pexels-photo-18003564.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A man working behind the counter of an ice cream shop at night, surrounded by cones and equipment.",
+    credit: "Photo by UMUT   🆁🅰🆆 on Pexels",
+    source: "stock",
+  },
+  "dessert_nitrogen": {
+    url:    "https://images.pexels.com/photos/2161624/pexels-photo-2161624.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of creamy ice cream with toppings prepared using liquid nitrogen for a unique indulgence.",
+    credit: "Photo by David Disponett on Pexels",
+    source: "stock",
+  },
+  "dessert_paan": {
+    url:    "https://images.pexels.com/photos/34909332/pexels-photo-34909332.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A mother and child order ice cream at a cozy, warmly-lit coffee shop counter.",
+    credit: "Photo by Onur on Pexels",
     source: "stock",
   },
   "dining_buffet_standing": {
@@ -917,6 +1025,24 @@ export const PACK_PHOTOS = {
     credit: "Photo by Mauricio Muñoz on Pexels",
     source: "stock",
   },
+  "fire_cold_pyro": {
+    url:    "https://images.pexels.com/photos/4669677/pexels-photo-4669677.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Young couple celebrating with sparklers under fireworks at night. Festive and joyful moment.",
+    credit: "Photo by cottonbro studio on Pexels",
+    source: "stock",
+  },
+  "fire_lantern": {
+    url:    "https://images.pexels.com/photos/266497/pexels-photo-266497.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Colorful fireworks exploding in the night sky, capturing a festive and celebratory moment.",
+    credit: "Photo by Pixabay on Pexels",
+    source: "stock",
+  },
+  "fire_outdoor": {
+    url:    "https://images.pexels.com/photos/22361403/pexels-photo-22361403.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A captivating fireworks display lighting up the night sky, perfect for festive celebrations.",
+    credit: "Photo by Jens Mahnke on Pexels",
+    source: "stock",
+  },
   "folk_magic_kids": {
     url:    "https://images.pexels.com/photos/8610533/pexels-photo-8610533.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Vibrant display of Kathakali dancers in traditional costumes on stage in Thiruvananthapuram.",
@@ -941,6 +1067,48 @@ export const PACK_PHOTOS = {
     credit: "Photo by Jithin murali on Pexels",
     source: "stock",
   },
+  "gift_budget": {
+    url:    "https://images.pexels.com/photos/7764513/pexels-photo-7764513.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Vibrant paper gift bags with curly ribbons against a solid blue background.",
+    credit: "Photo by RDNE Stock project on Pexels",
+    source: "stock",
+  },
+  "gift_kids": {
+    url:    "https://images.pexels.com/photos/13061688/pexels-photo-13061688.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Cluster of colorful wrapped gifts in shiny foil, perfect for festive occasions.",
+    credit: "Photo by Sharath G. on Pexels",
+    source: "stock",
+  },
+  "gift_mid": {
+    url:    "https://images.pexels.com/photos/7986138/pexels-photo-7986138.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Red gift box with satin ribbon surrounded by black and red shopping bags, perfect for celebrations.",
+    credit: "Photo by Tamanna Rumee on Pexels",
+    source: "stock",
+  },
+  "gift_premium": {
+    url:    "https://images.pexels.com/photos/6127394/pexels-photo-6127394.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of hands arranging gift bags on a wooden table, ideal for commerce and business themes.",
+    credit: "Photo by cottonbro studio on Pexels",
+    source: "stock",
+  },
+  "hamper_corporate": {
+    url:    "https://images.pexels.com/photos/5913998/pexels-photo-5913998.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Christmas gifts wrapped in festive paper under a Christmas tree, ready for the holiday celebration.",
+    credit: "Photo by https://kaboompics.com/ on Pexels",
+    source: "stock",
+  },
+  "hamper_festive": {
+    url:    "https://images.pexels.com/photos/35045992/pexels-photo-35045992.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A festive storefront display featuring baskets of wrapped Christmas gifts and vibrant decorations.",
+    credit: "Photo by Onur on Pexels",
+    source: "stock",
+  },
+  "hamper_luxury": {
+    url:    "https://images.pexels.com/photos/20856310/pexels-photo-20856310.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A collection of beautifully wrapped gifts on a stylish leather table, perfect for any celebration.",
+    credit: "Photo by Jonathan Borba on Pexels",
+    source: "stock",
+  },
   "hosp_cloakroom": {
     url:    "https://images.pexels.com/photos/7820379/pexels-photo-7820379.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "A woman in a mask stands at a hotel reception desk holding paper, welcoming service",
@@ -957,6 +1125,30 @@ export const PACK_PHOTOS = {
     url:    "https://images.pexels.com/photos/6474521/pexels-photo-6474521.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Elegant hotel lobby showcasing a uniformed doorman ready to welcome guests.",
     credit: "Photo by cottonbro studio on Pexels",
+    source: "stock",
+  },
+  "invite_digital": {
+    url:    "https://images.pexels.com/photos/11650086/pexels-photo-11650086.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A styled flat lay featuring wedding invitations with green floral accents and stationery items.",
+    credit: "Photo by Micheile Henderson on Pexels",
+    source: "stock",
+  },
+  "invite_luxury": {
+    url:    "https://images.pexels.com/photos/34241940/pexels-photo-34241940.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "An elegant wedding invitation set with rings and pearl jewelry for a sophisticated ceremony.",
+    credit: "Photo by Andrea Prochilo on Pexels",
+    source: "stock",
+  },
+  "invite_printed": {
+    url:    "https://images.pexels.com/photos/11650477/pexels-photo-11650477.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Minimalistic flat lay of stationery with greenery and flowers, perfect for wedding invitations or crafts.",
+    credit: "Photo by Micheile Henderson on Pexels",
+    source: "stock",
+  },
+  "invite_stationery": {
+    url:    "https://images.pexels.com/photos/35005576/pexels-photo-35005576.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Beautiful pink wedding bouquet and invitations set for an elegant ceremony.",
+    credit: "Photo by 🇻🇳🇻🇳Nguyễn Tiến Thịnh 🇻🇳🇻🇳 on Pexels",
     source: "stock",
   },
   "kids_activity": {
@@ -1127,6 +1319,24 @@ export const PACK_PHOTOS = {
     credit: "Photo by 🇻🇳🇻🇳Nguyễn Tiến Thịnh 🇻🇳🇻🇳 on Pexels",
     source: "stock",
   },
+  "pooja_annadanam": {
+    url:    "https://images.pexels.com/photos/8751531/pexels-photo-8751531.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Colorful depiction of Indian ritual with a ornate puja thali and vibrant garments.",
+    credit: "Photo by Anastasia  Shuraeva on Pexels",
+    source: "stock",
+  },
+  "pooja_basic": {
+    url:    "https://images.pexels.com/photos/35407778/pexels-photo-35407778.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A traditional Indian puja thali with decorative items and offerings for religious rituals.",
+    credit: "Photo by SAIF SIDDIQUE on Pexels",
+    source: "stock",
+  },
+  "pooja_homam_kit": {
+    url:    "https://images.pexels.com/photos/36595218/pexels-photo-36595218.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A silver tray holds traditional ritual items, including incense sticks, marigold flowers, and brass utensils.",
+    credit: "Photo by ornob Sadi on Pexels",
+    source: "stock",
+  },
   "power_25kva": {
     url:    "https://images.pexels.com/photos/18816918/pexels-photo-18816918.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Two technicians working on a red HÜTTENBERG power generator outdoors.",
@@ -1143,6 +1353,24 @@ export const PACK_PHOTOS = {
     url:    "https://images.pexels.com/photos/9800025/pexels-photo-9800025.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Image of an emergency power generator powered by renewable energy, featuring clean technology concepts.",
     credit: "Photo by Kindel Media on Pexels",
+    source: "stock",
+  },
+  "priest_homam": {
+    url:    "https://images.pexels.com/photos/12727876/pexels-photo-12727876.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Vibrant Bengali Hindu wedding ceremony with sacred fire ritual in Dhaka, Bangladesh.",
+    credit: "Photo by ISKCON TV  Dhaka on Pexels",
+    source: "stock",
+  },
+  "priest_home_pooja": {
+    url:    "https://images.pexels.com/photos/34056594/pexels-photo-34056594.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of Hindu ritual with hands making offerings over fire with fruits and flowers.",
+    credit: "Photo by ViAn Photography on Pexels",
+    source: "stock",
+  },
+  "priest_wedding": {
+    url:    "https://images.pexels.com/photos/30169491/pexels-photo-30169491.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Bride and groom in vibrant attire during a traditional Indian wedding ceremony with fire rituals.",
+    credit: "Photo by FliqaIndia Pvt. Ltd. on Pexels",
     source: "stock",
   },
   "sec_bouncer": {
@@ -1167,6 +1395,18 @@ export const PACK_PHOTOS = {
     url:    "https://images.pexels.com/photos/2477362/pexels-photo-2477362.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "An elderly Indian musician in vibrant traditional attire plays a colorful wind instrument outdoors.",
     credit: "Photo by Nishant Aneja on Pexels",
+    source: "stock",
+  },
+  "sign_seating": {
+    url:    "https://images.pexels.com/photos/2606405/pexels-photo-2606405.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A beautifully set wedding reception table with numbers and an elegant cake, perfect for a classic wedding theme.",
+    credit: "Photo by Michael Morse on Pexels",
+    source: "stock",
+  },
+  "sign_welcome": {
+    url:    "https://images.pexels.com/photos/1858199/pexels-photo-1858199.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Chalkboard signs in a wooden box against a brick wall background, perfect for events.",
+    credit: "Photo by Craig Adderley on Pexels",
     source: "stock",
   },
   "stream_multi": {
