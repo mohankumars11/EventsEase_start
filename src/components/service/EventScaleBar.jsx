@@ -1,5 +1,7 @@
-import { Users, Minus, Plus } from 'lucide-react'
+import { Users, Minus, Plus, CalendarCheck, CalendarPlus, ChevronRight } from 'lucide-react'
 import { DECOR_SCALES } from '../../data/decorThemes'
+import { humanDate } from '../../utils/format'
+import { slotByKey } from '../../lib/demand'
 
 /**
  * "How big is this?" — asked once, at the top, before anything is priced.
@@ -24,7 +26,11 @@ const GUEST_PRESETS = [30, 75, 150, 300, 500]
 
 export default function EventScaleBar({
   guestCount, onGuests, scaleId, onScale, showScale = true, perGuestMatters = true,
+  pickedDate, onPickDate,
 }) {
+  const dateLabel = humanDate(pickedDate?.event_date)
+  const slotLabel = slotByKey(pickedDate?.time_slot)?.label ?? null
+
   return (
     <div className="home-glass mx-4 space-y-3 p-3.5">
       {/* ── How many people ─────────────────────────────────────── */}
@@ -119,6 +125,46 @@ export default function EventScaleBar({
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── When ─────────────────────────────────────────────────────
+          Asked here rather than in a modal after the customer has already
+          chosen and pressed the button. It writes to the shared store every
+          calendar in the app reads (hooks/useEventDate), so a date picked on
+          the home screen arrives here already answered — and one picked here
+          means the cart never asks for it either.
+
+          Optional on purpose. A large share of people browsing prices have
+          not fixed a date yet, and blocking the catalogue behind one loses
+          exactly the customers who are still deciding whether to have the
+          event at all. */}
+      {onPickDate && (
+        <div className="border-t border-white/10 pt-3">
+          <button
+            type="button"
+            onClick={onPickDate}
+            className="flex w-full items-center gap-2.5 rounded-2xl bg-white/[0.07] px-3 py-2.5 text-left ring-1 ring-white/12 transition-colors hover:bg-white/[0.11]"
+          >
+            {dateLabel ? (
+              <CalendarCheck size={16} className="shrink-0 text-teal-300" />
+            ) : (
+              <CalendarPlus size={16} className="shrink-0 text-teal-300" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] font-extrabold leading-tight text-white">
+                {dateLabel
+                  ? `${dateLabel}${slotLabel ? ` · ${slotLabel}` : ''}`
+                  : 'When is it? (optional)'}
+              </span>
+              <span className="block text-[10.5px] leading-snug text-white/45">
+                {dateLabel
+                  ? 'Saved — we check the team is free for this date before confirming.'
+                  : 'Telling us early is what lets us hold the crew. You can add it later.'}
+              </span>
+            </span>
+            <ChevronRight size={14} className="shrink-0 text-white/30" />
+          </button>
         </div>
       )}
     </div>

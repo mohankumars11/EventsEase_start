@@ -414,11 +414,16 @@ function AppRoutes() {
           <DashboardShell><MyRequests /></DashboardShell>
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/customer/cart" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <DashboardShell><Cart /></DashboardShell>
-        </ProtectedRoute>
-      } />
+      {/* Public, like the shop's checkout beside it.
+          It was customer-only, and that guard is what made the single-service
+          door feel broken: a guest who chose a decoration setup and pressed
+          "Add to cart" was thrown to /login mid-decision, and the cart icon
+          they tapped afterwards pointed at the *shop* basket, which was empty.
+          Two different screens both telling them the add had failed.
+          The page asks for sign-in at "send", where there is something to save
+          and a reason a person can see — the same rule the wizard and the
+          storefront already follow. */}
+      <Route path="/dashboard/customer/cart" element={<DashboardShell><Cart /></DashboardShell>} />
       <Route path="/dashboard/customer/events" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <DashboardShell><MyEvents /></DashboardShell>

@@ -338,10 +338,19 @@ export function CartProvider({ children }) {
   // goods) and event services/packages (quoted work) — and one cart icon
   // in the header. Send people to whichever one actually has their stuff
   // in it, preferring products since that's the checkout-now flow.
-  // A guest always goes to the public shop cart: the event-services cart
-  // is customer-only, so pointing a signed-out visitor at it would bounce
-  // them to the login screen from a tap on a cart icon.
-  const cartPath = !user || productCount > 0
+  //
+  // ── Guests go to the services cart too, now ─────────────────────────
+  // This used to send every signed-out visitor to /shop/cart, because the
+  // services cart was customer-only and a tap on the cart icon would have
+  // bounced them to /login. That was the right call for the guard that
+  // existed and the wrong shape for the funnel: a guest who had just added
+  // a decoration setup tapped the cart, saw an empty *shop* basket, and
+  // reasonably concluded the add had failed.
+  //
+  // The services cart is public now — browse and fill it freely, sign in at
+  // send, exactly as the shop does — so the honest answer is to point at
+  // whichever cart holds their things regardless of who they are.
+  const cartPath = productCount > 0
     ? '/shop/cart'
     : totalCount > 0
       ? '/dashboard/customer/cart'

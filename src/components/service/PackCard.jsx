@@ -1,6 +1,7 @@
 import { Check, Star, Minus, Plus, Info } from 'lucide-react'
 import OptionArt from './OptionArt'
 import { packCost, packUnitLabel, defaultPackQty } from '../../data/servicePacks'
+import { PACK_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -42,7 +43,14 @@ export default function PackCard({
         aria-pressed={selected}
         className="text-left"
       >
-        <OptionArt tint={pack.tint} emoji={pack.emoji} height={78} seed={index + pack.name.length}>
+        <OptionArt
+          tint={pack.tint}
+          emoji={pack.emoji}
+          height={96}
+          seed={index + pack.name.length}
+          photo={PACK_PHOTOS[pack.id]}
+          alt={`${pack.name} — representative photograph`}
+        >
           {pack.popular && (
             <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-plum-900 shadow-sm">
               <Star size={8} className="fill-saffron-500 text-saffron-500" /> Most booked

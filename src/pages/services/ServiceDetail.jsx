@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, ShoppingBag, Search, X, ShieldCheck, Clock, BadgeIndianRupee,
   SlidersHorizontal, SearchX, ArrowRight, Phone, Sparkles,
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useToast } from '../../context/ToastContext'
 import { useCity } from '../../context/CityContext'
+import { useEventDate, setEventDate } from '../../hooks/useEventDate'
 import { BRAND } from '../../config/sambramo'
 import { resolveService, cartLineFor, isBookable } from '../../data/singleService'
 import { TOP_SERVICES } from '../../data/planCatalog'
@@ -21,7 +21,7 @@ import ThemeSheet from '../../components/service/ThemeSheet'
 import PackCard from '../../components/service/PackCard'
 import MenuComposer from '../../components/service/MenuComposer'
 import BookBar from '../../components/service/BookBar'
-import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
+import EventDateSheet from '../../components/plan/EventDateSheet'
 
 /**
  * One service, bought end to end.
@@ -50,16 +50,14 @@ import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
  * data/singleService.js, not here.
  */
 
-const INTENT_KEY = 'sambramo_single_service_intent'
 const DEFAULT_GUESTS = 100
 
 export default function ServiceDetail() {
   const { serviceId } = useParams()
   const navigate = useNavigate()
-  const location = useLocation()
-  const { user } = useAuth()
   const { dispatch, hasItem, getEventDetails, cartCount, cartPath } = useCart()
   const { city, chosen } = useCity()
+  const savedDate = useEventDate()
   const toast = useToast()
 
   const resolved = useMemo(() => resolveService(serviceId), [serviceId])
@@ -73,7 +71,7 @@ export default function ServiceDetail() {
   const [selectedPack, setSelectedPack] = useState(null)
   const [packQty, setPackQty] = useState({})
   const [menuConfig, setMenuConfig] = useState(null)
-  const [pendingAdd, setPendingAdd] = useState(null)
+  const [dateSheetOpen, setDateSheetOpen] = useState(false)
 
   // Arriving at a different service must not inherit the last one's choices —
   // a balloon arch selected on the previous page has no meaning on this one.
@@ -149,28 +147,34 @@ export default function ServiceDetail() {
   const alreadyAdded = !!(selection && eventId && hasItem(eventId, `${resolved.service.id}:${selection.optionId}`))
 
   /**
-   * The one place anything reaches the cart from this page.
+   * Adding to the cart. One step, no gate, no form.
    *
-   * Details are asked before the sign-in prompt, deliberately — the same order
-   * the occasion page uses. By the time we ask somebody to log in they have
-   * given us a date and a venue, so it reads as "sign in to save this" rather
-   * than "prove who you are before you may look at prices".
+   * ── What was here, and why it was broken ────────────────────────────
+   * Pressing "Add to cart" used to open a four-field modal (date, time, guest
+   * count, location) and then, on confirm, throw a signed-out visitor to
+   * /login. Both halves failed:
+   *
+   *   · the modal re-asked the guest count that had just driven every price on
+   *     the screen, and the city shown in the app bar two inches above it;
+   *   · and the login redirect landed *after* the customer had filled the form
+   *     — so the observable behaviour of pressing "Add to cart" was that the
+   *     page threw away their work and showed them a sign-in screen. Which is
+   *     indistinguishable from a button that does not work.
+   *
+   * The cart has always worked signed-out — CartContext writes to localStorage
+   * immediately and only syncs to Supabase when there is a user — so the gate
+   * was protecting nothing. It is gone, the services cart is public, and
+   * sign-in is asked at send, where there is something to save.
+   *
+   * The details go with it automatically: the guest count is the one on screen,
+   * the city is the one in CityContext, and the date is the shared one every
+   * calendar in the app already reads (hooks/useEventDate). Nothing that is
+   * already known is asked for again. What is genuinely missing — the venue
+   * address, a phone number, the access constraints — is collected once, in
+   * the cart, on the way to sending. See BookingSheet.
    */
-  const commitAdd = useCallback((sel, details, { book } = {}) => {
+  const commitAdd = useCallback(sel => {
     if (!resolved) return
-
-    if (!user) {
-      try {
-        sessionStorage.setItem(INTENT_KEY, JSON.stringify({ serviceId, sel, details, book }))
-      } catch {
-        // Storage unavailable — signing in still works, the selection just is
-        // not recoverable. Not worth blocking the journey over.
-      }
-      navigate('/login', {
-        state: { from: { pathname: location.pathname, search: location.search } },
-      })
-      return
-    }
 
     const line = cartLineFor({
       service: resolved.service,
@@ -181,35 +185,26 @@ export default function ServiceDetail() {
       qty: sel.qty ?? 1,
     })
 
-    dispatch({ type: 'ADD_SERVICE', ...line, details })
-    toast.success(`${sel.optionName} added — ${formatINR(sel.price)}`)
-    if (book) navigate(cartPath)
-  }, [resolved, user, serviceId, navigate, location, dispatch, toast, cartPath])
-
-  /** Booking details are asked once per service bucket, then reused. */
-  const handleAdd = useCallback((sel, opts = {}) => {
-    if (!sel || !eventId) return
-    const existing = getEventDetails(eventId)
-    if (!existing) { setPendingAdd({ sel, opts }); return }
-    commitAdd(sel, existing, opts)
-  }, [eventId, getEventDetails, commitAdd])
-
-  // Finish what a guest started, once they come back signed in.
-  useEffect(() => {
-    if (!user || !resolved) return
-    let intent
-    try {
-      const raw = sessionStorage.getItem(INTENT_KEY)
-      if (!raw) return
-      intent = JSON.parse(raw)
-      sessionStorage.removeItem(INTENT_KEY)
-    } catch {
-      return
+    // Everything we already know, carried without asking. `details` is what the
+    // cart shows as the event header and what the enquiry row is built from;
+    // partial is fine, and the cart asks for the rest before it will send.
+    const details = {
+      ...(getEventDetails(eventId) ?? {}),
+      guestCount,
+      date: savedDate?.event_date ?? getEventDetails(eventId)?.date ?? null,
+      slot: savedDate?.time_slot ?? null,
+      location: getEventDetails(eventId)?.location
+        ?? (chosen && city?.name ? { city: city.name, area: '' } : null),
     }
-    if (intent?.serviceId !== serviceId) return
-    commitAdd(intent.sel, intent.details, { book: intent.book })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, serviceId, resolved])
+
+    dispatch({ type: 'ADD_SERVICE', ...line, details })
+    toast.success(`Added — ${sel.optionName}, ${formatINR(sel.price)}`)
+  }, [resolved, eventId, getEventDetails, guestCount, savedDate, chosen, city, dispatch, toast])
+
+  const handleAdd = useCallback(sel => {
+    if (!sel || !eventId) return
+    commitAdd(sel)
+  }, [eventId, commitAdd])
 
   /* ── Not in the catalogue ──────────────────────────────────────── */
   if (!resolved) {
@@ -331,7 +326,12 @@ export default function ServiceDetail() {
           </div>
         </section>
 
-        {/* ── How big is it ─────────────────────────────────────────── */}
+        {/* ── How big is it, and when ────────────────────────────────
+            Both live here rather than in a modal after the decision. The
+            guest count drives every price on the page, and the date is the
+            shared one every calendar in the app reads — so asking here means
+            never asking again, and never asking for something we already
+            have. */}
         <EventScaleBar
           guestCount={guestCount}
           onGuests={setGuestCount}
@@ -339,6 +339,8 @@ export default function ServiceDetail() {
           onScale={setScaleId}
           showScale={kind === 'decor'}
           perGuestMatters={kind !== 'packs' || resolved.packs.some(p => p.unit === 'guest')}
+          pickedDate={savedDate}
+          onPickDate={() => setDateSheetOpen(true)}
         />
 
         {/* ══════════════ DÉCOR ══════════════ */}
@@ -586,12 +588,6 @@ export default function ServiceDetail() {
               optionId: theme.id, optionName: theme.name, price: total, summary,
             })
           }}
-          onBook={({ theme, total, summary }) => {
-            handleAdd(
-              { optionId: theme.id, optionName: theme.name, price: total, summary },
-              { book: true }
-            )
-          }}
         />
       )}
 
@@ -602,23 +598,22 @@ export default function ServiceDetail() {
           lineLabel={selection.label}
           detail={selection.detail}
           added={alreadyAdded}
+          cartPath={cartPath}
+          cartCount={cartCount}
           onAdd={() => handleAdd(selection)}
-          onBook={() => handleAdd(selection, { book: true })}
         />
       )}
 
-      {/* ── Date, time and venue, asked once ───────────────────────── */}
-      {pendingAdd && (
-        <BookingDetailsModal
-          itemLabel={`${service.name} — ${pendingAdd.sel.optionName}`}
-          defaults={{ guestCount }}
-          onClose={() => setPendingAdd(null)}
-          onConfirm={details => {
-            commitAdd(pendingAdd.sel, details, pendingAdd.opts)
-            setPendingAdd(null)
-          }}
-        />
-      )}
+      {/* The same calendar the home screen and the plan hub open, writing to
+          the same shared store — so a date picked anywhere in the app is known
+          everywhere in it, and this page never asks for one twice. */}
+      <EventDateSheet
+        open={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        city={chosen ? city : null}
+        value={savedDate}
+        onConfirm={next => { setEventDate(next); setDateSheetOpen(false) }}
+      />
     </div>
   )
 }

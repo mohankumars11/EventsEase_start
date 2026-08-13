@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Trash2, ShoppingCart, Package, ArrowLeft, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle, Calendar, Clock, Users, MapPin, Pencil } from 'lucide-react'
+import { Trash2, ShoppingCart, Package, ArrowLeft, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle, Calendar, Clock, Users, MapPin, Pencil, Phone } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { friendlyError } from '../../context/ToastContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
-import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
+import BookingSheet from '../../components/customer/BookingSheet'
 
 export default function Cart() {
   const { cart, dispatch, totalCount, getEventDetails } = useCart()
@@ -56,6 +56,26 @@ export default function Cart() {
     byEvent[p.eventId].packages.push(p)
   })
 
+  /**
+   * The three things a coordinator cannot start work without.
+   *
+   * Not "is the form filled" — a partial answer is fine and common. These are
+   * specifically the ones whose absence makes the request unworkable: no date
+   * means nothing can be checked for availability, no city means we cannot say
+   * whether we serve it, and no phone means there is no way to come back with
+   * the answer. Everything else can be sorted on the call.
+   */
+  function missingFor(details) {
+    const missing = []
+    if (!details?.date) missing.push('a date')
+    if (!details?.location?.city) missing.push('a city')
+    if (!details?.phone) missing.push('a phone number')
+    return missing
+  }
+
+  /** Buckets that cannot be sent yet, in the order they appear. */
+  const incompleteEvents = Object.keys(byEvent).filter(id => missingFor(getEventDetails(id)).length > 0)
+
   function applyDetailsToEvent(eventId, details) {
     const data = byEvent[eventId]
     if (!data) return
@@ -65,7 +85,39 @@ export default function Cart() {
     setEditingEvent(null)
   }
 
+  /**
+   * The note a coordinator actually reads, built from the details.
+   *
+   * Contact and venue address go here rather than into new columns because
+   * service_enquiries has neither, and shipping code that depends on an
+   * unapplied migration means the first real request silently loses the phone
+   * number. `notes` and `location` both already exist; the structured copy
+   * goes into `location` (JSONB) for any admin screen later, and this readable
+   * version goes into `notes` for the human working the request tomorrow
+   * morning on a phone.
+   */
+  function noteFor(details) {
+    const lines = []
+    if (details?.name || details?.phone) {
+      lines.push(`Contact: ${[details.name, details.phone].filter(Boolean).join(' · ')}`)
+    }
+    if (details?.slot) lines.push(`Time of day: ${details.slot.replace('_', ' ')}`)
+    if (details?.address) lines.push(`Venue: ${details.address}`)
+    if (details?.notes) lines.push(`Customer note: ${details.notes}`)
+    return lines.join('\n') || null
+  }
+
   async function proceedToEnquiry() {
+    // Sign-in is asked here, not at add. There is something to save at this
+    // point and a reason a person can see — the same rule the wizard and the
+    // storefront checkout follow. Asking at add-to-cart is what made the
+    // single-service page feel broken: the button appeared to discard the
+    // customer's work and show them a login screen.
+    if (!user) {
+      navigate('/login', { state: { from: { pathname: '/dashboard/customer/cart' } } })
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
@@ -78,8 +130,11 @@ export default function Cart() {
           event_date:  details?.date || cart.eventDates[eventId] || null,
           start_time:  details?.time || null,
           guest_count: details?.guestCount || null,
-          location:    details?.location || null,
-          services:    data.services.map(i => ({ id: i.service.id, name: i.service.name, emoji: i.service.emoji, qty: i.qty, unit_price: i.service.priceMin ?? null, details: i.details })),
+          location:    details?.location
+            ? { ...details.location, address: details.address ?? null, phone: details.phone ?? null, name: details.name ?? null, slot: details.slot ?? null }
+            : null,
+          notes:       noteFor(details),
+          services:    data.services.map(i => ({ id: i.service.id, name: i.service.name, emoji: i.service.emoji, qty: i.qty, unit_price: i.service.priceMin ?? null, chosen: i.service.summary ?? null, details: i.details })),
           packages:    data.packages.map(p => ({ id: p.pkg.id, name: p.pkg.name, type: p.pkg.type, price_min: p.pkg.price_min, price_max: p.pkg.price_max, details: p.details, complimentary: !!p.complimentary })),
           status: 'open',
         }
@@ -166,28 +221,42 @@ export default function Cart() {
                   <span className="font-bold text-amber-800 text-sm">{data.name}</span>
                   <span className="text-xs text-amber-600">{data.services.length + data.packages.length} item{data.services.length + data.packages.length !== 1 ? 's' : ''}</span>
                 </div>
-                {getEventDetails(eventId) && (
-                  <div className="px-5 py-2.5 bg-amber-50/50 border-b border-amber-100 flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {getEventDetails(eventId).date && (
-                      <span className="flex items-center gap-1 text-xs text-amber-700"><Calendar size={12} />{new Date(getEventDetails(eventId).date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-                    )}
-                    {getEventDetails(eventId).time && (
-                      <span className="flex items-center gap-1 text-xs text-amber-700"><Clock size={12} />{getEventDetails(eventId).time}</span>
-                    )}
-                    {getEventDetails(eventId).guestCount && (
-                      <span className="flex items-center gap-1 text-xs text-amber-700"><Users size={12} />{getEventDetails(eventId).guestCount} guests</span>
-                    )}
-                    {getEventDetails(eventId).location?.area && (
-                      <span className="flex items-center gap-1 text-xs text-amber-700"><MapPin size={12} />{getEventDetails(eventId).location.area}, {getEventDetails(eventId).location.city}</span>
-                    )}
-                    <button
-                      onClick={() => setEditingEvent(eventId)}
-                      className="flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-900 ml-auto"
-                    >
-                      <Pencil size={11} /> Edit
-                    </button>
-                  </div>
-                )}
+                {/* ── What we know, and what is still missing ──────────
+                    This block used to render only when details existed, and
+                    the button to *add* details lived inside it. So an item
+                    with no details had no way to acquire any: the only exit
+                    was the "some items are missing event details" warning at
+                    the bottom, which told you to go back to the services page.
+                    It always renders now, and says which of the three things a
+                    coordinator cannot work without is still outstanding. */}
+                <div className="px-5 py-2.5 bg-amber-50/50 border-b border-amber-100 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {getEventDetails(eventId)?.date && (
+                    <span className="flex items-center gap-1 text-xs text-amber-700"><Calendar size={12} />{new Date(getEventDetails(eventId).date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                  )}
+                  {getEventDetails(eventId)?.time && (
+                    <span className="flex items-center gap-1 text-xs text-amber-700"><Clock size={12} />{getEventDetails(eventId).time}</span>
+                  )}
+                  {getEventDetails(eventId)?.guestCount && (
+                    <span className="flex items-center gap-1 text-xs text-amber-700"><Users size={12} />{getEventDetails(eventId).guestCount} guests</span>
+                  )}
+                  {getEventDetails(eventId)?.location?.area && (
+                    <span className="flex items-center gap-1 text-xs text-amber-700"><MapPin size={12} />{getEventDetails(eventId).location.area}, {getEventDetails(eventId).location.city}</span>
+                  )}
+                  {getEventDetails(eventId)?.phone && (
+                    <span className="flex items-center gap-1 text-xs text-amber-700"><Phone size={12} />{getEventDetails(eventId).phone}</span>
+                  )}
+                  {missingFor(getEventDetails(eventId)).length > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                      <AlertCircle size={12} /> Needs {missingFor(getEventDetails(eventId)).join(', ')}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setEditingEvent(eventId)}
+                    className="flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-900 ml-auto"
+                  >
+                    <Pencil size={11} /> {missingFor(getEventDetails(eventId)).length ? 'Add details' : 'Edit'}
+                  </button>
+                </div>
 
                 {/* Packages */}
                 {data.packages.map(p => (
@@ -296,11 +365,25 @@ export default function Cart() {
               </div>
             ))}
 
-            {Object.keys(byEvent).some(eventId => !getEventDetails(eventId)) && (
-              <div className="flex items-start gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+            {/* Actionable, where the old warning was not. It used to say
+                "reopen them from the services page", which is a instruction to
+                leave the cart and navigate back to somewhere that could not
+                actually collect the missing fields. The fix is one tap, here. */}
+            {incompleteEvents.length > 0 && (
+              <button
+                onClick={() => setEditingEvent(incompleteEvents[0])}
+                className="flex w-full items-start gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 text-left hover:bg-amber-100 transition-colors"
+              >
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                Some items are missing event details — reopen them from the services page to add a date, time, guest count and location.
-              </div>
+                <span>
+                  <strong>{byEvent[incompleteEvents[0]]?.name}</strong> still needs{' '}
+                  {missingFor(getEventDetails(incompleteEvents[0])).join(', ')} before we
+                  can check availability.
+                  <span className="block text-xs text-amber-700/80 mt-0.5">
+                    Tap to add — takes about twenty seconds.
+                  </span>
+                </span>
+              </button>
             )}
 
             {/* Summary */}
@@ -345,25 +428,43 @@ export default function Cart() {
               </div>
             )}
 
+            {/* One button, and it always does something.
+                Disabling it while details are missing would leave the customer
+                staring at a greyed-out CTA working out what to fix; instead it
+                opens the sheet that fixes it, and only submits once the request
+                is actually workable. */}
             <button
-              onClick={proceedToEnquiry}
+              onClick={() => {
+                if (incompleteEvents.length) { setEditingEvent(incompleteEvents[0]); return }
+                proceedToEnquiry()
+              }}
               disabled={submitting}
               className="w-full py-4 rounded-2xl bg-amber-500 text-white font-bold text-base hover:bg-amber-600 disabled:opacity-60 shadow-lg flex items-center justify-center gap-2"
             >
-              {submitting ? 'Submitting…' : 'Send Requirements to Our Team'}
+              {submitting
+                ? 'Sending…'
+                : incompleteEvents.length
+                  ? 'Add your date & contact to send'
+                  : user
+                    ? 'Send to our team'
+                    : 'Sign in & send to our team'}
               {!submitting && <ChevronRight size={18} />}
             </button>
             <p className="text-xs text-center text-gray-400">
               No payment now — we'll confirm pricing and you decide before anything is booked.
+              {!user && ' Your cart is saved on this device until you sign in.'}
             </p>
           </div>
         )}
       </div>
 
       {editingEvent && (
-        <BookingDetailsModal
-          itemLabel={byEvent[editingEvent]?.name}
+        <BookingSheet
+          title="Where and when"
+          subtitle={byEvent[editingEvent]?.name}
+          guestCount={getEventDetails(editingEvent)?.guestCount}
           defaults={getEventDetails(editingEvent)}
+          confirmLabel="Save these details"
           onConfirm={details => applyDetailsToEvent(editingEvent, details)}
           onClose={() => setEditingEvent(null)}
         />

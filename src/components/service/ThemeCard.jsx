@@ -1,6 +1,7 @@
 import { Check, Star } from 'lucide-react'
 import OptionArt from './OptionArt'
 import { themeCost } from '../../data/decorThemes'
+import { THEME_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -35,7 +36,13 @@ export default function ThemeCard({ theme, scaleId, guestCount, selected, onSele
       }`}
       style={{ '--rise-delay': `${Math.min(index, 10) * 40}ms` }}
     >
-      <OptionArt tint={theme.tint} emoji={theme.emoji} seed={index + theme.name.length}>
+      <OptionArt
+        tint={theme.tint}
+        emoji={theme.emoji}
+        seed={index + theme.name.length}
+        photo={THEME_PHOTOS[theme.id]}
+        alt={`${theme.name} — representative photograph of a similar setup`}
+      >
         {theme.popular && (
           <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-plum-900 shadow-sm">
             <Star size={8} className="fill-saffron-500 text-saffron-500" /> Most booked

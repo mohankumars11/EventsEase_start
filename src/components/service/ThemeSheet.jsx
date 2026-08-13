@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Plus, Sparkles, MapPin, ShoppingCart, ArrowRight } from 'lucide-react'
+import { X, Check, Plus, Sparkles, MapPin, ShoppingCart } from 'lucide-react'
 import OptionArt from './OptionArt'
+import ImageSourceBadge from '../shop/ImageSourceBadge'
 import { themeCost, DECOR_SCALES } from '../../data/decorThemes'
 import { DECOR_ADDONS } from '../../data/decorPackages'
+import { THEME_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -25,7 +27,7 @@ import { formatINR } from '../../utils/format'
  *                                so the total is a sum and not an assertion
  */
 export default function ThemeSheet({
-  theme, scaleId, guestCount, onScale, onClose, onAdd, onBook, added,
+  theme, scaleId, guestCount, onScale, onClose, onAdd, added,
 }) {
   const [addonIds, setAddonIds] = useState([])
 
@@ -42,6 +44,7 @@ export default function ThemeSheet({
 
   if (!theme) return null
 
+  const photo = THEME_PHOTOS[theme.id]
   const cost = themeCost(theme, scaleId, guestCount)
   const addons = DECOR_ADDONS.filter(a => addonIds.includes(a.id))
   const addonTotal = addons.reduce((sum, a) => sum + a.price, 0)
@@ -64,7 +67,14 @@ export default function ThemeSheet({
       <div className="animate-fade-in-up flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-3xl">
         {/* ── The picture and the name ───────────────────────────── */}
         <div className="relative shrink-0">
-          <OptionArt tint={theme.tint} emoji={theme.emoji} height={132} seed={theme.name.length}>
+          <OptionArt
+            tint={theme.tint}
+            emoji={theme.emoji}
+            height={168}
+            seed={theme.name.length}
+            photo={photo}
+            alt={`${theme.name} — representative photograph of a similar setup`}
+          >
             <button
               onClick={onClose}
               aria-label="Close"
@@ -72,6 +82,14 @@ export default function ThemeSheet({
             >
               <X size={16} />
             </button>
+            {/* Says on the photograph itself that it is a lookalike, not our
+                portfolio. Sambramo has delivered nothing yet; a reference photo
+                a customer could mistake for our own work is the one thing this
+                badge exists to prevent — same component, same words, as every
+                product tile in the shop. */}
+            {photo?.url && (
+              <ImageSourceBadge source={photo.source} size="sm" className="absolute left-3 top-3" />
+            )}
           </OptionArt>
           <div className="absolute bottom-0 left-0 right-12 p-3.5">
             <h2 className="font-serif text-[19px] font-bold leading-tight text-white drop-shadow-sm">
@@ -215,30 +233,44 @@ export default function ThemeSheet({
           </div>
         </div>
 
-        {/* ── Out of here, one way or the other ───────────────────── */}
+        {/* ── One way out ──────────────────────────────────────────
+            This had "Add to cart" and "Book this" side by side — two buttons
+            for one intention, differing only in where they navigate
+            afterwards. That is a question about our routing, asked of somebody
+            who has just finished deciding what they want, and the usual answer
+            to it is hesitation. One action now; what happens next is the
+            *result*, not a second thing to choose. See BookBar. */}
         <div className="shrink-0 border-t border-gray-100 bg-white p-3 pb-safe">
-          <div className="flex gap-2">
+          {added ? (
+            <div className="flex items-center gap-2.5 rounded-2xl bg-green-50 px-3.5 py-3 ring-1 ring-green-200">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
+                <Check size={15} strokeWidth={3} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-extrabold leading-tight text-green-800">
+                  Added — {formatINR(total)}
+                </span>
+                <span className="block text-[11px] leading-snug text-green-700/70">
+                  Close this and keep browsing, or send it from your cart.
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="shrink-0 rounded-xl bg-white px-3 py-2 text-[12px] font-extrabold text-green-800 ring-1 ring-green-200"
+              >
+                Done
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
               onClick={() => onAdd({ theme, total, summary, addons })}
-              disabled={added}
-              className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-3 py-3 text-[13px] font-extrabold transition-transform active:scale-95 ${
-                added
-                  ? 'cursor-default bg-green-50 text-green-700 ring-1 ring-green-200'
-                  : 'bg-gray-900 text-white'
-              }`}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 px-3 py-3.5 text-[14px] font-extrabold text-plum-950 transition-transform active:scale-[0.98]"
             >
-              {added ? <Check size={15} /> : <ShoppingCart size={15} />}
-              {added ? 'In your cart' : 'Add to cart'}
+              <ShoppingCart size={16} /> Add to cart · {formatINR(total)}
             </button>
-            <button
-              type="button"
-              onClick={() => onBook({ theme, total, summary, addons })}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-saffron-400 px-3 py-3 text-[13px] font-extrabold text-plum-950 transition-transform active:scale-95"
-            >
-              Book this <ArrowRight size={15} />
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

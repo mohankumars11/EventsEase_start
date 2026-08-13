@@ -5,7 +5,9 @@ import {
 } from '../../data/cuisineMenus'
 import { perPlateFor } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
+import { CUISINE_PHOTOS } from '../../config/generatedServicePhotos'
 import OptionArt from './OptionArt'
+import ImageSourceBadge from '../shop/ImageSourceBadge'
 
 /**
  * The menu, actually built.
@@ -171,22 +173,35 @@ export default function MenuComposer({
                   const c = CUISINE_BY_ID[id]
                   if (!c) return null
                   const active = id === cuisineId
+                  const photo = CUISINE_PHOTOS[c.id]
                   return (
                     <button
                       key={id}
                       type="button"
                       onClick={() => pickCuisine(id)}
                       aria-pressed={active}
-                      className={`rounded-2xl p-2.5 text-left transition-all ${
+                      className={`overflow-hidden rounded-2xl text-left transition-all ${
                         active
-                          ? 'bg-saffron-400 text-plum-950'
+                          ? 'bg-saffron-400 text-plum-950 ring-2 ring-saffron-300'
                           : 'bg-white/[0.07] text-white/80 ring-1 ring-white/12'
                       }`}
                     >
-                      <span className="block text-[16px] leading-none" aria-hidden="true">{c.emoji}</span>
-                      <span className="mt-1 block text-[12px] font-extrabold leading-tight">{c.name}</span>
-                      <span className={`mt-0.5 block text-[10px] font-bold ${active ? 'text-plum-900/70' : 'text-white/40'}`}>
-                        from ₹{c.basePlate}/plate
+                      {/* A picture of the food on the tile you choose it from.
+                          Sixteen emoji in a grid told a customer nothing about
+                          the difference between Udupi and Chettinad. */}
+                      <OptionArt
+                        tint={active ? ['#b45309', '#fbbf24'] : ['#4c1d95', '#b45309']}
+                        emoji={c.emoji}
+                        height={62}
+                        seed={c.name.length}
+                        photo={photo}
+                        alt={`${c.name} food`}
+                      />
+                      <span className="block p-2.5">
+                        <span className="block text-[12px] font-extrabold leading-tight">{c.name}</span>
+                        <span className={`mt-0.5 block text-[10px] font-bold ${active ? 'text-plum-900/70' : 'text-white/40'}`}>
+                          from ₹{c.basePlate}/plate
+                        </span>
                       </span>
                     </button>
                   )
@@ -200,12 +215,25 @@ export default function MenuComposer({
       {/* ── The chosen kitchen, and what a plate costs ──────────── */}
       <section className="px-4">
         <div className="home-card overflow-hidden">
+          {/* The food, actually shown. This was a plain amber gradient — on
+              the one card in the app whose entire job is answering "what will
+              you serve at my daughter's wedding". */}
           <OptionArt
             tint={['#b45309', '#f59e0b']}
             emoji={cuisine.emoji}
-            height={72}
+            height={148}
             seed={cuisine.name.length}
-          />
+            photo={CUISINE_PHOTOS[cuisine.id]}
+            alt={`${cuisine.name} — representative photograph of this cuisine`}
+          >
+            {CUISINE_PHOTOS[cuisine.id]?.url && (
+              <ImageSourceBadge
+                source={CUISINE_PHOTOS[cuisine.id].source}
+                size="sm"
+                className="absolute left-3 top-3"
+              />
+            )}
+          </OptionArt>
           <div className="p-3.5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

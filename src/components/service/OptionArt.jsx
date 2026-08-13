@@ -1,29 +1,35 @@
+import { useState } from 'react'
+
 /**
- * The picture on a card, drawn rather than fetched.
+ * The picture on a card: a photograph where we have one, drawn art where we
+ * do not — and the drawn art underneath either way.
  *
- * ── Why not photographs ─────────────────────────────────────────────────
- * Eighty decoration setups and two hundred packages is eighty to two hundred
- * images. The app already has a hard ceiling here — lib/unsplash.js allows 24
- * live lookups per page load, app-wide — and the committed set in
- * generatedDecorSamples.js is sixty photographs mapped to sixty *occasion*
- * samples, not to these. Stretching those sixty across two hundred cards would
- * put a wedding mandap on the "cold pyro" card, which is worse than no picture:
- * a wrong photograph is a claim, and this catalogue is pre-launch with no
- * signed supplier behind it (see the header of decorThemes.js).
+ * ── Why the gradient still exists ───────────────────────────────────────
+ * Every decoration setup, cuisine and package now has a committed, distinct,
+ * deduplicated photograph (see scripts/resolve-service-photos.mjs). The
+ * gradient is no longer the picture; it is what the picture loads *over*.
  *
- * So each card draws its own art from the two colours the setup actually uses.
- * That is not a placeholder standing in for a photo — it is the palette, which
- * is a real thing the customer is choosing, and it makes a grid of eighty cards
- * legible at a glance in a way eighty near-identical stock photos never do.
+ * That matters more than it sounds on the grid this renders. /service/decor
+ * shows 89 cards, and 89 remote images on a phone means a screen of grey
+ * rectangles filling in one by one for a second or two. Painting each card's
+ * own palette first means the grid is legible and correctly colour-coded from
+ * the first frame, the photo fades in over it, and a photo that never arrives
+ * — flaky network, a dead URL, an item the resolver has not reached yet —
+ * degrades to something deliberate rather than to a broken-image icon.
  *
- * ── The composition ─────────────────────────────────────────────────────
- * A diagonal two-stop gradient, two soft radial lights over it, a repeating
- * motif that reads as texture rather than pattern, and the emoji sitting large
- * and slightly rotated. Every value is derived from `tint` so no two cards land
- * on the same picture, and nothing here costs a network request.
+ * ── What the photographs are ────────────────────────────────────────────
+ * Licensed stock photographs of similar work, never photographs of anything
+ * Sambramo has delivered. `source` is carried through to ImageSourceBadge so
+ * the card says so, in the same words the product tiles use. A customer must
+ * never be able to mistake a reference photo for a portfolio.
  */
-export default function OptionArt({ tint, emoji, height = 96, seed = 0, children }) {
+export default function OptionArt({
+  tint, emoji, height = 96, seed = 0, photo, alt, children,
+}) {
   const [from, to] = tint ?? ['#7c3aed', '#f59e0b']
+  const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const showPhoto = !!photo?.url && !failed
 
   // Two lights, placed from the seed so a row of cards does not repeat. Kept
   // inside the middle of the box: a light at the very edge reads as a
@@ -47,20 +53,45 @@ export default function OptionArt({ tint, emoji, height = 96, seed = 0, children
       {/* Texture. A 6px dot lattice at 14% white — visible as a surface,
           invisible as a pattern, and it survives being scaled down to a
           two-column phone grid. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-[0.22]"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 0.5px, transparent 0.6px)',
-          backgroundSize: '7px 7px',
-        }}
-      />
+      {!loaded && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.22]"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 0.5px, transparent 0.6px)',
+            backgroundSize: '7px 7px',
+          }}
+        />
+      )}
+
+      {/* The photograph. `loading="lazy"` matters here: this component renders
+          89 times on the decoration grid, and eagerly fetching all of them
+          would spend a phone's connection on cards eight screens down. */}
+      {showPhoto && (
+        <img
+          src={photo.url}
+          alt={alt ?? photo.alt ?? ''}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+            loaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
 
       {/* The emoji, large, tilted and bled off the bottom-right corner so the
-          card has a subject rather than a centred sticker. */}
+          card has a subject rather than a centred sticker. It steps back once
+          a photograph has arrived — the photo is the subject then, and a 54px
+          emoji sitting on top of it reads as a sticker slapped on a picture. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-2 right-1 select-none text-[54px] leading-none opacity-90 drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]"
+        className={`pointer-events-none absolute select-none leading-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)] transition-all duration-500 ${
+          loaded
+            ? 'bottom-1.5 right-2 text-[22px] opacity-95'
+            : '-bottom-2 right-1 text-[54px] opacity-90'
+        }`}
         style={{ transform: `rotate(${(seed % 5) - 2}deg)` }}
       >
         {emoji}
