@@ -32,7 +32,7 @@ export default function BuilderActionBar({
   variant = 'fixed',
   canGoBack, onBack,
   primaryLabel, onPrimary, primaryDisabled,
-  quote, onOpenReview, hint,
+  quote, onOpenReview, hint, ready = false, settled = false,
 }) {
   const isFixed = variant === 'fixed'
 
@@ -56,9 +56,9 @@ export default function BuilderActionBar({
       type="button"
       onClick={onPrimary}
       disabled={primaryDisabled}
-      className={`min-h-[52px] rounded-xl bg-gradient-to-r from-saffron-500 to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 px-4 shadow-lg shadow-amber-900/30 active:from-saffron-600 active:to-amber-600 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed transition-all ${
-        isFixed ? 'shrink-0 text-sm' : 'flex-1 text-base'
-      }`}
+      className={`min-h-[52px] rounded-xl bg-gradient-to-r from-saffron-500 to-amber-500 text-white font-extrabold flex items-center justify-center gap-1.5 px-4 shadow-lg shadow-amber-900/30 active:from-saffron-600 active:to-amber-600 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed transition-all ${
+        isFixed ? 'shrink-0 text-[15px]' : 'flex-1 text-base'
+      } ${ready ? 'plan-cta-ready' : ''}`}
     >
       <span className="truncate">{primaryLabel}</span>
       <ArrowRight size={16} className="shrink-0" />
@@ -82,15 +82,20 @@ export default function BuilderActionBar({
         {quote ? (
           /* The price is a link to the review, not a disclosure widget. One
              destination, no state to be in the wrong one. */
+          /* Sized like a price, not like a caption. It was 10px grey over
+             14px white — the one number the whole builder exists to produce,
+             quieter than the button beside it. The label is saffron because
+             "incl. taxes" is the promise being made, and it has to be read
+             rather than merely present. */
           <button
             type="button"
             onClick={onOpenReview}
-            className="min-w-0 flex-1 text-left py-1 active:opacity-70"
+            className="min-w-0 flex-1 rounded-lg px-1 py-1 text-left active:opacity-70"
           >
-            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/45 font-bold">
-              <Receipt size={10} /> Estimate · incl. taxes
+            <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-saffron-300">
+              <Receipt size={10} /> Estimated{settled ? '' : ' so far'} · incl. taxes
             </span>
-            <span className="block text-sm font-extrabold text-white truncate">
+            <span className="block truncate text-[17px] font-extrabold leading-tight text-white">
               {formatINR(quote.range.low)} – {formatINR(quote.range.high)}
             </span>
           </button>

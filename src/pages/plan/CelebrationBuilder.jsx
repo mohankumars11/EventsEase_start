@@ -16,6 +16,7 @@ import { OFFER_BY_ID, offerAvailability, offerToNote } from '../../data/celebrat
 import { buildQuote, quoteToText, checkMinimums } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
 import OccasionPicker from '../../components/plan/OccasionPicker'
+import JourneyRail from '../../components/plan/JourneyRail'
 import OffersRail from '../../components/plan/OffersRail'
 import RewardsCard from '../../components/plan/RewardsCard'
 import TierLadder from '../../components/plan/TierLadder'
@@ -117,6 +118,12 @@ export default function CelebrationBuilder() {
   const [otherOccasion, setOtherOccasion] = useState('')
   const [mode, setMode] = useState(searchParams.get('mode') === 'individual' ? 'individual' : 'full')
   const [guestCount, setGuestCount] = useState(Number(searchParams.get('guests')) || 120)
+  // Whether the headcount arrived with the customer. The occasion page has a
+  // whole control for it, so re-asking "how many guests are you expecting?" on
+  // arrival reads as the last screen having been ignored. Held in state rather
+  // than read live so that editing the number here does not turn the step back
+  // into the question the customer already answered.
+  const [guestsPrefilled] = useState(() => Number(searchParams.get('guests')) > 0)
   // `?tier=` arrives from the occasion page, where the customer has already
   // chosen a scale off the priced ladder. Landing them on the builder and
   // silently re-deriving the tier from the guest count would undo a decision
@@ -310,21 +317,37 @@ export default function CelebrationBuilder() {
   /* ── Scale, decided out loud ──────────────────────────────────────── */
 
   /**
-   * A guest count arriving from a chip is a completed decision and opens the
-   * confirmation; one arriving from the keyboard is not, and does not. Both
-   * update the price immediately either way.
+   * When a guest count is allowed to interrupt.
+   *
+   * It used to be: any discrete act (a preset chip, a tier tap) opened the
+   * confirmation dialog. That was the right instinct against the original bug
+   * — a scale being chosen for you, silently, by a highlight moving somewhere
+   * off screen — but it is the wrong mechanism now that the scale states
+   * itself in words at the top of the step, priced, with the way on attached.
+   * A modal that repeats what is already on screen is a modal people learn to
+   * dismiss without reading.
+   *
+   * So the interruption is reserved for the one case where something the
+   * customer decided is about to be contradicted: they picked a scale
+   * deliberately, and the new headcount suggests a different one. Everything
+   * else moves the banner and the price, quietly, in place.
    */
   const handleGuestCount = useCallback((n, discrete = false) => {
     setGuestCount(n)
-    if (!discrete) return
+    if (!discrete || !tierTouched) return
     const suggestion = tierForGuests(n)
-    if (suggestion && suggestion.id !== 'bespoke') setTierPrompt(suggestion.id)
-  }, [])
+    if (suggestion && suggestion.id !== 'bespoke' && suggestion.id !== tierId) {
+      setTierPrompt(suggestion.id)
+    }
+  }, [tierTouched, tierId])
 
+  // Choosing a rung from the ladder is already its own confirmation: the card
+  // banners itself where the thumb landed, and the summary above rewrites to
+  // match. Nothing is decided on the customer's behalf here, so nothing needs
+  // agreeing to.
   const handleTierSelect = useCallback(id => {
     setTierId(id)
     setTierTouched(true)
-    setTierPrompt(id)
   }, [])
 
   const confirmTier = useCallback(id => {
@@ -576,6 +599,10 @@ export default function CelebrationBuilder() {
     ? (submitting || !!blocked)
     : (step === 'occasion' && !occasionAnswered)
   const onPrimary = isReview ? () => submit() : () => goNext()
+  // "This step is answered — the forward button is now the thing to press."
+  // Drives the pulse in both bars, which is the only signal on the page that
+  // distinguishes an available control from the next move.
+  const primaryReady = !primaryDisabled && (isReview ? !blocked : !!done[step])
 
   const doneCount = flow.filter(s => done[s.id]).length
   const progressPct = Math.round((doneCount / Math.max(1, flow.length - 1)) * 100)
@@ -587,7 +614,14 @@ export default function CelebrationBuilder() {
           page's ground rather than as an opaque band across it. An opaque
           band is what made the old header read as a separate website stacked
           on top of the builder; at 55% the canvas shows through and the two
-          are one room with a lit end. */}
+          are one room with a lit end.
+
+          Deliberately short. It used to run a badge, a two-line headline,
+          four stat chips and a paragraph — about 400px of phone before the
+          first question, with the step rail below the offers and the mode
+          cards after that. Everything a customer needs in order to *start*
+          is now above the fold, and the counts that were in the chips live
+          on the sections that actually use them. */}
       <div className="relative overflow-hidden">
         {/* Faded out at the bottom rather than stopped. A wash that simply
             ends draws a hard horizontal rule across the page and puts the
@@ -599,140 +633,60 @@ export default function CelebrationBuilder() {
           }`}
           aria-hidden="true"
         />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-8">
-          <button
-            onClick={() => navigate(routeEventId ? `/services/${routeEventId}` : '/plan')}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-white/80 text-sm mb-4 min-h-[36px] ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-black/30"
-          >
-            <ArrowLeft size={15} /> {routeEventId && event ? `Back to ${event.name}` : 'Back to planning'}
-          </button>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => navigate(routeEventId ? `/services/${routeEventId}` : '/plan')}
+              className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-white/80 text-[13px] min-h-[34px] ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-black/30"
+            >
+              <ArrowLeft size={14} /> {routeEventId && event ? `Back to ${event.name}` : 'Back'}
+            </button>
+            <p className="plan-rise inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15">
+              <Sparkles size={12} className="text-saffron-300" />
+              {occasionEmoji} {eventId ? occasionName : 'Live estimate'}
+            </p>
+          </div>
 
-          <p className="plan-rise inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15">
-            <Sparkles size={12} className="text-saffron-300" />
-            {occasionEmoji} {eventId ? occasionName : 'Live estimate'}
-          </p>
-
-          <h1 className="plan-rise mt-3 text-2xl sm:text-4xl font-extrabold text-white leading-[1.1] max-w-3xl" style={{ '--rise-delay': '60ms' }}>
-            {eventId ? `Build your ${occasionName.toLowerCase()}` : 'Build your celebration'}
-            <span className="block bg-gradient-to-r from-saffron-300 via-amber-200 to-saffron-400 bg-clip-text text-transparent">
+          <h1 className="plan-rise mt-2.5 text-xl sm:text-3xl font-extrabold text-white leading-[1.15] max-w-3xl" style={{ '--rise-delay': '60ms' }}>
+            {eventId ? `Build your ${occasionName.toLowerCase()}` : 'Build your celebration'}{' '}
+            <span className="bg-gradient-to-r from-saffron-300 via-amber-200 to-saffron-400 bg-clip-text text-transparent">
               and watch the price move.
             </span>
           </h1>
-
-          {/* Counts derived, never typed. Three of these numbers were already
-              wrong once between writing the copy and adding a service. */}
-          <div className="plan-rise mt-4 flex flex-wrap gap-2" style={{ '--rise-delay': '120ms' }}>
-            {[
-              [EVENT_LIST.length, 'occasions'],
-              [CELEBRATION_TIERS.length, 'scales'],
-              [CUISINES.length, 'cuisines'],
-              [ALL_SERVICES.length, 'services'],
-            ].map(([n, label]) => (
-              <span key={label} className="plan-glass rounded-xl px-3 py-1.5 text-xs text-white/70">
-                <strong className="text-white font-extrabold">{n}</strong> {label}
-              </span>
-            ))}
-          </div>
-          <p className="plan-rise mt-3 max-w-2xl text-sm text-white/60" style={{ '--rise-delay': '160ms' }}>
-            Every tap updates the estimate — taxes included, nothing hidden, no call needed to see a number.
+          <p className="plan-rise mt-1.5 max-w-2xl text-[12px] sm:text-sm text-white/55" style={{ '--rise-delay': '120ms' }}>
+            {flow.length} quick steps · taxes included · nothing to pay to see your number.
           </p>
         </div>
       </div>
 
-      {/* ── Offers ─────────────────────────────────────────────────────
-          High on the page because that is where a saving changes whether
-          somebody starts, not whether they finish. */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-6">
-        <OffersRail
-          appliedId={appliedOfferId}
-          onApply={setAppliedOfferId}
-          eventDate={eventDate}
-          bundleSaving={showQuote && quote.bundle.applied ? quote.bundle.amount : 0}
-        />
-      </div>
-
-      {/* ── Which door ─────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {Object.values(BOOKING_MODES).map((m, i) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => setMode(m.id)}
-            aria-pressed={mode === m.id}
-            style={{ '--rise-delay': `${200 + i * 70}ms` }}
-            className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
-              mode === m.id
-                ? 'bg-white shadow-lg ring-2 ring-saffron-400'
-                : 'plan-glass text-white hover:bg-white/10'
-            }`}
-          >
-            <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-white'}`}>
-              {m.emoji} {m.name}
-            </p>
-            <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-white/55'}`}>{m.blurb}</p>
-            {m.bundleDiscount > 0 && (
-              <p className={`text-[11px] font-bold mt-1 ${mode === m.id ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
-              </p>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Step rail ──────────────────────────────────────────────────
-          Scrolls sideways rather than shrinking to unreadable, and each chip
-          carries what was decided there — so the rail doubles as a running
-          summary and "where am I / what have I answered" needs no scrolling
-          to answer. The hairline under it fills as steps complete: on a
-          six-step flow people want to know how much is left before they
-          commit to starting. */}
-      <div className="sticky top-0 z-20 plan-bar border-b border-white/10 shadow-lg shadow-black/20">
-        <div className="max-w-6xl mx-auto flex overflow-x-auto plan-rail-scroll">
-          {STEPS.map(s => {
-            const Icon = s.icon
-            const off = !flow.some(f => f.id === s.id)
-            const locked = s.id === 'review' && !showQuote
-            const disabled = off || locked
-            const active = step === s.id
-            const complete = done[s.id]
-            return (
-              <button
-                key={s.id}
-                onClick={() => !disabled && goTo(s.id)}
-                disabled={disabled}
-                aria-current={active ? 'step' : undefined}
-                className={`shrink-0 px-4 py-2.5 min-h-[58px] text-left transition-colors disabled:opacity-25 ${
-                  active ? 'bg-white/10' : 'hover:bg-white/5'
-                } ${s.id === 'review' ? 'ml-1 border-l border-white/10' : ''}`}
-              >
-                <span className={`flex items-center gap-1.5 text-sm font-semibold ${
-                  active ? 'text-saffron-300' : complete ? 'text-white/85' : 'text-white/45'
-                }`}>
-                  {complete && !active
-                    ? <CheckCircle2 size={14} className="text-emerald-400" />
-                    : <Icon size={14} />}
-                  {s.label}
-                </span>
-                <span className={`block text-[10px] font-medium truncate max-w-[130px] ${
-                  active ? 'text-saffron-200/70' : 'text-white/35'
-                }`}>
-                  {off ? 'switched off' : summary[s.id] ?? '—'}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        <div className="h-0.5 bg-white/10">
-          <div
-            className="h-full bg-gradient-to-r from-saffron-400 to-amber-300 transition-[width] duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </div>
+      {/* ── The journey ────────────────────────────────────────────────
+          Directly under the title and sticky from there: the steps, the
+          running estimate and the way on, all above the fold. See
+          JourneyRail for why all three belong in one band. */}
+      <JourneyRail
+        steps={STEPS}
+        current={step}
+        flow={flow}
+        done={done}
+        summary={summary}
+        showQuote={showQuote}
+        quote={quote}
+        onGoTo={goTo}
+        onOpenReview={() => goTo('review')}
+        primaryLabel={primaryLabel}
+        onPrimary={onPrimary}
+        primaryDisabled={primaryDisabled}
+        primaryReady={primaryReady}
+        progressPct={progressPct}
+        settled={!blocked}
+      />
 
       <div
         ref={contentRef}
-        className="scroll-mt-24 max-w-6xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-3 gap-6"
+        /* Clears both sticky bands — the 64px navbar and the journey rail
+           under it — so the first card of a step is never delivered behind
+           the navigation that just took you there. */
+        className="scroll-mt-32 max-w-6xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-3 gap-6"
       >
         <div className={isReview ? 'lg:col-span-3 space-y-5' : 'lg:col-span-2 space-y-5'}>
           {step === 'occasion' && (
@@ -760,6 +714,9 @@ export default function CelebrationBuilder() {
               selectedId={tierId}
               suggestedId={suggestedId}
               onSelect={handleTierSelect}
+              prefilled={guestsPrefilled}
+              nextLabel={nextStep?.short ?? 'Review'}
+              onContinue={() => goNext('scale')}
             />
           )}
 
@@ -856,7 +813,7 @@ export default function CelebrationBuilder() {
             which already is the number, itemised. */}
         {!isReview && (
           <div className="hidden lg:block lg:col-span-1">
-            <div className="lg:sticky lg:top-24">
+            <div className="lg:sticky lg:top-36">
               <QuotePanel
                 quote={showQuote ? quote : null}
                 blocked={blocked}
@@ -870,6 +827,62 @@ export default function CelebrationBuilder() {
         )}
       </div>
 
+      {/* ── Offers, and which door ─────────────────────────────────────
+          Both used to sit between the hero and the step rail, which put two
+          marketing surfaces in front of the question the customer came to
+          answer and pushed the navigation two screens down. They are worth
+          showing — a saving does change whether somebody finishes — so they
+          stay on the page, under the step they are decorating rather than
+          on top of it, and both remain live at every step. */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-6 space-y-5">
+        <OffersRail
+          appliedId={appliedOfferId}
+          onApply={setAppliedOfferId}
+          eventDate={eventDate}
+          bundleSaving={showQuote && quote.bundle.applied ? quote.bundle.amount : 0}
+        />
+
+        <div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">
+            How you are booking
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Object.values(BOOKING_MODES).map((m, i) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMode(m.id)}
+                aria-pressed={mode === m.id}
+                style={{ '--rise-delay': `${i * 70}ms` }}
+                className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
+                  mode === m.id
+                    ? 'bg-white shadow-lg ring-2 ring-saffron-400'
+                    : 'plan-glass text-white hover:bg-white/10'
+                }`}
+              >
+                <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-white'}`}>
+                  {m.emoji} {m.name}
+                </p>
+                <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-white/55'}`}>{m.blurb}</p>
+                {m.bundleDiscount > 0 && (
+                  <p className={`text-[11px] font-bold mt-1 ${mode === m.id ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                    Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* The catalogue's size, where it means something: at the bottom of
+            a build, as the answer to "is this all there is?". These were
+            four chips in the hero, above the first question. */}
+        <p className="text-center text-[11px] text-white/35">
+          {EVENT_LIST.length} occasions · {CELEBRATION_TIERS.length} scales ·{' '}
+          {CUISINES.length} cuisines · {ALL_SERVICES.length} services, all priced the same way.
+        </p>
+      </div>
+
       <BuilderActionBar
         variant="fixed"
         canGoBack={flowIndex > 0}
@@ -880,6 +893,8 @@ export default function CelebrationBuilder() {
         quote={isReview ? null : (showQuote ? quote : null)}
         onOpenReview={() => goTo('review')}
         hint={isReview ? 'Check it over, then send it.' : undefined}
+        ready={primaryReady}
+        settled={!blocked}
       />
 
       {tierPrompt && (

@@ -132,6 +132,35 @@ export function batchBandFor(guestCount) {
  * "photography through the main hours" in its highlights and does not carry
  * `photography` here is a tier whose price is missing a photographer.
  *
+ * ── The colour fields, and the rule they follow ─────────────────────────
+ * `accent` and `badge` were the whole palette: a tinted tile behind the emoji
+ * and a pill. Everything else about a rung was the same white rectangle as
+ * every other card in the app, which on a lit dark ground read as eight
+ * identical slabs — the customer could not tell one scale from another
+ * without reading, and a page whose job is to make a ₹4,00,000 celebration
+ * feel valuable was showing it on stationery.
+ *
+ * So each rung now carries its own surface. The rule that keeps eight
+ * colours from becoming a paint chart:
+ *
+ *   `surface` is a wash, not a fill. Every one of them runs from a 50-level
+ *   tint at the top-left out to white before it reaches the body copy, so
+ *   the text sits on white on all eight cards and the colour identifies the
+ *   rung without ever being something a customer reads through.
+ *
+ *   `spine` is the saturated statement — a 4px bar down the left edge. It is
+ *   the only place a tier's colour runs at full strength, which is what lets
+ *   the wash stay quiet enough to read on.
+ *
+ *   `ink` is that colour at text weight, for the one or two labels per card
+ *   that name the rung (its local name, its price line). Never body copy.
+ *
+ * The hues climb the ladder deliberately: fresh greens and ambers at the
+ * intimate end, rose and violet through the middle, red-gold and deep
+ * indigo-teal at the top. Nothing in the sequence ranks the buyer — the same
+ * rule the naming strategy above follows — it just means a family recognises
+ * their own rung by its colour before they have read a word of it.
+ *
  * ── `description` and `highlights` are the OCCASION-LESS copy ───────────
  * They are what a rung says on the home rail, where the customer has not told
  * us what they are celebrating yet, so they must stay true of any celebration
@@ -164,6 +193,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-emerald-200 bg-emerald-50',
     badge: 'bg-emerald-100 text-emerald-700',
+    surface: 'bg-gradient-to-br from-emerald-50 via-white to-white border-emerald-200/80',
+    spine: 'bg-gradient-to-b from-emerald-400 to-teal-500',
+    ink: 'text-emerald-700',
   },
   {
     id: 'house_full',
@@ -187,6 +219,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-amber-200 bg-amber-50',
     badge: 'bg-amber-100 text-amber-700',
+    surface: 'bg-gradient-to-br from-amber-50 via-white to-white border-amber-200/80',
+    spine: 'bg-gradient-to-b from-amber-400 to-orange-500',
+    ink: 'text-amber-700',
   },
   {
     id: 'full_celebration',
@@ -212,6 +247,11 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-saffron-300 bg-saffron-50 ring-2 ring-saffron-200',
     badge: 'bg-saffron-500 text-white',
+    // The one rung allowed a richer wash than the rest: it is the most-booked
+    // scale and the page should look like it knows that.
+    surface: 'bg-gradient-to-br from-saffron-100 via-amber-50 to-white border-saffron-300',
+    spine: 'bg-gradient-to-b from-saffron-500 to-amber-600',
+    ink: 'text-amber-700',
   },
   {
     id: 'special_day',
@@ -236,6 +276,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-rose-200 bg-rose-50',
     badge: 'bg-rose-100 text-rose-700',
+    surface: 'bg-gradient-to-br from-rose-50 via-white to-white border-rose-200/80',
+    spine: 'bg-gradient-to-b from-rose-400 to-pink-500',
+    ink: 'text-rose-700',
   },
   {
     id: 'grand',
@@ -260,6 +303,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-purple-200 bg-purple-50',
     badge: 'bg-purple-100 text-purple-700',
+    surface: 'bg-gradient-to-br from-plum-50 via-white to-white border-plum-200/80',
+    spine: 'bg-gradient-to-b from-plum-500 to-berry-500',
+    ink: 'text-plum-700',
   },
   {
     id: 'royal_mysuru',
@@ -285,6 +331,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-red-200 bg-gradient-to-br from-red-50 to-amber-50',
     badge: 'bg-gradient-to-r from-red-500 to-amber-500 text-white',
+    surface: 'bg-gradient-to-br from-red-50 via-amber-50/60 to-white border-red-200/80',
+    spine: 'bg-gradient-to-b from-red-500 to-amber-500',
+    ink: 'text-red-700',
   },
   /**
    * The two largest scales.
@@ -322,6 +371,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-sky-50',
     badge: 'bg-gradient-to-r from-indigo-500 to-sky-500 text-white',
+    surface: 'bg-gradient-to-br from-indigo-50 via-sky-50/60 to-white border-indigo-200/80',
+    spine: 'bg-gradient-to-b from-indigo-500 to-sky-500',
+    ink: 'text-indigo-700',
   },
   {
     id: 'jana_sagara',
@@ -351,6 +403,9 @@ export const CELEBRATION_TIERS = [
     ],
     accent: 'border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-50',
     badge: 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white',
+    surface: 'bg-gradient-to-br from-teal-50 via-cyan-50/60 to-white border-teal-200/80',
+    spine: 'bg-gradient-to-b from-teal-500 to-cyan-600',
+    ink: 'text-teal-700',
   },
 ]
 
@@ -376,6 +431,9 @@ export const BESPOKE_TIER = {
   guests: { min: 3500, max: null },
   accent: 'border-plum-200 bg-plum-50',
   badge: 'bg-plum-100 text-plum-700',
+  surface: 'bg-gradient-to-br from-plum-50 via-white to-white border-plum-200/80',
+  spine: 'bg-gradient-to-b from-plum-600 to-berry-600',
+  ink: 'text-plum-700',
 }
 
 export const TIER_BY_ID = Object.fromEntries(CELEBRATION_TIERS.map(t => [t.id, t]))

@@ -184,6 +184,45 @@
     0 20px 40px -20px rgba(13, 2, 23, 0.9);
 }
 
+/* The scale the customer landed on, announced rather than highlighted.
+   Arrives with a little more presence than the cards below it — this is the
+   answer to the question the step asks, and it used to be a moved border on
+   a card below the fold. */
+@keyframes plan-banner-in {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.plan-chosen-banner {
+  animation: plan-banner-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 18px 40px -22px rgba(13, 2, 23, 0.95);
+}
+
+/* ── The forward button, once the step is answered ─────────────────────
+   Two states are not enough for a primary control on a six-step flow:
+   "you cannot press this yet" and "you may press this" leave out the one
+   that matters, which is "this is now the move". A slow halo says it
+   without a colour change, so the button never looks like a different
+   button. Transform-free — it sits in a pinned bar, and a control that
+   grows and shrinks under a thumb is a control that gets mis-tapped. */
+@keyframes plan-cta-ready {
+  0%, 100% { box-shadow: 0 10px 15px -3px rgba(120, 53, 15, 0.3), 0 0 0 0 rgba(251, 191, 36, 0.55); }
+  50%      { box-shadow: 0 10px 15px -3px rgba(120, 53, 15, 0.3), 0 0 0 7px rgba(251, 191, 36, 0); }
+}
+.plan-cta-ready {
+  animation: plan-cta-ready 2.4s ease-out infinite;
+}
+
+/* The step you are standing on, in the journey rail. A white chip on a dark
+   band is already the loudest thing there; the ring keeps it from reading as
+   a hole punched in the bar. */
+.plan-step-on {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    0 8px 18px -8px rgba(0, 0, 0, 0.75);
+}
+
 /* Hide a scrollbar on the horizontal rails without hiding the ability to
    scroll them. index.css has .scrollbar-hide; repeated here so this file
    stands alone if it is ever used before that one loads. */
@@ -206,4 +245,8 @@
   .plan-ticket { transition: none; }
   .plan-ticket:hover { transform: none; }
   .plan-canvas { background-attachment: scroll; }
+  /* Same rule as .plan-rise: the banner starts at opacity 0 under `both`,
+     so it is resolved rather than cancelled. */
+  .plan-chosen-banner { animation: none; opacity: 1; }
+  .plan-cta-ready { animation: none; }
 }
