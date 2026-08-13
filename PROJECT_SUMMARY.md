@@ -53,8 +53,31 @@ that was the pre-pivot model and its pages have been removed.
 `/onboarding/vendor` · `/dashboard/vendor` — profile, service list, availability calendar
 
 ### Admin (`role = admin`)
-`/dashboard/admin` — 12 operational views incl. sales analytics and Customer 360
+`/dashboard/admin` — 18 views in three groups (see below)
 `/dashboard/admin/events/:eventId`
+
+The admin console is one data load (`hooks/useAdminData`) shared by every view,
+with every derived number defined once in `lib/analytics`. The sidebar groups
+by what you came to do:
+
+| Group | Views |
+|---|---|
+| **Understand** | Command Center · Product Intelligence · Area Demand · Order Lifecycle · Customers |
+| **Work the queues** | New Requests · Under Review · Vendor Sourcing · Proposals · Confirmed · Upcoming · Shop Orders · Support |
+| **What we sell** | Shop Catalog · Event Services · Dates · Vendors · Reviews |
+
+Two definitions carry the whole console and are kept apart deliberately:
+**demand** is every order line a customer placed (cancellations excluded), and
+**revenue** is only `payment_status = 'paid'`. Direct UPI has no gateway
+callback, so the gap between them is the admin's payment-confirmation backlog —
+collapsing them into one number would make an unticked bank statement look like
+a customer who never wanted the thing.
+
+Chart colour is a system, not a preference: `config/dataviz.js` holds the one
+palette, named by job (categorical / sequential / diverging / status), with the
+validator run recorded in its header. Charts with axes live in the lazy
+`components/admin/charts/ChartKit`; everything that is a shape beside a number
+is hand-drawn SVG in `components/admin/viz/Primitives` and costs nothing.
 
 ### Redirects (kept so old links resolve)
 `/dashboard/customer/browse` → `/services`
@@ -112,7 +135,7 @@ across the codebase — one of them still called the product a "marketplace".
 
 ## Migrations
 
-24 files in `supabase/migrations/`, applied **by hand** in
+37 files in `supabase/migrations/`, applied **by hand** in
 **Supabase Dashboard → SQL Editor**. There is no CI step and **`git push` does
 not run them.**
 
@@ -160,3 +183,15 @@ Honest list — none of these are hidden:
   50/hour, shared site-wide). Beyond that, emoji fallbacks. Pre-resolved
   `products.image_url` values avoid this entirely.
 - **Several pages remain unaudited**, notably `AdminEventDetail` (~1,300 lines).
+- **Migration 037 is not applied automatically.** Until it is run, the admin
+  Event Services screen shows instructions instead of a catalogue, and the
+  Retire control in Shop Catalog is hidden. Everything else works without it.
+- **New event services are admin-side only so far.** They can be added,
+  photographed and retired in the console, but the customer-facing planner
+  still reads the thirty-nine built-ins from `data/servicePricing.js` — that is
+  where the quote engine gets `unit`, `base` and `scales`, and wiring
+  DB-defined services through the quote engine is a separate change.
+- **Two home rails ignore `is_active`.** `ShopPicksRail` and the HomeScreen
+  strip select an explicit column list rather than `*`, so they cannot filter on
+  a column that may not exist yet. A retired product can still surface there.
+  Fix by adding `is_active` to those selects once 037 is applied everywhere.

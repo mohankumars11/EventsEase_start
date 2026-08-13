@@ -60,7 +60,13 @@ export default function ShopCategory() {
     // been applied yet. For every other category the alias list is just the
     // category itself.
     supabase.from('products').select('*').in('category', categoryQueryValues(category)).order('name')
-      .then(({ data }) => { setProducts(data ?? []); setLoading(false) })
+      // `is_active` is filtered here rather than in the query on purpose.
+      // The column arrives with migration 037; naming it in a `.eq()` would
+      // 400 the whole shelf on a database that has not run it yet, and
+      // migrations here are applied by hand after the deploy. `!== false`
+      // therefore reads "on sale unless explicitly retired", which is true
+      // both before and after.
+      .then(({ data }) => { setProducts((data ?? []).filter(p => p.is_active !== false)); setLoading(false) })
   }, [category])
 
   // Ratings + order-volume, fetched once the product set for this

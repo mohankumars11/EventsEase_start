@@ -292,8 +292,12 @@ function BestSellersRail() {
         if (cancelled) return
         setCounts(map)
         // Re-apply the RPC's ranking: `in` returns rows in table order, not
-        // in the order the ids were listed.
-        setItems((products ?? []).sort((a, b) => (map[b.id] ?? 0) - (map[a.id] ?? 0)))
+        // in the order the ids were listed. Retired products drop out here —
+        // `is_active` only exists after migration 037 (applied by hand), so
+        // `!== false` is the form that is correct before and after it.
+        setItems((products ?? [])
+          .filter(p => p.is_active !== false)
+          .sort((a, b) => (map[b.id] ?? 0) - (map[a.id] ?? 0)))
       })
     })
     return () => { cancelled = true }
@@ -350,7 +354,10 @@ function SearchResults({ query }) {
         .select('*')
         .or(`name.ilike.%${term}%,description.ilike.%${term}%,occasion.ilike.%${term}%`)
         .limit(40)
-        .then(({ data }) => { if (id === reqId.current) setResults(data ?? []) })
+        // Retired products are not findable either — see the note above.
+        .then(({ data }) => {
+          if (id === reqId.current) setResults((data ?? []).filter(p => p.is_active !== false))
+        })
     }, 260)
     return () => clearTimeout(t)
   }, [query])

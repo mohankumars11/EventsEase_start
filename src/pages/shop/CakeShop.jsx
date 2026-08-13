@@ -71,7 +71,9 @@ export default function CakeShop() {
   useEffect(() => {
     setLoading(true)
     supabase.from('products').select('*').eq('category', 'Cakes').order('name')
-      .then(({ data }) => { setProducts(data ?? []); setLoading(false) })
+      // Retired products dropped client-side — see the note in ShopCategory:
+      // `is_active` only exists after migration 037, which is applied by hand.
+      .then(({ data }) => { setProducts((data ?? []).filter(p => p.is_active !== false)); setLoading(false) })
   }, [])
 
   useEffect(() => {

@@ -1,0 +1,146 @@
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { supabase } from '../lib/supabase'
+
+/**
+ * One load of everything the admin dashboard reasons about.
+ *
+ * ── What this replaces ───────────────────────────────────────────────────
+ * Every tab used to fetch for itself. Revenue pulled `orders` with their line
+ * items; Customers pulled the same `orders` again plus profiles, events and
+ * reviews; Shop Orders pulled `orders` a third time with a different select.
+ * Opening three tabs meant three full table scans of the same rows, each one
+ * with its own loading spinner, and — worse — three chances for the same
+ * question to be asked slightly differently.
+ *
+ * Now the dashboard loads once and every view reads the same rows. Which also
+ * makes cross-view analysis possible at all: "which products sell in Mysore"
+ * needs orders and products in the same place, and no per-tab fetch was ever
+ * going to produce that.
+ *
+ * ── Tolerating a database that is one migration behind ───────────────────
+ * Migrations here are applied BY HAND in the Supabase SQL editor, and `git
+ * push` does not run them (PROJECT_SUMMARY § Migrations). So a deploy can
+ * legitimately reach production before its migration does.
+ *
+ * Every query therefore fails soft: a missing table or column resolves to an
+ * empty array and its name lands in `missing`, rather than taking the whole
+ * dashboard down with a red error. The views that need it say so in place —
+ * see AdminServices, which explains exactly which migration to run. The
+ * queries whose absence really is fatal (`orders`, `events`) surface as
+ * `error` in the normal way.
+ */
+
+/** Tables that must load for the dashboard to mean anything. */
+const REQUIRED = new Set(['orders', 'events'])
+
+/**
+ * Postgres/PostgREST codes for "you asked for something that isn't there":
+ * 42P01 undefined_table, 42703 undefined_column, PGRST200 no such relationship,
+ * PGRST202 no such function. Anything else is a real error and is re-thrown.
+ */
+const ABSENT_CODES = new Set(['42P01', '42703', 'PGRST200', 'PGRST202', 'PGRST205'])
+
+function isAbsent(error) {
+  if (!error) return false
+  if (ABSENT_CODES.has(error.code)) return true
+  return /does not exist|could not find|schema cache/i.test(error.message ?? '')
+}
+
+const EMPTY = {
+  orders: [], products: [], events: [], proposals: [], profiles: [],
+  vendors: [], enquiries: [], reviews: [], returns: [], complaints: [],
+  interest: [], services: [],
+}
+
+export default function useAdminData() {
+  const [data, setData]       = useState(EMPTY)
+  const [missing, setMissing] = useState([])
+  const [loading, setLoading] = useState(true)
+  // Distinct from `loading`: a refresh holds the previous render rather than
+  // flashing a skeleton over numbers the operator is mid-sentence about.
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError]     = useState(null)
+  const [loadedAt, setLoadedAt] = useState(null)
+
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true); else setLoading(true)
+    setError(null)
+
+    const queries = {
+      // Line items come nested rather than as a second query: PostgREST
+      // returns them in one round trip and every per-product number below
+      // needs the order's date, address and payment state alongside them.
+      orders: () => supabase
+        .from('orders')
+        .select('id, customer_id, status, subtotal, delivery_fee, discount, total, address, payment_status, created_at, updated_at, cancelled_at, order_items(id, product_id, product_name, category, occasion, unit_price, qty, subtotal), profiles!customer_id(full_name, phone)')
+        .order('created_at', { ascending: false }),
+
+      products: () => supabase
+        .from('products')
+        .select('id, name, category, occasion, description, price, emoji, image_url, image_alt, image_source, image_updated_at, is_active, created_at')
+        .order('name'),
+
+      events: () => supabase
+        .from('events')
+        .select('*, profiles!customer_id(full_name, email, phone)')
+        .order('created_at', { ascending: false }),
+
+      proposals: () => supabase.from('event_proposals').select('id, event_id, total_amount, status, created_at'),
+
+      profiles: () => supabase
+        .from('profiles')
+        .select('id, full_name, phone, email, city, created_at')
+        .eq('role', 'customer')
+        .order('created_at', { ascending: false }),
+
+      vendors: () => supabase
+        .from('vendors')
+        .select('*, profiles(full_name, email, phone)')
+        .order('created_at', { ascending: false }),
+
+      enquiries: () => supabase.from('service_enquiries').select('*').order('created_at', { ascending: false }),
+      reviews:   () => supabase.from('reviews_catalog').select('*').order('created_at', { ascending: false }),
+      returns:   () => supabase.from('return_requests').select('*, orders(id,total), profiles!customer_id(full_name, phone)').order('requested_at', { ascending: false }),
+      complaints:() => supabase.from('complaints').select('*, profiles!customer_id(full_name, phone)').order('created_at', { ascending: false }),
+      interest:  () => supabase.from('city_interest_requests').select('city, created_at').order('created_at', { ascending: false }),
+
+      // Migration 037. Absent on any database that has not run it yet, which
+      // is the normal state right after a deploy — hence the soft failure.
+      services:  () => supabase.from('service_catalog').select('*').order('group_id').order('sort_order').order('name'),
+    }
+
+    const keys = Object.keys(queries)
+    const results = await Promise.all(keys.map(k => queries[k]().then(r => r, err => ({ error: err }))))
+
+    const next = { ...EMPTY }
+    const absent = []
+    let fatal = null
+
+    results.forEach((res, i) => {
+      const key = keys[i]
+      if (res.error) {
+        if (isAbsent(res.error) && !REQUIRED.has(key)) { absent.push(key); return }
+        // First real error wins; the rest of the dashboard still gets its rows.
+        if (!fatal) fatal = res.error.message
+        return
+      }
+      next[key] = res.data ?? []
+    })
+
+    setData(next)
+    setMissing(absent)
+    setError(fatal)
+    setLoadedAt(new Date())
+    setLoading(false)
+    setRefreshing(false)
+  }, [])
+
+  useEffect(() => { load(false) }, [load])
+
+  const refresh = useCallback(() => load(true), [load])
+
+  return useMemo(
+    () => ({ ...data, missing, loading, refreshing, error, loadedAt, refresh }),
+    [data, missing, loading, refreshing, error, loadedAt, refresh],
+  )
+}

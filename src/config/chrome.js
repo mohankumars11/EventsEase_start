@@ -17,6 +17,13 @@ export const FOCUSED_ROUTES = [
   '/signup',
   '/auth/callback',
   '/onboarding',
+  // The two operator consoles. BottomNav already hides itself for the vendor
+  // and admin roles ("who work inside dedicated dashboards"); the chat bubble
+  // did not, so a customer-support launcher floated over an internal tool and
+  // sat on top of the numbers — on the admin Area Demand screen it covered a
+  // category's revenue figure outright. Same reasoning, same list.
+  '/dashboard/admin',
+  '/dashboard/vendor',
 ]
 
 export function isFocusedRoute(pathname) {
