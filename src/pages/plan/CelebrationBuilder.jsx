@@ -511,8 +511,8 @@ export default function CelebrationBuilder() {
   /* ── Sent ─────────────────────────────────────────────────────────── */
   if (step === 'done') {
     return (
-      <div className="plan-canvas min-h-screen">
-        <div className="max-w-lg mx-auto px-4 py-10 space-y-5">
+      <div className="plan-canvas min-h-screen pb-bottom-nav">
+        <div className="mx-auto max-w-lg space-y-5 px-4 py-10">
           <div className="plan-rise text-center space-y-3">
             <div className="w-20 h-20 bg-emerald-400/15 ring-1 ring-emerald-400/30 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 size={44} className="text-emerald-400" />
@@ -608,7 +608,7 @@ export default function CelebrationBuilder() {
   const progressPct = Math.round((doneCount / Math.max(1, flow.length - 1)) * 100)
 
   return (
-    <div className="plan-canvas min-h-screen pb-28 lg:pb-8">
+    <div className="plan-canvas min-h-screen pb-36 lg:pb-8">
       {/* ── Hero ───────────────────────────────────────────────────────
           The occasion's own gradient rides as a translucent wash over the
           page's ground rather than as an opaque band across it. An opaque

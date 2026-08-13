@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, X, ArrowLeft } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
 import CityButton from '../common/CityButton'
@@ -37,6 +37,7 @@ export default function ShopAppBar({
   title,
   subtitle,
 }) {
+  const navigate = useNavigate()
   const { cartCount, cartPath } = useCart()
   const { cityRecord } = useCity()
   const reduced = useReducedMotion()
@@ -44,6 +45,10 @@ export default function ShopAppBar({
   const [focused, setFocused] = useState(false)
   const inputRef = useRef(null)
   const barRef = useRef(null)
+
+  // React Router's own position counter; 0 means this entry opened the
+  // session, so `navigate(-1)` would drop the visitor out of the app.
+  const canGoBack = (window.history.state?.idx ?? 0) > 0
 
   // Publish the bar's real height as a custom property, so anything that has
   // to stick underneath it (the category filter row) can position against a
@@ -76,13 +81,28 @@ export default function ShopAppBar({
         {/* ── Row 1: where to, who we are, what's in the bag ── */}
         <div className="flex items-center gap-3">
           {backTo ? (
-            <Link
-              to={backTo}
-              aria-label="Back"
-              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 active:bg-white/10"
-            >
-              <ArrowLeft size={20} />
-            </Link>
+            // Real navigation, not a fixed destination. `backTo="/shop"` on the
+            // product page sent Shop → Cakes → a product → back to the *shop
+            // root*, losing the shelf and the filters the customer had set;
+            // it is the fallback for a cold open (a shared link, a refresh),
+            // where there is nothing behind this entry to return to.
+            canGoBack ? (
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="Back"
+                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 active:bg-white/10"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            ) : (
+              <Link
+                to={backTo}
+                aria-label="Back"
+                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 active:bg-white/10"
+              >
+                <ArrowLeft size={20} />
+              </Link>
+            )
           ) : (
             <SambramoMark size={30} className="shrink-0" />
           )}

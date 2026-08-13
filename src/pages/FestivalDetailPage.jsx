@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles } from 'lucide-react'
+import { useParams, Link } from 'react-router-dom'
+import { Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles, Phone } from 'lucide-react'
 import { FESTIVALS } from '../data/festivals'
+import { BRAND } from '../config/sambramo'
+import AppBar from '../components/layout/AppBar'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { fetchUnsplashPhoto } from '../lib/unsplash'
 
 export default function FestivalDetailPage() {
   useScrollReveal()
   const { id }   = useParams()
-  const navigate = useNavigate()
   const [photo, setPhoto] = useState(null)
 
   const festival = FESTIVALS.find(f => f.id === id)
@@ -25,12 +26,36 @@ export default function FestivalDetailPage() {
 
   if (!festival) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-cream">
-        <p className="text-2xl text-gray-400">Festival not found.</p>
-        <Link to="/" className="btn-primary">Back to Home</Link>
+      <div className="min-h-screen bg-cream pb-bottom-nav">
+        <AppBar tone="plum" backTo="/" title="Festival not found" />
+        <div className="mx-auto max-w-3xl px-4 pt-5">
+          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
+            <div className="text-5xl">🪔</div>
+            <h1 className="font-bold text-gray-800">We don't have a page for that festival</h1>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+              We still plan it — every occasion in the catalogue is priced and bookable.
+            </p>
+            <Link
+              to="/services"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+            >
+              Browse occasions
+            </Link>
+          </div>
+        </div>
       </div>
     )
   }
+
+  // The wizard already reads ?type= and ?festival= (PlanningWizard) and the
+  // catalogue reads ?festival= (ServicesPicker). This page never used either:
+  // all six of its calls to action pointed at /signup, so the highest-intent
+  // seasonal traffic in the app — somebody reading about their own festival —
+  // was met with an account form before it had been told a single price. That
+  // also contradicts the rule the shop, the catalogue and the wizard follow:
+  // browse freely, sign in at the moment there is something to save.
+  const planHref = `/plan/custom?type=festival&festival=${id}`
+  const catalogHref = `/services?festival=${id}`
 
   const {
     name, tagline, emoji, gradientFrom, gradientTo, accentHex,
@@ -41,13 +66,14 @@ export default function FestivalDetailPage() {
   const heroGradient = `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream pb-bottom-nav">
+      <AppBar tone="plum" backTo="/" title={name} subtitle={`${month} · ${duration}`} />
 
       {/* ═══════════════════════════════════════════════
           SECTION 1 — Emotional Hero
       ═══════════════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden pt-16 pb-20 px-4"
+        className="relative overflow-hidden px-4 pb-16 pt-12"
         style={photo
           ? {
               backgroundImage: `linear-gradient(135deg, ${gradientFrom}cc 0%, ${gradientTo}cc 100%), url(${photo.url})`,
@@ -67,17 +93,7 @@ export default function FestivalDetailPage() {
           style={{ backgroundColor: '#000000' }}
         />
 
-        {/* Back button */}
-        <div className="relative max-w-5xl mx-auto mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium transition-colors"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-        </div>
-
-        <div className="relative max-w-4xl mx-auto text-center">
+        <div className="relative mx-auto max-w-3xl text-center">
           {/* Emoji — full-size hero art when no photo, small accent badge when one loads */}
           {photo ? (
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-3xl mb-5">
@@ -117,7 +133,7 @@ export default function FestivalDetailPage() {
 
           {/* CTA */}
           <Link
-            to="/signup"
+            to={planHref}
             className="inline-flex items-center gap-2 bg-white font-bold px-8 py-3.5 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 text-base"
             style={{ color: gradientFrom }}
           >
@@ -140,8 +156,8 @@ export default function FestivalDetailPage() {
       {/* ═══════════════════════════════════════════════
           SECTION 2 — Foods
       ═══════════════════════════════════════════════ */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
+      <section className="px-4 py-10 sm:py-16 bg-white">
+        <div className="mx-auto max-w-3xl">
           <div className="text-center mb-12 reveal">
             <span
               className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
@@ -166,8 +182,8 @@ export default function FestivalDetailPage() {
       {/* ═══════════════════════════════════════════════
           SECTION 3 — Rituals
       ═══════════════════════════════════════════════ */}
-      <section className="py-16 px-4" style={{ backgroundColor: '#fafafa' }}>
-        <div className="max-w-4xl mx-auto">
+      <section className="px-4 py-10 sm:py-16" style={{ backgroundColor: '#fafafa' }}>
+        <div className="mx-auto max-w-3xl">
           <div className="text-center mb-12 reveal">
             <span
               className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
@@ -242,8 +258,8 @@ export default function FestivalDetailPage() {
       {/* ═══════════════════════════════════════════════
           SECTION 4 — Menu Packages
       ═══════════════════════════════════════════════ */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-5xl mx-auto">
+      <section className="px-4 py-10 sm:py-16 bg-white">
+        <div className="mx-auto max-w-3xl">
           <div className="text-center mb-12 reveal">
             <span
               className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
@@ -281,7 +297,7 @@ export default function FestivalDetailPage() {
                   {pkg.name}
                 </h3>
                 <p
-                  className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-white/80' : 'text-marigold-600'}`}
+                  className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-white/80' : 'text-saffron-600'}`}
                 >
                   Custom quote — priced to your guest count &amp; needs
                 </p>
@@ -300,7 +316,7 @@ export default function FestivalDetailPage() {
                 </ul>
 
                 <Link
-                  to="/signup"
+                  to={planHref}
                   className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     pkg.highlight
                       ? 'bg-white hover:bg-orange-50'
@@ -320,8 +336,8 @@ export default function FestivalDetailPage() {
           SECTION 4B — Gift Hampers (book & get this free)
       ═══════════════════════════════════════════════ */}
       {giftHampers?.length > 0 && (
-        <section className="py-16 px-4" style={{ background: `linear-gradient(135deg, ${gradientFrom}10 0%, ${gradientTo}10 100%)` }}>
-          <div className="max-w-3xl mx-auto">
+        <section className="px-4 py-10 sm:py-16" style={{ background: `linear-gradient(135deg, ${gradientFrom}10 0%, ${gradientTo}10 100%)` }}>
+          <div className="mx-auto max-w-3xl">
             <div className="text-center mb-10 reveal">
               <span
                 className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
@@ -360,7 +376,7 @@ export default function FestivalDetailPage() {
                   </ul>
                 </div>
                 <Link
-                  to={`/plan?type=festival&festival=${id}`}
+                  to={planHref}
                   className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
                   style={{ background: heroGradient }}
                 >
@@ -375,8 +391,8 @@ export default function FestivalDetailPage() {
       {/* ═══════════════════════════════════════════════
           SECTION 5 — Customization
       ═══════════════════════════════════════════════ */}
-      <section className="py-16 px-4" style={{ backgroundColor: '#fafafa' }}>
-        <div className="max-w-4xl mx-auto">
+      <section className="px-4 py-10 sm:py-16" style={{ backgroundColor: '#fafafa' }}>
+        <div className="mx-auto max-w-3xl">
           <div className="reveal text-center mb-10">
             <span
               className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
@@ -412,7 +428,7 @@ export default function FestivalDetailPage() {
                 Have something specific in mind? Our event experts will make it happen.
               </p>
               <Link
-                to="/signup"
+                to={planHref}
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
                 style={{ background: heroGradient }}
               >
@@ -426,8 +442,8 @@ export default function FestivalDetailPage() {
       {/* ═══════════════════════════════════════════════
           SECTION 6 — Services
       ═══════════════════════════════════════════════ */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-4xl mx-auto">
+      <section className="px-4 py-10 sm:py-16 bg-white">
+        <div className="mx-auto max-w-3xl">
           <div className="text-center mb-8 reveal">
             <h2 className="section-title">Services You'll Need</h2>
             <p className="section-subtitle">Everything to make your {name} celebration complete</p>
@@ -436,7 +452,7 @@ export default function FestivalDetailPage() {
             {services.map(service => (
               <Link
                 key={service}
-                to="/signup"
+                to={catalogHref}
                 className="group flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-medium text-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                 style={{ borderColor: accentHex, color: accentHex }}
                 onMouseEnter={e => {
@@ -459,7 +475,7 @@ export default function FestivalDetailPage() {
           SECTION 7 — Bottom CTA
       ═══════════════════════════════════════════════ */}
       <section
-        className="py-20 px-4 relative overflow-hidden"
+        className="relative overflow-hidden px-4 py-12 sm:py-20"
         style={{ background: heroGradient }}
       >
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -467,7 +483,7 @@ export default function FestivalDetailPage() {
           <div className="text-7xl absolute bottom-4 left-8 select-none">{emoji}</div>
         </div>
 
-        <div className="relative max-w-3xl mx-auto text-center reveal">
+        <div className="relative mx-auto max-w-3xl text-center reveal">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 leading-tight">
             Make This {name} the One <br className="hidden sm:block" />
             They'll Always Remember
@@ -477,18 +493,21 @@ export default function FestivalDetailPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/signup"
+              to={planHref}
               className="inline-flex items-center justify-center gap-2 bg-white font-bold px-8 py-3.5 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all text-base"
               style={{ color: gradientFrom }}
             >
               <Sparkles size={18} /> Plan This {name}
             </Link>
-            <Link
-              to="/signup"
+            {/* "Talk to an expert" now rings one. It opened a signup form,
+                which is the one thing somebody who wants to speak to a human
+                has already decided against. */}
+            <a
+              href={`tel:${BRAND.supportPhone}`}
               className="inline-flex items-center justify-center gap-2 bg-white/10 border-2 border-white/40 text-white font-bold px-8 py-3.5 rounded-2xl hover:bg-white/20 transition-all text-base backdrop-blur-sm"
             >
-              Talk to an Expert
-            </Link>
+              <Phone size={17} /> Talk to an expert
+            </a>
           </div>
         </div>
       </section>

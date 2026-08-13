@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Star, XCircle, RotateCcw, MessageCircleWarning } from 'lucide-react'
+import { Star, XCircle, RotateCcw, MessageCircleWarning } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
-import CustomerLayout from '../../components/customer/CustomerLayout'
+import AppBar from '../../components/layout/AppBar'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
 
@@ -101,21 +101,40 @@ export default function MyOrders() {
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-          <ShoppingBag size={22} className="text-amber-500" /> My Orders
-        </h1>
-        <p className="text-sm text-gray-500 mb-6">Everything you've ordered from the Shop.</p>
+    <div className="min-h-screen bg-cream pb-bottom-nav">
+      {/* The heading is the app bar's, so the page does not print it a second
+          time twelve pixels below itself — but a screen reader still needs an
+          h1 that is the document's, not a bar shared across screens. */}
+      <AppBar
+        tone="plum"
+        backTo="/dashboard/customer"
+        title="My orders"
+        subtitle="Everything you've ordered from the shop"
+      />
+      <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
+        <h1 className="sr-only">My orders</h1>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          /* Skeletons, not the word "Loading…" left-aligned in an otherwise
+             empty screen. The old text sat alone at the top of a full-height
+             page, which reads as an empty account rather than a pending one. */
+          <div className="space-y-4" aria-busy="true" aria-label="Loading your orders">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="card h-32 animate-pulse bg-gray-100" />
+            ))}
+          </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
+          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
             <div className="text-5xl">🛍️</div>
-            <h3 className="font-bold text-gray-700">No orders yet</h3>
-            <Link to="/shop" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
-              Browse Shop
+            <h2 className="font-bold text-gray-800">No orders yet</h2>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+              Cakes, flowers, gifts and pooja essentials — ordered today, delivered to your door.
+            </p>
+            <Link
+              to="/shop"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+            >
+              Browse the shop
             </Link>
           </div>
         ) : (
@@ -245,6 +264,6 @@ export default function MyOrders() {
           onClose={() => setActionModal(null)}
         />
       )}
-    </CustomerLayout>
+    </div>
   )
 }

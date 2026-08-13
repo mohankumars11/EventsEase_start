@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Trash2, ShoppingCart, Package, ArrowLeft, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle, Calendar, Clock, Users, MapPin, Pencil, Phone } from 'lucide-react'
+import { Trash2, Package, CheckCircle2, ChevronRight, Minus, Plus, AlertCircle, Calendar, Clock, Users, MapPin, Pencil, Phone } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { friendlyError } from '../../context/ToastContext'
-import CustomerLayout from '../../components/customer/CustomerLayout'
+import AppBar from '../../components/layout/AppBar'
 import BookingSheet from '../../components/customer/BookingSheet'
 
 export default function Cart() {
@@ -154,8 +154,13 @@ export default function Cart() {
 
   if (checkoutDone) {
     return (
-      <CustomerLayout>
-        <div className="max-w-md mx-auto px-4 py-16 text-center space-y-5">
+      <div className="min-h-screen bg-cream pb-bottom-nav">
+        {/* No back arrow and no cart icon on the confirmation: the cart it
+            would return to is the one that was just emptied, and a bag badge
+            reading 0 beside "Requirements sent" is the app contradicting its
+            own good news. */}
+        <AppBar tone="plum" title="Request sent" subtitle="A coordinator picks it up next" cart={false} />
+        <div className="mx-auto max-w-md px-4 py-14 text-center space-y-5">
           <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
             <CheckCircle2 size={48} className="text-green-500" />
           </div>
@@ -173,7 +178,7 @@ export default function Cart() {
           <div className="flex flex-col gap-2.5">
             <button
               onClick={() => navigate('/dashboard/customer/requests')}
-              className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600"
+              className="w-full py-3 rounded-xl bg-saffron-500 text-white font-bold hover:bg-saffron-600"
             >
               Track in My Requests
             </button>
@@ -185,32 +190,39 @@ export default function Cart() {
             </button>
           </div>
         </div>
-      </CustomerLayout>
+      </div>
     )
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-600">
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <ShoppingCart size={20} className="text-amber-500" /> My Cart
-            </h1>
-            <p className="text-sm text-gray-400 mt-0.5">{totalCount} item{totalCount !== 1 ? 's' : ''} selected</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-cream pb-bottom-nav">
+      {/* One back control, in the bar, where every other screen keeps it. The
+          page used to draw its own directly beneath the shell's "Back" link —
+          two arrows, eight pixels apart, doing different things: the shell's
+          went home, this one went back. */}
+      <AppBar
+        tone="plum"
+        backTo="/services"
+        title="My cart"
+        subtitle={`${totalCount} item${totalCount !== 1 ? 's' : ''} selected`}
+        cart={false}
+      />
+      <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
+        <h1 className="sr-only">My cart</h1>
 
         {!hasAnything ? (
-          <div className="text-center py-20 space-y-4">
+          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
             <div className="text-6xl">🛒</div>
-            <h3 className="font-bold text-gray-700">Your cart is empty</h3>
-            <p className="text-sm text-gray-400">Browse a function or festival and add the services you need.</p>
-            <Link to="/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
-              Browse services
+            <h2 className="font-bold text-gray-800">Your cart is empty</h2>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+              Browse a function or festival and add the services you need — a
+              cook, a priest, decorations. Nothing is booked until you approve a quote.
+            </p>
+            <Link
+              to="/services"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+            >
+              Browse occasions
             </Link>
           </div>
         ) : (
@@ -469,6 +481,6 @@ export default function Cart() {
           onClose={() => setEditingEvent(null)}
         />
       )}
-    </CustomerLayout>
+    </div>
   )
 }

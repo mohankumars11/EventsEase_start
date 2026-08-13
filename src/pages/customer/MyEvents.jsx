@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Sparkles, Calendar, MapPin, Users, ArrowRight } from 'lucide-react'
+import { Sparkles, Calendar, MapPin, Users, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { toCatalogId } from '../../data/occasionMap'
 import { useAuth } from '../../context/AuthContext'
@@ -10,7 +10,7 @@ import {
 } from '../../config/sambramo'
 import { formatDate } from '../../utils/format'
 import { friendlyError } from '../../context/ToastContext'
-import CustomerLayout from '../../components/customer/CustomerLayout'
+import AppBar from '../../components/layout/AppBar'
 
 /* ── Status messages shown to customers ────────────────────────── */
 const STATUS_MESSAGES = {
@@ -46,7 +46,7 @@ function StatusProgress({ status }) {
     <div className="space-y-1.5">
       <div className="flex justify-between items-center text-[11px] font-medium text-gray-500">
         <span>Submitted</span>
-        <span className="text-marigold-600 font-semibold">{label}</span>
+        <span className="text-saffron-600 font-semibold">{label}</span>
         <span>Completed</span>
       </div>
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -194,28 +194,34 @@ export default function MyEvents() {
       })
   }, [user?.id])
 
+  // The bar renders in the loading state too. It used to be absent, so the
+  // screen arrived with no title, no back control and no cart for however long
+  // the query took, then the whole page jumped as the chrome appeared under it.
+  const shell = children => (
+    <div className="min-h-screen bg-cream pb-bottom-nav">
+      <AppBar
+        tone="plum"
+        backTo="/dashboard/customer"
+        title="My celebrations"
+        subtitle={firstName ? `Welcome back, ${firstName}` : 'Everything we are arranging for you'}
+      />
+      <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">{children}</div>
+    </div>
+  )
+
   if (loading) {
-    return (
-      <CustomerLayout>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-gray-400">
-          <Loader2 className="animate-spin text-marigold-400" size={32} />
-          <span className="text-sm">Loading your celebrations…</span>
-        </div>
-      </CustomerLayout>
+    return shell(
+      <div className="space-y-4" aria-busy="true" aria-label="Loading your celebrations">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="card h-36 animate-pulse bg-gray-100" />
+        ))}
+      </div>
     )
   }
 
-  return (
-    <CustomerLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-
-        {/* Header */}
-        <div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-            Welcome back, {firstName} 💛
-          </h1>
-          <p className="text-gray-500 text-base">Your celebrations are in good hands.</p>
-        </div>
+  return shell(
+    <div className="space-y-6">
+        <h1 className="sr-only">My celebrations</h1>
 
         {/* Error */}
         {error && (
@@ -228,7 +234,7 @@ export default function MyEvents() {
         <div
           className="relative rounded-2xl p-6 sm:p-8 overflow-hidden cursor-pointer group"
           style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f59e0b 100%)' }}
-          onClick={() => navigate('/dashboard/customer')}
+          onClick={() => navigate('/plan')}
         >
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
@@ -242,7 +248,7 @@ export default function MyEvents() {
               <p className="text-white/75 text-sm mt-1">Tell us your dream — we'll handle the rest.</p>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); navigate('/dashboard/customer') }}
+              onClick={e => { e.stopPropagation(); navigate('/plan') }}
               className="btn-cta self-start sm:self-center shrink-0"
             >
               <Sparkles size={14} /> Start Planning
@@ -269,7 +275,7 @@ export default function MyEvents() {
                 </p>
               </div>
               <button
-                onClick={() => navigate('/dashboard/customer')}
+                onClick={() => navigate('/plan')}
                 className="btn-cta mx-auto"
               >
                 <Sparkles size={15} /> Plan My Celebration
@@ -283,6 +289,5 @@ export default function MyEvents() {
         </div>
 
       </div>
-    </CustomerLayout>
   )
 }

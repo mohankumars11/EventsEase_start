@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning, MessageCircle } from 'lucide-react'
+import { Calendar, Clock, Users, MapPin, Star, XCircle, MessageCircleWarning, MessageCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatINR } from '../../utils/format'
 import { BRAND } from '../../config/sambramo'
-import CustomerLayout from '../../components/customer/CustomerLayout'
+import AppBar from '../../components/layout/AppBar'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
 
@@ -68,21 +68,35 @@ export default function MyRequests() {
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-          <ClipboardList size={22} className="text-plum-600" /> My Requests
-        </h1>
-        <p className="text-sm text-gray-500 mb-6">Everything you've asked Sambramo to arrange.</p>
+    <div className="min-h-screen bg-cream pb-bottom-nav">
+      <AppBar
+        tone="plum"
+        backTo="/dashboard/customer"
+        title="My requests"
+        subtitle="Everything you've asked us to arrange"
+      />
+      <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
+        <h1 className="sr-only">My requests</h1>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <div className="space-y-4" aria-busy="true" aria-label="Loading your requests">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="card h-32 animate-pulse bg-gray-100" />
+            ))}
+          </div>
         ) : enquiries.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
+          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
             <div className="text-5xl">📋</div>
-            <h3 className="font-bold text-gray-700">No requests yet</h3>
-            <Link to="/services" className="inline-block mt-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
-              Browse services
+            <h2 className="font-bold text-gray-800">No requests yet</h2>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+              Tell us the occasion and a coordinator rings you back with one
+              priced plan. Free to ask, nothing booked until you approve it.
+            </p>
+            <Link
+              to="/services"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+            >
+              Browse occasions
             </Link>
           </div>
         ) : (
@@ -238,6 +252,6 @@ export default function MyRequests() {
           onClose={() => setActionModal(null)}
         />
       )}
-    </CustomerLayout>
+    </div>
   )
 }

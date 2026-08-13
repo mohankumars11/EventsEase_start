@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageSquareText, Star } from 'lucide-react'
+import { useParams, Link } from 'react-router-dom'
+import { ShoppingCart, Check, Minus, Plus, MessageSquareText, Star } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { formatINR } from '../../utils/format'
 import { useCart } from '../../context/CartContext'
 import { CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
+import ShopAppBar from '../../components/shop/ShopAppBar'
 import ProductImage from '../../components/shop/ProductImage'
 import ImageSourceBadge from '../../components/shop/ImageSourceBadge'
 import RatingBadge from '../../components/reviews/RatingBadge'
@@ -20,7 +21,6 @@ import { isCustomizable } from '../../config/customizers'
 
 export default function ProductDetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const { dispatch, hasProduct, productLines, productQtyFor } = useCart()
   const [product, setProduct] = useState(null)
@@ -61,13 +61,42 @@ export default function ProductDetail() {
 
   const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
-  if (loading) return <div className="min-h-screen bg-cream flex items-center justify-center text-gray-400 text-sm">Loading…</div>
+  // Both non-happy states keep the bar. Without it they were bare centred text
+  // on an otherwise empty screen with no way out except the browser's own back
+  // gesture — and on a cold open (a shared product link) there was no history
+  // behind it either, so "Product not found" was a dead end.
+  if (loading) {
+    return (
+      <div className="shop-canvas min-h-screen pb-bottom-nav">
+        <ShopAppBar backTo="/shop" title="Loading…" />
+        <div className="mx-auto max-w-3xl space-y-4 px-4 pt-5">
+          <div className="shop-card h-64 animate-pulse bg-white/10" />
+          <div className="shop-card h-40 animate-pulse bg-white/10" />
+        </div>
+      </div>
+    )
+  }
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4">
-        <p className="text-2xl text-gray-400">Product not found.</p>
-        <Link to="/shop" className="btn-primary">Back to Shop</Link>
+      <div className="shop-canvas min-h-screen pb-bottom-nav">
+        <ShopAppBar backTo="/shop" title="Not found" />
+        <div className="mx-auto max-w-3xl px-4 pt-5">
+          <div className="shop-card flex flex-col items-center gap-3 px-6 py-14 text-center">
+            <div className="text-5xl">🔍</div>
+            <h1 className="font-bold text-gray-800">We can't find that item</h1>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+              It may have sold out or been renamed. The shelves below still have
+              cakes, flowers, gifts and pooja essentials.
+            </p>
+            <Link
+              to="/shop"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+            >
+              Back to the shop
+            </Link>
+          </div>
+        </div>
       </div>
     )
   }
@@ -80,13 +109,18 @@ export default function ProductDetail() {
   const facts        = product.category === 'Cakes' ? cakeFacts(product) : null
 
   return (
-    <div className="min-h-screen bg-cream">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-sm mb-6">
-          <ArrowLeft size={15} /> Back
-        </button>
+    <div className="shop-canvas min-h-screen pb-bottom-nav">
+      {/* The page's own back button is gone — it sat directly under the shell's
+          "Back" link, two arrows eight pixels apart. The bar carries the one
+          that survives, and it names the product so the screen has a title
+          instead of an anonymous arrow. */}
+      <ShopAppBar backTo="/shop" title={product.name} subtitle={product.category} />
 
-        <div className="bg-white rounded-3xl border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
+      <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
+        {/* p-8 on a 360px phone spent 64px of a 328px card on padding, so the
+            photo and the price sat in a 264px column. Padding steps up with
+            the viewport now instead of being priced for a desktop. */}
+        <div className="shop-card grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 sm:gap-8 sm:p-8">
           {/* The hero drifts continuously and carries the source badge —
               a customer decides here, so this is where the photo has to
               both look its best and say what it actually is. */}
@@ -213,7 +247,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 p-8 mt-6">
+        <div className="shop-card mt-4 p-5 sm:p-8">
           <div className="flex items-center justify-between gap-3 mb-5">
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
               <MessageSquareText size={18} className="text-plum-500" /> Customer Feedback

@@ -7,13 +7,10 @@ import { ToastProvider } from './context/ToastContext'
 import { ChatProvider } from './context/ChatContext'
 import CitySheet from './components/common/CitySheet'
 import Navbar from './components/layout/Navbar'
-import BackToHomeButton from './components/layout/BackToHomeButton'
 import BottomNav from './components/layout/BottomNav'
 import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
-import Footer from './components/layout/Footer'
 import ChatWidget from './components/customer/ChatWidget'
-import ServiceAreaBanner from './components/customer/ServiceAreaBanner'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
@@ -120,55 +117,82 @@ function PageBoundary({ children }) {
 }
 
 /**
- * Public / pre-login chrome: header, pilot-city bar, footer.
- * `pb-bottom-nav` reserves room for the fixed mobile tab bar so the last
- * row of a page is never hidden underneath it.
+ * ── The end of the marketing shell ──────────────────────────────────────
  *
- * The scrolling festival ticker used to sit between the two bars, on every
- * page in the app. It is gone. Home already runs a full festival rail — eight
- * occasions, each with a countdown, a photo and its own route — so the ticker
- * was the same content a second time, in a worse form: a 20s marquee is the
- * one element on a page that never stops moving, it sat directly above the
- * content on screens that had nothing to do with festivals, and a chip you
- * have to hit while it slides is a target that moves out from under the
- * thumb. Anything that needs a festival links to /festivals/:id directly.
+ * There used to be an AppShell here: marketing navbar, pilot-city banner,
+ * "Back to Home" link, page, 400px marketing footer. Screens moved off it one
+ * at a time as each grew its own app bar — home, the storefront, the planner,
+ * the checkout, the occasion page, the single-service page — and the five that
+ * never made the move are the ones this pass finished: the occasions
+ * catalogue, the product page, festival pages, the builder, and the four
+ * signed-in customer screens.
+ *
+ * Nothing renders it now, so it is gone rather than left as a fourth option
+ * somebody adds a route to next month. What it was stacking, and why each
+ * piece had to stop:
+ *
+ *   · **the navbar** — a second logo above a bar that already carried one, and
+ *     a second cart button next to the bar's own. Two carts on one screen is
+ *     not a redundancy, it is a question about which one is real.
+ *   · **ServiceAreaBanner** — a "Pilot — Bengaluru — Somewhere else? [notify
+ *     me]" strip on every screen including the checkout, inviting a customer
+ *     mid-purchase to register interest in a city we do not serve. The city
+ *     control it also carried now lives in every app bar (CityButton), which
+ *     is where it was already duplicated *from*.
+ *   · **BackToHomeButton** — a back link floating in its own padded row, on
+ *     four screens directly above the page's own back button. Eight pixels
+ *     apart, pointing at different places.
+ *   · **the marketing footer** — a sitemap, a celebrations directory, "Track
+ *     an order" and "Sign in", hung under a page where somebody had just been
+ *     told what their wedding costs. Every screen that carried it now ends in
+ *     something written for that screen: EventFooter on the occasion page,
+ *     HowWeServe in the shop, CheckoutFooter at the till, HowItWorks and the
+ *     support strip on home.
+ *
+ * Two shells remain.
  */
-function AppShell({ children }) {
-  return (
-    <div className="flex flex-col min-h-screen pb-bottom-nav">
-      <Navbar />
-      <ServiceAreaBanner />
-      <BackToHomeButton />
-      <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
-      <Footer />
-    </div>
-  )
+
+/**
+ * Every customer-facing screen. The page owns its own bar, its own ground and
+ * its own height; this supplies the landmark and the crash boundary.
+ *
+ * ── Why it reserves nothing ─────────────────────────────────────────────
+ * It used to be `min-h-screen flex-col pb-bottom-nav`, wrapping pages that are
+ * themselves `min-h-screen pb-bottom-nav` — every one of the sixteen screens
+ * on this shell declares both. Nesting them doubled the reservation: the tab
+ * bar's strip was paid for twice, ~136px instead of ~68px, and because the
+ * inner page was already a full 100vh the outer padding sat *below* it. So
+ * every app screen in the product scrolled roughly 68px past its own last
+ * element into empty ground, and every screen showed a scrollbar even when its
+ * content fitted the viewport. That dead strip under the content — reported as
+ * blank space at the bottom of "every page" — is this, and only this.
+ *
+ * The rule now: the page owns its canvas, because the page is the thing that
+ * knows what colour the ground is and what fixed furniture it has to clear.
+ * ShopCart clears its own checkout bar, the builder clears its action bar, and
+ * everything else clears the tab bar with `pb-bottom-nav`. The shell adds
+ * nothing on top of that.
+ */
+function ScreenShell({ children }) {
+  return <main><PageBoundary>{children}</PageBoundary></main>
 }
 
 /**
- * Signed-in chrome — AppShell minus the marketing footer.
+ * Vendors and admins, who work inside an operations console rather than the
+ * customer surface.
  *
- * The footer is a sales surface: a sitemap, two "call us" buttons, a list of
- * celebration types and the pilot-city notice. All of it exists to convince
- * someone who has not signed up yet. Past the login it is 400px of scroll at
- * the bottom of every screen, selling the product to the person already using
- * it — and worse, on the vendor and admin dashboards it hung "Plan a birthday"
- * links under an operations console, which is not what those two roles are
- * here to do.
- *
- * So the rule is the door, not the role: public browsing (landing, shop, plan
- * hub, catalog, festivals) keeps the footer because those pages still have to
- * sell and still need a sitemap. Everything under /dashboard drops it — the
- * header, the profile menu and the phone tab bar are the navigation once you
- * are inside, and contact details live in the profile menu and the chat widget
- * that stays on screen here.
+ * They keep the navbar because it carries the profile menu and the sign-out,
+ * and BottomNav deliberately returns null for both roles — so without it these
+ * two screens would have no chrome at all. They do *not* keep the pilot-city
+ * banner: which cities the pilot covers is not a fact an admin reconciling
+ * shop orders needs restated above every table, and the "notify me when you
+ * launch in my city" form underneath it was addressed to a customer who is not
+ * the person reading this screen.
  */
 function DashboardShell({ children }) {
   return (
-    <div className="flex flex-col min-h-screen pb-bottom-nav">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <ServiceAreaBanner />
-      <BackToHomeButton />
       <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
     </div>
   )
@@ -176,48 +200,12 @@ function DashboardShell({ children }) {
 
 /**
  * Auth screens draw their own full-height split layout, complete with
- * brand panel and logo. Wrapping them in AppShell stacked a second logo,
- * a festival ticker, a "Back to Home" link, a marketing footer and a chat
- * bubble around a screen whose entire job is a single focused decision.
+ * brand panel and logo. Wrapping them in a shell stacked a second logo,
+ * a "Back to Home" link, a marketing footer and a chat bubble around a
+ * screen whose entire job is a single focused decision.
  */
 function BareShell({ children }) {
   return <div className="min-h-screen"><PageBoundary>{children}</PageBoundary></div>
-}
-
-/**
- * The app screens that draw their own chrome — home and the storefront.
- *
- * Same reasoning as BareShell, for the same symptom. /shop opens with a
- * sticky app bar carrying the delivery city, a search field and the cart —
- * and AppShell was stacking the marketing navbar, the pilot-city banner, the
- * festival ticker and a "Back to Home" link on top of it. That is roughly
- * 470px of chrome before the first product, two cart buttons, and the
- * delivery city stated twice in different words. It also broke the sticky
- * filter row, which positions itself against the top of the viewport.
- *
- * The footer goes too. Its job on a public page is a sitemap and a sales
- * pitch; the storefront now ends with the same information in its own voice
- * — how the service works, who delivers, how to pay — and the tab bar is the
- * navigation. ChatWidget stays: support is the one piece of global chrome a
- * shopper actually reaches for mid-purchase.
- *
- * Deliberately not applied to /shop/product/:id, which is still the
- * light-ground design and reads correctly inside the standard shell.
- *
- * Home joined it when the landing page and the customer dashboard collapsed
- * into one screen: it draws the same kind of sticky app bar, and stacking the
- * marketing navbar above a bar that already carries the city, the search and
- * the cart produced the identical duplication it does on /shop.
- *
- * The checkout joined it as well, for the strongest version of the same
- * reason — see the /shop/cart route.
- */
-function ScreenShell({ children }) {
-  return (
-    <div className="flex min-h-screen flex-col pb-bottom-nav">
-      <main className="flex-1"><PageBoundary>{children}</PageBoundary></main>
-    </div>
-  )
 }
 
 function AppRoutes() {
@@ -243,7 +231,7 @@ function AppRoutes() {
       <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
 
       {/* ── Festival detail (public) ────────────────── */}
-      <Route path="/festivals/:id" element={<AppShell><FestivalDetailPage /></AppShell>} />
+      <Route path="/festivals/:id" element={<ScreenShell><FestivalDetailPage /></ScreenShell>} />
 
       {/* ── Shop (public browsing, checkout requires login) ── */}
       <Route path="/shop" element={<ScreenShell><Shop /></ScreenShell>} />
@@ -271,7 +259,7 @@ function AppRoutes() {
           methods, the refund promise, a human to call). The tab bar stays: it
           is the app's navigation, not the marketing site's. */}
       <Route path="/shop/cart" element={<ScreenShell><ShopCart /></ScreenShell>} />
-      <Route path="/shop/product/:id" element={<AppShell><ProductDetail /></AppShell>} />
+      <Route path="/shop/product/:id" element={<ScreenShell><ProductDetail /></ScreenShell>} />
       {/* Cakes get their own storefront: the category carries 50-odd occasion
           tags and every item is configurable, neither of which ShopCategory's
           flat chip row and one-tap Add can express. Listed before the generic
@@ -289,9 +277,7 @@ function AppRoutes() {
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it
           offers the two ways to actually engage: hand the occasion over to
-          a coordinator, or browse the services and packages yourself. It
-          gets AppShell because it is a browsing page and needs the header,
-          footer and phone tab bar around it.
+          a coordinator, or browse the services and packages yourself.
 
           /plan/custom is the six-step wizard, which keeps BareShell — it is
           a focused flow and the chrome would only compete with it.
@@ -330,11 +316,15 @@ function AppRoutes() {
           same reason the wizard and the catalog are — a price behind a login
           is a price nobody sees. Login is asked at send, where there is
           something to save. */}
-      <Route path="/plan/build" element={<AppShell><CelebrationBuilder /></AppShell>} />
-      <Route path="/plan/build/:eventId" element={<AppShell><CelebrationBuilder /></AppShell>} />
+      <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
+      <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
 
-      {/* ── Services & packages catalog (public) ────── */}
-      <Route path="/services" element={<AppShell><ServicesPicker /></AppShell>} />
+      {/* ── Services & packages catalog (public) ──────
+          The last screen inside CustomerLayout, which for a signed-in customer
+          drew a second five-tab bar fixed to the bottom of the phone
+          underneath the app's real one, in the palette the pivot retired.
+          It carries the shared app bar now, search included. */}
+      <Route path="/services" element={<ScreenShell><ServicesPicker /></ScreenShell>} />
       {/* One service, bought end to end — singular `/service/:id`, distinct
           from the plural `/services/:eventId` occasion page beside it.
 
@@ -402,16 +392,20 @@ function AppRoutes() {
       <Route path="/dashboard/customer/events/:eventId" element={<LegacyEventRedirect />} />
       {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
       <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
-      {/* These two rendered bare — no header, no way out except the page's
-          own in-content links. Same shell as every other customer page. */}
+      {/* The four signed-in customer screens. They were on the dashboard
+          shell, which is now vendor/admin only: a customer checking an order
+          does not need an operations navbar, and the pilot-city notify-me form
+          above it was addressed to somebody who has already bought. Each draws
+          the shared app bar instead — one back control, the screen's name, the
+          cart and the account menu. */}
       <Route path="/dashboard/customer/orders" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <DashboardShell><MyOrders /></DashboardShell>
+          <ScreenShell><MyOrders /></ScreenShell>
         </ProtectedRoute>
       } />
       <Route path="/dashboard/customer/requests" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <DashboardShell><MyRequests /></DashboardShell>
+          <ScreenShell><MyRequests /></ScreenShell>
         </ProtectedRoute>
       } />
       {/* Public, like the shop's checkout beside it.
@@ -423,10 +417,10 @@ function AppRoutes() {
           The page asks for sign-in at "send", where there is something to save
           and a reason a person can see — the same rule the wizard and the
           storefront already follow. */}
-      <Route path="/dashboard/customer/cart" element={<DashboardShell><Cart /></DashboardShell>} />
+      <Route path="/dashboard/customer/cart" element={<ScreenShell><Cart /></ScreenShell>} />
       <Route path="/dashboard/customer/events" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <DashboardShell><MyEvents /></DashboardShell>
+          <ScreenShell><MyEvents /></ScreenShell>
         </ProtectedRoute>
       } />
 
