@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Calendar, MapPin } from 'lucide-react'
-import { EVENT_TYPES, EVENT_TYPE_EMOJIS, EVENT_STATUSES } from '../../config/sambramo'
+import { ChevronRight, Calendar, Users } from 'lucide-react'
+import { JOURNEY, needsYou } from '../../lib/celebrations'
 
 /**
  * "Your celebration is being arranged" — the live strip at the top of home.
@@ -13,54 +13,33 @@ import { EVENT_TYPES, EVENT_TYPE_EMOJIS, EVENT_STATUSES } from '../../config/sam
  * checks in repeatedly, and the answer used to be four taps down a separate
  * dashboard.
  *
- * The bar is a real position in a real pipeline — the index of the event's
- * status within the ordered stage list, which is the same sequence the admin
- * console moves it through. It is not a fake "80% complete".
+ * ── Why this now takes normalised celebrations ──────────────────────────
+ * It used to take raw `events` rows and index their status into a hardcoded
+ * eleven-stage pipeline. That made it structurally incapable of showing a
+ * request from the celebration builder or the services cart, which live in
+ * `service_enquiries` and have four states, not eleven — so the customer whose
+ * request came through either of those doors saw nothing here at all. It reads
+ * lib/celebrations.js's shape instead, which both tables are projected onto,
+ * and the bar is a real position on that shared journey rather than a fake
+ * "80% complete".
  */
-
-// The customer-visible run of stages, in order. CANCELLED and COMPLETED are
-// deliberately absent: neither is a step on the way to anything, and an event
-// in either state is not "in progress" and never reaches this component.
-const PIPELINE = [
-  'REQUEST_RECEIVED',
-  'UNDER_REVIEW',
-  'CONTACTING_VENDORS',
-  'QUOTES_COLLECTED',
-  'PROPOSAL_PREPARED',
-  'PROPOSAL_SENT',
-  'CUSTOMER_REVIEW',
-  'APPROVED',
-  'CONFIRMED',
-  'IN_COORDINATION',
-  'EVENT_DAY',
-]
-
-// The one stage where the ball is in the customer's court. It gets a
-// different colour and a different verb, because "Your Review Needed" styled
-// identically to "Contacting Vendors" reads as progress to watch rather than
-// as a thing to go and do — and a proposal nobody opens is the most expensive
-// way for this business to stall.
-const NEEDS_YOU = new Set(['CUSTOMER_REVIEW', 'PROPOSAL_SENT'])
-
-export default function LiveEventStrip({ events = [] }) {
-  if (events.length === 0) return null
+export default function LiveEventStrip({ celebrations = [] }) {
+  if (celebrations.length === 0) return null
 
   return (
     <section aria-label="Your celebrations in progress" className="px-4">
       <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x scroll-pl-4">
-        {events.map(e => <LiveCard key={e.id} event={e} single={events.length === 1} />)}
+        {celebrations.map(c => (
+          <LiveCard key={c.key} celebration={c} single={celebrations.length === 1} />
+        ))}
       </div>
     </section>
   )
 }
 
-function LiveCard({ event, single }) {
-  const status = EVENT_STATUSES[event.status]
-  const type   = EVENT_TYPES.find(t => t.id === event.event_type)
-  const emoji  = EVENT_TYPE_EMOJIS[event.event_type] ?? '🎊'
-  const step   = PIPELINE.indexOf(event.status)
-  const pct    = step < 0 ? 8 : ((step + 1) / PIPELINE.length) * 100
-  const yours  = NEEDS_YOU.has(event.status)
+function LiveCard({ celebration: c, single }) {
+  const yours = needsYou(c)
+  const step = JOURNEY.findIndex(s => s.key === c.stage)
 
   return (
     <Link
@@ -69,7 +48,7 @@ function LiveCard({ event, single }) {
     >
       <div className="flex items-center gap-3">
         <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl">
-          {emoji}
+          {c.emoji}
           {/* The live dot, on the stages where something is actively moving. */}
           {!yours && (
             <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
@@ -81,11 +60,11 @@ function LiveCard({ event, single }) {
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-extrabold capitalize leading-tight text-white">
-            {type?.label ?? event.event_type}
-            {event.city && <span className="font-semibold text-white/40"> · {event.city}</span>}
+            {c.title}
+            {c.city && <span className="font-semibold text-white/40"> · {c.city}</span>}
           </p>
           <p className={`truncate text-[11px] font-semibold ${yours ? 'text-saffron-300' : 'text-white/60'}`}>
-            {yours ? 'Needs you — open your proposal' : `${status?.icon ?? ''} ${status?.label ?? 'In progress'}`}
+            {yours ? 'Needs you — open your proposal' : c.stageLabel}
           </p>
         </div>
 
@@ -103,20 +82,21 @@ function LiveCard({ event, single }) {
           className={`h-full rounded-full transition-[width] duration-700 ease-out ${
             yours ? 'bg-saffron-400' : 'bg-gradient-to-r from-plum-400 to-berry-400'
           }`}
-          style={{ width: `${pct}%` }}
+          style={{ width: `${c.progress}%` }}
         />
       </div>
 
       <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold text-white/40">
-        <span>Step {Math.max(step + 1, 1)} of {PIPELINE.length}</span>
-        {event.event_date && (
+        <span>Step {Math.max(step + 1, 1)} of {JOURNEY.length}</span>
+        <span className="font-mono">{c.reference}</span>
+        {c.eventDate && (
           <span className="flex items-center gap-1">
             <Calendar size={10} />
-            {new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+            {new Date(c.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
           </span>
         )}
-        {event.guest_count && (
-          <span className="flex items-center gap-1"><MapPin size={10} />{event.guest_count} guests</span>
+        {c.guestCount && (
+          <span className="flex items-center gap-1"><Users size={10} />{c.guestCount} guests</span>
         )}
       </div>
     </Link>

@@ -1,160 +1,237 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Sparkles, Calendar, MapPin, Users, ArrowRight } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-import { toCatalogId } from '../../data/occasionMap'
-import { useAuth } from '../../context/AuthContext'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import {
-  BRAND, EVENT_TYPE_EMOJIS, EVENT_TYPE_GRADIENTS,
-  STATUS_ORDER, EVENT_STATUSES,
-} from '../../config/sambramo'
-import { formatDate } from '../../utils/format'
-import { friendlyError } from '../../context/ToastContext'
+  Sparkles, Calendar, MapPin, Users, ArrowRight, Clock3, Hash, Phone,
+  ShieldCheck, AlertTriangle, ListChecks, Inbox,
+} from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { BRAND } from '../../config/sambramo'
+import { fetchCelebrations, isLive, needsYou, JOURNEY } from '../../lib/celebrations'
+import { formatDate, formatINR } from '../../utils/format'
 import AppBar from '../../components/layout/AppBar'
 
-/* ── Status messages shown to customers ────────────────────────── */
-const STATUS_MESSAGES = {
-  REQUEST_RECEIVED:           'We\'ve received your request. Our team is reviewing it.',
-  UNDER_REVIEW:               'Your Sambramo coordinator is reviewing your requirements.',
-  CONTACTING_VENDORS:         'We\'re reaching out to vendors on your behalf.',
-  QUOTES_COLLECTED:           'We\'ve collected quotes from vendors. Preparing your plan!',
-  PROPOSAL_PREPARED:          'Your celebration plan is being finalised.',
-  PROPOSAL_SENT:              'Your celebration plan is ready to review! 🎉',
-  CUSTOMER_REVIEW:            'Your celebration plan is ready to review! 🎉',
-  CUSTOMER_CHANGES_REQUESTED: 'We\'re working on your requested changes.',
-  APPROVED:                   'Your celebration is confirmed. Let\'s make it magical!',
-  CONFIRMED:                  'Your celebration is confirmed. Let\'s make it magical!',
-  IN_COORDINATION:            'Everything is coming together beautifully.',
-  EVENT_DAY:                  'Today is your big day! Enjoy every moment. 🌟',
-  COMPLETED:                  'What a beautiful celebration! Thank you for celebrating with us.',
-  CANCELLED:                  'This event was cancelled. Reach out if you need help.',
-}
+/**
+ * My celebrations — every request, from every door, in one place.
+ *
+ * This page used to read the `events` table alone, which meant it could only
+ * ever show requests raised through the six-step wizard. A celebration built in
+ * /plan/build or sent from the services cart writes to `service_enquiries`, so
+ * it landed in the database, went to a coordinator, and was invisible here —
+ * the customer saw "you have no celebrations yet" on a screen whose whole job
+ * is to prove otherwise. See lib/celebrations.js for the join.
+ *
+ * The grouping is by who is holding the request, not by table and not by date:
+ * things waiting on the customer first, because that is the only group with an
+ * action in it, then everything in progress, then the archive.
+ */
 
-/* ── Workflow progress bar ─────────────────────────────────────── */
-function StatusProgress({ status }) {
-  const steps      = STATUS_ORDER // omit COMPLETED from steps count
-  const currentIdx = steps.indexOf(status)
-  const pct        = status === 'COMPLETED'
-    ? 100
-    : currentIdx < 0
-      ? 0
-      : Math.round(((currentIdx + 1) / steps.length) * 100)
+/* ── Filters ───────────────────────────────────────────────────────── */
+const FILTERS = [
+  { id: 'all',    label: 'All' },
+  { id: 'live',   label: 'In progress' },
+  { id: 'action', label: 'Needs you' },
+  { id: 'past',   label: 'Past' },
+]
 
-  const label = EVENT_STATUSES[status]?.label ?? status
+/* ── The journey bar ───────────────────────────────────────────────── */
+function JourneyBar({ celebration }) {
+  const { stage, progress, stageLabel } = celebration
+  const cancelled = stage === 'cancelled'
 
   return (
     <div className="space-y-1.5">
-      <div className="flex justify-between items-center text-[11px] font-medium text-gray-500">
-        <span>Submitted</span>
-        <span className="text-saffron-600 font-semibold">{label}</span>
-        <span>Completed</span>
+      <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-gray-500">
+        <span>Raised</span>
+        <span className={`font-bold ${cancelled ? 'text-red-600' : 'text-saffron-600'}`}>
+          {stageLabel}
+        </span>
+        <span>Celebrated</span>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div
+        className="h-1.5 bg-gray-100 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Progress: ${stageLabel}`}
+      >
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{
-            width: `${pct}%`,
-            background: pct >= 100
-              ? 'linear-gradient(90deg, #10b981, #059669)'
-              : 'linear-gradient(90deg, #7c3aed, #f59e0b)',
+            width: `${cancelled ? 100 : progress}%`,
+            background: cancelled
+              ? 'linear-gradient(90deg,#f87171,#dc2626)'
+              : progress >= 100
+                ? 'linear-gradient(90deg,#10b981,#059669)'
+                : 'linear-gradient(90deg,#7c3aed,#f59e0b)',
           }}
         />
+      </div>
+      {/* The named stops, so "60%" means something. Hidden on the narrowest
+          phones, where five labels across 320px is illegible rather than
+          informative. */}
+      <div className="hidden min-[380px]:flex justify-between gap-1">
+        {JOURNEY.map((s, i) => {
+          const reached = !cancelled && progress >= Math.round(((i + 1) / JOURNEY.length) * 100)
+          return (
+            <span
+              key={s.key}
+              className={`text-[9px] leading-tight text-center flex-1 ${
+                reached ? 'text-plum-600 font-semibold' : 'text-gray-300'
+              }`}
+            >
+              {s.label.split(' ')[0]}
+            </span>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-/* ── Event card ────────────────────────────────────────────────── */
-function EventCard({ event }) {
+/* ── One celebration ───────────────────────────────────────────────── */
+function CelebrationCard({ celebration: c }) {
   const navigate = useNavigate()
+  const action = needsYou(c)
+  const done = c.stage === 'done'
+  const cancelled = c.stage === 'cancelled'
 
-  const emoji     = EVENT_TYPE_EMOJIS[event.event_type] ?? '🎉'
-  const gradient  = EVENT_TYPE_GRADIENTS[event.event_type] ?? 'from-indigo-500 to-purple-600'
-  const message   = STATUS_MESSAGES[event.status] ?? 'Your Sambramo coordinator is on it.'
-  const isAction  = ['PROPOSAL_SENT', 'CUSTOMER_REVIEW'].includes(event.status)
-  const isDone    = event.status === 'COMPLETED'
+  const whatsapp = `https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(
+    `Hi Sambramo! I'd like an update on my celebration. Reference: ${c.reference}.`
+  )}`
 
   return (
-    <div className="card overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
-      {/* Gradient header */}
-      <div className={`bg-gradient-to-br ${gradient} p-5 relative overflow-hidden`}>
+    <article className={`card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${
+      action ? 'ring-2 ring-saffron-400' : ''
+    }`}>
+      {/* Header */}
+      <div className={`bg-gradient-to-br ${c.gradient} p-5 relative overflow-hidden ${cancelled ? 'grayscale' : ''}`}>
         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-14 h-14 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
         <div className="relative flex items-start justify-between gap-3">
-          <div>
-            <span className="text-4xl drop-shadow-md">{emoji}</span>
+          <div className="min-w-0">
+            <span className="text-4xl drop-shadow-md">{c.emoji}</span>
             <h3 className="mt-2 text-white font-bold text-base leading-tight capitalize drop-shadow">
-              {event.event_type?.replace(/-/g, ' ')}
+              {c.title}
             </h3>
+            {/* Which door this came through. A customer who used the builder
+                and the wizard in the same week has two rows that would
+                otherwise be indistinguishable. */}
+            <p className="mt-0.5 text-[11px] text-white/70">{c.source}</p>
           </div>
-          <span className="shrink-0 font-mono text-xs bg-white/20 text-white px-2 py-1 rounded-lg backdrop-blur-sm">
-            #{event.event_code ?? event.id?.slice(0, 8)?.toUpperCase()}
+          <span className="shrink-0 font-mono text-[11px] bg-white/20 text-white px-2 py-1 rounded-lg backdrop-blur-sm">
+            {c.reference}
           </span>
         </div>
       </div>
 
-      {/* Body */}
       <div className="p-4 space-y-4">
-        {/* Info chips */}
+        {/* ── Every date this request carries ──────────────────────────
+            When it was raised is as much a fact of the request as when the
+            event is, and it is the one the customer uses to decide whether
+            it is fair to chase us yet. It was previously recorded and never
+            shown. */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-500">
-          {event.event_date && (
+          <span className="flex items-center gap-1">
+            <Clock3 size={11} className="text-gray-400" />
+            Raised {formatDate(c.raisedAt)}
+          </span>
+          {c.eventDate && (
             <span className="flex items-center gap-1">
               <Calendar size={11} className="text-gray-400" />
-              {formatDate(event.event_date)}
+              {formatDate(c.eventDate)}
+              {c.timeSlot ? ` · ${String(c.timeSlot).replace(/_/g, ' ')}` : ''}
             </span>
           )}
-          {event.city && (
+          {c.city && (
             <span className="flex items-center gap-1">
-              <MapPin size={11} className="text-gray-400" />
-              {event.city}
+              <MapPin size={11} className="text-gray-400" />{c.city}
             </span>
           )}
-          {event.guest_count && (
+          {c.guestCount && (
             <span className="flex items-center gap-1">
-              <Users size={11} className="text-gray-400" />
-              {event.guest_count} guests
+              <Users size={11} className="text-gray-400" />{c.guestCount} guests
+            </span>
+          )}
+          {c.lineCount > 0 && (
+            <span className="flex items-center gap-1">
+              <ListChecks size={11} className="text-gray-400" />{c.lineCount} item{c.lineCount === 1 ? '' : 's'}
             </span>
           )}
         </div>
 
-        {/* Progress bar */}
-        <StatusProgress status={event.status} />
+        {/* The number we quoted, if there is one */}
+        {(c.quoted || c.estimate) && (
+          <p className="text-sm font-bold text-gray-900">
+            {c.quoted
+              ? <>Quoted <span className="text-plum-700">{formatINR(c.quoted)}</span></>
+              : <>Estimated <span className="text-plum-700">
+                  {formatINR(c.estimate.low)}
+                  {c.estimate.high !== c.estimate.low ? ` – ${formatINR(c.estimate.high)}` : ''}
+                </span></>}
+          </p>
+        )}
 
-        {/* Status message */}
+        <JourneyBar celebration={c} />
+
         <p className={`text-xs leading-relaxed font-medium px-3 py-2 rounded-xl ${
-          isAction
-            ? 'bg-plum-50 text-plum-700'
-            : isDone
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-amber-50 text-amber-700'
+          cancelled ? 'bg-red-50 text-red-700'
+            : action ? 'bg-plum-50 text-plum-700'
+              : done ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-amber-50 text-amber-700'
         }`}>
-          {message}
+          {c.message}
+          {cancelled && c.cancelReason ? ` — ${c.cancelReason}` : ''}
         </p>
 
-        {/* CTA button */}
+        {/* The hold, when one was claimed */}
+        {c.lockStatus === 'claimed' && (
+          <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+            <ShieldCheck size={13} className="mt-0.5 shrink-0" />
+            <span>
+              <strong>{formatINR(c.lockAmount ?? 0)} hold recorded.</strong> A person is matching it
+              against the bank — you'll get a message once it is confirmed.
+            </span>
+          </p>
+        )}
+        {c.lockStatus === 'confirmed' && (
+          <p className="flex items-start gap-2 rounded-xl bg-green-50 px-3 py-2 text-[11px] leading-relaxed text-green-800">
+            <ShieldCheck size={13} className="mt-0.5 shrink-0" />
+            <span><strong>Your date is held.</strong> Adjusted against your final invoice.</span>
+          </p>
+        )}
+
+        {/* How we will reach them, stated back. Somebody who mistyped a digit
+            can only find out here — nothing else in the app shows them the
+            number the coordinator is about to ring. */}
+        {c.contact.phone ? (
+          <p className="flex items-center gap-1.5 text-[11px] text-gray-400">
+            <Phone size={11} /> We'll call you on {c.contact.phone}
+          </p>
+        ) : (
+          <p className="flex items-start gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+            <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+            <span>
+              No phone number on this request — message us on WhatsApp so a coordinator can reach you.
+            </span>
+          </p>
+        )}
+
         <button
-          // event_type holds a wizard id ('baby-shower'), while the catalog is
-          // keyed by its own ('baby_shower') — so this used to route to a page
-          // that rendered "Event not found". Occasions the catalog has no page
-          // for fall back to its index rather than a dead URL.
-          onClick={() => {
-            const catalogId = toCatalogId(event.event_type)
-            navigate(catalogId ? `/services/${catalogId}` : '/services')
-          }}
+          onClick={() => navigate(c.href)}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            isAction
+            action
               ? 'bg-plum-600 text-white hover:bg-plum-700 shadow-md shadow-plum-200'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
           }`}
         >
-          {isAction ? 'Review Your Plan ✨' : 'View Celebration'}
+          {action ? 'Review your plan ✨' : 'Open this celebration'}
           <ArrowRight size={14} />
         </button>
 
-        {/* WhatsApp shortcut */}
         <a
-          href={`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(`Hi Sambramo! I'd like an update on my celebration. Reference: ${event.event_code ?? event.id?.slice(0, 8)}.`)}`}
+          href={whatsapp}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 text-xs text-green-700 font-medium hover:text-green-800 transition-colors"
@@ -165,45 +242,58 @@ function EventCard({ event }) {
           Ask for an update on WhatsApp
         </a>
       </div>
-    </div>
+    </article>
   )
 }
 
-/* ── Main page ─────────────────────────────────────────────────── */
+/* ── Page ──────────────────────────────────────────────────────────── */
 export default function MyEvents() {
   const { user, profile } = useAuth()
-  const navigate          = useNavigate()
+  const navigate = useNavigate()
 
-  const [events,  setEvents]  = useState([])
+  const [celebrations, setCelebrations] = useState([])
+  const [errors, setErrors] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState(null)
+  const [filter, setFilter] = useState('all')
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!user?.id) return
-    supabase
-      .from('events')
-      .select('*')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false })
-      .then(({ data, error: err }) => {
-        if (err) setError(friendlyError(err, "We couldn't load your celebrations just now."))
-        else setEvents(data ?? [])
-        setLoading(false)
-      })
+    let cancelled = false
+    setLoading(true)
+    fetchCelebrations(user.id).then(res => {
+      if (cancelled) return
+      setCelebrations(res.celebrations)
+      setErrors(res.errors)
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [user?.id])
 
-  // The bar renders in the loading state too. It used to be absent, so the
-  // screen arrived with no title, no back control and no cart for however long
-  // the query took, then the whole page jumped as the chrome appeared under it.
+  useEffect(() => load(), [load])
+
+  const counts = useMemo(() => ({
+    all:    celebrations.length,
+    live:   celebrations.filter(isLive).length,
+    action: celebrations.filter(needsYou).length,
+    past:   celebrations.filter(c => !isLive(c)).length,
+  }), [celebrations])
+
+  const shown = useMemo(() => {
+    if (filter === 'live')   return celebrations.filter(isLive)
+    if (filter === 'action') return celebrations.filter(needsYou)
+    if (filter === 'past')   return celebrations.filter(c => !isLive(c))
+    return celebrations
+  }, [celebrations, filter])
+
   const shell = children => (
     <div className="min-h-screen bg-cream pb-bottom-nav">
       <AppBar
         tone="plum"
         backTo="/dashboard/customer"
         title="My celebrations"
-        subtitle={firstName ? `Welcome back, ${firstName}` : 'Everything we are arranging for you'}
+        subtitle={`Welcome back, ${firstName}`}
       />
       <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">{children}</div>
     </div>
@@ -221,51 +311,90 @@ export default function MyEvents() {
 
   return shell(
     <div className="space-y-6">
-        <h1 className="sr-only">My celebrations</h1>
+      <h1 className="sr-only">My celebrations</h1>
 
-        {/* Error */}
-        {error && (
-          <div className="card p-4 border-red-100 bg-red-50 text-red-700 text-sm font-medium">
-            {error}
-          </div>
-        )}
-
-        {/* Plan a New Celebration CTA */}
-        <div
-          className="relative rounded-2xl p-6 sm:p-8 overflow-hidden cursor-pointer group"
-          style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f59e0b 100%)' }}
-          onClick={() => navigate('/plan')}
-        >
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-
-          <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="text-4xl group-hover:scale-110 transition-transform duration-300 shrink-0">✨</div>
-            <div className="flex-1">
-              <h2 className="text-white font-bold text-lg sm:text-xl leading-tight">
-                Plan a New Celebration
-              </h2>
-              <p className="text-white/75 text-sm mt-1">Tell us your dream — we'll handle the rest.</p>
-            </div>
-            <button
-              onClick={e => { e.stopPropagation(); navigate('/plan') }}
-              className="btn-cta self-start sm:self-center shrink-0"
-            >
-              <Sparkles size={14} /> Start Planning
-            </button>
-          </div>
+      {/* A half-loaded list is worse than a named failure — see
+          lib/celebrations.js. */}
+      {errors.map(({ source, error }) => (
+        <div key={source} className="card p-4 border-amber-200 bg-amber-50 text-amber-800 text-sm font-medium">
+          We couldn't load your {source} just now ({error.message}). Everything else is below —
+          pull down to retry, or message us if something you sent is missing.
         </div>
+      ))}
 
-        {/* Events grid */}
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            Your Celebrations
-            {events.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-gray-400">({events.length})</span>
-            )}
-          </h2>
+      {/* Needs-you banner. The one interruption this page earns. */}
+      {counts.action > 0 && filter !== 'action' && (
+        <button
+          onClick={() => setFilter('action')}
+          className="w-full flex items-center gap-3 rounded-2xl border border-saffron-300 bg-saffron-50 px-4 py-3 text-left transition-colors hover:border-saffron-400"
+        >
+          <Sparkles size={18} className="shrink-0 text-saffron-600" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-plum-900">
+              {counts.action} plan{counts.action === 1 ? '' : 's'} waiting for you
+            </span>
+            <span className="block text-xs text-plum-600">Tap to see what needs your yes.</span>
+          </span>
+          <ArrowRight size={16} className="shrink-0 text-saffron-600" />
+        </button>
+      )}
 
-          {events.length === 0 ? (
+      {/* Plan a new celebration */}
+      <div
+        className="relative rounded-2xl p-6 sm:p-8 overflow-hidden cursor-pointer group"
+        style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f59e0b 100%)' }}
+        onClick={() => navigate('/plan')}
+      >
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="text-4xl group-hover:scale-110 transition-transform duration-300 shrink-0">✨</div>
+          <div className="flex-1">
+            <h2 className="text-white font-bold text-lg sm:text-xl leading-tight">Plan a New Celebration</h2>
+            <p className="text-white/75 text-sm mt-1">Tell us your dream — we'll handle the rest.</p>
+          </div>
+          <button
+            onClick={e => { e.stopPropagation(); navigate('/plan') }}
+            className="btn-cta self-start sm:self-center shrink-0"
+          >
+            <Sparkles size={14} /> Start Planning
+          </button>
+        </div>
+      </div>
+
+      {/* Filters. Only once there is enough to be worth filtering. */}
+      {counts.all > 1 && (
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+          {FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              aria-pressed={filter === f.id}
+              className={`shrink-0 min-h-[36px] rounded-full px-3.5 text-xs font-semibold transition-colors ${
+                filter === f.id
+                  ? 'bg-plum-700 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-plum-300'
+              }`}
+            >
+              {f.label}
+              <span className={filter === f.id ? 'ml-1.5 text-white/60' : 'ml-1.5 text-gray-400'}>
+                {counts[f.id]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">
+          Your Celebrations
+          {shown.length > 0 && (
+            <span className="ml-2 text-sm font-normal text-gray-400">({shown.length})</span>
+          )}
+        </h2>
+
+        {shown.length === 0 ? (
+          counts.all === 0 ? (
             <div className="card py-16 px-6 text-center space-y-5">
               <div className="text-6xl">✨</div>
               <div>
@@ -274,20 +403,40 @@ export default function MyEvents() {
                   Every magical moment begins with a request. Let us plan something unforgettable for you.
                 </p>
               </div>
-              <button
-                onClick={() => navigate('/plan')}
-                className="btn-cta mx-auto"
-              >
+              <button onClick={() => navigate('/plan')} className="btn-cta mx-auto">
                 <Sparkles size={15} /> Plan My Celebration
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {events.map(ev => <EventCard key={ev.id} event={ev} />)}
+            <div className="card py-12 px-6 text-center space-y-3">
+              <Inbox size={32} className="mx-auto text-gray-300" />
+              <p className="text-sm text-gray-500">Nothing in this list right now.</p>
+              <button
+                onClick={() => setFilter('all')}
+                className="text-sm font-semibold text-plum-700 hover:text-plum-800"
+              >
+                Show all {counts.all}
+              </button>
             </div>
-          )}
-        </div>
-
+          )
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {shown.map(c => <CelebrationCard key={c.key} celebration={c} />)}
+          </div>
+        )}
       </div>
+
+      {/* The other list is still its own page — it carries per-line reviews,
+          cancellation and the price hold, none of which belong on a summary
+          card. Linked rather than duplicated. */}
+      <p className="text-center text-xs text-gray-400">
+        Looking for line-by-line detail, reviews or cancellation?{' '}
+        <Link to="/dashboard/customer/requests" className="font-semibold text-plum-600 hover:text-plum-700">
+          Open My requests
+        </Link>
+        <span className="mx-1.5">·</span>
+        <Hash size={11} className="inline -mt-0.5" /> quote your reference when you message us
+      </p>
+    </div>
   )
 }

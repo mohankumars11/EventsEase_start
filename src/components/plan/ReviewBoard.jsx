@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
 import {
   Pencil, Info, TrendingDown, Receipt, Users, UtensilsCrossed, Palette,
-  ListChecks, Sparkles, CalendarDays, MapPin, Leaf, ShieldCheck, Ticket,
+  ListChecks, Sparkles, PhoneCall, Leaf, ShieldCheck, Ticket,
 } from 'lucide-react'
-import { formatINR } from '../../utils/format'
+import { formatINR, humanDate } from '../../utils/format'
+import { slotByKey } from '../../lib/demand'
 import { BOOKING_MODES } from '../../data/celebrationTiers'
 import { COURSES, dishesFor } from '../../data/cuisineMenus'
 import { BRAND } from '../../config/sambramo'
+import ContactBlock from './ContactBlock'
 
 /**
  * The review — every decision and every rupee, on one page.
@@ -54,6 +56,7 @@ export default function ReviewBoard({
   occasionName, occasionEmoji, mode,
   cuisine, menu, vegOnly, specialRequests, cateringOn, decorOn,
   eventDate, onEventDate, city, onCity, offer, onClearOffer,
+  contact, onContact, timeSlot, onTimeSlot,
 }) {
   // Dish ids → names, course by course. Done here rather than in the JSX so
   // an empty course disappears entirely instead of rendering a bare heading.
@@ -126,37 +129,14 @@ export default function ReviewBoard({
 
         <div className="space-y-4">
           <Node n={1} icon={Sparkles} title="The occasion" onEdit={() => onEdit('occasion')}>
-            <Row label={occasionName} value={null} />
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="review-date" className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
-                  <CalendarDays size={13} className="text-plum-600" /> Date (if you know it)
-                </label>
-                <input
-                  id="review-date"
-                  type="date"
-                  value={eventDate}
-                  onChange={e => onEventDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 10)}
-                  className="w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border-2 border-gray-200 text-base focus:border-saffron-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="review-city" className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
-                  <MapPin size={13} className="text-plum-600" /> City
-                </label>
-                <select
-                  id="review-city"
-                  value={city}
-                  onChange={e => onCity(e.target.value)}
-                  className="w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border-2 border-gray-200 text-base bg-white focus:border-saffron-400 focus:outline-none"
-                >
-                  {BRAND.pilotCities.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
+            <Row
+              label={occasionName}
+              detail={eventDate
+                ? `${humanDate(eventDate)}${timeSlot ? ` · ${slotByKey(timeSlot)?.label}` : ''} · ${city}`
+                : `${city} · date not fixed yet`}
+            />
             <p className="mt-2 text-[11px] text-gray-400">
-              Neither changes the estimate — a coordinator uses them to check availability.
+              Set the date, the time of day and how we reach you in step 6 below.
             </p>
           </Node>
 
@@ -341,6 +321,23 @@ export default function ReviewBoard({
                 ))}
               </div>
             )}
+          </Node>
+
+          {/* ── Who we call, and when ────────────────────────────────────
+              The last link in the chain, and the only one that is required.
+              A request that cannot be followed up is not a request — see
+              ContactBlock for why this was missing and what it cost. */}
+          <Node n={6} icon={PhoneCall} title="How we reach you">
+            <ContactBlock
+              contact={contact}
+              onContact={onContact}
+              eventDate={eventDate}
+              onEventDate={onEventDate}
+              timeSlot={timeSlot}
+              onTimeSlot={onTimeSlot}
+              city={city}
+              onCity={onCity}
+            />
           </Node>
         </div>
       </div>

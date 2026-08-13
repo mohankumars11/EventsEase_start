@@ -22,6 +22,7 @@ import StickyCartBar from '../components/shop/StickyCartBar'
 import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
+import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
 import BrandFilm from '../components/home/BrandFilm'
 import OccasionCard from '../components/home/OccasionCard'
@@ -57,11 +58,10 @@ import ReferAndEarn from '../components/customer/ReferAndEarn'
  * claims a saving that isn't in the data.
  */
 
-const ACTIVE_STATUSES = [
-  'REQUEST_RECEIVED', 'UNDER_REVIEW', 'CONTACTING_VENDORS', 'QUOTES_COLLECTED',
-  'PROPOSAL_PREPARED', 'PROPOSAL_SENT', 'CUSTOMER_REVIEW', 'APPROVED',
-  'CONFIRMED', 'IN_COORDINATION', 'EVENT_DAY',
-]
+/* Active celebrations come from lib/celebrations.js now, which reads BOTH
+   `events` and `service_enquiries`. This page used to query `events` alone, so
+   a request raised in the celebration builder or the services cart never
+   appeared on the customer's own front door. */
 
 const FESTIVAL_DETAIL_IDS = new Set(FESTIVALS.map(f => f.id))
 const FESTIVAL_SHOP_ROUTE = {
@@ -90,7 +90,7 @@ function urgency(days) {
 
 export default function HomeScreen() {
   const { user, profile } = useAuth()
-  const [events, setEvents] = useState([])
+  const [celebrations, setCelebrations] = useState([])
   const [query, setQuery] = useState('')
   const offers = usePublicOffers()
   const { productCount } = useCart()
@@ -101,15 +101,21 @@ export default function HomeScreen() {
     null
 
   useEffect(() => {
-    if (!user) { setEvents([]); return }
+    if (!user) { setCelebrations([]); return }
     let cancelled = false
-    supabase.from('events').select('*').eq('customer_id', user.id)
-      .order('created_at', { ascending: false }).limit(5)
-      .then(({ data }) => { if (!cancelled) setEvents(data ?? []) })
+    fetchCelebrations(user.id).then(({ celebrations: rows }) => {
+      if (!cancelled) setCelebrations(rows)
+    })
     return () => { cancelled = true }
   }, [user])
 
-  const activeEvents = events.filter(e => ACTIVE_STATUSES.includes(e.status))
+  // Newest five that are neither finished nor cancelled. The slice happens
+  // after the merge, so a builder enquiry and a wizard event compete for the
+  // same five slots on recency rather than one table always winning.
+  const activeEvents = useMemo(
+    () => celebrations.filter(isLive).slice(0, 5),
+    [celebrations],
+  )
 
   const upcoming = useMemo(() => UPCOMING_FESTIVALS
     .map(f => ({ ...f, days: daysUntil(f.date) }))
@@ -184,7 +190,7 @@ export default function HomeScreen() {
               <h2 className="px-4 text-[15px] font-extrabold text-white">
                 {firstName ? `${firstName}, here's where things stand` : 'Your celebrations'}
               </h2>
-              <LiveEventStrip events={activeEvents} />
+              <LiveEventStrip celebrations={activeEvents} />
             </div>
           )}
 

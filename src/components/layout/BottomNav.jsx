@@ -14,9 +14,30 @@ import { isFocusedRoute } from '../../config/chrome'
  * a persistent tab bar makes the app's five real jobs visible at all
  * times and reachable with a thumb.
  *
- * "Plan" sits in the raised centre slot because it is the one action the
- * whole business runs on, and the centre of the bar is the easiest point
- * on the screen to hit.
+ * ── Why "Plan" is no longer a raised FAB ────────────────────────────
+ * It used to be a 56px saffron circle pulled up out of the bar with
+ * `-mt-5`, and that cost more than it bought:
+ *
+ *   It hung over the page. The circle plus its 4px white ring sat about
+ *   24px above the bar's own top edge, in a strip nothing reserves
+ *   padding for — `pb-bottom-nav` clears the BAR, not something floating
+ *   over it. So on every screen it covered a slice of whatever was
+ *   underneath: the last row of a product grid, the bottom of a sticky
+ *   quote panel, the corner of a card. That is the same fault the
+ *   floating help bubble was removed for, still in the bar that
+ *   replaced it.
+ *
+ *   It never actually sat in the middle. It is the third of six tabs, so
+ *   its slot spans 33–50% of the width and it centres near 42% — visibly
+ *   left of the bar's midpoint. Raising it drew the eye straight to that
+ *   asymmetry, so the one element treated as the centrepiece was the one
+ *   thing obviously off-centre.
+ *
+ * So all six tabs now sit on one baseline in six equal columns, and
+ * nothing leaves the bar's own box. Plan keeps its prominence the way a
+ * tab bar is supposed to give it — a filled saffron chip behind the
+ * icon, bolder label, wider tap target — rather than by climbing out of
+ * the bar and standing on the content.
  *
  * Hidden ≥ md, where the header already has room for the same links, and
  * hidden entirely for vendor/admin, who work inside dedicated dashboards
@@ -89,7 +110,11 @@ export default function BottomNav() {
       className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-safe shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]"
       aria-label="Primary"
     >
-      <ul className="flex items-stretch justify-around px-0.5">
+      {/* `flex-1 basis-0` on every item, not `justify-around`: equal columns
+          regardless of how wide each label renders, so the six icons land on
+          an even pitch and the row reads as a grid rather than as text that
+          happens to be spaced out. */}
+      <ul className="flex items-stretch px-0.5">
         {tabs.map(({ to, icon: Icon, label, primary, badge, action, active: forcedActive }) => {
           const active = forcedActive ?? isActive(to)
 
@@ -98,15 +123,34 @@ export default function BottomNav() {
           // away from the five links beside it.
           const inner = (
             <>
-              <span className="relative">
-                <Icon size={20} strokeWidth={active ? 2.4 : 2} />
-                {badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
-                )}
+              {/* Fixed 32px icon row on ALL six tabs, chip or no chip. Sizing
+                  this off the content instead let Plan's chip make its column
+                  62px against everyone else's 56, which put its icon 3px below
+                  the other five — the row was evenly spaced horizontally and
+                  still visibly out of line. */}
+              <span
+                className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors ${
+                  primary
+                    ? active
+                      ? 'bg-gradient-to-br from-saffron-400 to-saffron-500 text-plum-950 shadow-sm shadow-saffron-500/40'
+                      : 'bg-saffron-400/90 text-plum-950'
+                    : ''
+                }`}
+              >
+                {/* The badge anchors to the icon, not to the 32px row, so it
+                    sits on the bag's corner rather than floating above it. */}
+                <span className="relative flex items-center justify-center">
+                  <Icon size={20} strokeWidth={active || primary ? 2.4 : 2} />
+                  {badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
               </span>
-              <span className={`text-[10px] leading-none ${active ? 'font-bold' : 'font-medium'}`}>
+              <span className={`text-[10px] leading-none ${
+                primary ? 'font-bold text-plum-800' : active ? 'font-bold' : 'font-medium'
+              }`}>
                 {label}
               </span>
               {active && (
@@ -115,13 +159,16 @@ export default function BottomNav() {
             </>
           )
 
-          const tabClass = `relative flex w-full flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 rounded-xl transition-colors ${
+          // One class for all six. The primary tab differs in what it paints
+          // INSIDE this box, never in the box — which is what keeps the
+          // baseline, the height and the tap target identical across the row.
+          const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
             active ? 'text-plum-700' : 'text-gray-400 active:text-plum-600'
           }`
 
           if (action) {
             return (
-              <li key={label} className="flex-1">
+              <li key={label} className="flex-1 basis-0">
                 <button
                   type="button"
                   onClick={action}
@@ -135,28 +182,12 @@ export default function BottomNav() {
             )
           }
 
-          if (primary) {
-            return (
-              <li key={label} className="flex-1 flex justify-center">
-                <Link
-                  to={to}
-                  className="flex flex-col items-center -mt-5"
-                  aria-label="Plan my celebration"
-                >
-                  <span className="w-14 h-14 rounded-full bg-gradient-to-br from-saffron-400 to-saffron-500 text-plum-950 flex items-center justify-center shadow-lg shadow-saffron-500/30 ring-4 ring-white active:scale-95 transition-transform">
-                    <Icon size={22} strokeWidth={2.4} />
-                  </span>
-                  <span className="text-[10px] font-bold text-plum-800 mt-0.5">{label}</span>
-                </Link>
-              </li>
-            )
-          }
-
           return (
-            <li key={label} className="flex-1">
+            <li key={label} className="flex-1 basis-0">
               <Link
                 to={to}
                 aria-current={active ? 'page' : undefined}
+                aria-label={primary ? 'Plan my celebration' : undefined}
                 className={tabClass}
               >
                 {inner}

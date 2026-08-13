@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, Users, ArrowRight, Phone, Clock } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { EVENT_TYPES, EVENT_STATUSES, EVENT_TYPE_EMOJIS, STATUS_CSS, BRAND, CTA } from '../../config/sambramo'
+import { EVENT_TYPES, BRAND, CTA } from '../../config/sambramo'
+import { fetchCelebrations, isLive, needsYou } from '../../lib/celebrations'
+import { formatDate } from '../../utils/format'
 import { FESTIVALS } from '../../data/festivals'
 import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
 import { SHOP_CATEGORIES } from '../../config/shop'
@@ -12,7 +13,10 @@ import SlideCarousel from '../../components/common/SlideCarousel'
 import ReferAndEarn from '../../components/customer/ReferAndEarn'
 import { fetchUnsplashPhoto } from '../../lib/unsplash'
 
-const ACTIVE_STATUSES = ['REQUEST_RECEIVED','UNDER_REVIEW','CONTACTING_VENDORS','QUOTES_COLLECTED','PROPOSAL_PREPARED','PROPOSAL_SENT','CUSTOMER_REVIEW','APPROVED','CONFIRMED','IN_COORDINATION','EVENT_DAY']
+/* "Active" is decided in lib/celebrations.js, over both `events` and
+   `service_enquiries`. This page used to filter a hardcoded status list against
+   `events` alone, which made every celebration built in /plan/build invisible
+   on the customer's own dashboard. */
 
 // Festivals with a real detail page (same mapping as FestivalBanner.jsx) get
 // routed there; everything else routes to the most relevant Shop category —
@@ -47,23 +51,23 @@ function daysUntil(dateStr) {
 export default function CustomerHome() {
   const { profile, user } = useAuth()
   const navigate = useNavigate()
-  const [events, setEvents]   = useState([])
+  const [celebrations, setCelebrations] = useState([])
   const [loading, setLoading] = useState(true)
 
   const firstName = profile?.full_name?.split(' ')[0] ?? (user?.user_metadata?.name?.split(' ')[0]) ?? 'there'
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('events')
-      .select('*')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(3)
-      .then(({ data }) => { setEvents(data ?? []); setLoading(false) })
+    let cancelled = false
+    fetchCelebrations(user.id).then(({ celebrations: rows }) => {
+      if (cancelled) return
+      setCelebrations(rows)
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [user])
 
-  const activeEvents  = events.filter(e => ACTIVE_STATUSES.includes(e.status))
+  const activeEvents  = celebrations.filter(isLive).slice(0, 3)
   const hasActive     = activeEvents.length > 0
 
   const upcoming = UPCOMING_FESTIVALS
@@ -115,9 +119,9 @@ export default function CustomerHome() {
               </Link>
             </div>
             <SlideCarousel>
-              {activeEvents.map(e => (
-                <div key={e.id} className="shrink-0 w-72 snap-center">
-                  <ActiveEventCard event={e} />
+              {activeEvents.map(c => (
+                <div key={c.key} className="shrink-0 w-72 snap-center">
+                  <ActiveEventCard celebration={c} />
                 </div>
               ))}
             </SlideCarousel>
@@ -275,12 +279,12 @@ export default function CustomerHome() {
   )
 }
 
-function ActiveEventCard({ event }) {
+/* Renders a normalised celebration (lib/celebrations.js), so one card handles a
+   wizard event and a builder enquiry identically — the customer has no idea
+   which table their request landed in, and should not need one. */
+function ActiveEventCard({ celebration: c }) {
   const navigate = useNavigate()
-  const type     = EVENT_TYPES.find(et => et.id === event.event_type)
-  const status   = EVENT_STATUSES[event.status]
-  const css      = STATUS_CSS[event.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
-  const emoji    = EVENT_TYPE_EMOJIS[event.event_type] ?? '🎊'
+  const yours = needsYou(c)
 
   return (
     <button
@@ -288,24 +292,23 @@ function ActiveEventCard({ event }) {
       className="bg-white rounded-2xl border border-gray-100 p-4 text-left hover:shadow-md hover:border-plum-200 transition-all w-full"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-plum-50 rounded-xl flex items-center justify-center text-xl shrink-0">{emoji}</div>
+        <div className="w-10 h-10 bg-plum-50 rounded-xl flex items-center justify-center text-xl shrink-0">{c.emoji}</div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm capitalize">{type?.label ?? event.event_type}</p>
-          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full mt-0.5 ${css.bg} ${css.text}`}>
-            {status?.icon} {status?.label}
+          <p className="font-semibold text-gray-800 text-sm capitalize truncate">{c.title}</p>
+          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full mt-0.5 ${
+            yours ? 'bg-saffron-100 text-saffron-700' : 'bg-plum-50 text-plum-700'
+          }`}>
+            {yours ? '👀' : '🔍'} {c.stageLabel}
           </span>
         </div>
       </div>
-      <div className="flex gap-3 text-xs text-gray-400">
-        {event.event_date && (
-          <span className="flex items-center gap-1"><Calendar size={11} />{new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400">
+        <span className="flex items-center gap-1"><Clock size={11} />Raised {formatDate(c.raisedAt)}</span>
+        {c.eventDate && (
+          <span className="flex items-center gap-1"><Calendar size={11} />{new Date(c.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
         )}
-        {event.city && (
-          <span className="flex items-center gap-1"><MapPin size={11} />{event.city}</span>
-        )}
-        {event.guest_count && (
-          <span className="flex items-center gap-1"><Users size={11} />{event.guest_count}</span>
-        )}
+        {c.city && <span className="flex items-center gap-1"><MapPin size={11} />{c.city}</span>}
+        {c.guestCount && <span className="flex items-center gap-1"><Users size={11} />{c.guestCount}</span>}
       </div>
     </button>
   )

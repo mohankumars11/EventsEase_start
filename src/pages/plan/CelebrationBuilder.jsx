@@ -27,6 +27,8 @@ import QuotePanel from '../../components/plan/QuotePanel'
 import ReviewBoard from '../../components/plan/ReviewBoard'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import BuilderActionBar from '../../components/plan/BuilderActionBar'
+import { contactBlocked, phoneDigitsOf } from '../../components/plan/ContactBlock'
+import { slotByKey } from '../../lib/demand'
 import PriceLock from '../../components/plan/PriceLock'
 // This page's own ground and its ticket/motion styles. Separate from
 // index.css only because that file is carrying an unrelated in-flight change
@@ -111,7 +113,7 @@ export default function CelebrationBuilder() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const [step, setStep] = useState(routeEventId ? 'scale' : 'occasion')
   const [eventId, setEventId] = useState(routeEventId ?? '')
@@ -145,7 +147,14 @@ export default function CelebrationBuilder() {
   const [includeCatering, setIncludeCatering] = useState(true)
   const [includeDecor, setIncludeDecor] = useState(true)
   const [eventDate, setEventDate] = useState('')
+  const [timeSlot, setTimeSlot] = useState('')
   const [city, setCity] = useState(BRAND.pilotCities[0])
+  // Who to call about this. Seeded from the profile where there is one, because
+  // re-typing a name the app is already displaying in the header reads as the
+  // app not listening — but it is a seed, not a lock: a celebration is often
+  // arranged by one person for another, and the number to ring on the day may
+  // not be the number that signed up.
+  const [contact, setContact] = useState({ name: '', phone: '', email: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [enquiryId, setEnquiryId] = useState(null)
@@ -162,6 +171,17 @@ export default function CelebrationBuilder() {
   // the dialog can offer a switch ("your 450 guests suggest Grand") without
   // having already applied it behind the customer's back.
   const [tierPrompt, setTierPrompt] = useState(null)
+
+  // Seed the contact from the profile once it arrives, without ever overwriting
+  // something the customer has already typed.
+  useEffect(() => {
+    if (!profile) return
+    setContact(c => ({
+      name:  c.name  || profile.full_name || '',
+      phone: c.phone || (profile.phone ?? '').replace('+91', '').replace(/\D/g, '').slice(-10),
+      email: c.email || profile.email || '',
+    }))
+  }, [profile])
 
   const event = EVENT_DATA[eventId]
   const occasionName = eventId === 'other'
@@ -230,10 +250,17 @@ export default function CelebrationBuilder() {
     if (!includeCatering && !includeDecor && serviceIds.length === 0) {
       return { rule: 'empty', message: 'Nothing is selected yet — add food, décor or any service under "Everything else".' }
     }
-    return checkMinimums({
+    const minimums = checkMinimums({
       mode, guestCount, decorTotal: quote?.decor.total ?? 0, includeCatering, includeDecor,
     })
-  }, [eventId, otherOccasion, mode, guestCount, quote, includeCatering, includeDecor, cuisineId, decorLevelId, serviceIds])
+    if (minimums) return minimums
+    // Last, because it is the only rule about the customer rather than the
+    // configuration — and because a contact prompt raised before the quote is
+    // even valid is answering a question nobody has reached yet.
+    const contactMessage = contactBlocked(contact)
+    if (contactMessage) return { rule: 'contact', message: contactMessage }
+    return null
+  }, [eventId, otherOccasion, mode, guestCount, quote, includeCatering, includeDecor, cuisineId, decorLevelId, serviceIds, contact])
 
   /**
    * When the price is allowed on screen at all.
@@ -366,10 +393,21 @@ export default function CelebrationBuilder() {
     const state = draftOverride ?? {
       eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu, specialRequests,
       decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor, eventDate, city,
-      appliedOfferId,
+      appliedOfferId, contact, timeSlot,
     }
     const liveQuote = buildQuote(state)
     if (!liveQuote) return
+
+    // Re-checked against the state actually being submitted, not against the
+    // render that drew the button. A restored draft goes straight through
+    // `submit(draft)` without passing the disabled check on the review screen,
+    // so this is the only place the guarantee can actually be made.
+    const contactMessage = contactBlocked(state.contact)
+    if (contactMessage) {
+      setStep('review')
+      setError(contactMessage)
+      return
+    }
 
     // Same rule as the catalog: ask at the point where there is something to
     // save. A visitor who has just spent four minutes building a menu has
@@ -397,7 +435,23 @@ export default function CelebrationBuilder() {
       const offer = OFFER_BY_ID[state.appliedOfferId]
       const offerIsValid = offer && offerAvailability(offer, { eventDate: state.eventDate }).ok
 
+      // The contact goes at the TOP of the note, not the bottom. A coordinator
+      // opens this on a phone at 9am with thirty of them to work through, and
+      // the number they have to call should not be under an itemised menu.
+      const phone = `+91${phoneDigitsOf(state.contact?.phone)}`
+      const slot = slotByKey(state.timeSlot)
+      const contactLines = [
+        'CONTACT',
+        `  Name:  ${state.contact?.name?.trim()}`,
+        `  Phone: ${phone}`,
+        state.contact?.email?.trim() ? `  Email: ${state.contact.email.trim()}` : '',
+        `  When:  ${state.eventDate || 'date not fixed'}${slot ? ` · ${slot.label} (${slot.hint})` : ''}`,
+        `  Where: ${state.city}`,
+      ].filter(Boolean).join('\n')
+
       const notes = [
+        contactLines,
+        '',
         quoteToText(liveQuote, { menu: state.menu, cuisine, vegOnly: state.vegOnly }),
         state.specialRequests ? `\nSPECIAL REQUESTS\n  ${state.specialRequests}` : '',
         `\nBooked as: ${BOOKING_MODES[state.mode].name}`,
@@ -408,13 +462,27 @@ export default function CelebrationBuilder() {
       // lock fields are written by a separate, best-effort update below, so a
       // migration that has not been applied yet costs the customer a payment
       // option — never their enquiry.
+      //
+      // The contact rides in `location` (JSONB) and in `notes` because
+      // `service_enquiries` has no contact columns on the live database today.
+      // That is the same place the enquiry cart has always put it, so one admin
+      // screen reads both. Migration 041 adds real columns; until it is applied
+      // by hand these two are the storage, and after it is applied they are
+      // still written, so nothing has to be backfilled to stay readable.
       const { data, error: err } = await supabase.from('service_enquiries').insert({
         customer_id: user.id,
         event_id:    state.eventId || 'custom',
         event_name:  name,
         event_date:  state.eventDate || null,
+        start_time:  slot?.start ?? null,
         guest_count: state.guestCount,
-        location:    { city: state.city },
+        location: {
+          city:  state.city,
+          slot:  state.timeSlot || null,
+          name:  state.contact?.name?.trim() || null,
+          phone,
+          email: state.contact?.email?.trim() || null,
+        },
         services: [
           state.includeCatering && cuisine && {
             id: 'catering', name: `Catering — ${cuisine.name}`, emoji: cuisine.emoji,
@@ -456,7 +524,7 @@ export default function CelebrationBuilder() {
     }
   }, [user, navigate, location, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
       specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
-      eventDate, city, appliedOfferId])
+      eventDate, city, appliedOfferId, contact, timeSlot])
 
   /**
    * Record that the customer says they paid.
@@ -502,6 +570,8 @@ export default function CelebrationBuilder() {
     setServiceIds(draft.serviceIds ?? []); setServiceQty(draft.serviceQty ?? {})
     setIncludeCatering(draft.includeCatering); setIncludeDecor(draft.includeDecor)
     setEventDate(draft.eventDate ?? ''); setCity(draft.city ?? BRAND.pilotCities[0])
+    setTimeSlot(draft.timeSlot ?? '')
+    setContact(draft.contact ?? { name: '', phone: '', email: '' })
     setAppliedOfferId(draft.appliedOfferId ?? null)
     setTierTouched(true); setDecorTouched(true); setServicesTouched(true)
     submit(draft)
@@ -527,6 +597,16 @@ export default function CelebrationBuilder() {
                 {formatINR(quote.range.low)} – {formatINR(quote.range.high)} incl. taxes
               </p>
             )}
+            {/* Read the number back. A wrong digit is the one failure this
+                flow cannot recover from on its own, and the only moment the
+                customer can still catch it is now, while they remember
+                typing it. */}
+            <p className="text-xs text-white/60">
+              Reference <span className="font-mono font-bold text-white/80">
+                SR-{enquiryId?.slice(0, 8)?.toUpperCase()}
+              </span>
+              {contact.phone && <> · we'll call <span className="font-bold text-white/80">+91 {phoneDigitsOf(contact.phone)}</span></>}
+            </p>
             {/* The coupon is restated after sending, because "did my discount
                 actually go through" is the first thing somebody wonders once
                 the form is gone. */}
@@ -543,14 +623,18 @@ export default function CelebrationBuilder() {
             quote={quote}
             claimed={lockClaimed}
             onClaim={claimLock}
-            onSkip={() => navigate('/dashboard/customer/requests')}
+            onSkip={() => navigate('/dashboard/customer/events')}
             whatsappText={`Hi Sambramo, I'd like to hold my quote (ref ${enquiryId?.slice(0, 8)?.toUpperCase() ?? ''}) — ${tier?.name ?? ''} for ${guestCount} guests.`}
           />
 
           <RewardsCard occasionName={occasionName} />
 
           <div className="flex flex-col gap-2 pt-2">
-            <Link to="/dashboard/customer/requests" className="btn-primary text-center">Track this request</Link>
+            {/* My celebrations, not My requests. It is the screen the bottom
+                bar's own tab goes to, and since lib/celebrations.js it shows
+                this enquiry alongside everything else the customer has asked
+                for — which is what "track this" has to mean. */}
+            <Link to="/dashboard/customer/events" className="btn-primary text-center">Track this celebration</Link>
             <Link to="/services" className="text-sm font-semibold text-center text-saffron-300">
               Browse services &amp; packages
             </Link>
@@ -778,8 +862,12 @@ export default function CelebrationBuilder() {
               onClearOffer={() => setAppliedOfferId(null)}
               eventDate={eventDate}
               onEventDate={setEventDate}
+              timeSlot={timeSlot}
+              onTimeSlot={setTimeSlot}
               city={city}
               onCity={setCity}
+              contact={contact}
+              onContact={setContact}
             />
           )}
 
