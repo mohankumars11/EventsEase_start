@@ -14,6 +14,7 @@ import { DECOR_LEVEL_BY_ID } from '../../data/decorPackages'
 import { ALL_SERVICES } from '../../data/servicePricing'
 import { OFFER_BY_ID, offerAvailability, offerToNote } from '../../data/celebrationOffers'
 import { buildQuote, quoteToText, checkMinimums } from '../../utils/quote'
+import { celebrationSavings } from '../../lib/savings'
 import { formatINR } from '../../utils/format'
 import OccasionPicker from '../../components/plan/OccasionPicker'
 import JourneyRail from '../../components/plan/JourneyRail'
@@ -23,6 +24,7 @@ import TierLadder from '../../components/plan/TierLadder'
 import MenuBuilder from '../../components/plan/MenuBuilder'
 import DecorChooser from '../../components/plan/DecorChooser'
 import ServicePicker from '../../components/plan/ServicePicker'
+import ServiceSuggestions from '../../components/plan/ServiceSuggestions'
 import QuotePanel from '../../components/plan/QuotePanel'
 import ReviewBoard from '../../components/plan/ReviewBoard'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
@@ -232,6 +234,25 @@ export default function CelebrationBuilder() {
   }), [tierId, guestCount, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds,
       serviceIds, serviceQty, mode, includeCatering, includeDecor])
 
+  /**
+   * What booking it all together is worth, in rupees.
+   *
+   * Not `quote.bundle.amount`. That is the discount line, and it understates
+   * the saving: the discount comes off before the platform fee and before tax
+   * is applied to the components, so both shrink with it. lib/savings prices
+   * the identical configuration under both booking modes and subtracts, which
+   * is the only way to get the real figure — and it stays right if the order
+   * of operations in the quote engine ever changes.
+   *
+   * Carries `active`, because on the single-service door the same number is an
+   * argument for switching rather than a saving already earned.
+   */
+  const savings = useMemo(() => celebrationSavings({
+    tierId, guestCount, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds,
+    serviceIds, serviceQty, mode, includeCatering, includeDecor,
+  }), [tierId, guestCount, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds,
+      serviceIds, serviceQty, mode, includeCatering, includeDecor])
+
   const blocked = useMemo(() => {
     if (!eventId) return { rule: 'occasion', message: 'Pick what you are celebrating first — it is the top step.' }
     if (eventId === 'other' && !otherOccasion.trim()) {
@@ -394,6 +415,11 @@ export default function CelebrationBuilder() {
       eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu, specialRequests,
       decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor, eventDate, city,
       appliedOfferId, contact, timeSlot,
+      // Carried into the enquiry so the recommender can tell a customer's
+      // choice from our own pre-tick. See the `picked_by` stamp below. It
+      // rides in `state` rather than being read from the closure so that it
+      // survives the sessionStorage draft round-trip with everything else.
+      servicesTouched,
     }
     const liveQuote = buildQuote(state)
     if (!liveQuote) return
@@ -494,9 +520,30 @@ export default function CelebrationBuilder() {
             unit_price: liveQuote.decor.total, qty: 1,
             details: { level: liveQuote.decor.level.id, theme: state.themeId, addons: state.addonIds },
           },
+          // ── `picked_by`, and why a recommender needs it ────────────────
+          // The tier pre-ticks its own service list the moment a scale is
+          // chosen, so an enquiry from somebody who never opened this step
+          // records OUR suggestion, not their decision. Counting those as
+          // evidence would teach the recommender its own prior back — it
+          // would "learn" that photography goes with videography because we
+          // ticked both, and every measurement would confirm the guess it was
+          // supposed to correct.
+          //
+          // `servicesTouched` is already tracked here to stop the tier from
+          // overwriting an edited list, and it answers exactly the right
+          // question: has a human been through this list at all. Stamping it
+          // per line rather than per enquiry keeps the distinction readable
+          // even if a future step lets one service be edited without the
+          // others. get_service_cobooking_counts() (migration 043) counts
+          // only the 'customer' ones.
           ...liveQuote.services.map(({ service, qty, amount }) => ({
             id: service.id, name: service.name, emoji: service.emoji,
-            unit_price: service.base, qty, details: { unit: service.unit, amount },
+            unit_price: service.base, qty,
+            details: {
+              unit: service.unit,
+              amount,
+              picked_by: state.servicesTouched ? 'customer' : 'tier',
+            },
           })),
         ].filter(Boolean),
         packages: [{
@@ -524,7 +571,7 @@ export default function CelebrationBuilder() {
     }
   }, [user, navigate, location, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
       specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
-      eventDate, city, appliedOfferId, contact, timeSlot])
+      eventDate, city, appliedOfferId, contact, timeSlot, servicesTouched])
 
   /**
    * Record that the customer says they paid.
@@ -821,20 +868,32 @@ export default function CelebrationBuilder() {
           )}
 
           {step === 'services' && (
-            <ServicePicker
-              selectedIds={serviceIds}
-              onToggle={toggleService}
-              serviceQty={serviceQty}
-              onQty={(id, qty) => { setServicesTouched(true); setServiceQty(q => ({ ...q, [id]: qty })) }}
-              guestCount={guestCount}
-              includedByTier={tier?.includedServices ?? []}
-              includeCatering={includeCatering}
-              onIncludeCatering={setIncludeCatering}
-              includeDecor={includeDecor}
-              onIncludeDecor={setIncludeDecor}
-              cateringTotal={quote?.catering.total ?? 0}
-              decorTotal={quote?.decor.total ?? 0}
-            />
+            <div className="space-y-4">
+              {/* Above the list, because a suggestion on a row nobody scrolls
+                  to is not a suggestion. See ServiceSuggestions. */}
+              <ServiceSuggestions
+                occasion={eventId}
+                occasionName={occasionName}
+                chosenIds={serviceIds}
+                guestCount={guestCount}
+                quoteTotal={quote?.total ?? 0}
+                onAdd={toggleService}
+              />
+              <ServicePicker
+                selectedIds={serviceIds}
+                onToggle={toggleService}
+                serviceQty={serviceQty}
+                onQty={(id, qty) => { setServicesTouched(true); setServiceQty(q => ({ ...q, [id]: qty })) }}
+                guestCount={guestCount}
+                includedByTier={tier?.includedServices ?? []}
+                includeCatering={includeCatering}
+                onIncludeCatering={setIncludeCatering}
+                includeDecor={includeDecor}
+                onIncludeDecor={setIncludeDecor}
+                cateringTotal={quote?.catering.total ?? 0}
+                decorTotal={quote?.decor.total ?? 0}
+              />
+            </div>
           )}
 
           {/* Date and city live on the review, not on a build step — neither
@@ -894,6 +953,7 @@ export default function CelebrationBuilder() {
             <div className="lg:sticky lg:top-36">
               <QuotePanel
                 quote={showQuote ? quote : null}
+                savings={showQuote ? savings : null}
                 blocked={blocked}
                 primaryLabel="Review everything"
                 onPrimary={() => goTo('review')}
@@ -917,7 +977,10 @@ export default function CelebrationBuilder() {
           appliedId={appliedOfferId}
           onApply={setAppliedOfferId}
           eventDate={eventDate}
-          bundleSaving={showQuote && quote.bundle.applied ? quote.bundle.amount : 0}
+          // The real figure, not the discount line — see the `savings` memo.
+          // The rail was understating what booking together is worth by the
+          // platform fee and the tax that shrink along with it.
+          bundleSaving={showQuote && savings?.active ? savings.total : 0}
         />
 
         <div>

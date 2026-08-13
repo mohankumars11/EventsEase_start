@@ -25,7 +25,7 @@ import { BRAND } from '../../config/sambramo'
  * does not exist. See utils/quote.js.
  */
 export default function QuotePanel({
-  quote, blocked, primaryLabel, onPrimary, primaryDisabled, footnote,
+  quote, savings, blocked, primaryLabel, onPrimary, primaryDisabled, footnote,
 }) {
   if (!quote) {
     return (
@@ -79,6 +79,45 @@ export default function QuotePanel({
           About {formatINR(quote.perGuest)} per guest · {quote.tier.name} · {quote.guests} guests
         </p>
       </div>
+
+      {/* ── What booking it together is worth ────────────────────────────
+          Sat inside the breakdown as "Booked together (10%)" and nowhere
+          else, which is a rate next to a line item — the last place anybody
+          reads a benefit. It is now stated in rupees, directly under the
+          headline, because ₹18,400 is an argument and 10% is a footnote.
+
+          The wording turns on `active`, which is the whole reason lib/savings
+          returns that flag: on the single-service door this same number is
+          money the customer *would* get, and calling it a saving they have
+          would be claiming a discount that is not on their quote. */}
+      {savings && (
+        <div className={`flex items-start gap-2.5 px-5 py-3 border-b ${
+          savings.active
+            ? 'bg-emerald-50 border-emerald-100'
+            : 'bg-amber-50 border-amber-100'
+        }`}>
+          <TrendingDown
+            size={15}
+            className={`mt-0.5 shrink-0 ${savings.active ? 'text-emerald-600' : 'text-amber-600'}`}
+          />
+          <div className="min-w-0">
+            <p className={`text-[13px] font-extrabold leading-tight ${
+              savings.active ? 'text-emerald-800' : 'text-amber-900'
+            }`}>
+              {savings.active
+                ? `You're saving ${formatINR(savings.total)}`
+                : `Book it together and save ${formatINR(savings.total)}`}
+            </p>
+            <p className={`mt-0.5 text-[11px] leading-relaxed ${
+              savings.active ? 'text-emerald-700/90' : 'text-amber-800/90'
+            }`}>
+              {savings.active
+                ? <>Against {formatINR(savings.separately)} for the same pieces booked one at a time — about {formatINR(savings.perGuest)} a guest.</>
+                : <>One coordinator, one negotiation, one delivery window instead of several.</>}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="divide-y divide-gray-100">
         {groups.map(g => (
