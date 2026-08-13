@@ -2,12 +2,15 @@ import { useState, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Menu, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import { BRAND } from '../../config/sambramo'
 import { INK } from '../../config/dataviz'
 import useAdminData from '../../hooks/useAdminData'
+import useNotifications from '../../hooks/useNotifications'
 import SambramoMark from '../../components/ui/SambramoMark'
 import EventsTable from '../../components/admin/EventsTable'
 import CommandCenter from '../../components/admin/CommandCenter'
+import NotificationCenter, { NotificationInbox } from '../../components/admin/NotificationCenter'
 import { VendorsContent, OrdersContent, ReviewsContent, SupportContent } from '../../components/admin/OperationsViews'
 import { supabase } from '../../lib/supabase'
 
@@ -42,7 +45,9 @@ const OrderLifecycle      = lazy(() => import('../../components/admin/OrderLifec
 const CustomersView       = lazy(() => import('../../components/admin/CustomersView'))
 const AdminCatalog        = lazy(() => import('../../components/admin/AdminCatalog'))
 const AdminServices       = lazy(() => import('../../components/admin/AdminServices'))
+const ContentStudio       = lazy(() => import('../../components/admin/ContentStudio'))
 const DateConsole         = lazy(() => import('../../components/admin/DateConsole'))
+const OrderJourney        = lazy(() => import('../../components/admin/OrderJourney'))
 
 /**
  * Navigation, grouped by what you came here to DO.
@@ -59,6 +64,7 @@ const NAV_GROUPS = [
     label: 'Understand',
     items: [
       { id: 'overview',  label: 'Command Center',       emoji: '🏠' },
+      { id: 'inbox',     label: 'Activity Inbox',       emoji: '🔔', badge: 'unread' },
       { id: 'products',  label: 'Product Intelligence', emoji: '📦' },
       { id: 'geography', label: 'Area Demand',          emoji: '🗺️' },
       { id: 'lifecycle', label: 'Order Lifecycle',      emoji: '🔄' },
@@ -84,6 +90,7 @@ const NAV_GROUPS = [
     label: 'What we sell',
     items: [
       { id: 'catalog',  label: 'Shop Catalog',   emoji: '🖼️' },
+      { id: 'studio',   label: 'Content Studio', emoji: '🎛️' },
       { id: 'services', label: 'Event Services', emoji: '🎪' },
       { id: 'dates',    label: 'Dates',          emoji: '📆' },
       { id: 'vendors',  label: 'Vendors',        emoji: '🤝', badge: 'vendors' },
@@ -100,10 +107,24 @@ const EVENT_VIEWS = ['new_requests', 'under_review', 'vendor_sourcing', 'proposa
 export default function AdminDashboard() {
   const { profile } = useAuth()
   const navigate    = useNavigate()
+  const toast       = useToast()
   const data        = useAdminData()
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeNav, setActiveNav]     = useState('overview')
+  // Which order's full journey is open. An id rather than the row itself, so
+  // the drawer re-reads from `data` after a refresh instead of showing the
+  // stale copy it was handed.
+  const [journeyId, setJourneyId]     = useState(null)
+
+  /**
+   * The bell. `onToast` pops only the urgent, still-outstanding items that
+   * arrive while the tab is open — see lib/notifications § toastable for why
+   * a reload must never replay the backlog as toasts.
+   */
+  const notifications = useNotifications(data, {
+    onToast: item => toast.info(`${item.emoji} ${item.title}`),
+  })
 
   const [search, setSearch]             = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -118,7 +139,8 @@ export default function AdminDashboard() {
     support: returns.filter(r => r.status === 'requested').length + complaints.filter(c => c.status === 'open').length,
     vendors: vendors.filter(v => v.status === 'PENDING_REVIEW').length,
     orders:  orders.filter(o => o.status !== 'cancelled' && o.payment_status === 'pending').length,
-  }), [events, returns, complaints, vendors, orders])
+    unread:  notifications.unread,
+  }), [events, returns, complaints, vendors, orders, notifications.unread])
 
   const filteredEvents = useMemo(() => {
     let list = [...events]
@@ -260,15 +282,16 @@ export default function AdminDashboard() {
             </div>
             <div className="text-xs text-gray-400">{BRAND.signature}</div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={refresh} disabled={refreshing || loading}
               title="Reload everything"
-              className="p-1.5 text-gray-400 hover:text-plum-700 disabled:opacity-40"
+              className="p-2 rounded-xl text-gray-400 hover:text-plum-700 hover:bg-plum-50 disabled:opacity-40"
             >
-              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
-            <span className="hidden sm:block text-xs text-gray-500">{profile?.full_name?.split(' ')[0] ?? 'Admin'}</span>
+            <NotificationCenter {...notifications} onNavigate={go} />
+            <span className="hidden sm:block text-xs text-gray-500 ml-1">{profile?.full_name?.split(' ')[0] ?? 'Admin'}</span>
             <span className="px-2.5 py-1 bg-plum-100 text-plum-700 text-xs font-semibold rounded-full">Admin</span>
           </div>
         </div>
@@ -292,9 +315,10 @@ export default function AdminDashboard() {
             <div className={refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
               <Suspense fallback={<ViewSkeleton />}>
                 {activeNav === 'overview'  && <CommandCenter data={data} onNavigate={go} />}
+                {activeNav === 'inbox'     && <NotificationInbox {...notifications} onNavigate={go} />}
                 {activeNav === 'products'  && <ProductIntelligence data={data} onNavigate={go} />}
                 {activeNav === 'geography' && <AreaDemand data={data} />}
-                {activeNav === 'lifecycle' && <OrderLifecycle data={data} />}
+                {activeNav === 'lifecycle' && <OrderLifecycle data={data} onOpenOrder={setJourneyId} />}
                 {activeNav === 'customers' && <CustomersView data={data} />}
 
                 {activeNav === 'new_requests' && (
@@ -318,11 +342,12 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {activeNav === 'orders'   && <OrdersContent data={data} />}
-                {activeNav === 'support'  && <SupportContent data={data} />}
+                {activeNav === 'orders'   && <OrdersContent data={data} onOpenOrder={setJourneyId} />}
+                {activeNav === 'support'  && <SupportContent data={data} onOpenOrder={setJourneyId} />}
                 {activeNav === 'vendors'  && <VendorsContent data={data} />}
                 {activeNav === 'reviews'  && <ReviewsContent data={data} />}
                 {activeNav === 'catalog'  && <AdminCatalog />}
+                {activeNav === 'studio'   && <ContentStudio onNavigate={go} />}
                 {activeNav === 'services' && <AdminServices data={data} />}
                 {activeNav === 'dates'    && <DateConsole />}
               </Suspense>
@@ -330,6 +355,20 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {/* The order journey opens over whichever view raised it, so an admin
+          triaging the payment queue never loses their place in it. */}
+      {journeyId && (
+        <Suspense fallback={null}>
+          <OrderJourney
+            order={orders.find(o => o.id === journeyId)}
+            events={data.orderEvents}
+            returns={returns}
+            onClose={() => setJourneyId(null)}
+            onRefresh={refresh}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

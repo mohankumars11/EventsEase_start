@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR, formatDate } from '../../utils/format'
 import { ORDER_FLOW } from '../../lib/analytics'
+import { describeReasons } from '../../lib/orderJourney'
 import { EmptyNote } from './viz/Primitives'
 
 /**
@@ -163,7 +164,7 @@ const ORDER_STATUS_CSS = {
   cancelled:  { bg: 'bg-red-100',    text: 'text-red-700'    },
 }
 
-export function OrdersContent({ data }) {
+export function OrdersContent({ data, onOpenOrder }) {
   const toast = useToast()
   const { orders = [], refresh } = data
   const [acting, setActing] = useState(null)
@@ -202,8 +203,8 @@ export function OrdersContent({ data }) {
       <div>
         <h2 className="text-lg font-bold text-gray-900">🛍️ Shop Orders</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Every order, newest first. For the queues — what is unpaid, what has stopped moving —
-          see Order Lifecycle.
+          Every order, newest first — click any row for its full journey, refunds and payment link.
+          For the queues, see Order Lifecycle.
         </p>
       </div>
 
@@ -230,7 +231,11 @@ export function OrdersContent({ data }) {
                   const css = ORDER_STATUS_CSS[order.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
                   const next = ORDER_FLOW[ORDER_FLOW.indexOf(order.status) + 1]
                   return (
-                    <tr key={order.id} className="hover:bg-purple-50/30 transition-colors">
+                    <tr
+                      key={order.id}
+                      onClick={() => onOpenOrder?.(order.id)}
+                      className="hover:bg-purple-50/30 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3">
                         <div className="font-mono text-xs font-semibold text-gray-900">#{order.id.slice(0, 8).toUpperCase()}</div>
                         <div className="text-gray-400 text-[11px] mt-0.5">{formatDate(order.created_at)}</div>
@@ -253,7 +258,8 @@ export function OrdersContent({ data }) {
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      {/* The row opens the journey; the buttons must not. */}
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5">
                           {order.payment_status === 'pending' && (
                             <button onClick={() => markPaid(order)} disabled={acting === order.id}
@@ -385,7 +391,7 @@ const SUPPORT_PILLS = [
   { id: 'requests',   label: 'Service Requests', emoji: '📋' },
 ]
 
-export function SupportContent({ data }) {
+export function SupportContent({ data, onOpenOrder }) {
   const toast = useToast()
   const { returns = [], complaints = [], enquiries = [], refresh } = data
 
@@ -504,26 +510,33 @@ export function SupportContent({ data }) {
                     <p className="text-xs text-gray-400">
                       Order #{r.order_id.slice(0, 8).toUpperCase()} · {formatINR(r.orders?.total)} · {formatDate(r.requested_at)}
                     </p>
-                    <p className="text-sm text-gray-700 mt-1.5">{r.reason}{r.comment ? ` — ${r.comment}` : ''}</p>
+                    <p className="text-sm text-gray-700 mt-1.5">{describeReasons(r)}{r.comment ? ` — ${r.comment}` : ''}</p>
                   </div>
                   <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
                     r.status === 'requested' ? 'bg-amber-100 text-amber-700' :
                     r.status === 'refunded'  ? 'bg-green-100 text-green-700' :
-                    r.status === 'rejected'  ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                  }`}>{r.status}</span>
+                    r.status === 'rejected'  ? 'bg-red-100 text-red-700' :
+                    r.status === 'refund_pending' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>{r.status.replace(/_/g, ' ')}</span>
                 </div>
-                {r.status === 'requested' && (
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={() => resolveReturn(r.id, 'refunded')} disabled={acting === r.id}
-                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
-                      Approve &amp; Refund
-                    </button>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {/* The decision lives in the order journey, where the policy
+                      check and the calculated refund amount are — approving a
+                      return from a card that shows neither is how a delivery
+                      fee gets refunded on a changed-mind return. */}
+                  <button
+                    onClick={() => onOpenOrder?.(r.order_id)}
+                    className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700"
+                  >
+                    Open the order &amp; decide
+                  </button>
+                  {r.status === 'requested' && (
                     <button onClick={() => resolveReturn(r.id, 'rejected')} disabled={acting === r.id}
                       className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 disabled:opacity-50">
-                      Reject
+                      Reject outright
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -5,6 +5,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR, formatDate } from '../../utils/format'
 import { INK, STATUS, CATEGORICAL, ORDINAL_BLUE, compactINR } from '../../config/dataviz'
 import { orderLifecycle, ORDER_FLOW, ageInDays, orderLines, dailySeries } from '../../lib/analytics'
+import { stageDurations, formatDuration } from '../../lib/orderJourney'
 import {
   ChartCard, Funnel, StatTile, SectionHead, EmptyNote, BarRows, DataTable, Meter,
 } from './viz/Primitives'
@@ -35,12 +36,17 @@ import {
  * Both queues are actionable from this screen — confirming a payment or moving
  * a stage from an analytics view is the difference between a chart and a tool.
  *
- * ── The honest limit on "time in stage" ──────────────────────────────────
- * `orders` carries created_at and updated_at and no per-stage timestamps, so
- * there is no way to know how long an order sat in `processing` specifically.
- * Everything here says "untouched for N days" (now − updated_at), which is
- * both true and the number an operator needs. It is not dressed up as a stage
- * duration the schema cannot support.
+ * ── Queue length and throughput are different questions ──────────────────
+ * "Untouched for N days" (now − updated_at) is what this screen could always
+ * answer, and it is the right number for triage: it finds the forgotten order.
+ * It could never answer the other one — how long the process actually takes —
+ * because `orders` has no per-stage timestamps and `updated_at` destroys the
+ * previous one every time an order moves.
+ *
+ * Migration 039's `order_events` records every transition, so both are here
+ * now: the queues below for triage, and median stage durations for throughput.
+ * The durations exclude orders that predate the log rather than reconstructing
+ * them — an average built partly from guesses is a guess with a decimal point.
  */
 
 const STAGE_LABEL = {
@@ -50,14 +56,23 @@ const STAGE_LABEL = {
   delivered:  'Delivered',
 }
 
-export default function OrderLifecycle({ data }) {
+export default function OrderLifecycle({ data, onOpenOrder }) {
   const toast = useToast()
-  const { orders = [], returns = [], refresh } = data
+  const { orders = [], returns = [], orderEvents = [], refresh } = data
   const [acting, setActing] = useState(null)
 
   const lc = useMemo(() => orderLifecycle(orders), [orders])
   const lines = useMemo(() => orderLines(orders), [orders])
   const series = useMemo(() => dailySeries(lines, 30), [lines])
+
+  /**
+   * How long each stage actually takes, from the transition log (migration
+   * 039). Before that log existed this was unanswerable — the schema knew
+   * only where an order is now and when it last moved — so the screen could
+   * report queue lengths and never throughput.
+   */
+  const durations = useMemo(() => stageDurations(orders, orderEvents), [orders, orderEvents])
+  const hasLog = orderEvents.length > 0
 
   const stuckAll = useMemo(
     () => lc.stages.flatMap(s => s.stuckOrders.map(o => ({ ...o, stage: s.status })))
@@ -183,7 +198,12 @@ export default function OrderLifecycle({ data }) {
               <li key={o.id} className="flex items-center gap-3 py-3 flex-wrap">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-gray-900">#{short(o.id)}</span>
+                    <button
+                      onClick={() => onOpenOrder?.(o.id)}
+                      className="font-mono text-xs font-bold text-plum-700 hover:underline"
+                    >
+                      #{short(o.id)}
+                    </button>
                     <span className="text-xs text-gray-600">{o.profiles?.full_name ?? '—'}</span>
                     <span className="text-[11px]" style={{ color: INK.muted }}>
                       {formatDate(o.created_at)} · waiting {ageInDays(o.created_at)}d
@@ -248,7 +268,12 @@ export default function OrderLifecycle({ data }) {
                         style={{ background: days >= 7 ? STATUS.critical : STATUS.serious }} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-bold text-gray-900">#{short(o.id)}</span>
+                      <button
+                        onClick={() => onOpenOrder?.(o.id)}
+                        className="font-mono text-xs font-bold text-plum-700 hover:underline"
+                      >
+                        #{short(o.id)}
+                      </button>
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                             style={{ background: INK.plane, color: INK.secondary }}>
                         {STAGE_LABEL[o.status] ?? o.status}
@@ -277,6 +302,47 @@ export default function OrderLifecycle({ data }) {
           </ul>
         )}
       </div>
+
+      {/* ── How long each stage takes ────────────────────────────────── */}
+      <ChartCard
+        title="How long each stage takes"
+        sub="Median time between recorded transitions. Median rather than mean, because one order that sat over a festival weekend would make an average meaningless."
+        table={{
+          columns: [
+            { key: 'label', label: 'Stage' },
+            { key: 'medianHours', label: 'Median', render: r => formatDuration(r.medianHours) },
+            { key: 'targetHours', label: 'Target', render: r => formatDuration(r.targetHours) },
+            { key: 'samples', label: 'Orders measured' },
+          ],
+          rows: durations.map(d => ({ ...d, key: d.id })),
+        }}
+      >
+        {!hasLog ? (
+          <EmptyNote icon="⏱️">
+            Stage timings need the transition log from migration 039. Until it is applied,
+            only queue lengths are knowable — the schema records where an order is, not how it got there.
+          </EmptyNote>
+        ) : durations.every(d => !d.samples) ? (
+          <EmptyNote icon="⏱️">
+            No order has moved through two recorded stages yet. This fills in as orders progress.
+          </EmptyNote>
+        ) : (
+          <>
+            <BarRows
+              rows={durations.filter(d => d.samples > 0).map(d => ({
+                id: d.id, label: d.label, value: Math.round(d.medianHours),
+                color: d.overTarget ? STATUS.serious : CATEGORICAL[0],
+                note: `target ${formatDuration(d.targetHours)} · measured across ${d.samples} order${d.samples === 1 ? '' : 's'}`,
+              }))}
+              format={v => formatDuration(v)}
+            />
+            <p className="text-[11px] mt-3" style={{ color: INK.muted }}>
+              Orders that predate the log are excluded — an average built partly from guesses is a
+              guess with a decimal point.
+            </p>
+          </>
+        )}
+      </ChartCard>
 
       {/* ── Aging & returns ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">

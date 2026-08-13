@@ -7,6 +7,7 @@ import { formatDate, formatINR } from '../../utils/format'
 import AppBar from '../../components/layout/AppBar'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
+import ReturnRequestModal from '../../components/customer/ReturnRequestModal'
 
 const STATUS_CSS = {
   placed:     { bg: 'bg-blue-100',   text: 'text-blue-700'  },
@@ -17,13 +18,22 @@ const STATUS_CSS = {
 }
 
 const CANCEL_REASONS = ['Changed my mind', 'Found a better price', 'Ordered by mistake', 'Taking too long', 'Other']
-const RETURN_REASONS = ['Damaged or defective', 'Wrong item received', 'Not as described', 'No longer needed', 'Other']
 
+// Return reasons now live in config/policies.js with the rest of the policy —
+// they carry whose fault each one is, whether a photo settles it, and whether
+// the delivery fee comes back, none of which a bare string list could say.
+// ReturnRequestModal reads them from there.
+
+// 'refund_pending' arrives with migration 039 — the state between "we agreed"
+// and "it landed", which the old three-state model had no way to express and
+// so left a customer looking at "approved" for three days with no idea the
+// money was already on its way.
 const RETURN_STATUS_LABEL = {
-  requested: 'Return requested — pending review',
-  approved:  'Return approved',
-  rejected:  'Return request declined',
-  refunded:  'Refunded',
+  requested:      'Return requested — we are reviewing it',
+  approved:       'Return approved — your refund is being sent',
+  rejected:       'Return request declined',
+  refund_pending: 'Refund sent — it should reach you in 2–5 working days',
+  refunded:       'Refunded',
 }
 
 export default function MyOrders() {
@@ -79,13 +89,27 @@ export default function MyOrders() {
     loadOrders()
   }
 
-  async function handleReturn({ reason, message }) {
-    const { error } = await supabase.from('return_requests').insert({
+  async function handleReturn(payload) {
+    // `reasons`, `policy_version` and `terms_accepted_at` arrive with
+    // migration 039. On a database that has not run it yet the insert would
+    // fail on the unknown columns and the customer would simply be unable to
+    // raise a return — so the extras are dropped and retried rather than
+    // losing the request.
+    const base = {
       order_id: actionModal.order.id,
       customer_id: user.id,
-      reason,
-      comment: message || null,
+      reason: payload.reason,
+      comment: payload.comment || null,
+    }
+    let { error } = await supabase.from('return_requests').insert({
+      ...base,
+      reasons: payload.reasons,
+      policy_version: payload.policy_version,
+      terms_accepted_at: payload.terms_accepted_at,
     })
+    if (error && /42703|column|schema cache/i.test(`${error.code ?? ''} ${error.message ?? ''}`)) {
+      ({ error } = await supabase.from('return_requests').insert(base))
+    }
     if (error) throw error
     loadReturns()
   }
@@ -244,11 +268,8 @@ export default function MyOrders() {
         />
       )}
       {actionModal?.kind === 'return' && (
-        <ReasonModal
-          title="Request a return or refund"
-          itemLabel={`Order #${actionModal.order.id.slice(0, 8).toUpperCase()}`}
-          reasons={RETURN_REASONS}
-          submitLabel="Submit Request"
+        <ReturnRequestModal
+          order={actionModal.order}
           onSubmit={handleReturn}
           onClose={() => setActionModal(null)}
         />

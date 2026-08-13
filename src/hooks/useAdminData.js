@@ -49,7 +49,7 @@ function isAbsent(error) {
 const EMPTY = {
   orders: [], products: [], events: [], proposals: [], profiles: [],
   vendors: [], enquiries: [], reviews: [], returns: [], complaints: [],
-  interest: [], services: [],
+  interest: [], services: [], orderEvents: [],
 }
 
 export default function useAdminData() {
@@ -104,9 +104,21 @@ export default function useAdminData() {
       complaints:() => supabase.from('complaints').select('*, profiles!customer_id(full_name, phone)').order('created_at', { ascending: false }),
       interest:  () => supabase.from('city_interest_requests').select('city, created_at').order('created_at', { ascending: false }),
 
-      // Migration 037. Absent on any database that has not run it yet, which
-      // is the normal state right after a deploy — hence the soft failure.
-      services:  () => supabase.from('service_catalog').select('*').order('group_id').order('sort_order').order('name'),
+      // Migration 037/040. Absent on any database that has not run them yet,
+      // which is the normal state right after a deploy — hence the soft
+      // failure. `select('*')` rather than naming `kind`, so a database with
+      // 037 but not 040 still returns its services instead of 400-ing.
+      services:  () => supabase.from('service_catalog').select('*').order('sort_order').order('name'),
+
+      // Migration 039 — the per-transition history behind every order
+      // timeline. Bounded rather than unbounded: a year of transitions is
+      // more than any screen reads, and the cap keeps this from becoming the
+      // slowest query on the dashboard as the shop grows.
+      orderEvents: () => supabase
+        .from('order_events')
+        .select('id, order_id, kind, from_value, to_value, actor_role, note, created_at')
+        .order('created_at', { ascending: true })
+        .limit(5000),
     }
 
     const keys = Object.keys(queries)

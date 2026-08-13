@@ -246,13 +246,20 @@ export function productDemand(products = [], lines = [], { windowDays = 30, toda
     byProduct.set(p.id, {
       id: p.id,
       name: p.name,
+      // Carried through so the drill-down can show what the customer reads.
+      // A product's own copy is the first thing to check when it never sells,
+      // and it used to be the one field the analytics dropped.
+      description: p.description ?? null,
       category: p.category,
       occasion: p.occasion ?? null,
       price: Number(p.price) || 0,
       emoji: p.emoji,
       image_url: p.image_url ?? null,
+      image_alt: p.image_alt ?? null,
       image_source: p.image_source ?? null,
+      image_updated_at: p.image_updated_at ?? null,
       is_active: p.is_active !== false,
+      listedAt: p.created_at ?? null,
       orphan: false,
       lines: [],
     })
@@ -267,11 +274,13 @@ export function productDemand(products = [], lines = [], { windowDays = 30, toda
       orphans.set(key, {
         id: `orphan:${key}`,
         name: key,
+        description: null,
         category: l.category ?? 'Uncategorized',
         occasion: l.occasion ?? null,
         price: Number(l.unit_price) || 0,
         emoji: '📦',
-        image_url: null, image_source: null, is_active: false,
+        image_url: null, image_alt: null, image_source: null, image_updated_at: null,
+        is_active: false, listedAt: null,
         orphan: true,
         lines: [],
       })

@@ -2,7 +2,7 @@ import { useMemo, useState, lazy, Suspense } from 'react'
 import { Search, X, Pencil, Camera, AlertCircle } from 'lucide-react'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import { formatINR, formatDate } from '../../utils/format'
-import { INK, STATUS, CATEGORICAL, shopCategoryColor, compactINR } from '../../config/dataviz'
+import { INK, STATUS, CATEGORICAL, ORDINAL_BLUE, shopCategoryColor, compactINR } from '../../config/dataviz'
 import {
   orderLines, dailySeries, productDemand, productBuckets, occasionDemand, between,
   addDays, startOfDay, normaliseCity,
@@ -468,6 +468,14 @@ function ProductDetail({ product: p, lines, windowDays, onClose, onEdit }) {
         </div>
 
         <div className="px-5 sm:px-6 py-5 space-y-5">
+          {/* ── Identity ────────────────────────────────────────────
+              The product's own record: the id you would quote in a
+              support conversation, the copy the customer actually reads,
+              and its photo state. All three were missing before — the
+              analytics knew what this product SOLD and nothing about what
+              it IS, which is exactly what you need when it sells nothing. */}
+          <IdentityBlock product={p} />
+          <LifecycleStrip product={p} />
           {!p.everSold ? (
             <div className="rounded-2xl p-5" style={{ background: INK.plane }}>
               <p className="text-sm font-semibold text-gray-900">Nobody has ordered this yet.</p>
@@ -571,6 +579,130 @@ function ProductDetail({ product: p, lines, windowDays, onClose, onEdit }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ── Identity & lifecycle ──────────────────────────────────────────────── */
+
+/**
+ * What this product IS, as opposed to what it has done.
+ *
+ * The id is shown in full and copyable because it is the thing you paste into
+ * a query, a support thread or a URL — an id you can see but not copy is an id
+ * you retype wrong. The description is here because it is the customer-facing
+ * copy, and on a product that has never sold it is one of the three things
+ * worth checking (photo, price, words).
+ */
+function IdentityBlock({ product: p }) {
+  const [copied, setCopied] = useState(null)
+  const copy = async (text, what) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(what); setTimeout(() => setCopied(null), 1600)
+    } catch { /* clipboard blocked — the value is still on screen to select */ }
+  }
+
+  return (
+    <div className="rounded-xl p-4 space-y-2.5" style={{ background: INK.plane }}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: INK.muted }}>ID</span>
+        <code className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-700 break-all">
+          {p.id}
+        </code>
+        {!p.orphan && (
+          <button onClick={() => copy(p.id, 'id')}
+                  className="text-[11px] font-semibold text-plum-700 hover:text-plum-800">
+            {copied === 'id' ? 'Copied' : 'Copy'}
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: INK.muted }}>Name</span>
+        <span className="text-xs font-semibold text-gray-900">{p.name}</span>
+        <button onClick={() => copy(p.name, 'name')}
+                className="text-[11px] font-semibold text-plum-700 hover:text-plum-800">
+          {copied === 'name' ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+
+      <div>
+        <span className="text-[10px] font-bold uppercase tracking-wide block mb-0.5" style={{ color: INK.muted }}>
+          Description — what the customer reads
+        </span>
+        {p.description ? (
+          <p className="text-xs" style={{ color: INK.secondary }}>{p.description}</p>
+        ) : (
+          <p className="text-xs flex items-center gap-1.5" style={{ color: STATUS.serious }}>
+            <AlertCircle size={12} /> No description. A listing with no words is one nobody can search for.
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+        <Field label="Shelf" value={p.category} />
+        <Field label="Occasion" value={p.occasion ?? 'None'} />
+        <Field label="Listed price" value={formatINR(p.price)} />
+        <Field label="On sale" value={p.is_active ? 'Yes' : 'Retired'}
+               tone={p.is_active ? undefined : STATUS.serious} />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The product's own lifecycle, which is a different thing from the order's.
+ *
+ * Five states a listing passes through — created, described, photographed for
+ * real, first sold, still selling — and this shows which have been reached.
+ * Pre-launch most products sit at step two, and seeing that as a strip rather
+ * than as a number is what makes it a to-do list.
+ */
+function LifecycleStrip({ product: p }) {
+  const steps = [
+    { id: 'listed',   label: 'Listed',        done: true,
+      detail: p.listedAt ? formatDate(p.listedAt) : 'in the catalogue' },
+    { id: 'described',label: 'Described',     done: Boolean(p.description),
+      detail: p.description ? 'has copy' : 'no description yet' },
+    { id: 'pictured', label: 'Photographed',  done: Boolean(p.image_url),
+      detail: !p.image_url ? 'emoji tile only'
+            : p.image_source === 'actual' ? 'real photo' : 'representative stock photo' },
+    { id: 'sold',     label: 'First sale',    done: p.everSold,
+      detail: p.firstSold ? formatDate(p.firstSold) : 'never ordered' },
+    { id: 'selling',  label: 'Still selling', done: p.currUnits > 0,
+      detail: p.currUnits > 0 ? `${p.currUnits} this window`
+            : p.everSold ? `quiet for ${p.daysSinceSale}d` : '—' },
+  ]
+
+  return (
+    <div>
+      <SectionHead title="Where this listing has got to" />
+      <ol className="flex gap-1.5 overflow-x-auto pb-1">
+        {steps.map((s, i) => (
+          <li key={s.id} className="flex-1 min-w-[104px]">
+            {/* An ordered scale, so an ordinal ramp — darkening with depth —
+                rather than five categorical hues, which would say these five
+                steps are five unrelated things. */}
+            <div className="h-1.5 rounded-full mb-1.5"
+                 style={{ background: s.done ? ORDINAL_BLUE[Math.min(i, ORDINAL_BLUE.length - 1)] : INK.grid }} />
+            <p className={`text-[11px] ${s.done ? 'font-bold text-gray-900' : 'font-medium'}`}
+               style={s.done ? undefined : { color: INK.muted }}>
+              {s.label}
+            </p>
+            <p className="text-[10px] leading-snug" style={{ color: INK.muted }}>{s.detail}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function Field({ label, value, tone }) {
+  return (
+    <div>
+      <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color: INK.muted }}>{label}</div>
+      <div className="text-xs font-semibold mt-0.5" style={{ color: tone ?? INK.primary }}>{value}</div>
     </div>
   )
 }
