@@ -155,14 +155,6 @@ export default function ProductIntelligence({ data, onNavigate }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">📦 Product Intelligence</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Every item in the shop, ranked by what it actually does. Click any row for its own
-          demand curve, its buyers and the places it ships to.
-        </p>
-      </div>
-
       {missing.includes('products') && (
         <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800">
           <AlertCircle size={18} className="shrink-0" />

@@ -364,13 +364,9 @@ export default function AdminServices({ data }) {
 function Header({ onAdd, onSync, syncing }) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🎪 Event Services</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Everything Sambramo offers for a celebration. Photograph it, rewrite it, retire it,
-          or add something entirely new.
-        </p>
-      </div>
+      <p className="text-[12px] max-w-prose" style={{ color: INK.muted }}>
+        Photograph it, rewrite it, retire it, or add something entirely new.
+      </p>
       <div className="flex items-center gap-2">
         {onSync && (
           <button

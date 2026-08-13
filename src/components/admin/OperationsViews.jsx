@@ -57,9 +57,8 @@ export function VendorsContent({ data }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">🤝 Vendor Management</h2>
           {pending > 0 && (
-            <p className="text-sm text-amber-600 font-medium mt-0.5">
+            <p className="text-sm text-amber-600 font-medium">
               {pending} partner{pending !== 1 ? 's' : ''} awaiting review
             </p>
           )}
@@ -200,14 +199,6 @@ export function OrdersContent({ data, onOpenOrder }) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🛍️ Shop Orders</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Every order, newest first — click any row for its full journey, refunds and payment link.
-          For the queues, see Order Lifecycle.
-        </p>
-      </div>
-
       {orders.length === 0 ? (
         <div className="card p-14 text-center">
           <div className="text-4xl mb-3">🛍️</div>
@@ -321,8 +312,6 @@ export function ReviewsContent({ data }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-gray-900">⭐ Customer Reviews</h2>
-
       {reviews.length === 0 ? (
         <div className="card p-14 text-center">
           <div className="text-4xl mb-3">⭐</div>
@@ -391,11 +380,25 @@ const SUPPORT_PILLS = [
   { id: 'requests',   label: 'Service Requests', emoji: '📋' },
 ]
 
-export function SupportContent({ data, onOpenOrder }) {
+/**
+ * Returns, complaints and service enquiries.
+ *
+ * ── Why this is three screens now, not one "Support" tab ─────────────────
+ * They were pills on one page because they are all "somebody wrote in". But
+ * that is a shape, not a subject: a return is an ORDER problem, a complaint is
+ * a PERSON problem, and a service enquiry is an unpriced EVENT. Filing them
+ * together meant an admin working the order queue had to leave it, open
+ * Support, and remember which of three pills held the returns.
+ *
+ * So each is exported on its own and sits in its own domain group. The
+ * component stays single because the logic — reply, resolve, quote — is
+ * genuinely shared; `only` fixes which section renders and drops the pill bar.
+ */
+function SupportContent({ data, onOpenOrder, only }) {
   const toast = useToast()
   const { returns = [], complaints = [], enquiries = [], refresh } = data
 
-  const [pill, setPill]   = useState('returns')
+  const [pill, setPill]   = useState(only ?? 'returns')
   const [acting, setActing] = useState(null)
   const [replyingId, setReplyingId] = useState(null)
   const [replyText, setReplyText]   = useState('')
@@ -471,11 +474,13 @@ export function SupportContent({ data, onOpenOrder }) {
     setActing(null)
   }
 
+  const active = only ?? pill
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-gray-900">🛟 Support</h2>
+      {!only && <h2 className="text-lg font-bold text-gray-900">🛟 Support</h2>}
 
-      <div className="flex gap-2">
+      <div className={only ? 'hidden' : 'flex gap-2'}>
         {SUPPORT_PILLS.map(p => (
           <button
             key={p.id}
@@ -499,7 +504,7 @@ export function SupportContent({ data, onOpenOrder }) {
         ))}
       </div>
 
-      {pill === 'returns' && (
+      {active === 'returns' && (
         returns.length === 0 ? <EmptyNote icon="↩️">No return requests.</EmptyNote> : (
           <div className="space-y-3">
             {returns.map(r => (
@@ -543,7 +548,7 @@ export function SupportContent({ data, onOpenOrder }) {
         )
       )}
 
-      {pill === 'complaints' && (
+      {active === 'complaints' && (
         complaints.length === 0 ? <EmptyNote icon="⚠️">No complaints.</EmptyNote> : (
           <div className="space-y-3">
             {complaints.map(c => (
@@ -603,7 +608,7 @@ export function SupportContent({ data, onOpenOrder }) {
         )
       )}
 
-      {pill === 'requests' && (
+      {active === 'requests' && (
         enquiries.length === 0 ? <EmptyNote icon="📋">No service requests yet.</EmptyNote> : (
           <div className="space-y-3">
             {enquiries.map(e => (
@@ -688,3 +693,14 @@ export function SupportContent({ data, onOpenOrder }) {
     </div>
   )
 }
+
+
+/**
+ * The three, each in its own domain. Same component, one section apiece —
+ * see the note on SupportContent for why they were split.
+ */
+export const ReturnsView    = props => <SupportContent {...props} only="returns" />
+export const ComplaintsView = props => <SupportContent {...props} only="complaints" />
+export const EnquiriesView  = props => <SupportContent {...props} only="requests" />
+
+export { SupportContent }

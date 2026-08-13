@@ -125,14 +125,6 @@ export default function OrderLifecycle({ data, onOpenOrder }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🔄 Order Lifecycle</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Every order from placed to delivered, and the two places they pile up — waiting on a
-          payment nobody has confirmed, and waiting on a stage nobody has moved.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <StatTile label="Live orders" value={lc.total} sub="cancellations excluded" />
         <StatTile

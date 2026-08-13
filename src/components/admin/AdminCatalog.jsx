@@ -245,14 +245,9 @@ export default function AdminCatalog() {
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">🖼️ Catalog</h2>
-          <p className="text-sm text-gray-500 mt-1 max-w-prose">
-            Add a product, correct a price, or replace a representative stock photo with a
-            picture of the item you will actually deliver. Shoot straight from a phone — the
-            photo is compressed in the browser before it uploads.
-          </p>
-        </div>
+        <p className="text-[12px] max-w-prose" style={{ color: INK.muted }}>
+          Shoot straight from a phone — the photo is compressed in the browser before it uploads.
+        </p>
         <button
           onClick={() => setAdding(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-plum-600 text-white text-sm font-semibold hover:bg-plum-700 shrink-0"

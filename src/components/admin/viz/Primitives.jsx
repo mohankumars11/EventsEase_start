@@ -199,14 +199,19 @@ export function StatTile({ label, value, sub, delta, deltaPeriod, goodWhenUp = t
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold uppercase tracking-wide truncate" style={{ color: INK.muted }}>
+          {/* Not truncated. Six tiles across a laptop leaves each one narrow,
+              and with a sparkline beside it "Orders" was rendering as
+              "ORDE…" — a label clipped to the point of unreadability is
+              worse than one that wraps. The sparkline gives up the width
+              instead: it carries shape, and shape survives being smaller. */}
+          <div className="text-[11px] font-semibold uppercase tracking-wide leading-tight" style={{ color: INK.muted }}>
             {label}
           </div>
           <div className="text-2xl font-bold mt-1 leading-none" style={{ color: tone ?? INK.primary }}>
             {value}
           </div>
         </div>
-        {spark && <Sparkline data={spark} accent={accent} />}
+        {spark && <Sparkline data={spark} accent={accent} width={64} />}
       </div>
       <div className="flex items-center gap-2 mt-2 min-h-[16px] flex-wrap">
         <DeltaBadge value={delta} period={deltaPeriod} goodWhenUp={goodWhenUp} />

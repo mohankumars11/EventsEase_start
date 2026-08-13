@@ -96,14 +96,6 @@ export default function AreaDemand({ data }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🗺️ Area Demand</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Where orders ship, where celebrations are being planned, and where people are
-          asking us to open. Four different signals, kept apart on purpose.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatTile label="Deliveries placed" value={totals.deliveries} sub={`across ${totals.places} place${totals.places === 1 ? '' : 's'}`} />
         <StatTile label="Revenue by place" value={compactINR(totals.revenue)} sub="confirmed received" />

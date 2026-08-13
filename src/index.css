@@ -633,6 +633,22 @@
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+  /* ── The admin rail's scrollbar ───────────────────────
+     The console's navigation sits on a deep plum ground, where the
+     platform scrollbar renders as a bright light-mode bar down the
+     edge of a dark panel. Hiding it entirely is the wrong fix — with
+     six groups the rail genuinely scrolls on a short laptop screen,
+     and a scrollable region with no indicator is one people do not
+     discover. So it stays, drawn in the rail's own values. */
+  .admin-rail-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+  .admin-rail-scroll::-webkit-scrollbar { width: 6px; }
+  .admin-rail-scroll::-webkit-scrollbar-track { background: transparent; }
+  .admin-rail-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.16);
+    border-radius: 3px;
+  }
+  .admin-rail-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
   /* ── Marquee ─────────────────────────────────────────
      CSS-driven infinite ticker. Replaces the old
      requestAnimationFrame loops that wrote `scrollLeft` every

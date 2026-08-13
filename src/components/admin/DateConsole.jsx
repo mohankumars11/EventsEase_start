@@ -43,13 +43,6 @@ export default function DateConsole() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">📅 Dates</h2>
-        <p className="text-sm text-gray-500">
-          Demand, pressure and capacity for every date on the calendar.
-        </p>
-      </div>
-
       <div role="tablist" aria-label="Date tools" className="flex flex-wrap gap-2">
         {TABS.map(t => {
           const on = t.id === tab

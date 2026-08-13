@@ -80,13 +80,6 @@ export default function CustomersView({ data }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">👥 Customers</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Who buys, how often, and whether they come back. Click any row for their full history.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <StatTile label="Signed up" value={stats.totalCustomers} />
         <StatTile label="Have ordered" value={stats.buyers}

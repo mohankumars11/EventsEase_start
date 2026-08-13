@@ -82,15 +82,6 @@ export default function ContentStudio({ onNavigate }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🎛️ Content Studio</h2>
-        <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-          Everything a customer can see, in one place. Add it, rewrite it, photograph it,
-          reorder it, take it down. Shop products have their own screen because they carry
-          stock and orders — everything else lives here.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatTile label="Things you can edit" value={totals.total} sub="across every kind" />
         <StatTile label="With a photograph" value={totals.photos} sub={`of ${totals.total}`}
@@ -155,9 +146,6 @@ export default function ContentStudio({ onNavigate }) {
 function MigrationNotice({ kindMissing, onRetry }) {
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">🎛️ Content Studio</h2>
-      </div>
       <div className="card p-6 border-amber-200 bg-amber-50/40">
         <div className="flex items-start gap-3">
           <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />

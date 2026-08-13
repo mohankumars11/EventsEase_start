@@ -206,14 +206,10 @@ export function NotificationInbox({ items, unread, markAllRead, markRead, markUn
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">🔔 Activity Inbox</h2>
-          <p className="text-sm text-gray-500 mt-0.5 max-w-prose">
-            Everything that has happened on the customer side, newest first. Built from the orders,
-            returns and enquiries themselves rather than a separate log — so nothing can go missing,
-            and this is complete back to your first order.
-          </p>
-        </div>
+        <p className="text-[12px] max-w-prose" style={{ color: INK.muted }}>
+          Built from the orders, returns and enquiries themselves rather than a separate log — so
+          nothing can go missing, and this is complete back to your first order.
+        </p>
         {unread > 0 && (
           <button
             onClick={markAllRead}

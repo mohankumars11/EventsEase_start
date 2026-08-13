@@ -53,18 +53,34 @@ that was the pre-pivot model and its pages have been removed.
 `/onboarding/vendor` · `/dashboard/vendor` — profile, service list, availability calendar
 
 ### Admin (`role = admin`)
-`/dashboard/admin` — 18 views in three groups (see below)
+`/dashboard/admin` — 17 screens in six groups (see below)
 `/dashboard/admin/events/:eventId`
 
-The admin console is one data load (`hooks/useAdminData`) shared by every view,
-with every derived number defined once in `lib/analytics`. The sidebar groups
-by what you came to do:
+The admin console is one data load (`hooks/useAdminData`) shared by every
+screen, with every derived number defined once in `lib/analytics`. The frame is
+`components/admin/AdminShell`; the information architecture is data, in
+`config/adminNav`, so the sidebar, the ⌘K palette and the page header cannot
+drift.
 
-| Group | Views |
+**Grouped by subject, not by verb.** The rule is that a question should be
+answerable without leaving its group:
+
+| Group | Screens |
 |---|---|
-| **Understand** | Command Center · Activity Inbox · Product Intelligence · Area Demand · Order Lifecycle · Customers |
-| **Work the queues** | New Requests · Under Review · Vendor Sourcing · Proposals · Confirmed · Upcoming · Shop Orders · Support |
-| **What we sell** | Shop Catalog · Content Studio · Event Services · Dates · Vendors · Reviews |
+| **Overview** | Command Center · Activity Inbox |
+| **Events** | Event Requests · Enquiries & Quotes · Event Services · Dates & Demand |
+| **Orders** | All Orders · Order Lifecycle · Returns & Refunds |
+| **Catalogue** | Shop Products · Content Studio |
+| **People** | Customers · Complaints · Reviews · Partners |
+| **Insight** | Product Intelligence · Area Demand |
+
+Two earlier IA mistakes are worth not repeating. Six of the eighteen slots were
+the same events table under six `status` filters — a filter wearing a nav
+item's clothes; they are now tabs on one Event Requests screen. And "Support"
+grouped returns, complaints and enquiries because they share a shape ("somebody
+wrote in") rather than a subject — a return is an order problem, a complaint is
+a person problem, an enquiry is an unpriced event, and each now sits with its
+own kind.
 
 Two definitions carry the whole console and are kept apart deliberately:
 **demand** is every order line a customer placed (cancellations excluded), and
