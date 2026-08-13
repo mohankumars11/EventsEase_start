@@ -36,6 +36,15 @@ export default function Cart() {
   const pkgHigh = cart.packages.reduce((sum, p) => sum + (p.pkg.price_max ?? p.pkg.price_min ?? 0), 0)
   const hasPackageEstimate = cart.packages.length > 0 && pkgLow > 0
 
+  // What the configured single-service bookings add up to. Only lines that
+  // actually carry a price contribute — a service added from an occasion page
+  // has none, and counting it as ₹0 would understate the total rather than
+  // leave it out.
+  const servicesTotal = cart.items.reduce(
+    (sum, i) => sum + (Number.isFinite(i.service.priceMin) ? i.service.priceMin * i.qty : 0),
+    0
+  )
+
   // Group items by event
   const byEvent = {}
   cart.items.forEach(item => {
@@ -219,7 +228,43 @@ export default function Cart() {
                       <div className="min-w-0">
                         <p className="font-medium text-gray-800 text-sm">{item.service.name}</p>
                         {item.service.desc && <p className="text-xs text-gray-400 truncate">{item.service.desc}</p>}
-                        <p className="text-xs text-plum-500 font-medium mt-0.5">Custom quote</p>
+
+                        {/* A configured single-service booking carries the price
+                            the customer agreed to on the option card. Printing
+                            "Custom quote" over it — which this line did for
+                            every service, unconditionally — threw away the one
+                            number they had already been shown and made a
+                            completed booking look like an unanswered enquiry.
+                            Services added from an occasion page still have no
+                            price and still say so. */}
+                        {Number.isFinite(item.service.priceMin) && item.service.priceMin > 0 ? (
+                          <p className="text-xs text-plum-600 font-bold mt-0.5">
+                            Est. {formatINR(item.service.priceMin * item.qty)}
+                            {item.qty > 1 && (
+                              <span className="text-gray-400 font-medium"> · {formatINR(item.service.priceMin)} each</span>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-plum-500 font-medium mt-0.5">Custom quote</p>
+                        )}
+
+                        {/* What was actually chosen — the cuisine and its dishes,
+                            the decoration and its extras, what the package
+                            delivers. The coordinator reads the same lines. */}
+                        {item.service.summary?.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {item.service.summary.slice(0, 3).map((line, i) => (
+                              <li key={i} className="text-[11px] leading-snug text-gray-500 line-clamp-1">
+                                · {line}
+                              </li>
+                            ))}
+                            {item.service.summary.length > 3 && (
+                              <li className="text-[11px] text-gray-400">
+                                + {item.service.summary.length - 3} more details sent with your request
+                              </li>
+                            )}
+                          </ul>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -277,9 +322,18 @@ export default function Cart() {
                   </span>
                 </div>
               )}
+              {servicesTotal > 0 && (
+                <div className="flex justify-between gap-3 text-sm text-gray-600 border-t border-amber-200 pt-3">
+                  <span>Services you configured and priced</span>
+                  <span className="font-semibold text-gray-900 text-right">{formatINR(servicesTotal)}</span>
+                </div>
+              )}
               <p className="text-xs text-gray-500 pt-1">
-                💬 Individual services are quoted rather than listed — our team reviews your exact
-                requirements and sends one final price in <strong>My Requests</strong>.
+                💬 {servicesTotal > 0
+                  ? 'The figures above are the estimates you were shown while choosing, not locked quotes — a coordinator confirms them against your date and venue.'
+                  : 'Individual services are quoted rather than listed — our team reviews your exact requirements and sends one final price in'}
+                {servicesTotal > 0 ? ' You will see the confirmed price in ' : ' '}
+                <strong>My Requests</strong>.
                 {hasPackageEstimate && ' The band above is the estimate you were shown, not a locked quote.'}
                 {' '}Nothing is charged now.
               </p>

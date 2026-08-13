@@ -33,6 +33,7 @@ const PlanHub            = lazy(() => import('./pages/plan/PlanHub'))
 const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const CelebrationBuilder = lazy(() => import('./pages/plan/CelebrationBuilder'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
+const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const Shop               = lazy(() => import('./pages/shop/Shop'))
 const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
 const CakeShop           = lazy(() => import('./pages/shop/CakeShop'))
@@ -334,6 +335,23 @@ function AppRoutes() {
 
       {/* ── Services & packages catalog (public) ────── */}
       <Route path="/services" element={<AppShell><ServicesPicker /></AppShell>} />
+      {/* One service, bought end to end — singular `/service/:id`, distinct
+          from the plural `/services/:eventId` occasion page beside it.
+
+          This is the page the "Need just one thing?" shelf always implied and
+          never had: tapping a service there used to select a chip whose only
+          exit was /plan/custom, the celebration wizard, which opens by asking
+          which occasion you are planning. Somebody who wants a cook for Sunday
+          was answered with a form about their wedding.
+
+          Public, like the shop and the rest of the planner — a price behind a
+          login is a price nobody sees. Sign-in is asked at add-to-cart, where
+          there is something to save. ScreenShell because the page draws its own
+          bar and its own footer, the same as /shop, /plan and the occasion
+          page; stacking the marketing navbar over a bar that already carries
+          the back arrow, the service and the cart is the duplication those
+          three moved off AppShell to escape. */}
+      <Route path="/service/:serviceId" element={<ScreenShell><ServiceDetail /></ScreenShell>} />
       {/* The occasion page draws its own chrome, the same as home, /shop and
           /plan. On AppShell it arrived under the marketing navbar, a "Pilot —
           Bengaluru — somewhere else? [notify me]" bar, a "Back to Home" link

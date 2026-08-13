@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Check } from 'lucide-react'
+import { ChevronRight, Check, Plus, ArrowRight } from 'lucide-react'
 import { SERVICES_BY_CATEGORY, TOP_SERVICES } from '../../data/planCatalog'
+import { isBookable, BOOKABLE_SERVICE_IDS } from '../../data/singleService'
+import OptionArt from '../service/OptionArt'
 
 /**
  * "I only need one thing."
  *
- * The single biggest hole in the planner. Sambramo sells ~39 distinct services
+ * The single biggest hole in the planner. Sambramo sells ~55 distinct services
  * and every one of them was buried inside an occasion page: to discover that we
  * supply cooks, you first had to declare you were planning a birthday. Someone
  * who wants a cook for Sunday lunch, a decorator for a small pooja, or just a
@@ -18,21 +20,33 @@ import { SERVICES_BY_CATEGORY, TOP_SERVICES } from '../../data/planCatalog'
  * new supplier. Hiding it behind a package means the only door into the
  * business is the most expensive one.
  *
+ * ── What tapping a card does, and what it used to do ────────────────────
+ * It opens that service's own page, where the real options are — eighty
+ * decoration setups, sixteen cuisines with every dish, three to five priced
+ * packages — and where the booking is completed.
+ *
+ * It used to tick a chip. The only button under the grid then sent every
+ * selection to /plan/custom: the six-step celebration wizard, whose first
+ * question is which occasion you are planning. So the shelf promised "pick a
+ * single service and we'll arrange only that" and its one exit did the exact
+ * opposite, without ever showing a decoration, a dish or a price.
+ *
+ * The multi-pick survives as a *secondary* action, on the ⊕ button, because it
+ * genuinely serves the other customer: somebody who wants a cook, a decorator
+ * and a photographer quoted together has described a small event without being
+ * asked to choose a package, and one enquiry beats three. It is no longer the
+ * only thing a tap can do.
+ *
  * ── The design ─────────────────────────────────────────────────────────
- * Chips, then a grid. The chip row is the category filter (Decor, Catering,
- * Venue…) and defaults to "Most booked", which is genuinely derived — a service
- * wanted by twelve of the fifteen occasions really is the common request, and
- * that ranking comes out of the data rather than out of an editor's opinion.
+ * Chips, then a grid. The chip row defaults to "Most booked", which is
+ * genuinely derived — a service wanted by twelve of the fifteen occasions
+ * really is the common request, and that ranking comes out of the data rather
+ * than out of an editor's opinion.
  *
  * Every card names its own price band. The catalogue has honest ranges
  * (`priceHint`) and showing them here is the whole point: "what does a cook
  * cost" is the question that brings people to the page, and a card that answers
  * it converts far better than one that says "enquire".
- *
- * Selection is multi-pick and accumulates into a single enquiry. Someone who
- * taps cook + decor + photographer has just described a small event without
- * being asked to choose a package, which is exactly the journey the old design
- * refused to allow. The wizard receives the picks and skips ahead.
  */
 export default function ServiceShelf({ query = '' }) {
   const [activeCategory, setActiveCategory] = useState('top')
@@ -76,8 +90,12 @@ export default function ServiceShelf({ query = '' }) {
           Need just one thing?
         </h2>
         <p className="mt-1 text-[12px] leading-relaxed text-white/60">
-          You don't have to book a whole celebration. Pick a single service — a cook,
-          a decorator, a photographer — and we'll arrange only that.
+          You don't have to book a whole celebration. Tap any service to see its real
+          options — every decoration, every cuisine, every package — priced, and bookable
+          on its own.
+        </p>
+        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-teal-400/10 px-2.5 py-1 text-[10.5px] font-bold text-teal-200 ring-1 ring-teal-300/25">
+          <Check size={11} /> {BOOKABLE_SERVICE_IDS.length} services bookable end to end
         </p>
       </div>
 
@@ -118,39 +136,56 @@ export default function ServiceShelf({ query = '' }) {
         </p>
       ) : (
         <div className="mt-3 grid grid-cols-2 gap-3 px-4">
-          {list.map(svc => {
+          {list.map((svc, i) => {
             const on = picked.includes(svc.id)
+            const bookable = isBookable(svc.id)
             return (
-              <button
+              <div
                 key={svc.id}
-                onClick={() => toggle(svc.id)}
-                aria-pressed={on}
-                className={`home-card p-3 text-left transition-all ${
-                  on ? 'ring-2 ring-saffron-400' : ''
-                }`}
+                className={`home-card rise-in relative ${on ? 'ring-2 ring-saffron-400' : ''}`}
+                style={{ '--rise-delay': `${Math.min(i, 10) * 40}ms` }}
               >
-                <span className="flex items-start justify-between gap-2">
-                  <span className="text-2xl leading-none" aria-hidden="true">{svc.emoji}</span>
-                  <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
-                      on ? 'bg-saffron-400 text-plum-950' : 'bg-gray-100 text-transparent'
-                    }`}
-                  >
-                    <Check size={12} strokeWidth={3.5} />
-                  </span>
-                </span>
+                {/* The card is the door into the service. A whole card as the
+                    primary target is the difference between "look at this" and
+                    "here is a checkbox". */}
+                <Link to={`/service/${svc.id}`} className="block">
+                  <OptionArt tint={tintFor(svc.category)} emoji={svc.emoji} height={62} seed={i + svc.name.length} />
 
-                <span className="mt-2 block text-[13px] font-extrabold leading-tight text-gray-900">
-                  {svc.name}
-                </span>
-                <span className="mt-0.5 block text-[10px] leading-snug text-gray-500 line-clamp-2">
-                  {svc.desc}
-                </span>
-                {/* The number people came for. */}
-                <span className="mt-1.5 block text-[11px] font-bold text-plum-700">
-                  {svc.priceHint}
-                </span>
-              </button>
+                  <div className="p-3">
+                    <span className="block text-[13px] font-extrabold leading-tight text-gray-900">
+                      {svc.name}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-snug text-gray-500 line-clamp-2">
+                      {svc.desc}
+                    </span>
+
+                    {/* The number people came for. */}
+                    <span className="mt-1.5 block text-[11px] font-bold text-plum-700">
+                      {svc.priceHint}
+                    </span>
+
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold text-saffron-600">
+                      {bookable ? 'See options & book' : 'Ask for a price'}
+                      <ArrowRight size={10} />
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Secondary: gather several into one enquiry. Deliberately a
+                    small target in the corner — it is the minority journey, and
+                    it used to be the only one. */}
+                <button
+                  type="button"
+                  onClick={() => toggle(svc.id)}
+                  aria-pressed={on}
+                  aria-label={on ? `Remove ${svc.name} from your quote` : `Add ${svc.name} to a combined quote`}
+                  className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full shadow-md transition-colors ${
+                    on ? 'bg-saffron-400 text-plum-950' : 'bg-black/35 text-white backdrop-blur-sm'
+                  }`}
+                >
+                  {on ? <Check size={13} strokeWidth={3.5} /> : <Plus size={13} strokeWidth={3} />}
+                </button>
+              </div>
             )
           })}
         </div>
@@ -171,10 +206,10 @@ export default function ServiceShelf({ query = '' }) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-extrabold leading-tight text-plum-950">
-                Get a quote for {picked.length === 1 ? 'this service' : `these ${picked.length}`}
+                Get one quote for {picked.length === 1 ? 'this service' : `these ${picked.length}`}
               </span>
               <span className="block text-[11px] text-plum-900/70">
-                Free, no obligation — a coordinator replies with real prices
+                Free, no obligation — or tap a card to price and book it yourself
               </span>
             </span>
             <ChevronRight size={18} className="shrink-0 text-plum-950" />
@@ -183,4 +218,32 @@ export default function ServiceShelf({ query = '' }) {
       )}
     </section>
   )
+}
+
+/** The card's two colours, by category — see heroTint in ServiceDetail. */
+function tintFor(category) {
+  return {
+    Decor:          ['#c026d3', '#f59e0b'],
+    Catering:       ['#b45309', '#facc15'],
+    'F&B':          ['#0891b2', '#fbbf24'],
+    Photography:    ['#1e3a8a', '#38bdf8'],
+    Video:          ['#0f172a', '#22d3ee'],
+    Entertainment:  ['#7c3aed', '#ec4899'],
+    Lighting:       ['#f59e0b', '#4c1d95'],
+    Venue:          ['#15803d', '#fde68a'],
+    Beauty:         ['#be123c', '#f9a8d4'],
+    Ritual:         ['#d97706', '#fde68a'],
+    Gifts:          ['#7c2d12', '#fbbf24'],
+    Logistics:      ['#334155', '#94a3b8'],
+    Infrastructure: ['#0f766e', '#5eead4'],
+    Safety:         ['#b91c1c', '#fca5a5'],
+    Hospitality:    ['#db2777', '#fbcfe8'],
+    Stationery:     ['#a16207', '#fef08a'],
+    Furniture:      ['#78350f', '#d6d3d1'],
+    Security:       ['#1f2937', '#9ca3af'],
+    Cleanup:        ['#0e7490', '#a5f3fc'],
+    Corporate:      ['#1e293b', '#93c5fd'],
+    Effects:        ['#0f172a', '#f59e0b'],
+    Bakery:         ['#db2777', '#fed7aa'],
+  }[category] ?? ['#6d28d9', '#f59e0b']
 }

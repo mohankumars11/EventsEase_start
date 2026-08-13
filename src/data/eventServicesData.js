@@ -82,6 +82,34 @@ const SVC = {
   gifting:        { id: 'gifting',        name: 'Gifting & Hampers',    emoji: '🎀', category: 'Gifts',         desc: 'Curated gift hampers for guests or honorees',    priceHint: '₹300 – ₹3,000/unit',   priceMin: 300,    priceMax: 3000 },
   memory_wall:    { id: 'memory_wall',    name: 'Memory Wall / Tribute', emoji: '🖼️', category: 'Decor',       desc: 'Photo wall, career/life tribute display',        priceHint: '₹3,000 – ₹20,000',     priceMin: 3000,   priceMax: 20000 },
   av_setup:       { id: 'av_setup',       name: 'AV & Presentation Setup', emoji: '🖥️', category: 'Corporate', desc: 'Projectors, screens, mics for talks & presentations', priceHint: '₹5,000 – ₹40,000', priceMin: 5000,   priceMax: 40000 },
+
+  // ── The services that were missing ────────────────────────────────────
+  // Everything above is what somebody would list if asked "what goes into a
+  // celebration". Everything below is what actually decides whether one went
+  // well, and none of it was bookable: the generator that keeps the lights on
+  // through the muhurtham, the parking crew, the ambulance at a function with
+  // eighty elderly guests, the nadaswaram a South Indian family names in the
+  // first sentence, the stream for the son who could not fly back.
+  //
+  // Each carries priced packages in data/servicePacks.js, so they are bookable
+  // end to end rather than being a row that opens a quote form.
+  valet:          { id: 'valet',          name: 'Valet & Parking',      emoji: '🅿️', category: 'Logistics',     desc: 'Valet drivers, parking marshals, key counter',   priceHint: '₹1,800 – ₹25,000',     priceMin: 1800,   priceMax: 25000 },
+  power:          { id: 'power',          name: 'Power Backup / Generator', emoji: '⚡', category: 'Infrastructure', desc: 'Silent DG sets, distribution, auto changeover', priceHint: '₹7,500 – ₹25,000',   priceMin: 7500,   priceMax: 25000 },
+  cooling:        { id: 'cooling',        name: 'Cooling, Fans & Heaters', emoji: '🌬️', category: 'Infrastructure', desc: 'Coolers, misting fans, patio heaters, firepits', priceHint: '₹900 – ₹3,500/unit',  priceMin: 900,    priceMax: 3500 },
+  washrooms:      { id: 'washrooms',      name: 'Portable Washrooms',   emoji: '🚻', category: 'Infrastructure', desc: 'Portable cabins & luxury restroom vans',        priceHint: '₹4,500 – ₹35,000',     priceMin: 4500,   priceMax: 35000 },
+  medical:        { id: 'medical',        name: 'Medical & First Aid',  emoji: '🚑', category: 'Safety',        desc: 'First-aider, nurse, oxygen or ambulance standby', priceHint: '₹4,500 – ₹18,000',    priceMin: 4500,   priceMax: 18000 },
+  hospitality:    { id: 'hospitality',    name: 'Ushers & Guest Hospitality', emoji: '🙋', category: 'Hospitality', desc: 'Welcome hostesses, guest relations, cloakroom', priceHint: '₹2,200 – ₹12,000',   priceMin: 2200,   priceMax: 12000 },
+  livestream:     { id: 'livestream',     name: 'Live Streaming',       emoji: '📡', category: 'Video',         desc: 'Private stream for family who cannot travel',    priceHint: '₹12,000 – ₹32,000',    priceMin: 12000,  priceMax: 32000 },
+  drone:          { id: 'drone',          name: 'Drone & Aerial Coverage', emoji: '🚁', category: 'Photography', desc: 'Licensed aerial and FPV cinematography',        priceHint: '₹9,000 – ₹24,000',     priceMin: 9000,   priceMax: 24000 },
+  baraat:         { id: 'baraat',         name: 'Baraat & Procession',  emoji: '🎺', category: 'Entertainment', desc: 'Brass band, ghodi, light poles, route marshals', priceHint: '₹16,000 – ₹65,000',    priceMin: 16000,  priceMax: 65000 },
+  wedding_car:    { id: 'wedding_car',    name: 'Wedding & Vintage Cars', emoji: '🚗', category: 'Logistics',   desc: 'Decorated sedan, luxury, vintage or ghodi',      priceHint: '₹8,500 – ₹35,000',     priceMin: 8500,   priceMax: 35000 },
+  nadaswaram:     { id: 'nadaswaram',     name: 'Nadaswaram / Shehnai', emoji: '🪈', category: 'Entertainment', desc: 'Mangala vadyam for muhurtham & processions',     priceHint: '₹12,000 – ₹25,000',    priceMin: 12000,  priceMax: 25000 },
+  bhajan:         { id: 'bhajan',         name: 'Bhajan & Devotional Music', emoji: '🎼', category: 'Ritual',   desc: 'Bhajan mandali, mata ki chowki, Carnatic sitting', priceHint: '₹9,000 – ₹32,000',   priceMin: 9000,   priceMax: 32000 },
+  folk:           { id: 'folk',           name: 'Folk & Cultural Troupes', emoji: '🪗', category: 'Entertainment', desc: 'Dollu kunitha, bhangra, kalbeliya, magicians', priceHint: '₹7,500 – ₹26,000',     priceMin: 7500,   priceMax: 26000 },
+  bar:            { id: 'bar',            name: 'Bar & Mocktail Counters', emoji: '🍹', category: 'F&B',        desc: 'Mocktail bar, bartenders, flair service',        priceHint: '₹220/head – ₹28,000',  priceMin: 220,    priceMax: 28000 },
+  live_counters:  { id: 'live_counters',  name: 'Live Food Counters',   emoji: '🥘', category: 'Catering',      desc: 'Chaat, dosa, tandoor and global live counters',  priceHint: '₹120 – ₹220/head',     priceMin: 120,    priceMax: 220 },
+  nanny:          { id: 'nanny',          name: 'Childcare & Nannies',  emoji: '👶', category: 'Hospitality',   desc: 'Trained childminders and a supervised crèche',   priceHint: '₹3,500 – ₹18,000',     priceMin: 3500,   priceMax: 18000 },
+  signage:        { id: 'signage',        name: 'Signage & Seating Charts', emoji: '🪧', category: 'Stationery', desc: 'Welcome boards, wayfinding, seating charts',     priceHint: '₹6,500 – ₹9,500',      priceMin: 6500,   priceMax: 9500 },
 }
 
 export const EVENT_DATA = {
@@ -106,6 +134,7 @@ export const EVENT_DATA = {
       SVC.emcee, SVC.photography, SVC.videography, SVC.photobooth,
       SVC.kids_play, SVC.bouncers, SVC.return_gifts, SVC.invitations,
       SVC.fireworks, SVC.cleanup,
+      SVC.live_counters, SVC.bar, SVC.folk, SVC.nanny, SVC.power, SVC.signage,
     ],
   },
 
@@ -128,6 +157,7 @@ export const EVENT_DATA = {
       SVC.cake, SVC.catering, SVC.menu, SVC.dining, SVC.welcome_drinks,
       SVC.photography, SVC.videography, SVC.photobooth,
       SVC.emcee, SVC.mehendi, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.nanny, SVC.hospitality, SVC.live_counters, SVC.livestream, SVC.signage,
     ],
   },
 
@@ -152,8 +182,9 @@ export const EVENT_DATA = {
       // Nadaswaram. It was missing from all three Vedic rites below, which is
       // why the scale cards could not offer the one piece of a namakarana,
       // upanayanam or seemantham that families ask about by name.
-      SVC.live_music,
+      SVC.live_music, SVC.nadaswaram, SVC.bhajan,
       SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.livestream, SVC.hospitality, SVC.power, SVC.signage,
     ],
   },
 
@@ -177,6 +208,7 @@ export const EVENT_DATA = {
       SVC.welcome_drinks, SVC.live_music, SVC.dj, SVC.entertainment,
       SVC.emcee, SVC.photography, SVC.videography, SVC.photobooth,
       SVC.makeup, SVC.fireworks, SVC.transport, SVC.cleanup,
+      SVC.bar, SVC.live_counters, SVC.wedding_car, SVC.valet, SVC.power, SVC.signage,
     ],
   },
 
@@ -199,6 +231,7 @@ export const EVENT_DATA = {
       SVC.pooja, SVC.priest, SVC.catering, SVC.cooks, SVC.menu, SVC.dining,
       SVC.cake, SVC.welcome_drinks, SVC.photography,
       SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.bhajan, SVC.nadaswaram, SVC.drum, SVC.power, SVC.signage, SVC.hospitality,
     ],
   },
 
@@ -221,6 +254,7 @@ export const EVENT_DATA = {
       SVC.catering, SVC.cooks, SVC.menu, SVC.welcome_drinks,
       SVC.dj, SVC.live_music, SVC.emcee, SVC.entertainment,
       SVC.photography, SVC.videography, SVC.bouncers, SVC.cleanup,
+      SVC.bar, SVC.live_counters, SVC.valet, SVC.power, SVC.cooling,
     ],
   },
 
@@ -243,6 +277,7 @@ export const EVENT_DATA = {
       SVC.cake, SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.welcome_drinks, SVC.ice_cream,
       SVC.photography, SVC.videography, SVC.photobooth, SVC.kids_play,
       SVC.dj, SVC.entertainment, SVC.emcee, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.nanny, SVC.live_counters, SVC.folk, SVC.signage, SVC.power,
     ],
   },
 
@@ -267,6 +302,9 @@ export const EVENT_DATA = {
       SVC.emcee, SVC.photography, SVC.videography, SVC.photobooth,
       SVC.mehendi, SVC.makeup, SVC.bridal_wear, SVC.bouncers,
       SVC.return_gifts, SVC.invitations, SVC.transport, SVC.fireworks, SVC.cleanup,
+      SVC.valet, SVC.power, SVC.washrooms, SVC.medical, SVC.hospitality,
+      SVC.livestream, SVC.drone, SVC.baraat, SVC.wedding_car, SVC.nadaswaram, SVC.drum,
+      SVC.folk, SVC.bar, SVC.live_counters, SVC.nanny, SVC.signage, SVC.cooling,
     ],
   },
 
@@ -289,6 +327,8 @@ export const EVENT_DATA = {
       SVC.catering, SVC.menu, SVC.dining, SVC.cake, SVC.welcome_drinks,
       SVC.live_music, SVC.dj, SVC.emcee, SVC.photography, SVC.videography,
       SVC.makeup, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.bar, SVC.live_counters, SVC.drone, SVC.livestream, SVC.valet,
+      SVC.signage, SVC.hospitality,
     ],
   },
 
@@ -311,6 +351,8 @@ export const EVENT_DATA = {
       SVC.catering, SVC.menu, SVC.welcome_drinks, SVC.dj, SVC.live_music,
       SVC.choreography, SVC.emcee, SVC.entertainment, SVC.mehendi, SVC.makeup,
       SVC.photography, SVC.videography, SVC.fireworks, SVC.cleanup,
+      SVC.bar, SVC.live_counters, SVC.folk, SVC.drum, SVC.drone, SVC.valet,
+      SVC.power, SVC.cooling, SVC.signage,
     ],
   },
 
@@ -331,8 +373,9 @@ export const EVENT_DATA = {
     services: [
       SVC.venue, SVC.floral, SVC.decor, SVC.tent,
       SVC.pooja, SVC.priest, SVC.catering, SVC.cooks, SVC.menu, SVC.dining,
-      SVC.photography, SVC.videography, SVC.live_music,
+      SVC.photography, SVC.videography, SVC.live_music, SVC.nadaswaram, SVC.bhajan,
       SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.livestream, SVC.hospitality, SVC.power, SVC.signage,
     ],
   },
 
@@ -354,7 +397,9 @@ export const EVENT_DATA = {
       SVC.venue, SVC.floral, SVC.decor, SVC.balloon_arch,
       SVC.pooja, SVC.priest, SVC.catering, SVC.menu, SVC.dining,
       SVC.cake, SVC.welcome_drinks, SVC.photography, SVC.videography,
-      SVC.live_music, SVC.mehendi, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.live_music, SVC.nadaswaram, SVC.bhajan,
+      SVC.mehendi, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.livestream, SVC.hospitality, SVC.signage,
     ],
   },
 
@@ -381,6 +426,7 @@ export const EVENT_DATA = {
       SVC.catering, SVC.menu, SVC.dining, SVC.cake, SVC.welcome_drinks,
       SVC.live_music, SVC.emcee, SVC.photography, SVC.videography,
       SVC.memory_wall, SVC.gifting, SVC.invitations, SVC.cleanup,
+      SVC.livestream, SVC.hospitality, SVC.valet, SVC.signage, SVC.bar,
     ],
   },
 
@@ -403,6 +449,7 @@ export const EVENT_DATA = {
       SVC.catering, SVC.menu, SVC.dining, SVC.cake, SVC.welcome_drinks,
       SVC.dj, SVC.emcee, SVC.photography, SVC.videography, SVC.photobooth,
       SVC.memory_wall, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.bar, SVC.live_counters, SVC.folk, SVC.signage, SVC.livestream,
     ],
   },
 
@@ -426,6 +473,8 @@ export const EVENT_DATA = {
       SVC.dj, SVC.live_music, SVC.emcee, SVC.entertainment,
       SVC.photography, SVC.videography, SVC.bouncers, SVC.transport,
       SVC.gifting, SVC.invitations, SVC.cleanup,
+      SVC.valet, SVC.power, SVC.medical, SVC.hospitality, SVC.livestream,
+      SVC.drone, SVC.bar, SVC.live_counters, SVC.signage, SVC.washrooms, SVC.cooling,
     ],
   },
 }

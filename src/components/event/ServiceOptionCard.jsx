@@ -4,6 +4,7 @@ import {
   Check, ChevronDown, ShoppingCart, Star, Sparkles, ArrowRight, Leaf, Info,
 } from 'lucide-react'
 import { serviceOptionsFor, optionCountFor } from '../../data/serviceOptions'
+import { isBookable } from '../../data/singleService'
 import { CUISINES, CUISINE_GROUPS, CUISINE_BY_ID, COURSES, dishesFor } from '../../data/cuisineMenus'
 import { VISIBLE_DECOR_LEVELS, DECOR_THEMES, DECOR_ADDONS } from '../../data/decorPackages'
 import { serviceCost, serviceUnitLabel, defaultQty } from '../../data/servicePricing'
@@ -119,6 +120,21 @@ export default function ServiceOptionCard({
             >
               Configure &amp; price this <ArrowRight size={13} />
             </Link>
+            {/* The other half of the same question. "Configure & price this"
+                opens the whole-celebration builder, which is right for somebody
+                who came here to plan the occasion and wrong for the sizeable
+                share who opened a birthday page because they want one balloon
+                arch. That person had nowhere to go from this card except a
+                builder that prices catering, venue and coordination alongside
+                the one thing they wanted. */}
+            {isBookable(service.id) && (
+              <Link
+                to={`/service/${service.id}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[12px] font-bold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50"
+              >
+                Or book just this <ArrowRight size={13} />
+              </Link>
+            )}
             {options.deepLink && (
               <Link
                 to={options.deepLink.to}
