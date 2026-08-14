@@ -16,7 +16,7 @@ import ReviewModal from '../../components/reviews/ReviewModal'
 import CustomizeModal from '../../components/shop/CustomizeModal'
 import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
-import BundleCard from '../../components/shop/BundleCard'
+import BundleLadder from '../../components/shop/BundleLadder'
 import RecommendationRail from '../../components/shop/RecommendationRail'
 import { cakeFacts } from '../../data/cakeStyles'
 import { isCustomizable } from '../../config/customizers'
@@ -259,7 +259,7 @@ export default function ProductDetail() {
             — a rail that stops at the page margin looks clipped rather than
             scrollable, so the tiles have to be able to run to the screen edge
             while the heading stays aligned with everything above it. */}
-        <BundleCard seed={product} className="mt-4" />
+        <BundleLadder seed={product} className="mt-4" />
 
         <RecommendationRail
           seed={product}
