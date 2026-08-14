@@ -11,7 +11,7 @@ import {
   EVENT_STATUSES, STATUS_CSS, PRIORITIES, EVENT_TYPE_EMOJIS,
   DEFAULT_TASKS,
 } from '../../config/sambramo'
-import { formatDate, formatINR } from '../../utils/format'
+import { formatDate, formatINR, todayISO } from '../../utils/format'
 
 /* ── Shared small components ───────────────────────────────────── */
 function StatusBadge({ status }) {
@@ -917,8 +917,12 @@ function TasksTab({ event }) {
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="label text-xs">Due date</label>
-              <input type="date" value={form.due_at} onChange={e => setForm(f => ({ ...f, due_at: e.target.value }))} className="input text-sm py-2" />
+              {/* Required, like the title. A task with no due date is one
+                  nothing can ever chase — it does not appear in an overdue
+                  list, it does not sort, and on an event with a fixed day
+                  every piece of work has a real deadline anyway. */}
+              <label className="label text-xs">Due date *</label>
+              <input type="date" required min={todayISO()} value={form.due_at} onChange={e => setForm(f => ({ ...f, due_at: e.target.value }))} className="input text-sm py-2" />
             </div>
             <div>
               <label className="label text-xs">Priority</label>
@@ -928,7 +932,7 @@ function TasksTab({ event }) {
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={addTask} disabled={busy || !form.title.trim()} className="btn-plum text-sm py-2 px-4">
+            <button onClick={addTask} disabled={busy || !form.title.trim() || !form.due_at} className="btn-plum text-sm py-2 px-4">
               {busy ? 'Adding…' : 'Add Task'}
             </button>
             <button onClick={() => setAddOpen(false)} className="btn-secondary text-sm py-2 px-4">Cancel</button>

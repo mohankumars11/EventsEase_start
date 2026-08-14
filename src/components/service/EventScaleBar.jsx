@@ -151,16 +151,23 @@ export default function EventScaleBar({
             ) : (
               <CalendarPlus size={16} className="shrink-0 text-teal-300" />
             )}
+            {/* Not "(optional)" any more, and not "you can add it later".
+                Adding to the cart now asks for the date if it is not already
+                known (see ServiceDetail), so both of those lines had become
+                untrue — and a control that calls itself optional immediately
+                before it blocks you is worse than one that never mentioned it.
+                It is still not a nag: most visitors arrive with the date
+                already picked elsewhere, and this shows it back to them. */}
             <span className="min-w-0 flex-1">
               <span className="block text-[12px] font-extrabold leading-tight text-white">
                 {dateLabel
                   ? `${dateLabel}${slotLabel ? ` · ${slotLabel}` : ''}`
-                  : 'When is it? (optional)'}
+                  : 'When is it?'}
               </span>
               <span className="block text-[10.5px] leading-snug text-white/45">
                 {dateLabel
                   ? 'Saved — we check the team is free for this date before confirming.'
-                  : 'Telling us early is what lets us hold the crew. You can add it later.'}
+                  : 'Telling us early is what lets us hold the crew. We ask for it when you add.'}
               </span>
             </span>
             <ChevronRight size={14} className="shrink-0 text-white/30" />

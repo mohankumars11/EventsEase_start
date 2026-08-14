@@ -73,6 +73,8 @@ export default function ServiceDetail() {
   const [packQty, setPackQty] = useState({})
   const [menuConfig, setMenuConfig] = useState(null)
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
+  // The add that is waiting on a date. See handleAdd.
+  const [pendingAdd, setPendingAdd] = useState(null)
 
   // Arriving at a different service must not inherit the last one's choices —
   // a balloon arch selected on the previous page has no meaning on this one.
@@ -173,8 +175,15 @@ export default function ServiceDetail() {
    * already known is asked for again. What is genuinely missing — the venue
    * address, a phone number, the access constraints — is collected once, in
    * the cart, on the way to sending. See BookingSheet.
+   *
+   * ── `picked` ────────────────────────────────────────────────────────
+   * The date the customer has just chosen in the sheet, when there is one. It
+   * has to be passed rather than read from the shared store: the store is
+   * written a moment earlier in the same tick, and this closure still holds the
+   * value from the render that created it — so reading `savedDate` here would
+   * attach `null` to the very add the sheet was opened to unblock.
    */
-  const commitAdd = useCallback(sel => {
+  const commitAdd = useCallback((sel, picked) => {
     if (!resolved) return
 
     const line = cartLineFor({
@@ -192,8 +201,8 @@ export default function ServiceDetail() {
     const details = {
       ...(getEventDetails(eventId) ?? {}),
       guestCount,
-      date: savedDate?.event_date ?? getEventDetails(eventId)?.date ?? null,
-      slot: savedDate?.time_slot ?? null,
+      date: picked?.event_date ?? savedDate?.event_date ?? getEventDetails(eventId)?.date ?? null,
+      slot: picked?.time_slot ?? savedDate?.time_slot ?? null,
       location: getEventDetails(eventId)?.location
         ?? (chosen && city?.name ? { city: city.name, area: '' } : null),
     }
@@ -202,10 +211,36 @@ export default function ServiceDetail() {
     toast.success(`Added — ${sel.optionName}, ${formatINR(sel.price)}`)
   }, [resolved, eventId, getEventDetails, guestCount, savedDate, chosen, city, dispatch, toast])
 
+  /**
+   * The one thing that is asked for, if it is not already known: the date.
+   *
+   * Everything else this page needs it already has — the guest count is on
+   * screen, the city is in CityContext, the service is the page. The date is
+   * the single fact a coordinator cannot proceed without, and it was the one
+   * thing an add could carry as `null`: the line landed in the cart, the
+   * enquiry was built from it, and the first follow-up call was spent asking
+   * what day the event was.
+   *
+   * Gating it here rather than at send is the deliberate part. The cart does
+   * still refuse to send without a date, so nothing broken ever reached a
+   * coordinator — but a customer who adds four services and only then meets
+   * the question has to answer it with the page they chose them on already
+   * gone. Asking at the first add costs one sheet, once, and everything after
+   * it in the session is already answered.
+   *
+   * The pending selection is held while the sheet is open so that confirming
+   * the date completes the add the customer actually pressed. Dropping it and
+   * making them press Add again is how a gate turns into a dead end.
+   */
   const handleAdd = useCallback(sel => {
     if (!sel || !eventId) return
+    if (!savedDate?.event_date) {
+      setPendingAdd(sel)
+      setDateSheetOpen(true)
+      return
+    }
     commitAdd(sel)
-  }, [eventId, commitAdd])
+  }, [eventId, savedDate, commitAdd])
 
   /* ── Not in the catalogue ──────────────────────────────────────── */
   if (!resolved) {
@@ -618,10 +653,16 @@ export default function ServiceDetail() {
           everywhere in it, and this page never asks for one twice. */}
       <EventDateSheet
         open={dateSheetOpen}
-        onClose={() => setDateSheetOpen(false)}
+        onClose={() => { setDateSheetOpen(false); setPendingAdd(null) }}
         city={chosen ? city : null}
         value={savedDate}
-        onConfirm={next => { setEventDate(next); setDateSheetOpen(false) }}
+        onConfirm={next => {
+          setEventDate(next)
+          setDateSheetOpen(false)
+          // Finish the add the sheet interrupted. The date goes with it
+          // explicitly — see commitAdd on why the store cannot be read here.
+          if (pendingAdd) { commitAdd(pendingAdd, next); setPendingAdd(null) }
+        }}
       />
     </div>
   )

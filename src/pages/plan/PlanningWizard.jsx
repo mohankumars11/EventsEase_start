@@ -13,6 +13,8 @@ import EventDateSheet from '../../components/plan/EventDateSheet'
 import { useDateInterest } from '../../hooks/useDateDemand'
 import { getEventDate, setEventDate } from '../../hooks/useEventDate'
 import { interestForDate, slotByKey, daysBetween } from '../../lib/demand'
+import { saveDraft, loadDraft, clearDraft } from '../../lib/draftStore'
+import { noteDetail } from '../../lib/journey'
 import { todayISO } from '../../utils/format'
 
 const TOTAL_STEPS = 6
@@ -55,6 +57,18 @@ function daysUntil(dateStr) {
 // scoped rather than localStorage: this is one visit's work in progress, not
 // something to resurrect on a laptop three weeks later.
 const DRAFT_KEY = 'sambramo_plan_draft'
+
+/**
+ * And where they wait while the customer is simply elsewhere.
+ *
+ * A separate key from DRAFT_KEY above, deliberately. That one is the login
+ * hand-off — written at the moment somebody presses send, read back by an
+ * effect that also clears it. This one is a continuous autosave, so that
+ * tapping Home four steps in and coming back does not open an empty step 1.
+ * Both restore the same shape; only their triggers differ, and merging them
+ * would mean one mechanism guessing which of the two things had happened.
+ */
+const RESUME_KEY = 'sambramo_plan_resume'
 
 export default function PlanningWizard() {
   const navigate      = useNavigate()
@@ -153,6 +167,47 @@ export default function PlanningWizard() {
       : '',
   })
 
+  /**
+   * Put the answers back after the customer was simply somewhere else.
+   *
+   * Runs once, on mount, and does not clear what it read — unlike the login
+   * hand-off below, being interrupted twice is entirely normal and the draft
+   * has to survive every one of them. It is cleared when the request is
+   * actually sent.
+   *
+   * ── Except when the URL says otherwise ────────────────────────────────
+   * A link carrying `?type=` or `?date=` is somebody starting a *specific*
+   * celebration — from an occasion card, a festival banner, the home screen's
+   * date badge. Overwriting that with last hour's abandoned draft would answer
+   * a fresh intent with a stale one, which is the same "the app was not
+   * listening" fault the shared date store exists to prevent. The explicit
+   * intent wins; the draft stays on disk for whenever they come back to it.
+   */
+  useEffect(() => {
+    if (searchParams.get('type') || searchParams.get('date')) return
+    const draft = loadDraft(RESUME_KEY)
+    if (!draft?.form) return
+    setForm(f => ({ ...f, ...draft.form }))
+    if (draft.step) setStep(draft.step)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /**
+   * Save as they go, and tell the journey how far they got.
+   *
+   * "Step 4 of 6 · Wedding" is what makes the resume card on home worth
+   * tapping — it proves the work is still there. Step 1 with nothing answered
+   * is not work yet, so it is not saved: an autosave that fires the instant a
+   * page mounts would have the app offering to restore a form nobody has
+   * touched.
+   */
+  useEffect(() => {
+    if (step === 1 && !form.event_type) return
+    saveDraft(RESUME_KEY, { form, step })
+    const occasion = EVENT_TYPES.find(et => et.id === form.event_type)
+    noteDetail(`Step ${step} of ${TOTAL_STEPS}${occasion ? ` · ${occasion.label}` : ''}`)
+  }, [form, step])
+
   // Put a guest's answers back after they have signed in.
   //
   // Runs before the profile prefill below can matter, and clears the draft
@@ -232,24 +287,32 @@ export default function PlanningWizard() {
     return true
   }
 
-  function goNext() {
-    if (!canNext() || animating) return
+  /**
+   * The move itself, with no opinion about whether it is allowed.
+   *
+   * Split out because step 1 needs to advance on an answer that is not in
+   * `form` yet — see the occasion cards. Every caller decides its own rule and
+   * then calls this; the fade is defined once so the three of them cannot
+   * animate differently.
+   */
+  function advance(next) {
+    if (animating) return
     setAnimating(true)
     setTimeout(() => {
-      setStep(s => s + 1)
+      setStep(next)
       setError(null)
       setAnimating(false)
     }, 200)
   }
 
+  function goNext() {
+    if (!canNext()) return
+    advance(step + 1)
+  }
+
   function goBack() {
-    if (step === 1 || animating) return
-    setAnimating(true)
-    setTimeout(() => {
-      setStep(s => s - 1)
-      setError(null)
-      setAnimating(false)
-    }, 150)
+    if (step === 1) return
+    advance(step - 1)
   }
 
   const selectedType = EVENT_TYPES.find(et => et.id === form.event_type)
@@ -347,6 +410,10 @@ export default function PlanningWizard() {
         const { error: svcErr } = await supabase.from('event_services').insert(svcRows)
         if (svcErr) console.error('Failed to save selected services:', svcErr)
       }
+
+      // Sent, not paused. Leaving the autosave behind would have home offer to
+      // "finish" a request a coordinator is already working on.
+      clearDraft(RESUME_KEY)
 
       navigate(`/plan/confirmation?eventId=${data.id}`)
     } catch (err) {
@@ -516,7 +583,16 @@ export default function PlanningWizard() {
                 return (
                   <button
                     key={et.id}
-                    onClick={() => { setField('event_type', et.id); setTimeout(goNext, 300) }}
+                    /* Advances to step 2 directly rather than through
+                       goNext(). This handler's closure holds the state from
+                       before the click, so goNext()'s own `canNext()` read
+                       `event_type` as still empty and returned without moving
+                       — the observable behaviour being that tapping an
+                       occasion highlighted the card and then did nothing, and
+                       the customer had to find "Continue" themselves. The
+                       answer is `et.id`, right here; nothing needs to be
+                       re-derived from state that has not landed yet. */
+                    onClick={() => { setField('event_type', et.id); setTimeout(() => advance(2), 300) }}
                     className={`relative p-4 rounded-2xl border-2 text-left transition-all duration-200 group ${
                       selected
                         ? 'border-saffron-400 bg-saffron-50 shadow-lg scale-[1.02]'

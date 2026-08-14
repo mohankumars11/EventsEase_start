@@ -29,8 +29,10 @@ import QuotePanel from '../../components/plan/QuotePanel'
 import ReviewBoard from '../../components/plan/ReviewBoard'
 import TierMatchDialog from '../../components/plan/TierMatchDialog'
 import BuilderActionBar from '../../components/plan/BuilderActionBar'
-import { contactBlocked, phoneDigitsOf } from '../../components/plan/ContactBlock'
+import { contactBlocked, eventDateBlocked, phoneDigitsOf } from '../../components/plan/ContactBlock'
 import { slotByKey } from '../../lib/demand'
+import { saveDraft, loadDraft, clearDraft } from '../../lib/draftStore'
+import { noteDetail } from '../../lib/journey'
 import PriceLock from '../../components/plan/PriceLock'
 // This page's own ground and its ticket/motion styles. Separate from
 // index.css only because that file is carrying an unrelated in-flight change
@@ -93,6 +95,21 @@ import '../../styles/planBuilder.css'
 // the wizard's draft and the catalog's cart intent: one visit's intent, not a
 // standing order to be resurrected on another device three weeks later.
 const DRAFT_KEY = 'sambramo_builder_draft'
+
+/**
+ * A half-built celebration waiting out an interruption, which is a different
+ * thing entirely.
+ *
+ * DRAFT_KEY above is read by an effect that puts the configuration back and
+ * then *submits it* — correct for its one trigger (a guest pressed send and
+ * went to sign in), catastrophic for any other. Restoring that key because
+ * somebody wandered back to this page would fire an enquiry at a coordinator
+ * nobody asked to send.
+ *
+ * So the autosave gets its own key and its own restore, which only ever puts
+ * the work back on screen. See lib/draftStore.
+ */
+const RESUME_KEY = 'sambramo_builder_resume'
 
 /**
  * The steps, in order, ending at review.
@@ -275,13 +292,19 @@ export default function CelebrationBuilder() {
       mode, guestCount, decorTotal: quote?.decor.total ?? 0, includeCatering, includeDecor,
     })
     if (minimums) return minimums
+    // Then the date. Ahead of the contact block because it is a fact about the
+    // celebration rather than about the person, and because it is the one
+    // answer without which none of the follow-up works: a coordinator cannot
+    // check who is free, cannot price a peak weekend, and cannot hold anything.
+    const dateMessage = eventDateBlocked(eventDate)
+    if (dateMessage) return { rule: 'date', message: dateMessage }
     // Last, because it is the only rule about the customer rather than the
     // configuration — and because a contact prompt raised before the quote is
     // even valid is answering a question nobody has reached yet.
     const contactMessage = contactBlocked(contact)
     if (contactMessage) return { rule: 'contact', message: contactMessage }
     return null
-  }, [eventId, otherOccasion, mode, guestCount, quote, includeCatering, includeDecor, cuisineId, decorLevelId, serviceIds, contact])
+  }, [eventId, otherOccasion, mode, guestCount, quote, includeCatering, includeDecor, cuisineId, decorLevelId, serviceIds, eventDate, contact])
 
   /**
    * When the price is allowed on screen at all.
@@ -428,6 +451,13 @@ export default function CelebrationBuilder() {
     // render that drew the button. A restored draft goes straight through
     // `submit(draft)` without passing the disabled check on the review screen,
     // so this is the only place the guarantee can actually be made.
+    const dateMessage = eventDateBlocked(state.eventDate)
+    if (dateMessage) {
+      setStep('review')
+      setError(dateMessage)
+      return
+    }
+
     const contactMessage = contactBlocked(state.contact)
     if (contactMessage) {
       setStep('review')
@@ -471,7 +501,11 @@ export default function CelebrationBuilder() {
         `  Name:  ${state.contact?.name?.trim()}`,
         `  Phone: ${phone}`,
         state.contact?.email?.trim() ? `  Email: ${state.contact.email.trim()}` : '',
-        `  When:  ${state.eventDate || 'date not fixed'}${slot ? ` · ${slot.label} (${slot.hint})` : ''}`,
+        // No "date not fixed" fallback any more: nothing reaches this line
+        // without one, because eventDateBlocked() above refuses to submit
+        // without one. A fallback for an impossible case is a lie waiting for
+        // the day somebody removes the gate.
+        `  When:  ${state.eventDate}${slot ? ` · ${slot.label} (${slot.hint})` : ''}`,
         `  Where: ${state.city}`,
       ].filter(Boolean).join('\n')
 
@@ -561,6 +595,10 @@ export default function CelebrationBuilder() {
       }).select('id').single()
       if (err) throw err
 
+      // With a coordinator now holding this, the work is finished rather than
+      // paused — home must stop offering to "finish" it.
+      clearDraft(RESUME_KEY)
+
       setEnquiryId(data.id)
       setStep('done')
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -594,6 +632,67 @@ export default function CelebrationBuilder() {
     }).eq('id', enquiryId)
     if (err) console.warn('Price-lock claim not recorded (migration 034 applied?):', err.message)
   }, [enquiryId])
+
+  /**
+   * Autosave, and tell the journey what has been built so far.
+   *
+   * Keyed off the occasion: before one is chosen there is nothing but
+   * defaults on screen — a guest count of 120 and a tier that followed it —
+   * and saving that would have home offering to restore a page the customer
+   * never actually engaged with.
+   *
+   * `step` rides along so returning lands on the node they were on rather than
+   * back at the occasion picker, which for this flow is most of the point.
+   */
+  useEffect(() => {
+    if (!eventId || step === 'done') return
+    saveDraft(RESUME_KEY, {
+      step,
+      eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu, specialRequests,
+      decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
+      eventDate, city, appliedOfferId, contact, timeSlot, servicesTouched,
+    })
+    noteDetail(`${occasionName} · ${guestCount} guests`)
+  }, [step, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
+      specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty,
+      includeCatering, includeDecor, eventDate, city, appliedOfferId, contact, timeSlot,
+      servicesTouched, occasionName])
+
+  /**
+   * Put it back after an interruption — and only put it back.
+   *
+   * The contrast with the effect below is the whole reason this is separate
+   * code: that one restores and sends, this one restores and stops. It also
+   * leaves the draft in place, because being interrupted twice is normal.
+   *
+   * Skipped when the URL names a different occasion: `/plan/build/wedding` is
+   * somebody starting a wedding, and answering that with last hour's abandoned
+   * birthday is the app overruling a choice just made in front of it.
+   */
+  useEffect(() => {
+    const draft = loadDraft(RESUME_KEY)
+    if (!draft?.eventId) return
+    if (routeEventId && routeEventId !== draft.eventId) return
+
+    setEventId(draft.eventId); setOtherOccasion(draft.otherOccasion ?? '')
+    setMode(draft.mode); setGuestCount(draft.guestCount); setTierId(draft.tierId)
+    setCuisineId(draft.cuisineId); setVegOnly(draft.vegOnly); setMenu(draft.menu ?? {})
+    setSpecialRequests(draft.specialRequests ?? ''); setDecorLevelId(draft.decorLevelId)
+    setThemeId(draft.themeId); setAddonIds(draft.addonIds ?? [])
+    setServiceIds(draft.serviceIds ?? []); setServiceQty(draft.serviceQty ?? {})
+    setIncludeCatering(draft.includeCatering); setIncludeDecor(draft.includeDecor)
+    setEventDate(draft.eventDate ?? ''); setCity(draft.city ?? BRAND.pilotCities[0])
+    setTimeSlot(draft.timeSlot ?? '')
+    setContact(draft.contact ?? { name: '', phone: '', email: '' })
+    setAppliedOfferId(draft.appliedOfferId ?? null)
+    // The same three "the customer has been here" flags the login restore sets:
+    // without them the tier ladder, the décor chooser and the service shelf
+    // treat a restored configuration as untouched and re-apply their defaults
+    // over the top of it.
+    setTierTouched(true); setDecorTouched(true); setServicesTouched(!!draft.servicesTouched)
+    if (draft.step) setStep(draft.step)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Finish what a guest started, once they come back signed in.
   useEffect(() => {

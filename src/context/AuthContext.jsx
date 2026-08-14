@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { clearJourney } from '../lib/journey'
 
 const AuthContext = createContext(null)
 
@@ -185,6 +186,11 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    // The trail belongs to the person who just left. Without this, the next
+    // customer on a shared phone — which in this market is most of them — gets
+    // home offering to finish somebody else's wedding plan, with their guest
+    // count, their city and their name already in the form.
+    clearJourney()
   }
 
   return (

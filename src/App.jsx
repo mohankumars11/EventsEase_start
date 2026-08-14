@@ -11,6 +11,8 @@ import BottomNav from './components/layout/BottomNav'
 import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import ChatWidget from './components/customer/ChatWidget'
+import JourneyTracker from './components/common/JourneyTracker'
+import ResumePrompt from './components/common/ResumePrompt'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
@@ -470,8 +472,19 @@ export default function App() {
             <ToastProvider>
               <ChatProvider>
               <ScrollRestoration />
+              {/* Records every navigation, so the app can answer "was this
+                  customer in the middle of something?" — see lib/journey. It
+                  renders nothing and writes to sessionStorage only. */}
+              <JourneyTracker />
               <AppRoutes />
               <BottomNav />
+              {/* The offer to go back to unfinished work. It shows itself only
+                  on home, which is where an interrupted customer lands, and
+                  only when there is genuinely something to return to. Mounted
+                  here rather than inside HomeScreen because `/` and
+                  /dashboard/customer are two routes onto one screen and the
+                  card belongs to neither of them in particular. */}
+              <ResumePrompt />
               {/* One assistant for the whole app, opened by the Help tab in
                   BottomNav. It used to be mounted inside three separate
                   shells, which is why it floated over the page: a component

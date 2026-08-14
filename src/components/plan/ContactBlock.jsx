@@ -26,12 +26,28 @@ import { BRAND } from '../../config/sambramo'
  * next question rather than an interruption.
  *
  * ── What is required, and what is not ───────────────────────────────────
- * Name and a reachable mobile. Nothing else — email is optional because the
- * follow-up happens on WhatsApp, and the time of day is optional because
- * somebody who has not fixed it should not be made to invent one. The phone
- * check is the same 10-digit 6–9 rule the wizard uses: `!!phone` once let a
- * single stray digit through and saved "+915", which for this business is a
- * lead that can never be served.
+ * Name, a reachable mobile, and the date. Email stays optional because the
+ * follow-up happens on WhatsApp, and the time of day stays optional because
+ * somebody who has not fixed the hour should not be made to invent one. The
+ * phone check is the same 10-digit 6–9 rule the wizard uses: `!!phone` once
+ * let a single stray digit through and saved "+915", which for this business
+ * is a lead that can never be served.
+ *
+ * ── Why the date stopped being "if you know it" ─────────────────────────
+ * It used to be labelled exactly that, and optional, and it was the one
+ * optional field on this block that made the request unworkable when it was
+ * skipped. Every downstream step needs the day: a coordinator cannot check a
+ * Master's availability, cannot price against a peak weekend, cannot hold
+ * anything, and cannot tell whether the enquiry is for next Saturday or next
+ * March. What "if you know it" bought was a slightly shorter-looking form; what
+ * it cost was a lead whose first follow-up call is spent asking the question
+ * the form declined to ask. The wizard has required it at step 2 since it was
+ * written, the cart requires it through BookingSheet, and the shop requires it
+ * at checkout — this door was the one that did not, and it is the busiest.
+ *
+ * Anyone genuinely undecided is not stuck: every calendar in the app carries an
+ * "I'm flexible around this date" window (see EventDateSheet), which is a real
+ * answer a coordinator can work with. "No date at all" is not.
  */
 
 /** Same rule as PlanningWizard — an Indian mobile is 10 digits starting 6–9. */
@@ -44,6 +60,30 @@ export function isValidPhone(raw) {
 export function isValidEmail(raw) {
   const v = String(raw ?? '').trim()
   return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+}
+
+/**
+ * Is the date usable?
+ *
+ * Separate from `contactBlocked` because it is a fact about the celebration
+ * rather than about the person, and because the builder holds the two in
+ * different state. Exported for the same reason as its sibling: the rule that
+ * disables the send button and the rule that re-checks at submit have to be
+ * one rule.
+ *
+ * A date already past is treated as missing, not as an error to scold about —
+ * it is what a tab left open overnight leaves behind, and the customer did
+ * nothing wrong.
+ */
+export function eventDateBlocked(eventDate) {
+  const value = String(eventDate ?? '').trim()
+  if (!value) {
+    return 'Pick the date of the celebration — a coordinator cannot check who is free without it.'
+  }
+  if (value < todayISO()) {
+    return 'That date has already passed — pick the day of the celebration.'
+  }
+  return null
 }
 
 /**
@@ -77,6 +117,12 @@ export default function ContactBlock({
   const phoneTouched = digits.length > 0
   const phoneOk = isValidPhone(contact?.phone)
   const emailOk = isValidEmail(contact?.email)
+
+  // Only once they have engaged with the field. An empty date is caught by the
+  // send button, which explains itself; painting the input red the moment the
+  // review opens is scolding somebody for not having answered a question they
+  // have not been asked yet. The same rule the phone field above follows.
+  const dateMessage = eventDate ? eventDateBlocked(eventDate) : null
 
   return (
     <div className="space-y-4">
@@ -158,16 +204,30 @@ export default function ContactBlock({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-gray-100 pt-4">
         <div>
           <label htmlFor="review-date" className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
-            <CalendarDays size={13} className="text-plum-600" /> Date (if you know it)
+            <CalendarDays size={13} className="text-plum-600" /> Date of the celebration *
           </label>
           <input
             id="review-date"
             type="date"
+            required
             value={eventDate ?? ''}
             onChange={e => onEventDate(e.target.value)}
             min={todayISO()}
-            className="w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border-2 border-gray-200 text-base focus:border-saffron-400 focus:outline-none"
+            aria-invalid={!!dateMessage}
+            aria-describedby="review-date-hint"
+            className={`w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border-2 text-base focus:outline-none ${
+              dateMessage ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-saffron-400'
+            }`}
           />
+          {/* The consequence, not the rule. "This field is required" tells
+              somebody they are blocked; naming what the date unlocks tells
+              them why answering is in their own interest. */}
+          <p id="review-date-hint" className={`mt-1.5 flex items-start gap-1.5 text-[11px] ${
+            dateMessage ? 'text-red-600' : 'text-gray-400'
+          }`}>
+            {dateMessage ? <AlertCircle size={12} className="mt-0.5 shrink-0" /> : null}
+            {dateMessage ?? 'We check who is free on your day before quoting.'}
+          </p>
         </div>
         <div>
           <label htmlFor="review-city" className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">

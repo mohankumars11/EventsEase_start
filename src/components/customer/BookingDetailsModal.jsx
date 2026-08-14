@@ -52,11 +52,16 @@ export default function BookingDetailsModal({ itemLabel, defaults, onConfirm, on
         <div className="px-6 py-5 space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <div>
+              {/* Required, and said so. `handleConfirm` has always refused
+                  without it, but the label read like an optional field — so
+                  the first a customer heard of the rule was an error message
+                  under a button they had already pressed. */}
               <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mb-1.5">
-                <Calendar size={13} /> Event date
+                <Calendar size={13} /> Event date <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
+                required
                 min={today}
                 value={date}
                 onChange={e => setDate(e.target.value)}
