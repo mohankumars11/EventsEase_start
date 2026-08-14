@@ -26,6 +26,7 @@ import CheckoutHeader from '../../components/shop/CheckoutHeader'
 import CheckoutFooter from '../../components/shop/CheckoutFooter'
 import SavingsStack from '../../components/shop/SavingsStack'
 import RecommendationRail from '../../components/shop/RecommendationRail'
+import CartBridge from '../../components/common/CartBridge'
 import { usePublicOffers } from '../../hooks/usePublicOffers'
 import { basketSavings } from '../../lib/savings'
 import { describeSelections, summaryLines } from '../../config/customizers'
@@ -495,6 +496,12 @@ export default function ShopCart() {
               Start shopping <ArrowRight size={16} />
             </Link>
           </div>
+
+          {/* The empty state is the exact screen where the two-cart split did
+              its damage: somebody who has just added a photographer reads
+              "Your bag is empty" and concludes the add failed. It did not —
+              their service is one tap away, and now it says so. */}
+          <CartBridge side="shop" className="mt-4" />
         </main>
         <CheckoutFooter />
       </div>
@@ -684,6 +691,12 @@ export default function ShopCart() {
                 ))}
               </ul>
             </SectionCard>
+
+            {/* Directly under the bag's own contents, because that is where
+                somebody counts what they have and compares it against the
+                badge. Anywhere lower and they have already decided two items
+                went missing. */}
+            {step === 'cart' && <CartBridge side="shop" />}
 
             {/* ── Where it goes ── */}
             {step === 'cart' && (
