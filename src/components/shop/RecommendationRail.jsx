@@ -80,7 +80,7 @@ export default function RecommendationRail({
             <Icon size={16} className={dark ? 'text-saffron-300' : 'text-plum-500'} />
             {heading}
           </h2>
-          <p className={`mt-0.5 truncate text-[11px] ${dark ? 'text-white/50' : 'text-gray-400'}`}>{sub}</p>
+          <p className={`mt-0.5 truncate text-[11px] ${dark ? 'text-white/50' : 'text-gray-500'}`}>{sub}</p>
         </div>
       </div>
 

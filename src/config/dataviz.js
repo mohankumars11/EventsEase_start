@@ -148,7 +148,7 @@ export const DELTA_INK = { up: '#006300', down: '#c0392b', flat: '#52514e' }
 
 export const INK = {
   surface:   '#ffffff',   // what .card paints
-  plane:     '#f9f9f7',
+  plane:     '#FCFAFF',
   primary:   '#0b0b0b',
   secondary: '#52514e',
   muted:     '#898781',   // axis labels, tick text

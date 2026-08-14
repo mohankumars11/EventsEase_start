@@ -39,7 +39,7 @@ export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = 
           <Link
             to={backTo}
             aria-label="Back to shop"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 active:bg-white/15"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-sunk/[0.07] active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
           </Link>
@@ -47,15 +47,15 @@ export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = 
           <SambramoMark size={26} className="shrink-0" />
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-extrabold leading-tight text-white">
+            <p className="truncate text-[15px] font-extrabold leading-tight text-ink">
               Checkout
             </p>
-            <p className="truncate text-[11px] text-white/50">
+            <p className="truncate text-[11px] text-ink-mute">
               {itemCount} item{itemCount === 1 ? '' : 's'} in your bag
             </p>
           </div>
 
-          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-200 ring-1 ring-white/15">
+          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-surface-sunk/[0.07] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 ring-1 ring-hairline/10">
             <Lock size={11} className="shrink-0" />
             <span className="hidden sm:inline">Secure</span>
           </span>
@@ -77,8 +77,8 @@ export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = 
                       done
                         ? 'bg-saffron-400 text-forest-900'
                         : current
-                          ? 'bg-white text-forest-800 ring-4 ring-white/20'
-                          : 'bg-white/10 text-white/40 ring-1 ring-white/15',
+                          ? 'bg-white text-forest-800 ring-4 ring-hairline/10'
+                          : 'bg-surface-sunk/[0.07] text-ink-mute ring-1 ring-hairline/10',
                     ].join(' ')}
                   >
                     {done ? <Check size={13} strokeWidth={3} /> : n}
@@ -86,7 +86,7 @@ export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = 
                   <span
                     className={[
                       'truncate text-[11px] font-bold uppercase tracking-wide',
-                      done ? 'text-saffron-200' : current ? 'text-white' : 'text-white/35',
+                      done ? 'text-saffron-700' : current ? 'text-ink' : 'text-ink-mute',
                     ].join(' ')}
                   >
                     <span className="hidden sm:inline">{s.label}</span>

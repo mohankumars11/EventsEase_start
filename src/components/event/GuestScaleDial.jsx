@@ -92,8 +92,8 @@ export default function GuestScaleDial({
     <section className="event-glass rise-in p-4" style={{ '--rise-delay': '260ms' }}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex items-center gap-2">
-          <Users size={15} style={{ color: 'var(--event-glow)' }} />
-          <p className="text-[13px] font-extrabold text-white">How many people are coming?</p>
+          <Users size={15} style={{ color: 'var(--event-glow-ink)' }} />
+          <p className="text-[13px] font-extrabold text-ink">How many people are coming?</p>
         </div>
 
         {/* ── The number, as a control rather than a field ───────
@@ -107,7 +107,7 @@ export default function GuestScaleDial({
             onClick={() => bump(-step)}
             disabled={(guestCount || 0) <= 1}
             aria-label={`Fewer guests, in steps of ${step}`}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-90 disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-90 disabled:opacity-30"
           >
             <Minus size={14} />
           </button>
@@ -122,14 +122,14 @@ export default function GuestScaleDial({
               if (n > 0) onCommit(n)
             }}
             aria-label="Expected guest count"
-            className="w-[74px] rounded-xl bg-white/10 px-2 py-1.5 text-center text-[16px] font-extrabold text-white ring-1 ring-white/15 focus:outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--event-glow)' }}
+            className="w-[74px] rounded-xl bg-surface-sunk/[0.07] px-2 py-1.5 text-center text-[16px] font-extrabold text-ink ring-1 ring-hairline/10 focus:outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--event-glow-line)' }}
           />
           <button
             type="button"
             onClick={() => bump(step)}
             aria-label={`More guests, in steps of ${step}`}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-90"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-90"
           >
             <Plus size={14} />
           </button>
@@ -172,13 +172,13 @@ export default function GuestScaleDial({
               aria-label={`${t.name}, ${t.guests.min} to ${t.guests.max} guests`}
               aria-pressed={isChosen}
               className={`group relative flex-1 rounded-lg pb-1 pt-1.5 text-center transition-all duration-300 ${
-                isMatch ? 'ring-1' : 'hover:bg-white/10'
+                isMatch ? 'ring-1' : 'hover:bg-surface-sunk/[0.07]'
               }`}
               style={{
                 background: isMatch
                   ? 'color-mix(in srgb, var(--event-glow) 20%, transparent)'
-                  : isChosen ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.045)',
-                ...(isMatch ? { '--tw-ring-color': 'var(--event-glow)' } : null),
+                  : isChosen ? 'rgba(255,255,255,0.10)' : 'rgb(var(--hairline) / 0.06)',
+                ...(isMatch ? { '--tw-ring-color': 'var(--event-glow-line)' } : null),
               }}
             >
               <span
@@ -211,7 +211,7 @@ export default function GuestScaleDial({
         <span
           aria-hidden="true"
           className="flex-1 rounded-lg pb-1 pt-1.5 text-center transition-all duration-300"
-          style={{ background: bespoke ? 'color-mix(in srgb, var(--event-glow) 20%, transparent)' : 'rgba(255,255,255,0.045)' }}
+          style={{ background: bespoke ? 'color-mix(in srgb, var(--event-glow) 20%, transparent)' : 'rgb(var(--hairline) / 0.06)' }}
         >
           <span className={`block text-[13px] leading-none ${bespoke ? 'scale-110' : 'opacity-45'}`}>✨</span>
           <span
@@ -225,7 +225,7 @@ export default function GuestScaleDial({
         </span>
       </div>
 
-      <p className="mt-2 text-[11px] leading-snug text-white/50">
+      <p className="mt-2 text-[11px] leading-snug text-ink-mute">
         A rough number is enough — tap a rung to jump to it. Everything on this page reprices as
         you move.
       </p>

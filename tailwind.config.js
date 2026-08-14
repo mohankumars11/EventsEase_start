@@ -94,6 +94,48 @@ export default {
           900: '#072a20',
           950: '#041a14',
         },
+        // ── Semantic tokens ────────────────────────────────────────────
+        // Everything above this line is a *brand* colour: a fixed hex that
+        // means the same thing everywhere (saffron is the CTA, chilli is a
+        // saving). Everything below is a *role*, and its value depends on
+        // which room you are standing in — `text-ink` is plum-black on the
+        // concierge side and green-black in the shop, and the component
+        // asking for it neither knows nor cares which.
+        //
+        // That is the whole point. The app used to say `text-white/70` about
+        // 176 times, which encoded two facts at once: "this is secondary
+        // text" and "the ground behind it is dark". Relighting meant editing
+        // every one of them because the second fact had changed. A role name
+        // carries only the first, so the ground can change in one place.
+        //
+        // ── Why `rgb(var(--x) / <alpha-value>)` and not `var(--x)` ────────
+        // Tailwind substitutes `<alpha-value>` textually — with `1` for a
+        // bare `text-ink`, and with `0.7` for `text-ink/70`. That only works
+        // if the variable holds SPACE-SEPARATED sRGB CHANNELS and nothing
+        // else: `--ink: 31 16 51`. A variable holding `#1F1033` or
+        // `rgb(31,16,51)` produces `rgb(#1F1033 / 1)`, which is garbage, and
+        // the declaration is dropped.
+        //
+        // ── Every one of these MUST have a :root default ─────────────────
+        // If `--ink` is unset, `rgb(var(--ink) / 1)` is invalid at computed-
+        // value time. `color` then falls back to `inherit` (which usually
+        // looks plausible, so nobody notices) but `background-color` falls
+        // back to TRANSPARENT — an invisible panel with no error anywhere.
+        // The defaults live at the top of index.css; do not remove them.
+        //
+        // Shadows are deliberately NOT here: `<alpha-value>` is only wired
+        // for `colors`, so a tinted shadow cannot be a token this way. They
+        // live as whole `box-shadow` strings in `--shadow-1` / `--shadow-2`,
+        // consumed by the card classes in index.css.
+        ink:            'rgb(var(--ink) / <alpha-value>)',
+        'ink-soft':     'rgb(var(--ink-soft) / <alpha-value>)',
+        'ink-mute':     'rgb(var(--ink-mute) / <alpha-value>)',
+        'ink-faint':    'rgb(var(--ink-faint) / <alpha-value>)',
+        surface:        'rgb(var(--surface) / <alpha-value>)',
+        'surface-sunk': 'rgb(var(--surface-sunk) / <alpha-value>)',
+        hairline:       'rgb(var(--hairline) / <alpha-value>)',
+        accent:         'rgb(var(--accent) / <alpha-value>)',
+
         // The savings colour. Never used for anything that isn't money off
         // or genuinely urgent — the moment it decorates a heading it stops
         // meaning "offer".

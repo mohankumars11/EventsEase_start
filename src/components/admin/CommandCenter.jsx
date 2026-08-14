@@ -196,7 +196,7 @@ export default function CommandCenter({ data, onNavigate }) {
                   onClick={() => setWindowDays(w.days)}
                   aria-pressed={windowDays === w.days}
                   className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    windowDays === w.days ? 'bg-plum-600 text-white' : 'text-gray-500 hover:bg-gray-50'
+                    windowDays === w.days ? 'bg-plum-600 text-ink' : 'text-gray-500 hover:bg-gray-50'
                   }`}
                 >
                   {w.label}
@@ -206,7 +206,7 @@ export default function CommandCenter({ data, onNavigate }) {
             <button
               onClick={refresh}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 hover:text-plum-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-plum-700 disabled:opacity-50"
             >
               {refreshing ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
               {loadedAt ? `Updated ${loadedAt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}` : 'Refresh'}

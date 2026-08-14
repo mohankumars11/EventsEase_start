@@ -101,7 +101,7 @@ export default function AdminDashboard() {
       notifications={<NotificationCenter {...notifications} onNavigate={go} />}
     >
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
+        <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
           <Loader2 className="animate-spin text-plum-600" size={32} />
           <span className="text-sm">Loading the business…</span>
         </div>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
 
 function ViewSkeleton() {
   return (
-    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
       <Loader2 className="animate-spin text-plum-600" size={28} />
       <span className="text-sm">Opening…</span>
     </div>

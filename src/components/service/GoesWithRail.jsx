@@ -61,12 +61,12 @@ export default function GoesWithRail({ seedId, title, tone = 'dark', className =
       <div className="mb-3 px-4">
         <h2
           id={`goes-with-${seedId}`}
-          className={`flex items-center gap-2 text-[15px] font-extrabold ${dark ? 'text-white' : 'text-gray-900'}`}
+          className={`flex items-center gap-2 text-[15px] font-extrabold ${dark ? 'text-ink' : 'text-gray-900'}`}
         >
-          <Sparkles size={16} className={dark ? 'text-saffron-300' : 'text-plum-500'} />
+          <Sparkles size={16} className={dark ? 'text-saffron-600' : 'text-plum-500'} />
           {title ?? 'Often arranged together'}
         </h2>
-        <p className={`mt-0.5 text-[11px] ${dark ? 'text-white/50' : 'text-gray-400'}`}>
+        <p className={`mt-0.5 text-[11px] ${dark ? 'text-ink-mute' : 'text-gray-500'}`}>
           Arranged alongside this one for the same day
         </p>
       </div>
@@ -100,7 +100,7 @@ export default function GoesWithRail({ seedId, title, tone = 'dark', className =
                 : `Also for ${occasionCount(id) > 1 ? 'these celebrations' : 'this celebration'}`}
             </p>
 
-            <span className="mt-2 flex items-center gap-1 text-[11px] font-bold text-gray-400">
+            <span className="mt-2 flex items-center gap-1 text-[11px] font-bold text-gray-500">
               See options <ArrowRight size={11} />
             </span>
           </Link>

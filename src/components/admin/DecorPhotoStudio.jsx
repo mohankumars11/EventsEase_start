@@ -203,7 +203,7 @@ export default function DecorPhotoStudio() {
 
   if (loading) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-gray-400">
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-gray-500">
         <Loader2 className="animate-spin text-plum-600" size={28} />
         <span className="text-sm">Reading the décor catalogue…</span>
       </div>
@@ -224,7 +224,7 @@ export default function DecorPhotoStudio() {
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums text-gray-900">
               {covered}
-              <span className="text-lg font-semibold text-gray-400"> / {total}</span>
+              <span className="text-lg font-semibold text-gray-500"> / {total}</span>
               <span className="ml-2 text-base font-bold text-plum-600">{pct}%</span>
             </p>
             <p className="mt-1 max-w-lg text-[12.5px] leading-relaxed text-gray-500">
@@ -237,11 +237,11 @@ export default function DecorPhotoStudio() {
           <div className="flex items-center gap-4 text-center">
             <div>
               <p className="text-xl font-bold tabular-nums text-emerald-600">{covered}</p>
-              <p className="text-[10.5px] font-semibold text-gray-400">Ours</p>
+              <p className="text-[10.5px] font-semibold text-gray-500">Ours</p>
             </div>
             <div>
-              <p className="text-xl font-bold tabular-nums text-gray-400">{total - covered}</p>
-              <p className="text-[10.5px] font-semibold text-gray-400">Reference</p>
+              <p className="text-xl font-bold tabular-nums text-gray-500">{total - covered}</p>
+              <p className="text-[10.5px] font-semibold text-gray-500">Reference</p>
             </div>
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function DecorPhotoStudio() {
           the working queue and everything else is browsing. */}
       <div className="space-y-2.5">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="search"
             value={query}
@@ -332,7 +332,7 @@ export default function DecorPhotoStudio() {
             <button
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
             >
               <X size={15} />
             </button>
@@ -381,13 +381,13 @@ export default function DecorPhotoStudio() {
               }`}
             >
               <span aria-hidden="true">{o.emoji}</span> {o.name}
-              <span className={occasion === o.id ? 'ml-1 text-white/50' : 'ml-1 text-gray-400'}>{o.count}</span>
+              <span className={occasion === o.id ? 'ml-1 text-white/50' : 'ml-1 text-gray-500'}>{o.count}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <p className="text-[11.5px] text-gray-400" aria-live="polite">
+      <p className="text-[11.5px] text-gray-500" aria-live="polite">
         Showing {shown.length} of {total} setups
       </p>
 
@@ -499,7 +499,7 @@ function DecorPhotoCard({ item, row, busy, disabled, onUpload, onRemove, onSourc
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="truncate text-[13px] font-bold text-gray-900">{item.name}</h3>
-            <p className="mt-0.5 truncate text-[10.5px] text-gray-400">
+            <p className="mt-0.5 truncate text-[10.5px] text-gray-500">
               {category?.emoji} {category?.name} · from {formatINR(item.price)}
             </p>
           </div>
@@ -509,7 +509,7 @@ function DecorPhotoCard({ item, row, busy, disabled, onUpload, onRemove, onSourc
         {/* Which occasion pages this photograph will appear on. A décor item is
             tagged to several, so an admin about to replace one needs to know
             they are changing four pages and not one. */}
-        <p className="mt-1.5 truncate text-[10px] text-gray-400">
+        <p className="mt-1.5 truncate text-[10px] text-gray-500">
           Appears on: {item.occasions.map(o => EVENT_DATA[o]?.name ?? o).join(', ')}
         </p>
 
@@ -540,7 +540,7 @@ function DecorPhotoCard({ item, row, busy, disabled, onUpload, onRemove, onSourc
               disabled={busy}
               title="Delete the photograph and go back to the reference image"
               aria-label={`Remove the photograph for ${item.name}`}
-              className="rounded-lg border border-gray-200 p-2 text-gray-400 transition-colors hover:border-red-300 hover:text-red-600 disabled:opacity-40"
+              className="rounded-lg border border-gray-200 p-2 text-gray-500 transition-colors hover:border-red-300 hover:text-red-600 disabled:opacity-40"
             >
               <Trash2 size={13} />
             </button>
@@ -574,7 +574,7 @@ function DecorPhotoCard({ item, row, busy, disabled, onUpload, onRemove, onSourc
         )}
 
         {!live && (
-          <p className="mt-2 flex items-start gap-1 text-[10px] leading-snug text-gray-400">
+          <p className="mt-2 flex items-start gap-1 text-[10px] leading-snug text-gray-500">
             <Sparkles size={10} className="mt-0.5 shrink-0" />
             Drop a photo here, or tap above. It is compressed on this device before it uploads.
           </p>

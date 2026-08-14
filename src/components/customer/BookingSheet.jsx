@@ -116,9 +116,9 @@ export default function BookingSheet({
         <div className="sticky top-0 flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 pb-3.5 pt-4">
           <div className="min-w-0">
             <h3 className="text-[15px] font-extrabold text-gray-900">{title ?? 'Last thing — where and when'}</h3>
-            {subtitle && <p className="mt-0.5 truncate text-[11.5px] text-gray-400">{subtitle}</p>}
+            {subtitle && <p className="mt-0.5 truncate text-[11.5px] text-gray-500">{subtitle}</p>}
           </div>
-          <button onClick={onClose} aria-label="Close" className="-mr-1 shrink-0 p-1 text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} aria-label="Close" className="-mr-1 shrink-0 p-1 text-gray-500 hover:text-gray-600">
             <X size={19} />
           </button>
         </div>
@@ -190,12 +190,12 @@ export default function BookingSheet({
                     onClick={() => setSlot(on ? '' : s.id)}
                     aria-pressed={on}
                     className={`rounded-xl px-1 py-2 text-center transition-colors ${
-                      on ? 'bg-plum-600 text-white' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'
+                      on ? 'bg-plum-600 text-ink' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'
                     }`}
                   >
                     <Icon size={14} className="mx-auto" />
                     <span className="mt-0.5 block text-[10.5px] font-extrabold leading-tight">{s.label}</span>
-                    <span className={`block text-[8.5px] leading-tight ${on ? 'text-white/60' : 'text-gray-400'}`}>
+                    <span className={`block text-[8.5px] leading-tight ${on ? 'text-ink-mute' : 'text-gray-500'}`}>
                       {s.hint}
                     </span>
                   </button>
@@ -204,7 +204,7 @@ export default function BookingSheet({
             </div>
 
             <details className="mt-2">
-              <summary className="cursor-pointer text-[11px] font-bold text-gray-400">
+              <summary className="cursor-pointer text-[11px] font-bold text-gray-500">
                 Know the exact time? Add it
               </summary>
               <input
@@ -245,7 +245,7 @@ export default function BookingSheet({
             </label>
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
-                <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -254,7 +254,7 @@ export default function BookingSheet({
                 />
               </div>
               <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-gray-400">+91</span>
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-gray-500">+91</span>
                 <input
                   value={phone}
                   onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -268,7 +268,7 @@ export default function BookingSheet({
                 />
               </div>
             </div>
-            <p className="mt-1 text-[10.5px] text-gray-400">
+            <p className="mt-1 text-[10.5px] text-gray-500">
               We message on WhatsApp first. No calls before 9am, none after 8pm.
             </p>
           </div>
@@ -306,7 +306,7 @@ export default function BookingSheet({
           >
             {confirmLabel}
           </button>
-          <p className="mt-1.5 text-center text-[10.5px] text-gray-400">
+          <p className="mt-1.5 text-center text-[10.5px] text-gray-500">
             {user
               ? 'Nothing is charged. A coordinator confirms availability before anything is booked.'
               : 'Nothing is charged, and you can sign in later — this stays in your cart either way.'}

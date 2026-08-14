@@ -81,7 +81,7 @@ export default function ThemeCard({ theme, scaleId, guestCount, selected, onSele
         {/* The number people came for, at their own size. */}
         <p className="mt-2 text-[13px] font-extrabold text-plum-700">
           {formatINR(cost.total)}
-          <span className="ml-1 text-[9.5px] font-semibold uppercase tracking-wide text-gray-400">
+          <span className="ml-1 text-[9.5px] font-semibold uppercase tracking-wide text-gray-500">
             {cost.scale.name}
           </span>
         </p>

@@ -99,7 +99,7 @@ export default function TierRail({ offer }) {
       style={{ scrollMarginTop: 'var(--home-appbar-h, 7.75rem)' }}
     >
       <div className="px-4">
-        <h2 id="tier-heading" className="text-[15px] font-extrabold text-white">
+        <h2 id="tier-heading" className="text-[15px] font-extrabold text-ink">
           Arranged by Sambramo
         </h2>
         {/* A line that changes, because a fixed subtitle cannot explain what
@@ -108,7 +108,7 @@ export default function TierRail({ offer }) {
             celebrations; these ask the question they are already asking
             themselves, one at a time, and each one names a different thing
             the ladder covers. */}
-        <p className="mt-0.5 flex min-h-[15px] items-center text-[11px] text-white/55">
+        <p className="mt-0.5 flex min-h-[15px] items-center text-[11px] text-ink-mute">
           <span key={prompt} className="fact-swap">{prompt}</span>
         </p>
       </div>
@@ -147,7 +147,7 @@ export default function TierRail({ offer }) {
                   </span>
                   {/* The Kannada name is why these read as Sambramo's own
                       rather than as Small/Medium/Large. */}
-                  <span className="block truncate text-[10px] font-medium italic text-saffron-300">
+                  <span className="block truncate text-[10px] font-medium italic text-saffron-700">
                     {t.localName}
                   </span>
                 </span>
@@ -189,13 +189,13 @@ export default function TierRail({ offer }) {
                 <span className="mt-auto pt-2.5">
                   <span className="flex items-end justify-between gap-1 border-t border-gray-100 pt-2.5">
                     <span className="min-w-0">
-                      <span className="block text-[9px] font-semibold uppercase tracking-wide text-gray-400">
+                      <span className="block text-[9px] font-semibold uppercase tracking-wide text-gray-500">
                         From
                       </span>
                       <span className="block truncate text-[14px] font-extrabold leading-none text-gray-900">
                         {formatINR(econ.from)}
                       </span>
-                      <span className="mt-0.5 block text-[9px] font-medium text-gray-400">
+                      <span className="mt-0.5 block text-[9px] font-medium text-gray-500">
                         about {formatINR(econ.perGuest)}/guest
                       </span>
                     </span>
@@ -225,7 +225,7 @@ export default function TierRail({ offer }) {
           <span
             key={t.id}
             className={`h-1 rounded-full transition-all duration-300 ${
-              i === active ? 'w-4 bg-saffron-400' : 'w-1 bg-white/25'
+              i === active ? 'w-4 bg-saffron-500' : 'w-1 bg-ink/20'
             }`}
           />
         ))}
@@ -236,20 +236,20 @@ export default function TierRail({ offer }) {
       <div className="px-4">
         <Link
           to="/plan/build"
-          className="flex items-center gap-3 rounded-2xl bg-white/[0.07] px-4 py-3 ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]"
+          className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-hairline/[0.08] transition-colors hover:bg-surface-sunk/[0.04]"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/15 text-saffron-300">
             <Lock size={16} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[12.5px] font-extrabold text-white">
+            <span className="block text-[12.5px] font-extrabold text-ink">
               Build it, then hold the price for {formatINR(LOCK_AMOUNT)}
             </span>
-            <span className="block text-[11px] leading-relaxed text-white/55">
+            <span className="block text-[11px] leading-relaxed text-ink-mute">
               Pick the scale and the menu, see the number move, and lock it while you decide.
             </span>
           </span>
-          <ArrowRight size={16} className="shrink-0 text-white/30" />
+          <ArrowRight size={16} className="shrink-0 text-ink/40" />
         </Link>
       </div>
     </section>

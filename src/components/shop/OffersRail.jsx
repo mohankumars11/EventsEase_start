@@ -80,12 +80,12 @@ export default function OffersRail() {
     <section aria-labelledby="offers-heading">
       <div className="flex items-end justify-between px-4 mb-3">
         <div>
-          <h2 id="offers-heading" className="text-white font-extrabold text-[15px] flex items-center gap-2">
-            <Ticket size={16} className="text-saffron-300" /> Offers for you
+          <h2 id="offers-heading" className="text-ink font-extrabold text-[15px] flex items-center gap-2">
+            <Ticket size={16} className="text-saffron-700" /> Offers for you
           </h2>
-          <p className="text-white/50 text-[11px] mt-0.5">Tap to copy · applies at checkout</p>
+          <p className="text-ink-mute text-[11px] mt-0.5">Tap to copy · applies at checkout</p>
         </div>
-        <span className="text-white/40 text-[11px] font-semibold flex items-center">
+        <span className="text-ink-mute text-[11px] font-semibold flex items-center">
           Swipe <ChevronRight size={12} />
         </span>
       </div>
@@ -131,27 +131,38 @@ function OfferTile({ offer, copied, onCopy }) {
       onClick={onCopy}
       className="group relative snap-start shrink-0 w-[248px] text-left overflow-hidden
                  rounded-2xl bg-gradient-to-br from-chilli-600 via-chilli-500 to-chilli-700
-                 ring-1 ring-white/15 p-3.5 active:scale-[0.98] transition-transform"
+                 ring-1 ring-chilli-700/25 p-3.5 active:scale-[0.98] transition-transform"
     >
       {/* Sheen — the only always-on motion on the tile. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-white/20 blur-md animate-sheen"
       />
-      {/* Perforation, so the tile reads as a coupon and not as an ad. Painted
-          in the host canvas's own ground (--coupon-notch) because this rail
-          runs on both the green storefront and the plum home. */}
+      {/* Perforation, so the tile reads as a coupon and not as an ad.
+          These are not holes: they are two opaque circles pushed half
+          outside an `overflow-hidden` tile, painted the exact colour of
+          whatever is behind it, so the eye completes them as bites taken
+          out of the edge. That only works while the fill matches the
+          ground — which is why it reads --notch from the host canvas
+          rather than naming a colour. This rail runs on the storefront,
+          on home and on the plan hub, and each declares its own.
+
+          The fallback is the concierge ground rather than the shop's,
+          because :root carries the concierge set — if a canvas ever fails
+          to declare --notch, a near-white dot on a near-white ground is
+          nearly invisible, whereas the old dark-green fallback would have
+          been two obvious blobs stuck to the tile. */}
       <span aria-hidden="true" className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
-            style={{ background: 'var(--coupon-notch, #072a20)' }} />
+            style={{ background: 'var(--notch, #F7F2FB)' }} />
       <span aria-hidden="true" className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
-            style={{ background: 'var(--coupon-notch, #072a20)' }} />
+            style={{ background: 'var(--notch, #F7F2FB)' }} />
 
       <div className="relative">
         <p className="text-white font-extrabold text-xl leading-none tracking-tight">
           {headline}
           {cap && <span className="ml-1.5 text-[10px] font-bold text-white/70 align-middle">{cap}</span>}
         </p>
-        <p className="text-white/80 text-[11px] font-medium mt-1 leading-snug line-clamp-1">{condition}</p>
+        <p className="text-white/70 text-[11px] font-medium mt-1 leading-snug line-clamp-1">{condition}</p>
 
         <div className="mt-3 flex items-center gap-2">
           <span className="flex-1 border border-dashed border-white/45 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-xs tracking-widest text-center">

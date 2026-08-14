@@ -170,7 +170,7 @@ export default function CustomerHome() {
                   <ProductImage query={`Indian ${et.label} celebration`} emoji={et.emoji} className="w-full h-24" cinematic />
                   <div className="p-3">
                     <p className="font-semibold text-gray-800 text-sm">{et.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-tight line-clamp-2">{et.tagline}</p>
                   </div>
                 </button>
               </div>
@@ -223,7 +223,7 @@ export default function CustomerHome() {
                   <ProductImage query={`${f.name} festival India celebration`} emoji={f.emoji} className="w-full h-20" cinematic />
                   <div className="p-3 bg-white">
                     <p className="font-semibold text-xs text-gray-800">{f.name}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{f.month}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{f.month}</p>
                   </div>
                 </Link>
               </div>
@@ -244,7 +244,7 @@ export default function CustomerHome() {
               <div key={i} className="text-center">
                 <div className="w-12 h-12 bg-plum-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-2">{s.emoji}</div>
                 <p className="text-sm font-semibold text-gray-800">{s.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{s.sub}</p>
               </div>
             ))}
           </div>
@@ -302,7 +302,7 @@ function ActiveEventCard({ celebration: c }) {
           </span>
         </div>
       </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
         <span className="flex items-center gap-1"><Clock size={11} />Raised {formatDate(c.raisedAt)}</span>
         {c.eventDate && (
           <span className="flex items-center gap-1"><Calendar size={11} />{new Date(c.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>

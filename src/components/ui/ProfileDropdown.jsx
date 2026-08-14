@@ -130,7 +130,7 @@ function Item({ to, icon, label, onClick }) {
     <Link
       to={to}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2.5 text-sm text-plum-200 hover:bg-plum-800 hover:text-white transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 text-sm text-plum-200 hover:bg-plum-800 hover:text-ink transition-colors"
       role="menuitem"
     >
       <span className="text-plum-400">{icon}</span>

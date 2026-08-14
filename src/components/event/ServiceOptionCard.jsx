@@ -107,7 +107,7 @@ export default function ServiceOptionCard({
         <div className="animate-fade-in border-t border-black/5 bg-white/70 py-4 pl-6 pr-4">
           {options.blurb && (
             <p className="mb-3.5 flex items-start gap-1.5 text-[12px] leading-relaxed text-gray-600">
-              <Info size={12} className="mt-0.5 shrink-0 text-gray-400" />
+              <Info size={12} className="mt-0.5 shrink-0 text-gray-500" />
               {options.blurb}
             </p>
           )}
@@ -121,7 +121,7 @@ export default function ServiceOptionCard({
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-200 pt-3.5">
             <Link
               to={`/plan/build/${eventId}?guests=${guestCount}`}
-              className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-white transition-transform active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-ink transition-transform active:scale-95"
               style={{ background: 'var(--event-ink)' }}
             >
               Configure &amp; price this <ArrowRight size={13} />
@@ -163,7 +163,7 @@ export default function ServiceOptionCard({
             <Star size={11} /> Rate &amp; review
           </button>
         ) : (
-          <span className="text-[11px] text-gray-400">Arranged and coordinated by Sambramo</span>
+          <span className="text-[11px] text-gray-500">Arranged and coordinated by Sambramo</span>
         )}
 
         <button
@@ -172,7 +172,7 @@ export default function ServiceOptionCard({
           className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold transition-transform active:scale-95 ${
             inCart
               ? 'cursor-default bg-green-50 text-green-700 ring-1 ring-green-200'
-              : 'bg-gray-900 text-white hover:bg-gray-800'
+              : 'bg-gray-900 text-ink hover:bg-gray-800'
           }`}
         >
           {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}
@@ -222,8 +222,8 @@ function PriceHint({ options, guestCount }) {
   if (pricing.unit === 'per_guest') {
     return (
       <span className="text-[11px] font-bold text-gray-700">
-        {formatINR(pricing.base)} <span className="font-medium text-gray-400">per guest —</span>{' '}
-        ≈ {formatINR(total)} <span className="font-medium text-gray-400">for {guestCount}</span>
+        {formatINR(pricing.base)} <span className="font-medium text-gray-500">per guest —</span>{' '}
+        ≈ {formatINR(total)} <span className="font-medium text-gray-500">for {guestCount}</span>
       </span>
     )
   }
@@ -233,7 +233,7 @@ function PriceHint({ options, guestCount }) {
     return (
       <span className="text-[11px] font-bold text-gray-700">
         ≈ {formatINR(total)}{' '}
-        <span className="font-medium text-gray-400">
+        <span className="font-medium text-gray-500">
           — {qty} {pricing.unitLabel ?? 'unit'}{qty === 1 ? '' : 's'} at {formatINR(pricing.base)} each
         </span>
       </span>
@@ -243,7 +243,7 @@ function PriceHint({ options, guestCount }) {
   return (
     <span className="text-[11px] font-bold text-gray-700">
       ≈ {formatINR(total)}{' '}
-      <span className="font-medium text-gray-400">{serviceUnitLabel(pricing)}</span>
+      <span className="font-medium text-gray-500">{serviceUnitLabel(pricing)}</span>
     </span>
   )
 }
@@ -281,7 +281,7 @@ function MenuOptions({ serviceId, guestCount, vegOnly }) {
       <div className="space-y-2">
         {CUISINE_GROUPS.map(group => (
           <div key={group.label}>
-            <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+            <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
               {group.label}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -295,7 +295,7 @@ function MenuOptions({ serviceId, guestCount, vegOnly }) {
                     type="button"
                     onClick={() => setCuisineId(id)}
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                      active ? 'text-white' : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:ring-gray-300'
+                      active ? 'text-ink' : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:ring-gray-300'
                     }`}
                     style={active ? { background: 'var(--event-ink)' } : undefined}
                   >
@@ -315,15 +315,15 @@ function MenuOptions({ serviceId, guestCount, vegOnly }) {
             <p className="text-[13px] font-extrabold text-gray-900">
               {cuisine.emoji} {cuisine.name}
               {cuisine.localName && (
-                <span className="ml-1.5 text-[11px] font-medium italic text-gray-400">{cuisine.localName}</span>
+                <span className="ml-1.5 text-[11px] font-medium italic text-gray-500">{cuisine.localName}</span>
               )}
             </p>
             <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{cuisine.blurb}</p>
           </div>
           <div className="shrink-0 rounded-xl bg-gray-50 px-2.5 py-1.5 text-right ring-1 ring-gray-100">
-            <p className="text-[9px] uppercase tracking-wide text-gray-400">Per plate</p>
+            <p className="text-[9px] uppercase tracking-wide text-gray-500">Per plate</p>
             <p className="text-[13px] font-extrabold text-gray-900">≈ {formatINR(plate.perPlate)}</p>
-            <p className="text-[9px] text-gray-400">{plate.band.label}</p>
+            <p className="text-[9px] text-gray-500">{plate.band.label}</p>
           </div>
         </div>
 
@@ -349,7 +349,7 @@ function MenuOptions({ serviceId, guestCount, vegOnly }) {
             <div key={course.id} className="rounded-2xl bg-white p-3 ring-1 ring-gray-200">
               <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3">
                 <p className="text-[12px] font-extrabold text-gray-900">{course.label}</p>
-                <p className="text-[10px] text-gray-400">{course.hint}</p>
+                <p className="text-[10px] text-gray-500">{course.hint}</p>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {dishes.map(d => (
@@ -368,7 +368,7 @@ function MenuOptions({ serviceId, guestCount, vegOnly }) {
                     />
                     {d.name}
                     {d.delta > 0 && (
-                      <span className="font-bold text-gray-400">+₹{d.delta}</span>
+                      <span className="font-bold text-gray-500">+₹{d.delta}</span>
                     )}
                   </span>
                 ))}
@@ -398,7 +398,7 @@ function DecorOptions({ guestCount }) {
   return (
     <div className="space-y-3.5">
       <div>
-        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
           1 · How much decor — this is the part that moves the price
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -428,7 +428,7 @@ function DecorOptions({ guestCount }) {
                 <span className="mt-0.5 block text-[11px] leading-snug text-gray-500">{l.tagline}</span>
                 <span className="mt-1.5 block text-[12px] font-extrabold" style={{ color: 'var(--event-ink)' }}>
                   ≈ {formatINR(levelCost.total)}
-                  <span className="ml-1 text-[10px] font-medium text-gray-400">at {guestCount} guests</span>
+                  <span className="ml-1 text-[10px] font-medium text-gray-500">at {guestCount} guests</span>
                 </span>
               </button>
             )
@@ -439,7 +439,7 @@ function DecorOptions({ guestCount }) {
       <div className="rounded-2xl bg-white p-3.5 ring-1 ring-gray-200">
         <p className="text-[12px] font-extrabold text-gray-900">
           What {level.name} installs
-          <span className="ml-2 text-[10px] font-medium text-gray-400">
+          <span className="ml-2 text-[10px] font-medium text-gray-500">
             {level.setupHours}h setup · ≈ {formatINR(cost.total)}
           </span>
         </p>
@@ -454,7 +454,7 @@ function DecorOptions({ guestCount }) {
       </div>
 
       <div>
-        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
           2 · What it looks like — almost all of these are free
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -465,14 +465,14 @@ function DecorOptions({ guestCount }) {
               className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[11px] font-medium text-gray-700 ring-1 ring-gray-200"
             >
               {t.name}
-              {t.delta > 0 && <span className="font-bold text-gray-400">+{formatINR(t.delta)}</span>}
+              {t.delta > 0 && <span className="font-bold text-gray-500">+{formatINR(t.delta)}</span>}
             </span>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
           3 · What else — decided here rather than by phone three days before
         </p>
         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -502,7 +502,7 @@ function ListOptions({ groups }) {
         <div key={group.label} className="rounded-2xl bg-white p-3.5 ring-1 ring-gray-200">
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
             <p className="text-[12px] font-extrabold text-gray-900">{group.label}</p>
-            {group.hint && <p className="text-[10px] text-gray-400">{group.hint}</p>}
+            {group.hint && <p className="text-[10px] text-gray-500">{group.hint}</p>}
           </div>
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {group.items.map(item => (
@@ -511,7 +511,7 @@ function ListOptions({ groups }) {
                 <span className="min-w-0">
                   <span className="block text-[11.5px] font-semibold leading-snug text-gray-800">{item.name}</span>
                   {item.note && (
-                    <span className="block text-[10.5px] leading-snug text-gray-400">{item.note}</span>
+                    <span className="block text-[10.5px] leading-snug text-gray-500">{item.note}</span>
                   )}
                 </span>
               </li>

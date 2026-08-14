@@ -50,9 +50,9 @@ const PAYMENT_METHODS = [
  * is not a saving.
  */
 const ACCENTS = {
-  saffron: { strip: 'from-amber-100/90',    rule: 'bg-amber-400',   tile: 'bg-amber-500/15 text-amber-700',     num: 'bg-amber-500 text-white' },
-  forest:  { strip: 'from-emerald-100/90',  rule: 'bg-emerald-500', tile: 'bg-emerald-500/15 text-emerald-700', num: 'bg-emerald-600 text-white' },
-  plum:    { strip: 'from-plum-100/90',     rule: 'bg-plum-500',    tile: 'bg-plum-500/15 text-plum-700',       num: 'bg-plum-600 text-white' },
+  saffron: { strip: 'from-amber-100/90',    rule: 'bg-amber-400',   tile: 'bg-amber-500/15 text-amber-700',     num: 'bg-amber-500 text-ink' },
+  forest:  { strip: 'from-emerald-100/90',  rule: 'bg-emerald-500', tile: 'bg-emerald-500/15 text-emerald-700', num: 'bg-emerald-600 text-ink' },
+  plum:    { strip: 'from-plum-100/90',     rule: 'bg-plum-500',    tile: 'bg-plum-500/15 text-plum-700',       num: 'bg-plum-600 text-ink' },
   chilli:  { strip: 'from-chilli-100/90',   rule: 'bg-chilli-500',  tile: 'bg-chilli-500/15 text-chilli-700',   num: 'bg-chilli-600 text-white' },
 }
 
@@ -445,8 +445,8 @@ export default function ShopCart() {
             </p>
 
             <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-2.5 ring-1 ring-gray-100">
-              <Receipt size={14} className="text-gray-400" />
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Order</span>
+              <Receipt size={14} className="text-gray-500" />
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Order</span>
               <span className="font-mono text-sm font-bold text-gray-800">
                 #{placedOrderId?.slice(0, 8).toUpperCase()}
               </span>
@@ -517,7 +517,7 @@ export default function ShopCart() {
           <span className="font-semibold text-gray-800">{formatINR(productTotal)}</span>
         </div>
         <div className="flex justify-between text-sm text-gray-600">
-          <span className="flex items-center gap-1.5"><Truck size={13} className="text-gray-400" /> Delivery</span>
+          <span className="flex items-center gap-1.5"><Truck size={13} className="text-gray-500" /> Delivery</span>
           {deliveryFee === 0
             ? <span className="font-bold text-emerald-600">FREE</span>
             : <span className="font-semibold text-gray-800">{formatINR(deliveryFee)}</span>}
@@ -540,7 +540,7 @@ export default function ShopCart() {
         )}
 
         {deliveryFee > 0 && isFirstOrder === false && (
-          <p className="text-[11px] text-gray-400">Free delivery is a first-order welcome offer.</p>
+          <p className="text-[11px] text-gray-500">Free delivery is a first-order welcome offer.</p>
         )}
 
         {/* The total, on the storefront's own ground. A checkout has exactly
@@ -548,7 +548,7 @@ export default function ShopCart() {
             competing with five others set in the same weight. */}
         <div className="!mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-forest-800 to-forest-700 px-4 py-3.5 text-white">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">To pay</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-mute">To pay</p>
             <p className="text-xl font-extrabold leading-tight">{formatINR(total)}</p>
           </div>
           {savings > 0 && (
@@ -631,7 +631,7 @@ export default function ShopCart() {
                             screen — and the price difference is the part that
                             gets queried. */}
                         {p.unitPrice != null && p.unitPrice !== p.product.price && (
-                          <span className="font-normal text-gray-400"> · {formatINR(p.product.price)} + extras</span>
+                          <span className="font-normal text-gray-500"> · {formatINR(p.product.price)} + extras</span>
                         )}
                       </p>
 
@@ -647,13 +647,13 @@ export default function ShopCart() {
                               className="rounded-md bg-gray-50 px-1.5 py-0.5 text-[11px] leading-snug text-gray-600 ring-1 ring-gray-100"
                             >
                               {l.isText ? <span className="italic">“{l.label}”</span> : l.label}
-                              {l.price > 0 && <span className="text-gray-400"> +{formatINR(l.price)}</span>}
+                              {l.price > 0 && <span className="text-gray-500"> +{formatINR(l.price)}</span>}
                             </li>
                           ))}
                         </ul>
                       )}
                       {p.customization && (
-                        <p className="mt-1 line-clamp-2 text-[11px] italic text-gray-400">"{p.customization}"</p>
+                        <p className="mt-1 line-clamp-2 text-[11px] italic text-gray-500">"{p.customization}"</p>
                       )}
 
                       <div className="mt-2.5 flex items-center gap-2">
@@ -678,7 +678,7 @@ export default function ShopCart() {
                         <button
                           onClick={() => dispatch({ type: 'REMOVE_PRODUCT', key: p.key })}
                           aria-label={`Remove ${p.product.name}`}
-                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 size={13} /> Remove
                         </button>
@@ -873,11 +873,11 @@ export default function ShopCart() {
                   <button
                     onClick={startUpiPayment}
                     disabled={paying}
-                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-lg shadow-emerald-900/20 transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-ink shadow-lg shadow-emerald-900/20 transition-colors hover:bg-emerald-700 disabled:opacity-50"
                   >
                     {paying ? 'Preparing payment…' : `Pay ${formatINR(total)}`}
                   </button>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
                     ← Back to address
                   </button>
                 </div>
@@ -890,7 +890,7 @@ export default function ShopCart() {
                   {qrDataUrl && (
                     <div className="flex flex-col items-center gap-2 rounded-2xl bg-gray-50 py-4 ring-1 ring-gray-100">
                       <img src={qrDataUrl} alt="UPI QR code" className="h-44 w-44 rounded-xl bg-white p-2 ring-1 ring-gray-200" />
-                      <p className="text-xs text-gray-400">Scan with any UPI app</p>
+                      <p className="text-xs text-gray-500">Scan with any UPI app</p>
                     </div>
                   )}
 
@@ -927,7 +927,7 @@ export default function ShopCart() {
 
                   <div className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3">
                     <div className="min-w-0">
-                      <p className="text-[11px] text-gray-400">Or pay manually to UPI ID</p>
+                      <p className="text-[11px] text-gray-500">Or pay manually to UPI ID</p>
                       <p className="truncate font-mono text-sm font-semibold text-gray-800">{UPI_ID}</p>
                     </div>
                     <button onClick={copyUpiId} className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100">
@@ -936,7 +936,7 @@ export default function ShopCart() {
                   </div>
 
                   <div className={`space-y-3 rounded-2xl border p-4 ${tappedApp ? 'border-plum-200 bg-plum-50' : 'border-gray-100 bg-gray-50'}`}>
-                    <p className={`text-xs font-semibold ${tappedApp ? 'text-plum-700' : 'text-gray-400'}`}>
+                    <p className={`text-xs font-semibold ${tappedApp ? 'text-plum-700' : 'text-gray-500'}`}>
                       {tappedApp
                         ? `Step 2 — You've been redirected to ${tappedApp}. Complete the payment there, then come back to this tab.`
                         : 'Step 2 — After you pay, come back to this tab.'}
@@ -948,7 +948,7 @@ export default function ShopCart() {
                     >
                       I've completed the payment
                     </button>
-                    <p className="text-center text-[11px] text-gray-400">We'll confirm your payment against our UPI account and update your order shortly.</p>
+                    <p className="text-center text-[11px] text-gray-500">We'll confirm your payment against our UPI account and update your order shortly.</p>
                   </div>
                 </div>
               </SectionCard>
@@ -977,7 +977,7 @@ export default function ShopCart() {
                   >
                     Complete my order on WhatsApp
                   </a>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
                     ← Back to address
                   </button>
                 </div>
@@ -1007,7 +1007,7 @@ export default function ShopCart() {
                     <button
                       onClick={() => runPayment('success')}
                       disabled={paying}
-                      className="flex-1 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex-1 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {paying ? 'Processing…' : 'Simulate Success'}
                     </button>
@@ -1019,7 +1019,7 @@ export default function ShopCart() {
                       Simulate Failure
                     </button>
                   </div>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-400 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
                     ← Back to address
                   </button>
                 </div>
@@ -1043,7 +1043,7 @@ export default function ShopCart() {
                 intent="complete"
                 budgetGap={budgetGap}
                 limit={8}
-                tone="dark"
+                tone="light"
                 title="Goes with your order"
                 subtitle={budgetGap ? `Anything from ${formatINR(budgetGap)} closes the gap above` : 'Delivered together, one trip'}
                 className="-mx-1 pt-1"
@@ -1078,7 +1078,7 @@ export default function ShopCart() {
         <div className="pr-chat-dock above-bottom-nav fixed inset-x-0 z-40 lg:hidden">
           <div className="mx-3 mb-2 flex items-center gap-3 rounded-2xl bg-white p-2 pl-4 shadow-[0_-4px_30px_-8px_rgba(0,0,0,0.5)] ring-1 ring-black/10">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">To pay</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">To pay</p>
               <p className="text-lg font-extrabold leading-tight text-gray-900">{formatINR(total)}</p>
             </div>
             {user ? (

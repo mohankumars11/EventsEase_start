@@ -47,9 +47,9 @@ export default function TwoDoors({
         className={`event-card sheen-on-hover block w-full text-left ${
           active === 'packages' ? 'ring-2' : ''
         }`}
-        style={active === 'packages' ? { '--tw-ring-color': 'var(--event-glow)' } : undefined}
+        style={active === 'packages' ? { '--tw-ring-color': 'var(--event-glow-line)' } : undefined}
       >
-        <div className="flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white"
+        <div className="flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink"
              style={{ background: 'var(--event-ink)' }}>
           <Sparkles size={11} /> The whole thing, arranged
         </div>
@@ -67,7 +67,7 @@ export default function TwoDoors({
               </p>
             </div>
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink"
               style={{ background: 'var(--event-ink)' }}
             >
               <ArrowRight size={16} strokeWidth={2.6} />
@@ -80,7 +80,7 @@ export default function TwoDoors({
           <div className="mt-3 flex flex-wrap items-end justify-between gap-2 rounded-2xl bg-gray-50 px-3 py-2.5 ring-1 ring-gray-100">
             {bespoke ? (
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">
                   {guestCount.toLocaleString('en-IN')} guests
                 </p>
                 <p className="text-[14px] font-extrabold leading-tight text-gray-900">
@@ -89,7 +89,7 @@ export default function TwoDoors({
               </div>
             ) : quote?.range ? (
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">
                   {tier?.name} · {guestCount.toLocaleString('en-IN')} guests
                 </p>
                 <p
@@ -102,7 +102,7 @@ export default function TwoDoors({
               </div>
             ) : (
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400">Starting at</p>
+                <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">Starting at</p>
                 <p className="text-[16px] font-extrabold leading-tight" style={{ color: 'var(--event-ink)' }}>
                   {Number.isFinite(entryPrice) ? formatINR(entryPrice) : 'On request'}
                 </p>
@@ -128,26 +128,25 @@ export default function TwoDoors({
       <button
         type="button"
         onClick={() => onChoose('services')}
-        className={`flex w-full items-center gap-3 rounded-2xl bg-white/[0.07] px-4 py-3 text-left ring-1 transition-colors hover:bg-white/[0.11] ${
-          active === 'services' ? '' : 'ring-white/10'
+        className={`flex w-full items-center gap-3 rounded-2xl bg-surface-sunk/[0.06] px-4 py-3 text-left ring-1 transition-colors hover:bg-surface-sunk/[0.06] ${
+          active === 'services' ? '' : 'ring-hairline/10'
         }`}
-        style={active === 'services' ? { '--tw-ring-color': 'var(--event-glow)' } : undefined}
+        style={active === 'services' ? { '--tw-ring-color': 'var(--event-glow-line)' } : undefined}
       >
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: 'color-mix(in srgb, var(--event-glow) 18%, transparent)', color: 'var(--event-glow)' }}
+          className="event-tint flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
         >
           <LayoutGrid size={16} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-extrabold leading-tight text-white">
+          <span className="block text-[13px] font-extrabold leading-tight text-ink">
             Or just one piece of it
           </span>
-          <span className="block truncate text-[11px] leading-snug text-white/55">
+          <span className="block truncate text-[11px] leading-snug text-ink-mute">
             {named.join(' · ')}{rest ? ` · +${rest} more` : ''}
           </span>
         </span>
-        <ArrowRight size={16} className="shrink-0 text-white/35" />
+        <ArrowRight size={16} className="shrink-0 text-ink-mute" />
       </button>
     </section>
   )

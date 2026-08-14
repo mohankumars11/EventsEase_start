@@ -39,12 +39,12 @@ export default function CityButton({ subtitle, className = '' }) {
       onClick={openCityPicker}
       aria-label={chosen ? `Delivering to ${city}. Change city` : 'Set your city'}
       aria-haspopup="dialog"
-      className={`group -ml-1 min-w-0 flex-1 rounded-xl px-1 py-0.5 text-left transition-colors active:bg-white/10 ${className}`}
+      className={`group -ml-1 min-w-0 flex-1 rounded-xl px-1 py-0.5 text-left transition-colors active:bg-surface-sunk/[0.07] ${className}`}
     >
-      <span className="flex items-center gap-1 text-[13px] font-extrabold leading-tight text-white">
+      <span className="flex items-center gap-1 text-[13px] font-extrabold leading-tight text-ink">
         {chosen && !servable
-          ? <AlertCircle size={13} className="shrink-0 text-saffron-300" />
-          : <MapPin size={13} className="shrink-0 text-saffron-300" />}
+          ? <AlertCircle size={13} className="shrink-0 text-saffron-700" />
+          : <MapPin size={13} className="shrink-0 text-saffron-700" />}
 
         <span className="truncate">{chosen ? city : 'Set your city'}</span>
 
@@ -53,7 +53,7 @@ export default function CityButton({ subtitle, className = '' }) {
             touch feedback to do that job. */}
         <ChevronDown
           size={12}
-          className="shrink-0 text-white/40 transition-transform group-hover:text-white/70 group-active:translate-y-px"
+          className="shrink-0 text-ink-mute transition-transform group-hover:text-ink-soft group-active:translate-y-px"
         />
 
         {/* Unset: a small saffron dot. It is the only thing on either app bar
@@ -67,7 +67,7 @@ export default function CityButton({ subtitle, className = '' }) {
         )}
       </span>
 
-      <span className="block truncate text-[11px] text-white/50">
+      <span className="block truncate text-[11px] text-ink-mute">
         {chosen && !servable
           ? `We don't deliver to ${city} yet — tap to change`
           : subtitle}

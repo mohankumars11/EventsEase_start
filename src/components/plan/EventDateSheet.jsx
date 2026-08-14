@@ -19,7 +19,7 @@ import { humanDate } from '../../utils/format'
  * ground of the home screen it opens from. Two things were wrong with that.
  * MonthGrid is shared with the vendor availability editor and styles its own
  * chrome for a light surface — so the month name and the weekday letters were
- * `text-gray-900` and `text-gray-400` on near-black, effectively invisible,
+ * `text-gray-900` and `text-gray-500` on near-black, effectively invisible,
  * and a calendar whose month you cannot read is not a calendar. And a dense
  * grid of 35 numbers is a document, not a hero: dark type on white is where
  * numerals are easiest to scan, which is the entire job here.
@@ -120,7 +120,7 @@ export default function EventDateSheet({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="animate-pop-in flex max-h-[92vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl shadow-black/50 outline-none ring-1 ring-black/5 sm:max-h-[88vh] sm:max-w-lg sm:rounded-3xl"
+        className="animate-pop-in flex max-h-[92vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl shadow-black/10 outline-none ring-1 ring-black/5 sm:max-h-[88vh] sm:max-w-lg sm:rounded-3xl"
       >
         <div className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-3">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-300 sm:hidden" />
@@ -139,7 +139,7 @@ export default function EventDateSheet({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-mr-2 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              className="-mr-2 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
             >
               <X size={18} />
             </button>
@@ -238,7 +238,7 @@ export default function EventDateSheet({
                   ].join(' ')}
                 >
                   <span className="block text-sm font-bold">{s.emoji} {s.label}</span>
-                  <span className={`block text-[11px] ${slot === s.key ? 'text-white/75' : 'text-gray-500'}`}>
+                  <span className={`block text-[11px] ${slot === s.key ? 'text-ink-soft' : 'text-gray-500'}`}>
                     {s.hint}
                   </span>
                 </button>
@@ -294,7 +294,7 @@ export default function EventDateSheet({
             // Greyed rather than faded: a translucent purple button on white
             // still reads as tappable, and this one is the gate that makes the
             // time of day compulsory.
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-600 py-3 text-[13px] font-extrabold text-white transition-colors hover:bg-plum-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-600 py-3 text-[13px] font-extrabold text-ink transition-colors hover:bg-plum-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
           >
             {!selected ? 'Pick a date'
               : !slot ? 'Pick a time of day'

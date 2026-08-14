@@ -92,7 +92,7 @@ export default function ContentStudio({ onNavigate }) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40 gap-2 text-gray-400">
+        <div className="flex items-center justify-center h-40 gap-2 text-gray-500">
           <Loader2 className="animate-spin text-plum-600" size={24} />
           <span className="text-sm">Counting…</span>
         </div>
@@ -321,7 +321,7 @@ function KindEditor({ kind, onBack }) {
             </div>
             <button onClick={() => setShowRetired(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                showRetired ? 'bg-gray-700 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                showRetired ? 'bg-gray-700 border-gray-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
               }`}>
               {showRetired ? <Eye size={12} /> : <EyeOff size={12} />}
               {showRetired ? 'Showing retired' : `Hiding ${retired} retired`}
@@ -349,7 +349,7 @@ function KindEditor({ kind, onBack }) {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-400">
+        <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-500">
           <Loader2 className="animate-spin text-plum-600" size={26} />
           <span className="text-sm">Loading…</span>
         </div>
@@ -365,7 +365,7 @@ function KindEditor({ kind, onBack }) {
                 are never overwritten.
               </p>
               <button onClick={handleSync} disabled={syncing}
-                className="mt-3 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-plum-600 text-white text-sm font-semibold hover:bg-plum-700 disabled:opacity-50">
+                className="mt-3 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-plum-600 text-ink text-sm font-semibold hover:bg-plum-700 disabled:opacity-50">
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 Import the built-ins
               </button>
@@ -476,12 +476,12 @@ function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onRemoveIma
           </button>
           {item.image_url && (
             <button onClick={onRemoveImage} disabled={busy}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40">
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40">
               <Trash2 size={11} /> Remove
             </button>
           )}
           <button onClick={onToggle} disabled={busy}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40">
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40">
             {item.active === false ? <><Eye size={11} /> Show again</> : <><EyeOff size={11} /> Retire</>}
           </button>
 
@@ -494,7 +494,7 @@ function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onRemoveIma
               className="p-1 text-gray-300 hover:text-plum-700 disabled:opacity-30">
               <ChevronDown size={13} />
             </button>
-            <button onClick={onEdit} className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 px-1">
+            <button onClick={onEdit} className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 px-1">
               <Pencil size={11} /> Edit
             </button>
             {/* Deleting a built-in is a button that undoes itself — the next
@@ -596,7 +596,7 @@ function ItemForm({ meta, initial, title, busy, onCancel, onSave }) {
               <span className="block text-[11px] font-semibold text-gray-500 mb-1">
                 {f.label}
                 {engineOwned && <span className="ml-1 font-normal" style={{ color: STATUS.serious }}>· display copy only</span>}
-                {f.hint && <span className="ml-1 font-normal text-gray-400">— {f.hint}</span>}
+                {f.hint && <span className="ml-1 font-normal text-gray-500">— {f.hint}</span>}
               </span>
               {f.type === 'textarea' ? (
                 <textarea value={draft[f.key] ?? ''} onChange={e => set(f.key, e.target.value)}
@@ -681,7 +681,7 @@ function Chip({ active, onClick, children }) {
   return (
     <button onClick={onClick} aria-pressed={active}
       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-        active ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+        active ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
       }`}>
       {children}
     </button>

@@ -248,8 +248,8 @@ export default function ServiceDetail() {
       <div className="home-canvas flex min-h-screen items-center justify-center px-4">
         <div className="home-glass max-w-sm p-8 text-center">
           <div className="mb-3 text-5xl">🤔</div>
-          <h2 className="text-lg font-extrabold text-white">We don’t offer that yet</h2>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-white/55">
+          <h2 className="text-lg font-extrabold text-ink">We don’t offer that yet</h2>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-ink-mute">
             Nothing in the catalogue matches “{serviceId}”.
           </p>
           <Link
@@ -286,24 +286,24 @@ export default function ServiceDetail() {
       <header className="home-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 pb-3 pt-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/services'))}
             aria-label="Back"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-extrabold leading-tight text-white">
+            <p className="truncate text-[13px] font-extrabold leading-tight text-ink">
               {service.emoji} {service.name}
             </p>
-            <p className="truncate text-[10.5px] text-white/50">
+            <p className="truncate text-[10.5px] text-ink-mute">
               Book it on its own{chosen && city?.name ? ` · ${city.name}` : ''}
             </p>
           </div>
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} items`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
@@ -383,16 +383,16 @@ export default function ServiceDetail() {
         {kind === 'decor' && (
           <>
             <section className="px-4">
-              <h2 className="text-[15px] font-extrabold text-white">
+              <h2 className="text-[15px] font-extrabold text-ink">
                 Pick your setup
               </h2>
-              <p className="mt-0.5 text-[11.5px] text-white/55">
+              <p className="mt-0.5 text-[11.5px] text-ink-mute">
                 Every price below is for {guestCount} guests at the scale you chose. Tap one
                 to see exactly what gets installed.
               </p>
 
               <div className="relative mt-2.5">
-                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   value={query}
                   onChange={e => setQuery(e.target.value)}
@@ -420,7 +420,7 @@ export default function ServiceDetail() {
                   className={`home-chip ${
                     familyId === 'all'
                       ? 'bg-saffron-400 text-plum-950'
-                      : 'bg-white/10 text-white/70 ring-1 ring-white/15'
+                      : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
                   }`}
                 >
                   ✨ All {resolved.themes.length}
@@ -432,7 +432,7 @@ export default function ServiceDetail() {
                     className={`home-chip ${
                       familyId === f.id
                         ? 'bg-saffron-400 text-plum-950'
-                        : 'bg-white/10 text-white/70 ring-1 ring-white/15'
+                        : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
                     }`}
                   >
                     {f.emoji} {f.label}
@@ -443,7 +443,7 @@ export default function ServiceDetail() {
             )}
 
             {familyId !== 'all' && !query && (
-              <p className="px-4 text-[11.5px] leading-snug text-white/45">
+              <p className="px-4 text-[11.5px] leading-snug text-ink-mute">
                 {resolved.families.find(f => f.id === familyId)?.blurb}
               </p>
             )}
@@ -451,8 +451,8 @@ export default function ServiceDetail() {
             <section className="px-4">
               {themes.length === 0 ? (
                 <div className="py-10 text-center">
-                  <SearchX size={26} className="mx-auto text-white/30" />
-                  <p className="mt-2 text-sm text-white/55">
+                  <SearchX size={26} className="mx-auto text-ink-mute" />
+                  <p className="mt-2 text-sm text-ink-mute">
                     Nothing matches “{query}”. Try “mandap”, “balloon” or “marigold”.
                   </p>
                 </div>
@@ -475,7 +475,7 @@ export default function ServiceDetail() {
               {resolved.showAllLink && (
                 <Link
                   to="/service/decor"
-                  className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl bg-white/[0.07] px-4 py-3 text-[12.5px] font-bold text-white/75 ring-1 ring-white/12"
+                  className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl bg-surface-sunk/[0.06] px-4 py-3 text-[12.5px] font-bold text-ink-soft ring-1 ring-hairline/10"
                 >
                   <Sparkles size={13} /> See all decoration setups
                 </Link>
@@ -496,8 +496,8 @@ export default function ServiceDetail() {
         {/* ══════════════ PACKAGES ══════════════ */}
         {kind === 'packs' && (
           <section className="px-4">
-            <h2 className="text-[15px] font-extrabold text-white">Choose a package</h2>
-            <p className="mt-0.5 text-[11.5px] text-white/55">
+            <h2 className="text-[15px] font-extrabold text-ink">Choose a package</h2>
+            <p className="mt-0.5 text-[11.5px] text-ink-mute">
               Priced for {guestCount} guests. Everything listed on a card is what actually
               gets delivered — nothing is held back for a phone call.
             </p>
@@ -550,10 +550,10 @@ export default function ServiceDetail() {
         {alsoBooked.length > 0 && (
           <section>
             <div className="px-4">
-              <h2 className="text-[15px] font-extrabold text-white">
+              <h2 className="text-[15px] font-extrabold text-ink">
                 Booked alongside this
               </h2>
-              <p className="mt-0.5 text-[11.5px] text-white/55">
+              <p className="mt-0.5 text-[11.5px] text-ink-mute">
                 Each one is bookable on its own too — add as few or as many as you want.
               </p>
             </div>
@@ -588,7 +588,7 @@ export default function ServiceDetail() {
         {/* ── The reassurance ────────────────────────────────────────── */}
         <section className="px-4">
           <div className="home-glass p-4">
-            <h2 className="text-[13px] font-extrabold text-white">
+            <h2 className="text-[13px] font-extrabold text-ink">
               What happens after you add this
             </h2>
             <ol className="mt-2 space-y-2">
@@ -602,15 +602,15 @@ export default function ServiceDetail() {
                     {n}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[12px] font-extrabold text-white">{title}</span>
-                    <span className="block text-[11px] leading-snug text-white/55">{body}</span>
+                    <span className="block text-[12px] font-extrabold text-ink">{title}</span>
+                    <span className="block text-[11px] leading-snug text-ink-mute">{body}</span>
                   </span>
                 </li>
               ))}
             </ol>
             <a
               href={`tel:${BRAND.supportPhone.replace(/\s/g, '')}`}
-              className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 text-[12px] font-bold text-white ring-1 ring-white/15"
+              className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-surface-sunk/[0.07] px-4 py-2.5 text-[12px] font-bold text-ink ring-1 ring-hairline/10"
             >
               <Phone size={13} /> Rather just talk? {BRAND.supportPhone}
             </a>

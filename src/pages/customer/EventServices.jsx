@@ -383,8 +383,8 @@ export default function EventServices() {
       <div className="event-canvas flex min-h-screen items-center justify-center px-4">
         <div className="event-glass max-w-sm p-8 text-center">
           <div className="mb-3 text-5xl">🤔</div>
-          <h2 className="text-lg font-extrabold text-white">We do not have a page for that yet</h2>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-white/55">
+          <h2 className="text-lg font-extrabold text-ink">We do not have a page for that yet</h2>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-ink-mute">
             The occasion in the address does not match anything in the catalogue.
           </p>
           <Link
@@ -435,22 +435,22 @@ export default function EventServices() {
           <button
             onClick={() => navigate('/services')}
             aria-label="All occasions"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
           >
             <ArrowLeft size={16} />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-extrabold leading-tight text-white">
+            <p className="truncate text-[13px] font-extrabold leading-tight text-ink">
               {event.emoji} {event.name}
             </p>
             <button
               onClick={openCityPicker}
-              className="flex items-center gap-1 text-[10.5px] text-white/55 transition-colors hover:text-white"
+              className="flex items-center gap-1 text-[10.5px] text-ink-mute transition-colors hover:text-ink"
             >
               <MapPin size={9} className="shrink-0" />
               <span className="truncate">{chosen ? city : 'Set your city'}</span>
-              {chosen && !servable && <span className="text-amber-300">· not live yet</span>}
+              {chosen && !servable && <span className="text-amber-700">· not live yet</span>}
             </button>
           </div>
 
@@ -458,11 +458,11 @@ export default function EventServices() {
             <button
               onClick={() => navigate('/dashboard/customer/cart')}
               aria-label="Your enquiry cart"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <ShoppingCart size={16} />
               {totalCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-extrabold text-white">
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-extrabold text-ink">
                   {totalCount > 9 ? '9+' : totalCount}
                 </span>
               )}
@@ -478,14 +478,14 @@ export default function EventServices() {
           <div className="rise-in">
             <p
               className="text-[10px] font-extrabold uppercase tracking-[0.18em]"
-              style={{ color: 'var(--event-glow)' }}
+              style={{ color: 'var(--event-glow-ink)' }}
             >
               {event.tagline}
             </p>
-            <h1 className="mt-1.5 font-serif text-[30px] font-bold leading-[1.1] text-white sm:text-[36px]">
+            <h1 className="mt-1.5 font-serif text-[30px] font-bold leading-[1.1] text-ink sm:text-[36px]">
               {event.name}
             </h1>
-            <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/60">
+            <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-ink-mute">
               {profile.promise}
             </p>
           </div>
@@ -594,7 +594,7 @@ export default function EventServices() {
           plus its 10px padding either side). */}
       <div
         ref={contentRef}
-        className="sticky top-[56px] z-20 mt-6 border-y border-white/10 bg-[#180529]/90 backdrop-blur"
+        className="sticky top-[56px] z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
         style={{ scrollMarginTop: '56px' }}
       >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">
@@ -620,7 +620,7 @@ export default function EventServices() {
         {details && (
           <button
             onClick={() => setEditingDetails(true)}
-            className="mb-3 flex items-center gap-1.5 text-[11px] font-bold text-white/45 hover:text-white"
+            className="mb-3 flex items-center gap-1.5 text-[11px] font-bold text-ink-mute hover:text-ink"
           >
             <Pencil size={11} /> Change the date, time or venue for this celebration
           </button>
@@ -630,17 +630,17 @@ export default function EventServices() {
         {activeTab === 'packages' && (
           <div className="space-y-3">
             <div className="event-glass p-4">
-              <p className="text-[12.5px] leading-relaxed text-white/70">
-                Every one of these is the <strong className="font-extrabold text-white">whole celebration</strong> —
+              <p className="text-[12.5px] leading-relaxed text-ink-soft">
+                Every one of these is the <strong className="font-extrabold text-ink">whole celebration</strong> —
                 food, decor, coordination and the services this occasion needs — arranged by one team
                 for one price. They are named for the size of the gathering, never for a budget, and the
                 only difference between them is how many people are in the room.
               </p>
-              <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+              <p className="mt-2 text-[11px] leading-relaxed text-ink-mute">
                 Prices are estimates for{' '}
                 <button
                   onClick={openCityPicker}
-                  className="font-bold underline decoration-white/30 underline-offset-2 hover:text-white"
+                  className="font-bold underline decoration-hairline/20 underline-offset-2 hover:text-ink"
                 >
                   {city}
                 </button>
@@ -681,23 +681,23 @@ export default function EventServices() {
             <div id="tier-bespoke" style={{ scrollMarginTop: '116px' }} className="event-glass p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-2xl" aria-hidden="true">{BESPOKE_TIER.emoji}</span>
-                <h3 className="text-[16px] font-extrabold text-white">{BESPOKE_TIER.name}</h3>
-                <span className="text-[11px] font-medium italic text-white/40">{BESPOKE_TIER.localName}</span>
+                <h3 className="text-[16px] font-extrabold text-ink">{BESPOKE_TIER.name}</h3>
+                <span className="text-[11px] font-medium italic text-ink-mute">{BESPOKE_TIER.localName}</span>
               </div>
-              <p className="mt-1 text-[12.5px] font-semibold text-white/75">{BESPOKE_TIER.tagline}</p>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-white/50">{BESPOKE_TIER.description}</p>
+              <p className="mt-1 text-[12.5px] font-semibold text-ink-soft">{BESPOKE_TIER.tagline}</p>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-mute">{BESPOKE_TIER.description}</p>
               <Link
                 to={`/plan/custom?type=${toWizardType(eventId)}`}
                 className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-extrabold"
-                style={{ color: 'var(--event-glow)' }}
+                style={{ color: 'var(--event-glow-ink)' }}
               >
                 <Sparkles size={13} /> Tell us about it instead <ChevronRight size={13} />
               </Link>
             </div>
 
             <div className="event-glass p-5 text-center">
-              <p className="text-[13px] font-extrabold text-white">Want only one piece of it?</p>
-              <p className="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-white/50">
+              <p className="text-[13px] font-extrabold text-ink">Want only one piece of it?</p>
+              <p className="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-ink-mute">
                 Book just the catering, just the decor, just the photographer — every service is
                 available on its own, with all of its options.
               </p>
@@ -716,32 +716,32 @@ export default function EventServices() {
         {activeTab === 'services' && (
           <div className="space-y-4">
             <div className="event-glass p-4">
-              <p className="text-[12.5px] leading-relaxed text-white/70">
+              <p className="text-[12.5px] leading-relaxed text-ink-soft">
                 Every service opens. Tap one and you get what is actually inside it — the cuisines
                 and every dish under them, the decor levels and what each installs, what a
                 photographer hands back — priced at your{' '}
-                <strong className="font-extrabold text-white">{guestCount} guests</strong>.
+                <strong className="font-extrabold text-ink">{guestCount} guests</strong>.
               </p>
             </div>
 
             {/* Twenty-four services is a lot to scroll past to reach the one
                 you came for. */}
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
               <input
                 type="search"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Find a service — cook, decor, photographer…"
                 aria-label="Search services"
-                className="w-full rounded-2xl bg-white/[0.07] py-2.5 pl-9 pr-9 text-[13px] text-white ring-1 ring-white/10 placeholder:text-white/35 focus:outline-none focus:ring-2"
-                style={{ '--tw-ring-color': 'var(--event-glow)' }}
+                className="w-full rounded-2xl bg-surface-sunk/[0.06] py-2.5 pl-9 pr-9 text-[13px] text-ink ring-1 ring-hairline/10 placeholder:text-ink-mute focus:outline-none focus:ring-2"
+                style={{ '--tw-ring-color': 'var(--event-glow-line)' }}
               />
               {query && (
                 <button
                   onClick={() => setQuery('')}
                   aria-label="Clear search"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-mute hover:text-ink"
                 >
                   <X size={15} />
                 </button>
@@ -750,14 +750,14 @@ export default function EventServices() {
 
             {categories.length === 0 ? (
               <div className="event-glass p-8 text-center">
-                <p className="text-[13px] font-bold text-white">Nothing here matches “{query}”</p>
-                <p className="mx-auto mt-1 max-w-xs text-[11.5px] leading-relaxed text-white/50">
+                <p className="text-[13px] font-bold text-ink">Nothing here matches “{query}”</p>
+                <p className="mx-auto mt-1 max-w-xs text-[11.5px] leading-relaxed text-ink-mute">
                   Try a shorter word — or ask us anyway. Plenty of what we arrange never made it
                   onto a list.
                 </p>
                 <button
                   onClick={() => setQuery('')}
-                  className="mt-3 rounded-xl bg-white/10 px-4 py-2 text-[12px] font-bold text-white ring-1 ring-white/15"
+                  className="mt-3 rounded-xl bg-surface-sunk/[0.07] px-4 py-2 text-[12px] font-bold text-ink ring-1 ring-hairline/10"
                 >
                   Show all {event.services.length}
                 </button>
@@ -767,10 +767,10 @@ export default function EventServices() {
                 <section key={cat} aria-labelledby={`cat-${cat}`}>
                   <h2
                     id={`cat-${cat}`}
-                    className="mb-2 flex items-baseline gap-2 px-1 text-[13px] font-extrabold text-white"
+                    className="mb-2 flex items-baseline gap-2 px-1 text-[13px] font-extrabold text-ink"
                   >
                     {cat}
-                    <span className="text-[11px] font-medium text-white/35">
+                    <span className="text-[11px] font-medium text-ink-mute">
                       {byCategory[cat].length} service{byCategory[cat].length > 1 ? 's' : ''}
                     </span>
                   </h2>
@@ -798,9 +798,9 @@ export default function EventServices() {
             )}
 
             <div className="event-glass flex items-start gap-2.5 p-4">
-              <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-300" />
-              <p className="text-[11.5px] leading-relaxed text-white/55">
-                Adding a service here starts an <strong className="font-bold text-white">enquiry</strong>,
+              <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-700" />
+              <p className="text-[11.5px] leading-relaxed text-ink-mute">
+                Adding a service here starts an <strong className="font-bold text-ink">enquiry</strong>,
                 not an order. A coordinator prices it against your date and venue and comes back to
                 you. Nothing is charged and no vendor is held until you approve it.
               </p>
@@ -903,14 +903,14 @@ function TabButton({ active, onClick, icon: Icon, label, sub }) {
       onClick={onClick}
       aria-pressed={active}
       className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 transition-colors ${
-        active ? 'text-gray-900' : 'text-white/60 hover:bg-white/5 hover:text-white'
+        active ? 'text-gray-900' : 'text-ink-mute hover:bg-surface-sunk/[0.07] hover:text-ink'
       }`}
       style={active ? { background: 'var(--event-glow)' } : undefined}
     >
       <Icon size={15} className="shrink-0" />
       <span className="min-w-0 text-left">
         <span className="block truncate text-[12.5px] font-extrabold leading-tight">{label}</span>
-        <span className={`block truncate text-[10px] leading-tight ${active ? 'text-gray-900/60' : 'text-white/35'}`}>
+        <span className={`block truncate text-[10px] leading-tight ${active ? 'text-gray-900/60' : 'text-ink-mute'}`}>
           {sub}
         </span>
       </span>

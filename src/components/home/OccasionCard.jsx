@@ -90,7 +90,7 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
           Arranged by Sambramo
         </span>
 
-        <span className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-gray-400">
+        <span className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-gray-500">
           <span>{o.serviceCount} services</span>
           <span aria-hidden="true">·</span>
           <span>{o.packageCount} packages</span>
@@ -98,7 +98,7 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
 
         <span className="mt-2 flex items-end justify-between gap-1">
           <span className="min-w-0">
-            <span className="block text-[9px] font-semibold uppercase tracking-wide text-gray-400">
+            <span className="block text-[9px] font-semibold uppercase tracking-wide text-gray-500">
               Starting at
             </span>
             <span className="block truncate text-[15px] font-extrabold leading-none text-gray-900">

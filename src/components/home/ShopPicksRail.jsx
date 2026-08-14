@@ -81,16 +81,16 @@ export default function ShopPicksRail() {
     <section aria-labelledby="picks-heading">
       <div className="flex items-end justify-between gap-3 px-4">
         <div className="min-w-0">
-          <h2 id="picks-heading" className="text-[15px] font-extrabold text-white">
+          <h2 id="picks-heading" className="text-[15px] font-extrabold text-ink">
             Delivered to your door
           </h2>
-          <p className="mt-0.5 text-[11px] text-white/50">
+          <p className="mt-0.5 text-[11px] text-ink-mute">
             Cakes, gifts, flowers, pooja and party — order one on its own, no celebration required.
           </p>
         </div>
         <Link
           to="/shop"
-          className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-saffron-300"
+          className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-saffron-700"
         >
           All <ArrowRight size={12} />
         </Link>
@@ -185,7 +185,7 @@ export default function ShopPicksRail() {
           <Link
             key={cat.id}
             to={`/shop/${encodeURIComponent(cat.id)}`}
-            className="home-chip shrink-0 bg-white/10 text-white/80 ring-1 ring-white/15"
+            className="home-chip shrink-0 bg-surface text-ink-soft ring-1 ring-hairline/10"
           >
             <span aria-hidden="true">{cat.emoji}</span> {cat.label}
           </Link>
@@ -202,8 +202,8 @@ export default function ShopPicksRail() {
           screen is that a person handles the order rather than a warehouse,
           and that is the reason to buy a cake here instead of anywhere else. */}
       <div className="mt-3 px-4">
-        <p className="flex items-start gap-2 rounded-2xl bg-white/[0.07] px-3.5 py-2.5 text-[11px] leading-relaxed text-white/65 ring-1 ring-white/10">
-          <Heart size={13} className="mt-0.5 shrink-0 text-saffron-300" />
+        <p className="flex items-start gap-2 rounded-2xl bg-surface px-3.5 py-2.5 text-[11px] leading-relaxed text-ink-soft ring-1 ring-hairline/[0.08]">
+          <Heart size={13} className="mt-0.5 shrink-0 text-saffron-700" />
           <span>
             Packed by hand by our team, checked before it leaves, and delivered on the
             day you asked for — with a note if you want one.

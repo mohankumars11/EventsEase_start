@@ -126,7 +126,7 @@ export default function ProductCustomizeSheet({ product, onClose, onConfirm }) {
             {facts?.veg && <VegMark className="mt-1" />}
             <div className="min-w-0">
               <h3 className="font-bold text-gray-900 leading-snug">{product.name}</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {[product.occasion, facts?.serves, facts?.pieces && `${facts.pieces} pieces`]
                   .filter(Boolean).join(' · ')}
               </p>
@@ -179,7 +179,7 @@ export default function ProductCustomizeSheet({ product, onClose, onConfirm }) {
             </div>
             <button
               onClick={confirm}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-saffron-500 hover:bg-saffron-600 text-white font-bold shadow-sm transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-saffron-500 hover:bg-saffron-600 text-plum-950 font-bold shadow-sm transition-colors"
             >
               Add to cart · {formatINR(order.unitPrice * qty)}
             </button>
@@ -195,7 +195,7 @@ function OptionGroup({ group, selection, onPickSingle, onToggleMulti, onText }) 
   if (group.type === 'info') {
     return (
       <div className="flex items-start gap-2 rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3">
-        <Info size={14} className="text-gray-400 mt-0.5 shrink-0" />
+        <Info size={14} className="text-gray-500 mt-0.5 shrink-0" />
         <div>
           <p className="text-xs font-semibold text-gray-600">{group.label}</p>
           <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{group.text}</p>
@@ -211,11 +211,11 @@ function OptionGroup({ group, selection, onPickSingle, onToggleMulti, onText }) 
     <section>
       <div className="flex items-baseline justify-between gap-2 mb-2">
         <h4 className="text-sm font-bold text-gray-900">{group.label}</h4>
-        <span className="text-[11px] text-gray-400 shrink-0">
+        <span className="text-[11px] text-gray-500 shrink-0">
           {group.required ? 'Required' : group.type === 'multi' && group.max ? `Up to ${group.max}` : 'Optional'}
         </span>
       </div>
-      {group.hint && <p className="text-xs text-gray-400 -mt-1.5 mb-2">{group.hint}</p>}
+      {group.hint && <p className="text-xs text-gray-500 -mt-1.5 mb-2">{group.hint}</p>}
 
       {group.type === 'text' ? (
         <div>
@@ -226,7 +226,7 @@ function OptionGroup({ group, selection, onPickSingle, onToggleMulti, onText }) 
             maxLength={group.maxLength}
             className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-400"
           />
-          <p className="text-[11px] text-gray-400 mt-1 text-right">
+          <p className="text-[11px] text-gray-500 mt-1 text-right">
             {(selection ?? '').length}/{group.maxLength}
           </p>
         </div>
@@ -257,7 +257,7 @@ function OptionGroup({ group, selection, onPickSingle, onToggleMulti, onText }) 
                   className={[
                     'shrink-0 w-4 h-4 border-2 flex items-center justify-center',
                     isMulti ? 'rounded' : 'rounded-full',
-                    selected ? 'border-saffron-500 bg-saffron-500 text-white' : 'border-gray-300',
+                    selected ? 'border-saffron-500 bg-saffron-500 text-plum-950' : 'border-gray-300',
                   ].join(' ')}
                 >
                   {selected && <Check size={11} strokeWidth={3.5} />}
@@ -265,7 +265,7 @@ function OptionGroup({ group, selection, onPickSingle, onToggleMulti, onText }) 
 
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm text-gray-800 leading-snug">{option.label}</span>
-                  {option.note && <span className="block text-[11px] text-gray-400 mt-0.5">{option.note}</span>}
+                  {option.note && <span className="block text-[11px] text-gray-500 mt-0.5">{option.note}</span>}
                 </span>
 
                 {/* Grey is reserved for "this costs nothing". A weight option

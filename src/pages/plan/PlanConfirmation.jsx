@@ -50,7 +50,7 @@ export default function PlanConfirmation() {
   )
 
   return (
-    <div className="min-h-screen bg-plum-950 flex flex-col items-center justify-start py-16 px-4">
+    <div className="home-canvas min-h-screen flex flex-col items-center justify-start py-16 px-4">
       {/* Celebration glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-saffron-500/10 rounded-full blur-3xl" />
@@ -62,17 +62,17 @@ export default function PlanConfirmation() {
           <div className="text-6xl mb-4">
             {eventType?.emoji ?? '🎉'}
           </div>
-          <h1 className="font-display text-4xl lg:text-5xl font-bold text-white mb-3">
+          <h1 className="font-display text-4xl lg:text-5xl font-bold text-ink mb-3">
             Your celebration is in our hands!
           </h1>
-          <p className="text-plum-300 text-lg leading-relaxed">
+          <p className="text-plum-700 text-lg leading-relaxed">
             We've received your request and our concierge team will contact you within <span className="text-saffron-400 font-semibold">24 hours</span>.
           </p>
         </div>
 
         {/* Event summary card */}
         {event && (
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 mb-8">
+          <div className="bg-surface-sunk/[0.07] backdrop-blur-sm border border-hairline/10 rounded-3xl p-6 mb-8">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-plum-400 text-xs uppercase tracking-widest mb-1">Your Reference ID</p>
@@ -86,17 +86,17 @@ export default function PlanConfirmation() {
                 </span>
               </div>
             </div>
-            <div className="border-t border-white/10 pt-4 grid grid-cols-2 gap-3">
+            <div className="border-t border-hairline/10 pt-4 grid grid-cols-2 gap-3">
               {eventType && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Celebration</p>
-                  <p className="text-white text-sm font-medium">{eventType.emoji} {eventType.label}</p>
+                  <p className="text-ink text-sm font-medium">{eventType.emoji} {eventType.label}</p>
                 </div>
               )}
               {event.event_date && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Date</p>
-                  <p className="text-white text-sm font-medium">
+                  <p className="text-ink text-sm font-medium">
                     {new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
@@ -104,25 +104,25 @@ export default function PlanConfirmation() {
               {event.city && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">City</p>
-                  <p className="text-white text-sm font-medium">{event.city}</p>
+                  <p className="text-ink text-sm font-medium">{event.city}</p>
                 </div>
               )}
               {event.guest_count && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Guests</p>
-                  <p className="text-white text-sm font-medium">~{event.guest_count} guests</p>
+                  <p className="text-ink text-sm font-medium">~{event.guest_count} guests</p>
                 </div>
               )}
               {(event.budget_text || event.budget_label) && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Budget</p>
-                  <p className="text-white text-sm font-medium">{event.budget_text ?? event.budget_label}</p>
+                  <p className="text-ink text-sm font-medium">{event.budget_text ?? event.budget_label}</p>
                 </div>
               )}
               {event.customer_name && (
                 <div>
                   <p className="text-plum-500 text-xs mb-0.5">Name</p>
-                  <p className="text-white text-sm font-medium">{event.customer_name}</p>
+                  <p className="text-ink text-sm font-medium">{event.customer_name}</p>
                 </div>
               )}
             </div>
@@ -130,14 +130,14 @@ export default function PlanConfirmation() {
         )}
 
         {/* Timeline */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8">
-          <h2 className="text-white font-display text-lg font-semibold mb-5">What happens next</h2>
+        <div className="bg-surface-sunk/[0.07] border border-hairline/10 rounded-3xl p-6 mb-8">
+          <h2 className="text-ink font-display text-lg font-semibold mb-5">What happens next</h2>
           <div className="space-y-4">
             {CUSTOMER_TIMELINE.map((item, i) => (
               <div key={item.key} className="flex items-start gap-4">
                 <div className="relative flex flex-col items-center">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                    i === 0 ? 'bg-saffron-500 text-white' : 'bg-white/10 text-plum-300'
+                    i === 0 ? 'bg-saffron-500 text-plum-950' : 'bg-white/10 text-plum-300'
                   }`}>
                     {item.icon}
                   </div>
@@ -146,7 +146,7 @@ export default function PlanConfirmation() {
                   )}
                 </div>
                 <div className="pb-4">
-                  <p className={`text-sm font-medium leading-snug ${i === 0 ? 'text-saffron-300' : 'text-plum-300'}`}>
+                  <p className={`text-sm font-medium leading-snug ${i === 0 ? 'text-saffron-700' : 'text-plum-700'}`}>
                     {item.label}
                   </p>
                 </div>
@@ -207,13 +207,13 @@ export default function PlanConfirmation() {
         <div className="flex flex-col sm:flex-row gap-3 text-center">
           <Link
             to="/dashboard/customer/events"
-            className="flex-1 py-3 px-6 border border-white/20 rounded-2xl text-plum-300 hover:text-white hover:border-white/40 transition-all text-sm font-medium"
+            className="flex-1 py-3 px-6 border border-hairline/10 rounded-2xl text-plum-700 hover:text-ink hover:border-hairline/10 transition-all text-sm font-medium"
           >
             View My Celebrations
           </Link>
           <Link
             to="/"
-            className="flex-1 py-3 px-6 border border-white/20 rounded-2xl text-plum-300 hover:text-white hover:border-white/40 transition-all text-sm font-medium"
+            className="flex-1 py-3 px-6 border border-hairline/10 rounded-2xl text-plum-700 hover:text-ink hover:border-hairline/10 transition-all text-sm font-medium"
           >
             Back to Home
           </Link>

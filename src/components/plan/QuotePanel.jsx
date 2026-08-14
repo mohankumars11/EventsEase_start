@@ -67,15 +67,15 @@ export default function QuotePanel({
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-4 bg-gradient-to-br from-plum-700 to-plum-800 text-white">
-        <p className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-ink-mute font-semibold">
           Estimated total · incl. taxes
         </p>
         <p className="text-2xl font-extrabold mt-0.5 leading-tight">
           {formatINR(quote.range.low)}
-          <span className="text-white/40"> – </span>
+          <span className="text-ink-mute"> – </span>
           {formatINR(quote.range.high)}
         </p>
-        <p className="text-xs text-white/70 mt-1">
+        <p className="text-xs text-ink-soft mt-1">
           About {formatINR(quote.perGuest)} per guest · {quote.tier.name} · {quote.guests} guests
         </p>
       </div>
@@ -150,7 +150,7 @@ export default function QuotePanel({
             key={part.key}
             label={
               <span className="inline-flex items-center gap-1">
-                <Receipt size={12} className="text-gray-400" />
+                <Receipt size={12} className="text-gray-500" />
                 {part.label} @ {Math.round(part.rate * 100)}%
               </span>
             }
@@ -161,7 +161,7 @@ export default function QuotePanel({
 
       <div className="px-5 py-4 space-y-3 border-t border-gray-100">
         <p className="flex items-start gap-2 text-[11px] text-gray-500 leading-relaxed">
-          <Info size={13} className="mt-0.5 shrink-0 text-gray-400" />
+          <Info size={13} className="mt-0.5 shrink-0 text-gray-500" />
           <span>
             <strong className="text-gray-700">An estimate, not a final quote.</strong>{' '}
             Built from current {BRAND.pilotCities.join(' and ')} market rates. A coordinator confirms availability and
@@ -180,13 +180,13 @@ export default function QuotePanel({
             type="button"
             onClick={onPrimary}
             disabled={primaryDisabled}
-            className="w-full min-h-[52px] rounded-xl bg-saffron-500 text-white font-bold text-base flex items-center justify-center gap-1.5 active:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full min-h-[52px] rounded-xl bg-saffron-500 text-ink font-bold text-base flex items-center justify-center gap-1.5 active:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {primaryLabel} <ArrowRight size={17} />
           </button>
         )}
 
-        {footnote && <p className="text-[11px] text-center text-gray-400">{footnote}</p>}
+        {footnote && <p className="text-[11px] text-center text-gray-500">{footnote}</p>}
       </div>
     </div>
   )

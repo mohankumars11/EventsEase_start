@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Home, Store, Sparkles, CalendarHeart, ShoppingBag, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -43,13 +44,64 @@ import { isFocusedRoute } from '../../config/chrome'
  * hidden entirely for vendor/admin, who work inside dedicated dashboards
  * rather than the customer surface.
  */
+/**
+ * Publish the bar's real height as `--bottom-nav-h`.
+ *
+ * Everything that floats above this bar needs to know how tall it is, and
+ * until now every one of them guessed. The literal `4.25rem` was written into
+ * `.pb-bottom-nav`, `.above-bottom-nav`, both ChatWidget offsets, and then
+ * re-derived by eye as `bottom-16` in BookBar, `bottom-20` in ServiceShelf and
+ * `pb-36` in CelebrationBuilder. The bar actually measures ~63px — 32px icon
+ * row + 4px gap + 10px label + 16px padding + 1px border — so every one of
+ * those numbers was wrong, and the 5px difference showed as a live, tappable
+ * strip of page content between each floating bar and the tab bar.
+ *
+ * The bar already carries `pb-safe`, so `offsetHeight` INCLUDES the notch
+ * inset. Consumers therefore use the variable directly and must not add
+ * `env(safe-area-inset-bottom)` on top of it — doing so is what made
+ * BuilderActionBar render ~34px too tall on iOS.
+ *
+ * Same pattern, and the same reasoning, as `--shop-appbar-h` in ShopAppBar.
+ */
+function usePublishedHeight(ref, enabled) {
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    // The component returns null on focused routes and for vendor/admin, so
+    // the element simply is not there. Without this the variable would keep
+    // whatever the last mounted bar measured, and a checkout would reserve
+    // 63px of padding for a bar that is not on screen.
+    if (!enabled || !ref.current) {
+      root.style.setProperty('--bottom-nav-h', '0px')
+      return
+    }
+    const el = ref.current
+    const publish = () => {
+      // At `md` and up the bar is `display:none`, so this is 0 — which is
+      // exactly right, and is why the utilities no longer need an @screen md
+      // override to zero themselves.
+      root.style.setProperty('--bottom-nav-h', `${el.offsetHeight}px`)
+    }
+    publish()
+    if (typeof ResizeObserver === 'undefined') return () => root.style.setProperty('--bottom-nav-h', '0px')
+    const obs = new ResizeObserver(publish)
+    obs.observe(el)
+    return () => { obs.disconnect(); root.style.setProperty('--bottom-nav-h', '0px') }
+  }, [ref, enabled])
+}
+
 export default function BottomNav() {
   const { user, profile } = useAuth()
   const { cartCount, cartPath } = useCart()
   const { open: chatOpen, toggleChat } = useChat()
   const { pathname } = useLocation()
+  const barRef = useRef(null)
 
   const role = profile?.role
+  const hidden = role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
+  // Hooks cannot sit behind the early returns below, so the visibility test is
+  // computed first and passed in.
+  usePublishedHeight(barRef, !hidden)
+
   if (role === 'vendor' || role === 'admin') return null
 
   // Full-screen focused flows own the whole viewport — a tab bar under a
@@ -100,13 +152,47 @@ export default function BottomNav() {
     { action: toggleChat,  icon: MessageCircle, label: 'Help', active: chatOpen },
   ]
 
+  /**
+   * Exactly one tab is lit, on every route.
+   *
+   * The plain prefix match this used to be got three cases wrong, and each of
+   * them is the kind of thing that quietly tells somebody the app is broken:
+   *
+   *   /shop/cart      lit TWO tabs. Shop matched by prefix and Cart matched
+   *                   exactly, so there were two saffron underlines and two
+   *                   elements claiming aria-current="page".
+   *   /               lit NOTHING for a signed-in customer, because their Home
+   *                   tab points at /dashboard/customer while `/` still renders
+   *                   HomeScreen for everyone. A whole grey bar, nothing selected.
+   *   /service/:id    lit nothing, and neither did /festivals/:id — they are
+   *   /festivals/:id  reachable from the rails on Home but belong to no tab.
+   *
+   * So: the cart owns its own path outright, home means either address, and
+   * the strays are mapped to the tab they were reached from.
+   */
+  const HOME_PATHS = ['/', '/dashboard/customer']
+  // Routes that are not a tab's own path but belong under one.
+  const ADOPTED = [
+    { tab: '/plan',     prefixes: ['/service/', '/festivals/'] },
+    { tab: celebrations, prefixes: ['/services'] },
+  ]
+
   function isActive(to) {
-    if (to === '/' || to === '/dashboard/customer') return pathname === to
-    return pathname === to || pathname.startsWith(to + '/')
+    if (!to) return false
+    // The cart is the most specific claim on its own URL; nothing else may
+    // match it, which is what stops Shop lighting up on /shop/cart.
+    if (to !== cartPath && (pathname === cartPath || pathname.startsWith(cartPath + '/'))) {
+      return false
+    }
+    if (HOME_PATHS.includes(to)) return HOME_PATHS.includes(pathname)
+    if (pathname === to || pathname.startsWith(to + '/')) return true
+    const adopted = ADOPTED.find(a => a.tab === to)
+    return !!adopted && adopted.prefixes.some(p => pathname.startsWith(p))
   }
 
   return (
     <nav
+      ref={barRef}
       className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-safe shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]"
       aria-label="Primary"
     >
@@ -148,13 +234,13 @@ export default function BottomNav() {
                   )}
                 </span>
               </span>
-              <span className={`text-[10px] leading-none ${
+              <span className={`whitespace-nowrap text-[10px] leading-none ${
                 primary ? 'font-bold text-plum-800' : active ? 'font-bold' : 'font-medium'
               }`}>
                 {label}
               </span>
               {active && (
-                <span className="absolute top-0 w-8 h-0.5 rounded-full bg-saffron-400" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-saffron-400" />
               )}
             </>
           )
@@ -163,7 +249,7 @@ export default function BottomNav() {
           // INSIDE this box, never in the box — which is what keeps the
           // baseline, the height and the tap target identical across the row.
           const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
-            active ? 'text-plum-700' : 'text-gray-400 active:text-plum-600'
+            active ? 'text-plum-700' : 'text-gray-500 active:text-plum-600'
           }`
 
           if (action) {

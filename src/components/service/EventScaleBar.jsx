@@ -36,15 +36,15 @@ export default function EventScaleBar({
       {/* ── How many people ─────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between gap-3">
-          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.1em] text-white/60">
+          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.1em] text-ink-mute">
             <Users size={12} /> How many guests
           </p>
-          <div className="flex items-center rounded-xl bg-white/10 ring-1 ring-white/15">
+          <div className="flex items-center rounded-xl bg-surface-sunk/[0.07] ring-1 ring-hairline/10">
             <button
               type="button"
               onClick={() => onGuests(Math.max(10, guestCount - 10))}
               aria-label="Ten fewer guests"
-              className="p-1.5 text-white/70"
+              className="p-1.5 text-ink-soft"
             >
               <Minus size={13} />
             </button>
@@ -54,13 +54,13 @@ export default function EventScaleBar({
               value={guestCount}
               onChange={e => onGuests(Math.max(1, Number(e.target.value) || 0))}
               aria-label="Number of guests"
-              className="w-14 bg-transparent text-center text-[14px] font-extrabold text-white outline-none"
+              className="w-14 bg-transparent text-center text-[14px] font-extrabold text-ink outline-none"
             />
             <button
               type="button"
               onClick={() => onGuests(guestCount + 10)}
               aria-label="Ten more guests"
-              className="p-1.5 text-white/70"
+              className="p-1.5 text-ink-soft"
             >
               <Plus size={13} />
             </button>
@@ -76,7 +76,7 @@ export default function EventScaleBar({
               className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors ${
                 guestCount === n
                   ? 'bg-saffron-400 text-plum-950'
-                  : 'bg-white/10 text-white/70 ring-1 ring-white/15'
+                  : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
               }`}
             >
               {n}
@@ -85,7 +85,7 @@ export default function EventScaleBar({
         </div>
 
         {!perGuestMatters && (
-          <p className="mt-1.5 text-[10.5px] leading-snug text-white/45">
+          <p className="mt-1.5 text-[10.5px] leading-snug text-ink-mute">
             This service is priced for the job rather than per head — the count still
             tells us what to send.
           </p>
@@ -97,8 +97,8 @@ export default function EventScaleBar({
           400-seat hall still needs a stage that fills it, and one number
           cannot express both. */}
       {showScale && (
-        <div className="border-t border-white/10 pt-3">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-white/60">
+        <div className="border-t border-hairline/10 pt-3">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-ink-mute">
             Where is it happening
           </p>
           <div className="mt-2 grid grid-cols-3 gap-2">
@@ -113,12 +113,12 @@ export default function EventScaleBar({
                   className={`rounded-2xl p-2.5 text-left transition-all ${
                     active
                       ? 'bg-saffron-400 text-plum-950'
-                      : 'bg-white/[0.07] text-white/75 ring-1 ring-white/12'
+                      : 'bg-surface-sunk/[0.06] text-ink-soft ring-1 ring-hairline/10'
                   }`}
                 >
                   <span className="block text-[15px] leading-none" aria-hidden="true">{s.emoji}</span>
                   <span className="mt-1 block text-[12px] font-extrabold leading-tight">{s.name}</span>
-                  <span className={`mt-0.5 block text-[9.5px] leading-snug ${active ? 'text-plum-900/70' : 'text-white/45'}`}>
+                  <span className={`mt-0.5 block text-[9.5px] leading-snug ${active ? 'text-plum-900/70' : 'text-ink-mute'}`}>
                     {s.note}
                   </span>
                 </button>
@@ -140,16 +140,16 @@ export default function EventScaleBar({
           exactly the customers who are still deciding whether to have the
           event at all. */}
       {onPickDate && (
-        <div className="border-t border-white/10 pt-3">
+        <div className="border-t border-hairline/10 pt-3">
           <button
             type="button"
             onClick={onPickDate}
-            className="flex w-full items-center gap-2.5 rounded-2xl bg-white/[0.07] px-3 py-2.5 text-left ring-1 ring-white/12 transition-colors hover:bg-white/[0.11]"
+            className="flex w-full items-center gap-2.5 rounded-2xl bg-surface-sunk/[0.06] px-3 py-2.5 text-left ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.06]"
           >
             {dateLabel ? (
-              <CalendarCheck size={16} className="shrink-0 text-teal-300" />
+              <CalendarCheck size={16} className="shrink-0 text-teal-700" />
             ) : (
-              <CalendarPlus size={16} className="shrink-0 text-teal-300" />
+              <CalendarPlus size={16} className="shrink-0 text-teal-700" />
             )}
             {/* Not "(optional)" any more, and not "you can add it later".
                 Adding to the cart now asks for the date if it is not already
@@ -159,18 +159,18 @@ export default function EventScaleBar({
                 It is still not a nag: most visitors arrive with the date
                 already picked elsewhere, and this shows it back to them. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] font-extrabold leading-tight text-white">
+              <span className="block text-[12px] font-extrabold leading-tight text-ink">
                 {dateLabel
                   ? `${dateLabel}${slotLabel ? ` · ${slotLabel}` : ''}`
                   : 'When is it?'}
               </span>
-              <span className="block text-[10.5px] leading-snug text-white/45">
+              <span className="block text-[10.5px] leading-snug text-ink-mute">
                 {dateLabel
                   ? 'Saved — we check the team is free for this date before confirming.'
                   : 'Telling us early is what lets us hold the crew. We ask for it when you add.'}
               </span>
             </span>
-            <ChevronRight size={14} className="shrink-0 text-white/30" />
+            <ChevronRight size={14} className="shrink-0 text-ink-mute" />
           </button>
         </div>
       )}

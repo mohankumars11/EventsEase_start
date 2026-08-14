@@ -37,18 +37,18 @@ const ASSURANCES = [
 
 export default function CheckoutFooter() {
   return (
-    <footer className="mt-10 border-t border-white/10 pt-8 pb-6">
+    <footer className="mt-10 border-t border-hairline/10 pt-8 pb-6">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {ASSURANCES.map(({ icon: Icon, title, body }) => (
             <div key={title} className="checkout-glass flex items-start gap-3 p-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-saffron-300">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-saffron-700">
                 <Icon size={17} />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-bold text-white">{title}</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-white/55">{body}</p>
+                <p className="text-[13px] font-bold text-ink">{title}</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">{body}</p>
               </div>
             </div>
           ))}
@@ -57,7 +57,7 @@ export default function CheckoutFooter() {
         {/* ── What will be accepted, shown before it is asked for ── */}
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-mute">
               We accept
             </span>
             <span className="flex items-center gap-1.5 rounded-xl bg-white px-2.5 py-1.5">
@@ -73,20 +73,20 @@ export default function CheckoutFooter() {
               href={`https://wa.me/${BRAND.whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 ring-1 ring-white/15 transition-colors hover:bg-white/15"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunk/[0.07] px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07]"
             >
               <MessageCircle size={12} /> Order help
             </a>
             <a
               href={`tel:${BRAND.supportPhone}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 ring-1 ring-white/15 transition-colors hover:bg-white/15"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunk/[0.07] px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07]"
             >
               <Phone size={12} /> {BRAND.supportPhone}
             </a>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-white/30">
+        <p className="mt-6 text-center text-[11px] text-ink-mute">
           © {new Date().getFullYear()} Sambramo · Prices in ₹ and inclusive of applicable taxes
         </p>
       </div>

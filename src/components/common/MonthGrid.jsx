@@ -58,7 +58,7 @@ export default function MonthGrid({
           onClick={() => onCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
           disabled={atFloor}
           aria-label="Previous month"
-          className="p-2 rounded-lg text-gray-400 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 transition-colors"
+          className="p-2 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 transition-colors"
         >
           <ChevronLeft size={18} />
         </button>
@@ -69,7 +69,7 @@ export default function MonthGrid({
           type="button"
           onClick={() => onCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
           aria-label="Next month"
-          className="p-2 rounded-lg text-gray-400 hover:text-plum-600 hover:bg-plum-50 transition-colors"
+          className="p-2 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 transition-colors"
         >
           <ChevronRight size={18} />
         </button>
@@ -77,7 +77,7 @@ export default function MonthGrid({
 
       <div className="grid grid-cols-7 gap-1 mb-1.5">
         {WEEKDAYS.map(d => (
-          <div key={d.id} className="text-center text-[11px] font-bold text-gray-400 uppercase tracking-wide py-1">
+          <div key={d.id} className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-wide py-1">
             {d.short}
           </div>
         ))}

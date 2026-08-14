@@ -231,7 +231,7 @@ export default function ChatWidget() {
           type="button"
           aria-label="Close the assistant"
           onClick={closeChat}
-          className="md:hidden fixed inset-x-0 top-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-[52] bg-black/40"
+          className="md:hidden fixed inset-x-0 top-0 bottom-[var(--bottom-nav-h,4.25rem)] z-[52] bg-black/40"
         />
       )}
 
@@ -239,7 +239,7 @@ export default function ChatWidget() {
         <div
           role="dialog"
           aria-label="Sambramo Assistant"
-          className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-[55] h-[70dvh] max-h-[calc(100dvh-7rem)] rounded-t-3xl bg-white shadow-2xl border border-gray-100 flex flex-col overflow-hidden
+          className="fixed inset-x-0 bottom-[var(--bottom-nav-h,4.25rem)] z-[55] h-[70dvh] max-h-[calc(100dvh-7rem)] rounded-t-3xl bg-white shadow-2xl border border-gray-100 flex flex-col overflow-hidden
                      md:inset-x-auto md:right-5 md:bottom-[5.5rem] md:z-[45] md:w-[22rem] md:h-[32rem] md:rounded-3xl"
         >
           {/* Header */}
@@ -250,13 +250,13 @@ export default function ChatWidget() {
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-plum-900 rounded-full" />
               </div>
               <div>
-                <p className="text-white font-display font-bold text-sm leading-tight">Sambramo Assistant</p>
-                <p className="text-plum-300 text-[11px] leading-tight">Usually replies instantly</p>
+                <p className="text-ink font-display font-bold text-sm leading-tight">Sambramo Assistant</p>
+                <p className="text-plum-700 text-[11px] leading-tight">Usually replies instantly</p>
               </div>
             </div>
             <button
               onClick={closeChat}
-              className="text-plum-300 hover:text-white transition-colors p-1"
+              className="text-plum-700 hover:text-ink transition-colors p-1"
               aria-label="Close chat"
             >
               <X size={18} />

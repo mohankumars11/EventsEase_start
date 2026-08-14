@@ -53,10 +53,10 @@ export default function ReviewsScroller({ subjects = [], title = 'Customer Feedb
       </div>
 
       {reviews.length === 0 ? (
-        <p className="text-sm text-gray-400 mt-3">No reviews yet — be the first once you've received your order.</p>
+        <p className="text-sm text-gray-500 mt-3">No reviews yet — be the first once you've received your order.</p>
       ) : (
         <>
-          <p className="text-xs text-gray-400 mb-4">{reviews.length} review{reviews.length !== 1 ? 's' : ''} from real customers</p>
+          <p className="text-xs text-gray-500 mb-4">{reviews.length} review{reviews.length !== 1 ? 's' : ''} from real customers</p>
           {/* Fixed-height scroll box — this scrolls, the page doesn't. */}
           <div className="overflow-y-auto pr-1" style={{ maxHeight }}>
             {reviews.map(r => (

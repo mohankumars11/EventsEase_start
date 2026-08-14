@@ -21,9 +21,9 @@ export default function CustomizeModal({ product, fieldConfig, onClose, onConfir
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
           <div>
             <h3 className="font-bold text-gray-900">Make it yours</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{product.name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{product.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1">
             <X size={20} />
           </button>
         </div>
@@ -50,12 +50,12 @@ export default function CustomizeModal({ product, fieldConfig, onClose, onConfir
               className="w-full min-h-[80px] resize-none px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400"
               placeholder={fieldConfig.placeholder}
             />
-            <p className="text-[11px] text-gray-400 mt-1 text-right">{message.length}/200</p>
+            <p className="text-[11px] text-gray-500 mt-1 text-right">{message.length}/200</p>
           </div>
 
           <button
             onClick={() => onConfirm({ qty, customization: message.trim() || null })}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-saffron-500 text-white font-bold hover:bg-saffron-600"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-saffron-500 text-plum-950 font-bold hover:bg-saffron-600"
           >
             <ShoppingCart size={16} /> Add {qty > 1 ? `${qty} to Cart` : 'to Cart'}
             {product.price ? ` — ${formatINR(product.price * qty)}` : ''}

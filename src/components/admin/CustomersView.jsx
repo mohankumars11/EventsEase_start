@@ -187,7 +187,7 @@ export default function CustomersView({ data }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400">{c.phone || c.email || '—'}</div>
+                      <div className="text-xs text-gray-500">{c.phone || c.email || '—'}</div>
                     </td>
                     <td className="px-4 py-3 text-right text-gray-600">{c.city || '—'}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{formatDate(c.created_at)}</td>
@@ -245,12 +245,12 @@ function CustomerDetailPanel({ customer, orders, events, reviews, lines, onClose
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
             <h3 className="font-bold text-gray-900">{customer.full_name || 'Unnamed customer'}</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5">
               Customer since {formatDate(customer.created_at)}
               {customer.repeat ? ' · has ordered more than once' : ''}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={20} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1"><X size={20} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-5">

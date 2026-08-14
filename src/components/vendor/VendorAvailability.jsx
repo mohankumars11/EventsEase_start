@@ -191,7 +191,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
               )
             })}
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-500 mt-2">
             {daysOff.length === 0
               ? 'Open every day. Tap any day you never take work.'
               : `Closed ${daysOff.map(id => WEEKDAYS[id].label).join(', ')}. You can still open a single date below.`}
@@ -231,7 +231,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
             onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
             disabled={atFloor}
             aria-label="Previous month"
-            className="p-2 rounded-lg text-gray-400 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
@@ -241,7 +241,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
           <button
             onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
             aria-label="Next month"
-            className="p-2 rounded-lg text-gray-400 hover:text-plum-600 hover:bg-plum-50 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 transition-colors"
           >
             <ChevronRight size={18} />
           </button>
@@ -249,7 +249,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
 
         <div className="grid grid-cols-7 gap-1 mb-1.5">
           {WEEKDAYS.map(d => (
-            <div key={d.id} className="text-center text-[11px] font-bold text-gray-400 uppercase tracking-wide py-1">
+            <div key={d.id} className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-wide py-1">
               {d.short}
             </div>
           ))}
@@ -317,7 +317,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
               <span className={`w-2.5 h-2.5 rounded-full ${m.dot}`} />{m.label}
             </span>
           ))}
-          <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
             <span className="w-2.5 h-2.5 rounded-full border border-dashed border-gray-400" />
             Standing day off
           </span>
@@ -332,7 +332,7 @@ export default function VendorAvailability({ vendor, availability, onSetDay, onS
         </div>
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         Tapping cycles a date: open → busy → partly booked. Anything you leave
         alone stays open.
       </p>
@@ -373,11 +373,11 @@ function NumberRule({ id, label, suffix, value, min, max, hint, disabled, onComm
           onBlur={commit}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">
           {suffix}
         </span>
       </div>
-      <p className="text-xs text-gray-400 mt-1">{hint}</p>
+      <p className="text-xs text-gray-500 mt-1">{hint}</p>
     </div>
   )
 }

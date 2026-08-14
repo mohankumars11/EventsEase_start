@@ -250,7 +250,7 @@ export default function DateDemandAdmin() {
                 {/* The number a customer would see, or a muted one below the
                     threshold — never a guess about whether a row is live. */}
                 {d.total > 0 && (
-                  <span className={`text-[9px] font-extrabold leading-none ${d.visible ? 'text-teal-700' : 'text-gray-400'}`}>
+                  <span className={`text-[9px] font-extrabold leading-none ${d.visible ? 'text-teal-700' : 'text-gray-500'}`}>
                     {d.total}
                   </span>
                 )}
@@ -367,7 +367,7 @@ export default function DateDemandAdmin() {
             Log enquiries
           </button>
         </form>
-        <p className="mt-2 text-[11px] text-gray-400">
+        <p className="mt-2 text-[11px] text-gray-500">
           Site enquiries count automatically — don't add those here or they count twice.
         </p>
 
@@ -378,7 +378,7 @@ export default function DateDemandAdmin() {
                 <span className="font-bold text-gray-800">+{r.logged_count}</span>
                 <span className="truncate">{r.city ?? 'All cities'} · {r.note}</span>
                 <button onClick={() => removeEntry(r.id)} aria-label={`Remove entry of ${r.logged_count}`}
-                  className="ml-auto shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600">
+                  className="ml-auto shrink-0 rounded p-1 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600">
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -396,7 +396,7 @@ export default function DateDemandAdmin() {
           </button>
         </div>
         {byDate.size === 0 ? (
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-gray-500">
             Nothing logged. Every date currently shows plain and bookable, which is the
             right default until real enquiries exist.
           </p>
@@ -415,7 +415,7 @@ export default function DateDemandAdmin() {
                 }`}
               >
                 <span className="font-semibold text-gray-800">{humanDate(iso)}</span>
-                <span className="text-gray-400">{v.site} site · {v.logged} logged</span>
+                <span className="text-gray-500">{v.site} site · {v.logged} logged</span>
                 <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   v.visible ? 'bg-teal-100 text-teal-800' : 'bg-gray-200 text-gray-500'
                 }`}>

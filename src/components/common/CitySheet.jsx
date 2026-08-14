@@ -155,7 +155,7 @@ export default function CitySheet() {
           <button
             onClick={closeCityPicker}
             aria-label="Close"
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 transition-colors hover:bg-white/20"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07]"
           >
             <X size={17} />
           </button>
@@ -163,7 +163,7 @@ export default function CitySheet() {
           <h2 id="city-sheet-title" className="pr-10 text-lg font-extrabold leading-tight">
             Where are we celebrating?
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-white/70">
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">
             Your city sets what we can deliver, what it costs and who coordinates it.
           </p>
 
@@ -231,7 +231,7 @@ export default function CitySheet() {
                 </div>
               )}
 
-              <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
+              <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
                 Live now
               </p>
             </>
@@ -242,7 +242,7 @@ export default function CitySheet() {
 
           {/* ── The cities you can order in ──────────────────────── */}
           {q && liveMatches.length > 0 && (
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
               Live now
             </p>
           )}
@@ -262,7 +262,7 @@ export default function CitySheet() {
               action, and it is the same capture the rest of the app uses. */}
           {upcomingMatches.length > 0 && (
             <>
-              <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
+              <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
                 Coming soon
               </p>
               <ul className="space-y-2">
@@ -275,7 +275,7 @@ export default function CitySheet() {
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-2">
                           <span className="truncate text-[15px] font-extrabold text-gray-700">{c.name}</span>
-                          <span className="shrink-0 text-[11px] font-medium text-gray-400">{c.state}</span>
+                          <span className="shrink-0 text-[11px] font-medium text-gray-500">{c.state}</span>
                         </p>
                         <p className="text-[11px] text-gray-500">{c.coverage}</p>
                       </div>
@@ -344,7 +344,7 @@ function CityCard({ city: c, selected, onSelect }) {
       }`}
     >
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-        selected ? 'bg-plum-600 text-white' : 'bg-gray-100 text-gray-500'
+        selected ? 'bg-plum-600 text-ink' : 'bg-gray-100 text-gray-500'
       }`}>
         {selected ? <Check size={18} strokeWidth={2.6} /> : <MapPin size={17} />}
       </span>
@@ -352,7 +352,7 @@ function CityCard({ city: c, selected, onSelect }) {
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <span className="truncate text-[15px] font-extrabold text-gray-900">{c.name}</span>
-          <span className="shrink-0 text-[11px] font-medium text-gray-400">{c.state}</span>
+          <span className="shrink-0 text-[11px] font-medium text-gray-500">{c.state}</span>
         </span>
 
         {/* What actually runs here. Two chips beat a sentence: the question

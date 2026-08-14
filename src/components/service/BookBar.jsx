@@ -25,41 +25,52 @@ import { formatINR } from '../../utils/format'
  * be told what happened and offered somewhere to go. Nobody has to predict
  * which button they will want before they have pressed anything.
  *
- * It sits above the phone tab bar (`bottom-16`), not over it: the tab bar is
- * the app's navigation and covering it to sell something is the pattern that
- * makes people close a page rather than use it.
+ * It sits above the phone tab bar, not over it: the tab bar is the app's
+ * navigation and covering it to sell something is the pattern that makes
+ * people close a page rather than use it.
+ *
+ * That was the intent; `bottom-16` did not deliver it. 16 is a flat 64px with
+ * no `env(safe-area-inset-bottom)`, so on any phone with a home indicator the
+ * tab bar is ~97px tall and this bar's lower third was BEHIND it — and at
+ * z-30 against the bar's z-50, the nav painted straight over the disclaimer
+ * and the bottom of the Add to cart button. `.above-bottom-nav` exists for
+ * exactly this and is measured rather than guessed, so it is used here now.
+ *
+ * `pr-chat-dock` for the same reason StickyCartBar carries it: from `md` up
+ * the chat launcher parks in the bottom-right corner at z-45, directly on top
+ * of this bar's own CTA.
  */
 export default function BookBar({
   total, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
   estimateNote = true,
 }) {
   return (
-    <div className="animate-pop-in fixed inset-x-0 bottom-16 z-30 px-3 pb-2 md:bottom-3">
-      <div className="mx-auto max-w-3xl rounded-3xl bg-plum-950/95 p-3 shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.8)] ring-1 ring-white/12 backdrop-blur-md">
-        <div className="flex items-end justify-between gap-3 px-1">
+    <div className="animate-pop-in above-bottom-nav pr-chat-dock fixed inset-x-0 z-30 px-3 pb-2 md:pb-3">
+      <div className="mx-auto max-w-3xl rounded-3xl bg-surface/95 p-3 shadow-[var(--shadow-2)] ring-1 ring-hairline/10 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-3 px-1">
           <div className="min-w-0">
             {added ? (
               <>
-                <p className="flex items-center gap-1.5 text-[11px] font-extrabold text-green-300">
+                <p className="flex items-center gap-1.5 text-[11px] font-extrabold text-green-700">
                   <Check size={13} strokeWidth={3} /> Added to your cart
                 </p>
-                <p className="truncate text-[13px] font-bold leading-tight text-white">{lineLabel}</p>
-                <p className="truncate text-[10.5px] leading-snug text-white/45">
+                <p className="truncate text-[13px] font-bold leading-tight text-ink">{lineLabel}</p>
+                <p className="truncate text-[10.5px] leading-snug text-ink-mute">
                   Keep browsing — add as many services as you need, then send them together.
                 </p>
               </>
             ) : (
               <>
-                <p className="truncate text-[11px] font-bold text-white/55">{lineLabel}</p>
-                <p className="text-[20px] font-extrabold leading-tight text-white">
+                <p className="truncate text-[11px] font-bold text-ink-mute">{lineLabel}</p>
+                <p className="text-[20px] font-extrabold leading-tight text-ink">
                   {formatINR(total)}
                   {estimateNote && (
-                    <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-saffron-300">
+                    <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-saffron-700">
                       estimate
                     </span>
                   )}
                 </p>
-                {detail && <p className="truncate text-[10.5px] leading-snug text-white/45">{detail}</p>}
+                {detail && <p className="truncate text-[10.5px] leading-snug text-ink-mute">{detail}</p>}
               </>
             )}
           </div>
@@ -83,7 +94,7 @@ export default function BookBar({
           )}
         </div>
 
-        <p className="mt-1.5 px-1 text-[9.5px] leading-snug text-white/35">
+        <p className="mt-1.5 px-1 text-[9.5px] leading-snug text-ink-mute">
           Nothing is charged now. A coordinator confirms availability and the final
           figure before anything is booked.
         </p>

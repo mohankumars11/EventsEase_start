@@ -50,9 +50,9 @@ export default function ReviewModal({ subject, source, onClose, onSubmitted }) {
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
           <div>
             <h3 className="font-bold text-gray-900">Rate &amp; review</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{subject.name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{subject.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1">
             <X size={20} />
           </button>
         </div>

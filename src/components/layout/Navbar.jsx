@@ -73,10 +73,10 @@ export default function Navbar() {
   const showCart   = !profile || isCustomer
 
   const navClass = scrolled
-    ? 'bg-plum-950/90 backdrop-blur-md shadow-lg border-transparent'
-    : 'bg-plum-950 border-b border-plum-800'
+    ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
+    : 'bg-surface border-b border-hairline/10'
 
-  const linkClass = 'text-plum-300 hover:text-white hover:bg-plum-800'
+  const linkClass = 'text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07]'
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${navClass}`}>
@@ -95,7 +95,7 @@ export default function Navbar() {
                 menu button, have to drop it. */}
             <SambramoLogo
               size={32}
-              ground="onDark"
+              ground="onLight"
               caption="emotion"
               captionClassName="hidden min-[360px]:flex"
             />
@@ -148,7 +148,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-plum-300 hover:text-white px-3 py-2 rounded-lg transition-colors"
+                  className="text-sm font-medium text-ink-mute hover:text-ink px-3 py-2 rounded-lg transition-colors"
                 >
                   Login
                 </Link>
@@ -164,7 +164,7 @@ export default function Navbar() {
           <div className="flex md:hidden items-center gap-1">
             {showCart && <CartButton to={cartPath} count={cartCount} />}
             <button
-              className="p-2.5 rounded-lg text-plum-300 hover:text-white hover:bg-plum-800 transition-colors"
+              className="p-2.5 rounded-lg text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07] transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
@@ -179,7 +179,7 @@ export default function Navbar() {
       <div className={`md:hidden overflow-hidden transition-all duration-300 ${
         menuOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'
       }`}>
-        <div className="border-t border-plum-800 bg-plum-900 px-4 py-4 flex flex-col gap-1">
+        <div className="border-t border-hairline/10 bg-surface px-4 py-4 flex flex-col gap-1">
           {!user && NAV_LINKS.map(({ label, hash, to }) => (
             to ? (
               <MobileLink key={label} to={to}>{label}</MobileLink>
@@ -187,7 +187,7 @@ export default function Navbar() {
               <button
                 key={label}
                 onClick={() => scrollToSection(hash)}
-                className="text-sm font-medium text-plum-200 py-3 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors w-full text-left"
+                className="text-sm font-medium text-ink-soft py-3 px-3 rounded-lg hover:bg-surface-sunk/[0.07] hover:text-ink transition-colors w-full text-left"
               >
                 {label}
               </button>
@@ -201,12 +201,12 @@ export default function Navbar() {
                   {profile?.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{profile?.full_name ?? 'My Account'}</p>
-                  <p className="text-xs text-plum-400 truncate">{profile?.email ?? profile?.phone ?? ''}</p>
+                  <p className="text-sm font-semibold text-ink truncate">{profile?.full_name ?? 'My Account'}</p>
+                  <p className="text-xs text-ink-mute truncate">{profile?.email ?? profile?.phone ?? ''}</p>
                 </div>
               </div>
 
-              <div className="border-t border-plum-800 my-1" />
+              <div className="border-t border-hairline/10 my-1" />
 
               {isCustomer && (
                 <>
@@ -219,7 +219,7 @@ export default function Navbar() {
 
               <button
                 onClick={() => { signOut(); navigate('/') }}
-                className="w-full text-left text-sm font-medium text-rose-400 py-3 px-3 rounded-lg hover:bg-plum-800 transition-colors"
+                className="w-full text-left text-sm font-medium text-rose-400 py-3 px-3 rounded-lg hover:bg-surface-sunk/[0.07] transition-colors"
               >
                 Sign out
               </button>
@@ -227,11 +227,11 @@ export default function Navbar() {
           ) : (
             <>
               <MobileLink to="/shop">Shop</MobileLink>
-              <div className="border-t border-plum-800 my-2" />
+              <div className="border-t border-hairline/10 my-2" />
               <div className="flex gap-2">
                 <Link
                   to="/login"
-                  className="flex-1 text-sm font-medium text-center text-plum-200 border border-plum-700 py-3 px-3 rounded-xl hover:bg-plum-800 hover:text-white transition-colors"
+                  className="flex-1 text-sm font-medium text-center text-ink-soft border border-hairline/10 py-3 px-3 rounded-xl hover:bg-surface-sunk/[0.07] hover:text-ink transition-colors"
                 >
                   Login
                 </Link>
@@ -257,7 +257,7 @@ function MobileLink({ to, children }) {
   return (
     <Link
       to={to}
-      className="text-sm font-medium text-plum-200 py-3 px-3 rounded-lg hover:bg-plum-800 hover:text-white transition-colors"
+      className="text-sm font-medium text-ink-soft py-3 px-3 rounded-lg hover:bg-surface-sunk/[0.07] hover:text-ink transition-colors"
     >
       {children}
     </Link>
@@ -268,12 +268,12 @@ function CartButton({ to, count }) {
   return (
     <Link
       to={to}
-      className="relative p-2.5 rounded-lg text-plum-200 hover:text-white hover:bg-plum-800 transition-colors"
+      className="relative p-2.5 rounded-lg text-ink-soft hover:text-ink hover:bg-surface-sunk/[0.07] transition-colors"
       aria-label={count > 0 ? `Cart, ${count} item${count === 1 ? '' : 's'}` : 'Cart, empty'}
     >
       <ShoppingBag size={20} />
       {count > 0 && (
-        <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-plum-950">
+        <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-berry-500 text-ink text-[10px] font-bold flex items-center justify-center ring-2 ring-[color:var(--bar)]">
           {count > 9 ? '9+' : count}
         </span>
       )}

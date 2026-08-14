@@ -828,7 +828,12 @@ export default function CelebrationBuilder() {
   const progressPct = Math.round((doneCount / Math.max(1, flow.length - 1)) * 100)
 
   return (
-    <div className="plan-canvas min-h-screen pb-36 lg:pb-8">
+    {/* Clearance for TWO stacked things, not one: the tab bar (measured, via
+        --bottom-nav-h) plus BuilderActionBar floating above it (~5rem). The
+        old `pb-36` was a flat 144px guess that came up ~56px short on a
+        notched phone, so this page's last line sat under its own submit bar —
+        while the `done` branch at line 730 used pb-bottom-nav and disagreed. */}
+    <div className="plan-canvas min-h-screen pb-[calc(var(--bottom-nav-h,4.25rem)+5rem)] lg:pb-8">
       {/* ── Hero ───────────────────────────────────────────────────────
           The occasion's own gradient rides as a translucent wash over the
           page's ground rather than as an opaque band across it. An opaque

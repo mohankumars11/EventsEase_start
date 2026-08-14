@@ -168,10 +168,10 @@ export default function PlanHub() {
             seven things in a fifth of the height and gets the occasion grid
             above the fold on a phone. */}
         <header className="px-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-saffron-300">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-saffron-700">
             {meta.known ? `Planning ${meta.label?.toLowerCase()}` : 'Tell us the occasion'}
           </p>
-          <h1 className="mt-1.5 font-serif text-[26px] font-bold leading-tight text-white sm:text-3xl">
+          <h1 className="mt-1.5 font-serif text-[26px] font-bold leading-tight text-ink sm:text-3xl">
             {meta.known
               ? `Let's make this ${meta.label?.toLowerCase()} yours.`
               : "What are we celebrating?"}
@@ -194,12 +194,12 @@ export default function PlanHub() {
               costs them the rest of the page. */}
           {pickedDate ? (
             <div className="mt-3 rounded-2xl bg-teal-400/10 p-3 ring-1 ring-teal-300/30">
-              <p className="flex items-center gap-2 text-[12px] leading-tight text-white/85">
-                <CalendarCheck size={15} className="shrink-0 text-teal-300" />
+              <p className="flex items-center gap-2 text-[12px] leading-tight text-ink-soft">
+                <CalendarCheck size={15} className="shrink-0 text-teal-700" />
                 <span>
-                  <span className="font-extrabold text-white">{pickedDate}</span>
+                  <span className="font-extrabold text-ink">{pickedDate}</span>
                   {pickedSlot ? ` · ${pickedSlot}` : ''} saved
-                  <span className="text-white/55"> — now pick what we're celebrating.</span>
+                  <span className="text-ink-mute"> — now pick what we're celebrating.</span>
                 </span>
               </p>
               <div className="mt-2.5 flex flex-wrap gap-2">
@@ -213,7 +213,7 @@ export default function PlanHub() {
                 <button
                   type="button"
                   onClick={forgetDate}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/75 ring-1 ring-white/15"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-bold text-ink-soft ring-1 ring-hairline/10"
                 >
                   I'll decide the date later
                 </button>
@@ -223,19 +223,19 @@ export default function PlanHub() {
             <button
               type="button"
               onClick={() => setDateSheetOpen(true)}
-              className="mt-3 flex w-full items-center gap-2.5 rounded-2xl bg-white/5 px-3 py-2.5 text-left ring-1 ring-white/15 transition-colors hover:bg-white/10"
+              className="mt-3 flex w-full items-center gap-2.5 rounded-2xl bg-surface px-3 py-2.5 text-left ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.05]"
             >
-              <CalendarPlus size={16} className="shrink-0 text-teal-300" />
+              <CalendarPlus size={16} className="shrink-0 text-teal-700" />
               <span className="min-w-0 flex-1">
-                <span className="block text-[12px] font-extrabold text-white">
+                <span className="block text-[12px] font-extrabold text-ink">
                   Have a date in mind?
                 </span>
-                <span className="block text-[11px] leading-tight text-white/55">
+                <span className="block text-[11px] leading-tight text-ink-mute">
                   Check it in the calendar — every date is open, and telling us early
                   is what lets us hold the Masters.
                 </span>
               </span>
-              <ArrowRight size={14} className="shrink-0 text-white/30" />
+              <ArrowRight size={14} className="shrink-0 text-ink/40" />
             </button>
           )}
 
@@ -248,18 +248,18 @@ export default function PlanHub() {
         {/* ── Occasions ─────────────────────────────────────────────── */}
         <section aria-labelledby="occasions-heading">
           <div className="px-4">
-            <h2 id="occasions-heading" className="text-[17px] font-extrabold text-white">
+            <h2 id="occasions-heading" className="text-[17px] font-extrabold text-ink">
               Plan a full celebration
             </h2>
-            <p className="mt-1 text-[12px] text-white/60">
+            <p className="mt-1 text-[12px] text-ink-mute">
               Pick the occasion — we'll show you what it includes and what it costs.
             </p>
           </div>
 
           {matchedOccasions.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <SearchX size={26} className="mx-auto text-white/30" />
-              <p className="mt-2 text-sm text-white/55">
+              <SearchX size={26} className="mx-auto text-ink-mute" />
+              <p className="mt-2 text-sm text-ink-mute">
                 No occasion matches “{query}” — try the services below.
               </p>
             </div>
@@ -300,7 +300,7 @@ export default function PlanHub() {
             the services and the scale than it did as one of three doors
             shown before anything else. */}
         <section className="px-4">
-          <div className="rounded-3xl bg-gradient-to-br from-plum-700 to-berry-700 p-5 ring-1 ring-white/10">
+          <div className="rounded-3xl bg-gradient-to-br from-plum-700 to-berry-700 p-5 ring-1 ring-plum-900/20">
             <h2 className="font-serif text-[20px] font-bold leading-tight text-white">
               Or just tell us, and we'll take it from here.
             </h2>

@@ -90,7 +90,7 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
               <p className="mt-1.5 font-serif text-[21px] font-extrabold leading-[1.04] text-white drop-shadow-sm">
                 {slide.title}
               </p>
-              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-white/80">
+              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-ink-soft">
                 {slide.body}
               </p>
               <span className="mt-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-[11px] font-extrabold text-plum-900 shadow-sm">

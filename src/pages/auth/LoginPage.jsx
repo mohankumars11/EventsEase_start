@@ -200,7 +200,7 @@ export default function LoginPage() {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
                       type="email"
                       value={email}
@@ -224,7 +224,7 @@ export default function LoginPage() {
 
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-400 uppercase tracking-wider">or</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
 
@@ -279,7 +279,7 @@ export default function LoginPage() {
                   <ArrowLeft size={14} /> Change email
                 </button>
                 {resendTimer > 0 ? (
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
                     <RefreshCw size={11} /> Resend in {resendTimer}s
                   </p>
                 ) : (
@@ -323,7 +323,7 @@ export default function LoginPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Tip: You can paste the code directly.</p>
+                  <p className="text-xs text-gray-500 mt-2">Tip: You can paste the code directly.</p>
                 </div>
 
                 {error && <ErrorBox message={error} />}
@@ -348,7 +348,7 @@ export default function LoginPage() {
                   ← Instructions
                 </button>
                 {resendTimer > 0 ? (
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
                     <RefreshCw size={11} /> Resend in {resendTimer}s
                   </p>
                 ) : (

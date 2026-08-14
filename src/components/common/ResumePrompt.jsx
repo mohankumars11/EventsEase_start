@@ -102,16 +102,16 @@ export default function ResumePrompt() {
           </span>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-300">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700">
               {isWork ? 'Still unfinished' : 'Pick up where you left off'}
             </p>
-            <p className="mt-0.5 truncate text-[14px] font-extrabold text-white">
+            <p className="mt-0.5 truncate text-[14px] font-extrabold text-ink">
               {target.label}
             </p>
             {/* The detail is the proof the work survived — "Step 4 of 6 ·
                 Wedding" is what turns a generic offer into a specific one. It
                 is only ever present when the page reported it. */}
-            <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11.5px] text-white/50">
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11.5px] text-ink-mute">
               <Clock3 size={11} className="shrink-0" />
               {target.detail ? `${target.detail} · ` : ''}{agoLabel(target.at)}
             </p>
@@ -121,7 +121,7 @@ export default function ResumePrompt() {
             type="button"
             onClick={() => dismissResume(target.href)}
             aria-label="Not now"
-            className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+            className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-ink-mute transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink"
           >
             <X size={16} />
           </button>

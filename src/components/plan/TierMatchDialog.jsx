@@ -91,7 +91,7 @@ export default function TierMatchDialog({
           type="button"
           onClick={onDismiss}
           aria-label="Close"
-          className="absolute right-2 top-2 z-10 w-10 h-10 rounded-full flex items-center justify-center text-gray-400 active:bg-gray-100 sm:text-white/70 sm:active:bg-white/15"
+          className="absolute right-2 top-2 z-10 w-10 h-10 rounded-full flex items-center justify-center text-gray-500 active:bg-gray-100 sm:text-ink-soft sm:active:bg-surface-sunk/[0.07]"
         >
           <X size={18} />
         </button>
@@ -117,7 +117,7 @@ export default function TierMatchDialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <p className="text-sm font-medium text-gray-700">{tier.tagline}</p>
 
-          <p className="mt-3 text-[11px] uppercase tracking-wider font-bold text-gray-400">
+          <p className="mt-3 text-[11px] uppercase tracking-wider font-bold text-gray-500">
             What this circle brings with it
           </p>
           <ul className="mt-2 space-y-1.5">

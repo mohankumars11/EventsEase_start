@@ -66,7 +66,7 @@ export default function PromiseTicker({ city = null, className = '' }) {
     {
       key: 'services',
       icon: LayoutGrid,
-      tint: 'text-teal-300 bg-teal-400/15',
+      tint: 'text-teal-700 bg-teal-400/15',
       head: `${CATALOG_STATS.services} services`,
       sub: 'The whole day, or just the cook',
     },
@@ -80,7 +80,7 @@ export default function PromiseTicker({ city = null, className = '' }) {
     {
       key: 'no-advance',
       icon: ShieldCheck,
-      tint: 'text-berry-300 bg-berry-400/15',
+      tint: 'text-berry-700 bg-berry-400/15',
       head: 'No advance to enquire',
       sub: 'No card, no deposit, no catch',
     },
@@ -94,7 +94,7 @@ export default function PromiseTicker({ city = null, className = '' }) {
     {
       key: 'vendors',
       icon: BadgeCheck,
-      tint: 'text-teal-300 bg-teal-400/15',
+      tint: 'text-teal-700 bg-teal-400/15',
       head: 'Vetted vendors',
       // Naming the city is the single most persuasive word in the strip for
       // somebody who has told us where they are — "local" is a claim,
@@ -169,16 +169,16 @@ function PromiseCard({ promise, className = '', ...rest }) {
   return (
     <div
       {...rest}
-      className={`flex shrink-0 items-center gap-2.5 rounded-2xl bg-white/[0.07] px-3 py-2.5 ring-1 ring-inset ring-white/[0.12] ${className}`}
+      className={`flex shrink-0 items-center gap-2.5 rounded-2xl bg-surface-sunk/[0.06] px-3 py-2.5 ring-1 ring-inset ring-white/[0.12] ${className}`}
     >
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${promise.tint}`}>
         <Icon size={15} strokeWidth={2.4} />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[12.5px] font-extrabold leading-tight text-white">
+        <span className="block truncate text-[12.5px] font-extrabold leading-tight text-ink">
           {promise.head}
         </span>
-        <span className="mt-0.5 block truncate text-[10.5px] leading-tight text-white/55">
+        <span className="mt-0.5 block truncate text-[10.5px] leading-tight text-ink-mute">
           {promise.sub}
         </span>
       </span>

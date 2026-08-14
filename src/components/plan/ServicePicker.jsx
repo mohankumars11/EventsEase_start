@@ -81,7 +81,7 @@ export default function ServicePicker({
                     <span className={`mt-0.5 shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
                       picked ? 'bg-green-600 text-white' : 'border-2 border-gray-300'
                     }`}>
-                      {picked ? <Check size={14} /> : <Plus size={12} className="text-gray-400" />}
+                      {picked ? <Check size={14} /> : <Plus size={12} className="text-gray-500" />}
                     </span>
 
                     <span className="min-w-0 flex-1">
@@ -96,12 +96,12 @@ export default function ServicePicker({
                         )}
                       </span>
                       <span className="block text-xs text-gray-500 mt-0.5">{service.desc}</span>
-                      {service.note && <span className="block text-[11px] text-gray-400 mt-0.5">{service.note}</span>}
+                      {service.note && <span className="block text-[11px] text-gray-500 mt-0.5">{service.note}</span>}
                     </span>
 
                     <span className="shrink-0 text-right">
                       <span className="block text-sm font-bold text-plum-700">{formatINR(amount)}</span>
-                      <span className="block text-[10px] text-gray-400 leading-tight max-w-[92px]">
+                      <span className="block text-[10px] text-gray-500 leading-tight max-w-[92px]">
                         {serviceUnitLabel(service)}
                       </span>
                     </span>
@@ -150,7 +150,7 @@ function BigToggle({ icon: Icon, label, hint, on, onChange, amount }) {
       <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
         on ? 'bg-green-600 text-white' : 'border-2 border-gray-300'
       }`}>
-        {on ? <Check size={14} /> : <Plus size={12} className="text-gray-400" />}
+        {on ? <Check size={14} /> : <Plus size={12} className="text-gray-500" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-base font-semibold text-gray-900">

@@ -134,7 +134,7 @@ export default function EventRequests({ data, navigate }) {
               aria-selected={on}
               onClick={() => setTab(t.id)}
               className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                on ? 'text-white border-transparent shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                on ? 'text-ink border-transparent shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
               }`}
               style={on ? {
                 // Ordered stages get the ordinal ramp — the same one the funnel

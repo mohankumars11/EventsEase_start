@@ -80,7 +80,7 @@ export default function VendorDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-24 flex flex-col items-center gap-3 text-gray-400">
+      <div className="max-w-5xl mx-auto px-4 py-24 flex flex-col items-center gap-3 text-gray-500">
         <Loader2 className="animate-spin text-plum-600" size={30} />
         <span className="text-sm">Loading your dashboard…</span>
       </div>
@@ -123,7 +123,7 @@ export default function VendorDashboard() {
           <Link to="/onboarding/vendor" className="btn-cta mt-7">
             Set up my profile <ArrowRight size={18} />
           </Link>
-          <button onClick={handleSignOut} className="block mx-auto mt-5 text-xs text-gray-400 hover:text-gray-600">
+          <button onClick={handleSignOut} className="block mx-auto mt-5 text-xs text-gray-500 hover:text-gray-600">
             Sign out
           </button>
         </div>
@@ -298,7 +298,7 @@ function Overview({ vendor, stats, checklist, businessName, onGo }) {
                   {step.done
                     ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                     : <Circle       size={16} className="text-saffron-400 shrink-0" />}
-                  <span className={step.done ? 'line-through text-gray-400' : 'text-gray-800'}>
+                  <span className={step.done ? 'line-through text-gray-500' : 'text-gray-800'}>
                     {step.label}
                   </span>
                   {!step.done && (step.tab || step.to) && (
@@ -341,13 +341,13 @@ function Overview({ vendor, stats, checklist, businessName, onGo }) {
 
       {/* Stats */}
       <section>
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Your numbers</h2>
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your numbers</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {tiles.map(({ label, value, hint }) => (
             <div key={label} className="card p-4">
               <div className="text-2xl font-display font-bold text-gray-900">{value}</div>
               <div className="text-xs font-semibold text-gray-600 mt-1">{label}</div>
-              <div className="text-[11px] text-gray-400">{hint}</div>
+              <div className="text-[11px] text-gray-500">{hint}</div>
             </div>
           ))}
         </div>
@@ -440,7 +440,7 @@ function Account({ vendor, profile, plan, businessName }) {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           {rows.map(([label, value]) => (
             <div key={label} className="flex items-baseline gap-3 min-w-0">
-              <dt className="text-xs text-gray-400 w-28 shrink-0">{label}</dt>
+              <dt className="text-xs text-gray-500 w-28 shrink-0">{label}</dt>
               <dd className="text-sm font-medium text-gray-800 truncate">{value || '—'}</dd>
             </div>
           ))}
@@ -453,7 +453,7 @@ function Account({ vendor, profile, plan, businessName }) {
       </section>
 
       <section>
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Your plan</h2>
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your plan</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {VENDOR_PLANS.map(p => {
             const current = p.id === plan.id
@@ -469,7 +469,7 @@ function Account({ vendor, profile, plan, businessName }) {
                     </span>
                   )}
                   {!current && p.popular && (
-                    <span className="text-[10px] font-bold bg-saffron-500 text-white px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold bg-saffron-500 text-plum-950 px-2 py-0.5 rounded-full">
                       Popular
                     </span>
                   )}
@@ -483,7 +483,7 @@ function Account({ vendor, profile, plan, businessName }) {
                   ))}
                 </ul>
                 {current ? (
-                  <div className="w-full mt-5 text-xs font-semibold text-center text-gray-400 border border-gray-100 rounded-xl py-2.5">
+                  <div className="w-full mt-5 text-xs font-semibold text-center text-gray-500 border border-gray-100 rounded-xl py-2.5">
                     Your plan
                   </div>
                 ) : (

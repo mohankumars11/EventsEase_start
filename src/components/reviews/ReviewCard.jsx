@@ -38,7 +38,7 @@ export default function ReviewCard({ review, onVoted }) {
           </div>
           <div className="flex items-center gap-2 mt-1">
             <StarRating value={review.rating} showValue={false} size="xs" />
-            <span className="text-xs text-gray-400">{formatDate(review.created_at)}</span>
+            <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
           </div>
           {review.comment && <p className="text-sm text-gray-700 mt-2 leading-relaxed">{review.comment}</p>}
 
@@ -52,7 +52,7 @@ export default function ReviewCard({ review, onVoted }) {
           <button
             onClick={castHelpfulVote}
             disabled={!user || voting}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-plum-600 mt-3 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-plum-600 mt-3 disabled:opacity-50 transition-colors"
           >
             <ThumbsUp size={13} /> Helpful{review.helpful_count > 0 ? ` (${review.helpful_count})` : ''}
           </button>

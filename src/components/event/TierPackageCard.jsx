@@ -58,7 +58,7 @@ export default function TierPackageCard({
           colour runs at full strength. The occasion's own ink stays on the
           primary button, which is how the page keeps its identity while the
           cards keep theirs. */}
-      <div className={`event-card sheen-on-hover ${tier.surface ?? ''} ${selected ? 'ring-2 ring-white/60' : ''}`}>
+      <div className={`event-card sheen-on-hover ${tier.surface ?? ''} ${selected ? 'ring-2 ring-hairline/10' : ''}`}>
         <span className={`absolute inset-y-0 left-0 z-10 w-1.5 ${tier.spine ?? ''}`} aria-hidden="true" />
 
         {/* The chosen scale announces itself in words at the top of the card.
@@ -66,7 +66,7 @@ export default function TierPackageCard({
             having picked its own option. */}
         {selected && (
           <div
-            className="flex items-center gap-1.5 py-1.5 pl-6 pr-4 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white"
+            className="flex items-center gap-1.5 py-1.5 pl-6 pr-4 text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink"
             style={{ background: 'var(--event-ink)' }}
           >
             <Check size={11} /> Your scale
@@ -80,7 +80,7 @@ export default function TierPackageCard({
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="text-2xl" aria-hidden="true">{tier.emoji}</span>
                 <h3 className="text-[17px] font-extrabold leading-tight text-gray-900">{tier.name}</h3>
-                <span className={`text-[11px] font-semibold italic ${tier.ink ?? 'text-gray-400'}`}>
+                <span className={`text-[11px] font-semibold italic ${tier.ink ?? 'text-gray-500'}`}>
                   {tier.localName}
                 </span>
               </div>
@@ -104,11 +104,11 @@ export default function TierPackageCard({
                 reads as a dead patch; white reads as a panel set into the
                 card, which is what they are. */}
             <div className="shrink-0 rounded-2xl bg-white/80 px-2.5 py-2 text-center ring-1 ring-black/5">
-              <Users size={12} className="mx-auto text-gray-400" />
+              <Users size={12} className="mx-auto text-gray-500" />
               <p className="mt-0.5 whitespace-nowrap text-[12px] font-extrabold text-gray-800">
                 {tier.guests.min}–{tier.guests.max}
               </p>
-              <p className="text-[9px] uppercase tracking-wide text-gray-400">guests</p>
+              <p className="text-[9px] uppercase tracking-wide text-gray-500">guests</p>
             </div>
           </div>
 
@@ -117,16 +117,16 @@ export default function TierPackageCard({
           {/* ── The two numbers ───────────────────────────────── */}
           <div className="mt-3.5 grid grid-cols-2 gap-2">
             <div className="rounded-2xl bg-white/80 p-2.5 ring-1 ring-black/5">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400">Starts at</p>
+              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">Starts at</p>
               <p className="text-[15px] font-extrabold leading-tight text-gray-900">
                 {Number.isFinite(tier.from) ? formatINR(tier.from) : '—'}
               </p>
-              <p className="text-[9.5px] leading-tight text-gray-400">
+              <p className="text-[9.5px] leading-tight text-gray-500">
                 the cheapest real booking at {tier.guests.min} guests
               </p>
             </div>
             <div className="rounded-2xl bg-white/80 p-2.5 ring-1 ring-black/5">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">
                 Typical {tier.typicalGuests} guests
               </p>
               <p className="text-[15px] font-extrabold leading-tight" style={{ color: 'var(--event-ink)' }}>
@@ -134,7 +134,7 @@ export default function TierPackageCard({
                   ? `${formatINR(tier.range.low)}–${formatINR(tier.range.high)}`
                   : 'On request'}
               </p>
-              <p className="text-[9.5px] leading-tight text-gray-400">
+              <p className="text-[9.5px] leading-tight text-gray-500">
                 incl. taxes{tier.perGuest ? ` · ≈ ${formatINR(tier.perGuest)}/guest` : ''}
               </p>
             </div>
@@ -167,14 +167,14 @@ export default function TierPackageCard({
           <div className="mt-3 flex flex-wrap gap-1.5">
             {tier.cuisine && (
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[10.5px] font-semibold text-gray-600 ring-1 ring-black/5">
-                <UtensilsCrossed size={10} className="text-gray-400" />
+                <UtensilsCrossed size={10} className="text-gray-500" />
                 {tier.cuisine.name}
                 {tier.vegOnly ? ' · pure veg' : ''}
               </span>
             )}
             {tier.decor && (
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2 py-1 text-[10.5px] font-semibold text-gray-600 ring-1 ring-black/5">
-                <Palette size={10} className="text-gray-400" />
+                <Palette size={10} className="text-gray-500" />
                 {tier.decor.name} decor
               </span>
             )}
@@ -188,7 +188,7 @@ export default function TierPackageCard({
             ))}
           </div>
 
-          <p className="mt-2.5 text-[10.5px] leading-relaxed text-gray-400">
+          <p className="mt-2.5 text-[10.5px] leading-relaxed text-gray-500">
             {tier.coordination}
             {tier.coordinationPct ? ` · coordination is about ${tier.coordinationPct}% of the total` : ''}
           </p>
@@ -197,7 +197,7 @@ export default function TierPackageCard({
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
             <Link
               to={`/plan/build/${eventId}?tier=${tier.id}&guests=${tier.typicalGuests}`}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-white transition-transform active:scale-95"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-ink transition-transform active:scale-95"
               style={{ background: 'var(--event-ink)' }}
             >
               Build &amp; price this <ArrowRight size={14} />
@@ -208,7 +208,7 @@ export default function TierPackageCard({
               className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-extrabold transition-transform active:scale-95 ${
                 inCart
                   ? 'cursor-default bg-green-50 text-green-700 ring-1 ring-green-200'
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                  : 'bg-gray-900 text-ink hover:bg-gray-800'
               }`}
             >
               {inCart ? <Check size={14} /> : <ShoppingCart size={14} />}
@@ -220,7 +220,7 @@ export default function TierPackageCard({
             <button
               type="button"
               onClick={onSelect}
-              className="text-[11px] font-bold text-gray-400 hover:text-gray-700"
+              className="text-[11px] font-bold text-gray-500 hover:text-gray-700"
             >
               {selected ? `Your scale — ${guestLabel}` : `Set this as my scale (${guestLabel})`}
             </button>

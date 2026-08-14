@@ -91,23 +91,23 @@ export default function ReviewBoard({
       {/* ── The headline ───────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-plum-800 via-plum-700 to-plum-900 text-white shadow-lg">
         <div className="px-5 pt-5 pb-4">
-          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-white/50">
+          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-ink-mute">
             Your celebration, priced
           </p>
-          <p className="mt-1 text-base font-bold text-white/90">
+          <p className="mt-1 text-base font-bold text-ink-soft">
             {occasionEmoji} {occasionName}
           </p>
           <p className="mt-3 text-3xl sm:text-4xl font-extrabold leading-none">
             {formatINR(quote.range.low)}
-            <span className="text-white/40 font-bold"> – </span>
+            <span className="text-ink-mute font-bold"> – </span>
             {formatINR(quote.range.high)}
           </p>
-          <p className="mt-1.5 text-xs text-white/70">
+          <p className="mt-1.5 text-xs text-ink-soft">
             All taxes in · about {formatINR(quote.perGuest)} per guest
           </p>
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 text-center">
+        <div className="grid grid-cols-3 divide-x divide-hairline/10 border-t border-hairline/10 text-center">
           <Stat label="Scale" value={quote.tier.name} sub={quote.tier.localName} />
           <Stat label="Guests" value={String(quote.guests)} sub={quote.plate.band.label} />
           <Stat
@@ -135,7 +135,7 @@ export default function ReviewBoard({
                 ? `${humanDate(eventDate)}${timeSlot ? ` · ${slotByKey(timeSlot)?.label}` : ''} · ${city}`
                 : `${city} · date not fixed yet`}
             />
-            <p className="mt-2 text-[11px] text-gray-400">
+            <p className="mt-2 text-[11px] text-gray-500">
               Set the date, the time of day and how we reach you in step 6 below.
             </p>
           </Node>
@@ -160,7 +160,7 @@ export default function ReviewBoard({
                   the most-asked question in this business; answering it
                   before it is asked is most of what this page is for. */}
               <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3 space-y-1.5">
-                <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400">
+                <p className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
                   How the plate rate is built
                 </p>
                 <Micro label={`${quote.cuisine.name} base rate`} value={`₹${quote.plate.base}`} />
@@ -198,7 +198,7 @@ export default function ReviewBoard({
                   left to come from. */}
               {menuByCourse.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-2">
+                  <p className="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2">
                     The menu, course by course
                   </p>
                   <div className="space-y-2">
@@ -206,7 +206,7 @@ export default function ReviewBoard({
                       <div key={course.id} className="rounded-xl border border-gray-100 px-3.5 py-2.5">
                         <p className="text-xs font-bold text-gray-700">
                           {course.label}
-                          <span className="ml-1.5 font-medium text-gray-400">{dishes.length}</span>
+                          <span className="ml-1.5 font-medium text-gray-500">{dishes.length}</span>
                         </p>
                         <p className="mt-1 text-xs leading-relaxed text-gray-600">
                           {dishes.map((d, i) => (
@@ -344,8 +344,8 @@ export default function ReviewBoard({
 
       {/* ── The money, line by line ────────────────────────────────── */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-3.5 bg-gray-900 text-white">
-          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-white/50">
+        <div className="px-5 py-3.5 bg-gray-900 text-ink">
+          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-ink-mute">
             How the number is built
           </p>
           <p className="text-sm font-bold">Nothing added after this line</p>
@@ -379,7 +379,7 @@ export default function ReviewBoard({
               key={part.key}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  <Receipt size={13} className="text-gray-400" />
+                  <Receipt size={13} className="text-gray-500" />
                   {quote.tax.label} on {part.label}
                 </span>
               }
@@ -397,7 +397,7 @@ export default function ReviewBoard({
             </div>
             <p className="text-right text-xl font-extrabold text-plum-800 leading-tight">
               {formatINR(quote.range.low)}
-              <span className="text-plum-300"> – </span>
+              <span className="text-plum-700"> – </span>
               {formatINR(quote.range.high)}
             </p>
           </div>
@@ -437,7 +437,7 @@ export default function ReviewBoard({
       {/* ── Send it ────────────────────────────────────────────────── */}
       <div className="card p-5 space-y-3">
         <p className="flex items-start gap-2 text-[11px] text-gray-500 leading-relaxed">
-          <Info size={13} className="mt-0.5 shrink-0 text-gray-400" />
+          <Info size={13} className="mt-0.5 shrink-0 text-gray-500" />
           <span>
             <strong className="text-gray-700">This is an estimate, not a final quote — it can vary slightly.</strong>{' '}
             Built from current {BRAND.pilotCities.join(' and ')} market rates. A coordinator confirms venue access,
@@ -455,12 +455,12 @@ export default function ReviewBoard({
           type="button"
           onClick={onSubmit}
           disabled={submitting || !!blocked}
-          className="w-full min-h-[54px] rounded-xl bg-saffron-500 text-white font-bold text-base active:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full min-h-[54px] rounded-xl bg-saffron-500 text-ink font-bold text-base active:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? 'Sending…' : 'Get this confirmed →'}
         </button>
 
-        <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
           <ShieldCheck size={12} /> Free to send. Nothing to pay to get a confirmed quote.
         </p>
       </div>
@@ -473,9 +473,9 @@ export default function ReviewBoard({
 function Stat({ label, value, sub }) {
   return (
     <div className="px-2 py-3 min-w-0">
-      <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-ink-mute font-bold">{label}</p>
       <p className="mt-0.5 text-sm font-bold truncate">{value}</p>
-      <p className="text-[10px] text-white/50 truncate">{sub}</p>
+      <p className="text-[10px] text-ink-mute truncate">{sub}</p>
     </div>
   )
 }
@@ -494,7 +494,7 @@ function Node({ n, icon: Icon, title, children, onEdit, muted }) {
            node out of the spine rule behind it, so it has to match whatever
            it is drawn on. See planBuilder.css. */
         className={`absolute -left-9 sm:-left-11 top-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-extrabold ring-4 ring-[#1a0730] ${
-          muted ? 'bg-white/15 text-white/60' : 'bg-saffron-500 text-white'
+          muted ? 'bg-white/15 text-white/60' : 'bg-saffron-500 text-plum-950'
         }`}
       >
         {n}

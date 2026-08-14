@@ -86,15 +86,15 @@ export default function ServiceShelf({ query = '' }) {
   return (
     <section aria-labelledby="services-heading" className="scroll-mt-24">
       <div className="px-4">
-        <h2 id="services-heading" className="text-[17px] font-extrabold text-white">
+        <h2 id="services-heading" className="text-[17px] font-extrabold text-ink">
           Need just one thing?
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-white/60">
+        <p className="mt-1 text-[12px] leading-relaxed text-ink-mute">
           You don't have to book a whole celebration. Tap any service to see its real
           options — every decoration, every cuisine, every package — priced, and bookable
           on its own.
         </p>
-        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-teal-400/10 px-2.5 py-1 text-[10.5px] font-bold text-teal-200 ring-1 ring-teal-300/25">
+        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-teal-400/10 px-2.5 py-1 text-[10.5px] font-bold text-teal-700 ring-1 ring-teal-300/25">
           <Check size={11} /> {BOOKABLE_SERVICE_IDS.length} services bookable end to end
         </p>
       </div>
@@ -107,7 +107,7 @@ export default function ServiceShelf({ query = '' }) {
             className={`home-chip ${
               activeCategory === 'top'
                 ? 'bg-saffron-400 text-plum-950'
-                : 'bg-white/10 text-white/70 ring-1 ring-white/15'
+                : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
             }`}
           >
             ⭐ Most booked
@@ -119,7 +119,7 @@ export default function ServiceShelf({ query = '' }) {
               className={`home-chip ${
                 activeCategory === g.category
                   ? 'bg-saffron-400 text-plum-950'
-                  : 'bg-white/10 text-white/70 ring-1 ring-white/15'
+                  : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
               }`}
             >
               {g.emoji} {g.category}
@@ -131,7 +131,7 @@ export default function ServiceShelf({ query = '' }) {
 
       {/* ── The services ───────────────────────────────────────────── */}
       {list.length === 0 ? (
-        <p className="px-4 py-6 text-center text-sm text-white/50">
+        <p className="px-4 py-6 text-center text-sm text-ink-mute">
           Nothing matches “{query}”. Try a service name like “cook” or “decor”.
         </p>
       ) : (
@@ -196,7 +196,7 @@ export default function ServiceShelf({ query = '' }) {
           nobody has touched is furniture; one that appears the instant you
           choose is a response. */}
       {picked.length > 0 && (
-        <div className="animate-pop-in sticky bottom-20 z-20 mt-4 px-4 md:bottom-4">
+        <div className="animate-pop-in above-bottom-nav sticky z-20 mt-4 px-4 md:bottom-4">
           <Link
             to={enquiryHref}
             className="flex items-center gap-3 rounded-2xl bg-saffron-400 px-4 py-3 shadow-xl shadow-black/30"

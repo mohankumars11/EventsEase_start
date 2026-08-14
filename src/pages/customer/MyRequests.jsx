@@ -132,7 +132,7 @@ export default function MyRequests() {
             </p>
             <Link
               to="/services"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
             >
               Browse occasions
             </Link>
@@ -147,7 +147,7 @@ export default function MyRequests() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
                       <p className="font-bold text-gray-900 text-sm">{enq.event_name}</p>
-                      <p className="text-xs text-gray-400">{formatDate(enq.created_at)}</p>
+                      <p className="text-xs text-gray-500">{formatDate(enq.created_at)}</p>
                     </div>
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
                       {css.label}
@@ -191,7 +191,7 @@ export default function MyRequests() {
                           {pkg.type === 'hamper' && (
                             pkg.complimentary
                               ? <span className="text-xs text-green-600 font-semibold">FREE</span>
-                              : <span className="text-xs text-gray-400">{formatINR(pkg.price_min)}</span>
+                              : <span className="text-xs text-gray-500">{formatINR(pkg.price_min)}</span>
                           )}
                           {canReview && (
                             hasReviewed(enq.id, 'package', pkg.id) ? (
@@ -304,7 +304,7 @@ export default function MyRequests() {
                     )}
                     <button
                       onClick={() => setActionModal({ kind: 'complaint', enquiry: enq })}
-                      className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600"
+                      className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-600"
                     >
                       <MessageCircleWarning size={13} /> Report a Problem
                     </button>

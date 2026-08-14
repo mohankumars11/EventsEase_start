@@ -69,7 +69,7 @@ export default function AdminShell({
   }
 
   return (
-    <div className="flex bg-[#f7f6f9]" style={{ minHeight: 'calc(100vh - 64px)' }}>
+    <div className="flex bg-[#FCFAFF]" style={{ minHeight: 'calc(100vh - 64px)' }}>
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
@@ -86,7 +86,7 @@ export default function AdminShell({
           // Plum is the product's brand colour everywhere outside the shop.
           // A vertical ramp rather than a flat fill so the rail has a top and
           // a bottom — the founder block at the foot sits in the deepest part.
-          background: 'linear-gradient(175deg, #3b1a6b 0%, #2e1065 45%, #23084f 100%)',
+          background: 'linear-gradient(175deg, #FAF7FE 0%, #F5F0FC 45%, #F1EAFA 100%)',
           maxHeight: '100vh',
         }}
       >
@@ -95,16 +95,16 @@ export default function AdminShell({
           <div className="flex items-center gap-2.5">
             <SambramoMark size={30} />
             <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-bold text-white leading-none tracking-tight">
+              <div className="text-[15px] font-bold text-ink leading-none tracking-tight">
                 {BRAND.name}
               </div>
-              <div className="text-[10px] mt-1 tracking-wide" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <div className="text-[10px] mt-1 tracking-wide" style={{ color: 'rgb(var(--ink-mute))' }}>
                 Operations Console
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-white/50 hover:text-white p-1"
+              className="md:hidden text-ink-mute hover:text-ink p-1"
               aria-label="Close navigation"
             >
               <X size={18} />
@@ -114,12 +114,12 @@ export default function AdminShell({
           <button
             onClick={() => setPaletteOpen(true)}
             className="mt-4 w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-colors"
-            style={{ background: 'rgba(255,255,255,0.08)' }}
+            style={{ background: 'rgb(var(--surface-sunk) / 0.07)' }}
           >
-            <Search size={13} className="text-white/40 shrink-0" />
-            <span className="text-[11px] text-white/40 flex-1">Jump to…</span>
-            <kbd className="text-[9px] font-sans px-1 py-0.5 rounded text-white/40"
-                 style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <Search size={13} className="text-ink-mute shrink-0" />
+            <span className="text-[11px] text-ink-mute flex-1">Jump to…</span>
+            <kbd className="text-[9px] font-sans px-1 py-0.5 rounded text-ink-mute"
+                 style={{ background: 'rgb(var(--surface-sunk) / 0.10)' }}>
               ⌘K
             </kbd>
           </button>
@@ -135,7 +135,7 @@ export default function AdminShell({
                   what made the old rail hard to scan. The heading is type. */}
               <div className="px-2.5 pb-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-[0.09em]"
-                      style={{ color: 'rgba(255,255,255,0.38)' }}>
+                      style={{ color: 'rgb(var(--ink-mute))' }}>
                   {group.label}
                 </span>
               </div>
@@ -154,11 +154,11 @@ export default function AdminShell({
                         // The active item is a filled pill, not a coloured
                         // word: on a dark ground a colour change alone is far
                         // too quiet to find at a glance.
-                        background: on ? 'rgba(255,255,255,0.14)' : 'transparent',
-                        color: on ? '#fff' : 'rgba(255,255,255,0.62)',
+                        background: on ? 'rgb(var(--accent) / 0.12)' : 'transparent',
+                        color: on ? 'rgb(var(--accent))' : 'rgb(var(--ink-soft))',
                         fontWeight: on ? 600 : 500,
                       }}
-                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = 'rgb(var(--surface-sunk) / 0.06)' }}
                       onMouseLeave={e => { if (!on) e.currentTarget.style.background = 'transparent' }}
                     >
                       <span className="text-[13px] shrink-0 w-[18px] text-center" aria-hidden="true">{item.emoji}</span>
@@ -166,7 +166,7 @@ export default function AdminShell({
                       {count > 0 && (
                         <span
                           className="text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums shrink-0"
-                          style={{ background: STATUS.critical, color: '#fff' }}
+                          style={{ background: STATUS.critical, color: 'rgb(var(--ink))' }}
                         >
                           {count > 99 ? '99+' : count}
                         </span>
@@ -181,20 +181,20 @@ export default function AdminShell({
 
         {/* Who is signed in. The founder's own name, at the foot of the rail —
             identity belongs here, not competing with each page's title. */}
-        <div className="px-3 py-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="px-3 py-3 shrink-0" style={{ borderTop: '1px solid rgb(var(--hairline) / 0.10)' }}>
           <div className="flex items-center gap-2.5">
             <span
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-ink shrink-0"
               style={{ background: 'linear-gradient(135deg, #F59E0B, #FB7185)' }}
               aria-hidden="true"
             >
               {initials(profile?.full_name)}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-semibold text-white truncate">
+              <div className="text-[12px] font-semibold text-ink truncate">
                 {profile?.full_name ?? 'Admin'}
               </div>
-              <div className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <div className="text-[10px] truncate" style={{ color: 'rgb(var(--ink-mute))' }}>
                 {roleLabel(profile?.role)}
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function AdminShell({
               <button
                 onClick={() => setPaletteOpen(true)}
                 title="Jump to a screen (⌘K)"
-                className="hidden sm:flex p-2 rounded-xl text-gray-400 hover:text-plum-700 hover:bg-plum-50 transition-colors"
+                className="hidden sm:flex p-2 rounded-xl text-gray-500 hover:text-plum-700 hover:bg-plum-50 transition-colors"
               >
                 <Command size={16} />
               </button>
@@ -242,7 +242,7 @@ export default function AdminShell({
                 onClick={onRefresh}
                 disabled={refreshing}
                 title="Reload everything"
-                className="p-2 rounded-xl text-gray-400 hover:text-plum-700 hover:bg-plum-50 disabled:opacity-40 transition-colors"
+                className="p-2 rounded-xl text-gray-500 hover:text-plum-700 hover:bg-plum-50 disabled:opacity-40 transition-colors"
               >
                 <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
               </button>
@@ -322,7 +322,7 @@ function CommandPalette({ onClose, onSelect, badges, activeNav }) {
             placeholder="Jump to a screen…"
             className="flex-1 text-sm outline-none placeholder-gray-300"
           />
-          <kbd className="text-[10px] font-sans px-1.5 py-0.5 rounded bg-gray-100 text-gray-400">esc</kbd>
+          <kbd className="text-[10px] font-sans px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">esc</kbd>
         </div>
 
         <div className="max-h-[52vh] overflow-y-auto py-1.5">
@@ -354,7 +354,7 @@ function CommandPalette({ onClose, onSelect, badges, activeNav }) {
                     <span className="block text-[11px] truncate" style={{ color: INK.muted }}>{r.description}</span>
                   </span>
                   {count > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white shrink-0 mt-0.5"
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-ink shrink-0 mt-0.5"
                           style={{ background: STATUS.critical }}>
                       {count}
                     </span>

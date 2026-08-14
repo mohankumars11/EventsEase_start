@@ -77,12 +77,12 @@ export default function EventFooter({ eventId }) {
   const others = EVENT_LIST.filter(e => e.id !== eventId).slice(0, 6)
 
   return (
-    <footer className="mt-10 border-t border-white/10 pb-10 pt-10">
+    <footer className="mt-10 border-t border-hairline/10 pb-10 pt-10">
       <div className="mx-auto max-w-3xl space-y-6 px-4">
 
         {/* ── What we commit to ───────────────────────────────── */}
         <section aria-labelledby="commitments-heading">
-          <h2 id="commitments-heading" className="px-1 text-[15px] font-extrabold text-white">
+          <h2 id="commitments-heading" className="px-1 text-[15px] font-extrabold text-ink">
             Before you book anything, here is what we hold ourselves to
           </h2>
           <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -93,14 +93,14 @@ export default function EventFooter({ eventId }) {
                 style={{ '--rise-delay': `${i * 60}ms` }}
               >
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15"
-                  style={{ color: 'var(--event-glow)' }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] ring-1 ring-hairline/10"
+                  style={{ color: 'var(--event-glow-ink)' }}
                 >
                   <Icon size={16} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-extrabold leading-snug text-white">{title}</p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-white/55">{body}</p>
+                  <p className="text-[12.5px] font-extrabold leading-snug text-ink">{title}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{body}</p>
                 </div>
               </div>
             ))}
@@ -109,10 +109,10 @@ export default function EventFooter({ eventId }) {
 
         {/* ── What happens next ───────────────────────────────── */}
         <section aria-labelledby="journey-heading" className="event-glass p-5">
-          <h2 id="journey-heading" className="text-[15px] font-extrabold text-white">
+          <h2 id="journey-heading" className="text-[15px] font-extrabold text-ink">
             What happens after you send it
           </h2>
-          <p className="mt-1 text-[11px] text-white/50">
+          <p className="mt-1 text-[11px] text-ink-mute">
             Five steps. You can stop at any of them and owe nothing.
           </p>
           <ol className="relative mt-4 space-y-3.5">
@@ -123,7 +123,7 @@ export default function EventFooter({ eventId }) {
             />
             {JOURNEY.map((s, i) => (
               <li key={s.title} className="relative flex gap-3">
-                <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-base ring-1 ring-white/15">
+                <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-base ring-1 ring-hairline/10">
                   {s.icon}
                   <span
                     className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-extrabold text-gray-900"
@@ -133,8 +133,8 @@ export default function EventFooter({ eventId }) {
                   </span>
                 </span>
                 <div className="min-w-0 pt-0.5">
-                  <p className="text-[12.5px] font-bold text-white">{s.title}</p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-white/55">{s.body}</p>
+                  <p className="text-[12.5px] font-bold text-ink">{s.title}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{s.body}</p>
                 </div>
               </li>
             ))}
@@ -143,24 +143,24 @@ export default function EventFooter({ eventId }) {
 
         {/* ── Where we are, honestly ──────────────────────────── */}
         <section className="event-glass flex flex-wrap items-center gap-x-4 gap-y-2 p-4">
-          <span className="flex items-center gap-2 text-[12px] text-white/70">
-            <MapPin size={14} className="shrink-0" style={{ color: 'var(--event-glow)' }} />
-            Live in <strong className="font-extrabold text-white">{BRAND.pilotCities.join(' & ')}</strong>
+          <span className="flex items-center gap-2 text-[12px] text-ink-soft">
+            <MapPin size={14} className="shrink-0" style={{ color: 'var(--event-glow-ink)' }} />
+            Live in <strong className="font-extrabold text-ink">{BRAND.pilotCities.join(' & ')}</strong>
           </span>
-          <span className="flex items-center gap-2 text-[12px] text-white/70">
-            <ShieldCheck size={14} className="shrink-0 text-emerald-300" />
+          <span className="flex items-center gap-2 text-[12px] text-ink-soft">
+            <ShieldCheck size={14} className="shrink-0 text-emerald-700" />
             We will tell you plainly if we cannot cover your date or your city
           </span>
         </section>
 
         {/* ── Talk to a person ────────────────────────────────── */}
         <section className="event-glass p-5">
-          <h2 className="text-[15px] font-extrabold text-white">Rather just talk to someone?</h2>
-          <p className="mt-1 text-[11px] text-white/50">Mon–Sat, 9am–8pm. A coordinator, not a bot.</p>
+          <h2 className="text-[15px] font-extrabold text-ink">Rather just talk to someone?</h2>
+          <p className="mt-1 text-[11px] text-ink-mute">Mon–Sat, 9am–8pm. A coordinator, not a bot.</p>
           <div className="mt-3.5 flex flex-wrap gap-2">
             <a
               href={`tel:${BRAND.supportPhone}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2.5 text-[12.5px] font-bold text-white ring-1 ring-white/15 transition-transform active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-3.5 py-2.5 text-[12.5px] font-bold text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <Phone size={14} /> {BRAND.supportPhone}
             </a>
@@ -174,7 +174,7 @@ export default function EventFooter({ eventId }) {
             </a>
             <a
               href={`mailto:${BRAND.supportEmail}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2.5 text-[12.5px] font-bold text-white ring-1 ring-white/15 transition-transform active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-3.5 py-2.5 text-[12.5px] font-bold text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <Mail size={14} /> Email
             </a>
@@ -190,7 +190,7 @@ export default function EventFooter({ eventId }) {
 
         {/* ── Other occasions ─────────────────────────────────── */}
         <section aria-labelledby="others-heading">
-          <h2 id="others-heading" className="px-1 text-[13px] font-extrabold text-white/80">
+          <h2 id="others-heading" className="px-1 text-[13px] font-extrabold text-ink-soft">
             Planning something else too?
           </h2>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -198,7 +198,7 @@ export default function EventFooter({ eventId }) {
               <Link
                 key={e.id}
                 to={`/services/${e.id}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5 text-[11.5px] font-bold text-white/75 ring-1 ring-white/10 transition-colors hover:bg-white/15 hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunk/[0.06] px-3 py-1.5 text-[11.5px] font-bold text-ink-soft ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink"
               >
                 <span aria-hidden="true">{e.emoji}</span> {e.name}
               </Link>
@@ -206,7 +206,7 @@ export default function EventFooter({ eventId }) {
             <Link
               to="/services"
               className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold"
-              style={{ color: 'var(--event-glow)' }}
+              style={{ color: 'var(--event-glow-ink)' }}
             >
               Every occasion <ArrowRight size={12} />
             </Link>
@@ -214,10 +214,10 @@ export default function EventFooter({ eventId }) {
         </section>
 
         {/* ── Legal line ──────────────────────────────────────── */}
-        <div className="flex flex-col-reverse items-center justify-between gap-3 border-t border-white/10 pt-5 text-[11px] text-white/40 sm:flex-row">
+        <div className="flex flex-col-reverse items-center justify-between gap-3 border-t border-hairline/10 pt-5 text-[11px] text-ink-mute sm:flex-row">
           <p>© {new Date().getFullYear()} {BRAND.name}. Prices shown are estimates, not quotes.</p>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] uppercase tracking-[0.1em] text-white/30">We accept</span>
+            <span className="text-[9px] uppercase tracking-[0.1em] text-ink-mute">We accept</span>
             <span className="flex items-center gap-1.5 rounded-lg bg-white/95 px-2 py-1.5">
               <GooglePayIcon className="h-4 w-4" />
               <PhonePeIcon className="h-4 w-4" />

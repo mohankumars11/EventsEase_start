@@ -20,10 +20,10 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-3 text-gray-400">
+      <div className="flex flex-col items-center gap-3 text-gray-500">
         <div className="w-8 h-8 border-4 border-plum-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-sm font-medium text-gray-600">Signing you in…</p>
-        <p className="text-xs text-gray-400">Please wait a moment</p>
+        <p className="text-xs text-gray-500">Please wait a moment</p>
       </div>
     </div>
   )

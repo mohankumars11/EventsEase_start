@@ -253,7 +253,7 @@ export default function SignupPage() {
 
               <div className="flex items-center gap-3 mb-5">
                 <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-400 uppercase tracking-wider">or</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
 
@@ -299,7 +299,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email address</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
                       type="email"
                       value={email}
@@ -314,7 +314,7 @@ export default function SignupPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Mobile number <span className="font-normal text-gray-400">(optional — for WhatsApp updates)</span>
+                    Mobile number <span className="font-normal text-gray-500">(optional — for WhatsApp updates)</span>
                   </label>
                   <div className="flex gap-2">
                     <span className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-500 text-sm bg-gray-50 shrink-0 flex items-center">+91</span>
@@ -401,7 +401,7 @@ export default function SignupPage() {
 
               <div className="text-center mt-4">
                 {resendTimer > 0 ? (
-                  <p className="text-sm text-gray-400 flex items-center justify-center gap-1.5">
+                  <p className="text-sm text-gray-500 flex items-center justify-center gap-1.5">
                     <RefreshCw size={13} /> Resend in {resendTimer}s
                   </p>
                 ) : (

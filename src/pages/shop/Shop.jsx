@@ -130,7 +130,7 @@ export default function Shop() {
             <div className="px-4">
               <Link
                 to={`/shop/Gifts?occasion=${encodeURIComponent('Independence Day')}`}
-                className="group relative flex items-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-r from-[#FF9933] via-white to-[#138808] px-4 py-3.5 shadow-lg ring-1 ring-white/20"
+                className="group relative flex items-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-r from-[#FF9933] via-white to-[#138808] px-4 py-3.5 shadow-lg ring-1 ring-hairline/10"
               >
                 <span className="text-3xl">🇮🇳</span>
                 <div className="min-w-0 flex-1">
@@ -155,8 +155,8 @@ export default function Shop() {
           {/* ── Shop by occasion ───────────────────────────────────── */}
           <section aria-labelledby="occasion-heading">
             <div className="px-4">
-              <h2 id="occasion-heading" className="text-[15px] font-extrabold text-white">What are we celebrating?</h2>
-              <p className="mt-0.5 text-[11px] text-white/50">Jump straight to the shelf that fits the day.</p>
+              <h2 id="occasion-heading" className="text-[15px] font-extrabold text-ink">What are we celebrating?</h2>
+              <p className="mt-0.5 text-[11px] text-ink-mute">Jump straight to the shelf that fits the day.</p>
             </div>
             <div className="mt-3 flex gap-3.5 overflow-x-auto px-4 pb-2 scrollbar-hide">
               {OCCASION_SHORTCUTS.map(o => (
@@ -165,11 +165,11 @@ export default function Shop() {
                   to={`/shop/${encodeURIComponent(o.category)}?occasion=${encodeURIComponent(o.occasion)}`}
                   className="group flex w-[68px] shrink-0 flex-col items-center gap-1.5"
                 >
-                  <span className="relative block h-[68px] w-[68px] overflow-hidden rounded-2xl ring-2 ring-white/15 transition-all group-active:scale-95 group-hover:ring-saffron-400">
+                  <span className="relative block h-[68px] w-[68px] overflow-hidden rounded-2xl ring-2 ring-hairline/10 transition-all group-active:scale-95 group-hover:ring-saffron-400">
                     <ProductImage query={o.query} emoji={o.emoji} className="h-full w-full" cinematic />
                     <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-forest-950/70 to-transparent" />
                   </span>
-                  <span className="text-center text-[10px] font-bold leading-tight text-white/80">{o.label}</span>
+                  <span className="text-center text-[10px] font-bold leading-tight text-ink-soft">{o.label}</span>
                 </Link>
               ))}
             </div>
@@ -177,8 +177,8 @@ export default function Shop() {
 
           {/* ── Categories ─────────────────────────────────────────── */}
           <section aria-labelledby="cat-heading" className="px-4">
-            <h2 id="cat-heading" className="text-[15px] font-extrabold text-white">Shop by category</h2>
-            <p className="mt-0.5 text-[11px] text-white/50">Everything Sambramo delivers, in five shelves.</p>
+            <h2 id="cat-heading" className="text-[15px] font-extrabold text-ink">Shop by category</h2>
+            <p className="mt-0.5 text-[11px] text-ink-mute">Everything Sambramo delivers, in five shelves.</p>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
               {SHOP_CATEGORIES.map((cat, i) => (
@@ -232,7 +232,7 @@ export default function Shop() {
                 rather than only on the product page. Sambramo is pre-launch
                 and sources per order — the photo is the style, not the
                 specific box that arrives, and saying so here costs one line. */}
-            <p className="flex items-start gap-2 px-1 pb-2 text-[11px] leading-relaxed text-white/40">
+            <p className="flex items-start gap-2 px-1 pb-2 text-[11px] leading-relaxed text-ink-mute">
               <Camera size={13} className="mt-0.5 shrink-0" />
               Photos are representative of the style and finish. Your order is made
               fresh, so small differences are normal.
@@ -250,13 +250,13 @@ export default function Shop() {
 function PromiseTicker() {
   return (
     <div className="px-4">
-      <div className="flex items-center gap-2.5 rounded-2xl bg-white/5 px-3.5 py-2.5 ring-1 ring-white/10">
+      <div className="flex items-center gap-2.5 rounded-2xl bg-surface-sunk/[0.07] px-3.5 py-2.5 ring-1 ring-hairline/10">
         <span className="relative flex h-2 w-2 shrink-0">
           <span className="absolute inline-flex h-full w-full rounded-full bg-saffron-400 animate-pulse-ring" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-saffron-400" />
         </span>
         <DetailRotator
-          className="flex-1 [&_span]:!text-white/75"
+          className="flex-1 [&_span]:!text-ink-soft"
           interval={3200}
           facts={[
             { key: 'p1', text: 'Delivered by Sambramo — one number to call, whoever made it' },
@@ -309,10 +309,10 @@ function BestSellersRail() {
     <section aria-labelledby="best-heading">
       <div className="flex items-end justify-between px-4">
         <div>
-          <h2 id="best-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-white">
+          <h2 id="best-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-ink">
             <Flame size={16} className="text-chilli-400" /> Most ordered
           </h2>
-          <p className="mt-0.5 text-[11px] text-white/50">What people are actually buying this week.</p>
+          <p className="mt-0.5 text-[11px] text-ink-mute">What people are actually buying this week.</p>
         </div>
       </div>
 
@@ -367,27 +367,27 @@ function SearchResults({ query }) {
       {results === null ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-56 animate-pulse rounded-3xl bg-white/5" />
+            <div key={i} className="h-56 animate-pulse rounded-3xl bg-surface-sunk/[0.07]" />
           ))}
         </div>
       ) : results.length === 0 ? (
         <div className="py-16 text-center">
-          <SearchX size={30} className="mx-auto text-white/25" />
-          <p className="mt-3 text-sm font-bold text-white">Nothing matches “{query}”</p>
-          <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-white/45">
+          <SearchX size={30} className="mx-auto text-ink-mute" />
+          <p className="mt-3 text-sm font-bold text-ink">Nothing matches “{query}”</p>
+          <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-ink-mute">
             Try a shorter word, or browse a category — we make plenty to order that
             isn't in the catalogue yet.
           </p>
           <Link
             to="/shop"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white ring-1 ring-white/15"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-surface-sunk/[0.07] px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10"
           >
             Browse all categories <ArrowRight size={13} />
           </Link>
         </div>
       ) : (
         <>
-          <p className="mb-3 text-[11px] font-semibold text-white/50">
+          <p className="mb-3 text-[11px] font-semibold text-ink-mute">
             {results.length} result{results.length === 1 ? '' : 's'} for “{query}”
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

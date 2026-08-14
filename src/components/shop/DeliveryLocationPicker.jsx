@@ -158,7 +158,7 @@ export default function DeliveryLocationPicker({ value, onChange }) {
 
       <div ref={mapElRef} className="w-full h-56 rounded-xl border border-gray-200 overflow-hidden" />
       {geocoding && (
-        <p className="text-xs text-gray-400 flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Looking up address…</p>
+        <p className="text-xs text-gray-500 flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Looking up address…</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">

@@ -52,11 +52,11 @@ export default function OffersRail({ offers = OFFERS, appliedId, onApply, eventD
     <section aria-labelledby="offers-heading" className="space-y-3">
       <div className="flex items-end justify-between gap-3 px-0.5">
         <div>
-          <h2 id="offers-heading" className="flex items-center gap-2 text-base font-extrabold text-white">
+          <h2 id="offers-heading" className="flex items-center gap-2 text-base font-extrabold text-ink">
             <Gift size={17} className="text-saffron-400" />
             Offers on this celebration
           </h2>
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-ink-mute">
             Claim one now — your coordinator applies it to the confirmed quote.
           </p>
         </div>
@@ -126,7 +126,7 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
             {offer.emoji} {offer.name}
           </span>
           {applied && (
-            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-saffron-500 px-2 py-0.5 text-[10px] font-extrabold text-white">
+            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-saffron-500 px-2 py-0.5 text-[10px] font-extrabold text-plum-950">
               <Check size={11} /> Claimed
             </span>
           )}
@@ -156,7 +156,7 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
             >
               {copied ? <span className="text-emerald-600">Copied ✓</span> : (
                 <span className="inline-flex items-center gap-1.5">
-                  <Copy size={12} className="shrink-0 text-gray-400" />
+                  <Copy size={12} className="shrink-0 text-gray-500" />
                   {offer.code}
                 </span>
               )}
@@ -166,7 +166,7 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
               onClick={() => onApply(applied ? null : offer.id)}
               disabled={blocked}
               aria-pressed={applied}
-              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-extrabold text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-extrabold text-ink transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
                 applied ? 'bg-gray-800 active:bg-gray-900' : accent.btn
               }`}
             >

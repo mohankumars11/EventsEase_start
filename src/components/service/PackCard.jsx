@@ -83,7 +83,7 @@ export default function PackCard({
               dining setup rendered as "₹14,400 per guest". */}
           <p className="mt-2.5 text-[15px] font-extrabold text-plum-700">
             {formatINR(total)}
-            <span className="ml-1.5 text-[10px] font-semibold text-gray-400">
+            <span className="ml-1.5 text-[10px] font-semibold text-gray-500">
               {isGuest
                 ? `${formatINR(pack.price)} per guest × ${guestCount || 0}`
                 : isUnit

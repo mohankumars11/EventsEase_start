@@ -143,7 +143,7 @@ export default function ServiceSuggestions({
                   <span className="block text-sm font-bold text-plum-700">
                     {formatINR(rec.cost)}
                   </span>
-                  <span className="block max-w-[92px] text-[10px] leading-tight text-gray-400">
+                  <span className="block max-w-[92px] text-[10px] leading-tight text-gray-500">
                     {serviceUnitLabel(rec.service)}
                   </span>
                   <span className="mt-1.5 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-plum-600 text-white">
@@ -161,7 +161,7 @@ export default function ServiceSuggestions({
           card as the rest of the quote, and this panel is the one place in the
           builder that puts a number in front of somebody who did not ask for
           it — so it says so. */}
-      <p className="border-t border-gray-50 bg-gray-50/60 px-4 py-2.5 text-[11px] leading-snug text-gray-400">
+      <p className="border-t border-gray-50 bg-gray-50/60 px-4 py-2.5 text-[11px] leading-snug text-gray-500">
         Estimates at {guestCount} guests. Adding one here only changes your quote —
         nothing is booked until you approve the proposal.
       </p>

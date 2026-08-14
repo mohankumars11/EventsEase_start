@@ -159,11 +159,11 @@ export default function MarketProductCard({
 
         <RatingBadge subjectType="product" subjectId={p.id} className="mt-1" />
 
-        <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-snug text-gray-400">{p.description}</p>
+        <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-snug text-gray-500">{p.description}</p>
 
         <div className="mt-2 flex items-baseline gap-1.5">
           <span className="text-[15px] font-extrabold text-forest-800">{formatINR(p.price)}</span>
-          {configurable && <span className="text-[10px] font-semibold text-gray-400">onwards</span>}
+          {configurable && <span className="text-[10px] font-semibold text-gray-500">onwards</span>}
         </div>
 
         <DetailRotator facts={facts} stagger={stagger} className="mt-1.5" />

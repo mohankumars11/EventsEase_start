@@ -279,7 +279,7 @@ export default function AdminServices({ data }) {
               </p>
               <button
                 onClick={handleSync} disabled={syncing}
-                className="mt-3 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-plum-600 text-white text-sm font-semibold hover:bg-plum-700 disabled:opacity-50"
+                className="mt-3 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-plum-600 text-ink text-sm font-semibold hover:bg-plum-700 disabled:opacity-50"
               >
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 Sync built-in services
@@ -319,7 +319,7 @@ export default function AdminServices({ data }) {
           <button
             onClick={() => setShowRetired(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              showRetired ? 'bg-gray-700 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+              showRetired ? 'bg-gray-700 border-gray-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
             }`}
           >
             {showRetired ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -330,7 +330,7 @@ export default function AdminServices({ data }) {
 
       {/* ── The list ─────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-400">
+        <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-500">
           <Loader2 className="animate-spin text-plum-600" size={28} />
           <span className="text-sm">Loading services…</span>
         </div>
@@ -473,7 +473,7 @@ function ServiceCard({ service: s, demand, busy, editing, onEdit, onSave, onUplo
           {s.image_url && (
             <button
               onClick={onRemoveImage} disabled={busy}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40"
             >
               <Trash2 size={11} /> Remove
             </button>
@@ -481,12 +481,12 @@ function ServiceCard({ service: s, demand, busy, editing, onEdit, onSave, onUplo
 
           <button
             onClick={onToggleActive} disabled={busy}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40"
           >
             {s.active ? <><EyeOff size={11} /> Retire</> : <><Eye size={11} /> Offer again</>}
           </button>
 
-          <button onClick={onEdit} className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 ml-auto">
+          <button onClick={onEdit} className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 ml-auto">
             <Pencil size={11} /> Edit
           </button>
 
@@ -651,7 +651,7 @@ function Chip({ active, onClick, children, title }) {
     <button
       onClick={onClick} title={title} aria-pressed={active}
       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-        active ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+        active ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
       }`}
     >
       {children}

@@ -67,7 +67,7 @@ export default function DecorChooser({
                     )}
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-[10px] text-gray-400 leading-tight">At {guestCount || 0} guests</p>
+                    <p className="text-[10px] text-gray-500 leading-tight">At {guestCount || 0} guests</p>
                     <p className="text-sm font-bold text-plum-700 whitespace-nowrap">{formatINR(cost)}</p>
                     {selected && (
                       <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-plum-700">
@@ -100,7 +100,7 @@ export default function DecorChooser({
               </option>
             ))}
           </select>
-          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
         </div>
         {DECOR_THEMES.find(t => t.id === themeId)?.note && (
           <p className="mt-2 text-xs text-gray-500">{DECOR_THEMES.find(t => t.id === themeId).note}</p>
@@ -127,7 +127,7 @@ export default function DecorChooser({
               >
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-gray-800">{addon.name}</span>
-                  {addon.note && <span className="block text-[11px] text-gray-400">{addon.note}</span>}
+                  {addon.note && <span className="block text-[11px] text-gray-500">{addon.note}</span>}
                 </span>
                 <span className="shrink-0 text-xs font-bold text-plum-700">{formatINR(addon.price)}</span>
               </button>

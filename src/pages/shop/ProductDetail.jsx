@@ -72,8 +72,8 @@ export default function ProductDetail() {
       <div className="shop-canvas min-h-screen pb-bottom-nav">
         <ShopAppBar backTo="/shop" title="Loading…" />
         <div className="mx-auto max-w-3xl space-y-4 px-4 pt-5">
-          <div className="shop-card h-64 animate-pulse bg-white/10" />
-          <div className="shop-card h-40 animate-pulse bg-white/10" />
+          <div className="shop-card h-64 animate-pulse bg-surface-sunk/[0.07]" />
+          <div className="shop-card h-40 animate-pulse bg-surface-sunk/[0.07]" />
         </div>
       </div>
     )
@@ -93,7 +93,7 @@ export default function ProductDetail() {
             </p>
             <Link
               to="/shop"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
             >
               Back to the shop
             </Link>
@@ -173,18 +173,18 @@ export default function ProductDetail() {
                 says what that means for the order. Stated before the price
                 and the Add to Cart button, not after. */}
             {product.image_source !== 'actual' && (
-              <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+              <p className="text-xs text-gray-500 mb-4 leading-relaxed">
                 The photo shows a similar item. What you receive will match the
                 name, size and description above — the exact decoration may vary.
               </p>
             )}
 
             <p className="text-3xl font-extrabold text-plum-700 mb-1">
-              {configurable && <span className="text-base font-semibold text-gray-400 mr-1.5">from</span>}
+              {configurable && <span className="text-base font-semibold text-gray-500 mr-1.5">from</span>}
               {formatINR(product.price)}
             </p>
             {configurable && (
-              <p className="text-xs text-gray-400 mb-4">
+              <p className="text-xs text-gray-500 mb-4">
                 Final price depends on the options and extras you pick.
               </p>
             )}
@@ -203,7 +203,7 @@ export default function ProductDetail() {
               <div className="space-y-2">
                 <button
                   onClick={() => setCustomizing(true)}
-                  className="w-full flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-white font-bold py-3.5 rounded-xl"
+                  className="w-full flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-plum-950 font-bold py-3.5 rounded-xl"
                 >
                   <ShoppingCart size={17} /> {inCart ? 'Add another, your way' : 'Choose options'}
                 </button>
@@ -241,7 +241,7 @@ export default function ProductDetail() {
             ) : (
               <button
                 onClick={() => CUSTOMIZABLE_CATEGORIES[product.category] ? setCustomizing(true) : dispatch({ type: 'ADD_PRODUCT', product })}
-                className="flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-white font-bold py-3.5 rounded-xl"
+                className="flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-plum-950 font-bold py-3.5 rounded-xl"
               >
                 <ShoppingCart size={17} /> Add to Cart
               </button>
@@ -290,7 +290,7 @@ export default function ProductDetail() {
             </div>
           )}
           {reviews.length === 0 && (
-            <p className="text-sm text-gray-400 mt-5">No reviews yet — be the first once you've received this order.</p>
+            <p className="text-sm text-gray-500 mt-5">No reviews yet — be the first once you've received this order.</p>
           )}
         </div>
 

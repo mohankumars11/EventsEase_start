@@ -170,7 +170,7 @@ export default function ContactBlock({
             A 10-digit Indian mobile, starting 6–9. This is the number we call and WhatsApp.
           </p>
         ) : (
-          <p className="mt-1.5 text-[11px] text-gray-400">
+          <p className="mt-1.5 text-[11px] text-gray-500">
             We call once about this request. No marketing messages.
           </p>
         )}
@@ -178,7 +178,7 @@ export default function ContactBlock({
 
       <div>
         <label htmlFor="contact-email" className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
-          <Mail size={13} className="text-plum-600" /> Email <span className="font-normal text-gray-400">(optional)</span>
+          <Mail size={13} className="text-plum-600" /> Email <span className="font-normal text-gray-500">(optional)</span>
         </label>
         <input
           id="contact-email"
@@ -223,7 +223,7 @@ export default function ContactBlock({
               somebody they are blocked; naming what the date unlocks tells
               them why answering is in their own interest. */}
           <p id="review-date-hint" className={`mt-1.5 flex items-start gap-1.5 text-[11px] ${
-            dateMessage ? 'text-red-600' : 'text-gray-400'
+            dateMessage ? 'text-red-600' : 'text-gray-500'
           }`}>
             {dateMessage ? <AlertCircle size={12} className="mt-0.5 shrink-0" /> : null}
             {dateMessage ?? 'We check who is free on your day before quoting.'}
@@ -249,7 +249,7 @@ export default function ContactBlock({
       {eventDate && (
         <div>
           <p className="text-xs font-bold text-gray-700 mb-1.5">
-            Time of day <span className="font-normal text-gray-400">(optional — it decides which vendors we can ask)</span>
+            Time of day <span className="font-normal text-gray-500">(optional — it decides which vendors we can ask)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             {TIME_SLOTS.map(s => (
@@ -265,7 +265,7 @@ export default function ContactBlock({
                 }`}
               >
                 <span className="block text-sm font-semibold text-gray-800">{s.emoji} {s.label}</span>
-                <span className="block text-[11px] text-gray-400">{s.hint}</span>
+                <span className="block text-[11px] text-gray-500">{s.hint}</span>
               </button>
             ))}
           </div>

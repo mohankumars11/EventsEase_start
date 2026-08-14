@@ -60,12 +60,12 @@ export default function PerksDeck() {
 
   return (
     <section aria-labelledby="perks-heading" className="space-y-3 px-4">
-      <h2 id="perks-heading" className="text-[17px] font-extrabold text-white">
+      <h2 id="perks-heading" className="text-[17px] font-extrabold text-ink">
         More reasons to plan with us
       </h2>
 
       {/* ── Membership ───────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-plum-800 via-plum-700 to-berry-700 p-5 ring-1 ring-white/15">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-plum-800 via-plum-700 to-berry-700 p-5 ring-1 ring-white/20">
         {/* A single slow sheen. The card is the most valuable thing on the
             page and earns one piece of movement; anything more competes with
             the buttons under it. */}
@@ -87,7 +87,7 @@ export default function PerksDeck() {
                 {MEMBERSHIP.status}
               </span>
             </p>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-white/70">
+            <p className="mt-0.5 text-[12px] leading-relaxed text-white/85">
               {MEMBERSHIP.pitch}
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function PerksDeck() {
           <MessageCircle size={16} />
           {MEMBERSHIP.cta}
         </a>
-        <p className="relative mt-2 text-center text-[10px] leading-relaxed text-white/45">
+        <p className="relative mt-2 text-center text-[10px] leading-relaxed text-white/60">
           {MEMBERSHIP.disclaimer}
         </p>
       </div>
@@ -123,7 +123,7 @@ export default function PerksDeck() {
           -out visitors get the sign-up prompt instead, which is the honest
           version of the same offer. */}
       {referralCode ? (
-        <div className="rounded-3xl bg-gradient-to-br from-saffron-500 to-amber-600 p-5 text-white">
+        <div className="rounded-3xl bg-gradient-to-br from-saffron-400 to-amber-500 p-5 text-plum-950">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/20">
               <Gift size={19} />
@@ -146,7 +146,7 @@ export default function PerksDeck() {
             <button
               onClick={copyLink}
               aria-label="Copy referral link"
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-white/20 px-3.5 py-2.5 text-[12px] font-bold text-white ring-1 ring-white/30"
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-white/20 px-3.5 py-2.5 text-[12px] font-bold text-white ring-1 ring-white/20"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy'}
@@ -156,20 +156,20 @@ export default function PerksDeck() {
       ) : (
         <Link
           to="/signup"
-          className="flex items-center gap-3 rounded-3xl bg-white/[0.07] p-4 ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]"
+          className="flex items-center gap-3 rounded-3xl bg-surface-sunk/[0.06] p-4 ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.06]"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-saffron-400/15 text-saffron-300">
             <Gift size={18} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-extrabold text-white">
+            <span className="block text-[13px] font-extrabold text-ink">
               Create an account, get a referral code
             </span>
-            <span className="block text-[11px] leading-relaxed text-white/55">
+            <span className="block text-[11px] leading-relaxed text-ink-mute">
               Invite friends and you both get a coupon on their first order.
             </span>
           </span>
-          <ChevronRight size={17} className="shrink-0 text-white/30" />
+          <ChevronRight size={17} className="shrink-0 text-ink-mute" />
         </Link>
       )}
     </section>

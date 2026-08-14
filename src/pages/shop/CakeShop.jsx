@@ -162,7 +162,7 @@ export default function CakeShop() {
           rather than a cramped icon in the header, where at 360px it had to
           hide its own label. `top` is the app bar's measured height. */}
       <div
-        className="sticky z-30 border-b border-white/5 bg-forest-900/90 backdrop-blur-md"
+        className="sticky z-30 border-b border-hairline/10 bg-surface/90 backdrop-blur-md"
         style={{ top: 'var(--shop-appbar-h, 7.75rem)' }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide">
@@ -170,7 +170,7 @@ export default function CakeShop() {
             onClick={() => setVegOnly(v => !v)}
             aria-pressed={vegOnly}
             className={`shop-chip ${
-              vegOnly ? 'border-green-400 bg-green-50 text-green-800' : 'border-white/15 bg-white/5 text-white/70'
+              vegOnly ? 'border-green-400 bg-green-50 text-green-800' : 'border-hairline/10 bg-surface-sunk/[0.06] text-ink-soft'
             }`}
           >
             <VegMark /> Eggless
@@ -183,7 +183,7 @@ export default function CakeShop() {
               className={`shop-chip ${
                 sort === s.id
                   ? 'border-saffron-400 bg-saffron-400 text-forest-900'
-                  : 'border-white/15 bg-white/5 text-white/70'
+                  : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
               }`}
             >
               <s.icon size={12} strokeWidth={2.6} /> {s.label}
@@ -225,8 +225,8 @@ export default function CakeShop() {
                 out of the overflow-hidden box. Every other overlay in this shop
                 is absolutely positioned for the same reason. */}
             <div className="absolute inset-0 flex flex-col justify-center p-5">
-              <h3 className="font-serif text-xl font-bold text-white leading-tight">Designer<br />cakes</h3>
-              <p className="text-white/70 text-xs mt-1.5 max-w-[60%]">Fondant, sculpted and tiered — built to a brief</p>
+              <h3 className="font-serif text-xl font-bold text-ink leading-tight">Designer<br />cakes</h3>
+              <p className="text-ink-soft text-xs mt-1.5 max-w-[60%]">Fondant, sculpted and tiered — built to a brief</p>
               <span className="mt-3 inline-flex items-center gap-1 self-start bg-white text-forest-800 text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2 transition-all">
                 Explore <ChevronRight size={13} />
               </span>
@@ -249,8 +249,8 @@ export default function CakeShop() {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-chilli-900/92 via-chilli-800/60 to-transparent" />
             <div className="absolute inset-0 flex flex-col justify-center p-5">
-              <h3 className="font-serif text-xl font-bold text-white leading-tight">Something<br />entirely yours</h3>
-              <p className="text-white/70 text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
+              <h3 className="font-serif text-xl font-bold text-ink leading-tight">Something<br />entirely yours</h3>
+              <p className="text-ink-soft text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
               <span className="mt-3 inline-flex items-center gap-1.5 self-start bg-green-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2.5 transition-all">
                 <MessageCircle size={13} /> Chat with our expert
               </span>
@@ -262,14 +262,14 @@ export default function CakeShop() {
         {!loading && occasionGroups.length > 0 && (
           <section>
             <div className="flex items-end justify-between gap-3 mb-1">
-              <h2 className="text-[15px] font-extrabold text-white">Cakes for every celebration</h2>
+              <h2 className="text-[15px] font-extrabold text-ink">Cakes for every celebration</h2>
               {occasion !== 'All' && (
-                <button onClick={() => selectOccasion('All')} className="shrink-0 text-[11px] font-bold text-saffron-300">
+                <button onClick={() => selectOccasion('All')} className="shrink-0 text-[11px] font-bold text-saffron-700">
                   Show all
                 </button>
               )}
             </div>
-            <p className="mb-5 text-[11px] text-white/50">
+            <p className="mb-5 text-[11px] text-ink-mute">
               Every moment worth marking — from a first birthday to an apology.
             </p>
 
@@ -277,8 +277,8 @@ export default function CakeShop() {
               {occasionGroups.map(group => (
                 <div key={group.id}>
                   <div className="flex items-baseline gap-2 mb-2.5">
-                    <h3 className="text-[13px] font-extrabold text-white">{group.label}</h3>
-                    <span className="truncate text-[11px] text-white/40">{group.blurb}</span>
+                    <h3 className="text-[13px] font-extrabold text-ink">{group.label}</h3>
+                    <span className="truncate text-[11px] text-ink-mute">{group.blurb}</span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
                     {group.occasions.map(o => {
@@ -290,7 +290,7 @@ export default function CakeShop() {
                           className="group shrink-0 w-[4.5rem] flex flex-col items-center gap-1.5"
                         >
                           <span className={`relative w-[4.5rem] h-[4.5rem] rounded-2xl overflow-hidden ring-2 transition-all group-active:scale-95 ${
-                            active ? 'ring-saffron-400' : 'ring-white/15 group-hover:ring-saffron-300'
+                            active ? 'ring-saffron-400' : 'ring-hairline/10 group-hover:ring-saffron-300'
                           }`}>
                             <ProductImage
                               src={CAKE_OCCASION_PHOTOS[o.id]}
@@ -302,14 +302,14 @@ export default function CakeShop() {
                             />
                             {active && (
                               <span className="absolute inset-0 bg-saffron-500/25 flex items-center justify-center">
-                                <span className="w-6 h-6 rounded-full bg-saffron-500 text-white flex items-center justify-center">
+                                <span className="w-6 h-6 rounded-full bg-saffron-500 text-plum-950 flex items-center justify-center">
                                   <Check size={13} strokeWidth={3} />
                                 </span>
                               </span>
                             )}
                           </span>
                           <span className={`text-center text-[10px] font-bold leading-tight ${
-                            active ? 'text-saffron-300' : 'text-white/75'
+                            active ? 'text-saffron-700' : 'text-ink-soft'
                           }`}>
                             {o.label}
                           </span>
@@ -327,10 +327,10 @@ export default function CakeShop() {
         <section ref={gridRef} className="scroll-mt-20">
           <div className="flex items-end justify-between gap-3 mb-3">
             <div className="min-w-0">
-              <h2 className="truncate text-[15px] font-extrabold text-white">
+              <h2 className="truncate text-[15px] font-extrabold text-ink">
                 {occasion === 'All' ? 'All cakes' : `${occasionEmoji(occasion)} ${occasionLabel(occasion)}`}
               </h2>
-              <p className="text-[11px] text-white/50">
+              <p className="text-[11px] text-ink-mute">
                 {loading ? 'Loading…' : `${visible.length} cake${visible.length === 1 ? '' : 's'}`}
                 {vegOnly && ' · eggless only'}
               </p>
@@ -350,7 +350,7 @@ export default function CakeShop() {
                   className={`shop-chip ${
                     style === s.id
                       ? 'border-white bg-white text-forest-900'
-                      : 'border-white/15 bg-white/5 text-white/70'
+                      : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
                   }`}
                 >
                   {s.emoji} {s.label}
@@ -362,15 +362,15 @@ export default function CakeShop() {
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-60 animate-pulse rounded-3xl bg-white/5" />
+                <div key={i} className="h-60 animate-pulse rounded-3xl bg-surface-sunk/[0.07]" />
               ))}
             </div>
           ) : visible.length === 0 ? (
             <div className="text-center py-14 space-y-3">
               <div className="text-4xl">🎂</div>
-              <p className="text-sm text-white/60">Nothing matches that combination yet.</p>
+              <p className="text-sm text-ink-mute">Nothing matches that combination yet.</p>
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                <button onClick={clearFilters} className="rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white ring-1 ring-white/15">
+                <button onClick={clearFilters} className="rounded-xl bg-surface-sunk/[0.07] px-4 py-2 text-xs font-bold text-ink ring-1 ring-hairline/10">
                   Clear filters
                 </button>
                 <a
@@ -403,7 +403,7 @@ export default function CakeShop() {
           <div ref={sentinelRef} className="pt-5 text-center">
             <button
               onClick={showMore}
-              className="rounded-xl bg-white/10 px-5 py-3 text-xs font-bold text-white ring-1 ring-white/15 active:scale-95 transition-transform"
+              className="rounded-xl bg-surface-sunk/[0.07] px-5 py-3 text-xs font-bold text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
             >
               Show {Math.min(remaining, 24)} more
             </button>
@@ -523,11 +523,11 @@ function CakeCard({ cake, offer, orderCount = 0, stagger = 0, inCartQty, onCusto
 
         <RatingBadge subjectType="product" subjectId={cake.id} className="mt-1" />
 
-        <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-snug text-gray-400">{cake.description}</p>
+        <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-snug text-gray-500">{cake.description}</p>
 
         <div className="mt-2 flex items-baseline gap-1.5">
           <span className="text-[15px] font-extrabold text-forest-800">{formatINR(cake.price)}</span>
-          <span className="text-[10px] font-semibold text-gray-400">onwards</span>
+          <span className="text-[10px] font-semibold text-gray-500">onwards</span>
         </div>
 
         <DetailRotator facts={rotatorFacts} stagger={stagger} className="mt-1.5" />

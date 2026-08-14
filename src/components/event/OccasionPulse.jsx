@@ -52,7 +52,7 @@ export default function OccasionPulse({
   // services simply contributes fewer lines instead of an empty one.
   const facts = [
     ...profile.signature.map((s, i) => ({
-      key: `sig-${i}`, icon: Sparkles, text: s, color: 'var(--event-glow)',
+      key: `sig-${i}`, icon: Sparkles, text: s, color: 'var(--event-glow-ink)',
     })),
     tier?.cuisine && {
       key: 'cuisine',
@@ -82,7 +82,7 @@ export default function OccasionPulse({
   ]
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white/[0.07] ring-1 ring-white/10 backdrop-blur-sm">
+    <div className="overflow-hidden rounded-3xl bg-surface-sunk/[0.06] ring-1 ring-hairline/10 backdrop-blur-sm">
       {/* ── The scale, named ─────────────────────────────────────
           Renamed live as the count changes. The customer is told which circle
           they are in before they are told what it costs, because the price is
@@ -91,17 +91,16 @@ export default function OccasionPulse({
       <div className="flex items-center gap-2.5 px-4 pt-3.5">
         <span className="text-[22px] leading-none" aria-hidden="true">{tier?.emoji ?? event.emoji}</span>
         <div className="min-w-0 flex-1">
-          <p key={tier?.id} className="fact-swap truncate text-[14px] font-extrabold leading-tight text-white">
+          <p key={tier?.id} className="fact-swap truncate text-[14px] font-extrabold leading-tight text-ink">
             {tier?.name ?? event.name}
           </p>
-          <p className="truncate text-[10.5px] font-medium italic text-white/45">
+          <p className="truncate text-[10.5px] font-medium italic text-ink-mute">
             {tier?.localName ?? profile.promise}
           </p>
         </div>
         {tier?.guests && (
           <span
-            className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-extrabold"
-            style={{ background: 'color-mix(in srgb, var(--event-glow) 22%, transparent)', color: 'var(--event-glow)' }}
+            className="event-tint flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-extrabold"
           >
             <Users size={10} />
             {bespoke ? `${tier.guests.min}+` : `${tier.guests.min}–${tier.guests.max}`}
@@ -117,10 +116,10 @@ export default function OccasionPulse({
       <div className="px-4 pb-3.5 pt-2">
         {bespoke ? (
           <>
-            <p className="font-serif text-[21px] font-bold leading-tight text-white">
+            <p className="font-serif text-[21px] font-bold leading-tight text-ink">
               Past what we will auto-price
             </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-white/50">
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
               {guestCount.toLocaleString('en-IN')} guests is beyond the ladder. A coordinator builds
               this with you and you see every line before agreeing to any of it — no automatic number,
               because at this size one would be a guess.
@@ -128,19 +127,19 @@ export default function OccasionPulse({
           </>
         ) : quote?.range ? (
           <>
-            <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/40">
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink-mute">
               Your estimate, all in
             </p>
             <p
               key={`${quote.range.low}-${quote.range.high}`}
-              className="fact-swap font-serif text-[25px] font-bold leading-tight text-white sm:text-[29px]"
+              className="fact-swap font-serif text-[25px] font-bold leading-tight text-ink sm:text-[29px]"
             >
               {formatINR(quote.range.low)}
-              <span className="mx-1 text-white/35">–</span>
+              <span className="mx-1 text-ink-mute">–</span>
               {formatINR(quote.range.high)}
             </p>
-            <p className="mt-0.5 text-[11px] leading-snug text-white/50">
-              for <strong className="font-extrabold text-white/80">{guestCount.toLocaleString('en-IN')} guests</strong>
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-mute">
+              for <strong className="font-extrabold text-ink-soft">{guestCount.toLocaleString('en-IN')} guests</strong>
               {quote.perGuest ? <> · about {formatINR(quote.perGuest)} a head</> : null} · incl. taxes
             </p>
 
@@ -155,19 +154,19 @@ export default function OccasionPulse({
                 somebody with ₹10,000 has a real door in; the door has to stay
                 visible. Both numbers, each labelled as what it is. */}
             {Number.isFinite(entryPrice) && tier?.guests?.min > 10 && (
-              <p className="mt-1.5 text-[10.5px] leading-snug text-white/40">
+              <p className="mt-1.5 text-[10.5px] leading-snug text-ink-mute">
                 Planning something smaller? We start at{' '}
-                <strong className="font-bold text-white/60">{formatINR(entryPrice)}</strong> for ten
+                <strong className="font-bold text-ink-mute">{formatINR(entryPrice)}</strong> for ten
                 people.
               </p>
             )}
           </>
         ) : (
           <>
-            <p className="font-serif text-[21px] font-bold leading-tight text-white">
+            <p className="font-serif text-[21px] font-bold leading-tight text-ink">
               Tell us the headcount
             </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-white/50">
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
               It is the one thing that moves the price most. Put a rough number in below and every
               figure on this page prices itself against it.
             </p>
@@ -176,12 +175,12 @@ export default function OccasionPulse({
       </div>
 
       {/* ── The line that keeps moving ───────────────────────── */}
-      <div className="border-t border-white/10 bg-white/[0.04] px-4 py-2.5">
+      <div className="border-t border-hairline/10 bg-surface-sunk/[0.06] px-4 py-2.5">
         <DetailRotator
           facts={facts}
           interval={3200}
           height={16}
-          lineClassName="text-white/65"
+          lineClassName="text-ink-mute"
         />
       </div>
     </div>

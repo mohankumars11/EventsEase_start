@@ -53,7 +53,7 @@ export default function ScaleVerdict({
   const fits = !bespoke && guestCount >= tier.guests.min && guestCount <= tier.guests.max
 
   return (
-    <div className="mt-3.5 overflow-hidden rounded-2xl border border-white/10 bg-white">
+    <div className="mt-3.5 overflow-hidden rounded-2xl border border-hairline/10 bg-white">
       {/* The rung's own colour at full strength, carrying the verdict. This is
           the line the customer's eye lands on after they let go of the
           number, so it says the conclusion rather than a label. */}
@@ -130,7 +130,7 @@ export default function ScaleVerdict({
           {!bespoke && (
             <Link
               to={`/plan/build/${eventId}?tier=${tier.id}&guests=${guestCount}`}
-              className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl px-4 text-[13px] font-extrabold text-white transition-transform active:scale-[0.98]"
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl px-4 text-[13px] font-extrabold text-ink transition-transform active:scale-[0.98]"
               style={{ background: 'var(--event-ink)' }}
             >
               Build my celebration <ArrowRight size={14} />
@@ -139,7 +139,7 @@ export default function ScaleVerdict({
           <button
             type="button"
             onClick={onSeeDetails}
-            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-gray-900 px-3.5 text-[13px] font-extrabold text-white transition-transform active:scale-[0.98] hover:bg-gray-800"
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-gray-900 px-3.5 text-[13px] font-extrabold text-ink transition-transform active:scale-[0.98] hover:bg-gray-800"
           >
             <Eye size={14} /> See what's included
           </button>
@@ -155,7 +155,7 @@ export default function ScaleVerdict({
             onClick={onAdoptSuggested}
             className="mt-2.5 flex w-full items-center gap-2 rounded-xl bg-white/80 px-3 py-2.5 text-left ring-1 ring-black/5 transition-colors hover:bg-white"
           >
-            <RefreshCw size={13} className="shrink-0 text-gray-400" />
+            <RefreshCw size={13} className="shrink-0 text-gray-500" />
             <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-gray-600">
               {guestCount.toLocaleString('en-IN')} guests normally points to{' '}
               <strong className="font-extrabold text-gray-900">{suggested.name}</strong>. Keep{' '}
@@ -167,7 +167,7 @@ export default function ScaleVerdict({
           </button>
         )}
 
-        <p className="mt-2 flex items-start gap-1.5 text-[10.5px] leading-snug text-gray-400">
+        <p className="mt-2 flex items-start gap-1.5 text-[10.5px] leading-snug text-gray-500">
           <Sparkles size={10} className="mt-0.5 shrink-0" />
           Every scale is on the page below — this one is simply the one your headcount lands in.
           Nothing is booked and nothing is charged until you approve a final quote.

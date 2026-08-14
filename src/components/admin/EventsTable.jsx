@@ -86,7 +86,7 @@ export default function EventsTable({
           <div className="text-4xl mb-3">📋</div>
           <p className="text-gray-500 text-sm font-medium">No events found matching the filter.</p>
           {(search || filterStatus || filterType || filterCity) && (
-            <p className="text-xs text-gray-400 mt-1">Try clearing the search or filter above.</p>
+            <p className="text-xs text-gray-500 mt-1">Try clearing the search or filter above.</p>
           )}
         </div>
       ) : (
@@ -116,7 +116,7 @@ export default function EventsTable({
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 text-xs leading-tight">{ev.profiles?.full_name ?? '—'}</div>
-                      <div className="text-gray-400 text-[11px] mt-0.5">{ev.profiles?.phone ?? ''}</div>
+                      <div className="text-gray-500 text-[11px] mt-0.5">{ev.profiles?.phone ?? ''}</div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="mr-1">{EVENT_TYPE_EMOJIS[ev.event_type] ?? '🎉'}</span>
@@ -142,13 +142,13 @@ export default function EventsTable({
                         {ev.profiles?.phone && (
                           <>
                             <a href={`tel:${ev.profiles.phone}`} title="Call"
-                               className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                               className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
                               <Phone size={13} />
                             </a>
                             <a
                               href={`https://wa.me/${ev.profiles.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${ev.profiles.full_name ?? ''}, this is your Sambramo coordinator!`)}`}
                               target="_blank" rel="noopener noreferrer" title="WhatsApp"
-                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             >
                               <MessageCircle size={13} />
                             </a>
@@ -170,7 +170,7 @@ export default function EventsTable({
             </table>
           </div>
           <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
-            <p className="text-xs text-gray-400">{events.length} event{events.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500">{events.length} event{events.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}

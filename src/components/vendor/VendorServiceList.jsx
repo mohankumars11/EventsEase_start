@@ -200,7 +200,7 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.description}</p>
                   )}
                   {s.lead_time_days !== null && s.lead_time_days !== undefined && (
-                    <p className="text-xs text-gray-400 mt-1 inline-flex items-center gap-1">
+                    <p className="text-xs text-gray-500 mt-1 inline-flex items-center gap-1">
                       <Clock size={11} />
                       {s.lead_time_days === 0 ? 'Same-day possible' : `${s.lead_time_days} day${s.lead_time_days === 1 ? '' : 's'} notice`}
                     </p>
@@ -230,7 +230,7 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
       </ul>
 
       {services.length > 0 && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500">
           Hiding an item keeps it and its price for later — useful for anything
           seasonal. Deleting is permanent.
         </p>
@@ -271,7 +271,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label" htmlFor="svc-price">
-            Price <span className="font-normal text-gray-400">(optional)</span>
+            Price <span className="font-normal text-gray-500">(optional)</span>
           </label>
           <input
             id="svc-price" className="input" inputMode="numeric" value={f.price}
@@ -300,7 +300,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
         </div>
         <div>
           <label className="label" htmlFor="svc-lead">
-            Notice needed <span className="font-normal text-gray-400">(days)</span>
+            Notice needed <span className="font-normal text-gray-500">(days)</span>
           </label>
           <input
             id="svc-lead" className="input" inputMode="numeric" value={f.lead_time_days}
@@ -312,7 +312,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
 
       <div>
         <label className="label" htmlFor="svc-desc">
-          What's included <span className="font-normal text-gray-400">(optional)</span>
+          What's included <span className="font-normal text-gray-500">(optional)</span>
         </label>
         <textarea
           id="svc-desc" className="input resize-none h-20" value={f.description}
@@ -325,7 +325,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
           typed. It is the only way for the vendor to tell that "400" and
           "per plate" combine into something sane. */}
       <div className="rounded-xl bg-cream border border-orange-100 px-3 py-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-0.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-0.5">
           How this reads to us
         </div>
         <div className="text-sm text-gray-800">
@@ -354,7 +354,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
           <button
             type="button"
             onClick={() => set('category', vendorCategory)}
-            className="hidden sm:inline-flex text-xs text-gray-400 hover:text-plum-600 px-2"
+            className="hidden sm:inline-flex text-xs text-gray-500 hover:text-plum-600 px-2"
           >
             Tag as {vendorCategory}
           </button>
@@ -369,7 +369,7 @@ function IconButton({ label, children, disabled, onClick }) {
     <button
       type="button" onClick={onClick} disabled={disabled}
       aria-label={label} title={label}
-      className="p-1.5 rounded-lg text-gray-400 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-colors"
+      className="p-1.5 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
     >
       {children}
     </button>

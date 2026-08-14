@@ -97,13 +97,13 @@ export function VendorsContent({ data }) {
                     <tr key={vendor.id} className="hover:bg-purple-50/30 transition-colors">
                       <td className="px-4 py-3">
                         <div className="font-semibold text-gray-900 text-sm leading-tight">{vendor.business_name}</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5">{vendor.profiles?.full_name ?? '—'}</div>
+                        <div className="text-gray-500 text-[11px] mt-0.5">{vendor.profiles?.full_name ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600">{vendor.category ?? '—'}</td>
                       <td className="px-4 py-3 text-xs text-gray-600">{vendor.city ?? '—'}</td>
                       <td className="px-4 py-3">
                         <div className="text-xs text-gray-600">{vendor.profiles?.phone ?? '—'}</div>
-                        <div className="text-[11px] text-gray-400">{vendor.profiles?.email ?? ''}</div>
+                        <div className="text-[11px] text-gray-500">{vendor.profiles?.email ?? ''}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
@@ -114,7 +114,7 @@ export function VendorsContent({ data }) {
                         <div className="flex items-center gap-1.5">
                           {vendor.status !== 'APPROVED' && (
                             <button onClick={() => updateStatus(vendor.id, 'APPROVED')} disabled={isActing}
-                              className="px-2.5 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                              className="px-2.5 py-1 bg-green-600 text-ink text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
                               Approve
                             </button>
                           )}
@@ -145,7 +145,7 @@ export function VendorsContent({ data }) {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
-            <p className="text-xs text-gray-400">{displayed.length} vendor{displayed.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500">{displayed.length} vendor{displayed.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}
@@ -229,18 +229,18 @@ export function OrdersContent({ data, onOpenOrder }) {
                     >
                       <td className="px-4 py-3">
                         <div className="font-mono text-xs font-semibold text-gray-900">#{order.id.slice(0, 8).toUpperCase()}</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5">{formatDate(order.created_at)}</div>
+                        <div className="text-gray-500 text-[11px] mt-0.5">{formatDate(order.created_at)}</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-xs text-gray-700">{order.profiles?.full_name ?? '—'}</div>
-                        <div className="text-[11px] text-gray-400">{order.profiles?.phone ?? order.address?.phone ?? ''}</div>
+                        <div className="text-[11px] text-gray-500">{order.profiles?.phone ?? order.address?.phone ?? ''}</div>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600">
                         {order.order_items?.length ?? 0} item{order.order_items?.length !== 1 ? 's' : ''}
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold text-gray-900">{formatINR(order.total)}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-[11px] font-semibold ${order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-400'}`}>
+                        <span className={`text-[11px] font-semibold ${order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-500'}`}>
                           {order.payment_status}
                         </span>
                       </td>
@@ -254,13 +254,13 @@ export function OrdersContent({ data, onOpenOrder }) {
                         <div className="flex items-center gap-1.5">
                           {order.payment_status === 'pending' && (
                             <button onClick={() => markPaid(order)} disabled={acting === order.id}
-                              className="px-2.5 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                              className="px-2.5 py-1 bg-green-600 text-ink text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
                               Mark Paid
                             </button>
                           )}
                           {next && order.status !== 'cancelled' && (
                             <button onClick={() => advanceStatus(order)} disabled={acting === order.id}
-                              className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50">
+                              className="px-2.5 py-1 bg-plum-600 text-ink text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50">
                               {acting === order.id ? <Loader2 size={11} className="animate-spin" /> : `Mark ${next}`}
                             </button>
                           )}
@@ -273,7 +273,7 @@ export function OrdersContent({ data, onOpenOrder }) {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
-            <p className="text-xs text-gray-400">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}
@@ -327,7 +327,7 @@ export function ReviewsContent({ data }) {
                     <span className="font-semibold text-gray-900 text-sm">{r.customer_name}</span>
                     <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-semibold uppercase">{r.subject_type}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{r.subject_name} · {formatDate(r.created_at)}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{r.subject_name} · {formatDate(r.created_at)}</p>
                 </div>
                 <span className="text-amber-500 font-bold text-sm shrink-0">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
               </div>
@@ -350,7 +350,7 @@ export function ReviewsContent({ data }) {
                   />
                   <div className="flex gap-2">
                     <button onClick={() => submitReply(r.id)} disabled={saving}
-                      className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                      className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                       {saving ? 'Saving…' : 'Save reply'}
                     </button>
                     <button onClick={() => setReplyingId(null)}
@@ -486,7 +486,7 @@ function SupportContent({ data, onOpenOrder, only }) {
             key={p.id}
             onClick={() => setPill(p.id)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              pill === p.id ? 'bg-plum-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              pill === p.id ? 'bg-plum-600 text-ink' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             {p.emoji} {p.label}
@@ -512,7 +512,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{r.profiles?.full_name ?? '—'}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       Order #{r.order_id.slice(0, 8).toUpperCase()} · {formatINR(r.orders?.total)} · {formatDate(r.requested_at)}
                     </p>
                     <p className="text-sm text-gray-700 mt-1.5">{describeReasons(r)}{r.comment ? ` — ${r.comment}` : ''}</p>
@@ -559,7 +559,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                       <p className="font-semibold text-gray-900 text-sm">{c.profiles?.full_name ?? '—'}</p>
                       <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-semibold uppercase">{c.subject_type}</span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(c.created_at)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(c.created_at)}</p>
                     <p className="text-sm text-gray-700 mt-1.5">{c.message}</p>
                   </div>
                   <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -584,11 +584,11 @@ function SupportContent({ data, onOpenOrder, only }) {
                     />
                     <div className="flex gap-2">
                       <button onClick={() => submitComplaintReply(c.id, 'in_progress')} disabled={acting === c.id}
-                        className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                         Save &amp; keep open
                       </button>
                       <button onClick={() => submitComplaintReply(c.id, 'resolved')} disabled={acting === c.id}
-                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-green-600 text-ink text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
                         Save &amp; resolve
                       </button>
                       <button onClick={() => setReplyingId(null)}
@@ -616,7 +616,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{e.event_name}</p>
-                    <p className="text-xs text-gray-400">{formatDate(e.created_at)}</p>
+                    <p className="text-xs text-gray-500">{formatDate(e.created_at)}</p>
                   </div>
                   <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
                     e.status === 'open' ? 'bg-blue-100 text-blue-700' :
@@ -660,7 +660,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                     />
                     <div className="flex gap-2">
                       <button onClick={() => sendQuote(e.id)} disabled={acting === e.id}
-                        className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                         Send Quote
                       </button>
                       <button onClick={() => setQuotingId(null)}
@@ -679,7 +679,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                     )}
                     {e.status === 'responded' && (
                       <button onClick={() => advanceEnquiry(e.id, 'closed')} disabled={acting === e.id}
-                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-green-600 text-ink text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
                         Mark Closed
                       </button>
                     )}

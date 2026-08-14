@@ -43,8 +43,8 @@ export default function BuilderActionBar({
       aria-label="Back a step"
       className={
         isFixed
-          ? 'shrink-0 w-11 h-11 rounded-xl ring-1 ring-white/15 bg-white/10 flex items-center justify-center text-white/70 active:bg-white/20'
-          : 'shrink-0 px-5 min-h-[52px] rounded-xl ring-1 ring-white/15 bg-white/10 text-sm font-semibold text-white/80 active:bg-white/20'
+          ? 'shrink-0 w-11 h-11 rounded-xl ring-1 ring-hairline/10 bg-surface-sunk/[0.07] flex items-center justify-center text-ink-soft active:bg-surface-sunk/[0.07]'
+          : 'shrink-0 px-5 min-h-[52px] rounded-xl ring-1 ring-hairline/10 bg-surface-sunk/[0.07] text-sm font-semibold text-ink-soft active:bg-surface-sunk/[0.07]'
       }
     >
       {isFixed ? <ArrowLeft size={18} /> : 'Back'}
@@ -75,8 +75,8 @@ export default function BuilderActionBar({
   }
 
   return (
-    <div className="plan-bar lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.5)]">
-      <div className="flex items-center gap-2 px-3 py-2.5 pb-safe">
+    <div className="plan-bar lg:hidden fixed inset-x-0 z-30 above-bottom-nav pr-chat-dock border-t border-hairline/10 shadow-[0_-4px_24px_-8px_rgba(70,30,120,0.18)]">
+      <div className="flex items-center gap-2 px-3 py-2.5">
         {back}
 
         {quote ? (
@@ -92,15 +92,15 @@ export default function BuilderActionBar({
             onClick={onOpenReview}
             className="min-w-0 flex-1 rounded-lg px-1 py-1 text-left active:opacity-70"
           >
-            <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-saffron-300">
+            <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-saffron-700">
               <Receipt size={10} /> Estimated{settled ? '' : ' so far'} · incl. taxes
             </span>
-            <span className="block truncate text-[17px] font-extrabold leading-tight text-white">
+            <span className="block truncate text-[17px] font-extrabold leading-tight text-ink">
               {formatINR(quote.range.low)} – {formatINR(quote.range.high)}
             </span>
           </button>
         ) : (
-          <span className="min-w-0 flex-1 text-[11px] leading-snug text-white/45">
+          <span className="min-w-0 flex-1 text-[11px] leading-snug text-ink-mute">
             {hint ?? 'The estimate appears here once you pick an occasion.'}
           </span>
         )}

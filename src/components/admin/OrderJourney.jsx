@@ -162,7 +162,7 @@ export default function OrderJourney({ order, events = [], returns = [], onClose
                 {' · '}{formatINR(order.total)}
               </p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 shrink-0"><X size={20} /></button>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1 shrink-0"><X size={20} /></button>
           </div>
 
           {/* One sentence: what to do about this order right now. */}
@@ -237,7 +237,7 @@ export default function OrderJourney({ order, events = [], returns = [], onClose
 
                     <div className="flex-1 min-w-0 pb-4">
                       <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                        <span className={`text-sm ${s.reached ? 'font-semibold text-gray-900' : 'text-gray-400'}`}>
+                        <span className={`text-sm ${s.reached ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
                           {s.label}
                         </span>
                         <span className="text-[11px] tabular-nums" style={{ color: INK.muted }}>
@@ -279,7 +279,7 @@ export default function OrderJourney({ order, events = [], returns = [], onClose
             <div className="flex flex-wrap gap-2 mt-1">
               {nextStage && !journey.cancelled && (
                 <button onClick={advance} disabled={acting === 'advance'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-white text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-ink text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
                   {acting === 'advance' ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
                   Mark {STAGE_BY_ID[nextStage].label.toLowerCase()}
                 </button>
@@ -324,7 +324,7 @@ export default function OrderJourney({ order, events = [], returns = [], onClose
               {order.payment_status === 'pending' && (
                 <div className="mt-3 pt-3 border-t border-gray-200/70 space-y-2.5">
                   <button onClick={markPaid} disabled={acting === 'paid'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-ink text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
                     {acting === 'paid' ? <Loader2 size={12} className="animate-spin" /> : <IndianRupee size={12} />}
                     Confirm the money arrived
                   </button>
@@ -580,7 +580,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
             <button
               onClick={() => update({ status: 'approved', refund_amount: owed }, 'Return approved.')}
               disabled={acting === 'return'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-ink text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
               {acting === 'return' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               Approve — refund {formatINR(owed)}
             </button>
@@ -606,7 +606,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
                   key={m.id} onClick={() => setMethod(m.id)} aria-pressed={method === m.id}
                   title={m.note}
                   className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${
-                    method === m.id ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                    method === m.id ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
                   }`}
                 >
                   {m.label} <span className="opacity-70">· {m.eta}</span>
@@ -636,7 +636,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
                   refund_initiated_at: new Date().toISOString(),
                 }, 'Refund recorded as sent.')}
                 disabled={acting === 'return'}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-white text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-ink text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
                 {acting === 'return' ? <Loader2 size={12} className="animate-spin" /> : <IndianRupee size={12} />}
                 I have sent it
               </button>
@@ -665,7 +665,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
                 resolved_at: new Date().toISOString(),
               }, 'Refund complete — the order is marked refunded too.')}
               disabled={acting === 'return'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-ink text-xs font-semibold hover:bg-green-700 disabled:opacity-50">
               {acting === 'return' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               They confirmed it arrived
             </button>

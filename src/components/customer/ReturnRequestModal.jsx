@@ -90,11 +90,11 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
             <h3 className="font-bold text-gray-900">Request a return</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5">
               Order #{String(order.id).slice(0, 8).toUpperCase()} · {formatINR(order.total)}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={20} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1"><X size={20} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -126,7 +126,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
           {/* ── Reasons — more than one allowed ──────────────────── */}
           <div>
             <p className="text-xs font-semibold text-gray-700 mb-1">What went wrong?</p>
-            <p className="text-[11px] text-gray-400 mb-2">Tick everything that applies.</p>
+            <p className="text-[11px] text-gray-500 mb-2">Tick everything that applies.</p>
             <div className="flex flex-wrap gap-2">
               {RETURN_REASONS.map(r => {
                 const on = reasons.includes(r.id)
@@ -134,7 +134,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
                   <button
                     key={r.id} type="button" onClick={() => toggle(r.id)} aria-pressed={on}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                      on ? 'bg-plum-600 border-plum-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                      on ? 'bg-plum-600 border-plum-600 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
                     }`}
                   >
                     {on ? '✓ ' : ''}{r.label}
@@ -157,7 +157,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
           {/* ── What comes back ─────────────────────────────────── */}
           {reasons.length > 0 && (
             <div className="rounded-xl bg-gray-50 px-3.5 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                 What you would get back
               </p>
               <dl className="space-y-0.5 text-xs">
@@ -169,7 +169,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
                 <Line label="Refund" value={formatINR(breakdown.total)} bold />
               </dl>
               <p className="text-[11px] text-gray-500 mt-1.5">{breakdown.reason}</p>
-              <p className="text-[11px] text-gray-400 mt-1">
+              <p className="text-[11px] text-gray-500 mt-1">
                 Subject to review — we will confirm the exact amount before sending it.
               </p>
             </div>
@@ -177,7 +177,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
 
           <div>
             <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Anything else we should know? <span className="font-normal text-gray-400">(optional)</span>
+              Anything else we should know? <span className="font-normal text-gray-500">(optional)</span>
             </label>
             <textarea
               value={message} onChange={e => setMessage(e.target.value)}
@@ -205,7 +205,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
               />
               <span className="text-xs text-gray-700 font-medium">{RETURN_TERMS.confirm}</span>
             </label>
-            <p className="text-[10px] text-gray-400 mt-1.5">
+            <p className="text-[10px] text-gray-500 mt-1.5">
               We record which version of these terms you agreed to (v{POLICY_VERSION}), so this
               cannot change behind you.
             </p>

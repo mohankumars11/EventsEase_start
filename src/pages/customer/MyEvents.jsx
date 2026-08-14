@@ -106,7 +106,7 @@ function CelebrationCard({ celebration: c }) {
     }`}>
       {/* Header */}
       <div className={`bg-gradient-to-br ${c.gradient} p-5 relative overflow-hidden ${cancelled ? 'grayscale' : ''}`}>
-        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-24 h-24 bg-surface-sunk/[0.07] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-14 h-14 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
         <div className="relative flex items-start justify-between gap-3">
@@ -118,9 +118,9 @@ function CelebrationCard({ celebration: c }) {
             {/* Which door this came through. A customer who used the builder
                 and the wizard in the same week has two rows that would
                 otherwise be indistinguishable. */}
-            <p className="mt-0.5 text-[11px] text-white/70">{c.source}</p>
+            <p className="mt-0.5 text-[11px] text-ink-soft">{c.source}</p>
           </div>
-          <span className="shrink-0 font-mono text-[11px] bg-white/20 text-white px-2 py-1 rounded-lg backdrop-blur-sm">
+          <span className="shrink-0 font-mono text-[11px] bg-surface-sunk/[0.07] text-ink px-2 py-1 rounded-lg backdrop-blur-sm">
             {c.reference}
           </span>
         </div>
@@ -134,29 +134,29 @@ function CelebrationCard({ celebration: c }) {
             shown. */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-500">
           <span className="flex items-center gap-1">
-            <Clock3 size={11} className="text-gray-400" />
+            <Clock3 size={11} className="text-gray-500" />
             Raised {formatDate(c.raisedAt)}
           </span>
           {c.eventDate && (
             <span className="flex items-center gap-1">
-              <Calendar size={11} className="text-gray-400" />
+              <Calendar size={11} className="text-gray-500" />
               {formatDate(c.eventDate)}
               {c.timeSlot ? ` · ${String(c.timeSlot).replace(/_/g, ' ')}` : ''}
             </span>
           )}
           {c.city && (
             <span className="flex items-center gap-1">
-              <MapPin size={11} className="text-gray-400" />{c.city}
+              <MapPin size={11} className="text-gray-500" />{c.city}
             </span>
           )}
           {c.guestCount && (
             <span className="flex items-center gap-1">
-              <Users size={11} className="text-gray-400" />{c.guestCount} guests
+              <Users size={11} className="text-gray-500" />{c.guestCount} guests
             </span>
           )}
           {c.lineCount > 0 && (
             <span className="flex items-center gap-1">
-              <ListChecks size={11} className="text-gray-400" />{c.lineCount} item{c.lineCount === 1 ? '' : 's'}
+              <ListChecks size={11} className="text-gray-500" />{c.lineCount} item{c.lineCount === 1 ? '' : 's'}
             </span>
           )}
         </div>
@@ -206,7 +206,7 @@ function CelebrationCard({ celebration: c }) {
             can only find out here — nothing else in the app shows them the
             number the coordinator is about to ring. */}
         {c.contact.phone ? (
-          <p className="flex items-center gap-1.5 text-[11px] text-gray-400">
+          <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
             <Phone size={11} /> We'll call you on {c.contact.phone}
           </p>
         ) : (
@@ -222,7 +222,7 @@ function CelebrationCard({ celebration: c }) {
           onClick={() => navigate(c.href)}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             action
-              ? 'bg-plum-600 text-white hover:bg-plum-700 shadow-md shadow-plum-200'
+              ? 'bg-plum-600 text-ink hover:bg-plum-700 shadow-md shadow-plum-200'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
           }`}
         >
@@ -345,13 +345,13 @@ export default function MyEvents() {
         style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f59e0b 100%)' }}
         onClick={() => navigate('/plan')}
       >
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-surface-sunk/[0.07] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="text-4xl group-hover:scale-110 transition-transform duration-300 shrink-0">✨</div>
           <div className="flex-1">
-            <h2 className="text-white font-bold text-lg sm:text-xl leading-tight">Plan a New Celebration</h2>
-            <p className="text-white/75 text-sm mt-1">Tell us your dream — we'll handle the rest.</p>
+            <h2 className="text-ink font-bold text-lg sm:text-xl leading-tight">Plan a New Celebration</h2>
+            <p className="text-ink-soft text-sm mt-1">Tell us your dream — we'll handle the rest.</p>
           </div>
           <button
             onClick={e => { e.stopPropagation(); navigate('/plan') }}
@@ -377,7 +377,7 @@ export default function MyEvents() {
               }`}
             >
               {f.label}
-              <span className={filter === f.id ? 'ml-1.5 text-white/60' : 'ml-1.5 text-gray-400'}>
+              <span className={filter === f.id ? 'ml-1.5 text-ink-mute' : 'ml-1.5 text-gray-500'}>
                 {counts[f.id]}
               </span>
             </button>
@@ -389,7 +389,7 @@ export default function MyEvents() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           Your Celebrations
           {shown.length > 0 && (
-            <span className="ml-2 text-sm font-normal text-gray-400">({shown.length})</span>
+            <span className="ml-2 text-sm font-normal text-gray-500">({shown.length})</span>
           )}
         </h2>
 
@@ -399,7 +399,7 @@ export default function MyEvents() {
               <div className="text-6xl">✨</div>
               <div>
                 <h3 className="font-bold text-gray-800 text-lg">Your next celebration could start here.</h3>
-                <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+                <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
                   Every magical moment begins with a request. Let us plan something unforgettable for you.
                 </p>
               </div>
@@ -429,7 +429,7 @@ export default function MyEvents() {
       {/* The other list is still its own page — it carries per-line reviews,
           cancellation and the price hold, none of which belong on a summary
           card. Linked rather than duplicated. */}
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-gray-500">
         Looking for line-by-line detail, reviews or cancellation?{' '}
         <Link to="/dashboard/customer/requests" className="font-semibold text-plum-600 hover:text-plum-700">
           Open My requests

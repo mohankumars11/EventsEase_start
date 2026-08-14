@@ -30,7 +30,7 @@ function StepIndicator({ current, total }) {
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
             i + 1 < current  ? 'bg-plum-600 text-white' :
             i + 1 === current ? 'bg-saffron-400 text-plum-950' :
-                                'bg-gray-200 text-gray-400'
+                                'bg-gray-200 text-gray-500'
           }`}>
             {i + 1 < current ? <CheckCircle2 size={14} /> : i + 1}
           </div>
@@ -213,7 +213,7 @@ export default function VendorOnboarding() {
         </div>
 
         {hydrating ? (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center gap-3 text-gray-400">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center gap-3 text-gray-500">
             <Loader2 className="animate-spin text-plum-600" size={26} />
             <span className="text-sm">Loading your details…</span>
           </div>
@@ -281,7 +281,7 @@ export default function VendorOnboarding() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Cities you serve <span className="font-normal text-gray-400">(optional)</span>
+                    Cities you serve <span className="font-normal text-gray-500">(optional)</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {CITIES.map(c => (
@@ -384,7 +384,7 @@ function Field({ label, hint, children }) {
     <div>
       <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-1.5">
         <span>{label}</span>
-        {hint && <span className="text-xs font-normal text-gray-400">{hint}</span>}
+        {hint && <span className="text-xs font-normal text-gray-500">{hint}</span>}
       </label>
       {children}
     </div>

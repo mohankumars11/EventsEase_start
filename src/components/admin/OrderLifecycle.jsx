@@ -212,13 +212,13 @@ export default function OrderLifecycle({ data, onOpenOrder }) {
                   {o.profiles?.phone && (
                     <>
                       <a href={`tel:${o.profiles.phone}`} title="Call"
-                         className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                         className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
                         <Phone size={13} />
                       </a>
                       <a
                         href={`https://wa.me/${o.profiles.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${o.profiles.full_name ?? ''}, checking on the payment for Sambramo order #${short(o.id)} (${formatINR(o.total)}).`)}`}
                         target="_blank" rel="noopener noreferrer" title="WhatsApp"
-                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                       >
                         <MessageCircle size={13} />
                       </a>
@@ -226,7 +226,7 @@ export default function OrderLifecycle({ data, onOpenOrder }) {
                   )}
                   <button
                     onClick={() => markPaid(o)} disabled={acting === o.id}
-                    className="flex items-center gap-1 px-2.5 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="flex items-center gap-1 px-2.5 py-1 bg-green-600 text-ink text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50"
                   >
                     {acting === o.id ? <Loader2 size={11} className="animate-spin" /> : <IndianRupee size={11} />}
                     Confirm
@@ -282,7 +282,7 @@ export default function OrderLifecycle({ data, onOpenOrder }) {
                   {next && (
                     <button
                       onClick={() => advance(o)} disabled={acting === o.id}
-                      className="flex items-center gap-1 px-2.5 py-1 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50"
                     >
                       {acting === o.id ? <Loader2 size={11} className="animate-spin" /> : <ArrowRight size={11} />}
                       {STAGE_LABEL[next] ?? next}

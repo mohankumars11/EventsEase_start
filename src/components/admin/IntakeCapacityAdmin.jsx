@@ -261,7 +261,7 @@ export default function IntakeCapacityAdmin() {
                   <span className="block text-sm font-semibold text-gray-800">
                     {cityName ?? 'Every other city'}
                   </span>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-[11px] text-gray-500">
                     {row ? `set · updated ${row.updated_at?.slice(0, 10)}` : 'not set — using the fallback'}
                   </span>
                 </span>
@@ -296,7 +296,7 @@ export default function IntakeCapacityAdmin() {
                 onClick={() => setCity(c.name)}
                 aria-pressed={city === c.name}
                 className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
-                  city === c.name ? 'bg-plum-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  city === c.name ? 'bg-plum-600 text-ink' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {c.name}
@@ -405,7 +405,7 @@ export default function IntakeCapacityAdmin() {
         </div>
 
         {sel.rows.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-400">Nothing booked in {city} on this date.</p>
+          <p className="mt-3 text-sm text-gray-500">Nothing booked in {city} on this date.</p>
         ) : (
           <div className="mt-3 space-y-1.5">
             {[...sel.rows]
@@ -423,7 +423,7 @@ export default function IntakeCapacityAdmin() {
                     <span className="min-w-0 flex-1 truncate">
                       <span className="font-semibold text-gray-800">{r.label}</span>
                       {r.who && <span className="text-gray-500"> · {r.who}</span>}
-                      <span className="text-gray-400"> · {r.table === 'events' ? 'event' : 'enquiry'}</span>
+                      <span className="text-gray-500"> · {r.table === 'events' ? 'event' : 'enquiry'}</span>
                     </span>
                     <button
                       onClick={() => setIntake(r, waiting ? 'ACCEPTED' : 'WAITLIST')}
@@ -444,7 +444,7 @@ export default function IntakeCapacityAdmin() {
           </div>
         )}
 
-        <p className="mt-3 flex items-start gap-1.5 text-[11px] text-gray-400">
+        <p className="mt-3 flex items-start gap-1.5 text-[11px] text-gray-500">
           <Users size={12} className="mt-0.5 shrink-0" />
           Waitlisted rows stay ordinary leads — they keep their status and their
           coordinator, and they are excluded from the booked count so the queue never

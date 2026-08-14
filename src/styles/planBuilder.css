@@ -35,14 +35,14 @@
    page reads as content moving through a room rather than a very tall
    gradient sliding by. */
 .plan-canvas {
-  --plan-notch: #1a0730;
+  --notch: #F7F1FC;
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(95% 50% at 50% -6%, rgba(124, 58, 237, 0.42) 0%, transparent 62%),
-    radial-gradient(58% 36% at 90% 10%, rgba(245, 158, 11, 0.22) 0%, transparent 58%),
-    radial-gradient(70% 44% at 2% 38%, rgba(217, 70, 239, 0.15) 0%, transparent 60%),
-    linear-gradient(180deg, #2a0849 0%, #1a0730 46%, #0d0217 100%);
+    radial-gradient(95% 50% at 50% -6%, rgba(124, 58, 237, 0.11) 0%, transparent 62%),
+    radial-gradient(58% 36% at 90% 10%, rgba(245, 158, 11, 0.12) 0%, transparent 58%),
+    radial-gradient(70% 44% at 2% 38%, rgba(217, 70, 239, 0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #FCFAFF 0%, #F7F1FC 46%, #F3EDF9 100%);
   background-attachment: fixed;
 }
 
@@ -57,8 +57,8 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(31, 16, 51, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 16, 51, 0.055) 1px, transparent 1px);
   background-size: 56px 56px;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 32%, transparent 58%);
   mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 32%, transparent 58%);
@@ -70,8 +70,8 @@
    moving gradient is a contrast bug waiting for the one scroll position
    where it fails. */
 .plan-glass {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgb(var(--surface-sunk) / 0.05);
+  border: 1px solid rgb(var(--hairline) / 0.09);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -79,7 +79,7 @@
 /* The sticky step rail and the pinned action bar need to be opaque enough to
    read against whatever scrolls under them, which glass alone is not. */
 .plan-bar {
-  background: linear-gradient(180deg, rgba(26, 7, 48, 0.94) 0%, rgba(20, 5, 38, 0.96) 100%);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
@@ -94,19 +94,19 @@
    that the failure mode is a card with two white blobs on it — and the
    ground behind them here is close enough to flat at any one card's height
    that a solid fill is indistinguishable. Same call the occasion page made
-   with its --coupon-notch. */
+   with its --notch. */
 .plan-ticket {
   position: relative;
   overflow: hidden;
   border-radius: 1.25rem;
   background: #ffffff;
-  box-shadow: 0 2px 14px -6px rgba(13, 2, 23, 0.7);
+  box-shadow: var(--shadow-1);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 @media (hover: hover) {
   .plan-ticket:hover {
     transform: translateY(-3px);
-    box-shadow: 0 24px 44px -22px rgba(13, 2, 23, 0.9);
+    box-shadow: var(--shadow-2);
   }
 }
 /* The notches are measured from the BOTTOM, not the top. The stub carrying
@@ -121,7 +121,7 @@
   width: 1.125rem;
   height: 1.125rem;
   border-radius: 9999px;
-  background: var(--plan-notch, #1a0730);
+  background: var(--notch, #1a0730);
   transform: translateY(50%);
 }
 .plan-ticket::before { left: -0.5625rem; }
@@ -168,7 +168,7 @@
   left: 0;
   width: 40%;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.10), transparent);
   opacity: 0;
   animation: plan-shine 5.5s ease-in-out infinite;
   animation-delay: var(--shine-delay, 0ms);
@@ -181,7 +181,7 @@
   box-shadow:
     0 0 0 2px rgba(245, 158, 11, 0.95),
     0 0 0 6px rgba(245, 158, 11, 0.18),
-    0 20px 40px -20px rgba(13, 2, 23, 0.9);
+    var(--shadow-2);
 }
 
 /* The scale the customer landed on, announced rather than highlighted.
@@ -195,8 +195,8 @@
 .plan-chosen-banner {
   animation: plan-banner-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.5),
-    0 18px 40px -22px rgba(13, 2, 23, 0.95);
+    0 0 0 1px rgb(var(--hairline) / 0.12),
+    var(--shadow-2);
 }
 
 /* ── The forward button, once the step is answered ─────────────────────
@@ -219,8 +219,8 @@
    a hole punched in the bar. */
 .plan-step-on {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.8),
-    0 8px 18px -8px rgba(0, 0, 0, 0.75);
+    0 0 0 1px rgb(var(--hairline) / 0.14),
+    var(--shadow-1);
 }
 
 /* Hide a scrollbar on the horizontal rails without hiding the ability to

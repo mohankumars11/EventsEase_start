@@ -107,7 +107,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
@@ -130,7 +130,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
           ) : (
             <Link
               to="/login"
-              className="shrink-0 rounded-full bg-white/10 px-3.5 py-2 text-xs font-bold text-white ring-1 ring-white/15 transition-transform active:scale-95"
+              className="shrink-0 rounded-full bg-surface-sunk/[0.07] px-3.5 py-2 text-xs font-bold text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               Sign in
             </Link>

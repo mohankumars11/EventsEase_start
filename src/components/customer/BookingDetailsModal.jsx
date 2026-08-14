@@ -42,9 +42,9 @@ export default function BookingDetailsModal({ itemLabel, defaults, onConfirm, on
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white">
           <div>
             <h3 className="font-bold text-gray-900">A few details first</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{itemLabel}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{itemLabel}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1">
             <X size={20} />
           </button>
         </div>

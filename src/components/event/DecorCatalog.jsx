@@ -125,15 +125,15 @@ function ItemPhoto({ item, className = '', sizes, eager = false }) {
 function DecorCard({ item, selected, onToggle, onOpen, inCart, eager = false }) {
   return (
     <div
-      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white/[0.05] text-left ring-1 transition-[background-color,box-shadow] ${
-        selected ? 'bg-white/[0.11] shadow-lg ring-2' : 'ring-white/10 hover:bg-white/[0.09]'
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-sunk/[0.06] text-left ring-1 transition-[background-color,box-shadow] ${
+        selected ? 'bg-surface-sunk/[0.06] shadow-lg ring-2' : 'ring-hairline/10 hover:bg-surface-sunk/[0.06]'
       }`}
-      style={selected ? { '--tw-ring-color': 'var(--event-glow)' } : undefined}
+      style={selected ? { '--tw-ring-color': 'var(--event-glow-line)' } : undefined}
     >
       <button
         type="button"
         onClick={onOpen}
-        className="flex flex-1 flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        className="flex flex-1 flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-hairline/10"
         aria-label={`${item.name} — from ${formatINR(item.price)}. See what is included.`}
       >
         <div className="relative w-full">
@@ -162,16 +162,16 @@ function DecorCard({ item, selected, onToggle, onOpen, inCart, eager = false }) 
         </div>
 
         <div className="flex flex-1 flex-col p-2.5">
-          <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-white">
+          <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-ink">
             {item.name}
           </h3>
           {/* Price and the size it buys, on the card, always. This is the pair
               that makes comparison possible without opening anything — and the
               reason the sheet is allowed to exist at all. */}
-          <p className="mt-1 text-[13px] font-extrabold leading-none" style={{ color: 'var(--event-glow)' }}>
+          <p className="mt-1 text-[13px] font-extrabold leading-none" style={{ color: 'var(--event-glow-ink)' }}>
             from {formatINR(item.price)}
           </p>
-          <p className="mt-1 line-clamp-1 text-[9.5px] text-white/40">{item.where}</p>
+          <p className="mt-1 line-clamp-1 text-[9.5px] text-ink-mute">{item.where}</p>
         </div>
       </button>
 
@@ -246,7 +246,7 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
       />
 
       <div
-        className={`relative flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-[#1b0733] shadow-2xl ring-1 ring-white/10 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none sm:max-w-lg sm:rounded-3xl ${
+        className={`relative flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-[#1b0733] shadow-2xl ring-1 ring-hairline/10 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none sm:max-w-lg sm:rounded-3xl ${
           entered ? 'translate-y-0 opacity-100 sm:scale-100' : 'translate-y-5 opacity-0 sm:translate-y-0 sm:scale-[0.98]'
         }`}
       >
@@ -264,30 +264,30 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          <h2 className="text-[18px] font-extrabold leading-tight text-white">{item.name}</h2>
-          <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/60">{item.blurb}</p>
+          <h2 className="text-[18px] font-extrabold leading-tight text-ink">{item.name}</h2>
+          <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">{item.blurb}</p>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-            <span className="text-[22px] font-extrabold leading-none" style={{ color: 'var(--event-glow)' }}>
+            <span className="text-[22px] font-extrabold leading-none" style={{ color: 'var(--event-glow-ink)' }}>
               from {formatINR(item.price)}
             </span>
-            <span className="text-[11px] text-white/45">{item.where}</span>
+            <span className="text-[11px] text-ink-mute">{item.where}</span>
           </div>
 
           <div className="mt-4 rounded-2xl bg-black/25 p-3.5 ring-1 ring-white/10">
-            <p className="mb-2.5 text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-white/40">
+            <p className="mb-2.5 text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
               What gets installed
             </p>
             <ul className="space-y-2">
               {item.includes.map(line => (
-                <li key={line} className="flex items-start gap-2 text-[12px] leading-snug text-white/75">
-                  <Check size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
+                <li key={line} className="flex items-start gap-2 text-[12px] leading-snug text-ink-soft">
+                  <Check size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow-ink)' }} />
                   {line}
                 </li>
               ))}
             </ul>
 
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-white/10 pt-2.5 text-[10.5px] text-white/45">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-hairline/10 pt-2.5 text-[10.5px] text-ink-mute">
               <span className="inline-flex items-center gap-1"><Clock size={11} /> {item.setup} to install</span>
               <span className="inline-flex items-center gap-1"><Maximize2 size={11} /> {item.where}</span>
             </div>
@@ -296,21 +296,21 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
           {/* The top of the band, stated only where there is room to explain
               what moves it. On the card it would read as a second price. */}
           {item.priceTo > item.price && (
-            <p className="mt-3 text-[11px] leading-relaxed text-white/45">
+            <p className="mt-3 text-[11px] leading-relaxed text-ink-mute">
               {formatINR(item.price)} is this setup at the size above. A bigger space, fresher
               flowers or a longer install takes it toward {formatINR(item.priceTo)} — your quote
               says which and why.
             </p>
           )}
 
-          {item.credit && <p className="mt-2 text-[9.5px] text-white/25">{item.credit}</p>}
+          {item.credit && <p className="mt-2 text-[9.5px] text-ink-mute">{item.credit}</p>}
         </div>
 
         <div className="shrink-0 border-t border-white/10 bg-black/25 p-3.5">
           <button
             onClick={() => { onToggle(item); onClose() }}
             className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13.5px] font-extrabold transition-transform active:scale-[0.98] ${
-              selected ? 'bg-white/10 text-white ring-1 ring-white/20' : 'text-gray-900'
+              selected ? 'bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10' : 'text-gray-900'
             }`}
             style={selected ? undefined : { background: 'var(--event-glow)' }}
           >
@@ -360,12 +360,12 @@ function Shelf({ category, items, total, selected, onToggle, onOpen, hasItem, ev
     <section aria-labelledby={`shelf-${category.id}`} className="min-w-0">
       <div className="mb-2 flex items-end justify-between gap-3 px-0.5">
         <div className="min-w-0">
-          <h3 id={`shelf-${category.id}`} className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-white">
+          <h3 id={`shelf-${category.id}`} className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-ink">
             <span aria-hidden="true">{category.emoji}</span>
             <span className="truncate">{category.name}</span>
-            <span className="shrink-0 text-[11px] font-bold text-white/30">{total}</span>
+            <span className="shrink-0 text-[11px] font-bold text-ink-mute">{total}</span>
           </h3>
-          <p className="mt-0.5 line-clamp-1 text-[10.5px] text-white/40">{category.blurb}</p>
+          <p className="mt-0.5 line-clamp-1 text-[10.5px] text-ink-mute">{category.blurb}</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -376,21 +376,21 @@ function Shelf({ category, items, total, selected, onToggle, onOpen, hasItem, ev
               of the rail, both of which say what they do. This just answers
               "what does this kind start at", which is the question somebody
               scanning eleven shelves is actually asking. */}
-          <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: 'var(--event-glow)' }}>
+          <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: 'var(--event-glow-ink)' }}>
             from {formatINR(category.from)}
           </span>
           <div className="hidden items-center gap-1 sm:flex">
             <button
               onClick={() => page(-1)}
               aria-label={`Scroll ${category.name} left`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink-soft transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink"
             >
               <ChevronLeft size={13} />
             </button>
             <button
               onClick={() => page(1)}
               aria-label={`Scroll ${category.name} right`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink-soft transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink"
             >
               <ChevronRight size={13} />
             </button>
@@ -418,11 +418,11 @@ function Shelf({ category, items, total, selected, onToggle, onOpen, hasItem, ev
         {more > 0 && (
           <button
             onClick={onSeeAll}
-            className="flex w-[148px] shrink-0 snap-start flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.05] text-white/70 ring-1 ring-white/10 transition-colors hover:bg-white/10 hover:text-white sm:w-[168px]"
+            className="flex w-[148px] shrink-0 snap-start flex-col items-center justify-center gap-1.5 rounded-2xl bg-surface-sunk/[0.06] text-ink-soft ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink sm:w-[168px]"
           >
-            <span className="text-[19px] font-extrabold" style={{ color: 'var(--event-glow)' }}>+{more}</span>
+            <span className="text-[19px] font-extrabold" style={{ color: 'var(--event-glow-ink)' }}>+{more}</span>
             <span className="text-[11px] font-bold">more {category.name.toLowerCase()}</span>
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-white/40">
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-ink-mute">
               See all <ChevronRight size={10} />
             </span>
           </button>
@@ -637,18 +637,18 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
 
       {/* ── What this section is ────────────────────────────── */}
       <div className="mb-3.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--event-glow)' }}>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--event-glow-ink)' }}>
           Decoration catalogue
         </p>
         {/* The event name verbatim, never lowercased. EVENT_DATA carries
             "Housewarming (Griha Pravesh)" and "Sangeet / Mehendi Night", and a
             blanket toLowerCase() sets those as "griha pravesh" mid-sentence. */}
-        <h2 id="decor-catalog-heading" className="mt-1 text-[19px] font-extrabold leading-tight text-white sm:text-[22px]">
+        <h2 id="decor-catalog-heading" className="mt-1 text-[19px] font-extrabold leading-tight text-ink sm:text-[22px]">
           Every {eventName} setup we install
         </h2>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[12px] leading-relaxed text-ink-mute">
           {summary.count} setups in {summary.categories} kinds, from{' '}
-          <strong className="font-extrabold text-white">{formatINR(summary.from)}</strong>. Flick a
+          <strong className="font-extrabold text-ink">{formatINR(summary.from)}</strong>. Flick a
           row, tap anything to see what goes into it, and pick without leaving this page.
         </p>
       </div>
@@ -657,10 +657,10 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
           what kind of number sits under them — said once, before anything is
           priced. Compact, because it is read once and then scrolled past
           forever, and this section is fighting for height. */}
-      <div className="mb-3.5 flex items-start gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/10">
-        <Camera size={13} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
-        <p className="text-[10.5px] leading-relaxed text-white/50">
-          <strong className="font-bold text-white/85">Reference photographs of the style we build</strong>,
+      <div className="mb-3.5 flex items-start gap-2 rounded-xl bg-surface-sunk/[0.06] px-3 py-2.5 ring-1 ring-hairline/10">
+        <Camera size={13} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow-ink)' }} />
+        <p className="text-[10.5px] leading-relaxed text-ink-mute">
+          <strong className="font-bold text-ink-soft">Reference photographs of the style we build</strong>,
           not our own past events — we are new and would rather say so. Prices are indicative
           starting rates for the size shown on each card; your quote confirms them against your
           space and date, and you approve it before anything is booked.
@@ -673,7 +673,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
           which is exactly the budget this redesign is trying to win back. */}
       {starts.length > 0 && (
         <div className="mb-3.5">
-          <p className="mb-1.5 flex items-center gap-1.5 px-0.5 text-[10.5px] font-bold text-white/40">
+          <p className="mb-1.5 flex items-center gap-1.5 px-0.5 text-[10.5px] font-bold text-ink-mute">
             <Sparkles size={11} /> Not sure where to start? Tap one — it ticks real cards you can untick.
           </p>
           <div className="scrollbar-hide -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
@@ -682,13 +682,13 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
                 key={point.id}
                 type="button"
                 onClick={() => applyStart(point)}
-                className="w-[210px] shrink-0 snap-start rounded-xl bg-white/[0.05] p-2.5 text-left ring-1 ring-white/10 transition-colors hover:bg-white/[0.1] active:scale-[0.98]"
+                className="w-[210px] shrink-0 snap-start rounded-xl bg-surface-sunk/[0.06] p-2.5 text-left ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.06] active:scale-[0.98]"
               >
-                <span className="flex items-center gap-1.5 text-[12px] font-extrabold text-white">
+                <span className="flex items-center gap-1.5 text-[12px] font-extrabold text-ink">
                   <span aria-hidden="true">{point.emoji}</span> {point.name}
                 </span>
-                <span className="mt-0.5 line-clamp-2 block text-[10px] leading-snug text-white/45">{point.blurb}</span>
-                <span className="mt-1 block text-[10.5px] font-extrabold" style={{ color: 'var(--event-glow)' }}>
+                <span className="mt-0.5 line-clamp-2 block text-[10px] leading-snug text-ink-mute">{point.blurb}</span>
+                <span className="mt-1 block text-[10.5px] font-extrabold" style={{ color: 'var(--event-glow-ink)' }}>
                   {point.items.length} setups · from {formatINR(point.from)}
                 </span>
               </button>
@@ -703,21 +703,21 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
           mind — "canopy", "mandap", "candlelight". */}
       <div className="space-y-2">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
           <input
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={`Search ${items.length} setups — canopy, candlelight, stage…`}
             aria-label="Search décor setups"
-            className="w-full rounded-xl bg-white/[0.07] py-2 pl-9 pr-9 text-[12.5px] text-white ring-1 ring-white/10 placeholder:text-white/35 focus:outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--event-glow)' }}
+            className="w-full rounded-xl bg-surface-sunk/[0.06] py-2 pl-9 pr-9 text-[12.5px] text-ink ring-1 ring-hairline/10 placeholder:text-ink-mute focus:outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--event-glow-line)' }}
           />
           {query && (
             <button
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-mute hover:text-ink"
             >
               <X size={14} />
             </button>
@@ -727,7 +727,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
         <div className="scrollbar-hide -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           <button
             onClick={() => { setCategory('all'); setLayout(null) }}
-            className={`${CHIP} ${category === 'all' ? 'text-gray-900' : 'bg-white/[0.07] text-white/65 ring-1 ring-white/10 hover:text-white'}`}
+            className={`${CHIP} ${category === 'all' ? 'text-gray-900' : 'bg-surface-sunk/[0.06] text-ink-mute ring-1 ring-hairline/10 hover:text-ink'}`}
             style={category === 'all' ? { background: 'var(--event-glow)' } : undefined}
           >
             All {items.length}
@@ -737,11 +737,11 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
               key={cat.id}
               onClick={() => setCategory(cat.id)}
               title={cat.blurb}
-              className={`${CHIP} ${category === cat.id ? 'text-gray-900' : 'bg-white/[0.07] text-white/65 ring-1 ring-white/10 hover:text-white'}`}
+              className={`${CHIP} ${category === cat.id ? 'text-gray-900' : 'bg-surface-sunk/[0.06] text-ink-mute ring-1 ring-hairline/10 hover:text-ink'}`}
               style={category === cat.id ? { background: 'var(--event-glow)' } : undefined}
             >
               <span aria-hidden="true">{cat.emoji}</span> {cat.name}
-              <span className={category === cat.id ? 'text-gray-900/55' : 'text-white/35'}>{cat.count}</span>
+              <span className={category === cat.id ? 'text-gray-900/55' : 'text-ink-mute'}>{cat.count}</span>
             </button>
           ))}
         </div>
@@ -749,7 +749,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
         <div className="scrollbar-hide -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           <button
             onClick={() => setBand('all')}
-            className={`${CHIP} ${band === 'all' ? 'bg-white/20 text-white ring-1 ring-white/25' : 'bg-white/[0.07] text-white/55 ring-1 ring-white/10 hover:text-white'}`}
+            className={`${CHIP} ${band === 'all' ? 'bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10' : 'bg-surface-sunk/[0.06] text-ink-mute ring-1 ring-hairline/10 hover:text-ink'}`}
           >
             Any budget
           </button>
@@ -759,7 +759,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
             <button
               key={b.id}
               onClick={() => setBand(b.id)}
-              className={`${CHIP} ${band === b.id ? 'bg-white/20 text-white ring-1 ring-white/25' : 'bg-white/[0.07] text-white/55 ring-1 ring-white/10 hover:text-white'}`}
+              className={`${CHIP} ${band === b.id ? 'bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10' : 'bg-surface-sunk/[0.06] text-ink-mute ring-1 ring-hairline/10 hover:text-ink'}`}
             >
               {b.label}
             </button>
@@ -802,7 +802,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
                 </button>
                 <button
                   onClick={() => { onAddSelected(chosen); setSelected(new Set()) }}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2.5 text-[12.5px] font-extrabold text-white transition-transform active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2.5 text-[12.5px] font-extrabold text-ink transition-transform active:scale-95"
                 >
                   <ShoppingCart size={14} /> Add to cart
                 </button>
@@ -830,10 +830,10 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
 
       {/* ── Result line and the layout override ───────────────── */}
       <div ref={bodyRef} className="mt-3.5 flex items-center justify-between gap-3" style={{ scrollMarginTop: '64px' }}>
-        <p className="min-w-0 text-[10.5px] text-white/40" aria-live="polite">
+        <p className="min-w-0 text-[10.5px] text-ink-mute" aria-live="polite">
           {narrowed
             ? <>Showing {filtered.length} of {items.length}{' '}
-                <button onClick={clearAll} className="font-bold underline decoration-white/25 underline-offset-2 hover:text-white">
+                <button onClick={clearAll} className="font-bold underline decoration-hairline/20 underline-offset-2 hover:text-ink">
                   Clear
                 </button></>
             : `${items.length} setups in ${shelfData.length} kinds`}
@@ -844,7 +844,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
         {!narrowed && (
           <button
             onClick={() => setLayout(mode === 'grid' ? 'shelves' : 'grid')}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.07] px-2.5 py-1.5 text-[10.5px] font-bold text-white/65 ring-1 ring-white/10 transition-colors hover:text-white"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-sunk/[0.06] px-2.5 py-1.5 text-[10.5px] font-bold text-ink-mute ring-1 ring-hairline/10 transition-colors hover:text-ink"
           >
             {mode === 'grid' ? <><Rows3 size={11} /> Group by kind</> : <><LayoutGrid size={11} /> See all at once</>}
           </button>
@@ -854,15 +854,15 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
       {/* ── The catalogue ─────────────────────────────────────── */}
       <div className="mt-3">
         {filtered.length === 0 ? (
-          <div className="rounded-2xl bg-white/[0.04] p-7 text-center ring-1 ring-white/10">
-            <p className="text-[13px] font-bold text-white">Nothing in that combination</p>
-            <p className="mx-auto mt-1 max-w-xs text-[11.5px] leading-relaxed text-white/50">
+          <div className="rounded-2xl bg-surface-sunk/[0.06] p-7 text-center ring-1 ring-hairline/10">
+            <p className="text-[13px] font-bold text-ink">Nothing in that combination</p>
+            <p className="mx-auto mt-1 max-w-xs text-[11.5px] leading-relaxed text-ink-mute">
               Widen the budget or pick another kind — and if what you have in mind is not on this
               list at all, ask anyway. Plenty of what we build never made it onto a card.
             </p>
             <button
               onClick={clearAll}
-              className="mt-3 rounded-xl bg-white/10 px-4 py-2 text-[12px] font-bold text-white ring-1 ring-white/15"
+              className="mt-3 rounded-xl bg-surface-sunk/[0.07] px-4 py-2 text-[12px] font-bold text-ink ring-1 ring-hairline/10"
             >
               Show all {items.length}
             </button>
@@ -905,11 +905,11 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
             {shelves < shelfData.length && (
               <button
                 onClick={() => setShelves(n => n + SHELF_STEP)}
-                className="w-full rounded-2xl bg-white/[0.05] px-4 py-3 text-[12px] font-extrabold text-white ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]"
+                className="w-full rounded-2xl bg-surface-sunk/[0.06] px-4 py-3 text-[12px] font-extrabold text-ink ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.06]"
               >
                 Show {Math.min(SHELF_STEP, shelfData.length - shelves)} more kind
                 {Math.min(SHELF_STEP, shelfData.length - shelves) > 1 ? 's' : ''} of décor
-                <span className="ml-1.5 font-bold text-white/40">
+                <span className="ml-1.5 font-bold text-ink-mute">
                   {shelfData.slice(shelves).reduce((n, s) => n + s.items.length, 0)} setups
                 </span>
               </button>

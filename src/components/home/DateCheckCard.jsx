@@ -77,7 +77,7 @@ function seasonSlide(now = new Date()) {
       emoji: '💍',
       img: photo('Flowers', 'Wedding'),
       eyebrow: inSeason ? s.label : 'Coming up',
-      accent: 'text-teal-300',
+      accent: 'text-teal-700',
       title: inSeason ? s.title : s.soon,
       body: s.body,
     }
@@ -113,7 +113,7 @@ export default function DateCheckCard() {
       const total = hot.reduce((n, d) => n + d.count, 0)
       out.push({
         key: 'demand', emoji: '🔥', img: photo('Hampers', 'Wedding'),
-        eyebrow: 'High demand', accent: 'text-teal-300',
+        eyebrow: 'High demand', accent: 'text-teal-700',
         title: hot.length === 1
           ? 'One date is in high demand'
           : `${hot.length} dates are in high demand`,
@@ -125,7 +125,7 @@ export default function DateCheckCard() {
     // what the card is before it starts selling.
     out.push({
       key: 'check', emoji: '📅', img: photo('Cakes', 'Birthday'),
-      eyebrow: 'Check first', accent: 'text-white/60',
+      eyebrow: 'Check first', accent: 'text-ink-mute',
       title: 'Is your date still free?',
       body: 'Check the day you have in mind before you plan anything else.',
     })
@@ -136,25 +136,25 @@ export default function DateCheckCard() {
     out.push(
       {
         key: 'weekend', emoji: '🗓️', img: photo('Flowers', 'Wedding'),
-        eyebrow: 'Weekends', accent: 'text-teal-300',
+        eyebrow: 'Weekends', accent: 'text-teal-700',
         title: 'Weekends book first',
         body: 'Saturdays are the first thing families ask for.',
       },
       {
         key: 'hold', emoji: '🔒', img: photo('Hampers', 'Diwali'),
-        eyebrow: 'Hold your slot', accent: 'text-teal-300',
+        eyebrow: 'Hold your slot', accent: 'text-teal-700',
         title: 'Tell us the date, we hold the team',
         body: 'A coordinator and your Masters are held the moment we know it.',
       },
       {
         key: 'free', emoji: '🤝', img: photo('Flowers', 'Anniversary'),
-        eyebrow: 'No cost', accent: 'text-emerald-300',
+        eyebrow: 'No cost', accent: 'text-emerald-700',
         title: 'Free to enquire',
         body: 'One coordinator, one price, and you approve every rupee.',
       },
       {
         key: 'early', emoji: '⏳', img: photo('Cakes', 'Baby Shower'),
-        eyebrow: 'Lead time', accent: 'text-sky-300',
+        eyebrow: 'Lead time', accent: 'text-sky-700',
         title: 'The earlier we know, the more we hold',
         body: 'Our decor and catering Masters commit weeks ahead.',
       },
@@ -191,23 +191,32 @@ export default function DateCheckCard() {
     <>
       <section aria-labelledby="date-check-heading" className="px-4">
         {/* ── The ground ──────────────────────────────────────────────
-            This was `.home-card`, which is `bg-white` — while every line of
-            type inside it is `text-white`. The title and the body were
-            therefore white on white and had been invisible on the front page:
-            all a customer saw was a floating teal button and a coloured
-            eyebrow. The whole card is written for a dark surface, so the fix
-            is to give it one rather than to repaint six spans.
+            This card has now been wrong in both directions, and the second
+            fault was caused by the fix for the first.
 
-            Teal into plum, because this card's own note argues for teal — far
-            from the plum ground, unused elsewhere on this screen, and reading
-            professional rather than promotional. The gradient keeps it part
-            of the night sky instead of a white slab punched through it, and
-            the ring is what stops it dissolving into the canvas. */}
+            Originally it was `.home-card` (`bg-white`) with every line of
+            type inside it `text-white` — so the title and body were white on
+            white and invisible on the front page. Rather than repaint six
+            spans, it was given a dark gradient of its own, hardcoded inline,
+            which made the type legible again.
+
+            That inline gradient is now the only dark object left on a light
+            screen. So the card comes back to `.home-card` and the six spans
+            finally get repainted — which is what should have happened the
+            first time. The lesson worth keeping: when type and ground
+            disagree, repaint the type. A one-off ground is a second theme
+            nobody maintains, and it survives exactly until the first theme
+            changes.
+
+            Teal survives as the card's identity, because this card's own
+            note argued for it — far from the plum accent, unused elsewhere
+            on this screen, and reading professional rather than promotional.
+            It is now a teal wash and a teal hairline on white instead of a
+            teal-into-plum gradient. */}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="group relative block w-full overflow-hidden rounded-3xl p-2.5 text-left ring-1 ring-teal-300/25 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.95)] transition-transform active:scale-[0.995]"
-          style={{ background: 'linear-gradient(135deg, #0b3b39 0%, #11243f 48%, #1d0838 100%)' }}
+          className="home-card group block w-full p-2.5 text-left ring-1 ring-teal-500/25 transition-transform active:scale-[0.995]"
         >
           <span
             aria-hidden="true"
@@ -217,7 +226,7 @@ export default function DateCheckCard() {
           <span className="flex items-center gap-2.5">
             {/* Emoji tile underneath, photo fades in on top — never a blank
                 frame, and a failed image just leaves the tile showing. */}
-            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-[15px] ring-1 ring-white/15">
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-sunk/[0.07] text-[15px] ring-1 ring-hairline/10">
               <span key={`e-${slide.key}`} className="animate-fade-in">{slide.emoji}</span>
               {slide.img && (
                 <img
@@ -240,10 +249,10 @@ export default function DateCheckCard() {
                 <span className={`block text-[9px] font-extrabold uppercase leading-none tracking-[0.12em] ${slide.accent}`}>
                   {slide.eyebrow}
                 </span>
-                <span id="date-check-heading" className="mt-1 block truncate text-[13px] font-extrabold leading-tight text-white">
+                <span id="date-check-heading" className="mt-1 block truncate text-[13px] font-extrabold leading-tight text-ink">
                   {slide.title}
                 </span>
-                <span className="mt-0.5 block truncate text-[10px] leading-tight text-white/60">
+                <span className="mt-0.5 block truncate text-[10px] leading-tight text-ink-mute">
                   {slide.body}
                 </span>
               </span>
@@ -252,7 +261,7 @@ export default function DateCheckCard() {
 
           {/* The one thing that never moves. */}
           <span className="mt-2 flex items-center gap-2">
-            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-400 py-1.5 text-[11px] font-extrabold text-plum-950">
+            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 py-1.5 text-[11px] font-extrabold text-white">
               <CalendarSearch size={12} />
               {saved?.event_date ? 'Change your date' : 'Check your date'}
               <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
@@ -262,7 +271,7 @@ export default function DateCheckCard() {
                 <span
                   key={s.key}
                   className={`h-1 rounded-full transition-all duration-300 ${
-                    n === i ? 'w-3 bg-teal-400' : 'w-1 bg-white/25'
+                    n === i ? 'w-3 bg-teal-500' : 'w-1 bg-ink/20'
                   }`}
                 />
               ))}

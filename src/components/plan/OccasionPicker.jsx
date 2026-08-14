@@ -48,7 +48,7 @@ export default function OccasionPicker({ eventId, onEvent, otherText, onOtherTex
           ))}
           <option value="other">✏️ Something else — let me type it</option>
         </select>
-        <ChevronDown size={20} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <ChevronDown size={20} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
       </div>
 
       {isOther && (

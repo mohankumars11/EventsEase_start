@@ -104,7 +104,7 @@ export default function ThemeSheet({
 
           {theme.bestFor?.length > 0 && (
             <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
-              <MapPin size={11} className="text-gray-400" />
+              <MapPin size={11} className="text-gray-500" />
               Booked most for:
               {theme.bestFor.map(b => (
                 <span key={b} className="rounded-md bg-plum-50 px-1.5 py-0.5 font-bold text-plum-700">
@@ -116,7 +116,7 @@ export default function ThemeSheet({
 
           {/* ── Scale, changeable without leaving ─────────────────── */}
           <div className="mt-4">
-            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
               1 · How big is the room — this is what moves the price
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -148,7 +148,7 @@ export default function ThemeSheet({
 
           {/* ── What gets installed ──────────────────────────────── */}
           <div className="mt-4">
-            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
               2 · What our crew installs
             </p>
             <ul className="space-y-1.5 rounded-2xl bg-gray-50 p-3 ring-1 ring-gray-100">
@@ -163,7 +163,7 @@ export default function ThemeSheet({
 
           {/* ── The extras ───────────────────────────────────────── */}
           <div className="mt-4">
-            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-400">
+            <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
               3 · Anything else — decided here, not by phone three days before
             </p>
             <div className="grid grid-cols-1 gap-1.5">
@@ -181,14 +181,14 @@ export default function ThemeSheet({
                   >
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                        on ? 'bg-saffron-400 text-plum-950' : 'bg-gray-100 text-gray-400'
+                        on ? 'bg-saffron-400 text-plum-950' : 'bg-gray-100 text-gray-500'
                       }`}
                     >
                       {on ? <Check size={12} strokeWidth={3.5} /> : <Plus size={12} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[12px] font-semibold leading-snug text-gray-800">{a.name}</span>
-                      {a.note && <span className="block text-[10px] text-gray-400">{a.note}</span>}
+                      {a.note && <span className="block text-[10px] text-gray-500">{a.note}</span>}
                     </span>
                     <span className="shrink-0 text-[12px] font-extrabold text-gray-600">
                       +{formatINR(a.price)}
@@ -200,33 +200,33 @@ export default function ThemeSheet({
           </div>
 
           {/* ── The arithmetic ───────────────────────────────────── */}
-          <div className="mt-4 rounded-2xl bg-plum-950 p-3.5 text-white">
-            <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-saffron-300">
+          <div className="mt-4 rounded-2xl bg-surface-sunk/[0.06] p-3.5 text-ink ring-1 ring-hairline/10">
+            <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-saffron-700">
               <Sparkles size={11} /> What the number is made of
             </p>
             <dl className="mt-2 space-y-1 text-[12px]">
               <div className="flex justify-between gap-3">
-                <dt className="text-white/60">Installation ({cost.scale.name.toLowerCase()})</dt>
+                <dt className="text-ink-mute">Installation ({cost.scale.name.toLowerCase()})</dt>
                 <dd className="font-bold">{formatINR(cost.installation)}</dd>
               </div>
               {cost.tableWork > 0 && (
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Table & seating work × {guestCount}</dt>
+                  <dt className="text-ink-mute">Table & seating work × {guestCount}</dt>
                   <dd className="font-bold">{formatINR(cost.tableWork)}</dd>
                 </div>
               )}
               {addons.map(a => (
                 <div key={a.id} className="flex justify-between gap-3">
-                  <dt className="truncate text-white/60">{a.name}</dt>
+                  <dt className="truncate text-ink-mute">{a.name}</dt>
                   <dd className="font-bold">{formatINR(a.price)}</dd>
                 </div>
               ))}
-              <div className="mt-1.5 flex justify-between gap-3 border-t border-white/15 pt-1.5 text-[14px]">
+              <div className="mt-1.5 flex justify-between gap-3 border-t border-hairline/10 pt-1.5 text-[14px]">
                 <dt className="font-extrabold">Estimated total</dt>
-                <dd className="font-extrabold text-saffron-300">{formatINR(total)}</dd>
+                <dd className="font-extrabold text-accent">{formatINR(total)}</dd>
               </div>
             </dl>
-            <p className="mt-2 text-[9.5px] leading-snug text-white/40">
+            <p className="mt-2 text-[9.5px] leading-snug text-ink-mute">
               Setup and clearing by our team are included. Estimate for a Bengaluru /
               Mysore date — a coordinator confirms against your venue before booking.
             </p>

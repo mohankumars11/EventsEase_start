@@ -234,7 +234,7 @@ function OverviewTab({ event, onRefresh }) {
 
         <div className="space-y-2.5 max-h-60 overflow-y-auto">
           {notes.length === 0 && (
-            <p className="text-xs text-gray-400 py-2">No notes yet. Add the first one below.</p>
+            <p className="text-xs text-gray-500 py-2">No notes yet. Add the first one below.</p>
           )}
           {notes.map(note => (
             <NoteBubble key={note.id} note={note} />
@@ -265,7 +265,7 @@ function OverviewTab({ event, onRefresh }) {
 function Row({ icon, label, value }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="text-gray-400 mt-0.5 shrink-0">{icon}</span>
+      <span className="text-gray-500 mt-0.5 shrink-0">{icon}</span>
       <span className="text-gray-500 w-28 shrink-0">{label}</span>
       <span className="text-gray-900 font-medium flex-1">{value}</span>
     </div>
@@ -276,7 +276,7 @@ function NoteBubble({ note }) {
   return (
     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
       <p className="text-sm text-gray-800 leading-relaxed">{note.note}</p>
-      <p className="text-[11px] text-gray-400 mt-1.5">
+      <p className="text-[11px] text-gray-500 mt-1.5">
         {note.profiles?.full_name ?? 'Admin'} · {formatDate(note.created_at)}
       </p>
     </div>
@@ -371,7 +371,7 @@ function VendorSourcingTab({ event }) {
   return (
     <div className="space-y-5">
       {services.length === 0 && (
-        <div className="card p-10 text-center text-gray-400">
+        <div className="card p-10 text-center text-gray-500">
           <div className="text-4xl mb-3">📦</div>
           <p className="text-sm">No service requirements added yet.</p>
         </div>
@@ -397,7 +397,7 @@ function VendorSourcingTab({ event }) {
           {/* Vendor list */}
           <div className="divide-y divide-gray-50">
             {(vendors[svc.id] ?? []).length === 0 && addVendorFor !== svc.id && (
-              <p className="px-5 py-4 text-xs text-gray-400">No vendors added yet.</p>
+              <p className="px-5 py-4 text-xs text-gray-500">No vendors added yet.</p>
             )}
             {(vendors[svc.id] ?? []).map(v => (
               <div key={v.id} className={`px-5 py-3.5 flex flex-wrap items-center gap-3 ${v.selected ? 'bg-green-50' : ''}`}>
@@ -422,12 +422,12 @@ function VendorSourcingTab({ event }) {
                   {v.vendor_phone && (
                     <>
                       <a href={`tel:${v.vendor_phone}`}
-                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                        className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
                         <Phone size={13} />
                       </a>
                       <a href={`https://wa.me/${v.vendor_phone.replace(/\D/g, '')}`}
                         target="_blank" rel="noopener noreferrer"
-                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                        className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
                         <MessageCircle size={13} />
                       </a>
                     </>
@@ -608,7 +608,7 @@ function ProposalTab({ event }) {
       <div className="card p-12 text-center space-y-4">
         <div className="text-5xl">📄</div>
         <p className="text-gray-600 font-medium">No proposal created yet.</p>
-        <p className="text-sm text-gray-400">Select vendors first, then create a proposal with auto-populated line items.</p>
+        <p className="text-sm text-gray-500">Select vendors first, then create a proposal with auto-populated line items.</p>
         <button onClick={initCreate} className="btn-plum mx-auto">Create Proposal</button>
       </div>
     )
@@ -625,7 +625,7 @@ function ProposalTab({ event }) {
               }`}>
                 {proposal.status === 'SENT' ? '✅ Sent to customer' : '📝 Draft'}
               </span>
-              <p className="text-xs text-gray-400 mt-1">{formatDate(proposal.created_at)}</p>
+              <p className="text-xs text-gray-500 mt-1">{formatDate(proposal.created_at)}</p>
             </div>
             <div className="flex gap-2">
               <button onClick={() => setEditing(true)} className="btn-secondary text-sm py-2 px-4">Edit</button>
@@ -651,7 +651,7 @@ function ProposalTab({ event }) {
                   <tr key={it.id}>
                     <td className="py-2.5">{it.description}</td>
                     <td className="py-2.5 text-right text-gray-600">{it.quantity}</td>
-                    <td className="py-2.5 text-right text-gray-400 text-xs">{it.vendor_cost ? formatINR(it.vendor_cost) : '—'}</td>
+                    <td className="py-2.5 text-right text-gray-500 text-xs">{it.vendor_cost ? formatINR(it.vendor_cost) : '—'}</td>
                     <td className="py-2.5 text-right font-medium">{formatINR(it.customer_price * it.quantity)}</td>
                     <td className="py-2.5 text-right text-amber-600 text-xs font-medium">
                       {it.vendor_cost ? formatINR((it.customer_price - it.vendor_cost) * it.quantity) : '—'}
@@ -871,7 +871,7 @@ function TasksTab({ event }) {
       <div className="card divide-y divide-gray-50">
         {tasks.length === 0 && (
           <div className="p-10 text-center">
-            <p className="text-gray-400 text-sm mb-4">No tasks yet.</p>
+            <p className="text-gray-500 text-sm mb-4">No tasks yet.</p>
             <button onClick={seedDefaultTasks} disabled={busy} className="btn-secondary text-sm">
               {busy ? 'Adding…' : 'Add default checklist'}
             </button>
@@ -886,11 +886,11 @@ function TasksTab({ event }) {
               }
             </button>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${task.status === 'DONE' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+              <p className={`text-sm font-medium ${task.status === 'DONE' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                 {task.title}
               </p>
-              {task.description && <p className="text-xs text-gray-400 mt-0.5">{task.description}</p>}
-              <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-400">
+              {task.description && <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>}
+              <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
                 {task.due_at && <span>Due: {formatDate(task.due_at)}</span>}
                 <PriorityBadge priority={task.priority} />
               </div>
@@ -1046,9 +1046,9 @@ function PaymentsTab({ event }) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-gray-900 text-sm">{formatINR(pmt.amount)}</span>
                     <span className="text-xs text-gray-500 capitalize">{pmt.payment_type?.replace(/_/g, ' ')}</span>
-                    <span className="text-xs text-gray-400">via {pmt.payment_method}</span>
+                    <span className="text-xs text-gray-500">via {pmt.payment_method}</span>
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-500 mt-0.5">
                     {formatDate(pmt.created_at)}
                     {pmt.transaction_reference && ` · Ref: ${pmt.transaction_reference}`}
                   </div>
@@ -1074,7 +1074,7 @@ function PaymentsTab({ event }) {
       )}
 
       {payments.length === 0 && !addOpen && (
-        <div className="card p-10 text-center text-gray-400">
+        <div className="card p-10 text-center text-gray-500">
           <DollarSign size={32} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">No payments recorded yet.</p>
         </div>
@@ -1192,13 +1192,13 @@ function NotesTab({ event }) {
 
       {/* Notes list */}
       {notes.length === 0 ? (
-        <div className="card p-10 text-center text-gray-400 text-sm">No notes yet.</div>
+        <div className="card p-10 text-center text-gray-500 text-sm">No notes yet.</div>
       ) : (
         <div className="space-y-2">
           {notes.map(note => (
             <div key={note.id} className="card p-4 space-y-1.5">
               <p className="text-sm text-gray-800 leading-relaxed">{note.note}</p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-gray-500">
                 {note.profiles?.full_name ?? 'Admin'} · {formatDate(note.created_at)}
               </p>
             </div>
@@ -1212,7 +1212,7 @@ function NotesTab({ event }) {
 /* ── Loading spinner helper ────────────────────────────────────── */
 function LoadingSpinner() {
   return (
-    <div className="flex items-center justify-center h-40 text-gray-400 gap-2">
+    <div className="flex items-center justify-center h-40 text-gray-500 gap-2">
       <Loader2 className="animate-spin text-plum-600" size={24} />
       <span className="text-sm">Loading…</span>
     </div>
@@ -1256,7 +1256,7 @@ export default function AdminEventDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen gap-3 text-gray-400">
+      <div className="flex items-center justify-center min-h-screen gap-3 text-gray-500">
         <Loader2 className="animate-spin text-plum-600" size={32} />
         <span>Loading event…</span>
       </div>

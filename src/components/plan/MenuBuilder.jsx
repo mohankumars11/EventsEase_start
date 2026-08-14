@@ -101,7 +101,7 @@ export default function MenuBuilder({
               </optgroup>
             ))}
           </select>
-          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
         </div>
 
         {cuisine && (
@@ -163,7 +163,7 @@ export default function MenuBuilder({
                   type="button"
                   onClick={() => resetCourse(course.id)}
                   title="Back to the recommended set"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-plum-700 hover:bg-plum-50"
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-plum-700 hover:bg-plum-50"
                 >
                   <RotateCcw size={14} />
                 </button>
@@ -198,7 +198,7 @@ export default function MenuBuilder({
                     <span className={`mt-0.5 shrink-0 w-4 h-4 rounded flex items-center justify-center ${
                       picked ? 'bg-green-600 text-white' : 'border-2 border-gray-300'
                     }`}>
-                      {picked ? <Check size={11} /> : <Plus size={10} className="text-gray-400" />}
+                      {picked ? <Check size={11} /> : <Plus size={10} className="text-gray-500" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block text-sm font-medium text-gray-800">
@@ -208,7 +208,7 @@ export default function MenuBuilder({
                       {dish.delta > 0 && (
                         <span className="block text-[11px] font-semibold text-plum-600">+₹{dish.delta}/plate</span>
                       )}
-                      {dish.note && <span className="block text-[11px] text-gray-400">{dish.note}</span>}
+                      {dish.note && <span className="block text-[11px] text-gray-500">{dish.note}</span>}
                     </span>
                   </button>
                 )
@@ -231,7 +231,7 @@ export default function MenuBuilder({
             placeholder="e.g. No garlic in the sambar, and a small Jain counter for six guests"
             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm text-gray-800 focus:border-saffron-400 focus:outline-none resize-none"
           />
-          <p className="mt-1 text-[11px] text-gray-400 text-right">{specialRequests.length}/500</p>
+          <p className="mt-1 text-[11px] text-gray-500 text-right">{specialRequests.length}/500</p>
         </div>
       )}
 
@@ -241,7 +241,7 @@ export default function MenuBuilder({
           <p className="text-sm text-gray-500">
             Choose a cuisine above and every dish in it appears here.
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {CUISINES.length} cuisines, from a Mysuru leaf meal to a multi-cuisine buffet.
           </p>
         </div>

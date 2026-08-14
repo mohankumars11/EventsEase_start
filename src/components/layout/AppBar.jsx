@@ -67,13 +67,22 @@ export default function AppBar({
   const canGoBack = (window.history.state?.idx ?? 0) > 0
 
   const barClass = tone === 'forest' ? 'shop-appbar' : 'home-appbar'
-  const badgeRing = tone === 'forest' ? 'ring-forest-800' : 'ring-plum-950'
+  // The cart badge overlaps the bag icon, and the ring is what separates the
+  // two — it has to be painted the BAR's colour so the badge reads as cut out
+  // of it rather than as a coloured donut sitting on top.
+  //
+  // It used to name that colour twice, by hand, per tone (`ring-forest-800` /
+  // `ring-plum-950`) — two more copies of a value the bar itself owns, which
+  // is why both were wrong the moment the bars stopped being dark. Naming the
+  // token means the ring cannot drift from the bar again, whatever either
+  // becomes next. `ShopAppBar` has the identical line for the identical reason.
+  const badgeRing = 'ring-[color:var(--bar)]'
   const badgeTone = tone === 'forest'
     ? 'bg-chilli-500 text-white'
     : 'bg-saffron-400 text-plum-950'
 
   const controlClass =
-    '-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10'
+    '-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.08]'
 
   function dashboardLinkFor(p) {
     if (!p) return '/dashboard'
@@ -107,8 +116,8 @@ export default function AppBar({
 
           {title ? (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-extrabold leading-tight text-white">{title}</p>
-              {subtitle && <p className="truncate text-[11px] leading-tight text-white/50">{subtitle}</p>}
+              <p className="truncate text-[15px] font-extrabold leading-tight text-ink">{title}</p>
+              {subtitle && <p className="truncate text-[11px] leading-tight text-ink-mute">{subtitle}</p>}
             </div>
           ) : (
             <CityButton subtitle={citySubtitle} />
@@ -118,7 +127,7 @@ export default function AppBar({
             <Link
               to={cartPath}
               aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <ShoppingBag size={18} />
               {cartCount > 0 && (

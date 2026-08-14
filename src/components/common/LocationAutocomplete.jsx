@@ -99,7 +99,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
             {c}
             {c === 'Mysore' && (
               <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                otherCity === null && city === c ? 'bg-white/25 text-white' : 'bg-saffron-100 text-saffron-700'
+                otherCity === null && city === c ? 'bg-surface-sunk/[0.06] text-ink' : 'bg-saffron-100 text-saffron-700'
               }`}>
                 <Sparkles size={9} /> NEW
               </span>
@@ -140,7 +140,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
               value={query}
               onChange={e => handleQueryChange(e.target.value)}
               onFocus={() => results.length > 0 && setOpen(true)}
-              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400 disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-plum-400 disabled:bg-gray-50 disabled:text-gray-500"
             />
             {loading
               ? <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 animate-spin" />
@@ -164,7 +164,7 @@ export default function LocationAutocomplete({ value, onChange, className = '' }
             </div>
           )}
           {open && failed && (
-            <div className="absolute z-30 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-xs text-gray-400">
+            <div className="absolute z-30 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-xs text-gray-500">
               Couldn't look up that area — just type it below and we'll use it as-is.
             </div>
           )}

@@ -141,7 +141,7 @@ export default function LockPayment({
 
           <div className="flex items-center gap-3 rounded-xl border-2 border-gray-200 px-3 py-2.5">
             <span className="min-w-0 flex-1">
-              <span className="block text-[11px] text-gray-400">Or send to this UPI ID</span>
+              <span className="block text-[11px] text-gray-500">Or send to this UPI ID</span>
               <span className="block truncate text-sm font-bold text-gray-900">{UPI_ID}</span>
             </span>
             <button
@@ -159,7 +159,7 @@ export default function LockPayment({
           {qr && (
             <div className="hidden flex-col items-center gap-2 pt-1 sm:flex">
               <img src={qr} alt={`UPI QR code to pay ${formatINR(amount)} to Sambramo`} className="h-40 w-40" />
-              <p className="text-[11px] text-gray-400">Scan with any UPI app</p>
+              <p className="text-[11px] text-gray-500">Scan with any UPI app</p>
             </div>
           )}
 
@@ -172,11 +172,11 @@ export default function LockPayment({
             type="button"
             onClick={claim}
             disabled={claiming}
-            className="min-h-[52px] w-full rounded-xl bg-plum-700 font-bold text-white active:bg-plum-800 disabled:opacity-50"
+            className="min-h-[52px] w-full rounded-xl bg-plum-700 font-bold text-ink active:bg-plum-800 disabled:opacity-50"
           >
             {claiming ? 'Recording…' : "I've paid — tell my coordinator"}
           </button>
-          <p className="text-center text-[11px] leading-relaxed text-gray-400">
+          <p className="text-center text-[11px] leading-relaxed text-gray-500">
             UPI gives us no automatic confirmation, so this flags your payment for a human to check against the bank.
             You will get a message once it is matched — usually within a couple of hours.
           </p>

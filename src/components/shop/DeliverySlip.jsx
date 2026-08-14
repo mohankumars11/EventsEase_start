@@ -54,14 +54,14 @@ export default function DeliverySlip({ className = '' }) {
 
   return (
     <div className={`px-4 ${className}`}>
-      <div className="flex items-stretch overflow-hidden rounded-2xl bg-white/[0.07] ring-1 ring-white/10 backdrop-blur-sm">
+      <div className="flex items-stretch overflow-hidden rounded-2xl bg-surface-sunk/[0.06] ring-1 ring-hairline/10 backdrop-blur-sm">
 
         {/* ── Where ────────────────────────────────────────────────
             Opens the same sheet as the app bar's city control, because it is
             the same decision. Two ways to reach one sheet, never two pickers. */}
         <button
           onClick={openCityPicker}
-          className="flex min-w-0 flex-1 items-center gap-2.5 px-3.5 py-3 text-left transition-colors hover:bg-white/[0.06] active:bg-white/10"
+          className="flex min-w-0 flex-1 items-center gap-2.5 px-3.5 py-3 text-left transition-colors hover:bg-surface-sunk/[0.06] active:bg-surface-sunk/[0.07]"
         >
           <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
             chosen && !servable ? 'bg-chilli-500/20 text-chilli-300' : 'bg-saffron-400/15 text-saffron-300'
@@ -69,21 +69,21 @@ export default function DeliverySlip({ className = '' }) {
             {chosen && !servable ? <AlertCircle size={15} /> : <MapPin size={15} />}
           </span>
           <span className="min-w-0">
-            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-ink-mute">
               Deliver to
             </span>
             <span className="flex items-center gap-1">
               <span className={`truncate text-[13px] font-extrabold ${
-                chosen && !servable ? 'text-chilli-300' : 'text-white'
+                chosen && !servable ? 'text-chilli-700' : 'text-ink'
               }`}>
                 {chosen ? city : 'Pick your city'}
               </span>
-              <ChevronRight size={12} className="shrink-0 text-white/30" />
+              <ChevronRight size={12} className="shrink-0 text-ink-mute" />
             </span>
           </span>
         </button>
 
-        <span aria-hidden="true" className="my-2.5 w-px shrink-0 bg-white/10" />
+        <span aria-hidden="true" className="my-2.5 w-px shrink-0 bg-surface-sunk/[0.07]" />
 
         {/* ── When ─────────────────────────────────────────────────
             A native date input, not a custom calendar. On a phone it opens the
@@ -103,16 +103,16 @@ export default function DeliverySlip({ className = '' }) {
             <CalendarDays size={15} />
           </span>
           <span className="min-w-0">
-            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-ink-mute">
               Needed on
             </span>
             <span className="flex items-center gap-1">
               <span className={`truncate text-[13px] font-extrabold ${
-                stale ? 'text-chilli-300' : when ? 'text-white' : 'text-white/60'
+                stale ? 'text-chilli-700' : when ? 'text-ink' : 'text-ink-mute'
               }`}>
                 {stale ? 'Date has passed' : when ?? 'Pick a date'}
               </span>
-              <ChevronRight size={12} className="shrink-0 text-white/30" />
+              <ChevronRight size={12} className="shrink-0 text-ink-mute" />
             </span>
           </span>
 
@@ -132,7 +132,7 @@ export default function DeliverySlip({ className = '' }) {
           explanatory caption under a control this small is noise; a caption
           that appears exactly when the customer needs to act is a warning. */}
       {chosen && !servable && (
-        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-chilli-200">
+        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-chilli-700">
           <AlertCircle size={12} className="mt-0.5 shrink-0" />
           We can't deliver to {city} yet — nothing here can be ordered to that address.{' '}
           <button onClick={openCityPicker} className="font-bold underline underline-offset-2">

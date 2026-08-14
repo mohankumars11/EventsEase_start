@@ -95,7 +95,7 @@ export default function ServicesPicker() {
 
       <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
 
-        <p className="text-[13px] leading-relaxed text-white/55">
+        <p className="text-[13px] leading-relaxed text-ink-mute">
           Pick your function or festival — we'll show you exactly what's typically
           needed: cooks, priests, pooja items, decorations and more. Add only what you want.
         </p>
@@ -111,29 +111,29 @@ export default function ServicesPicker() {
               <Sparkles size={16} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-bold text-white">
+              <span className="block text-[13px] font-bold text-ink">
                 Browse freely — nothing to fill in
               </span>
-              <span className="block text-[11px] leading-snug text-white/50">
+              <span className="block text-[11px] leading-snug text-ink-mute">
                 You only sign in when you add something. Or let us plan the whole thing.
               </span>
             </span>
-            <ChevronRight size={16} className="shrink-0 text-white/30" />
+            <ChevronRight size={16} className="shrink-0 text-ink/40" />
           </Link>
         )}
 
         {filtered.length === 0 ? (
           <div className="home-glass mt-5 flex flex-col items-center gap-3 px-6 py-12 text-center">
-            <SearchX size={26} className="text-white/30" />
-            <p className="text-sm font-bold text-white">No occasion matches “{query}”</p>
-            <p className="max-w-xs text-[12px] leading-relaxed text-white/45">
+            <SearchX size={26} className="text-ink-mute" />
+            <p className="text-sm font-bold text-ink">No occasion matches “{query}”</p>
+            <p className="max-w-xs text-[12px] leading-relaxed text-ink-mute">
               Try a broader word — “birthday”, “wedding”, “pooja” — or tell a
               coordinator what you're planning and we'll build it from scratch.
             </p>
             <div className="mt-1 flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => setQuery('')}
-                className="rounded-xl bg-white/10 px-4 py-2.5 text-[12.5px] font-bold text-white ring-1 ring-white/15"
+                className="rounded-xl bg-surface px-4 py-2.5 text-[12.5px] font-bold text-ink ring-1 ring-hairline/10"
               >
                 Show all {EVENT_LIST.length}
               </button>

@@ -66,25 +66,25 @@ export default function RewardsCard({ occasionName }) {
 
   return (
     <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-plum-800 via-plum-900 to-[#160528] text-white shadow-lg ring-1 ring-white/10">
-      <div className="border-b border-white/10 px-5 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">
+      <div className="border-b border-hairline/10 px-5 py-3">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
           And after the day itself
         </p>
       </div>
 
-      <div className="divide-y divide-white/10 sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+      <div className="divide-y divide-hairline/10 sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         <div className="p-5">
           <div className="flex items-center gap-2">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/15 ring-1 ring-saffron-400/30">
-              <Repeat2 size={17} className="text-saffron-300" />
+              <Repeat2 size={17} className="text-saffron-700" />
             </span>
             <div className="min-w-0">
               <p className="text-sm font-extrabold leading-tight">{next.name}</p>
-              <p className="text-lg font-extrabold leading-none text-saffron-300">{next.headline}</p>
+              <p className="text-lg font-extrabold leading-none text-saffron-700">{next.headline}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-white/65">{next.blurb}</p>
-          <p className="mt-2 text-[11px] leading-snug text-white/35">{next.terms}</p>
+          <p className="mt-3 text-xs leading-relaxed text-ink-mute">{next.blurb}</p>
+          <p className="mt-2 text-[11px] leading-snug text-ink-mute">{next.terms}</p>
         </div>
 
         <div className="p-5">
@@ -97,20 +97,20 @@ export default function RewardsCard({ occasionName }) {
               <p className="text-lg font-extrabold leading-none text-rose-300">{referral.headline}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-white/65">{referral.blurb}</p>
+          <p className="mt-3 text-xs leading-relaxed text-ink-mute">{referral.blurb}</p>
 
           <button
             type="button"
             onClick={share}
-            className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 text-sm font-bold text-white ring-1 ring-white/15 transition-colors hover:bg-white/15 active:bg-white/20"
+            className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 text-sm font-bold text-ink ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07] active:bg-surface-sunk/[0.07]"
           >
             {shared
-              ? <><Check size={15} className="text-emerald-300" /> Message copied</>
+              ? <><Check size={15} className="text-emerald-700" /> Message copied</>
               : <><Share2 size={15} /> Share with a friend</>}
           </button>
-          <p className="mt-2 text-[11px] leading-snug text-white/35">
+          <p className="mt-2 text-[11px] leading-snug text-ink-mute">
             They mention your number when they book — we match it by hand and credit you both. Questions:{' '}
-            <a href={`tel:${BRAND.supportPhone}`} className="text-white/60 underline underline-offset-2">
+            <a href={`tel:${BRAND.supportPhone}`} className="text-ink-mute underline underline-offset-2">
               {BRAND.supportPhone}
             </a>
           </p>

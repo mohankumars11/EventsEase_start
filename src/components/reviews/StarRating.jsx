@@ -29,7 +29,7 @@ export default function StarRating({ value = 0, count, size = 'sm', showValue = 
       {showValue && (
         <span className="text-xs font-semibold text-gray-600">
           {value > 0 ? value.toFixed(1) : 'New'}
-          {typeof count === 'number' && count > 0 && <span className="text-gray-400 font-normal"> ({count})</span>}
+          {typeof count === 'number' && count > 0 && <span className="text-gray-500 font-normal"> ({count})</span>}
         </span>
       )}
     </span>

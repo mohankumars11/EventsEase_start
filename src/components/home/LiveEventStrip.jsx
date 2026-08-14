@@ -47,7 +47,7 @@ function LiveCard({ celebration: c, single }) {
       className={`home-glass group relative shrink-0 snap-start overflow-hidden p-3.5 ${single ? 'w-full' : 'w-[86%]'}`}
     >
       <div className="flex items-center gap-3">
-        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl">
+        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-xl ring-1 ring-hairline/[0.08]">
           {c.emoji}
           {/* The live dot, on the stages where something is actively moving. */}
           {!yours && (
@@ -59,25 +59,25 @@ function LiveCard({ celebration: c, single }) {
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-extrabold capitalize leading-tight text-white">
+          <p className="truncate text-[13px] font-extrabold capitalize leading-tight text-ink">
             {c.title}
-            {c.city && <span className="font-semibold text-white/40"> · {c.city}</span>}
+            {c.city && <span className="font-semibold text-ink-mute"> · {c.city}</span>}
           </p>
-          <p className={`truncate text-[11px] font-semibold ${yours ? 'text-saffron-300' : 'text-white/60'}`}>
+          <p className={`truncate text-[11px] font-semibold ${yours ? 'text-saffron-700' : 'text-ink-mute'}`}>
             {yours ? 'Needs you — open your proposal' : c.stageLabel}
           </p>
         </div>
 
         <span
           className={`flex shrink-0 items-center gap-1 rounded-xl px-3 py-2 text-[11px] font-extrabold transition-transform group-active:scale-95 ${
-            yours ? 'bg-saffron-400 text-plum-950' : 'bg-white/10 text-white ring-1 ring-white/15'
+            yours ? 'bg-saffron-400 text-plum-950' : 'bg-surface text-ink ring-1 ring-hairline/10'
           }`}
         >
           {yours ? 'Review' : 'Track'} <ChevronRight size={12} strokeWidth={3} />
         </span>
       </div>
 
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 h-1 overflow-hidden rounded-full bg-ink/10">
         <div
           className={`h-full rounded-full transition-[width] duration-700 ease-out ${
             yours ? 'bg-saffron-400' : 'bg-gradient-to-r from-plum-400 to-berry-400'
@@ -86,7 +86,7 @@ function LiveCard({ celebration: c, single }) {
         />
       </div>
 
-      <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold text-white/40">
+      <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold text-ink-mute">
         <span>Step {Math.max(step + 1, 1)} of {JOURNEY.length}</span>
         <span className="font-mono">{c.reference}</span>
         {c.eventDate && (

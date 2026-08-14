@@ -65,9 +65,9 @@ export default function EventOfferCard({
       </div>
 
       <div className="mt-3 flex items-baseline gap-1.5">
-        {!fixed && <span className="text-[11px] font-bold text-gray-400">from</span>}
+        {!fixed && <span className="text-[11px] font-bold text-gray-500">from</span>}
         <span className="text-[17px] font-extrabold text-plum-900">{formatINR(pkg.price_min)}</span>
-        {!fixed && <span className="text-[11px] font-semibold text-gray-400">to {formatINR(pkg.price_max)}</span>}
+        {!fixed && <span className="text-[11px] font-semibold text-gray-500">to {formatINR(pkg.price_max)}</span>}
       </div>
 
       <DetailRotator facts={facts} stagger={stagger} className="mb-3 mt-1.5" />

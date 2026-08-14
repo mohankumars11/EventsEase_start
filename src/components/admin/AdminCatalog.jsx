@@ -289,7 +289,7 @@ export default function AdminCatalog() {
         <FilterChip active={filter === 'all'}    onClick={() => setFilter('all')}>Everything</FilterChip>
 
         <div className="relative ml-auto">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -301,7 +301,7 @@ export default function AdminCatalog() {
 
       {/* ── List ────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-400">
+        <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-500">
           <Loader2 className="animate-spin text-plum-600" size={28} />
           <span className="text-sm">Loading catalogue…</span>
         </div>
@@ -312,7 +312,7 @@ export default function AdminCatalog() {
           <button onClick={load} className="font-semibold hover:underline">Retry</button>
         </div>
       ) : !listed.length ? (
-        <p className="text-sm text-gray-400 py-10 text-center">
+        <p className="text-sm text-gray-500 py-10 text-center">
           Nothing matches this filter.
           {filter === 'stock'   && ' Every product in this view already has a real photo. 🎉'}
           {filter === 'retired' && ' Nothing has been taken off the shelf.'}
@@ -342,7 +342,7 @@ export default function AdminCatalog() {
               className="w-full py-3 text-sm font-semibold text-plum-700 bg-white border border-gray-200 rounded-2xl hover:border-plum-300"
             >
               Show {Math.min(PAGE_SIZE, listed.length - visible.length)} more
-              <span className="text-gray-400 font-normal"> ({visible.length} of {listed.length})</span>
+              <span className="text-gray-500 font-normal"> ({visible.length} of {listed.length})</span>
             </button>
           )}
         </>
@@ -379,7 +379,7 @@ function CoverageMeter({ totals, pct, coverage }) {
           </p>
           <p className="text-xs text-gray-500 mt-0.5">products photographed for real</p>
         </div>
-        <span className={`text-sm font-bold ${pct >= 100 ? 'text-green-600' : 'text-gray-400'}`}>{pct}%</span>
+        <span className={`text-sm font-bold ${pct >= 100 ? 'text-green-600' : 'text-gray-500'}`}>{pct}%</span>
       </div>
 
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -391,7 +391,7 @@ function CoverageMeter({ totals, pct, coverage }) {
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
         {coverage.map(c => (
-          <span key={c.category} className="text-[11px] text-gray-400">
+          <span key={c.category} className="text-[11px] text-gray-500">
             {c.category}{' '}
             <span className={Number(c.actual_photos) ? 'text-gray-700 font-semibold' : ''}>
               {c.actual_photos}/{c.total}
@@ -468,7 +468,7 @@ function NewProductForm({ busy, onCancel, onSave }) {
         </label>
         <label className="sm:col-span-3">
           <span className="block text-[11px] font-semibold text-gray-500 mb-1">
-            Occasion <span className="font-normal text-gray-400">— optional, drives the festival pages</span>
+            Occasion <span className="font-normal text-gray-500">— optional, drives the festival pages</span>
           </span>
           <input value={draft.occasion} onChange={e => set('occasion', e.target.value)}
                  placeholder="Diwali" className="input py-2 text-sm" />
@@ -639,7 +639,7 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
               <span className="text-sm font-bold text-plum-700 shrink-0">{formatINR(product.price)}</span>
             </div>
 
-            <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+            <p className="text-[11px] text-gray-500 mt-0.5 truncate">
               {product.category}{product.occasion ? ` · ${product.occasion}` : ''}
               {isRetired ? ' · off the shelf' : ''}
             </p>
@@ -659,7 +659,7 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
                 <button
                   onClick={onRevert}
                   disabled={busy}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40"
                 >
                   <RotateCcw size={11} /> Revert
                 </button>
@@ -670,7 +670,7 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
                   onClick={onToggleActive}
                   disabled={busy}
                   title={isRetired ? 'Put it back on the shelf' : 'Take it off the shelf — its order history is kept'}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 disabled:opacity-40"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40"
                 >
                   {isRetired ? <><Eye size={11} /> Restore</> : <><EyeOff size={11} /> Retire</>}
                 </button>
@@ -678,7 +678,7 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
 
               <button
                 onClick={onEdit}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 ml-auto"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 ml-auto"
               >
                 <Pencil size={11} /> Edit
               </button>

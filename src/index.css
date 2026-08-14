@@ -5,13 +5,91 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── The semantic tokens ───────────────────────────────────────────
+     Read the block in tailwind.config.js first; it explains why these are
+     channel triples rather than hex, and why this default block is not
+     optional. Short version: an unset token makes `background-color`
+     resolve to transparent, which is an invisible panel and no error.
+
+     These values are the CONCIERGE set. They are the defaults because the
+     concierge surface is the app's ground state — `/`, `/plan`, the
+     occasion pages, and anything rendered outside a canvas entirely. The
+     storefront overrides them inside `.shop-canvas` / `.checkout-canvas`.
+
+     ── The ink ramp is four fixed steps, not an opacity ladder ─────────
+     The dark theme expressed hierarchy as `text-white/70`, `/60`, `/50`,
+     `/40`, `/30` — five steps that all read fine on near-black. Inverted,
+     they do not: on this ground `ink/55` measures 3.97:1 and `ink/45`
+     measures 2.93:1, so more than half that ladder fails WCAG AA the
+     moment it is flipped. Fixed steps with measured contrast are the
+     honest replacement, and there are only three of them for type
+     because three is how many are actually distinguishable.
+
+     Contrast, measured against the canvas ground (not against white):
+       --ink        16.1:1   AAA
+       --ink-soft    9.2:1   AAA
+       --ink-mute    5.5:1   AA      ← the floor on any ground
+       --ink-faint   4.4:1   FAILS on the ground, 4.8:1 on white
+
+     ⚠ --ink-faint is legal on `--surface` (a white card) ONLY. On the
+     canvas itself it fails, and it fails quietly — which is exactly why
+     it gets a comment instead of a code review. If you are on the ground,
+     --ink-mute is as light as it goes.
+
+     The hierarchy the ladder used to carry now comes from weight and
+     size instead — see the .type-* scale further down this file. */
+  :root {
+    --ink:          31 16 51;      /* #1F1033 */
+    --ink-soft:     74 58 99;      /* #4A3A63 */
+    --ink-mute:    107 91 133;     /* #6B5B85 */
+    --ink-faint:   122 107 148;    /* #7A6B94 — white cards only */
+    --surface:     255 255 255;
+    --surface-sunk: 124 58 237;    /* used at low alpha: bg-surface-sunk/5 */
+    --hairline:     31 16 51;      /* used at low alpha: ring-hairline/10 */
+    --accent:      124 58 237;     /* plum-600 */
+
+    /* Whole values, not channels — nothing takes an alpha modifier on
+       these, and their consumers (an inline style, a ring colour, a
+       box-shadow) all want a plain colour. */
+    --notch:  #F7F2FB;             /* the coupon tile's fake perforation */
+    --bar:    #FFFFFF;             /* the app bar fill, so a badge ring can name it */
+    /* The kolam mark's centre is a KNOCKOUT — a hole punched through the
+       glyph that must be filled with whatever is behind it. It defaulted to
+       plum because the mark only ever sat on a plum bar; on a white bar that
+       default is a dark dot in the middle of the logo. Tied to --bar so the
+       two can never disagree again. */
+    --sambramo-knockout: var(--bar);
+    --shadow-1: 0 2px 10px -6px rgba(70, 30, 120, 0.28);
+    --shadow-2: 0 18px 38px -18px rgba(70, 30, 120, 0.30);
+  }
+
   html {
     scroll-behavior: smooth;
   }
   body {
     font-family: 'Manrope', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    @apply bg-cream text-gray-800;
+    /* Was `bg-cream text-gray-800`. Cream (#FFF8F0) is a fifth light plane
+       on top of the four the canvases paint, and with the grounds now light
+       the seam between them is visible where a page ends short of the fold.
+       The ground colour is the concierge canvas's own base stop, so a page
+       with no canvas of its own is simply the quietest version of the same
+       room rather than a different one. */
+    background-color: #FCFAFF;
+    /* Tabular figures app-wide, not per price.
+       Manrope's default figures are proportional — a 1 is narrower than a 0 —
+       so a cart total slides sideways as it updates, a quantity stepper
+       twitches on every tap, and a column of prices in an order list does not
+       align on the rupee sign. Prices are produced by `formatINR`, which
+       returns a plain string, so there is no element to hang a class on
+       without editing several hundred call sites.
+       Setting it here instead is the trade most commerce UIs make: figures in
+       prose are very slightly wider, and every number in the product lines
+       up. `.price` below stays as the explicit opt-in for anywhere that ever
+       needs to say so locally. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    @apply text-ink;
   }
 }
 
@@ -51,6 +129,56 @@
   .section-subtitle {
     @apply text-base text-gray-500 mt-2;
   }
+  /* ── The type scale ────────────────────────────────────────────────
+     Manrope for the interface, Playfair Display for the occasion moments.
+     Both were already loaded; what was missing was a scale, so sizes were
+     picked per component and drifted — the four app bars alone carried
+     text-[15px], text-[13px] and text-[10.5px] for the same title slot.
+
+     This matters more after the relight than it did before it. The dark
+     theme expressed hierarchy with five steps of white opacity; on a lit
+     ground more than half of those fail contrast, so the ink ramp is three
+     steps and WEIGHT AND SIZE have to carry the rest. That is what these
+     are for.
+
+     `text-wrap: balance` on the display sizes so a two-line heading breaks
+     evenly instead of leaving one orphan word — it costs nothing and it is
+     the difference between a headline that looks set and one that looks
+     wrapped. */
+  .type-display {
+    @apply font-serif font-bold tracking-tight text-ink;
+    font-size: clamp(1.5rem, 1.15rem + 1.7vw, 2.25rem);
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .type-h1 { @apply text-[19px] font-extrabold leading-tight tracking-[-0.01em] text-ink; }
+  .type-h2 { @apply text-[15px] font-extrabold leading-tight tracking-[-0.005em] text-ink; }
+  .type-h3 { @apply text-[13px] font-bold leading-tight text-ink; }
+  .type-body    { @apply text-[13px] leading-relaxed text-ink-soft; }
+  .type-caption { @apply text-[11px] leading-snug text-ink-mute; }
+  /* The small all-caps label above a heading. Uppercase at 11px needs the
+     letter-spacing or it sets as a solid block — this is the one place
+     tracking is doing real legibility work rather than styling. */
+  .type-overline {
+    @apply text-[10px] font-extrabold uppercase leading-none;
+    letter-spacing: 0.14em;
+  }
+
+  /* ── Money ─────────────────────────────────────────────────────────
+     Every price in the app. Manrope's default figures are proportional, so
+     a 1 is narrower than a 0 — which means a cart total shifts sideways as
+     it updates, a quantity stepper twitches on each tap, and a column of
+     prices in an order list does not line up on the rupee sign. Tabular
+     figures fix all three for one declaration.
+
+     `font-feature-settings` alongside `font-variant-numeric` because Safari
+     ignored the latter on some versions and this is a rendering detail
+     nobody would think to re-test. */
+  .price {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
   .glass-nav {
     @apply bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm;
   }
@@ -62,44 +190,74 @@
   }
 
   /* ── Home (the app's front screen) ─────────────────────────────────
-     Festival night: deep aubergine, a violet bloom overhead and a warm
-     marigold glow off to one side — the colour of a courtyard strung with
-     lights, which is the product.
+     Morning of the celebration, not the night of it: warm ivory washed with
+     a little lavender, a violet bloom overhead and a marigold lamp off to
+     one side. The lights are the same three lights this canvas has always
+     had and they sit in the same places — they are simply falling on a lit
+     room now instead of a dark one, at roughly a quarter of the alpha,
+     because a bloom that reads as atmosphere on near-black reads as a stain
+     on near-white.
 
-     Deliberately not the storefront's green. The two surfaces do different
+     Deliberately not the storefront's mint. The two surfaces do different
      jobs and a customer should know which one they are on before they read a
-     word: green is the shop (fresh, transactional, priced), plum is the
-     concierge (evening, occasion, arranged for you). Both carry the same
-     saffron accent, so they read as one brand rather than two apps. */
+     word: mint is the shop (fresh, transactional, priced), ivory-lavender is
+     the concierge (occasion, arranged for you). Both carry the same saffron
+     accent, so they read as one brand rather than two apps.
+
+     `background-attachment: fixed` stays: the lights are the room, and the
+     room should not scroll with the cards in it. */
   .home-canvas {
-    /* The colour a coupon tile punches its notches out in. The offers rail is
-       shared with the storefront, and its perforations were painted the shop's
-       green — on plum that read as two green dots stuck to the tile rather
-       than as holes in it. Each canvas declares its own ground here. */
-    --coupon-notch: #1c0733;
+    /* The colour a coupon tile punches its notches out in. See --notch in
+       the :root block — this canvas declares its own because the offers rail
+       is shared with the storefront, and a perforation painted the wrong
+       room's ground reads as two dots stuck ON the tile rather than as holes
+       in it. It must match the ground at the tile's own height. */
+    --notch: #F7F2FB;
     background:
-      radial-gradient(95% 55% at 50% -8%,  rgba(124, 58, 237, 0.38) 0%, transparent 62%),
-      radial-gradient(60% 38% at 88% 12%,  rgba(245, 158, 11, 0.20) 0%, transparent 58%),
-      radial-gradient(70% 45% at 6% 42%,   rgba(217, 70, 239, 0.16) 0%, transparent 60%),
-      linear-gradient(180deg, #2b0b52 0%, #1c0733 46%, #120420 100%);
+      radial-gradient(95% 55% at 50% -8%,  rgba(124, 58, 237, 0.10) 0%, transparent 62%),
+      radial-gradient(60% 38% at 88% 12%,  rgba(245, 158, 11, 0.12) 0%, transparent 58%),
+      radial-gradient(70% 45% at 6% 42%,   rgba(217, 70, 239, 0.06) 0%, transparent 60%),
+      linear-gradient(180deg, #FCFAFF 0%, #F7F2FB 46%, #F3EDF9 100%);
     background-attachment: fixed;
   }
+  /* Opaque white with a hairline under it. The bar used to be the darkest
+     thing on the screen and separated itself by weight; on a light ground it
+     separates by being the one flat surface in a room full of gradients. */
   .home-appbar {
-    background: linear-gradient(180deg, #2b0b52 0%, #260a49 100%);
+    background: var(--bar);
+    border-bottom: 1px solid rgb(var(--hairline) / 0.08);
   }
-  /* The light card used on the home canvas. Same geometry as .shop-card so
-     the two surfaces feel like one app, different shadow colour so it sits
-     on plum rather than floating over it. */
+  /* The card used on the home canvas. Same geometry as .shop-card so the two
+     surfaces feel like one app; the shadow is violet rather than neutral,
+     which is what keeps a white card on a near-white ground reading as
+     RAISED rather than as a slightly different shade of the same paper.
+     A grey shadow here reads as dirt — the tint is doing real work. */
   .home-card {
-    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
-           shadow-[0_2px_10px_-6px_rgba(18,4,32,0.5)]
-           transition-[transform,box-shadow] duration-300
-           hover:-translate-y-1 hover:shadow-[0_18px_38px_-18px_rgba(18,4,32,0.75)];
+    @apply relative overflow-hidden rounded-3xl bg-surface;
+    box-shadow: var(--shadow-1);
+    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline-offset: -1px;
+    transition: transform 0.3s, box-shadow 0.3s;
   }
-  /* The glass card, for anything that should stay part of the night sky —
-     section wrappers, trust blocks, the live-event strip. */
+  .home-card:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: var(--shadow-2);
+  }
+  /* For anything that should stay part of the room rather than float above
+     it — section wrappers, trust blocks, the live-event strip.
+
+     It used to be `bg-white/[0.06]`: a white film over a dark ground. On a
+     light ground that is white on white, i.e. nothing at all. The semantic
+     is "belongs to the room, not to the form", and the way to say that on a
+     lit surface is to SINK it rather than raise it — a faint tint of the
+     canvas's own accent, below the paper instead of above it.
+
+     backdrop-blur is gone with it. There is nothing to blur on a near-flat
+     light ground, and it was costing a compositor layer per instance. */
   .home-glass {
-    @apply rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+    @apply rounded-3xl;
+    background: rgb(var(--surface-sunk) / 0.05);
+    border: 1px solid rgb(var(--hairline) / 0.09);
   }
   .home-chip {
     @apply shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full
@@ -121,17 +279,17 @@
      table has not been taught yet renders as plum rather than as a black
      rectangle. */
   .event-canvas {
-    --event-a: rgba(124, 58, 237, 0.40);
-    --event-b: rgba(245, 158, 11, 0.20);
-    --event-c: rgba(217, 70, 239, 0.16);
-    --coupon-notch: #120420;
+    --event-a: rgba(124, 58, 237, 0.11);
+    --event-b: rgba(245, 158, 11, 0.12);
+    --event-c: rgba(217, 70, 239, 0.06);
+    --notch: #F6F0FB;
     position: relative;
     isolation: isolate;
     background:
       radial-gradient(95% 55% at 50% -8%,  var(--event-a) 0%, transparent 62%),
       radial-gradient(60% 38% at 88% 12%,  var(--event-b) 0%, transparent 58%),
       radial-gradient(72% 46% at 4% 40%,   var(--event-c) 0%, transparent 60%),
-      linear-gradient(180deg, #240740 0%, #180529 46%, #0e0318 100%);
+      linear-gradient(180deg, #FCFAFF 0%, var(--event-tint-ground, #F7F2FB) 46%, #F3EDF9 100%);
     background-attachment: fixed;
   }
   /* A faint engineering grid over the top third. It is what makes the page
@@ -146,26 +304,31 @@
     z-index: -1;
     pointer-events: none;
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      linear-gradient(rgba(31, 16, 51, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31, 16, 51, 0.055) 1px, transparent 1px);
     background-size: 56px 56px;
     -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
     mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
   }
   .event-appbar {
-    background: linear-gradient(180deg, #240740 0%, #1d0635 100%);
+    background: var(--bar);
+    border-bottom: 1px solid rgb(var(--hairline) / 0.08);
   }
   /* The light card on the occasion ground. Same geometry as .home-card so the
      two screens are one app; the lift on hover is a touch stronger because
      these cards are the thing being chosen rather than browsed past. */
   .event-card {
-    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
-           shadow-[0_2px_12px_-6px_rgba(14,3,24,0.6)]
-           transition-[transform,box-shadow] duration-300
-           hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(14,3,24,0.85)];
+    @apply relative overflow-hidden rounded-3xl bg-surface;
+    box-shadow: var(--shadow-1);
+    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline-offset: -1px;
+    transition: transform 0.3s, box-shadow 0.3s;
   }
+  .event-card:hover { transform: translateY(-0.25rem); box-shadow: var(--shadow-2); }
   .event-glass {
-    @apply rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+    @apply rounded-3xl;
+    background: rgb(var(--surface-sunk) / 0.05);
+    border: 1px solid rgb(var(--hairline) / 0.09);
   }
   /* A chip in the occasion's own colour, on a light card. Written as a class
      rather than an inline style so the flat grey can sit underneath as a
@@ -191,11 +354,11 @@
     border-radius: inherit;
     background: conic-gradient(
       from var(--halo-angle, 0deg),
-      var(--event-glow, #f59e0b),
-      rgba(255, 255, 255, 0.85),
-      var(--event-glow, #f59e0b),
-      rgba(255, 255, 255, 0.2),
-      var(--event-glow, #f59e0b)
+      var(--event-glow-line, #b45309),
+      rgb(var(--accent)),
+      var(--event-glow-line, #b45309),
+      rgb(var(--hairline) / 0.15),
+      var(--event-glow-line, #b45309)
     );
     animation: halo-spin 6s linear infinite;
   }
@@ -226,17 +389,17 @@
     height: 6px;
     border-radius: 999px;
     background:
-      linear-gradient(90deg, var(--event-glow, #f59e0b) var(--fill, 0%), rgba(255, 255, 255, 0.14) var(--fill, 0%));
+      linear-gradient(90deg, var(--event-glow-line, #b45309) var(--fill, 0%), rgb(var(--hairline) / 0.14) var(--fill, 0%));
   }
   .scale-slider::-moz-range-track {
     height: 6px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgb(var(--hairline) / 0.14);
   }
   .scale-slider::-moz-range-progress {
     height: 6px;
     border-radius: 999px;
-    background: var(--event-glow, #f59e0b);
+    background: var(--event-glow-line, #b45309);
   }
 
   .scale-slider::-webkit-slider-thumb {
@@ -247,8 +410,8 @@
     margin-top: -7px; /* centres a 20px thumb on a 6px track */
     border-radius: 999px;
     background: #fff;
-    border: 3px solid var(--event-glow, #f59e0b);
-    box-shadow: 0 2px 10px rgba(14, 3, 24, 0.55);
+    border: 3px solid var(--event-glow-line, #b45309);
+    box-shadow: var(--shadow-1);
     transition: transform 0.15s ease;
   }
   .scale-slider::-moz-range-thumb {
@@ -256,8 +419,8 @@
     width: 20px;
     border-radius: 999px;
     background: #fff;
-    border: 3px solid var(--event-glow, #f59e0b);
-    box-shadow: 0 2px 10px rgba(14, 3, 24, 0.55);
+    border: 3px solid var(--event-glow-line, #b45309);
+    box-shadow: var(--shadow-1);
     transition: transform 0.15s ease;
   }
   .scale-slider:active::-webkit-slider-thumb,
@@ -270,9 +433,18 @@
      savings. Scoped to the shop rather than dropped into the shared
      button classes, so nothing outside /shop changes colour. */
   .shop-canvas {
-    --coupon-notch: #072a20;
+    --ink:          8 40 28;       /* #08281C  ~16:1 on the mint ground */
+    --ink-soft:    38 73 58;       /* #26493A  10.0:1 */
+    --ink-mute:    78 114 99;      /* #4E7263   5.4:1 — the floor */
+    --ink-faint:   94 130 114;     /* #5E8272 — white cards only */
+    --surface-sunk: 28 133 96;
+    --hairline:     8 40 28;
+    --accent:      14 82 60;       /* forest-700 */
+    --notch: #EFF8F3;
+    --shadow-1: 0 2px 10px -6px rgba(6, 60, 42, 0.26);
+    --shadow-2: 0 18px 38px -18px rgba(6, 60, 42, 0.30);
     background:
-      radial-gradient(120% 60% at 50% 0%, #0e523c 0%, #0b3d2e 42%, #072a20 100%);
+      radial-gradient(120% 60% at 50% 0%, #F4FBF7 0%, #EDF7F2 42%, #E9F5EF 100%);
   }
   /* Opaque, not translucent. The bar is sticky and the filter row sticks
      directly under it, so any alpha at the bottom edge showed product cards
@@ -280,17 +452,20 @@
      legible as a rendering fault rather than as depth. The blur stays for the
      safe-area strip above it. */
   .shop-appbar {
-    background: linear-gradient(180deg, #0e523c 0%, #0b3d2e 100%);
+    background: var(--bar);
+    border-bottom: 1px solid rgb(var(--hairline) / 0.08);
   }
   /* One card treatment, used by every product tile in the shop. The
      ring rather than a border keeps the 1px hairline from eating a
      pixel of the photo at the top corners. */
   .shop-card {
-    @apply relative bg-white rounded-3xl ring-1 ring-black/5 overflow-hidden
-           shadow-[0_2px_10px_-6px_rgba(4,26,20,0.35)]
-           transition-[transform,box-shadow] duration-300
-           hover:shadow-[0_18px_38px_-18px_rgba(4,26,20,0.55)] hover:-translate-y-1;
+    @apply relative bg-surface rounded-3xl overflow-hidden;
+    box-shadow: var(--shadow-1);
+    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline-offset: -1px;
+    transition: transform 0.3s, box-shadow 0.3s;
   }
+  .shop-card:hover { transform: translateY(-0.25rem); box-shadow: var(--shadow-2); }
   /* ADD button. Sits half-out of the photo's bottom edge, thumb-height
      above the card's own bottom — the position every food marketplace
      converged on because it is reachable without covering the price. */
@@ -326,14 +501,27 @@
      `fixed` attachment so the lights stay put while the page scrolls under
      them — the panels move, the room does not. */
   .checkout-canvas {
-    --coupon-notch: #041a14;
+    --ink:          8 40 28;
+    --ink-soft:    38 73 58;
+    --ink-mute:    78 114 99;
+    --ink-faint:   94 130 114;
+    --surface-sunk: 28 133 96;
+    --hairline:     8 40 28;
+    --accent:      14 82 60;
+    --notch: #EDF7F2;
+    --shadow-1: 0 18px 40px -24px rgba(6, 60, 42, 0.35);
+    --shadow-2: 0 22px 46px -22px rgba(6, 60, 42, 0.38);
     position: relative;
     isolation: isolate;
+    /* The same three lights, at about a quarter of their old alpha. They are
+       what stop the cart reading as a plain white form — with the grid of
+       product photos gone, four white panels on a flat ground is a tax
+       return. Keep all three. */
     background:
-      radial-gradient(100% 55% at 50% -10%, rgba(28, 133, 96, 0.55) 0%, transparent 60%),
-      radial-gradient(55% 32% at 88% 6%,    rgba(245, 158, 11, 0.22) 0%, transparent 62%),
-      radial-gradient(65% 42% at 2% 34%,    rgba(124, 58, 237, 0.18) 0%, transparent 60%),
-      linear-gradient(180deg, #0b3d2e 0%, #072a20 44%, #041a14 100%);
+      radial-gradient(100% 55% at 50% -10%, rgba(28, 133, 96, 0.12) 0%, transparent 60%),
+      radial-gradient(55% 32% at 88% 6%,    rgba(245, 158, 11, 0.11) 0%, transparent 62%),
+      radial-gradient(65% 42% at 2% 34%,    rgba(124, 58, 237, 0.07) 0%, transparent 60%),
+      linear-gradient(180deg, #F6FBF8 0%, #F0F8F4 44%, #ECF6F1 100%);
     background-attachment: fixed;
   }
   /* Two offset dot grids — a warm one and a cool one — which at 26px read as
@@ -347,10 +535,9 @@
     z-index: -1;
     pointer-events: none;
     background-image:
-      radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px),
-      radial-gradient(rgba(252, 211, 77, 0.11) 1px, transparent 1.3px);
-    background-size: 26px 26px, 26px 26px;
-    background-position: 0 0, 13px 13px;
+      radial-gradient(rgba(8, 40, 28, 0.07) 1px, transparent 1.3px);
+    background-size: 26px 26px;
+    background-position: 0 0;
     -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
     mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
   }
@@ -358,19 +545,24 @@
      beneath it, and any alpha at the seam shows a card sliding between the
      two bars as a smudge. */
   .checkout-appbar {
-    background: linear-gradient(180deg, #0e523c 0%, #0b3d2e 100%);
+    background: var(--bar);
+    border-bottom: 1px solid rgb(var(--hairline) / 0.08);
   }
   /* Every panel on the checkout is white. The ground is decorative, the
      panels are where someone types their address and reads a price — the
      one place in this design that must not be clever. */
   .checkout-card {
-    @apply relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5
-           shadow-[0_18px_40px_-24px_rgba(4,26,20,0.9)];
+    @apply relative overflow-hidden rounded-3xl bg-surface;
+    box-shadow: var(--shadow-1);
+    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline-offset: -1px;
   }
   /* For the things that belong to the room rather than to the form —
      the trust row, the footer, the recap strip. */
   .checkout-glass {
-    @apply rounded-2xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm;
+    @apply rounded-2xl;
+    background: rgb(var(--surface-sunk) / 0.05);
+    border: 1px solid rgb(var(--hairline) / 0.09);
   }
   /* The header strip that opens every panel. Geometry and the sheen live
      here; the tint is passed per-section by the caller, because the colour
@@ -383,7 +575,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(104deg, transparent 34%, rgba(255, 255, 255, 0.5) 48%, transparent 60%);
+    background: linear-gradient(104deg, transparent 34%, rgba(255, 255, 255, 0.32) 48%, transparent 60%);
   }
 }
 
@@ -640,14 +832,14 @@
      six groups the rail genuinely scrolls on a short laptop screen,
      and a scrollable region with no indicator is one people do not
      discover. So it stays, drawn in the rail's own values. */
-  .admin-rail-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+  .admin-rail-scroll { scrollbar-width: thin; scrollbar-color: rgba(31,16,51,0.20) transparent; }
   .admin-rail-scroll::-webkit-scrollbar { width: 6px; }
   .admin-rail-scroll::-webkit-scrollbar-track { background: transparent; }
   .admin-rail-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.16);
+    background: rgba(31,16,51,0.18);
     border-radius: 3px;
   }
-  .admin-rail-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+  .admin-rail-scroll::-webkit-scrollbar-thumb:hover { background: rgba(31,16,51,0.30); }
 
   /* ── Marquee ─────────────────────────────────────────
      CSS-driven infinite ticker. Replaces the old
@@ -718,14 +910,31 @@
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
   /* Clears the fixed mobile tab bar so the last element on a page
      is never trapped underneath it. */
-  .pb-bottom-nav { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
-  @screen md { .pb-bottom-nav { padding-bottom: 0; } }
+  /* The clearance every page keeps for the tab bar, and the offset every
+     floating bar sits at. Both read ONE measured value that BottomNav
+     publishes (see usePublishedHeight there) instead of the `4.25rem` that
+     used to be copied into six files by hand.
+
+     Two things follow from it being measured:
+
+       · No `env(safe-area-inset-bottom)` here. The bar carries `pb-safe`
+         itself, so its `offsetHeight` already contains the inset — adding it
+         again is what made BuilderActionBar render ~34px too tall on iOS.
+
+       · No `@screen md` override. Above `md` the bar is `display:none`, so it
+         measures 0 and these collapse on their own. The old override existed
+         because a hardcoded 4.25rem had no way to know the bar had gone.
+
+     The fallback only applies for the single paint before the observer's
+     first callback, and 4.25rem is deliberately kept as that value: it is
+     slightly too much rather than too little, so the first frame can never
+     trap content under the bar. */
+  .pb-bottom-nav { padding-bottom: var(--bottom-nav-h, 4.25rem); }
   /* The same clearance, for something FIXED above the tab bar rather than
      padded away from it — the celebration builder's price sheet sits here.
      Without this it would render underneath the tab bar on a phone, hiding
      its own submit button. */
-  .above-bottom-nav { bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
-  @screen md { .above-bottom-nav { bottom: 0; } }
+  .above-bottom-nav { bottom: var(--bottom-nav-h, 4.25rem); }
 
   /* ── The desktop chat launcher's dock ─────────────────
      On a phone the assistant is a tab in the bottom bar, so nothing

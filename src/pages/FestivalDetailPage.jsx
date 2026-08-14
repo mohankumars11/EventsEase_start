@@ -37,7 +37,7 @@ export default function FestivalDetailPage() {
             </p>
             <Link
               to="/services"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
             >
               Browse occasions
             </Link>
@@ -96,7 +96,7 @@ export default function FestivalDetailPage() {
         <div className="relative mx-auto max-w-3xl text-center">
           {/* Emoji — full-size hero art when no photo, small accent badge when one loads */}
           {photo ? (
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-3xl mb-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-sunk/[0.07] backdrop-blur-sm text-3xl mb-5">
               {emoji}
             </div>
           ) : (
@@ -109,24 +109,24 @@ export default function FestivalDetailPage() {
           </h1>
 
           {/* Tagline */}
-          <p className="text-white/90 text-lg sm:text-xl font-medium mb-6 max-w-2xl mx-auto">
+          <p className="text-ink-soft text-lg sm:text-xl font-medium mb-6 max-w-2xl mx-auto">
             {tagline}
           </p>
 
           {/* Emotional hook */}
-          <blockquote className="text-white/80 text-base sm:text-lg italic max-w-2xl mx-auto mb-8 leading-relaxed border-l-4 border-white/40 pl-4 text-left">
+          <blockquote className="text-ink-soft text-base sm:text-lg italic max-w-2xl mx-auto mb-8 leading-relaxed border-l-4 border-hairline/10 pl-4 text-left">
             "{emotionalHook}"
           </blockquote>
 
           {/* Badges */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
               <Calendar size={13} /> {month}
             </span>
-            <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
               <Clock size={13} /> {duration}
             </span>
-            <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
               <MapPin size={13} /> {region}
             </span>
           </div>
@@ -146,7 +146,7 @@ export default function FestivalDetailPage() {
             href={photo.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute bottom-3 right-4 text-[11px] text-white/60 hover:text-white/90 transition-colors"
+            className="absolute bottom-3 right-4 text-[11px] text-ink-mute hover:text-ink-soft transition-colors"
           >
             Photo by {photo.photographerName} on Unsplash
           </a>
@@ -232,7 +232,7 @@ export default function FestivalDetailPage() {
                       <p className="text-gray-600 text-sm leading-relaxed mb-4">{ritual.description}</p>
                       {ritual.items?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Items needed</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items needed</p>
                           <div className="flex flex-wrap gap-1.5">
                             {ritual.items.map(item => (
                               <span
@@ -292,19 +292,19 @@ export default function FestivalDetailPage() {
                 )}
 
                 <h3
-                  className={`font-bold text-xl mb-1 ${pkg.highlight ? 'text-white' : 'text-gray-900'}`}
+                  className={`font-bold text-xl mb-1 ${pkg.highlight ? 'text-ink' : 'text-gray-900'}`}
                 >
                   {pkg.name}
                 </h3>
                 <p
-                  className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-white/80' : 'text-saffron-600'}`}
+                  className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-ink-soft' : 'text-saffron-600'}`}
                 >
                   Custom quote — priced to your guest count &amp; needs
                 </p>
 
                 <ul className="space-y-2 mb-6">
                   {pkg.items.map(item => (
-                    <li key={item} className={`flex items-center gap-2 text-sm ${pkg.highlight ? 'text-white/90' : 'text-gray-600'}`}>
+                    <li key={item} className={`flex items-center gap-2 text-sm ${pkg.highlight ? 'text-ink-soft' : 'text-gray-600'}`}>
                       <CheckCircle
                         size={14}
                         className="shrink-0"
@@ -357,7 +357,7 @@ export default function FestivalDetailPage() {
               >
                 {hamper.highlight && (
                   <span
-                    className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white shadow"
+                    className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-ink shadow"
                     style={{ background: heroGradient }}
                   >
                     {hamper.highlight}
@@ -377,7 +377,7 @@ export default function FestivalDetailPage() {
                 </div>
                 <Link
                   to={planHref}
-                  className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+                  className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-ink transition-all hover:opacity-90"
                   style={{ background: heroGradient }}
                 >
                   Claim This Offer <ChevronRight size={14} />
@@ -414,7 +414,7 @@ export default function FestivalDetailPage() {
                     className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-110"
                     style={{ backgroundColor: accentHex }}
                   >
-                    <CheckCircle size={12} className="text-white" />
+                    <CheckCircle size={12} className="text-ink" />
                   </div>
                   <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
                     {option}
@@ -429,7 +429,7 @@ export default function FestivalDetailPage() {
               </p>
               <Link
                 to={planHref}
-                className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-ink shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
                 style={{ background: heroGradient }}
               >
                 Request Custom Menu <ChevronRight size={16} />
@@ -484,11 +484,11 @@ export default function FestivalDetailPage() {
         </div>
 
         <div className="relative mx-auto max-w-3xl text-center reveal">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-ink mb-4 leading-tight">
             Make This {name} the One <br className="hidden sm:block" />
             They'll Always Remember
           </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-ink-soft text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             {description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -504,7 +504,7 @@ export default function FestivalDetailPage() {
                 has already decided against. */}
             <a
               href={`tel:${BRAND.supportPhone}`}
-              className="inline-flex items-center justify-center gap-2 bg-white/10 border-2 border-white/40 text-white font-bold px-8 py-3.5 rounded-2xl hover:bg-white/20 transition-all text-base backdrop-blur-sm"
+              className="inline-flex items-center justify-center gap-2 bg-surface-sunk/[0.07] border-2 border-hairline/10 text-ink font-bold px-8 py-3.5 rounded-2xl hover:bg-surface-sunk/[0.07] transition-all text-base backdrop-blur-sm"
             >
               <Phone size={17} /> Talk to an expert
             </a>
@@ -540,7 +540,7 @@ function FoodCard({ food, accentHex, delay }) {
           )}
         </div>
 
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{food.category}</span>
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{food.category}</span>
 
         <p className="text-xs text-gray-500 leading-relaxed mt-2 mb-3">{food.description}</p>
 
@@ -550,7 +550,7 @@ function FoodCard({ food, accentHex, delay }) {
         {food.customizable && food.customOptions?.length > 0 && (
           <div className="mt-3 max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-300">
             <div className="border-t border-orange-100 pt-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Options</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Options</p>
               <div className="flex flex-col gap-1">
                 {food.customOptions.map(opt => (
                   <span key={opt} className="text-xs text-gray-600 flex items-center gap-1">

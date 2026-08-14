@@ -116,14 +116,14 @@ export default function DateInterestBadge() {
             tabIndex={-1}
             role="dialog"
             aria-label="Dates in high demand"
-            className="pointer-events-auto mx-4 mb-2 w-[min(24rem,calc(100vw-2rem))] animate-pop-in rounded-2xl border border-plum-700 bg-plum-950 p-4 shadow-2xl shadow-black/50 outline-none"
+            className="pointer-events-auto mx-4 mb-2 w-[min(24rem,calc(100vw-2rem))] animate-pop-in rounded-2xl border border-hairline/10 bg-surface p-4 shadow-[var(--shadow-2)] outline-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[13px] font-extrabold text-white">
+                <p className="text-[13px] font-extrabold text-ink">
                   These dates are in high demand
                 </p>
-                <p className="mt-0.5 text-[11px] text-white/50">
+                <p className="mt-0.5 text-[11px] text-ink-mute">
                   Enquiries are coming in{city ? ` across ${city}` : ''}. Open any date to
                   see it in the calendar — yours may be quieter.
                 </p>
@@ -132,7 +132,7 @@ export default function DateInterestBadge() {
                 type="button"
                 onClick={dismiss}
                 aria-label="Close"
-                className="-mr-1 -mt-1 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                className="-mr-1 -mt-1 rounded-lg p-1.5 text-ink-mute transition-colors hover:bg-surface-sunk/[0.07] hover:text-ink"
               >
                 <X size={15} />
               </button>
@@ -144,15 +144,15 @@ export default function DateInterestBadge() {
                   key={d.iso}
                   type="button"
                   onClick={() => openCalendar(d.iso)}
-                  className="flex w-full items-center gap-3 rounded-xl bg-white/5 px-3 py-2 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10"
+                  className="flex w-full items-center gap-3 rounded-xl bg-surface-sunk/[0.05] px-3 py-2 text-left ring-1 ring-hairline/[0.08] transition-colors hover:bg-surface-sunk/[0.09]"
                 >
-                  <span className="text-[12px] font-extrabold text-white">
+                  <span className="text-[12px] font-extrabold text-ink">
                     {humanDate(d.iso)}
                   </span>
                   <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${d.level.chipDark}`}>
                     <Users size={9} />{d.headline}
                   </span>
-                  <ArrowRight size={13} className="ml-auto shrink-0 text-white/30" />
+                  <ArrowRight size={13} className="ml-auto shrink-0 text-ink/40" />
                 </button>
               ))}
             </div>
@@ -167,7 +167,7 @@ export default function DateInterestBadge() {
               <CalendarSearch size={13} />
               {saved?.event_date ? 'Change your date' : 'Check your date'}
             </button>
-            <p className="mt-1.5 text-center text-[10px] text-white/40">
+            <p className="mt-1.5 text-center text-[10px] text-ink-mute">
               Every date is open — pick yours and we'll hold the Masters.
             </p>
           </div>

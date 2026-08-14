@@ -428,7 +428,7 @@ export default function PlanningWizard() {
   const progressPct = ((step - 1) / (TOTAL_STEPS - 1)) * 100
 
   return (
-    <div className="min-h-screen bg-plum-950 flex flex-col lg:flex-row">
+    <div className="home-canvas min-h-screen flex flex-col lg:flex-row">
 
       {/* ── Left panel ─────────────────────────────────── */}
       {/* On a phone this panel stacks above the form, so everything in it
@@ -455,7 +455,7 @@ export default function PlanningWizard() {
           {step === 1 && (
             <Link
               to="/plan"
-              className="shrink-0 text-plum-400 hover:text-white text-xs font-medium transition-colors"
+              className="shrink-0 text-plum-400 hover:text-ink text-xs font-medium transition-colors"
             >
               ← Other ways to plan
             </Link>
@@ -470,10 +470,10 @@ export default function PlanningWizard() {
 
           {/* Step title */}
           <div>
-            <h1 className="text-white font-display text-2xl lg:text-4xl font-bold leading-tight mb-1.5 lg:mb-3">
+            <h1 className="text-ink font-display text-2xl lg:text-4xl font-bold leading-tight mb-1.5 lg:mb-3">
               {STEPS[step - 1].title}
             </h1>
-            <p className="text-plum-300 text-sm lg:text-base leading-relaxed">
+            <p className="text-plum-700 text-sm lg:text-base leading-relaxed">
               {STEPS[step - 1].sub}
             </p>
           </div>
@@ -492,17 +492,17 @@ export default function PlanningWizard() {
 
           {/* Live summary of choices */}
           {(selectedType || form.event_date || form.city || form.guest_count) && (
-            <div className="hidden lg:block bg-white/5 rounded-2xl p-4 space-y-2 border border-white/10">
+            <div className="hidden lg:block bg-surface-sunk/[0.07] rounded-2xl p-4 space-y-2 border border-hairline/10">
               <p className="text-plum-400 text-xs uppercase tracking-wider mb-2">Your celebration</p>
               {selectedType && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
+                <div className="flex items-center gap-2 text-sm text-plum-700">
                   <span>{selectedType.emoji}</span>
                   <span className="font-medium">{selectedType.label}</span>
                 </div>
               )}
               {form.event_date && (
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-plum-200">
+                  <div className="flex items-center gap-2 text-sm text-plum-700">
                     <span>📅</span>
                     <span>{new Date(form.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     {days !== null && days > 0 && (
@@ -512,32 +512,32 @@ export default function PlanningWizard() {
                   {/* The reason to hurry, carried through the remaining four
                       steps rather than left behind on step 2. */}
                   {dateInfo?.showCount && (
-                    <p className="text-xs text-saffron-300 pl-6">
+                    <p className="text-xs text-saffron-700 pl-6">
                       {dateInfo.headline} already
                     </p>
                   )}
                   {form.time_slot && (
-                    <p className="text-xs text-plum-300 pl-6">{slotByKey(form.time_slot)?.label}</p>
+                    <p className="text-xs text-plum-700 pl-6">{slotByKey(form.time_slot)?.label}</p>
                   )}
                 </div>
               )}
               {form.city && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
+                <div className="flex items-center gap-2 text-sm text-plum-700">
                   <span>📍</span><span>{form.city}</span>
                 </div>
               )}
               {form.guest_count && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
+                <div className="flex items-center gap-2 text-sm text-plum-700">
                   <span>👥</span><span>~{form.guest_count} guests</span>
                 </div>
               )}
               {form.services.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
+                <div className="flex items-center gap-2 text-sm text-plum-700">
                   <span>✨</span><span>{form.services.length} service{form.services.length !== 1 ? 's' : ''} selected</span>
                 </div>
               )}
               {form.budget_text && (
-                <div className="flex items-center gap-2 text-sm text-plum-200">
+                <div className="flex items-center gap-2 text-sm text-plum-700">
                   <span>💰</span><span>{form.budget_text}</span>
                 </div>
               )}
@@ -604,7 +604,7 @@ export default function PlanningWizard() {
                     <div className="text-xs text-gray-500 mt-1 leading-tight">{et.tagline}</div>
                     {selected && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-saffron-400 rounded-full flex items-center justify-center animate-fade-in">
-                        <CheckCircle2 size={12} className="text-white" />
+                        <CheckCircle2 size={12} className="text-ink" />
                       </div>
                     )}
                   </button>
@@ -725,7 +725,7 @@ export default function PlanningWizard() {
                 <ComingSoonCity source="plan_wizard" />
               )}
               <div>
-                <label className="block text-sm font-semibold text-plum-800 mb-2">Venue type in mind? <span className="font-normal text-gray-400">(optional)</span></label>
+                <label className="block text-sm font-semibold text-plum-800 mb-2">Venue type in mind? <span className="font-normal text-gray-500">(optional)</span></label>
                 <div className="grid grid-cols-2 gap-2">
                   {VENUE_OPTIONS.map(({ label, emoji }) => (
                     <button
@@ -765,7 +765,7 @@ export default function PlanningWizard() {
                         <span className="text-xl">{emoji}</span>
                         <div className="text-left">
                           <div className="font-semibold text-sm">{label}</div>
-                          <div className="text-xs text-gray-400">{range} guests</div>
+                          <div className="text-xs text-gray-500">{range} guests</div>
                         </div>
                       </div>
                       {form.guest_count === value && <CheckCircle2 size={16} className="text-saffron-500" />}
@@ -784,7 +784,7 @@ export default function PlanningWizard() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-400">Approximate is fine — we'll confirm details later.</p>
+              <p className="text-xs text-gray-500">Approximate is fine — we'll confirm details later.</p>
             </div>
           )}
 
@@ -860,7 +860,7 @@ export default function PlanningWizard() {
               )}
               {form.services.length === 0 && (
                 <div className="mt-6 bg-gray-50 rounded-2xl p-4 border border-gray-100 text-center">
-                  <p className="text-xs text-gray-400">You can skip this — our team will recommend the right services.</p>
+                  <p className="text-xs text-gray-500">You can skip this — our team will recommend the right services.</p>
                 </div>
               )}
             </div>
@@ -926,7 +926,7 @@ export default function PlanningWizard() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Email <span className="font-normal text-gray-400">(optional)</span></label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Email <span className="font-normal text-gray-500">(optional)</span></label>
                   <input
                     type="email"
                     placeholder="you@example.com"
@@ -942,7 +942,7 @@ export default function PlanningWizard() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Anything specific? <span className="font-normal text-gray-400">(optional)</span></label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Anything specific? <span className="font-normal text-gray-500">(optional)</span></label>
                   <textarea
                     rows={3}
                     placeholder="Theme ideas, dietary needs, special requirements…"
@@ -990,13 +990,13 @@ export default function PlanningWizard() {
             Back
           </button>
 
-          <div className="text-xs text-gray-400">{step}/{TOTAL_STEPS}</div>
+          <div className="text-xs text-gray-500">{step}/{TOTAL_STEPS}</div>
 
           {step < TOTAL_STEPS ? (
             <button
               onClick={goNext}
               disabled={!canNext() || animating}
-              className="px-8 py-2.5 rounded-xl bg-saffron-500 text-white text-sm font-semibold hover:bg-saffron-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+              className="px-8 py-2.5 rounded-xl bg-saffron-500 text-plum-950 text-sm font-semibold hover:bg-saffron-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
             >
               Continue →
             </button>

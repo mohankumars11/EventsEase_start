@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, X, ArrowLeft } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
 import CityButton from '../common/CityButton'
@@ -38,6 +38,7 @@ const SEARCH_HINTS = [
 ]
 
 export default function PlanAppBar({ query = '', onQueryChange }) {
+  const navigate = useNavigate()
   const { user, profile, signOut } = useAuth()
   const { cartCount, cartPath } = useCart()
   const reduced = useReducedMotion()
@@ -67,13 +68,20 @@ export default function PlanAppBar({ query = '', onQueryChange }) {
     <header className="home-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
       <div className="mx-auto max-w-3xl px-4 pb-3 pt-3">
         <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            aria-label="Back to home"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
+          {/* Real back, with the cold-open guard the other bars already
+              use: history.state.idx is React Router's position counter, and
+              0 means this entry opened the session — a shared link, a
+              refresh, a notification — so `navigate(-1)` would drop the
+              visitor out of the app. Home is the honest fallback for that
+              case only, not for every case. */}
+          <button
+            type="button"
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
+            aria-label="Back"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
-          </Link>
+          </button>
 
           <SambramoMark size={26} className="hidden shrink-0 sm:block" />
 
@@ -86,7 +94,7 @@ export default function PlanAppBar({ query = '', onQueryChange }) {
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (

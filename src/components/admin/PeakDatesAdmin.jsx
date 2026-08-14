@@ -304,17 +304,17 @@ export default function PeakDatesAdmin() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-gray-800">
-                    {r.label} <span className="font-normal text-gray-400">· {r.city ?? 'All cities'}</span>
+                    {r.label} <span className="font-normal text-gray-500">· {r.city ?? 'All cities'}</span>
                   </span>
                   {r.note && <span className="block text-gray-500">{r.note}</span>}
-                  <span className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400">
+                  <span className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-500">
                     <BookOpen size={10} /> {r.source}
                   </span>
                 </span>
                 <button
                   onClick={() => remove(r.id)}
                   aria-label={`Remove ${r.label}`}
-                  className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  className="shrink-0 rounded p-1 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
                 >
                   <Trash2 size={13} />
                 </button>
@@ -390,7 +390,7 @@ export default function PeakDatesAdmin() {
               ? `Update ${form.city || 'all cities'} entry`
               : `Mark ${humanDate(selected)}`}
           </button>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-500">
             Source is required. An auspicious date nobody can trace back to a published
             panchang is a guess, and this is the one audience that will notice.
           </p>
@@ -401,7 +401,7 @@ export default function PeakDatesAdmin() {
       <section className="card p-4 sm:p-5">
         <h3 className="font-bold text-gray-900">All marked dates</h3>
         {rows.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-gray-500">
             Nothing marked yet — which is the honest default. Add dates from a published
             panchang or the festival calendar as you confirm them.
           </p>
@@ -422,7 +422,7 @@ export default function PeakDatesAdmin() {
               >
                 <span className="font-semibold text-gray-800">{humanDate(r.peak_date)}</span>
                 <span className="truncate text-gray-500">{r.label}</span>
-                <span className="ml-auto shrink-0 text-[10px] text-gray-400">{r.city ?? 'All cities'}</span>
+                <span className="ml-auto shrink-0 text-[10px] text-gray-500">{r.city ?? 'All cities'}</span>
                 <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${WEIGHT_CELL[r.weight]}`}>
                   {r.weight}
                 </span>

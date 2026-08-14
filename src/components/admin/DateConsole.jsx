@@ -61,7 +61,7 @@ export default function DateConsole() {
               <span aria-hidden="true">{t.emoji}</span>
               <span>
                 <span className="block text-xs font-bold leading-tight">{t.label}</span>
-                <span className={`block text-[10px] leading-tight ${on ? 'text-plum-600' : 'text-gray-400'}`}>
+                <span className={`block text-[10px] leading-tight ${on ? 'text-plum-600' : 'text-gray-500'}`}>
                   {t.hint}
                 </span>
               </span>

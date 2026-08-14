@@ -220,7 +220,7 @@ export default function Cart() {
               {sent.high && sent.high !== sent.low
                 ? `${formatINR(sent.low)} – ${formatINR(sent.high)}`
                 : formatINR(sent.low)}{' '}
-              <span className="font-medium text-gray-400">estimated</span>
+              <span className="font-medium text-gray-500">estimated</span>
             </p>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left space-y-1">
@@ -246,7 +246,7 @@ export default function Cart() {
           <div className="flex flex-col gap-2.5">
             <button
               onClick={() => navigate('/dashboard/customer/requests')}
-              className="w-full py-3 rounded-xl bg-saffron-500 text-white font-bold hover:bg-saffron-600"
+              className="w-full py-3 rounded-xl bg-saffron-500 text-plum-950 font-bold hover:bg-saffron-600"
             >
               Track in My Requests
             </button>
@@ -295,7 +295,7 @@ export default function Cart() {
             </p>
             <Link
               to="/services"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
             >
               Browse occasions
             </Link>
@@ -356,7 +356,7 @@ export default function Cart() {
                         <p className="font-semibold text-gray-900 text-sm">
                           {p.pkg.emoji ? `${p.pkg.emoji} ` : ''}{p.pkg.name}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-500">
                           {p.pkg.typicalGuests ? `Around ${p.pkg.typicalGuests} guests` : 'Complete celebration'}
                           {p.pkg.includes?.length ? ` · ${p.pkg.includes.length} services included` : ''}
                         </p>
@@ -383,7 +383,7 @@ export default function Cart() {
                       <span className="text-2xl shrink-0">{item.service.emoji}</span>
                       <div className="min-w-0">
                         <p className="font-medium text-gray-800 text-sm">{item.service.name}</p>
-                        {item.service.desc && <p className="text-xs text-gray-400 truncate">{item.service.desc}</p>}
+                        {item.service.desc && <p className="text-xs text-gray-500 truncate">{item.service.desc}</p>}
 
                         {/* A configured single-service booking carries the price
                             the customer agreed to on the option card. Printing
@@ -397,7 +397,7 @@ export default function Cart() {
                           <p className="text-xs text-plum-600 font-bold mt-0.5">
                             Est. {formatINR(item.service.priceMin * item.qty)}
                             {item.qty > 1 && (
-                              <span className="text-gray-400 font-medium"> · {formatINR(item.service.priceMin)} each</span>
+                              <span className="text-gray-500 font-medium"> · {formatINR(item.service.priceMin)} each</span>
                             )}
                           </p>
                         ) : (
@@ -415,7 +415,7 @@ export default function Cart() {
                               </li>
                             ))}
                             {item.service.summary.length > 3 && (
-                              <li className="text-[11px] text-gray-400">
+                              <li className="text-[11px] text-gray-500">
                                 + {item.service.summary.length - 3} more details sent with your request
                               </li>
                             )}
@@ -537,7 +537,7 @@ export default function Cart() {
                     : 'Sign in & send to our team'}
               {!submitting && <ChevronRight size={18} />}
             </button>
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-xs text-center text-gray-500">
               Nothing is charged to send this — we'll confirm pricing and you decide before anything is
               booked. You can optionally hold your date for {formatINR(LOCK_AMOUNT)} on the next screen.
               {!user && ' Your cart is saved on this device until you sign in.'}

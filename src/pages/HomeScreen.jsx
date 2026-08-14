@@ -187,7 +187,7 @@ export default function HomeScreen() {
 
           {activeEvents.length > 0 && (
             <div className="space-y-3">
-              <h2 className="px-4 text-[15px] font-extrabold text-white">
+              <h2 className="px-4 text-[15px] font-extrabold text-ink">
                 {firstName ? `${firstName}, here's where things stand` : 'Your celebrations'}
               </h2>
               <LiveEventStrip celebrations={activeEvents} />
@@ -262,10 +262,10 @@ export default function HomeScreen() {
               scrolling. */}
           <section aria-labelledby="occasions-heading">
             <div className="px-4">
-              <h2 id="occasions-heading" className="text-[15px] font-extrabold text-white">
+              <h2 id="occasions-heading" className="text-[15px] font-extrabold text-ink">
                 What are we celebrating?
               </h2>
-              <p className="mt-0.5 text-[11px] text-white/50">
+              <p className="mt-0.5 text-[11px] text-ink-mute">
                 Every one of these, arranged end to end — pick yours.
               </p>
             </div>
@@ -293,10 +293,10 @@ export default function HomeScreen() {
           {upcoming.length > 0 && (
             <section aria-labelledby="festival-heading">
               <div className="px-4">
-                <h2 id="festival-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-white">
-                  <CalendarHeart size={16} className="text-saffron-300" /> Coming up
+                <h2 id="festival-heading" className="flex items-center gap-2 text-[15px] font-extrabold text-ink">
+                  <CalendarHeart size={16} className="text-saffron-600" /> Coming up
                 </h2>
-                <p className="mt-0.5 text-[11px] text-white/50">The calendar, with enough notice to do it properly.</p>
+                <p className="mt-0.5 text-[11px] text-ink-mute">The calendar, with enough notice to do it properly.</p>
               </div>
               {/* Moves on its own, same contract as the tier deck: on a phone
                   two of these eight are visible and nothing says the rest are
@@ -310,7 +310,7 @@ export default function HomeScreen() {
                   <Link
                     key={f.id}
                     to={festivalHref(f)}
-                    className="group relative h-36 w-[148px] shrink-0 snap-start overflow-hidden rounded-2xl ring-1 ring-white/10"
+                    className="group relative h-36 w-[148px] shrink-0 snap-start overflow-hidden rounded-2xl ring-1 ring-hairline/10"
                   >
                     <ProductImage
                       query={`${f.name} festival India celebration`}
@@ -329,7 +329,7 @@ export default function HomeScreen() {
                     </span>
                     <span className="absolute inset-x-0 bottom-0 p-2.5">
                       <span className="block text-[12px] font-extrabold leading-tight text-white">{f.name}</span>
-                      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-300">
+                      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-700">
                         {FESTIVAL_DETAIL_IDS.has(f.id) ? 'Plan it' : 'Shop it'}
                         <ArrowRight size={10} />
                       </span>
@@ -342,7 +342,7 @@ export default function HomeScreen() {
                   <span
                     key={f.id}
                     className={`h-1 rounded-full transition-all duration-300 ${
-                      i === festivalRail.active ? 'w-4 bg-saffron-400' : 'w-1 bg-white/25'
+                      i === festivalRail.active ? 'w-4 bg-saffron-500' : 'w-1 bg-ink/20'
                     }`}
                   />
                 ))}
@@ -360,11 +360,25 @@ export default function HomeScreen() {
         </div>
       )}
 
-      <StickyCartBar />
+      {/* ── One occupant of the bottom strip at a time ──────────────────
+          Three separate components can float in this band on Home —
+          ResumePrompt (App.jsx), StickyCartBar, and DateInterestBadge — and
+          all three used to be z-40, in the same place, with no knowledge of
+          each other. Which one you could actually read came down to DOM
+          order, and with a cart AND an unfinished journey the corner was
+          three cards stacked on top of one another.
 
-      {/* Stays on screen rather than being scrolled past once. Renders
-          nothing until real enquiries exist to point at. */}
-      <DateInterestBadge />
+          The order is by how much the customer has already committed:
+
+            ResumePrompt      they started a celebration and stopped
+            StickyCartBar     they have items waiting
+            DateInterestBadge an ambient nudge, and the first to yield
+
+          ResumePrompt self-gates to Home, so this file only has to arbitrate
+          its own two — and the cart bar's condition is the same `productCount`
+          it gates itself on, read here rather than duplicated. */}
+      <StickyCartBar />
+      {productCount === 0 && <DateInterestBadge />}
     </div>
   )
 }
@@ -380,34 +394,41 @@ function HowItWorks() {
   return (
     <section className="px-4" aria-labelledby="how-heading">
       <div className="home-glass p-5">
-        <h2 id="how-heading" className="text-[15px] font-extrabold text-white">How Sambramo works</h2>
-        <p className="mt-1 text-[11px] leading-relaxed text-white/50">
+        <h2 id="how-heading" className="text-[15px] font-extrabold text-ink">How Sambramo works</h2>
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
           A human-assisted concierge — not a directory you have to phone yourself.
         </p>
 
         <ol className="relative mt-5 space-y-4">
-          <span aria-hidden="true" className="absolute bottom-6 left-[19px] top-6 w-px bg-gradient-to-b from-saffron-400/60 via-white/20 to-plum-300/40" />
+          <span aria-hidden="true" className="absolute bottom-6 left-[19px] top-6 w-px bg-gradient-to-b from-saffron-400 via-accent/30 to-accent/10" />
           {STEPS.map((s, i) => (
             <li key={s.title} className="relative flex gap-3.5">
-              <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-plum-800 text-lg ring-1 ring-white/15">
+              {/* Was a solid plum-800 disc. On a lit ground that reads as a
+                  hole punched in the page; the emoji inside it is the subject
+                  and it wants a surface behind it, not a shadow. */}
+              <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-lg ring-1 ring-accent/20">
                 {s.emoji}
                 <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-saffron-400 text-[9px] font-extrabold text-plum-950">
                   {i + 1}
                 </span>
               </span>
               <div className="min-w-0 pt-0.5">
-                <p className="text-[13px] font-bold text-white">{s.title}</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-white/55">{s.sub}</p>
+                <p className="text-[13px] font-bold text-ink">{s.title}</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{s.sub}</p>
               </div>
             </li>
           ))}
         </ol>
 
-        <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-white/5 p-3.5 ring-1 ring-white/10">
-          <ShieldCheck size={16} className="mt-0.5 shrink-0 text-forest-300" />
-          <p className="text-[11px] leading-relaxed text-white/60">
+        {/* Raised to a white card rather than sunk further. It is inside a
+            glass panel that is already a tint of the ground, and a second
+            tint on top of the first is a smudge — the trust line is the one
+            thing in this block someone actually needs to read. */}
+        <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-surface p-3.5 ring-1 ring-hairline/[0.08]">
+          <ShieldCheck size={16} className="mt-0.5 shrink-0 text-forest-600" />
+          <p className="text-[11px] leading-relaxed text-ink-soft">
             Nothing is charged until you approve a plan, and we're live in{' '}
-            <span className="font-bold text-white">{BRAND.pilotCities.join(' and ')}</span> today —
+            <span className="font-bold text-ink">{BRAND.pilotCities.join(' and ')}</span> today —
             tell us where you are and we'll say honestly whether we can do it.
           </p>
         </div>
@@ -428,10 +449,10 @@ function SupportStrip() {
   return (
     <section className="px-4">
       <div className="home-glass flex items-center gap-3 p-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl">💬</span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-xl ring-1 ring-hairline/[0.08]">💬</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-extrabold text-white">Talk to a person</p>
-          <p className="text-[11px] text-white/50">Mon–Sat, 9am–8pm. A human, not a bot.</p>
+          <p className="text-[13px] font-extrabold text-ink">Talk to a person</p>
+          <p className="text-[11px] text-ink-mute">Mon–Sat, 9am–8pm. A human, not a bot.</p>
         </div>
         <a
           href={`https://wa.me/${BRAND.whatsappNumber}`}
@@ -445,7 +466,7 @@ function SupportStrip() {
         <a
           href={`tel:${BRAND.supportPhone}`}
           aria-label="Call support"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform active:scale-95"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
         >
           <PhoneCall size={16} />
         </a>
@@ -494,9 +515,9 @@ function SearchResults({ query, onClear }) {
   if (nothing) {
     return (
       <div className="mx-auto max-w-3xl px-4 pb-32 pt-16 text-center">
-        <SearchX size={30} className="mx-auto text-white/25" />
-        <p className="mt-3 text-sm font-bold text-white">Nothing matches “{query}”</p>
-        <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-white/45">
+        <SearchX size={30} className="mx-auto text-ink-mute" />
+        <p className="mt-3 text-sm font-bold text-ink">Nothing matches “{query}”</p>
+        <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-ink-mute">
           Try a shorter word — or just tell us what you're celebrating and we'll
           arrange it, catalogue or not.
         </p>
@@ -504,7 +525,7 @@ function SearchResults({ query, onClear }) {
           <Link to="/plan" className="rounded-xl bg-saffron-400 px-4 py-2.5 text-xs font-extrabold text-plum-950">
             Plan a celebration
           </Link>
-          <button onClick={onClear} className="rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white ring-1 ring-white/15">
+          <button onClick={onClear} className="rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10">
             Clear
           </button>
         </div>
@@ -536,7 +557,7 @@ function SearchResults({ query, onClear }) {
 
       <Group title="Buy this" hint={products === null ? 'Searching…' : `${products.length} item${products.length === 1 ? '' : 's'}`}>
         {products === null
-          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-white/5" />)
+          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />)
           : products.map(p => (
               <Row
                 key={p.id}
@@ -555,8 +576,8 @@ function Group({ title, hint, children }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between gap-3">
-        <h2 className="text-[13px] font-extrabold text-white">{title}</h2>
-        <span className="truncate text-[11px] text-white/40">{hint}</span>
+        <h2 className="text-[13px] font-extrabold text-ink">{title}</h2>
+        <span className="truncate text-[11px] text-ink-mute">{hint}</span>
       </div>
       <div className="space-y-2">{children}</div>
     </section>
@@ -569,12 +590,12 @@ function Row({ emoji, label, sub, onClick }) {
       onClick={onClick}
       className="home-glass flex w-full items-center gap-3 p-3 text-left transition-transform active:scale-[0.99]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-base">{emoji}</span>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-base ring-1 ring-hairline/[0.08]">{emoji}</span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold text-white">{label}</span>
-        {sub && <span className="block truncate text-[11px] text-white/45">{sub}</span>}
+        <span className="block truncate text-[13px] font-bold text-ink">{label}</span>
+        {sub && <span className="block truncate text-[11px] text-ink-mute">{sub}</span>}
       </span>
-      <ChevronRight size={15} className="shrink-0 text-white/30" />
+      <ChevronRight size={15} className="shrink-0 text-ink/40" />
     </button>
   )
 }

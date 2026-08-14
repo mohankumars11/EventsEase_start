@@ -90,7 +90,7 @@ export default function ShopAppBar({
               <button
                 onClick={() => navigate(-1)}
                 aria-label="Back"
-                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 active:bg-white/10"
+                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
               >
                 <ArrowLeft size={20} />
               </button>
@@ -98,7 +98,7 @@ export default function ShopAppBar({
               <Link
                 to={backTo}
                 aria-label="Back"
-                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 active:bg-white/10"
+                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
               >
                 <ArrowLeft size={20} />
               </Link>
@@ -109,8 +109,8 @@ export default function ShopAppBar({
 
           {title ? (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-extrabold leading-tight text-white">{title}</p>
-              {subtitle && <p className="truncate text-[11px] text-white/50">{subtitle}</p>}
+              <p className="truncate text-[15px] font-extrabold leading-tight text-ink">{title}</p>
+              {subtitle && <p className="truncate text-[11px] text-ink-mute">{subtitle}</p>}
             </div>
           ) : (
             /* The same control as the home bar, in the same slot, opening the
@@ -136,11 +136,11 @@ export default function ShopAppBar({
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 active:scale-95 transition-transform"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-chilli-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-forest-800">
+              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-chilli-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-[color:var(--bar)]">
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
             )}

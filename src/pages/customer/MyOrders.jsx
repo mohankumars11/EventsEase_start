@@ -156,7 +156,7 @@ export default function MyOrders() {
             </p>
             <Link
               to="/shop"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-white transition-colors hover:bg-saffron-600"
+              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
             >
               Browse the shop
             </Link>
@@ -170,7 +170,7 @@ export default function MyOrders() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
                       <p className="font-mono text-xs font-semibold text-gray-500">#{order.id.slice(0, 8).toUpperCase()}</p>
-                      <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+                      <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
                     </div>
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
                       {order.status}
@@ -202,7 +202,7 @@ export default function MyOrders() {
                     ))}
                   </div>
                   <div className="flex justify-between items-center border-t border-gray-100 pt-3">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-500">
                       Payment: <span className={order.payment_status === 'paid' ? 'text-green-600 font-semibold' : ''}>{order.payment_status}</span>
                     </span>
                     <span className="font-bold text-gray-900">{formatINR(order.total)}</span>
@@ -236,7 +236,7 @@ export default function MyOrders() {
                     )}
                     <button
                       onClick={() => setActionModal({ kind: 'complaint', order })}
-                      className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600"
+                      className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-600"
                     >
                       <MessageCircleWarning size={13} /> Report a Problem
                     </button>

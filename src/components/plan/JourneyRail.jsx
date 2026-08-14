@@ -56,8 +56,8 @@ export default function JourneyRail({
        its own, so the moment the page scrolled the steps slid underneath 64px
        of chrome and stayed there — a navigation band nobody could see, which
        is a fair part of why the flow read as having no navigation at all. */
-    <div className="plan-bar sticky top-16 z-30 border-b border-white/10 shadow-lg shadow-black/30">
-      <div className="mx-auto max-w-6xl px-3 pt-2 sm:px-6">
+    <div className="plan-bar sticky top-0 z-30 border-b border-hairline/10 shadow-lg shadow-black/10">
+      <div className="mx-auto max-w-6xl px-4 pt-2 sm:px-6">
         <div className="flex items-center gap-4">
           {/* ── The steps ─────────────────────────────────────────────── */}
           <div ref={railRef} className="plan-rail-scroll flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto pb-2">
@@ -82,7 +82,7 @@ export default function JourneyRail({
                       ? 'plan-step-on bg-white text-plum-900 shadow-lg'
                       : complete
                         ? 'bg-emerald-400/15 text-white ring-1 ring-emerald-300/30 hover:bg-emerald-400/25'
-                        : 'bg-white/[0.07] text-white/60 ring-1 ring-white/10 hover:bg-white/15'
+                        : 'bg-surface-sunk/[0.06] text-ink-mute ring-1 ring-hairline/10 hover:bg-surface-sunk/[0.07]'
                   }`}
                 >
                   {/* The number is the affordance: six of them in a row read
@@ -94,7 +94,7 @@ export default function JourneyRail({
                         ? 'bg-gradient-to-br from-saffron-500 to-amber-600 text-white'
                         : complete
                           ? 'bg-emerald-400 text-emerald-950'
-                          : 'bg-white/10 text-white/60'
+                          : 'bg-surface-sunk/[0.07] text-ink-mute'
                     }`}
                   >
                     {locked ? <Lock size={11} /> : complete && !active ? <Check size={13} /> : i + 1}
@@ -110,7 +110,7 @@ export default function JourneyRail({
                     </span>
                     <span
                       className={`block max-w-[130px] truncate text-[10px] font-medium leading-tight ${
-                        active ? 'text-plum-500' : complete ? 'text-emerald-200/80' : 'text-white/35'
+                        active ? 'text-plum-500' : complete ? 'text-emerald-700/80' : 'text-ink-mute'
                       }`}
                     >
                       {off ? 'switched off' : summary[s.id] ?? '—'}
@@ -130,22 +130,22 @@ export default function JourneyRail({
               <button
                 type="button"
                 onClick={onOpenReview}
-                className="rounded-xl bg-white/[0.07] px-3.5 py-1.5 text-right ring-1 ring-white/10 transition-colors hover:bg-white/15"
+                className="rounded-xl bg-surface-sunk/[0.06] px-3.5 py-1.5 text-right ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.07]"
               >
                 {/* "So far" until the configuration is sendable. The number
                     only counts what has actually been chosen, so calling a
                     half-built ₹17,000 "your estimate" next to a scale card
                     quoting ₹4,75,500 is how a transparent price loses the
                     customer's trust in one glance. */}
-                <span className="flex items-center justify-end gap-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-saffron-300">
+                <span className="flex items-center justify-end gap-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-saffron-700">
                   <Receipt size={9} /> Estimated{settled ? '' : ' so far'} · incl. taxes
                 </span>
-                <span className="block whitespace-nowrap text-[15px] font-extrabold leading-tight text-white">
+                <span className="block whitespace-nowrap text-[15px] font-extrabold leading-tight text-ink">
                   {formatINR(quote.range.low)} – {formatINR(quote.range.high)}
                 </span>
               </button>
             ) : (
-              <span className="max-w-[190px] text-[11px] leading-snug text-white/40">
+              <span className="max-w-[190px] text-[11px] leading-snug text-ink-mute">
                 Your estimate appears here the moment you pick an occasion.
               </span>
             )}
@@ -173,7 +173,7 @@ export default function JourneyRail({
 
       {/* How much of the build is behind you. On a six-step flow this is the
           difference between starting and not. */}
-      <div className="h-0.5 bg-white/10">
+      <div className="h-0.5 bg-surface-sunk/[0.07]">
         <div
           className="h-full bg-gradient-to-r from-saffron-400 to-amber-300 transition-[width] duration-500"
           style={{ width: `${progressPct}%` }}

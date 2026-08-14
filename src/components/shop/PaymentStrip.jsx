@@ -22,11 +22,11 @@ import { BRAND } from '../../config/sambramo'
 export default function PaymentStrip({ className = '' }) {
   if (!UPI_CONFIGURED) {
     return (
-      <div className={`rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 ${className}`}>
-        <p className="text-white text-sm font-bold flex items-center gap-2">
-          <MessageCircle size={15} className="text-saffron-300" /> We'll take payment over WhatsApp
+      <div className={`rounded-2xl bg-surface-sunk/[0.07] ring-1 ring-hairline/10 p-4 ${className}`}>
+        <p className="text-ink text-sm font-bold flex items-center gap-2">
+          <MessageCircle size={15} className="text-saffron-700" /> We'll take payment over WhatsApp
         </p>
-        <p className="text-white/55 text-xs mt-1 leading-relaxed">
+        <p className="text-ink-mute text-xs mt-1 leading-relaxed">
           Online payment is being set up. Fill your cart as usual — we'll confirm the
           order and collect payment on WhatsApp
           {BRAND.whatsappNumber ? ` (${BRAND.whatsappNumber})` : ''}.
@@ -36,10 +36,10 @@ export default function PaymentStrip({ className = '' }) {
   }
 
   return (
-    <div className={`rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 ${className}`}>
+    <div className={`rounded-2xl bg-surface-sunk/[0.07] ring-1 ring-hairline/10 p-4 ${className}`}>
       <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="text-white text-sm font-bold flex items-center gap-2">
-          <ShieldCheck size={15} className="text-forest-300" /> Pay by UPI
+        <p className="text-ink text-sm font-bold flex items-center gap-2">
+          <ShieldCheck size={15} className="text-forest-700" /> Pay by UPI
         </p>
         <span className="text-[10px] font-bold text-forest-200 bg-forest-500/20 ring-1 ring-forest-400/30 rounded-full px-2 py-0.5">
           NO EXTRA FEE
@@ -58,12 +58,12 @@ export default function PaymentStrip({ className = '' }) {
             <span className="sr-only">{label}</span>
           </li>
         ))}
-        <li className="ml-auto flex items-center gap-1.5 text-white/45 text-[10px] font-semibold">
+        <li className="ml-auto flex items-center gap-1.5 text-ink-mute text-[10px] font-semibold">
           <QrCode size={13} /> or scan
         </li>
       </ul>
 
-      <p className="text-white/45 text-[11px] mt-3 leading-relaxed">
+      <p className="text-ink-mute text-[11px] mt-3 leading-relaxed">
         Pay straight from your UPI app at checkout, or scan the QR on desktop.
         Nothing is charged until you confirm.
       </p>

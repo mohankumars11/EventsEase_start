@@ -209,7 +209,7 @@ export default function ProductIntelligence({ data, onNavigate }) {
             {[7, 30, 90].map(d => (
               <button key={d} onClick={() => setWindowDays(d)} aria-pressed={windowDays === d}
                 className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  windowDays === d ? 'bg-plum-600 text-white' : 'text-gray-500 hover:bg-gray-50'
+                  windowDays === d ? 'bg-plum-600 text-ink' : 'text-gray-500 hover:bg-gray-50'
                 }`}>
                 {d}d
               </button>
@@ -456,7 +456,7 @@ function ProductDetail({ product: p, lines, windowDays, onClose, onEdit }) {
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 shrink-0"><X size={20} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-1 shrink-0"><X size={20} /></button>
         </div>
 
         <div className="px-5 sm:px-6 py-5 space-y-5">
@@ -734,7 +734,7 @@ function Chip({ active, onClick, children, dot, title }) {
     <button
       onClick={onClick} title={title} aria-pressed={active}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-        active ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+        active ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
       }`}
     >
       {dot && <span className="w-2 h-2 rounded-sm" style={{ background: active ? '#fff' : dot }} aria-hidden="true" />}

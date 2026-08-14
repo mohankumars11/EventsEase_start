@@ -169,7 +169,7 @@ export default function TierLadder({
           {/* The rung's own colour at full strength, as the strip that names
               the decision. Same token as the card spine — a composed class
               string would be invisible to Tailwind's scanner. */}
-          <div className={`flex items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white ${chosen.spine}`}>
+          <div className={`flex items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink ${chosen.spine}`}>
             <Check size={12} /> You belong here
           </div>
 
@@ -250,14 +250,14 @@ export default function TierLadder({
           type="button"
           onClick={() => setShowAll(v => !v)}
           aria-expanded={showAll}
-          className="plan-glass flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-colors hover:bg-white/10"
+          className="plan-glass flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-colors hover:bg-surface-sunk/[0.07]"
         >
-          <Layers size={17} className="shrink-0 text-saffron-300" />
+          <Layers size={17} className="shrink-0 text-saffron-700" />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-white">
+            <span className="block text-sm font-bold text-ink">
               There are {CELEBRATION_TIERS.length} scales in all
             </span>
-            <span className="block text-[11px] leading-snug text-white/55">
+            <span className="block text-[11px] leading-snug text-ink-mute">
               {showAll
                 ? 'Yours is lit. Tap any other to move to it — the price follows.'
                 : `Want to see them side by side? Open the ladder and compare${chosen ? ` — ${chosen.name} stays yours until you pick another` : ''}.`}
@@ -265,7 +265,7 @@ export default function TierLadder({
           </span>
           <ChevronDown
             size={18}
-            className={`shrink-0 text-white/50 transition-transform duration-300 ${showAll ? 'rotate-180' : ''}`}
+            className={`shrink-0 text-ink-mute transition-transform duration-300 ${showAll ? 'rotate-180' : ''}`}
           />
         </button>
 

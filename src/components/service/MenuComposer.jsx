@@ -154,10 +154,10 @@ export default function MenuComposer({
           Grouped by region. Sixteen chips in one row is a scroll, not a
           choice. */}
       <section className="px-4">
-        <h2 className="text-[15px] font-extrabold text-white">
+        <h2 className="text-[15px] font-extrabold text-ink">
           1 · Whose food is it?
         </h2>
-        <p className="mt-0.5 text-[11.5px] text-white/55">
+        <p className="mt-0.5 text-[11.5px] text-ink-mute">
           {CUISINES.length} kitchens. Every dish under each one is listed, and every
           one is available.
         </p>
@@ -165,7 +165,7 @@ export default function MenuComposer({
             on every other image in this app — so the same statement is made
             once for the row. The rule is not negotiable (see the header of
             DecorSampleGallery); only where it is printed changes. */}
-        <p className="mt-1 text-[10.5px] leading-snug text-white/35">
+        <p className="mt-1 text-[10.5px] leading-snug text-ink-mute">
           Photographs are of similar meals, not of food we have served — we are
           pre-launch. The dishes listed are what actually goes on your table.
         </p>
@@ -173,7 +173,7 @@ export default function MenuComposer({
         <div className="mt-3 space-y-2.5">
           {CUISINE_GROUPS.map(group => (
             <div key={group.label}>
-              <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/35">
+              <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-ink-mute">
                 {group.label}
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -191,7 +191,7 @@ export default function MenuComposer({
                       className={`overflow-hidden rounded-2xl text-left transition-all ${
                         active
                           ? 'bg-saffron-400 text-plum-950 ring-2 ring-saffron-300'
-                          : 'bg-white/[0.07] text-white/80 ring-1 ring-white/12'
+                          : 'bg-surface-sunk/[0.06] text-ink-soft ring-1 ring-hairline/10'
                       }`}
                     >
                       {/* A picture of the food on the tile you choose it from.
@@ -207,7 +207,7 @@ export default function MenuComposer({
                       />
                       <span className="block p-2.5">
                         <span className="block text-[12px] font-extrabold leading-tight">{c.name}</span>
-                        <span className={`mt-0.5 block text-[10px] font-bold ${active ? 'text-plum-900/70' : 'text-white/40'}`}>
+                        <span className={`mt-0.5 block text-[10px] font-bold ${active ? 'text-plum-900/70' : 'text-ink-mute'}`}>
                           from ₹{c.basePlate}/plate
                         </span>
                       </span>
@@ -248,7 +248,7 @@ export default function MenuComposer({
                 <p className="text-[14px] font-extrabold text-gray-900">
                   {cuisine.name}
                   {cuisine.localName && (
-                    <span className="ml-1.5 text-[11px] font-medium italic text-gray-400">
+                    <span className="ml-1.5 text-[11px] font-medium italic text-gray-500">
                       {cuisine.localName}
                     </span>
                   )}
@@ -299,15 +299,15 @@ export default function MenuComposer({
       <section className="px-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="text-[15px] font-extrabold text-white">2 · Build the menu</h2>
-            <p className="mt-0.5 text-[11.5px] text-white/55">
+            <h2 className="text-[15px] font-extrabold text-ink">2 · Build the menu</h2>
+            <p className="mt-0.5 text-[11.5px] text-ink-mute">
               Pre-filled with a standard spread. Change anything — the rate moves as you do.
             </p>
           </div>
         </div>
 
         <div className="relative mt-2.5">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -345,12 +345,12 @@ export default function MenuComposer({
                   <button
                     type="button"
                     onClick={() => resetCourse(course.id)}
-                    className="text-[10.5px] font-bold text-gray-400 hover:text-gray-600"
+                    className="text-[10.5px] font-bold text-gray-500 hover:text-gray-600"
                   >
                     Reset to standard
                   </button>
                 </div>
-                <p className="mb-2 text-[10.5px] text-gray-400">{course.hint}</p>
+                <p className="mb-2 text-[10.5px] text-gray-500">{course.hint}</p>
 
                 <div className="flex flex-wrap gap-1.5">
                   {dishes.map(d => {
@@ -378,7 +378,7 @@ export default function MenuComposer({
                         />
                         {d.name}
                         {d.delta > 0 && (
-                          <span className={`font-bold ${on ? 'text-saffron-200' : 'text-gray-400'}`}>
+                          <span className={`font-bold ${on ? 'text-saffron-700' : 'text-gray-500'}`}>
                             +₹{d.delta}
                           </span>
                         )}
@@ -392,7 +392,7 @@ export default function MenuComposer({
           })}
         </div>
 
-        <p className="mt-3 text-[11px] leading-relaxed text-white/45">
+        <p className="mt-3 text-[11px] leading-relaxed text-ink-mute">
           Every dish above is available. Premium items — mutton, prawns, paneer, saffron,
           anything with a chef standing behind it — carry the per-plate premium shown on
           the chip; everything else is priced as part of the spread.

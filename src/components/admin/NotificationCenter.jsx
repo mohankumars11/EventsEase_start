@@ -79,7 +79,7 @@ export default function NotificationCenter({ items, unread, markAllRead, markRea
                   <CheckCheck size={12} /> Mark all read
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="p-1 text-gray-400 hover:text-gray-600">
+              <button onClick={() => setOpen(false)} className="p-1 text-gray-500 hover:text-gray-600">
                 <X size={16} />
               </button>
             </div>
@@ -233,7 +233,7 @@ export function NotificationInbox({ items, unread, markAllRead, markRead, markUn
               onClick={() => setFilter(f.id)}
               aria-pressed={filter === f.id}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                filter === f.id ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                filter === f.id ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
               }`}
             >
               {f.label} <span className="opacity-60">{n}</span>

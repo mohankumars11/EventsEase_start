@@ -29,18 +29,18 @@ export default function StickyCartBar() {
       // `pr-chat-dock` is the clearance the chat launcher owns in this
       // corner (index.css). Without it the launcher sat squarely on top of
       // the "View cart" button — the one tap this bar exists for.
-      className="animate-pop-in fixed inset-x-0 z-40 pl-3 md:pl-4 pr-chat-dock bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:bottom-5"
+      className="animate-pop-in above-bottom-nav fixed inset-x-0 z-40 pl-3 md:pl-4 pr-chat-dock md:bottom-5"
       role="region"
       aria-label="Cart summary"
     >
       <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-forest-800 shadow-[0_16px_40px_-16px_rgba(4,26,20,0.9)] ring-1 ring-white/10">
         {remaining > 0 ? (
           <div className="px-3.5 pt-2.5">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-saffron-200">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-saffron-700">
               <Truck size={12} />
               Add {formatINR(remaining)} more for free delivery
             </p>
-            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/15">
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-sunk/[0.07]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-saffron-400 to-saffron-300 transition-[width] duration-500 ease-out"
                 style={{ width: `${progress}%` }}
@@ -48,20 +48,20 @@ export default function StickyCartBar() {
             </div>
           </div>
         ) : (
-          <p className="flex items-center gap-1.5 px-3.5 pt-2.5 text-[11px] font-semibold text-forest-200">
+          <p className="flex items-center gap-1.5 px-3.5 pt-2.5 text-[11px] font-semibold text-forest-700">
             <Truck size={12} /> Free delivery unlocked
           </p>
         )}
 
-        <Link to={cartPath} className="flex items-center gap-3 px-3.5 py-3 active:bg-white/5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
+        <Link to={cartPath} className="flex items-center gap-3 px-3.5 py-3 active:bg-surface-sunk/[0.07]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink">
             <ShoppingBag size={18} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-extrabold leading-tight text-white">
+            <span className="block text-[13px] font-extrabold leading-tight text-ink">
               {productCount} item{productCount === 1 ? '' : 's'} · {formatINR(productTotal)}
             </span>
-            <span className="block text-[11px] text-white/50">Taxes & delivery calculated at checkout</span>
+            <span className="block text-[11px] text-ink-mute">Taxes & delivery calculated at checkout</span>
           </span>
           <span className="flex shrink-0 items-center gap-1 rounded-xl bg-chilli-600 px-3.5 py-2.5 text-xs font-extrabold text-white">
             View cart <ArrowRight size={14} />

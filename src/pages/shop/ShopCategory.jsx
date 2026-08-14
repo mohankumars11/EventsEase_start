@@ -142,7 +142,7 @@ export default function ShopCategory() {
           not fit across a 360px screen, and wrapping them would push the
           first product below the fold. */}
       <div
-        className="sticky z-30 border-b border-white/5 bg-forest-900/90 backdrop-blur-md"
+        className="sticky z-30 border-b border-hairline/10 bg-surface/90 backdrop-blur-md"
         style={{ top: 'var(--shop-appbar-h, 7.75rem)' }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide">
@@ -152,7 +152,7 @@ export default function ShopCategory() {
               className={`shop-chip ${
                 occasion !== 'All'
                   ? 'border-white bg-white text-forest-900'
-                  : 'border-white/15 bg-white/5 text-white/70'
+                  : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
               }`}
             >
               <SlidersHorizontal size={12} strokeWidth={2.6} />
@@ -167,7 +167,7 @@ export default function ShopCategory() {
               className={`shop-chip ${
                 sort === s.id
                   ? 'border-saffron-400 bg-saffron-400 text-forest-900'
-                  : 'border-white/15 bg-white/5 text-white/70'
+                  : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
               }`}
             >
               <s.icon size={12} strokeWidth={2.6} /> {s.label}
@@ -185,7 +185,7 @@ export default function ShopCategory() {
       </div>
 
       <div className="mx-auto max-w-3xl px-4 pb-32 pt-4">
-        <p className="mb-3 text-[11px] font-semibold text-white/45">
+        <p className="mb-3 text-[11px] font-semibold text-ink-mute">
           {loading
             ? 'Loading…'
             : `${sortedProducts.length} item${sortedProducts.length === 1 ? '' : 's'}${occasionLabel ? ` in ${occasionLabel}` : ''}`}
@@ -194,23 +194,23 @@ export default function ShopCategory() {
         {loading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-60 animate-pulse rounded-3xl bg-white/5" />
+              <div key={i} className="h-60 animate-pulse rounded-3xl bg-surface-sunk/[0.07]" />
             ))}
           </div>
         ) : sortedProducts.length === 0 ? (
           <div className="py-16 text-center">
-            <PackageOpen size={30} className="mx-auto text-white/25" />
-            <p className="mt-3 text-sm font-bold text-white">
+            <PackageOpen size={30} className="mx-auto text-ink-mute" />
+            <p className="mt-3 text-sm font-bold text-ink">
               Nothing matches that yet in {meta?.label ?? category}
             </p>
-            <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-white/45">
+            <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-ink-mute">
               Try another occasion or a shorter word — plenty gets made to order that
               isn't in the catalogue yet.
             </p>
             {filtered && (
               <button
                 onClick={() => { selectOccasion('All'); setQuery('') }}
-                className="mt-4 rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white ring-1 ring-white/15"
+                className="mt-4 rounded-xl bg-surface-sunk/[0.07] px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10"
               >
                 Show everything in {meta?.label ?? category}
               </button>
@@ -235,7 +235,7 @@ export default function ShopCategory() {
           <div ref={sentinelRef} className="pt-5 text-center">
             <button
               onClick={showMore}
-              className="rounded-xl bg-white/10 px-5 py-3 text-xs font-bold text-white ring-1 ring-white/15 active:scale-95 transition-transform"
+              className="rounded-xl bg-surface-sunk/[0.07] px-5 py-3 text-xs font-bold text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
             >
               Show {Math.min(remaining, 24)} more
             </button>
@@ -277,17 +277,17 @@ export default function ShopCategory() {
    returns nothing. */
 function OccasionSheet({ groups, active, categoryLabel, onPick, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true" aria-label="Filter by occasion">
+    <div className="fixed inset-0 z-[60] flex items-end" role="dialog" aria-modal="true" aria-label="Filter by occasion">
       <button className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-label="Close filters" onClick={onClose} />
 
-      <div className="animate-pop-in relative max-h-[80vh] w-full overflow-y-auto rounded-t-3xl bg-white pb-8">
+      <div className="animate-pop-in relative max-h-[80vh] w-full overflow-y-auto rounded-t-3xl bg-white pb-bottom-nav">
         {/* Grab handle + a header that stays put while the list scrolls. */}
         <div className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3 backdrop-blur">
           <span aria-hidden="true" className="mx-auto mb-3 block h-1 w-10 rounded-full bg-gray-200" />
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-[15px] font-extrabold text-gray-900">What's the occasion?</h2>
-              <p className="text-[11px] text-gray-400">Filtering {categoryLabel}</p>
+              <p className="text-[11px] text-gray-500">Filtering {categoryLabel}</p>
             </div>
             <button
               onClick={onClose}
@@ -316,7 +316,7 @@ function OccasionSheet({ groups, active, categoryLabel, onPick, onClose }) {
             <div key={group.id}>
               <div className="mb-2 flex items-baseline gap-2">
                 <h3 className="text-[13px] font-extrabold text-gray-900">{group.label}</h3>
-                {group.blurb && <span className="truncate text-[11px] text-gray-400">{group.blurb}</span>}
+                {group.blurb && <span className="truncate text-[11px] text-gray-500">{group.blurb}</span>}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {group.occasions.map(o => {
@@ -332,7 +332,7 @@ function OccasionSheet({ groups, active, categoryLabel, onPick, onClose }) {
                       }`}
                     >
                       <span aria-hidden="true">{o.emoji}</span> {o.label}
-                      <span className={isActive ? 'text-white/60' : 'text-gray-300'}>{o.count}</span>
+                      <span className={isActive ? 'text-ink-mute' : 'text-gray-300'}>{o.count}</span>
                     </button>
                   )
                 })}

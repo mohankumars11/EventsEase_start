@@ -16,11 +16,11 @@ const ICONS = { choose: ShoppingBasket, source: ChefHat, deliver: BadgeCheck }
  */
 export default function HowWeServe({ className = '' }) {
   return (
-    <section className={`rounded-3xl bg-white/5 p-5 ring-1 ring-white/10 ${className}`} aria-labelledby="serve-heading">
-      <h2 id="serve-heading" className="text-[15px] font-extrabold text-white">
+    <section className={`rounded-3xl bg-surface-sunk/[0.07] p-5 ring-1 ring-hairline/10 ${className}`} aria-labelledby="serve-heading">
+      <h2 id="serve-heading" className="text-[15px] font-extrabold text-ink">
         How Sambramo serves you
       </h2>
-      <p className="mt-1 text-[11px] leading-relaxed text-white/50">{FULFILMENT.line}</p>
+      <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">{FULFILMENT.line}</p>
 
       <ol className="relative mt-5 space-y-4">
         {/* The rail. Stops short at both ends so it reads as a path between
@@ -40,8 +40,8 @@ export default function HowWeServe({ className = '' }) {
                 </span>
               </span>
               <div className="min-w-0 pt-0.5">
-                <p className="text-[13px] font-bold text-white">{step.title}</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-white/55">{step.detail}</p>
+                <p className="text-[13px] font-bold text-ink">{step.title}</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{step.detail}</p>
               </div>
             </li>
           )
