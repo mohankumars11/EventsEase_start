@@ -20,6 +20,7 @@ import ThemeCard from '../../components/service/ThemeCard'
 import ThemeSheet from '../../components/service/ThemeSheet'
 import PackCard from '../../components/service/PackCard'
 import MenuComposer from '../../components/service/MenuComposer'
+import GoesWithRail from '../../components/service/GoesWithRail'
 import BookBar from '../../components/service/BookBar'
 import EventDateSheet from '../../components/plan/EventDateSheet'
 
@@ -540,6 +541,14 @@ export default function ServiceDetail() {
             </div>
           </section>
         )}
+
+        {/* ── What else the same day needs ───────────────────────────────
+            Placed after the options and before the reassurance: the customer
+            has just made their choice about THIS service and has not yet left,
+            which is the one moment "and the nadaswaram?" is a helpful question
+            rather than an interruption. Above the options it would compete
+            with the thing they came for. */}
+        <GoesWithRail seedId={serviceId} />
 
         {/* ── The reassurance ────────────────────────────────────────── */}
         <section className="px-4">

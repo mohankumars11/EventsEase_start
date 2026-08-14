@@ -238,7 +238,7 @@ const SUBSTITUTE_OF = (() => {
  * claim the ranker will act on, and an invented 0.3 between two unrelated
  * services is noise that outranks a genuine 0.25 somewhere else.
  */
-const COMPLEMENTS = {
+export const COMPLEMENTS = {
   dj:           { emcee: 0.55, av_setup: 0.40, photobooth: 0.25 },
   live_music:   { av_setup: 0.50, emcee: 0.35 },
   photography:  { videography: 0.60, photobooth: 0.30, makeup: 0.35 },
