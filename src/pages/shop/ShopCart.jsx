@@ -10,7 +10,9 @@ import { useAuth } from '../../context/AuthContext'
 import { useCity } from '../../context/CityContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR, todayISO, humanDate } from '../../utils/format'
-import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+// The delivery rule itself now lives in lib/savings, which applies it
+// alongside the coupon rules so the two cannot disagree about what this
+// basket is worth. Nothing in this file re-derives either any more.
 import { createOrder as createTestOrder, initiatePayment, verifyPayment, IS_TEST_MODE } from '../../lib/payment/testPaymentProvider'
 import { BRAND } from '../../config/sambramo'
 import { friendlyError } from '../../context/ToastContext'
@@ -22,6 +24,10 @@ import FulfilmentNote from '../../components/shop/FulfilmentNote'
 import ProductImage from '../../components/shop/ProductImage'
 import CheckoutHeader from '../../components/shop/CheckoutHeader'
 import CheckoutFooter from '../../components/shop/CheckoutFooter'
+import SavingsStack from '../../components/shop/SavingsStack'
+import RecommendationRail from '../../components/shop/RecommendationRail'
+import { usePublicOffers } from '../../hooks/usePublicOffers'
+import { basketSavings } from '../../lib/savings'
 import { describeSelections, summaryLines } from '../../config/customizers'
 
 const PAYMENT_METHODS = [
@@ -136,16 +142,63 @@ export default function ShopCart() {
       .then(({ count }) => setIsFirstOrder((count ?? 0) === 0))
   }, [user])
 
-  const qualifiesForFreeDelivery = isFirstOrder && productTotal >= FREE_DELIVERY_THRESHOLD
-  const deliveryFee = productTotal === 0 || qualifiesForFreeDelivery ? 0 : DELIVERY_FEE
+  // Every live coupon this visitor could use — the same list the storefront's
+  // offers rail advertises, so the cart can never fail to mention a code the
+  // shop just showed them two screens ago.
+  const offers = usePublicOffers()
+
+  /**
+   * What this basket saves, and what it is still leaving on the table.
+   *
+   * The delivery rule, the coupon cap and the first-order condition all used
+   * to be re-derived here in three separate expressions. They now come from
+   * lib/savings, which applies exactly the rules `validate_coupon` applies —
+   * so the figure beside the total and the figure the RPC returns are computed
+   * the same way, and a percent coupon that hits its ceiling says so instead
+   * of silently paying out less than the badge promised.
+   *
+   * `appliedCoupon` is passed through so the server's own number wins the
+   * moment there is one. Ours is only ever used to describe what is available.
+   */
+  const valueStack = basketSavings({
+    subtotal: productTotal,
+    coupons: offers,
+    isFirstOrder,
+    appliedCoupon: coupon,
+  })
+
+  const deliveryFee = productTotal === 0 ? 0 : valueStack.delivery.fee
   const discountAmount = coupon?.discount_amount ?? 0
   const total = Math.max(0, productTotal + deliveryFee - discountAmount)
   const addressErrors = getAddressErrors(address)
-  // What this order saved, stated as one number. Two separate concessions
-  // buried in the breakdown read as fine print; the sum reads as a reason to
-  // finish. Only counts the delivery fee as a saving when it was actually
-  // waived, never when the basket simply hasn't reached the threshold.
-  const savings = discountAmount + (qualifiesForFreeDelivery ? DELIVERY_FEE : 0)
+  // Only what is actually off the bill. Never includes a coupon the customer
+  // has not applied — see SavingsStack for why those two must stay apart.
+  const savings = valueStack.saved
+
+  /**
+   * The gap the recommendation rail should aim at.
+   *
+   * Whichever threshold is nearest and real: free delivery, or the next coupon
+   * worth crossing to. Handed to the ranker, which boosts items priced to
+   * close it — so "add ₹212 more" is followed by something that actually costs
+   * about ₹212, rather than leaving the customer to go and find one.
+   */
+  const budgetGap = valueStack.delivery.shortfall ?? valueStack.unlock?.shortfall ?? null
+
+  /**
+   * One-tap claim from the savings stack.
+   *
+   * Applies straight away rather than filling the field and waiting: the code
+   * came from `coupons` and the basket already clears its minimum, so there is
+   * nothing for the customer to decide. The field is filled too, so that if
+   * the RPC does refuse it — an exhausted `max_uses`, say — they are left
+   * looking at the code and the reason rather than at an empty box.
+   */
+  function useSuggestedCode(code) {
+    if (!code) return
+    setCouponInput(code)
+    applyCoupon(code)
+  }
 
   // When the order is needed. Captured on the storefront by DeliverySlip and
   // confirmed here, because it is the one delivery fact this shop never asked
@@ -187,13 +240,21 @@ export default function ShopCart() {
   // (it lives in localStorage) and the return trip already set up.
   const signInToCheckout = { pathname: '/shop/cart', search: '' }
 
-  async function applyCoupon() {
-    if (!couponInput.trim()) return
+  /**
+   * `codeArg` lets the savings stack claim a code in one tap rather than
+   * filling a field the customer then has to find and submit. Defaulting to
+   * the input keeps the Apply button's behaviour identical — but note the
+   * button must now call this through an arrow, since a bare onClick would
+   * hand it the click event as the code.
+   */
+  async function applyCoupon(codeArg) {
+    const code = (typeof codeArg === 'string' ? codeArg : couponInput).trim()
+    if (!code) return
     setApplyingCoupon(true)
     setCouponError(null)
     try {
       const { data, error: err } = await supabase.rpc('validate_coupon', {
-        p_code: couponInput.trim(),
+        p_code: code,
         p_order_total: productTotal,
         p_customer_id: user.id,
       })
@@ -461,12 +522,16 @@ export default function ShopCart() {
           </div>
         )}
 
-        {deliveryFee > 0 && isFirstOrder && (
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
-            Add <span className="font-bold">{formatINR(FREE_DELIVERY_THRESHOLD - productTotal)}</span> more to unlock
-            free delivery on your first order.
-          </p>
+        {/* Every saving on this order, itemised, plus the single most
+            valuable thing still worth doing. Replaces the lone "add ₹X for
+            free delivery" line, which knew about exactly one of the four
+            mechanisms that can take money off this bill. Only shown while
+            there is still something to change — on the payment step the
+            decisions are made and this becomes noise over a total. */}
+        {step === 'cart' && (
+          <SavingsStack savings={valueStack} onUseCode={user ? useSuggestedCode : undefined} className="!mt-3.5" />
         )}
+
         {deliveryFee > 0 && isFirstOrder === false && (
           <p className="text-[11px] text-gray-400">Free delivery is a first-order welcome offer.</p>
         )}
@@ -734,7 +799,7 @@ export default function ShopCart() {
                         className="input flex-1 font-mono uppercase tracking-wider"
                       />
                       <button
-                        onClick={applyCoupon}
+                        onClick={() => applyCoupon()}
                         disabled={applyingCoupon || !couponInput.trim()}
                         className="shrink-0 rounded-xl bg-chilli-600 px-5 text-sm font-bold text-white transition-colors hover:bg-chilli-700 disabled:opacity-40"
                       >
@@ -946,6 +1011,30 @@ export default function ShopCart() {
                   </button>
                 </div>
               </SectionCard>
+            )}
+
+            {/* ── What else goes on the table ────────────────────────────
+                Seeded from the whole basket rather than one item, and aimed
+                at `budgetGap` — so when the summary above says "add ₹212 more
+                for free delivery", the tiles under it are things that cost
+                about ₹212. The old cart said the sentence and left the
+                customer to go and find one, which is most of the reason that
+                nudge never worked.
+
+                Cart step only. On the payment step the basket is settled and
+                a rail of more things to buy is an interruption between a
+                customer and a UPI app. */}
+            {step === 'cart' && (
+              <RecommendationRail
+                cart={cart.products}
+                intent="complete"
+                budgetGap={budgetGap}
+                limit={8}
+                tone="dark"
+                title="Goes with your order"
+                subtitle={budgetGap ? `Anything from ${formatINR(budgetGap)} closes the gap above` : 'Delivered together, one trip'}
+                className="-mx-1 pt-1"
+              />
             )}
 
             {/* The summary reads inline on a phone, where there is no rail to

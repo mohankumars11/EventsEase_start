@@ -16,6 +16,8 @@ import ReviewModal from '../../components/reviews/ReviewModal'
 import CustomizeModal from '../../components/shop/CustomizeModal'
 import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
+import BundleCard from '../../components/shop/BundleCard'
+import RecommendationRail from '../../components/shop/RecommendationRail'
 import { cakeFacts } from '../../data/cakeStyles'
 import { isCustomizable } from '../../config/customizers'
 
@@ -247,6 +249,26 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        {/* ── The set, then the table it goes on ──────────────────────────
+            Placed directly under the buy box because this is the one moment
+            the customer has already decided about this item and has not yet
+            left. Both surfaces answer questions the old page left hanging:
+            "what else do I need for this" and "what does buying more get me".
+
+            The rails carry `-mx-4` because they lay out their own px-4 gutter
+            — a rail that stops at the page margin looks clipped rather than
+            scrollable, so the tiles have to be able to run to the screen edge
+            while the heading stays aligned with everything above it. */}
+        <BundleCard seed={product} className="mt-4" />
+
+        <RecommendationRail
+          seed={product}
+          intent="complete"
+          occasion={product.occasion}
+          tone="light"
+          className="-mx-4 mt-6"
+        />
+
         <div className="shop-card mt-4 p-5 sm:p-8">
           <div className="flex items-center justify-between gap-3 mb-5">
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -271,6 +293,19 @@ export default function ProductDetail() {
             <p className="text-sm text-gray-400 mt-5">No reviews yet — be the first once you've received this order.</p>
           )}
         </div>
+
+        {/* Alternatives last, and only last. Above the fold they compete with
+            the thing the customer came for; down here they catch the person
+            who has read the whole page and decided this particular one is not
+            it — which is the only point at which showing them a different cake
+            is a service rather than a distraction. */}
+        <RecommendationRail
+          seed={product}
+          intent="similar"
+          tone="light"
+          limit={6}
+          className="-mx-4 mt-8"
+        />
       </div>
 
       {reviewing && (
