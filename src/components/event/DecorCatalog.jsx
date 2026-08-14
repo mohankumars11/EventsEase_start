@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
-  Camera, Check, ChevronDown, Clock, Maximize2, Sparkles, Plus, X,
-  SlidersHorizontal, ShoppingCart,
+  Camera, Check, Clock, Maximize2, Sparkles, Plus, X, ChevronRight, ChevronLeft,
+  Search, ShoppingCart, LayoutGrid, Rows3,
 } from 'lucide-react'
 import {
   CATALOG_BY_OCCASION, BUDGET_BANDS, categoriesForOccasion,
@@ -14,39 +14,52 @@ import ImageSourceBadge from '../shop/ImageSourceBadge'
 /**
  * The décor catalogue, on the occasion's own page.
  *
- * ── What this replaced ────────────────────────────────────────────────────
- * A 2×2 grid of four "samples". Tapping one opened a photograph whose only
- * forward action was a button that navigated to /plan — a wizard, on another
- * page, asking about guest counts. Somebody who tapped a picture of a
- * candlelight dinner because they wanted to know what one costs was answered
- * with a form.
+ * ── What this replaced, twice ─────────────────────────────────────────────
+ * First it replaced four sample photographs whose only forward action was a
+ * link to /plan — a wizard, on another page, asking about guest counts.
+ * Somebody who tapped a picture of a candlelight dinner because they wanted to
+ * know what one costs was answered with a form.
  *
- * That navigation is deleted. Everything the customer came for now happens
- * inside this section: the whole list rather than four of it, filterable,
- * priced, with what is physically in each setup one tap away, and selection
- * that lands in the enquiry they already have open.
+ * Then it replaced the thing that replaced it. The first catalogue rendered
+ * every item for the occasion as one flat grid, which is fine at four and
+ * wrong at twenty-nine: an anniversary became fifteen rows of cards inside a
+ * page that already had a guest dial, two doors, eight priced tiers and a
+ * service list under it. The section stopped being a catalogue and became a
+ * wall. At the hundred items this catalogue is built to grow to, it would have
+ * been unusable.
  *
- * ── Three rules this component is built around ────────────────────────────
+ * ── The fix is that height stops depending on catalogue size ─────────────
+ * Items are laid out as horizontal shelves, one per kind of décor, four
+ * visible until the customer asks for more. A shelf is a fixed ~230px however
+ * many setups are on it, so the section's height is a function of HOW MANY
+ * KINDS OF THING WE SELL — which is about twelve and essentially fixed —
+ * rather than of how many items are in the catalogue, which is meant to grow.
+ * Adding fifty more setups makes the shelves longer, not the page.
  *
- * 1. NOTHING NAVIGATES. Not the card, not the photograph, not the price. A
- *    person browsing décor is comparing, and comparing means going back and
- *    forth between six of them — every navigation is a lost comparison. The
- *    only thing that leaves this section is the enquiry itself.
+ * That is also how people actually shop this: nobody compares a mandap against
+ * a photo string. They decide "I want the room done" and then compare the four
+ * ways of doing a room, which is one shelf, side by side, with no scrolling
+ * past anything irrelevant.
  *
- * 2. THE PRICE IS ON THE CARD. See the header of data/decorCatalog.js for the
- *    full argument. Short version: these are absolute figures for one
- *    installed setup at a stated size, not the per-plate strings
- *    SHOW_SERVICE_PRICES exists to hide, and every operator this business
- *    competes with prints them.
+ * ── Two modes, and the rule for which one is showing ─────────────────────
+ * SHELVES while the customer is browsing — no search, no filter. GRID the
+ * moment they narrow, because a narrowed set is small, and a person who has
+ * just filtered to "under ₹2,500" wants to see all six of those at once rather
+ * than hunt them across shelves. The mode is derived from the filters, not a
+ * setting somebody has to find, and the toggle is there only to override.
  *
- * 3. SELECTING IS NOT BUYING, AND IT SAYS SO. Ticking a card adds nothing
- *    anywhere. The tray states the count and the running total, and one
- *    explicit button moves the lot into the enquiry — which is itself still an
- *    enquiry, not an order. Two deliberate acts before anything is committed,
- *    said in words at both of them.
+ * ── On the detail sheet, which reverses an earlier decision ──────────────
+ * The flat-grid version expanded "what's in it" inline and its comment argued
+ * against ever opening an overlay, because an earlier version had made the
+ * whole card open a lightbox and turned every attempt to read a price into a
+ * modal to dismiss.
  *
- * Generic over the occasion, like everything else on this page: an anniversary
- * gets twenty-eight setups and a corporate event gets six, from the same code.
+ * That argument was right about the cause and wrong about the fix. The problem
+ * was that the PRICE was in the overlay. A 150px shelf card cannot hold a
+ * five-line inclusion list, but it holds the photograph, the name and the price
+ * comfortably — so everything needed to compare stays on the card, and the
+ * sheet carries only the detail you go looking for. Comparing is free;
+ * inspecting costs one tap and one Escape.
  */
 
 /* ═══════════════════════════════════════════════════════════
@@ -56,10 +69,10 @@ import ImageSourceBadge from '../shop/ImageSourceBadge'
 /**
  * Same compositing contract as the gallery's SamplePhoto: the tinted plate and
  * the emoji sit underneath at all times and the photograph fades in on top, so
- * an item the resolver has not reached renders as a designed tile rather than a
- * hole in the grid.
+ * an item the resolver has not reached renders as a designed tile rather than
+ * a hole in the shelf.
  */
-function ItemPhoto({ item, className = '', eager = false }) {
+function ItemPhoto({ item, className = '', sizes, eager = false }) {
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -67,7 +80,7 @@ function ItemPhoto({ item, className = '', eager = false }) {
     <div className={`relative overflow-hidden bg-gradient-to-br from-plum-800 to-berry-900 ${className}`}>
       <span
         aria-hidden="true"
-        className="absolute inset-0 flex select-none items-center justify-center text-4xl opacity-60"
+        className="absolute inset-0 flex select-none items-center justify-center text-3xl opacity-60"
       >
         {item.emoji}
       </span>
@@ -78,7 +91,7 @@ function ItemPhoto({ item, className = '', eager = false }) {
           alt={item.alt}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
-          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+          sizes={sizes}
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
           className={`relative h-full w-full object-cover transition-opacity duration-500 ${
@@ -91,154 +104,331 @@ function ItemPhoto({ item, className = '', eager = false }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   One setup
+   One setup — the same card on a shelf and in a grid
 ═══════════════════════════════════════════════════════════ */
 
 /**
- * A card that does two things and refuses to do a third.
+ * One component for both layouts, sized by its container rather than by a
+ * `variant` prop.
  *
- * "What's included" expands in place; "Select" ticks it. There is deliberately
- * no third control and no whole-card click target — an earlier version made the
- * card itself open a lightbox, which meant every attempt to read the price list
- * became a modal the customer had to dismiss.
+ * Two card components drift. The shelf one gets a price format the grid one
+ * does not, somebody fixes the selected state in one place, and the two
+ * versions of the same setup start disagreeing about what they cost. The only
+ * real difference between the layouts is width, and width is the parent's
+ * business.
  *
- * The expansion is uncontrolled and local. Lifting it into the parent would let
- * the grid close a card the customer is mid-read of whenever a filter changed,
- * and there is no reason for two cards not to be open at once — comparing two
- * inclusion lists side by side is the single most useful thing this section
- * does.
+ * The whole tile is one button that opens the sheet, with the select control
+ * layered above it as a separate button — so a tap anywhere reads the setup and
+ * the deliberate act of choosing it has its own target. `stopPropagation` on
+ * the tick is what keeps selecting from also opening the sheet.
  */
-function DecorItemCard({ item, selected, onToggle, inCart, index }) {
-  const [open, setOpen] = useState(false)
-  const panelId = `decor-includes-${item.id}`
+function DecorCard({ item, selected, onToggle, onOpen, inCart, eager = false }) {
+  return (
+    <div
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white/[0.05] text-left ring-1 transition-[background-color,box-shadow] ${
+        selected ? 'bg-white/[0.11] shadow-lg ring-2' : 'ring-white/10 hover:bg-white/[0.09]'
+      }`}
+      style={selected ? { '--tw-ring-color': 'var(--event-glow)' } : undefined}
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex flex-1 flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        aria-label={`${item.name} — from ${formatINR(item.price)}. See what is included.`}
+      >
+        <div className="relative w-full">
+          <ItemPhoto
+            item={item}
+            className="h-28 w-full sm:h-32"
+            sizes="(min-width: 1024px) 220px, 160px"
+            eager={eager}
+          />
+
+          {/* "Our pick", never "Most booked". Sambramo is pre-launch and has no
+              booking history — `popular` is a recommendation from market
+              research, and a badge claiming otherwise would be the same lie as
+              captioning a stock photograph "our recent work". */}
+          {item.popular && (
+            <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
+              <Sparkles size={8} /> Our pick
+            </span>
+          )}
+
+          {inCart && (
+            <span className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-0.5 rounded-full bg-emerald-500/90 px-1.5 py-0.5 text-[8.5px] font-extrabold text-white backdrop-blur-sm">
+              <Check size={8} /> In cart
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col p-2.5">
+          <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-white">
+            {item.name}
+          </h3>
+          {/* Price and the size it buys, on the card, always. This is the pair
+              that makes comparison possible without opening anything — and the
+              reason the sheet is allowed to exist at all. */}
+          <p className="mt-1 text-[13px] font-extrabold leading-none" style={{ color: 'var(--event-glow)' }}>
+            from {formatINR(item.price)}
+          </p>
+          <p className="mt-1 line-clamp-1 text-[9.5px] text-white/40">{item.where}</p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); onToggle(item) }}
+        aria-pressed={selected}
+        aria-label={selected ? `Remove ${item.name}` : `Select ${item.name}`}
+        className={`absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full transition-transform active:scale-90 ${
+          selected ? 'text-gray-900 shadow-lg' : 'bg-black/45 text-white backdrop-blur-sm hover:bg-black/70'
+        }`}
+        style={selected ? { background: 'var(--event-glow)' } : undefined}
+      >
+        {selected ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}
+      </button>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   The detail sheet
+═══════════════════════════════════════════════════════════ */
+
+/**
+ * Everything that will not fit on a 150px card.
+ *
+ * A bottom sheet rather than a centred dialog: this section is read on a phone
+ * with one thumb, and the controls that matter — select, close — belong within
+ * reach of it rather than at the top of a box in the middle of the screen. On
+ * a wide viewport it centres, because a sheet pinned to the bottom of a 1400px
+ * window is a strip of content the eye has to travel to.
+ *
+ * Escape closes, the backdrop closes, and body scroll is restored to whatever
+ * it was rather than blanked — another overlay on this page may already own
+ * the lock and clearing it here would unlock the page behind theirs.
+ */
+function DecorSheet({ item, selected, onToggle, onClose }) {
+  const closeRef = useRef(null)
+  const [entered, setEntered] = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); onClose() } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  useEffect(() => {
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+    return () => { document.body.style.overflow = previous }
+  }, [])
 
   return (
     <div
-      className={`rise-in group relative flex flex-col overflow-hidden rounded-2xl bg-white/[0.04] ring-1 backdrop-blur transition-[box-shadow,background-color] ${
-        selected
-          ? 'bg-white/[0.09] ring-2 shadow-lg'
-          : 'ring-white/10 hover:bg-white/[0.07]'
-      }`}
-      style={{
-        '--rise-delay': `${Math.min(index, 10) * 40}ms`,
-        ...(selected ? { '--tw-ring-color': 'var(--event-glow)' } : null),
-      }}
+      className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.name}
     >
-      <div className="relative">
-        <ItemPhoto item={item} className="h-36 sm:h-40" eager={index < 2} />
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        className={`absolute inset-0 bg-plum-950/80 backdrop-blur-sm transition-opacity duration-150 motion-reduce:transition-none ${
+          entered ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
 
-        {/* Honesty label, on the image, in the same words the shop uses.
-            Bottom-left rather than top-right: on a two-up phone grid a card is
-            about 165px wide, and "Representative image" beside "MOST BOOKED"
-            on the same row overlapped into "MOST BOOKEDpresentative image" —
-            which reads as neither. The two claims get their own corners, and
-            the badge that must always be legible gets the emptier one. */}
-        <ImageSourceBadge source={item.source} size="sm" subject="setup" className="absolute bottom-2 left-2" />
-
-        {/* "Our pick", never "Most booked". Sambramo is pre-launch and has no
-            booking history — `popular` is a recommendation drawn from market
-            research, and a badge claiming otherwise would be the same lie as
-            captioning a stock photograph "our recent work". See decorCatalog.js. */}
-        {item.popular && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
-            <Sparkles size={9} /> Our pick
-          </span>
-        )}
-
-        {/* The tick lives on the photograph so the selected state survives a
-            long card being scrolled past its own footer. */}
-        {selected && (
-          <span
-            aria-hidden="true"
-            className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full text-gray-900 shadow-lg"
-            style={{ background: 'var(--event-glow)' }}
+      <div
+        className={`relative flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-[#1b0733] shadow-2xl ring-1 ring-white/10 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none sm:max-w-lg sm:rounded-3xl ${
+          entered ? 'translate-y-0 opacity-100 sm:scale-100' : 'translate-y-5 opacity-0 sm:translate-y-0 sm:scale-[0.98]'
+        }`}
+      >
+        <div className="relative shrink-0">
+          <ItemPhoto item={item} className="h-44 w-full sm:h-52" sizes="(min-width: 640px) 512px, 100vw" eager />
+          <button
+            ref={closeRef}
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <Check size={15} strokeWidth={3} />
-          </span>
-        )}
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col p-3">
-        <h3 className="text-[13.5px] font-extrabold leading-tight text-white">{item.name}</h3>
-        <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/50">{item.blurb}</p>
-
-        {/* The price, and immediately under it the size it buys. A figure with
-            no scale attached is the thing that produces "why is my quote
-            double the website" three weeks later. */}
-        <div className="mt-2.5">
-          <span className="text-[15px] font-extrabold" style={{ color: 'var(--event-glow)' }}>
-            from {formatINR(item.price)}
-          </span>
-          <span className="ml-1.5 text-[10.5px] text-white/40">{item.where}</span>
+            <X size={17} />
+          </button>
+          <ImageSourceBadge source={item.source} size="sm" subject="setup" className="absolute bottom-3 left-3" />
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onToggle(item)}
-            aria-pressed={selected}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-extrabold transition-transform active:scale-95 ${
-              selected ? 'text-gray-900' : 'bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/[0.16]'
-            }`}
-            style={selected ? { background: 'var(--event-glow)' } : undefined}
-          >
-            {selected ? <><Check size={13} /> Selected</> : <><Plus size={13} /> Select</>}
-          </button>
+        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+          <h2 className="text-[18px] font-extrabold leading-tight text-white">{item.name}</h2>
+          <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/60">{item.blurb}</p>
 
-          <button
-            type="button"
-            onClick={() => setOpen(o => !o)}
-            aria-expanded={open}
-            aria-controls={panelId}
-            className="flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-2 text-[11px] font-bold text-white/55 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            What&apos;s in it
-            <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <span className="text-[22px] font-extrabold leading-none" style={{ color: 'var(--event-glow)' }}>
+              from {formatINR(item.price)}
+            </span>
+            <span className="text-[11px] text-white/45">{item.where}</span>
+          </div>
 
-        {inCart && (
-          <p className="mt-2 flex items-center gap-1 text-[10.5px] font-bold text-emerald-300">
-            <Check size={11} /> Already in your enquiry
-          </p>
-        )}
-
-        {open && (
-          <div id={panelId} className="mt-3 rounded-xl bg-black/25 p-3 ring-1 ring-white/10">
-            <p className="mb-2 text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-white/40">
+          <div className="mt-4 rounded-2xl bg-black/25 p-3.5 ring-1 ring-white/10">
+            <p className="mb-2.5 text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-white/40">
               What gets installed
             </p>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
               {item.includes.map(line => (
-                <li key={line} className="flex items-start gap-2 text-[11.5px] leading-snug text-white/70">
-                  <Check size={11} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
+                <li key={line} className="flex items-start gap-2 text-[12px] leading-snug text-white/75">
+                  <Check size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
                   {line}
                 </li>
               ))}
             </ul>
 
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-white/10 pt-2.5 text-[10.5px] text-white/45">
-              <span className="inline-flex items-center gap-1"><Clock size={10} /> {item.setup} to install</span>
-              <span className="inline-flex items-center gap-1"><Maximize2 size={10} /> {item.where}</span>
+              <span className="inline-flex items-center gap-1"><Clock size={11} /> {item.setup} to install</span>
+              <span className="inline-flex items-center gap-1"><Maximize2 size={11} /> {item.where}</span>
             </div>
-
-            {/* The top of the band, stated only where there is room to explain
-                what moves it. On the card it would read as a second price. */}
-            {item.priceTo > item.price && (
-              <p className="mt-2 text-[10.5px] leading-relaxed text-white/45">
-                {formatINR(item.price)} is this setup at the size above. A bigger space, fresher
-                flowers or a longer install takes it toward {formatINR(item.priceTo)} — your quote
-                says which and why.
-              </p>
-            )}
-
-            {item.credit && (
-              <p className="mt-2 text-[9.5px] text-white/25">{item.credit}</p>
-            )}
           </div>
-        )}
+
+          {/* The top of the band, stated only where there is room to explain
+              what moves it. On the card it would read as a second price. */}
+          {item.priceTo > item.price && (
+            <p className="mt-3 text-[11px] leading-relaxed text-white/45">
+              {formatINR(item.price)} is this setup at the size above. A bigger space, fresher
+              flowers or a longer install takes it toward {formatINR(item.priceTo)} — your quote
+              says which and why.
+            </p>
+          )}
+
+          {item.credit && <p className="mt-2 text-[9.5px] text-white/25">{item.credit}</p>}
+        </div>
+
+        <div className="shrink-0 border-t border-white/10 bg-black/25 p-3.5">
+          <button
+            onClick={() => { onToggle(item); onClose() }}
+            className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13.5px] font-extrabold transition-transform active:scale-[0.98] ${
+              selected ? 'bg-white/10 text-white ring-1 ring-white/20' : 'text-gray-900'
+            }`}
+            style={selected ? undefined : { background: 'var(--event-glow)' }}
+          >
+            {selected
+              ? <><X size={15} /> Remove from selection</>
+              : <><Plus size={15} /> Select this setup</>}
+          </button>
+        </div>
       </div>
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   A shelf
+═══════════════════════════════════════════════════════════ */
+
+/**
+ * One kind of décor, horizontally.
+ *
+ * Capped at TEN cards with a "see all" tile at the end rather than rendering
+ * the whole category: a shelf you can flick for thirty seconds is a shelf
+ * nobody reaches the end of, and the tile turns "there is more here" into one
+ * tap that filters to exactly that kind. It is also what keeps the DOM bounded
+ * — twelve shelves × ten is a hundred and twenty cards at absolute worst, and
+ * the images below the fold are lazy.
+ *
+ * The arrows are rendered on wide viewports only. A phone flicks; a mouse has
+ * nothing to flick with and a trackpad's horizontal scroll is a gesture most
+ * people do not know they have.
+ */
+const SHELF_CAP = 10
+
+function Shelf({ category, items, total, selected, onToggle, onOpen, hasItem, eventId, onSeeAll }) {
+  const railRef = useRef(null)
+
+  const page = dir => {
+    const rail = railRef.current
+    if (!rail) return
+    rail.scrollBy({ left: dir * Math.max(rail.clientWidth * 0.8, 160), behavior: 'smooth' })
+  }
+
+  const shown = items.slice(0, SHELF_CAP)
+  const more  = total - shown.length
+
+  return (
+    <section aria-labelledby={`shelf-${category.id}`} className="min-w-0">
+      <div className="mb-2 flex items-end justify-between gap-3 px-0.5">
+        <div className="min-w-0">
+          <h3 id={`shelf-${category.id}`} className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-white">
+            <span aria-hidden="true">{category.emoji}</span>
+            <span className="truncate">{category.name}</span>
+            <span className="shrink-0 text-[11px] font-bold text-white/30">{total}</span>
+          </h3>
+          <p className="mt-0.5 line-clamp-1 text-[10.5px] text-white/40">{category.blurb}</p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {/* A label, not a button. It read as one for a draft — "From ₹1,999 ›"
+              with a chevron — and tapping a price to get a filtered list is a
+              result nobody predicts from that wording. Filtering to one kind is
+              already the category chip above and the "+N more" tile at the end
+              of the rail, both of which say what they do. This just answers
+              "what does this kind start at", which is the question somebody
+              scanning eleven shelves is actually asking. */}
+          <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: 'var(--event-glow)' }}>
+            from {formatINR(category.from)}
+          </span>
+          <div className="hidden items-center gap-1 sm:flex">
+            <button
+              onClick={() => page(-1)}
+              aria-label={`Scroll ${category.name} left`}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              <ChevronLeft size={13} />
+            </button>
+            <button
+              onClick={() => page(1)}
+              aria-label={`Scroll ${category.name} right`}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        ref={railRef}
+        className="scrollbar-hide -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-1"
+      >
+        {shown.map((item, i) => (
+          <div key={item.id} className="w-[148px] shrink-0 snap-start sm:w-[168px]">
+            <DecorCard
+              item={item}
+              selected={selected.has(item.id)}
+              onToggle={onToggle}
+              onOpen={() => onOpen(item)}
+              inCart={hasItem?.(eventId, item.id) ?? false}
+              eager={i < 2}
+            />
+          </div>
+        ))}
+
+        {more > 0 && (
+          <button
+            onClick={onSeeAll}
+            className="flex w-[148px] shrink-0 snap-start flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.05] text-white/70 ring-1 ring-white/10 transition-colors hover:bg-white/10 hover:text-white sm:w-[168px]"
+          >
+            <span className="text-[19px] font-extrabold" style={{ color: 'var(--event-glow)' }}>+{more}</span>
+            <span className="text-[11px] font-bold">more {category.name.toLowerCase()}</span>
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-white/40">
+              See all <ChevronRight size={10} />
+            </span>
+          </button>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -254,13 +444,31 @@ const SORTS = [
   { id: 'high',    label: 'Price: high first' },
 ]
 
+/** Shelves revealed at a time, before and after "show more kinds". */
+const SHELF_STEP = 4
+
+/**
+ * Below this many setups, shelves are the wrong answer and a grid is shown.
+ *
+ * Shelves buy their keep by capping height when there is far more catalogue
+ * than screen. A corporate event has six setups across four kinds, which
+ * renders as four rows holding one or two cards each — a lot of section
+ * furniture and a lot of empty rail for six things that fit in a single grid
+ * three rows tall. Twelve is where the two layouts cost about the same height
+ * and above which shelves start winning by a widening margin.
+ *
+ * Anniversary (29) gets shelves; a corporate event (6) gets a grid; both from
+ * the same code, and the customer never sees a control asking them to decide.
+ */
+const SHELF_MIN = 12
+
 export default function DecorCatalog({ eventId, eventName, onAddSelected, hasItem }) {
   // Photographs an admin has uploaded of our OWN work, laid over the licensed
   // lookalikes the catalogue ships with. Resolves to {} when nothing has been
-  // uploaded and when migration 044 has not been applied — both of which are
-  // normal states, and in both the shipped photographs render unchanged.
+  // uploaded and when migration 044 has not been applied — both normal states,
+  // and in both the shipped photographs render unchanged.
   //
-  // The whole point of the overlay is `source`: it carries through to
+  // The point of the overlay is `source`: it carries through to
   // ImageSourceBadge, so an uploaded photograph changes the card's claim from
   // "Representative image" to "Actual setup photo" with no other edit anywhere.
   const overrides = useDecorPhotos()
@@ -292,20 +500,33 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
   const [category, setCategory] = useState('all')
   const [band, setBand]         = useState('all')
   const [sort, setSort]         = useState('popular')
-  // Ids, not items. The item objects are recreated on every module evaluation
-  // and holding them here would make "is this selected" an identity test that
-  // silently starts failing after a hot reload.
+  const [query, setQuery]       = useState('')
+  const [shelves, setShelves]   = useState(SHELF_STEP)
+  // null means "use the size-derived default" — see `mode` below. Only a
+  // deliberate tap on the layout toggle pins it to a value, and changing
+  // occasion releases it again, because the right default for an anniversary
+  // is not the right default for a corporate event.
+  const [layout, setLayout] = useState(null)
+  const [sheetId, setSheetId]   = useState(null)
+  // Ids, not items. The item objects are rebuilt whenever the photo overrides
+  // resolve, and holding the objects would make "is this selected" an identity
+  // test that silently starts failing the moment that fetch returns.
   const [selected, setSelected] = useState(() => new Set())
 
-  const gridRef = useRef(null)
+  const bodyRef = useRef(null)
 
-  // A filter row is scoped to one occasion's catalogue. Carrying "Room & home
-  // setups" from an anniversary into a corporate event lands on a category that
-  // occasion does not have, and the grid renders empty for a filter the
-  // customer never chose. Same restart the page does for its guest count.
+  // Everything here is scoped to one occasion. Carrying a filter, an expanded
+  // shelf count or a selection from an anniversary into a corporate event
+  // lands on a category that occasion does not have and shows an empty result
+  // for a filter the customer never chose. Same restart the page does for its
+  // guest count.
   useEffect(() => {
     setCategory('all')
     setBand('all')
+    setQuery('')
+    setShelves(SHELF_STEP)
+    setLayout(null)
+    setSheetId(null)
     setSelected(new Set())
   }, [eventId])
 
@@ -321,112 +542,153 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
   /**
    * A shortcut ticks real cards — it does not create a hidden bundle.
    *
-   * Additive rather than replacing, so tapping "The full evening" after having
-   * chosen two things by hand keeps those two. The customer's own choices
-   * outrank our suggestion; a shortcut that wipes them is a shortcut people
-   * learn not to touch.
+   * Additive rather than replacing, so tapping it after choosing two things by
+   * hand keeps those two. The customer's own choices outrank our suggestion; a
+   * shortcut that wipes them is a shortcut people learn not to touch.
    *
-   * The filters are cleared at the same time. Without that, ticking four items
-   * while a category filter is up shows the customer one of them and appears to
-   * have lost the other three.
+   * Filters are cleared at the same time and the view is forced to a grid —
+   * otherwise four ticked items land across four different shelves, three of
+   * them below the fold, and the shortcut looks like it did almost nothing.
    */
   const applyStart = useCallback(point => {
     setCategory('all')
     setBand('all')
+    setQuery('')
+    setLayout('grid')
     setSelected(prev => {
       const next = new Set(prev)
       for (const item of point.items) next.add(item.id)
       return next
     })
     requestAnimationFrame(() =>
-      gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      bodyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     )
   }, [])
 
-  const shown = useMemo(() => {
+  const seeCategory = useCallback(id => {
+    setCategory(id)
+    requestAnimationFrame(() =>
+      bodyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    )
+  }, [])
+
+  const narrowed = category !== 'all' || band !== 'all' || query.trim() !== ''
+
+  /**
+   * SHELVES while browsing a large catalogue, GRID otherwise.
+   *
+   * Three rules, in order:
+   *   1. Narrowed by a filter or a search → always a grid. A narrowed set is
+   *      small, and somebody who has just filtered to "under ₹2,500" wants to
+   *      see all six at once rather than hunt them across shelves.
+   *   2. The customer tapped the layout toggle → whatever they picked.
+   *   3. Otherwise → shelves only if there is enough catalogue to be worth
+   *      organising. See SHELF_MIN.
+   *
+   * Derived rather than a stored preference, because the right answer is
+   * knowable from the data. A toggle exists to override a derivation, never to
+   * make somebody configure a layout before they are allowed to look at
+   * anything.
+   */
+  const mode = narrowed
+    ? 'grid'
+    : layout ?? (items.length > SHELF_MIN ? 'shelves' : 'grid')
+
+  const filtered = useMemo(() => {
     const bandDef = BUDGET_BANDS.find(b => b.id === band)
-    const filtered = items.filter(i =>
+    const needle = query.trim().toLowerCase()
+    const list = items.filter(i =>
       (category === 'all' || i.category === category) &&
-      (!bandDef || (i.price >= bandDef.min && i.price < bandDef.max))
+      (!bandDef || (i.price >= bandDef.min && i.price < bandDef.max)) &&
+      (!needle ||
+        i.name.toLowerCase().includes(needle) ||
+        i.blurb.toLowerCase().includes(needle))
     )
     // `items` arrives cheapest-first from the data module, so 'low' is already
-    // correct and the other two sort a copy — never the shared array, which
+    // correct and the other two sort a COPY — never the shared array, which
     // every occasion's card list is a live reference to.
-    if (sort === 'high')    return [...filtered].reverse()
-    if (sort === 'popular') return [...filtered].sort((a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0))
-    return filtered
-  }, [items, category, band, sort])
+    if (sort === 'high')    return [...list].reverse()
+    if (sort === 'popular') return [...list].sort((a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0))
+    return list
+  }, [items, category, band, query, sort])
+
+  /** Items per shelf, in DECOR_CATEGORIES order, sorted the way the grid is. */
+  const shelfData = useMemo(
+    () => categories.map(cat => ({
+      category: cat,
+      items: filtered.filter(i => i.category === cat.id),
+    })).filter(s => s.items.length > 0),
+    [categories, filtered]
+  )
 
   /** The tray's numbers, over the whole selection — not just what is on screen. */
   const chosen = useMemo(() => items.filter(i => selected.has(i.id)), [items, selected])
   const total  = chosen.reduce((sum, i) => sum + i.price, 0)
+  const sheetItem = sheetId ? items.find(i => i.id === sheetId) : null
 
   // An occasion with no décor entries renders nothing rather than an empty
-  // heading, the same rule EventDecorSamples and CustomerVoices follow.
+  // heading, the same rule CustomerVoices follows for zero reviews.
   if (!items.length) return null
 
-  const filtersOn = category !== 'all' || band !== 'all'
+  const clearAll = () => { setCategory('all'); setBand('all'); setQuery(''); setLayout(null) }
 
   return (
     <section id="decor-catalog" aria-labelledby="decor-catalog-heading">
 
       {/* ── What this section is ────────────────────────────── */}
-      <div className="mb-4">
+      <div className="mb-3.5">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--event-glow)' }}>
           Decoration catalogue
         </p>
         {/* The event name verbatim, never lowercased. EVENT_DATA carries
             "Housewarming (Griha Pravesh)" and "Sangeet / Mehendi Night", and a
-            blanket toLowerCase() sets those as "griha pravesh" mid-sentence —
-            the same trap decorSamples' per-event strip flagged. */}
+            blanket toLowerCase() sets those as "griha pravesh" mid-sentence. */}
         <h2 id="decor-catalog-heading" className="mt-1 text-[19px] font-extrabold leading-tight text-white sm:text-[22px]">
           Every {eventName} setup we install
         </h2>
         <p className="mt-1.5 text-[12px] leading-relaxed text-white/55">
-          {summary.count} décor setups across {summary.categories} kinds, from{' '}
-          <strong className="font-extrabold text-white">{formatINR(summary.from)}</strong>. Tick
-          whatever you want — see what goes into it, what it costs and what size that price buys,
-          all without leaving this page.
+          {summary.count} setups in {summary.categories} kinds, from{' '}
+          <strong className="font-extrabold text-white">{formatINR(summary.from)}</strong>. Flick a
+          row, tap anything to see what goes into it, and pick without leaving this page.
         </p>
       </div>
 
-      {/* Said once, plainly, before anything is priced. Both halves of the
-          honesty owed here: whose photographs these are, and what kind of
-          number is printed under them. */}
-      <div className="mb-4 flex items-start gap-2.5 rounded-2xl bg-white/[0.04] px-3.5 py-3 ring-1 ring-white/10">
-        <Camera size={15} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
-        <p className="text-[11px] leading-relaxed text-white/55">
-          <strong className="font-bold text-white">Reference photographs of the style we build</strong>,
-          not our own past events — we are new, and we would rather say so. Prices are indicative
-          starting rates for the size printed on each card; your quote confirms them against your
+      {/* Both halves of the honesty owed here — whose photographs these are and
+          what kind of number sits under them — said once, before anything is
+          priced. Compact, because it is read once and then scrolled past
+          forever, and this section is fighting for height. */}
+      <div className="mb-3.5 flex items-start gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/10">
+        <Camera size={13} className="mt-0.5 shrink-0" style={{ color: 'var(--event-glow)' }} />
+        <p className="text-[10.5px] leading-relaxed text-white/50">
+          <strong className="font-bold text-white/85">Reference photographs of the style we build</strong>,
+          not our own past events — we are new and would rather say so. Prices are indicative
+          starting rates for the size shown on each card; your quote confirms them against your
           space and date, and you approve it before anything is booked.
         </p>
       </div>
 
       {/* ── Three ways in ───────────────────────────────────────
-          Twenty-eight cards is the right amount of choice for somebody who
-          knows what they want and the wrong amount for somebody who does not.
-          These tick real cards below rather than hiding a bundle — see
-          startingPointsFor(). */}
+          A horizontal rail rather than a stacked grid: three full-width cards
+          cost 270px on a phone before the customer has seen a single setup,
+          which is exactly the budget this redesign is trying to win back. */}
       {starts.length > 0 && (
-        <div className="mb-4">
-          <p className="mb-2 flex items-center gap-1.5 px-0.5 text-[11px] font-bold text-white/45">
-            <Sparkles size={12} /> Not sure where to start? Tap one — it ticks the cards below, and
-            you can untick any of them.
+        <div className="mb-3.5">
+          <p className="mb-1.5 flex items-center gap-1.5 px-0.5 text-[10.5px] font-bold text-white/40">
+            <Sparkles size={11} /> Not sure where to start? Tap one — it ticks real cards you can untick.
           </p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="scrollbar-hide -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
             {starts.map(point => (
               <button
                 key={point.id}
                 type="button"
                 onClick={() => applyStart(point)}
-                className="rounded-2xl bg-white/[0.05] p-3 text-left ring-1 ring-white/10 transition-colors hover:bg-white/[0.09] active:scale-[0.98]"
+                className="w-[210px] shrink-0 snap-start rounded-xl bg-white/[0.05] p-2.5 text-left ring-1 ring-white/10 transition-colors hover:bg-white/[0.1] active:scale-[0.98]"
               >
-                <span className="flex items-center gap-1.5 text-[12.5px] font-extrabold text-white">
+                <span className="flex items-center gap-1.5 text-[12px] font-extrabold text-white">
                   <span aria-hidden="true">{point.emoji}</span> {point.name}
                 </span>
-                <span className="mt-0.5 block text-[10.5px] leading-snug text-white/45">{point.blurb}</span>
-                <span className="mt-1.5 block text-[11px] font-extrabold" style={{ color: 'var(--event-glow)' }}>
+                <span className="mt-0.5 line-clamp-2 block text-[10px] leading-snug text-white/45">{point.blurb}</span>
+                <span className="mt-1 block text-[10.5px] font-extrabold" style={{ color: 'var(--event-glow)' }}>
                   {point.items.length} setups · from {formatINR(point.from)}
                 </span>
               </button>
@@ -435,18 +697,40 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
         </div>
       )}
 
-      {/* ── Filters ─────────────────────────────────────────────
-          Kind, then budget, then order. Three rows rather than one control,
-          because they answer three unrelated questions and folding them into a
-          single dropdown makes the second and third invisible. */}
+      {/* ── Find and narrow ─────────────────────────────────────
+          Search first. At a hundred setups it stops being a convenience and
+          becomes the primary way in for anybody who arrived with a word in
+          mind — "canopy", "mandap", "candlelight". */}
       <div className="space-y-2">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={`Search ${items.length} setups — canopy, candlelight, stage…`}
+            aria-label="Search décor setups"
+            className="w-full rounded-xl bg-white/[0.07] py-2 pl-9 pr-9 text-[12.5px] text-white ring-1 ring-white/10 placeholder:text-white/35 focus:outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--event-glow)' }}
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         <div className="scrollbar-hide -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           <button
-            onClick={() => setCategory('all')}
+            onClick={() => { setCategory('all'); setLayout(null) }}
             className={`${CHIP} ${category === 'all' ? 'text-gray-900' : 'bg-white/[0.07] text-white/65 ring-1 ring-white/10 hover:text-white'}`}
             style={category === 'all' ? { background: 'var(--event-glow)' } : undefined}
           >
-            <SlidersHorizontal size={11} /> All {items.length}
+            All {items.length}
           </button>
           {categories.map(cat => (
             <button
@@ -469,9 +753,8 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
           >
             Any budget
           </button>
-          {/* Only the bands this occasion can actually fill. A "₹15,000+" chip
-              on a catalogue whose dearest item is ₹9,000 is a chip that can
-              only ever return nothing. */}
+          {/* Only bands this occasion can fill. A "₹15,000+" chip on a
+              catalogue whose dearest item is ₹9,000 can only return nothing. */}
           {BUDGET_BANDS.filter(b => items.some(i => i.price >= b.min && i.price < b.max)).map(b => (
             <button
               key={b.id}
@@ -482,33 +765,17 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
             </button>
           ))}
         </div>
-
-        <div className="scrollbar-hide -mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
-          <span className="shrink-0 text-[10.5px] font-bold uppercase tracking-wider text-white/30">Order</span>
-          {SORTS.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSort(s.id)}
-              className={`${CHIP} ${sort === s.id ? 'bg-white/20 text-white ring-1 ring-white/25' : 'bg-white/[0.07] text-white/55 ring-1 ring-white/10 hover:text-white'}`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* ── The selection tray ──────────────────────────────────
           Sticky under the app bar rather than pinned to the bottom of the
           viewport: this page already stacks a cart bar and the tab bar down
           there, and a third floating bar would cover the cards it is counting.
-          Only mounted once something is selected, so it costs nothing until it
+          Mounted only once something is selected, so it costs nothing until it
           means something. */}
       {chosen.length > 0 && (
-        <div className="sticky top-[56px] z-20 mt-4" style={{ scrollMarginTop: '56px' }}>
-          <div
-            className="rounded-2xl p-3 shadow-2xl ring-1 ring-black/10"
-            style={{ background: 'var(--event-glow)' }}
-          >
+        <div className="sticky top-[56px] z-20 mt-3" style={{ scrollMarginTop: '56px' }}>
+          <div className="rounded-2xl p-2.5 shadow-2xl ring-1 ring-black/10" style={{ background: 'var(--event-glow)' }}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-extrabold leading-tight text-gray-900">
@@ -516,19 +783,20 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
                   <span className="mx-1.5 opacity-40">·</span>
                   from {formatINR(total)}
                 </p>
-                {/* The single most important line in this component. Ticking
-                    cards has to be reversible and free, and it has to be
-                    obviously so, or people stop ticking. */}
-                <p className="text-[10.5px] leading-snug text-gray-900/60">
-                  Nothing is booked or charged — this starts an enquiry a coordinator prices and
-                  comes back on.
+                {/* The single most important line here. Adding to the cart has
+                    to be reversible and free, and obviously so, or people stop
+                    adding — and "cart" is a word that carries a checkout with
+                    it everywhere else on the internet, so the sentence has to
+                    say plainly that this one does not. */}
+                <p className="text-[10px] leading-snug text-gray-900/60">
+                  Nothing is charged — the cart becomes an enquiry a coordinator prices and comes back on.
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   onClick={() => setSelected(new Set())}
-                  className="rounded-xl px-2.5 py-2 text-[11.5px] font-bold text-gray-900/55 transition-colors hover:bg-black/10 hover:text-gray-900"
+                  className="rounded-lg px-2 py-2 text-[11.5px] font-bold text-gray-900/55 transition-colors hover:bg-black/10 hover:text-gray-900"
                 >
                   Clear
                 </button>
@@ -536,23 +804,23 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
                   onClick={() => { onAddSelected(chosen); setSelected(new Set()) }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2.5 text-[12.5px] font-extrabold text-white transition-transform active:scale-95"
                 >
-                  <ShoppingCart size={14} /> Add to my enquiry
+                  <ShoppingCart size={14} /> Add to cart
                 </button>
               </div>
             </div>
 
-            {/* Named, not just counted. "3 setups selected" three screens below
+            {/* Named, not just counted. "4 setups selected" three screens below
                 where they were ticked is a number the customer has to scroll to
                 verify; the names are the verification. */}
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-1.5 flex flex-wrap gap-1">
               {chosen.map(i => (
                 <button
                   key={i.id}
                   onClick={() => toggle(i)}
                   aria-label={`Remove ${i.name}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-bold text-gray-900 transition-colors hover:bg-black/20"
+                  className="inline-flex items-center gap-1 rounded-full bg-black/10 px-1.5 py-0.5 text-[9.5px] font-bold text-gray-900 transition-colors hover:bg-black/20"
                 >
-                  {i.name} <X size={9} />
+                  {i.name} <X size={8} />
                 </button>
               ))}
             </div>
@@ -560,21 +828,32 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
         </div>
       )}
 
-      {/* ── The grid ────────────────────────────────────────── */}
-      <div ref={gridRef} className="mt-4" style={{ scrollMarginTop: '70px' }}>
-        <p className="mb-2.5 px-0.5 text-[11px] text-white/40" aria-live="polite">
-          Showing {shown.length} of {items.length}
-          {filtersOn && (
-            <button
-              onClick={() => { setCategory('all'); setBand('all') }}
-              className="ml-2 font-bold underline decoration-white/25 underline-offset-2 hover:text-white"
-            >
-              Clear filters
-            </button>
-          )}
+      {/* ── Result line and the layout override ───────────────── */}
+      <div ref={bodyRef} className="mt-3.5 flex items-center justify-between gap-3" style={{ scrollMarginTop: '64px' }}>
+        <p className="min-w-0 text-[10.5px] text-white/40" aria-live="polite">
+          {narrowed
+            ? <>Showing {filtered.length} of {items.length}{' '}
+                <button onClick={clearAll} className="font-bold underline decoration-white/25 underline-offset-2 hover:text-white">
+                  Clear
+                </button></>
+            : `${items.length} setups in ${shelfData.length} kinds`}
         </p>
 
-        {shown.length === 0 ? (
+        {/* Only offered when it is a real choice. While narrowed the layout is
+            already a grid and a toggle that cannot do anything is furniture. */}
+        {!narrowed && (
+          <button
+            onClick={() => setLayout(mode === 'grid' ? 'shelves' : 'grid')}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.07] px-2.5 py-1.5 text-[10.5px] font-bold text-white/65 ring-1 ring-white/10 transition-colors hover:text-white"
+          >
+            {mode === 'grid' ? <><Rows3 size={11} /> Group by kind</> : <><LayoutGrid size={11} /> See all at once</>}
+          </button>
+        )}
+      </div>
+
+      {/* ── The catalogue ─────────────────────────────────────── */}
+      <div className="mt-3">
+        {filtered.length === 0 ? (
           <div className="rounded-2xl bg-white/[0.04] p-7 text-center ring-1 ring-white/10">
             <p className="text-[13px] font-bold text-white">Nothing in that combination</p>
             <p className="mx-auto mt-1 max-w-xs text-[11.5px] leading-relaxed text-white/50">
@@ -582,27 +861,71 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
               list at all, ask anyway. Plenty of what we build never made it onto a card.
             </p>
             <button
-              onClick={() => { setCategory('all'); setBand('all') }}
+              onClick={clearAll}
               className="mt-3 rounded-xl bg-white/10 px-4 py-2 text-[12px] font-bold text-white ring-1 ring-white/15"
             >
               Show all {items.length}
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3">
-            {shown.map((item, i) => (
-              <DecorItemCard
+        ) : mode === 'grid' ? (
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            {filtered.map((item, i) => (
+              <DecorCard
                 key={item.id}
                 item={item}
-                index={i}
                 selected={selected.has(item.id)}
                 onToggle={toggle}
+                onOpen={() => setSheetId(item.id)}
                 inCart={hasItem?.(eventId, item.id) ?? false}
+                eager={i < 2}
               />
             ))}
           </div>
+        ) : (
+          <div className="space-y-5">
+            {shelfData.slice(0, shelves).map(shelf => (
+              <Shelf
+                key={shelf.category.id}
+                category={shelf.category}
+                items={shelf.items}
+                total={shelf.items.length}
+                selected={selected}
+                onToggle={toggle}
+                onOpen={item => setSheetId(item.id)}
+                hasItem={hasItem}
+                eventId={eventId}
+                onSeeAll={() => seeCategory(shelf.category.id)}
+              />
+            ))}
+
+            {/* The height cap. Four shelves is roughly one screen of catalogue
+                on a phone — enough to see that this is organised and worth
+                exploring, not so much that it buries the tabs below. The rest
+                is one tap away and stays open once asked for. */}
+            {shelves < shelfData.length && (
+              <button
+                onClick={() => setShelves(n => n + SHELF_STEP)}
+                className="w-full rounded-2xl bg-white/[0.05] px-4 py-3 text-[12px] font-extrabold text-white ring-1 ring-white/10 transition-colors hover:bg-white/[0.1]"
+              >
+                Show {Math.min(SHELF_STEP, shelfData.length - shelves)} more kind
+                {Math.min(SHELF_STEP, shelfData.length - shelves) > 1 ? 's' : ''} of décor
+                <span className="ml-1.5 font-bold text-white/40">
+                  {shelfData.slice(shelves).reduce((n, s) => n + s.items.length, 0)} setups
+                </span>
+              </button>
+            )}
+          </div>
         )}
       </div>
+
+      {sheetItem && (
+        <DecorSheet
+          item={sheetItem}
+          selected={selected.has(sheetItem.id)}
+          onToggle={toggle}
+          onClose={() => setSheetId(null)}
+        />
+      )}
     </section>
   )
 }
