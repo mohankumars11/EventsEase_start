@@ -344,7 +344,7 @@ export default function ReviewBoard({
 
       {/* ── The money, line by line ────────────────────────────────── */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-3.5 bg-gray-900 text-ink">
+        <div className="px-5 py-3.5 bg-gray-900 text-white">
           <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-ink-mute">
             How the number is built
           </p>

@@ -93,10 +93,10 @@ export default function ResumePrompt() {
       role="status"
       aria-live="polite"
     >
-      <div className="animate-fade-in-up w-full max-w-md overflow-hidden rounded-2xl bg-plum-950 shadow-2xl shadow-black/40 ring-1 ring-white/10">
+      <div className="animate-fade-in-up w-full max-w-md overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-2)] ring-1 ring-hairline/10">
         <div className="flex items-start gap-3 p-3.5">
           <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-            isWork ? 'bg-saffron-400 text-plum-950' : 'bg-white/10 text-saffron-300'
+            isWork ? 'bg-saffron-400 text-plum-950' : 'bg-accent/10 text-accent'
           }`}>
             <History size={17} />
           </span>
@@ -130,7 +130,7 @@ export default function ResumePrompt() {
         <button
           type="button"
           onClick={() => navigate(target.href)}
-          className="flex w-full items-center justify-center gap-2 bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 transition-colors hover:bg-saffron-300 active:bg-saffron-500"
+          className="flex w-full items-center justify-center gap-2 bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 transition-colors hover:bg-saffron-500 active:bg-saffron-600"
         >
           {target.verb === 'Back to' ? `Back to ${target.label.toLowerCase()}` : `${target.verb} it`}
           <ArrowRight size={15} />

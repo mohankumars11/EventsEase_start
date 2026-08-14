@@ -69,7 +69,7 @@ export default function SlideCarousel({ children, className = '' }) {
             onClick={() => slide(-1)}
             aria-label="Scroll left"
             disabled={atStart}
-            className={`${arrowBase} -left-4 bg-white border border-gray-100 text-plum-700 hover:bg-plum-700 hover:text-ink active:scale-95 ${
+            className={`${arrowBase} -left-4 bg-white border border-gray-100 text-plum-700 hover:bg-plum-700 hover:text-white active:scale-95 ${
               atStart ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >

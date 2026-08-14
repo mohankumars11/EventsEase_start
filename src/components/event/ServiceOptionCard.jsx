@@ -172,7 +172,7 @@ export default function ServiceOptionCard({
           className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold transition-transform active:scale-95 ${
             inCart
               ? 'cursor-default bg-green-50 text-green-700 ring-1 ring-green-200'
-              : 'bg-gray-900 text-ink hover:bg-gray-800'
+              : 'bg-gray-900 text-white hover:bg-gray-800'
           }`}
         >
           {inCart ? <Check size={13} /> : <ShoppingCart size={13} />}

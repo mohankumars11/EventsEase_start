@@ -734,7 +734,7 @@ function Chip({ active, onClick, children, dot, title }) {
     <button
       onClick={onClick} title={title} aria-pressed={active}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-        active ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+        active ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
       }`}
     >
       {dot && <span className="w-2 h-2 rounded-sm" style={{ background: active ? '#fff' : dot }} aria-hidden="true" />}

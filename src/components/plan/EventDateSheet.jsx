@@ -294,7 +294,7 @@ export default function EventDateSheet({
             // Greyed rather than faded: a translucent purple button on white
             // still reads as tappable, and this one is the gate that makes the
             // time of day compulsory.
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-600 py-3 text-[13px] font-extrabold text-ink transition-colors hover:bg-plum-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-600 py-3 text-[13px] font-extrabold text-white transition-colors hover:bg-plum-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
           >
             {!selected ? 'Pick a date'
               : !slot ? 'Pick a time of day'

@@ -279,7 +279,7 @@ export default function OrderJourney({ order, events = [], returns = [], onClose
             <div className="flex flex-wrap gap-2 mt-1">
               {nextStage && !journey.cancelled && (
                 <button onClick={advance} disabled={acting === 'advance'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-ink text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-white text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
                   {acting === 'advance' ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
                   Mark {STAGE_BY_ID[nextStage].label.toLowerCase()}
                 </button>
@@ -606,7 +606,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
                   key={m.id} onClick={() => setMethod(m.id)} aria-pressed={method === m.id}
                   title={m.note}
                   className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${
-                    method === m.id ? 'bg-plum-700 border-plum-700 text-ink' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
+                    method === m.id ? 'bg-plum-700 border-plum-700 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-plum-300'
                   }`}
                 >
                   {m.label} <span className="opacity-70">· {m.eta}</span>
@@ -636,7 +636,7 @@ function ReturnBlock({ journey, order, acting, setActing, onRefresh, toast, phon
                   refund_initiated_at: new Date().toISOString(),
                 }, 'Refund recorded as sent.')}
                 disabled={acting === 'return'}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-ink text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-plum-600 text-white text-xs font-semibold hover:bg-plum-700 disabled:opacity-50">
                 {acting === 'return' ? <Loader2 size={12} className="animate-spin" /> : <IndianRupee size={12} />}
                 I have sent it
               </button>

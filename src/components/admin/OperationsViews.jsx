@@ -260,7 +260,7 @@ export function OrdersContent({ data, onOpenOrder }) {
                           )}
                           {next && order.status !== 'cancelled' && (
                             <button onClick={() => advanceStatus(order)} disabled={acting === order.id}
-                              className="px-2.5 py-1 bg-plum-600 text-ink text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50">
+                              className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50">
                               {acting === order.id ? <Loader2 size={11} className="animate-spin" /> : `Mark ${next}`}
                             </button>
                           )}
@@ -350,7 +350,7 @@ export function ReviewsContent({ data }) {
                   />
                   <div className="flex gap-2">
                     <button onClick={() => submitReply(r.id)} disabled={saving}
-                      className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                      className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                       {saving ? 'Saving…' : 'Save reply'}
                     </button>
                     <button onClick={() => setReplyingId(null)}
@@ -584,7 +584,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                     />
                     <div className="flex gap-2">
                       <button onClick={() => submitComplaintReply(c.id, 'in_progress')} disabled={acting === c.id}
-                        className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                         Save &amp; keep open
                       </button>
                       <button onClick={() => submitComplaintReply(c.id, 'resolved')} disabled={acting === c.id}
@@ -660,7 +660,7 @@ function SupportContent({ data, onOpenOrder, only }) {
                     />
                     <div className="flex gap-2">
                       <button onClick={() => sendQuote(e.id)} disabled={acting === e.id}
-                        className="px-3 py-1.5 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
+                        className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50">
                         Send Quote
                       </button>
                       <button onClick={() => setQuotingId(null)}

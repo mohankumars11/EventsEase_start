@@ -139,7 +139,7 @@ export default function ScaleVerdict({
           <button
             type="button"
             onClick={onSeeDetails}
-            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-gray-900 px-3.5 text-[13px] font-extrabold text-ink transition-transform active:scale-[0.98] hover:bg-gray-800"
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-gray-900 px-3.5 text-[13px] font-extrabold text-white transition-transform active:scale-[0.98] hover:bg-gray-800"
           >
             <Eye size={14} /> See what's included
           </button>

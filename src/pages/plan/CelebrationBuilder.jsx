@@ -733,13 +733,13 @@ export default function CelebrationBuilder() {
             <div className="w-20 h-20 bg-emerald-400/15 ring-1 ring-emerald-400/30 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 size={44} className="text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-extrabold text-white">Sent to a coordinator 🎉</h2>
-            <p className="text-white/60 text-sm leading-relaxed">
+            <h2 className="text-2xl font-extrabold text-ink">Sent to a coordinator 🎉</h2>
+            <p className="text-ink-mute text-sm leading-relaxed">
               Your {occasionName.toLowerCase()} — {tier?.name}, {guestCount} guests, menu, décor and services — is with
               our team. Nothing gets booked until you approve the confirmed quote.
             </p>
             {quote && (
-              <p className="plan-glass inline-block rounded-xl px-4 py-2 text-sm font-bold text-white">
+              <p className="plan-glass inline-block rounded-xl px-4 py-2 text-sm font-bold text-ink">
                 {formatINR(quote.range.low)} – {formatINR(quote.range.high)} incl. taxes
               </p>
             )}
@@ -747,11 +747,11 @@ export default function CelebrationBuilder() {
                 flow cannot recover from on its own, and the only moment the
                 customer can still catch it is now, while they remember
                 typing it. */}
-            <p className="text-xs text-white/60">
-              Reference <span className="font-mono font-bold text-white/80">
+            <p className="text-xs text-ink-mute">
+              Reference <span className="font-mono font-bold text-ink-soft">
                 SR-{enquiryId?.slice(0, 8)?.toUpperCase()}
               </span>
-              {contact.phone && <> · we'll call <span className="font-bold text-white/80">+91 {phoneDigitsOf(contact.phone)}</span></>}
+              {contact.phone && <> · we'll call <span className="font-bold text-ink-soft">+91 {phoneDigitsOf(contact.phone)}</span></>}
             </p>
             {/* The coupon is restated after sending, because "did my discount
                 actually go through" is the first thing somebody wonders once
@@ -827,12 +827,12 @@ export default function CelebrationBuilder() {
   const doneCount = flow.filter(s => done[s.id]).length
   const progressPct = Math.round((doneCount / Math.max(1, flow.length - 1)) * 100)
 
+  // Clearance for TWO stacked things, not one: the tab bar (measured, via
+  // --bottom-nav-h) plus BuilderActionBar floating above it (~5rem). The old
+  // `pb-36` was a flat 144px guess that came up ~56px short on a notched
+  // phone, so this page's last line sat under its own submit bar — while the
+  // `done` branch above used pb-bottom-nav and disagreed with it.
   return (
-    {/* Clearance for TWO stacked things, not one: the tab bar (measured, via
-        --bottom-nav-h) plus BuilderActionBar floating above it (~5rem). The
-        old `pb-36` was a flat 144px guess that came up ~56px short on a
-        notched phone, so this page's last line sat under its own submit bar —
-        while the `done` branch at line 730 used pb-bottom-nav and disagreed. */}
     <div className="plan-canvas min-h-screen pb-[calc(var(--bottom-nav-h,4.25rem)+5rem)] lg:pb-8">
       {/* ── Hero ───────────────────────────────────────────────────────
           The occasion's own gradient rides as a translucent wash over the
@@ -853,7 +853,7 @@ export default function CelebrationBuilder() {
             header back in its own box, which is the thing the translucency
             was for in the first place. */}
         <div
-          className={`absolute inset-0 bg-gradient-to-br opacity-55 [mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] [-webkit-mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] ${
+          className={`absolute inset-0 bg-gradient-to-br opacity-[0.16] [mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] [-webkit-mask-image:linear-gradient(180deg,#000_58%,transparent_100%)] ${
             event?.heroGradient ?? 'from-plum-700 via-plum-600 to-saffron-500'
           }`}
           aria-hidden="true"
@@ -862,23 +862,23 @@ export default function CelebrationBuilder() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => navigate(routeEventId ? `/services/${routeEventId}` : '/plan')}
-              className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-white/80 text-[13px] min-h-[34px] ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-black/30"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-ink-soft text-[13px] min-h-[34px] ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.06]"
             >
               <ArrowLeft size={14} /> {routeEventId && event ? `Back to ${event.name}` : 'Back'}
             </button>
-            <p className="plan-rise inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15">
+            <p className="plan-rise inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-soft ring-1 ring-hairline/10">
               <Sparkles size={12} className="text-saffron-300" />
               {occasionEmoji} {eventId ? occasionName : 'Live estimate'}
             </p>
           </div>
 
-          <h1 className="plan-rise mt-2.5 text-xl sm:text-3xl font-extrabold text-white leading-[1.15] max-w-3xl" style={{ '--rise-delay': '60ms' }}>
+          <h1 className="plan-rise mt-2.5 text-xl sm:text-3xl font-extrabold text-ink leading-[1.15] max-w-3xl" style={{ '--rise-delay': '60ms' }}>
             {eventId ? `Build your ${occasionName.toLowerCase()}` : 'Build your celebration'}{' '}
-            <span className="bg-gradient-to-r from-saffron-300 via-amber-200 to-saffron-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-saffron-600 via-amber-600 to-chilli-600 bg-clip-text text-transparent">
               and watch the price move.
             </span>
           </h1>
-          <p className="plan-rise mt-1.5 max-w-2xl text-[12px] sm:text-sm text-white/55" style={{ '--rise-delay': '120ms' }}>
+          <p className="plan-rise mt-1.5 max-w-2xl text-[12px] sm:text-sm text-ink-mute" style={{ '--rise-delay': '120ms' }}>
             {flow.length} quick steps · taxes included · nothing to pay to see your number.
           </p>
         </div>
@@ -1088,7 +1088,7 @@ export default function CelebrationBuilder() {
         />
 
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
             How you are booking
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1102,13 +1102,13 @@ export default function CelebrationBuilder() {
                 className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
                   mode === m.id
                     ? 'bg-white shadow-lg ring-2 ring-saffron-400'
-                    : 'plan-glass text-white hover:bg-white/10'
+                    : 'plan-glass text-ink hover:bg-surface-sunk/[0.08]'
                 }`}
               >
-                <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-white'}`}>
+                <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-ink'}`}>
                   {m.emoji} {m.name}
                 </p>
-                <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-white/55'}`}>{m.blurb}</p>
+                <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-ink-mute'}`}>{m.blurb}</p>
                 {m.bundleDiscount > 0 && (
                   <p className={`text-[11px] font-bold mt-1 ${mode === m.id ? 'text-emerald-700' : 'text-emerald-300'}`}>
                     Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
@@ -1122,7 +1122,7 @@ export default function CelebrationBuilder() {
         {/* The catalogue's size, where it means something: at the bottom of
             a build, as the answer to "is this all there is?". These were
             four chips in the hero, above the first question. */}
-        <p className="text-center text-[11px] text-white/35">
+        <p className="text-center text-[11px] text-ink-mute">
           {EVENT_LIST.length} occasions · {CELEBRATION_TIERS.length} scales ·{' '}
           {CUISINES.length} cuisines · {ALL_SERVICES.length} services, all priced the same way.
         </p>

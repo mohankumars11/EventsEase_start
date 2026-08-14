@@ -50,10 +50,10 @@ export default function ProfileDropdown({ profile, onSignOut, dashboardLink }) {
         <div className="w-8 h-8 rounded-full bg-saffron-400 flex items-center justify-center text-plum-950 text-sm font-bold font-display ring-2 ring-plum-700">
           {initials ?? <User size={14} />}
         </div>
-        <span className="text-sm text-white font-medium hidden sm:block">{firstName}</span>
+        <span className="text-sm text-ink font-medium hidden sm:block">{firstName}</span>
         <ChevronDown
           size={14}
-          className={`text-plum-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-ink-mute transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -130,7 +130,7 @@ function Item({ to, icon, label, onClick }) {
     <Link
       to={to}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2.5 text-sm text-plum-200 hover:bg-plum-800 hover:text-ink transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 text-sm text-plum-200 hover:bg-plum-800 hover:text-white transition-colors"
       role="menuitem"
     >
       <span className="text-plum-400">{icon}</span>

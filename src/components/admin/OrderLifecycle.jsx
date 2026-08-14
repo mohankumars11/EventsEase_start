@@ -282,7 +282,7 @@ export default function OrderLifecycle({ data, onOpenOrder }) {
                   {next && (
                     <button
                       onClick={() => advance(o)} disabled={acting === o.id}
-                      className="flex items-center gap-1 px-2.5 py-1 bg-plum-600 text-ink text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700 disabled:opacity-50"
                     >
                       {acting === o.id ? <Loader2 size={11} className="animate-spin" /> : <ArrowRight size={11} />}
                       {STAGE_LABEL[next] ?? next}

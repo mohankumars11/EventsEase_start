@@ -802,7 +802,7 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
                 </button>
                 <button
                   onClick={() => { onAddSelected(chosen); setSelected(new Set()) }}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2.5 text-[12.5px] font-extrabold text-ink transition-transform active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2.5 text-[12.5px] font-extrabold text-white transition-transform active:scale-95"
                 >
                   <ShoppingCart size={14} /> Add to cart
                 </button>

@@ -172,7 +172,7 @@ export default function LockPayment({
             type="button"
             onClick={claim}
             disabled={claiming}
-            className="min-h-[52px] w-full rounded-xl bg-plum-700 font-bold text-ink active:bg-plum-800 disabled:opacity-50"
+            className="min-h-[52px] w-full rounded-xl bg-plum-700 font-bold text-white active:bg-plum-800 disabled:opacity-50"
           >
             {claiming ? 'Recording…' : "I've paid — tell my coordinator"}
           </button>

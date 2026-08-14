@@ -250,7 +250,7 @@ export default function ChatWidget() {
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-plum-900 rounded-full" />
               </div>
               <div>
-                <p className="text-ink font-display font-bold text-sm leading-tight">Sambramo Assistant</p>
+                <p className="text-white font-display font-bold text-sm leading-tight">Sambramo Assistant</p>
                 <p className="text-plum-700 text-[11px] leading-tight">Usually replies instantly</p>
               </div>
             </div>

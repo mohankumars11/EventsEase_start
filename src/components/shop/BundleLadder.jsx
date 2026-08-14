@@ -204,7 +204,7 @@ export default function BundleLadder({ seed, className = '', maxAdd = 5 }) {
               <button
                 onClick={() => missing.forEach(addProduct)}
                 disabled={allIn}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-ink transition-colors hover:bg-plum-800 disabled:bg-emerald-600 disabled:opacity-100"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-white transition-colors hover:bg-plum-800 disabled:bg-emerald-600 disabled:opacity-100"
               >
                 {allIn
                   ? <><Check size={15} strokeWidth={3} /> All {rung.size} in your bag</>
