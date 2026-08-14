@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { X, ArrowRight, ArrowLeft, Sparkles, Check, Camera } from 'lucide-react'
 import { SAMPLES_BY_EVENT, FEATURED_SAMPLES, SAMPLE_TOTALS } from '../../config/decorSamples'
-import { toWizardType } from '../../data/occasionMap'
 import { formatINRRange } from '../../utils/format'
 import { SHOW_SERVICE_PRICES } from '../../config/sambramo'
 import ImageSourceBadge from '../shop/ImageSourceBadge'
@@ -47,8 +46,21 @@ function shopCategoryFor(sample) {
   return ritual ? 'Pooja & Essentials' : 'Party Essentials'
 }
 
-function planHref(sample) {
-  return `/plan?type=${encodeURIComponent(toWizardType(sample.eventId))}`
+/**
+ * Where "show me more of this" goes now.
+ *
+ * It used to be `/plan?type=…` — the wizard. That was the wrong destination and
+ * it was the wrong destination in a specific, costly way: somebody who taps a
+ * photograph of a candlelight dinner is asking what it looks like and what it
+ * costs, and the wizard answers neither. It asks them for a guest count.
+ *
+ * The occasion page now carries the full priced décor catalogue, so that is
+ * where the photograph leads. `?see=decor` scrolls straight to it rather than
+ * to the top of a page they would then have to hunt down. The wizard is still
+ * there for people who want it; it is no longer the only exit from a picture.
+ */
+function catalogHref(sample) {
+  return `/services/${encodeURIComponent(sample.eventId)}?see=decor`
 }
 
 const TIER_LABEL = ['', 'Simple setup', 'Fuller setup', 'The grand version']
@@ -373,8 +385,8 @@ function SampleOverlay({ sample, onClose, onPrev, onNext }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link to={planHref(sample)} onClick={onClose} className="btn-cta flex-1 justify-center">
-              Plan this setup ✨
+            <Link to={catalogHref(sample)} onClick={onClose} className="btn-cta flex-1 justify-center">
+              See every {sample.eventName} setup &amp; price ✨
             </Link>
             <Link
               to={shopHref(sample)}
@@ -536,47 +548,24 @@ export function DecorSampleShowcase() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   2. Per-event strip — for the occasion's own catalogue page
+   2. The per-event strip, and where it went
 ═══════════════════════════════════════════════════════════ */
 
 /**
- * The same setups, on the page for one occasion.
+ * `EventDecorSamples` used to live here — the same four samples, rendered on
+ * the occasion's own page above the packages and services tabs.
  *
- * Renders nothing when an occasion has no samples rather than an empty
- * "Samples" heading — an empty gallery is worse than no gallery, the same
- * reasoning CustomerVoices uses for zero reviews.
+ * It is deleted rather than left unused, because the occasion page now carries
+ * the full priced décor catalogue (components/event/DecorCatalog) and two
+ * sections on one page both headed "<Occasion> décor" would have been a
+ * genuine trap: four unpriced teasers immediately above sixty priced setups,
+ * with the cheap-looking one on top and no way to tell which list was the
+ * offer. That is the exact confusion this rebuild set out to remove, and
+ * keeping a dead export around is how it comes back the next time somebody
+ * needs "a décor section" and greps for one.
+ *
+ * The showcase below it is unaffected — one gallery, on the landing page,
+ * whose job is to make somebody pick an occasion. That job still exists.
  */
-export function EventDecorSamples({ eventId, className = '' }) {
-  const samples = SAMPLES_BY_EVENT[eventId] ?? []
-  if (samples.length === 0) return null
-
-  // The section-level badge and caption may only speak for the whole set when
-  // the whole set agrees. Once even one of these occasions has a real
-  // photograph, "not our own past events" stops being true of the section and
-  // the claim retreats to the per-card badges, which are always right.
-  const allStock = samples.every(s => s.source === 'stock')
-
-  return (
-    <section className={className}>
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 mb-1.5">
-        {/* The event name is used verbatim, not lowercased: EVENT_DATA
-            carries "Housewarming (Griha Pravesh)" and "Sangeet / Mehendi
-            Night", and a blanket toLowerCase() turns those into
-            "griha pravesh" mid-sentence. */}
-        <h2 className="text-lg font-bold text-gray-900">
-          {samples[0].eventName} décor — see it before you book it
-        </h2>
-        {allStock && <ImageSourceBadge source="stock" size="sm" />}
-      </div>
-      <p className="text-sm text-gray-500 mb-4 max-w-2xl">
-        {samples.length} setups we build for this occasion, with what goes into each and the
-        typical range.
-        {allStock && ' Reference photographs of the style — not our own past events.'}
-      </p>
-
-      <Gallery samples={samples} showOccasion={false} columns="grid-cols-2 lg:grid-cols-4" />
-    </section>
-  )
-}
 
 export default DecorSampleShowcase

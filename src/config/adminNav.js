@@ -111,6 +111,18 @@ export const NAV = [
         description: 'Add a product, fix a price, replace a stock photo with the real thing.',
       },
       {
+        /* Its own screen rather than a tab inside Content Studio, which is
+           where a "decor" section already lives. That one edits decor LEVELS
+           and themes — copy and configuration. This one does a physically
+           different job with a different tool: it is opened on a phone, in a
+           hall, to replace a stock lookalike with a photograph of the room in
+           front of you. Burying a camera workflow three tabs inside a text
+           editor is how it never gets used. */
+        id: 'decorphotos', label: 'Décor Photos', emoji: '📷',
+        title: 'Décor Photos',
+        description: 'Replace the stock reference images with photographs of setups we actually built.',
+      },
+      {
         id: 'studio', label: 'Content Studio', emoji: '🎛️',
         title: 'Content Studio',
         description: 'Decor, cuisines, tiers, festivals and offers — everything else a customer sees.',

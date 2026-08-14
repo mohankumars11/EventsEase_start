@@ -14,7 +14,8 @@ import { occasionThemeVars } from '../../config/occasionTheme'
 import BookingDetailsModal from '../../components/customer/BookingDetailsModal'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import ReviewModal from '../../components/reviews/ReviewModal'
-import { EventDecorSamples } from '../../components/landing/DecorSampleGallery'
+import DecorCatalog from '../../components/event/DecorCatalog'
+import { decorAsService } from '../../data/decorCatalog'
 import ServiceOptionCard from '../../components/event/ServiceOptionCard'
 import TierPackageCard from '../../components/event/TierPackageCard'
 import OccasionPulse from '../../components/event/OccasionPulse'
@@ -265,7 +266,16 @@ export default function EventServices() {
       return
     }
 
-    if (kind === 'service') {
+    // A décor selection is a LIST — the catalogue's tray adds everything that
+    // was ticked in one act. Routed through the same funnel rather than given
+    // its own handler so the signed-out check above cannot end up duplicated
+    // and disagreeing with itself, which is the whole reason this function
+    // exists. Each item was already put in service shape by decorAsService().
+    if (kind === 'decor') {
+      for (const service of payload) {
+        dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service, details })
+      }
+    } else if (kind === 'service') {
       dispatch({ type: 'ADD_SERVICE', eventId, eventName: event.name, service: payload, details })
     } else {
       dispatch({ type: 'ADD_PACKAGE', eventId, eventName: event.name, pkg: payload, details })
@@ -335,6 +345,25 @@ export default function EventServices() {
   }, [user])
 
   useEffect(() => { checkEligibility() }, [checkEligibility])
+
+  /**
+   * `?see=decor` lands on the décor catalogue instead of the top of the page.
+   *
+   * Same convention as `?tab=services` above, and it exists for the same
+   * reason: the landing gallery sends people here specifically to see the
+   * priced décor list, and dropping them at the hero means scrolling past the
+   * guest dial and both doors to find what they clicked for.
+   *
+   * A query param rather than a `#decor-catalog` hash because this is a SPA
+   * with no hash-scroll handling — a fragment would land at the top of the page
+   * and look like the link was broken.
+   */
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('see') !== 'decor') return
+    afterPaint(() => {
+      document.getElementById('decor-catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [eventId, location.search])
 
   // Restart the page when the occasion changes under it — the footer links
   // between occasions, and carrying a birthday's open tab and guest count into
@@ -533,21 +562,30 @@ export default function EventServices() {
           />
         </div>
 
-        {/* ── See it before you book it ──────────────────────
-            "What does it look like" is the question people ask before "what
-            is in it", and the tabs below answer only the second one. */}
+        {/* ── See it, price it, pick it ──────────────────────
+            "What does it look like and what does it cost" is the question
+            people ask before "what is in the package", and the tabs below
+            answer only the second one.
+
+            This was four sample photographs whose only forward action was a
+            link to /plan. Tapping a picture of a candlelight dinner navigated
+            to a wizard about guest counts — the customer asked what it looks
+            like and was handed a form. That link is gone and so is the teaser:
+            the whole décor list is here, priced, filterable, and selectable
+            without leaving the page. See components/event/DecorCatalog.
+
+            Deliberately NOT wrapped in `event-glass overflow-hidden` the way
+            the samples were. `overflow-hidden` on any ancestor kills
+            `position: sticky` in the descendant, and the catalogue's selection
+            tray is sticky — it would have silently scrolled away with the
+            grid, taking the running total with it. */}
         <section className="rise-in mt-6" style={{ '--rise-delay': '360ms' }}>
-          <div className="event-glass overflow-hidden p-4">
-            {/* EventDecorSamples was written for a white page, so its own
-                heading and caption are near-black. Recoloured by direct-child
-                selector rather than a descendant one: `[&_h2]` would also
-                repaint the text inside the sample cards, which are white
-                tiles, and white-on-white is worse than dark-on-dark. */}
-            <EventDecorSamples
-              eventId={eventId}
-              className="[&>div>h2]:text-white [&>p]:text-white/55"
-            />
-          </div>
+          <DecorCatalog
+            eventId={eventId}
+            eventName={event.name}
+            hasItem={hasItem}
+            onAddSelected={chosen => handleAdd('decor', chosen.map(decorAsService))}
+          />
         </section>
       </div>
 
@@ -801,7 +839,15 @@ export default function EventServices() {
 
       {pendingAdd && (
         <BookingDetailsModal
-          itemLabel={pendingAdd.payload.name}
+          /* A décor add carries a list, so there is no single `.name` to read.
+             Naming the count rather than the first item: "Romantic Room Décor"
+             over a form that is about to attach the date to four setups is a
+             label that misstates what is being confirmed. */
+          itemLabel={
+            Array.isArray(pendingAdd.payload)
+              ? `${pendingAdd.payload.length} décor setup${pendingAdd.payload.length > 1 ? 's' : ''}`
+              : pendingAdd.payload.name
+          }
           defaults={details}
           onConfirm={confirmAdd}
           onClose={() => setPendingAdd(null)}

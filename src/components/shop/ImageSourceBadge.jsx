@@ -13,7 +13,14 @@ import { Camera, ImageIcon } from 'lucide-react'
 // terms — it sits on the image. `products.image_source` (migration 023)
 // is the source of truth, and it flips to 'actual' the moment an admin
 // uploads a real photo through the Catalog tab.
-export default function ImageSourceBadge({ source, className = '', size = 'md' }) {
+// `subject` names the thing photographed, for the 'actual' wording only.
+// The shop says "Actual product photo"; the décor catalogue says "Actual setup
+// photo", because a décor installation is not a product and calling it one on
+// the badge that exists to be precise would be a strange place to be loose.
+// The 'stock' wording does not vary — "Representative image" is already
+// subject-neutral and it is the string customers have been trained on since
+// migration 023.
+export default function ImageSourceBadge({ source, className = '', size = 'md', subject = 'product' }) {
   const actual = source === 'actual'
   const Icon   = actual ? Camera : ImageIcon
 
@@ -32,11 +39,11 @@ export default function ImageSourceBadge({ source, className = '', size = 'md' }
         className,
       ].filter(Boolean).join(' ')}
       title={actual
-        ? 'This is a photograph of the item we will deliver.'
-        : 'A licensed photo of a similar item. The item delivered will match the name, size and description, but may differ in appearance.'}
+        ? `This is a photograph of the ${subject} we will deliver.`
+        : `A licensed photo of a similar ${subject}. What is delivered will match the name, size and description, but may differ in appearance.`}
     >
       <Icon size={size === 'sm' ? 10 : 12} />
-      {actual ? 'Actual product photo' : 'Representative image'}
+      {actual ? `Actual ${subject} photo` : 'Representative image'}
     </span>
   )
 }
