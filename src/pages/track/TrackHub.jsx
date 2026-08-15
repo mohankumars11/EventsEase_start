@@ -79,7 +79,9 @@ export default function TrackHub() {
         </div>
       )}
 
-      {items === null ? (
+      {!user ? (
+        <SignedOutPitch />
+      ) : items === null ? (
         <div className="mx-auto max-w-3xl space-y-3 px-4 pt-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-28 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />
@@ -233,6 +235,79 @@ function OrderRow({ item }) {
       </span>
       <ChevronRight size={15} className="shrink-0 text-ink-mute" />
     </Link>
+  )
+}
+
+/* ── Signed out ───────────────────────────────────────────────────────────
+ *
+ * The tab is permanent, so this is a real destination for somebody who has
+ * never ordered — and it is the single best place in the app to make the
+ * argument, because it describes what happens AFTER they commit. A brand with
+ * no ratings and no order count cannot win on reputation; it can win on
+ * showing exactly how the thing will be run.
+ *
+ * So this is the promise, not an apology for being empty, and certainly not a
+ * login wall. Sign-in is asked at the point there is something to see.
+ */
+const PROMISES = [
+  { emoji: '🤝', title: 'Every step your coordinator takes',
+    body: 'Masters sourced, decorator confirmed, caterer confirmed — as it happens, with the time it happened.' },
+  { emoji: '💳', title: 'Every payment, and what it released',
+    body: 'Paid in stages, never all at once. Each one shows exactly what work it set in motion.' },
+  { emoji: '📋', title: 'Your plan, priced and itemised',
+    body: 'One number you approve before anything is booked. Change it and we re-send it.' },
+  { emoji: '🛍️', title: 'Your shop orders too',
+    body: 'Cakes, gifts and pooja essentials, from placed to delivered.' },
+]
+
+function SignedOutPitch() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4">
+      <div className="rounded-2xl bg-surface p-5 ring-1 ring-hairline/[0.08]">
+        <p className="font-serif text-[20px] font-extrabold leading-tight text-ink">
+          Everything about your celebration lives here
+        </p>
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
+          Once you send us a celebration or place an order, this is where you watch it
+          happen — every step, every payment, one screen. Nothing to set up.
+        </p>
+
+        <ul className="mt-4 space-y-3.5">
+          {PROMISES.map(p => (
+            <li key={p.title} className="flex gap-3">
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/[0.08] text-base">
+                {p.emoji}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-extrabold text-ink">{p.title}</span>
+                <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink-mute">{p.body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <Link to="/plan" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
+            <Sparkles size={15} /> Plan a celebration
+          </Link>
+          <Link to="/shop" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10">
+            <Store size={15} /> Browse the shop
+          </Link>
+        </div>
+
+        {/* Sign-in is offered, never imposed — the same rule the planner and
+            the storefront follow. Somebody who already has a booking should
+            be able to get to it from here in one tap. */}
+        <p className="mt-3 text-center text-[11.5px] text-ink-mute">
+          Already booked something?{' '}
+          <Link to="/login" className="font-bold text-accent underline underline-offset-2">
+            Sign in to track it
+          </Link>
+        </p>
+      </div>
+
+      <FulfilmentFilm />
+    </div>
   )
 }
 

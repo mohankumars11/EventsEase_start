@@ -136,14 +136,25 @@ export default function BottomNav() {
    * and login is asked at the one moment there is something to save. A tab
    * bar advertising the door is the opposite of that decision.
    *
-   * ── It now changes identity once there is something to track ───────────
-   * Before an order exists it is `Occasions`, pointing at the catalogue — a
-   * real place, and the thing a calendar icon suggests.
+   * ── It is always `Track`, and that is deliberate ───────────────────────
+   * It briefly changed identity — `Occasions` until you had an order, then
+   * `Track` — and that was wrong twice over.
    *
-   * The moment a customer has ANY order, event or enquiry it becomes `Track`:
-   * one screen carrying every celebration and every order, with the steps and
-   * the payments. That is the thing somebody actually returns to the app for,
-   * and it was previously reachable only from a card on Home.
+   * Navigation that rearranges itself is disorienting: the tab a customer
+   * learned in position four becomes a different destination the day they
+   * order, so the one thing a tab bar is FOR — muscle memory — is exactly
+   * what it breaks. And a tab nobody can see until they already need it can
+   * never be discovered before then, so the promise it carries (every step,
+   * every payment, in one place) never reaches the people still deciding
+   * whether to trust us with a booking. That promise is worth more to
+   * somebody who has not ordered than to somebody who has.
+   *
+   * So it is always here, always `/track`, and the screen itself explains
+   * what it will hold when there is nothing in it yet.
+   *
+   * `Occasions` is gone rather than moved: it pointed at a third copy of the
+   * occasion grid already on Home and inside Plan, so the slot was spending
+   * primary navigation on a duplicate.
    *
    * "Track" over the alternatives: "Orders" excludes celebrations, "Events"
    * excludes the shop, and "Bookings" is the pre-pivot marketplace word this
@@ -151,9 +162,6 @@ export default function BottomNav() {
    * uses, and it fits the 10px label.
    */
   const tracking = activity.total > 0
-  const celebrations = user
-    ? (tracking ? '/track' : '/services')
-    : '/services'
 
   /**
    * Help is a tab, not a floating bubble.
@@ -177,9 +185,9 @@ export default function BottomNav() {
     // everything is a badge people learn to ignore. The pulse covers the
     // other case: something is live, but nothing needs you.
     {
-      to: celebrations,
-      icon: tracking ? Route : CalendarHeart,
-      label: tracking ? 'Track' : 'Occasions',
+      to: '/track',
+      icon: Route,
+      label: 'Track',
       badge: activity.needsYou,
       pulse: tracking && activity.needsYou === 0 && activity.live > 0,
     },
@@ -207,9 +215,11 @@ export default function BottomNav() {
    */
   const HOME_PATHS = ['/', '/dashboard/customer']
   // Routes that are not a tab's own path but belong under one.
+  // `/services` moves under Plan now that Occasions is gone: it is the
+  // occasion catalogue, reached from the Plan hub's own shelves, and it is
+  // certainly not part of Track.
   const ADOPTED = [
-    { tab: '/plan',     prefixes: ['/service/', '/festivals/'] },
-    { tab: celebrations, prefixes: ['/services'] },
+    { tab: '/plan',  prefixes: ['/service/', '/festivals/', '/services'] },
   ]
 
   function isActive(to) {

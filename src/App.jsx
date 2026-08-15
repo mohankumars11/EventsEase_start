@@ -451,11 +451,18 @@ function AppRoutes() {
 
           ScreenShell, like the other customer screens — each page draws its
           own header and owns its own `pb-bottom-nav`. */}
-      <Route path="/track" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><TrackHub /></ScreenShell>
-        </ProtectedRoute>
-      } />
+      {/* Public, and it has to be: the Track tab is now permanent in the bar,
+          so a signed-out visitor tapping it must land on something that
+          explains what this screen will hold rather than being bounced to a
+          login form. That is also the one moment the promise — every step,
+          every payment, in one place — reaches somebody still deciding
+          whether to book at all.
+
+          Same rule the shop's cart and the whole planner already follow:
+          browse freely, sign in when there is something to save. The per-item
+          trackers below stay guarded, because those DO show somebody's own
+          data. */}
+      <Route path="/track" element={<ScreenShell><TrackHub /></ScreenShell>} />
       <Route path="/track/order/:orderId" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <ScreenShell><OrderTracker /></ScreenShell>
