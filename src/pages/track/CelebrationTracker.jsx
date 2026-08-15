@@ -223,6 +223,8 @@ export default function CelebrationTracker() {
 
         {/* ── What it costs to commit, and what each payment starts ── */}
         <PaymentLadder
+          subjectType={subjectType}
+          subjectId={subjectId}
           confirmedTotal={confirmedTotal}
           eventDate={item.eventDate}
           approvedAt={approved?.updated_at ?? null}

@@ -35,7 +35,7 @@ import { TAX_LABEL } from '../data/taxes'
  * that does not scale with a price nobody has agreed to yet.
  */
 
-export const SCHEDULE_VERSION = '2026-08-15'
+export const SCHEDULE_VERSION = '2026-08-16'
 
 /**
  * A discount for settling in one payment.
@@ -52,139 +52,87 @@ export const SCHEDULE_VERSION = '2026-08-15'
  */
 export const fullPaymentDiscountPct = 0
 
-/* ── The ladder ───────────────────────────────────────────────────────────
+/* ── The plans ────────────────────────────────────────────────────────────
  *
- * 25 / 40 / 35, with everything collected before the day.
+ * The customer chooses how to split it, and every plan finishes BEFORE the
+ * day. Nothing is collected after the celebration.
  *
- * This is the Indian vendor cash-flow curve made visible rather than a number
- * invented to look approachable. Banquet halls take 25–30% to hold a date,
- * caterers bill roughly half a week out and the balance on the day, decorators
- * commonly want 50% before they load a van. The customer's ladder is really
- * their vendors' ladder, which is why each rung can name what it releases.
+ * ── Why the id is the cumulative percentage ──────────────────────────────
+ * A milestone is `pay-25`, `pay-50`, `pay-75`, `pay-100` — named for the
+ * point on the road it reaches, not for its position in a list. That has one
+ * property worth the slight awkwardness: the ids OVERLAP between plans.
  *
- * The ₹1,000 hold is CREDITED against the confirmation advance, never added to
- * it — see `creditsPaid`. `celebrationTiers.js:65-79` is emphatic that the hold
- * is not a deposit; it buys a coordinator who stops shopping the date. If it
- * ever starts behaving like a down payment, that comment and this ladder have
- * to change in the same commit.
+ * Somebody who chose "Pay in 2", paid the first 50%, and then decides to
+ * switch to quarters has already paid `pay-50`; the quarters plan asks for
+ * `pay-25` and `pay-50`, sees `pay-50` settled, and only `pay-75` and
+ * `pay-100` remain. Nothing is double-charged and nothing is stranded. With
+ * positional ids (`instalment-1`) the same switch would have orphaned the
+ * payment and asked for money already taken.
  */
-export const MILESTONES = [
-  {
-    id: 'hold',
-    label: 'Hold your date',
-    kind: 'flat',
-    amount: LOCK_AMOUNT,
-    trigger: { on: 'enquiry_sent' },
-    paymentType: 'advance',
-    adjustsAgainst: 'confirmation',
-    plans: ['full', 'staged'],
-    unlocks: ['date_hold'],
-    refund: { tiers: [{ daysBefore: 0, pct: 1.00, copy: 'Refunded in full if you decide not to go ahead.' }] },
-    customerCopy: 'Your coordinator stops offering your date to anyone else.',
-  },
-
-  /* ── The staged ladder ─────────────────────────────────────────────── */
-  {
-    id: 'confirmation',
-    label: 'Confirmation advance',
-    share: 0.25,
-    trigger: { on: 'proposal_approved' },
-    dueWithinHours: 48,
-    paymentType: 'advance',
-    creditsPaid: ['hold'],
-    plans: ['staged'],
-    unlocks: ['venue_hold', 'vendor_advances'],
-    refund: { tiers: [
-      { daysBefore: 21, pct: 1.00, copy: 'Full refund — nothing is committed to a vendor yet.' },
-      { daysBefore: 7,  pct: 0.50, copy: 'Half back. The booking advances we placed with your vendors are not returned to us.' },
-      { daysBefore: 0,  pct: 0.00, copy: 'Not refundable — every vendor for your date is booked and paid an advance.' },
-    ] },
-    customerCopy: 'This is what books your masters. Nothing is reserved until it lands.',
-  },
-  {
-    id: 'sourcing',
-    label: 'Masters locked',
-    share: 0.40,
-    trigger: { on: 'days_before_event', days: 7 },
-    paymentType: 'partial',
-    plans: ['staged'],
-    unlocks: ['provisions', 'materials', 'staffing'],
-    refund: { tiers: [
-      { daysBefore: 7, pct: 1.00, copy: 'Full refund if we have not yet paid it forward.' },
-      { daysBefore: 3, pct: 0.30, copy: 'Most vendors bill in full at this point.' },
-      { daysBefore: 0, pct: 0.00, copy: 'Not refundable — provisions are bought and staff are rostered.' },
-    ] },
-    customerCopy: 'This buys the provisions and rosters the people for your day.',
-  },
-  {
-    id: 'balance',
-    label: 'Final balance',
-    share: 0.35,
-    trigger: { on: 'days_before_event', days: 2 },
-    paymentType: 'full',
-    plans: ['staged'],
-    unlocks: ['setup', 'event_day'],
-    refund: { tiers: [{ daysBefore: 0, pct: 0.00, copy: 'Not refundable at this point.' }] },
-    customerCopy: 'Everything settled before the day, so nobody is chasing money at your celebration.',
-  },
-
-  /* ── The one-payment plan ──────────────────────────────────────────── */
-  {
-    id: 'settle',
-    label: 'Pay in full',
-    share: 1.00,
-    trigger: { on: 'proposal_approved' },
-    dueWithinHours: 48,
-    paymentType: 'full',
-    creditsPaid: ['hold'],
-    plans: ['full'],
-    unlocks: ['venue_hold', 'vendor_advances', 'provisions', 'materials', 'staffing', 'setup', 'event_day'],
-    refund: { tiers: [
-      { daysBefore: 21, pct: 1.00, copy: 'Full refund — nothing is committed to a vendor yet.' },
-      { daysBefore: 7,  pct: 0.60, copy: 'Vendor booking advances are already placed and are not returned to us.' },
-      { daysBefore: 3,  pct: 0.30, copy: 'Most vendors bill in full at this point.' },
-      { daysBefore: 0,  pct: 0.00, copy: 'Not refundable — provisions are bought and staff are rostered.' },
-    ] },
-    customerCopy: 'One payment, everything released at once.',
-  },
-]
-
-export const MILESTONE_BY_ID = Object.fromEntries(MILESTONES.map(m => [m.id, m]))
-
-/* ── The two plans ────────────────────────────────────────────────────── */
-
 export const PAYMENT_PLANS = {
-  staged: {
-    id: 'staged',
-    label: 'Pay in stages',
-    blurb: 'Four payments, spread across the run-up. Each one releases the next piece of work.',
+  quarters: {
+    id: 'quarters',
+    label: 'Pay in 4',
+    short: '25% × 4',
+    splits: [0.25, 0.25, 0.25, 0.25],
+    blurb: 'Four equal payments across the run-up. The gentlest on cash flow.',
     recommended: true,
+  },
+  halves: {
+    id: 'halves',
+    label: 'Pay in 2',
+    short: '50% × 2',
+    splits: [0.50, 0.50],
+    blurb: 'Half to book it in, half before the day.',
+  },
+  most: {
+    id: 'most',
+    label: '75% now',
+    short: '75% + 25%',
+    splits: [0.75, 0.25],
+    blurb: 'Most of it up front, a small balance before the day.',
   },
   full: {
     id: 'full',
     label: 'Pay in full',
-    blurb: 'One payment on approval. Everything is released at once.',
-    recommended: false,
+    short: '100%',
+    splits: [1.00],
+    blurb: 'One payment. Everything released at once.',
   },
 }
 
-/** Above this, staged is the default — it is what the ladder exists for. */
+export const PLAN_LIST = Object.values(PAYMENT_PLANS)
+
+/** Above this, splitting is the sensible default — it is what the ladder is for. */
 export const STAGED_DEFAULT_ABOVE = 50000
 
 export function defaultPlanFor(confirmedTotal) {
-  return Number(confirmedTotal) > STAGED_DEFAULT_ABOVE ? 'staged' : 'full'
-}
-
-export function milestonesForPlan(plan) {
-  return MILESTONES.filter(m => m.plans.includes(plan))
+  return Number(confirmedTotal) > STAGED_DEFAULT_ABOVE ? 'quarters' : 'full'
 }
 
 /* ── What the money unlocks ───────────────────────────────────────────────
  *
- * A percentage is an ask. "This releases your cooks and buys the provisions"
- * is a reason, and it is the difference between a customer paying blind and a
- * customer who knows what their money just started.
+ * ── Why gates are keyed on cumulative percentage, not on an instalment ───
+ * The work a payment releases depends on HOW MUCH of the celebration is
+ * funded, not on which instalment happened to carry it. A customer who pays
+ * 75% in one go has funded the vendor advances and the provisions just as
+ * surely as one who got there in three steps, and telling them otherwise
+ * would be an arbitrary penalty for paying more, sooner.
  *
+ * Keying on the total paid also means the gates survive a change of plan
+ * without any reconciliation: they are a property of the celebration, not of
+ * the schedule that happens to be attached to it.
+ */
+export const UNLOCK_GATES = [
+  { atPct: 0.25, keys: ['venue_hold', 'vendor_advances'],
+    label: 'Your masters are booked' },
+  { atPct: 0.50, keys: ['provisions', 'materials', 'staffing'],
+    label: 'Provisions and crew are secured' },
+  { atPct: 1.00, keys: ['setup', 'event_day'],
+    label: 'The day itself is fully funded' },
+]
+
+/**
  * Every line is derived from the services actually in THIS booking. A booking
  * with no catering must never be told a payment buys groceries — that is the
  * same invented-progress failure the tracker exists to avoid, wearing a
@@ -211,60 +159,74 @@ const UNLOCK_RULES = {
                      line: () => 'Your coordinator is on the ground from the morning' },
 }
 
-/**
- * The lines one milestone releases, for one booking.
- *
- * @param milestone         a row from MILESTONES
- * @param bookedServiceIds  service ids on this celebration, from
- *                          `service_enquiries.services[].id` or `event_services`
- */
-export function unlocksFor(milestone, bookedServiceIds = []) {
+/** The lines one set of unlock keys releases, for one booking. */
+export function unlocksFor(keys = [], bookedServiceIds = []) {
   const ids = new Set(bookedServiceIds)
   const count = ids.size
-
-  return (milestone.unlocks ?? [])
+  return keys
     .map(key => {
       const rule = UNLOCK_RULES[key]
       if (!rule) return null
       const applies = rule.needs === '*' || rule.needs.some(n => ids.has(n))
-      if (!applies) return null
-      return { key, line: rule.line({ count }) }
+      return applies ? { key, line: rule.line({ count }) } : null
     })
     .filter(Boolean)
 }
 
+/* ── Refunds, by how close to the day you cancel ──────────────────────────
+ *
+ * One ladder for every plan, because what we can give back depends on when we
+ * paid the vendors — not on which instalment the money arrived in.
+ */
+export const REFUND_TIERS = [
+  { daysBefore: 21, pct: 1.00, copy: 'Full refund — nothing is committed to a vendor yet.' },
+  { daysBefore: 7,  pct: 0.50, copy: 'Half back. The booking advances placed with your vendors are not returned to us.' },
+  { daysBefore: 3,  pct: 0.30, copy: 'Most vendors bill in full at this point.' },
+  { daysBefore: 0,  pct: 0.00, copy: 'Not refundable — provisions are bought and staff are rostered.' },
+]
+
 /* ── Building a schedule ──────────────────────────────────────────────── */
 
 const round = n => Math.round(n)
+const pctId = pct => `pay-${Math.round(pct * 100)}`
 
-function dueDateFor(milestone, { eventDate, approvedAt }) {
-  const t = milestone.trigger
-  if (t.on === 'proposal_approved') {
-    if (!approvedAt) return null
-    return new Date(new Date(approvedAt).getTime() + (milestone.dueWithinHours ?? 48) * 3600000)
-  }
-  if (t.on === 'days_before_event') {
-    if (!eventDate) return null
-    return new Date(new Date(eventDate).getTime() - t.days * 86400000)
-  }
-  return null
+/**
+ * When each instalment is due.
+ *
+ * The first lands 48h after approval — a decision made is a decision worth
+ * acting on while it is fresh. The last lands 2 days before the day, because
+ * nobody should be chasing money at somebody's wedding. Anything between is
+ * spread evenly across that window.
+ */
+function dueDates({ count, eventDate, approvedAt }) {
+  if (!approvedAt) return Array(count).fill(null)
+  const first = new Date(approvedAt).getTime() + 48 * 3600000
+  if (count === 1) return [new Date(first)]
+
+  const last = eventDate
+    ? new Date(eventDate).getTime() - 2 * 86400000
+    : first + (count - 1) * 14 * 86400000     // no date yet: fortnightly
+  // A date too close for the spread collapses to "all due now", which is the
+  // truth — a celebration booked five days out is simply payable immediately.
+  if (last <= first) return Array(count).fill(new Date(first))
+
+  const step = (last - first) / (count - 1)
+  return Array.from({ length: count }, (_, i) => new Date(first + step * i))
 }
 
 /**
  * The ladder, priced, for one celebration.
  *
- * ── `basis` is the honesty switch ─────────────────────────────────────────
- * `'confirmed'` — a coordinator has priced this and the customer has a real
- *                 number. Rupee amounts are shown.
- * `'none'`      — no confirmed quote yet. Percentages only. The caller must
+ * `basis` is the honesty switch:
+ *   'confirmed' — a coordinator has priced this. Rupee amounts are shown.
+ *   'none'      — no confirmed quote yet. Percentages only. The caller must
  *                 not fall back to the estimate range; see the file header.
  *
- * @param confirmedTotal  TAX-INCLUSIVE confirmed total. From
+ * @param confirmedTotal  TAX-INCLUSIVE confirmed total, from
  *                        `event_proposals.total_amount` (APPROVED) or
  *                        `service_enquiries.quoted_price`. Never `quote.range`.
  * @param taxTotal        the GST inside that total, if known, so each rung can
- *                        show its share. Null hides the per-rung tax line
- *                        rather than guessing at it.
+ *                        show its share.
  * @param payments        rows from `event_payments`, matched on `milestone_id`
  */
 export function buildSchedule({
@@ -272,13 +234,13 @@ export function buildSchedule({
   taxTotal = null,
   eventDate = null,
   approvedAt = null,
-  plan = 'staged',
+  plan = 'quarters',
   payments = [],
   services = [],
   now = new Date(),
 } = {}) {
-  const chosen = PAYMENT_PLANS[plan] ? plan : 'staged'
-  const rungs = milestonesForPlan(chosen)
+  const chosen = PAYMENT_PLANS[plan] ? plan : 'quarters'
+  const splits = PAYMENT_PLANS[chosen].splits
   const priced = Number.isFinite(Number(confirmedTotal)) && Number(confirmedTotal) > 0
 
   const discount = priced && chosen === 'full'
@@ -286,61 +248,79 @@ export function buildSchedule({
     : 0
   const totalPayable = priced ? Number(confirmedTotal) - discount : null
 
-  // Shares are rounded, and the LAST share-based rung absorbs the remainder so
-  // the ladder sums to the total exactly. Four rounded percentages of an odd
-  // number do not otherwise add up, and a schedule that is ₹1 short of the
-  // bill is the kind of thing a customer notices and nobody can explain.
-  const shareRungs = rungs.filter(m => m.kind !== 'flat')
-  const holdAmount = rungs.some(m => m.kind === 'flat') ? LOCK_AMOUNT : 0
-
-  let allocated = 0
-  const amounts = {}
-  shareRungs.forEach((m, i) => {
-    if (!priced) { amounts[m.id] = null; return }
-    // Everything the hold already covered comes off the rung that credits it.
-    const gross = i === shareRungs.length - 1
-      ? totalPayable - allocated
-      : round(totalPayable * m.share)
-    allocated += gross
-    const credit = (m.creditsPaid ?? []).includes('hold') ? holdAmount : 0
-    amounts[m.id] = Math.max(0, gross - credit)
-  })
-
   const paidBy = {}
-  for (const p of payments) {
-    if (p?.milestone_id) paidBy[p.milestone_id] = p
-  }
+  for (const p of payments) if (p?.milestone_id) paidBy[p.milestone_id] = p
 
-  const rows = rungs.map(m => {
-    const payment = paidBy[m.id] ?? null
-    const amount = m.kind === 'flat' ? m.amount : amounts[m.id]
-    const dueAt = dueDateFor(m, { eventDate, approvedAt })
+  const holdPayment = paidBy.hold ?? null
+  const holdSettled = isSettled(holdPayment)
+  const holdCredit = holdSettled ? LOCK_AMOUNT : 0
+
+  const dates = dueDates({ count: splits.length, eventDate, approvedAt })
+
+  // Rounded shares, with the LAST instalment absorbing the remainder so the
+  // ladder sums to the bill exactly. Four rounded quarters of an odd number
+  // do not add up, and a schedule ₹1 short is the kind of thing a customer
+  // notices and nobody can explain.
+  let cumulative = 0
+  let allocated = 0
+  let taxAllocated = 0
+  const rows = splits.map((share, i) => {
+    cumulative += share
+    const id = pctId(cumulative)
+    const last = i === splits.length - 1
+
+    let amount = null
+    if (priced) {
+      const gross = last ? totalPayable - allocated : round(totalPayable * share)
+      allocated += gross
+      // The ₹1,000 hold comes off the FIRST instalment, once and only once.
+      amount = Math.max(0, gross - (i === 0 ? holdCredit : 0))
+    }
+
+    // The tax split needs the same last-absorbs-the-remainder rule as the
+    // amount, and for the same reason: four rounded quarters of ₹3,850 come
+    // to ₹3,852. Two rupees is nothing, but it makes the page contradict the
+    // sentence beneath it — "the GST inside it is the same" — which is the
+    // one claim on this screen that has to survive being checked.
+    let gst = null
+    if (priced && taxTotal != null) {
+      gst = last ? Number(taxTotal) - taxAllocated : round(Number(taxTotal) * share)
+      taxAllocated += gst
+    }
+
+    const payment = paidBy[id] ?? null
+    const dueAt = dates[i]
 
     return {
-      id: m.id,
-      label: m.label,
-      share: m.share ?? null,
-      kind: m.kind ?? 'share',
+      id,
+      n: i + 1,
+      of: splits.length,
+      label: splits.length === 1 ? 'Pay in full' : `Payment ${i + 1} of ${splits.length}`,
+      share,
+      cumulative,
       amount,
-      // Pro-rated from the confirmed total's own tax, never recomputed. Each
-      // rung carries its slice of the SAME tax — see `gstNote` below.
-      gst: priced && taxTotal != null && m.kind !== 'flat'
-        ? round(Number(taxTotal) * m.share)
-        : null,
+      gst,
       dueAt,
       overdue: Boolean(dueAt && dueAt < now && !isSettled(payment)),
-      customerCopy: m.customerCopy,
-      unlocks: unlocksFor(m, services),
-      refund: m.refund,
-      creditsHold: (m.creditsPaid ?? []).includes('hold'),
+      creditsHold: i === 0 && holdSettled,
       payment,
       status: paymentStatusOf(payment),
-      // The gate. A CLAIM unlocks nothing — see `isSettled`.
-      unlocked: isSettled(payment),
+      settled: isSettled(payment),
     }
   })
 
-  const paidTotal = rows.reduce((sum, r) => sum + (isSettled(r.payment) ? (r.amount ?? 0) : 0), 0)
+  // How far along the money is — the number the gates key off.
+  const paidPct = rows.filter(r => r.settled).reduce((s, r) => s + r.share, 0)
+  const paidTotal = priced
+    ? rows.reduce((s, r) => s + (r.settled ? (r.amount ?? 0) : 0), 0) + holdCredit
+    : null
+
+  const gates = UNLOCK_GATES.map(g => ({
+    ...g,
+    // A hair of tolerance: four rounded quarters can land at 0.9999999.
+    open: paidPct >= g.atPct - 1e-9,
+    lines: unlocksFor(g.keys, services),
+  })).filter(g => g.lines.length > 0)
 
   return {
     basis: priced ? 'confirmed' : 'none',
@@ -352,14 +332,24 @@ export function buildSchedule({
     totalPayable,
     taxTotal: priced ? taxTotal : null,
     taxLabel: TAX_LABEL,
+    hold: {
+      amount: LOCK_AMOUNT,
+      payment: holdPayment,
+      settled: holdSettled,
+      status: paymentStatusOf(holdPayment),
+      lines: unlocksFor(['date_hold'], services),
+    },
     rows,
-    paidTotal: priced ? paidTotal : null,
+    gates,
+    paidPct,
+    paidTotal,
     outstanding: priced ? Math.max(0, totalPayable - paidTotal) : null,
+    allSettled: rows.every(r => r.settled),
   }
 }
 
 /**
- * Has this milestone's money actually arrived?
+ * Has this money actually arrived?
  *
  * `CUSTOMER_CLAIMED_PAID` is deliberately NOT settled. A claim is a sentence
  * somebody typed; direct UPI has no callback, so until a gateway signature or
@@ -390,15 +380,12 @@ function paymentStatusOf(payment) {
  * Most people in this market assume the opposite, because instalments usually
  * do carry a charge. Saying plainly that ours do not is worth more than any
  * badge on the page — which is why `scripts/check-payment-schedule.mjs`
- * asserts that both plans produce the same total and the same total tax,
+ * asserts that every plan produces the same total and the same total tax,
  * rather than leaving this as a comment somebody can quietly falsify.
  */
 export const GST_NOTE = {
-  headline: 'Paying in stages costs you nothing extra.',
-  body: 'The total is the same, and so is the GST inside it — instalments just move part of it earlier. What changes is when the money leaves your account, and what each payment sets in motion.',
-  // Carried through from data/taxes.js, which says it louder: the rate mix
-  // depends on registration, principal-vs-agent treatment and ITC, none of
-  // which is settled. Every figure derived here inherits that caveat.
+  headline: 'Splitting it costs you nothing extra.',
+  body: 'Whichever plan you pick the total is the same, and so is the GST inside it — instalments just move part of it earlier. What changes is when the money leaves your account, and what each payment sets in motion.',
   estimated: `${TAX_LABEL} — confirmed on your final invoice.`,
 }
 
@@ -407,8 +394,8 @@ export const GST_NOTE = {
  *
  * Stated here because nothing in the app generates either one yet, and a
  * staged plan without them is not compliant. A gap named in the config is a
- * gap somebody can find; a gap in nobody's head is one discovered by an
- * accountant a year later.
+ * gap somebody can find; a gap in nobody's head is one an accountant finds a
+ * year later.
  */
 export const REQUIRED_DOCUMENTS = {
   staged: [
@@ -425,10 +412,6 @@ export const REQUIRED_DOCUMENTS = {
  * `order.subtotal`. None of it can answer what happens to a ₹25,000 advance on
  * a celebration cancelled three weeks out, and taking that advance without an
  * answer is not acceptable.
- *
- * This lives here rather than in policies.js because it is a function OF the
- * ladder above: the refund tiers are per-milestone, so splitting them from the
- * milestones would be two files that have to agree.
  */
 export const CELEBRATION_CANCELLATION_TERMS = {
   version: SCHEDULE_VERSION,
@@ -446,42 +429,50 @@ export const CELEBRATION_CANCELLATION_TERMS = {
 /**
  * What comes back if this celebration is cancelled now.
  *
- * Returns a verdict per milestone rather than one number, mirroring
- * `policies.refundBreakdown()`'s contract — the customer is owed the reasoning,
- * not just the total, and a coordinator has to be able to read it out loud.
+ * Returns a verdict per instalment rather than one number, mirroring
+ * `policies.refundBreakdown()`'s contract — the customer is owed the
+ * reasoning, not just the total, and a coordinator has to be able to read it
+ * out loud.
  */
 export function refundForCancellation({ schedule, eventDate, now = new Date() }) {
   const daysOut = eventDate
     ? Math.floor((new Date(eventDate) - now) / 86400000)
     : null
 
+  // Tiers run furthest-out first; the first one the customer is still ahead of
+  // applies. With no date we cannot know how close we are, so the most
+  // generous tier stands — the customer is not charged for our missing data.
+  const tier = daysOut == null
+    ? REFUND_TIERS[0]
+    : REFUND_TIERS.find(t => daysOut >= t.daysBefore) ?? REFUND_TIERS[REFUND_TIERS.length - 1]
+
   const lines = (schedule?.rows ?? [])
-    .filter(r => isSettled(r.payment))
-    .map(r => {
-      // Tiers are ordered furthest-out first; the first one the customer is
-      // still ahead of is the one that applies. With no date we cannot know
-      // how close we are, so the most generous tier stands — the customer is
-      // not charged for our missing data.
-      const tiers = r.refund?.tiers ?? []
-      const tier = daysOut == null
-        ? tiers[0]
-        : tiers.find(t => daysOut >= t.daysBefore) ?? tiers[tiers.length - 1]
-      const pct = tier?.pct ?? 0
-      return {
-        id: r.id,
-        label: r.label,
-        paid: r.amount ?? 0,
-        refund: round((r.amount ?? 0) * pct),
-        pct,
-        reason: tier?.copy ?? null,
-      }
+    .filter(r => r.settled)
+    .map(r => ({
+      id: r.id,
+      label: r.label,
+      paid: r.amount ?? 0,
+      refund: round((r.amount ?? 0) * tier.pct),
+      pct: tier.pct,
+      reason: tier.copy,
+    }))
+
+  // The hold is refundable in full until a plan is approved, and is credited
+  // against the first instalment after that — so it is only refunded here
+  // when it has not yet been absorbed.
+  if (schedule?.hold?.settled && !schedule.rows.some(r => r.creditsHold && r.settled)) {
+    lines.unshift({
+      id: 'hold', label: 'Hold your date',
+      paid: schedule.hold.amount, refund: schedule.hold.amount, pct: 1,
+      reason: 'Refunded in full — you had not approved a plan yet.',
     })
+  }
 
   return {
     daysOut,
     lines,
-    total: lines.reduce((sum, l) => sum + l.refund, 0),
-    paid: lines.reduce((sum, l) => sum + l.paid, 0),
+    total: lines.reduce((s, l) => s + l.refund, 0),
+    paid: lines.reduce((s, l) => s + l.paid, 0),
     version: SCHEDULE_VERSION,
   }
 }

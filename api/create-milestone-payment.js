@@ -20,12 +20,16 @@
 // This endpoint only opens the order and parks a PENDING row.
 import { createClient } from '@supabase/supabase-js'
 
-// Kept in step with src/config/celebrationPayments.js. Duplicated rather
-// than imported because a Vercel function cannot import from src/ — so the
-// two are checked against each other by scripts/check-payment-schedule.mjs
-// rather than trusted to stay in step by memory.
-const SHARES = { confirmation: 0.25, sourcing: 0.40, balance: 0.35, settle: 1.00 }
-const HOLD_CREDITING = new Set(['confirmation', 'settle'])
+// Kept in step with src/config/celebrationPayments.js by
+// scripts/check-payment-schedule.mjs, which fails the build if these drift —
+// a Vercel function is bundled separately and cannot import from src/, so
+// this is a second source of truth for the amount charged to a real card.
+const PLAN_SPLITS = {
+  quarters: [0.25, 0.25, 0.25, 0.25],
+  halves:   [0.50, 0.50],
+  most:     [0.75, 0.25],
+  full:     [1.00],
+}
 const LOCK_AMOUNT = 1000
 
 /**
@@ -43,15 +47,28 @@ const PAYMENT_METHOD = 'upi'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { subjectType, subjectId, milestoneId, scheduleVersion } = req.body || {}
-  if (!subjectType || !subjectId || !milestoneId) {
-    return res.status(400).json({ error: 'Missing subjectType, subjectId or milestoneId' })
+  const { subjectType, subjectId, milestoneId, plan, scheduleVersion } = req.body || {}
+  if (!subjectType || !subjectId || !milestoneId || !plan) {
+    return res.status(400).json({ error: 'Missing subjectType, subjectId, milestoneId or plan' })
   }
   if (subjectType !== 'event' && subjectType !== 'enquiry') {
     return res.status(400).json({ error: 'Unknown subjectType' })
   }
-  const share = SHARES[milestoneId]
-  if (!share) return res.status(400).json({ error: 'Unknown milestone' })
+  const splits = PLAN_SPLITS[plan]
+  if (!splits) return res.status(400).json({ error: 'Unknown plan' })
+
+  // A milestone is named for the cumulative point it reaches (`pay-50`), so
+  // its own share is that point minus the one before it in THIS plan. Named
+  // that way the ids overlap between plans, which is what lets somebody
+  // switch from "Pay in 2" to "Pay in 4" without paying anything twice.
+  let cumulative = 0
+  let share = null
+  let index = -1
+  for (let i = 0; i < splits.length; i++) {
+    cumulative += splits[i]
+    if (`pay-${Math.round(cumulative * 100)}` === milestoneId) { share = splits[i]; index = i; break }
+  }
+  if (share == null) return res.status(400).json({ error: 'Unknown milestone for this plan' })
 
   // `RAZORPAY_KEY_ID` first, matching the sibling create-razorpay-order.js.
   // The VITE_-prefixed one is the browser's copy (it is a publishable id, so
@@ -99,8 +116,14 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: 'This celebration has no confirmed quote yet' })
   }
 
-  const gross = Math.round(Number(confirmedTotal) * share)
-  const credit = HOLD_CREDITING.has(milestoneId) ? lockPaid : 0
+  // The last instalment absorbs the rounding remainder, so the ladder sums to
+  // the bill exactly rather than landing a rupee short.
+  const isLast = index === splits.length - 1
+  const gross = isLast
+    ? Number(confirmedTotal) - splits.slice(0, index).reduce((sum, sp) => sum + Math.round(Number(confirmedTotal) * sp), 0)
+    : Math.round(Number(confirmedTotal) * share)
+  // The ₹1,000 hold comes off the FIRST instalment, once.
+  const credit = index === 0 ? lockPaid : 0
   const amount = Math.max(0, gross - credit)
   if (amount <= 0) return res.status(409).json({ error: 'Nothing to pay on this milestone' })
 
@@ -113,7 +136,7 @@ export default async function handler(req, res) {
       amount: amount * 100,                 // paise
       currency: 'INR',
       receipt: `${subjectId.slice(0, 8)}-${milestoneId}`.slice(0, 40),
-      notes: { subjectType, subjectId, milestoneId },
+      notes: { subjectType, subjectId, milestoneId, plan },
       // ── UPI only, and this is a commercial decision made structural ────
       // UPI and RuPay debit are zero-MDR in India by law (the 2019 Finance
       // Act amendment to the Payments and Settlement Systems Act), so a
@@ -147,7 +170,7 @@ export default async function handler(req, res) {
     milestone_id: milestoneId,
     schedule_version: scheduleVersion ?? null,
     amount,
-    payment_type: milestoneId === 'balance' || milestoneId === 'settle' ? 'full' : 'advance',
+    payment_type: isLast ? 'full' : 'advance',
     status: 'PENDING',
     gateway_order_id: rzpOrder.id,
   }, { onConflict: `${subjectColumn},milestone_id` })

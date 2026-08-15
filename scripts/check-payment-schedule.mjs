@@ -7,23 +7,21 @@
  *
  * ── Why this exists ───────────────────────────────────────────────────────
  * `config/celebrationPayments.js` makes a promise on screen, in these words:
- * "Paying in stages costs you nothing extra. The total is the same, and so is
- * the GST inside it." That sentence is the most load-bearing thing on the
- * payment page — most people in this market assume instalments carry a
- * surcharge, and being the ones who say plainly that they do not is the whole
- * trust play.
+ * "Splitting it costs you nothing extra. Whichever plan you pick the total is
+ * the same, and so is the GST inside it." That sentence is the most
+ * load-bearing thing on the payment page — most people in this market assume
+ * instalments carry a surcharge, and being the ones who say plainly that they
+ * do not is the whole trust play.
  *
- * A sentence like that cannot live as a comment. If a share is edited, a
+ * A sentence like that cannot live as a comment. If a split is edited, a
  * rounding rule changes, or the hold stops being credited, the arithmetic
  * drifts and the product starts lying — silently, on a five-figure sum, with
  * nothing failing. So it is asserted here instead.
  *
- * Also checked: that no milestone ever promises a customer something their
- * booking does not include. A birthday with no catering must never be told a
- * payment buys the provisions — that is the invented-progress failure the
- * tracker exists to avoid, wearing a friendlier face.
+ * Also checked: that no unlock gate ever promises a customer something their
+ * booking does not include, and that a CLAIMED payment unlocks nothing.
  */
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { pathToFileURL, fileURLToPath } from 'node:url'
@@ -32,9 +30,6 @@ import esbuild from 'esbuild'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const verbose = process.argv.includes('--verbose')
 
-/* Bundle the browser modules so Node can import them — same approach as
-   check-customizers.mjs and check-single-service.mjs, so this tests the real
-   files rather than a copy that has drifted. */
 const dir = mkdtempSync(join(tmpdir(), 'pay-schedule-'))
 const entry = join(dir, 'entry.mjs')
 const abs = p => JSON.stringify(join(ROOT, p).split('\\').join('/'))
@@ -51,8 +46,8 @@ const mod = await import(pathToFileURL(outfile).href)
 rmSync(dir, { recursive: true, force: true })
 
 const {
-  MILESTONES, PAYMENT_PLANS, buildSchedule, milestonesForPlan, unlocksFor,
-  fullPaymentDiscountPct, refundForCancellation, isSettled,
+  PAYMENT_PLANS, UNLOCK_GATES, buildSchedule, unlocksFor,
+  fullPaymentDiscountPct, refundForCancellation, REFUND_TIERS,
   EVENT_DATA, LOCK_AMOUNT,
 } = mod
 
@@ -62,198 +57,242 @@ const fail = m => failures.push(m)
 const warn = m => warnings.push(m)
 const inr = n => '₹' + Number(n).toLocaleString('en-IN')
 
-/* ── 1 · The shares of each plan sum to exactly 1 ──────────────────────── */
-for (const planId of Object.keys(PAYMENT_PLANS)) {
-  const shares = milestonesForPlan(planId).filter(m => m.kind !== 'flat')
-  const sum = shares.reduce((s, m) => s + m.share, 0)
+const PLANS = Object.keys(PAYMENT_PLANS)
+const TOTALS = [12000, 27500, 49999, 50000, 73333, 100000, 123457, 250000, 999999, 1500001]
+const WHEN = { eventDate: '2026-12-01', approvedAt: '2026-08-16' }
+
+/* ── 1 · Every plan's splits sum to exactly 1 ──────────────────────────── */
+for (const id of PLANS) {
+  const sum = PAYMENT_PLANS[id].splits.reduce((s, n) => s + n, 0)
   if (Math.abs(sum - 1) > 1e-9) {
-    fail(`plan "${planId}": shares sum to ${sum}, not 1 — the ladder does not add up to the bill`)
+    fail(`plan "${id}": splits sum to ${sum}, not 1 — the ladder does not add up to the bill`)
   }
-  if (shares.length === 0) fail(`plan "${planId}": has no share-based milestone`)
+  if (PAYMENT_PLANS[id].splits.some(s => s <= 0)) fail(`plan "${id}": has a zero or negative split`)
 }
 
-/* ── 2 · Every rung is fully allocated, at any total ───────────────────── */
-const TOTALS = [12000, 27500, 49999, 50000, 73333, 100000, 123457, 250000, 999999, 1500001]
-
-for (const planId of Object.keys(PAYMENT_PLANS)) {
+/* ── 2 · Every plan bills the whole total, at any amount ───────────────── */
+for (const plan of PLANS) {
   for (const total of TOTALS) {
-    const s = buildSchedule({ confirmedTotal: total, plan: planId, eventDate: '2026-12-01', approvedAt: '2026-08-15' })
-    if (s.basis !== 'confirmed') { fail(`${planId} @ ${total}: basis should be 'confirmed'`); continue }
+    const s = buildSchedule({ confirmedTotal: total, plan, ...WHEN })
+    if (s.basis !== 'confirmed') { fail(`${plan} @ ${total}: basis should be 'confirmed'`); continue }
 
-    // Amounts + the credited hold must reconstruct the payable total exactly.
     const billed = s.rows.reduce((sum, r) => sum + (r.amount ?? 0), 0)
     if (billed !== s.totalPayable) {
-      fail(`${planId} @ ${inr(total)}: rungs bill ${inr(billed)} but the total payable is ${inr(s.totalPayable)} (out by ${inr(billed - s.totalPayable)})`)
+      fail(`${plan} @ ${inr(total)}: instalments bill ${inr(billed)} against a payable total of ${inr(s.totalPayable)} (out by ${inr(billed - s.totalPayable)})`)
     }
+    if (s.rows.some(r => r.amount != null && r.amount < 0)) fail(`${plan} @ ${inr(total)}: an instalment is negative`)
+    if (s.rows.length !== PAYMENT_PLANS[plan].splits.length) fail(`${plan}: wrong number of instalments`)
 
-    // The hold is credited exactly once, never twice and never not at all.
-    const creditors = s.rows.filter(r => r.creditsHold)
-    if (creditors.length !== 1) {
-      fail(`${planId} @ ${inr(total)}: ${creditors.length} rungs credit the hold — must be exactly 1`)
+    // Due dates must be ordered and land before the day.
+    const dates = s.rows.map(r => r.dueAt).filter(Boolean)
+    for (let i = 1; i < dates.length; i++) {
+      if (dates[i] < dates[i - 1]) fail(`${plan} @ ${inr(total)}: instalment ${i + 1} is due before instalment ${i}`)
     }
-
-    if (s.rows.some(r => r.amount != null && r.amount < 0)) {
-      fail(`${planId} @ ${inr(total)}: a rung is negative`)
+    const eventTime = new Date(WHEN.eventDate).getTime()
+    if (dates.some(d => d.getTime() > eventTime)) {
+      fail(`${plan} @ ${inr(total)}: an instalment falls after the celebration — everything must be collected before the day`)
     }
   }
 }
 
-/* ── 3 · THE CLAIM: both plans cost the same, and carry the same tax ───── */
+/* ── 3 · THE CLAIM: every plan costs the same, and carries the same tax ── */
 for (const total of TOTALS) {
-  const taxTotal = Math.round(total * 0.14)   // a realistic blended mix
+  const taxTotal = Math.round(total * 0.14)
+  const billed = {}
+  const taxed = {}
 
-  const staged = buildSchedule({ confirmedTotal: total, taxTotal, plan: 'staged', eventDate: '2026-12-01', approvedAt: '2026-08-15' })
-  const full   = buildSchedule({ confirmedTotal: total, taxTotal, plan: 'full',   eventDate: '2026-12-01', approvedAt: '2026-08-15' })
-
-  const stagedBilled = staged.rows.reduce((s, r) => s + (r.amount ?? 0), 0)
-  const fullBilled   = full.rows.reduce((s, r) => s + (r.amount ?? 0), 0)
-  const expectedGap  = Math.round(total * fullPaymentDiscountPct)
-
-  if (stagedBilled - fullBilled !== expectedGap) {
-    fail(`@ ${inr(total)}: staged bills ${inr(stagedBilled)}, full bills ${inr(fullBilled)} — the gap should be exactly the ${fullPaymentDiscountPct * 100}% full-payment discount (${inr(expectedGap)}), and nothing else. The screen says paying in stages costs nothing extra.`)
+  for (const plan of PLANS) {
+    const s = buildSchedule({ confirmedTotal: total, taxTotal, plan, ...WHEN })
+    billed[plan] = s.rows.reduce((sum, r) => sum + (r.amount ?? 0), 0)
+    taxed[plan]  = s.rows.reduce((sum, r) => sum + (r.gst ?? 0), 0)
   }
 
-  const stagedTax = staged.rows.reduce((s, r) => s + (r.gst ?? 0), 0)
-  const fullTax   = full.rows.reduce((s, r) => s + (r.gst ?? 0), 0)
-  const taxGap    = Math.round(taxTotal * fullPaymentDiscountPct)
-
-  if (Math.abs((stagedTax - fullTax) - taxGap) > 1) {
-    fail(`@ ${inr(total)}: staged carries ${inr(stagedTax)} of GST, full carries ${inr(fullTax)} — instalments must not add tax`)
-  }
-  if (Math.abs(stagedTax - taxTotal) > 1) {
-    fail(`@ ${inr(total)}: the staged rungs carry ${inr(stagedTax)} of GST but the quote's tax is ${inr(taxTotal)} — the split is not adding up to the whole`)
+  const discountGap = Math.round(total * fullPaymentDiscountPct)
+  for (const plan of PLANS) {
+    // Only `full` may differ, and only by exactly the full-payment discount.
+    const expected = plan === 'full' ? billed.quarters - discountGap : billed.quarters
+    if (billed[plan] !== expected) {
+      fail(`@ ${inr(total)}: "${plan}" bills ${inr(billed[plan])} but "quarters" bills ${inr(billed.quarters)} — the screen says splitting it costs nothing extra`)
+    }
+    if (Math.abs(taxed[plan] - taxTotal) > 1) {
+      fail(`@ ${inr(total)}: "${plan}" carries ${inr(taxed[plan])} of GST against the quote's ${inr(taxTotal)} — instalments must not add or lose tax`)
+    }
   }
   if (verbose) {
-    console.log(`  ${inr(total).padStart(12)}  staged ${inr(stagedBilled).padStart(12)} / tax ${inr(stagedTax).padStart(10)}   full ${inr(fullBilled).padStart(12)} / tax ${inr(fullTax).padStart(10)}`)
+    console.log(`  ${inr(total).padStart(12)}  ` +
+      PLANS.map(p => `${p} ${inr(billed[p])}`).join('  ·  '))
   }
 }
 
 /* ── 4 · No rupee figures before a confirmed quote ─────────────────────── */
-const unpriced = buildSchedule({ confirmedTotal: null, plan: 'staged' })
-if (unpriced.basis !== 'none') fail('an unpriced schedule must report basis "none"')
-if (unpriced.rows.some(r => r.kind !== 'flat' && r.amount != null)) {
-  fail('an unpriced schedule put a rupee figure on a share-based rung — that number would be derived from an estimate nobody has agreed to')
-}
-if (unpriced.rows.some(r => r.gst != null)) fail('an unpriced schedule showed a GST figure')
-const holdRow = unpriced.rows.find(r => r.kind === 'flat')
-if (!holdRow || holdRow.amount !== LOCK_AMOUNT) {
-  fail(`the ₹1,000 hold is flat and should still show as ${inr(LOCK_AMOUNT)} before a quote exists`)
+for (const plan of PLANS) {
+  const s = buildSchedule({ confirmedTotal: null, plan })
+  if (s.basis !== 'none') fail(`${plan}: an unpriced schedule must report basis "none"`)
+  if (s.rows.some(r => r.amount != null)) {
+    fail(`${plan}: an unpriced schedule put a rupee figure on an instalment — that number would be derived from an estimate nobody has agreed to`)
+  }
+  if (s.rows.some(r => r.gst != null)) fail(`${plan}: an unpriced schedule showed a GST figure`)
+  if (s.hold.amount !== LOCK_AMOUNT) fail('the flat ₹1,000 hold should still show before a quote exists')
 }
 
 /* ── 5 · A claim unlocks nothing ───────────────────────────────────────── */
-const claimed = buildSchedule({
-  confirmedTotal: 100000, plan: 'staged', eventDate: '2026-12-01', approvedAt: '2026-08-15',
-  payments: [{ milestone_id: 'confirmation', status: 'CUSTOMER_CLAIMED_PAID' }],
-})
-const claimedRow = claimed.rows.find(r => r.id === 'confirmation')
-if (claimedRow.unlocked) {
-  fail('a CUSTOMER_CLAIMED_PAID milestone reported unlocked — a claim is a sentence somebody typed, not money that arrived')
-}
-if (claimedRow.status !== 'checking') fail(`a claimed milestone should read "checking", got "${claimedRow.status}"`)
-if (claimed.paidTotal !== 0) fail('a claimed-but-unverified payment was counted as paid')
-
-for (const status of ['ADMIN_VERIFIED', 'GATEWAY_VERIFIED']) {
-  const s = buildSchedule({
-    confirmedTotal: 100000, plan: 'staged', eventDate: '2026-12-01', approvedAt: '2026-08-15',
-    payments: [{ milestone_id: 'confirmation', status }],
+{
+  const claimed = buildSchedule({
+    confirmedTotal: 100000, plan: 'quarters', ...WHEN,
+    payments: [{ milestone_id: 'pay-25', status: 'CUSTOMER_CLAIMED_PAID' }],
   })
-  if (!s.rows.find(r => r.id === 'confirmation').unlocked) fail(`${status} should unlock its milestone`)
-  if (s.paidTotal <= 0) fail(`${status} should count toward paidTotal`)
+  const row = claimed.rows.find(r => r.id === 'pay-25')
+  if (row.settled) fail('a CUSTOMER_CLAIMED_PAID instalment reported settled — a claim is a sentence somebody typed, not money that arrived')
+  if (row.status !== 'checking') fail(`a claimed instalment should read "checking", got "${row.status}"`)
+  if (claimed.paidPct !== 0) fail('a claimed-but-unverified payment moved the unlock gauge')
+  if (claimed.gates.some(g => g.open)) fail('a claim opened an unlock gate')
+  if (claimed.paidTotal !== 0) fail('a claimed-but-unverified payment was counted as paid')
+
+  for (const status of ['ADMIN_VERIFIED', 'GATEWAY_VERIFIED']) {
+    const s = buildSchedule({
+      confirmedTotal: 100000, plan: 'quarters', ...WHEN,
+      services: ['venue', 'catering', 'decor', 'photography', 'cake'],
+      payments: [{ milestone_id: 'pay-25', status }],
+    })
+    if (!s.rows.find(r => r.id === 'pay-25').settled) fail(`${status} should settle its instalment`)
+    if (!s.gates.find(g => g.atPct === 0.25)?.open) fail(`${status} at 25% should open the first gate`)
+    if (s.gates.find(g => g.atPct === 0.50)?.open) fail(`${status} at 25% must NOT open the 50% gate`)
+  }
 }
 
-/* ── 6 · Unlock lines never promise what a booking does not include ────── */
+/* ── 6 · Gates open on money paid, not on which plan carried it ────────── */
+{
+  // A gate with no applicable line is filtered out of the schedule — correct
+  // product behaviour (never show an empty gate), but it means these
+  // assertions need a booking that actually has food, decor and crew on it,
+  // or the gates under test simply would not exist.
+  const FULL_BOOKING = ['venue', 'catering', 'decor', 'photography', 'cake']
+
+  const paidHalf = {
+    quarters: ['pay-25', 'pay-50'],
+    halves:   ['pay-50'],
+    most:     [],            // 75% in one go — checked separately below
+    full:     [],
+  }
+  for (const plan of ['quarters', 'halves']) {
+    const s = buildSchedule({
+      confirmedTotal: 100000, plan, ...WHEN,
+      services: FULL_BOOKING,
+      payments: paidHalf[plan].map(id => ({ milestone_id: id, status: 'ADMIN_VERIFIED' })),
+    })
+    if (Math.abs(s.paidPct - 0.5) > 1e-9) fail(`${plan}: paying half reported ${s.paidPct} paid`)
+    if (!s.gates.find(g => g.atPct === 0.5)?.open) fail(`${plan}: half paid should open the 50% gate`)
+    if (s.gates.find(g => g.atPct === 1)?.open) fail(`${plan}: half paid must not open the final gate`)
+  }
+  // 75% in one payment must release everything 50% would have.
+  const most = buildSchedule({
+    confirmedTotal: 100000, plan: 'most', ...WHEN, services: FULL_BOOKING,
+    payments: [{ milestone_id: 'pay-75', status: 'ADMIN_VERIFIED' }],
+  })
+  if (!most.gates.find(g => g.atPct === 0.25)?.open || !most.gates.find(g => g.atPct === 0.5)?.open) {
+    fail('paying 75% in one go did not release what 50% releases — paying more, sooner, must never unlock less')
+  }
+  // Fully paid opens everything, on every plan.
+  for (const plan of PLANS) {
+    const s0 = buildSchedule({ confirmedTotal: 100000, plan, ...WHEN, services: FULL_BOOKING })
+    const s = buildSchedule({
+      confirmedTotal: 100000, plan, ...WHEN, services: FULL_BOOKING,
+      payments: s0.rows.map(r => ({ milestone_id: r.id, status: 'ADMIN_VERIFIED' })),
+    })
+    if (!s.allSettled) fail(`${plan}: paying every instalment did not settle the schedule`)
+    if (s.gates.some(g => !g.open)) fail(`${plan}: fully paid left a gate closed`)
+    if (s.outstanding !== 0) fail(`${plan}: fully paid left ${inr(s.outstanding)} outstanding`)
+  }
+}
+
+/* ── 7 · The hold is credited exactly once ─────────────────────────────── */
+for (const plan of PLANS) {
+  const s = buildSchedule({
+    confirmedTotal: 100000, plan, ...WHEN,
+    payments: [{ milestone_id: 'hold', status: 'ADMIN_VERIFIED' }],
+  })
+  const creditors = s.rows.filter(r => r.creditsHold)
+  if (creditors.length !== 1) fail(`${plan}: ${creditors.length} instalments credit the hold — must be exactly 1`)
+  const billed = s.rows.reduce((sum, r) => sum + r.amount, 0)
+  if (billed !== 100000 - LOCK_AMOUNT) {
+    fail(`${plan}: with the hold paid, instalments bill ${inr(billed)} — should be ${inr(100000 - LOCK_AMOUNT)}`)
+  }
+}
+
+/* ── 8 · Unlock lines never promise what a booking does not include ────── */
 for (const [eventId, ev] of Object.entries(EVENT_DATA)) {
   const serviceIds = (ev.services ?? []).map(s => (typeof s === 'string' ? s : s.id)).filter(Boolean)
   if (serviceIds.length === 0) { warn(`${eventId}: no services in EVENT_DATA, skipped`); continue }
 
-  for (const m of milestonesForPlan('staged')) {
-    const lines = unlocksFor(m, serviceIds)
-    if (lines.length === 0) {
-      fail(`${eventId} / ${m.id}: unlocks nothing — a rung with no stated purpose is a rung nobody understands`)
-    }
-    if (lines.some(l => !l.line || !l.line.trim())) fail(`${eventId} / ${m.id}: produced an empty unlock line`)
-  }
+  const s = buildSchedule({ confirmedTotal: 100000, plan: 'quarters', services: serviceIds, ...WHEN })
+  if (s.gates.length === 0) fail(`${eventId}: no unlock gate applies at all — every payment would be unexplained`)
+  if (s.gates.some(g => g.lines.some(l => !l.line?.trim()))) fail(`${eventId}: produced an empty unlock line`)
 
-  // The specific promises, against the specific booking.
   const provisionIds = ['catering', 'cooks', 'menu', 'cake', 'live_counters', 'bar', 'welcome_drinks', 'ice_cream']
   const hasFood = serviceIds.some(id => provisionIds.includes(id))
-  const claimsFood = unlocksFor(MILESTONES.find(m => m.id === 'sourcing'), serviceIds)
-    .some(l => l.key === 'provisions')
+  const claimsFood = s.gates.some(g => g.lines.some(l => l.key === 'provisions'))
   if (claimsFood && !hasFood) {
     fail(`${eventId}: promises "provisions bought and your cooks confirmed" on a booking with no catering`)
   }
 }
-
-// And the empty case: a booking with no recognised services still has to say
-// something true, never a food or décor line.
-const bare = unlocksFor(MILESTONES.find(m => m.id === 'sourcing'), [])
-if (bare.some(l => l.key === 'provisions' || l.key === 'materials' || l.key === 'staffing')) {
-  fail('a booking with no services was promised provisions, materials or crew')
+{
+  const bare = unlocksFor(['provisions', 'materials', 'staffing'], [])
+  if (bare.length > 0) fail('a booking with no services was promised provisions, materials or crew')
 }
 
-/* ── 7 · Cancellation refunds are bounded and explained ────────────────── */
-const settled = buildSchedule({
-  confirmedTotal: 100000, plan: 'staged', eventDate: '2026-12-01', approvedAt: '2026-08-15',
-  payments: [
-    { milestone_id: 'hold', status: 'ADMIN_VERIFIED' },
-    { milestone_id: 'confirmation', status: 'ADMIN_VERIFIED' },
-  ],
-})
-for (const daysOut of [60, 30, 21, 20, 7, 6, 2, 0]) {
-  const when = new Date(new Date('2026-12-01').getTime() - daysOut * 86400000)
-  const r = refundForCancellation({ schedule: settled, eventDate: '2026-12-01', now: when })
-  if (r.total > r.paid) fail(`cancellation at ${daysOut} days out refunds ${inr(r.total)} of ${inr(r.paid)} paid — more than was taken`)
-  if (r.total < 0) fail(`cancellation at ${daysOut} days out refunds a negative amount`)
-  if (r.lines.some(l => l.pct > 0 && !l.reason)) {
-    fail(`cancellation at ${daysOut} days out withholds money with no reason to read out`)
+/* ── 9 · Cancellation refunds are bounded and explained ────────────────── */
+{
+  const s0 = buildSchedule({ confirmedTotal: 100000, plan: 'quarters', ...WHEN })
+  const settled = buildSchedule({
+    confirmedTotal: 100000, plan: 'quarters', ...WHEN,
+    payments: [
+      { milestone_id: 'hold', status: 'ADMIN_VERIFIED' },
+      ...s0.rows.slice(0, 2).map(r => ({ milestone_id: r.id, status: 'ADMIN_VERIFIED' })),
+    ],
+  })
+  for (const daysOut of [60, 30, 21, 20, 7, 6, 3, 2, 0]) {
+    const when = new Date(new Date(WHEN.eventDate).getTime() - daysOut * 86400000)
+    const r = refundForCancellation({ schedule: settled, eventDate: WHEN.eventDate, now: when })
+    if (r.total > r.paid) fail(`cancel at T-${daysOut}d refunds ${inr(r.total)} of ${inr(r.paid)} paid — more than was taken`)
+    if (r.total < 0) fail(`cancel at T-${daysOut}d refunds a negative amount`)
+    if (r.lines.some(l => !l.reason)) fail(`cancel at T-${daysOut}d withholds money with no reason to read out`)
+    if (verbose) console.log(`  cancel T-${String(daysOut).padStart(2)}d → ${inr(r.total).padStart(10)} of ${inr(r.paid)}`)
   }
-  if (verbose) console.log(`  cancel at T-${String(daysOut).padStart(2)}d → refund ${inr(r.total).padStart(10)} of ${inr(r.paid)}`)
+  if (REFUND_TIERS.some(t => t.pct > 1 || t.pct < 0)) fail('a refund tier is outside 0–100%')
 }
 
-/* ── 8 · The serverless copy of the shares has not drifted ────────────────
+/* ── 10 · The serverless copy of the plans has not drifted ────────────────
  *
  * `api/create-milestone-payment.js` cannot import from `src/` — a Vercel
- * function is bundled separately — so it carries its own SHARES map. That is
- * a second source of truth for the amount actually charged to a card, which
- * is the worst possible thing to let drift silently. It is compared here
- * instead of being trusted to stay in step by memory.
+ * function is bundled separately — so it carries its own copy of the splits.
+ * That is a second source of truth for the amount actually charged to a card,
+ * which is the worst possible thing to let drift silently.
  */
 {
-  const api = await import('node:fs').then(fs =>
-    fs.readFileSync(join(ROOT, 'api/create-milestone-payment.js'), 'utf8'))
+  const api = readFileSync(join(ROOT, 'api/create-milestone-payment.js'), 'utf8')
+  const block = api.match(/const PLAN_SPLITS = \{([\s\S]*?)\n\}/)?.[1]
+  const lockLine = api.match(/const LOCK_AMOUNT = (\d+)/)?.[1]
+  const methodLine = api.match(/const PAYMENT_METHOD = '([a-z]*)'/)?.[1]
 
-  const sharesLine = api.match(/const SHARES = \{([^}]*)\}/)?.[1]
-  const holdLine   = api.match(/const HOLD_CREDITING = new Set\(\[([^\]]*)\]\)/)?.[1]
-  const lockLine   = api.match(/const LOCK_AMOUNT = (\d+)/)?.[1]
-
-  if (!sharesLine || !holdLine || !lockLine) {
-    fail('could not read SHARES / HOLD_CREDITING / LOCK_AMOUNT out of api/create-milestone-payment.js')
+  if (!block || !lockLine) {
+    fail('could not read PLAN_SPLITS / LOCK_AMOUNT out of api/create-milestone-payment.js')
   } else {
-    const apiShares = Object.fromEntries(
-      sharesLine.split(',').map(p => p.split(':').map(x => x.trim())).filter(p => p.length === 2)
-        .map(([k, v]) => [k, Number(v)]))
-
-    for (const m of MILESTONES.filter(x => x.kind !== 'flat')) {
-      if (apiShares[m.id] !== m.share) {
-        fail(`api/create-milestone-payment.js charges ${apiShares[m.id]} for "${m.id}" but the config says ${m.share} — the endpoint would take the wrong amount`)
+    for (const plan of PLANS) {
+      const row = block.match(new RegExp(`${plan}\\s*:\\s*\\[([^\\]]*)\\]`))?.[1]
+      if (!row) { fail(`the endpoint does not know plan "${plan}"`); continue }
+      const apiSplits = row.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n))
+      const want = PAYMENT_PLANS[plan].splits
+      if (apiSplits.length !== want.length || apiSplits.some((v, i) => Math.abs(v - want[i]) > 1e-9)) {
+        fail(`api/create-milestone-payment.js splits "${plan}" as [${apiSplits}] but the config says [${want}] — the endpoint would charge the wrong amount`)
       }
     }
-    for (const id of Object.keys(apiShares)) {
-      if (!MILESTONES.some(m => m.id === id)) fail(`the endpoint knows a milestone "${id}" the config does not`)
-    }
+    if (Number(lockLine) !== LOCK_AMOUNT) fail(`the endpoint's LOCK_AMOUNT is ${lockLine}, the app's is ${LOCK_AMOUNT}`)
+  }
 
-    const apiCredits = new Set(holdLine.split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean))
-    const configCredits = new Set(MILESTONES.filter(m => (m.creditsPaid ?? []).includes('hold')).map(m => m.id))
-    for (const id of configCredits) {
-      if (!apiCredits.has(id)) fail(`the endpoint does not credit the hold on "${id}" but the config does — the customer would be charged the ₹1,000 twice`)
-    }
-    for (const id of apiCredits) {
-      if (!configCredits.has(id)) fail(`the endpoint credits the hold on "${id}" but the config does not — the customer would be undercharged`)
-    }
-
-    if (Number(lockLine) !== LOCK_AMOUNT) {
-      fail(`the endpoint's LOCK_AMOUNT is ${lockLine}, the app's is ${LOCK_AMOUNT}`)
-    }
+  // UPI is the whole zero-MDR argument. If this ever becomes null or 'card',
+  // every celebration starts costing ~2.36% against a 2% platform fee.
+  if (methodLine !== 'upi') {
+    fail(`api/create-milestone-payment.js collects by "${methodLine}" — anything but UPI carries MDR that exceeds the platform fee`)
   }
 }
 
@@ -269,6 +308,7 @@ if (failures.length) {
   failures.forEach(f => console.log('   ' + f))
   process.exit(1)
 }
-console.log(`✓  payment ladder checks passed across ${TOTALS.length} totals and ${Object.keys(EVENT_DATA).length} occasions`)
-console.log('   both plans cost the same and carry the same GST; a claim unlocks nothing.')
+console.log(`✓  payment ladder passed across ${PLANS.length} plans, ${TOTALS.length} totals and ${Object.keys(EVENT_DATA).length} occasions`)
+console.log('   every plan costs the same and carries the same GST; a claim unlocks nothing;')
+console.log('   paying more sooner never unlocks less; everything is collected before the day.')
 process.exit(0)
