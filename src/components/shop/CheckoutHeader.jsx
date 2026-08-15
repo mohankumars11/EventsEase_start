@@ -18,18 +18,44 @@ import SambramoMark from '../ui/SambramoMark'
  * The stepper is the other half of the same argument. A checkout that shows
  * no length is a checkout people abandon at the address field, because for
  * all they know there are six more screens behind it. There are two.
+ *
+ * ── Why the middle step is "Details" and not "Delivery" ──────────────────
+ * It read Bag → Delivery → Pay, and that is the wrong story told in the
+ * wrong order. Every checkout a customer has ever used runs
+ *
+ *     bag → who you are and where it goes → pay → *then* it is delivered
+ *
+ * so a rail that puts "Delivery" before "Pay" is claiming this shop delivers
+ * before it takes payment. On a phone the labels collapse to "Bag · Delivery
+ * · Pay", three words that read as a sentence about a cash-on-delivery
+ * service, which is precisely what Sambramo does not offer: the only live
+ * path is UPI, up front, and there is no COD code anywhere in this app.
+ *
+ * Delivery is the outcome of the checkout, not a stage inside it, so it has
+ * moved off the rail and onto the confirmation screen where it is actually
+ * true. The middle step is now named for what is genuinely on that screen —
+ * the address, the date and the contact number.
  */
 const STEPS = [
   { id: 'cart',    label: 'Bag',      short: 'Bag' },
-  { id: 'address', label: 'Delivery', short: 'Delivery' },
+  { id: 'address', label: 'Details',  short: 'Details' },
   { id: 'payment', label: 'Payment',  short: 'Pay' },
 ]
 
-export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = '/shop' }) {
-  // `cart` covers both reviewing the bag and filling the address — they are
-  // one scroll on this page — so the rail lights the first two dots there and
-  // completes them at payment.
-  const activeIndex = step === 'payment' ? 2 : step === 'done' ? 3 : 1
+export default function CheckoutHeader({
+  step = 'cart', itemCount = 0, backTo = '/shop', detailsDone = false,
+}) {
+  // The bag and the details share one scroll, so the rail advances within
+  // that screen rather than sitting on step 1 until payment: filling in a
+  // deliverable address is real progress and the header should say so. The
+  // old version hard-coded 1 here, so step 2 was never the current step on
+  // any screen — it went straight from Bag to Payment, and the middle dot
+  // existed only to be skipped.
+  const activeIndex =
+    step === 'done' ? 4
+    : step === 'payment' ? 3
+    : detailsDone ? 2
+    : 1
 
   return (
     <header className="sticky top-0 z-40 pt-safe checkout-appbar shadow-[0_10px_30px_-20px_rgba(0,0,0,0.9)]">

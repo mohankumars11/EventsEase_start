@@ -41,7 +41,10 @@ export default function PaymentStrip({ className = '' }) {
         <p className="text-ink text-sm font-bold flex items-center gap-2">
           <ShieldCheck size={15} className="text-forest-700" /> Pay by UPI
         </p>
-        <span className="text-[10px] font-bold text-forest-200 bg-forest-500/20 ring-1 ring-forest-400/30 rounded-full px-2 py-0.5">
+        {/* forest-700, not forest-200. Another shade left over from the deep
+            green storefront: on this light card it was pale green on a pale
+            green tint, about 1.2:1. */}
+        <span className="text-[10px] font-bold text-forest-700 bg-forest-500/15 ring-1 ring-forest-500/30 rounded-full px-2 py-0.5">
           NO EXTRA FEE
         </span>
       </div>
@@ -63,9 +66,18 @@ export default function PaymentStrip({ className = '' }) {
         </li>
       </ul>
 
+      {/* The no-COD line is stated here rather than discovered at the last
+          screen of checkout. Cash on delivery is the default assumption for
+          a great many shoppers in this market, and a customer who reaches
+          the payment step still expecting to pay the rider is a customer who
+          abandons the order — the app has never had a COD path, so the only
+          thing that was missing was saying so before it mattered. */}
       <p className="text-ink-mute text-[11px] mt-3 leading-relaxed">
         Pay straight from your UPI app at checkout, or scan the QR on desktop.
         Nothing is charged until you confirm.
+      </p>
+      <p className="text-ink-soft text-[11px] mt-1.5 leading-relaxed font-semibold">
+        Online payment only — we don't take cash on delivery.
       </p>
     </div>
   )

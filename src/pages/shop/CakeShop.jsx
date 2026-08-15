@@ -190,7 +190,7 @@ export default function CakeShop() {
             </button>
           ))}
           {filtersActive && (
-            <button onClick={clearFilters} className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/15 text-chilli-200">
+            <button onClick={clearFilters} className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/10 text-chilli-700">
               <X size={12} strokeWidth={2.6} /> Clear
             </button>
           )}
@@ -251,7 +251,11 @@ export default function CakeShop() {
             <div className="absolute inset-0 flex flex-col justify-center p-5">
               <h3 className="font-serif text-xl font-bold text-white leading-tight">Something<br />entirely yours</h3>
               <p className="text-white/85 text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
-              <span className="mt-3 inline-flex items-center gap-1.5 self-start bg-green-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2.5 transition-all">
+              {/* forest-600, not green-500. White on Tailwind's green-500 is
+                  2.3:1 — the call to action on the custom-cake panel was the
+                  palest thing on it. The storefront's own green is darker and
+                  is what the rest of the shop uses. */}
+              <span className="mt-3 inline-flex items-center gap-1.5 self-start bg-forest-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2.5 transition-all">
                 <MessageCircle size={13} /> Chat with our expert
               </span>
             </div>

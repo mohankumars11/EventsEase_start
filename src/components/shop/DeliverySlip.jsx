@@ -63,8 +63,14 @@ export default function DeliverySlip({ className = '' }) {
           onClick={openCityPicker}
           className="flex min-w-0 flex-1 items-center gap-2.5 px-3.5 py-3 text-left transition-colors hover:bg-surface-sunk/[0.06] active:bg-surface-sunk/[0.07]"
         >
+          {/* 600-weight icons, not 300. The slip's ground is
+              `bg-surface-sunk/[0.06]` — a 6% tint on the pale mint shop
+              surface, so it is a LIGHT card. The 300 shades are the ones
+              tuned for the deep-green storefront this page used to have;
+              left behind after the relight they put pale gold on pale gold,
+              and the pin marking the delivery city measured about 1.2:1. */}
           <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-            chosen && !servable ? 'bg-chilli-500/20 text-chilli-300' : 'bg-saffron-400/15 text-saffron-300'
+            chosen && !servable ? 'bg-chilli-500/15 text-chilli-600' : 'bg-saffron-400/20 text-saffron-600'
           }`}>
             {chosen && !servable ? <AlertCircle size={15} /> : <MapPin size={15} />}
           </span>
@@ -97,8 +103,14 @@ export default function DeliverySlip({ className = '' }) {
             is not achievable, so it goes transparent on top and the text below
             is what everyone actually sees. */}
         <div className="relative flex min-w-0 flex-1 items-center gap-2.5 px-3.5 py-3">
+          {/* Same relight fix. The unset state was the worst of the three:
+              `bg-white/10 text-white/50` is white-on-white here, so the
+              calendar icon on the default "Pick a date" state — the one
+              every first-time visitor sees — was not visible at all. */}
           <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-            stale ? 'bg-chilli-500/20 text-chilli-300' : when ? 'bg-saffron-400/15 text-saffron-300' : 'bg-white/10 text-white/50'
+            stale ? 'bg-chilli-500/15 text-chilli-600'
+            : when ? 'bg-saffron-400/20 text-saffron-600'
+            : 'bg-surface-sunk/[0.08] text-ink-soft'
           }`}>
             <CalendarDays size={15} />
           </span>

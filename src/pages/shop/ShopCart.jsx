@@ -564,7 +564,7 @@ export default function ShopCart() {
               onClick={handleProceed}
               className="!mt-3 hidden w-full items-center justify-center gap-2 rounded-2xl bg-saffron-500 py-3.5 text-[15px] font-extrabold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-saffron-400 lg:flex"
             >
-              Continue to payment <ArrowRight size={16} />
+              Pay online by UPI <ArrowRight size={16} />
             </button>
           ) : (
             <Link
@@ -588,7 +588,10 @@ export default function ShopCart() {
        the bar overlaps once you have scrolled all the way down is the
        footer, not the form. */
     <div className={`checkout-canvas flex min-h-screen flex-col ${step === 'cart' ? 'pb-24 lg:pb-0' : ''}`}>
-      <CheckoutHeader step={step} itemCount={productCount} />
+      {/* `addressValid` is what makes the middle dot mean something: the bag
+          and the details are one scroll, so the rail has to advance on the
+          form rather than on the screen change. */}
+      <CheckoutHeader step={step} itemCount={productCount} detailsDone={addressValid} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-6 pt-5 sm:px-6">
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-6">
@@ -1078,15 +1081,19 @@ export default function ShopCart() {
         <div className="pr-chat-dock above-bottom-nav fixed inset-x-0 z-40 lg:hidden">
           <div className="mx-3 mb-2 flex items-center gap-3 rounded-2xl bg-white p-2 pl-4 shadow-[0_-4px_30px_-8px_rgba(0,0,0,0.5)] ring-1 ring-black/10">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">To pay</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">To pay online</p>
               <p className="text-lg font-extrabold leading-tight text-gray-900">{formatINR(total)}</p>
             </div>
             {user ? (
+              /* "Pay by UPI", not "Continue". The next screen is a payment
+                 screen and nothing else, so naming it here is the last
+                 chance to correct anyone still expecting to pay the rider —
+                 there is no cash-on-delivery path in this app. */
               <button
                 onClick={handleProceed}
                 className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-extrabold text-gray-900 transition-colors active:bg-saffron-600"
               >
-                Continue <ArrowRight size={15} />
+                Pay by UPI <ArrowRight size={15} />
               </button>
             ) : (
               <Link

@@ -130,7 +130,14 @@ export default function ShopCategory() {
       <ShopAppBar
         backTo="/shop"
         title={`${meta?.emoji ?? ''} ${meta?.label ?? category}`}
-        subtitle={loading ? 'Loading…' : `${products.length} items · ${meta?.tagline ?? ''}`}
+        /* The shelf's promise, not its stock level. This read "12 items ·
+           <tagline>", and a catalogue count is the one number a shop that
+           sources per order should never lead with: it answers a question
+           nobody asked with the most discouraging fact available, and it
+           isn't even true about what can be supplied. The count still exists
+           where it is genuinely useful — over the results, below, where it
+           tells you how many rows your filter just produced. */
+        subtitle={loading ? 'Loading…' : (meta?.tagline ?? '')}
         query={query}
         onQueryChange={setQuery}
       />
@@ -176,7 +183,7 @@ export default function ShopCategory() {
           {filtered && (
             <button
               onClick={() => { selectOccasion('All'); setQuery('') }}
-              className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/15 text-chilli-200"
+              className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/10 text-chilli-700"
             >
               <X size={12} strokeWidth={2.6} /> Clear
             </button>
