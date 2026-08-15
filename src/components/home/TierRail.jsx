@@ -146,8 +146,13 @@ export default function TierRail({ offer }) {
                     {t.name}
                   </span>
                   {/* The Kannada name is why these read as Sambramo's own
-                      rather than as Small/Medium/Large. */}
-                  <span className="block truncate text-[10px] font-medium italic text-saffron-700">
+                      rather than as Small/Medium/Large — which is exactly
+                      why it has to be readable. In saffron-700 on the
+                      plum-950 scrim it measured 2.1:1 and the one piece of
+                      the brand's own language on the home screen was a
+                      smudge. saffron-300 is the shade this codebase already
+                      uses for gold on a dark ground. */}
+                  <span className="block truncate text-[10px] font-medium italic text-saffron-300 drop-shadow">
                     {t.localName}
                   </span>
                 </span>
@@ -238,7 +243,11 @@ export default function TierRail({ offer }) {
           to="/plan/build"
           className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-hairline/[0.08] transition-colors hover:bg-surface-sunk/[0.04]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/15 text-saffron-300">
+          {/* The same mistake in the other direction: saffron-300 is gold for
+              a dark ground, and this tile is a white card. The padlock — the
+              icon carrying "your price is held" — was pale yellow on cream.
+              saffron-600 on the same 15% tint is the light-ground pairing. */}
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/15 text-saffron-600">
             <Lock size={16} />
           </span>
           <span className="min-w-0 flex-1">

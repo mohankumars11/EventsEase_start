@@ -345,7 +345,9 @@ export default function ReviewBoard({
       {/* ── The money, line by line ────────────────────────────────── */}
       <div className="card overflow-hidden">
         <div className="px-5 py-3.5 bg-gray-900 text-white">
-          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-ink-mute">
+          {/* white/65, not ink-mute: on gray-900 the token measured 2.9:1 and
+              the heading over the entire cost breakdown was barely there. */}
+          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-white/65">
             How the number is built
           </p>
           <p className="text-sm font-bold">Nothing added after this line</p>
@@ -470,12 +472,21 @@ export default function ReviewBoard({
 
 /* ── Pieces ─────────────────────────────────────────────────────────── */
 
+/**
+ * One figure in the strip under the headline price.
+ *
+ * White-family type, not `text-ink-mute`. This strip sits inside the plum
+ * gradient card above, where the semantic tokens resolve to their light-ground
+ * values — the label and the sub-line measured 1.2–1.6:1 there, so "Scale",
+ * "Guests", "Booked as" and every value under them were unreadable on the one
+ * panel that summarises what is being bought.
+ */
 function Stat({ label, value, sub }) {
   return (
     <div className="px-2 py-3 min-w-0">
-      <p className="text-[10px] uppercase tracking-wider text-ink-mute font-bold">{label}</p>
-      <p className="mt-0.5 text-sm font-bold truncate">{value}</p>
-      <p className="text-[10px] text-ink-mute truncate">{sub}</p>
+      <p className="text-[10px] uppercase tracking-wider text-white/60 font-bold">{label}</p>
+      <p className="mt-0.5 text-sm font-bold truncate text-white">{value}</p>
+      <p className="text-[10px] text-white/70 truncate">{sub}</p>
     </div>
   )
 }

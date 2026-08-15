@@ -182,11 +182,29 @@ export default function HomeScreen() {
         /* The tail padding exists to clear StickyCartBar, so it is only spent
            when that bar is on screen. Reserved unconditionally it left roughly
            300px of empty plum under the support strip for every visitor with an
-           empty cart, which reads as a page that failed to finish loading. */
-        <div className={`mx-auto max-w-3xl space-y-8 pt-4 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
+           empty cart, which reads as a page that failed to finish loading.
+
+           ── The vertical rhythm ─────────────────────────────────────────
+           One `space-y-8` used to separate everything, and 32px between every
+           pair is not a rhythm — it is the absence of one. On a 390px phone it
+           also reads as much more than 32px, because each neighbour is a
+           rounded card with its own padding and a soft shadow, so the eye
+           measures card-edge to card-edge and sees the gap plus two inner
+           margins.
+
+           The page now spaces by *relationship* rather than by default:
+
+             8px    inside a block that is one idea (the hero pair below)
+             24px   between two sections that are different ideas
+             +8px   only before the closing explanatory tail
+
+           Everything the trim saves is real screen: the occasion grid, which
+           is the thing people are here to tap, arrives most of a phone-height
+           earlier than it did. */
+        <div className={`mx-auto max-w-3xl space-y-6 pt-3 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
 
           {activeEvents.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <h2 className="px-4 text-[15px] font-extrabold text-ink">
                 {firstName ? `${firstName}, here's where things stand` : 'Your celebrations'}
               </h2>
@@ -194,31 +212,30 @@ export default function HomeScreen() {
             </div>
           )}
 
-          <PromoDeck slides={slides} />
+          {/* ── The hero pair ─────────────────────────────────────────
+              The deck and the film are one unit and are now spaced like
+              one: 8px, so they stack as a single above-the-fold block
+              instead of two cards floating a full gap apart.
 
-          {/* ── The gifting film ──────────────────────────────────────
-              Everything else above the fold argues — a tier, a price, a
-              coupon, a countdown. None of it shows what any of it is for.
-              This does, in five beats, and its tap target moves with the
-              story: the planner on beat one, a hamper you can send tonight
-              by beat five.
+              They were the worst offender for exactly the reason they
+              belong together — both are full-bleed rounded panels of
+              almost the same height, so a 32px trough between them read
+              as two unrelated adverts with dead ground in between rather
+              than as "here is what's on" followed by "here is what it's
+              for". Adjacent, the film reads as the deck's answer.
 
-              It carries no section heading, unlike everything below it.
-              That is deliberate and it is the second thing that got fixed
-              here: a heading plus a subtitle plus the panel came to ~250px
-              of hero for one idea, and the panel already opens with its own
-              chapter label. A hero that has to be introduced isn't a hero.
-
-              It also sits in a different place depending on who is looking:
-
-                signed out   directly under the deck. A cold visitor has to
-                             want the thing before being asked for a date,
-                             and this is the only element on the page that
-                             makes them want it.
-                signed in    under the date check. They are already sold —
-                             pushing their most useful control down to
-                             re-pitch them would be a straight loss. */}
-          {!user && <BrandFilm />}
+              Signed-in customers keep the film lower down the page (see
+              below), so this pair only exists when there is no session —
+              which is also the only time the film is the argument rather
+              than a re-pitch. */}
+          {user ? (
+            <PromoDeck slides={slides} />
+          ) : (
+            <div className="space-y-2">
+              <PromoDeck slides={slides} />
+              <BrandFilm />
+            </div>
+          )}
 
           {/* ── The six scales of celebration ─────────────────────────
               Replaces PackageRail, which put "Grand Celebration Birthday,
@@ -247,6 +264,21 @@ export default function HomeScreen() {
               not something you live next to on a phone screen. */}
           <DateCheckCard />
 
+          {/* ── The gifting film, for a signed-in customer ────────────
+              Everything else on this page argues — a tier, a price, a
+              coupon, a countdown. None of it shows what any of it is for.
+              The film does, in five beats, and its tap target moves with
+              the story: the planner on beat one, a hamper you can send
+              tonight by beat five. It carries no section heading, unlike
+              everything below it: the panel opens with its own chapter
+              label, and a hero that has to be introduced isn't a hero.
+
+              Where it sits depends on who is looking. Signed out it is
+              welded to the deck as the hero pair above, because a cold
+              visitor has to want the thing before being asked for a date.
+              Signed in it waits until after the date check — they have
+              already bought the pitch, and pushing their most useful
+              control down to re-pitch them would be a straight loss. */}
           {user && <BrandFilm />}
 
           {/* ── What are we celebrating ───────────────────────────────
@@ -329,7 +361,13 @@ export default function HomeScreen() {
                     </span>
                     <span className="absolute inset-x-0 bottom-0 p-2.5">
                       <span className="block text-[12px] font-extrabold leading-tight text-white">{f.name}</span>
-                      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-700">
+                      {/* saffron-300, not saffron-700. The 700 is the shade
+                          tuned to carry on a white card; on the near-solid
+                          plum-950 floor directly above it measures 2.5:1 and
+                          the call to action on every festival tile — the
+                          only words telling you the tile is tappable — was
+                          effectively not printed. */}
+                      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-300">
                         {FESTIVAL_DETAIL_IDS.has(f.id) ? 'Plan it' : 'Shop it'}
                         <ArrowRight size={10} />
                       </span>
@@ -353,10 +391,17 @@ export default function HomeScreen() {
           {/* ── How this works ──────────────────────────────────────
               Signed-out visitors get the full explanation; signed-in
               customers have already been through it and get the support
-              strip only. */}
-          {!user && <HowItWorks />}
+              strip only.
 
-          <SupportStrip />
+              `pt-2` on top of the shared 24px is the one place the page
+              deliberately opens up again: everything above is something to
+              tap, and this is the explanatory tail. The extra breath is
+              what marks the end of the shopping and the start of the
+              reassurance. */}
+          <div className="space-y-6 pt-2">
+            {!user && <HowItWorks />}
+            <SupportStrip />
+          </div>
         </div>
       )}
 

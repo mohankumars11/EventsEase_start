@@ -73,7 +73,11 @@ export const OFFERS = [
     emoji: '🔁',
     name: 'Book this, earn your next',
     headline: '15% off next time',
-    blurb: 'Complete this celebration and your next one starts at 15% off. Weddings have four functions; families come back.',
+    // Customer-first, then the reason. The previous line opened on the
+    // company's own logic ("Weddings have four functions; families come
+    // back"), which is a true and rather good sentence — it just is not the
+    // first thing the person reading it wants to know.
+    blurb: 'The day this celebration is delivered, your next one starts at 15% off. A wedding is four functions — most families are back within the year.',
     terms: 'Issued after this event is delivered. Valid 12 months. One celebration, not one service.',
     accent: 'plum',
     automatic: true,

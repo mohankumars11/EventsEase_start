@@ -66,16 +66,19 @@ export default function QuotePanel({
 
   return (
     <div className="card overflow-hidden">
+      {/* White-family type on the plum header. `ink-mute` and `ink-soft` are
+          the light-ground values (see index.css) and on plum-700 they put the
+          label, the range dash and the per-guest line at 2–3:1. */}
       <div className="px-5 py-4 bg-gradient-to-br from-plum-700 to-plum-800 text-white">
-        <p className="text-[11px] uppercase tracking-wider text-ink-mute font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">
           Estimated total · incl. taxes
         </p>
         <p className="text-2xl font-extrabold mt-0.5 leading-tight">
           {formatINR(quote.range.low)}
-          <span className="text-ink-mute"> – </span>
+          <span className="text-white/60"> – </span>
           {formatINR(quote.range.high)}
         </p>
-        <p className="text-xs text-ink-soft mt-1">
+        <p className="text-xs text-white/85 mt-1">
           About {formatINR(quote.perGuest)} per guest · {quote.tier.name} · {quote.guests} guests
         </p>
       </div>
