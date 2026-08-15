@@ -52,7 +52,7 @@ import ContactBlock from './ContactBlock'
  * exist. See utils/quote.js.
  */
 export default function ReviewBoard({
-  quote, blocked, submitting, onSubmit, onEdit,
+  quote, blocked, submitting, onSubmit, onEdit, revising = false,
   occasionName, occasionEmoji, mode,
   cuisine, menu, vegOnly, specialRequests, cateringOn, decorOn,
   eventDate, onEventDate, city, onCity, offer, onClearOffer,
@@ -459,11 +459,20 @@ export default function ReviewBoard({
           disabled={submitting || !!blocked}
           className="w-full min-h-[54px] rounded-xl bg-saffron-500 text-ink font-bold text-base active:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {submitting ? 'Sending…' : 'Get this confirmed →'}
+          {/* `revising` reaches this button because it is the one the
+              customer actually presses on a phone — telling them on the
+              pinned bar but not here would leave the loudest control on the
+              page still offering to send a request they already sent. */}
+          {submitting
+            ? 'Sending…'
+            : (revising ? 'Send the corrected plan →' : 'Get this confirmed →')}
         </button>
 
-        <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
-          <ShieldCheck size={12} /> Free to send. Nothing to pay to get a confirmed quote.
+        <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-gray-500">
+          <ShieldCheck size={12} className="shrink-0" />
+          {revising
+            ? 'Replaces the request you already sent — the earlier one is cancelled.'
+            : 'Free to send. Nothing to pay to get a confirmed quote.'}
         </p>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom'
 import {
-  ArrowLeft, CheckCircle2, Users, Palette, UtensilsCrossed, Sparkles, ListChecks, Receipt, Gift,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, Users, Palette, UtensilsCrossed,
+  Sparkles, ListChecks, Receipt, Gift, Pencil,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -178,6 +179,49 @@ export default function CelebrationBuilder() {
   const [error, setError] = useState(null)
   const [enquiryId, setEnquiryId] = useState(null)
   const [lockClaimed, setLockClaimed] = useState(false)
+
+  /**
+   * The id of a request that has already been sent and is now being edited.
+   *
+   * ── Why this exists ─────────────────────────────────────────────────────
+   * Once the confirmation screen appeared there was no way back into the
+   * plan at all — the only exits were "Track this celebration" and a link to
+   * the services catalogue. Somebody who noticed the wrong guest count a
+   * second after pressing send had to rebuild all six steps in an empty
+   * builder, and the coordinator would then hold two unrelated enquiries
+   * with nothing to say which one the customer meant.
+   *
+   * The whole configuration is still in component state here, so "change
+   * something" is a step change rather than a reload: every answer is
+   * already on screen and any of them can be edited before re-sending.
+   *
+   * ── Why a revision replaces rather than edits in place ──────────────────
+   * The obvious implementation is `UPDATE service_enquiries SET …`. The
+   * database refuses it. `enforce_enquiry_self_update` (migrations 013/034)
+   * is a BEFORE UPDATE trigger that allows a customer exactly two things —
+   * claim the price lock, or move an `open` request to `cancelled` — and
+   * raises on any statement that touches `services`, `packages`,
+   * `event_date` or `event_name`. An in-place edit would therefore fail for
+   * every customer, every time, and surface as "could not send this just
+   * now" at the end of a six-step form.
+   *
+   * That trigger is right, and working around it with a migration that lets
+   * customers rewrite sent enquiries would be the wrong fix: the row is what
+   * a coordinator is working from, and it should not change under them
+   * silently. So a revision does what the trigger already permits — send the
+   * corrected plan as a new request, then cancel the superseded one, with
+   * each pointing at the other in `notes`.
+   *
+   * New request first, cancel second, and the cancel is best-effort. The
+   * other order risks a cancelled request and a failed insert, which is the
+   * one outcome where the customer ends up with nothing.
+   */
+  const [revisingId, setRevisingId] = useState(null)
+  // Whether the confirmation screen is reporting a first send or an edit.
+  // `revisingId` is cleared on success, so it cannot answer this — and a
+  // screen that says "Sent to a coordinator" after an update would leave the
+  // customer wondering whether they have just raised a duplicate.
+  const [wasRevision, setWasRevision] = useState(false)
 
   // The one coupon claimed, by id. One at a time on purpose: the terms say
   // so, and two stacked percentages on an estimate nobody has confirmed is a
@@ -516,6 +560,12 @@ export default function CelebrationBuilder() {
         state.specialRequests ? `\nSPECIAL REQUESTS\n  ${state.specialRequests}` : '',
         `\nBooked as: ${BOOKING_MODES[state.mode].name}`,
         offerIsValid ? offerToNote(offer) : '',
+        // Stamped in the notes because that is the field a coordinator
+        // actually reads on their phone, and it names the reference they
+        // will already have in their list.
+        revisingId
+          ? `\nREVISED BY THE CUSTOMER on ${new Date().toLocaleString('en-IN')} — this replaces SR-${revisingId.slice(0, 8).toUpperCase()}, which has been cancelled. Re-read the whole plan above; do not work from the earlier one.`
+          : '',
       ].join('\n')
 
       // Only columns that exist before migration 034 go in this insert. The
@@ -529,7 +579,11 @@ export default function CelebrationBuilder() {
       // screen reads both. Migration 041 adds real columns; until it is applied
       // by hand these two are the storage, and after it is applied they are
       // still written, so nothing has to be backfilled to stay readable.
-      const { data, error: err } = await supabase.from('service_enquiries').insert({
+      // One payload, written by either path. A revision updates the row the
+      // customer is editing; anything else inserts a new one. Splitting the
+      // payload between the two would be the obvious way to end up with a
+      // revised enquiry that quietly stopped carrying, say, `packages`.
+      const payload = {
         customer_id: user.id,
         event_id:    state.eventId || 'custom',
         event_name:  name,
@@ -592,14 +646,38 @@ export default function CelebrationBuilder() {
         }],
         notes,
         status: 'open',
-      }).select('id').single()
+      }
+
+      const { data, error: err } = await supabase
+        .from('service_enquiries').insert(payload).select('id').single()
       if (err) throw err
+
+      // Retire the superseded request, now that its replacement is safely
+      // stored. `status: 'open' → 'cancelled'` with nothing else touched is
+      // precisely the one edit enforce_enquiry_self_update() permits a
+      // customer, so this is the supported path and not a workaround of the
+      // trigger.
+      //
+      // Best-effort, and deliberately so: the customer's corrected plan is
+      // already saved by this point. A coordinator seeing one stale open
+      // request that says which enquiry replaced it is a far better failure
+      // than an error thrown over a request that did in fact go through.
+      if (revisingId) {
+        const { error: cancelErr } = await supabase.from('service_enquiries')
+          .update({ status: 'cancelled' })
+          .eq('id', revisingId).eq('customer_id', user.id).eq('status', 'open')
+        if (cancelErr) {
+          console.warn('Superseded enquiry not cancelled:', cancelErr.message)
+        }
+      }
 
       // With a coordinator now holding this, the work is finished rather than
       // paused — home must stop offering to "finish" it.
       clearDraft(RESUME_KEY)
 
       setEnquiryId(data.id)
+      setWasRevision(!!revisingId)
+      setRevisingId(null)
       setStep('done')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
@@ -609,7 +687,7 @@ export default function CelebrationBuilder() {
     }
   }, [user, navigate, location, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
       specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
-      eventDate, city, appliedOfferId, contact, timeSlot, servicesTouched])
+      eventDate, city, appliedOfferId, contact, timeSlot, servicesTouched, revisingId])
 
   /**
    * Record that the customer says they paid.
@@ -651,12 +729,18 @@ export default function CelebrationBuilder() {
       eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu, specialRequests,
       decorLevelId, themeId, addonIds, serviceIds, serviceQty, includeCatering, includeDecor,
       eventDate, city, appliedOfferId, contact, timeSlot, servicesTouched,
+      // Carried so an interrupted revision resumes as a revision. Without it,
+      // somebody who edits a sent request, wanders off and comes back through
+      // the resume prompt would send the corrected plan as a second request
+      // and leave the original one open — the exact duplicate this flow
+      // exists to prevent, reintroduced by the recovery path.
+      revisingId,
     })
     noteDetail(`${occasionName} · ${guestCount} guests`)
   }, [step, eventId, otherOccasion, mode, guestCount, tierId, cuisineId, vegOnly, menu,
       specialRequests, decorLevelId, themeId, addonIds, serviceIds, serviceQty,
       includeCatering, includeDecor, eventDate, city, appliedOfferId, contact, timeSlot,
-      servicesTouched, occasionName])
+      servicesTouched, occasionName, revisingId])
 
   /**
    * Put it back after an interruption — and only put it back.
@@ -690,6 +774,7 @@ export default function CelebrationBuilder() {
     // treat a restored configuration as untouched and re-apply their defaults
     // over the top of it.
     setTierTouched(true); setDecorTouched(true); setServicesTouched(!!draft.servicesTouched)
+    setRevisingId(draft.revisingId ?? null)
     if (draft.step) setStep(draft.step)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -724,6 +809,22 @@ export default function CelebrationBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  /**
+   * Reopen a sent request at question one, with every answer still on it.
+   *
+   * No refetch and no reload: the configuration never left component state,
+   * so this is a step change. `revisingId` is what turns the next send into
+   * an update of this row rather than a second enquiry, and the autosave
+   * effect starts writing again by itself the moment `step` stops being
+   * 'done' — so an interruption mid-revision is recoverable like any other.
+   */
+  const reviseFromStart = useCallback(() => {
+    setRevisingId(enquiryId)
+    setStep(flow[0]?.id ?? 'occasion')
+    setError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [enquiryId, flow])
+
   /* ── Sent ─────────────────────────────────────────────────────────── */
   if (step === 'done') {
     return (
@@ -733,10 +834,13 @@ export default function CelebrationBuilder() {
             <div className="w-20 h-20 bg-emerald-400/15 ring-1 ring-emerald-400/30 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 size={44} className="text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-extrabold text-ink">Sent to a coordinator 🎉</h2>
+            <h2 className="text-2xl font-extrabold text-ink">
+              {wasRevision ? 'Your changes are in 🎉' : 'Sent to a coordinator 🎉'}
+            </h2>
             <p className="text-ink-mute text-sm leading-relaxed">
-              Your {occasionName.toLowerCase()} — {tier?.name}, {guestCount} guests, menu, décor and services — is with
-              our team. Nothing gets booked until you approve the confirmed quote.
+              {wasRevision
+                ? <>Your corrected {occasionName.toLowerCase()} — {tier?.name}, {guestCount} guests, menu, décor and services — is with our team, and the earlier request has been cancelled so nobody works from it. Note the new reference below. Nothing gets booked until you approve the confirmed quote.</>
+                : <>Your {occasionName.toLowerCase()} — {tier?.name}, {guestCount} guests, menu, décor and services — is with our team. Nothing gets booked until you approve the confirmed quote.</>}
             </p>
             {quote && (
               <p className="plan-glass inline-block rounded-xl px-4 py-2 text-sm font-bold text-ink">
@@ -775,13 +879,52 @@ export default function CelebrationBuilder() {
 
           <RewardsCard occasionName={occasionName} />
 
+          {/* ── Change it ────────────────────────────────────────────
+              The way back into the plan, and the reason it is here rather
+              than only in a WhatsApp thread: the second after pressing send
+              is exactly when somebody spots the wrong guest count, and until
+              now this screen had no route back at all. The two exits were
+              "track this" and the services catalogue, so the only way to
+              correct a digit was to rebuild all six steps from an empty
+              builder — and the coordinator would then hold two enquiries
+              with nothing to say which one was meant.
+
+              Every answer is still in component state, so this is a step
+              change rather than a reload: the builder reopens at question
+              one with the whole plan filled in, anything can be edited, and
+              re-sending updates this same request instead of raising a
+              second one. */}
+          {/* Not offered once the price lock is paid. That ₹1,000 was taken
+              against this specific quote, and replacing the enquiry it is
+              attached to would strand the payment on a cancelled request.
+              Changing a locked plan is a conversation, and the WhatsApp
+              thread on the card above is where it belongs. */}
+          {!lockClaimed && (
+            <div className="rounded-2xl bg-surface p-4 ring-1 ring-hairline/[0.08]">
+              <p className="text-[13px] font-extrabold text-ink">Need to change something?</p>
+              <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-mute">
+                Nothing is booked yet. Go back through it from the start — every answer
+                is still here — and send us the corrected plan. We'll cancel this one so
+                your coordinator only ever works from the latest.
+              </p>
+              <button
+                type="button"
+                onClick={reviseFromStart}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.1]"
+              >
+                <Pencil size={14} strokeWidth={2.6} />
+                Start again from the beginning
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 pt-2">
             {/* My celebrations, not My requests. It is the screen the bottom
                 bar's own tab goes to, and since lib/celebrations.js it shows
                 this enquiry alongside everything else the customer has asked
                 for — which is what "track this" has to mean. */}
             <Link to="/dashboard/customer/events" className="btn-primary text-center">Track this celebration</Link>
-            <Link to="/services" className="text-sm font-semibold text-center text-saffron-300">
+            <Link to="/services" className="text-sm font-semibold text-center text-saffron-700">
               Browse services &amp; packages
             </Link>
           </div>
@@ -812,8 +955,11 @@ export default function CelebrationBuilder() {
 
   const isReview = step === 'review'
   const nextStep = flow[flowIndex + 1]
+  // A revision says so on the button. "Get this confirmed" on a request that
+  // is already with a coordinator reads as sending a second one, which is
+  // the exact fear this flow exists to remove.
   const primaryLabel = isReview
-    ? (submitting ? 'Sending…' : 'Get this confirmed')
+    ? (submitting ? 'Sending…' : (revisingId ? 'Send corrected plan' : 'Get this confirmed'))
     : nextStep ? `Next: ${nextStep.short}` : 'Review'
   const primaryDisabled = isReview
     ? (submitting || !!blocked)
@@ -881,6 +1027,24 @@ export default function CelebrationBuilder() {
           <p className="plan-rise mt-1.5 max-w-2xl text-[12px] sm:text-sm text-ink-mute" style={{ '--rise-delay': '120ms' }}>
             {flow.length} quick steps · taxes included · nothing to pay to see your number.
           </p>
+
+          {/* ── Editing a request that has already gone out ────────────
+              Without this the builder is indistinguishable from a fresh
+              one, and somebody halfway through a revision has no way to
+              tell whether they are about to update their request or raise
+              a second. It names the reference so the thing on screen and
+              the thing in their inbox are visibly the same request. */}
+          {revisingId && (
+            <div className="plan-rise mt-3 flex items-start gap-2.5 rounded-2xl bg-saffron-400/15 px-3.5 py-2.5 ring-1 ring-saffron-400/40">
+              <Pencil size={14} className="mt-0.5 shrink-0 text-saffron-700" strokeWidth={2.6} />
+              <p className="text-[11.5px] leading-relaxed text-ink-soft">
+                <span className="font-extrabold text-ink">Editing your sent request</span>
+                {' '}(SR-{revisingId.slice(0, 8).toUpperCase()}). Change anything you like —
+                when you send, that one is cancelled and your coordinator works from the
+                corrected plan only.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1010,6 +1174,7 @@ export default function CelebrationBuilder() {
               quote={showQuote ? quote : null}
               blocked={blocked}
               submitting={submitting}
+              revising={!!revisingId}
               onSubmit={() => submit()}
               onEdit={goTo}
               occasionName={occasionName}
@@ -1087,35 +1252,73 @@ export default function CelebrationBuilder() {
           bundleSaving={showQuote && savings?.active ? savings.total : 0}
         />
 
+        {/* ── The two doors ───────────────────────────────────────────
+            These were a pair of radio buttons wearing the clothes of a
+            navigation choice, and "Just one thing" was the broken half of
+            it: tapping it set `mode` to `individual`, which removed the 10%
+            bundle from the estimate and changed nothing else. The customer
+            was still standing in a six-step builder that asks which
+            occasion they are planning, how many guests, which cuisine and
+            which décor level — for a cook on Sunday. Nothing moved, nothing
+            navigated, and there was no way from here to actually book one
+            service.
+
+            The app has had the right screen for that all along. /services
+            is, in App.jsx's own words, "the page the 'Need just one thing?'
+            shelf always implied and never had" — one service, priced and
+            bought end to end. So this half is now a door to it.
+
+            The other half stays a button, because the whole celebration is
+            not somewhere else: it is this page. Pressing it confirms the
+            mode and carries you back up to the step you are on, which is
+            the honest answer to "take me to the whole thing" when you are
+            already inside it. */}
         <div>
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
-            How you are booking
+            What are you booking?
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {Object.values(BOOKING_MODES).map((m, i) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setMode(m.id)}
-                aria-pressed={mode === m.id}
-                style={{ '--rise-delay': `${i * 70}ms` }}
-                className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
-                  mode === m.id
-                    ? 'bg-white shadow-lg ring-2 ring-saffron-400'
-                    : 'plan-glass text-ink hover:bg-surface-sunk/[0.08]'
-                }`}
-              >
-                <p className={`font-bold text-sm ${mode === m.id ? 'text-gray-900' : 'text-ink'}`}>
-                  {m.emoji} {m.name}
-                </p>
-                <p className={`text-xs mt-0.5 ${mode === m.id ? 'text-gray-500' : 'text-ink-mute'}`}>{m.blurb}</p>
-                {m.bundleDiscount > 0 && (
-                  <p className={`text-[11px] font-bold mt-1 ${mode === m.id ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                    Saves {Math.round(m.bundleDiscount * 100)}% against booking the same pieces separately
-                  </p>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('full')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              aria-pressed={mode === 'full'}
+              className={`plan-rise text-left px-4 py-3.5 min-h-[76px] rounded-2xl transition-all ${
+                mode === 'full'
+                  ? 'bg-white shadow-lg ring-2 ring-saffron-400'
+                  : 'plan-glass text-ink hover:bg-surface-sunk/[0.08]'
+              }`}
+            >
+              <p className="flex items-center gap-1.5 font-bold text-sm text-gray-900">
+                {BOOKING_MODES.full.emoji} {BOOKING_MODES.full.name}
+                {mode === 'full' && (
+                  <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-saffron-400/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-saffron-700">
+                    <Check size={10} strokeWidth={3} /> You're here
+                  </span>
                 )}
-              </button>
-            ))}
+              </p>
+              <p className="text-xs mt-0.5 text-gray-500">{BOOKING_MODES.full.blurb}</p>
+              <p className="text-[11px] font-bold mt-1 text-emerald-700">
+                Saves {Math.round(BOOKING_MODES.full.bundleDiscount * 100)}% against booking the same pieces separately
+              </p>
+            </button>
+
+            <Link
+              to="/services"
+              style={{ '--rise-delay': '70ms' }}
+              className="plan-rise plan-glass group flex min-h-[76px] flex-col justify-center rounded-2xl px-4 py-3.5 text-left text-ink transition-all hover:bg-surface-sunk/[0.08]"
+            >
+              <p className="flex items-center gap-1.5 font-bold text-sm text-ink">
+                {BOOKING_MODES.individual.emoji} {BOOKING_MODES.individual.name}
+                <ArrowRight size={14} className="ml-auto shrink-0 text-ink-mute transition-transform group-hover:translate-x-0.5" />
+              </p>
+              <p className="text-xs mt-0.5 text-ink-mute">{BOOKING_MODES.individual.blurb}</p>
+              <p className="mt-1 text-[11px] font-bold text-accent">
+                Takes you to the service catalogue
+              </p>
+            </Link>
           </div>
         </div>
 
