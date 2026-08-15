@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, CalendarHeart, ShoppingBag, MessageCircle } from 'lucide-react'
+import { Home, Store, Sparkles, CalendarHeart, Route, ShoppingBag, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useChat } from '../../context/ChatContext'
+import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
 import SambramoMark from '../ui/SambramoMark'
 
@@ -100,6 +101,9 @@ export default function BottomNav() {
   const { open: chatOpen, toggleChat } = useChat()
   const { pathname } = useLocation()
   const barRef = useRef(null)
+  // Three counts, no row payload — see the hook. It self-gates on role, so
+  // this costs a vendor or an admin nothing.
+  const activity = useCustomerActivity()
 
   const role = profile?.role
   const hidden = role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
@@ -132,11 +136,24 @@ export default function BottomNav() {
    * and login is asked at the one moment there is something to save. A tab
    * bar advertising the door is the opposite of that decision.
    *
-   * Signed-out visitors get the occasions catalogue instead, which is the
-   * thing the tab's calendar icon actually suggests and a place worth going.
-   * Signed-in customers keep their own celebrations.
+   * ── It now changes identity once there is something to track ───────────
+   * Before an order exists it is `Occasions`, pointing at the catalogue — a
+   * real place, and the thing a calendar icon suggests.
+   *
+   * The moment a customer has ANY order, event or enquiry it becomes `Track`:
+   * one screen carrying every celebration and every order, with the steps and
+   * the payments. That is the thing somebody actually returns to the app for,
+   * and it was previously reachable only from a card on Home.
+   *
+   * "Track" over the alternatives: "Orders" excludes celebrations, "Events"
+   * excludes the shop, and "Bookings" is the pre-pivot marketplace word this
+   * codebase deliberately retired. It is also the verb this market already
+   * uses, and it fits the 10px label.
    */
-  const celebrations = user ? '/dashboard/customer/events' : '/services'
+  const tracking = activity.total > 0
+  const celebrations = user
+    ? (tracking ? '/track' : '/services')
+    : '/services'
 
   /**
    * Help is a tab, not a floating bubble.
@@ -154,7 +171,18 @@ export default function BottomNav() {
     // `icon` is the fallback for this row; a primary tab renders the
     // kolam instead and never reaches it.
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
-    { to: celebrations,    icon: CalendarHeart, label: user ? 'Events' : 'Occasions' },
+    // The badge counts only what is WAITING ON THE CUSTOMER — a plan to
+    // approve, an answered enquiry. An order awaiting payment confirmation is
+    // our reconciliation backlog, not their task, and a badge that counts
+    // everything is a badge people learn to ignore. The pulse covers the
+    // other case: something is live, but nothing needs you.
+    {
+      to: celebrations,
+      icon: tracking ? Route : CalendarHeart,
+      label: tracking ? 'Track' : 'Occasions',
+      badge: activity.needsYou,
+      pulse: tracking && activity.needsYou === 0 && activity.live > 0,
+    },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
     { action: toggleChat,  icon: MessageCircle, label: 'Help', active: chatOpen },
   ]
@@ -208,7 +236,7 @@ export default function BottomNav() {
           an even pitch and the row reads as a grid rather than as text that
           happens to be spaced out. */}
       <ul className="flex items-stretch px-0.5">
-        {tabs.map(({ to, icon: Icon, label, primary, badge, action, active: forcedActive }) => {
+        {tabs.map(({ to, icon: Icon, label, primary, badge, pulse, action, active: forcedActive }) => {
           const active = forcedActive ?? isActive(to)
 
           // What every tab looks like inside, whether it navigates or opens
@@ -261,6 +289,16 @@ export default function BottomNav() {
                   {badge > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                  {/* A number means "do something". This dot means "something
+                      is happening" — a live celebration or an order on its
+                      way, with nothing owed by the customer. Keeping the two
+                      apart is what stops the badge becoming wallpaper. */}
+                  {!badge && pulse && (
+                    <span aria-hidden="true" className="absolute -top-0.5 -right-1 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-saffron-400 animate-pulse-ring" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-saffron-500" />
                     </span>
                   )}
                 </span>

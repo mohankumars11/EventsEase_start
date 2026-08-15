@@ -42,8 +42,12 @@ function LiveCard({ celebration: c, single }) {
   const step = JOURNEY.findIndex(s => s.key === c.stage)
 
   return (
+    /* Straight to this celebration's own tracker, not to a list.
+       It used to point at /dashboard/customer/events — the list — from a card
+       that already names the celebration, so tapping the thing you were
+       reading about took you to a page where you had to find it again. */
     <Link
-      to="/dashboard/customer/events"
+      to={`/track/${c.kind}/${c.id}`}
       className={`home-glass group relative shrink-0 snap-start overflow-hidden p-3.5 ${single ? 'w-full' : 'w-[86%]'}`}
     >
       <div className="flex items-center gap-3">
@@ -87,7 +91,13 @@ function LiveCard({ celebration: c, single }) {
       </div>
 
       <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold text-ink-mute">
-        <span>Step {Math.max(step + 1, 1)} of {JOURNEY.length}</span>
+        {/* The stage's NAME, not "Step 2 of 5".
+            Track draws the same journey on four stops, so a count here said
+            "of 5" while the tracker one tap away said four — two numbers for
+            one process, which reads as one of them being wrong. The name is
+            what the customer actually wants anyway ("Coordinator working on
+            it" beats "Step 2"), and it cannot disagree with a total. */}
+        <span>{JOURNEY[Math.max(step, 0)]?.label ?? 'In progress'}</span>
         <span className="font-mono">{c.reference}</span>
         {c.eventDate && (
           <span className="flex items-center gap-1">

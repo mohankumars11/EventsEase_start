@@ -47,6 +47,11 @@ const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
 const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
 const Cart           = lazy(() => import('./pages/customer/Cart'))
 
+// Track — every celebration and every order, with the steps and the payments.
+const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
+const OrderTracker        = lazy(() => import('./pages/track/OrderTracker'))
+const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'))
+
 // Vendor & Admin
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
@@ -91,18 +96,27 @@ function DashboardRedirect() {
   return <Navigate to="/dashboard/customer" replace />
 }
 
+/** A UUID, as opposed to a catalogue slug like `birthday`. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
- * Keeps old /dashboard/customer/events/:eventId links working now that the
- * catalog lives at /services/:eventId. A bare <Navigate> cannot interpolate a
- * route param, so this reads it and rebuilds the path.
+ * Two different things have lived at /dashboard/customer/events/:eventId, and
+ * this tells them apart.
  *
- * Note the sibling /dashboard/customer/events (MyEvents) still resolves: React
- * Router ranks a static segment above a dynamic one, so the two coexist exactly
- * as they did before.
+ * The param used to be a catalogue slug, so the redirect sent everything to
+ * /services/:eventId. But the customer's own celebrations are keyed by UUID,
+ * and `MyEvents` linked to exactly this path — so a customer opening their own
+ * wedding was thrown at the PUBLIC MARKETING CATALOGUE, which is a dead end
+ * wearing the clothes of a working link.
+ *
+ * A UUID is now recognised and sent to its tracker. Anything else is still a
+ * slug and still goes to the catalogue, so every old link survives.
  */
 function LegacyEventRedirect() {
   const { eventId } = useParams()
-  return <Navigate to={`/services/${eventId}`} replace />
+  return UUID_RE.test(eventId ?? '')
+    ? <Navigate to={`/track/event/${eventId}`} replace />
+    : <Navigate to={`/services/${eventId}`} replace />
 }
 
 /**
@@ -423,6 +437,41 @@ function AppRoutes() {
       <Route path="/dashboard/customer/events" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <ScreenShell><MyEvents /></ScreenShell>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Track ──────────────────────────────────────
+          One screen for every celebration and every order, replacing three
+          that each answered "where is my thing?" in a different vocabulary.
+
+          Deliberately NOT in FOCUSED_ROUTES (config/chrome.js): this is a
+          browsing surface a customer arrives at from the tab bar, and hiding
+          the bar here would strand them on the one screen they return to
+          most.
+
+          ScreenShell, like the other customer screens — each page draws its
+          own header and owns its own `pb-bottom-nav`. */}
+      <Route path="/track" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <ScreenShell><TrackHub /></ScreenShell>
+        </ProtectedRoute>
+      } />
+      <Route path="/track/order/:orderId" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <ScreenShell><OrderTracker /></ScreenShell>
+        </ProtectedRoute>
+      } />
+      {/* One component, two doors: a wizard celebration lives in `events`, a
+          builder or cart one in `service_enquiries`. The customer is owed one
+          screen regardless of which table it landed in. */}
+      <Route path="/track/event/:eventId" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <ScreenShell><CelebrationTracker /></ScreenShell>
+        </ProtectedRoute>
+      } />
+      <Route path="/track/enquiry/:enquiryId" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <ScreenShell><CelebrationTracker /></ScreenShell>
         </ProtectedRoute>
       } />
 

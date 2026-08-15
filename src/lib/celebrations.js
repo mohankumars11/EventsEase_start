@@ -166,7 +166,11 @@ function fromEvent(row) {
     lockAmount: row.lock_payment_amount ?? null,
     contact:    contactOf(row, 'event'),
     lineCount:  null,
-    href:       '/dashboard/customer/events',
+    // The celebration's OWN tracker. This pointed at the list screen, which
+    // for `MyEvents` meant its "Open this celebration" button navigated to
+    // the page the customer was already standing on — a dead end wearing the
+    // clothes of a working link.
+    href:       `/track/event/${row.id}`,
     raw:        row,
   }
 }
@@ -207,7 +211,7 @@ function fromEnquiry(row) {
     contact:    contactOf(row, 'enquiry'),
     lineCount:  services.length + (row.packages ?? []).length,
     cancelReason: row.cancellation_reason ?? null,
-    href:       '/dashboard/customer/requests',
+    href:       `/track/enquiry/${row.id}`,
     raw:        row,
   }
 }
