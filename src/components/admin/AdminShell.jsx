@@ -166,7 +166,7 @@ export default function AdminShell({
                       {count > 0 && (
                         <span
                           className="text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums shrink-0"
-                          style={{ background: STATUS.critical, color: 'rgb(var(--ink))' }}
+                          style={{ background: STATUS.critical, color: '#fff' }}
                         >
                           {count > 99 ? '99+' : count}
                         </span>

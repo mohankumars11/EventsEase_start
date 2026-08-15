@@ -33,7 +33,11 @@ export default function StickyCartBar() {
       role="region"
       aria-label="Cart summary"
     >
-      <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-forest-800 shadow-[0_16px_40px_-16px_rgba(4,26,20,0.9)] ring-1 ring-white/10">
+      {/* A white card, like every other floating bar. It was `bg-forest-800`
+          — the storefront's old ground — which made sense while the page
+          behind it was the same green and stopped making sense the moment it
+          was not: a dark slab with the app's ink colour written on it. */}
+      <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-2)] ring-1 ring-hairline/10">
         {remaining > 0 ? (
           <div className="px-3.5 pt-2.5">
             <p className="flex items-center gap-1.5 text-[11px] font-semibold text-saffron-700">

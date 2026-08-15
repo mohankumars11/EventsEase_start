@@ -171,7 +171,7 @@ export default function GuestScaleDial({
               title={`${t.name} — ${t.guests.min}–${t.guests.max} guests`}
               aria-label={`${t.name}, ${t.guests.min} to ${t.guests.max} guests`}
               aria-pressed={isChosen}
-              className={`group relative flex-1 rounded-lg pb-1 pt-1.5 text-center transition-all duration-300 ${
+              className={`tap-tall group relative flex-1 rounded-lg pb-1 pt-1.5 text-center transition-all duration-300 ${
                 isMatch ? 'ring-1' : 'hover:bg-surface-sunk/[0.07]'
               }`}
               style={{

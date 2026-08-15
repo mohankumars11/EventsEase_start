@@ -379,7 +379,10 @@
   .scale-slider {
     -webkit-appearance: none;
     appearance: none;
-    height: 22px;
+    /* 44px, not the thumb's 22px: this is a drag target and its height is
+       the whole of its hit area. The track and thumb are pseudo-elements
+       centred inside it, so nothing moves visually. */
+    height: 44px;
     background: transparent;
     cursor: pointer;
   }
@@ -805,6 +808,58 @@
     100% { opacity: 1; transform: translateY(0); }
   }
   .fact-swap { animation: fact-swap 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  /* ── Touch targets ───────────────────────────────────────────────
+     Material's minimum tap target is 48x48dp, and Android's accessibility
+     scanner flags anything under it. This app is phone-first and most of its
+     icon controls were drawn at 36–40px, its filter chips at 34px tall, and
+     its carousel dots at 6px — all visually right and all too small to hit
+     reliably with a thumb.
+
+     The fix is to grow the HIT AREA, not the artwork. Enlarging the buttons
+     themselves would push the app bars taller and space the chips out until
+     the rails stopped fitting; a centred pseudo-element costs no layout at
+     all, because it is absolutely positioned and its parent is the thing
+     already on screen.
+
+     `.tap-48` needs a positioned parent — every control it is used on is
+     already `relative` or `inline-flex`, but it sets `position: relative`
+     itself so it cannot silently anchor to the wrong ancestor.
+
+     Nothing here changes what is painted. If a target looks bigger after
+     this, something else moved. */
+  .tap-48 { position: relative; }
+  .tap-48::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    /* Above the control's own art so the whole area is clickable, but below
+       anything that overlaps it — a cart badge stays hittable, and this never
+       eats a neighbouring control's taps because it is only 48px wide. */
+    z-index: 1;
+  }
+  /* For a wide-but-short control (a chip, a pill) the width is already fine
+     and only the height is short — stretching to 48px wide would overlap the
+     chip beside it in a rail. */
+  .tap-tall { position: relative; }
+  .tap-tall::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* Pinned to 48px and centred, rather than inset by a fixed amount:
+       `inset: -7px 0` grows a 26px control to 40px, not to 48, and the
+       shortfall depends on the control's own height — so every caller would
+       need its own number. This one rule is correct for any height. */
+    top: 50%;
+    height: 48px;
+    transform: translateY(-50%);
+    z-index: 1;
+  }
 
   /* ── Safe areas (top notch, for the sticky app bar) ─── */
   .pt-safe { padding-top: env(safe-area-inset-top, 0px); }

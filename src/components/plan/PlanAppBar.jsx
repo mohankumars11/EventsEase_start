@@ -78,7 +78,7 @@ export default function PlanAppBar({ query = '', onQueryChange }) {
             type="button"
             onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
             aria-label="Back"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
+            className="-ml-1 tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
           </button>
@@ -94,7 +94,7 @@ export default function PlanAppBar({ query = '', onQueryChange }) {
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (

@@ -90,7 +90,7 @@ export default function ShopAppBar({
               <button
                 onClick={() => navigate(-1)}
                 aria-label="Back"
-                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
+                className="-ml-1 tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
               >
                 <ArrowLeft size={20} />
               </button>
@@ -98,7 +98,7 @@ export default function ShopAppBar({
               <Link
                 to={backTo}
                 aria-label="Back"
-                className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
+                className="-ml-1 tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft active:bg-surface-sunk/[0.07]"
               >
                 <ArrowLeft size={20} />
               </Link>
@@ -136,7 +136,7 @@ export default function ShopAppBar({
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
+            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (

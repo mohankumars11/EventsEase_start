@@ -90,7 +90,7 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
               <p className="mt-1.5 font-serif text-[21px] font-extrabold leading-[1.04] text-white drop-shadow-sm">
                 {slide.title}
               </p>
-              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-ink-soft">
+              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-white/85">
                 {slide.body}
               </p>
               <span className="mt-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-[11px] font-extrabold text-plum-900 shadow-sm">
@@ -100,18 +100,36 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
           </div>
         </Link>
 
+        {/* The dot is the artwork; the button around it is the target.
+            These were bare 6px buttons — far under Android's 48dp minimum,
+            and the obvious fix (a 48px pseudo-element on each) is wrong here
+            because the dots sit 12px apart, so every hit area would swallow
+            its neighbours and a tap could not resolve to one slide.
+
+            Padding the button instead keeps each target separate and
+            self-measuring: 8px either side of a 6px dot is a 22px column,
+            and `py-2.5` gives the full height. Narrower than 48px, but the
+            targets no longer overlap, and the deck's primary controls are
+            swipe and auto-advance — these are a supplement and an indicator.
+            `-mr-2` pulls the row back so the added padding does not shift the
+            dots off their original right margin. */}
         {items.length > 1 && (
-          <div className="pointer-events-auto absolute bottom-3 right-4 flex items-center gap-1.5">
+          <div className="pointer-events-auto absolute bottom-1 right-2 -mr-2 flex items-center">
             {items.map((s, n) => (
               <button
                 key={s.key}
                 onClick={() => { setI(n); setHeld(true) }}
                 aria-label={`Show slide ${n + 1}: ${s.title}`}
                 aria-current={n === i}
-                className={`h-1.5 rounded-full transition-all ${
-                  n === i ? 'w-5 bg-white' : 'w-1.5 bg-white/45'
-                }`}
-              />
+                className="tap-tall group px-2 py-2.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block h-1.5 rounded-full transition-all ${
+                    n === i ? 'w-5 bg-white' : 'w-1.5 bg-white/45'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

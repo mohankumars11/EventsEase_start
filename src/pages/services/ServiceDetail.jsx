@@ -288,7 +288,7 @@ export default function ServiceDetail() {
           <button
             onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/services'))}
             aria-label="Back"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
+            className="-ml-1 tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
           </button>
@@ -303,7 +303,7 @@ export default function ServiceDetail() {
           <Link
             to={cartPath}
             aria-label={`Cart, ${cartCount} items`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10"
+            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
@@ -417,7 +417,7 @@ export default function ServiceDetail() {
               <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
                 <button
                   onClick={() => setFamilyId('all')}
-                  className={`home-chip ${
+                  className={`tap-tall home-chip ${
                     familyId === 'all'
                       ? 'bg-saffron-400 text-plum-950'
                       : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
@@ -429,7 +429,7 @@ export default function ServiceDetail() {
                   <button
                     key={f.id}
                     onClick={() => setFamilyId(f.id)}
-                    className={`home-chip ${
+                    className={`tap-tall home-chip ${
                       familyId === f.id
                         ? 'bg-saffron-400 text-plum-950'
                         : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'

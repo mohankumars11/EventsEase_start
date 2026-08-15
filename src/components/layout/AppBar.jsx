@@ -127,7 +127,7 @@ export default function AppBar({
             <Link
               to={cartPath}
               aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+              className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <ShoppingBag size={18} />
               {cartCount > 0 && (

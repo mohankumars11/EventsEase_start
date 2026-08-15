@@ -185,14 +185,14 @@ export default function ShopPicksRail() {
           <Link
             key={cat.id}
             to={`/shop/${encodeURIComponent(cat.id)}`}
-            className="home-chip shrink-0 bg-surface text-ink-soft ring-1 ring-hairline/10"
+            className="tap-tall home-chip shrink-0 bg-surface text-ink-soft ring-1 ring-hairline/10"
           >
             <span aria-hidden="true">{cat.emoji}</span> {cat.label}
           </Link>
         ))}
         <Link
           to="/shop"
-          className="home-chip shrink-0 bg-saffron-400 text-plum-950"
+          className="tap-tall home-chip shrink-0 bg-saffron-400 text-plum-950"
         >
           See all <ArrowRight size={11} />
         </Link>

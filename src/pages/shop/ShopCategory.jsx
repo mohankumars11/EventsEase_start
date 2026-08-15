@@ -149,7 +149,7 @@ export default function ShopCategory() {
           {occasionGroups.length > 0 && (
             <button
               onClick={() => setFiltersOpen(true)}
-              className={`shop-chip ${
+              className={`tap-tall shop-chip ${
                 occasion !== 'All'
                   ? 'border-white bg-white text-forest-900'
                   : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
@@ -164,7 +164,7 @@ export default function ShopCategory() {
               key={s.id}
               onClick={() => setSort(s.id)}
               aria-pressed={sort === s.id}
-              className={`shop-chip ${
+              className={`tap-tall shop-chip ${
                 sort === s.id
                   ? 'border-saffron-400 bg-saffron-400 text-forest-900'
                   : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
@@ -176,7 +176,7 @@ export default function ShopCategory() {
           {filtered && (
             <button
               onClick={() => { selectOccasion('All'); setQuery('') }}
-              className="shop-chip border-chilli-400/40 bg-chilli-500/15 text-chilli-200"
+              className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/15 text-chilli-200"
             >
               <X size={12} strokeWidth={2.6} /> Clear
             </button>
@@ -325,7 +325,7 @@ function OccasionSheet({ groups, active, categoryLabel, onPick, onClose }) {
                     <button
                       key={o.id}
                       onClick={() => onPick(isActive ? 'All' : o.id)}
-                      className={`shop-chip ${
+                      className={`tap-tall shop-chip ${
                         isActive
                           ? 'border-forest-700 bg-forest-700 text-white'
                           : 'border-gray-200 bg-white text-gray-600'

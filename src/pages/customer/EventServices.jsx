@@ -435,7 +435,7 @@ export default function EventServices() {
           <button
             onClick={() => navigate('/services')}
             aria-label="All occasions"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+            className="tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
           >
             <ArrowLeft size={16} />
           </button>
@@ -446,7 +446,7 @@ export default function EventServices() {
             </p>
             <button
               onClick={openCityPicker}
-              className="flex items-center gap-1 text-[10.5px] text-ink-mute transition-colors hover:text-ink"
+              className="tap-tall flex items-center gap-1 text-[10.5px] text-ink-mute transition-colors hover:text-ink"
             >
               <MapPin size={9} className="shrink-0" />
               <span className="truncate">{chosen ? city : 'Set your city'}</span>
@@ -458,7 +458,7 @@ export default function EventServices() {
             <button
               onClick={() => navigate('/dashboard/customer/cart')}
               aria-label="Your enquiry cart"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+              className="relative tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
             >
               <ShoppingCart size={16} />
               {totalCount > 0 && (

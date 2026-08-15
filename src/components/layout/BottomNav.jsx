@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useChat } from '../../context/ChatContext'
 import { isFocusedRoute } from '../../config/chrome'
+import SambramoMark from '../ui/SambramoMark'
 
 /**
  * Phone-first primary navigation.
@@ -36,9 +37,13 @@ import { isFocusedRoute } from '../../config/chrome'
  *
  * So all six tabs now sit on one baseline in six equal columns, and
  * nothing leaves the bar's own box. Plan keeps its prominence the way a
- * tab bar is supposed to give it — a filled saffron chip behind the
- * icon, bolder label, wider tap target — rather than by climbing out of
- * the bar and standing on the content.
+ * tab bar is supposed to give it — a filled chip behind the mark, a bolder
+ * label, a wider tap target — rather than by climbing out of the bar and
+ * standing on the content.
+ *
+ * That chip carries the kolam rather than a generic sparkle, on plum: it is
+ * the only branded object in the navigation and the only dark one on a light
+ * bar, which is the weight the primary action wants. See the render below.
  *
  * Hidden ≥ md, where the header already has room for the same links, and
  * hidden entirely for vendor/admin, who work inside dedicated dashboards
@@ -146,6 +151,8 @@ export default function BottomNav() {
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
     { to: '/shop',         icon: Store,         label: 'Shop' },
+    // `icon` is the fallback for this row; a primary tab renders the
+    // kolam instead and never reaches it.
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
     { to: celebrations,    icon: CalendarHeart, label: user ? 'Events' : 'Occasions' },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
@@ -214,19 +221,43 @@ export default function BottomNav() {
                   62px against everyone else's 56, which put its icon 3px below
                   the other five — the row was evenly spaced horizontally and
                   still visibly out of line. */}
+              {/* ── The Plan tab wears the brand ─────────────────────────
+                  The primary tab used to be a saffron chip with a generic
+                  sparkle in it. On a light bar that chip was the only
+                  saturated thing on screen and it was saying nothing — a
+                  sparkle is what every app puts on its "magic" button.
+
+                  The kolam is the product's own mark, and its ramp was
+                  drawn to sit on plum (see SambramoMark) — so the chip is
+                  plum, which makes the one branded object in the navigation
+                  also the one dark object on a light bar. That is exactly
+                  the weight a primary action wants, and it reads as
+                  Sambramo rather than as a generic accent.
+
+                  `solid` because below ~24px the monoline centre closes up;
+                  the petals fill and the pulli is knocked out instead. The
+                  knockout has to be the CHIP's colour, so it is passed here
+                  rather than inherited from --bar (which is the app bar's
+                  white and would punch a white hole in a plum disc). The
+                  chip colour is the same in both states for that reason —
+                  selection is carried by the ring and the lift, so the
+                  knockout can never disagree with its ground. */}
               <span
-                className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors ${
+                className={`flex h-8 w-11 items-center justify-center rounded-full transition-all ${
                   primary
                     ? active
-                      ? 'bg-gradient-to-br from-saffron-400 to-saffron-500 text-plum-950 shadow-sm shadow-saffron-500/40'
-                      : 'bg-saffron-400/90 text-plum-950'
+                      ? 'bg-plum-700 ring-2 ring-saffron-400 shadow-md shadow-plum-700/35'
+                      : 'bg-plum-700 shadow-sm shadow-plum-700/25'
                     : ''
                 }`}
+                style={primary ? { '--sambramo-knockout': '#6d28d9' } : undefined}
               >
                 {/* The badge anchors to the icon, not to the 32px row, so it
                     sits on the bag's corner rather than floating above it. */}
                 <span className="relative flex items-center justify-center">
-                  <Icon size={20} strokeWidth={active || primary ? 2.4 : 2} />
+                  {primary
+                    ? <SambramoMark size={21} variant="solid" title="" />
+                    : <Icon size={20} strokeWidth={active ? 2.4 : 2} />}
                   {badge > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {badge > 9 ? '9+' : badge}
@@ -235,7 +266,7 @@ export default function BottomNav() {
                 </span>
               </span>
               <span className={`whitespace-nowrap text-[10px] leading-none ${
-                primary ? 'font-bold text-plum-800' : active ? 'font-bold' : 'font-medium'
+                primary ? 'font-bold text-plum-700' : active ? 'font-bold' : 'font-medium'
               }`}>
                 {label}
               </span>

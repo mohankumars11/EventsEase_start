@@ -152,7 +152,7 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
               type="button"
               onClick={() => onCopy(offer.code)}
               title="Copy this code"
-              className="min-w-0 flex-1 truncate text-left font-mono text-[13px] font-bold tracking-wide text-gray-700 active:text-gray-900"
+              className="min-w-0 flex-1 truncate py-3 text-left font-mono text-[13px] font-bold tracking-wide text-gray-700 active:text-gray-900"
             >
               {copied ? <span className="text-emerald-600">Copied ✓</span> : (
                 <span className="inline-flex items-center gap-1.5">
@@ -166,7 +166,7 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
               onClick={() => onApply(applied ? null : offer.id)}
               disabled={blocked}
               aria-pressed={applied}
-              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-extrabold text-ink transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
+              className={`shrink-0 min-h-[44px] rounded-lg px-3 py-3 text-xs font-extrabold text-ink transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
                 applied ? 'bg-gray-800 active:bg-gray-900' : accent.btn
               }`}
             >

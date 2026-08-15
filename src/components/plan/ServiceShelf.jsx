@@ -104,7 +104,7 @@ export default function ServiceShelf({ query = '' }) {
         <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
           <button
             onClick={() => setActiveCategory('top')}
-            className={`home-chip ${
+            className={`tap-tall home-chip ${
               activeCategory === 'top'
                 ? 'bg-saffron-400 text-plum-950'
                 : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
@@ -116,7 +116,7 @@ export default function ServiceShelf({ query = '' }) {
             <button
               key={g.category}
               onClick={() => setActiveCategory(g.category)}
-              className={`home-chip ${
+              className={`tap-tall home-chip ${
                 activeCategory === g.category
                   ? 'bg-saffron-400 text-plum-950'
                   : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'

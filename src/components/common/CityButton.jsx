@@ -39,7 +39,7 @@ export default function CityButton({ subtitle, className = '' }) {
       onClick={openCityPicker}
       aria-label={chosen ? `Delivering to ${city}. Change city` : 'Set your city'}
       aria-haspopup="dialog"
-      className={`group -ml-1 min-w-0 flex-1 rounded-xl px-1 py-0.5 text-left transition-colors active:bg-surface-sunk/[0.07] ${className}`}
+      className={`tap-tall group -ml-1 min-w-0 flex-1 rounded-xl px-1 py-0.5 text-left transition-colors active:bg-surface-sunk/[0.07] ${className}`}
     >
       <span className="flex items-center gap-1 text-[13px] font-extrabold leading-tight text-ink">
         {chosen && !servable

@@ -39,7 +39,7 @@ export default function CheckoutHeader({ step = 'cart', itemCount = 0, backTo = 
           <Link
             to={backTo}
             aria-label="Back to shop"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-sunk/[0.07] active:bg-surface-sunk/[0.07]"
+            className="-ml-1 tap-48 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-sunk/[0.07] active:bg-surface-sunk/[0.07]"
           >
             <ArrowLeft size={20} />
           </Link>

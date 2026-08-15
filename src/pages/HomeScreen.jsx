@@ -459,14 +459,14 @@ function SupportStrip() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat on WhatsApp"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white transition-transform active:scale-95"
+          className="tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white transition-transform active:scale-95"
         >
           <MessageCircle size={17} />
         </a>
         <a
           href={`tel:${BRAND.supportPhone}`}
           aria-label="Call support"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+          className="tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
         >
           <PhoneCall size={16} />
         </a>
