@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Camera, Check, Clock, Maximize2, Sparkles, Plus, X, ChevronRight, ChevronLeft,
   Search, ShoppingCart, LayoutGrid, Rows3,
@@ -230,9 +231,32 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
     return () => { document.body.style.overflow = previous }
   }, [])
 
-  return (
+  /* ── Why this is a portal ─────────────────────────────────────────────
+     This sheet is `position: fixed`, and it was not behaving like it: it
+     rendered 1631px tall, sized to a section halfway down the page, mostly
+     off screen. Opening a décor setup showed almost nothing, which is
+     exactly the bug it was reported as.
+
+     The cause is that `position: fixed` resolves against the nearest
+     ancestor with a transform, filter or backdrop-filter — not the viewport
+     — and this sheet sits inside a `.rise-in` section whose entrance
+     animation rests on `transform: translateY(0) scale(1)`. That is an
+     identity matrix, visually nothing, and still enough to make the section
+     a containing block for every fixed descendant, permanently, because the
+     animation fills forwards.
+
+     Those keyframes now rest at `transform: none`, which fixes the class of
+     bug at its source. This portal is the belt to that braces: a modal
+     should not depend on what its ancestors happen to be doing, and the
+     next entrance animation somebody adds above it must not be able to
+     break it again. Rendering under <body> also puts it above BottomNav
+     without fighting `.event-canvas`'s stacking context.
+
+     The occasion's theme variables are mirrored onto the document root by
+     EventServices so they still reach this subtree. */
+  return createPortal(
     <div
-      className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center sm:p-6"
+      className="fixed inset-0 z-[95] flex items-end justify-center pb-bottom-nav sm:items-center sm:p-6 sm:pb-6"
       role="dialog"
       aria-modal="true"
       aria-label={item.name}
@@ -240,13 +264,13 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`absolute inset-0 bg-plum-950/80 backdrop-blur-sm transition-opacity duration-150 motion-reduce:transition-none ${
+        className={`absolute inset-0 bg-plum-950/55 backdrop-blur-sm transition-opacity duration-150 motion-reduce:transition-none ${
           entered ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
       <div
-        className={`relative flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-[#1b0733] shadow-2xl ring-1 ring-hairline/10 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none sm:max-w-lg sm:rounded-3xl ${
+        className={`relative flex max-h-[calc(88vh-var(--bottom-nav-h,0px))] w-full flex-col overflow-hidden rounded-t-3xl bg-surface shadow-[var(--shadow-2)] ring-1 ring-hairline/10 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none sm:max-w-lg sm:rounded-3xl ${
           entered ? 'translate-y-0 opacity-100 sm:scale-100' : 'translate-y-5 opacity-0 sm:translate-y-0 sm:scale-[0.98]'
         }`}
       >
@@ -274,7 +298,7 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
             <span className="text-[11px] text-ink-mute">{item.where}</span>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-black/25 p-3.5 ring-1 ring-white/10">
+          <div className="mt-4 rounded-2xl bg-surface-sunk/[0.06] p-3.5 ring-1 ring-hairline/10">
             <p className="mb-2.5 text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
               What gets installed
             </p>
@@ -306,7 +330,7 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
           {item.credit && <p className="mt-2 text-[9.5px] text-ink-mute">{item.credit}</p>}
         </div>
 
-        <div className="shrink-0 border-t border-white/10 bg-black/25 p-3.5">
+        <div className="shrink-0 border-t border-hairline/10 bg-surface p-3.5">
           <button
             onClick={() => { onToggle(item); onClose() }}
             className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13.5px] font-extrabold transition-transform active:scale-[0.98] ${
@@ -320,7 +344,8 @@ function DecorSheet({ item, selected, onToggle, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -774,7 +799,10 @@ export default function DecorCatalog({ eventId, eventName, onAddSelected, hasIte
           Mounted only once something is selected, so it costs nothing until it
           means something. */}
       {chosen.length > 0 && (
-        <div className="sticky top-[56px] z-20 mt-3" style={{ scrollMarginTop: '56px' }}>
+        <div
+          className="sticky z-20 mt-3"
+          style={{ top: 'var(--event-appbar-h, 3.5rem)', scrollMarginTop: 'var(--event-appbar-h, 3.5rem)' }}
+        >
           <div className="rounded-2xl p-2.5 shadow-2xl ring-1 ring-black/10" style={{ background: 'var(--event-glow)' }}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="min-w-0 flex-1">

@@ -455,7 +455,7 @@ export default function PlanningWizard() {
           {step === 1 && (
             <Link
               to="/plan"
-              className="shrink-0 text-plum-400 hover:text-ink text-xs font-medium transition-colors"
+              className="shrink-0 text-plum-400 hover:text-white text-xs font-medium transition-colors"
             >
               ← Other ways to plan
             </Link>

@@ -67,7 +67,7 @@ export default function TierMatchDialog({
     : tier
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[70] flex items-end pb-bottom-nav sm:pb-0 sm:items-center justify-center">
       <button
         aria-label="Close"
         onClick={onDismiss}

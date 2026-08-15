@@ -591,7 +591,11 @@
   }
   .reveal.visible {
     opacity: 1;
-    transform: translateY(0);
+    /* `none`, not `translateY(0)`: an identity transform still makes this a
+       containing block for `position: fixed` children, which silently breaks
+       any modal rendered inside a revealed section. See fix note in the
+       rise-in keyframes. */
+    transform: none;
   }
   .reveal-delay-1 { transition-delay: 0.1s; }
   .reveal-delay-2 { transition-delay: 0.2s; }
@@ -622,7 +626,7 @@
   @keyframes count-pulse {
     0%   { transform: scale(1); }
     50%  { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    100% { transform: none; }
   }
   .count-pulse { animation: count-pulse 0.3s ease; }
 
@@ -674,14 +678,14 @@
   /* ── Fade in up ──────────────────────────────────────── */
   @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: none; }
   }
   .animate-fade-in-up { animation: fade-in-up 0.5s ease forwards; }
 
   /* ── Fade up ─────────────────────────────────────────── */
   @keyframes fade-up {
     0%   { opacity: 0; transform: translateY(24px); }
-    100% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 1; transform: none; }
   }
   .animate-fade-up { animation: fade-up 0.6s ease forwards; }
 
@@ -709,7 +713,7 @@
      same whatever is underneath it. */
   @keyframes pop-in {
     0%   { opacity: 0; transform: translateY(6px) scale(0.98); }
-    100% { opacity: 1; transform: translateY(0)   scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   .animate-pop-in {
     animation: pop-in 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -754,7 +758,7 @@
 
   @keyframes rise-in {
     0%   { opacity: 0; transform: translateY(18px) scale(0.985); }
-    100% { opacity: 1; transform: translateY(0)    scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   .rise-in {
     opacity: 0;
@@ -787,7 +791,7 @@
   /* ── Count up ────────────────────────────────────────── */
   @keyframes count-up {
     0%   { opacity: 0; transform: translateY(8px); }
-    100% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 1; transform: none; }
   }
   .animate-count-up { animation: count-up 0.4s ease forwards; }
 
@@ -805,7 +809,7 @@
      stays on the compositor. */
   @keyframes fact-swap {
     0%   { opacity: 0; transform: translateY(70%); }
-    100% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 1; transform: none; }
   }
   .fact-swap { animation: fact-swap 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
@@ -910,7 +914,7 @@
   }
   @keyframes marquee-reverse {
     from { transform: translateX(-50%); }
-    to   { transform: translateX(0); }
+    to   { transform: none; }
   }
   .marquee-track {
     display: flex;
@@ -1086,7 +1090,7 @@
   /* Caption: three lines in reading order. */
   @keyframes film-line {
     0%   { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 1; transform: none; }
   }
   .film-line   { animation: film-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .film-line-2 { animation-delay: 0.10s; }
@@ -1116,7 +1120,7 @@
   @keyframes film-land {
     0%   { opacity: 0; transform: translateY(30px) scale(0.93); }
     55%  { opacity: 1; transform: translateY(-4px) scale(1.012); }
-    100% { opacity: 1; transform: translateY(0)    scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   .film-land {
     transform-box: fill-box; transform-origin: center bottom;
@@ -1128,7 +1132,7 @@
   @keyframes film-flame-in {
     0%   { opacity: 0; transform: scale(0.2, 0.1); }
     45%  { opacity: 1; transform: scale(1.12, 1.18); }
-    100% { opacity: 1; transform: scale(1, 1); }
+    100% { opacity: 1; transform: none; }
   }
   @keyframes film-flicker {
     0%, 100% { transform: scale(1, 1)       translateX(0); }
@@ -1153,7 +1157,7 @@
   @keyframes film-orbit {
     0%   { opacity: 0; transform: translateY(14px) scale(0.85); }
     45%  { opacity: 1; transform: translateY(0)    scale(1); }
-    100% { opacity: 1; transform: translateY(0)    scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   .film-orbit-1, .film-orbit-2, .film-orbit-3 { transform-box: fill-box; transform-origin: center; }
   .film-orbit-1 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both, film-float 3.8s ease-in-out 1.05s infinite; }
@@ -1167,7 +1171,7 @@
   @keyframes film-item-in {
     0%   { opacity: 0; transform: translateY(-34px) rotate(-6deg) scale(0.9); }
     65%  { opacity: 1; transform: translateY(3px)   rotate(1deg)  scale(1.02); }
-    100% { opacity: 1; transform: translateY(0)     rotate(0deg)  scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   .film-item { transform-box: fill-box; transform-origin: center bottom; }
   .film-item-1 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.12s both, film-float 3.6s ease-in-out 1.3s infinite; }
@@ -1185,7 +1189,7 @@
   @keyframes film-turn-in {
     0%   { opacity: 0; transform: translateY(26px) rotate(-7deg) scale(0.9); }
     60%  { opacity: 1; transform: translateY(-3px) rotate(2deg)  scale(1.02); }
-    100% { opacity: 1; transform: translateY(0)    rotate(0deg)  scale(1); }
+    100% { opacity: 1; transform: none; }
   }
   @keyframes film-turn-sway {
     0%, 100% { transform: rotate(-2.5deg); }
@@ -1229,7 +1233,7 @@
   /* ── Beat 3: the packing ───────────────────────────── */
   @keyframes film-lid {
     0%   { opacity: 0; transform: translateY(-30px); }
-    100% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 1; transform: none; }
   }
   .film-lid { transform-box: fill-box; animation: film-lid 0.45s cubic-bezier(0.34, 1.2, 0.6, 1) 0.22s both; }
 
@@ -1258,7 +1262,7 @@
   @keyframes film-bow {
     0%   { opacity: 0; transform: scale(0.25) rotate(-22deg); }
     55%  { opacity: 1; transform: scale(1.1)  rotate(3deg); }
-    100% { opacity: 1; transform: scale(1)    rotate(0deg); }
+    100% { opacity: 1; transform: none; }
   }
   .film-bow {
     animation: film-bow 0.42s cubic-bezier(0.34, 1.5, 0.6, 1) 1.18s both,
@@ -1274,7 +1278,7 @@
 
   @keyframes film-tag {
     0%   { opacity: 0; transform: translate(-10px, 5px) rotate(-10deg); }
-    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    100% { opacity: 1; transform: none; }
   }
   .film-tag {
     transform-box: fill-box;
@@ -1292,11 +1296,11 @@
 
   @keyframes film-hand-give {
     0%   { opacity: 0; transform: translateX(-46px); }
-    100% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 1; transform: none; }
   }
   @keyframes film-hand-take {
     0%   { opacity: 0; transform: translateX(46px); }
-    100% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 1; transform: none; }
   }
   /* The giving hand leads, the receiving hand answers it. */
   .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.12s both; }
@@ -1306,7 +1310,7 @@
   @keyframes film-pass {
     0%   { opacity: 0; transform: translate(-34px, 6px) rotate(-7deg); }
     60%  { opacity: 1; transform: translate(2px, -3px)  rotate(1.5deg); }
-    100% { opacity: 1; transform: translate(0, 0)       rotate(0deg); }
+    100% { opacity: 1; transform: none; }
   }
   /* Starts almost with the giving hand, not 400ms after it. At the old delay
      the hands had both landed and the caption had fully resolved while the

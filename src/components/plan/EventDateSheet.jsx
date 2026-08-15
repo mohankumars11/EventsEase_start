@@ -111,7 +111,7 @@ export default function EventDateSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[70] flex items-end pb-bottom-nav sm:pb-0 justify-center bg-black/60 sm:items-center sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       role="dialog"
       aria-modal="true"

@@ -91,18 +91,18 @@ export default function ReviewBoard({
       {/* ── The headline ───────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-plum-800 via-plum-700 to-plum-900 text-white shadow-lg">
         <div className="px-5 pt-5 pb-4">
-          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-ink-mute">
+          <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-white/70">
             Your celebration, priced
           </p>
-          <p className="mt-1 text-base font-bold text-ink-soft">
+          <p className="mt-1 text-base font-bold text-white/85">
             {occasionEmoji} {occasionName}
           </p>
           <p className="mt-3 text-3xl sm:text-4xl font-extrabold leading-none">
             {formatINR(quote.range.low)}
-            <span className="text-ink-mute font-bold"> – </span>
+            <span className="text-white/70 font-bold"> – </span>
             {formatINR(quote.range.high)}
           </p>
-          <p className="mt-1.5 text-xs text-ink-soft">
+          <p className="mt-1.5 text-xs text-white/85">
             All taxes in · about {formatINR(quote.perGuest)} per guest
           </p>
         </div>

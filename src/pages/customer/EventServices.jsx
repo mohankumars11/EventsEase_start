@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import {
   ArrowLeft, ShoppingCart, Sparkles, Pencil, LayoutGrid, Package,
@@ -104,6 +104,20 @@ function afterPaint(fn) {
 }
 
 export default function EventServices() {
+  const barRef = useRef(null)
+  // See the header below: publishes --event-appbar-h for the sticky rows.
+  useLayoutEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    const publish = () => document.documentElement.style.setProperty(
+      '--event-appbar-h', `${el.offsetHeight}px`)
+    publish()
+    if (typeof ResizeObserver === 'undefined') return
+    const obs = new ResizeObserver(publish)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
   const { eventId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -399,6 +413,17 @@ export default function EventServices() {
   }
 
   const themeVars = occasionThemeVars(eventId)
+
+  // Mirror the occasion theme onto the document root. The décor sheet renders
+  // through a portal (see DecorCatalog) so it sits under <body>, outside the
+  // element these are set on — without this it would fall back to the house
+  // plum and a birthday sheet would price in the wrong colour.
+  useEffect(() => {
+    const root = document.documentElement
+    const keys = Object.keys(themeVars)
+    keys.forEach(k => root.style.setProperty(k, themeVars[k]))
+    return () => keys.forEach(k => root.style.removeProperty(k))
+  }, [themeVars])
   const details   = getEventDetails(eventId)
 
   // Services, grouped the way they are shopped for, and filtered by the search.
@@ -430,7 +455,7 @@ export default function EventServices() {
           Replaces the marketing navbar, the pilot-city notify bar and the
           "Back to Home" link that used to stack above this page. One exit,
           the occasion's name, the city and the cart. */}
-      <header className="event-appbar sticky top-0 z-30 pt-safe">
+      <header ref={barRef} className="event-appbar sticky top-0 z-40 pt-safe">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-2.5">
           <button
             onClick={() => navigate('/services')}
@@ -594,7 +619,8 @@ export default function EventServices() {
           plus its 10px padding either side). */}
       <div
         ref={contentRef}
-        className="sticky top-[56px] z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
+        className="sticky z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
+        style={{ top: 'var(--event-appbar-h, 3.5rem)' }}
         style={{ scrollMarginTop: '56px' }}
       >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">

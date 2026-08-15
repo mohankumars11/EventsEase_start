@@ -92,7 +92,7 @@ export default function ProductCustomizeSheet({ product, onClose, onConfirm }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 bg-black/50 z-[70] flex items-end pb-bottom-nav sm:pb-0 sm:items-center justify-center sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       role="dialog"
       aria-modal="true"

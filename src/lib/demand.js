@@ -39,11 +39,21 @@ export const INTEREST_HIGH = 8
 /**
  * ── Which surface these classes are for ──────────────────────────────
  *
- * `cell` and `chip` are **light-surface** classes: the calendar sheet is
- * white, and so is the wizard step that repeats the same line. They were
- * written for a dark panel and rendered `text-teal-100` on white in the
- * wizard, which was invisible — one set of classes cannot serve both, so the
- * dark panel keeps its own in `chipDark` / `accentDark`.
+ * `cell` and `chip` are the light-surface classes: the calendar sheet is
+ * white, and so is the wizard step that repeats the same line.
+ *
+ * `chipDark` / `accentDark` existed because one consumer — the home screen's
+ * demand badge — was a dark plum panel, and the light classes rendered
+ * `text-teal-100` on white there, which is invisible. That panel is white
+ * now, so the pastels had the same failure in the other direction: the
+ * enquiry counts ("3 enquiries", "4 enquiries") were teal-100 on white.
+ *
+ * The names are kept because every call site passes one or the other and
+ * renaming them is a separate change — but both pairs now target a LIGHT
+ * surface, and the values differ only in weight: `chip` is the calm version
+ * for a calendar full of them, `chipDark` the emphatic one for a panel
+ * showing three. If a genuinely dark surface ever needs these again, add a
+ * third set rather than pushing these back toward pastel.
  */
 export const INTEREST_LEVELS = {
   NONE: {
@@ -55,7 +65,7 @@ export const INTEREST_LEVELS = {
     cell: 'bg-white text-plum-900 border-gray-200 hover:border-teal-500 hover:bg-teal-50',
     chip: '',
     chipDark: '',
-    accentDark: 'text-white/50',
+    accentDark: 'text-ink-mute',
   },
   INTEREST: {
     key: 'INTEREST',
@@ -64,8 +74,8 @@ export const INTEREST_LEVELS = {
     dot: 'bg-teal-500',
     cell: 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-500',
     chip: 'bg-teal-50 text-teal-800 border-teal-200',
-    chipDark: 'bg-teal-400/15 text-teal-200 border-teal-400/30',
-    accentDark: 'text-teal-300',
+    chipDark: 'bg-teal-50 text-teal-800 border-teal-300',
+    accentDark: 'text-teal-700',
   },
   HIGH_INTEREST: {
     key: 'HIGH_INTEREST',
@@ -74,8 +84,8 @@ export const INTEREST_LEVELS = {
     dot: 'bg-teal-600',
     cell: 'bg-teal-100 text-teal-900 border-teal-300 hover:border-teal-600',
     chip: 'bg-teal-100 text-teal-900 border-teal-300',
-    chipDark: 'bg-teal-400/25 text-teal-100 border-teal-300/40',
-    accentDark: 'text-teal-200',
+    chipDark: 'bg-teal-100 text-teal-900 border-teal-400',
+    accentDark: 'text-teal-800',
   },
 }
 

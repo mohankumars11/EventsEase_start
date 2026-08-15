@@ -217,7 +217,7 @@ export default function CakeShop() {
               className="absolute inset-0 w-full h-full"
               cinematic
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-forest-950/92 via-forest-900/65 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/72 to-forest-950/10" />
             {/* Absolute, not `relative h-full`. ProductImage hard-codes
                 `relative` on its own wrapper and that wins over any position
                 class passed in, so the photo sits in normal flow and takes the
@@ -225,8 +225,8 @@ export default function CakeShop() {
                 out of the overflow-hidden box. Every other overlay in this shop
                 is absolutely positioned for the same reason. */}
             <div className="absolute inset-0 flex flex-col justify-center p-5">
-              <h3 className="font-serif text-xl font-bold text-ink leading-tight">Designer<br />cakes</h3>
-              <p className="text-ink-soft text-xs mt-1.5 max-w-[60%]">Fondant, sculpted and tiered — built to a brief</p>
+              <h3 className="font-serif text-xl font-bold text-white leading-tight">Designer<br />cakes</h3>
+              <p className="text-white/85 text-xs mt-1.5 max-w-[60%]">Fondant, sculpted and tiered — built to a brief</p>
               <span className="mt-3 inline-flex items-center gap-1 self-start bg-white text-forest-800 text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2 transition-all">
                 Explore <ChevronRight size={13} />
               </span>
@@ -247,10 +247,10 @@ export default function CakeShop() {
               className="absolute inset-0 w-full h-full"
               cinematic
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-chilli-900/92 via-chilli-800/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-chilli-900/95 via-chilli-900/70 to-chilli-900/10" />
             <div className="absolute inset-0 flex flex-col justify-center p-5">
-              <h3 className="font-serif text-xl font-bold text-ink leading-tight">Something<br />entirely yours</h3>
-              <p className="text-ink-soft text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
+              <h3 className="font-serif text-xl font-bold text-white leading-tight">Something<br />entirely yours</h3>
+              <p className="text-white/85 text-xs mt-1.5 max-w-[62%]">Describe it to us and we'll have it made</p>
               <span className="mt-3 inline-flex items-center gap-1.5 self-start bg-green-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-full group-hover:gap-2.5 transition-all">
                 <MessageCircle size={13} /> Chat with our expert
               </span>

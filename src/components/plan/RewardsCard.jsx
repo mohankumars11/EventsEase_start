@@ -67,7 +67,7 @@ export default function RewardsCard({ occasionName }) {
   return (
     <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-plum-800 via-plum-900 to-[#160528] text-white shadow-lg ring-1 ring-white/10">
       <div className="border-b border-hairline/10 px-5 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">
           And after the day itself
         </p>
       </div>
@@ -83,8 +83,8 @@ export default function RewardsCard({ occasionName }) {
               <p className="text-lg font-extrabold leading-none text-saffron-700">{next.headline}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-ink-mute">{next.blurb}</p>
-          <p className="mt-2 text-[11px] leading-snug text-ink-mute">{next.terms}</p>
+          <p className="mt-3 text-xs leading-relaxed text-white/70">{next.blurb}</p>
+          <p className="mt-2 text-[11px] leading-snug text-white/70">{next.terms}</p>
         </div>
 
         <div className="p-5">

@@ -548,7 +548,7 @@ export default function ShopCart() {
             competing with five others set in the same weight. */}
         <div className="!mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-forest-800 to-forest-700 px-4 py-3.5 text-white">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-mute">To pay</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">To pay</p>
             <p className="text-xl font-extrabold leading-tight">{formatINR(total)}</p>
           </div>
           {savings > 0 && (

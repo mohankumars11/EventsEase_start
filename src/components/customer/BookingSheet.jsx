@@ -109,7 +109,7 @@ export default function BookingSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 sm:items-center"
+      className="fixed inset-0 z-[70] flex items-end pb-bottom-nav sm:pb-0 justify-center bg-black/60 sm:items-center"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="animate-fade-in-up flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-3xl">

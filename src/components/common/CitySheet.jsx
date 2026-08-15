@@ -132,7 +132,7 @@ export default function CitySheet() {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[80] flex items-end pb-bottom-nav sm:pb-0 justify-center bg-black/60 backdrop-blur-[2px] sm:items-center sm:p-4"
       onClick={closeCityPicker}
       role="dialog"
       aria-modal="true"

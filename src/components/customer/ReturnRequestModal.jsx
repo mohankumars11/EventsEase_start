@@ -83,7 +83,7 @@ export default function ReturnRequestModal({ order, onSubmit, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-black/50 z-[60] flex items-end pb-bottom-nav sm:pb-0 sm:items-center justify-center p-0 sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-lg shadow-xl max-h-[94vh] overflow-y-auto">
