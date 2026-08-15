@@ -1263,10 +1263,15 @@ export default function CelebrationBuilder() {
             navigated, and there was no way from here to actually book one
             service.
 
-            The app has had the right screen for that all along. /services
-            is, in App.jsx's own words, "the page the 'Need just one thing?'
-            shelf always implied and never had" — one service, priced and
-            bought end to end. So this half is now a door to it.
+            The app has had the right shelf for that all along, and it is
+            the "Need just one thing?" section on /plan — the one that says
+            in its own words that you don't have to book a whole
+            celebration, and lists every service bookable on its own. So
+            this half is a door to exactly that, by hash: ScrollRestoration
+            already listens for `#` targets, and `services-heading` is the
+            id the shelf's own aria-labelledby points at, so the customer
+            lands on the shelf rather than at the top of /plan with the
+            thing they asked for somewhere below the fold.
 
             The other half stays a button, because the whole celebration is
             not somewhere else: it is this page. Pressing it confirms the
@@ -1306,7 +1311,7 @@ export default function CelebrationBuilder() {
             </button>
 
             <Link
-              to="/services"
+              to="/plan#services-heading"
               style={{ '--rise-delay': '70ms' }}
               className="plan-rise plan-glass group flex min-h-[76px] flex-col justify-center rounded-2xl px-4 py-3.5 text-left text-ink transition-all hover:bg-surface-sunk/[0.08]"
             >
@@ -1316,7 +1321,7 @@ export default function CelebrationBuilder() {
               </p>
               <p className="text-xs mt-0.5 text-ink-mute">{BOOKING_MODES.individual.blurb}</p>
               <p className="mt-1 text-[11px] font-bold text-accent">
-                Takes you to the service catalogue
+                Takes you to “Need just one thing?”
               </p>
             </Link>
           </div>
