@@ -40,28 +40,53 @@ export function useCustomerActivity() {
     let cancelled = false
 
     async function count() {
-      const [orders, events, enquiries] = await Promise.all([
-        supabase.from('orders').select('id, status', { count: 'exact' })
+      // `allSettled`, not `all`. With `all`, ONE failing table — an RLS
+      // change, a column that does not exist yet, a dropped connection —
+      // rejects the whole thing, `setState` never runs, and the tab silently
+      // stays on "Occasions" for a customer who has five live orders. The
+      // navigation quietly loses a destination and nothing anywhere says so.
+      //
+      // Same reasoning as `fetchCelebrations`' named-errors contract: a
+      // partial answer beats a wrong one, and "you have nothing" is the most
+      // damaging thing this can say untruthfully.
+      const [orders, events, enquiries, milestones] = await Promise.allSettled([
+        supabase.from('orders').select('id, status')
           .eq('customer_id', user.id).limit(200),
-        supabase.from('events').select('id, status', { count: 'exact' })
+        supabase.from('events').select('id, status')
           .eq('customer_id', user.id).limit(200),
-        supabase.from('service_enquiries').select('id, status', { count: 'exact' })
+        supabase.from('service_enquiries').select('id, status')
           .eq('customer_id', user.id).limit(200),
+        // Milestones due. Needs migration 046 for `milestone_id`/`due_at`, so
+        // on a database that has not run it this 400s and is discarded —
+        // the tab keeps working, it just counts one fewer thing.
+        supabase.from('event_payments').select('id, status, due_at, milestone_id')
+          .in('status', ['PENDING']).limit(200),
       ])
       if (cancelled) return
 
-      const orderRows   = orders.data ?? []
-      const eventRows   = events.data ?? []
-      const enquiryRows = enquiries.data ?? []
+      const rowsOf = r => (r.status === 'fulfilled' ? (r.value?.data ?? []) : [])
+      const orderRows     = rowsOf(orders)
+      const eventRows     = rowsOf(events)
+      const enquiryRows   = rowsOf(enquiries)
+      const milestoneRows = rowsOf(milestones)
 
       // Cancelled items still count toward `total`. A tab that disappears the
       // moment you cancel something reads as the app erasing you, and the
       // history is still worth reaching.
       const total = orderRows.length + eventRows.length + enquiryRows.length
 
+      // A milestone whose due date has passed is the one money-related thing
+      // that IS the customer's to act on — unlike an order awaiting payment
+      // confirmation, which is our bank-reconciliation backlog.
+      const now = Date.now()
+      const dueMilestones = milestoneRows.filter(
+        p => p.milestone_id && p.due_at && new Date(p.due_at).getTime() <= now,
+      ).length
+
       const needsYou =
         eventRows.filter(e => e.status === 'PROPOSAL_SENT' || e.status === 'CUSTOMER_REVIEW').length +
-        enquiryRows.filter(e => e.status === 'responded').length
+        enquiryRows.filter(e => e.status === 'responded').length +
+        dueMilestones
 
       const live =
         orderRows.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length +
