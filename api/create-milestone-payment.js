@@ -28,6 +28,18 @@ const SHARES = { confirmation: 0.25, sourcing: 0.40, balance: 0.35, settle: 1.00
 const HOLD_CREDITING = new Set(['confirmation', 'settle'])
 const LOCK_AMOUNT = 1000
 
+/**
+ * The only method a milestone may be paid by.
+ *
+ * UPI (and RuPay debit) carry zero MDR in India by statute, so this is the
+ * one collection route that costs the business nothing per transaction.
+ * Everything else at every gateway is roughly 2% + GST.
+ *
+ * Set to null to accept all methods — but read the note at the order call
+ * first, and move `PLATFORM_FEE_RATE` before you do.
+ */
+const PAYMENT_METHOD = 'upi'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -102,6 +114,22 @@ export default async function handler(req, res) {
       currency: 'INR',
       receipt: `${subjectId.slice(0, 8)}-${milestoneId}`.slice(0, 40),
       notes: { subjectType, subjectId, milestoneId },
+      // ── UPI only, and this is a commercial decision made structural ────
+      // UPI and RuPay debit are zero-MDR in India by law (the 2019 Finance
+      // Act amendment to the Payments and Settlement Systems Act), so a
+      // milestone collected over UPI costs the business nothing. Cards and
+      // netbanking are ~2% + GST, which on a ₹1,00,000 celebration is about
+      // ₹2,360 against a platform fee of ₹2,000 — the gateway would eat the
+      // entire margin and then some, on every single instalment.
+      //
+      // Restricting it on the ORDER rather than in the checkout options is
+      // deliberate: a client-side `method` filter is a suggestion the
+      // browser can be talked out of, and a card payment that slips through
+      // is a real loss on a five-figure sum. Razorpay refuses anything but
+      // UPI against this order.
+      //
+      // If cards are ever wanted, `PLATFORM_FEE_RATE` has to move first.
+      method: PAYMENT_METHOD,
     }),
   })
   if (!rzpRes.ok) {
@@ -131,5 +159,9 @@ export default async function handler(req, res) {
     amount,
     currency: 'INR',
     keyId,
+    // So the checkout sheet opens straight on UPI rather than showing a card
+    // tab the order will refuse. Belt and braces: the order is the guarantee,
+    // this is the courtesy.
+    method: PAYMENT_METHOD,
   })
 }
