@@ -210,6 +210,53 @@ for (const daysOut of [60, 30, 21, 20, 7, 6, 2, 0]) {
   if (verbose) console.log(`  cancel at T-${String(daysOut).padStart(2)}d → refund ${inr(r.total).padStart(10)} of ${inr(r.paid)}`)
 }
 
+/* ── 8 · The serverless copy of the shares has not drifted ────────────────
+ *
+ * `api/create-milestone-payment.js` cannot import from `src/` — a Vercel
+ * function is bundled separately — so it carries its own SHARES map. That is
+ * a second source of truth for the amount actually charged to a card, which
+ * is the worst possible thing to let drift silently. It is compared here
+ * instead of being trusted to stay in step by memory.
+ */
+{
+  const api = await import('node:fs').then(fs =>
+    fs.readFileSync(join(ROOT, 'api/create-milestone-payment.js'), 'utf8'))
+
+  const sharesLine = api.match(/const SHARES = \{([^}]*)\}/)?.[1]
+  const holdLine   = api.match(/const HOLD_CREDITING = new Set\(\[([^\]]*)\]\)/)?.[1]
+  const lockLine   = api.match(/const LOCK_AMOUNT = (\d+)/)?.[1]
+
+  if (!sharesLine || !holdLine || !lockLine) {
+    fail('could not read SHARES / HOLD_CREDITING / LOCK_AMOUNT out of api/create-milestone-payment.js')
+  } else {
+    const apiShares = Object.fromEntries(
+      sharesLine.split(',').map(p => p.split(':').map(x => x.trim())).filter(p => p.length === 2)
+        .map(([k, v]) => [k, Number(v)]))
+
+    for (const m of MILESTONES.filter(x => x.kind !== 'flat')) {
+      if (apiShares[m.id] !== m.share) {
+        fail(`api/create-milestone-payment.js charges ${apiShares[m.id]} for "${m.id}" but the config says ${m.share} — the endpoint would take the wrong amount`)
+      }
+    }
+    for (const id of Object.keys(apiShares)) {
+      if (!MILESTONES.some(m => m.id === id)) fail(`the endpoint knows a milestone "${id}" the config does not`)
+    }
+
+    const apiCredits = new Set(holdLine.split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean))
+    const configCredits = new Set(MILESTONES.filter(m => (m.creditsPaid ?? []).includes('hold')).map(m => m.id))
+    for (const id of configCredits) {
+      if (!apiCredits.has(id)) fail(`the endpoint does not credit the hold on "${id}" but the config does — the customer would be charged the ₹1,000 twice`)
+    }
+    for (const id of apiCredits) {
+      if (!configCredits.has(id)) fail(`the endpoint credits the hold on "${id}" but the config does not — the customer would be undercharged`)
+    }
+
+    if (Number(lockLine) !== LOCK_AMOUNT) {
+      fail(`the endpoint's LOCK_AMOUNT is ${lockLine}, the app's is ${LOCK_AMOUNT}`)
+    }
+  }
+}
+
 /* ── Report ───────────────────────────────────────────────────────────── */
 console.log('')
 if (warnings.length) {
