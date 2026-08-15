@@ -100,14 +100,31 @@ export default function ServicesPicker() {
           needed: cooks, priests, pooja items, decorations and more. Add only what you want.
         </p>
 
-        {/* A guest arrives here cold, with no dashboard around the page to
-            explain it and no sign that the other door exists. */}
+        {/* ── The other door ──────────────────────────────────────────
+            A guest arrives here cold, with no dashboard around the page to
+            explain it and no sign that the other door exists.
+
+            This card used to point at /plan/custom while promising "nothing
+            to fill in" — and /plan/custom is the six-step wizard, which
+            opens by asking which occasion you are planning. The one card on
+            the page whose whole job was to say "you don't have to fill
+            anything in" was the one that dropped you into a form. Anybody
+            who trusted it got the opposite of what it said, which is worse
+            than no card at all.
+
+            It goes to /plan now: the hub where the two doors are laid out
+            side by side — have the whole thing arranged, or take one piece
+            of it — and nothing is asked of you to look. That is what this
+            card was always describing.
+
+            saffron-600, not saffron-300: this is a white card, and the 300
+            is the gold tuned for a dark ground. */}
         {!user && (
           <Link
-            to="/plan/custom"
+            to="/plan"
             className="home-glass mt-4 flex items-center gap-3 p-3.5 transition-transform active:scale-[0.99]"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/15 text-saffron-300">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-400/20 text-saffron-600">
               <Sparkles size={16} />
             </span>
             <span className="min-w-0 flex-1">
@@ -115,7 +132,8 @@ export default function ServicesPicker() {
                 Browse freely — nothing to fill in
               </span>
               <span className="block text-[11px] leading-snug text-ink-mute">
-                You only sign in when you add something. Or let us plan the whole thing.
+                See both ways to book: the whole celebration arranged, or just one
+                piece of it. Sign in only when there's something to save.
               </span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-ink/40" />
