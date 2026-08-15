@@ -96,9 +96,28 @@ export default function PaymentLadder({
         <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-mute">
           {priced
             ? 'Pick how to split it. Every plan is settled before your day, and each payment releases the next piece of work.'
-            : 'Your coordinator confirms the price first — then these become real amounts.'}
+            : 'This is the plan. The amounts fill in as soon as your price is confirmed.'}
         </p>
       </div>
+
+      {/* ── Why there is nothing to pay yet ──────────────────────────
+          Without this the panel is four percentages and no buttons, and a
+          customer reasonably reads that as broken. It is not broken — there
+          is genuinely no number to charge against until a coordinator has
+          priced the celebration, because the estimate is a range nobody has
+          agreed to. Saying which step unlocks it is the difference between
+          a dead panel and a queue position. */}
+      {!priced && (
+        <p className="flex items-start gap-2 border-b border-hairline/[0.08] bg-saffron-400/[0.12] px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
+          <Info size={13} className="mt-0.5 shrink-0 text-saffron-700" />
+          <span>
+            <span className="font-extrabold text-ink">Nothing to pay yet.</span>{' '}
+            Your coordinator is sourcing and pricing this. When your plan arrives and
+            you approve it, these become real amounts and you can pay any of them from
+            here.
+          </span>
+        </p>
+      )}
 
       {/* ── How much progress the money has made ────────────────────
           One bar, before any detail. On a phone this is the answer to the

@@ -209,8 +209,12 @@ function CelebrationCard({ item }) {
         </div>
         <div className="mt-1.5 flex items-center justify-between">
           <span className="text-[11px] font-bold text-ink-soft">{stageLabel}</span>
+          {/* Names the payment panel rather than a generic "open". The ladder
+              is one tap in, and a card that does not mention it is why
+              somebody looks at this hub and concludes the payment options
+              were never built. */}
           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent">
-            See every step <ArrowRight size={11} />
+            Steps &amp; payments <ArrowRight size={11} />
           </span>
         </div>
       </div>
