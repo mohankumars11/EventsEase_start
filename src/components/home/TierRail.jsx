@@ -138,7 +138,16 @@ export default function TierRail({ offer }) {
                 stagger={i * 340}
                 interval={5200}
               />
+              {/* Two layers, not one ramp — the same fix the festival rail
+                  already carries. A single gradient whose `via` stop is 10%
+                  is nearly clear across the middle of the card, and the
+                  caption's second line sits right there. It measured fine
+                  against a placeholder and 3.9:1 in production, where the
+                  photographs actually load and the ground is a lit banquet
+                  hall rather than a dark tile. The lower quarter gets a
+                  near-solid floor the caption can sit on. */}
               <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-plum-950/85 via-plum-950/10 to-transparent" />
+              <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-plum-950/95 to-transparent" />
 
               <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5">
                 <span className="min-w-0">

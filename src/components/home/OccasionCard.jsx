@@ -60,8 +60,15 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
         />
         {/* Bottom scrim so the title stays readable over any photo the
             resolver returns — the images are searched, not art-directed, so
-            the card cannot assume a dark or a light one. */}
+            the card cannot assume a dark or a light one.
+
+            Two layers rather than one ramp. The single gradient is at 15%
+            across the middle of the card, which is where the tagline sits,
+            and against a bright photograph that line measured 4.4:1 — right
+            on the AA boundary and over it on the lighter frames. The lower
+            two-fifths gets a near-solid floor. */}
         <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-plum-950/85 via-plum-950/15 to-transparent" />
+        <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-plum-950/95 to-transparent" />
 
         {offerLabel && (
           <span className="absolute left-0 top-2.5 rounded-r-lg bg-chilli-600 py-1 pl-2 pr-2.5 text-[10px] font-extrabold tracking-wide text-white shadow-lg">
