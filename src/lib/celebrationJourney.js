@@ -1,4 +1,4 @@
-import { TRACK_STAGES, STAGE_INDEX, CANCELLED } from './activity'
+import { TRACK_STAGES, STAGE_INDEX, CANCELLED, trackStageOf } from './activity'
 
 /**
  * The whole life of one celebration, as a thing you can render.
@@ -78,6 +78,16 @@ const STAGE_COPY = {
   },
 }
 
+/** One glyph per kind of log row, so the timeline scans without reading. */
+const EVENT_EMOJI = {
+  status:   '📍',
+  sourcing: '🤝',
+  proposal: '📋',
+  payment:  '💰',
+  service:  '✅',
+  note:     '📝',
+}
+
 export const CANCELLED_STAGE = {
   id: CANCELLED,
   label: 'Cancelled',
@@ -108,9 +118,22 @@ export function buildCelebrationJourney(
   const mine = [...log].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
   const hasLog = mine.length > 0
 
-  /* ── The axis ───────────────────────────────────────────────────── */
+  /* ── The axis ─────────────────────────────────────────────────────
+   *
+   * The log stores what the DATABASE stores — 'PROPOSAL_SENT', 'open' — not
+   * this file's four-stop key. Matching `to_value === stage.key` therefore
+   * never matched anything, and every stage silently fell back to inferred
+   * timestamps even on a database that had the log. `trackStageOf` is the
+   * shared translation, so no fifth private mapping grows here.
+   *
+   * The FIRST row that lands on a stage wins: a celebration that moves
+   * PROPOSAL_SENT → CUSTOMER_CHANGES_REQUESTED → PROPOSAL_SENT has been in
+   * `arranging` since the first of those, and re-stamping it on the third
+   * would say the work started later than it did. */
   const stages = TRACK_STAGES.map((stage, i) => {
-    const evt = mine.find(e => e.kind === 'status' && e.to_value === stage.key)
+    const evt = mine.find(
+      e => e.kind === 'status' && trackStageOf(item.subject, e.to_value) === stage.key,
+    )
     const reached = evt ? true : (!cancelled && i <= reachedIndex)
 
     // Without the log only two timestamps exist: the request arrived at
@@ -160,18 +183,55 @@ export function buildCelebrationJourney(
   push(item.at, '🧾', 'Request received',
     `${item.title}${item.guestCount ? ` · ${item.guestCount} guests` : ''}`)
 
-  if (row.quoted_at) {
-    push(row.quoted_at, '🧮', 'Your coordinator priced this',
-      row.quoted_price ? 'A confirmed quote is on your request.' : null)
+  /* ── What the log itself recorded ────────────────────────────────
+   *
+   * This is what migration 045 bought, and the reason the sourcing steps can
+   * be shown at all: the trigger writes a customer-safe row carrying only a
+   * sentence — "Your decorator is confirmed for your celebration" — while the
+   * vendor's name and the negotiated amount stay on an internal row the
+   * policy never returns.
+   *
+   * Only rows that carry `customer_copy` are rendered. A row without one is
+   * a transition with nothing worth saying to a customer, and inventing a
+   * sentence for it here would put the copy in two places.
+   *
+   * Reconstructed rows are marked approximate rather than dropped: the
+   * backfill's timestamps are real for the first and last stage and honest
+   * about being guesses in between. */
+  for (const e of mine) {
+    if (!e.customer_copy) continue
+    // The status rows already drive the stepper above; repeating them in the
+    // timeline would say everything twice.
+    if (e.kind === 'status') continue
+    const reconstructed = Boolean(e.note?.startsWith('Reconstructed'))
+    push(e.created_at, EVENT_EMOJI[e.kind] ?? '•',
+      e.customer_copy, null, { inferred: reconstructed })
   }
 
-  for (const p of proposals) {
-    push(p.created_at, '📋', 'Your plan was prepared', null)
-    if (p.status === 'SENT' || p.status === 'APPROVED') {
-      // `updated_at` is the only stamp a proposal carries for its send, and it
-      // is overwritten by any later edit — so it is marked approximate.
-      push(p.updated_at, '📤', 'Your plan was sent to you',
-        'Ready for you to approve.', { inferred: true })
+  /* ── Derived from the records, only where the log is silent ──────
+   *
+   * Before migration 045 these WERE the timeline — reconstructed from
+   * whatever each row happened to stamp. With the log applied the trigger
+   * records the same moments properly, so running both would print every
+   * quote, proposal and payment twice.
+   *
+   * They are kept rather than deleted because the log is applied by hand:
+   * a database that has not run 045 still gets a real timeline out of this,
+   * which is what makes the tracker shippable ahead of the SQL. */
+  if (!hasLog) {
+    if (row.quoted_at) {
+      push(row.quoted_at, '🧮', 'Your coordinator priced this',
+        row.quoted_price ? 'A confirmed quote is on your request.' : null)
+    }
+
+    for (const p of proposals) {
+      push(p.created_at, '📋', 'Your plan was prepared', null)
+      if (p.status === 'SENT' || p.status === 'APPROVED') {
+        // `updated_at` is the only stamp a proposal carries for its send, and
+        // it is overwritten by any later edit — so it is marked approximate.
+        push(p.updated_at, '📤', 'Your plan was sent to you',
+          'Ready for you to approve.', { inferred: true })
+      }
     }
   }
 
@@ -180,21 +240,26 @@ export function buildCelebrationJourney(
     push(c.resolved_at, '✅', 'We answered your change', null)
   }
 
-  if (row.lock_claimed_at) {
-    push(row.lock_claimed_at, '🔒', 'You told us the hold was paid',
-      'We are matching it against the bank.')
-  }
-  if (row.lock_confirmed_at) {
-    push(row.lock_confirmed_at, '✅', 'Your hold is confirmed',
-      'Your date is held. It comes off your final invoice.')
+  if (!hasLog) {
+    if (row.lock_claimed_at) {
+      push(row.lock_claimed_at, '🔒', 'You told us the hold was paid',
+        'We are matching it against the bank.')
+    }
+    if (row.lock_confirmed_at) {
+      push(row.lock_confirmed_at, '✅', 'Your hold is confirmed',
+        'Your date is held. It comes off your final invoice.')
+    }
+
+    for (const p of payments) {
+      const verified = p.status === 'ADMIN_VERIFIED' || p.status === 'GATEWAY_VERIFIED'
+      push(p.created_at, verified ? '💰' : '⏳',
+        verified ? 'Payment received' : 'Payment recorded',
+        p.milestone_id ? null : (p.notes ?? null))
+    }
   }
 
-  for (const p of payments) {
-    const verified = p.status === 'ADMIN_VERIFIED' || p.status === 'GATEWAY_VERIFIED'
-    push(p.created_at, verified ? '💰' : '⏳',
-      verified ? 'Payment received' : 'Payment recorded',
-      p.milestone_id ? null : (p.notes ?? null))
-  }
+  // Change requests are NOT logged by 045 — no trigger on
+  // `event_change_requests` — so these always come from the rows themselves.
 
   timeline.sort((a, b) => new Date(a.at) - new Date(b.at))
 

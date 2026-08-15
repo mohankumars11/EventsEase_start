@@ -80,7 +80,15 @@ const STAGE_MESSAGE = {
 
 const CANCELLED = 'cancelled'
 
-function stageOf(kind, status) {
+/**
+ * A raw DB status → the five-stage customer journey.
+ *
+ * Exported because `celebration_events` (migration 045) stores the RAW status
+ * — 'PROPOSAL_SENT', 'open' — and any consumer of that log has to translate
+ * it the same way this file does, or the app grows a fifth private mapping
+ * that disagrees with the other four.
+ */
+export function stageOf(kind, status) {
   if (status === 'CANCELLED' || status === 'cancelled') return CANCELLED
   const map = kind === 'event' ? EVENT_STAGE : ENQUIRY_STAGE
   return map[status] ?? 'received'

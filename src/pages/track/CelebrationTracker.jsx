@@ -47,6 +47,7 @@ export default function CelebrationTracker() {
   const [items, setItems] = useState([])
   const [payments, setPayments] = useState([])
   const [changeRequests, setChangeRequests] = useState([])
+  const [log, setLog] = useState([])
   const [plan, setPlan] = useState(null)
   const [state, setState] = useState('loading')
 
@@ -64,9 +65,33 @@ export default function CelebrationTracker() {
       setItem(hit)
       setState('ready')
 
-      // Only events carry proposals, payments and change requests today —
-      // `event_payments.event_id` is a NOT NULL FK to `events`, so a builder
-      // enquiry structurally cannot have one until migration 046 widens it.
+      // ── The transition log (migration 045) ────────────────────────
+      // Customer-visible rows only — the policy enforces that server-side,
+      // and the column list keeps vendor names and negotiated amounts out of
+      // the browser even if the policy ever loosened.
+      //
+      // Both subject types: a celebration is owed one history whichever
+      // table it landed in. On a database that has not run 045 this 42P01s
+      // and the journey falls back to inferred timestamps, which is exactly
+      // what `buildCelebrationJourney` is written to do.
+      supabase.from('celebration_events')
+        .select('id, subject_type, subject_id, kind, from_value, to_value, customer_copy, note, created_at')
+        .eq('subject_type', subjectType)
+        .eq('subject_id', subjectId)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => { if (!cancelled && data) setLog(data) })
+
+      // Milestone payments now reach an enquiry too — migration 046 dropped
+      // the NOT NULL on `event_id` and added `enquiry_id`, so the builder and
+      // the services cart are no longer structurally unable to hold one.
+      supabase.from('event_payments')
+        .select('id, event_id, enquiry_id, amount, payment_type, status, milestone_id, schedule_version, due_at, paid_at, notes, created_at')
+        .eq(subjectType === 'event' ? 'event_id' : 'enquiry_id', subjectId)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => { if (!cancelled && data) setPayments(data) })
+
+      // Proposals and change requests remain events-only: neither table has
+      // an enquiry column, and inventing one is a bigger change than this.
       if (subjectType !== 'event') return
 
       supabase.from('event_proposals')
@@ -81,12 +106,6 @@ export default function CelebrationTracker() {
         .select('id, proposal_id, event_service_id, description, customer_price, quantity')
         .then(({ data }) => { if (!cancelled && data) setItems(data) })
 
-      supabase.from('event_payments')
-        .select('id, event_id, amount, payment_type, status, transaction_reference, notes, created_at')
-        .eq('event_id', subjectId)
-        .order('created_at', { ascending: true })
-        .then(({ data }) => { if (!cancelled && data) setPayments(data) })
-
       supabase.from('event_change_requests')
         .select('id, event_id, description, created_at, resolved_at')
         .eq('event_id', subjectId)
@@ -98,8 +117,8 @@ export default function CelebrationTracker() {
   }, [user, subjectId, subjectType])
 
   const journey = useMemo(
-    () => (item ? buildCelebrationJourney(item, { log: [], proposals, payments, changeRequests }) : null),
-    [item, proposals, payments, changeRequests],
+    () => (item ? buildCelebrationJourney(item, { log, proposals, payments, changeRequests }) : null),
+    [item, log, proposals, payments, changeRequests],
   )
 
   // The services on this booking drive which unlock lines are true for it.

@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { fetchCelebrations } from './celebrations'
+import { fetchCelebrations, stageOf } from './celebrations'
 
 /**
  * Everything a customer has going with us, on one axis.
@@ -86,6 +86,18 @@ const CELEBRATION_STAGE = {
 
 /** Which celebration stages are waiting on the customer. */
 const CELEBRATION_NEEDS_YOU = { yours: NEEDS_YOU.proposal }
+
+/**
+ * A raw celebration status → this file's four-stop axis.
+ *
+ * The transition log stores what the database stores, so anything reading it
+ * needs this composition rather than a private copy of the two maps.
+ */
+export function trackStageOf(subjectType, rawStatus) {
+  const kind = subjectType === 'event' ? 'event' : 'enquiry'
+  const five = stageOf(kind, rawStatus)
+  return five === CANCELLED ? CANCELLED : (CELEBRATION_STAGE[five] ?? 'received')
+}
 
 export function stageOfOrder(status) {
   if (status === 'cancelled') return CANCELLED
