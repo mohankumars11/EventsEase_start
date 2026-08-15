@@ -55,6 +55,52 @@ Google's own OAuth console keeps pointing at
 `https://<project>.supabase.co/auth/v1/callback` — that one does *not* change
 with the app's domain.
 
+### e) Razorpay — only for staged celebration payments
+
+Optional. Without it the milestone endpoints return an honest `503` and the
+whole app stays on the UPI-deep-link model, where an admin confirms each
+payment against the bank by hand. Nothing breaks and nothing fakes a success.
+
+**Where each value comes from**
+
+| Variable | Where |
+|---|---|
+| `RAZORPAY_KEY_ID` | Dashboard → Settings → API Keys → Generate Key |
+| `VITE_RAZORPAY_KEY_ID` | the same value — the browser's copy |
+| `RAZORPAY_KEY_SECRET` | shown **once**, at the moment you generate the key |
+| `RAZORPAY_WEBHOOK_SECRET` | you invent it (any long random string) and paste the same value into the webhook below |
+
+**Test keys work immediately.** Live keys need completed KYC — PAN, bank
+account, address proof, and GSTIN if you are registered — but the entire flow
+can be wired and exercised in test mode before that lands.
+
+**Register the webhook** at Dashboard → Settings → Webhooks → Add New Webhook:
+
+- **URL** — `https://sambramoh.vercel.app/api/razorpay-webhook`
+- **Secret** — the same string as `RAZORPAY_WEBHOOK_SECRET`
+- **Events** — `payment.captured` and `refund.processed`
+
+The webhook is not optional once payments are live. `verify-razorpay-payment`
+runs from the browser's success callback, so a customer who pays and closes
+the tab leaves a captured payment this app never hears about — charged, with
+the database believing otherwise. The webhook is what makes the record
+eventually correct regardless of what the browser did.
+
+Set all of these in **Vercel → Project → Settings → Environment Variables**,
+then redeploy: environment changes do not apply to an already-built deployment.
+
+> ⚠ **Never put a `VITE_` prefix on either secret.** Anything `VITE_`-prefixed
+> is inlined into the JavaScript every visitor downloads. The key *id* is
+> publishable and is meant to be public; the secret and the webhook secret are
+> not, and leaking either lets somebody forge payments.
+
+**One commercial decision before going live:** Razorpay's MDR on cards and
+netbanking (~2% + GST) is larger than `PLATFORM_FEE_RATE` (2%, in
+`src/data/celebrationTiers.js`). On a ₹1,00,000 celebration that is roughly
+₹2,360 of fees against ₹2,000 of platform margin — the gateway would eat the
+whole fee and more. UPI collected through a gateway is typically zero-MDR, so
+restrict milestone collection to UPI methods, or reprice the platform fee.
+
 ---
 
 ## 3. Run the dev server

@@ -41,7 +41,11 @@ export default async function handler(req, res) {
   const share = SHARES[milestoneId]
   if (!share) return res.status(400).json({ error: 'Unknown milestone' })
 
-  const keyId = process.env.VITE_RAZORPAY_KEY_ID
+  // `RAZORPAY_KEY_ID` first, matching the sibling create-razorpay-order.js.
+  // The VITE_-prefixed one is the browser's copy (it is a publishable id, so
+  // that is correct) and is accepted as a fallback only so a project that set
+  // just the one variable still works rather than 503-ing with no explanation.
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID
   const keySecret = process.env.RAZORPAY_KEY_SECRET
   if (!keyId || !keySecret) {
     // Honest 503, never a fake success — the same posture LockPayment takes
