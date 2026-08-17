@@ -372,44 +372,6 @@ export async function reorder(items) {
 
 /* ── Images ────────────────────────────────────────────────────────────── */
 
-/**
- * Compress in the browser, upload, point the row at it.
- *
- * Same path and same bucket as the shop's product photos — migration 025's
- * storage policies key on `bucket_id` alone, so the `content/` prefix inherits
- * public-read and admin-only-write with nothing new to configure.
- *
- * Defaults to `image_source: 'actual'`, because the reason to stand in front
- * of a decorated hall with a phone is that it is your decorated hall. The
- * customer-facing badge reads from the same field the shop uses, so a real
- * photograph stops saying "representative image" everywhere at once.
- */
-export async function uploadItemImage(item, file, { alt, source = 'actual' } = {}) {
-  const blob = await compressImage(file)
-  const ext  = blob.type === 'image/webp' ? 'webp' : 'jpg'
-  const path = `content/${item.kind ?? 'service'}/${item.id}/${Date.now()}.${ext}`
-
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false })
-  if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`)
-
-  const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
-
-  try {
-    return await updateItem(item.id, {
-      image_url: publicUrl,
-      image_alt: alt || item.image_alt || null,
-      image_source: source,
-      image_updated_at: new Date().toISOString(),
-    })
-  } catch (err) {
-    // Never strand an object nothing points at — it costs storage forever.
-    await supabase.storage.from(BUCKET).remove([path])
-    throw new Error(`Saved the file but could not update the item: ${err.message}`)
-  }
-}
-
 export async function removeItemImage(item) {
   const dir = `content/${item.kind ?? 'service'}/${item.id}`
   const { data: files } = await supabase.storage.from(BUCKET).list(dir)
@@ -418,7 +380,199 @@ export async function removeItemImage(item) {
   }
   return updateItem(item.id, {
     image_url: null, image_source: 'stock', image_updated_at: new Date().toISOString(),
+    // The gallery is stored in `payload` (see below) and every file it pointed
+    // at has just been deleted from storage. Leaving the array behind would
+    // give the customer a slider full of 404s.
+    payload: { ...(item.payload ?? {}), gallery: [] },
   })
+}
+
+/* ── Galleries ─────────────────────────────────────────────────────────────
+ *
+ * One item, any number of photographs, and a horizontal slider on the customer
+ * side. The founder's ask was blunt: everything with a picture on it should take
+ * MORE than one picture, uploaded from the console.
+ *
+ * ── Why this lives in `payload` and not in a new table ────────────────────
+ * `service_catalog.payload` is JSONB and already exists (migration 040), so the
+ * whole feature ships with no migration — which matters here more than it
+ * usually would, because migrations in this project are applied by hand out of
+ * the SQL editor. A feature that needs a `content_images` table is a feature
+ * that silently does nothing until somebody remembers to run the file, and the
+ * failure mode is an admin uploading six photographs into a void.
+ *
+ * The honest trade: a JSONB array cannot be queried or constrained the way a
+ * table could. Nothing needs to — no screen asks "which photo is used most",
+ * the arrays are single-digit, and they are always read as part of the row they
+ * belong to. If that ever changes this becomes a table, and `itemGallery()`
+ * below is the one place that would have to know.
+ *
+ * ── `image_url` stays the cover, and that is the important part ───────────
+ * The gallery INCLUDES the cover at index 0, and `image_url` keeps pointing at
+ * it. So every existing consumer — the storefront, the decor chooser, the theme
+ * sheets, `fetchKindCounts`, the "needs a real photo" index from migration 023
+ * — goes on working with no change at all, and reads the same first frame it
+ * always did. The slider is additive: a surface that has not been taught about
+ * galleries shows the cover, which is exactly right.
+ *
+ * That is also why cover changes write BOTH fields. Two sources of truth for
+ * "the main photo" is the bug this ordering exists to prevent.
+ */
+
+/** A gallery frame: `{ url, alt, source, at }`. */
+function frameOf(url, { alt = null, source = 'actual' } = {}) {
+  return { url, alt, source, at: new Date().toISOString() }
+}
+
+/**
+ * Every photograph on this item, oldest-cover-first, as normalised frames.
+ *
+ * Rows that predate galleries have an `image_url` and no `payload.gallery`, and
+ * they must not read as having zero photographs — so a bare `image_url` is
+ * promoted to a one-frame gallery. This is the only function that knows the
+ * storage shape; everything else takes its output.
+ */
+export function itemGallery(item) {
+  const raw = Array.isArray(item?.payload?.gallery) ? item.payload.gallery : []
+  const frames = raw
+    .filter(f => f && typeof f.url === 'string')
+    .map(f => ({ url: f.url, alt: f.alt ?? null, source: f.source ?? 'stock', at: f.at ?? null }))
+
+  if (frames.length === 0 && item?.image_url) {
+    return [{ url: item.image_url, alt: item.image_alt ?? null, source: item.image_source ?? 'stock', at: item.image_updated_at ?? null }]
+  }
+  // The cover wins its place regardless of array order — if the two ever
+  // disagree, `image_url` is what every other surface in the app is already
+  // showing, so it is the one the slider must open on.
+  if (item?.image_url) {
+    const i = frames.findIndex(f => f.url === item.image_url)
+    if (i > 0) return [frames[i], ...frames.slice(0, i), ...frames.slice(i + 1)]
+    if (i === -1) return [{ url: item.image_url, alt: item.image_alt ?? null, source: item.image_source ?? 'stock', at: null }, ...frames]
+  }
+  return frames
+}
+
+/**
+ * Upload several photographs at once and append them to the gallery.
+ *
+ * Sequential rather than `Promise.all`: these are phone photographs being
+ * compressed in the browser and pushed to storage, and eight parallel canvas
+ * encodes on a mid-range laptop is how the console freezes. `onProgress` exists
+ * so the button can say "3 of 8" instead of spinning silently for a minute.
+ *
+ * Partial success is a real outcome and is treated as one. If file five fails,
+ * files one to four are already in storage and are STILL SAVED to the row
+ * before the error is raised — the alternative is an admin losing four
+ * successful uploads to one bad JPEG, and orphaned objects nothing points at
+ * that cost storage forever.
+ */
+export async function uploadItemImages(item, files, { source = 'actual', onProgress } = {}) {
+  const list = Array.from(files ?? []).filter(Boolean)
+  if (list.length === 0) return item
+
+  const kind = item.kind ?? 'service'
+  const existing = itemGallery(item)
+  const added = []
+  let failure = null
+
+  for (let i = 0; i < list.length; i++) {
+    onProgress?.({ done: i, total: list.length })
+    try {
+      const blob = await compressImage(list[i])
+      const ext  = blob.type === 'image/webp' ? 'webp' : 'jpg'
+      // The index is in the path as well as the timestamp: a multi-file upload
+      // can complete two files inside the same millisecond, and `upsert: false`
+      // would then reject the second as a duplicate key.
+      const path = `content/${kind}/${item.id}/${Date.now()}-${i}.${ext}`
+
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false })
+      if (error) throw new Error(error.message)
+
+      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
+      added.push(frameOf(publicUrl, { alt: item.image_alt, source }))
+    } catch (err) {
+      failure = err
+      break
+    }
+  }
+
+  if (added.length === 0) throw new Error(`Upload failed: ${failure?.message ?? 'unknown error'}`)
+
+  const gallery = [...existing, ...added]
+  const patch = {
+    payload: { ...(item.payload ?? {}), gallery },
+    image_updated_at: new Date().toISOString(),
+  }
+  // Only claim the cover if there wasn't one. An admin adding a second angle to
+  // a photographed item is not asking to replace its cover.
+  if (!item.image_url) {
+    patch.image_url = gallery[0].url
+    patch.image_source = gallery[0].source
+  }
+
+  const saved = await updateItem(item.id, patch)
+  if (failure) {
+    throw Object.assign(
+      new Error(`Saved ${added.length} of ${list.length}. The rest failed: ${failure.message}`),
+      { item: saved, partial: true },
+    )
+  }
+  return saved
+}
+
+/** Promote one frame to the cover, so every other surface shows it too. */
+export async function setGalleryCover(item, url) {
+  const gallery = itemGallery(item)
+  const frame = gallery.find(f => f.url === url)
+  if (!frame) throw new Error('That photo is not on this item.')
+  return updateItem(item.id, {
+    payload: { ...(item.payload ?? {}), gallery: [frame, ...gallery.filter(f => f.url !== url)] },
+    image_url: frame.url,
+    image_source: frame.source,
+    image_alt: frame.alt ?? item.image_alt ?? null,
+    image_updated_at: new Date().toISOString(),
+  })
+}
+
+/**
+ * Delete one frame — from the row and from storage.
+ *
+ * The row is updated FIRST and the object removed after. That order is
+ * deliberate: if the storage delete fails we are left with a file nothing points
+ * at, which costs a few kilobytes; the other order risks a row pointing at a
+ * file that no longer exists, which is a broken image on a customer's screen.
+ *
+ * Removing the cover promotes the next frame rather than leaving the item
+ * pictureless while five photographs sit in its gallery.
+ */
+export async function removeGalleryImage(item, url) {
+  const gallery = itemGallery(item)
+  const rest = gallery.filter(f => f.url !== url)
+  const wasCover = item.image_url === url
+
+  const patch = {
+    payload: { ...(item.payload ?? {}), gallery: rest },
+    image_updated_at: new Date().toISOString(),
+  }
+  if (wasCover) {
+    patch.image_url    = rest[0]?.url ?? null
+    patch.image_source = rest[0]?.source ?? 'stock'
+    patch.image_alt    = rest[0]?.alt ?? null
+  }
+
+  const saved = await updateItem(item.id, patch)
+
+  // Storage keys are paths, not URLs. Anything not under our own prefix is a
+  // resolver-assigned stock photo on a CDN we do not own — skip rather than
+  // attempt a delete that would fail.
+  const marker = '/object/public/' + BUCKET + '/'
+  const at = url.indexOf(marker)
+  if (at !== -1) {
+    await supabase.storage.from(BUCKET).remove([url.slice(at + marker.length)])
+  }
+  return saved
 }
 
 /** True when migration 040 has not been applied — `kind` will not exist. */

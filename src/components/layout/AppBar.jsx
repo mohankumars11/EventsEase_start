@@ -55,6 +55,13 @@ export default function AppBar({
   subtitle,
   citySubtitle,
   cart = true,
+  /**
+   * The avatar menu. On by default because on every other screen it is the only
+   * route to Orders, Requests and sign out — but the Account screen IS those
+   * links, and a menu duplicating the page it sits on is a second answer to a
+   * question already answered.
+   */
+  menu = true,
   children,
 }) {
   const navigate = useNavigate()
@@ -140,8 +147,9 @@ export default function AppBar({
 
           {/* The account menu is the only route to Orders, Requests and sign
               out once the marketing navbar is gone, so it cannot be optional
-              on a signed-in screen. */}
-          {user && (
+              on a signed-in screen — except the one screen that is itself
+              those destinations. See `menu` above. */}
+          {menu && user && (
             <ProfileDropdown
               profile={profile}
               onSignOut={signOut}

@@ -9,7 +9,8 @@ import { INK, STATUS, CATEGORICAL } from '../../config/dataviz'
 import {
   CONTENT_KINDS, KIND_BY_ID, fetchKind, fetchKindCounts, syncKind,
   createItem, updateItem, setActive, deleteItem, reorder,
-  uploadItemImage, removeItemImage, isMissingTable, isMissingKindColumn, slugify,
+  removeItemImage, isMissingTable, isMissingKindColumn, slugify,
+  uploadItemImages, itemGallery, setGalleryCover, removeGalleryImage,
 } from '../../lib/contentStudio'
 import ImageSourceBadge from '../shop/ImageSourceBadge'
 import { SectionHead, EmptyNote, Meter, StatTile } from './viz/Primitives'
@@ -392,8 +393,20 @@ function KindEditor({ kind, onBack }) {
                 key={item.id} item={item} meta={meta} busy={busyId === item.id}
                 first={i === 0} last={i === filtered.length - 1}
                 onEdit={() => setEditing(item.id)}
-                onUpload={file => withBusy(item.id, () => uploadItemImage(item, file), `Photo saved for ${item.name}.`)}
-                onRemoveImage={() => withBusy(item.id, () => removeItemImage(item), `Photo removed.`)}
+                /* Many files at once, and the toast counts them — an admin
+                   selecting eight photographs of a mandap needs to know all
+                   eight landed, not that "a photo" was saved. A partial
+                   failure throws with the rows already saved attached, so
+                   `withBusy`'s error path still leaves the successful uploads
+                   on the card. */
+                onUpload={files => withBusy(
+                  item.id,
+                  () => uploadItemImages(item, files),
+                  `${files.length} photo${files.length === 1 ? '' : 's'} saved for ${item.name}.`,
+                )}
+                onSetCover={url => withBusy(item.id, () => setGalleryCover(item, url), 'Cover photo updated.')}
+                onRemoveFrame={url => withBusy(item.id, () => removeGalleryImage(item, url), 'Photo removed.')}
+                onRemoveImage={() => withBusy(item.id, () => removeItemImage(item), `All photos removed.`)}
                 onToggle={() => withBusy(item.id, () => setActive(item.id, item.active === false),
                                          item.active === false ? `${item.name} is live again.` : `${item.name} is no longer shown.`)}
                 onDelete={async () => {
@@ -418,14 +431,18 @@ function KindEditor({ kind, onBack }) {
 
 /* ── One item ──────────────────────────────────────────────────────────── */
 
-function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onRemoveImage, onToggle, onDelete, onMove }) {
+function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onSetCover, onRemoveFrame, onRemoveImage, onToggle, onDelete, onMove }) {
   const fileRef = useRef(null)
   const payload = item.payload ?? {}
+  // Every photograph on this item, cover first. Rows that predate galleries
+  // return their single `image_url` as a one-frame gallery, so this is never
+  // empty for an item that has a picture — see itemGallery().
+  const gallery = itemGallery(item)
 
   return (
     <div className={`bg-white border rounded-2xl overflow-hidden flex ${item.active === false ? 'border-gray-200 opacity-70' : 'border-gray-100'}`}>
       <button onClick={() => fileRef.current?.click()} disabled={busy}
-        title="Upload a photograph" className="relative w-28 shrink-0 bg-gray-50 group">
+        title="Upload photographs" className="relative w-28 shrink-0 bg-gray-50 group">
         {item.image_url ? (
           <img src={item.image_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
@@ -433,12 +450,27 @@ function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onRemoveIma
             {item.emoji ?? meta.emoji}
           </span>
         )}
+        {/* How many photographs are behind the cover. Without this the console
+            shows one thumbnail whether the item has one photograph or nine, so
+            there is no way to tell a photographed item from a well-photographed
+            one — which is the whole thing this screen is for. */}
+        {gallery.length > 1 && (
+          <span className="absolute bottom-1 right-1 rounded-full bg-plum-950/80 px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+            {gallery.length}
+          </span>
+        )}
         <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           {busy ? <Loader2 size={18} className="animate-spin text-white" /> : <Camera size={18} className="text-white" />}
         </span>
       </button>
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
-             onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onUpload(f) }} />
+      {/* `multiple`, and `capture` is gone with it. The two are contradictory:
+          `capture="environment"` asks the OS for the camera, which returns
+          exactly one frame, so an admin who wanted to attach six photographs
+          from their gallery was handed a viewfinder instead. Uploading a batch
+          that already exists is the common case here — the camera is still one
+          tap away in the OS picker. */}
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+             onChange={e => { const f = Array.from(e.target.files ?? []); e.target.value = ''; if (f.length) onUpload(f) }} />
 
       <div className="flex-1 min-w-0 p-3.5">
         <div className="flex items-start justify-between gap-2">
@@ -468,16 +500,79 @@ function ItemCard({ item, meta, busy, first, last, onEdit, onUpload, onRemoveIma
           </p>
         )}
 
+        {/* ── The gallery strip ────────────────────────────────────
+            Only once there is more than one photograph. At one frame the
+            thumbnail on the left already IS the gallery, and a strip
+            showing the same picture again with a "cover" tick on it is
+            two controls for one photo.
+
+            Cover-setting is here rather than in the edit form because it
+            is a decision made by LOOKING — you pick the cover by seeing
+            the six options next to each other, which is exactly what a
+            form field cannot show you. */}
+        {gallery.length > 1 && (
+          <div className="mt-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+              {gallery.map((frame, i) => {
+                const isCover = frame.url === item.image_url
+                return (
+                  <div
+                    key={frame.url}
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 ${
+                      isCover ? 'border-plum-600' : 'border-transparent'
+                    }`}
+                  >
+                    <img src={frame.url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+
+                    {isCover ? (
+                      <span className="absolute inset-x-0 bottom-0 bg-plum-700/90 py-px text-center text-[8px] font-extrabold uppercase tracking-wide text-white">
+                        Cover
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onSetCover(frame.url)}
+                        disabled={busy}
+                        title="Make this the cover photo"
+                        className="absolute inset-x-0 bottom-0 bg-black/65 py-px text-center text-[8px] font-bold uppercase tracking-wide text-white opacity-0 transition-opacity hover:opacity-100 focus:opacity-100 disabled:opacity-0"
+                      >
+                        Cover
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => onRemoveFrame(frame.url)}
+                      disabled={busy}
+                      title="Delete this photo"
+                      aria-label={`Delete photo ${i + 1}`}
+                      className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/65 text-white opacity-0 transition-opacity hover:bg-chilli-600 hover:opacity-100 focus:opacity-100 disabled:opacity-0"
+                    >
+                      <X size={9} strokeWidth={3} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[10px]" style={{ color: INK.muted }}>
+              {gallery.length} photos — the customer swipes through all of them. Hover a
+              thumbnail to make it the cover or delete it.
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           {item.image_url && <ImageSourceBadge source={item.image_source} size="sm" />}
           <button onClick={() => fileRef.current?.click()} disabled={busy}
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-plum-700 hover:text-plum-800 disabled:opacity-40">
-            <Upload size={11} /> {item.image_url ? 'Replace' : 'Add a photo'}
+            {/* "Add more" rather than "Replace" once there is a photo. Replacing
+                was the only thing this button could do when an item held exactly
+                one image; now it appends, and a button that says Replace while
+                appending is a button that loses somebody's work in their head. */}
+            <Upload size={11} /> {item.image_url ? 'Add more photos' : 'Add photos'}
           </button>
           {item.image_url && (
             <button onClick={onRemoveImage} disabled={busy}
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-600 disabled:opacity-40">
-              <Trash2 size={11} /> Remove
+              <Trash2 size={11} /> {gallery.length > 1 ? 'Remove all' : 'Remove'}
             </button>
           )}
           <button onClick={onToggle} disabled={busy}

@@ -12,6 +12,17 @@ export const SHOP_CATEGORIES = [
   { id: 'Flowers',            label: 'Flowers',            emoji: '💐', tagline: 'Fresh bouquets, delivered same-day' },
   { id: 'Party Essentials',   label: 'Party Essentials',   emoji: '🎈', tagline: 'Balloons, banners & party supplies' },
   { id: 'Pooja & Essentials', label: 'Pooja & Essentials', emoji: '🪔', tagline: 'Diyas, samagri, flowers & pandit booking' },
+  // Migration 048. The one shelf here that is a reason to exist rather than a
+  // convenience: cakes and balloons are available from twenty apps in
+  // Bengaluru, and a Molakalmuru silk, a Mysore gesso painting or a rosewood
+  // inlay panel are not. A brand live in exactly Bengaluru and Mysuru is the
+  // one that should be selling them.
+  //
+  // Listed last on purpose. It is the highest-ticket and slowest-moving
+  // category, so it must not stand between a customer and a cake — but it is
+  // the category the home mosaic gives its own full-width tile to, because
+  // that is where somebody discovers a shelf they were not looking for.
+  { id: 'Heritage & Crafts',  label: 'Heritage & Crafts',  emoji: '🪆', tagline: 'Mysore silk, rare handloom weaves, carvings and the Mysuru specialities' },
 ]
 
 export const DELIVERY_FEE = 49

@@ -327,7 +327,7 @@ function SampleOverlay({ sample, onClose, onPrev, onNext }) {
 
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6">{sample.blurb}</p>
 
-          <div className="rounded-2xl border border-gray-100 bg-cream p-4 sm:p-5 mb-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 mb-6">
             <h3 className="text-[11px] font-bold tracking-[0.14em] uppercase text-plum-600 mb-3">
               What goes into it
             </h3>
@@ -506,7 +506,7 @@ export function DecorSampleShowcase() {
         {/* Said once, plainly, above the grid — so nobody has to open a card
             to learn what they are looking at. The per-image badge repeats it
             where somebody who scrolled straight into the grid will see it. */}
-        <div className="flex items-start gap-2.5 rounded-2xl bg-cream border border-amber-100 px-4 py-3 mb-6 text-xs sm:text-sm text-gray-600 leading-relaxed">
+        <div className="flex items-start gap-2.5 rounded-2xl bg-white border border-amber-100 px-4 py-3 mb-6 text-xs sm:text-sm text-gray-600 leading-relaxed">
           <Camera size={16} className="shrink-0 mt-0.5 text-plum-600" />
           <p>
             <span className="font-semibold text-gray-900">These are reference photographs</span> of

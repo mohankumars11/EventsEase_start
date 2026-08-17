@@ -324,7 +324,7 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
       {/* The line a coordinator will actually read, shown while it is being
           typed. It is the only way for the vendor to tell that "400" and
           "per plate" combine into something sane. */}
-      <div className="rounded-xl bg-cream border border-orange-100 px-3 py-2.5">
+      <div className="rounded-xl bg-white border border-orange-100 px-3 py-2.5">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-0.5">
           How this reads to us
         </div>

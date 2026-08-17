@@ -51,7 +51,12 @@
     /* Whole values, not channels — nothing takes an alpha modifier on
        these, and their consumers (an inline style, a ring colour, a
        box-shadow) all want a plain colour. */
-    --notch:  #F7F2FB;             /* the coupon tile's fake perforation */
+    /* The ground colour a coupon tile punches its perforations out in. It is
+       #FFF now like every canvas, and it is still a token rather than a
+       hardcoded white: the notch has to match whatever is behind the tile at
+       the tile's own height, and a surface that ever stops being white must be
+       able to say so in one place. */
+    --notch:  #FFFFFF;             /* the coupon tile's fake perforation */
     --bar:    #FFFFFF;             /* the app bar fill, so a badge ring can name it */
     /* The kolam mark's centre is a KNOCKOUT — a hole punched through the
        glyph that must be filled with whatever is behind it. It defaulted to
@@ -69,13 +74,13 @@
   body {
     font-family: 'Manrope', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    /* Was `bg-cream text-gray-800`. Cream (#FFF8F0) is a fifth light plane
-       on top of the four the canvases paint, and with the grounds now light
-       the seam between them is visible where a page ends short of the fold.
-       The ground colour is the concierge canvas's own base stop, so a page
-       with no canvas of its own is simply the quietest version of the same
-       room rather than a different one. */
-    background-color: #FCFAFF;
+    /* Pure white, app-wide.
+       This has been cream (#FFF8F0), then the concierge canvas's own base stop
+       (#FCFAFF), and it is now #FFF — because every one of the four canvases
+       below is now flat white too, and the whole point of setting it here is
+       that a page with no canvas of its own must not show a seam against the
+       ones that have. One ground colour, one value, no planes. */
+    background-color: #FFFFFF;
     /* Tabular figures app-wide, not per price.
        Manrope's default figures are proportional — a 1 is narrower than a 0 —
        so a cart total slides sideways as it updates, a quantity stepper
@@ -206,19 +211,33 @@
 
      `background-attachment: fixed` stays: the lights are the room, and the
      room should not scroll with the cards in it. */
+  /* ── Pure white, and what had to change with it ─────────────────────────
+     All four canvases below used to paint a tinted room: three soft radial
+     lights over a graded base — ivory-lavender for the concierge, mint for the
+     shop. The comments above describe that design and they are kept as the
+     record of it, because the reasoning was sound for a tinted ground and the
+     constraint has simply changed: the app is pure white now, on every surface.
+
+     Three consequences, all handled rather than discovered:
+
+       1. `--notch` becomes #FFF everywhere. A coupon tile punches its
+          perforations out in the ground colour, so a notch left at #F7F2FB on a
+          white page reads as two grey dots stuck ON the tile instead of as
+          holes in it. This is the single most visible thing that breaks when a
+          ground colour changes and nothing else does.
+       2. `background-attachment: fixed` is gone. It existed because the lights
+          were the room and the room should not scroll with the cards in it.
+          There are no lights, and `fixed` on a flat colour is a repaint cost
+          for no effect.
+       3. The card outlines below go from 6% to 10%. A white card on a
+          near-white ground separated on its violet-tinted shadow alone; on pure
+          white that shadow is doing the whole job, and a hairline at 6% was
+          tuned to be nearly invisible because the ground was already doing
+          half of it. The shadows stay tinted — a grey shadow on white reads as
+          dirt, which is why they were tinted in the first place. */
   .home-canvas {
-    /* The colour a coupon tile punches its notches out in. See --notch in
-       the :root block — this canvas declares its own because the offers rail
-       is shared with the storefront, and a perforation painted the wrong
-       room's ground reads as two dots stuck ON the tile rather than as holes
-       in it. It must match the ground at the tile's own height. */
-    --notch: #F7F2FB;
-    background:
-      radial-gradient(95% 55% at 50% -8%,  rgba(124, 58, 237, 0.10) 0%, transparent 62%),
-      radial-gradient(60% 38% at 88% 12%,  rgba(245, 158, 11, 0.12) 0%, transparent 58%),
-      radial-gradient(70% 45% at 6% 42%,   rgba(217, 70, 239, 0.06) 0%, transparent 60%),
-      linear-gradient(180deg, #FCFAFF 0%, #F7F2FB 46%, #F3EDF9 100%);
-    background-attachment: fixed;
+    --notch: #FFFFFF;
+    background: #FFFFFF;
   }
   /* Opaque white with a hairline under it. The bar used to be the darkest
      thing on the screen and separated itself by weight; on a light ground it
@@ -235,7 +254,7 @@
   .home-card {
     @apply relative overflow-hidden rounded-3xl bg-surface;
     box-shadow: var(--shadow-1);
-    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline: 1px solid rgb(var(--hairline) / 0.10);
     outline-offset: -1px;
     transition: transform 0.3s, box-shadow 0.3s;
   }
@@ -278,37 +297,18 @@
      The fallback values are the home canvas's own, so an occasion the theme
      table has not been taught yet renders as plum rather than as a black
      rectangle. */
+  /* White, like everything else. The per-occasion lights are gone with the
+     tinted ground — but `--event-ink` is NOT, and that is the distinction worth
+     keeping: the occasion's colour still drives its chips (.event-tint below),
+     its halo and its accents, which is where a customer actually reads it. The
+     ground was the least legible place that colour was expressed and the most
+     expensive, and a birthday and a griha pravesh are still told apart by
+     everything on the page except the paper it is printed on. */
   .event-canvas {
-    --event-a: rgba(124, 58, 237, 0.11);
-    --event-b: rgba(245, 158, 11, 0.12);
-    --event-c: rgba(217, 70, 239, 0.06);
-    --notch: #F6F0FB;
+    --notch: #FFFFFF;
     position: relative;
     isolation: isolate;
-    background:
-      radial-gradient(95% 55% at 50% -8%,  var(--event-a) 0%, transparent 62%),
-      radial-gradient(60% 38% at 88% 12%,  var(--event-b) 0%, transparent 58%),
-      radial-gradient(72% 46% at 4% 40%,   var(--event-c) 0%, transparent 60%),
-      linear-gradient(180deg, #FCFAFF 0%, var(--event-tint-ground, #F7F2FB) 46%, #F3EDF9 100%);
-    background-attachment: fixed;
-  }
-  /* A faint engineering grid over the top third. It is what makes the page
-     read as *built* rather than as a poster — the brief asked for something
-     futuristic, and a grid is the cheapest honest way to say "this is a
-     configurator" without adding a single element to the DOM. Masked out
-     before it reaches the content, so nothing is ever read through it. */
-  .event-canvas::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-      linear-gradient(rgba(31, 16, 51, 0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(31, 16, 51, 0.055) 1px, transparent 1px);
-    background-size: 56px 56px;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
-    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 34%, transparent 62%);
+    background: #FFFFFF;
   }
   .event-appbar {
     background: var(--bar);
@@ -320,7 +320,7 @@
   .event-card {
     @apply relative overflow-hidden rounded-3xl bg-surface;
     box-shadow: var(--shadow-1);
-    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline: 1px solid rgb(var(--hairline) / 0.10);
     outline-offset: -1px;
     transition: transform 0.3s, box-shadow 0.3s;
   }
@@ -436,18 +436,22 @@
      savings. Scoped to the shop rather than dropped into the shared
      button classes, so nothing outside /shop changes colour. */
   .shop-canvas {
-    --ink:          8 40 28;       /* #08281C  ~16:1 on the mint ground */
-    --ink-soft:    38 73 58;       /* #26493A  10.0:1 */
-    --ink-mute:    78 114 99;      /* #4E7263   5.4:1 — the floor */
+    /* The ink stays green-cast on white. It is not decoration: it is how a
+       customer knows, before reading a word, that they are in the shop rather
+       than the concierge — and the contrast ratios noted below only IMPROVE
+       against #FFF, so nothing here needed retuning when the mint ground went.
+       --ink-mute was the AA floor at 5.4:1 on mint; on white it is 5.9:1. */
+    --ink:          8 40 28;       /* #08281C  ~17:1 on white */
+    --ink-soft:    38 73 58;       /* #26493A  ~10.8:1 */
+    --ink-mute:    78 114 99;      /* #4E7263   ~5.9:1 — the floor */
     --ink-faint:   94 130 114;     /* #5E8272 — white cards only */
     --surface-sunk: 28 133 96;
     --hairline:     8 40 28;
     --accent:      14 82 60;       /* forest-700 */
-    --notch: #EFF8F3;
+    --notch: #FFFFFF;
     --shadow-1: 0 2px 10px -6px rgba(6, 60, 42, 0.26);
     --shadow-2: 0 18px 38px -18px rgba(6, 60, 42, 0.30);
-    background:
-      radial-gradient(120% 60% at 50% 0%, #F4FBF7 0%, #EDF7F2 42%, #E9F5EF 100%);
+    background: #FFFFFF;
   }
   /* Opaque, not translucent. The bar is sticky and the filter row sticks
      directly under it, so any alpha at the bottom edge showed product cards
@@ -464,7 +468,7 @@
   .shop-card {
     @apply relative bg-surface rounded-3xl overflow-hidden;
     box-shadow: var(--shadow-1);
-    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline: 1px solid rgb(var(--hairline) / 0.10);
     outline-offset: -1px;
     transition: transform 0.3s, box-shadow 0.3s;
   }
@@ -511,38 +515,20 @@
     --surface-sunk: 28 133 96;
     --hairline:     8 40 28;
     --accent:      14 82 60;
-    --notch: #EDF7F2;
+    --notch: #FFFFFF;
     --shadow-1: 0 18px 40px -24px rgba(6, 60, 42, 0.35);
     --shadow-2: 0 22px 46px -22px rgba(6, 60, 42, 0.38);
     position: relative;
     isolation: isolate;
-    /* The same three lights, at about a quarter of their old alpha. They are
-       what stop the cart reading as a plain white form — with the grid of
-       product photos gone, four white panels on a flat ground is a tax
-       return. Keep all three. */
-    background:
-      radial-gradient(100% 55% at 50% -10%, rgba(28, 133, 96, 0.12) 0%, transparent 60%),
-      radial-gradient(55% 32% at 88% 6%,    rgba(245, 158, 11, 0.11) 0%, transparent 62%),
-      radial-gradient(65% 42% at 2% 34%,    rgba(124, 58, 237, 0.07) 0%, transparent 60%),
-      linear-gradient(180deg, #F6FBF8 0%, #F0F8F4 44%, #ECF6F1 100%);
-    background-attachment: fixed;
-  }
-  /* Two offset dot grids — a warm one and a cool one — which at 26px read as
-     a string of far-off lights rather than as a texture you can name. Masked
-     away below the fold so it never competes with the order summary, and
-     drawn in CSS so it costs no request and no image. */
-  .checkout-canvas::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-      radial-gradient(rgba(8, 40, 28, 0.07) 1px, transparent 1.3px);
-    background-size: 26px 26px;
-    background-position: 0 0;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
-    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
+    /* White, and the three lights and the dot grid are both gone.
+       The comment above argues that a flat ground makes the cart "a tax
+       return", and on a checkout that argument is worth losing on purpose: the
+       one screen in the product where somebody types an address and reads a
+       total is the one screen that should be the least decorated. What
+       separates the panels here is the shadow, which is the heaviest in the app
+       (--shadow-1 above) precisely because this surface was always going to
+       have to hold four white panels on their own. */
+    background: #FFFFFF;
   }
   /* Opaque for the same reason .shop-appbar is: the stepper sticks directly
      beneath it, and any alpha at the seam shows a card sliding between the
@@ -557,7 +543,7 @@
   .checkout-card {
     @apply relative overflow-hidden rounded-3xl bg-surface;
     box-shadow: var(--shadow-1);
-    outline: 1px solid rgb(var(--hairline) / 0.06);
+    outline: 1px solid rgb(var(--hairline) / 0.10);
     outline-offset: -1px;
   }
   /* For the things that belong to the room rather than to the form —
@@ -764,6 +750,70 @@
     opacity: 0;
     animation: rise-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     animation-delay: var(--rise-delay, 0ms);
+  }
+
+  /* ── The brand banner's ground ────────────────────────
+     A deep plum field with two warm lights drifting across it, very slowly.
+
+     It is a gradient rather than a photograph on purpose. This is the one panel
+     on Home whose subject is the NAME, and a photograph behind a wordmark makes
+     the wordmark a caption on somebody else's picture. The two radial lights
+     (saffron low-left, berry high-right) are the brand's own accents and give
+     the flat field somewhere for the foil on the mark to catch.
+
+     The drift is 34s and moves a few percent. At that speed nobody watches it
+     happen — they notice, coming back to the page, that it is not where it was,
+     which is the difference between a live surface and an animation. */
+  @keyframes brand-drift {
+    0%   { background-position: 0% 50%,   100% 0%,  50% 50%; }
+    50%  { background-position: 12% 60%,  88% 12%,  50% 50%; }
+    100% { background-position: 0% 50%,   100% 0%,  50% 50%; }
+  }
+  .brand-banner {
+    background-image:
+      radial-gradient(80% 120% at 0% 100%,  rgba(245, 158, 11, 0.38) 0%, transparent 62%),
+      radial-gradient(70% 110% at 100% 0%,  rgba(217, 70, 239, 0.30) 0%, transparent 60%),
+      linear-gradient(150deg, #3b1181 0%, #2e1065 46%, #1b0940 100%);
+    background-size: 180% 180%, 180% 180%, 100% 100%;
+    animation: brand-drift 34s ease-in-out infinite;
+    box-shadow: 0 24px 54px -28px rgba(43, 15, 82, 0.95);
+  }
+
+  /* ── The mosaic's hero sweep ──────────────────────────
+     `sheen` below is the hover version, and a phone has no hover — so the two
+     hero tiles on the home mosaic run this on a long loop instead.
+
+     The pause is most of the design. A 2.2s sweep on a 9s cycle means the light
+     crosses once and then the tile is still for nearly seven seconds; at a
+     shorter period two hero tiles in one viewport read as a strobe, which is
+     the specific motion failure that makes an app feel cheap rather than alive.
+
+     Transform and opacity only, so it never leaves the compositor, and the
+     blanket prefers-reduced-motion rule at the end of this file switches it
+     off with everything else. */
+  @keyframes mosaic-sweep {
+    0%   { transform: translateX(-140%) skewX(-16deg); opacity: 0; }
+    8%   { opacity: 0.5; }
+    24%  { opacity: 0.5; }
+    32%  { transform: translateX(240%)  skewX(-16deg); opacity: 0; }
+    100% { transform: translateX(240%)  skewX(-16deg); opacity: 0; }
+  }
+  .mosaic-sweep {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 35%,
+      rgba(255, 255, 255, 0.30) 50%,
+      rgba(255, 255, 255, 0.05) 65%,
+      transparent 100%
+    );
+    animation: mosaic-sweep 9s cubic-bezier(0.32, 0, 0.24, 1) infinite;
   }
 
   @keyframes sheen {
@@ -995,30 +1045,40 @@
      its own submit button. */
   .above-bottom-nav { bottom: var(--bottom-nav-h, 4.25rem); }
 
-  /* ── The desktop chat launcher's dock ─────────────────
-     On a phone the assistant is a tab in the bottom bar, so nothing
-     floats over the page at all. Desktop has no tab bar and an empty
-     bottom-right corner, so the launcher parks there.
+  /* ── The chat launcher's dock ─────────────────────────
+     The assistant is a floating bubble in the bottom-right corner on every
+     size now. It used to be a tab in the bottom bar on phones, and that slot
+     went to Account — the destination a phone customer reaches for far more
+     often than support.
 
-       .chat-dock     — where the desktop launcher sits. `hidden
-                        md:flex` on the button keeps it off phones.
-       .pr-chat-dock  — the clearance a full-width bottom bar keeps
-                        on its right so its own buttons never end up
-                        under the launcher. Only md–lg needs it: below
-                        md there is no launcher, and from lg the
-                        centred bars are nowhere near the corner.
+       .chat-dock     — where the launcher sits. On a phone it parks ABOVE
+                        the tab bar rather than over it, so it can never
+                        cover navigation.
+       .pr-chat-dock  — the clearance a full-width bottom bar keeps on its
+                        right so its own buttons never end up under the
+                        launcher. Now needed on phones too, which is the
+                        fault that got the bubble removed the first time:
+                        a launcher in the corner a thumb rests in sat
+                        squarely on "View cart".
 
      z-45: above page content and the cart bar, below the tab bar
      (z-50) and every modal/sheet (z-50+). Support never outranks
      navigation or the dialog someone is currently in. */
   .chat-dock {
     position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
+    right: 0.875rem;
+    /* Measured tab-bar height, not a guess — see usePublishedHeight in
+       BottomNav. The bar is display:none from md, where it measures 0 and
+       this collapses to the plain corner inset on its own. */
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + 0.625rem);
     z-index: 45;
   }
+  @screen md {
+    .chat-dock { right: 1.25rem; bottom: 1.25rem; }
+  }
 
-  .pr-chat-dock { padding-right: 0.75rem; }
+  /* 3.5rem launcher + 0.875rem inset + a gap. */
+  .pr-chat-dock { padding-right: 3.75rem; }
   @screen md { .pr-chat-dock { padding-right: 5.5rem; } }
   @screen lg { .pr-chat-dock { padding-right: 1rem; } }
 
@@ -1373,6 +1433,10 @@
   .animate-spin-slow,
   .animate-sheen,
   .animate-pulse-ring,
+  /* The brand banner keeps its gradient and loses the drift — the panel is a
+     finished surface standing still, which is more than can be said for most
+     things that animate. */
+  .brand-banner,
   .ken-burns {
     animation: none !important;
   }
@@ -1382,9 +1446,14 @@
      never animates in must still be visible, and `.rise-in` starts at
      opacity 0. */
   .event-halo::after,
-  .sheen-on-hover::after {
+  .sheen-on-hover::after,
+  /* The mosaic's hero sweep. Hidden rather than merely paused: frozen at 0% it
+     is a bright diagonal band parked over a hero tile's left edge, which reads
+     as a rendering fault rather than as a still design. */
+  .mosaic-sweep {
     animation: none !important;
   }
+  .mosaic-sweep { display: none !important; }
   .rise-in {
     animation: none !important;
     opacity: 1;

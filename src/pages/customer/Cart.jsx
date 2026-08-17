@@ -200,7 +200,7 @@ export default function Cart() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-cream pb-bottom-nav">
+      <div className="min-h-screen bg-white pb-bottom-nav">
         {/* No back arrow and no cart icon on the confirmation: the cart it
             would return to is the one that was just emptied, and a bag badge
             reading 0 beside "Requirements sent" is the app contradicting its
@@ -263,7 +263,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-cream pb-bottom-nav">
+    <div className="min-h-screen bg-white pb-bottom-nav">
       {/* One back control, in the bar, where every other screen keeps it. The
           page used to draw its own directly beneath the shell's "Back" link —
           two arrows, eight pixels apart, doing different things: the shell's

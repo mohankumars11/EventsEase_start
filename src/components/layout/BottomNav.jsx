@@ -1,9 +1,8 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, CalendarHeart, Route, ShoppingBag, MessageCircle } from 'lucide-react'
+import { Home, Store, Sparkles, Route, ShoppingBag, User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
-import { useChat } from '../../context/ChatContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
 import SambramoMark from '../ui/SambramoMark'
@@ -98,7 +97,6 @@ function usePublishedHeight(ref, enabled) {
 export default function BottomNav() {
   const { user, profile } = useAuth()
   const { cartCount, cartPath } = useCart()
-  const { open: chatOpen, toggleChat } = useChat()
   const { pathname } = useLocation()
   const barRef = useRef(null)
   // Three counts, no row payload — see the hook. It self-gates on role, so
@@ -164,14 +162,28 @@ export default function BottomNav() {
   const tracking = activity.total > 0
 
   /**
-   * Help is a tab, not a floating bubble.
+   * The sixth tab is Account, and it used to be Help.
    *
-   * It used to be a 56px circle pinned over the bottom-right of every screen,
-   * which meant it covered the cart bar's "View cart", the builder's submit
-   * row and the corner of every modal — the exact buttons a thumb reaches for
-   * in the corner it rests in. In the bar it is in a strip the app already
-   * reserves, so it can never sit on top of anything, and it is still one tap
-   * from wherever you are.
+   * Help was here because the floating chat bubble it replaced covered the
+   * cart bar's "View cart" and the builder's submit row — the buttons a thumb
+   * reaches for in the corner it rests in. That fault was the bubble's
+   * POSITION, not the fact that it floated: it now docks above the tab bar and
+   * every full-width bottom bar reserves `pr-chat-dock` beside it, so it can
+   * no longer sit on anything (see .chat-dock in index.css).
+   *
+   * Which frees the slot for the thing a phone customer actually reaches for
+   * repeatedly. Every app of this shape ends its bar with the person's own
+   * account, and Sambramo's was scattered: addresses lived in the checkout,
+   * orders behind a dropdown in one app bar, celebrations behind another
+   * entry in the same dropdown, and referrals nowhere reachable at all. A
+   * dropdown in a header is a desktop control — on a phone it is a 32px
+   * avatar hiding eight destinations.
+   *
+   * Signed out it is still Account rather than "Sign in", for the reason the
+   * Track tab documents above: a permanent tab whose only function is to
+   * interrupt contradicts an app that deliberately lets guests browse, plan
+   * and fill a cart. The screen itself asks, once, when there is something to
+   * save.
    */
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
@@ -192,7 +204,7 @@ export default function BottomNav() {
       pulse: tracking && activity.needsYou === 0 && activity.live > 0,
     },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
-    { action: toggleChat,  icon: MessageCircle, label: 'Help', active: chatOpen },
+    { to: '/account',      icon: User,          label: 'Account' },
   ]
 
   /**
@@ -246,12 +258,9 @@ export default function BottomNav() {
           an even pitch and the row reads as a grid rather than as text that
           happens to be spaced out. */}
       <ul className="flex items-stretch px-0.5">
-        {tabs.map(({ to, icon: Icon, label, primary, badge, pulse, action, active: forcedActive }) => {
-          const active = forcedActive ?? isActive(to)
+        {tabs.map(({ to, icon: Icon, label, primary, badge, pulse }) => {
+          const active = isActive(to)
 
-          // What every tab looks like inside, whether it navigates or opens
-          // the assistant — so the one button in this bar can never drift
-          // away from the five links beside it.
           const inner = (
             <>
               {/* Fixed 32px icon row on ALL six tabs, chip or no chip. Sizing
@@ -330,22 +339,6 @@ export default function BottomNav() {
           const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
             active ? 'text-plum-700' : 'text-gray-500 active:text-plum-600'
           }`
-
-          if (action) {
-            return (
-              <li key={label} className="flex-1 basis-0">
-                <button
-                  type="button"
-                  onClick={action}
-                  aria-expanded={active}
-                  aria-label={active ? 'Close the assistant' : 'Open the assistant'}
-                  className={tabClass}
-                >
-                  {inner}
-                </button>
-              </li>
-            )
-          }
 
           return (
             <li key={label} className="flex-1 basis-0">

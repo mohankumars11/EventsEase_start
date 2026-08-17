@@ -109,7 +109,13 @@ export default function DateInterestBadge() {
         />
       )}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center pb-bottom-nav">
+      {/* `pr-chat-dock` is the clearance the chat launcher owns in this corner
+          (index.css). The pill is centred, so on a 390px phone its right edge
+          reaches into the corner the bubble sits in — and the bubble is the one
+          thing in the app allowed to float there. Without this the launcher
+          landed squarely on the pill's own text, which is the same fault
+          StickyCartBar carries this class for. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center pb-bottom-nav pr-chat-dock">
         {open && (
           <div
             ref={panelRef}

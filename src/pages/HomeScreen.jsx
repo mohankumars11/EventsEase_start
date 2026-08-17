@@ -17,7 +17,7 @@ import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
 import ProductImage from '../components/shop/ProductImage'
-import OffersRail from '../components/shop/OffersRail'
+import OffersGrid from '../components/home/OffersGrid'
 import StickyCartBar from '../components/shop/StickyCartBar'
 import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
@@ -25,10 +25,12 @@ import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
 import BrandFilm from '../components/home/BrandFilm'
+import BrandBanner from '../components/home/BrandBanner'
+import ServiceMosaic from '../components/home/ServiceMosaic'
+import PhotoReelFilm from '../components/home/PhotoReelFilm'
 import OccasionCard from '../components/home/OccasionCard'
 import TierRail from '../components/home/TierRail'
 import ShopPicksRail from '../components/home/ShopPicksRail'
-import ReferAndEarn from '../components/customer/ReferAndEarn'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -128,17 +130,34 @@ export default function HomeScreen() {
   // does not need the "plan a celebration" pitch first.
   const nextFestival = upcoming[0]
   const bestOffer = offers[0]
+
+  /* ── The deck carries what is TIME-SENSITIVE, and nothing else ──────────
+     There used to be a permanent "Tell us what's being celebrated / Plan a
+     celebration" slide at the front of this deck, and removing it is the
+     single biggest fix on this screen.
+
+     It was the second of five identical "Plan a celebration" buttons above
+     the fold — the brand band had two doors, this deck had one, the drawn
+     film's first beat had one, the mosaic's hero had one, and the signed-out
+     tail had one. Repeating a button five times is not emphasis. It teaches
+     the eye that this shape is wallpaper, so the one at the bottom — placed
+     after the argument has actually been made, which is the moment it is most
+     likely to be pressed — is the one that gets skipped.
+
+     Worse, it was a permanent slide in a rotating panel. The whole point of a
+     deck is that it shows what is true TODAY: a festival that is nine days
+     away, a coupon that expires. "You can plan a celebration" is true every
+     day forever, so it was a slide that never told anyone anything new while
+     occupying a third of the rotation.
+
+     The planner is not harder to reach for its absence — it is the left-hand
+     door in the band directly above, the hero of the mosaic below, and a tab
+     in the bar. It has simply stopped being said five times.
+
+     The fallback below matters: with no festival in range and no live coupon
+     the deck would render nothing, so it keeps ONE slide rather than leaving a
+     hole where the hero was. */
   const slides = [
-    {
-      key: 'plan',
-      eyebrow: 'Concierge',
-      title: activeEvents.length > 0 ? 'Planning another one?' : 'Tell us what’s being celebrated',
-      body: 'Venue, decor, food, photography — one team arranges all of it and one number answers for it.',
-      cta: CTA.planNav,
-      to: '/plan',
-      art: '🎊',
-      background: 'linear-gradient(120deg,#6d28d9 0%,#a21caf 55%,#c026d3 100%)',
-    },
     nextFestival && {
       key: `fest-${nextFestival.id}`,
       eyebrow: `${urgency(nextFestival.days)} to go`,
@@ -163,7 +182,25 @@ export default function HomeScreen() {
       art: '🎁',
       background: 'linear-gradient(120deg,#0e523c 0%,#12694c 50%,#1c8560 100%)',
     },
-  ]
+  ].filter(Boolean)
+
+  /* Nothing timely to show — no festival within range, no live coupon. Rather
+     than render an empty band where the deck was, fall back to the one thing
+     that is always true. This is the ONLY path on which the planner CTA
+     appears in the deck, so on any ordinary day it does not. */
+  if (slides.length === 0) {
+    slides.push({
+      key: 'plan',
+      eyebrow: 'Concierge',
+      title: activeEvents.length > 0 ? 'Planning another one?' : 'Tell us what’s being celebrated',
+      body: 'Venue, decor, food, photography — one team arranges all of it and one number answers for it.',
+      cta: CTA.planNav,
+      to: '/plan',
+      art: '🎊',
+      background: 'linear-gradient(120deg,#6d28d9 0%,#a21caf 55%,#c026d3 100%)',
+    })
+  }
+
   // A returning customer sees what's next for them before the pitch.
   if (activeEvents.length > 0) slides.reverse()
 
@@ -203,6 +240,17 @@ export default function HomeScreen() {
            earlier than it did. */
         <div className={`mx-auto max-w-3xl space-y-6 pt-3 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
 
+          {/* ── The name, once, properly ──────────────────────────────
+              Nobody has heard of Sambramo yet: there is no rating, no order
+              count and no ad recall, so a visitor arriving from a link met a
+              search box and a gradient and had no idea whose app this was.
+
+              This is the only section on Home that carries no price, no coupon
+              and no live data, which is exactly the cost of putting it first —
+              see the component for why that trade is worth making now and why
+              it is written to expire once there is recall to trade on. */}
+          <BrandBanner />
+
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
               <h2 className="px-4 text-[15px] font-extrabold text-ink">
@@ -236,6 +284,38 @@ export default function HomeScreen() {
               <BrandFilm />
             </div>
           )}
+
+          {/* ── Everything we do ──────────────────────────────────────
+              The answer to the first question a new visitor actually has,
+              which is not "what does a wedding cost" but "what can I even get
+              here?". It is a broad answer and it is the product's real
+              strength — whole celebrations, single services, cakes, flowers,
+              decor, pooja, gifting, and a heritage-crafts shelf nobody else in
+              these two cities lists — and a range is shown as a grid rather
+              than said in a sentence.
+
+              Placed directly under the hero pair, before the tier rail and the
+              date check. Those two are the best things on this page for
+              somebody who has already decided to plan a celebration; the
+              mosaic is for everybody who hasn't, which on a pre-launch app is
+              almost everybody. Fourteen tiles, mixed spans, every one of them a
+              real shelf with real photography behind it — see
+              config/homeMosaic.js. */}
+          <ServiceMosaic />
+
+          {/* ── The same story, in photographs ────────────────────────
+              The mosaic above says what the shelves ARE; this says that they
+              exist. A drawn hamper is our idea of gifting, and a photograph of
+              gold zari on crepe silk is a thing you can buy — a pre-launch
+              brand needs both, and the drawn film at the top of the page is the
+              other half of this pair.
+
+              Seven beats, each with its own button pointing at its own shelf,
+              plus a standing "Everything in the shop" underneath. Deliberately
+              placed below the mosaic rather than beside the drawn film: two
+              films back to back is one film too many, and this one works as the
+              evidence for the grid it follows. See config/homeReel.js. */}
+          <PhotoReelFilm />
 
           {/* ── The six scales of celebration ─────────────────────────
               Replaces PackageRail, which put "Grand Celebration Birthday,
@@ -315,8 +395,28 @@ export default function HomeScreen() {
             </div>
           </section>
 
-          {/* ── Live shop coupons ───────────────────────────────────── */}
-          <OffersRail />
+          {/* ── Every offer, four at a time ───────────────────────────
+              Was OffersRail, which showed SHOP COUPONS ONLY as a sideways
+              drifting strip of 248px tiles. Two faults, one of them
+              commercial:
+
+              The four celebration savings — first booking 10%, early bird 7%,
+              repeat 15%, the ₹1,000 referral — live in code rather than the
+              `coupons` table, so they appeared nowhere on this screen. Those
+              are the offers worth thousands of rupees, attached to the half of
+              the business the revenue comes from, and Home was advertising
+              none of them.
+
+              And a 248px tile on a 390px phone means the second one is always
+              cut in half, which reads as an overflow rather than as an
+              invitation to swipe.
+
+              A page of four fixes both: everything on screen is whole, one
+              glance takes in four offers instead of one and a half, and the
+              page swaps rather than slides so nothing moves while it is being
+              read. See lib/allOffers for why the two kinds of promise get
+              different controls. */}
+          <OffersGrid />
 
           {/* ── Real products, priced, one tap from the front door ──── */}
           <ShopPicksRail />

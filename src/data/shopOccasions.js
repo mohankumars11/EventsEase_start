@@ -144,12 +144,70 @@ const TAXONOMIES = {
       // The two tags Hampers brought with it describe contents rather than an
       // occasion. They stay, because "I want a dry fruit box" is a real way
       // people shop — they just don't belong beside "Wedding".
+      //
+      // Handmade and Eco & Plants (migration 047) join them for the same
+      // reason: all four answer "what IS it?" rather than "what is it for?",
+      // and someone who wants a plant wants a plant whichever festival is
+      // next. Listing them beside Diwali would have buried them.
       id: 'contents',
       label: "Or by what's inside",
       blurb: 'When you already know what you want in the box',
       occasions: [
+        { id: 'Handmade',            label: 'Indian handmade', emoji: '🪔' },
+        { id: 'Eco & Plants',        label: 'Eco & plants',    emoji: '🪴' },
         { id: 'Chocolate',           label: 'Chocolate',       emoji: '🍫' },
         { id: 'Dry Fruits',          label: 'Dry fruits',      emoji: '🥜' },
+      ],
+    },
+  ],
+
+  // Migration 048. Grouped by CRAFT rather than by occasion, which is the one
+  // place this file's own naming stops fitting: nobody buys a Patan Patola
+  // because Diwali is coming, they buy it because it is a Patan Patola. So the
+  // groups answer "what is it and who made it", and `label` asks that question
+  // out loud rather than pretending it is an occasion.
+  'Heritage & Crafts': [
+    {
+      id: 'silk',
+      label: 'Mysore silk',
+      blurb: 'GI-tagged crepe woven with pure gold zari — Mysore Reshme',
+      occasions: [
+        { id: 'Mysore Silk',           label: 'Mysore silk',      emoji: '🧣' },
+      ],
+    },
+    {
+      id: 'weaves',
+      label: 'Rare weaves',
+      blurb: 'Handlooms you will not find listed anywhere else',
+      occasions: [
+        { id: 'Rare Weaves',           label: 'Rare weaves',      emoji: '🪡' },
+      ],
+    },
+    {
+      id: 'carving',
+      label: 'Carvings & sculpture',
+      blurb: 'Stone, sandalwood, rosewood and cast metal',
+      occasions: [
+        { id: 'Carvings & Sculpture',  label: 'Carvings',         emoji: '🗿' },
+      ],
+    },
+    {
+      id: 'mysuru',
+      label: 'From Mysuru',
+      blurb: "The city's own list — paintings, sandalwood, inlay, lacquerware",
+      occasions: [
+        { id: 'Mysuru Specials',       label: 'Mysuru specials',  emoji: '🏛️' },
+      ],
+    },
+    {
+      // Not stock. Every row here is made for one buyer, and the price is a
+      // floor rather than a price — which is why it is its own group instead of
+      // being mixed in with pieces that ship this week.
+      id: 'commission',
+      label: 'Commission an artisan',
+      blurb: 'Made to your measurements, your colours, your subject',
+      occasions: [
+        { id: 'Artisan Commissions',   label: 'Commissions',      emoji: '🪵' },
       ],
     },
   ],

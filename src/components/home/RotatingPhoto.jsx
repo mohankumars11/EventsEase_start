@@ -45,7 +45,25 @@ export default function RotatingPhoto({
   const reduced = useReducedMotion()
   const [index, setIndex] = useState(0)
 
-  const frames = photos.filter(Boolean)
+  /**
+   * De-duplicated, not just compacted.
+   *
+   * `key={src}` below means a repeated URL is a duplicate React key — which is
+   * a console error and, worse, undefined behaviour: React is explicit that it
+   * may drop or duplicate such children. It happens for real. CATALOGUE_PHOTOS
+   * assigns one photo per (category, occasion) and the same frame is
+   * legitimately reused across occasions — the fallback map has Gifts/Birthday
+   * and Gifts/Wedding on one photograph — and any caller composing frames from
+   * more than one key can collide. The home mosaic's gifting tile reads both
+   * `Gifts` and `Hampers`, which the shop merged in migration 031, so it hit
+   * this immediately.
+   *
+   * Deduping here rather than at each call site because the collision is a
+   * property of keying by URL, which is this component's decision. It is also
+   * the right thing visually: the same photograph appearing twice in one
+   * rotation reads as the cross-fade having stalled.
+   */
+  const frames = [...new Set(photos.filter(Boolean))]
 
   useEffect(() => {
     if (reduced || frames.length < 2) return

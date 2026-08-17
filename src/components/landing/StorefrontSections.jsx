@@ -144,7 +144,7 @@ export function PathFork({ onPlan }) {
           </div>
 
           {/* Shop */}
-          <div className="reveal reveal-delay-1 group relative rounded-3xl overflow-hidden bg-cream border border-amber-100 flex flex-col card-hover">
+          <div className="reveal reveal-delay-1 group relative rounded-3xl overflow-hidden bg-white border border-amber-100 flex flex-col card-hover">
             <PhotoReel
               frames={SHOP_REEL}
               emoji="🎂"
@@ -215,7 +215,7 @@ export function PathFork({ onPlan }) {
 
 export function ShopCategoryGrid() {
   return (
-    <section id="shop" className="py-16 sm:py-20 px-4 bg-cream">
+    <section id="shop" className="py-16 sm:py-20 px-4 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8 sm:mb-12 reveal">
           <div>
@@ -353,7 +353,7 @@ export function OccasionRail() {
             { icon: Truck,       title: `Free over ₹${FREE_DELIVERY_THRESHOLD.toLocaleString('en-IN')}`, desc: 'Flat ₹49 below that' },
             { icon: ShieldCheck, title: 'Pay on delivery or UPI',      desc: 'No card details stored, ever' },
           ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex items-start gap-3 rounded-2xl bg-cream border border-amber-100 p-4">
+            <div key={title} className="flex items-start gap-3 rounded-2xl bg-white border border-amber-100 p-4">
               <span className="shrink-0 w-9 h-9 rounded-xl bg-white flex items-center justify-center text-plum-600">
                 <Icon size={17} />
               </span>

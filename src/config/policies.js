@@ -28,7 +28,11 @@
  * before anyone is held to them.
  */
 
-export const POLICY_VERSION = '2026-08-13'
+// Bumped for the Heritage & Crafts rule below (migration 048) — a new category
+// window and a new condition are rule changes, which is exactly what this
+// field exists to date-stamp. Past return requests keep '2026-08-13', so what
+// each customer actually agreed to stays recoverable.
+export const POLICY_VERSION = '2026-08-17'
 
 /* ── Categories behave differently, and pretending otherwise is the bug ── */
 
@@ -73,6 +77,29 @@ export const CATEGORY_RULES = {
     perishable: false,
     condition: 'Unused, with tags and original packaging. Personalised or engraved items can only be returned if they arrived damaged or wrong.',
     label: '7 days, unused',
+  },
+  /**
+   * Heritage & Crafts (migration 048) gets its own rule rather than falling to
+   * DEFAULT_RULE, and the window is the longest in the shop for two reasons
+   * that are both about how handloom is actually bought.
+   *
+   * Handloom is bought by eye. Two sarees off the same loom differ, and every
+   * listing carries a "Representative image" badge saying so — which means the
+   * first time a customer sees the piece they are buying is when it is in their
+   * hands. A three-day window on a ₹28,000 saree somebody is deciding about
+   * with their family is a policy designed to expire before the decision.
+   *
+   * And a commission cannot come back at all. It was woven, carved or cast for
+   * one buyer to one specification, so there is no second customer for it — the
+   * condition says that in the same breath as the window, rather than letting
+   * somebody discover it after paying a 12-week deposit.
+   */
+  'Heritage & Crafts': {
+    windowHours: 240,
+    perishable: false,
+    condition:
+      'Unused, with tags, and the fall unstitched. Handloom varies piece to piece and a slub or a small irregularity in the weave is the weave, not a defect — but if it is not what was described, it goes back. Commissioned pieces cannot be returned unless they arrive damaged or differ from the approved drawing.',
+    label: '10 days, unused',
   },
 }
 

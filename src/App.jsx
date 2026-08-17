@@ -46,6 +46,7 @@ const EventServices  = lazy(() => import('./pages/customer/EventServices'))
 const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
 const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
 const Cart           = lazy(() => import('./pages/customer/Cart'))
+const Account        = lazy(() => import('./pages/customer/Account'))
 
 // Track — every celebration and every order, with the steps and the payments.
 const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
@@ -60,7 +61,7 @@ const AdminEventDetail = lazy(() => import('./pages/admin/AdminEventDetail'))
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cream">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-3 text-gray-400">
         <div className="w-8 h-8 border-4 border-saffron-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-sm">Loading…</span>
@@ -439,6 +440,20 @@ function AppRoutes() {
           <ScreenShell><MyEvents /></ScreenShell>
         </ProtectedRoute>
       } />
+
+      {/* ── Account ────────────────────────────────────
+          The sixth tab, and public for the same reason Track is: the tab is
+          permanent in the bar, so a guest who taps it must land on something
+          that explains what an account is for rather than being bounced to a
+          login form. The screen renders a guest panel and asks once; every
+          row inside it that shows somebody's own data links to a route that
+          is still guarded.
+
+          `/account` rather than `/dashboard/customer/account`: it is a tab
+          destination a customer types and shares, and the `/dashboard/*`
+          prefix is the pre-pivot shape the rest of the app is migrating off
+          rather than into. */}
+      <Route path="/account" element={<ScreenShell><Account /></ScreenShell>} />
 
       {/* ── Track ──────────────────────────────────────
           One screen for every celebration and every order, replacing three

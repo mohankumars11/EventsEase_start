@@ -92,7 +92,10 @@ const BEATS = [
     chapter: 'Every celebration',
     line: 'Whatever you’re celebrating',
     sub: 'Birthdays, weddings, housewarmings, Diwali.',
-    cta: 'Plan a celebration',
+    // Third place this page said "Plan a celebration" before the trim. The
+    // beat is about the RANGE of occasions, so the button now names that
+    // rather than repeating the band's door verbatim.
+    cta: 'See every occasion',
     to: '/plan',
     ground: 'radial-gradient(125% 105% at 62% 108%, #fff7e9 0%, #f8e7cd 46%, #e6cfae 100%)',
     Art: OccasionArt,
@@ -191,12 +194,14 @@ export default function BrandFilm() {
   const { Art } = current
 
   return (
-    <section className="px-4" aria-label="How Sambramo gifting works">
+    /* Full-bleed. See PhotoReelFilm for the reasoning — the two films are one
+       treatment and must not disagree about their own edges. */
+    <section aria-label="How Sambramo gifting works">
       <Link
         ref={stage}
         to={current.to}
         aria-label={`${current.line} — ${current.cta}`}
-        className="group relative block h-[226px] overflow-hidden rounded-3xl ring-1 ring-white/12 shadow-[0_22px_50px_-26px_rgba(0,0,0,0.95)] sm:h-[268px]"
+        className="group relative block h-[226px] overflow-hidden ring-1 ring-hairline/10 sm:h-[268px]"
         /* Hold on hover AND on pointer-down. The second matters most: the
            href changes every beat and a thumb takes ~200ms to land, so
            freezing at touch-start is what makes the beat you aimed at the

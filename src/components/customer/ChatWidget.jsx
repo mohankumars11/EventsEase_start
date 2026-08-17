@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { MessageCircle, X, Sparkles, Send } from 'lucide-react'
+import { X, Sparkles, Send } from 'lucide-react'
 import { BRAND, EVENT_TYPES } from '../../config/sambramo'
 import { SHOP_CATEGORIES } from '../../config/shop'
 import { FESTIVALS } from '../../data/festivals'
 import { useChat } from '../../context/ChatContext'
 import { isFocusedRoute } from '../../config/chrome'
+import ChatLauncher from './ChatLauncher'
 
 const GREETING = "Hi! How can I help you today? 👋 Type what you need, or tap an option below."
 
@@ -358,18 +359,7 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Desktop launcher only — `hidden md:flex`.
-          On a phone the Help tab in the bottom bar is the launcher, so there
-          is deliberately nothing floating over the page there. Desktop has no
-          tab bar and an empty bottom-right corner, and the two bars that do
-          reach it (`pr-chat-dock`) keep their buttons clear of it. */}
-      <button
-        onClick={toggleChat}
-        className="chat-dock hidden md:flex w-14 h-14 rounded-full bg-saffron-400 hover:bg-saffron-500 shadow-xl items-center justify-center transition-all hover:scale-105"
-        aria-label={open ? 'Close chat' : 'Open chat'}
-      >
-        {open ? <X size={22} className="text-plum-950" /> : <MessageCircle size={22} className="text-plum-950" />}
-      </button>
+      <ChatLauncher open={open} onToggle={toggleChat} />
     </>
   )
 }
