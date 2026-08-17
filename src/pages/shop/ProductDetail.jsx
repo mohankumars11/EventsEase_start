@@ -8,7 +8,9 @@ import { useCart } from '../../context/CartContext'
 import { CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
 import ShopAppBar from '../../components/shop/ShopAppBar'
 import ProductImage from '../../components/shop/ProductImage'
-import ImageSourceBadge from '../../components/shop/ImageSourceBadge'
+import ProductGallery from '../../components/shop/ProductGallery'
+import ProductStory from '../../components/shop/ProductStory'
+import ProductFaqs from '../../components/shop/ProductFaqs'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import RatingBreakdown from '../../components/reviews/RatingBreakdown'
 import ReviewCard from '../../components/reviews/ReviewCard'
@@ -20,6 +22,7 @@ import BundleLadder from '../../components/shop/BundleLadder'
 import RecommendationRail from '../../components/shop/RecommendationRail'
 import { cakeFacts } from '../../data/cakeStyles'
 import { isCustomizable } from '../../config/customizers'
+import { fetchMedia, fetchStory, fetchFaqs } from '../../lib/productStudio'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -31,12 +34,36 @@ export default function ProductDetail() {
   const [eligibleOrderId, setEligibleOrderId] = useState(null) // a delivered order containing this product, not yet reviewed
   const [reviewing, setReviewing] = useState(false)
   const [customizing, setCustomizing] = useState(false)
+  // Everything migration 051 added. All three default to empty and stay empty
+  // on a database that has not run it, which is exactly what the sections below
+  // treat as "there is nothing to show" — so the page is unchanged until an
+  // admin has actually written something.
+  const [media, setMedia] = useState([])
+  const [story, setStory] = useState([])
+  const [faqs, setFaqs] = useState([])
 
   useEffect(() => {
     setLoading(true)
     supabase.from('products').select('*').eq('id', id).single()
       .then(({ data }) => { setProduct(data); setLoading(false) })
   }, [id])
+
+  useEffect(() => {
+    if (!product?.id) return
+    let cancelled = false
+    const scope = { productId: product.id, category: product.category }
+    Promise.all([fetchMedia(product.id), fetchStory(scope), fetchFaqs(scope)])
+      .then(([m, st, f]) => {
+        if (cancelled) return
+        setMedia(m.rows)
+        setStory(st.slides)
+        setFaqs(f.faqs)
+      })
+      // A missing table is already handled inside those readers; anything else
+      // here is a network blip, and a product page must not fail over a FAQ.
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [product?.id, product?.category])
 
   const loadReviews = useCallback(() => {
     supabase.from('reviews_catalog').select('*')
@@ -126,21 +153,23 @@ export default function ProductDetail() {
           {/* The hero drifts continuously and carries the source badge —
               a customer decides here, so this is where the photo has to
               both look its best and say what it actually is. */}
-          <ProductImage
-            src={product.image_url}
-            query={product.name}
-            emoji={product.emoji}
-            alt={product.image_alt || product.name}
-            className="w-full h-64 sm:h-full rounded-2xl"
-            drift
-            scrim
-            priority
-          >
-            <ImageSourceBadge
-              source={product.image_source}
-              className="absolute bottom-3 left-3"
+          {/* The gallery replaces the single hero: it still shows exactly one
+              photo when that is all there is, and grows into a slider the
+              moment an admin adds a second one or a clip. */}
+          <div>
+            <ProductGallery
+              media={media}
+              fallbackUrl={product.image_url}
+              fallbackSource={product.image_source}
+              emoji={product.emoji}
+              alt={product.image_alt || product.name}
+              query={product.name}
             />
-          </ProductImage>
+            {/* No separate ImageSourceBadge here any more. The gallery prints
+                the provenance caveat over the photo itself, and rendering both
+                showed "Representative image" twice on every product that has
+                not been photographed yet — which is currently all of them. */}
+          </div>
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-plum-600 uppercase tracking-wide mb-1">
               {product.occasion ? `${product.category} · ${product.occasion}` : product.category}
@@ -150,7 +179,21 @@ export default function ProductDetail() {
               <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
             </div>
             <RatingBadge subjectType="product" subjectId={product.id} size="sm" className="mb-3" />
+            {product.subtitle && (
+              <p className="mb-2 text-sm font-semibold text-gray-700">{product.subtitle}</p>
+            )}
             <p className="text-sm text-gray-500 mb-3">{product.description}</p>
+
+            {Array.isArray(product.highlights) && product.highlights.length > 0 && (
+              <ul className="mb-3 space-y-1">
+                {product.highlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <Check size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {facts && (facts.serves || facts.diets.length > 0) && (
               <div className="flex flex-wrap items-center gap-1.5 mb-4">
@@ -179,10 +222,23 @@ export default function ProductDetail() {
               </p>
             )}
 
-            <p className="text-3xl font-extrabold text-plum-700 mb-1">
-              {configurable && <span className="text-base font-semibold text-gray-500 mr-1.5">from</span>}
-              {formatINR(product.price)}
-            </p>
+            <div className="mb-1 flex flex-wrap items-baseline gap-2">
+              <p className="text-3xl font-extrabold text-plum-700">
+                {configurable && <span className="mr-1.5 text-base font-semibold text-gray-500">from</span>}
+                {formatINR(product.price)}
+              </p>
+              {/* Only when there is a genuine saving. `mrp` is nullable
+                  precisely so a product without one prints nothing here rather
+                  than a 0% discount on every tile in the shop. */}
+              {product.mrp > product.price && (
+                <>
+                  <span className="text-base text-gray-400 line-through">{formatINR(product.mrp)}</span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                    {Math.round(((product.mrp - product.price) / product.mrp) * 100)}% off
+                  </span>
+                </>
+              )}
+            </div>
             {configurable && (
               <p className="text-xs text-gray-500 mb-4">
                 Final price depends on the options and extras you pick.
@@ -259,6 +315,38 @@ export default function ProductDetail() {
             — a rail that stops at the page margin looks clipped rather than
             scrollable, so the tiles have to be able to run to the screen edge
             while the heading stays aligned with everything above it. */}
+        {/* The story goes directly under the buy box: the customer has just
+            read the price, and this is the answer to "is it worth it" — which
+            is a different question from "what is it", and the one the rest of
+            this page never used to answer. */}
+        {story.length > 0 && (
+          <div className="mt-6">
+            <ProductStory slides={story} productName={product.name} />
+          </div>
+        )}
+
+        {product.specs && Object.keys(product.specs).length > 0 && (
+          <div className="shop-card mt-4 overflow-hidden">
+            <h2 className="border-b border-gray-100 px-4 py-3 text-base font-extrabold text-plum-950">
+              The details
+            </h2>
+            <dl className="divide-y divide-gray-100">
+              {Object.entries(product.specs).map(([label, value]) => (
+                <div key={label} className="flex gap-4 px-4 py-2.5">
+                  <dt className="w-32 shrink-0 text-sm font-semibold text-gray-500">{label}</dt>
+                  <dd className="text-sm text-gray-800">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {faqs.length > 0 && (
+          <div className="mt-4">
+            <ProductFaqs faqs={faqs} />
+          </div>
+        )}
+
         <BundleLadder seed={product} className="mt-4" />
 
         <RecommendationRail

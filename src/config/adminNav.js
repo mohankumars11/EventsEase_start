@@ -106,9 +106,19 @@ export const NAV = [
     emoji: '🏬',
     items: [
       {
-        id: 'catalog', label: 'Shop Products', emoji: '🖼️',
-        title: 'Shop Products',
-        description: 'Add a product, fix a price, replace a stock photo with the real thing.',
+        /* The screen this group is really about. Everything a customer sees —
+           the shelves, the photographs, the clips, the story, the questions,
+           the price, the rating — is edited here, and a whole supplier PDF can
+           be read into it in one go. Listed first because filling the shop in
+           is the job; fixing one photo is a follow-up. */
+        id: 'studio', label: 'Product Studio', emoji: '🏬',
+        title: 'Product Studio',
+        description: 'Everything we sell — add it, photograph it, film it, price it, tell its story.',
+      },
+      {
+        id: 'catalog', label: 'Photo Coverage', emoji: '🖼️',
+        title: 'Photo Coverage',
+        description: 'The camera queue: which products still have a stock lookalike instead of the real thing.',
       },
       {
         /* Its own screen rather than a tab inside Content Studio, which is
@@ -123,7 +133,7 @@ export const NAV = [
         description: 'Replace the stock reference images with photographs of setups we actually built.',
       },
       {
-        id: 'studio', label: 'Content Studio', emoji: '🎛️',
+        id: 'content', label: 'Content Studio', emoji: '🎛️',
         title: 'Content Studio',
         description: 'Decor, cuisines, tiers, festivals and offers — everything else a customer sees.',
       },
@@ -186,6 +196,11 @@ export const NAV_BY_ID = Object.fromEntries(NAV_ITEMS.map(i => [i.id, i]))
  * screen — the same reason the customer-facing routes keep their redirects.
  */
 export const NAV_ALIASES = {
+  /* 'studio' used to mean Content Studio and now means Product Studio. The old
+     id is in bookmarks and in the `nav` field of already-written notifications,
+     so Content Studio moved to its own id rather than the two fighting over
+     one — and anything still asking for 'contentstudio' resolves too. */
+  contentstudio:   'content',
   new_requests:    'requests',
   under_review:    'requests',
   vendor_sourcing: 'requests',
