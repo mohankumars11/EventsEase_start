@@ -58,12 +58,12 @@ const BEATS = [
     Art: PlanArt,
   },
   {
-    key: 'stages',
-    chapter: 'Paid in stages',
-    line: 'Never all at once.',
-    sub: 'Each payment releases the next piece of work.',
+    key: 'settle',
+    chapter: 'One payment',
+    line: 'The price you approved.',
+    sub: 'It releases every part of the arrangement at once.',
     ground: 'radial-gradient(120% 100% at 60% 8%, #fff0f2 0%, #fbdde2 50%, #f0c2cb 100%)',
-    Art: StagesArt,
+    Art: SettleArt,
   },
   {
     key: 'day',
@@ -358,33 +358,50 @@ function PlanArt() {
 }
 
 /* Beat 4 — the ladder. Four rungs, the paid ones open, the rest padlocked. */
-function StagesArt() {
-  const rungs = [
-    { y: 20, w: 34, paid: true },
-    { y: 44, w: 56, paid: true },
-    { y: 68, w: 72, paid: false },
-    { y: 92, w: 62, paid: false },
+/**
+ * One payment, releasing everything under it.
+ *
+ * This used to draw four rungs — two paid, two padlocked — which was an
+ * accurate picture of the instalment ladder and became a picture of something
+ * the product no longer does. It was still animating on the live Track screen
+ * beside copy that says the opposite.
+ *
+ * So: one filled bar with a tick, and the services below it going green
+ * together. That is the actual mechanic now — there is no state in which a
+ * celebration is three-quarters arranged.
+ */
+function SettleArt() {
+  const services = [
+    { y: 62, w: 40 },
+    { y: 62, w: 40 },
+    { y: 62, w: 40 },
   ]
   return (
     <svg viewBox="0 0 200 120" className={ART} role="presentation">
-      {rungs.map((r, i) => (
-        <g key={i} className="film-item" style={rise(i * 0.13)}>
-          <rect x="40" y={r.y} width={r.w} height="16" rx="8"
-                fill={r.paid ? 'url(#ff-green)' : '#fffdf8'}
-                stroke={r.paid ? 'none' : '#e0c9cf'} strokeWidth="1.3" />
-          <circle cx={40 + r.w + 14} cy={r.y + 8} r="9"
-                  fill={r.paid ? '#0b3d2e' : '#f0c2cb'} opacity={r.paid ? 1 : 0.9} />
-          {r.paid ? (
-            <path d={`M${40 + r.w + 10} ${r.y + 8} l2.8 3 l5.4 -6`} stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-          ) : (
-            <>
-              <rect x={40 + r.w + 10.5} y={r.y + 6.5} width="7" height="6" rx="1.4" fill="#7f1d1d" opacity="0.8" />
-              <path d={`M${40 + r.w + 12} ${r.y + 6.5} v-2 a2 2 0 0 1 4 0 v2`} stroke="#7f1d1d" strokeWidth="1.3" fill="none" opacity="0.8" />
-            </>
-          )}
-        </g>
-      ))}
-      <path d="M32 20 v88" stroke="#c98878" strokeWidth="1.6" opacity="0.45" strokeLinecap="round" />
+      {/* The one payment. */}
+      <g className="film-item" style={rise(0)}>
+        <rect x="34" y="18" width="104" height="22" rx="11" fill="url(#ff-green)" />
+        <circle cx="152" cy="29" r="11" fill="#0b3d2e" />
+        <path d="M147 29 l3.4 3.6 l6.4 -7.2" stroke="#fff" strokeWidth="2.1"
+              fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+
+      {/* It fans out to everything at once. */}
+      {services.map((sv, i) => {
+        const x = 22 + i * 58
+        return (
+          <g key={i} className="film-item" style={rise(0.18 + i * 0.1)}>
+            <path d={`M94 44 C94 54 ${x + 20} 50 ${x + 20} ${sv.y - 4}`}
+                  stroke="#0b3d2e" strokeWidth="1.4" fill="none" opacity="0.35" />
+            <rect x={x} y={sv.y} width={sv.w} height="34" rx="9"
+                  fill="#fffdf8" stroke="#e0c9cf" strokeWidth="1.3" />
+            <circle cx={x + 20} cy={sv.y + 13} r="7.5" fill="url(#ff-green)" />
+            <path d={`M${x + 16.5} ${sv.y + 13} l2.4 2.6 l4.6 -5.2`} stroke="#fff"
+                  strokeWidth="1.7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x={x + 9} y={sv.y + 24} width="22" height="3.4" rx="1.7" fill="#e0c9cf" />
+          </g>
+        )
+      })}
     </svg>
   )
 }

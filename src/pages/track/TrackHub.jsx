@@ -17,7 +17,7 @@ import FulfilmentFilm from '../../components/track/FulfilmentFilm'
  *
  * ── Why the two halves are deliberately unequal ───────────────────────────
  * A shop order needs a status word and a date. A celebration is weeks of work
- * on somebody's wedding and a five-figure sum paid in stages — it needs the
+ * on somebody's wedding and a five-figure sum settled in one payment — it needs the
  * whole road. Giving them the same card weight would either bury the
  * celebration or make a cake delivery look like a project.
  */
@@ -253,13 +253,23 @@ function OrderRow({ item }) {
  * So this is the promise, not an apology for being empty, and certainly not a
  * login wall. Sign-in is asked at the point there is something to see.
  */
+/**
+ * These four sentences are a promise about how the business runs, so they
+ * have to move whenever the business does. The payment line used to read
+ * 'Paid in stages, never all at once' — which stopped being true the moment
+ * the instalment ladder was removed, and was still on the live site telling
+ * people the opposite of what the tracker would do. Copy that describes
+ * mechanics is code with a longer fuse.
+ */
 const PROMISES = [
   { emoji: '🤝', title: 'Every step your coordinator takes',
     body: 'Masters sourced, decorator confirmed, caterer confirmed — as it happens, with the time it happened.' },
-  { emoji: '💳', title: 'Every payment, and what it released',
-    body: 'Paid in stages, never all at once. Each one shows exactly what work it set in motion.' },
   { emoji: '📋', title: 'Your plan, priced and itemised',
     body: 'One number you approve before anything is booked. Change it and we re-send it.' },
+  { emoji: '💳', title: 'One payment, and what it set in motion',
+    body: 'The price you approved, paid once. No instalments to keep track of, and nothing collected after the day.' },
+  { emoji: '✅', title: 'Every service you ordered, ticked as it is booked',
+    body: 'Eleven services on a wedding means eleven ticks — not one progress bar.' },
   { emoji: '🛍️', title: 'Your shop orders too',
     body: 'Cakes, gifts and pooja essentials, from placed to delivered.' },
 ]
@@ -269,11 +279,12 @@ function SignedOutPitch() {
     <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4">
       <div className="rounded-2xl bg-surface p-5 ring-1 ring-hairline/[0.08]">
         <p className="font-serif text-[20px] font-extrabold leading-tight text-ink">
-          Everything about your celebration lives here
+          Track unlocks when you place an event order with us
         </p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
-          Once you send us a celebration or place an order, this is where you watch it
-          happen — every step, every payment, one screen. Nothing to set up.
+          There is nothing to set up and nothing to switch on. The moment you send us a
+          celebration or place an order, this is where you watch it happen — every step,
+          every payment, one screen, from that day until your event is over.
         </p>
 
         <ul className="mt-4 space-y-3.5">
