@@ -238,7 +238,7 @@ export default function HomeScreen() {
            Everything the trim saves is real screen: the occasion grid, which
            is the thing people are here to tap, arrives most of a phone-height
            earlier than it did. */
-        <div className={`mx-auto max-w-3xl space-y-6 pt-3 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
+        <div className={`mx-auto max-w-3xl space-y-4 pt-0 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
 
           {/* ── The name, once, properly ──────────────────────────────
               Nobody has heard of Sambramo yet: there is no rating, no order
@@ -279,7 +279,7 @@ export default function HomeScreen() {
           {user ? (
             <PromoDeck slides={slides} />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <PromoDeck slides={slides} />
               <BrandFilm />
             </div>

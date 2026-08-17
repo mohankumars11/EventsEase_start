@@ -7,55 +7,43 @@ import { CATALOGUE_PHOTOS } from '../../config/imagery'
 import { formatINR } from '../../utils/format'
 
 /**
- * The brand, and the two doors, in one band.
+ * The masthead bar, and — separately, underneath it — the two doors.
  *
- * ── It used to be twice this tall, and that was the fault ─────────────────
- * The first version was a 230px panel: the name at 46px, the emotional line,
- * and two flat pill buttons under it. It spent the most expensive space in the
- * product — the first screen of a phone — on a name and two links, and the
- * name is not what a customer came for.
+ * ── Why these are now two things and not one panel ────────────────────────
+ * They were one rounded plum card holding the logo, the caption and both
+ * doors. That was wrong in a way worth naming, because it is a mistake that
+ * looks tidy: it put two NAVIGATION CARDS inside a BRAND OBJECT. A masthead
+ * and a pair of destinations are different kinds of thing — one you read once
+ * and never touch, the other you press — and nesting the second in the first
+ * made the doors look like decoration printed on a banner rather than the two
+ * most important controls on the screen.
  *
- * Worse, those two pills were the FIRST of five "Plan a celebration" buttons
- * on one screen. The deck had one, the drawn film had one, the mosaic hero had
- * one, and the signed-out tail had one. A button repeated five times is not
- * emphasis, it is noise: it teaches the eye to skip that shape, so the fifth
- * one — the one at the bottom, after the argument has been made — is the one
- * that gets ignored.
+ * It also meant the doors sat on plum. Every other card in this app sits on
+ * white, so the two that matter most were the two that did not match, and
+ * their photographs had to fight a dark ground before they could show anything.
  *
- * So this band does two jobs at once instead of one job twice as tall:
+ * So:
  *
- *   the brand   mark, wordmark and the emotional line, on one baseline. It is
- *               a masthead now rather than a hero — you read it once and move
- *               on, which is exactly what a name you already know deserves.
- *   the doors   the only place on Home where both halves of the business are
- *               offered together. Every other CTA on the page belongs to a
- *               specific shelf.
+ *   the bar     Full-bleed, square-cornered, edge to edge. Logo, name, caption.
+ *               It is a masthead — the thing at the top of a newspaper — and a
+ *               masthead runs the full measure or it is just a box.
+ *   the doors   Directly below it, on the page's own white, as two ordinary
+ *               cards that happen to be large. Same card language as
+ *               everything else on Home.
  *
- * ── Why the doors are panels and not buttons ──────────────────────────────
- * Two saffron pills reading "Plan a celebration" and "Shop the essentials" are
- * two labels. They tell somebody the two things exist and nothing about either,
- * so the choice between them is made on the words alone — and for a first-time
- * visitor those words are close to synonymous.
- *
- * These are doors you can see through. Each carries a real photograph from that
- * half of the catalogue, and a real number underneath: the count of occasions
- * and the honest entry price on one, the shop's live category count on the
- * other. Both numbers are computed from the catalogue rather than typed, so
- * neither can drift. The photograph does the persuading, the number does the
- * qualifying, and the label just names the door.
- *
- * That is also why they are side by side and equal. Events are the primary
- * revenue line and the temptation is to make that door bigger — but a customer
- * who wants a cake tonight and is shown a wedding is a customer who leaves, and
- * the mosaic below already leads with events. This band's job is to make the
- * fork legible, not to pick a side.
+ * ── Why the bar is square and full-bleed ──────────────────────────────────
+ * A rounded card inset 16px reads as CONTENT — a thing on the page. A bar that
+ * touches both edges and the chrome above it reads as STRUCTURE — a thing the
+ * page is built from. The brand should be structure. The rounded version was,
+ * quite literally, an advert for Sambramo placed inside Sambramo's own app,
+ * which is the tell that it was the wrong object.
  *
  * ── The motion ────────────────────────────────────────────────────────────
- * One thing moves: the kolam turns, very slowly. It has four-fold rotational
- * symmetry so it maps onto itself every 90° and can turn indefinitely without
- * becoming a different shape — the property that makes it safe to animate a
- * logo at all. The ground drifts at 34s, which nobody watches happen; they
- * notice, coming back, that it is not where it was.
+ * The kolam turns, very slowly. Four-fold rotational symmetry means it maps
+ * onto itself every 90°, so it can turn indefinitely without ever becoming a
+ * different shape — the property that makes it safe to animate a logo at all.
+ * The ground drifts on a 34s cycle, which nobody watches happen; they notice,
+ * coming back, that it is not where it was.
  */
 
 /* The photograph behind each door. Committed URLs, not a runtime search — the
@@ -70,35 +58,45 @@ const SHOP_PHOTO = CATALOGUE_PHOTOS['Cakes']?.['Birthday']
 
 export default function BrandBanner() {
   return (
-    <section className="px-4" aria-label={`${BRAND.name} — ${BRAND.emotion}`}>
-      <div className="brand-banner relative isolate overflow-hidden rounded-3xl p-3.5">
+    /* One child of Home's section flow, not two: the doors belong to the bar
+       and must not be separated by the page's full inter-section gap. */
+    <div className="space-y-2.5">
+      {/* ── The bar ──────────────────────────────────────────────────
+          No horizontal inset, no radius. It spans the glass and butts
+          against the search bar above it, so the brand reads as part of
+          the app's frame rather than as the first card in the feed. */}
+      <section className="brand-banner relative isolate overflow-hidden px-4 py-3" aria-label={BRAND.name}>
         <span
           aria-hidden="true"
-          className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.10]"
+          className="animate-spin-slow pointer-events-none absolute -right-8 -top-12 opacity-[0.12]"
         >
-          <SambramoMark size={150} title="" />
+          <SambramoMark size={140} title="" />
         </span>
 
-        {/* ── The masthead ───────────────────────────────────────────
-            Mark and wordmark on one baseline with the emotional line
-            beside it, not stacked under it. Stacked, this block alone was
-            three rows tall; inline it is one, and the line reads as a
-            strapline rather than as a second headline competing with the
-            name. `BRAND.emotion` rather than the descriptor: the
-            descriptor is 45 characters explaining what Sambramo is, and
-            the two doors immediately below explain it better. */}
-        <div className="relative flex items-center gap-2.5">
-          <SambramoMark size={26} className="shrink-0" />
-          <h1 className="font-display text-[22px] font-bold leading-none tracking-tight text-white">
+        <div className="relative mx-auto flex max-w-3xl items-center gap-2.5">
+          <SambramoMark size={28} className="shrink-0" />
+          <h1 className="font-display text-[23px] font-bold leading-none tracking-tight text-white">
             {BRAND.name}
           </h1>
-          <span aria-hidden="true" className="h-3 w-px shrink-0 bg-white/25" />
-          <p className="min-w-0 flex-1 truncate text-[9px] font-bold uppercase tracking-[0.14em] text-plum-200">
+          <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-white/25" />
+          <p className="min-w-0 flex-1 truncate text-[9px] font-bold uppercase tracking-[0.16em] text-plum-200">
             {BRAND.emotion}
           </p>
         </div>
+      </section>
 
-        <div className="relative mt-3 grid grid-cols-2 gap-2.5">
+      {/* ── The doors ────────────────────────────────────────────────
+          On white, below the bar, as two ordinary cards. This is the only
+          place on Home where both halves of the business are offered
+          together — every other CTA belongs to one specific shelf.
+
+          Side by side and equal in weight. Events are the primary revenue
+          line and the temptation is to make that door bigger, but a
+          customer who wants a cake tonight and is shown a wedding is a
+          customer who leaves. The mosaic below already leads with events;
+          this row's job is to make the fork legible, not to pick a side. */}
+      <section className="px-4" aria-label="Plan a celebration, or shop the essentials">
+        <div className="grid grid-cols-2 gap-2.5">
           <Door
             to="/plan"
             photo={PLAN_PHOTO}
@@ -119,26 +117,35 @@ export default function BrandBanner() {
             tint="rgba(14,82,60,0.34)"
           />
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   )
 }
 
 /**
  * One door. A photograph you can see through, a label, and a fact.
  *
- * The tint is per-door and deliberately light: plum for the concierge half,
- * forest for the shop, which is the colour rule the whole app already runs on —
- * a customer should know which half they are in from the colour before reading
- * a word. It is a wash, not a scrim: the text contrast is the bottom ramp's job
- * (see below), so the tint can stay light enough that the photograph is still a
- * photograph.
+ * ── Why these are panels and not buttons ──────────────────────────────────
+ * Two pills reading "Plan a celebration" and "Shop the essentials" are two
+ * labels. They say the two things exist and nothing about either, so the choice
+ * is made on the words alone — and to a first-time visitor those words are
+ * nearly synonymous.
+ *
+ * These are doors you can see through. Each carries a real photograph from that
+ * half of the catalogue and a real number: the count of occasions and the honest
+ * entry price on one, the shelves on the other. The photograph persuades, the
+ * number qualifies, and the label just names the door.
+ *
+ * The tint is a light per-door wash — plum for the concierge half, forest for
+ * the shop — because that is the colour rule the whole app runs on. It is a
+ * wash and not a scrim: all the text contrast comes from the bottom ramp, so
+ * the tint can stay light enough that the photograph is still a photograph.
  */
 function Door({ to, photo, eyebrow, label, fact, tint }) {
   return (
     <Link
       to={to}
-      className="group relative isolate flex min-h-[92px] flex-col justify-end overflow-hidden rounded-2xl p-2.5 ring-1 ring-white/15 transition-transform active:scale-[0.98]"
+      className="group relative isolate flex min-h-[104px] flex-col justify-end overflow-hidden rounded-2xl p-2.5 shadow-[var(--shadow-1)] ring-1 ring-hairline/10 transition-transform active:scale-[0.98]"
     >
       {photo && (
         <img
@@ -150,14 +157,6 @@ function Door({ to, photo, eyebrow, label, fact, tint }) {
           className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       )}
-      {/* Two layers, and the split between them is the whole trick.
-          The flat tint is LIGHT — it only has to say "this side is plum, that
-          side is forest" so the fork reads as the app's own two halves. All of
-          the text contrast comes from the bottom ramp, which is heavy and
-          local. The first cut had the tint at 0.72 doing both jobs and the
-          photographs went to mud: at that opacity a wedding mandap and a
-          birthday cake are two coloured rectangles, which defeats the entire
-          reason these are doors you can see through rather than buttons. */}
       <span aria-hidden="true" className="absolute inset-0 -z-10" style={{ background: tint }} />
       <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
