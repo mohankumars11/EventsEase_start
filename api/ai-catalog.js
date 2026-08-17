@@ -623,6 +623,17 @@ Do not return image URLs. Return a short image_query instead.`
         ? `${provider.label} is having trouble. Try again in a minute.`
         : raw.slice(0, 300) || 'Something went wrong reading that.'
 
-    return res.status(status >= 400 && status < 600 ? status : 500).json({ error: message })
+    /* The friendly line above is a guess derived from a status code, and a
+       guess is exactly what cost hours on the auth bug: "OpenRouter is having
+       trouble" was shown for a fault that had nothing to do with OpenRouter,
+       because anything without a `.status` defaults to 500. The real message
+       rides along so the next failure is diagnosed instead of theorised. It
+       is an error string from an API, never a key. */
+    return res.status(status >= 400 && status < 600 ? status : 500).json({
+      error: message,
+      detail: raw.slice(0, 500) || null,
+      provider: provider.label,
+      model,
+    })
   }
 }

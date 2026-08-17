@@ -251,9 +251,20 @@ export default async function handler(req, res) {
   } catch (err) {
     const status = err?.status ?? 500
     const raw = err?.message ?? ''
+
+    /* fal answers several very different problems with 403, and guessing
+       between them produced the wrong instruction: an exhausted balance was
+       reported as "the key was rejected", which sends somebody to re-copy a
+       key that was never wrong. fal's own `detail` says exactly what happened
+       — an empty balance, a locked account, a bad key — so it is read first
+       and only fallen back on when it says nothing useful. */
+    let falDetail = ''
+    try { falDetail = JSON.parse(raw)?.detail ?? '' } catch { falDetail = '' }
+
     const message =
-      status === 401 || status === 403 ? 'The fal.ai key was rejected. Check FAL_KEY in the Vercel settings.'
-      : status === 402 ? 'That fal.ai account is out of credit.'
+      falDetail ? `fal.ai says: ${falDetail}`
+      : status === 401 || status === 403 ? 'The fal.ai key was rejected. Check FAL_KEY in the Vercel settings.'
+      : status === 402 ? 'That fal.ai account is out of credit — top it up at fal.ai/dashboard/billing.'
       : status === 429 ? 'fal.ai is rate-limiting us — wait a moment and try again.'
       : status === 404 ? `The model "${MODELS[kind]}" was not found. Set FAL_IMAGE_MODEL or FAL_VIDEO_MODEL to one fal.ai serves.`
       : status >= 500 ? 'fal.ai is having trouble. Try again in a minute.'
