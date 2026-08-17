@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ChevronRight, AlertCircle, Sparkles, Store } from 'lucide-react'
+import { ArrowRight, ChevronRight, AlertCircle, Sparkles, Store, Lock, Check } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { fetchActivity, TRACK_STAGES, needsYou, isLive } from '../../lib/activity'
 import { formatINR } from '../../utils/format'
@@ -88,7 +88,7 @@ export default function TrackHub() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState />
+        <LockedState />
       ) : (
         <div className="mx-auto max-w-3xl space-y-6 pb-8 pt-4">
           <Filters filter={filter} onChange={setFilter} counts={counts} />
@@ -315,27 +315,102 @@ function SignedOutPitch() {
   )
 }
 
-/* ── Nothing yet ──────────────────────────────────────────────────────── */
+/* ── Nothing yet: locked, not empty ───────────────────────────────────── */
 
 /**
- * Reachable only by deep link or on desktop — the tab does not appear until
- * there is something to track. So it is not an apology, it is the pitch: the
- * film shows exactly what this screen will fill up with.
+ * What the Track tab opens when the customer has ordered nothing.
+ *
+ * ── Why "locked" and not "empty" ──────────────────────────────────────────
+ * These are the same screen and they are not the same message. "Nothing to
+ * track yet" describes a container; it invites the reading that the feature
+ * is thin, or half-built, which for a brand with no order history is the most
+ * expensive wrong impression available. "This unlocks when you order"
+ * describes a door — it says the thing behind it is real, is substantial, and
+ * is waiting.
+ *
+ * The greyed tab in the bottom bar makes the same statement, and the two have
+ * to agree: a tab drawn as locked that opens a screen apologising for being
+ * empty is worse than either on its own.
+ *
+ * ── What it spends its space on ───────────────────────────────────────────
+ * Not an apology, and not a feature list. The six steps below are exactly the
+ * ones the real tracker shows on a live celebration, in the real order, with
+ * the real green ticks — so somebody deciding whether to trust us with a
+ * wedding is looking at the actual instrument, greyed out, rather than at a
+ * description of it. That is the whole argument this business has before it
+ * has reviews: not "we are good", but "here is precisely how you will watch
+ * us work."
  */
-function EmptyState() {
+const UNLOCKED_STEPS = [
+  { title: 'Your request, the moment it lands',
+    body: 'Timestamped. You never wonder whether it reached a human.' },
+  { title: 'Your coordinator sourcing, master by master',
+    body: 'Decorator confirmed, caterer confirmed, photographer confirmed — as it happens.' },
+  { title: 'One price, itemised, before anything is booked',
+    body: 'You approve it. Nothing is committed to a vendor until you do.' },
+  { title: 'One payment, and a receipt that lists every step',
+    body: 'No instalments to track, and nothing collected after the day.' },
+  { title: 'Every single service you ordered, ticked as it is booked',
+    body: 'Eleven services on a wedding means eleven ticks — not one progress bar.' },
+  { title: 'Your rating of each of them, afterwards',
+    body: 'It decides which masters we book for the next family.' },
+]
+
+function LockedState() {
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-6">
-      <div className="rounded-2xl bg-surface p-5 text-center ring-1 ring-hairline/[0.08]">
-        <p className="font-serif text-[19px] font-extrabold text-ink">Nothing to track yet</p>
-        <p className="mx-auto mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-ink-mute">
-          When you send us a celebration or place an order, it appears here — every
-          step, every payment, in one place.
+    <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4">
+      <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
+        {/* The lock, said plainly and once. */}
+        <div className="flex items-start gap-3 border-b border-hairline/[0.08] bg-surface-sunk/[0.04] px-5 py-4">
+          <span aria-hidden="true" className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.1] text-ink-mute">
+            <Lock size={17} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-[19px] font-extrabold leading-tight text-ink">
+              Track unlocks when you place an event order with us
+            </p>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
+              There is nothing to set up and nothing to switch on. The moment you send us a
+              celebration or place an order, this screen fills in — and stays filled in from
+              that day until your event is over.
+            </p>
+          </div>
+        </div>
+
+        {/* The instrument itself, greyed. Every tick below is one the live
+            tracker really draws; nothing here is illustrative. */}
+        <ol className="divide-y divide-hairline/[0.06]">
+          {UNLOCKED_STEPS.map((s, i) => (
+            <li key={s.title} className="flex items-start gap-3 px-5 py-3">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.09] text-ink-mute/60"
+              >
+                <Check size={12} strokeWidth={3.5} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12.5px] font-extrabold text-ink-soft">{s.title}</span>
+                <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink-mute">{s.body}</span>
+              </span>
+              <span aria-hidden="true" className="mt-1 shrink-0 text-[10px] font-bold tabular-nums text-ink-mute/50">
+                {i + 1}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        {/* The transparency claim, made as a promise rather than a feature. */}
+        <p className="border-t border-hairline/[0.08] bg-accent/[0.05] px-5 py-3.5 text-[11.5px] leading-relaxed text-ink-soft">
+          <span className="font-extrabold text-ink">Nothing is hidden from you.</span>{' '}
+          Anything not ticked here is not done yet — we never mark work complete in advance,
+          and we never show you a step we cannot stand behind.
         </p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-          <Link to="/plan" className="inline-flex items-center justify-center gap-2 rounded-xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
+
+        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row">
+          <Link to="/plan" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
             <Sparkles size={15} /> Plan a celebration
           </Link>
-          <Link to="/shop" className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10">
+          <Link to="/shop" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10">
             <Store size={15} /> Browse the shop
           </Link>
         </div>

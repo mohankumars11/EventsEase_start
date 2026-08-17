@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Info, MessageCircle, FileText } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -6,10 +6,14 @@ import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import { fetchActivity } from '../../lib/activity'
 import { buildCelebrationJourney, NO_LOG_NOTE, CANCELLED_STAGE } from '../../lib/celebrationJourney'
-import { defaultPlanFor } from '../../config/celebrationPayments'
+import { buildSettlement } from '../../config/celebrationPayments'
+import { buildServiceLedger } from '../../lib/serviceLedger'
 import { formatINR } from '../../utils/format'
 import JourneyStepper from '../../components/track/JourneyStepper'
-import PaymentLadder from '../../components/track/PaymentLadder'
+import SettlePayment, { PayButton } from '../../components/track/SettlePayment'
+import ServiceLedger from '../../components/track/ServiceLedger'
+import PaymentReceipt from '../../components/track/PaymentReceipt'
+import CelebrationReviews from '../../components/track/CelebrationReviews'
 import { TrackerHeader } from './OrderTracker'
 
 /**
@@ -22,13 +26,22 @@ import { TrackerHeader } from './OrderTracker'
  * a waiting customer could be shown, it is already customer-readable by RLS,
  * and it was sitting there unrendered.
  *
+ * ── The order of this screen is the argument it makes ─────────────────────
+ * Read top to bottom it is: what happens next · where it is · your price, with
+ * the button that pays it · your receipt · every service you ordered · what
+ * actually happened · how did it go. That order is deliberate — the money is
+ * asked for beside the number it is for, and everything below the payment is
+ * the transparency that justifies having asked.
+ *
  * ── The honesty rule, made concrete ───────────────────────────────────────
  * Only rows that wrote themselves somewhere get a timestamp: the request, the
- * quote, each proposal, each change request, the price-lock claim, each
- * payment. Stage transitions in between are unrecorded until migration 045
- * adds the log, so the stepper prints `time not recorded` and one banner says
- * why — rather than the screen inventing a plausible-looking history for a
- * customer who is deciding whether to trust us with a wedding.
+ * quote, each proposal, each change request, the price-lock claim, the
+ * payment, each service's own row. Stage transitions in between are
+ * unrecorded until migration 045 is applied, so the stepper prints `time not
+ * recorded` and one banner says why — rather than the screen inventing a
+ * plausible-looking history for a customer who is deciding whether to trust us
+ * with a wedding. `lib/serviceLedger.js` applies the same rule per service,
+ * where a wrong tick would be a much more specific lie.
  *
  * ── The margin leak this must not open ────────────────────────────────────
  * `event_proposal_items.sambramo_margin` is a GENERATED column and
@@ -41,15 +54,20 @@ export default function CelebrationTracker() {
   const subjectType = eventId ? 'event' : 'enquiry'
   const subjectId = eventId ?? enquiryId
 
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [item, setItem] = useState(null)
   const [proposals, setProposals] = useState([])
   const [items, setItems] = useState([])
   const [payments, setPayments] = useState([])
   const [changeRequests, setChangeRequests] = useState([])
+  const [eventServices, setEventServices] = useState([])
   const [log, setLog] = useState([])
-  const [plan, setPlan] = useState(null)
   const [state, setState] = useState('loading')
+  // Bumped after a payment so every panel re-reads rather than the screen
+  // showing a stale "to pay" beside a receipt.
+  const [refresh, setRefresh] = useState(0)
+
+  const reload = useCallback(() => setRefresh(n => n + 1), [])
 
   useEffect(() => {
     if (!user || !subjectId) return
@@ -81,17 +99,19 @@ export default function CelebrationTracker() {
         .order('created_at', { ascending: true })
         .then(({ data }) => { if (!cancelled && data) setLog(data) })
 
-      // Milestone payments now reach an enquiry too — migration 046 dropped
+      // The single settlement reaches an enquiry too — migration 046 dropped
       // the NOT NULL on `event_id` and added `enquiry_id`, so the builder and
-      // the services cart are no longer structurally unable to hold one.
+      // the services cart are no longer structurally unable to hold a payment.
       supabase.from('event_payments')
         .select('id, event_id, enquiry_id, amount, payment_type, status, milestone_id, schedule_version, due_at, paid_at, notes, created_at')
         .eq(subjectType === 'event' ? 'event_id' : 'enquiry_id', subjectId)
         .order('created_at', { ascending: true })
         .then(({ data }) => { if (!cancelled && data) setPayments(data) })
 
-      // Proposals and change requests remain events-only: neither table has
-      // an enquiry column, and inventing one is a bigger change than this.
+      // Proposals, proposal lines and the per-service rows remain events-only:
+      // none of those tables has an enquiry column, and inventing one is a
+      // bigger change than this. The ledger reads an enquiry's services out of
+      // its JSONB instead — see lib/serviceLedger.js.
       if (subjectType !== 'event') return
 
       supabase.from('event_proposals')
@@ -106,6 +126,14 @@ export default function CelebrationTracker() {
         .select('id, proposal_id, event_service_id, description, customer_price, quantity')
         .then(({ data }) => { if (!cancelled && data) setItems(data) })
 
+      // What the customer actually asked us to arrange, one row per service.
+      // Customer-readable by RLS since migration 004; nothing has ever shown
+      // it to them until now.
+      supabase.from('event_services')
+        .select('id, event_id, service_category, service_name, description, quantity, status, created_at, updated_at')
+        .eq('event_id', subjectId)
+        .then(({ data }) => { if (!cancelled && data) setEventServices(data) })
+
       supabase.from('event_change_requests')
         .select('id, event_id, description, created_at, resolved_at')
         .eq('event_id', subjectId)
@@ -114,19 +142,42 @@ export default function CelebrationTracker() {
 
     load()
     return () => { cancelled = true }
-  }, [user, subjectId, subjectType])
+  }, [user, subjectId, subjectType, refresh])
 
   const journey = useMemo(
     () => (item ? buildCelebrationJourney(item, { log, proposals, payments, changeRequests }) : null),
     [item, log, proposals, payments, changeRequests],
   )
 
-  // The services on this booking drive which unlock lines are true for it.
+  // The services on this booking drive which release lines are true for it.
   const serviceIds = useMemo(() => {
     const raw = item?.raw?.services
-    if (!Array.isArray(raw)) return []
-    return raw.map(s => s?.id).filter(Boolean)
-  }, [item])
+    if (Array.isArray(raw)) return raw.map(s => s?.id).filter(Boolean)
+    return eventServices
+      .map(r => String(r.service_category ?? r.service_name ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_'))
+      .filter(Boolean)
+  }, [item, eventServices])
+
+  const approved = proposals.find(p => p.status === 'APPROVED')
+  const sent = proposals.find(p => p.status === 'SENT' || p.status === 'APPROVED')
+  const confirmedTotal = journey?.payment.confirmedTotal ?? null
+
+  const settlement = useMemo(() => buildSettlement({
+    confirmedTotal,
+    eventDate: item?.eventDate ?? null,
+    approvedAt: approved?.updated_at ?? item?.raw?.quoted_at ?? null,
+    payments,
+    services: serviceIds,
+  }), [confirmedTotal, item, approved, payments, serviceIds])
+
+  const ledger = useMemo(() => buildServiceLedger({
+    item,
+    eventServices,
+    proposal: sent ?? null,
+    proposalItems: items,
+    settlement,
+    log,
+  }), [item, eventServices, sent, items, settlement, log])
 
   if (state === 'loading') {
     return (
@@ -158,9 +209,13 @@ export default function CelebrationTracker() {
     )
   }
 
-  const approved = proposals.find(p => p.status === 'APPROVED')
-  const sent = proposals.find(p => p.status === 'SENT' || p.status === 'APPROVED')
-  const confirmedTotal = journey.payment.confirmedTotal
+  const contact = {
+    name: profile?.full_name ?? item.raw?.customer_name ?? null,
+    email: profile?.email ?? item.raw?.customer_email ?? null,
+    phone: profile?.phone ?? item.raw?.customer_phone ?? null,
+  }
+  const priced = settlement.basis === 'confirmed'
+  const owes = priced && !settlement.settled && !journey.cancelled
 
   return (
     <div className="home-canvas min-h-screen pb-bottom-nav">
@@ -183,6 +238,18 @@ export default function CelebrationTracker() {
           </p>
         </div>
 
+        {/* ── Payment received, and what it set off ─────────────────
+            Above the stepper on purpose: somebody who has just paid opens
+            this screen to be told it landed, and making them scroll past a
+            progress rail to find out is how a confident customer becomes a
+            support message. */}
+        <PaymentReceipt
+          settlement={settlement}
+          item={item}
+          proposal={approved ?? sent ?? null}
+          ledger={ledger}
+        />
+
         {/* ── Where it is ──────────────────────────────────────────── */}
         <section className="rounded-2xl bg-surface p-4 ring-1 ring-hairline/[0.08]">
           <h2 className="mb-3 text-[14px] font-extrabold text-ink">Where it is</h2>
@@ -198,7 +265,11 @@ export default function CelebrationTracker() {
           )}
         </section>
 
-        {/* ── The plan they were told was ready ────────────────────── */}
+        {/* ── The plan they were told was ready ──────────────────────
+            Events carry an itemised proposal. Enquiries carry one confirmed
+            number and no lines, so they get the block below instead — the
+            important half being the same either way: the price, and the
+            button that pays it, in the same eyeline. */}
         {sent && (
           <section className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
             <div className="flex items-center gap-2 border-b border-hairline/[0.08] px-4 py-3">
@@ -231,27 +302,91 @@ export default function CelebrationTracker() {
               ))}
             </ul>
 
-            <div className="flex items-center justify-between border-t border-hairline/[0.08] bg-surface-sunk/[0.03] px-4 py-3">
-              <span className="text-[12px] font-bold text-ink-soft">Total</span>
-              <span className="text-[16px] font-extrabold tabular-nums text-ink">
-                {formatINR(sent.total_amount)}
+            {/* ── The total, with the payment link beside it ─────────
+                This is the moment the customer decides. A pay button parked
+                at the bottom of a different card makes somebody scroll away
+                from the number they are agreeing to, and every scroll
+                between the price and the button is a chance to not pay. */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline/[0.08] bg-surface-sunk/[0.03] px-4 py-3">
+              <span className="min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wide text-ink-mute">
+                  {settlement.settled ? 'Paid in full' : 'Your price'}
+                </span>
+                <span className="block text-[19px] font-extrabold leading-tight tabular-nums text-ink">
+                  {formatINR(sent.total_amount)}
+                </span>
               </span>
+              {owes && (
+                <PayButton
+                  subjectType={subjectType}
+                  subjectId={subjectId}
+                  amount={settlement.settlement.amount}
+                  contact={contact}
+                  label={item.title}
+                  onPaid={reload}
+                  size="compact"
+                />
+              )}
             </div>
           </section>
         )}
 
-        {/* ── What it costs to commit, and what each payment starts ── */}
-        <PaymentLadder
+        {/* ── An enquiry's confirmed price ───────────────────────────
+            `service_enquiries` has no proposal table behind it — a
+            coordinator sets `quoted_price` and that one number is the whole
+            agreement. It was previously shown nowhere on this screen, so a
+            customer whose celebration came through the builder or the
+            services cart could be quoted and have no way to pay. */}
+        {!sent && priced && (
+          <section className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
+            <div className="flex items-center gap-2 border-b border-hairline/[0.08] px-4 py-3">
+              <FileText size={15} className="shrink-0 text-accent" />
+              <h2 className="flex-1 text-[14px] font-extrabold text-ink">Your confirmed price</h2>
+            </div>
+            <p className="px-4 pt-3 text-[11.5px] leading-relaxed text-ink-mute">
+              Your coordinator has priced this celebration. It covers everything on your
+              list below — one number, one payment.
+            </p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-3 px-4 pb-3.5 pt-2">
+              <span className="min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wide text-ink-mute">
+                  {settlement.settled ? 'Paid in full' : 'Your price'}
+                </span>
+                <span className="block text-[19px] font-extrabold leading-tight tabular-nums text-ink">
+                  {formatINR(settlement.confirmedTotal)}
+                </span>
+              </span>
+              {owes && (
+                <PayButton
+                  subjectType={subjectType}
+                  subjectId={subjectId}
+                  amount={settlement.settlement.amount}
+                  contact={contact}
+                  label={item.title}
+                  onPaid={reload}
+                  size="compact"
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── What it costs to commit, and what the payment starts ── */}
+        <SettlePayment
           subjectType={subjectType}
           subjectId={subjectId}
           confirmedTotal={confirmedTotal}
           eventDate={item.eventDate}
-          approvedAt={approved?.updated_at ?? null}
+          approvedAt={approved?.updated_at ?? item.raw?.quoted_at ?? null}
           payments={payments}
           services={serviceIds}
-          plan={plan ?? defaultPlanFor(confirmedTotal)}
-          onPlanChange={setPlan}
+          contact={contact}
+          label={item.title}
+          onPaid={reload}
         />
+
+        {/* ── Every service, with its own ticks ────────────────────── */}
+        <ServiceLedger ledger={ledger} />
 
         {/* ── Everything that actually happened ────────────────────── */}
         {journey.timeline.length > 0 && (
@@ -275,6 +410,17 @@ export default function CelebrationTracker() {
               ))}
             </ol>
           </section>
+        )}
+
+        {/* ── How did it go ────────────────────────────────────────
+            Only once it is over. A rating asked for mid-arrangement measures
+            anxiety rather than quality. */}
+        {item.stage === 'done' && !journey.cancelled && (
+          <CelebrationReviews
+            subjectType={subjectType}
+            subjectId={subjectId}
+            ledger={ledger}
+          />
         )}
 
         <a

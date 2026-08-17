@@ -178,11 +178,89 @@ across the codebase — one of them still called the product a "marketplace".
 - Production with no payment configured shows an honest "unavailable, message us"
   hand-off — never a fake success button.
 
+### A celebration is settled in ONE payment
+
+`config/celebrationPayments.js` used to offer four instalment plans (25%×4,
+50%×2, 75%+25%, in full) with work released at 25%, 50% and 100% of the money.
+It now offers a single settlement of the confirmed quote, and the reasoning is
+operational rather than aesthetic:
+
+- **A part-paid celebration is a part-booked celebration.** Three days out with
+  half the money, the business either fronts the unfunded half or tells a
+  family their décor was never ordered. There is no third position.
+- **Every instalment is a due date that can be missed** — a reminder to send, a
+  reconciliation to do, and a conversation about money in the week of a wedding.
+- **It made the price ambiguous** at the one moment it must not be. "₹18,750
+  due" makes the customer work out what the celebration actually costs.
+
+The milestone id stays `pay-100`, because `event_payments.milestone_id` already
+holds that value for anybody who paid in full under the old config. `pay-25` /
+`pay-50` / `pay-75` are **read as credit and never issued** —
+`scripts/check-payment-schedule.mjs` asserts that a customer who paid an
+instalment under the old ladder is never charged for it again, which is the
+single most expensive thing this change could have got wrong.
+
+The ₹1,000 date hold survives. It is not a part payment of the quote: it is a
+pre-quote, refundable hold that comes off the one payment.
+
+`api/create-milestone-payment.js` carries a second copy of these rules (a Vercel
+function cannot import from `src/`), and the checker fails if the two drift.
+
+### The payment link sits beside the quoted price
+
+`lib/celebrationPayment.js` opens the Razorpay checkout. It exists because the
+old ladder POSTed to the endpoint, got a real order back, and then dispatched a
+`sambramo:milestone-payment` window event **that nothing listened for** — so
+the button opened no checkout at all. Every piece was present and the path was
+dead.
+
+The button is offered twice on one screen, through one code path: beside the
+confirmed total on the plan (where somebody is looking at the number they are
+agreeing to) and in the settlement panel below it. Neither marks a payment
+received — `api/razorpay-webhook.js` is the only witness, and the browser
+callback records a CLAIM at most.
+
+---
+
+## Track
+
+`/track` is the customer's whole relationship with us, and the tab is
+**permanent** — it never changes identity, because navigation that rearranges
+itself breaks the one thing a tab bar is for.
+
+**Locked, not empty.** With nothing ordered, the tab renders grey with a lock
+pip and announces "unlocks once you place an event order with us"; the screen
+behind it shows the real six-step instrument, greyed, rather than an apology
+for being empty. Those are the same message and had to agree.
+
+**Every service, with its own ticks.** `lib/serviceLedger.js` gives each service
+on a celebration six steps — asked for, sourcing, on your price, paid for,
+booked, delivered — so a wedding reads as eleven bookings rather than one
+progress word. A package (the complete wedding package, say) expands into the
+services it contains through `tierServicesFor`, the same function that priced
+it.
+
+**A green tick is a claim about the real world**, and every one traces to a row
+somebody wrote: `event_services` and `event_proposal_items` per line for wizard
+events, `quoted_price` all-or-nothing for enquiries (which carry one number
+over the whole list, and say so), `event_payments` for funding, and migration
+045's log for confirmation. A step with no record stays grey. Nothing is
+inferred from elapsed time or from a neighbouring service.
+
+**After payment**, `PaymentReceipt` lists every step on record with its
+timestamp and states what happens next — written as what we are doing, never as
+a tick, because a tick that runs ahead of the work devalues the ones above it.
+
+**Afterwards**, ratings are captured per service plus one for Sambramo's own
+coordination, on the screen the customer already has open. That feeds the
+supplier signal `event_vendor_options.quality_rating` was built for and nothing
+was filling.
+
 ---
 
 ## Migrations
 
-40 files in `supabase/migrations/`, applied **by hand** in
+50 files in `supabase/migrations/`, applied **by hand** in
 **Supabase Dashboard → SQL Editor**. There is no CI step and **`git push` does
 not run them.**
 
@@ -230,6 +308,11 @@ Honest list — none of these are hidden:
   50/hour, shared site-wide). Beyond that, emoji fallbacks. Pre-resolved
   `products.image_url` values avoid this entirely.
 - **Several pages remain unaudited**, notably `AdminEventDetail` (~1,300 lines).
+- **Migration 050 (reviews on celebrations) is not applied automatically.** A
+  review written from Track is saved either way — `lib/celebrationReviews.js`
+  catches the missing column and retries without it — but until the SQL is
+  pasted it is not linked to the celebration it came from, and the panel says
+  so on screen rather than hiding it.
 - **Migrations 037, 039 and 040 are not applied automatically.** Each screen
   that needs one says so and keeps working without it: Event Services and the
   Content Studio show the exact SQL file to run, Shop Catalog hides its Retire

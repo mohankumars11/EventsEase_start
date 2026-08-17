@@ -2,7 +2,7 @@ import { LOCK_AMOUNT } from '../data/celebrationTiers'
 import { TAX_LABEL } from '../data/taxes'
 
 /**
- * What a celebration costs to commit to, and when.
+ * What a celebration costs to commit to. One number, one payment.
  *
  * ── Why this is a config file and not code in a component ────────────────
  * The same three properties that made `config/policies.js` a file rather than
@@ -14,135 +14,88 @@ import { TAX_LABEL } from '../data/taxes'
  *   — the customer, the coordinator and the admin console must evaluate the
  *     SAME rules, or two of them are looking at a number the third will not
  *     honour;
- *   — `SCHEDULE_VERSION` is stamped on every agreement, so changing the ladder
+ *   — `SCHEDULE_VERSION` is stamped on every agreement, so changing the terms
  *     cannot silently rewrite what a customer already agreed to.
  *
- * ── These numbers need a business sign-off ───────────────────────────────
- * Same status as the rates in `data/taxes.js` and the offers in
- * `data/celebrationOffers.js`: defensible launch figures, not approved ones.
- * They move real money in both directions.
+ * ── Why the instalment ladder is gone ────────────────────────────────────
+ * This file used to offer four splits — 25%×4, 50%×2, 75%+25%, and all of it —
+ * with work released at 25%, 50% and 100% of the money. It now offers one
+ * settlement of the confirmed quote, and the reasoning is operational rather
+ * than aesthetic:
+ *
+ *   A part-paid celebration is a celebration with an open question on it.
+ *   Every instalment is a due date that can be missed, a reminder somebody has
+ *   to send, a reconciliation somebody has to do, and — on the week of a
+ *   wedding — a conversation about money nobody wants to have. Four rungs is
+ *   four times as many of those, on a booking whose vendors have already been
+ *   committed to.
+ *
+ *   Partial funding creates partially-booked celebrations. The gates were an
+ *   honest attempt to model that: 25% booked the masters, 50% bought the
+ *   provisions. But it means the business either fronts the unfunded half of
+ *   an event that is three days away, or tells a family on the day that their
+ *   décor was never ordered. Neither is a position to be in, and there is no
+ *   third one.
+ *
+ *   It made the price ambiguous at the moment it must not be. A customer
+ *   reading "₹18,750 due" has to work out what the celebration actually costs.
+ *   The one thing this screen owes them is the whole number, once.
+ *
+ * So: the coordinator confirms a price, the customer pays that price, and
+ * everything the money releases is released together. The ₹1,000 date hold
+ * survives — see `hold` below — because it is not a part payment of the quote;
+ * it is a pre-quote, refundable hold that comes off the one payment.
  *
  * ── The one rule the whole file is built on ──────────────────────────────
- * Percentages here are of the CONFIRMED QUOTE and of nothing else.
+ * The amount here is the CONFIRMED QUOTE and nothing else.
  * `utils/quote.js:29-35` refuses to state the estimate to the rupee, because
  * Sambramo has no signed supplier behind the catalogue and a number stated to
  * the rupee implies a rate card that does not exist. Putting a DUE DATE on
  * that number would be strictly worse. So before a confirmed quote exists,
- * `buildSchedule()` returns `basis: 'none'` and the UI shows percentages with
- * no rupee figures at all.
+ * `buildSettlement()` returns `basis: 'none'` and the UI shows no rupee
+ * figure at all.
  *
  * The ₹1,000 hold is the single exception, and only because it is a flat fee
  * that does not scale with a price nobody has agreed to yet.
  */
 
-export const SCHEDULE_VERSION = '2026-08-16'
+export const SCHEDULE_VERSION = '2026-08-17'
 
 /**
- * A discount for settling in one payment.
+ * The one milestone id, kept as `pay-100`.
  *
- * Legitimate and genuinely tax-efficient: under CGST §15(3)(a) GST is charged
- * on the discounted value when the discount is known at the time of supply and
- * shown on the invoice — so 2% off ₹1,00,000 saves the customer ₹2,000
- * *including* its share of the tax, not ₹2,000 plus tax on top.
+ * It is stored in `event_payments.milestone_id` (migration 046) and the unique
+ * index on `(subject, milestone_id)` is what stops a customer who opens the
+ * payment sheet twice creating two rows. Naming it for the cumulative point it
+ * reaches is left over from the ladder, and it is kept for exactly one reason:
+ * a celebration that already settled `pay-100` under the old four-plan config
+ * is still recognised as paid. Renaming it to `settlement` would strand those
+ * rows and re-ask people for money they have already sent.
  *
- * Shipped at ZERO deliberately. It costs exactly the whole platform fee
- * (`PLATFORM_FEE_RATE`, 2%), so switching it on is a business decision about
- * margin, not an engineering one. It is wired end to end at 0 so that decision
- * is a one-line change rather than a feature.
+ * `pay-25` / `pay-50` / `pay-75` are no longer issued. Any that exist are read
+ * as credit against the settlement — see `creditFrom()`.
  */
-export const fullPaymentDiscountPct = 0
+export const SETTLEMENT_ID = 'pay-100'
 
-/* ── The plans ────────────────────────────────────────────────────────────
+/** Ids the retired ladder could have written. Read, never issued. */
+export const LEGACY_MILESTONE_IDS = ['pay-25', 'pay-50', 'pay-75']
+
+/* ── What the money releases ──────────────────────────────────────────────
  *
- * The customer chooses how to split it, and every plan finishes BEFORE the
- * day. Nothing is collected after the celebration.
- *
- * ── Why the id is the cumulative percentage ──────────────────────────────
- * A milestone is `pay-25`, `pay-50`, `pay-75`, `pay-100` — named for the
- * point on the road it reaches, not for its position in a list. That has one
- * property worth the slight awkwardness: the ids OVERLAP between plans.
- *
- * Somebody who chose "Pay in 2", paid the first 50%, and then decides to
- * switch to quarters has already paid `pay-50`; the quarters plan asks for
- * `pay-25` and `pay-50`, sees `pay-50` settled, and only `pay-75` and
- * `pay-100` remain. Nothing is double-charged and nothing is stranded. With
- * positional ids (`instalment-1`) the same switch would have orphaned the
- * payment and asked for money already taken.
- */
-export const PAYMENT_PLANS = {
-  quarters: {
-    id: 'quarters',
-    label: 'Pay in 4',
-    short: '25% × 4',
-    splits: [0.25, 0.25, 0.25, 0.25],
-    blurb: 'Four equal payments across the run-up. The gentlest on cash flow.',
-    recommended: true,
-  },
-  halves: {
-    id: 'halves',
-    label: 'Pay in 2',
-    short: '50% × 2',
-    splits: [0.50, 0.50],
-    blurb: 'Half to book it in, half before the day.',
-  },
-  most: {
-    id: 'most',
-    label: '75% now',
-    short: '75% + 25%',
-    splits: [0.75, 0.25],
-    blurb: 'Most of it up front, a small balance before the day.',
-  },
-  full: {
-    id: 'full',
-    label: 'Pay in full',
-    short: '100%',
-    splits: [1.00],
-    blurb: 'One payment. Everything released at once.',
-  },
-}
-
-export const PLAN_LIST = Object.values(PAYMENT_PLANS)
-
-/** Above this, splitting is the sensible default — it is what the ladder is for. */
-export const STAGED_DEFAULT_ABOVE = 50000
-
-export function defaultPlanFor(confirmedTotal) {
-  return Number(confirmedTotal) > STAGED_DEFAULT_ABOVE ? 'quarters' : 'full'
-}
-
-/* ── What the money unlocks ───────────────────────────────────────────────
- *
- * ── Why gates are keyed on cumulative percentage, not on an instalment ───
- * The work a payment releases depends on HOW MUCH of the celebration is
- * funded, not on which instalment happened to carry it. A customer who pays
- * 75% in one go has funded the vendor advances and the provisions just as
- * surely as one who got there in three steps, and telling them otherwise
- * would be an arbitrary penalty for paying more, sooner.
- *
- * Keying on the total paid also means the gates survive a change of plan
- * without any reconciliation: they are a property of the celebration, not of
- * the schedule that happens to be attached to it.
- */
-export const UNLOCK_GATES = [
-  { atPct: 0.25, keys: ['venue_hold', 'vendor_advances'],
-    label: 'Your masters are booked' },
-  { atPct: 0.50, keys: ['provisions', 'materials', 'staffing'],
-    label: 'Provisions and crew are secured' },
-  { atPct: 1.00, keys: ['setup', 'event_day'],
-    label: 'The day itself is fully funded' },
-]
-
-/**
  * Every line is derived from the services actually in THIS booking. A booking
  * with no catering must never be told a payment buys groceries — that is the
  * same invented-progress failure the tracker exists to avoid, wearing a
  * friendlier face. `needs: '*'` means the line holds for any celebration.
+ *
+ * The gates are gone with the ladder. One payment releases the lot, which is
+ * the point of taking it in one: there is no state in which a celebration is
+ * three-quarters arranged.
  */
-const UNLOCK_RULES = {
+const RELEASE_RULES = {
   date_hold:       { needs: '*',
                      line: () => 'Your date is held while you decide' },
   venue_hold:      { needs: ['venue', 'tent'],
-                     line: () => 'Your venue is held for the date' },
+                     line: () => 'Your venue is confirmed for the date' },
   vendor_advances: { needs: '*',
                      line: ({ count }) => count > 1
                        ? `Booking advances placed with all ${count} masters`
@@ -159,13 +112,19 @@ const UNLOCK_RULES = {
                      line: () => 'Your coordinator is on the ground from the morning' },
 }
 
-/** The lines one set of unlock keys releases, for one booking. */
+/** Everything the single settlement releases, in the order it happens. */
+export const RELEASE_KEYS = [
+  'venue_hold', 'vendor_advances', 'provisions', 'materials', 'staffing',
+  'setup', 'event_day',
+]
+
+/** The lines one set of release keys covers, for one booking. */
 export function unlocksFor(keys = [], bookedServiceIds = []) {
   const ids = new Set(bookedServiceIds)
   const count = ids.size
   return keys
     .map(key => {
-      const rule = UNLOCK_RULES[key]
+      const rule = RELEASE_RULES[key]
       if (!rule) return null
       const applies = rule.needs === '*' || rule.needs.some(n => ids.has(n))
       return applies ? { key, line: rule.line({ count }) } : null
@@ -175,8 +134,8 @@ export function unlocksFor(keys = [], bookedServiceIds = []) {
 
 /* ── Refunds, by how close to the day you cancel ──────────────────────────
  *
- * One ladder for every plan, because what we can give back depends on when we
- * paid the vendors — not on which instalment the money arrived in.
+ * Unchanged by the move to one payment: what we can give back depends on when
+ * we paid the vendors, not on how the money arrived.
  */
 export const REFUND_TIERS = [
   { daysBefore: 21, pct: 1.00, copy: 'Full refund — nothing is committed to a vendor yet.' },
@@ -185,153 +144,102 @@ export const REFUND_TIERS = [
   { daysBefore: 0,  pct: 0.00, copy: 'Not refundable — provisions are bought and staff are rostered.' },
 ]
 
-/* ── Building a schedule ──────────────────────────────────────────────── */
+/* ── Building the settlement ──────────────────────────────────────────── */
 
 const round = n => Math.round(n)
-const pctId = pct => `pay-${Math.round(pct * 100)}`
 
 /**
- * When each instalment is due.
+ * When the one payment is due.
  *
- * The first lands 48h after approval — a decision made is a decision worth
- * acting on while it is fresh. The last lands 2 days before the day, because
- * nobody should be chasing money at somebody's wedding. Anything between is
- * spread evenly across that window.
+ * 48 hours after the customer approves the plan — a decision made is a
+ * decision worth acting on while it is fresh — and never later than two days
+ * before the day, because nobody should be chasing money at somebody's
+ * wedding. A celebration booked inside that window is simply payable now,
+ * which is the truth rather than a softened version of it.
  */
-function dueDates({ count, eventDate, approvedAt }) {
-  if (!approvedAt) return Array(count).fill(null)
-  const first = new Date(approvedAt).getTime() + 48 * 3600000
-  if (count === 1) return [new Date(first)]
-
-  const last = eventDate
-    ? new Date(eventDate).getTime() - 2 * 86400000
-    : first + (count - 1) * 14 * 86400000     // no date yet: fortnightly
-  // A date too close for the spread collapses to "all due now", which is the
-  // truth — a celebration booked five days out is simply payable immediately.
-  if (last <= first) return Array(count).fill(new Date(first))
-
-  const step = (last - first) / (count - 1)
-  return Array.from({ length: count }, (_, i) => new Date(first + step * i))
+function dueDate({ eventDate, approvedAt }) {
+  if (!approvedAt) return null
+  const soon = new Date(approvedAt).getTime() + 48 * 3600000
+  if (!eventDate) return new Date(soon)
+  const latest = new Date(eventDate).getTime() - 2 * 86400000
+  return new Date(Math.min(soon, latest))
 }
 
 /**
- * The ladder, priced, for one celebration.
+ * Money already received against this celebration, from any milestone id.
+ *
+ * Reads the retired ladder's rows as well as the hold, for one reason: a
+ * celebration that paid `pay-25` before this change must not be asked for the
+ * full quote again. Anything verified is credit.
+ */
+function creditFrom(payments = []) {
+  let holdPayment = null
+  let ladderPaid = 0
+  let settlement = null
+
+  for (const p of payments) {
+    if (!p) continue
+    if (p.milestone_id === 'hold') { holdPayment = p; continue }
+    if (p.milestone_id === SETTLEMENT_ID) { settlement = p; continue }
+    if (LEGACY_MILESTONE_IDS.includes(p.milestone_id) && isSettled(p)) {
+      ladderPaid += Number(p.amount ?? 0)
+    }
+  }
+
+  return { holdPayment, ladderPaid, settlement }
+}
+
+/**
+ * The settlement, priced, for one celebration.
  *
  * `basis` is the honesty switch:
- *   'confirmed' — a coordinator has priced this. Rupee amounts are shown.
- *   'none'      — no confirmed quote yet. Percentages only. The caller must
- *                 not fall back to the estimate range; see the file header.
+ *   'confirmed' — a coordinator has priced this. The rupee amount is shown.
+ *   'none'      — no confirmed quote yet. No rupee figure at all. The caller
+ *                 must not fall back to the estimate range; see the header.
  *
  * @param confirmedTotal  TAX-INCLUSIVE confirmed total, from
  *                        `event_proposals.total_amount` (APPROVED) or
  *                        `service_enquiries.quoted_price`. Never `quote.range`.
- * @param taxTotal        the GST inside that total, if known, so each rung can
- *                        show its share.
+ * @param taxTotal        the GST inside that total, if known.
  * @param payments        rows from `event_payments`, matched on `milestone_id`
+ * @param services        service ids on this booking, for the release lines
  */
-export function buildSchedule({
+export function buildSettlement({
   confirmedTotal = null,
   taxTotal = null,
   eventDate = null,
   approvedAt = null,
-  plan = 'quarters',
   payments = [],
   services = [],
   now = new Date(),
 } = {}) {
-  const chosen = PAYMENT_PLANS[plan] ? plan : 'quarters'
-  const splits = PAYMENT_PLANS[chosen].splits
   const priced = Number.isFinite(Number(confirmedTotal)) && Number(confirmedTotal) > 0
+  const total = priced ? Number(confirmedTotal) : null
 
-  const discount = priced && chosen === 'full'
-    ? round(Number(confirmedTotal) * fullPaymentDiscountPct)
-    : 0
-  const totalPayable = priced ? Number(confirmedTotal) - discount : null
-
-  const paidBy = {}
-  for (const p of payments) if (p?.milestone_id) paidBy[p.milestone_id] = p
-
-  const holdPayment = paidBy.hold ?? null
+  const { holdPayment, ladderPaid, settlement: settlementPayment } = creditFrom(payments)
   const holdSettled = isSettled(holdPayment)
   const holdCredit = holdSettled ? LOCK_AMOUNT : 0
+  // Everything already received that comes off the one payment.
+  const credit = holdCredit + ladderPaid
 
-  const dates = dueDates({ count: splits.length, eventDate, approvedAt })
+  // Never below zero: a celebration whose old instalments already covered the
+  // quote owes nothing, and a negative "amount due" is not a refund — refunds
+  // are `refundForCancellation`'s job and go through a human.
+  const amount = priced ? Math.max(0, total - credit) : null
+  const settled = isSettled(settlementPayment) || (priced && amount === 0)
 
-  // Rounded shares, with the LAST instalment absorbing the remainder so the
-  // ladder sums to the bill exactly. Four rounded quarters of an odd number
-  // do not add up, and a schedule ₹1 short is the kind of thing a customer
-  // notices and nobody can explain.
-  let cumulative = 0
-  let allocated = 0
-  let taxAllocated = 0
-  const rows = splits.map((share, i) => {
-    cumulative += share
-    const id = pctId(cumulative)
-    const last = i === splits.length - 1
+  const due = dueDate({ eventDate, approvedAt })
 
-    let amount = null
-    if (priced) {
-      const gross = last ? totalPayable - allocated : round(totalPayable * share)
-      allocated += gross
-      // The ₹1,000 hold comes off the FIRST instalment, once and only once.
-      amount = Math.max(0, gross - (i === 0 ? holdCredit : 0))
-    }
-
-    // The tax split needs the same last-absorbs-the-remainder rule as the
-    // amount, and for the same reason: four rounded quarters of ₹3,850 come
-    // to ₹3,852. Two rupees is nothing, but it makes the page contradict the
-    // sentence beneath it — "the GST inside it is the same" — which is the
-    // one claim on this screen that has to survive being checked.
-    let gst = null
-    if (priced && taxTotal != null) {
-      gst = last ? Number(taxTotal) - taxAllocated : round(Number(taxTotal) * share)
-      taxAllocated += gst
-    }
-
-    const payment = paidBy[id] ?? null
-    const dueAt = dates[i]
-
-    return {
-      id,
-      n: i + 1,
-      of: splits.length,
-      label: splits.length === 1 ? 'Pay in full' : `Payment ${i + 1} of ${splits.length}`,
-      share,
-      cumulative,
-      amount,
-      gst,
-      dueAt,
-      overdue: Boolean(dueAt && dueAt < now && !isSettled(payment)),
-      creditsHold: i === 0 && holdSettled,
-      payment,
-      status: paymentStatusOf(payment),
-      settled: isSettled(payment),
-    }
-  })
-
-  // How far along the money is — the number the gates key off.
-  const paidPct = rows.filter(r => r.settled).reduce((s, r) => s + r.share, 0)
-  const paidTotal = priced
-    ? rows.reduce((s, r) => s + (r.settled ? (r.amount ?? 0) : 0), 0) + holdCredit
-    : null
-
-  const gates = UNLOCK_GATES.map(g => ({
-    ...g,
-    // A hair of tolerance: four rounded quarters can land at 0.9999999.
-    open: paidPct >= g.atPct - 1e-9,
-    lines: unlocksFor(g.keys, services),
-  })).filter(g => g.lines.length > 0)
+  const releases = unlocksFor(RELEASE_KEYS, services)
 
   return {
     basis: priced ? 'confirmed' : 'none',
-    plan: chosen,
-    planLabel: PAYMENT_PLANS[chosen].label,
     version: SCHEDULE_VERSION,
-    confirmedTotal: priced ? Number(confirmedTotal) : null,
-    discount,
-    totalPayable,
+    confirmedTotal: total,
     taxTotal: priced ? taxTotal : null,
     taxLabel: TAX_LABEL,
+
+    /** The ₹1,000 pre-quote hold. Not a part payment — credit against the one. */
     hold: {
       amount: LOCK_AMOUNT,
       payment: holdPayment,
@@ -339,12 +247,33 @@ export function buildSchedule({
       status: paymentStatusOf(holdPayment),
       lines: unlocksFor(['date_hold'], services),
     },
-    rows,
-    gates,
-    paidPct,
-    paidTotal,
-    outstanding: priced ? Math.max(0, totalPayable - paidTotal) : null,
-    allSettled: rows.every(r => r.settled),
+
+    /** Anything the retired instalment ladder collected, as credit. */
+    legacyPaid: ladderPaid,
+    credit,
+
+    /** The one payment. */
+    settlement: {
+      id: SETTLEMENT_ID,
+      label: 'Your payment',
+      amount,
+      gst: priced && taxTotal != null ? Number(taxTotal) : null,
+      dueAt: due,
+      overdue: Boolean(due && due < now && !settled),
+      creditsHold: holdSettled,
+      creditsLadder: ladderPaid > 0,
+      payment: settlementPayment,
+      status: settled ? 'paid' : paymentStatusOf(settlementPayment),
+      settled,
+    },
+
+    /** What the payment releases. Released together, or not at all. */
+    releases,
+    released: settled,
+
+    paid: priced ? (settled ? total : credit) : null,
+    outstanding: priced ? (settled ? 0 : amount) : null,
+    settled,
   }
 }
 
@@ -353,15 +282,15 @@ export function buildSchedule({
  *
  * `CUSTOMER_CLAIMED_PAID` is deliberately NOT settled. A claim is a sentence
  * somebody typed; direct UPI has no callback, so until a gateway signature or
- * a human bank check says otherwise it is unverified. If a claim unlocked the
- * work it funds, the lock would mean nothing — and the first customer who
+ * a human bank check says otherwise it is unverified. If a claim released the
+ * work it funds, the release would mean nothing — and the first customer who
  * discovered that would stop believing every other thing this tracker says.
  */
 export function isSettled(payment) {
   return payment?.status === 'ADMIN_VERIFIED' || payment?.status === 'GATEWAY_VERIFIED'
 }
 
-function paymentStatusOf(payment) {
+export function paymentStatusOf(payment) {
   if (!payment) return 'due'
   if (isSettled(payment)) return 'paid'
   if (payment.status === 'CUSTOMER_CLAIMED_PAID') return 'checking'
@@ -370,38 +299,34 @@ function paymentStatusOf(payment) {
   return 'due'
 }
 
-/* ── The sentence that has to stay true ───────────────────────────────────
+/* ── The sentence that does the persuading ────────────────────────────────
  *
- * Under CGST §13(2) the time of supply for services is the earlier of invoice
- * or payment received, so GST is due on each advance. It is a PORTION OF THE
- * SAME TAX COLLECTED EARLIER — not an additional tax, and not a surcharge for
- * choosing instalments.
+ * The old note existed to kill the assumption that instalments carry a
+ * surcharge. With one payment that argument is moot, and the thing worth
+ * saying instead is what the number IS: the whole cost of the celebration,
+ * GST inside it, nothing after the day, nothing to remember.
  *
- * Most people in this market assume the opposite, because instalments usually
- * do carry a charge. Saying plainly that ours do not is worth more than any
- * badge on the page — which is why `scripts/check-payment-schedule.mjs`
- * asserts that every plan produces the same total and the same total tax,
- * rather than leaving this as a comment somebody can quietly falsify.
+ * `scripts/check-payment-schedule.mjs` asserts the arithmetic behind every
+ * clause here rather than leaving it as a comment somebody can quietly
+ * falsify.
  */
-export const GST_NOTE = {
-  headline: 'Splitting it costs you nothing extra.',
-  body: 'Whichever plan you pick the total is the same, and so is the GST inside it — instalments just move part of it earlier. What changes is when the money leaves your account, and what each payment sets in motion.',
-  estimated: `${TAX_LABEL} — confirmed on your final invoice.`,
+export const PAYMENT_NOTE = {
+  headline: 'One payment, and it is done.',
+  body: 'The number your coordinator confirms is the whole cost of your celebration — GST included, no instalments to keep track of, no balance collected after the day. Paying it releases every part of the arrangement at once.',
+  estimated: `${TAX_LABEL} — confirmed on your invoice.`,
 }
 
 /**
- * Documents this schedule obliges the business to issue.
+ * Documents this settlement obliges the business to issue.
  *
- * Stated here because nothing in the app generates either one yet, and a
- * staged plan without them is not compliant. A gap named in the config is a
- * gap somebody can find; a gap in nobody's head is one an accountant finds a
- * year later.
+ * One payment means one document, which is the other quiet win of dropping the
+ * ladder: staged collection required a receipt voucher per advance (CGST Rule
+ * 50) and then a tax invoice adjusting them all at completion (§31(3)(d)), and
+ * nothing in this app generated either. A single payment against a confirmed
+ * quote needs one tax invoice. Stated here because a gap named in the config
+ * is a gap somebody can find.
  */
 export const REQUIRED_DOCUMENTS = {
-  staged: [
-    'A receipt voucher for every advance received (CGST Rule 50).',
-    'A tax invoice at completion, adjusting the advances already taken (§31(3)(d)).',
-  ],
   full: ['A tax invoice for the payment.'],
 }
 
@@ -409,8 +334,8 @@ export const REQUIRED_DOCUMENTS = {
  *
  * `config/policies.js` is entirely shop-order shaped — its `CANCELLATION`
  * ladder keys off `orders.status` and `refundBreakdown()` reads
- * `order.subtotal`. None of it can answer what happens to a ₹25,000 advance on
- * a celebration cancelled three weeks out, and taking that advance without an
+ * `order.subtotal`. None of it can answer what happens to a ₹25,000 payment on
+ * a celebration cancelled three weeks out, and taking that money without an
  * answer is not acceptable.
  */
 export const CELEBRATION_CANCELLATION_TERMS = {
@@ -429,12 +354,12 @@ export const CELEBRATION_CANCELLATION_TERMS = {
 /**
  * What comes back if this celebration is cancelled now.
  *
- * Returns a verdict per instalment rather than one number, mirroring
+ * Returns a line per payment received rather than one number, mirroring
  * `policies.refundBreakdown()`'s contract — the customer is owed the
  * reasoning, not just the total, and a coordinator has to be able to read it
  * out loud.
  */
-export function refundForCancellation({ schedule, eventDate, now = new Date() }) {
+export function refundForCancellation({ settlement, eventDate, now = new Date() }) {
   const daysOut = eventDate
     ? Math.floor((new Date(eventDate) - now) / 86400000)
     : null
@@ -446,25 +371,39 @@ export function refundForCancellation({ schedule, eventDate, now = new Date() })
     ? REFUND_TIERS[0]
     : REFUND_TIERS.find(t => daysOut >= t.daysBefore) ?? REFUND_TIERS[REFUND_TIERS.length - 1]
 
-  const lines = (schedule?.rows ?? [])
-    .filter(r => r.settled)
-    .map(r => ({
-      id: r.id,
-      label: r.label,
-      paid: r.amount ?? 0,
-      refund: round((r.amount ?? 0) * tier.pct),
-      pct: tier.pct,
-      reason: tier.copy,
-    }))
+  const lines = []
 
   // The hold is refundable in full until a plan is approved, and is credited
-  // against the first instalment after that — so it is only refunded here
-  // when it has not yet been absorbed.
-  if (schedule?.hold?.settled && !schedule.rows.some(r => r.creditsHold && r.settled)) {
-    lines.unshift({
+  // against the payment after that — so it is only refunded on its own terms
+  // while the settlement is still outstanding.
+  if (settlement?.hold?.settled && !settlement.settled) {
+    lines.push({
       id: 'hold', label: 'Hold your date',
-      paid: schedule.hold.amount, refund: schedule.hold.amount, pct: 1,
+      paid: settlement.hold.amount, refund: settlement.hold.amount, pct: 1,
       reason: 'Refunded in full — you had not approved a plan yet.',
+    })
+  }
+
+  if (settlement?.settled) {
+    const paid = settlement.confirmedTotal ?? 0
+    lines.push({
+      id: SETTLEMENT_ID,
+      label: 'Your payment',
+      paid,
+      refund: round(paid * tier.pct),
+      pct: tier.pct,
+      reason: tier.copy,
+    })
+  } else if (settlement?.legacyPaid > 0) {
+    // A celebration part-paid under the retired ladder, cancelled before it
+    // settled. The money is real and is owed the same ladder.
+    lines.push({
+      id: 'legacy',
+      label: 'Paid so far',
+      paid: settlement.legacyPaid,
+      refund: round(settlement.legacyPaid * tier.pct),
+      pct: tier.pct,
+      reason: tier.copy,
     })
   }
 

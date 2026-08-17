@@ -1,17 +1,30 @@
-// Vercel serverless function — opens a Razorpay order for ONE milestone of
-// one celebration.
+// Vercel serverless function — opens a Razorpay order to settle ONE
+// celebration, in full.
 //
 // ── Why this is a new file and not a widened create-razorpay-order ───────
 // That endpoint is live-path code for the shop and it works. Teaching it a
 // second subject shape would put every shop checkout at risk for a feature
 // that has not shipped yet, and the two have genuinely different rules: a
-// shop order has one amount stored on its own row, whereas a milestone is a
-// SHARE of a confirmed quote that has to be recomputed here.
+// shop order has one amount stored on its own row, whereas a celebration's
+// amount is a confirmed quote that has to be re-read and re-credited here.
+//
+// ── One payment, not four ────────────────────────────────────────────────
+// This endpoint used to price any of `pay-25` / `pay-50` / `pay-75` /
+// `pay-100` against a plan the browser named. It now issues exactly one
+// settlement, `pay-100`, for the whole confirmed quote less anything already
+// received. See the header of src/config/celebrationPayments.js for why the
+// ladder went: a part-paid celebration is a part-booked celebration, and the
+// business has no honest position to hold three days out with half the money.
+//
+// The id stays `pay-100` deliberately — `event_payments.milestone_id` and its
+// unique index (migration 046) already hold that value for anybody who paid
+// in full under the old config, and renaming it would re-ask them for money
+// they have already sent.
 //
 // ── The amount never comes from the browser ──────────────────────────────
-// The client sends a celebration and a milestone id. The share, the credited
-// hold and the total are read from the database and multiplied server-side.
-// A client that could name its own amount could name ₹1.
+// The client sends a celebration id and nothing else that matters. The total,
+// the credited hold and any legacy instalments are read from the database and
+// subtracted server-side. A client that could name its own amount could name ₹1.
 //
 // ── This alone does not make a payment known ─────────────────────────────
 // The browser's success callback is not a reliable witness — somebody who
@@ -24,12 +37,9 @@ import { createClient } from '@supabase/supabase-js'
 // scripts/check-payment-schedule.mjs, which fails the build if these drift —
 // a Vercel function is bundled separately and cannot import from src/, so
 // this is a second source of truth for the amount charged to a real card.
-const PLAN_SPLITS = {
-  quarters: [0.25, 0.25, 0.25, 0.25],
-  halves:   [0.50, 0.50],
-  most:     [0.75, 0.25],
-  full:     [1.00],
-}
+const SETTLEMENT_ID = 'pay-100'
+const LEGACY_MILESTONE_IDS = ['pay-25', 'pay-50', 'pay-75']
+const SETTLED_STATUSES = ['ADMIN_VERIFIED', 'GATEWAY_VERIFIED']
 const LOCK_AMOUNT = 1000
 
 /**
@@ -47,28 +57,22 @@ const PAYMENT_METHOD = 'upi'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { subjectType, subjectId, milestoneId, plan, scheduleVersion } = req.body || {}
-  if (!subjectType || !subjectId || !milestoneId || !plan) {
-    return res.status(400).json({ error: 'Missing subjectType, subjectId, milestoneId or plan' })
+  const { subjectType, subjectId, milestoneId, scheduleVersion } = req.body || {}
+  if (!subjectType || !subjectId) {
+    return res.status(400).json({ error: 'Missing subjectType or subjectId' })
   }
   if (subjectType !== 'event' && subjectType !== 'enquiry') {
     return res.status(400).json({ error: 'Unknown subjectType' })
   }
-  const splits = PLAN_SPLITS[plan]
-  if (!splits) return res.status(400).json({ error: 'Unknown plan' })
-
-  // A milestone is named for the cumulative point it reaches (`pay-50`), so
-  // its own share is that point minus the one before it in THIS plan. Named
-  // that way the ids overlap between plans, which is what lets somebody
-  // switch from "Pay in 2" to "Pay in 4" without paying anything twice.
-  let cumulative = 0
-  let share = null
-  let index = -1
-  for (let i = 0; i < splits.length; i++) {
-    cumulative += splits[i]
-    if (`pay-${Math.round(cumulative * 100)}` === milestoneId) { share = splits[i]; index = i; break }
+  // `milestoneId` is accepted but only one value is issued. A client asking
+  // for `pay-25` is a client running a build from before the ladder was
+  // removed; it is refused rather than quietly upgraded to the full amount,
+  // because charging four times what the button said is worse than an error.
+  if (milestoneId && milestoneId !== SETTLEMENT_ID) {
+    return res.status(409).json({
+      error: 'Celebrations are settled in one payment now. Please reload the page.',
+    })
   }
-  if (share == null) return res.status(400).json({ error: 'Unknown milestone for this plan' })
 
   // `RAZORPAY_KEY_ID` first, matching the sibling create-razorpay-order.js.
   // The VITE_-prefixed one is the browser's copy (it is a publishable id, so
@@ -116,16 +120,31 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: 'This celebration has no confirmed quote yet' })
   }
 
-  // The last instalment absorbs the rounding remainder, so the ladder sums to
-  // the bill exactly rather than landing a rupee short.
-  const isLast = index === splits.length - 1
-  const gross = isLast
-    ? Number(confirmedTotal) - splits.slice(0, index).reduce((sum, sp) => sum + Math.round(Number(confirmedTotal) * sp), 0)
-    : Math.round(Number(confirmedTotal) * share)
-  // The ₹1,000 hold comes off the FIRST instalment, once.
-  const credit = index === 0 ? lockPaid : 0
-  const amount = Math.max(0, gross - credit)
-  if (amount <= 0) return res.status(409).json({ error: 'Nothing to pay on this milestone' })
+  // ── What is already in ─────────────────────────────────────────
+  // The ₹1,000 hold, plus anything the retired instalment ladder collected
+  // before this change. Both are credit against the one payment. A celebration
+  // that paid `pay-25` under the old config must never be asked for the whole
+  // quote again — that is money already in our account.
+  const subjectColumn = subjectType === 'event' ? 'event_id' : 'enquiry_id'
+  const { data: priorRows } = await supabase
+    .from('event_payments')
+    .select('milestone_id, amount, status')
+    .eq(subjectColumn, subjectId)
+    .in('status', SETTLED_STATUSES)
+
+  const ladderPaid = (priorRows ?? [])
+    .filter(r => LEGACY_MILESTONE_IDS.includes(r.milestone_id))
+    .reduce((sum, r) => sum + Number(r.amount ?? 0), 0)
+
+  const alreadySettled = (priorRows ?? []).some(r => r.milestone_id === SETTLEMENT_ID)
+  if (alreadySettled) {
+    return res.status(409).json({ error: 'This celebration is already paid in full' })
+  }
+
+  const amount = Math.max(0, Number(confirmedTotal) - lockPaid - ladderPaid)
+  if (amount <= 0) {
+    return res.status(409).json({ error: 'Nothing left to pay on this celebration' })
+  }
 
   // ── Razorpay ──────────────────────────────────────────────────────────
   const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64')
@@ -135,15 +154,17 @@ export default async function handler(req, res) {
     body: JSON.stringify({
       amount: amount * 100,                 // paise
       currency: 'INR',
-      receipt: `${subjectId.slice(0, 8)}-${milestoneId}`.slice(0, 40),
-      notes: { subjectType, subjectId, milestoneId, plan },
+      receipt: `${subjectId.slice(0, 8)}-${SETTLEMENT_ID}`.slice(0, 40),
+      notes: { subjectType, subjectId, milestoneId: SETTLEMENT_ID },
       // ── UPI only, and this is a commercial decision made structural ────
       // UPI and RuPay debit are zero-MDR in India by law (the 2019 Finance
       // Act amendment to the Payments and Settlement Systems Act), so a
-      // milestone collected over UPI costs the business nothing. Cards and
+      // celebration collected over UPI costs the business nothing. Cards and
       // netbanking are ~2% + GST, which on a ₹1,00,000 celebration is about
       // ₹2,360 against a platform fee of ₹2,000 — the gateway would eat the
-      // entire margin and then some, on every single instalment.
+      // entire margin and then some. Taking it in one payment rather than
+      // four does not change that arithmetic; it just means it would only be
+      // wrong once.
       //
       // Restricting it on the ORDER rather than in the checkout options is
       // deliberate: a client-side `method` filter is a suggestion the
@@ -161,16 +182,19 @@ export default async function handler(req, res) {
   }
   const rzpOrder = await rzpRes.json()
 
-  // ── Park the milestone as PENDING ─────────────────────────────────────
+  // ── Park the settlement as PENDING ───────────────────────────────
   // Upserted on (subject, milestone) — the unique indexes in migration 046
   // mean a customer who opens the payment sheet twice gets one row, not two.
-  const subjectColumn = subjectType === 'event' ? 'event_id' : 'enquiry_id'
+  //
+  // `payment_type: 'full'` unconditionally now. It was 'advance' for every
+  // rung but the last; there are no rungs, so nothing on this platform records
+  // an advance against a celebration any more.
   const { error: upsertErr } = await supabase.from('event_payments').upsert({
     [subjectColumn]: subjectId,
-    milestone_id: milestoneId,
+    milestone_id: SETTLEMENT_ID,
     schedule_version: scheduleVersion ?? null,
     amount,
-    payment_type: isLast ? 'full' : 'advance',
+    payment_type: 'full',
     status: 'PENDING',
     gateway_order_id: rzpOrder.id,
   }, { onConflict: `${subjectColumn},milestone_id` })

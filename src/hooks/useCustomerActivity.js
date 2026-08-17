@@ -56,9 +56,9 @@ export function useCustomerActivity() {
           .eq('customer_id', user.id).limit(200),
         supabase.from('service_enquiries').select('id, status')
           .eq('customer_id', user.id).limit(200),
-        // Milestones due. Needs migration 046 for `milestone_id`/`due_at`, so
-        // on a database that has not run it this 400s and is discarded —
-        // the tab keeps working, it just counts one fewer thing.
+        // Payments opened and not finished. Needs migration 046 for
+        // `milestone_id`, so on a database that has not run it this 400s and
+        // is discarded — the tab keeps working, it just counts one fewer thing.
         supabase.from('event_payments').select('id, status, due_at, milestone_id')
           .in('status', ['PENDING']).limit(200),
       ])
@@ -75,13 +75,18 @@ export function useCustomerActivity() {
       // history is still worth reaching.
       const total = orderRows.length + eventRows.length + enquiryRows.length
 
-      // A milestone whose due date has passed is the one money-related thing
-      // that IS the customer's to act on — unlike an order awaiting payment
-      // confirmation, which is our bank-reconciliation backlog.
-      const now = Date.now()
-      const dueMilestones = milestoneRows.filter(
-        p => p.milestone_id && p.due_at && new Date(p.due_at).getTime() <= now,
-      ).length
+      // A celebration payment that was opened and never completed is the one
+      // money-related thing that IS the customer's to act on — unlike an order
+      // awaiting payment confirmation, which is our bank-reconciliation
+      // backlog.
+      //
+      // This used to require `due_at` to have passed, and `due_at` is never
+      // written by `api/create-milestone-payment.js` — so the condition was
+      // unsatisfiable and this whole query counted nothing, on every render,
+      // for every customer. A PENDING settlement row means the customer opened
+      // a checkout and did not finish it, which is exactly the thing worth a
+      // badge.
+      const dueMilestones = milestoneRows.filter(p => p.milestone_id).length
 
       const needsYou =
         eventRows.filter(e => e.status === 'PROPOSAL_SENT' || e.status === 'CUSTOMER_REVIEW').length +

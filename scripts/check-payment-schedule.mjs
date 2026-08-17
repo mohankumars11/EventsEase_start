@@ -1,25 +1,31 @@
 #!/usr/bin/env node
 /**
- * The payment ladder, checked.
+ * The celebration settlement, checked.
  *
  *   node scripts/check-payment-schedule.mjs
  *   node scripts/check-payment-schedule.mjs --verbose
  *
  * ── Why this exists ───────────────────────────────────────────────────────
  * `config/celebrationPayments.js` makes a promise on screen, in these words:
- * "Splitting it costs you nothing extra. Whichever plan you pick the total is
- * the same, and so is the GST inside it." That sentence is the most
- * load-bearing thing on the payment page — most people in this market assume
- * instalments carry a surcharge, and being the ones who say plainly that they
- * do not is the whole trust play.
+ * "One payment, and it is done. The number your coordinator confirms is the
+ * whole cost of your celebration — GST included, no instalments to keep track
+ * of, no balance collected after the day."
  *
- * A sentence like that cannot live as a comment. If a split is edited, a
- * rounding rule changes, or the hold stops being credited, the arithmetic
+ * A sentence like that cannot live as a comment. If the credit rules change, a
+ * rounding rule moves, or the hold stops coming off the total, the arithmetic
  * drifts and the product starts lying — silently, on a five-figure sum, with
  * nothing failing. So it is asserted here instead.
  *
- * Also checked: that no unlock gate ever promises a customer something their
- * booking does not include, and that a CLAIMED payment unlocks nothing.
+ * ── What it also guards ───────────────────────────────────────────────────
+ *   · that money collected under the RETIRED instalment ladder is credited
+ *     rather than re-charged. This is the single most expensive thing that
+ *     could go wrong in this change: a customer who paid 25% under the old
+ *     config being asked for 100% again.
+ *   · that a CLAIMED payment releases nothing.
+ *   · that no release line promises a customer something their booking does
+ *     not include.
+ *   · that api/create-milestone-payment.js — a second, un-importable copy of
+ *     these rules — has not drifted.
  */
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
@@ -30,7 +36,7 @@ import esbuild from 'esbuild'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const verbose = process.argv.includes('--verbose')
 
-const dir = mkdtempSync(join(tmpdir(), 'pay-schedule-'))
+const dir = mkdtempSync(join(tmpdir(), 'pay-settlement-'))
 const entry = join(dir, 'entry.mjs')
 const abs = p => JSON.stringify(join(ROOT, p).split('\\').join('/'))
 
@@ -46,9 +52,8 @@ const mod = await import(pathToFileURL(outfile).href)
 rmSync(dir, { recursive: true, force: true })
 
 const {
-  PAYMENT_PLANS, UNLOCK_GATES, buildSchedule, unlocksFor,
-  fullPaymentDiscountPct, refundForCancellation, REFUND_TIERS,
-  EVENT_DATA, LOCK_AMOUNT,
+  buildSettlement, unlocksFor, RELEASE_KEYS, refundForCancellation, REFUND_TIERS,
+  SETTLEMENT_ID, LEGACY_MILESTONE_IDS, EVENT_DATA, LOCK_AMOUNT,
 } = mod
 
 const failures = []
@@ -57,242 +62,248 @@ const fail = m => failures.push(m)
 const warn = m => warnings.push(m)
 const inr = n => '₹' + Number(n).toLocaleString('en-IN')
 
-const PLANS = Object.keys(PAYMENT_PLANS)
 const TOTALS = [12000, 27500, 49999, 50000, 73333, 100000, 123457, 250000, 999999, 1500001]
 const WHEN = { eventDate: '2026-12-01', approvedAt: '2026-08-16' }
+const paidRow = (id, amount = null) => ({ milestone_id: id, amount, status: 'ADMIN_VERIFIED' })
 
-/* ── 1 · Every plan's splits sum to exactly 1 ──────────────────────────── */
-for (const id of PLANS) {
-  const sum = PAYMENT_PLANS[id].splits.reduce((s, n) => s + n, 0)
-  if (Math.abs(sum - 1) > 1e-9) {
-    fail(`plan "${id}": splits sum to ${sum}, not 1 — the ladder does not add up to the bill`)
+/* ── 1 · There is exactly one payment, and it is the whole quote ───────── */
+for (const total of TOTALS) {
+  const s = buildSettlement({ confirmedTotal: total, ...WHEN })
+  if (s.basis !== 'confirmed') { fail(`@ ${inr(total)}: basis should be 'confirmed'`); continue }
+  if (s.settlement.amount !== total) {
+    fail(`@ ${inr(total)}: the one payment asks ${inr(s.settlement.amount)} — it must be the whole confirmed quote`)
   }
-  if (PAYMENT_PLANS[id].splits.some(s => s <= 0)) fail(`plan "${id}": has a zero or negative split`)
+  if (s.settlement.amount < 0) fail(`@ ${inr(total)}: the payment is negative`)
+  if (s.outstanding !== total) fail(`@ ${inr(total)}: outstanding is ${inr(s.outstanding)}, should be the full quote`)
+  if (s.settled) fail(`@ ${inr(total)}: an unpaid celebration reported settled`)
+  if (verbose) console.log(`  ${inr(total).padStart(12)}  one payment of ${inr(s.settlement.amount)}`)
 }
 
-/* ── 2 · Every plan bills the whole total, at any amount ───────────────── */
-for (const plan of PLANS) {
-  for (const total of TOTALS) {
-    const s = buildSchedule({ confirmedTotal: total, plan, ...WHEN })
-    if (s.basis !== 'confirmed') { fail(`${plan} @ ${total}: basis should be 'confirmed'`); continue }
-
-    const billed = s.rows.reduce((sum, r) => sum + (r.amount ?? 0), 0)
-    if (billed !== s.totalPayable) {
-      fail(`${plan} @ ${inr(total)}: instalments bill ${inr(billed)} against a payable total of ${inr(s.totalPayable)} (out by ${inr(billed - s.totalPayable)})`)
-    }
-    if (s.rows.some(r => r.amount != null && r.amount < 0)) fail(`${plan} @ ${inr(total)}: an instalment is negative`)
-    if (s.rows.length !== PAYMENT_PLANS[plan].splits.length) fail(`${plan}: wrong number of instalments`)
-
-    // Due dates must be ordered and land before the day.
-    const dates = s.rows.map(r => r.dueAt).filter(Boolean)
-    for (let i = 1; i < dates.length; i++) {
-      if (dates[i] < dates[i - 1]) fail(`${plan} @ ${inr(total)}: instalment ${i + 1} is due before instalment ${i}`)
-    }
-    const eventTime = new Date(WHEN.eventDate).getTime()
-    if (dates.some(d => d.getTime() > eventTime)) {
-      fail(`${plan} @ ${inr(total)}: an instalment falls after the celebration — everything must be collected before the day`)
-    }
-  }
-}
-
-/* ── 3 · THE CLAIM: every plan costs the same, and carries the same tax ── */
+/* ── 2 · The GST inside it is the quote's own, never added to ──────────── */
 for (const total of TOTALS) {
   const taxTotal = Math.round(total * 0.14)
-  const billed = {}
-  const taxed = {}
-
-  for (const plan of PLANS) {
-    const s = buildSchedule({ confirmedTotal: total, taxTotal, plan, ...WHEN })
-    billed[plan] = s.rows.reduce((sum, r) => sum + (r.amount ?? 0), 0)
-    taxed[plan]  = s.rows.reduce((sum, r) => sum + (r.gst ?? 0), 0)
+  const s = buildSettlement({ confirmedTotal: total, taxTotal, ...WHEN })
+  if (s.settlement.gst !== taxTotal) {
+    fail(`@ ${inr(total)}: the payment carries ${inr(s.settlement.gst)} of GST against the quote's ${inr(taxTotal)} — one payment must not add or lose tax`)
   }
-
-  const discountGap = Math.round(total * fullPaymentDiscountPct)
-  for (const plan of PLANS) {
-    // Only `full` may differ, and only by exactly the full-payment discount.
-    const expected = plan === 'full' ? billed.quarters - discountGap : billed.quarters
-    if (billed[plan] !== expected) {
-      fail(`@ ${inr(total)}: "${plan}" bills ${inr(billed[plan])} but "quarters" bills ${inr(billed.quarters)} — the screen says splitting it costs nothing extra`)
-    }
-    if (Math.abs(taxed[plan] - taxTotal) > 1) {
-      fail(`@ ${inr(total)}: "${plan}" carries ${inr(taxed[plan])} of GST against the quote's ${inr(taxTotal)} — instalments must not add or lose tax`)
-    }
-  }
-  if (verbose) {
-    console.log(`  ${inr(total).padStart(12)}  ` +
-      PLANS.map(p => `${p} ${inr(billed[p])}`).join('  ·  '))
+  if (s.settlement.amount !== total) {
+    fail(`@ ${inr(total)}: tax was added on top of the confirmed total — it is tax-inclusive`)
   }
 }
 
-/* ── 4 · No rupee figures before a confirmed quote ─────────────────────── */
-for (const plan of PLANS) {
-  const s = buildSchedule({ confirmedTotal: null, plan })
-  if (s.basis !== 'none') fail(`${plan}: an unpriced schedule must report basis "none"`)
-  if (s.rows.some(r => r.amount != null)) {
-    fail(`${plan}: an unpriced schedule put a rupee figure on an instalment — that number would be derived from an estimate nobody has agreed to`)
+/* ── 3 · Nothing is ever collected after the day ───────────────────────── */
+{
+  const eventTime = new Date(WHEN.eventDate).getTime()
+  const s = buildSettlement({ confirmedTotal: 100000, ...WHEN })
+  if (!s.settlement.dueAt) {
+    fail('an approved celebration produced no due date')
+  } else if (s.settlement.dueAt.getTime() > eventTime - 2 * 86400000) {
+    fail('the payment falls inside 2 days of the celebration — nobody should be chasing money at a wedding')
   }
-  if (s.rows.some(r => r.gst != null)) fail(`${plan}: an unpriced schedule showed a GST figure`)
+  // Approved five days out: due immediately rather than at a date past the day.
+  const late = buildSettlement({ confirmedTotal: 100000, eventDate: '2026-12-01', approvedAt: '2026-11-27' })
+  if (late.settlement.dueAt.getTime() > new Date('2026-11-29').getTime()) {
+    fail('a celebration approved days before the event was given a due date past the last collection point')
+  }
+  // No approval yet means no due date — a date on an unapproved plan is a
+  // demand for money against something nobody has agreed to.
+  const unapproved = buildSettlement({ confirmedTotal: 100000, eventDate: WHEN.eventDate })
+  if (unapproved.settlement.dueAt !== null) fail('an unapproved celebration was given a payment due date')
+}
+
+/* ── 4 · No rupee figure before a confirmed quote ──────────────────────── */
+{
+  const s = buildSettlement({ confirmedTotal: null, ...WHEN })
+  if (s.basis !== 'none') fail('an unpriced celebration must report basis "none"')
+  if (s.settlement.amount != null) {
+    fail('an unpriced celebration put a rupee figure on the payment — that number would be derived from an estimate nobody has agreed to')
+  }
+  if (s.settlement.gst != null) fail('an unpriced celebration showed a GST figure')
+  if (s.outstanding != null) fail('an unpriced celebration reported an outstanding amount')
   if (s.hold.amount !== LOCK_AMOUNT) fail('the flat ₹1,000 hold should still show before a quote exists')
 }
 
-/* ── 5 · A claim unlocks nothing ───────────────────────────────────────── */
+/* ── 5 · A claim releases nothing ──────────────────────────────────────── */
 {
-  const claimed = buildSchedule({
-    confirmedTotal: 100000, plan: 'quarters', ...WHEN,
-    payments: [{ milestone_id: 'pay-25', status: 'CUSTOMER_CLAIMED_PAID' }],
+  const claimed = buildSettlement({
+    confirmedTotal: 100000, ...WHEN,
+    services: ['venue', 'catering', 'decor', 'photography', 'cake'],
+    payments: [{ milestone_id: SETTLEMENT_ID, amount: 100000, status: 'CUSTOMER_CLAIMED_PAID' }],
   })
-  const row = claimed.rows.find(r => r.id === 'pay-25')
-  if (row.settled) fail('a CUSTOMER_CLAIMED_PAID instalment reported settled — a claim is a sentence somebody typed, not money that arrived')
-  if (row.status !== 'checking') fail(`a claimed instalment should read "checking", got "${row.status}"`)
-  if (claimed.paidPct !== 0) fail('a claimed-but-unverified payment moved the unlock gauge')
-  if (claimed.gates.some(g => g.open)) fail('a claim opened an unlock gate')
-  if (claimed.paidTotal !== 0) fail('a claimed-but-unverified payment was counted as paid')
+  if (claimed.settled) fail('a CUSTOMER_CLAIMED_PAID payment reported settled — a claim is a sentence somebody typed, not money that arrived')
+  if (claimed.settlement.status !== 'checking') fail(`a claimed payment should read "checking", got "${claimed.settlement.status}"`)
+  if (claimed.released) fail('a claim released the work the payment funds')
+  if (claimed.paid !== 0) fail('a claimed-but-unverified payment was counted as paid')
+  if (claimed.outstanding !== 100000) fail('a claim reduced what is outstanding')
 
   for (const status of ['ADMIN_VERIFIED', 'GATEWAY_VERIFIED']) {
-    const s = buildSchedule({
-      confirmedTotal: 100000, plan: 'quarters', ...WHEN,
+    const s = buildSettlement({
+      confirmedTotal: 100000, ...WHEN,
       services: ['venue', 'catering', 'decor', 'photography', 'cake'],
-      payments: [{ milestone_id: 'pay-25', status }],
+      payments: [{ milestone_id: SETTLEMENT_ID, amount: 100000, status }],
     })
-    if (!s.rows.find(r => r.id === 'pay-25').settled) fail(`${status} should settle its instalment`)
-    if (!s.gates.find(g => g.atPct === 0.25)?.open) fail(`${status} at 25% should open the first gate`)
-    if (s.gates.find(g => g.atPct === 0.50)?.open) fail(`${status} at 25% must NOT open the 50% gate`)
+    if (!s.settled) fail(`${status} should settle the celebration`)
+    if (!s.released) fail(`${status} should release the work`)
+    if (s.outstanding !== 0) fail(`${status} left ${inr(s.outstanding)} outstanding`)
+    if (s.paid !== 100000) fail(`${status} recorded ${inr(s.paid)} paid against a ${inr(100000)} quote`)
   }
 }
 
-/* ── 6 · Gates open on money paid, not on which plan carried it ────────── */
+/* ── 6 · The hold comes off the payment, exactly once ──────────────────── */
+for (const total of TOTALS) {
+  const s = buildSettlement({
+    confirmedTotal: total, ...WHEN,
+    payments: [paidRow('hold', LOCK_AMOUNT)],
+  })
+  if (s.settlement.amount !== total - LOCK_AMOUNT) {
+    fail(`@ ${inr(total)}: with the hold paid the payment asks ${inr(s.settlement.amount)} — should be ${inr(total - LOCK_AMOUNT)}`)
+  }
+  if (!s.settlement.creditsHold) fail(`@ ${inr(total)}: the paid hold was not shown as credited`)
+  if (s.paid !== LOCK_AMOUNT) fail(`@ ${inr(total)}: the paid hold was not counted toward what has been paid`)
+  // And once settled, the customer has paid the whole quote — hold included.
+  const done = buildSettlement({
+    confirmedTotal: total, ...WHEN,
+    payments: [paidRow('hold', LOCK_AMOUNT), paidRow(SETTLEMENT_ID, total - LOCK_AMOUNT)],
+  })
+  if (done.paid !== total) fail(`@ ${inr(total)}: a settled celebration reports ${inr(done.paid)} paid against a ${inr(total)} quote`)
+  if (done.outstanding !== 0) fail(`@ ${inr(total)}: a settled celebration still owes ${inr(done.outstanding)}`)
+}
+
+/* ── 7 · THE EXPENSIVE ONE: the retired ladder is credited, not re-charged ─
+ *
+ * Anybody who paid an instalment under the four-plan config still has that
+ * money with us. Asking them for the whole quote again is the single worst
+ * outcome of removing the ladder, so it is asserted at every combination.
+ */
+for (const total of [50000, 100000, 123457]) {
+  const each = Math.round(total * 0.25)
+  for (const legacy of [['pay-25'], ['pay-25', 'pay-50'], ['pay-25', 'pay-50', 'pay-75']]) {
+    const payments = legacy.map(id => paidRow(id, each))
+    const s = buildSettlement({ confirmedTotal: total, ...WHEN, payments })
+    const expected = total - each * legacy.length
+    if (s.settlement.amount !== expected) {
+      fail(`@ ${inr(total)} with ${legacy.join('+')} already paid: asked for ${inr(s.settlement.amount)}, should be ${inr(expected)} — that money is already in our account`)
+    }
+    if (!s.settlement.creditsLadder) fail(`@ ${inr(total)}: ${legacy.join('+')} was not flagged as credited`)
+    if (s.legacyPaid !== each * legacy.length) fail(`@ ${inr(total)}: legacyPaid is ${inr(s.legacyPaid)}, should be ${inr(each * legacy.length)}`)
+    if (verbose) console.log(`  ${inr(total).padStart(12)}  ${legacy.join('+').padEnd(24)} → ${inr(s.settlement.amount)} left`)
+  }
+  // Somebody whose old instalments already cover the quote owes nothing, is
+  // settled, and is never shown a negative amount.
+  const full = buildSettlement({
+    confirmedTotal: total, ...WHEN,
+    payments: ['pay-25', 'pay-50', 'pay-75'].map(id => paidRow(id, Math.ceil(total / 3))),
+  })
+  if (!full.settled) fail(`@ ${inr(total)}: a celebration whose old instalments cover the quote must read settled`)
+  if (full.settlement.amount !== 0) fail(`@ ${inr(total)}: over-credited celebration asked for ${inr(full.settlement.amount)} — must clamp to zero, never negative`)
+}
+
+/* ── 8 · A CLAIMED legacy instalment is not credit either ──────────────── */
 {
-  // A gate with no applicable line is filtered out of the schedule — correct
-  // product behaviour (never show an empty gate), but it means these
-  // assertions need a booking that actually has food, decor and crew on it,
-  // or the gates under test simply would not exist.
-  const FULL_BOOKING = ['venue', 'catering', 'decor', 'photography', 'cake']
-
-  const paidHalf = {
-    quarters: ['pay-25', 'pay-50'],
-    halves:   ['pay-50'],
-    most:     [],            // 75% in one go — checked separately below
-    full:     [],
-  }
-  for (const plan of ['quarters', 'halves']) {
-    const s = buildSchedule({
-      confirmedTotal: 100000, plan, ...WHEN,
-      services: FULL_BOOKING,
-      payments: paidHalf[plan].map(id => ({ milestone_id: id, status: 'ADMIN_VERIFIED' })),
-    })
-    if (Math.abs(s.paidPct - 0.5) > 1e-9) fail(`${plan}: paying half reported ${s.paidPct} paid`)
-    if (!s.gates.find(g => g.atPct === 0.5)?.open) fail(`${plan}: half paid should open the 50% gate`)
-    if (s.gates.find(g => g.atPct === 1)?.open) fail(`${plan}: half paid must not open the final gate`)
-  }
-  // 75% in one payment must release everything 50% would have.
-  const most = buildSchedule({
-    confirmedTotal: 100000, plan: 'most', ...WHEN, services: FULL_BOOKING,
-    payments: [{ milestone_id: 'pay-75', status: 'ADMIN_VERIFIED' }],
+  const s = buildSettlement({
+    confirmedTotal: 100000, ...WHEN,
+    payments: [{ milestone_id: 'pay-25', amount: 25000, status: 'CUSTOMER_CLAIMED_PAID' }],
   })
-  if (!most.gates.find(g => g.atPct === 0.25)?.open || !most.gates.find(g => g.atPct === 0.5)?.open) {
-    fail('paying 75% in one go did not release what 50% releases — paying more, sooner, must never unlock less')
-  }
-  // Fully paid opens everything, on every plan.
-  for (const plan of PLANS) {
-    const s0 = buildSchedule({ confirmedTotal: 100000, plan, ...WHEN, services: FULL_BOOKING })
-    const s = buildSchedule({
-      confirmedTotal: 100000, plan, ...WHEN, services: FULL_BOOKING,
-      payments: s0.rows.map(r => ({ milestone_id: r.id, status: 'ADMIN_VERIFIED' })),
-    })
-    if (!s.allSettled) fail(`${plan}: paying every instalment did not settle the schedule`)
-    if (s.gates.some(g => !g.open)) fail(`${plan}: fully paid left a gate closed`)
-    if (s.outstanding !== 0) fail(`${plan}: fully paid left ${inr(s.outstanding)} outstanding`)
+  if (s.settlement.amount !== 100000) {
+    fail('an unverified legacy claim was credited against the quote — the same rule that makes a claim release nothing')
   }
 }
 
-/* ── 7 · The hold is credited exactly once ─────────────────────────────── */
-for (const plan of PLANS) {
-  const s = buildSchedule({
-    confirmedTotal: 100000, plan, ...WHEN,
-    payments: [{ milestone_id: 'hold', status: 'ADMIN_VERIFIED' }],
-  })
-  const creditors = s.rows.filter(r => r.creditsHold)
-  if (creditors.length !== 1) fail(`${plan}: ${creditors.length} instalments credit the hold — must be exactly 1`)
-  const billed = s.rows.reduce((sum, r) => sum + r.amount, 0)
-  if (billed !== 100000 - LOCK_AMOUNT) {
-    fail(`${plan}: with the hold paid, instalments bill ${inr(billed)} — should be ${inr(100000 - LOCK_AMOUNT)}`)
-  }
-}
-
-/* ── 8 · Unlock lines never promise what a booking does not include ────── */
+/* ── 9 · Release lines never promise what a booking does not include ───── */
 for (const [eventId, ev] of Object.entries(EVENT_DATA)) {
   const serviceIds = (ev.services ?? []).map(s => (typeof s === 'string' ? s : s.id)).filter(Boolean)
   if (serviceIds.length === 0) { warn(`${eventId}: no services in EVENT_DATA, skipped`); continue }
 
-  const s = buildSchedule({ confirmedTotal: 100000, plan: 'quarters', services: serviceIds, ...WHEN })
-  if (s.gates.length === 0) fail(`${eventId}: no unlock gate applies at all — every payment would be unexplained`)
-  if (s.gates.some(g => g.lines.some(l => !l.line?.trim()))) fail(`${eventId}: produced an empty unlock line`)
+  const s = buildSettlement({ confirmedTotal: 100000, services: serviceIds, ...WHEN })
+  if (s.releases.length === 0) fail(`${eventId}: the payment releases nothing at all — it would be unexplained`)
+  if (s.releases.some(l => !l.line?.trim())) fail(`${eventId}: produced an empty release line`)
 
   const provisionIds = ['catering', 'cooks', 'menu', 'cake', 'live_counters', 'bar', 'welcome_drinks', 'ice_cream']
   const hasFood = serviceIds.some(id => provisionIds.includes(id))
-  const claimsFood = s.gates.some(g => g.lines.some(l => l.key === 'provisions'))
-  if (claimsFood && !hasFood) {
+  if (s.releases.some(l => l.key === 'provisions') && !hasFood) {
     fail(`${eventId}: promises "provisions bought and your cooks confirmed" on a booking with no catering`)
   }
 }
 {
   const bare = unlocksFor(['provisions', 'materials', 'staffing'], [])
   if (bare.length > 0) fail('a booking with no services was promised provisions, materials or crew')
+  if (RELEASE_KEYS.length === 0) fail('nothing is released by the payment')
 }
 
-/* ── 9 · Cancellation refunds are bounded and explained ────────────────── */
+/* ── 10 · Cancellation refunds are bounded and explained ───────────────── */
 {
-  const s0 = buildSchedule({ confirmedTotal: 100000, plan: 'quarters', ...WHEN })
-  const settled = buildSchedule({
-    confirmedTotal: 100000, plan: 'quarters', ...WHEN,
-    payments: [
-      { milestone_id: 'hold', status: 'ADMIN_VERIFIED' },
-      ...s0.rows.slice(0, 2).map(r => ({ milestone_id: r.id, status: 'ADMIN_VERIFIED' })),
-    ],
+  const settled = buildSettlement({
+    confirmedTotal: 100000, ...WHEN,
+    payments: [paidRow('hold', LOCK_AMOUNT), paidRow(SETTLEMENT_ID, 99000)],
   })
   for (const daysOut of [60, 30, 21, 20, 7, 6, 3, 2, 0]) {
     const when = new Date(new Date(WHEN.eventDate).getTime() - daysOut * 86400000)
-    const r = refundForCancellation({ schedule: settled, eventDate: WHEN.eventDate, now: when })
+    const r = refundForCancellation({ settlement: settled, eventDate: WHEN.eventDate, now: when })
     if (r.total > r.paid) fail(`cancel at T-${daysOut}d refunds ${inr(r.total)} of ${inr(r.paid)} paid — more than was taken`)
     if (r.total < 0) fail(`cancel at T-${daysOut}d refunds a negative amount`)
     if (r.lines.some(l => !l.reason)) fail(`cancel at T-${daysOut}d withholds money with no reason to read out`)
     if (verbose) console.log(`  cancel T-${String(daysOut).padStart(2)}d → ${inr(r.total).padStart(10)} of ${inr(r.paid)}`)
   }
+  // The hold, before any plan is approved, comes back whole.
+  const heldOnly = buildSettlement({ confirmedTotal: null, payments: [paidRow('hold', LOCK_AMOUNT)] })
+  const r = refundForCancellation({ settlement: heldOnly, eventDate: WHEN.eventDate, now: new Date('2026-11-30') })
+  if (r.total !== LOCK_AMOUNT) fail(`the ₹1,000 hold must come back in full before a plan is approved, got ${inr(r.total)}`)
+  // A celebration part-paid under the old ladder and then cancelled is still
+  // owed a refund line for the money it handed over.
+  const stranded = buildSettlement({ confirmedTotal: 100000, ...WHEN, payments: [paidRow('pay-25', 25000)] })
+  const sr = refundForCancellation({ settlement: stranded, eventDate: WHEN.eventDate, now: new Date('2026-09-01') })
+  if (sr.paid !== 25000) fail('a celebration part-paid under the retired ladder was refunded nothing on cancellation')
   if (REFUND_TIERS.some(t => t.pct > 1 || t.pct < 0)) fail('a refund tier is outside 0–100%')
 }
 
-/* ── 10 · The serverless copy of the plans has not drifted ────────────────
+/* ── 11 · The serverless copy has not drifted ──────────────────────────────
  *
  * `api/create-milestone-payment.js` cannot import from `src/` — a Vercel
- * function is bundled separately — so it carries its own copy of the splits.
- * That is a second source of truth for the amount actually charged to a card,
- * which is the worst possible thing to let drift silently.
+ * function is bundled separately — so it carries its own copy of these rules.
+ * That is a second source of truth for the amount actually charged to a real
+ * card, which is the worst possible thing to let drift silently.
  */
 {
   const api = readFileSync(join(ROOT, 'api/create-milestone-payment.js'), 'utf8')
-  const block = api.match(/const PLAN_SPLITS = \{([\s\S]*?)\n\}/)?.[1]
+
+  const apiSettlement = api.match(/const SETTLEMENT_ID = '([^']*)'/)?.[1]
+  const apiLegacy = api.match(/const LEGACY_MILESTONE_IDS = \[([^\]]*)\]/)?.[1]
   const lockLine = api.match(/const LOCK_AMOUNT = (\d+)/)?.[1]
   const methodLine = api.match(/const PAYMENT_METHOD = '([a-z]*)'/)?.[1]
 
-  if (!block || !lockLine) {
-    fail('could not read PLAN_SPLITS / LOCK_AMOUNT out of api/create-milestone-payment.js')
+  if (apiSettlement !== SETTLEMENT_ID) {
+    fail(`the endpoint settles milestone "${apiSettlement}" but the app writes "${SETTLEMENT_ID}" — a paid celebration would never be recognised`)
+  }
+  if (!apiLegacy) {
+    fail('could not read LEGACY_MILESTONE_IDS out of api/create-milestone-payment.js')
   } else {
-    for (const plan of PLANS) {
-      const row = block.match(new RegExp(`${plan}\\s*:\\s*\\[([^\\]]*)\\]`))?.[1]
-      if (!row) { fail(`the endpoint does not know plan "${plan}"`); continue }
-      const apiSplits = row.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n))
-      const want = PAYMENT_PLANS[plan].splits
-      if (apiSplits.length !== want.length || apiSplits.some((v, i) => Math.abs(v - want[i]) > 1e-9)) {
-        fail(`api/create-milestone-payment.js splits "${plan}" as [${apiSplits}] but the config says [${want}] — the endpoint would charge the wrong amount`)
-      }
+    const ids = apiLegacy.split(',').map(t => t.trim().replace(/'/g, '')).filter(Boolean)
+    const missing = LEGACY_MILESTONE_IDS.filter(id => !ids.includes(id))
+    if (missing.length) {
+      fail(`the endpoint does not credit retired instalments [${missing}] — a customer who already paid one would be charged for it twice`)
     }
-    if (Number(lockLine) !== LOCK_AMOUNT) fail(`the endpoint's LOCK_AMOUNT is ${lockLine}, the app's is ${LOCK_AMOUNT}`)
+  }
+  if (Number(lockLine) !== LOCK_AMOUNT) fail(`the endpoint's LOCK_AMOUNT is ${lockLine}, the app's is ${LOCK_AMOUNT}`)
+
+  // The ladder must be gone from the endpoint too, not just from the config.
+  if (/const PLAN_SPLITS/.test(api)) {
+    fail('api/create-milestone-payment.js still carries PLAN_SPLITS — the instalment ladder is only half removed')
+  }
+  if (/payment_type:\s*isLast/.test(api)) {
+    fail('api/create-milestone-payment.js still records advances — every celebration payment is now `full`')
   }
 
   // UPI is the whole zero-MDR argument. If this ever becomes null or 'card',
   // every celebration starts costing ~2.36% against a 2% platform fee.
   if (methodLine !== 'upi') {
     fail(`api/create-milestone-payment.js collects by "${methodLine}" — anything but UPI carries MDR that exceeds the platform fee`)
+  }
+}
+
+/* ── 12 · The instalment ladder is gone from the config ────────────────── */
+for (const gone of ['PAYMENT_PLANS', 'PLAN_LIST', 'defaultPlanFor', 'buildSchedule', 'UNLOCK_GATES']) {
+  if (mod[gone] !== undefined) {
+    fail(`config/celebrationPayments.js still exports "${gone}" — a caller could still build a part payment`)
   }
 }
 
@@ -308,7 +319,8 @@ if (failures.length) {
   failures.forEach(f => console.log('   ' + f))
   process.exit(1)
 }
-console.log(`✓  payment ladder passed across ${PLANS.length} plans, ${TOTALS.length} totals and ${Object.keys(EVENT_DATA).length} occasions`)
-console.log('   every plan costs the same and carries the same GST; a claim unlocks nothing;')
-console.log('   paying more sooner never unlocks less; everything is collected before the day.')
+console.log(`✓  settlement passed across ${TOTALS.length} totals and ${Object.keys(EVENT_DATA).length} occasions`)
+console.log('   one payment for the whole confirmed quote; a claim releases nothing;')
+console.log('   the hold and every retired instalment are credited, never re-charged;')
+console.log('   nothing is collected after the day.')
 process.exit(0)

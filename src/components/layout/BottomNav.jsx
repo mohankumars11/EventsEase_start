@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, Route, ShoppingBag, User } from 'lucide-react'
+import { Home, Store, Sparkles, Route, ShoppingBag, User, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
@@ -202,6 +202,17 @@ export default function BottomNav() {
       label: 'Track',
       badge: activity.needsYou,
       pulse: tracking && activity.needsYou === 0 && activity.live > 0,
+      // ── Greyed until there is something to track ──────────────────
+      // The tab stays in position four and stays reachable — see the note
+      // above for why it is never removed or renamed — but it is drawn as
+      // what it is: a feature that does nothing for you yet. A live tab that
+      // opens an empty screen reads as the app being broken; a locked tab
+      // that says what unlocks it reads as a promise.
+      //
+      // `activity.loaded` matters here. Without it the tab flashes locked on
+      // every cold render for a customer who has five live orders, which is
+      // the one audience it must never tell "you have nothing with us".
+      locked: activity.loaded && !tracking,
     },
     { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
     { to: '/account',      icon: User,          label: 'Account' },
@@ -258,7 +269,7 @@ export default function BottomNav() {
           an even pitch and the row reads as a grid rather than as text that
           happens to be spaced out. */}
       <ul className="flex items-stretch px-0.5">
-        {tabs.map(({ to, icon: Icon, label, primary, badge, pulse }) => {
+        {tabs.map(({ to, icon: Icon, label, primary, badge, pulse, locked }) => {
           const active = isActive(to)
 
           const inner = (
@@ -305,7 +316,9 @@ export default function BottomNav() {
                   {primary
                     ? <SambramoMark size={21} variant="solid" title="" />
                     : <Icon size={20} strokeWidth={active ? 2.4 : 2} />}
-                  {badge > 0 && (
+                  {/* A locked tab carries neither. Both are claims that
+                      something is happening, and nothing is. */}
+                  {!locked && badge > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-berry-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {badge > 9 ? '9+' : badge}
                     </span>
@@ -314,20 +327,33 @@ export default function BottomNav() {
                       is happening" — a live celebration or an order on its
                       way, with nothing owed by the customer. Keeping the two
                       apart is what stops the badge becoming wallpaper. */}
-                  {!badge && pulse && (
+                  {!locked && !badge && pulse && (
                     <span aria-hidden="true" className="absolute -top-0.5 -right-1 flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full rounded-full bg-saffron-400 animate-pulse-ring" />
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-saffron-500" />
                     </span>
                   )}
+                  {/* The grey pip. Small enough to read as a state rather
+                      than as an error, and it sits where the badge would —
+                      the same corner the eye already checks. */}
+                  {locked && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-200 text-gray-500 ring-2 ring-white"
+                    >
+                      <Lock size={7} strokeWidth={3.5} />
+                    </span>
+                  )}
                 </span>
               </span>
               <span className={`whitespace-nowrap text-[10px] leading-none ${
-                primary ? 'font-bold text-plum-700' : active ? 'font-bold' : 'font-medium'
+                locked ? 'font-medium text-gray-400'
+                  : primary ? 'font-bold text-plum-700'
+                  : active ? 'font-bold' : 'font-medium'
               }`}>
                 {label}
               </span>
-              {active && (
+              {active && !locked && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-saffron-400" />
               )}
             </>
@@ -337,15 +363,24 @@ export default function BottomNav() {
           // INSIDE this box, never in the box — which is what keeps the
           // baseline, the height and the tap target identical across the row.
           const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
-            active ? 'text-plum-700' : 'text-gray-500 active:text-plum-600'
+            locked ? 'text-gray-400'
+              : active ? 'text-plum-700'
+              : 'text-gray-500 active:text-plum-600'
           }`
 
+          // Said rather than implied: a screen reader gets the same sentence
+          // the screen behind the tab opens with, so the locked state is not
+          // carried by colour alone.
           return (
             <li key={label} className="flex-1 basis-0">
               <Link
                 to={to}
-                aria-current={active ? 'page' : undefined}
-                aria-label={primary ? 'Plan my celebration' : undefined}
+                aria-current={active && !locked ? 'page' : undefined}
+                aria-label={
+                  primary ? 'Plan my celebration'
+                    : locked ? 'Track — unlocks once you place an event order with us'
+                    : undefined
+                }
                 className={tabClass}
               >
                 {inner}
