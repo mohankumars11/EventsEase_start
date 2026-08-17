@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { adminAuthHeader } from './adminSession'
 
 /**
  * The browser half of the AI catalogue tools.
@@ -32,29 +33,21 @@ export const ACCEPTED = {
 export const ACCEPT_ATTR = '.pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.txt,.csv,.md,.json'
 
 /**
- * Two ceilings, because there are two ways a file reaches the endpoint.
- *
- * ── Why there are two ────────────────────────────────────────────────────
+ * ── How a file reaches the endpoint, and the one wall that is real ───────
  * Vercel caps a function's REQUEST BODY at 4.5 MB and rejects anything larger
  * with a bare `413` before the function runs — no chance to catch it, no
  * useful message. Base64 inflates a file by about a third, so sending bytes
- * inline tops out around a 3 MB PDF. Supplier catalogues are bigger than that,
- * and "your catalogue is too big" is not an answer for a feature whose whole
- * purpose is reading supplier catalogues.
+ * inline tops out around a 3 MB PDF, and "your catalogue is too big" is not an
+ * answer for a feature whose whole purpose is reading supplier catalogues.
  *
- * So the file goes to Supabase Storage instead, and the endpoint gets a path.
- * The request body becomes a few hundred bytes and the real limit becomes the
- * bucket's, which is 50 MB.
+ * So the file goes to Supabase Storage and the endpoint gets a path. The
+ * request body becomes a few hundred bytes. INLINE_MAX is only the fallback
+ * for a database that has not run migration 052 yet, set below the wall with
+ * room for base64 and the rest of the JSON.
  *
- * INLINE_MAX is the fallback for a database that has not run migration 052 —
- * deliberately under the 4.5 MB wall with room for base64 and the rest of the
- * JSON body.
- */
-/**
  * ── No size limit of our own ─────────────────────────────────────────────
- * There is deliberately no MAX_FILE_BYTES any more. A file of any size goes
- * to storage, and the only ceilings left are ones this code does not get to
- * choose:
+ * There is deliberately no MAX_FILE_BYTES. A file of any size goes to storage,
+ * and the only ceilings left are ones this code does not get to choose:
  *
  *   · the Supabase project's own upload limit (Storage → Settings), which the
  *     bucket now inherits rather than second-guessing;
@@ -114,15 +107,15 @@ async function toBase64(file) {
 }
 
 async function call(body) {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Your session has expired — sign in again.')
+  // Refreshed if it is near expiry rather than sent as found. A Supabase
+  // access token lasts about an hour, and an admin console left open through
+  // a lunch break otherwise sends a dead token and is told its sign-in
+  // expired — on a page that is visibly working.
+  const authorization = await adminAuthHeader()
 
   const res = await fetch('/api/ai-catalog', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
-    },
+    headers: { 'Content-Type': 'application/json', Authorization: authorization },
     body: JSON.stringify(body),
   })
 

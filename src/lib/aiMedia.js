@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { adminAuthHeader } from './adminSession'
 
 /**
  * Generating a picture or a clip, from the browser.
@@ -15,12 +15,13 @@ import { supabase } from './supabase'
  */
 
 async function call(body) {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Your session has expired — sign in again.')
+  // Refreshed near expiry — see adminSession.js. A generated clip can take
+  // minutes, and a token that was fine at submit can be dead by the poll.
+  const authorization = await adminAuthHeader()
 
   const res = await fetch('/api/ai-media', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+    headers: { 'Content-Type': 'application/json', Authorization: authorization },
     body: JSON.stringify(body),
   })
 
