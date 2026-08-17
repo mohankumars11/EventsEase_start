@@ -438,7 +438,7 @@ export default async function handler(req, res) {
   // `stage` rides along so "it says X" is enough to locate the problem — the
   // difference between a stale token and a wrong service key is invisible from
   // the message alone if you are not the person who wrote it.
-  if (auth.error) return res.status(auth.status).json({ error: auth.error, stage: auth.stage })
+  if (auth.error) return res.status(auth.status).json({ error: auth.error, stage: auth.stage, detail: auth.detail, project: auth.project })
 
   const { provider, model: baseModel } = resolved
   const {

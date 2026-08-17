@@ -73,6 +73,14 @@ export async function requireAdmin(req) {
         status: 401,
         stage: 'bad-token',
         error: 'Your sign-in has expired. Reload the admin console and sign in again.',
+        /* What Supabase actually said, and which project said it.
+           This is here because a valid token minted against this project was
+           rejected in production while the identical call succeeded locally —
+           which can only mean the deployed environment differs, and no amount
+           of reasoning from the outside could tell us how. An auth error
+           string and a project host are not secrets; the key is never echoed. */
+        detail: detail || 'no message',
+        project: url.replace(/^https?:\/\//, '').split('.')[0],
       }
     }
     user = data?.user
