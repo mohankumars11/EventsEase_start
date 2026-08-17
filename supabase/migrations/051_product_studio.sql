@@ -76,10 +76,21 @@ WHERE category IS NOT NULL
 ON CONFLICT (id) DO NOTHING;
 
 -- The six the storefront knows by name, with the copy config/shop.js carries.
--- ON CONFLICT DO UPDATE touches only the presentational columns: if this is
--- re-run after somebody has reordered or retired a shelf in the console, their
--- sort order and their on/off switch survive. A sync that eats your work is a
--- button nobody presses twice (the rule contentStudio.js already follows).
+--
+-- ── The bug this shape had, and why it is written this way now ────────────
+-- The first version wrote `emoji = COALESCE(shop_categories.emoji, EXCLUDED.emoji)`,
+-- meaning "never overwrite what is already there". That reads as careful and
+-- was wrong, because the statement above has ALREADY inserted every shelf with
+-- the placeholder '🛍️' and sort_order 100. By the time this runs there is
+-- always a value, COALESCE always keeps it, and the shelves ended up generic
+-- and unordered on a fresh apply — which is exactly what happened in
+-- production.
+--
+-- So the condition is specific instead of blanket: overwrite only where the
+-- value is still the placeholder this migration itself put there. A real edit
+-- made in the console — a different emoji, a hand-set order — is not a
+-- placeholder and survives a re-run, which was the point of the caution in the
+-- first place. Re-running this file repairs an install that hit the old bug.
 INSERT INTO shop_categories (id, label, emoji, tagline, sort_order) VALUES
   ('Cakes',              'Cakes',              '🎂', 'Made to order for every occasion — pick your size, flavour and extras', 10),
   ('Gifts',              'Gifts & Hampers',    '🎁', 'One gift or a whole hamper — wrapped, carded and delivered',            20),
@@ -89,8 +100,14 @@ INSERT INTO shop_categories (id, label, emoji, tagline, sort_order) VALUES
   ('Heritage & Crafts',  'Heritage & Crafts',  '🪆', 'Mysore silk, rare handloom weaves, carvings and the Mysuru specialities', 60)
 ON CONFLICT (id) DO UPDATE
   SET label   = EXCLUDED.label,
-      emoji   = COALESCE(shop_categories.emoji, EXCLUDED.emoji),
-      tagline = COALESCE(shop_categories.tagline, EXCLUDED.tagline);
+      emoji   = CASE WHEN shop_categories.emoji IS NULL
+                       OR shop_categories.emoji = '🛍️'
+                     THEN EXCLUDED.emoji ELSE shop_categories.emoji END,
+      tagline = COALESCE(shop_categories.tagline, EXCLUDED.tagline),
+      -- 100 is this migration's own seed default, so it means "never ordered".
+      -- Any other number was chosen by a person and is left alone.
+      sort_order = CASE WHEN shop_categories.sort_order = 100
+                        THEN EXCLUDED.sort_order ELSE shop_categories.sort_order END;
 
 -- 'Hampers' is a retired shelf (migration 031 merged it into Gifts) but its
 -- rows still exist and CATEGORY_ALIASES still reads them. It is registered and
