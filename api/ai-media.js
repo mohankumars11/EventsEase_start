@@ -110,7 +110,7 @@ export default async function handler(req, res) {
   }
 
   const auth = await requireAdmin(req)
-  if (auth.error) return res.status(auth.status).json({ error: auth.error })
+  if (auth.error) return res.status(auth.status).json({ error: auth.error, stage: auth.stage })
 
   const { action = 'submit', kind = 'image', prompt = '', aspect = '1:1', statusUrl, responseUrl, productId, caption } = req.body || {}
 

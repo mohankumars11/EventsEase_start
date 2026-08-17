@@ -32,12 +32,45 @@ export const ACCEPTED = {
 export const ACCEPT_ATTR = '.pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.txt,.csv,.md,.json'
 
 /**
- * 32 MB is the request ceiling for the whole call, and base64 inflates a file
- * by a third — so the practical per-file limit is well under it. Checked here
- * rather than server-side so the admin finds out before a 20 MB upload.
+ * Two ceilings, because there are two ways a file reaches the endpoint.
+ *
+ * ── Why there are two ────────────────────────────────────────────────────
+ * Vercel caps a function's REQUEST BODY at 4.5 MB and rejects anything larger
+ * with a bare `413` before the function runs — no chance to catch it, no
+ * useful message. Base64 inflates a file by about a third, so sending bytes
+ * inline tops out around a 3 MB PDF. Supplier catalogues are bigger than that,
+ * and "your catalogue is too big" is not an answer for a feature whose whole
+ * purpose is reading supplier catalogues.
+ *
+ * So the file goes to Supabase Storage instead, and the endpoint gets a path.
+ * The request body becomes a few hundred bytes and the real limit becomes the
+ * bucket's, which is 50 MB.
+ *
+ * INLINE_MAX is the fallback for a database that has not run migration 052 —
+ * deliberately under the 4.5 MB wall with room for base64 and the rest of the
+ * JSON body.
  */
-export const MAX_FILE_BYTES = 8 * 1024 * 1024
-export const MAX_TOTAL_BYTES = 20 * 1024 * 1024
+/**
+ * ── No size limit of our own ─────────────────────────────────────────────
+ * There is deliberately no MAX_FILE_BYTES any more. A file of any size goes
+ * to storage, and the only ceilings left are ones this code does not get to
+ * choose:
+ *
+ *   · the Supabase project's own upload limit (Storage → Settings), which the
+ *     bucket now inherits rather than second-guessing;
+ *   · the model's context window — a 400-page catalogue is not a size problem,
+ *     it is a "more text than the model can hold at once" problem, and no
+ *     upload limit would have helped with it.
+ *
+ * Both are reported by whoever enforces them, in their own words, rather than
+ * pre-empted here by a number somebody guessed. The one limit still worth
+ * warning about is the size at which reading gets slow, and that is a warning,
+ * not a refusal.
+ */
+export const LARGE_FILE_WARN = 25 * 1024 * 1024
+export const INLINE_MAX      = 3 * 1024 * 1024
+
+const STAGING_BUCKET = 'ai-uploads'
 
 export function describeFile(file) {
   const ext = (file.name.split('.').pop() || '').toLowerCase()
@@ -45,11 +78,14 @@ export function describeFile(file) {
   return ACCEPTED[file.type] ?? byExt[ext] ?? 'File'
 }
 
-/** Whether we can read it at all, and what to say if we cannot. */
+/**
+ * Whether we can read it at all, and what to say if we cannot.
+ *
+ * Only about the KIND of file, never the size. Size is the platform's call and
+ * it reports its own limit accurately; a guess here would either block a file
+ * that would have worked or pass one that would not.
+ */
 export function checkFile(file) {
-  if (file.size > MAX_FILE_BYTES) {
-    return `${file.name} is ${(file.size / 1048576).toFixed(1)} MB — the limit is 8 MB per file. Split it, or export a smaller PDF.`
-  }
   const ext = (file.name.split('.').pop() || '').toLowerCase()
   if (ext === 'doc') {
     return `${file.name} is an old-format Word file. Open it and "Save as" .docx or PDF first.`
@@ -103,31 +139,92 @@ async function call(body) {
     )
   }
 
-  if (!res.ok) throw new Error(payload?.error || `The AI service returned ${res.status}.`)
+  if (!res.ok) {
+    // 413 comes from Vercel itself, before the function runs, so there is no
+    // message of ours in it. Say what it actually means.
+    if (res.status === 413) {
+      throw new Error('That file was too big to send directly. Run migration 052_ai_upload_bucket.sql in the Supabase SQL editor — after that there is no size limit.')
+    }
+    throw new Error(payload?.error || `The AI service returned ${res.status}.`)
+  }
   return payload
+}
+
+/**
+ * Put one file somewhere the endpoint can fetch it from.
+ *
+ * Returns a `{ path }` descriptor on success. Returns null when the staging
+ * bucket does not exist — migration 052 is applied by hand like every other
+ * one here, and the caller then falls back to sending the bytes inline.
+ */
+async function stage(file, userId) {
+  const safeName = file.name.replace(/[^\w.\-]+/g, '_').slice(-80)
+  const path = `${userId}/${Date.now()}-${safeName}`
+
+  const { error } = await supabase.storage
+    .from(STAGING_BUCKET)
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+
+  if (error) {
+    // "Bucket not found" is the un-migrated case and is not an error worth
+    // showing; anything else is.
+    if (/bucket not found|does not exist/i.test(error.message)) return null
+    throw new Error(`Could not upload ${file.name}: ${error.message}`)
+  }
+
+  return { name: file.name, media_type: file.type || 'application/octet-stream', path }
 }
 
 /**
  * Read products out of files and/or pasted text.
  *
- * `onProgress` exists because encoding a stack of PDFs takes long enough to
+ * Files go to storage and only their paths travel in the request body — see
+ * the note above INLINE_MAX for why sending the bytes themselves stops working
+ * at about 3 MB. There is no size limit applied here.
+ *
+ * `onProgress` exists because uploading a stack of PDFs takes long enough to
  * look frozen, and a frozen button is a button somebody presses twice.
  */
 export async function extractProducts({ files = [], text = '', instructions = '', categories = [], onProgress } = {}) {
-  const encoded = []
-  let total = 0
+  const staged = []
+  let inlineBytes = 0
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const userId = user?.id ?? 'anon'
 
   for (const [i, file] of files.entries()) {
     const problem = checkFile(file)
     if (problem) throw new Error(problem)
 
-    total += file.size
-    if (total > MAX_TOTAL_BYTES) {
-      throw new Error('That is more than 20 MB in one go. Send them in two batches.')
+    const mb = file.size / 1048576
+    onProgress?.(
+      file.size > LARGE_FILE_WARN
+        // Told, not blocked. A 60 MB catalogue is a legitimate thing to hand
+        // this; it just takes a while, and silence during a long upload is
+        // what makes people press the button again.
+        ? `Uploading ${file.name} — ${mb.toFixed(0)} MB, this will take a minute…`
+        : `Uploading ${file.name} (${i + 1} of ${files.length})…`
+    )
+
+    const descriptor = await stage(file, userId)
+    if (descriptor) {
+      staged.push(descriptor)
+      continue
     }
 
-    onProgress?.(`Reading ${file.name} (${i + 1} of ${files.length})…`)
-    encoded.push({
+    // No staging bucket yet. Fall back to inline, and be explicit about the
+    // ceiling rather than letting Vercel answer with a bare 413.
+    if (file.size > INLINE_MAX) {
+      throw new Error(
+        `${file.name} is ${(file.size / 1048576).toFixed(1)} MB, and files over 3 MB need the upload area that migration 052_ai_upload_bucket.sql creates. Run it in the Supabase SQL editor, or send a smaller file.`
+      )
+    }
+    inlineBytes += file.size * 1.37
+    if (inlineBytes > INLINE_MAX) {
+      throw new Error('Those add up to more than 3 MB. Run migration 052_ai_upload_bucket.sql to lift that, or send them one at a time.')
+    }
+
+    staged.push({
       name: file.name,
       media_type: file.type || 'application/octet-stream',
       data: await toBase64(file),
@@ -135,7 +232,7 @@ export async function extractProducts({ files = [], text = '', instructions = ''
   }
 
   onProgress?.(files.length ? 'Reading it…' : 'Thinking…')
-  return call({ mode: 'extract', files: encoded, text, instructions, categories })
+  return call({ mode: 'extract', files: staged, text, instructions, categories })
 }
 
 /** Ask for products that don't exist yet, researched against live sources. */

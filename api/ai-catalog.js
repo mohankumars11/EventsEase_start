@@ -239,6 +239,41 @@ function textFromDocx(buffer) {
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 /**
+ * Fetch anything that was staged in the upload bucket instead of sent inline.
+ *
+ * Vercel refuses a request body over 4.5 MB with a bare 413 before the
+ * function even runs, so a supplier's PDF cannot travel in the request — the
+ * browser puts it in Supabase Storage and sends a path. Here it comes back as
+ * bytes, where a 30 MB buffer is unremarkable.
+ *
+ * Each file is deleted once read. This bucket is a hand-off, not an archive,
+ * and a supplier's wholesale price list should not accumulate in it.
+ */
+async function hydrate(files, supabase) {
+  const out = []
+  const problems = []
+
+  for (const file of files) {
+    if (file.data || !file.path) { out.push(file); continue }
+
+    const { data, error } = await supabase.storage.from('ai-uploads').download(file.path)
+    if (error || !data) {
+      problems.push(`${file.name} could not be read back after upload (${error?.message ?? 'no data'}).`)
+      continue
+    }
+
+    const buf = Buffer.from(await data.arrayBuffer())
+    out.push({ ...file, data: buf.toString('base64') })
+
+    // Best effort. A file left behind is untidy, not broken, and failing the
+    // import over a failed cleanup would be the wrong trade.
+    supabase.storage.from('ai-uploads').remove([file.path]).catch(() => {})
+  }
+
+  return { files: out, problems }
+}
+
+/**
  * Turn one uploaded file into a content part, in whichever shape the active
  * provider understands — and report what could not be sent, rather than
  * dropping it silently.
@@ -400,7 +435,10 @@ export default async function handler(req, res) {
   if (resolved.error) return res.status(503).json({ error: resolved.error })
 
   const auth = await requireAdmin(req)
-  if (auth.error) return res.status(auth.status).json({ error: auth.error })
+  // `stage` rides along so "it says X" is enough to locate the problem — the
+  // difference between a stale token and a wrong service key is invisible from
+  // the message alone if you are not the person who wrote it.
+  if (auth.error) return res.status(auth.status).json({ error: auth.error, stage: auth.stage })
 
   const { provider, model: baseModel } = resolved
   const {
@@ -493,8 +531,12 @@ it deserves its own shelf rather than living inside an existing one.`
     } else {
       schema = PRODUCT_SCHEMA
       schemaName = 'catalogue_products'
-      const built = buildParts(files, provider, provider.native)
-      rejected = built.rejected
+
+      // Anything staged in the bucket is fetched here first, so `buildParts`
+      // only ever sees bytes and does not care how they arrived.
+      const hydrated = await hydrate(files, auth.supabase)
+      const built = buildParts(hydrated.files, provider, provider.native)
+      rejected = [...built.rejected, ...hydrated.problems]
       const parts = built.parts
 
       if (text.trim()) parts.push({ type: 'text', text: text.slice(0, 200_000) })
