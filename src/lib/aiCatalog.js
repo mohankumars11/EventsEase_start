@@ -169,6 +169,26 @@ async function stage(file, userId) {
 }
 
 /**
+ * Which readers this deployment actually has keys for.
+ *
+ * Asked once when the import panel opens, so it offers a choice only when
+ * there is one to make — a "use the accurate reader" switch that silently does
+ * nothing because no key is set is worse than no switch at all.
+ *
+ * Never throws: an unreachable endpoint means the panel simply shows no
+ * choice, which is the correct fallback rather than a blocking error before
+ * the admin has done anything.
+ */
+export async function fetchCapabilities() {
+  try {
+    const { providers } = await call({ mode: 'capabilities' })
+    return providers ?? []
+  } catch {
+    return []
+  }
+}
+
+/**
  * Read products out of files and/or pasted text.
  *
  * Files go to storage and only their paths travel in the request body — see
@@ -178,7 +198,7 @@ async function stage(file, userId) {
  * `onProgress` exists because uploading a stack of PDFs takes long enough to
  * look frozen, and a frozen button is a button somebody presses twice.
  */
-export async function extractProducts({ files = [], text = '', instructions = '', categories = [], onProgress } = {}) {
+export async function extractProducts({ files = [], text = '', instructions = '', categories = [], quality = 'fast', onProgress } = {}) {
   const staged = []
   let inlineBytes = 0
 
@@ -225,13 +245,13 @@ export async function extractProducts({ files = [], text = '', instructions = ''
   }
 
   onProgress?.(files.length ? 'Reading it…' : 'Thinking…')
-  return call({ mode: 'extract', files: staged, text, instructions, categories })
+  return call({ mode: 'extract', files: staged, text, instructions, categories, quality })
 }
 
 /** Ask for products that don't exist yet, researched against live sources. */
-export async function researchProducts({ instructions, categories = [] }) {
+export async function researchProducts({ instructions, categories = [], quality = 'fast' }) {
   if (!instructions?.trim()) throw new Error('Say what you want to sell first.')
-  return call({ mode: 'research', instructions, categories })
+  return call({ mode: 'research', instructions, categories, quality })
 }
 
 /** Write the page for one product that already exists. */

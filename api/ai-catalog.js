@@ -28,7 +28,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import zlib from 'node:zlib'
 import { requireAdmin } from '../serverlib/admin.js'
-import { resolveProvider } from '../serverlib/providers.js'
+import { resolveProvider, availableProviders } from '../serverlib/providers.js'
 
 // Research with web search genuinely takes a while; the default 10s would cut
 // it off mid-thought.
@@ -431,14 +431,28 @@ async function callAnthropic({ key, model, system, content, schema, search }) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const resolved = resolveProvider()
+  const auth0 = await requireAdmin(req)
+  if (auth0.error) return res.status(auth0.status).json({ error: auth0.error, stage: auth0.stage, detail: auth0.detail, project: auth0.project })
+
+  /* "What can this install actually do?" — asked by the import panel when it
+     opens, so it offers a choice between readers only when there is more than
+     one, and never advertises a paid one that has no key. Cheap, and it stops
+     the UI from promising something the deployment cannot deliver. */
+  if (req.body?.mode === 'capabilities') {
+    return res.status(200).json({ providers: availableProviders() })
+  }
+
+  /* `quality: 'accurate'` asks for the best reader available. Reading a
+     supplier PDF is where a weaker model costs somebody an afternoon of
+     corrections; suggesting a shelf name is not. One console, two prices. */
+  const prefer = req.body?.quality === 'accurate' ? 'anthropic' : null
+  const resolved = resolveProvider(process.env, prefer)
   if (resolved.error) return res.status(503).json({ error: resolved.error })
 
-  const auth = await requireAdmin(req)
-  // `stage` rides along so "it says X" is enough to locate the problem — the
-  // difference between a stale token and a wrong service key is invisible from
-  // the message alone if you are not the person who wrote it.
-  if (auth.error) return res.status(auth.status).json({ error: auth.error, stage: auth.stage, detail: auth.detail, project: auth.project })
+  // Checked at the top now, before anything is resolved or spent: the
+  // capabilities probe needs an authenticated caller too, and asking "who are
+  // you" after "which model shall we pay for" was the wrong order.
+  const auth = auth0
 
   const { provider, model: baseModel } = resolved
   const {

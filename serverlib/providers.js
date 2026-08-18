@@ -101,6 +101,23 @@ export const PROVIDERS = {
   },
 }
 
+/** Which providers actually have a key, so the console can offer real choices. */
+export function availableProviders(env = process.env) {
+  return Object.entries(PROVIDERS)
+    .filter(([, p]) => Boolean(env[p.keyEnv]))
+    .map(([id, p]) => ({
+      id,
+      label: p.label,
+      pdf: p.pdf,
+      images: p.images,
+      model: env.AI_MODEL?.trim() || p.defaultModel,
+      /* Whether using it costs real money. The free default exists so the
+         catalogue can be filled in at no cost; a console that quietly spends
+         on every keystroke is one people stop trusting. */
+      free: id === 'openrouter' && (env.AI_MODEL?.trim() || p.defaultModel).endsWith(':free'),
+    }))
+}
+
 /**
  * Work out which provider to use.
  *
@@ -108,8 +125,33 @@ export const PROVIDERS = {
  * only setup step is "paste one key into Vercel" — nobody has to know that a
  * second variable exists. `AI_PROVIDER` overrides when more than one key is
  * present.
+ *
+ * ── `prefer` ─────────────────────────────────────────────────────────────
+ * One request can ask for a specific provider, because the jobs are not alike.
+ * Reading a supplier's PDF — photographs of the goods, a multi-column layout,
+ * prices in a table — is the task where a weaker model produces rows somebody
+ * has to correct line by line, and the one worth paying for. Suggesting a
+ * shelf name is not. Tying the whole console to one provider forces the same
+ * price on both.
+ *
+ * A preference that has no key is ignored rather than refused: the caller gets
+ * the default and is told which model actually ran, instead of an error about
+ * configuration they may not control.
  */
-export function resolveProvider(env = process.env) {
+export function resolveProvider(env = process.env, prefer = null) {
+  if (prefer && PROVIDERS[prefer] && env[PROVIDERS[prefer].keyEnv]) {
+    const chosen = PROVIDERS[prefer]
+    return {
+      id: prefer,
+      provider: chosen,
+      key: env[chosen.keyEnv],
+      // A per-provider model override, so AI_MODEL set for the default
+      // provider is not accidentally handed to a different one that has never
+      // heard of it.
+      model: env[`AI_MODEL_${prefer.toUpperCase()}`]?.trim() || chosen.defaultModel,
+    }
+  }
+
   const named = env.AI_PROVIDER?.trim().toLowerCase()
   if (named) {
     const chosen = PROVIDERS[named]

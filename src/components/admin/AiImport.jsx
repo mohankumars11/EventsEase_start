@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import {
   Sparkles, Upload, FileText, Globe, ClipboardPaste, Loader2, X, Check,
   AlertTriangle, Trash2, Plus, ShieldCheck, Image as ImageIcon,
@@ -7,7 +7,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR } from '../../utils/format'
 import { importProducts } from '../../lib/productStudio'
 import {
-  extractProducts, researchProducts, toReviewRows,
+  extractProducts, researchProducts, toReviewRows, fetchCapabilities,
   describeFile, checkFile, ACCEPT_ATTR,
 } from '../../lib/aiCatalog'
 import { Modal } from './ProductStudio'
@@ -59,11 +59,21 @@ export default function AiImport({ categories = [], onClose, onDone }) {
 
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
+  const [quality, setQuality] = useState('fast')
+  const [readers, setReaders] = useState([])
   const [rows, setRows] = useState(null)
   const [warnings, setWarnings] = useState([])
   const [importing, setImporting] = useState(false)
 
   const categoryIds = useMemo(() => categories.map(c => c.id), [categories])
+
+  /* Which readers this deployment can actually use. Asked once, on open, so
+     the accuracy choice appears only when there is a second reader to switch
+     to — offering a "more accurate" option that silently does nothing is worse
+     than offering none. */
+  useEffect(() => { fetchCapabilities().then(setReaders) }, [])
+  const accurate = readers.find(r => r.id === 'anthropic')
+  const standard = readers.find(r => r.id !== 'anthropic')
 
   function addFiles(list) {
     const next = []
@@ -82,12 +92,13 @@ export default function AiImport({ categories = [], onClose, onDone }) {
     setWarnings([])
     try {
       const result = source === 'research'
-        ? await researchProducts({ instructions, categories: categoryIds })
+        ? await researchProducts({ instructions, categories: categoryIds, quality })
         : await extractProducts({
             files: source === 'files' ? files : [],
             text:  source === 'text' ? text : '',
             instructions,
             categories: categoryIds,
+            quality,
             onProgress: setProgress,
           })
 
@@ -247,6 +258,26 @@ export default function AiImport({ categories = [], onClose, onDone }) {
               />
             </label>
 
+            {accurate && standard && (
+              <div>
+                <p className="mb-1.5 text-xs font-bold text-gray-700">Which reader?</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <ReaderChoice
+                    active={quality === 'fast'}
+                    onClick={() => setQuality('fast')}
+                    title={standard.free ? 'Standard — free' : 'Standard'}
+                    detail="Good on typed lists and clean tables. Costs nothing to run."
+                  />
+                  <ReaderChoice
+                    active={quality === 'accurate'}
+                    onClick={() => setQuality('accurate')}
+                    title="Most accurate — costs money"
+                    detail="Reads photographs inside a PDF, messy scans and multi-column layouts far better. Worth it for a real supplier catalogue."
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-xs font-semibold text-gray-600">Shelf for anything it can't place:</label>
               <select
@@ -314,6 +345,27 @@ export default function AiImport({ categories = [], onClose, onDone }) {
    Every cell is editable, because the most common outcome is not "it was
    wrong" but "it read a price list that didn't print prices" — and typing
    twelve numbers into a table beats retyping twelve products into a form. */
+
+/**
+ * One of the two readers.
+ *
+ * Says out loud which one costs money. The whole point of having two is that
+ * the cheap one handles most of the work; an admin who cannot tell them apart
+ * will pick whichever is on the left and never think about it again.
+ */
+function ReaderChoice({ active, onClick, title, detail }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl border p-3 text-left transition-colors ${
+        active ? 'border-plum-500 bg-plum-50' : 'border-gray-200 bg-white hover:border-plum-300'
+      }`}
+    >
+      <span className={`block text-sm font-bold ${active ? 'text-plum-900' : 'text-gray-700'}`}>{title}</span>
+      <span className="mt-0.5 block text-[11px] leading-relaxed text-gray-500">{detail}</span>
+    </button>
+  )
+}
 
 function ReviewTable({ rows, categories, warnings, ready, blocked, importing, onEdit, onDrop, onBack, onImport }) {
   return (
