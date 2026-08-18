@@ -21,7 +21,7 @@ import FulfilmentNote from '../../components/shop/FulfilmentNote'
 import BundleLadder from '../../components/shop/BundleLadder'
 import RecommendationRail from '../../components/shop/RecommendationRail'
 import { cakeFacts } from '../../data/cakeStyles'
-import { isCustomizable } from '../../config/customizers'
+import { useProductOptionGroups } from '../../hooks/useProductOptions'
 import { fetchMedia, fetchStory, fetchFaqs } from '../../lib/productStudio'
 
 export default function ProductDetail() {
@@ -90,6 +90,14 @@ export default function ProductDetail() {
 
   const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
+  // What this product can be asked about: the code builder for its category
+  // (cakes, party, pooja, gifts) merged with anything the admin defined in the
+  // console. MUST sit above the loading/not-found returns below — it is a
+  // hook, and calling it after an early return is the "rendered fewer hooks
+  // than expected" crash the moment `loading` flips to false. It tolerates a
+  // null product and answers [] until one arrives.
+  const optionGroups = useProductOptionGroups(product)
+
   // Both non-happy states keep the bar. Without it they were bare centred text
   // on an otherwise empty screen with no way out except the browser's own back
   // gesture — and on a cold open (a shared product link) there was no history
@@ -132,9 +140,7 @@ export default function ProductDetail() {
 
   const inCart   = hasProduct(product.id)
   const cartLine = productLines(product.id)[0]
-  // Cakes, party decor, pooja kits and gifts all open the full sheet; a
-  // category with no builder falls back to the simple message modal.
-  const configurable = isCustomizable(product.category)
+  const configurable = optionGroups.length > 0
   const facts        = product.category === 'Cakes' ? cakeFacts(product) : null
 
   return (
@@ -408,6 +414,7 @@ export default function ProductDetail() {
       {customizing && (configurable ? (
         <ProductCustomizeSheet
           product={product}
+          groups={optionGroups}
           onClose={() => setCustomizing(false)}
           onConfirm={({ qty, unitPrice, lines, signature }) => {
             dispatch({ type: 'ADD_PRODUCT', product, qty, unitPrice, lines, signature })

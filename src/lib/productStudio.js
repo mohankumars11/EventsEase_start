@@ -309,6 +309,65 @@ export async function bulkUpdate(ids, { field, value, mode = 'set' }) {
   return { updated: count ?? ids.length }
 }
 
+/**
+ * Put products on sale, and then go and check.
+ *
+ * ── Why this is not just `bulkUpdate(ids, { field: 'is_active', ... })` ──
+ * "I clicked Put on sale and it never appeared on the site" is the report this
+ * exists to answer. The write almost always succeeded — what failed was
+ * somewhere else, and the admin had no way to tell which, because the only
+ * feedback was a toast that said "1 product updated" whether or not a customer
+ * could see anything.
+ *
+ * So this writes, then RE-READS the rows with the same filter the storefront
+ * uses, and reports what is actually true afterwards. A confirmation that the
+ * console did not verify is not a confirmation.
+ *
+ * Two things can still hide a correctly-published product, and both are
+ * returned rather than assumed away:
+ *
+ *   · RLS silently matching zero rows — an update that is not permitted comes
+ *     back as a success with a count of 0, which reads identically to a
+ *     success. The re-read catches it.
+ *   · the SHELF being retired. `shop_categories.is_active = false` removes the
+ *     tile from the storefront, so every product on it is live and unreachable.
+ *     That is the single most confusing state this console can be in, and it
+ *     is not visible from the product row at all.
+ */
+export async function publishProducts(ids, { active = true } = {}) {
+  if (!ids?.length) return { confirmed: [], failed: [], shelves: [] }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_active: active })
+    .in('id', ids)
+
+  // The column arrives with migration 037. Without it every product is on sale
+  // already, so this is a no-op rather than a failure.
+  if (error && error.code !== MISSING_COLUMN) throw error
+
+  const { data, error: readErr } = await supabase
+    .from('products')
+    .select('id, name, category, is_active, image_url, price')
+    .in('id', ids)
+  if (readErr) throw readErr
+
+  const rows = data ?? []
+  const wanted = active
+  const confirmed = rows.filter(p => (p.is_active !== false) === wanted)
+  const failed = rows.filter(p => (p.is_active !== false) !== wanted)
+
+  return {
+    confirmed,
+    failed,
+    shelves: [...new Set(confirmed.map(p => p.category))],
+    // Worth surfacing separately: a live product with no photograph renders as
+    // an emoji tile, which an admin scanning the shelf for it will not
+    // recognise as the thing they just published.
+    withoutPhoto: confirmed.filter(p => !p.image_url).length,
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    Media — the gallery and the clips
    ══════════════════════════════════════════════════════════════════════ */
@@ -394,7 +453,10 @@ export async function reorderMedia(list, id, direction) {
 export async function uploadGalleryImage(productId, file, { source = 'actual', alt, caption, makePrimary = false } = {}) {
   const blob = await compressImage(file)
   const ext  = blob.type === 'image/webp' ? 'webp' : 'jpg'
-  const path = `${productId}/gallery-${Date.now()}.${ext}`
+  // A random suffix as well as the clock. Pasting eight screenshots at once
+  // starts eight uploads inside the same millisecond, and `upsert: false`
+  // turns a path collision into a failed upload for every file but the first.
+  const path = `${productId}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
   const { error: upErr } = await supabase.storage
     .from(IMAGE_BUCKET)
@@ -406,6 +468,121 @@ export async function uploadGalleryImage(productId, file, { source = 'actual', a
 
   if (makePrimary) await setPrimaryImage(productId, publicUrl, source)
   return media
+}
+
+/* ── Getting pictures in ───────────────────────────────────────────────────
+
+   The file picker was the only way in, and it is the worst of the four ways
+   somebody actually has a picture on hand:
+
+     · they just pressed Win+Shift+S / Ctrl+Shift+4 and it is on the CLIPBOARD
+     · they have a folder open and want to DRAG a dozen across
+     · they have the file and will pick it — but eight of them, not one
+     · they are looking at it in another tab and can copy the image ADDRESS
+
+   All four end up as a Blob or a URL, so they all end at `uploadGalleryImage`.
+   What follows is only the funnel into it.
+*/
+
+/** Everything image-shaped in a paste or a drop, in the order it was given. */
+export function imagesFromTransfer(dataTransfer) {
+  if (!dataTransfer) return []
+  const out = []
+
+  // `items` carries a pasted screenshot (which has no entry in `files` on some
+  // browsers); `files` carries a drag from the file system. Reading both and
+  // de-duplicating is what makes one handler serve paste AND drop.
+  for (const item of dataTransfer.items ?? []) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) out.push(file)
+    }
+  }
+  for (const file of dataTransfer.files ?? []) {
+    if (file.type.startsWith('image/') && !out.some(f => f.name === file.name && f.size === file.size)) {
+      out.push(file)
+    }
+  }
+  return out
+}
+
+/** Any http(s) image URLs in a paste — one per line, so a list works too. */
+export function imageUrlsFromText(text) {
+  return String(text ?? '')
+    .split(/[\s,]+/)
+    .map(s => s.trim())
+    .filter(s => /^https?:\/\//i.test(s))
+}
+
+/**
+ * Fetch a remote image into a Blob so it can be re-hosted.
+ *
+ * Deliberately re-hosted rather than stored as a link. A URL pasted from
+ * somebody else's site is a photo that disappears the day they reorganise
+ * their bucket, and it leaks every shopper's IP to that host. `addMedia` with
+ * `source: 'link'` still exists for when a link is genuinely what is wanted —
+ * this is for "I found the picture, put it in our shop".
+ *
+ * CORS is the catch and it cannot be worked around from the browser: a host
+ * that does not send Access-Control-Allow-Origin cannot be read into a canvas
+ * at all. So the failure is reported as what it is, with the fallback named.
+ */
+export async function fetchImageAsFile(url) {
+  let res
+  try {
+    res = await fetch(url, { mode: 'cors' })
+  } catch {
+    throw new Error(
+      'That site will not let us copy the image directly. Save it to your ' +
+      'computer and drag it in, or use “From a link” to point at it instead.'
+    )
+  }
+  if (!res.ok) throw new Error(`That link returned ${res.status}.`)
+
+  const blob = await res.blob()
+  if (!blob.type.startsWith('image/')) throw new Error('That link is not an image.')
+
+  const name = (url.split('/').pop() || 'image').split('?')[0]
+  return new File([blob], name, { type: blob.type })
+}
+
+/**
+ * Upload many images as one job, reporting each one as it lands.
+ *
+ * Never `Promise.all`. Eight 4 MB screenshots decoded onto canvases at the
+ * same moment is how a mid-range phone browser drops the tab, and one failure
+ * in the middle of a Promise.all loses the results of the ones that succeeded.
+ * Sequential, with each result surfaced as it happens, means a part-failed
+ * batch still leaves every good photo in the gallery and names the bad one.
+ *
+ * `makePrimaryIfFirst` points the tile at the very first image only when the
+ * product has none — pasting more photos onto a product that already has a
+ * chosen tile photo must not silently replace it.
+ */
+export async function uploadGalleryImages(productId, files, {
+  source = 'actual',
+  makePrimaryIfFirst = false,
+  onProgress,
+} = {}) {
+  const added = []
+  const failures = []
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    onProgress?.({ index: i, total: files.length, name: file.name || 'pasted image', phase: 'uploading' })
+    try {
+      const media = await uploadGalleryImage(productId, file, {
+        source,
+        makePrimary: makePrimaryIfFirst && i === 0,
+      })
+      added.push(media)
+    } catch (err) {
+      failures.push({ name: file.name || `image ${i + 1}`, message: err.message })
+    }
+  }
+
+  onProgress?.(null)
+  return { added, failures }
 }
 
 /**

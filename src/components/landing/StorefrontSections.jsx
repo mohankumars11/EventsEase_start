@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, Truck, ShieldCheck, Sparkles } from 'lucide-react'
-import { SHOP_CATEGORIES, FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+import { FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+import { useShopCategories } from '../../hooks/useShopCategories'
 import { CTA } from '../../config/sambramo'
 import {
   CATEGORY_PHOTO, CATEGORY_PHOTO_QUERY, OCCASION_CARDS, occasionPhoto,
@@ -214,6 +215,7 @@ export function PathFork({ onPlan }) {
 ═══════════════════════════════════════════════════════════ */
 
 export function ShopCategoryGrid() {
+  const shopCategories = useShopCategories()
   return (
     <section id="shop" className="py-16 sm:py-20 px-4 bg-white">
       <div className="max-w-6xl mx-auto">
@@ -235,7 +237,7 @@ export function ShopCategoryGrid() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {SHOP_CATEGORIES.map((cat, i) => {
+          {shopCategories.map((cat, i) => {
             const src = CATEGORY_PHOTO[cat.id]
             const query = CATEGORY_PHOTO_QUERY[cat.id]
 

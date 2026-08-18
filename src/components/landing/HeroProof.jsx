@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { UserRound, Timer, ShieldCheck, ArrowRight } from 'lucide-react'
-import { SHOP_CATEGORIES } from '../../config/shop'
+import { useShopCategories } from '../../hooks/useShopCategories'
 import { CATEGORY_PHOTO } from '../../config/imagery'
 
 /**
@@ -43,10 +43,11 @@ const SHORT_LABEL = {
  * rail cannot show a different cake from the one the category page opens on.
  */
 export function ShopRail() {
+  const shopCategories = useShopCategories()
   return (
     <div className="relative -mx-6 sm:mx-0 mt-5 sm:mt-6 pt-5 border-t border-white/10">
       <div className="flex sm:flex-wrap sm:justify-center gap-3 sm:gap-4 overflow-x-auto scrollbar-hide px-6 sm:px-0 pb-1">
-        {SHOP_CATEGORIES.map(cat => (
+        {shopCategories.map(cat => (
           <Link
             key={cat.id}
             to={`/shop/${encodeURIComponent(cat.id)}`}

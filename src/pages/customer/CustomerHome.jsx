@@ -7,7 +7,7 @@ import { fetchCelebrations, isLive, needsYou } from '../../lib/celebrations'
 import { formatDate } from '../../utils/format'
 import { FESTIVALS } from '../../data/festivals'
 import { UPCOMING_FESTIVALS } from '../../data/eventServicesData'
-import { SHOP_CATEGORIES } from '../../config/shop'
+import { useShopCategories } from '../../hooks/useShopCategories'
 import ProductImage from '../../components/shop/ProductImage'
 import SlideCarousel from '../../components/common/SlideCarousel'
 import ReferAndEarn from '../../components/customer/ReferAndEarn'
@@ -49,6 +49,7 @@ function daysUntil(dateStr) {
 }
 
 export default function CustomerHome() {
+  const shopCategories = useShopCategories()
   const { profile, user } = useAuth()
   const navigate = useNavigate()
   const [celebrations, setCelebrations] = useState([])
@@ -198,7 +199,7 @@ export default function CustomerHome() {
             </Link>
           </div>
           <SlideCarousel>
-            {SHOP_CATEGORIES.map(cat => (
+            {shopCategories.map(cat => (
               <div key={cat.id} className="shrink-0 w-32 sm:w-36 snap-center">
                 <ShopMiniCard category={cat} />
               </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Flame, ChevronRight, Camera, SearchX } from 'lucide-react'
-import { SHOP_CATEGORIES, categoryQueryValues } from '../../config/shop'
+import { categoryQueryValues } from '../../config/shop'
+import { useShopCategories } from '../../hooks/useShopCategories'
 import { groupsForCategory } from '../../data/shopOccasions'
 import { supabase } from '../../lib/supabase'
 import { useAutoScrollRail } from '../../hooks/useAutoScrollRail'
@@ -84,6 +85,11 @@ const OCCASION_SHORTCUTS = [
  * nobody can trust the second they notice.
  */
 export default function Shop() {
+  // The shelves come from the database (migration 051) merged over the config
+  // list — NOT from the config list alone. A shelf an admin adds in the
+  // Product Studio has to appear here, otherwise its products are unreachable
+  // however correctly they were saved. See hooks/useShopCategories.
+  const shopCategories = useShopCategories()
   const [rows, setRows] = useState([])
   const [query, setQuery] = useState('')
   const daysToIndependenceDay = daysUntil(INDEPENDENCE_DAY)
@@ -111,7 +117,7 @@ export default function Shop() {
    */
   const waysIn = useMemo(() => {
     const out = {}
-    for (const cat of SHOP_CATEGORIES) {
+    for (const cat of shopCategories) {
       const values = new Set(categoryQueryValues(cat.id))
       const mine = rows.filter(p => values.has(p.category))
       out[cat.id] = groupsForCategory(cat.id, mine)
@@ -120,7 +126,7 @@ export default function Shop() {
         .slice(0, 4)
     }
     return out
-  }, [rows])
+  }, [rows, shopCategories])
 
   const searching = query.trim().length >= 2
 
@@ -205,10 +211,15 @@ export default function Shop() {
           {/* ── Categories ─────────────────────────────────────────── */}
           <section aria-labelledby="cat-heading" className="px-4">
             <h2 id="cat-heading" className="text-[15px] font-extrabold text-ink">Shop by category</h2>
-            <p className="mt-0.5 text-[11px] text-ink-mute">Five shelves — tap a shelf, or jump to the reason you're shopping.</p>
+            {/* Counted, not typed. It said "Five shelves" while six were
+                rendered, and it would have gone on being wrong every time an
+                admin added one. */}
+            <p className="mt-0.5 text-[11px] text-ink-mute">
+              {shopCategories.length} shelves — tap a shelf, or jump to the reason you're shopping.
+            </p>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
-              {SHOP_CATEGORIES.map((cat, i) => (
+              {shopCategories.map((cat, i) => (
                 <CategoryTile key={cat.id} cat={cat} wide={i === 0} waysIn={waysIn[cat.id] ?? []} />
               ))}
             </div>
@@ -322,7 +333,12 @@ function CategoryTile({ cat, wide, waysIn }) {
       className={`shop-card group flex flex-col ${wide ? 'col-span-2' : ''}`}
     >
       <span className="relative block">
+        {/* `hero_image_url` first: a shelf the admin created has no entry in
+            CATEGORY_QUERIES below, and the picture they chose for it in the
+            Shelf Manager is a better answer than an Unsplash guess at its
+            name. Falls through to the curated query, then to the label. */}
         <ProductImage
+          src={cat.hero_image_url || undefined}
           query={CATEGORY_QUERIES[cat.id] ?? cat.label}
           emoji={cat.emoji}
           className={wide ? 'h-36 w-full' : 'aspect-[4/3] w-full'}
@@ -340,7 +356,7 @@ function CategoryTile({ cat, wide, waysIn }) {
         <span className="flex items-center gap-2">
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-semibold leading-snug text-gray-600 line-clamp-2">
-              {CATEGORY_HOOKS[cat.id] ?? cat.tagline}
+              {cat.blurb || CATEGORY_HOOKS[cat.id] || cat.tagline}
             </span>
           </span>
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-forest-50 text-forest-700 transition-transform group-hover:translate-x-0.5">

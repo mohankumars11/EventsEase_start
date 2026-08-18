@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   X, Loader2, Save, Plus, Trash2, ChevronUp, ChevronDown, Star, Sparkles,
   Images, Film, HelpCircle, Clapperboard, SlidersHorizontal, Upload, Link2,
-  Camera, Check, AlertTriangle, Eye, EyeOff, Wand2, MessageSquare,
+  Camera, Check, AlertTriangle, Eye, EyeOff, Wand2, MessageSquare, ListChecks, ArrowRight,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR } from '../../utils/format'
 import {
   saveProduct, fetchMedia, addMedia, updateMedia, deleteMedia, reorderMedia,
-  uploadGalleryImage, uploadVideo, setPrimaryImage, VIDEO_WARN_BYTES,
+  uploadVideo, setPrimaryImage, VIDEO_WARN_BYTES,
   fetchFaqs, saveFaq, deleteFaq, parseFaqBulk, importFaqs,
   fetchStory, saveSlide, deleteSlide, storyTemplate, importSlides,
   SCENES, SCENE_BY_ID, ACCENTS,
@@ -16,6 +16,8 @@ import {
 } from '../../lib/productStudio'
 import { enrichProduct } from '../../lib/aiCatalog'
 import MediaGenerator from './MediaGenerator'
+import ProductOptionsTab from './ProductOptionsTab'
+import PhotoIntake, { Kbd } from './PhotoIntake'
 
 /**
  * Everything about one product, in one place.
@@ -29,6 +31,8 @@ import MediaGenerator from './MediaGenerator'
  * ── The five tabs are five different jobs ────────────────────────────────
  *   Details   the row itself: name, price, shelf, description, specs
  *   Media     the photographs and the clips, in the order the customer sees
+ *   Options   what a customer can change about it — sizes, colours, wraps,
+ *             add-ons, a message — per product, per shelf or shop-wide
  *   Story     the slides — the part that says why this is worth buying
  *   Questions the FAQ, which can be answered once for a whole shelf
  *   Rating    real reviews and the reply to them, plus the launch baseline
@@ -42,6 +46,7 @@ import MediaGenerator from './MediaGenerator'
 const TABS = [
   { id: 'details', label: 'Details',   icon: SlidersHorizontal },
   { id: 'media',   label: 'Photos & video', icon: Images },
+  { id: 'options', label: 'Customisations', icon: ListChecks },
   { id: 'story',   label: 'Story',     icon: Clapperboard },
   { id: 'faqs',    label: 'Questions', icon: HelpCircle },
   { id: 'rating',  label: 'Rating',    icon: Star },
@@ -103,6 +108,7 @@ export default function ProductWorkbench({ product, categories, installed, onClo
         <div className="flex-1 overflow-y-auto p-5">
           {tab === 'details' && <DetailsTab product={product} categories={categories} onSaved={onSaved} />}
           {tab === 'media'   && <MediaTab   product={product} installed={installed} onSaved={onSaved} />}
+          {tab === 'options' && <ProductOptionsTab product={product} />}
           {tab === 'story'   && <StoryTab   product={product} installed={installed} />}
           {tab === 'faqs'    && <FaqTab     product={product} installed={installed} />}
           {tab === 'rating'  && <RatingTab  product={product} installed={installed} onSaved={onSaved} />}
@@ -160,8 +166,22 @@ function DetailsTab({ product, categories, onSaved }) {
         specs: form.specs,
       }, { id: product.id })
 
-      if (degraded) toast.info('Saved the basics. The rest needs migration 051.')
-      else toast.success('Saved.')
+      if (degraded) {
+        toast.info('Saved the basics. The rest needs migration 051.')
+      } else if (form.is_active && product.is_active === false) {
+        // The one save that changes what a customer can see. Say which shelf,
+        // because "Saved." gives an admin no way to tell whether the thing
+        // they were trying to do actually happened.
+        toast.success(
+          `Saved — “${form.name.trim() || product.name}” is now on sale in ${form.category}. ` +
+          'Customers can see it on that shelf right away.',
+          9000,
+        )
+      } else if (!form.is_active && product.is_active !== false) {
+        toast.success(`Saved — taken off sale. Customers can no longer see it in ${form.category}.`)
+      } else {
+        toast.success('Saved.')
+      }
       await onSaved()
     } catch (err) {
       toast.error(friendlyError(err, 'Could not save that.'))
@@ -219,6 +239,13 @@ function DetailsTab({ product, categories, onSaved }) {
 
       {ai && <AiDraft draft={ai} onApply={applyAi} onDismiss={() => setAi(null)} productId={product.id} category={form.category} />}
 
+      <ShelfMover
+        current={product.category}
+        value={form.category}
+        categories={categories}
+        onChange={category => set({ category })}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" full>
           <input value={form.name} onChange={e => set({ name: e.target.value })} className={inputCls} />
@@ -235,12 +262,7 @@ function DetailsTab({ product, categories, onSaved }) {
           <input type="number" value={form.mrp} onChange={e => set({ mrp: e.target.value })} className={inputCls} />
         </Field>
 
-        <Field label="Shelf">
-          <select value={form.category} onChange={e => set({ category: e.target.value })} className={inputCls}>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
-          </select>
-        </Field>
-        <Field label="Occasion" hint="Optional — birthday, Diwali, wedding…">
+        <Field label="Occasion" hint="Optional — birthday, Diwali, wedding…" full>
           <input value={form.occasion} onChange={e => set({ occasion: e.target.value })} className={inputCls} />
         </Field>
 
@@ -302,6 +324,104 @@ function DetailsTab({ product, categories, onSaved }) {
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Save
         </button>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Move this product from one shelf to another.
+ *
+ * ── Why this is not just the `<select>` it replaced ──────────────────────
+ * It was a field labelled "Shelf" sitting between "Was (₹)" and "Occasion",
+ * and changing it looked exactly like correcting a typo. But a shelf is the
+ * only field on this form that decides where a customer can FIND the thing:
+ * change it and the product leaves one page and appears on another. That
+ * deserves to read as a move, with both ends of it named, rather than as an
+ * edit to a dropdown.
+ *
+ * So it shows FROM → TO explicitly, states what will happen in words, and
+ * says the one thing an admin worries about when moving something that has
+ * already sold: past orders are not rewritten. `order_items.category` is a
+ * snapshot taken at purchase (migration 022) and stays as it was, which is why
+ * last quarter's numbers still reconcile after a reorganisation.
+ *
+ * Nothing is written until Save, like every other field here.
+ */
+function ShelfMover({ current, value, categories, onChange }) {
+  const from = categories.find(c => c.id === current)
+  const to   = categories.find(c => c.id === value)
+  const moving = value !== current
+
+  return (
+    <div className={`rounded-2xl border p-4 transition-colors ${
+      moving ? 'border-plum-300 bg-plum-50/50' : 'border-gray-200'
+    }`}>
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-extrabold text-plum-950">Which shelf is it on?</h4>
+        {moving && (
+          <span className="rounded-lg bg-plum-600 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">
+            Moving
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <label className="min-w-0 flex-1">
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500">From</span>
+          {/* Deliberately a disabled input and not a second dropdown: where it
+              is now is a fact, not a choice, and making it look editable is how
+              somebody changes the wrong end of the move. */}
+          <input
+            disabled
+            value={from ? `${from.emoji} ${from.label}` : (current || '— none —')}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-500"
+          />
+        </label>
+
+        <ArrowRight size={18} className={`mb-2.5 shrink-0 ${moving ? 'text-plum-600' : 'text-gray-300'}`} />
+
+        <label className="min-w-0 flex-1">
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500">To</span>
+          <select
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold focus:outline-none ${
+              moving ? 'border-plum-500 bg-white text-plum-800' : 'border-gray-200 focus:border-plum-400'
+            }`}
+          >
+            {/* An id that is on the product but is not a registered shelf still
+                has to be selectable, or opening this product would silently
+                move it somewhere else the moment anything else was saved. */}
+            {!categories.some(c => c.id === current) && current && (
+              <option value={current}>{current} (unregistered shelf)</option>
+            )}
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
+            ))}
+          </select>
+        </label>
+
+        {moving && (
+          <button
+            onClick={() => onChange(current)}
+            className="mb-0.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:border-gray-400"
+          >
+            Undo
+          </button>
+        )}
+      </div>
+
+      <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+        {moving ? (
+          <>
+            On save it leaves <strong>{from?.label ?? current}</strong> and appears on{' '}
+            <strong>{to?.label ?? value}</strong>. Past orders keep the shelf they were bought
+            under, so your history still adds up.
+          </>
+        ) : (
+          <>Customers find this under <strong>{from?.label ?? current}</strong>. Pick another shelf to move it.</>
+        )}
+      </p>
     </div>
   )
 }
@@ -405,6 +525,16 @@ function DraftBlock({ title, children, onUse, busy, label = 'Put in the form' })
    Media
    ══════════════════════════════════════════════════════════════════════ */
 
+/**
+ * The photographs and the clips for one product.
+ *
+ * The intake itself lives in `PhotoIntake` and is shared with the catalogue
+ * list and the phone-first photo screen, so Ctrl+V, drag-and-drop, the Paste
+ * button, the multi-file picker and the camera behave identically wherever an
+ * admin happens to be. What stays here is everything about a product's
+ * gallery specifically: the order the customer sees, which frame is the tile,
+ * the captions, and clips.
+ */
 function MediaTab({ product, installed, onSaved }) {
   const toast = useToast()
   const [items, setItems] = useState([])
@@ -413,9 +543,7 @@ function MediaTab({ product, installed, onSaved }) {
   const [busy, setBusy] = useState(null)
   const [adding, setAdding] = useState(false)
 
-  const imageInput = useRef(null)
   const videoInput = useRef(null)
-  const [pendingSource, setPendingSource] = useState('actual')
   const [generating, setGenerating] = useState(false)
 
   const load = useCallback(async () => {
@@ -428,21 +556,6 @@ function MediaTab({ product, installed, onSaved }) {
 
   useEffect(() => { load() }, [load])
 
-  async function handleImage(file) {
-    if (!file) return
-    setBusy('upload')
-    try {
-      await uploadGalleryImage(product.id, file, {
-        source: pendingSource,
-        makePrimary: items.filter(m => m.kind === 'image').length === 0,
-      })
-      toast.success('Photo added.')
-      await load(); await onSaved()
-    } catch (err) {
-      toast.error(friendlyError(err, 'Could not upload that photo.'))
-    } finally { setBusy(null) }
-  }
-
   async function handleVideo(file) {
     if (!file) return
     if (file.size > VIDEO_WARN_BYTES) {
@@ -450,7 +563,9 @@ function MediaTab({ product, installed, onSaved }) {
     }
     setBusy('upload')
     try {
-      await uploadVideo(product.id, file, { source: pendingSource, onProgress: msg => setBusy(msg) })
+      // 'actual' rather than the removed per-upload picker: a clip is filmed,
+      // not sourced, and PhotoIntake owns the provenance choice for stills.
+      await uploadVideo(product.id, file, { source: 'actual', onProgress: msg => setBusy(msg) })
       toast.success('Clip added.')
       await load(); await onSaved()
     } catch (err) {
@@ -462,86 +577,44 @@ function MediaTab({ product, installed, onSaved }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-gray-200 p-4">
-        <h4 className="text-sm font-extrabold text-plum-950">Add a photo or a clip</h4>
-        <p className="mt-0.5 text-xs text-gray-500">
-          The first photo becomes the one on the shelf tile. The rest slide behind it.
-        </p>
+      {/* The shared intake — the same panel and the same five routes in as
+          the catalogue list and the photo screen. It was a bespoke block here,
+          which is how Ctrl+V ended up working on exactly one tab of one modal
+          and nowhere else in the console. */}
+      <PhotoIntake
+        productId={product.id}
+        hasPhoto={Boolean(product.image_url)}
+        onDone={async () => { await load(); await onSaved() }}
+      />
 
-        <div className="mt-3">
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-500">Where is this from?</p>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              ['actual', 'A photo of the real thing', 'Shows as “Actual product photo”'],
-              ['vendor', 'From the maker', 'Their photo of the item they make'],
-              ['stock',  'A stock lookalike', 'Shows as “Representative image”'],
-              ['ai',     'Made with AI', 'Labelled as generated, so nobody is misled'],
-            ].map(([id, label, hint]) => (
-              <button
-                key={id} onClick={() => setPendingSource(id)} title={hint}
-                className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                  pendingSource === id
-                    ? 'border-plum-600 bg-plum-600 text-white'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-plum-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {/* Not decoration. Migration 023 made image provenance a column and
-              the storefront prints it; a generated clip sitting unlabelled next
-              to a real one is the thing this control exists to prevent. */}
-          <p className="mt-1.5 text-[11px] text-gray-400">
-            {{
-              actual: 'Customers will be told this is the real item.',
-              vendor: 'Shown as the maker’s own photo.',
-              stock:  'Shown as “Representative image” — a lookalike, not this exact item.',
-              ai:     'Shown as generated. Fine for a mood shot; not for “this is what arrives”.',
-            }[pendingSource]}
-          </p>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            onClick={() => imageInput.current?.click()} disabled={!!busy}
-            className="flex items-center gap-1.5 rounded-xl bg-plum-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-plum-700 disabled:opacity-50"
-          >
-            {busy === 'upload' ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />} Photo
-          </button>
-          <button
-            onClick={() => videoInput.current?.click()} disabled={!!busy}
-            className="flex items-center gap-1.5 rounded-xl border border-plum-200 px-3.5 py-2 text-sm font-semibold text-plum-700 hover:border-plum-400 disabled:opacity-50"
-          >
-            <Film size={15} /> Clip
-          </button>
-          <button
-            onClick={() => setGenerating(g => !g)} disabled={!!busy}
-            className="flex items-center gap-1.5 rounded-xl border border-plum-200 px-3.5 py-2 text-sm font-semibold text-plum-700 hover:border-plum-400 disabled:opacity-50"
-          >
-            <Wand2 size={15} /> Make one with AI
-          </button>
-          <button
-            onClick={() => setAdding(true)} disabled={!!busy}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-600 hover:border-gray-300"
-          >
-            <Link2 size={15} /> From a link
-          </button>
-          {busy && busy !== 'upload' && (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-plum-700">
-              <Loader2 size={13} className="animate-spin" /> {busy}
-            </span>
-          )}
-        </div>
-
-        {/* `capture="environment"` so tapping this on a phone opens the camera
-            rather than the photo library — the workflow is somebody standing in
-            the shop with the thing in front of them. */}
-        <input ref={imageInput} type="file" accept="image/*" capture="environment" className="hidden"
-          onChange={e => { handleImage(e.target.files?.[0]); e.target.value = '' }} />
-        <input ref={videoInput} type="file" accept="video/*" className="hidden"
-          onChange={e => { handleVideo(e.target.files?.[0]); e.target.value = '' }} />
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => videoInput.current?.click()} disabled={!!busy}
+          className="flex items-center gap-1.5 rounded-xl border border-plum-200 px-3.5 py-2 text-sm font-semibold text-plum-700 hover:border-plum-400 disabled:opacity-50"
+        >
+          <Film size={15} /> Add a clip
+        </button>
+        <button
+          onClick={() => setGenerating(g => !g)} disabled={!!busy}
+          className="flex items-center gap-1.5 rounded-xl border border-plum-200 px-3.5 py-2 text-sm font-semibold text-plum-700 hover:border-plum-400 disabled:opacity-50"
+        >
+          <Wand2 size={15} /> Make one with AI
+        </button>
+        <button
+          onClick={() => setAdding(true)} disabled={!!busy}
+          className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-600 hover:border-gray-300"
+        >
+          <Link2 size={15} /> Link a photo without copying it
+        </button>
+        {busy && busy !== 'upload' && (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-plum-700">
+            <Loader2 size={13} className="animate-spin" /> {busy}
+          </span>
+        )}
       </div>
+
+      <input ref={videoInput} type="file" accept="video/*" className="hidden"
+        onChange={e => { handleVideo(e.target.files?.[0]); e.target.value = '' }} />
 
       {generating && (
         <MediaGenerator
@@ -561,6 +634,7 @@ function MediaTab({ product, installed, onSaved }) {
           <p className="mt-2 text-sm font-bold text-gray-700">No photos yet</p>
           <p className="mt-1 text-xs text-gray-500">
             One good photo does more for this product than anything else on this screen.
+            Take a screenshot and press <Kbd>Ctrl</Kbd>+<Kbd>V</Kbd> — it lands here.
           </p>
         </div>
       ) : (
@@ -596,6 +670,7 @@ function MediaTab({ product, installed, onSaved }) {
     </div>
   )
 }
+
 
 const SOURCE_BADGE = {
   actual: ['bg-emerald-100 text-emerald-700', 'Real photo'],

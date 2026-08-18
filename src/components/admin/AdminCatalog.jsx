@@ -9,6 +9,7 @@ import { SHOP_CATEGORIES } from '../../config/shop'
 import { formatINR } from '../../utils/format'
 import { INK, STATUS, shopCategoryColor } from '../../config/dataviz'
 import { uploadProductImage, revertToStock, fetchImageCoverage } from '../../lib/productImages'
+import { QuickPhotoSheet } from './PhotoIntake'
 import ImageSourceBadge from '../shop/ImageSourceBadge'
 
 /**
@@ -329,6 +330,7 @@ export default function AdminCatalog() {
                 canRetire={hasLifecycle}
                 onEdit={() => setEditing(editing === p.id ? null : p.id)}
                 onUpload={file => handleUpload(p, file)}
+                onPhoto={() => setPhotoFor(p)}
                 onRevert={() => handleRevert(p)}
                 onSave={patch => handleSaveDetails(p, patch)}
                 onToggleActive={() => handleToggleActive(p)}
@@ -357,6 +359,14 @@ export default function AdminCatalog() {
             applied to this database. Everything else on this screen works without it.
           </span>
         </p>
+      )}
+
+      {photoFor && (
+        <QuickPhotoSheet
+          product={photoFor}
+          onClose={() => setPhotoFor(null)}
+          onDone={load}
+        />
       )}
     </div>
   )
@@ -497,7 +507,7 @@ function NewProductForm({ busy, onCancel, onSave }) {
 }
 
 /* ── One product ─────────────────────────────────────────────────────── */
-function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRevert, onSave, onToggleActive }) {
+function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onPhoto, onRevert, onSave, onToggleActive }) {
   const fileRef = useRef(null)
   const [draft, setDraft] = useState(null)
 
@@ -524,9 +534,9 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
     }`}>
       {/* Thumbnail doubles as the upload target. */}
       <button
-        onClick={() => fileRef.current?.click()}
+        onClick={onPhoto}
         disabled={busy}
-        title="Upload a real photo"
+        title="Add photos — paste a screenshot, drag files in, choose them, or use the camera"
         className="relative w-28 shrink-0 bg-gray-50 group"
       >
         {product.image_url ? (
@@ -541,9 +551,11 @@ function ProductRow({ product, busy, editing, canRetire, onEdit, onUpload, onRev
         </span>
       </button>
 
-      {/* capture="environment" opens the rear camera directly on a phone,
-          which is the difference between "photograph the catalogue" being
-          an afternoon and being a project. */}
+      {/* The camera shortcut, kept for the "standing in the shop with the
+          thing in front of you" workflow. It is no longer the ONLY way in —
+          `capture="environment"` removes the gallery option on Android, so as
+          the sole picker it blocked every photo an admin already had. The
+          thumbnail above opens the full intake. */}
       <input
         ref={fileRef}
         type="file"

@@ -31,6 +31,17 @@ const isMissing = err =>
   err?.code === 'PGRST205' ||
   /could not find the table/i.test(err?.message ?? '')
 
+/**
+ * The two values migration 051 writes when it has nothing better to put there.
+ *
+ * The emoji is compared with the variation selector (U+FE0F) stripped, because
+ * '🛍' and '🛍️' are different strings and which one is stored depends on how
+ * the SQL file reached the editor — and on this project that is a paste
+ * through PowerShell, which mangles UTF-8.
+ */
+const SEED_SORT = 100
+const isPlaceholderEmoji = e => !e || e.replace(/️/g, '') === '\u{1F6CD}'
+
 /** A config entry, in the shape a database row has. */
 function fromConfig(c, i) {
   return {
@@ -96,7 +107,21 @@ export async function fetchCategories({ kind = 'shop', includeInactive = false }
       // A NULL tagline in the table must not erase the one config carries —
       // that is a blank line on the shelf header, not an intentional edit.
       tagline: r.tagline ?? base?.tagline ?? null,
-      emoji: r.emoji ?? base?.emoji ?? '🛍️',
+      // ── Placeholders are not edits ────────────────────────────────────
+      // Migration 051 seeds every shelf from `products` with emoji '🛍️' and
+      // sort_order 100, then tries to overwrite those with the real values in
+      // a second statement. On this database that second statement did not
+      // take: every row still reads 🛍️ / 100.
+      //
+      // That is invisible until something actually renders the table — and
+      // then a live read replaces 🎂🎁💐🎈🪔🪆 with six identical shopping
+      // bags and collapses the shelf order to alphabetical. So the same rule
+      // the migration states for itself is enforced here, where it can be
+      // relied on: a value that is still 051's own default means "nobody has
+      // chosen one", and the config value wins. Anything else was typed by a
+      // person and is left alone.
+      emoji: isPlaceholderEmoji(r.emoji) ? (base?.emoji ?? '🛍️') : r.emoji,
+      sort_order: r.sort_order === SEED_SORT && base ? base.sort_order : r.sort_order,
       _source: 'db',
     })
   }

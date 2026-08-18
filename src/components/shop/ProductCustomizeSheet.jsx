@@ -36,8 +36,16 @@ import FulfilmentNote from './FulfilmentNote'
  * phone, where most of this shop is used. The sheet pins the header and the
  * total to the frame and lets only the options move.
  */
-export default function ProductCustomizeSheet({ product, onClose, onConfirm }) {
-  const groups = useMemo(() => buildOptionGroups(product), [product])
+export default function ProductCustomizeSheet({ product, groups: providedGroups, onClose, onConfirm }) {
+  // `groups` is passed in by useProductAdd, which already had to compute them
+  // to decide whether to open this sheet at all — that merge is code builders
+  // PLUS whatever the admin defined in the console (migration 053). The
+  // fallback keeps the component usable on its own, and keeps it working if
+  // the options table is not there.
+  const groups = useMemo(
+    () => providedGroups ?? buildOptionGroups(product),
+    [providedGroups, product]
+  )
   const [selections, setSelections] = useState(() => defaultSelections(groups))
   const [qty, setQty] = useState(1)
 

@@ -18,6 +18,7 @@ import ProductImage from '../../components/shop/ProductImage'
 import RatingBadge from '../../components/reviews/RatingBadge'
 import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import ProductCustomizeSheet, { VegMark } from '../../components/shop/ProductCustomizeSheet'
+import { useProductOptionGroups } from '../../hooks/useProductOptions'
 import ShopAppBar from '../../components/shop/ShopAppBar'
 import StickyCartBar from '../../components/shop/StickyCartBar'
 import HowWeServe from '../../components/shop/HowWeServe'
@@ -66,6 +67,11 @@ export default function CakeShop() {
   const [query, setQuery]       = useState('')
 
   const [customizing, setCustomizing] = useState(null)
+  // The cake builder plus anything the admin added for Cakes or for this one
+  // cake. Without this the sheet opened from THIS page would show the coded
+  // groups only, while the identical sheet opened from a shelf tile showed
+  // the admin's as well — the same cake, two different configurators.
+  const customizingGroups = useProductOptionGroups(customizing)
   const gridRef = useRef(null)
 
   useEffect(() => {
@@ -428,6 +434,7 @@ export default function CakeShop() {
       {customizing && (
         <ProductCustomizeSheet
           product={customizing}
+          groups={customizingGroups}
           onClose={() => setCustomizing(null)}
           onConfirm={({ qty, unitPrice, lines, signature }) => {
             dispatch({

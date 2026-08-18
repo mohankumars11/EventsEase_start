@@ -7,7 +7,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
-import { SHOP_CATEGORIES } from '../config/shop'
+import { useShopCategories } from '../hooks/useShopCategories'
 import { FESTIVALS } from '../data/festivals'
 import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
@@ -632,13 +632,14 @@ function SupportStrip() {
  */
 function SearchResults({ query, onClear }) {
   const navigate = useNavigate()
+  const shopCategories = useShopCategories()
   const [products, setProducts] = useState(null)
   const reqId = useRef(0)
   const needle = query.toLowerCase()
 
   const occasions = EVENT_TYPES.filter(t => t.label.toLowerCase().includes(needle) || t.tagline?.toLowerCase().includes(needle))
   const festivals = FESTIVALS.filter(f => f.name.toLowerCase().includes(needle))
-  const categories = SHOP_CATEGORIES.filter(c => c.label.toLowerCase().includes(needle) || c.tagline?.toLowerCase().includes(needle))
+  const categories = shopCategories.filter(c => c.label.toLowerCase().includes(needle) || c.tagline?.toLowerCase().includes(needle))
 
   useEffect(() => {
     const id = ++reqId.current

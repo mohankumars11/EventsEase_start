@@ -5,7 +5,7 @@ import DetailRotator from './DetailRotator'
 import RatingBadge from '../reviews/RatingBadge'
 import { formatINR } from '../../utils/format'
 import { FULFILMENT, FREE_DELIVERY_THRESHOLD, CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
-import { isCustomizable } from '../../config/customizers'
+import { useIsConfigurable } from '../../hooks/useProductOptions'
 import { useCartLine } from './useProductAdd'
 
 /**
@@ -46,7 +46,10 @@ export default function MarketProductCard({
   // is six chances for one of them to wire "−" to the wrong line.
   const { qty, inc, dec } = useCartLine(p.id)
   const messageField = CUSTOMIZABLE_CATEGORIES[p.category]
-  const configurable = isCustomizable(p.category)   // has a full option builder
+  // Not `isCustomizable(p.category)` any more: since migration 053 a product
+  // can carry its own questions regardless of which shelf it sits on, and this
+  // card decides between a stepper and a “Choose options” button on the answer.
+  const configurable = useIsConfigurable(p)
 
   const facts = [
     offer && {

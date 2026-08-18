@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Heart, Flame, Sparkles, ArrowDownNarrowWide, SlidersHorizontal, X, PackageOpen, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { SHOP_CATEGORIES, categoryQueryValues } from '../../config/shop'
+import { categoryQueryValues } from '../../config/shop'
+import { useShopCategory } from '../../hooks/useShopCategories'
 import { groupsForCategory, occasionMetaFor } from '../../data/shopOccasions'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 import ShopAppBar from '../../components/shop/ShopAppBar'
@@ -51,7 +52,12 @@ export default function ShopCategory() {
 
   const offers = usePublicOffers()
   const { addProduct, sheet } = useProductAdd()
-  const meta = SHOP_CATEGORIES.find(c => c.id === category)
+  // Was `SHOP_CATEGORIES.find(...)`, which returned undefined for any shelf
+  // an admin created — so a brand-new category rendered with a blank title, a
+  // blank tagline and no emoji, and looked broken even though its products
+  // loaded fine underneath. `useShopCategory` reads the merged list and, for
+  // an id with no row at all, falls back to the id as its own label.
+  const meta = useShopCategory(category)
 
   useEffect(() => {
     setLoading(true)

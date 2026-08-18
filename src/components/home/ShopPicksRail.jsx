@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Ticket, Truck, Heart, BadgeCheck, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
-import { FREE_DELIVERY_THRESHOLD, SHOP_CATEGORIES } from '../../config/shop'
+import { FREE_DELIVERY_THRESHOLD } from '../../config/shop'
+import { useShopCategories } from '../../hooks/useShopCategories'
 import ProductImage from '../shop/ProductImage'
 import { formatINR } from '../../utils/format'
 
@@ -41,6 +42,9 @@ import { formatINR } from '../../utils/format'
  * is decorative.
  */
 export default function ShopPicksRail() {
+  // Live shelves, so a category added in the Product Studio gets sampled
+  // here too instead of only the six that ship in config/shop.js.
+  const shopCategories = useShopCategories()
   const [picks, setPicks] = useState([])
   const offers = usePublicOffers()
 
@@ -56,7 +60,7 @@ export default function ShopPicksRail() {
      * lookups are worth a grid that actually represents the catalogue.
      */
     Promise.all(
-      SHOP_CATEGORIES.map(cat =>
+      shopCategories.map(cat =>
         supabase
           .from('products')
           .select('id, name, category, price, image_url, occasion')
@@ -70,7 +74,9 @@ export default function ShopPicksRail() {
     })
 
     return () => { cancelled = true }
-  }, [])
+    // Re-samples when the live shelf list arrives, so a shelf added in the
+    // console is represented here on the same visit rather than after a reload.
+  }, [shopCategories])
 
   // Nothing rather than an empty shelf: a heading over a blank strip reads as
   // a broken page, and this is the one section whose contents depend on a
@@ -181,7 +187,7 @@ export default function ShopPicksRail() {
           the direct route to a category without spending another screen of
           height repeating what is directly above them. */}
       <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
-        {SHOP_CATEGORIES.map(cat => (
+        {shopCategories.map(cat => (
           <Link
             key={cat.id}
             to={`/shop/${encodeURIComponent(cat.id)}`}

@@ -2,14 +2,16 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react
 import {
   Loader2, Search, Plus, X, Check, AlertTriangle, ClipboardPaste, Layers,
   IndianRupee, Tag, EyeOff, Eye, Images, Film, Star, HelpCircle, Sparkles,
-  ChevronRight, PackageOpen, Store, ArrowRight,
+  ChevronRight, PackageOpen, Store, ArrowRight, ExternalLink, CheckCircle2, Camera,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR } from '../../utils/format'
 import { fetchCategories, FALLBACK_CATEGORIES } from '../../lib/shopCategories'
+import { invalidateShopCategories } from '../../hooks/useShopCategories'
+import { QuickPhotoSheet } from './PhotoIntake'
 import {
-  parseBulk, importProducts, bulkUpdate, saveProduct,
+  parseBulk, importProducts, bulkUpdate, saveProduct, publishProducts,
   fetchMediaCounts, fetchRatings, isNotInstalled,
 } from '../../lib/productStudio'
 
@@ -62,7 +64,12 @@ export default function ProductStudio() {
 
   const [category, setCategory] = useState('all')
   const [search, setSearch] = useState('')
-  const [gaps, setGaps] = useState('all')      // 'all' | 'nogallery' | 'nostory' | 'nofaq' | 'norating'
+  const [gaps, setGaps] = useState('all')      // see GAP_FILTERS
+  // Separate from `gaps` on purpose: "show me what is off sale" is a different
+  // question from "show me what is missing a photo", and folding them into one
+  // chip row would make them mutually exclusive when an admin most often wants
+  // both ("what is live and still has no picture").
+  const [live, setLive] = useState('all')      // 'all' | 'on' | 'off'
   const [page, setPage] = useState(0)
 
   const [selected, setSelected] = useState(() => new Set())
@@ -70,6 +77,14 @@ export default function ProductStudio() {
   const [importing, setImporting] = useState(false)
   const [creating, setCreating] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
+  // The receipt shown after publishing. Not a toast: a toast disappears, and
+  // the whole point of it is that the admin can click through and SEE the
+  // product on the storefront.
+  const [published, setPublished] = useState(null)
+  // Which product's photo sheet is open. Clicking any thumbnail in the list
+  // opens it — that is the gesture people already try, and it used to do
+  // nothing at all.
+  const [photoFor, setPhotoFor] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -103,6 +118,11 @@ export default function ProductStudio() {
         mc.status === 'fulfilled' && mc.value.installed && data.some(p => 'highlights' in p)
       )
       setPage(0)
+      // The storefront caches the shelf list for the life of the tab. Without
+      // this, an admin adds a shelf here, taps through to /shop in the same
+      // tab, and sees the old list — which is indistinguishable from the save
+      // having failed.
+      invalidateShopCategories()
     } catch (err) {
       setError(friendlyError(err, 'Could not load the catalogue.'))
     } finally {
@@ -121,6 +141,11 @@ export default function ProductStudio() {
     const q = search.trim().toLowerCase()
     return products.filter(p => {
       if (category !== 'all' && p.category !== category) return false
+      // `!== false` rather than `=== true`: the column defaults to TRUE and is
+      // absent altogether on a database behind on migration 037, where every
+      // product is on sale.
+      if (live === 'on'  && p.is_active === false) return false
+      if (live === 'off' && p.is_active !== false) return false
       if (q && !(`${p.name} ${p.occasion ?? ''} ${p.description ?? ''}`.toLowerCase().includes(q))) return false
 
       const m = media[p.id]
@@ -130,7 +155,7 @@ export default function ProductStudio() {
       if (gaps === 'noprice'   && Number(p.price) > 0) return false
       return true
     })
-  }, [products, category, search, gaps, media, ratings])
+  }, [products, category, search, gaps, live, media, ratings])
 
   const shown = filtered.slice(0, (page + 1) * PAGE_SIZE)
   const allShownSelected = shown.length > 0 && shown.every(p => selected.has(p.id))
@@ -151,6 +176,37 @@ export default function ProductStudio() {
       return next
     })
   }
+
+  /**
+   * Put things on sale, from anywhere on this screen, with one confirmation.
+   *
+   * Every route to "make this live" — the row toggle, the bulk bar — comes
+   * through here so the admin gets the same verified answer each time rather
+   * than a toast from one path and nothing from another.
+   */
+  const publish = useCallback(async (ids, active) => {
+    const result = await publishProducts(ids, { active })
+
+    if (!active) {
+      toast.success(
+        result.confirmed.length === 1
+          ? `“${result.confirmed[0].name}” is off sale — customers can no longer see it.`
+          : `${result.confirmed.length} products taken off sale.`
+      )
+      await load()
+      return result
+    }
+
+    if (result.failed.length) {
+      toast.error(
+        `${result.failed.length} product${result.failed.length === 1 ? '' : 's'} did not go live. ` +
+        'Your account may not have permission to publish.'
+      )
+    }
+    if (result.confirmed.length) setPublished(result)
+    await load()
+    return result
+  }, [load, toast])
 
   const openProduct = products.find(p => p.id === openId) ?? null
 
@@ -206,13 +262,17 @@ export default function ProductStudio() {
             category={category} onCategory={c => { setCategory(c); setPage(0) }}
             search={search} onSearch={s => { setSearch(s); setPage(0) }}
             gaps={gaps} onGaps={g => { setGaps(g); setPage(0) }}
+            live={live} onLive={v => { setLive(v); setPage(0) }}
+            offCount={products.filter(p => p.is_active === false).length}
             count={filtered.length}
           />
 
           {selected.size > 0 && (
             <BulkBar
               ids={[...selected]}
+              selectedProducts={products.filter(p => selected.has(p.id))}
               categories={shopCategories}
+              onPublish={async (active) => { await publish([...selected], active); setSelected(new Set()) }}
               onDone={async (msg) => { toast.success(msg); setSelected(new Set()); await load() }}
               onCancel={() => setSelected(new Set())}
             />
@@ -254,8 +314,18 @@ export default function ProductStudio() {
                     media={media[p.id]}
                     rating={ratings[p.id]}
                     selected={selected.has(p.id)}
+                    categories={shopCategories}
                     onToggle={() => toggle(p.id)}
                     onOpen={() => setOpenId(p.id)}
+                    onPublish={active => publish([p.id], active)}
+                    onPhoto={() => setPhotoFor(p)}
+                    onMove={async to => {
+                      const from = p.category
+                      await bulkUpdate([p.id], { field: 'category', value: to })
+                      const label = shopCategories.find(c => c.id === to)?.label ?? to
+                      toast.success(`“${p.name}” moved from ${from} to ${label}.`)
+                      await load()
+                    }}
                   />
                 ))}
               </div>
@@ -301,6 +371,22 @@ export default function ProductStudio() {
           categories={shopCategories}
           onClose={() => setCreating(false)}
           onCreated={async (p) => { setCreating(false); await load(); setOpenId(p.id) }}
+        />
+      )}
+
+      {photoFor && (
+        <QuickPhotoSheet
+          product={photoFor}
+          onClose={() => setPhotoFor(null)}
+          onDone={load}
+        />
+      )}
+
+      {published && (
+        <LiveReceipt
+          result={published}
+          categories={categories}
+          onClose={() => setPublished(null)}
         />
       )}
 
@@ -422,6 +508,137 @@ function MigrationBanner() {
   )
 }
 
+
+/* ── The "it's live" receipt ──────────────────────────────────────────── */
+
+/**
+ * What the admin sees after publishing.
+ *
+ * ── Why this is a panel and not a toast ──────────────────────────────────
+ * The complaint that started this was "I clicked put on sale and it never went
+ * to the front end". A toast saying "1 product updated" cannot answer that,
+ * because it reports what the console TRIED to do. This reports what is now
+ * true — the rows were re-read after the write (see `publishProducts`) — and
+ * then hands over the one thing that settles it either way: a link straight to
+ * the shelf the customer would land on.
+ *
+ * It also names the two states that hide a correctly-published product, since
+ * both are invisible from the product row itself:
+ *
+ *   · the SHELF is retired, so there is no tile to reach the product through;
+ *   · the product has no photograph, so it renders as an emoji plate and the
+ *     admin scrolls straight past the thing they just published.
+ */
+function LiveReceipt({ result, categories, onClose }) {
+  const { confirmed, shelves, withoutPhoto } = result
+  const one = confirmed.length === 1 ? confirmed[0] : null
+
+  // A shelf switched off in the Shelves tab still holds its products, and they
+  // are still `is_active`. They are simply unreachable, which looks exactly
+  // like the publish having failed.
+  const hiddenShelves = shelves.filter(id => {
+    const cat = categories.find(c => c.id === id)
+    return cat && cat.is_active === false
+  })
+
+  return (
+    <Modal title={one ? 'It is live' : `${confirmed.length} products are live`} onClose={onClose}>
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-600" />
+          <div className="min-w-0 text-sm">
+            {one ? (
+              <>
+                <p className="font-bold text-emerald-900">
+                  “{one.name}” is on sale in {one.category}.
+                </p>
+                <p className="mt-1 leading-relaxed text-emerald-800">
+                  Customers can see it and add it to a basket right now, at {formatINR(one.price)}.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-bold text-emerald-900">
+                  {confirmed.length} products are on sale across {shelves.length} shelf{shelves.length === 1 ? '' : 'ves'}.
+                </p>
+                <p className="mt-1 leading-relaxed text-emerald-800">{shelves.join(' · ')}</p>
+              </>
+            )}
+            {/* Checked, not claimed. The row was read back out of the database
+                after the write — this line is the difference between a
+                confirmation and a hopeful message. */}
+            <p className="mt-1.5 text-[11px] font-semibold text-emerald-700">
+              Confirmed by re-reading {confirmed.length === 1 ? 'the row' : 'the rows'} after saving.
+            </p>
+          </div>
+        </div>
+
+        {/* The link that actually settles it. New tab, because the admin is
+            mid-queue in the studio and closing it to look would lose their
+            filters and their scroll position. */}
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-700">See it the way a customer does</p>
+          {shelves.map(id => {
+            const cat = categories.find(c => c.id === id)
+            return (
+              <a
+                key={id}
+                href={`/shop/${encodeURIComponent(id)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-xl border border-plum-200 px-3 py-2.5 text-sm font-semibold text-plum-700 hover:border-plum-400 hover:bg-plum-50/50"
+              >
+                <span className="text-lg">{cat?.emoji ?? '🛍️'}</span>
+                <span className="flex-1">Open the {cat?.label ?? id} shelf</span>
+                <ExternalLink size={15} />
+              </a>
+            )
+          })}
+        </div>
+
+        {hiddenShelves.length > 0 && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-sm">
+            <AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-bold text-amber-900">
+                {hiddenShelves.join(', ')} {hiddenShelves.length === 1 ? 'is' : 'are'} switched off
+              </p>
+              <p className="mt-1 leading-relaxed text-amber-800">
+                The product is on sale, but that shelf is hidden from the storefront, so there is
+                no tile leading to it. Turn the shelf back on under{' '}
+                <strong>Shelves &amp; categories</strong>, or move the product to a live shelf.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {withoutPhoto > 0 && (
+          <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-3.5 text-sm">
+            <Images size={17} className="mt-0.5 shrink-0 text-gray-500" />
+            <div>
+              <p className="font-bold text-gray-800">
+                {withoutPhoto === 1 ? 'It has no photograph yet' : `${withoutPhoto} of them have no photograph yet`}
+              </p>
+              <p className="mt-1 leading-relaxed text-gray-600">
+                {withoutPhoto === 1 ? 'It shows' : 'They show'} as an emoji tile until you add one — open
+                the product and use <strong>Photos &amp; video</strong>. You can paste a screenshot
+                straight in.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end border-t border-gray-100 pt-3">
+          <button onClick={onClose}
+            className="rounded-xl bg-plum-600 px-4 py-2 text-sm font-bold text-white hover:bg-plum-700">
+            Done
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 /* ── Filters ─────────────────────────────────────────────────────────── */
 
 const GAP_FILTERS = [
@@ -432,7 +649,7 @@ const GAP_FILTERS = [
   { id: 'noprice',   label: 'No price' },
 ]
 
-function Filters({ categories, category, onCategory, search, onSearch, gaps, onGaps, count }) {
+function Filters({ categories, category, onCategory, search, onSearch, gaps, onGaps, live, onLive, offCount, count }) {
   return (
     <div className="card space-y-3 p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -455,6 +672,25 @@ function Filters({ categories, category, onCategory, search, onSearch, gaps, onG
             <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
           ))}
         </select>
+        {/* On sale / off sale. This is the control an admin reaches for after
+            "I put it live and it isn't on the site" — it answers, in one tap,
+            whether the flag is actually set. */}
+        <div className="flex overflow-hidden rounded-xl border border-gray-200">
+          {[
+            ['all', 'All'],
+            ['on',  'On sale'],
+            ['off', `Off sale${offCount ? ` (${offCount})` : ''}`],
+          ].map(([id, label]) => (
+            <button
+              key={id} onClick={() => onLive(id)}
+              className={`px-2.5 py-2 text-xs font-semibold transition-colors ${
+                live === id ? 'bg-plum-600 text-white' : 'bg-white text-gray-600 hover:text-plum-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <span className="ml-auto text-xs font-semibold text-gray-400">{count} shown</span>
       </div>
 
@@ -479,9 +715,18 @@ function Filters({ categories, category, onCategory, search, onSearch, gaps, onG
 
 /* ── One product in the list ─────────────────────────────────────────── */
 
-function ProductRow({ product: p, media: m, rating, selected, onToggle, onOpen }) {
+function ProductRow({ product: p, media: m, rating, categories = [], selected, onToggle, onOpen, onPublish, onMove, onPhoto }) {
   const images = m?.image ?? 0
   const videos = m?.video ?? 0
+  const [publishing, setPublishing] = useState(false)
+  const [moving, setMoving] = useState(false)
+  const live = p.is_active !== false
+
+  async function togglePublish(e) {
+    e.stopPropagation()
+    setPublishing(true)
+    try { await onPublish(!live) } finally { setPublishing(false) }
+  }
 
   return (
     <div className={`card overflow-hidden transition-shadow ${selected ? 'ring-2 ring-plum-500' : 'hover:shadow-md'}`}>
@@ -496,16 +741,26 @@ function ProductRow({ product: p, media: m, rating, selected, onToggle, onOpen }
           {selected && <Check size={12} strokeWidth={3} />}
         </button>
 
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+        {/* The thumbnail is the photo button. Clicking a picture to change it
+            is what everyone tries first; it used to be inert, so the only way
+            in was open product → Photos tab. */}
+        <button
+          onClick={onPhoto}
+          title={p.image_url ? 'Add or replace photos — paste, drop or choose' : 'Add a photo — paste, drop or choose'}
+          className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100"
+        >
           {p.image_url
             ? <img src={p.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
             : <span className="grid h-full w-full place-items-center text-2xl">{p.emoji ?? '🎁'}</span>}
+          <span className="absolute inset-0 grid place-items-center bg-plum-950/55 opacity-0 transition-opacity group-hover:opacity-100">
+            <Camera size={16} className="text-white" />
+          </span>
           {p.is_active === false && (
-            <span className="absolute inset-0 grid place-items-center bg-white/70 text-[9px] font-extrabold uppercase text-gray-500">
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-white/80 text-center text-[9px] font-extrabold uppercase text-gray-500">
               Off
             </span>
           )}
-        </div>
+        </button>
 
         <button onClick={onOpen} className="min-w-0 flex-1 text-left">
           <p className="truncate text-sm font-bold text-plum-950">{p.name}</p>
@@ -520,9 +775,30 @@ function ProductRow({ product: p, media: m, rating, selected, onToggle, onOpen }
           </div>
         </button>
 
-        <button onClick={onOpen} className="self-center rounded-lg p-1 text-gray-300 hover:text-plum-700" aria-label="Open">
-          <ChevronRight size={18} />
-        </button>
+        {/* One tap to publish, from the list. It used to take selecting the
+            row and finding the bulk bar, or opening the workbench and hunting
+            for a toggle inside a tab — three steps for the single most common
+            action in this console. */}
+        <div className="flex flex-col items-center gap-1 self-center">
+          <button
+            onClick={togglePublish}
+            disabled={publishing}
+            title={live ? 'Take it off sale' : 'Put it on sale — customers will see it'}
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+              live
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400'
+                : 'border-gray-200 bg-white text-gray-500 hover:border-plum-400 hover:text-plum-700'
+            }`}
+          >
+            {publishing
+              ? <Loader2 size={11} className="animate-spin" />
+              : live ? <Eye size={11} /> : <EyeOff size={11} />}
+            {live ? 'Live' : 'Off'}
+          </button>
+          <button onClick={onOpen} className="rounded-lg p-0.5 text-gray-300 hover:text-plum-700" aria-label="Open">
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
       {/* What is filled in and what is not, at a glance. The whole point of
@@ -531,6 +807,32 @@ function ProductRow({ product: p, media: m, rating, selected, onToggle, onOpen }
       <div className="flex items-center gap-1.5 border-t border-gray-100 bg-gray-50/60 px-3 py-2">
         <Chip icon={Images} count={images} label="photos" />
         <Chip icon={Film} count={videos} label="clips" />
+
+        {/* Move shelf, without opening the product. The dropdown holds the
+            destination; the shelf it is leaving is the label beside it, so the
+            control reads as "Cakes → …" rather than as an unlabelled picker
+            that silently reassigns whatever is selected. */}
+        <label className="flex items-center gap-1 text-[11px] font-semibold text-gray-400">
+          <span className="max-w-[6rem] truncate" title={`Currently on ${p.category}`}>{p.category}</span>
+          <ArrowRight size={11} />
+          <select
+            value=""
+            disabled={moving}
+            onChange={async e => {
+              const to = e.target.value
+              if (!to || to === p.category) return
+              setMoving(true)
+              try { await onMove(to) } finally { setMoving(false) }
+            }}
+            className="max-w-[5.5rem] rounded border border-gray-200 bg-white px-1 py-0.5 text-[11px] font-semibold text-gray-600 disabled:opacity-50"
+            aria-label={`Move ${p.name} to another shelf`}
+          >
+            <option value="">Move…</option>
+            {categories.filter(c => c.id !== p.category).map(c => (
+              <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
+            ))}
+          </select>
+        </label>
         <button
           onClick={onOpen}
           className={`ml-auto flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold ${
@@ -573,21 +875,35 @@ function Chip({ icon: Icon, count, label }) {
  * ten percent". Without those two modes, "bulk edit" is a feature that reads
  * well in a list and gets used once.
  */
-function BulkBar({ ids, categories, onDone, onCancel }) {
+function BulkBar({ ids, selectedProducts = [], categories, onPublish, onDone, onCancel }) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const [mode, setMode] = useState(null)     // 'price' | 'category' | 'badge'
   const [priceMode, setPriceMode] = useState('percent')
   const [value, setValue] = useState('')
 
-  async function run(action) {
+  /** Which shelves the selection currently sits on, and how many from each. */
+  const fromShelves = useMemo(() => {
+    const counts = {}
+    for (const p of selectedProducts) counts[p.category] = (counts[p.category] ?? 0) + 1
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])
+  }, [selectedProducts])
+
+  async function publish(active) {
+    setBusy(true)
+    try { await onPublish(active) }
+    catch (err) { toast.error(friendlyError(err, 'Could not change that.')) }
+    finally { setBusy(false) }
+  }
+
+  async function run(action, successMessage) {
     setBusy(true)
     try {
       const res = await action()
       if (res?.degraded) {
         toast.error(`"${res.field}" needs migration 051 — nothing was changed.`)
       } else {
-        await onDone(`${res?.updated ?? ids.length} product${(res?.updated ?? ids.length) === 1 ? '' : 's'} updated.`)
+        await onDone(successMessage ?? `${res?.updated ?? ids.length} product${(res?.updated ?? ids.length) === 1 ? '' : 's'} updated.`)
         setMode(null); setValue('')
       }
     } catch (err) {
@@ -616,12 +932,14 @@ function BulkBar({ ids, categories, onDone, onCancel }) {
           className="flex items-center gap-1.5 rounded-lg border border-plum-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-plum-700 hover:border-plum-400">
           <Tag size={13} /> Set badge
         </button>
-        <button disabled={busy} onClick={() => run(() => bulkUpdate(ids, { field: 'is_active', value: false }))}
+        {/* Through `onPublish`, not `bulkUpdate`, so these two get the same
+            verified confirmation as the row toggle — see `publish` above. */}
+        <button disabled={busy} onClick={() => publish(false)}
           className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-400 disabled:opacity-50">
           <EyeOff size={13} /> Take off sale
         </button>
-        <button disabled={busy} onClick={() => run(() => bulkUpdate(ids, { field: 'is_active', value: true }))}
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-400 disabled:opacity-50">
+        <button disabled={busy} onClick={() => publish(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700 hover:border-emerald-400 disabled:opacity-50">
           <Eye size={13} /> Put on sale
         </button>
 
@@ -658,19 +976,41 @@ function BulkBar({ ids, categories, onDone, onCancel }) {
       )}
 
       {mode === 'category' && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-plum-200 pt-3">
-          <select value={value} onChange={e => setValue(e.target.value)}
-            className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm font-semibold">
-            <option value="">Choose a shelf…</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
-          </select>
-          <button
-            disabled={busy || !value}
-            onClick={() => run(() => bulkUpdate(ids, { field: 'category', value }))}
-            className="flex items-center gap-1.5 rounded-lg bg-plum-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-plum-700 disabled:opacity-40"
-          >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Move {ids.length}
-          </button>
+        <div className="mt-3 space-y-2 border-t border-plum-200 pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* The FROM side, spelled out. A bulk move whose source is invisible
+                is how forty products leave a shelf nobody meant to empty —
+                especially when the selection spans more than one. */}
+            <span className="text-xs font-semibold text-gray-600">From</span>
+            <span className="rounded-lg bg-white px-2 py-1 text-xs font-bold text-gray-700 ring-1 ring-gray-200">
+              {fromShelves.length === 0
+                ? '—'
+                : fromShelves.length <= 3
+                  ? fromShelves.map(([id, n]) => `${id} (${n})`).join(', ')
+                  : `${fromShelves.length} shelves`}
+            </span>
+            <ArrowRight size={14} className="text-plum-500" />
+            <span className="text-xs font-semibold text-gray-600">To</span>
+            <select value={value} onChange={e => setValue(e.target.value)}
+              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm font-semibold">
+              <option value="">Choose a shelf…</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+            </select>
+            <button
+              disabled={busy || !value}
+              onClick={() => run(
+                () => bulkUpdate(ids, { field: 'category', value }),
+                `Moved ${ids.length} product${ids.length === 1 ? '' : 's'} to ${categories.find(c => c.id === value)?.label ?? value}.`
+              )}
+              className="flex items-center gap-1.5 rounded-lg bg-plum-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-plum-700 disabled:opacity-40"
+            >
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Move {ids.length}
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-500">
+            They leave those shelves and appear on the new one immediately. Past orders keep the
+            shelf they were bought under.
+          </p>
         </div>
       )}
 
