@@ -4,6 +4,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import {
   uploadGalleryImages, fetchImageAsFile, imageUrlsFromText,
 } from '../../lib/productStudio'
+import { QUALITY_MODES, ORIGINAL_MAX_BYTES } from '../../lib/productImages'
 import { usePasteImages } from '../../hooks/usePasteImages'
 
 /**
@@ -40,11 +41,18 @@ export default function PhotoIntake({
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState(null)
   const [source, setSource] = useState(defaultSource)
+  // Defaults to 'original', because the route that brought people here is a
+  // pasted screenshot and re-encoding one is exactly the complaint. A
+  // photograph is better off 'balanced', which is one click away.
+  const [quality, setQuality] = useState('original')
+  const [lastResult, setLastResult] = useState(null)
   const [urlText, setUrlText] = useState('')
   const filesInput = useRef(null)
   const cameraInput = useRef(null)
   const sourceRef = useRef(source)
   sourceRef.current = source
+  const qualityRef = useRef(quality)
+  qualityRef.current = quality
 
   const ingest = useCallback(async (files, { label = 'Photo' } = {}) => {
     if (!files?.length) return
@@ -52,6 +60,7 @@ export default function PhotoIntake({
     try {
       const { added, failures } = await uploadGalleryImages(productId, files, {
         source: sourceRef.current,
+        quality: qualityRef.current,
         // Only claims the tile when there is nothing there. Pasting more
         // photos onto a product whose tile photo was chosen deliberately must
         // not silently replace it.
@@ -59,9 +68,21 @@ export default function PhotoIntake({
         onProgress: setProgress,
       })
       if (added.length) {
+        // Reported from what actually happened to the bytes, not from what was
+        // requested — `_kept` is set by prepareImage only when the original was
+        // uploaded untouched.
+        const kept = added.filter(a => a._kept).length
+        const first = added[0]
+        const dims = first?._width ? ` ${first._width}x${first._height}` : ''
+        setLastResult({
+          kept,
+          total: added.length,
+          dims,
+          reason: added.find(a => a._reason)?._reason ?? null,
+        })
         toast.success(added.length === 1
-          ? `${label} added.${!hasPhoto ? ' It is now the tile photo.' : ''}`
-          : `${added.length} photos added.${!hasPhoto ? ' The first is now the tile photo.' : ''}`)
+          ? `${label} added${kept ? ` at full quality${dims}` : dims}.${!hasPhoto ? ' It is now the tile photo.' : ''}`
+          : `${added.length} photos added${kept === added.length ? ' at full quality' : ''}.${!hasPhoto ? ' The first is now the tile photo.' : ''}`)
       }
       for (const f of failures.slice(0, 3)) toast.error(`${f.name}: ${f.message}`)
       if (failures.length > 3) toast.error(`…and ${failures.length - 3} more failed.`)
@@ -160,6 +181,34 @@ export default function PhotoIntake({
         </p>
       </div>
 
+      {/* ── Quality ─────────────────────────────────────────────────────
+          The pixels that arrive are the pixels that were on the clipboard —
+          'Original quality' does not re-encode at a higher setting, it does
+          not re-encode at all. Every canvas round-trip costs something, and a
+          screenshot of a PDF is text and hard edges, which is exactly what
+          lossy WebP at 0.82 smears. */}
+      <div className="mt-3">
+        <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-500">Quality</p>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.values(QUALITY_MODES).map(mode => (
+            <button
+              key={mode.id} onClick={() => setQuality(mode.id)}
+              className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                quality === mode.id
+                  ? 'border-plum-600 bg-plum-600 text-white'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-plum-300'
+              }`}
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-gray-400">
+          {QUALITY_MODES[quality]?.hint}
+          {quality === 'original' && ` Up to ${ORIGINAL_MAX_BYTES / 1048576} MB stays byte-for-byte; anything larger is resaved at high quality.`}
+        </p>
+      </div>
+
       <div className="mt-3 flex flex-wrap gap-2">
         {/* First and loudest: it is the one the whole complaint was about, and
             it works even when Ctrl+V never reaches the page. */}
@@ -205,6 +254,26 @@ export default function PhotoIntake({
           Fetch
         </button>
       </div>
+
+      {/* What happened to the bytes, reported rather than assumed. */}
+      {lastResult && !progress && (
+        <div className={`mt-3 rounded-xl px-3 py-2 text-[11px] ${
+          lastResult.kept === lastResult.total
+            ? 'bg-emerald-50 text-emerald-800'
+            : 'bg-amber-50 text-amber-800'
+        }`}>
+          {lastResult.kept === lastResult.total ? (
+            <p className="font-semibold">
+              Uploaded untouched{lastResult.dims} — identical to the original, no re-encoding.
+            </p>
+          ) : (
+            <p className="font-semibold">
+              {lastResult.kept} of {lastResult.total} kept at original quality.
+              {lastResult.reason ? ` ${lastResult.reason}` : ''}
+            </p>
+          )}
+        </div>
+      )}
 
       {progress && (
         <div className="mt-3 rounded-xl bg-plum-50 px-3 py-2">

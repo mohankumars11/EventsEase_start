@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { compressImage } from './productImages'
+import { prepareImage, extFor } from './productImages'
 
 /**
  * Everything the Product Studio reads and writes.
@@ -450,24 +450,37 @@ export async function reorderMedia(list, id, direction) {
  * wait for. `makePrimary` also points `products.image_url` at it, which is
  * what puts the photo on the grid tile.
  */
-export async function uploadGalleryImage(productId, file, { source = 'actual', alt, caption, makePrimary = false } = {}) {
-  const blob = await compressImage(file)
-  const ext  = blob.type === 'image/webp' ? 'webp' : 'jpg'
+export async function uploadGalleryImage(productId, file, {
+  source = 'actual', alt, caption, makePrimary = false, quality = 'balanced',
+} = {}) {
+  // 'original' keeps the pasted bytes exactly — see prepareImage. The
+  // extension has to follow the ACTUAL type now rather than assuming
+  // webp-or-jpg, because a kept PNG screenshot stays a PNG and serving it as
+  // .jpg makes some CDNs and image tools guess wrong about it.
+  // `bucket` is chosen by prepareImage, not fixed here: an untouched 22 MB
+  // scan cannot go in product-images (5 MB) but fits product-media (50 MB), and
+  // shrinking it to satisfy the smaller bucket would throw away exactly what
+  // 'original' was asked to preserve.
+  const { blob, kept, bucket, width, height, reason } = await prepareImage(file, { mode: quality })
+  const ext  = extFor(blob.type)
   // A random suffix as well as the clock. Pasting eight screenshots at once
   // starts eight uploads inside the same millisecond, and `upsert: false`
   // turns a path collision into a failed upload for every file but the first.
   const path = `${productId}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
+  const target = bucket === 'product-media' ? MEDIA_BUCKET : IMAGE_BUCKET
   const { error: upErr } = await supabase.storage
-    .from(IMAGE_BUCKET)
+    .from(target)
     .upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false })
   if (upErr) throw new Error(`Upload failed: ${upErr.message}`)
 
-  const { data: { publicUrl } } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path)
+  const { data: { publicUrl } } = supabase.storage.from(target).getPublicUrl(path)
   const media = await addMedia(productId, { kind: 'image', url: publicUrl, source, alt, caption })
 
   if (makePrimary) await setPrimaryImage(productId, publicUrl, source)
-  return media
+  // `kept` and the dimensions travel back so the console can say what actually
+  // happened to the file rather than implying nothing did.
+  return { ...media, _kept: kept, _width: width, _height: height, _reason: reason }
 }
 
 /* ── Getting pictures in ───────────────────────────────────────────────────
@@ -562,6 +575,7 @@ export async function fetchImageAsFile(url) {
 export async function uploadGalleryImages(productId, files, {
   source = 'actual',
   makePrimaryIfFirst = false,
+  quality = 'balanced',
   onProgress,
 } = {}) {
   const added = []
@@ -573,6 +587,7 @@ export async function uploadGalleryImages(productId, files, {
     try {
       const media = await uploadGalleryImage(productId, file, {
         source,
+        quality,
         makePrimary: makePrimaryIfFirst && i === 0,
       })
       added.push(media)
