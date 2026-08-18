@@ -28,9 +28,10 @@ import BrandFilm from '../components/home/BrandFilm'
 import BrandBanner from '../components/home/BrandBanner'
 import ServiceMosaic from '../components/home/ServiceMosaic'
 import PhotoReelFilm from '../components/home/PhotoReelFilm'
-import OccasionCard from '../components/home/OccasionCard'
 import TierRail from '../components/home/TierRail'
 import ShopPicksRail from '../components/home/ShopPicksRail'
+import { QuickRail, SquareGrid } from '../components/gifting/GiftSections'
+import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -128,6 +129,30 @@ export default function HomeScreen() {
   // The deck is assembled from what is true today, in the order that matters
   // to whoever is looking. A returning customer with a celebration underway
   // does not need the "plan a celebration" pitch first.
+  /**
+   * The celebration occasions, as square tiles.
+   *
+   * The colour is assigned by position rather than stored per occasion, so
+   * the palette cycles evenly down the grid and adding a sixteenth occasion
+   * cannot leave it colourless. `photos` is up to four real, committed
+   * photographs (see planCatalog), which is what lets the tile deal them —
+   * the emoji underneath is only reached when an occasion has none.
+   */
+  const occasionTiles = useMemo(() => {
+    const keys = Object.keys(TILE_COLOURS)
+    return OCCASIONS.map((o, i) => ({
+      id: o.id,
+      to: `/services/${o.id}`,
+      label: o.label ?? o.name,
+      meta: Number.isFinite(o.fromPrice) ? `from ${formatINR(o.fromPrice)}` : null,
+      emoji: o.emoji,
+      // The whole set, not the first: several photographs is what makes
+      // the tile a deck rather than a still. See PhotoDeck.
+      photos: o.photos ?? [],
+      colour: keys[i % keys.length],
+    }))
+  }, [])
+
   const nextFestival = upcoming[0]
   const bestOffer = offers[0]
 
@@ -250,6 +275,16 @@ export default function HomeScreen() {
               see the component for why that trade is worth making now and why
               it is written to expire once there is recall to trade on. */}
           <BrandBanner />
+
+          {/* ── The seven ways in ─────────────────────────────────────
+              The same square rail the storefront opens with, in the same
+              place, for the same reason: most people arriving here want a
+              thing rather than a celebration, and the fastest route to a
+              thing should not be below three sections of argument.
+
+              Square tiles with the name underneath — see SquareTile for why
+              the caption sits below the photograph rather than over it. */}
+          <QuickRail items={QUICK_RAIL} />
 
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
@@ -381,18 +416,23 @@ export default function HomeScreen() {
                 Every one of these, arranged end to end — pick yours.
               </p>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 px-4">
-              {OCCASIONS.map((o, i) => (
-                <OccasionCard
-                  key={o.id}
-                  occasion={o}
-                  offer={bestOfferFor(o.fromPrice, offers)}
-                  /* Each card starts its rotation a beat after the one
-                     before, so the grid never flips as one block. */
-                  stagger={i * 260}
-                />
-              ))}
-            </div>
+            {/* Square tiles, three to a row, with the name and the entry
+                price underneath.
+
+                This was a two-per-row grid of OccasionCard — a tall panel
+                that cycled four photographs and carried a coupon badge. Two
+                things were wrong with it once the rest of the app moved to
+                squares. Fifteen occasions at two per row is eight rows of
+                scrolling before the page moves on, so the sections under it
+                were effectively unreachable; and a card that reflows its own
+                photograph every few seconds means the grid is never still
+                while somebody is trying to read down it.
+
+                Three squares to a row halves the height, the photograph is
+                still large enough to read at 110px, and the from-price — the
+                one number that was worth keeping off that card — moves under
+                the name where every tile states it on the same baseline. */}
+            <SquareGrid className="mt-3" items={occasionTiles} />
           </section>
 
           {/* ── Every offer, four at a time ───────────────────────────

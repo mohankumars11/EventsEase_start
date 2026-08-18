@@ -1521,3 +1521,67 @@
     transition-property: opacity !important;
   }
 }
+
+/* ── The photo deck ──────────────────────────────────────────────────
+   A celebration tile holds several real photographs and deals them, one
+   at a time, like a small stack of prints.
+
+   Why a deal and not a crossfade. A crossfade between two photographs of
+   the same subject is nearly invisible — the eye reads it as the image
+   sharpening rather than as a change — so the tile spends its motion
+   budget and tells you nothing. A card leaving the top of a stack is a
+   physical event: something moved, something was underneath it, and there
+   is more here than one picture. That is the whole message the motion has
+   to carry.
+
+   Two layers only are ever mounted (outgoing and incoming); the rest of
+   the deck is a pair of static offset edges behind them, so a grid of
+   fifteen tiles animates four elements each rather than sixty.
+
+   The deal moves the OUTER layer and the drift scales the INNER image, so
+   the two never fight over one transform. */
+@layer utilities {
+  @keyframes deck-deal-in {
+    0%   { opacity: 0; transform: translate3d(7%, 9%, 0) rotate(4deg)  scale(0.90); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: translate3d(0, 0, 0)   rotate(0deg)  scale(1); }
+  }
+  @keyframes deck-deal-out {
+    0%   { opacity: 1; transform: translate3d(0, 0, 0)     rotate(0deg)    scale(1); }
+    100% { opacity: 0; transform: translate3d(-10%, -8%, 0) rotate(-5deg)  scale(1.08); }
+  }
+  /* Slow push-in while a card rests, so the tile is never completely
+     still between deals. */
+  @keyframes deck-drift {
+    from { transform: scale(1.02); }
+    to   { transform: scale(1.13); }
+  }
+
+  .deck-layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .deck-in  { animation: deck-deal-in  0.72s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .deck-out { animation: deck-deal-out 0.72s cubic-bezier(0.55, 0, 0.55, 1) both; }
+  .deck-drift {
+    animation: deck-drift 6s ease-out both;
+    transform-origin: 55% 45%;
+  }
+
+  /* The edges of the cards still in the stack. Static — they are scenery,
+     and animating them would turn one moving object into three. */
+  .deck-edge {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .deck-in, .deck-out, .deck-drift { animation: none !important; }
+    .deck-out { opacity: 0 !important; }
+    .deck-in  { opacity: 1 !important; transform: none !important; }
+  }
+}

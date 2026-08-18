@@ -71,7 +71,44 @@ export function festivalPill(occasion) {
 }
 
 /**
- * The circular rail directly under the search field.
+ * ── The tile palette ──────────────────────────────────────────────────────
+ *
+ * The page ground is pure white and stays that way. Colour lives only inside
+ * tiles, and it comes from here so that six sections cannot each invent their
+ * own pink.
+ *
+ * These are deliberately SATURATED, not the near-white 50-level tints a
+ * Tailwind scale reaches for first. On a white page a 50-level tint reads as
+ * a rendering artefact — the reader cannot tell whether the tile is coloured
+ * or the screen is dirty — and the whole grid goes grey at arm's length. The
+ * job of the colour is to separate one occasion from the next at a glance,
+ * which needs real chroma.
+ *
+ * Each entry is a pair: `bg` for the tile and `ink` for type set on it. The
+ * ink is a dark, desaturated relative of the ground rather than black,
+ * because pure black on a coloured tile reads as a mistake. Every pairing
+ * below clears 7:1.
+ */
+export const TILE_COLOURS = {
+  blush:   { bg: '#FBD9D3', ink: '#7A2E22' },
+  coral:   { bg: '#F9A98C', ink: '#7C2D12' },
+  amber:   { bg: '#F7D774', ink: '#78350F' },
+  sky:     { bg: '#C3DCF2', ink: '#1E3A5F' },
+  mint:    { bg: '#BFE3CB', ink: '#14532D' },
+  lilac:   { bg: '#DCD0F5', ink: '#4C1D95' },
+  sand:    { bg: '#EFE0C9', ink: '#6B4423' },
+  rose:    { bg: '#F6C6D9', ink: '#831843' },
+  sage:    { bg: '#D6E3C3', ink: '#3F5B21' },
+}
+
+/**
+ * The rail directly under the search field.
+ *
+ * Square tiles with the label underneath, not circles with the label inside.
+ * A square shows more of a photograph at the same width, the labels all sit
+ * on one baseline so the row reads as a list rather than as decoration, and a
+ * long word ("Personalised") can wrap under its tile instead of being
+ * squeezed into one.
  *
  * Seven entries, and the first is not a category. "Today" leads because the
  * most common unserved intent in this market is temporal rather than
@@ -79,13 +116,13 @@ export function festivalPill(occasion) {
  * that behind a filter three taps in.
  */
 export const QUICK_RAIL = [
-  { id: 'today',      label: 'Need it today', emoji: '⚡', to: '/shop/today',                      tint: 'from-amber-100 to-orange-50' },
-  { id: 'flowers',    label: 'Flowers',       emoji: '💐', to: '/shop/Flowers',                    tint: 'from-rose-100 to-pink-50' },
-  { id: 'cakes',      label: 'Cakes',         emoji: '🎂', to: '/shop/Cakes',                      tint: 'from-orange-100 to-amber-50' },
-  { id: 'personal',   label: 'Personalised',  emoji: '✍️', to: '/shop/Gifts?kind=personalised',    tint: 'from-violet-100 to-purple-50' },
-  { id: 'rakhi',      label: 'Rakhi',         emoji: '🧿', to: '/shop/Gifts?occasion=Rakhi',       tint: 'from-yellow-100 to-amber-50' },
-  { id: 'pooja',      label: 'Pooja',         emoji: '🪔', to: '/shop/Pooja%20%26%20Essentials',   tint: 'from-amber-100 to-yellow-50' },
-  { id: 'heritage',   label: 'Heritage',      emoji: '🪆', to: '/shop/Heritage%20%26%20Crafts',    tint: 'from-emerald-100 to-teal-50' },
+  { id: 'today',    label: 'Need it today', emoji: '⚡', to: '/shop/today',                    colour: 'coral', query: 'express delivery scooter courier' },
+  { id: 'flowers',  label: 'Flowers',       emoji: '💐', to: '/shop/Flowers',                  colour: 'rose',  query: 'fresh flower bouquet roses' },
+  { id: 'cakes',    label: 'Cakes',         emoji: '🎂', to: '/shop/Cakes',                    colour: 'blush', query: 'birthday cake chocolate' },
+  { id: 'personal', label: 'Personalised',  emoji: '✍️', to: '/shop/Gifts?kind=personalised',  colour: 'lilac', query: 'personalised photo frame gift' },
+  { id: 'rakhi',    label: 'Rakhi',         emoji: '🧿', to: '/shop/Gifts?occasion=Rakhi',     colour: 'amber', query: 'rakhi raksha bandhan thread' },
+  { id: 'pooja',    label: 'Pooja',         emoji: '🪔', to: '/shop/Pooja%20%26%20Essentials', colour: 'sand',  query: 'pooja thali diya brass lamp' },
+  { id: 'heritage', label: 'Heritage',      emoji: '🪆', to: '/shop/Heritage%20%26%20Crafts',  colour: 'sage',  query: 'mysore silk saree handloom' },
 ]
 
 /**
@@ -103,48 +140,39 @@ export const QUICK_RAIL = [
 export const OCCASION_TILES = [
   {
     id: 'birthday', label: 'Birthdays', sub: 'Cake at midnight, and the fuss that goes with it',
-    category: 'Cakes', occasion: 'Birthday', emoji: '🎂', span: 'wide',
-    tint: 'from-orange-50 via-amber-50 to-white', accent: 'text-orange-900',
+    category: 'Cakes', occasion: 'Birthday', emoji: '🎂', colour: 'blush',
   },
   {
     id: 'rakhi', label: 'Rakhi', sub: 'Tie it on time, wherever he is',
-    category: 'Gifts', occasion: 'Rakhi', emoji: '🧿',
-    tint: 'from-amber-50 to-yellow-50', accent: 'text-amber-900',
+    category: 'Gifts', occasion: 'Rakhi', emoji: '🧿', colour: 'coral',
   },
   {
     id: 'anniversary', label: 'Anniversaries', sub: 'The year you both remember',
-    category: 'Flowers', occasion: 'Anniversary', emoji: '💕',
-    tint: 'from-rose-50 to-pink-50', accent: 'text-rose-900',
+    category: 'Flowers', occasion: 'Anniversary', emoji: '💕', colour: 'amber',
   },
   {
     id: 'congrats', label: 'Congratulations', sub: 'New job, new degree, long time coming',
-    category: 'Gifts', occasion: 'Congratulations', emoji: '🎓',
-    tint: 'from-sky-50 to-blue-50', accent: 'text-sky-900',
+    category: 'Gifts', occasion: 'Congratulations', emoji: '🎓', colour: 'sky',
   },
   {
     id: 'housewarming', label: 'New home', sub: 'Something that stays in the house',
-    category: 'Gifts', occasion: 'Housewarming', emoji: '🏠',
-    tint: 'from-emerald-50 to-teal-50', accent: 'text-emerald-900',
+    category: 'Gifts', occasion: 'Housewarming', emoji: '🏠', colour: 'sand',
   },
   {
     id: 'baby', label: 'Baby shower', sub: 'For the people about to stop sleeping',
-    category: 'Party Essentials', occasion: 'Baby Shower', emoji: '🍼',
-    tint: 'from-violet-50 to-purple-50', accent: 'text-violet-900',
+    category: 'Party Essentials', occasion: 'Baby Shower', emoji: '🍼', colour: 'mint',
   },
   {
-    id: 'wedding', label: 'Weddings', sub: 'For the couple and for the house they are starting',
-    category: 'Gifts', occasion: 'Wedding', emoji: '💍',
-    tint: 'from-fuchsia-50 to-pink-50', accent: 'text-fuchsia-900',
+    id: 'wedding', label: 'Weddings', sub: 'For the couple and the house they are starting',
+    category: 'Gifts', occasion: 'Wedding', emoji: '💍', colour: 'rose',
   },
   {
     id: 'getwell', label: 'Get well', sub: 'When you cannot be at the hospital yourself',
-    category: 'Gifts', occasion: 'Get Well', emoji: '🌿',
-    tint: 'from-lime-50 to-green-50', accent: 'text-green-900',
+    category: 'Gifts', occasion: 'Get Well', emoji: '🌿', colour: 'sage',
   },
   {
-    id: 'corporate', label: 'For the office', sub: 'Fifty of them, invoiced once, delivered on one date',
-    category: 'Gifts', occasion: 'Corporate', emoji: '🏢', span: 'wide',
-    tint: 'from-slate-50 via-zinc-50 to-white', accent: 'text-slate-900',
+    id: 'corporate', label: 'For the office', sub: 'Fifty of them, invoiced once, on one date',
+    category: 'Gifts', occasion: 'Corporate', emoji: '🏢', colour: 'lilac', span: 'wide',
   },
 ]
 
@@ -163,7 +191,7 @@ export const SHELF_STRIPS = [
     title: 'Flowers, cut this morning',
     blurb: 'Conditioned in water and hand-delivered — never posted.',
     emoji: '💐',
-    tint: 'from-rose-50 via-pink-50 to-white',
+    colour: 'rose',
     ways: [
       { label: 'Roses',       occasion: 'Anniversary' },
       { label: 'Birthday',    occasion: 'Birthday' },
@@ -177,7 +205,7 @@ export const SHELF_STRIPS = [
     title: 'Cakes baked to your order',
     blurb: 'Four hours in the oven, photographed before the rider leaves.',
     emoji: '🎂',
-    tint: 'from-amber-50 via-orange-50 to-white',
+    colour: 'blush',
     ways: [
       { label: 'Birthday',    occasion: 'Birthday' },
       { label: 'Anniversary', occasion: 'Anniversary' },
@@ -191,7 +219,7 @@ export const SHELF_STRIPS = [
     title: 'Made in Karnataka, by name',
     blurb: 'Mysore silk, rare weaves and carvings — the shelf nobody else stocks.',
     emoji: '🪆',
-    tint: 'from-emerald-50 via-teal-50 to-white',
+    colour: 'sage',
     ways: [
       { label: 'Mysore silk',  occasion: 'Mysore Silk' },
       { label: 'Rare weaves',  occasion: 'Rare Weaves' },
@@ -205,7 +233,7 @@ export const SHELF_STRIPS = [
     title: 'Ready before the first lamp',
     blurb: 'Kits assembled for the ritual they are actually for, delivered from 6 AM.',
     emoji: '🪔',
-    tint: 'from-amber-50 via-yellow-50 to-white',
+    colour: 'amber',
     ways: [
       { label: 'Daily pooja',    occasion: 'Daily Pooja' },
       { label: 'Griha pravesh',  occasion: 'Griha Pravesh' },
@@ -219,7 +247,7 @@ export const SHELF_STRIPS = [
     title: 'The whole room, in one box',
     blurb: 'Counted against a checklist, with an optional two-person setup.',
     emoji: '🎈',
-    tint: 'from-sky-50 via-cyan-50 to-white',
+    colour: 'sky',
     ways: [
       { label: 'Balloons',   occasion: 'Balloon Decor' },
       { label: 'Backdrops',  occasion: 'Backdrop & Banners' },
@@ -233,7 +261,7 @@ export const SHELF_STRIPS = [
     title: 'Gifts that survive the year',
     blurb: 'Hampers, keepsakes and personalised pieces, wrapped and carded free.',
     emoji: '🎁',
-    tint: 'from-violet-50 via-purple-50 to-white',
+    colour: 'lilac',
     ways: [
       { label: 'Chocolate',   occasion: 'Chocolate' },
       { label: 'Dry fruits',  occasion: 'Dry Fruits' },
@@ -309,7 +337,7 @@ export const GUIDES = [
     sub: 'What survives a courier, and what has to be posted by Tuesday',
     emoji: '🧿',
     to: '/shop/Gifts?occasion=Rakhi',
-    tint: 'from-amber-100 to-yellow-50',
+    colour: 'amber',
   },
   {
     id: 'boss',
@@ -317,7 +345,7 @@ export const GUIDES = [
     sub: 'Handmade and understated, without a logo on it',
     emoji: '🏢',
     to: '/shop/Gifts?occasion=Corporate',
-    tint: 'from-slate-100 to-zinc-50',
+    colour: 'sand',
   },
   {
     id: 'silk',
@@ -325,7 +353,7 @@ export const GUIDES = [
     sub: 'Zari, GI marks, and what the price is actually telling you',
     emoji: '🧣',
     to: '/shop/Heritage%20%26%20Crafts?occasion=Mysore%20Silk',
-    tint: 'from-emerald-100 to-teal-50',
+    colour: 'sage',
   },
   {
     id: 'lastminute',
@@ -333,6 +361,6 @@ export const GUIDES = [
     sub: 'Everything that can still arrive before tonight',
     emoji: '⚡',
     to: '/shop/today',
-    tint: 'from-orange-100 to-red-50',
+    colour: 'coral',
   },
 ]

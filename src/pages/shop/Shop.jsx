@@ -11,7 +11,7 @@ import {
 import GiftAppBar from '../../components/gifting/GiftAppBar'
 import GiftCard, { GiftCardRailItem } from '../../components/gifting/GiftCard'
 import {
-  SectionHead, Rail, QuickRail, OccasionMosaic, ShelfStrip, PromiseStrip, GuideRail,
+  SectionHead, Rail, QuickRail, OccasionMosaic, ShelfBanner, PromiseStrip, GuideRail,
 } from '../../components/gifting/GiftSections'
 import { formatINR } from '../../utils/format'
 
@@ -20,16 +20,16 @@ import { formatINR } from '../../utils/format'
  *
  * ── Read top to bottom, it answers the questions in the order asked ──────
  *   where does this go        the bar
- *   what do you have          the circular rail
+ *   what do you have          the square shortcut rail
  *   what is this even for     the occasion mosaic
  *   can it get here in time   the "today" rail, which only exists when it can
- *   show me the shelves       the shelf strips
+ *   show me the shelves       the shelf banners, each with its ways in
  *   how do I choose           the guides
  *   why you                   the promises
  *
  * ── Everything here is filtered against real rows ────────────────────────
  * `giftingHome` is an editorial list, not a source of truth. Every tile,
- * strip and chip on this page is checked against a live `products` query
+ * banner and shortcut on this page is checked against a live `products` query
  * before it renders, and anything with nothing behind it is dropped. That is
  * what makes it safe for the data file to describe shelves whose migration
  * has not been pasted yet: the worst outcome is a section that has not
@@ -79,21 +79,53 @@ export default function Shop() {
     return { byCategory, byPair }
   }, [rows])
 
-  /** Occasion tiles that actually lead somewhere. */
+  /**
+   * A real photograph for a (shelf, occasion) pair.
+   *
+   * Every tile on this page is a square that wants a picture in it, and the
+   * catalogue already has one: `products.image_url` was resolved per row by
+   * scripts/resolve-product-images.mjs. Borrowing the first one on the shelf
+   * beats a live Unsplash search per tile — the free tier allows about 24 of
+   * those per page load, and this page would want thirty on its own.
+   *
+   * The row is picked by `sort_order`, which is the order an admin arranged
+   * the shelf in, so the tile shows the item they chose to lead with rather
+   * than whichever row the database handed back first.
+   */
+  const photoFor = useMemo(() => {
+    const byPair = new Map()
+    const byCat = new Map()
+    for (const p of rows) {
+      if (!p.image_url) continue
+      if (!byCat.has(p.category)) byCat.set(p.category, p.image_url)
+      if (p.occasion) {
+        const key = `${p.category}|${p.occasion}`
+        if (!byPair.has(key)) byPair.set(key, p.image_url)
+      }
+    }
+    return (category, occasion) =>
+      (occasion && byPair.get(`${category}|${occasion}`)) || byCat.get(category) || null
+  }, [rows])
+
+  /** Occasion tiles that actually lead somewhere, each with a real photo. */
   const tiles = useMemo(
-    () => OCCASION_TILES.filter(t => (counts.byPair.get(`${t.category}|${t.occasion}`) ?? 0) > 0),
-    [counts],
+    () => OCCASION_TILES
+      .filter(t => (counts.byPair.get(`${t.category}|${t.occasion}`) ?? 0) > 0)
+      .map(t => ({ ...t, photo: photoFor(t.category, t.occasion) })),
+    [counts, photoFor],
   )
 
-  /** Shelf strips for shelves that exist, with their empty chips removed. */
+  /** Shelf banners for shelves that exist, with their empty ways removed. */
   const strips = useMemo(
     () => SHELF_STRIPS
       .filter(s => (counts.byCategory.get(s.category) ?? 0) > 0)
       .map(s => ({
         ...s,
-        ways: s.ways.filter(w => (counts.byPair.get(`${s.category}|${w.occasion}`) ?? 0) > 0),
+        ways: s.ways
+          .filter(w => (counts.byPair.get(`${s.category}|${w.occasion}`) ?? 0) > 0)
+          .map(w => ({ ...w, photo: photoFor(s.category, w.occasion) })),
       })),
-    [counts],
+    [counts, photoFor],
   )
 
   /** Quick-rail entries whose shelf has stock. 'today' and filtered links always stay. */
@@ -180,8 +212,8 @@ export default function Shop() {
           )}
 
           {/* ── The shelves ── */}
-          <div className="space-y-3">
-            {strips.map(s => <ShelfStrip key={s.id} strip={s} />)}
+          <div className="space-y-7">
+            {strips.map(s => <ShelfBanner key={s.id} strip={s} />)}
           </div>
 
           {/* ── Offers ── */}
