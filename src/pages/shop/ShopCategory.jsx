@@ -1,359 +1,330 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { Heart, Flame, Sparkles, ArrowDownNarrowWide, SlidersHorizontal, X, PackageOpen, Check } from 'lucide-react'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
+import { SlidersHorizontal, ArrowUpDown, X, Check, MapPin, PackageOpen } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { categoryQueryValues } from '../../config/shop'
-import { useShopCategory } from '../../hooks/useShopCategories'
-import { groupsForCategory, occasionMetaFor } from '../../data/shopOccasions'
+import { groupsForCategory } from '../../data/shopOccasions'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
-import ShopAppBar from '../../components/shop/ShopAppBar'
-import StickyCartBar from '../../components/shop/StickyCartBar'
-import MarketProductCard from '../../components/shop/MarketProductCard'
-import HowWeServe from '../../components/shop/HowWeServe'
-import ReviewsScroller from '../../components/reviews/ReviewsScroller'
 import { useProductAdd } from '../../components/shop/useProductAdd'
-import { useIncremental } from '../../components/shop/useIncremental'
-
-const SORTS = [
-  { id: 'default', label: 'Featured',     icon: Sparkles },
-  { id: 'loved',   label: 'Most Loved',   icon: Heart },
-  { id: 'ordered', label: 'Most Ordered', icon: Flame },
-  { id: 'price',   label: 'Price: low to high', icon: ArrowDownNarrowWide },
-]
+import { useCity } from '../../context/CityContext'
+import { canDeliverToday, earliestPromise } from '../../lib/deliveryPromise'
+import GiftAppBar from '../../components/gifting/GiftAppBar'
+import GiftCard from '../../components/gifting/GiftCard'
+import { formatINR } from '../../utils/format'
 
 /**
- * One category shelf, as a phone screen.
+ * The listing page — one shelf, or one filtered slice of it.
  *
- * The data layer is untouched — same alias-aware query, same ratings and
- * order-count lookups behind the sort chips, same grouped occasion taxonomy
- * from data/shopOccasions. What changed is the shape of the page:
+ * ── It also serves /shop/today ───────────────────────────────────────────
+ * "Today" is not a shelf, it is a constraint, and it was going to need this
+ * whole screen anyway — the same grid, the same sorter, the same filter row.
+ * So the route falls through to here with `TODAY` as its category and the
+ * only difference is where `rows` comes from. A second near-identical page
+ * would have drifted from this one inside a month.
  *
- *   — The filter row is sticky and the page header is not. Scrolling past 60
- *     products and having to scroll all the way back up to swap "Birthday"
- *     for "Anniversary" is the defining annoyance of a long catalogue.
- *   — The occasion groups moved into a bottom sheet. Eight groups of chips
- *     rendered inline is a screen and a half of filters before the first
- *     product on a 360px phone; as a sheet the taxonomy survives intact and
- *     costs one tap.
- *   — Products are a two-up grid of MarketProductCard, so the ADD button is
- *     in the same place here, on the home rail, and in search results.
+ * ── Sort defaults to "soonest", not "relevance" ──────────────────────────
+ * Every competitor defaults to popularity, which on a pre-launch catalogue is
+ * a number nobody earned, and which on any catalogue answers a question the
+ * customer did not ask. The thing people are actually optimising for in a
+ * gifting purchase is whether it arrives in time, so that is the default
+ * order, and it is computed per row against the clock.
  */
+
+const TODAY = 'today'
+
+const SORTS = [
+  { id: 'soonest', label: 'Arrives soonest' },
+  { id: 'low',     label: 'Price: low to high' },
+  { id: 'high',    label: 'Price: high to low' },
+  { id: 'newest',  label: 'Newest first' },
+]
+
+const PRICE_BANDS = [
+  { id: 'u500',   label: 'Under ₹500',        min: 0,    max: 500 },
+  { id: '5001k',  label: '₹500 – ₹1,000',     min: 500,  max: 1000 },
+  { id: '1k2k',   label: '₹1,000 – ₹2,500',   min: 1000, max: 2500 },
+  { id: 'o2k',    label: 'Over ₹2,500',       min: 2500, max: Infinity },
+]
+
 export default function ShopCategory() {
-  const { category } = useParams()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [products, setProducts] = useState([])
+  const { category: rawCategory } = useParams()
+  const category = decodeURIComponent(rawCategory ?? '')
+  const isToday = category.toLowerCase() === TODAY
+
+  const [params, setParams] = useSearchParams()
+  const occasion = params.get('occasion') ?? null
+
+  const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
-  const [occasion, setOccasion] = useState(searchParams.get('occasion') ?? 'All')
-  const [sort, setSort] = useState('default')
-  const [query, setQuery] = useState('')
-  const [ratings, setRatings] = useState({})   // product id -> avg_rating
-  const [orders, setOrders]   = useState({})   // product id -> total_ordered
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sort, setSort] = useState('soonest')
+  const [band, setBand] = useState(null)
+  const [todayOnly, setTodayOnly] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(null)   // 'sort' | 'price' | 'occasion' | null
 
   const offers = usePublicOffers()
   const { addProduct, sheet } = useProductAdd()
-  // Was `SHOP_CATEGORIES.find(...)`, which returned undefined for any shelf
-  // an admin created — so a brand-new category rendered with a blank title, a
-  // blank tagline and no emoji, and looked broken even though its products
-  // loaded fine underneath. `useShopCategory` reads the merged list and, for
-  // an id with no row at all, falls back to the id as its own label.
-  const meta = useShopCategory(category)
+  const { city, openCityPicker } = useCity()
 
   useEffect(() => {
+    let alive = true
     setLoading(true)
-    // `in` rather than `eq`: Gifts absorbs Hampers (migration 031), and this
-    // page has to render the merged shelf whether or not that migration has
-    // been applied yet. For every other category the alias list is just the
-    // category itself.
-    supabase.from('products').select('*').in('category', categoryQueryValues(category)).order('name')
-      // `is_active` is filtered here rather than in the query on purpose.
-      // The column arrives with migration 037; naming it in a `.eq()` would
-      // 400 the whole shelf on a database that has not run it yet, and
-      // migrations here are applied by hand after the deploy. `!== false`
-      // therefore reads "on sale unless explicitly retired", which is true
-      // both before and after.
-      .then(({ data }) => { setProducts((data ?? []).filter(p => p.is_active !== false)); setLoading(false) })
-  }, [category])
 
-  // Ratings + order-volume, fetched once the product set for this
-  // category is known — powers the "Most Loved" / "Most Ordered" sort
-  // chips. Missing data just sorts last, never hides a product.
-  useEffect(() => {
-    if (products.length === 0) return
-    const ids = products.map(p => String(p.id))
-    supabase.from('review_aggregates').select('subject_id, avg_rating')
-      .eq('subject_type', 'product').in('subject_id', ids)
-      .then(({ data }) => {
-        const map = {}
-        ;(data ?? []).forEach(r => { map[r.subject_id] = r.avg_rating })
-        setRatings(map)
+    const select = 'id, name, subtitle, category, occasion, price, mrp, emoji, image_url, image_alt, badge, same_day, prep_hours, is_active, sort_order, created_at, seed_rating, seed_rating_count'
+
+    const q = isToday
+      // "Today" has to consider the whole catalogue, because whether a row
+      // qualifies is decided in JS against its prep time and the clock —
+      // there is no column to filter on that would give the right answer.
+      ? supabase.from('products').select(select).eq('is_active', true).limit(600)
+      : supabase.from('products').select(select).eq('is_active', true)
+          .in('category', categoryQueryValues(category)).limit(400)
+
+    q.then(({ data }) => {
+      if (!alive) return
+      setRows(isToday ? (data ?? []).filter(p => canDeliverToday(p)) : (data ?? []))
+      setLoading(false)
+    })
+    return () => { alive = false }
+  }, [category, isToday])
+
+  /** The occasion chips, only ever showing tags with rows behind them. */
+  const groups = useMemo(
+    () => (isToday ? [] : groupsForCategory(category, rows)),
+    [category, rows, isToday],
+  )
+  const chips = useMemo(() => groups.flatMap(g => g.occasions ?? []), [groups])
+
+  const filtered = useMemo(() => {
+    let out = rows
+    if (occasion) out = out.filter(p => p.occasion === occasion)
+    if (band) {
+      const b = PRICE_BANDS.find(x => x.id === band)
+      if (b) out = out.filter(p => Number(p.price) >= b.min && Number(p.price) < b.max)
+    }
+    if (todayOnly && !isToday) out = out.filter(p => canDeliverToday(p))
+
+    const sorted = [...out]
+    if (sort === 'low')    sorted.sort((a, b) => Number(a.price) - Number(b.price))
+    if (sort === 'high')   sorted.sort((a, b) => Number(b.price) - Number(a.price))
+    if (sort === 'newest') sorted.sort((a, b) => new Date(b.created_at ?? 0) - new Date(a.created_at ?? 0))
+    if (sort === 'soonest') {
+      // Rank by the actual minute the earliest slot opens. Two rows that can
+      // both arrive today are then ordered by which arrives first, which is
+      // the whole point of the sort.
+      sorted.sort((a, b) => {
+        const ea = earliestPromise(a), eb = earliestPromise(b)
+        const ka = ea.day ? ea.day.offset * 1440 + (ea.slot?.fee === 0 ? 0 : 1) : 99999
+        const kb = eb.day ? eb.day.offset * 1440 + (eb.slot?.fee === 0 ? 0 : 1) : 99999
+        return ka - kb
       })
-    supabase.rpc('get_product_order_counts').then(({ data }) => {
-      const map = {}
-      ;(data ?? []).forEach(r => { map[r.product_id] = r.total_ordered })
-      setOrders(map)
-    })
-  }, [products])
+    }
+    return sorted
+  }, [rows, occasion, band, todayOnly, sort, isToday])
 
-  // Re-sync the occasion filter when arriving via a deep link (e.g. an
-  // "upcoming festival" card routing straight into "Diwali" within Gifts).
-  useEffect(() => {
-    setOccasion(searchParams.get('occasion') ?? 'All')
-  }, [category, searchParams])
+  const activeCount = [occasion, band, todayOnly && !isToday].filter(Boolean).length
 
-  // Occasions grouped by the reason someone is shopping, rather than one flat
-  // alphabetical row — Gifts alone carries 16 tags after the Hampers merge,
-  // and at that size a single row of chips is a wall nobody reads.
-  const occasionGroups = useMemo(() => groupsForCategory(category, products), [category, products])
+  const title = isToday ? 'Arriving today' : category
+  const subtitle = isToday
+    ? 'Every window checked against the clock'
+    : `${rows.length} ${rows.length === 1 ? 'piece' : 'pieces'} on this shelf`
 
-  const sortedProducts = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    let list = products.filter(p => {
-      if (occasion !== 'All' && p.occasion !== occasion) return false
-      if (needle && !`${p.name} ${p.description ?? ''} ${p.occasion ?? ''}`.toLowerCase().includes(needle)) return false
-      return true
-    })
-    if (sort === 'loved')   list = [...list].sort((a, b) => (ratings[String(b.id)] ?? -1) - (ratings[String(a.id)] ?? -1))
-    if (sort === 'ordered') list = [...list].sort((a, b) => (orders[b.id] ?? -1) - (orders[a.id] ?? -1))
-    if (sort === 'price')   list = [...list].sort((a, b) => a.price - b.price)
-    return list
-  }, [products, occasion, query, sort, ratings, orders])
-
-  function selectOccasion(o) {
-    setOccasion(o)
-    setSearchParams(o === 'All' ? {} : { occasion: o }, { replace: true })
+  const setOccasion = next => {
+    const p = new URLSearchParams(params)
+    if (next) p.set('occasion', next); else p.delete('occasion')
+    setParams(p, { replace: true })
   }
 
-  // Render a screenful at a time — this shelf runs to 122 items after the
-  // Hampers merge, and every card carries a photo.
-  const { items: shown, hasMore, showMore, remaining, sentinelRef } = useIncremental(sortedProducts)
-
-  const occasionLabel = occasion === 'All' ? null : occasionMetaFor(category, occasion).label
-  const filtered = occasion !== 'All' || query.trim().length > 0
+  const clearAll = () => {
+    setBand(null); setTodayOnly(false); setOccasion(null)
+  }
 
   return (
-    <div className="shop-canvas min-h-screen pb-bottom-nav">
-      <ShopAppBar
-        backTo="/shop"
-        title={`${meta?.emoji ?? ''} ${meta?.label ?? category}`}
-        /* The shelf's promise, not its stock level. This read "12 items ·
-           <tagline>", and a catalogue count is the one number a shop that
-           sources per order should never lead with: it answers a question
-           nobody asked with the most discouraging fact available, and it
-           isn't even true about what can be supplied. The count still exists
-           where it is genuinely useful — over the results, below, where it
-           tells you how many rows your filter just produced. */
-        subtitle={loading ? 'Loading…' : (meta?.tagline ?? '')}
-        query={query}
-        onQueryChange={setQuery}
-      />
+    <div className="shop-canvas min-h-screen pb-28">
+      <GiftAppBar backTo="/shop" title={title} subtitle={subtitle} compact />
 
-      {/* ── Sticky filter row ───────────────────────────────────────────
-          `top` is the app bar's measured height (published as a custom
-          property by ShopAppBar) so the two stack rather than overlap on any
-          screen. Horizontally scrollable: four sorts plus an occasion pill do
-          not fit across a 360px screen, and wrapping them would push the
-          first product below the fold. */}
-      <div
-        className="sticky z-30 border-b border-hairline/10 bg-surface/90 backdrop-blur-md"
-        style={{ top: 'var(--shop-appbar-h, 7.75rem)' }}
+      {/* ── Where it is going. Stated on the listing, because every delivery
+             promise on every tile below is conditional on it. ── */}
+      <button
+        onClick={openCityPicker}
+        className="flex w-full items-center gap-2 border-b border-hairline/[0.07] bg-surface-sunk/[0.03] px-4 py-2 text-left"
       >
-        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide">
-          {occasionGroups.length > 0 && (
+        <MapPin size={13} className="shrink-0 text-chilli-600" />
+        <span className="flex-1 truncate text-[11.5px] font-semibold text-ink-soft">
+          Delivering to <span className="font-extrabold text-ink">{city}</span>
+        </span>
+        <span className="text-[11px] font-extrabold text-forest-700">Change</span>
+      </button>
+
+      {/* ── The occasion rail ── */}
+      {chips.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto border-b border-hairline/[0.07] px-4 py-2.5 scrollbar-hide">
+          <button
+            onClick={() => setOccasion(null)}
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11.5px] font-bold transition-colors ${
+              !occasion ? 'bg-forest-800 text-white' : 'bg-white text-ink-soft ring-1 ring-hairline/[0.10]'
+            }`}
+          >
+            Everything
+          </button>
+          {chips.map(c => (
             <button
-              onClick={() => setFiltersOpen(true)}
-              className={`tap-tall shop-chip ${
-                occasion !== 'All'
-                  ? 'border-white bg-white text-forest-900'
-                  : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
+              key={c.id}
+              onClick={() => setOccasion(c.id === occasion ? null : c.id)}
+              className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11.5px] font-bold transition-colors ${
+                c.id === occasion ? 'bg-forest-800 text-white' : 'bg-white text-ink-soft ring-1 ring-hairline/[0.10]'
               }`}
             >
-              <SlidersHorizontal size={12} strokeWidth={2.6} />
-              {occasionLabel ?? 'Occasion'}
-            </button>
-          )}
-          {SORTS.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSort(s.id)}
-              aria-pressed={sort === s.id}
-              className={`tap-tall shop-chip ${
-                sort === s.id
-                  ? 'border-saffron-400 bg-saffron-400 text-forest-900'
-                  : 'border-hairline/10 bg-surface-sunk/[0.07] text-ink-soft'
-              }`}
-            >
-              <s.icon size={12} strokeWidth={2.6} /> {s.label}
+              <span className="mr-1">{c.emoji}</span>{c.label}
             </button>
           ))}
-          {filtered && (
-            <button
-              onClick={() => { selectOccasion('All'); setQuery('') }}
-              className="tap-tall shop-chip border-chilli-400/40 bg-chilli-500/10 text-chilli-700"
-            >
-              <X size={12} strokeWidth={2.6} /> Clear
-            </button>
-          )}
         </div>
+      )}
+
+      {/* ── The filter bar ── */}
+      <div className="sticky top-[var(--shop-appbar-h,3.5rem)] z-30 flex items-center gap-2 overflow-x-auto border-b border-hairline/[0.07] bg-white px-4 py-2 scrollbar-hide">
+        <FilterChip
+          icon={ArrowUpDown}
+          label={SORTS.find(s => s.id === sort)?.label ?? 'Sort'}
+          active={sort !== 'soonest'}
+          onClick={() => setSheetOpen('sort')}
+        />
+        <FilterChip
+          icon={SlidersHorizontal}
+          label={band ? PRICE_BANDS.find(b => b.id === band)?.label : 'Price'}
+          active={!!band}
+          onClick={() => setSheetOpen('price')}
+        />
+        {!isToday && (
+          <FilterChip
+            label="Arrives today"
+            active={todayOnly}
+            onClick={() => setTodayOnly(t => !t)}
+          />
+        )}
+        {activeCount > 0 && (
+          <button
+            onClick={clearAll}
+            className="shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-chilli-50 px-3 py-1.5 text-[11.5px] font-bold text-chilli-700"
+          >
+            <X size={12} /> Clear {activeCount}
+          </button>
+        )}
       </div>
 
-      <div className="mx-auto max-w-3xl px-4 pb-32 pt-4">
-        <p className="mb-3 text-[11px] font-semibold text-ink-mute">
-          {loading
-            ? 'Loading…'
-            : `${sortedProducts.length} item${sortedProducts.length === 1 ? '' : 's'}${occasionLabel ? ` in ${occasionLabel}` : ''}`}
+      <main className="mx-auto max-w-6xl px-4 pt-3">
+        <p className="mb-3 text-[12px] font-semibold text-ink-mute">
+          <span className="font-extrabold text-ink">{filtered.length}</span>
+          {filtered.length === 1 ? ' result' : ' results'}
+          {occasion && <> for <span className="font-extrabold text-ink">{occasion}</span></>}
         </p>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-60 animate-pulse rounded-3xl bg-surface-sunk/[0.07]" />
+              <div key={i} className="aspect-[3/4] animate-pulse rounded-2xl bg-surface-sunk/[0.06]" />
             ))}
           </div>
-        ) : sortedProducts.length === 0 ? (
-          <div className="py-16 text-center">
-            <PackageOpen size={30} className="mx-auto text-ink-mute" />
-            <p className="mt-3 text-sm font-bold text-ink">
-              Nothing matches that yet in {meta?.label ?? category}
+        ) : filtered.length === 0 ? (
+          <div className="py-14 text-center">
+            <PackageOpen size={24} className="mx-auto text-ink-mute" />
+            <p className="mt-3 text-[13px] font-extrabold text-ink">Nothing here matches that.</p>
+            <p className="mx-auto mt-1 max-w-sm text-[12px] leading-relaxed text-ink-soft">
+              {activeCount > 0
+                ? 'Loosen one of the filters — the shelf itself is not empty.'
+                : isToday
+                  ? 'Everything on the catalogue has passed its cut-off for today. Tomorrow morning is wide open.'
+                  : 'This shelf has not been stocked yet. We would rather show it empty than fill it with things you cannot order.'}
             </p>
-            <p className="mx-auto mt-1 max-w-xs text-[12px] leading-relaxed text-ink-mute">
-              Try another occasion or a shorter word — plenty gets made to order that
-              isn't in the catalogue yet.
-            </p>
-            {filtered && (
-              <button
-                onClick={() => { selectOccasion('All'); setQuery('') }}
-                className="mt-4 rounded-xl bg-surface-sunk/[0.07] px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10"
-              >
-                Show everything in {meta?.label ?? category}
+            {activeCount > 0 && (
+              <button onClick={clearAll} className="mt-4 rounded-xl bg-forest-800 px-4 py-2 text-[12px] font-extrabold text-white">
+                Clear the filters
               </button>
+            )}
+            {activeCount === 0 && (
+              <Link to="/shop" className="mt-4 inline-block rounded-xl bg-forest-800 px-4 py-2 text-[12px] font-extrabold text-white">
+                Back to the shop
+              </Link>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {shown.map((p, i) => (
-              <MarketProductCard
-                key={p.id}
-                product={p}
-                offer={bestOfferFor(p.price, offers)}
-                orderCount={orders[p.id] ?? 0}
-                stagger={i * 260}
-                onAdd={() => addProduct(p)}
-              />
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            {filtered.map(p => (
+              <GiftCard key={p.id} product={p} offer={bestOfferFor(p.price, offers)} onAdd={addProduct} />
             ))}
           </div>
         )}
+      </main>
 
-        {hasMore && (
-          <div ref={sentinelRef} className="pt-5 text-center">
-            <button
-              onClick={showMore}
-              className="rounded-xl bg-surface-sunk/[0.07] px-5 py-3 text-xs font-bold text-ink ring-1 ring-hairline/10 active:scale-95 transition-transform"
-            >
-              Show {Math.min(remaining, 24)} more
-            </button>
-          </div>
-        )}
-
-        <HowWeServe className="mt-8" />
-
-        {!loading && products.length > 0 && (
-          <div className="mt-6">
-            <ReviewsScroller
-              subjects={products.map(p => ({ type: 'product', id: p.id, name: p.name }))}
-              title={`What customers say about ${meta?.label ?? category}`}
-            />
-          </div>
-        )}
-      </div>
-
-      {filtersOpen && (
-        <OccasionSheet
-          groups={occasionGroups}
-          active={occasion}
-          categoryLabel={meta?.label ?? category}
-          onPick={o => { selectOccasion(o); setFiltersOpen(false) }}
-          onClose={() => setFiltersOpen(false)}
-        />
+      {/* ── The option sheets ── */}
+      {sheetOpen === 'sort' && (
+        <OptionSheet title="Order these by" onClose={() => setSheetOpen(null)}>
+          {SORTS.map(s => (
+            <SheetRow key={s.id} label={s.label} active={s.id === sort} onClick={() => { setSort(s.id); setSheetOpen(null) }} />
+          ))}
+        </OptionSheet>
+      )}
+      {sheetOpen === 'price' && (
+        <OptionSheet title="Price" onClose={() => setSheetOpen(null)}>
+          <SheetRow label="Any price" active={!band} onClick={() => { setBand(null); setSheetOpen(null) }} />
+          {PRICE_BANDS.map(b => (
+            <SheetRow key={b.id} label={b.label} active={b.id === band} onClick={() => { setBand(b.id); setSheetOpen(null) }} />
+          ))}
+        </OptionSheet>
       )}
 
       {sheet}
-      <StickyCartBar />
     </div>
   )
 }
 
-/* ── Occasion filter sheet ───────────────────────────────────────────────
-   The full grouped taxonomy, one tap away, as a bottom sheet — the Android
-   convention for a filter that is too big to live inline. Counts come from
-   the same grouping pass as the labels, so a chip never offers a filter that
-   returns nothing. */
-function OccasionSheet({ groups, active, categoryLabel, onPick, onClose }) {
+function FilterChip({ icon: Icon, label, active, onClick }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-end" role="dialog" aria-modal="true" aria-label="Filter by occasion">
-      <button className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-label="Close filters" onClick={onClose} />
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11.5px] font-bold transition-colors ${
+        active ? 'bg-forest-800 text-white' : 'bg-white text-ink-soft ring-1 ring-hairline/[0.12]'
+      }`}
+    >
+      {Icon && <Icon size={12} />} {label}
+    </button>
+  )
+}
 
-      <div className="animate-pop-in relative max-h-[80vh] w-full overflow-y-auto rounded-t-3xl bg-white pb-bottom-nav">
-        {/* Grab handle + a header that stays put while the list scrolls. */}
-        <div className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3 backdrop-blur">
-          <span aria-hidden="true" className="mx-auto mb-3 block h-1 w-10 rounded-full bg-gray-200" />
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[15px] font-extrabold text-gray-900">What's the occasion?</h2>
-              <p className="text-[11px] text-gray-500">Filtering {categoryLabel}</p>
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-5 px-5 pt-2">
-          <button
-            onClick={() => onPick('All')}
-            className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-bold transition-colors ${
-              active === 'All'
-                ? 'border-forest-700 bg-forest-50 text-forest-800'
-                : 'border-gray-200 text-gray-700'
-            }`}
-          >
-            Everything in {categoryLabel}
-            {active === 'All' && <Check size={16} className="text-forest-700" strokeWidth={3} />}
+/**
+ * A bottom sheet.
+ *
+ * `position: fixed` and nothing above it in the tree carries a transform —
+ * an ancestor with even an identity transform makes a fixed child position
+ * against that ancestor instead of the viewport, which renders the sheet
+ * somewhere off screen with no error to go on.
+ */
+function OptionSheet({ title, children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true" aria-label={title}>
+      <button className="absolute inset-0 bg-ink/40" aria-label="Close" onClick={onClose} />
+      <div className="relative w-full rounded-t-3xl bg-white pb-safe">
+        <div className="flex items-center justify-between border-b border-hairline/[0.08] px-4 py-3.5">
+          <h2 className="text-[14px] font-extrabold text-ink">{title}</h2>
+          <button onClick={onClose} aria-label="Close" className="tap-48 flex h-8 w-8 items-center justify-center rounded-full text-ink-mute">
+            <X size={17} />
           </button>
-
-          {groups.map(group => (
-            <div key={group.id}>
-              <div className="mb-2 flex items-baseline gap-2">
-                <h3 className="text-[13px] font-extrabold text-gray-900">{group.label}</h3>
-                {group.blurb && <span className="truncate text-[11px] text-gray-500">{group.blurb}</span>}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {group.occasions.map(o => {
-                  const isActive = active === o.id
-                  return (
-                    <button
-                      key={o.id}
-                      onClick={() => onPick(isActive ? 'All' : o.id)}
-                      className={`tap-tall shop-chip ${
-                        isActive
-                          ? 'border-forest-700 bg-forest-700 text-white'
-                          : 'border-gray-200 bg-white text-gray-600'
-                      }`}
-                    >
-                      <span aria-hidden="true">{o.emoji}</span> {o.label}
-                      <span className={isActive ? 'text-ink-mute' : 'text-gray-300'}>{o.count}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
         </div>
+        <div className="p-2">{children}</div>
       </div>
     </div>
+  )
+}
+
+function SheetRow({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-[13px] font-bold transition-colors ${
+        active ? 'bg-forest-50 text-forest-800' : 'text-ink active:bg-surface-sunk/[0.05]'
+      }`}
+    >
+      {label}
+      {active && <Check size={15} />}
+    </button>
   )
 }

@@ -44,6 +44,30 @@ that was the pre-pivot model and its pages have been removed.
 | `/plan/confirmation` | Request submitted |
 | `/services`, `/services/:eventId` | Public service & package catalog |
 | `/shop`, `/shop/:category`, `/shop/product/:id`, `/shop/cart` | Shop (cart is public; sign-in is asked at checkout) |
+| `/shop/today` | Everything with a delivery window still open, checked against the clock. Served by `ShopCategory` — "today" is a constraint, not a shelf, but it needs the same grid, sorter and filter row. |
+
+> `/shop/Cakes` no longer has its own page. `CakeShop` existed because the old
+> listing could express neither the 50-odd cake occasion tags nor the fact that
+> every cake is configurable; the rebuilt `ShopCategory` does both, so the
+> most-visited shelf in the shop is no longer the one screen that does not look
+> like the shop. The file is still in the tree, unrouted.
+
+### The storefront's design system
+
+`/shop`, `/shop/:category` and `/shop/product/:id` are built from
+`components/gifting/` on a pure-white ground, with three libraries behind them:
+
+| Module | Job |
+|---|---|
+| `lib/productCopy` | Description, detail table, care instructions and delivery info **generated per product**, from `category` + `name` + `specs` + `prep_hours` + `same_day`. Nine archetypes (bloom, baked, confection, plant, personalised, craft, decor, ritual, keepsake) matched on the name first and the shelf second — so a personalised lamp and a chocolate hamper on the same shelf print different care rules. A written `description` always wins. |
+| `lib/deliveryPromise` | Which two-hour windows this product can actually make, against its own prep time and each slot's cut-off. One computation feeds the tile badge, the listing sort, the slot picker and the packing note, so the badge cannot promise what the picker refuses. |
+| `data/giftingHome` | The editorial layer — occasion mosaic, shelf strips, guides, promises. Filtered against a live product count before rendering, so a tile whose shelf is empty is dropped rather than shown as a door into nothing. |
+
+**Every slot fee is currently 0**, deliberately. The field is real and the UI is
+written for a non-zero value, but `ShopCart` has no channel through which a
+per-line window choice reaches the order total — so charging for a premium
+window would print a number on the product page that is never collected. See
+the block comment on `SLOTS`.
 | `/festivals/:id` | Festival detail |
 
 ### Customer (`role = customer`)

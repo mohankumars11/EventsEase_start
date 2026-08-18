@@ -35,7 +35,6 @@ const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const Shop               = lazy(() => import('./pages/shop/Shop'))
 const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
-const CakeShop           = lazy(() => import('./pages/shop/CakeShop'))
 const ProductDetail      = lazy(() => import('./pages/shop/ProductDetail'))
 const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 
@@ -277,14 +276,16 @@ function AppRoutes() {
           is the app's navigation, not the marketing site's. */}
       <Route path="/shop/cart" element={<ScreenShell><ShopCart /></ScreenShell>} />
       <Route path="/shop/product/:id" element={<ScreenShell><ProductDetail /></ScreenShell>} />
-      {/* Cakes get their own storefront: the category carries 50-odd occasion
-          tags and every item is configurable, neither of which ShopCategory's
-          flat chip row and one-tap Add can express. Listed before the generic
-          route for readability — React Router ranks the static segment above
-          the dynamic one regardless of order. Existing deep links of the form
-          /shop/Cakes?occasion=Birthday still work; CakeShop reads the same
-          search param. */}
-      <Route path="/shop/Cakes" element={<ScreenShell><CakeShop /></ScreenShell>} />
+      {/* Cakes used to get their own storefront (CakeShop), because the old
+          ShopCategory could express neither the 50-odd occasion tags nor the
+          fact that every cake is configurable. The rebuilt listing does both
+          — occasion chips come from `groupsForCategory`, which already routes
+          Cakes through its own taxonomy, and a configurable row renders
+          "Choose options" instead of a one-tap Add — so the shelf no longer
+          needs a second page, and having one meant the most-visited shelf in
+          the shop was the one screen that did not look like the shop.
+          /shop/Cakes?occasion=Birthday still resolves; the param is read the
+          same way. */}
       {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
           festival banners, the chat widget, anything a customer bookmarked — so
           it redirects rather than falling through to an empty category page. */}
