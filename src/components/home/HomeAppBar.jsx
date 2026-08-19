@@ -7,7 +7,6 @@ import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import VoiceSearchButton from '../common/VoiceSearchButton'
 import { BRAND } from '../../config/sambramo'
 
 /**
@@ -153,16 +152,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               placeholder={focused ? 'Search celebrations, cakes, decor…' : `Search "${SEARCH_HINTS[hint]}"`}
               className="h-12 w-full rounded-2xl bg-white pl-11 pr-11 text-sm font-medium text-gray-900 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.9)] outline-none ring-2 ring-transparent placeholder:text-gray-400 focus:ring-saffron-400"
             />
-            {/* One control in the right slot at a time, and which one depends
-                on whether there is anything to clear. A field with text in it
-                needs a clear; an empty one does not, and that is exactly the
-                moment a microphone is useful. Drawing both crowds a 12px gap
-                with two 28px targets that are then too close to hit reliably.
-
-                The mic renders only where the browser can actually listen —
-                see useVoiceSearch for why a decorative one is worse than
-                none. */}
-            {query ? (
+            {query && (
               <button
                 onClick={() => { onQueryChange(''); inputRef.current?.focus() }}
                 aria-label="Clear search"
@@ -170,8 +160,6 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               >
                 <X size={14} />
               </button>
-            ) : (
-              <VoiceSearchButton onResult={onQueryChange} />
             )}
           </div>
         )}

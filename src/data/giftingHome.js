@@ -364,39 +364,3 @@ export const GUIDES = [
     colour: 'coral',
   },
 ]
-
-/**
- * The compact date tag — "28 Aug", or "17–26 Aug" for a festival that runs
- * across several days.
- *
- * Distinct from `festivalPill`, which counts down ("Raksha Bandhan in 9
- * days"). The countdown is the right thing on a card with room for a
- * sentence. On a 64px circle, or in the corner of a portrait tile, there is
- * room for a date and nothing else — and a date still answers the only
- * question that matters there, which is whether you have missed it.
- *
- * Returns null once the date has passed, and null beyond three weeks out, so
- * the tag never becomes permanent furniture. A badge that is always on is a
- * badge nobody reads.
- */
-const HORIZON_DAYS = 21
-
-const shortDate = iso =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-
-export function festivalTag(occasion) {
-  const f = FESTIVAL_DATES[occasion]
-  if (!f) return null
-  const d = daysUntil(f.on)
-  if (d === null || d > HORIZON_DAYS) return null
-
-  if (!f.from) return shortDate(f.on)
-
-  // A range collapses to one month name when both ends share it: "17–26 Aug"
-  // rather than "17 Aug – 26 Aug", which does not fit and reads as two dates.
-  const a = new Date(`${f.from}T00:00:00`)
-  const b = new Date(`${f.on}T00:00:00`)
-  return a.getMonth() === b.getMonth()
-    ? `${a.getDate()}–${shortDate(f.on)}`
-    : `${shortDate(f.from)} – ${shortDate(f.on)}`
-}

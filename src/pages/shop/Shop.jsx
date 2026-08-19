@@ -6,15 +6,12 @@ import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 import { useProductAdd } from '../../components/shop/useProductAdd'
 import { canDeliverToday } from '../../lib/deliveryPromise'
 import {
-  OCCASION_TILES, SHELF_STRIPS, PROMISES, GUIDES,
+  QUICK_RAIL, OCCASION_TILES, SHELF_STRIPS, PROMISES, GUIDES,
 } from '../../data/giftingHome'
-import { STOREFRONT_PILLS, CATEGORY_CIRCLES } from '../../config/homeFront'
-import StorefrontPillRail from '../../components/home/StorefrontPillRail'
-import CategoryCircleRail from '../../components/home/CategoryCircleRail'
 import GiftAppBar from '../../components/gifting/GiftAppBar'
 import GiftCard, { GiftCardRailItem } from '../../components/gifting/GiftCard'
 import {
-  SectionHead, Rail, OccasionGrid, ShelfBanner, PromiseStrip, GuideRail,
+  SectionHead, Rail, QuickRail, OccasionMosaic, ShelfBanner, PromiseStrip, GuideRail,
 } from '../../components/gifting/GiftSections'
 import { formatINR } from '../../utils/format'
 
@@ -131,21 +128,12 @@ export default function Shop() {
     [counts, photoFor],
   )
 
-  /** Category circles whose shelf has stock. 'today' and filtered links always stay. */
-  const circles = useMemo(() => CATEGORY_CIRCLES.filter(item => {
+  /** Quick-rail entries whose shelf has stock. 'today' and filtered links always stay. */
+  const quick = useMemo(() => QUICK_RAIL.filter(item => {
     const m = item.to.match(/^\/shop\/([^?]+)/)
     if (!m || m[1] === 'today') return true
     return (counts.byCategory.get(decodeURIComponent(m[1])) ?? 0) > 0
   }), [counts])
-
-  /* The storefront strip is NOT stock-filtered, and that is deliberate. Its
-     entries are propositions rather than shelves — "Celebrate" and "Services"
-     lead out of the shop entirely, and the two that do point at shelves are
-     the ones a customer is most likely to have been sent here for. A pill
-     that vanishes because a shelf is briefly empty makes the row a different
-     shape on every visit, which is worse than a shelf that turns out to be
-     thin. The shelf pages state their own emptiness. */
-  const pills = STOREFRONT_PILLS
 
   /**
    * What can still arrive today.
@@ -188,30 +176,16 @@ export default function Shop() {
         <SearchResults query={query} results={results} offers={offers} onAdd={addProduct} />
       ) : (
         <main className="mx-auto max-w-6xl space-y-8 pt-3">
-          {/* The same two rows the front door opens with, in the same order
-              and built from the same config — a customer who taps "Sambramo"
-              on home and lands here should not have to re-learn where the
-              categories live. What differs is the stock filter: home
-              advertises the whole catalogue, the shop only shows a shelf it
-              can actually fill. */}
-          {/* Wrapped so the storefront's `space-y-8` cannot get between them.
-              32px is the gap between two different ideas; these two rows are
-              one idea — "here is where everything is" — and a full trough
-              between them reads as two unrelated widgets that happen to be
-              stacked. Home spaces them the same way. */}
-          <div className="space-y-1">
-            <StorefrontPillRail items={pills} />
-            <CategoryCircleRail items={circles} />
-          </div>
+          <QuickRail items={quick} />
 
-          {/* ── The occasion grid ── */}
+          {/* ── The occasion mosaic ── */}
           {tiles.length > 0 && (
             <section>
               <SectionHead
                 title="What is the occasion?"
                 sub="Pick the reason and we will narrow the shelf for you."
               />
-              <OccasionGrid tiles={tiles} />
+              <OccasionMosaic tiles={tiles} />
             </section>
           )}
 

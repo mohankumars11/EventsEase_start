@@ -30,11 +30,8 @@ import ServiceMosaic from '../components/home/ServiceMosaic'
 import PhotoReelFilm from '../components/home/PhotoReelFilm'
 import TierRail from '../components/home/TierRail'
 import ShopPicksRail from '../components/home/ShopPicksRail'
-import { SquareGrid, OccasionGrid } from '../components/gifting/GiftSections'
-import { TILE_COLOURS } from '../data/giftingHome'
-import StorefrontPillRail from '../components/home/StorefrontPillRail'
-import CategoryCircleRail from '../components/home/CategoryCircleRail'
-import { STOREFRONT_PILLS, CATEGORY_CIRCLES, OCCASION_GRID_TILES } from '../config/homeFront'
+import { QuickRail, SquareGrid } from '../components/gifting/GiftSections'
+import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -268,28 +265,26 @@ export default function HomeScreen() {
            earlier than it did. */
         <div className={`mx-auto max-w-3xl space-y-4 pt-0 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
 
-          {/* ── The two forks, above the fold ─────────────────────────
-              Everything below this pair is an argument. This pair is not: it
-              is the fastest route out of the front door for somebody who
-              already knows what they came for, and on a storefront that is
-              most people.
+          {/* ── The name, once, properly ──────────────────────────────
+              Nobody has heard of Sambramo yet: there is no rating, no order
+              count and no ad recall, so a visitor arriving from a link met a
+              search box and a gradient and had no idea whose app this was.
 
-              The pills fork by PROPOSITION — the shop, the heritage shelf, a
-              whole celebration, one service. The circles fork by CATEGORY —
-              rakhi, flowers, cakes. Two rows rather than one merged row of
-              fourteen because they answer different questions, and a customer
-              who wants a cake should not have to read past "Celebrate" to
-              find it. See config/homeFront.js: every image in both rows is a
-              committed URL, so neither costs a live search.
+              This is the only section on Home that carries no price, no coupon
+              and no live data, which is exactly the cost of putting it first —
+              see the component for why that trade is worth making now and why
+              it is written to expire once there is recall to trade on. */}
+          <BrandBanner />
 
-              This is where the brand banner used to be. A visitor who has
-              never heard of Sambramo does need to be told whose app this is —
-              but not before being shown that it sells anything. The banner
-              now sits under the occasion grid, after the page has proved it
-              has stock, which is the point at which "who are these people"
-              is a question somebody is actually asking. */}
-          <StorefrontPillRail items={STOREFRONT_PILLS} />
-          <CategoryCircleRail items={CATEGORY_CIRCLES} />
+          {/* ── The seven ways in ─────────────────────────────────────
+              The same square rail the storefront opens with, in the same
+              place, for the same reason: most people arriving here want a
+              thing rather than a celebration, and the fastest route to a
+              thing should not be below three sections of argument.
+
+              Square tiles with the name underneath — see SquareTile for why
+              the caption sits below the photograph rather than over it. */}
+          <QuickRail items={QUICK_RAIL} />
 
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
@@ -299,29 +294,6 @@ export default function HomeScreen() {
               <LiveEventStrip celebrations={activeEvents} />
             </div>
           )}
-
-          {/* ── Gifts for every occasion ───────────────────────────────
-              The first section with things in it, and it is deliberately the
-              SHOP's occasions rather than the planner's. Somebody who has
-              scrolled one thumb-length is browsing, not commissioning a
-              wedding — the celebration occasions get their own grid further
-              down, where the page has earned that question.
-
-              Nine tiles, three to a row, every one carrying a committed
-              photograph and a live date badge where there is a date to give.
-              See OccasionGrid for why these are portrait when the rest of the
-              app is square. */}
-          <section aria-labelledby="gift-occasions-heading">
-            <div className="px-4">
-              <h2 id="gift-occasions-heading" className="text-[15px] font-extrabold text-ink">
-                Gifts for every occasion
-              </h2>
-              <p className="mt-0.5 text-[11px] text-ink-mute">
-                Delivered across {BRAND.pilotCities.join(' & ')} — same day where it says so.
-              </p>
-            </div>
-            <OccasionGrid className="mt-3" tiles={OCCASION_GRID_TILES} />
-          </section>
 
           {/* ── The hero pair ─────────────────────────────────────────
               The deck and the film are one unit and are now spaced like
@@ -347,20 +319,6 @@ export default function HomeScreen() {
               <BrandFilm />
             </div>
           )}
-
-          {/* ── The name, once, properly ──────────────────────────────
-              Nobody has heard of Sambramo yet: there is no rating, no order
-              count and no ad recall. This says whose app this is — but it now
-              says it AFTER the pills, the circles, the occasion grid and
-              whatever the deck is carrying today, rather than before them.
-
-              Opening on it was the older, weaker order. It is the only
-              section on Home with no price, no coupon and no live data, so a
-              first-time visitor met a paragraph about a brand they had never
-              heard of and had to scroll past it to discover the shop existed
-              at all. Placed here it answers a question the page has already
-              provoked instead of pre-empting one nobody had. */}
-          <BrandBanner />
 
           {/* ── Everything we do ──────────────────────────────────────
               The answer to the first question a new visitor actually has,

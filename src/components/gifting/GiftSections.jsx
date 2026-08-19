@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import ProductImage from '../shop/ProductImage'
 import PhotoDeck from './PhotoDeck'
-import { festivalPill, festivalTag, TILE_COLOURS } from '../../data/giftingHome'
+import { festivalPill, TILE_COLOURS } from '../../data/giftingHome'
 
 /**
  * The storefront's repeating furniture — the section head, the rail, the
@@ -466,103 +466,5 @@ export function GuideRail({ guides }) {
         )
       })}
     </Rail>
-  )
-}
-
-/**
- * The occasion grid — "every reason to send something", three to a row.
- *
- * This is the mosaic's treatment at a third of the width: the name sits
- * top-left on flat colour where it is always legible, and the photograph
- * fills the bottom of the tile and bleeds off both corners. Nothing is ever
- * set over an image.
- *
- * ── Why portrait and not square ─────────────────────────────────────────
- * Square is still the rule for a *product* tile, where the photo is the whole
- * message and a caption underneath it is the whole caption. This tile carries
- * type INSIDE it — a name, a chevron, sometimes a date — and a square with a
- * two-line heading in the top third leaves the photograph a letterbox strip
- * too short to show a subject in. 3:4 buys that strip back: the heading keeps
- * its own band of flat colour, and the photograph below it is still tall
- * enough to be a photograph.
- *
- * Three to a row rather than two, because this is the section people actually
- * came to tap. Fifteen occasions at two per row is eight screens of scrolling
- * and everything below it is unreachable; at three it is five rows, and the
- * photo is still 110px wide, which is legible.
- *
- * ── The date badge ──────────────────────────────────────────────────────
- * `festivalTag`, not `festivalPill`: there is no room here for "Raksha
- * Bandhan in 9 days" and the countdown wraps to three lines at this width.
- * The tag returns null past the date and null beyond three weeks, so an
- * occasion with nothing imminent renders as a plain tile rather than
- * advertising a festival four months out.
- */
-export function OccasionGrid({ tiles, className = '' }) {
-  if (!tiles?.length) return null
-
-  return (
-    <div className={`grid grid-cols-3 gap-2.5 px-4 ${className}`}>
-      {tiles.map(t => {
-        const { bg, ink } = paletteOf(t.colour)
-        const tag = festivalTag(t.occasion)
-        const to = t.to ??
-          `/shop/${encodeURIComponent(t.category)}?occasion=${encodeURIComponent(t.occasion)}`
-
-        return (
-          <Link
-            key={t.id}
-            to={to}
-            className="group relative flex aspect-[3/4] flex-col overflow-hidden rounded-2xl ring-1 ring-hairline/[0.05] transition-transform duration-200 active:scale-[0.97]"
-            style={{ backgroundColor: bg }}
-          >
-            {/* The type band. `relative z-10` keeps it above the photograph's
-                bleed even when a tall image reaches further up than intended. */}
-            <div className="relative z-10 px-2 pt-2">
-              {tag && (
-                <span
-                  className="mb-1 inline-block rounded-full bg-white/75 px-1.5 py-[1px] text-[8px] font-extrabold uppercase tracking-wide"
-                  style={{ color: ink }}
-                >
-                  {tag}
-                </span>
-              )}
-              {/* The chevron is set INLINE, in the text flow, rather than as
-                  a flex sibling. As a sibling it could not be pushed to a
-                  second line, so a name that filled the tile on its own
-                  ("Congratulations") drove it into the rounded corner and
-                  left no gap between word and arrow. Inline it simply wraps
-                  with the text, which is also why the name is allowed to
-                  break: two tidy lines beat one clipped one. */}
-              <p
-                className="text-[11px] font-extrabold leading-[1.15] [overflow-wrap:anywhere]"
-                style={{ color: ink }}
-              >
-                {t.label}
-                <ChevronRight size={11} className="ml-0.5 inline-block align-[-1.5px]" />
-              </p>
-            </div>
-
-            {/* The subject, filling the bottom and bleeding off both corners.
-                `mt-auto` rather than a fixed height: a one-line name and a
-                two-line name get different amounts of photograph, which is
-                correct — the type must never be crowded to keep the images
-                on a common baseline they do not share anyway. */}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none relative mt-auto block h-[58%] w-full overflow-hidden"
-            >
-              <ProductImage
-                src={t.photo ?? (Array.isArray(t.photos) ? t.photos[0] : undefined)}
-                query={t.photo || t.photos?.[0] ? undefined : t.query}
-                alt=""
-                className="!bg-transparent h-full w-full"
-                cinematic
-              />
-            </span>
-          </Link>
-        )
-      })}
-    </div>
   )
 }
