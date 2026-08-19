@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, X, ArrowLeft, ChevronDown, MapPin, AlertCircle } from 'lucide-react'
+import VoiceSearchButton from '../common/VoiceSearchButton'
 import SambramoMark from '../ui/SambramoMark'
 import { useCart } from '../../context/CartContext'
 import { useCity } from '../../context/CityContext'
@@ -185,7 +186,9 @@ export default function GiftAppBar({
               placeholder={focused ? 'Search cakes, flowers, gifts, silk…' : `Try "${SEARCH_HINTS[hint]}"`}
               className="h-11 w-full rounded-2xl border border-hairline/12 bg-surface-sunk/[0.04] pl-10 pr-10 text-[13px] font-medium text-ink outline-none transition placeholder:text-ink-mute focus:border-forest-600 focus:bg-white"
             />
-            {query && (
+            {/* Clear when there is something to clear, microphone when there
+                is not — the same swap the home bar makes. */}
+            {query ? (
               <button
                 onClick={() => { onQueryChange(''); inputRef.current?.focus() }}
                 aria-label="Clear search"
@@ -193,6 +196,11 @@ export default function GiftAppBar({
               >
                 <X size={14} />
               </button>
+            ) : (
+              <VoiceSearchButton
+                onResult={onQueryChange}
+                tint="text-forest-600 active:bg-forest-50"
+              />
             )}
           </div>
         )}

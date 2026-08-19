@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, X, ArrowLeft } from 'lucide-react'
+import VoiceSearchButton from '../common/VoiceSearchButton'
 import SambramoMark from '../ui/SambramoMark'
 import CityButton from '../common/CityButton'
 import { useCart } from '../../context/CartContext'
@@ -163,7 +164,10 @@ export default function ShopAppBar({
               placeholder={focused ? 'Search cakes, gifts, flowers…' : `Search "${SEARCH_HINTS[hint]}"`}
               className="h-12 w-full rounded-2xl bg-white pl-11 pr-11 text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.8)] outline-none ring-2 ring-transparent focus:ring-saffron-400"
             />
-            {query && (
+            {/* Clear when there is something to clear, microphone when there
+                is not — the same swap home makes, because it is the same
+                field doing the same job in a different room. */}
+            {query ? (
               <button
                 onClick={() => { onQueryChange(''); inputRef.current?.focus() }}
                 aria-label="Clear search"
@@ -171,6 +175,11 @@ export default function ShopAppBar({
               >
                 <X size={14} />
               </button>
+            ) : (
+              <VoiceSearchButton
+                onResult={onQueryChange}
+                tint="text-forest-600 active:bg-forest-50"
+              />
             )}
           </div>
         )}
