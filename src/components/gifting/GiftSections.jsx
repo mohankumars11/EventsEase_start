@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import ProductImage from '../shop/ProductImage'
 import PhotoDeck from './PhotoDeck'
-import { festivalPill, TILE_COLOURS } from '../../data/giftingHome'
+import { festivalPill, TILE_COLOURS, TILE_WASH } from '../../data/giftingHome'
 
 /**
  * The storefront's repeating furniture — the section head, the rail, the
@@ -253,10 +253,20 @@ export function SquareGrid({ items, cols = 3, className = '' }) {
 /**
  * The occasion mosaic — "what is this for?".
  *
- * A two-column grid of coloured tiles. The label and its reason sit top-left
- * on the flat colour where they are always legible; the photograph fills the
- * bottom-right and bleeds off the corner, so the tile has a subject without
- * ever putting type over an image.
+ * A two-column grid of moment tiles, each one card: a vivid colour block on
+ * top, a white plate underneath carrying the label. Colour and type never
+ * share a surface — the label is never lettered onto the wash, because at
+ * nine different hues a fixed ink colour is illegible on at least half of
+ * them and a per-tile ink colour is a maintenance trap that has already
+ * drifted once. Putting the words on white instead means the tile can be as
+ * saturated as the occasion warrants and the label is always full-contrast
+ * ink-on-white, with zero per-hue tuning.
+ *
+ * The wash comes from `TILE_WASH` (a gradient or a flat colour depending on
+ * the occasion — see its own comment for which and why); the photograph, when
+ * the shelf has one, sits inside that block rather than replacing it, so a
+ * tile with no photograph yet is still a finished, saturated card rather than
+ * a hole.
  *
  * The date pill comes from `festivalPill`, which returns null for anything
  * without a date or with one already passed — so the mosaic degrades to plain
@@ -267,7 +277,7 @@ export function OccasionMosaic({ tiles }) {
     <div className="a-stagger grid grid-cols-2 gap-3.5 px-5">
       {tiles.map(t => {
         const pill = festivalPill(t.occasion)
-        const { bg, ink } = paletteOf(t.colour)
+        const wash = TILE_WASH[t.colour] ?? TILE_WASH.sand
         const wide = t.span === 'wide'
 
         return (
@@ -279,57 +289,56 @@ export function OccasionMosaic({ tiles }) {
             // catalogue with a single shelf's contents, which is what made the
             // mosaic feel like a menu of categories wearing occasion names.
             to={`/shop/occasion/${encodeURIComponent(t.occasion)}`}
-            // Hero framing: this is the lead section of the shop now, so its
-            // tiles get the largest radius in the system and a real shadow —
-            // the flat ring these used to carry was sized for a secondary
-            // strip, and a secondary strip is no longer what this is.
             className={[
-              'relative flex min-h-[148px] flex-col overflow-hidden rounded-[28px] p-4',
-              'shadow-[0_16px_34px_-18px_rgba(0,0,0,0.32)] transition-transform active:scale-[0.98]',
-              wide ? 'col-span-2 min-h-[126px]' : '',
+              'group relative flex flex-col overflow-hidden rounded-[26px] bg-white',
+              'shadow-[0_14px_30px_-18px_rgba(42,30,20,0.35)] transition-transform active:scale-[0.98]',
+              wide ? 'col-span-2' : '',
             ].filter(Boolean).join(' ')}
-            style={{ backgroundColor: bg }}
           >
-            <div className={`relative z-10 ${wide ? 'max-w-[62%]' : 'max-w-[74%]'}`}>
+            {/* The wash. Whatever else is true of the occasion, this block is
+                where the eye lands first — colour is doing the whole job of
+                distinguishing nine tiles at a glance, the way the reference
+                for this pattern uses it. */}
+            <div
+              className={`relative overflow-hidden ${wide ? 'h-28' : 'h-32'}`}
+              style={{ background: wash }}
+            >
+              {/* `<img>` rather than ProductImage: this slot wants the photo
+                  or nothing at all. ProductImage falls back to a centred emoji
+                  plate, which on a saturated wash renders as one enormous
+                  glyph floating in the middle of the block — worse than the
+                  clean colour field it is standing in for. The wash IS the
+                  finished state here, so a missing photo simply shows it. */}
+              {t.photo && (
+                <img
+                  src={t.photo}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+                />
+              )}
               {pill && (
                 <span
-                  className={`mb-2 inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
-                    pill.urgent ? 'bg-chilli-600 text-white' : 'bg-white/70'
+                  className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${
+                    pill.urgent ? 'bg-chilli-600 text-white' : 'bg-white/85 text-ink'
                   }`}
-                  style={pill.urgent ? undefined : { color: ink }}
                 >
                   {pill.text}
                 </span>
               )}
-              <p className="flex items-center gap-1 text-[16px] font-extrabold leading-tight tracking-tight" style={{ color: ink }}>
-                {t.label} <ChevronRight size={15} />
+            </div>
+
+            {/* The plate. Ink-on-white, always — see the block comment above
+                for why the label never sits on the colour itself. */}
+            <div className="px-4 py-3.5">
+              <p className="text-[15px] font-extrabold leading-tight tracking-tight text-ink">
+                {t.label}
               </p>
-              <p className="mt-1 text-[11px] font-semibold leading-snug opacity-80" style={{ color: ink }}>
+              <p className="mt-1 text-[11.5px] leading-snug text-ink-mute">
                 {t.sub}
               </p>
             </div>
-
-            {/* The subject, bleeding off the bottom-right corner. A real
-                photograph when the shelf has one, the emoji when it does not
-                — and the emoji is sized and faded so an unphotographed tile
-                still looks composed rather than unfinished. */}
-            {t.photo ? (
-              <span
-                aria-hidden="true"
-                className={`pointer-events-none absolute bottom-0 right-0 overflow-hidden rounded-tl-[28px] ${
-                  wide ? 'h-[92%] w-[34%]' : 'h-[54%] w-[58%]'
-                }`}
-              >
-                <ProductImage src={t.photo} emoji={t.emoji} alt="" className="!bg-transparent h-full w-full" />
-              </span>
-            ) : (
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute -bottom-3 -right-2 select-none text-[68px] opacity-25"
-              >
-                {t.emoji}
-              </span>
-            )}
           </Link>
         )
       })}

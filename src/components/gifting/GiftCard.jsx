@@ -66,7 +66,7 @@ export default function GiftCard({
   const ratingCount = Number(p.seed_rating_count) || 0
 
   return (
-    <article className={`group relative flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-hairline/[0.09] transition-shadow duration-300 hover:shadow-[0_18px_38px_-22px_rgba(6,60,42,0.35)] ${className}`}>
+    <article className={`group relative flex flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_10px_22px_-16px_rgba(6,60,42,0.28)] transition-shadow duration-300 hover:shadow-[0_20px_40px_-20px_rgba(6,60,42,0.4)] ${className}`}>
       <Link to={`/shop/product/${p.id}`} className="block">
         <div className="relative">
           <ProductImage
@@ -150,19 +150,19 @@ export default function GiftCard({
         <div className="mt-2 flex-1" />
 
         {qty > 0 && !configurable ? (
-          <div className="flex h-9 items-center justify-between rounded-xl bg-forest-800 px-1 text-white">
-            <button onClick={dec} aria-label={`Remove one ${p.name}`} className="tap-48 flex h-8 w-8 items-center justify-center rounded-lg active:bg-white/15">
+          <div className="flex h-10 items-center justify-between rounded-full bg-forest-800 px-1 text-white shadow-[0_8px_18px_-10px_rgba(6,60,42,0.6)]">
+            <button onClick={dec} aria-label={`Remove one ${p.name}`} className="tap-48 flex h-8 w-8 items-center justify-center rounded-full active:bg-white/15">
               <Minus size={15} />
             </button>
             <span className="text-[13px] font-extrabold">{qty}</span>
-            <button onClick={inc} aria-label={`Add one ${p.name}`} className="tap-48 flex h-8 w-8 items-center justify-center rounded-lg active:bg-white/15">
+            <button onClick={inc} aria-label={`Add one ${p.name}`} className="tap-48 flex h-8 w-8 items-center justify-center rounded-full active:bg-white/15">
               <Plus size={15} />
             </button>
           </div>
         ) : (
           <button
             onClick={() => onAdd?.(p)}
-            className="h-9 w-full rounded-xl border border-forest-700 bg-white text-[12px] font-extrabold uppercase tracking-wide text-forest-700 transition-colors active:bg-forest-50"
+            className="h-10 w-full rounded-full border border-forest-700 bg-white text-[12px] font-extrabold uppercase tracking-wide text-forest-700 transition-colors active:bg-forest-50"
           >
             {configurable ? 'Choose options' : qty > 0 ? `${qty} in bag` : 'Add'}
           </button>

@@ -102,6 +102,32 @@ export const TILE_COLOURS = {
 }
 
 /**
+ * The same nine, as a vivid two-stop wash for the moment mosaic.
+ *
+ * `TILE_COLOURS` above is a flat pastel meant to sit BEHIND a photograph — it
+ * has to be gentle because the photo is doing the work and the tint only
+ * shows through the gaps. The mosaic tile is different: on it the colour IS
+ * the work, because `OccasionMosaic` puts the label on a white plate below
+ * the colour rather than lettering the colour itself, so the block is free to
+ * be as saturated as the occasion warrants. Four of the nine stay flat
+ * (`sand`, `rose`, `amber` read better as a calm solid — grief, an apology, a
+ * festival that already has enough going on) rather than forcing every tile
+ * through the same gradient, which is what made an earlier pass at this
+ * feel like a colour-picker demo rather than nine different occasions.
+ */
+export const TILE_WASH = {
+  blush: 'linear-gradient(135deg, #F43F5E 0%, #FB7185 100%)',
+  coral: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)',
+  amber: '#F7D774',
+  sky:   'linear-gradient(135deg, #0EA5E9 0%, #7DD3FC 100%)',
+  mint:  'linear-gradient(135deg, #15803D 0%, #86EFAC 100%)',
+  lilac: 'linear-gradient(135deg, #7C3AED 0%, #D946EF 100%)',
+  sand:  '#EFE0C9',
+  rose:  '#F6C6D9',
+  sage:  'linear-gradient(135deg, #4D7C0F 0%, #BEF264 100%)',
+}
+
+/**
  * The rail directly under the search field.
  *
  * Square tiles with the label underneath, not circles with the label inside.

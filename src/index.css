@@ -1676,33 +1676,36 @@
    bottom of this section switches all of it off. */
 
 @layer components {
-  /* ── The concierge room (events, plan, track, account) ──────────────── */
-  .a-canvas {
-    --a-canvas: #FBF9FE;
-    --a-low:    #F4EFFB;
-    --a-surf:   #FFFFFF;
-    --a-high:   #FDFBFF;
-    --a-line:   31 16 51;
-    --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
-    --a-shadow: 0 18px 44px -22px rgba(70, 30, 120, 0.30);
-    --a-sheet:  0 -12px 48px -16px rgba(70, 30, 120, 0.26);
-    background: var(--a-canvas, #FBF9FE);
-  }
+  /* ── One warm room, not two tinted ones ────────────────────────────────
+     This used to be a cool violet-white ground for the concierge and a
+     cool mint-green ground for the shop — each room telling itself apart
+     by tinting the whole page. A concrete reference changed that: a warm
+     ivory ground with colour living ENTIRELY inside the moment tiles reads
+     calmer, holds a gifting catalogue's photography better (a green cast
+     fights product photos; a neutral warm one does not), and is closer to
+     what this codebase's own design notes already argued for the shop
+     specifically — "the ground is pure and nothing tints it; colour only
+     inside the tile."
 
-  /* ── The storefront room (shop, product, checkout) ───────────────────
-     Same ramp, green-cast. The shop has always been told apart from the
-     concierge by its ink; now it is told apart by its whole room, which is
-     what a customer actually perceives. */
-  .a-shop {
-    --a-canvas: #F7FBF9;
-    --a-low:    #EAF5F0;
+     So both rooms share one warm neutral ramp now. Room identity moves
+     from the page tint into the aurora sweep and the moment-tile gradients,
+     which is where a customer actually reads it — on the thing they are
+     choosing, not on the paper it sits on. */
+  .a-canvas, .a-shop {
+    --a-canvas: #FFF8F0;
+    --a-low:    #FBEFDE;
     --a-surf:   #FFFFFF;
-    --a-high:   #FCFEFD;
-    --a-line:   8 40 28;
+    --a-high:   #FFFFFF;
+    --a-line:   42 30 20;
+    --a-shadow: 0 18px 44px -22px rgba(60, 40, 20, 0.22);
+    --a-sheet:  0 -12px 48px -16px rgba(60, 40, 20, 0.20);
+    background: var(--a-canvas, #FFF8F0);
+  }
+  .a-canvas {
+    --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
+  }
+  .a-shop {
     --a-aurora: linear-gradient(115deg, #0E523C 0%, #1C8560 38%, #38A47B 68%, #FBBF24 100%);
-    --a-shadow: 0 18px 44px -22px rgba(6, 60, 42, 0.28);
-    --a-sheet:  0 -12px 48px -16px rgba(6, 60, 42, 0.24);
-    background: var(--a-canvas, #FBF9FE);
   }
 
   /* ── Surfaces ───────────────────────────────────────────────────────
@@ -1721,31 +1724,31 @@
   .a-card {
     @apply relative rounded-[28px];
     background: var(--a-surf, #FFFFFF);
-    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.07);
+    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.07);
     outline-offset: -1px;
   }
   /* A card that is genuinely above the page — a sheet, a dialog, a hero. */
   .a-raised {
     @apply relative rounded-[28px];
     background: var(--a-surf, #FFFFFF);
-    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.06);
+    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.06);
     outline-offset: -1px;
-    box-shadow: var(--a-shadow, 0 18px 44px -22px rgba(70, 30, 120, 0.30));
+    box-shadow: var(--a-shadow, 0 18px 44px -22px rgba(60, 40, 20, 0.22));
   }
   /* Sunk: belongs to the room rather than sitting on it. Replaces the old
      `.home-glass` / `bg-surface-sunk/5` idiom, which on a white ground was
      white on white. */
   .a-well {
     @apply relative rounded-[24px];
-    background: var(--a-low, #F4EFFB);
+    background: var(--a-low, #FBEFDE);
   }
   /* A card on a card, or a selected state that must not rely on colour. */
   .a-high {
     background: var(--a-high, #FDFBFF);
-    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.08);
+    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.08);
     outline-offset: -1px;
   }
-  .a-hairline { border-color: rgb(var(--a-line, 31 16 51) / 0.08); }
+  .a-hairline { border-color: rgb(var(--a-line, 42 30 20) / 0.08); }
 
   /* ── The brand light ────────────────────────────────────────────────
      A hero ground. `background-size` is oversized so `aurora-pan` has
@@ -1797,13 +1800,13 @@
   }
   .a-btn-quiet {
     @apply a-btn;
-    background: var(--a-low, #F4EFFB);
+    background: var(--a-low, #FBEFDE);
     color: rgb(var(--ink));
   }
   .a-btn-ghost {
     @apply a-btn;
     color: rgb(var(--ink));
-    outline: 1.5px solid rgb(var(--a-line, 31 16 51) / 0.14);
+    outline: 1.5px solid rgb(var(--a-line, 42 30 20) / 0.14);
     outline-offset: -1.5px;
   }
   /* Pill filter/segment chip. `aria-pressed` drives the selected look rather
@@ -1813,7 +1816,7 @@
     @apply inline-flex shrink-0 items-center gap-1.5 min-h-[40px] px-4
            rounded-full text-[13px] font-bold whitespace-nowrap
            transition-colors duration-150;
-    background: var(--a-low, #F4EFFB);
+    background: var(--a-low, #FBEFDE);
     color: rgb(var(--ink-soft));
   }
   .a-chip[aria-pressed='true'] {
@@ -1823,7 +1826,7 @@
   .a-field {
     @apply w-full min-h-[52px] px-4 rounded-2xl text-[15px]
            placeholder:text-ink-mute;
-    background: var(--a-low, #F4EFFB);
+    background: var(--a-low, #FBEFDE);
     color: rgb(var(--ink));
     border: 1.5px solid transparent;
     transition: border-color 0.15s, background-color 0.15s;
@@ -1839,13 +1842,13 @@
      translucent sticky bar reads as a rendering fault, not as depth. */
   .a-appbar {
     background: var(--a-canvas, var(--bar, #FFFFFF));
-    border-bottom: 1px solid rgb(var(--a-line, 31 16 51) / 0.07);
+    border-bottom: 1px solid rgb(var(--a-line, 42 30 20) / 0.07);
   }
   /* A bottom sheet. Shadow points UP — it is lit from the page it covers. */
   .a-sheet {
     @apply rounded-t-[32px];
     background: var(--a-surf, #FFFFFF);
-    box-shadow: var(--a-sheet, 0 -12px 48px -16px rgba(70, 30, 120, 0.26));
+    box-shadow: var(--a-sheet, 0 -12px 48px -16px rgba(60, 40, 20, 0.20));
   }
 
   /* ── Entrances ──────────────────────────────────────────────────────
