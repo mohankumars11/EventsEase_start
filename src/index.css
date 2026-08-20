@@ -66,6 +66,13 @@
     --sambramo-knockout: var(--bar);
     --shadow-1: 0 2px 10px -6px rgba(70, 30, 120, 0.28);
     --shadow-2: 0 18px 38px -18px rgba(70, 30, 120, 0.30);
+    /* A third, larger tier for hero cards, sheets and modals — bigger
+       blur, lower spread, same violet tint as --shadow-1/2 on this
+       surface. Not a replacement for either: .home-card/.event-card still
+       rest on --shadow-1 and lift to --shadow-2 on hover; --shadow-lift is
+       for things that are already above the page (a sheet, a hero tile)
+       and need to look it at rest, not just on hover. */
+    --shadow-lift: 0 30px 70px -24px rgba(70, 30, 120, 0.34);
   }
 
   html {
@@ -186,6 +193,35 @@
 
   .glass-nav {
     @apply bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm;
+  }
+  /* A frosted panel for anything that floats above the page rather than
+     sitting in it — modals, sheets, dropdowns. 43 places already hand-roll
+     `backdrop-blur` + an ad-hoc white alpha + an ad-hoc ring; this is the
+     one class they converge on. Uses --hairline so it re-tints per surface
+     the same way .home-card/.shop-card already do. */
+  .glass-panel {
+    @apply rounded-3xl bg-white/70 backdrop-blur-md;
+    outline: 1px solid rgb(var(--hairline) / 0.12);
+    outline-offset: -1px;
+    box-shadow: var(--shadow-lift);
+  }
+  /* A soft bloom behind a hero CTA or an active state, in the surface's own
+     --accent — never a new colour. Put `.glow-ring` on a `relative`
+     ancestor (or add `relative` alongside it); the bloom sits in a
+     pseudo-element so it never affects layout or eats a click. */
+  .glow-ring {
+    position: relative;
+  }
+  .glow-ring::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(closest-side, rgb(var(--accent) / 0.32), transparent 72%);
+    filter: blur(8px);
+    animation: glow-pulse 2.4s ease-in-out infinite;
+    pointer-events: none;
   }
   .tag {
     @apply inline-block px-3 py-1 bg-plum-50 text-plum-700 text-xs font-semibold rounded-full;
@@ -451,6 +487,7 @@
     --notch: #FFFFFF;
     --shadow-1: 0 2px 10px -6px rgba(6, 60, 42, 0.26);
     --shadow-2: 0 18px 38px -18px rgba(6, 60, 42, 0.30);
+    --shadow-lift: 0 30px 70px -24px rgba(6, 60, 42, 0.34);
     background: #FFFFFF;
   }
   /* Opaque, not translucent. The bar is sticky and the filter row sticks
@@ -518,6 +555,7 @@
     --notch: #FFFFFF;
     --shadow-1: 0 18px 40px -24px rgba(6, 60, 42, 0.35);
     --shadow-2: 0 22px 46px -22px rgba(6, 60, 42, 0.38);
+    --shadow-lift: 0 34px 76px -26px rgba(6, 60, 42, 0.4);
     position: relative;
     isolation: isolate;
     /* White, and the three lights and the dot grid are both gone.
@@ -1433,6 +1471,9 @@
   .animate-spin-slow,
   .animate-sheen,
   .animate-pulse-ring,
+  .animate-glow-pulse,
+  .animate-drift-soft,
+  .glow-ring::before,
   /* The brand banner keeps its gradient and loses the drift — the panel is a
      finished surface standing still, which is more than can be said for most
      things that animate. */

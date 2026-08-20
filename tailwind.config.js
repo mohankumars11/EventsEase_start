@@ -166,6 +166,10 @@ export default {
         xl:   '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
+        // Hero-scale cards only (occasion mosaic tiles, plan CTA card) —
+        // the redesign's "soft depth" reads better with one size up from
+        // the previous ceiling at that scale.
+        '4xl': '2.5rem',
       },
       keyframes: {
         'fade-up': {
@@ -215,6 +219,19 @@ export default {
           '80%':  { transform: 'scale(1.9)',  opacity: '0' },
           '100%': { transform: 'scale(1.9)',  opacity: '0' },
         },
+        // The soft bloom behind .glow-ring — breathes rather than blinks,
+        // so a hero CTA reads as lit rather than as an alert.
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.55', transform: 'scale(1)' },
+          '50%':      { opacity: '0.9',  transform: 'scale(1.06)' },
+        },
+        // A barely-there drift for hero-scale decorative shapes — same
+        // transform-only compositor budget as `float`, slower and smaller
+        // so it reads as depth rather than as a bounce.
+        'drift-soft': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%':      { transform: 'translate(6px, -6px)' },
+        },
       },
       animation: {
         'fade-up':   'fade-up 0.6s ease forwards',
@@ -225,6 +242,8 @@ export default {
         'spin-slow': 'spin-slow 8s linear infinite',
         sheen:       'sheen 3.2s ease-in-out infinite',
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',
+        'glow-pulse': 'glow-pulse 2.4s ease-in-out infinite',
+        'drift-soft': 'drift-soft 6s ease-in-out infinite',
       },
     },
   },
