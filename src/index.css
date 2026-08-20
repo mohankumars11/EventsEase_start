@@ -1626,3 +1626,248 @@
     .deck-in  { opacity: 1 !important; transform: none !important; }
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   AURORA — the design language
+   ══════════════════════════════════════════════════════════════════════
+
+   Everything above this line is the previous system: a flat white ground on
+   every surface, with white cards separated from it by a tinted shadow. It
+   was coherent and its contrast was measured, and it is left intact because
+   162 files still render through it.
+
+   This is what replaces it, screen by screen. Two things change.
+
+   ── 1. Depth comes from TONE, not from shadow ────────────────────────────
+   The old system had one ground (#FFF) and one paper (#FFF), which meant a
+   card could only be told from the page it sat on by its shadow. Push that
+   far enough and every screen becomes white rectangles on white with grey
+   halos under them — which is what a phone screenshot of the old build
+   actually looks like.
+
+   Aurora uses a tonal ramp instead, the way Material 3 does: the canvas is
+   the LOWEST tone and each layer above it steps lighter, so a card is
+   legible as raised with the shadow switched off entirely. Shadow is then
+   free to do what it is good at — signalling that something is temporarily
+   above the page (a sheet, a dragged tile) rather than permanently part of it.
+
+     --a-canvas     the page
+     --a-low        sunk panels, input wells, inactive chips
+     --a-surf       the default card
+     --a-high       a card on a card, a selected state
+     --a-line       the hairline, as channels for alpha
+
+   Each canvas class re-tints the whole ramp, so the concierge is warm violet
+   and the storefront is cool green WITHOUT a single component knowing which
+   room it is in — the same discipline the ink tokens already had.
+
+   ── 2. The accent is a gradient, not a colour ────────────────────────────
+   `--a-aurora` is the brand's light: a three-stop sweep that belongs to
+   Sambramo the way a single flat hex never could. It is used on hero grounds,
+   active rails and primary buttons. The flat `--accent` stays for anything
+   that needs a solid colour (a focus ring, an icon), because a gradient
+   cannot be a border-color and should not be a text colour.
+
+   ── Type, geometry, motion ───────────────────────────────────────────────
+   Corners are 28/36px, not 12/16 — Expressive's shift, and at phone scale it
+   is the difference between an object and a div. Motion overshoots and
+   settles rather than fading. Every animation here is transform/opacity or
+   background-position only, and the blanket reduced-motion rule at the
+   bottom of this section switches all of it off. */
+
+@layer components {
+  /* ── The concierge room (events, plan, track, account) ──────────────── */
+  .a-canvas {
+    --a-canvas: #FBF9FE;
+    --a-low:    #F4EFFB;
+    --a-surf:   #FFFFFF;
+    --a-high:   #FDFBFF;
+    --a-line:   31 16 51;
+    --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
+    --a-shadow: 0 18px 44px -22px rgba(70, 30, 120, 0.30);
+    --a-sheet:  0 -12px 48px -16px rgba(70, 30, 120, 0.26);
+    background: var(--a-canvas);
+  }
+
+  /* ── The storefront room (shop, product, checkout) ───────────────────
+     Same ramp, green-cast. The shop has always been told apart from the
+     concierge by its ink; now it is told apart by its whole room, which is
+     what a customer actually perceives. */
+  .a-shop {
+    --a-canvas: #F7FBF9;
+    --a-low:    #EAF5F0;
+    --a-surf:   #FFFFFF;
+    --a-high:   #FCFEFD;
+    --a-line:   8 40 28;
+    --a-aurora: linear-gradient(115deg, #0E523C 0%, #1C8560 38%, #38A47B 68%, #FBBF24 100%);
+    --a-shadow: 0 18px 44px -22px rgba(6, 60, 42, 0.28);
+    --a-sheet:  0 -12px 48px -16px rgba(6, 60, 42, 0.24);
+    background: var(--a-canvas);
+  }
+
+  /* ── Surfaces ───────────────────────────────────────────────────────
+     .a-card is the workhorse and it carries NO shadow. That is deliberate:
+     it is legible against --a-canvas on tone alone, and a screen of twelve
+     shadowed cards is a screen with twelve grey smudges on it. */
+  .a-card {
+    @apply relative rounded-[28px];
+    background: var(--a-surf);
+    outline: 1px solid rgb(var(--a-line) / 0.07);
+    outline-offset: -1px;
+  }
+  /* A card that is genuinely above the page — a sheet, a dialog, a hero. */
+  .a-raised {
+    @apply relative rounded-[28px];
+    background: var(--a-surf);
+    outline: 1px solid rgb(var(--a-line) / 0.06);
+    outline-offset: -1px;
+    box-shadow: var(--a-shadow);
+  }
+  /* Sunk: belongs to the room rather than sitting on it. Replaces the old
+     `.home-glass` / `bg-surface-sunk/5` idiom, which on a white ground was
+     white on white. */
+  .a-well {
+    @apply relative rounded-[24px];
+    background: var(--a-low);
+  }
+  /* A card on a card, or a selected state that must not rely on colour. */
+  .a-high {
+    background: var(--a-high);
+    outline: 1px solid rgb(var(--a-line) / 0.08);
+    outline-offset: -1px;
+  }
+  .a-hairline { border-color: rgb(var(--a-line) / 0.08); }
+
+  /* ── The brand light ────────────────────────────────────────────────
+     A hero ground. `background-size` is oversized so `aurora-pan` has
+     somewhere to travel; the animation moves background-position only. */
+  .a-aurora {
+    background-image: var(--a-aurora);
+    background-size: 220% 220%;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+  /* The same sweep as a 3px top rail on a card — the cheapest way to mark a
+     section as the brand's without painting a whole panel. */
+  .a-rail::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    border-radius: inherit;
+    background-image: var(--a-aurora);
+    background-size: 220% 220%;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+  /* Type in the brand's light. Needs a fallback colour underneath: if the
+     clip is unsupported or the gradient fails to paint, transparent text is
+     an invisible heading. */
+  .a-aurora-text {
+    color: rgb(var(--accent));
+    background-image: var(--a-aurora);
+    background-size: 220% 220%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+
+  /* ── Controls ───────────────────────────────────────────────────────
+     min-height 48px, not 44: 48dp is the Android touch target, and this app
+     is used on phones with a thumb. */
+  .a-btn {
+    @apply inline-flex items-center justify-center gap-2 min-h-[48px] px-6
+           rounded-full text-[15px] font-extrabold tracking-tight
+           transition-transform duration-200 active:scale-[0.97]
+           disabled:opacity-45 disabled:pointer-events-none;
+  }
+  .a-btn-primary {
+    @apply a-btn text-white;
+    background-image: var(--a-aurora);
+    background-size: 220% 220%;
+    box-shadow: 0 10px 26px -12px rgb(var(--accent) / 0.75);
+  }
+  .a-btn-quiet {
+    @apply a-btn;
+    background: var(--a-low);
+    color: rgb(var(--ink));
+  }
+  .a-btn-ghost {
+    @apply a-btn;
+    color: rgb(var(--ink));
+    outline: 1.5px solid rgb(var(--a-line) / 0.14);
+    outline-offset: -1.5px;
+  }
+  /* Pill filter/segment chip. `aria-pressed` drives the selected look rather
+     than a second class, so the accessible state and the visible state
+     cannot disagree — they are the same attribute. */
+  .a-chip {
+    @apply inline-flex shrink-0 items-center gap-1.5 min-h-[40px] px-4
+           rounded-full text-[13px] font-bold whitespace-nowrap
+           transition-colors duration-150;
+    background: var(--a-low);
+    color: rgb(var(--ink-soft));
+  }
+  .a-chip[aria-pressed='true'] {
+    background: rgb(var(--accent));
+    color: #fff;
+  }
+  .a-field {
+    @apply w-full min-h-[52px] px-4 rounded-2xl text-[15px]
+           placeholder:text-ink-mute;
+    background: var(--a-low);
+    color: rgb(var(--ink));
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .a-field:focus {
+    outline: none;
+    background: var(--a-surf);
+    border-color: rgb(var(--accent) / 0.55);
+  }
+
+  /* ── Chrome ─────────────────────────────────────────────────────────
+     Opaque, for the reason the old bars were: content sliding under a
+     translucent sticky bar reads as a rendering fault, not as depth. */
+  .a-appbar {
+    background: var(--a-canvas);
+    border-bottom: 1px solid rgb(var(--a-line) / 0.07);
+  }
+  /* A bottom sheet. Shadow points UP — it is lit from the page it covers. */
+  .a-sheet {
+    @apply rounded-t-[32px];
+    background: var(--a-surf);
+    box-shadow: var(--a-sheet);
+  }
+
+  /* ── Entrances ──────────────────────────────────────────────────────
+     `.a-stagger` gives its children a rising delay so a list arrives as a
+     cascade rather than as a block. Capped at 8: past that the last row is
+     waiting long enough to read as lag rather than as choreography. */
+  .a-stagger > * { animation: spring-up 0.52s cubic-bezier(0.2, 0.9, 0.25, 1.12) both; }
+  .a-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .a-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+  .a-stagger > *:nth-child(3) { animation-delay: 0.10s; }
+  .a-stagger > *:nth-child(4) { animation-delay: 0.14s; }
+  .a-stagger > *:nth-child(5) { animation-delay: 0.18s; }
+  .a-stagger > *:nth-child(6) { animation-delay: 0.22s; }
+  .a-stagger > *:nth-child(7) { animation-delay: 0.26s; }
+  .a-stagger > *:nth-child(n+8) { animation-delay: 0.30s; }
+
+  /* ── Reduced motion ─────────────────────────────────────────────────
+     Every Aurora animation, off. The staggered children resolve to their
+     final state rather than being suppressed — `spring-up` starts at
+     opacity 0, so merely cancelling it would leave a blank screen. */
+  @media (prefers-reduced-motion: reduce) {
+    .a-aurora,
+    .a-rail::before,
+    .a-aurora-text {
+      animation: none !important;
+      background-position: 0% 50% !important;
+    }
+    .a-stagger > * {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+}

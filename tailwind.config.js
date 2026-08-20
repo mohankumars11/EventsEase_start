@@ -170,6 +170,11 @@ export default {
         // the redesign's "soft depth" reads better with one size up from
         // the previous ceiling at that scale.
         '4xl': '2.5rem',
+        // Aurora geometry. Material 3 Expressive moved Android away from the
+        // 8–16px corner era; at phone scale a 28px card reads as an object you
+        // could pick up, where a 12px one reads as a div. These are the two
+        // sizes the Aurora surfaces use — everything else keeps the old scale.
+        '5xl': '3rem',
       },
       keyframes: {
         'fade-up': {
@@ -232,6 +237,21 @@ export default {
           '0%, 100%': { transform: 'translate(0, 0)' },
           '50%':      { transform: 'translate(6px, -6px)' },
         },
+        // Aurora spring entrances — overshoot, then settle.
+        'spring-up': {
+          '0%':   { opacity: '0', transform: 'translateY(18px) scale(0.97)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'spring-in': {
+          '0%':   { opacity: '0', transform: 'scale(0.92)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        // The slow drift of the aurora wash behind a hero. Background-position
+        // only, so it stays off the main thread.
+        'aurora-pan': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%':      { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
         'fade-up':   'fade-up 0.6s ease forwards',
@@ -244,6 +264,13 @@ export default {
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',
         'glow-pulse': 'glow-pulse 2.4s ease-in-out infinite',
         'drift-soft': 'drift-soft 6s ease-in-out infinite',
+        // Aurora entrances. The overshoot is the point: Material 3
+        // Expressive's spring curves are what make a screen feel like it
+        // arrived rather than appeared, and it is the single cheapest thing
+        // that separates a native-feeling app from a website in a shell.
+        'spring-up':  'spring-up 0.52s cubic-bezier(0.2, 0.9, 0.25, 1.12) both',
+        'spring-in':  'spring-in 0.44s cubic-bezier(0.2, 0.9, 0.25, 1.12) both',
+        'aurora-pan': 'aurora-pan 14s ease-in-out infinite',
       },
     },
   },
