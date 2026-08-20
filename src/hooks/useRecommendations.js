@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { selectActive } from '../lib/activeProducts'
 import { buildRecommender } from '../lib/recommend'
 
 /**
@@ -41,17 +42,21 @@ export function fetchRecommenderData() {
     // catalogue on a phone, and `select('*')` would drag every description
     // and image field into a payload that only needs to rank.
     //
-    // No `is_active` filter in the query itself: that column only exists
-    // after migration 037, and naming it in a select against a database
-    // without it fails the whole request. The ranker skips
-    // `is_active === false`, which is correct before and after 037 — the
-    // same shape ShopPicksRail uses, for the same reason.
-    supabase
-      .from('products')
-      .select('id, name, category, occasion, price, emoji, image_url, image_alt, description')
-      .order('created_at', { ascending: false })
-      .limit(400)
-      .then(({ data, error }) => (error ? [] : (data ?? []))),
+    // ── The guard downstream needed a column nobody was fetching ─────────
+    // This used to select the list below WITHOUT `is_active` and rely on
+    // `recommend.js` skipping `candidate.is_active === false`. The column
+    // was never in the payload, so that field was `undefined` on every
+    // candidate, `undefined === false` is false, and the guard never once
+    // fired — retired products were rankable everywhere recommendations
+    // appear. The comment describing the protection outlived the protection.
+    //
+    // `selectActive` asks for the filter and drops it if migration 037 is
+    // absent, so the column is present whenever the database has it and the
+    // ranker's guard now has something to read.
+    selectActive(
+      'id, name, category, occasion, price, emoji, image_url, image_alt, description',
+      q => q.order('created_at', { ascending: false }).limit(400)
+    ).then(({ data, error }) => (error ? [] : (data ?? []))),
 
     supabase.rpc('get_copurchase_counts')
       .then(({ data, error }) => (error ? [] : (data ?? [])))

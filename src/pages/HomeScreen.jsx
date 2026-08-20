@@ -5,6 +5,7 @@ import {
   MessageCircle, SearchX, CalendarHeart, ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { selectActive } from '../lib/activeProducts'
 import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
 import { useShopCategories } from '../hooks/useShopCategories'
@@ -686,10 +687,15 @@ function SearchResults({ query, onClear }) {
     setProducts(null)
     const t = setTimeout(() => {
       const term = query.replace(/[%,]/g, ' ')
-      supabase.from('products').select('id, name, price, emoji, image_url, category')
-        .or(`name.ilike.%${term}%,description.ilike.%${term}%,occasion.ilike.%${term}%`)
-        .limit(8)
-        .then(({ data }) => { if (id === reqId.current) setProducts(data ?? []) })
+      // Search reached retired products too — same omission as the shop rail,
+      // and worse here, because a search result is something the customer
+      // asked for by name and will assume is buyable.
+      selectActive(
+        'id, name, price, emoji, image_url, category',
+        q => q
+          .or(`name.ilike.%${term}%,description.ilike.%${term}%,occasion.ilike.%${term}%`)
+          .limit(8)
+      ).then(({ data }) => { if (id === reqId.current) setProducts(data ?? []) })
     }, 260)
     return () => clearTimeout(t)
   }, [query])

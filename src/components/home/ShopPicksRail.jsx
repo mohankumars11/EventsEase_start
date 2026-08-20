@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Ticket, Truck, Heart, BadgeCheck, ChevronRight } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { selectActive } from '../../lib/activeProducts'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 import { FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { useShopCategories } from '../../hooks/useShopCategories'
@@ -61,13 +61,16 @@ export default function ShopPicksRail() {
      */
     Promise.all(
       shopCategories.map(cat =>
-        supabase
-          .from('products')
-          .select('id, name, category, price, image_url, occasion')
-          .eq('category', cat.id)
-          .order('price', { ascending: true })
-          .limit(1)
-          .then(({ data }) => data?.[0] ?? null)
+        // Retired products used to reach this rail: the select named its
+        // columns and `is_active` was not among them. See lib/activeProducts
+        // for why it could not simply be added.
+        selectActive(
+          'id, name, category, price, image_url, occasion',
+          q => q
+            .eq('category', cat.id)
+            .order('price', { ascending: true })
+            .limit(1)
+        ).then(({ data }) => data?.[0] ?? null)
       )
     ).then(rows => {
       if (!cancelled) setPicks(rows.filter(Boolean))
