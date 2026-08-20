@@ -130,7 +130,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="shop-canvas min-h-screen">
+      <div className="shop-canvas a-shop min-h-screen">
         <GiftAppBar backTo="/shop" title="Loading…" compact />
         <div className="mx-auto max-w-6xl p-4">
           <div className="aspect-square w-full animate-pulse rounded-2xl bg-surface-sunk/[0.06]" />
@@ -141,7 +141,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="shop-canvas min-h-screen">
+      <div className="shop-canvas a-shop min-h-screen">
         <GiftAppBar backTo="/shop" title="Not found" compact />
         <div className="mx-auto max-w-lg px-4 py-16 text-center">
           <PackageSearch size={26} className="mx-auto text-ink-mute" />
@@ -234,7 +234,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="shop-canvas min-h-screen pb-28">
+    <div className="shop-canvas a-shop min-h-screen pb-28">
       <GiftAppBar backTo="/shop" title={product.name} subtitle={product.category} compact />
 
       <main className="mx-auto max-w-6xl lg:grid lg:grid-cols-2 lg:gap-8 lg:px-4 lg:pt-4">

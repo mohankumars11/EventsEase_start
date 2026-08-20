@@ -172,7 +172,7 @@ export default function ShopCategory() {
   }
 
   return (
-    <div className="shop-canvas min-h-screen pb-28">
+    <div className="shop-canvas a-shop min-h-screen pb-28">
       <GiftAppBar backTo="/shop" title={title} subtitle={subtitle} compact />
 
       {/* ── Where it is going. Stated on the listing, because every delivery

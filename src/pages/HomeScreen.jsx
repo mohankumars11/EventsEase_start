@@ -236,7 +236,7 @@ export default function HomeScreen() {
   const searching = query.trim().length >= 2
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
       <HomeAppBar query={query} onQueryChange={setQuery} />
 
       {searching ? (
@@ -579,7 +579,7 @@ const STEPS = [
 function HowItWorks() {
   return (
     <section className="px-4" aria-labelledby="how-heading">
-      <div className="home-glass p-5">
+      <div className="a-card p-5">
         <h2 id="how-heading" className="text-[15px] font-extrabold text-ink">How Sambramo works</h2>
         <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
           A human-assisted concierge — not a directory you have to phone yourself.
@@ -610,7 +610,7 @@ function HowItWorks() {
             glass panel that is already a tint of the ground, and a second
             tint on top of the first is a smudge — the trust line is the one
             thing in this block someone actually needs to read. */}
-        <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-surface p-3.5 ring-1 ring-hairline/[0.08]">
+        <div className="a-well mt-5 flex items-start gap-2.5 p-4">
           <ShieldCheck size={16} className="mt-0.5 shrink-0 text-forest-600" />
           <p className="text-[11px] leading-relaxed text-ink-soft">
             Nothing is charged until you approve a plan, and we're live in{' '}
@@ -634,8 +634,8 @@ function HowItWorks() {
 function SupportStrip() {
   return (
     <section className="px-4">
-      <div className="home-glass flex items-center gap-3 p-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-xl ring-1 ring-hairline/[0.08]">💬</span>
+      <div className="a-card flex items-center gap-3 p-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-xl">💬</span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-extrabold text-ink">Talk to a person</p>
           <p className="text-[11px] text-ink-mute">Mon–Sat, 9am–8pm. A human, not a bot.</p>
@@ -652,7 +652,7 @@ function SupportStrip() {
         <a
           href={`tel:${BRAND.supportPhone}`}
           aria-label="Call support"
-          className="tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+          className="tap-48 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-ink transition-transform active:scale-95"
         >
           <PhoneCall size={16} />
         </a>
@@ -717,7 +717,7 @@ function SearchResults({ query, onClear }) {
           <Link to="/plan" className="rounded-xl bg-saffron-400 px-4 py-2.5 text-xs font-extrabold text-plum-950">
             Plan a celebration
           </Link>
-          <button onClick={onClear} className="rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10">
+          <button onClick={onClear} className="a-chip">
             Clear
           </button>
         </div>
@@ -749,7 +749,7 @@ function SearchResults({ query, onClear }) {
 
       <Group title="Buy this" hint={products === null ? 'Searching…' : `${products.length} item${products.length === 1 ? '' : 's'}`}>
         {products === null
-          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />)
+          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="a-well h-14 animate-pulse" />)
           : products.map(p => (
               <Row
                 key={p.id}
@@ -780,9 +780,9 @@ function Row({ emoji, label, sub, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="home-glass flex w-full items-center gap-3 p-3 text-left transition-transform active:scale-[0.99]"
+      className="a-card flex w-full items-center gap-3 p-4 text-left transition-transform active:scale-[0.99]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-base ring-1 ring-hairline/[0.08]">{emoji}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-base">{emoji}</span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-ink">{label}</span>
         {sub && <span className="block truncate text-[11px] text-ink-mute">{sub}</span>}

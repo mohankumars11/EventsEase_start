@@ -78,7 +78,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
   }, [reduced, focused, query])
 
   return (
-    <header ref={barRef} className="home-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
+    <header ref={barRef} className="home-appbar a-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
       <div className="mx-auto max-w-3xl px-4 pb-3 pt-3">
         <div className="flex items-center gap-3">
           <SambramoMark size={30} className="shrink-0" />
@@ -150,13 +150,13 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               enterKeyHint="search"
               aria-label="Search celebrations and shop"
               placeholder={focused ? 'Search celebrations, cakes, decor…' : `Search "${SEARCH_HINTS[hint]}"`}
-              className="h-12 w-full rounded-2xl bg-white pl-11 pr-11 text-sm font-medium text-gray-900 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.9)] outline-none ring-2 ring-transparent placeholder:text-gray-400 focus:ring-saffron-400"
+              className="a-field h-12 pl-11 pr-11 font-medium"
             />
             {query && (
               <button
                 onClick={() => { onQueryChange(''); inputRef.current?.focus() }}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500"
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-ink/[0.08] text-ink-mute"
               >
                 <X size={14} />
               </button>

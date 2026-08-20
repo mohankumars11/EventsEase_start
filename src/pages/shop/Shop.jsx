@@ -169,7 +169,7 @@ export default function Shop() {
   }, [query, rows])
 
   return (
-    <div className="shop-canvas min-h-screen pb-28">
+    <div className="shop-canvas a-shop min-h-screen pb-28">
       <GiftAppBar query={query} onQueryChange={setQuery} />
 
       {results ? (

@@ -87,7 +87,7 @@ export default function GiftAppBar({
   }, [reduced, focused, query, compact])
 
   return (
-    <header ref={barRef} className="shop-appbar sticky top-0 z-40 pt-safe">
+    <header ref={barRef} className="shop-appbar a-appbar sticky top-0 z-40 pt-safe">
       <div className="mx-auto max-w-6xl px-4 pb-2.5 pt-2.5">
         <div className="flex items-center gap-2.5">
           {backTo && (
@@ -183,7 +183,7 @@ export default function GiftAppBar({
               enterKeyHint="search"
               aria-label="Search the shop"
               placeholder={focused ? 'Search cakes, flowers, gifts, silk…' : `Try "${SEARCH_HINTS[hint]}"`}
-              className="h-11 w-full rounded-2xl border border-hairline/12 bg-surface-sunk/[0.04] pl-10 pr-10 text-[13px] font-medium text-ink outline-none transition placeholder:text-ink-mute focus:border-forest-600 focus:bg-white"
+              className="a-field h-11 pl-10 pr-10 text-[13px] font-medium"
             />
             {query && (
               <button
