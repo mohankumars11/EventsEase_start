@@ -75,7 +75,7 @@ export default function StickyCartBar() {
             onClick={() => setMinimised(false)}
             aria-expanded="false"
             aria-label={`Expand cart — ${summary}`}
-            className="flex items-center gap-2 rounded-full bg-chilli-600 py-2 pl-2.5 pr-4 text-white shadow-[var(--shadow-2)] transition-transform active:scale-95"
+            className="flex items-center gap-2 rounded-full bg-chilli-600 py-2.5 pl-2.5 pr-4 text-white shadow-[0_16px_32px_-14px_rgba(198,40,40,0.55)] transition-transform active:scale-95"
           >
             <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
               <ShoppingBag size={14} />
@@ -88,7 +88,7 @@ export default function StickyCartBar() {
            — the storefront's old ground — which made sense while the page
            behind it was the same green and stopped making sense the moment it
            was not: a dark slab with the app's ink colour written on it. */
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-2)] ring-1 ring-hairline/10">
+        <div className="a-raised mx-auto max-w-3xl overflow-hidden rounded-[26px]">
           <div className="flex items-start gap-2 px-3.5 pt-2.5">
             <div className="min-w-0 flex-1">
               {remaining > 0 ? (
@@ -125,15 +125,15 @@ export default function StickyCartBar() {
             </button>
           </div>
 
-          <Link to={cartPath} className="flex items-center gap-3 px-3.5 py-3 active:bg-surface-sunk/[0.07]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.07] text-ink">
+          <Link to={cartPath} className="flex items-center gap-3 px-4 py-3.5 active:bg-ink/[0.04]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.06] text-ink">
               <ShoppingBag size={18} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-extrabold leading-tight text-ink">{summary}</span>
+              <span className="block text-[13.5px] font-extrabold leading-tight text-ink">{summary}</span>
               <span className="block text-[11px] text-ink-mute">Taxes &amp; delivery calculated at checkout</span>
             </span>
-            <span className="flex shrink-0 items-center gap-1 rounded-xl bg-chilli-600 px-3.5 py-2.5 text-xs font-extrabold text-white">
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-chilli-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-[0_10px_22px_-12px_rgba(198,40,40,0.6)]">
               View cart <ArrowRight size={14} />
             </span>
           </Link>

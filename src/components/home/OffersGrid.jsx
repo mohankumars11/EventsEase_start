@@ -207,7 +207,7 @@ function OfferCard({ offer, onHold, animate = false }) {
       onClick={() => navigate(offer.to)}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(offer.to) } }}
       aria-label={`${offer.headline} — ${offer.name}`}
-      className={`${animate ? 'rise-in' : ''} relative flex min-h-[126px] cursor-pointer flex-col overflow-hidden rounded-2xl p-3 pb-4 text-left shadow-[0_10px_24px_-16px_rgba(0,0,0,0.6)] transition-transform active:scale-[0.98]`}
+      className={`${animate ? 'rise-in' : ''} relative flex min-h-[128px] cursor-pointer flex-col overflow-hidden rounded-[24px] p-3.5 pb-4 text-left shadow-[0_14px_30px_-16px_rgba(0,0,0,0.6)] transition-transform active:scale-[0.98]`}
       style={{ background: `linear-gradient(135deg, ${accent.from} 0%, ${accent.to} 100%)` }}
     >
       {/* Perforations, so the card reads as a coupon rather than an advert.
