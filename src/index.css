@@ -1686,7 +1686,7 @@
     --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
     --a-shadow: 0 18px 44px -22px rgba(70, 30, 120, 0.30);
     --a-sheet:  0 -12px 48px -16px rgba(70, 30, 120, 0.26);
-    background: var(--a-canvas);
+    background: var(--a-canvas, #FBF9FE);
   }
 
   /* ── The storefront room (shop, product, checkout) ───────────────────
@@ -1702,47 +1702,56 @@
     --a-aurora: linear-gradient(115deg, #0E523C 0%, #1C8560 38%, #38A47B 68%, #FBBF24 100%);
     --a-shadow: 0 18px 44px -22px rgba(6, 60, 42, 0.28);
     --a-sheet:  0 -12px 48px -16px rgba(6, 60, 42, 0.24);
-    background: var(--a-canvas);
+    background: var(--a-canvas, #FBF9FE);
   }
 
   /* ── Surfaces ───────────────────────────────────────────────────────
      .a-card is the workhorse and it carries NO shadow. That is deliberate:
      it is legible against --a-canvas on tone alone, and a screen of twelve
      shadowed cards is a screen with twelve grey smudges on it. */
+  /* ── Every var below carries a fallback, and that is not defensive
+     styling — it is the difference between a component that degrades and
+     one that vanishes. An unset custom property makes the whole
+     declaration invalid at computed-value time, and `background` then
+     resolves to TRANSPARENT: an invisible panel, with no error anywhere.
+     The old semantic tokens have the same rule written at the top of this
+     file. These classes are used on screens that have not moved onto an
+     Aurora canvas yet (AppBar is on both), so the fallback is not
+     hypothetical — it is the common case during the migration. */
   .a-card {
     @apply relative rounded-[28px];
-    background: var(--a-surf);
-    outline: 1px solid rgb(var(--a-line) / 0.07);
+    background: var(--a-surf, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.07);
     outline-offset: -1px;
   }
   /* A card that is genuinely above the page — a sheet, a dialog, a hero. */
   .a-raised {
     @apply relative rounded-[28px];
-    background: var(--a-surf);
-    outline: 1px solid rgb(var(--a-line) / 0.06);
+    background: var(--a-surf, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.06);
     outline-offset: -1px;
-    box-shadow: var(--a-shadow);
+    box-shadow: var(--a-shadow, 0 18px 44px -22px rgba(70, 30, 120, 0.30));
   }
   /* Sunk: belongs to the room rather than sitting on it. Replaces the old
      `.home-glass` / `bg-surface-sunk/5` idiom, which on a white ground was
      white on white. */
   .a-well {
     @apply relative rounded-[24px];
-    background: var(--a-low);
+    background: var(--a-low, #F4EFFB);
   }
   /* A card on a card, or a selected state that must not rely on colour. */
   .a-high {
-    background: var(--a-high);
-    outline: 1px solid rgb(var(--a-line) / 0.08);
+    background: var(--a-high, #FDFBFF);
+    outline: 1px solid rgb(var(--a-line, 31 16 51) / 0.08);
     outline-offset: -1px;
   }
-  .a-hairline { border-color: rgb(var(--a-line) / 0.08); }
+  .a-hairline { border-color: rgb(var(--a-line, 31 16 51) / 0.08); }
 
   /* ── The brand light ────────────────────────────────────────────────
      A hero ground. `background-size` is oversized so `aurora-pan` has
      somewhere to travel; the animation moves background-position only. */
   .a-aurora {
-    background-image: var(--a-aurora);
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
     background-size: 220% 220%;
     animation: aurora-pan 14s ease-in-out infinite;
   }
@@ -1754,7 +1763,7 @@
     inset: 0 0 auto 0;
     height: 3px;
     border-radius: inherit;
-    background-image: var(--a-aurora);
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
     background-size: 220% 220%;
     animation: aurora-pan 14s ease-in-out infinite;
   }
@@ -1763,7 +1772,7 @@
      an invisible heading. */
   .a-aurora-text {
     color: rgb(var(--accent));
-    background-image: var(--a-aurora);
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
     background-size: 220% 220%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -1782,19 +1791,19 @@
   }
   .a-btn-primary {
     @apply a-btn text-white;
-    background-image: var(--a-aurora);
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
     background-size: 220% 220%;
     box-shadow: 0 10px 26px -12px rgb(var(--accent) / 0.75);
   }
   .a-btn-quiet {
     @apply a-btn;
-    background: var(--a-low);
+    background: var(--a-low, #F4EFFB);
     color: rgb(var(--ink));
   }
   .a-btn-ghost {
     @apply a-btn;
     color: rgb(var(--ink));
-    outline: 1.5px solid rgb(var(--a-line) / 0.14);
+    outline: 1.5px solid rgb(var(--a-line, 31 16 51) / 0.14);
     outline-offset: -1.5px;
   }
   /* Pill filter/segment chip. `aria-pressed` drives the selected look rather
@@ -1804,7 +1813,7 @@
     @apply inline-flex shrink-0 items-center gap-1.5 min-h-[40px] px-4
            rounded-full text-[13px] font-bold whitespace-nowrap
            transition-colors duration-150;
-    background: var(--a-low);
+    background: var(--a-low, #F4EFFB);
     color: rgb(var(--ink-soft));
   }
   .a-chip[aria-pressed='true'] {
@@ -1814,14 +1823,14 @@
   .a-field {
     @apply w-full min-h-[52px] px-4 rounded-2xl text-[15px]
            placeholder:text-ink-mute;
-    background: var(--a-low);
+    background: var(--a-low, #F4EFFB);
     color: rgb(var(--ink));
     border: 1.5px solid transparent;
     transition: border-color 0.15s, background-color 0.15s;
   }
   .a-field:focus {
     outline: none;
-    background: var(--a-surf);
+    background: var(--a-surf, #FFFFFF);
     border-color: rgb(var(--accent) / 0.55);
   }
 
@@ -1829,14 +1838,14 @@
      Opaque, for the reason the old bars were: content sliding under a
      translucent sticky bar reads as a rendering fault, not as depth. */
   .a-appbar {
-    background: var(--a-canvas);
-    border-bottom: 1px solid rgb(var(--a-line) / 0.07);
+    background: var(--a-canvas, var(--bar, #FFFFFF));
+    border-bottom: 1px solid rgb(var(--a-line, 31 16 51) / 0.07);
   }
   /* A bottom sheet. Shadow points UP — it is lit from the page it covers. */
   .a-sheet {
     @apply rounded-t-[32px];
-    background: var(--a-surf);
-    box-shadow: var(--a-sheet);
+    background: var(--a-surf, #FFFFFF);
+    box-shadow: var(--a-sheet, 0 -12px 48px -16px rgba(70, 30, 120, 0.26));
   }
 
   /* ── Entrances ──────────────────────────────────────────────────────

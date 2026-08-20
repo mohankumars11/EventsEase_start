@@ -261,7 +261,7 @@ export default function BottomNav() {
   return (
     <nav
       ref={barRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-safe shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-ink/[0.07] pb-safe shadow-[0_-4px_24px_-10px_rgba(70,30,120,0.18)]"
       aria-label="Primary"
     >
       {/* `flex-1 basis-0` on every item, not `justify-around`: equal columns
@@ -300,13 +300,25 @@ export default function BottomNav() {
                   chip colour is the same in both states for that reason —
                   selection is carried by the ring and the lift, so the
                   knockout can never disagree with its ground. */}
+              {/* ── The active pill ──────────────────────────────────────
+                  Material 3's navigation bar marks the selected tab with a
+                  filled pill behind its icon rather than a line above the
+                  column, and the reason is mechanical: on a 6-tab bar at
+                  phone width each column is ~62px, so a 32px underline is
+                  reading as a mark on the BAR rather than on the tab. The
+                  pill is attached to the thing it selects.
+
+                  The primary tab keeps its plum disc — it is branded rather
+                  than selected — so it never takes the pill. */}
               <span
                 className={`flex h-8 w-11 items-center justify-center rounded-full transition-all ${
                   primary
                     ? active
                       ? 'bg-plum-700 ring-2 ring-saffron-400 shadow-md shadow-plum-700/35'
                       : 'bg-plum-700 shadow-sm shadow-plum-700/25'
-                    : ''
+                    : active && !locked
+                      ? 'bg-accent/[0.12]'
+                      : ''
                 }`}
                 style={primary ? { '--sambramo-knockout': '#6d28d9' } : undefined}
               >
@@ -339,33 +351,30 @@ export default function BottomNav() {
                   {locked && (
                     <span
                       aria-hidden="true"
-                      className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-200 text-gray-500 ring-2 ring-white"
+                      className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-ink/[0.12] text-ink-mute ring-2 ring-white"
                     >
                       <Lock size={7} strokeWidth={3.5} />
                     </span>
                   )}
                 </span>
               </span>
-              <span className={`whitespace-nowrap text-[10px] leading-none ${
-                locked ? 'font-medium text-gray-400'
+              <span className={`whitespace-nowrap text-[10.5px] leading-none ${
+                locked ? 'font-medium text-ink-mute/70'
                   : primary ? 'font-bold text-plum-700'
-                  : active ? 'font-bold' : 'font-medium'
+                  : active ? 'font-extrabold' : 'font-medium'
               }`}>
                 {label}
               </span>
-              {active && !locked && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-saffron-400" />
-              )}
             </>
           )
 
           // One class for all six. The primary tab differs in what it paints
           // INSIDE this box, never in the box — which is what keeps the
           // baseline, the height and the tap target identical across the row.
-          const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
-            locked ? 'text-gray-400'
-              : active ? 'text-plum-700'
-              : 'text-gray-500 active:text-plum-600'
+          const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1.5 min-h-[60px] py-2 rounded-xl transition-colors ${
+            locked ? 'text-ink-mute/70'
+              : active ? 'text-accent'
+              : 'text-ink-mute active:text-accent'
           }`
 
           // Said rather than implied: a screen reader gets the same sentence
