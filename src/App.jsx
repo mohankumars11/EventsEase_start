@@ -290,6 +290,24 @@ function AppRoutes() {
           festival banners, the chat widget, anything a customer bookmarked — so
           it redirects rather than falling through to an empty category page. */}
       <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
+
+      {/* ── Shopping by the moment, not the shelf ──────────────────────
+          An occasion is not a category, and it was being served as one.
+          The mosaic's "Birthday" tile pointed at /shop/Cakes?occasion=
+          Birthday — so a customer who told us what they were shopping FOR
+          got one shelf's answer to it, and the birthday flowers, the
+          birthday gifts and the personalised birthday mug were all
+          filtered out of a page that had just promised them birthdays.
+
+          This route asks the catalogue the question the customer actually
+          asked: everything tagged with this occasion, whatever shelf it
+          lives on. It is served by ShopCategory because it needs that
+          screen's grid, sort and price filters exactly — an occasion is a
+          constraint on the catalogue, the same way "today" already is.
+
+          Declared BEFORE /shop/:category so "occasion" is never mistaken
+          for the name of a shelf. */}
+      <Route path="/shop/occasion/:occasion" element={<ScreenShell><ShopCategory /></ScreenShell>} />
       <Route path="/shop/:category" element={<ScreenShell><ShopCategory /></ScreenShell>} />
 
       {/* ── Planning ────────────────────────────────────

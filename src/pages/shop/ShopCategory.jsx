@@ -47,12 +47,23 @@ const PRICE_BANDS = [
 ]
 
 export default function ShopCategory() {
-  const { category: rawCategory } = useParams()
+  const { category: rawCategory, occasion: rawOccasion } = useParams()
   const category = decodeURIComponent(rawCategory ?? '')
   const isToday = category.toLowerCase() === TODAY
 
+  // ── /shop/occasion/:occasion ────────────────────────────────────────
+  // The third thing this screen serves, and the same kind of thing as
+  // "today": a constraint on the whole catalogue rather than a shelf in
+  // it. When the route carries an occasion, that occasion is fixed for
+  // the page — it is what the customer asked for, so it is not one of the
+  // filters they can clear.
+  const routeOccasion = rawOccasion ? decodeURIComponent(rawOccasion) : null
+  const isOccasion = !!routeOccasion
+
   const [params, setParams] = useSearchParams()
-  const occasion = params.get('occasion') ?? null
+  // On an occasion route the path wins; the ?occasion= param is how the
+  // per-shelf chips work and has no meaning here.
+  const occasion = routeOccasion ?? params.get('occasion') ?? null
 
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -71,13 +82,19 @@ export default function ShopCategory() {
 
     const select = 'id, name, subtitle, category, occasion, price, mrp, emoji, image_url, image_alt, badge, same_day, prep_hours, is_active, sort_order, created_at, seed_rating, seed_rating_count'
 
+    const base = supabase.from('products').select(select).eq('is_active', true)
+
     const q = isToday
       // "Today" has to consider the whole catalogue, because whether a row
       // qualifies is decided in JS against its prep time and the clock —
       // there is no column to filter on that would give the right answer.
-      ? supabase.from('products').select(select).eq('is_active', true).limit(600)
-      : supabase.from('products').select(select).eq('is_active', true)
-          .in('category', categoryQueryValues(category)).limit(400)
+      ? base.limit(600)
+      : isOccasion
+        // Across every shelf, which is the entire point of the route: a
+        // birthday is cakes AND flowers AND gifts, and answering it from
+        // one category is what made the mosaic feel like a lie.
+        ? base.eq('occasion', routeOccasion).limit(600)
+        : base.in('category', categoryQueryValues(category)).limit(400)
 
     q.then(({ data }) => {
       if (!alive) return
@@ -85,14 +102,22 @@ export default function ShopCategory() {
       setLoading(false)
     })
     return () => { alive = false }
-  }, [category, isToday])
+  }, [category, isToday, isOccasion, routeOccasion])
 
-  /** The occasion chips, only ever showing tags with rows behind them. */
+  /** The occasion chips, only ever showing tags with rows behind them.
+   *  An occasion route has already answered this question, so it shows
+   *  none — the alternative is a Birthday chip on the Birthday page. */
   const groups = useMemo(
-    () => (isToday ? [] : groupsForCategory(category, rows)),
-    [category, rows, isToday],
+    () => (isToday || isOccasion ? [] : groupsForCategory(category, rows)),
+    [category, rows, isToday, isOccasion],
   )
   const chips = useMemo(() => groups.flatMap(g => g.occasions ?? []), [groups])
+
+  /** How many distinct shelves this occasion actually spans. */
+  const shelfCount = useMemo(
+    () => new Set(rows.map(r => r.category).filter(Boolean)).size,
+    [rows],
+  )
 
   const filtered = useMemo(() => {
     let out = rows
@@ -121,12 +146,19 @@ export default function ShopCategory() {
     return sorted
   }, [rows, occasion, band, todayOnly, sort, isToday])
 
-  const activeCount = [occasion, band, todayOnly && !isToday].filter(Boolean).length
+  // The route's own occasion is not a clearable filter — it is the page.
+  const activeCount = [
+    occasion && !isOccasion, band, todayOnly && !isToday,
+  ].filter(Boolean).length
 
-  const title = isToday ? 'Arriving today' : category
+  const title = isToday ? 'Arriving today' : isOccasion ? routeOccasion : category
   const subtitle = isToday
     ? 'Every window checked against the clock'
-    : `${rows.length} ${rows.length === 1 ? 'piece' : 'pieces'} on this shelf`
+    : isOccasion
+      // Names the shelves it drew from, because the promise of this page is
+      // that it is NOT one shelf — and the count is the proof.
+      ? `${rows.length} ${rows.length === 1 ? 'piece' : 'pieces'} across ${shelfCount} ${shelfCount === 1 ? 'shelf' : 'shelves'}`
+      : `${rows.length} ${rows.length === 1 ? 'piece' : 'pieces'} on this shelf`
 
   const setOccasion = next => {
     const p = new URLSearchParams(params)
@@ -135,7 +167,8 @@ export default function ShopCategory() {
   }
 
   const clearAll = () => {
-    setBand(null); setTodayOnly(false); setOccasion(null)
+    setBand(null); setTodayOnly(false)
+    if (!isOccasion) setOccasion(null)
   }
 
   return (

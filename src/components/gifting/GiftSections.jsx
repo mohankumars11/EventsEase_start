@@ -269,7 +269,12 @@ export function OccasionMosaic({ tiles }) {
         return (
           <Link
             key={t.id}
-            to={`/shop/${encodeURIComponent(t.category)}?occasion=${encodeURIComponent(t.occasion)}`}
+            // The occasion route, not one shelf filtered by it. A birthday is
+            // cakes AND flowers AND gifts; sending this tile to
+            // /shop/Cakes?occasion=Birthday answered a question about the whole
+            // catalogue with a single shelf's contents, which is what made the
+            // mosaic feel like a menu of categories wearing occasion names.
+            to={`/shop/occasion/${encodeURIComponent(t.occasion)}`}
             className={[
               'relative flex min-h-[136px] flex-col overflow-hidden rounded-2xl p-3.5',
               'ring-1 ring-hairline/[0.05] transition-transform active:scale-[0.985]',

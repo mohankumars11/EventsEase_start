@@ -175,19 +175,35 @@ export default function Shop() {
       {results ? (
         <SearchResults query={query} results={results} offers={offers} onAdd={addProduct} />
       ) : (
-        <main className="mx-auto max-w-6xl space-y-8 pt-3">
-          <QuickRail items={quick} />
+        <main className="mx-auto max-w-6xl space-y-9 pt-3">
+          {/* ── The occasion mosaic, first ────────────────────────────────
+              Nobody arrives at a gift shop wanting a category. They arrive
+              because something is happening — a birthday, a housewarming,
+              a festival next week — and the shelf a thing sits on is our
+              filing system, not their reason.
 
-          {/* ── The occasion mosaic ── */}
+              So the moment leads and the shelves follow it. The rail below
+              is still the fastest route for somebody who knows they want
+              flowers, which is why it stays; it just no longer stands in
+              front of the question most people came in with. */}
           {tiles.length > 0 && (
             <section>
               <SectionHead
-                title="What is the occasion?"
-                sub="Pick the reason and we will narrow the shelf for you."
+                title="What are you shopping for?"
+                sub="Pick the moment — we will show you everything for it, from every shelf."
               />
               <OccasionMosaic tiles={tiles} />
             </section>
           )}
+
+          {/* ── The shelves, for people who already know ── */}
+          <section>
+            <SectionHead
+              title="Or go straight to a shelf"
+              sub="Flowers, cakes, gifts, pooja essentials."
+            />
+            <QuickRail items={quick} />
+          </section>
 
           {/* ── Still possible today ── */}
           {todayItems.length > 0 && (
