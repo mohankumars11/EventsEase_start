@@ -50,8 +50,8 @@ const PAYMENT_METHODS = [
  * is not a saving.
  */
 const ACCENTS = {
-  saffron: { strip: 'from-amber-100/90',    rule: 'bg-amber-400',   tile: 'bg-amber-500/15 text-amber-700',     num: 'bg-amber-500 text-ink' },
-  forest:  { strip: 'from-emerald-100/90',  rule: 'bg-emerald-500', tile: 'bg-emerald-500/15 text-emerald-700', num: 'bg-emerald-600 text-ink' },
+  saffron: { strip: 'from-saffron-100/90',  rule: 'bg-saffron-400', tile: 'bg-saffron-500/15 text-saffron-700', num: 'bg-saffron-500 text-ink' },
+  forest:  { strip: 'from-forest-100/90',   rule: 'bg-forest-500',  tile: 'bg-forest-500/15 text-forest-700',   num: 'bg-forest-600 text-white' },
   plum:    { strip: 'from-plum-100/90',     rule: 'bg-plum-500',    tile: 'bg-plum-500/15 text-plum-700',       num: 'bg-plum-600 text-ink' },
   chilli:  { strip: 'from-chilli-100/90',   rule: 'bg-chilli-500',  tile: 'bg-chilli-500/15 text-chilli-700',   num: 'bg-chilli-600 text-white' },
 }
@@ -68,8 +68,8 @@ function SectionCard({ icon: Icon, title, subtitle, accent = 'forest', badge, ac
           <Icon size={17} />
         </span>
         <div className="relative z-10 min-w-0 flex-1">
-          <h3 className="truncate text-[12.5px] font-extrabold uppercase tracking-[0.09em] text-gray-900">{title}</h3>
-          {subtitle && <p className="mt-0.5 truncate text-[11px] text-gray-500">{subtitle}</p>}
+          <h3 className="truncate text-[12.5px] font-extrabold uppercase tracking-[0.09em] text-ink">{title}</h3>
+          {subtitle && <p className="mt-0.5 truncate text-[11px] text-ink-mute">{subtitle}</p>}
         </div>
         {action && <div className="relative z-10 shrink-0">{action}</div>}
         {badge && (
@@ -426,28 +426,28 @@ export default function ShopCart() {
   // ── Placed ────────────────────────────────────────────────────────
   if (step === 'done') {
     return (
-      <div className="checkout-canvas flex min-h-screen flex-col">
+      <div className="checkout-canvas a-shop flex min-h-screen flex-col">
         <CheckoutHeader step="done" itemCount={0} />
         <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 sm:px-6">
           <div className="checkout-card p-7 text-center sm:p-9">
             <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center">
-              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-emerald-100" />
-              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-emerald-400/30 animate-pulse-ring" />
-              <CheckCircle2 size={40} className="relative text-emerald-600" />
+              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-forest-100" />
+              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-forest-400/30 animate-pulse-ring" />
+              <CheckCircle2 size={40} className="relative text-forest-600" />
             </div>
-            <h2 className="font-serif text-[26px] font-bold leading-tight text-gray-900">
+            <h2 className="font-serif text-[26px] font-bold leading-tight text-ink">
               {pendingConfirmation ? 'Order received' : 'Order placed'}
             </h2>
-            <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-gray-500">
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-ink-mute">
               {pendingConfirmation
                 ? "We'll confirm your UPI payment shortly and get it ready for delivery."
                 : "We'll get it ready for delivery and keep you posted."}
             </p>
 
-            <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-2.5 ring-1 ring-gray-100">
-              <Receipt size={14} className="text-gray-500" />
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Order</span>
-              <span className="font-mono text-sm font-bold text-gray-800">
+            <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-ink/[0.03] px-4 py-2.5 ring-1 ring-ink/[0.07]">
+              <Receipt size={14} className="text-ink-mute" />
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-mute">Order</span>
+              <span className="font-mono text-sm font-bold text-ink">
                 #{placedOrderId?.slice(0, 8).toUpperCase()}
               </span>
             </div>
@@ -463,7 +463,7 @@ export default function ShopCart() {
               </button>
               <button
                 onClick={() => navigate('/shop')}
-                className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                className="w-full rounded-2xl border border-ink/10 bg-white py-3.5 font-semibold text-ink-soft transition-colors hover:bg-ink/[0.03]"
               >
                 Continue shopping
               </button>
@@ -478,15 +478,15 @@ export default function ShopCart() {
   // ── Empty ─────────────────────────────────────────────────────────
   if (cart.products.length === 0) {
     return (
-      <div className="checkout-canvas flex min-h-screen flex-col">
+      <div className="checkout-canvas a-shop flex min-h-screen flex-col">
         <CheckoutHeader step="cart" itemCount={0} />
         <main className="mx-auto w-full max-w-lg flex-1 px-4 py-12 sm:px-6">
           <div className="checkout-card px-6 py-12 text-center">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-100 to-amber-50 text-4xl ring-1 ring-amber-200/70">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-saffron-100 to-saffron-50 text-4xl ring-1 ring-saffron-200/70">
               🛍️
             </div>
-            <h2 className="font-serif text-2xl font-bold text-gray-900">Your bag is empty</h2>
-            <p className="mx-auto mt-2 max-w-[16rem] text-sm leading-relaxed text-gray-500">
+            <h2 className="font-serif text-2xl font-bold text-ink">Your bag is empty</h2>
+            <p className="mx-auto mt-2 max-w-[16rem] text-sm leading-relaxed text-ink-mute">
               Cakes, gifts, flowers, decor and pooja essentials — all delivered for the day you need them.
             </p>
             <Link
@@ -512,18 +512,18 @@ export default function ShopCart() {
   const summaryCard = (
     <SectionCard icon={Receipt} title="Order summary" accent="saffron">
       <div className="space-y-2.5 p-4 sm:p-5">
-        <div className="flex justify-between text-sm text-gray-600">
+        <div className="flex justify-between text-sm text-ink-soft">
           <span>Subtotal · {productCount} item{productCount !== 1 ? 's' : ''}</span>
-          <span className="font-semibold text-gray-800">{formatINR(productTotal)}</span>
+          <span className="font-semibold text-ink">{formatINR(productTotal)}</span>
         </div>
-        <div className="flex justify-between text-sm text-gray-600">
-          <span className="flex items-center gap-1.5"><Truck size={13} className="text-gray-500" /> Delivery</span>
+        <div className="flex justify-between text-sm text-ink-soft">
+          <span className="flex items-center gap-1.5"><Truck size={13} className="text-ink-mute" /> Delivery</span>
           {deliveryFee === 0
-            ? <span className="font-bold text-emerald-600">FREE</span>
-            : <span className="font-semibold text-gray-800">{formatINR(deliveryFee)}</span>}
+            ? <span className="font-bold text-forest-600">FREE</span>
+            : <span className="font-semibold text-ink">{formatINR(deliveryFee)}</span>}
         </div>
         {discountAmount > 0 && (
-          <div className="flex justify-between text-sm font-medium text-emerald-600">
+          <div className="flex justify-between text-sm font-medium text-forest-600">
             <span className="flex items-center gap-1.5"><BadgePercent size={13} /> {coupon.code}</span>
             <span>−{formatINR(discountAmount)}</span>
           </div>
@@ -540,7 +540,7 @@ export default function ShopCart() {
         )}
 
         {deliveryFee > 0 && isFirstOrder === false && (
-          <p className="text-[11px] text-gray-500">Free delivery is a first-order welcome offer.</p>
+          <p className="text-[11px] text-ink-mute">Free delivery is a first-order welcome offer.</p>
         )}
 
         {/* The total, on the storefront's own ground. A checkout has exactly
@@ -562,7 +562,7 @@ export default function ShopCart() {
           user ? (
             <button
               onClick={handleProceed}
-              className="!mt-3 hidden w-full items-center justify-center gap-2 rounded-2xl bg-saffron-500 py-3.5 text-[15px] font-extrabold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-saffron-400 lg:flex"
+              className="!mt-3 hidden w-full items-center justify-center gap-2 rounded-2xl bg-saffron-500 py-3.5 text-[15px] font-extrabold text-ink shadow-lg shadow-black/10 transition-colors hover:bg-saffron-400 lg:flex"
             >
               Pay online by UPI <ArrowRight size={16} />
             </button>
@@ -570,7 +570,7 @@ export default function ShopCart() {
             <Link
               to="/login"
               state={{ from: signInToCheckout }}
-              className="!mt-3 hidden w-full items-center justify-center gap-2 rounded-2xl bg-saffron-500 py-3.5 text-[15px] font-extrabold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-saffron-400 lg:flex"
+              className="!mt-3 hidden w-full items-center justify-center gap-2 rounded-2xl bg-saffron-500 py-3.5 text-[15px] font-extrabold text-ink shadow-lg shadow-black/10 transition-colors hover:bg-saffron-400 lg:flex"
             >
               Sign in to checkout <ArrowRight size={16} />
             </Link>
@@ -587,7 +587,7 @@ export default function ShopCart() {
        page root rather than on the content column, because the last thing
        the bar overlaps once you have scrolled all the way down is the
        footer, not the form. */
-    <div className={`checkout-canvas flex min-h-screen flex-col ${step === 'cart' ? 'pb-24 lg:pb-0' : ''}`}>
+    <div className={`checkout-canvas a-shop flex min-h-screen flex-col ${step === 'cart' ? 'pb-24 lg:pb-0' : ''}`}>
       {/* `addressValid` is what makes the middle dot mean something: the bag
           and the details are one scroll, so the rail has to advance on the
           form rather than on the screen change. */}
@@ -615,7 +615,7 @@ export default function ShopCart() {
                 </Link>
               }
             >
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-ink/[0.07]">
                 {cart.products.map(p => (
                   <li key={p.key} className="flex items-start gap-3 px-4 py-4 sm:px-5">
                     <ProductImage
@@ -626,7 +626,7 @@ export default function ShopCart() {
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold leading-snug text-gray-900">{p.product.name}</p>
+                      <p className="text-sm font-bold leading-snug text-ink">{p.product.name}</p>
                       <p className="mt-0.5 text-[13px] font-bold text-forest-700">
                         {formatINR(lineUnitPrice(p))}
                         {/* Two lines of the same cake, configured differently,
@@ -634,7 +634,7 @@ export default function ShopCart() {
                             screen — and the price difference is the part that
                             gets queried. */}
                         {p.unitPrice != null && p.unitPrice !== p.product.price && (
-                          <span className="font-normal text-gray-500"> · {formatINR(p.product.price)} + extras</span>
+                          <span className="font-normal text-ink-mute"> · {formatINR(p.product.price)} + extras</span>
                         )}
                       </p>
 
@@ -647,33 +647,33 @@ export default function ShopCart() {
                           {summaryLines(p.optionLines).map((l, i) => (
                             <li
                               key={`${l.groupId}-${i}`}
-                              className="rounded-md bg-gray-50 px-1.5 py-0.5 text-[11px] leading-snug text-gray-600 ring-1 ring-gray-100"
+                              className="rounded-md bg-ink/[0.03] px-1.5 py-0.5 text-[11px] leading-snug text-ink-soft ring-1 ring-ink/[0.07]"
                             >
                               {l.isText ? <span className="italic">“{l.label}”</span> : l.label}
-                              {l.price > 0 && <span className="text-gray-500"> +{formatINR(l.price)}</span>}
+                              {l.price > 0 && <span className="text-ink-mute"> +{formatINR(l.price)}</span>}
                             </li>
                           ))}
                         </ul>
                       )}
                       {p.customization && (
-                        <p className="mt-1 line-clamp-2 text-[11px] italic text-gray-500">"{p.customization}"</p>
+                        <p className="mt-1 line-clamp-2 text-[11px] italic text-ink-mute">"{p.customization}"</p>
                       )}
 
                       <div className="mt-2.5 flex items-center gap-2">
-                        <div className="inline-flex items-center rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                        <div className="inline-flex items-center rounded-xl bg-ink/[0.03] ring-1 ring-ink/10">
                           <button
                             onClick={() => dispatch({ type: 'SET_PRODUCT_QTY', key: p.key, qty: p.qty - 1 })}
                             disabled={p.qty <= 1}
                             aria-label={`Reduce quantity of ${p.product.name}`}
-                            className="p-2 text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-30"
+                            className="p-2 text-ink-mute transition-colors hover:text-ink disabled:opacity-30"
                           >
                             <Minus size={13} />
                           </button>
-                          <span className="w-6 text-center text-sm font-extrabold text-gray-800">{p.qty}</span>
+                          <span className="w-6 text-center text-sm font-extrabold text-ink">{p.qty}</span>
                           <button
                             onClick={() => dispatch({ type: 'SET_PRODUCT_QTY', key: p.key, qty: p.qty + 1 })}
                             aria-label={`Increase quantity of ${p.product.name}`}
-                            className="p-2 text-gray-500 transition-colors hover:text-gray-900"
+                            className="p-2 text-ink-mute transition-colors hover:text-ink"
                           >
                             <Plus size={13} />
                           </button>
@@ -681,11 +681,11 @@ export default function ShopCart() {
                         <button
                           onClick={() => dispatch({ type: 'REMOVE_PRODUCT', key: p.key })}
                           aria-label={`Remove ${p.product.name}`}
-                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-ink-mute transition-colors hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 size={13} /> Remove
                         </button>
-                        <span className="ml-auto text-sm font-extrabold text-gray-900">
+                        <span className="ml-auto text-sm font-extrabold text-ink">
                           {formatINR(lineUnitPrice(p) * p.qty)}
                         </span>
                       </div>
@@ -729,7 +729,7 @@ export default function ShopCart() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-gray-50/80 p-3 ring-1 ring-gray-100">
+                  <div className="rounded-2xl bg-ink/[0.03]/80 p-3 ring-1 ring-ink/[0.07]">
                     <DeliveryLocationPicker
                       value={{ lat: address.lat, lon: address.lon, city: address.city, pincode: address.pincode, line: address.line }}
                       onChange={patch => setAddress(a => ({ ...a, ...patch }))}
@@ -796,12 +796,12 @@ export default function ShopCart() {
               <SectionCard icon={Tag} title="Coupon" subtitle="Have a code? Apply it before you pay" accent="chilli" badge="4">
                 <div className="space-y-3 p-4 sm:p-5">
                   {coupon ? (
-                    <div className="flex items-center justify-between gap-2 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3">
+                    <div className="flex items-center justify-between gap-2 rounded-2xl border border-dashed border-forest-300 bg-forest-50 px-4 py-3">
                       <div className="min-w-0">
-                        <p className="font-mono text-sm font-extrabold tracking-wide text-emerald-700">{coupon.code}</p>
-                        <p className="text-xs text-emerald-600">{coupon.message} — you save {formatINR(coupon.discount_amount)}</p>
+                        <p className="font-mono text-sm font-extrabold tracking-wide text-forest-700">{coupon.code}</p>
+                        <p className="text-xs text-forest-600">{coupon.message} — you save {formatINR(coupon.discount_amount)}</p>
                       </div>
-                      <button onClick={removeCoupon} aria-label="Remove coupon" className="shrink-0 rounded-lg p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 hover:text-emerald-800">
+                      <button onClick={removeCoupon} aria-label="Remove coupon" className="shrink-0 rounded-lg p-1.5 text-forest-600 transition-colors hover:bg-forest-100 hover:text-forest-800">
                         <X size={16} />
                       </button>
                     </div>
@@ -847,8 +847,8 @@ export default function ShopCart() {
                   </button>
                 }
               >
-                <div className="p-4 text-sm leading-relaxed text-gray-600 sm:p-5">
-                  <p className="font-bold text-gray-900">{address.name} · {address.phone}</p>
+                <div className="p-4 text-sm leading-relaxed text-ink-soft sm:p-5">
+                  <p className="font-bold text-ink">{address.name} · {address.phone}</p>
                   <p className="mt-0.5">{address.line}</p>
                   <p>{[address.city, address.pincode].filter(Boolean).join(' ')}</p>
                   {neededOn && (
@@ -870,17 +870,17 @@ export default function ShopCart() {
             {step === 'payment' && UPI_CONFIGURED && !upiOrderId && (
               <SectionCard icon={Wallet} title="Payment" subtitle="UPI — Google Pay, PhonePe, Paytm or any app" accent="forest">
                 <div className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
+                  <div className="flex items-center gap-2 rounded-xl border border-forest-200 bg-forest-50 p-3 text-xs font-semibold text-forest-700">
                     <ShieldAlert size={15} className="shrink-0" /> Paid straight to Sambramo's verified UPI account
                   </div>
                   <button
                     onClick={startUpiPayment}
                     disabled={paying}
-                    className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-ink shadow-lg shadow-emerald-900/20 transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                    className="w-full rounded-2xl bg-forest-600 py-4 text-base font-bold text-white shadow-lg shadow-forest-900/20 transition-colors hover:bg-forest-700 disabled:opacity-50"
                   >
                     {paying ? 'Preparing payment…' : `Pay ${formatINR(total)}`}
                   </button>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-ink-mute transition-colors hover:text-ink-soft">
                     ← Back to address
                   </button>
                 </div>
@@ -891,9 +891,9 @@ export default function ShopCart() {
               <SectionCard icon={Wallet} title="Pay by UPI" subtitle={`Step 1 — pay ${formatINR(total)} to Sambramo`} accent="forest">
                 <div className="space-y-4 p-4 sm:p-5">
                   {qrDataUrl && (
-                    <div className="flex flex-col items-center gap-2 rounded-2xl bg-gray-50 py-4 ring-1 ring-gray-100">
-                      <img src={qrDataUrl} alt="UPI QR code" className="h-44 w-44 rounded-xl bg-white p-2 ring-1 ring-gray-200" />
-                      <p className="text-xs text-gray-500">Scan with any UPI app</p>
+                    <div className="flex flex-col items-center gap-2 rounded-2xl bg-ink/[0.03] py-4 ring-1 ring-ink/[0.07]">
+                      <img src={qrDataUrl} alt="UPI QR code" className="h-44 w-44 rounded-xl bg-white p-2 ring-1 ring-ink/10" />
+                      <p className="text-xs text-ink-mute">Scan with any UPI app</p>
                     </div>
                   )}
 
@@ -901,21 +901,21 @@ export default function ShopCart() {
                     <a
                       href={upiLinks.gpay}
                       onClick={() => openUpiApp('Google Pay')}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-gray-700 transition-colors ${tappedApp === 'Google Pay' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-400'}`}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-ink-soft transition-colors ${tappedApp === 'Google Pay' ? 'border-forest-500 bg-forest-50' : 'border-ink/10 hover:border-forest-400'}`}
                     >
                       <GooglePayIcon className="h-9 w-9" /> Google Pay
                     </a>
                     <a
                       href={upiLinks.phonepe}
                       onClick={() => openUpiApp('PhonePe')}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-gray-700 transition-colors ${tappedApp === 'PhonePe' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-400'}`}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-ink-soft transition-colors ${tappedApp === 'PhonePe' ? 'border-forest-500 bg-forest-50' : 'border-ink/10 hover:border-forest-400'}`}
                     >
                       <PhonePeIcon className="h-9 w-9" /> PhonePe
                     </a>
                     <a
                       href={upiLinks.paytm}
                       onClick={() => openUpiApp('Paytm')}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-gray-700 transition-colors ${tappedApp === 'Paytm' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-400'}`}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-xs font-semibold text-ink-soft transition-colors ${tappedApp === 'Paytm' ? 'border-forest-500 bg-forest-50' : 'border-ink/10 hover:border-forest-400'}`}
                     >
                       <PaytmIcon className="h-9 w-9" /> Paytm
                     </a>
@@ -923,23 +923,23 @@ export default function ShopCart() {
                   <a
                     href={upiLinks.upi}
                     onClick={() => openUpiApp('your UPI app')}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition-colors ${tappedApp === 'your UPI app' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition-colors ${tappedApp === 'your UPI app' ? 'border-forest-500 bg-forest-50 text-forest-700' : 'border-ink/10 text-ink-mute hover:bg-ink/[0.03]'}`}
                   >
                     <UpiIcon className="h-6 w-6" /> Other UPI app (BHIM & more)
                   </a>
 
-                  <div className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3">
+                  <div className="flex items-center justify-between gap-2 rounded-xl bg-ink/[0.03] px-4 py-3">
                     <div className="min-w-0">
-                      <p className="text-[11px] text-gray-500">Or pay manually to UPI ID</p>
-                      <p className="truncate font-mono text-sm font-semibold text-gray-800">{UPI_ID}</p>
+                      <p className="text-[11px] text-ink-mute">Or pay manually to UPI ID</p>
+                      <p className="truncate font-mono text-sm font-semibold text-ink">{UPI_ID}</p>
                     </div>
-                    <button onClick={copyUpiId} className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100">
+                    <button onClick={copyUpiId} className="shrink-0 rounded-lg border border-ink/10 bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-ink/[0.06]">
                       {copied ? 'Copied ✓' : 'Copy'}
                     </button>
                   </div>
 
-                  <div className={`space-y-3 rounded-2xl border p-4 ${tappedApp ? 'border-plum-200 bg-plum-50' : 'border-gray-100 bg-gray-50'}`}>
-                    <p className={`text-xs font-semibold ${tappedApp ? 'text-plum-700' : 'text-gray-500'}`}>
+                  <div className={`space-y-3 rounded-2xl border p-4 ${tappedApp ? 'border-plum-200 bg-plum-50' : 'border-ink/[0.07] bg-ink/[0.03]'}`}>
+                    <p className={`text-xs font-semibold ${tappedApp ? 'text-plum-700' : 'text-ink-mute'}`}>
                       {tappedApp
                         ? `Step 2 — You've been redirected to ${tappedApp}. Complete the payment there, then come back to this tab.`
                         : 'Step 2 — After you pay, come back to this tab.'}
@@ -951,7 +951,7 @@ export default function ShopCart() {
                     >
                       I've completed the payment
                     </button>
-                    <p className="text-center text-[11px] text-gray-500">We'll confirm your payment against our UPI account and update your order shortly.</p>
+                    <p className="text-center text-[11px] text-ink-mute">We'll confirm your payment against our UPI account and update your order shortly.</p>
                   </div>
                 </div>
               </SectionCard>
@@ -965,7 +965,7 @@ export default function ShopCart() {
             {step === 'payment' && !UPI_CONFIGURED && !IS_TEST_MODE && (
               <SectionCard icon={Wallet} title="Payment" accent="chilli">
                 <div className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                  <div className="flex items-start gap-2 rounded-xl border border-saffron-200 bg-saffron-50 p-3 text-xs text-saffron-800">
                     <ShieldAlert size={15} className="mt-0.5 shrink-0" />
                     <span>
                       Online payment is temporarily unavailable. Your cart is saved —
@@ -976,11 +976,11 @@ export default function ShopCart() {
                     href={`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(`Hi Sambramo — I'd like to place a shop order for ${formatINR(total)}.`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+                    className="flex w-full items-center justify-center rounded-xl bg-forest-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-forest-700"
                   >
                     Complete my order on WhatsApp
                   </a>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-ink-mute transition-colors hover:text-ink-soft">
                     ← Back to address
                   </button>
                 </div>
@@ -999,7 +999,7 @@ export default function ShopCart() {
                         key={m.id}
                         onClick={() => setMethod(m.id)}
                         className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition-colors ${
-                          method === m.id ? 'border-plum-500 bg-plum-50 text-plum-700' : 'border-gray-200 text-gray-500'
+                          method === m.id ? 'border-plum-500 bg-plum-50 text-plum-700' : 'border-ink/10 text-ink-mute'
                         }`}
                       >
                         {m.label}
@@ -1010,7 +1010,7 @@ export default function ShopCart() {
                     <button
                       onClick={() => runPayment('success')}
                       disabled={paying}
-                      className="flex-1 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex-1 rounded-xl bg-forest-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-forest-700 disabled:opacity-50"
                     >
                       {paying ? 'Processing…' : 'Simulate Success'}
                     </button>
@@ -1022,7 +1022,7 @@ export default function ShopCart() {
                       Simulate Failure
                     </button>
                   </div>
-                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-gray-500 transition-colors hover:text-gray-600">
+                  <button onClick={() => setStep('cart')} className="w-full text-center text-xs text-ink-mute transition-colors hover:text-ink-soft">
                     ← Back to address
                   </button>
                 </div>
@@ -1081,8 +1081,8 @@ export default function ShopCart() {
         <div className="pr-chat-dock above-bottom-nav fixed inset-x-0 z-40 lg:hidden">
           <div className="mx-3 mb-2 flex items-center gap-3 rounded-2xl bg-white p-2 pl-4 shadow-[0_-4px_30px_-8px_rgba(0,0,0,0.5)] ring-1 ring-black/10">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">To pay online</p>
-              <p className="text-lg font-extrabold leading-tight text-gray-900">{formatINR(total)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-mute">To pay online</p>
+              <p className="text-lg font-extrabold leading-tight text-ink">{formatINR(total)}</p>
             </div>
             {user ? (
               /* "Pay by UPI", not "Continue". The next screen is a payment
@@ -1091,7 +1091,7 @@ export default function ShopCart() {
                  there is no cash-on-delivery path in this app. */
               <button
                 onClick={handleProceed}
-                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-extrabold text-gray-900 transition-colors active:bg-saffron-600"
+                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-extrabold text-ink transition-colors active:bg-saffron-600"
               >
                 Pay by UPI <ArrowRight size={15} />
               </button>
@@ -1099,7 +1099,7 @@ export default function ShopCart() {
               <Link
                 to="/login"
                 state={{ from: signInToCheckout }}
-                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-extrabold text-gray-900 transition-colors active:bg-saffron-600"
+                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-extrabold text-ink transition-colors active:bg-saffron-600"
               >
                 Sign in <ArrowRight size={15} />
               </Link>
