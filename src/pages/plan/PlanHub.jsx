@@ -138,24 +138,24 @@ export default function PlanHub() {
     : OCCASIONS
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
       <PlanAppBar query={query} onQueryChange={setQuery} />
 
-      <div className="mx-auto max-w-3xl space-y-8 pb-32 pt-4">
+      <div className="mx-auto max-w-3xl space-y-9 pb-32 pt-4">
 
         {/* ── Unfinished business ───────────────────────────────────── */}
         {(hasDraft || totalCount > 0) && (
-          <div className="px-4">
+          <div className="px-5">
             <Link
               to={hasDraft ? wizardHref : cartPath}
-              className="flex items-center gap-3 rounded-2xl bg-saffron-400 px-4 py-3 text-plum-950"
+              className="flex items-center gap-3 rounded-[22px] bg-saffron-400 px-4 py-3.5 text-plum-950 transition-transform active:scale-[0.99]"
             >
-              <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-tight">
+              <span className="min-w-0 flex-1 text-[13.5px] font-extrabold leading-tight">
                 {hasDraft
                   ? 'You have a half-finished request — pick up where you left off'
                   : `${totalCount} ${totalCount === 1 ? 'service' : 'services'} waiting in your cart`}
               </span>
-              <ArrowRight size={16} className="shrink-0" />
+              <ArrowRight size={17} className="shrink-0" />
             </Link>
           </div>
         )}
@@ -167,11 +167,11 @@ export default function PlanHub() {
             moving strip below it now (see PromiseTicker), which says the same
             seven things in a fifth of the height and gets the occasion grid
             above the fold on a phone. */}
-        <header className="px-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-saffron-700">
+        <header className="px-5">
+          <p className="type-overline text-saffron-700">
             {meta.known ? `Planning ${meta.label?.toLowerCase()}` : 'Tell us the occasion'}
           </p>
-          <h1 className="mt-1.5 font-serif text-[26px] font-bold leading-tight text-ink sm:text-3xl">
+          <h1 className="mt-2 font-serif text-[30px] font-extrabold leading-[1.08] tracking-tight text-ink sm:text-[34px]">
             {meta.known
               ? `Let's make this ${meta.label?.toLowerCase()} yours.`
               : "What are we celebrating?"}
@@ -180,7 +180,7 @@ export default function PlanHub() {
           {/* Full-bleed inside a padded header: the strip has to reach both
               screen edges or cards appear to spawn 16px in from nowhere,
               which is the one thing that makes a ticker look broken. */}
-          <PromiseTicker city={chosen ? city : null} className="-mx-4 mt-3" />
+          <PromiseTicker city={chosen ? city : null} className="-mx-5 mt-3.5" />
 
           {/* ── The date, and the way out of it ────────────────────────
               Somebody who picked their date on the home screen arrives here
@@ -193,27 +193,28 @@ export default function PlanHub() {
               rather than carry on. Both ways out are one tap, and neither
               costs them the rest of the page. */}
           {pickedDate ? (
-            <div className="mt-3 rounded-2xl bg-teal-400/10 p-3 ring-1 ring-teal-300/30">
-              <p className="flex items-center gap-2 text-[12px] leading-tight text-ink-soft">
-                <CalendarCheck size={15} className="shrink-0 text-teal-700" />
+            <div className="a-card mt-3.5 p-4">
+              <p className="flex items-start gap-2.5 text-[13px] leading-snug text-ink-soft">
+                <CalendarCheck size={17} className="mt-px shrink-0 text-teal-700" />
                 <span>
                   <span className="font-extrabold text-ink">{pickedDate}</span>
                   {pickedSlot ? ` · ${pickedSlot}` : ''} saved
                   <span className="text-ink-mute"> — now pick what we're celebrating.</span>
                 </span>
               </p>
-              <div className="mt-2.5 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setDateSheetOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-teal-400 px-3 py-1.5 text-[11px] font-extrabold text-plum-950"
+                  className="a-chip"
+                  aria-pressed="true"
                 >
-                  <CalendarSearch size={12} /> Change or compare dates
+                  <CalendarSearch size={13} /> Change or compare dates
                 </button>
                 <button
                   type="button"
                   onClick={forgetDate}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-bold text-ink-soft ring-1 ring-hairline/10"
+                  className="a-chip"
                 >
                   I'll decide the date later
                 </button>
@@ -223,19 +224,19 @@ export default function PlanHub() {
             <button
               type="button"
               onClick={() => setDateSheetOpen(true)}
-              className="mt-3 flex w-full items-center gap-2.5 rounded-2xl bg-surface px-3 py-2.5 text-left ring-1 ring-hairline/10 transition-colors hover:bg-surface-sunk/[0.05]"
+              className="a-card mt-3.5 flex w-full items-center gap-3 p-4 text-left transition-transform active:scale-[0.99]"
             >
-              <CalendarPlus size={16} className="shrink-0 text-teal-700" />
+              <CalendarPlus size={18} className="shrink-0 text-teal-700" />
               <span className="min-w-0 flex-1">
-                <span className="block text-[12px] font-extrabold text-ink">
+                <span className="block text-[13.5px] font-extrabold text-ink">
                   Have a date in mind?
                 </span>
-                <span className="block text-[11px] leading-tight text-ink-mute">
+                <span className="mt-0.5 block text-[12px] leading-snug text-ink-mute">
                   Check it in the calendar — every date is open, and telling us early
                   is what lets us hold the Masters.
                 </span>
               </span>
-              <ArrowRight size={14} className="shrink-0 text-ink/40" />
+              <ArrowRight size={16} className="shrink-0 text-ink-mute" />
             </button>
           )}
 
@@ -247,19 +248,19 @@ export default function PlanHub() {
 
         {/* ── Occasions ─────────────────────────────────────────────── */}
         <section aria-labelledby="occasions-heading">
-          <div className="px-4">
-            <h2 id="occasions-heading" className="text-[17px] font-extrabold text-ink">
+          <div className="px-5">
+            <h2 id="occasions-heading" className="text-[19px] font-extrabold tracking-tight text-ink">
               Plan a full celebration
             </h2>
-            <p className="mt-1 text-[12px] text-ink-mute">
+            <p className="mt-1 text-[12.5px] text-ink-mute">
               Pick the occasion — we'll show you what it includes and what it costs.
             </p>
           </div>
 
           {matchedOccasions.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <SearchX size={26} className="mx-auto text-ink-mute" />
-              <p className="mt-2 text-sm text-ink-mute">
+            <div className="px-5 py-10 text-center">
+              <SearchX size={28} className="mx-auto text-ink-mute" />
+              <p className="mt-2.5 text-[13px] text-ink-mute">
                 No occasion matches “{query}” — try the services below.
               </p>
             </div>
@@ -267,7 +268,7 @@ export default function PlanHub() {
             // The same card the home screen uses. One occasion should not look
             // like two different products depending on which screen you met it
             // on.
-            <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+            <div className="mt-3.5 grid grid-cols-2 gap-3.5 px-5">
               {matchedOccasions.map((o, i) => (
                 <OccasionCard
                   key={o.id}
@@ -299,28 +300,31 @@ export default function PlanHub() {
             and it converts far better after somebody has seen the prices,
             the services and the scale than it did as one of three doors
             shown before anything else. */}
-        <section className="px-4">
-          <div className="rounded-3xl bg-gradient-to-br from-plum-700 to-berry-700 p-5 ring-1 ring-plum-900/20">
-            <h2 className="font-serif text-[20px] font-bold leading-tight text-white">
+        <section className="px-5">
+          {/* The brand's own light, rather than a two-stop plum ramp. This is
+              the page's closing argument and the one panel on it that should
+              look like nothing else in the app. */}
+          <div className="a-aurora relative overflow-hidden rounded-[32px] p-6">
+            <h2 className="font-serif text-[23px] font-extrabold leading-[1.12] tracking-tight text-white">
               Or just tell us, and we'll take it from here.
             </h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-white/70">
+            <p className="mt-2 text-[13px] leading-relaxed text-white/80">
               Six questions, about two minutes. A coordinator reads it, sources the
               vendors, negotiates, and comes back with one proposal and one price.
               You approve it before anything is booked.
             </p>
             <Link
               to={wizardHref}
-              className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-saffron-400 px-4 py-3.5 text-[14px] font-extrabold text-plum-950 transition-transform active:scale-[0.98]"
+              className="a-btn mt-5 w-full bg-white text-[15px] text-plum-800"
             >
-              Tell us what you're planning <ArrowRight size={16} />
+              Tell us what you're planning <ArrowRight size={17} />
             </Link>
 
             <a
               href={`tel:${BRAND.supportPhone.replace(/\s/g, '')}`}
-              className="mt-2 flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-[13px] font-bold text-white ring-1 ring-white/15"
+              className="a-btn mt-2.5 w-full bg-white/15 text-[13.5px] text-white ring-1 ring-inset ring-white/25"
             >
-              <Phone size={14} /> Prefer to talk? {BRAND.supportPhone}
+              <Phone size={15} /> Prefer to talk? {BRAND.supportPhone}
             </a>
           </div>
         </section>
