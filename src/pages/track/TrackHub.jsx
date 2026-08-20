@@ -20,6 +20,12 @@ import FulfilmentFilm from '../../components/track/FulfilmentFilm'
  * on somebody's wedding and a five-figure sum settled in one payment — it needs the
  * whole road. Giving them the same card weight would either bury the
  * celebration or make a cake delivery look like a project.
+ *
+ * ── Aurora ────────────────────────────────────────────────────────────────
+ * Rebuilt on the tonal system. The screen's job is triage — "is anything
+ * waiting on me?" — so the one thing that needed to get louder is the answer
+ * to that, which is now a banner above the filters rather than a badge buried
+ * on the third card. Everything else is the same data in the same order.
  */
 export default function TrackHub() {
   const { user } = useAuth()
@@ -57,10 +63,12 @@ export default function TrackHub() {
   const orders = shown.filter(i => i.kind === 'order')
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
-      <header className="px-4 pt-5">
-        <h1 className="font-serif text-[26px] font-extrabold leading-tight text-ink">Track</h1>
-        <p className="mt-0.5 text-[12px] text-ink-mute">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
+      <header className="px-5 pt-6">
+        <h1 className="font-serif text-[30px] font-extrabold leading-[1.08] tracking-tight text-ink">
+          Track
+        </h1>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-mute">
           Every celebration and every order, with what happens next.
         </p>
       </header>
@@ -70,9 +78,9 @@ export default function TrackHub() {
           say untruthfully. If one source failed, the other still renders and
           the customer is told which half is missing. */}
       {errors.length > 0 && (
-        <div className="mx-4 mt-3 flex items-start gap-2 rounded-2xl bg-chilli-50 px-3.5 py-3 ring-1 ring-chilli-600/15">
-          <AlertCircle size={14} className="mt-0.5 shrink-0 text-chilli-700" />
-          <p className="text-[11.5px] leading-relaxed text-chilli-800">
+        <div className="mx-5 mt-4 flex items-start gap-2.5 rounded-[20px] bg-chilli-50 px-4 py-3.5 ring-1 ring-chilli-600/15">
+          <AlertCircle size={15} className="mt-0.5 shrink-0 text-chilli-700" />
+          <p className="text-[12px] leading-relaxed text-chilli-800">
             We couldn't load your {errors.map(e => e.source === 'orders' ? 'orders' : 'celebrations').join(' and ')} just now.
             Anything shown below is complete; pull down to try again.
           </p>
@@ -82,23 +90,46 @@ export default function TrackHub() {
       {!user ? (
         <SignedOutPitch />
       ) : items === null ? (
-        <div className="mx-auto max-w-3xl space-y-3 px-4 pt-4">
+        <div className="mx-auto max-w-3xl space-y-3 px-5 pt-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />
+            <div key={i} className="a-well h-32 animate-pulse" />
           ))}
         </div>
       ) : items.length === 0 ? (
         <LockedState />
       ) : (
-        <div className="mx-auto max-w-3xl space-y-6 pb-8 pt-4">
+        <div className="mx-auto max-w-3xl space-y-7 pb-10 pt-5">
+          {/* ── The triage answer, said once and at the top ──────────────
+              This is the question the screen exists to answer. It used to be
+              answerable only by reading every card's badge. */}
+          {counts.needsYou > 0 && filter !== 'needsYou' && (
+            <button
+              onClick={() => setFilter('needsYou')}
+              className="mx-5 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-[24px] bg-saffron-400/15 px-4 py-3.5 text-left ring-1 ring-saffron-400/35 transition-transform active:scale-[0.99]"
+            >
+              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-saffron-400 text-plum-950">
+                <AlertCircle size={18} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-extrabold text-ink">
+                  {counts.needsYou} {counts.needsYou === 1 ? 'thing needs' : 'things need'} you
+                </span>
+                <span className="block text-[11.5px] text-ink-mute">
+                  Tap to see only those.
+                </span>
+              </span>
+              <ArrowRight size={16} className="shrink-0 text-ink-soft" />
+            </button>
+          )}
+
           <Filters filter={filter} onChange={setFilter} counts={counts} />
 
           {celebrations.length > 0 && (
             <section aria-labelledby="celebrations-heading">
-              <h2 id="celebrations-heading" className="px-4 text-[15px] font-extrabold text-ink">
+              <h2 id="celebrations-heading" className="px-5 text-[17px] font-extrabold tracking-tight text-ink">
                 Your celebrations
               </h2>
-              <div className="mt-3 space-y-3 px-4">
+              <div className="a-stagger mt-3.5 space-y-3.5 px-5">
                 {celebrations.map(c => <CelebrationCard key={c.key} item={c} />)}
               </div>
             </section>
@@ -106,20 +137,22 @@ export default function TrackHub() {
 
           {orders.length > 0 && (
             <section aria-labelledby="orders-heading">
-              <h2 id="orders-heading" className="px-4 text-[15px] font-extrabold text-ink">
+              <h2 id="orders-heading" className="px-5 text-[17px] font-extrabold tracking-tight text-ink">
                 Your orders
               </h2>
-              <p className="mt-0.5 px-4 text-[11px] text-ink-mute">
+              <p className="mt-1 px-5 text-[12px] text-ink-mute">
                 Delivered by Sambramo. Tap one to see where it is.
               </p>
-              <div className="mt-3 divide-y divide-hairline/[0.06] overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08] mx-4">
-                {orders.map(o => <OrderRow key={o.key} item={o} />)}
+              <div className="a-card mx-5 mt-3.5 overflow-hidden">
+                <div className="divide-y divide-ink/[0.06]">
+                  {orders.map(o => <OrderRow key={o.key} item={o} />)}
+                </div>
               </div>
             </section>
           )}
 
           {shown.length === 0 && (
-            <p className="px-4 py-10 text-center text-[12.5px] text-ink-mute">
+            <p className="px-5 py-12 text-center text-[13px] text-ink-mute">
               Nothing here under this filter.
             </p>
           )}
@@ -140,20 +173,16 @@ const FILTERS = [
 
 function Filters({ filter, onChange, counts }) {
   return (
-    <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
+    <div className="flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-hide">
       {FILTERS.map(f => (
         <button
           key={f.id}
           onClick={() => onChange(f.id)}
           aria-pressed={filter === f.id}
-          className={`tap-tall home-chip shrink-0 ${
-            filter === f.id
-              ? 'bg-saffron-400 text-plum-950'
-              : 'bg-surface-sunk/[0.07] text-ink-soft ring-1 ring-hairline/10'
-          }`}
+          className="a-chip"
         >
           {f.label}
-          {counts[f.id] > 0 && <span className="ml-1 opacity-70">{counts[f.id]}</span>}
+          {counts[f.id] > 0 && <span className="opacity-65">{counts[f.id]}</span>}
         </button>
       ))}
     </div>
@@ -170,21 +199,21 @@ function CelebrationCard({ item }) {
   return (
     <Link
       to={item.href}
-      className="block overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08] transition-transform active:scale-[0.99]"
+      className="a-card a-rail block overflow-hidden transition-transform active:scale-[0.985]"
     >
-      <div className="flex items-start gap-3 p-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/[0.08] text-xl">
+      <div className="flex items-start gap-3.5 p-5 pt-6">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-accent/[0.09] text-[22px]">
           {item.emoji}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate text-[14px] font-extrabold text-ink">{item.title}</p>
+            <p className="truncate text-[15.5px] font-extrabold tracking-tight text-ink">{item.title}</p>
             <span className="shrink-0 font-mono text-[10px] text-ink-mute">{item.reference}</span>
           </div>
-          <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-mute">{item.message}</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-mute">{item.message}</p>
 
           {item.needsYou && (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-saffron-400/15 px-2.5 py-1 text-[11px] font-extrabold text-saffron-700 ring-1 ring-saffron-400/30">
+            <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-saffron-400/20 px-3 py-1.5 text-[11.5px] font-extrabold text-saffron-800 ring-1 ring-saffron-400/35">
               {item.needsYou.label}
             </p>
           )}
@@ -193,9 +222,9 @@ function CelebrationCard({ item }) {
 
       {/* The bar is the axis only. `needsYou` never moves it — a plan waiting
           on the customer has not travelled further, it has stopped. */}
-      <div className="px-4 pb-3">
+      <div className="px-5 pb-4">
         <div
-          className="h-1.5 overflow-hidden rounded-full bg-surface-sunk/[0.08]"
+          className="h-2 overflow-hidden rounded-full bg-ink/[0.07]"
           role="progressbar"
           aria-valuenow={item.progress}
           aria-valuemin={0}
@@ -203,18 +232,18 @@ function CelebrationCard({ item }) {
           aria-label={`${item.title}: ${stageLabel}`}
         >
           <span
-            className={`block h-full rounded-full transition-all duration-500 ${item.cancelled ? 'bg-ink/20' : 'bg-accent'}`}
+            className={`block h-full rounded-full transition-all duration-500 ${item.cancelled ? 'bg-ink/20' : 'a-aurora'}`}
             style={{ width: `${Math.max(item.progress, 4)}%` }}
           />
         </div>
-        <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-ink-soft">{stageLabel}</span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[12px] font-bold text-ink-soft">{stageLabel}</span>
           {/* Names the payment panel rather than a generic "open". The ladder
               is one tap in, and a card that does not mention it is why
               somebody looks at this hub and concludes the payment options
               were never built. */}
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent">
-            Steps &amp; payments <ArrowRight size={11} />
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-accent">
+            Steps &amp; payments <ArrowRight size={12} />
           </span>
         </div>
       </div>
@@ -226,18 +255,18 @@ function CelebrationCard({ item }) {
 
 function OrderRow({ item }) {
   return (
-    <Link to={item.href} className="flex items-center gap-3 p-3.5 transition-colors active:bg-surface-sunk/[0.04]">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunk/[0.06] text-base">
+    <Link to={item.href} className="flex min-h-[64px] items-center gap-3.5 px-4 py-3.5 transition-colors active:bg-ink/[0.04]">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-[17px]">
         {item.emoji}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold text-ink">{item.title}</span>
-        <span className="block text-[11px] text-ink-mute">
+        <span className="block truncate text-[14px] font-bold text-ink">{item.title}</span>
+        <span className="block text-[12px] text-ink-mute">
           {TRACK_STAGES[item.stageIndex]?.label ?? 'Cancelled'}
           {item.amount != null && <> · {formatINR(item.amount)}</>}
         </span>
       </span>
-      <ChevronRight size={15} className="shrink-0 text-ink-mute" />
+      <ChevronRight size={17} className="shrink-0 text-ink-mute" />
     </Link>
   )
 }
@@ -276,44 +305,44 @@ const PROMISES = [
 
 function SignedOutPitch() {
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4">
-      <div className="rounded-2xl bg-surface p-5 ring-1 ring-hairline/[0.08]">
-        <p className="font-serif text-[20px] font-extrabold leading-tight text-ink">
+    <div className="mx-auto max-w-3xl space-y-6 px-5 pb-12 pt-5">
+      <div className="a-raised a-rail overflow-hidden p-6 pt-7">
+        <p className="font-serif text-[23px] font-extrabold leading-[1.15] tracking-tight text-ink">
           Track unlocks when you place an event order with us
         </p>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-mute">
           There is nothing to set up and nothing to switch on. The moment you send us a
           celebration or place an order, this is where you watch it happen — every step,
           every payment, one screen, from that day until your event is over.
         </p>
 
-        <ul className="mt-4 space-y-3.5">
+        <ul className="mt-5 space-y-4">
           {PROMISES.map(p => (
-            <li key={p.title} className="flex gap-3">
-              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/[0.08] text-base">
+            <li key={p.title} className="flex gap-3.5">
+              <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/[0.09] text-[17px]">
                 {p.emoji}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-extrabold text-ink">{p.title}</span>
-                <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink-mute">{p.body}</span>
+                <span className="block text-[13.5px] font-extrabold tracking-tight text-ink">{p.title}</span>
+                <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-mute">{p.body}</span>
               </span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <Link to="/plan" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
-            <Sparkles size={15} /> Plan a celebration
+        <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+          <Link to="/plan" className="a-btn-primary flex-1">
+            <Sparkles size={16} /> Plan a celebration
           </Link>
-          <Link to="/shop" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10">
-            <Store size={15} /> Browse the shop
+          <Link to="/shop" className="a-btn-quiet flex-1">
+            <Store size={16} /> Browse the shop
           </Link>
         </div>
 
         {/* Sign-in is offered, never imposed — the same rule the planner and
             the storefront follow. Somebody who already has a booking should
             be able to get to it from here in one tap. */}
-        <p className="mt-3 text-center text-[11.5px] text-ink-mute">
+        <p className="mt-4 text-center text-[12px] text-ink-mute">
           Already booked something?{' '}
           <Link to="/login" className="font-bold text-accent underline underline-offset-2">
             Sign in to track it
@@ -369,18 +398,18 @@ const UNLOCKED_STEPS = [
 
 function LockedState() {
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-4 pb-10 pt-4">
-      <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
+    <div className="mx-auto max-w-3xl space-y-6 px-5 pb-12 pt-5">
+      <div className="a-raised overflow-hidden">
         {/* The lock, said plainly and once. */}
-        <div className="flex items-start gap-3 border-b border-hairline/[0.08] bg-surface-sunk/[0.04] px-5 py-4">
-          <span aria-hidden="true" className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.1] text-ink-mute">
-            <Lock size={17} />
+        <div className="flex items-start gap-3.5 border-b border-ink/[0.07] px-6 py-5" style={{ background: 'var(--a-low)' }}>
+          <span aria-hidden="true" className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink/[0.08] text-ink-mute">
+            <Lock size={18} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-[19px] font-extrabold leading-tight text-ink">
+            <p className="font-serif text-[21px] font-extrabold leading-[1.15] tracking-tight text-ink">
               Track unlocks when you place an event order with us
             </p>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-mute">
               There is nothing to set up and nothing to switch on. The moment you send us a
               celebration or place an order, this screen fills in — and stays filled in from
               that day until your event is over.
@@ -390,20 +419,20 @@ function LockedState() {
 
         {/* The instrument itself, greyed. Every tick below is one the live
             tracker really draws; nothing here is illustrative. */}
-        <ol className="divide-y divide-hairline/[0.06]">
+        <ol className="divide-y divide-ink/[0.06]">
           {UNLOCKED_STEPS.map((s, i) => (
-            <li key={s.title} className="flex items-start gap-3 px-5 py-3">
+            <li key={s.title} className="flex items-start gap-3.5 px-6 py-4">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.09] text-ink-mute/60"
+                className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink/[0.08] text-ink-mute/60"
               >
-                <Check size={12} strokeWidth={3.5} />
+                <Check size={13} strokeWidth={3.5} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[12.5px] font-extrabold text-ink-soft">{s.title}</span>
-                <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink-mute">{s.body}</span>
+                <span className="block text-[13px] font-extrabold tracking-tight text-ink-soft">{s.title}</span>
+                <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-mute">{s.body}</span>
               </span>
-              <span aria-hidden="true" className="mt-1 shrink-0 text-[10px] font-bold tabular-nums text-ink-mute/50">
+              <span aria-hidden="true" className="mt-1 shrink-0 text-[11px] font-bold tabular-nums text-ink-mute/50">
                 {i + 1}
               </span>
             </li>
@@ -411,18 +440,18 @@ function LockedState() {
         </ol>
 
         {/* The transparency claim, made as a promise rather than a feature. */}
-        <p className="border-t border-hairline/[0.08] bg-accent/[0.05] px-5 py-3.5 text-[11.5px] leading-relaxed text-ink-soft">
+        <p className="border-t border-ink/[0.07] bg-accent/[0.05] px-6 py-4 text-[12px] leading-relaxed text-ink-soft">
           <span className="font-extrabold text-ink">Nothing is hidden from you.</span>{' '}
           Anything not ticked here is not done yet — we never mark work complete in advance,
           and we never show you a step we cannot stand behind.
         </p>
 
-        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row">
-          <Link to="/plan" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
-            <Sparkles size={15} /> Plan a celebration
+        <div className="flex flex-col gap-2.5 px-6 py-5 sm:flex-row">
+          <Link to="/plan" className="a-btn-primary flex-1">
+            <Sparkles size={16} /> Plan a celebration
           </Link>
-          <Link to="/shop" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-sunk/[0.07] px-4 py-3 text-[13px] font-extrabold text-ink ring-1 ring-hairline/10">
-            <Store size={15} /> Browse the shop
+          <Link to="/shop" className="a-btn-quiet flex-1">
+            <Store size={16} /> Browse the shop
           </Link>
         </div>
       </div>
