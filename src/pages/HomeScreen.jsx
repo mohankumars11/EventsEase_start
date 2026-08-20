@@ -296,80 +296,75 @@ export default function HomeScreen() {
             </div>
           )}
 
-          {/* ── The hero pair ─────────────────────────────────────────
-              The deck and the film are one unit and are now spaced like
-              one: 8px, so they stack as a single above-the-fold block
-              instead of two cards floating a full gap apart.
+          {/* ── The hero ──────────────────────────────────────────────
+              What is live right now: the festival closest to today, the
+              best coupon checkout will honour, the planner. Three slides
+              that rotate, all of them time-sensitive — see PromoDeck for
+              why nothing permanent is allowed in here.
 
-              They were the worst offender for exactly the reason they
-              belong together — both are full-bleed rounded panels of
-              almost the same height, so a 32px trough between them read
-              as two unrelated adverts with dead ground in between rather
-              than as "here is what's on" followed by "here is what it's
-              for". Adjacent, the film reads as the deck's answer.
+              The brand film used to be welded underneath it for signed-out
+              visitors. It now sits below the catalogue with the rest of
+              the story, so this is one panel for everyone. */}
+          <PromoDeck slides={slides} />
 
-              Signed-in customers keep the film lower down the page (see
-              below), so this pair only exists when there is no session —
-              which is also the only time the film is the argument rather
-              than a re-pitch. */}
-          {user ? (
-            <PromoDeck slides={slides} />
-          ) : (
-            <div className="space-y-2.5">
-              <PromoDeck slides={slides} />
-              <BrandFilm />
+          {/* ══ COMMERCE, THEN STORY ══════════════════════════════════
+              The order below is the one change on this page that is worth
+              more than all the styling.
+
+              It used to run: brand banner → quick rail → hero → service
+              mosaic → photo film → tier rail → date check → brand film →
+              occasion grid → offers → priced products. So a customer had to
+              scroll past FOUR editorial panels — two of them full-bleed
+              films — before this app showed them a single thing they could
+              buy at a stated price. Every storefront that sells anything
+              does the opposite, and not for fashion reasons: the panels
+              that convert are the ones carrying a price, a discount or a
+              date, and on a phone each film costs roughly a screen height
+              of everything underneath it.
+
+              Commerce first now — what you are shopping for, what is
+              discounted, what you can buy right now — and the story after
+              it, for the people still reading. Nothing is deleted; the
+              films still do their job, one screen further down, for an
+              audience that has already seen the goods. ══════════════ */}
+
+          {/* ── What are we celebrating ───────────────────────────────
+              The merchandising grid, and the highest-intent thing on the
+              page: it is the question a customer arrives already holding.
+              Fifteen occasions, three to a row, each with its real entry
+              price under the name. */}
+          <section aria-labelledby="occasions-heading">
+            <div className="px-5">
+              <h2 id="occasions-heading" className="text-[18px] font-extrabold tracking-tight text-ink">
+                What are we celebrating?
+              </h2>
+              <p className="mt-0.5 text-[12px] text-ink-mute">
+                Every one of these, arranged end to end — pick yours.
+              </p>
             </div>
-          )}
+            <SquareGrid className="mt-3.5" items={occasionTiles} />
+          </section>
 
-          {/* ── Everything we do ──────────────────────────────────────
-              The answer to the first question a new visitor actually has,
-              which is not "what does a wedding cost" but "what can I even get
-              here?". It is a broad answer and it is the product's real
-              strength — whole celebrations, single services, cakes, flowers,
-              decor, pooja, gifting, and a heritage-crafts shelf nobody else in
-              these two cities lists — and a range is shown as a grid rather
-              than said in a sentence.
+          {/* ── Every offer, four at a time ───────────────────────────
+              Moved up with the rest of commerce. The four celebration
+              savings live in code rather than the `coupons` table, so
+              before OffersGrid existed they appeared nowhere on this
+              screen at all — those are the offers worth thousands of
+              rupees, on the half of the business the revenue comes from.
+              See lib/allOffers for why the two kinds of promise get
+              different controls. */}
+          <OffersGrid />
 
-              Placed directly under the hero pair, before the tier rail and the
-              date check. Those two are the best things on this page for
-              somebody who has already decided to plan a celebration; the
-              mosaic is for everybody who hasn't, which on a pre-launch app is
-              almost everybody. Fourteen tiles, mixed spans, every one of them a
-              real shelf with real photography behind it — see
-              config/homeMosaic.js. */}
-          <ServiceMosaic />
-
-          {/* ── The same story, in photographs ────────────────────────
-              The mosaic above says what the shelves ARE; this says that they
-              exist. A drawn hamper is our idea of gifting, and a photograph of
-              gold zari on crepe silk is a thing you can buy — a pre-launch
-              brand needs both, and the drawn film at the top of the page is the
-              other half of this pair.
-
-              Seven beats, each with its own button pointing at its own shelf,
-              plus a standing "Everything in the shop" underneath. Deliberately
-              placed below the mosaic rather than beside the drawn film: two
-              films back to back is one film too many, and this one works as the
-              evidence for the grid it follows. See config/homeReel.js. */}
-          <PhotoReelFilm />
+          {/* ── Real products, priced, one tap from the front door ────
+              The only section on Home that was ever a straight product
+              rail, and it used to sit tenth. */}
+          <ShopPicksRail />
 
           {/* ── The six scales of celebration ─────────────────────────
-              Replaces PackageRail, which put "Grand Celebration Birthday,
-              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
-              screen of a birthday decision shown to someone who has not said
-              they are planning a birthday, repeated once per occasion.
-
-              The tiers are the axis customers actually start on: nobody thinks
-              "I want the premium package", they think "there'll be about sixty
-              people". One rail serves every occasion.
-
-              Moved above the date check. It used to sit fourth, behind the
-              deck, the film and the date card, which on a phone put the only
-              thing on Home carrying a real scale, a real price and a live
-              coupon below the fold — so the page asked for a date before it
-              had once said what the thing costs. Sequence now runs the way
-              the decision does: what this is (film) → what it costs
-              (tiers) → when is it (date). */}
+              The tiers are the axis customers actually start on: nobody
+              thinks "I want the premium package", they think "there'll be
+              about sixty people". One rail serves every occasion, and it
+              carries a real scale, a real price and a live coupon. */}
           <TierRail offer={bestOfferFor(50000, offers)} />
 
           {/* ── Check the date ────────────────────────────────────────
@@ -380,87 +375,39 @@ export default function HomeScreen() {
               not something you live next to on a phone screen. */}
           <DateCheckCard />
 
-          {/* ── The gifting film, for a signed-in customer ────────────
-              Everything else on this page argues — a tier, a price, a
-              coupon, a countdown. None of it shows what any of it is for.
-              The film does, in five beats, and its tap target moves with
-              the story: the planner on beat one, a hamper you can send
-              tonight by beat five. It carries no section heading, unlike
-              everything below it: the panel opens with its own chapter
-              label, and a hero that has to be introduced isn't a hero.
+          {/* ══ THE STORY ═════════════════════════════════════════════
+              Everything below carries no price and no date. It is the
+              argument for the brand rather than the catalogue, and it now
+              runs after the catalogue rather than in front of it. ══ */}
 
-              Where it sits depends on who is looking. Signed out it is
-              welded to the deck as the hero pair above, because a cold
-              visitor has to want the thing before being asked for a date.
-              Signed in it waits until after the date check — they have
-              already bought the pitch, and pushing their most useful
-              control down to re-pitch them would be a straight loss. */}
-          {user && <BrandFilm />}
+          {/* ── Everything we do ──────────────────────────────────────
+              What a visitor can even get here — whole celebrations, single
+              services, cakes, flowers, decor, pooja, gifting, and a
+              heritage-crafts shelf nobody else in these two cities lists.
+              A range is shown as a grid rather than said in a sentence.
+              See config/homeMosaic.js. */}
+          <ServiceMosaic />
 
-          {/* ── What are we celebrating ───────────────────────────────
-              Was a horizontal rail of 72×72 thumbnails with a caption under
-              each. At that size the photograph was a smudge, so fifteen
-              occasions read as fifteen identical grey squares; nothing said
-              what one costs or included; and being a scroller, eleven of them
-              were behind a swipe most people never make.
+          {/* ── The gifting film ──────────────────────────────────────
+              Everything above argues with a tier, a price, a coupon, a
+              countdown. None of it shows what any of it is FOR. The film
+              does, in five beats, and its tap target moves with the story:
+              the planner on beat one, a hamper you can send tonight by
+              beat five.
 
-              A two-per-row grid fixes all three at once — the photo becomes
-              legible, there is room for the price and a live coupon, and every
-              occasion is reachable by scrolling the page you are already
-              scrolling. */}
-          <section aria-labelledby="occasions-heading">
-            <div className="px-4">
-              <h2 id="occasions-heading" className="text-[15px] font-extrabold text-ink">
-                What are we celebrating?
-              </h2>
-              <p className="mt-0.5 text-[11px] text-ink-mute">
-                Every one of these, arranged end to end — pick yours.
-              </p>
-            </div>
-            {/* Square tiles, three to a row, with the name and the entry
-                price underneath.
+              It renders once, here, for everyone. It used to be welded to
+              the deck at the top for signed-out visitors and deferred for
+              signed-in ones — two placements and a branch, to decide which
+              audience got a film before they had seen a price. Neither
+              does now, so the branch is gone. */}
+          <BrandFilm />
 
-                This was a two-per-row grid of OccasionCard — a tall panel
-                that cycled four photographs and carried a coupon badge. Two
-                things were wrong with it once the rest of the app moved to
-                squares. Fifteen occasions at two per row is eight rows of
-                scrolling before the page moves on, so the sections under it
-                were effectively unreachable; and a card that reflows its own
-                photograph every few seconds means the grid is never still
-                while somebody is trying to read down it.
-
-                Three squares to a row halves the height, the photograph is
-                still large enough to read at 110px, and the from-price — the
-                one number that was worth keeping off that card — moves under
-                the name where every tile states it on the same baseline. */}
-            <SquareGrid className="mt-3" items={occasionTiles} />
-          </section>
-
-          {/* ── Every offer, four at a time ───────────────────────────
-              Was OffersRail, which showed SHOP COUPONS ONLY as a sideways
-              drifting strip of 248px tiles. Two faults, one of them
-              commercial:
-
-              The four celebration savings — first booking 10%, early bird 7%,
-              repeat 15%, the ₹1,000 referral — live in code rather than the
-              `coupons` table, so they appeared nowhere on this screen. Those
-              are the offers worth thousands of rupees, attached to the half of
-              the business the revenue comes from, and Home was advertising
-              none of them.
-
-              And a 248px tile on a 390px phone means the second one is always
-              cut in half, which reads as an overflow rather than as an
-              invitation to swipe.
-
-              A page of four fixes both: everything on screen is whole, one
-              glance takes in four offers instead of one and a half, and the
-              page swaps rather than slides so nothing moves while it is being
-              read. See lib/allOffers for why the two kinds of promise get
-              different controls. */}
-          <OffersGrid />
-
-          {/* ── Real products, priced, one tap from the front door ──── */}
-          <ShopPicksRail />
+          {/* ── The same story, in photographs ────────────────────────
+              The mosaic says what the shelves ARE; this says that they
+              exist. A drawn hamper is our idea of gifting, and a photograph
+              of gold zari on crepe silk is a thing you can buy — a
+              pre-launch brand needs both. See config/homeReel.js. */}
+          <PhotoReelFilm />
 
           {/* ── Festivals, counting down ────────────────────────────── */}
           {upcoming.length > 0 && (
