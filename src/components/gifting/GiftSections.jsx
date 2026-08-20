@@ -37,15 +37,15 @@ const paletteOf = key => TILE_COLOURS[key] ?? TILE_COLOURS.sand
 /** Section heading with an optional "see everything" link. */
 export function SectionHead({ title, sub, to, action = 'See all', className = '' }) {
   return (
-    <div className={`mb-3 flex items-end justify-between gap-3 px-4 ${className}`}>
+    <div className={`mb-3.5 flex items-end justify-between gap-3 px-5 ${className}`}>
       <div className="min-w-0">
-        <h2 className="text-[16px] font-extrabold leading-tight tracking-[-0.01em] text-ink">{title}</h2>
-        {sub && <p className="mt-0.5 text-[11.5px] leading-snug text-ink-mute">{sub}</p>}
+        <h2 className="text-[18px] font-extrabold leading-tight tracking-tight text-ink">{title}</h2>
+        {sub && <p className="mt-0.5 text-[12px] leading-snug text-ink-mute">{sub}</p>}
       </div>
       {to && (
         <Link
           to={to}
-          className="shrink-0 inline-flex items-center gap-0.5 whitespace-nowrap text-[11.5px] font-extrabold text-forest-700"
+          className="shrink-0 inline-flex items-center gap-0.5 whitespace-nowrap text-[12px] font-extrabold text-accent"
         >
           {action} <ChevronRight size={13} />
         </Link>
@@ -64,7 +64,7 @@ export function SectionHead({ title, sub, to, action = 'See all', className = ''
  */
 export function Rail({ children, className = '' }) {
   return (
-    <div className={`flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide ${className}`}>
+    <div className={`flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 pb-1 scrollbar-hide ${className}`}>
       {children}
       <span aria-hidden="true" className="w-1 shrink-0" />
     </div>
@@ -88,12 +88,16 @@ export function Rail({ children, className = '' }) {
  */
 export function SquareTile({ to, label, sub, emoji, colour, photo, query, size = 'md' }) {
   const { bg, ink } = paletteOf(colour)
-  const width = size === 'lg' ? 'w-[124px]' : size === 'sm' ? 'w-[80px]' : 'w-[96px]'
+  const width = size === 'lg' ? 'w-[128px]' : size === 'sm' ? 'w-[82px]' : 'w-[98px]'
 
   return (
     <Link to={to} className={`group flex shrink-0 snap-start flex-col ${width}`}>
+      {/* Slightly bigger radius and a real lift on press, rather than the flat
+          ring the tile used to rely on alone to separate itself from the
+          page — a soft shadow is what makes a photo tile read as an object
+          sitting above the ground instead of a cutout pasted onto it. */}
       <span
-        className="relative block aspect-square w-full overflow-hidden rounded-2xl ring-1 ring-hairline/[0.06] transition-transform duration-200 active:scale-95"
+        className="relative block aspect-square w-full overflow-hidden rounded-[22px] shadow-[0_10px_24px_-14px_rgba(0,0,0,0.28)] ring-1 ring-black/[0.04] transition-transform duration-200 group-active:scale-[0.94]"
         style={{ backgroundColor: bg }}
       >
         {photo || query ? (
@@ -106,12 +110,12 @@ export function SquareTile({ to, label, sub, emoji, colour, photo, query, size =
             cinematic
           />
         ) : (
-          <span className="flex h-full w-full items-center justify-center text-[30px]">{emoji}</span>
+          <span className="flex h-full w-full items-center justify-center text-[32px]">{emoji}</span>
         )}
       </span>
 
-      {/* The name, underneath, on the page's own white — never over the photo. */}
-      <span className="mt-2 block text-center text-[11.5px] font-bold leading-tight text-ink">
+      {/* The name, underneath, on the page's own ground — never over the photo. */}
+      <span className="mt-2.5 block text-center text-[12px] font-bold leading-tight text-ink">
         {label}
       </span>
       {sub && (
@@ -260,7 +264,7 @@ export function SquareGrid({ items, cols = 3, className = '' }) {
  */
 export function OccasionMosaic({ tiles }) {
   return (
-    <div className="grid grid-cols-2 gap-3 px-4">
+    <div className="a-stagger grid grid-cols-2 gap-3.5 px-5">
       {tiles.map(t => {
         const pill = festivalPill(t.occasion)
         const { bg, ink } = paletteOf(t.colour)
@@ -275,17 +279,21 @@ export function OccasionMosaic({ tiles }) {
             // catalogue with a single shelf's contents, which is what made the
             // mosaic feel like a menu of categories wearing occasion names.
             to={`/shop/occasion/${encodeURIComponent(t.occasion)}`}
+            // Hero framing: this is the lead section of the shop now, so its
+            // tiles get the largest radius in the system and a real shadow —
+            // the flat ring these used to carry was sized for a secondary
+            // strip, and a secondary strip is no longer what this is.
             className={[
-              'relative flex min-h-[136px] flex-col overflow-hidden rounded-2xl p-3.5',
-              'ring-1 ring-hairline/[0.05] transition-transform active:scale-[0.985]',
-              wide ? 'col-span-2 min-h-[116px]' : '',
+              'relative flex min-h-[148px] flex-col overflow-hidden rounded-[28px] p-4',
+              'shadow-[0_16px_34px_-18px_rgba(0,0,0,0.32)] transition-transform active:scale-[0.98]',
+              wide ? 'col-span-2 min-h-[126px]' : '',
             ].filter(Boolean).join(' ')}
             style={{ backgroundColor: bg }}
           >
             <div className={`relative z-10 ${wide ? 'max-w-[62%]' : 'max-w-[74%]'}`}>
               {pill && (
                 <span
-                  className={`mb-1.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
+                  className={`mb-2 inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
                     pill.urgent ? 'bg-chilli-600 text-white' : 'bg-white/70'
                   }`}
                   style={pill.urgent ? undefined : { color: ink }}
@@ -293,10 +301,10 @@ export function OccasionMosaic({ tiles }) {
                   {pill.text}
                 </span>
               )}
-              <p className="flex items-center gap-0.5 text-[14.5px] font-extrabold leading-tight" style={{ color: ink }}>
-                {t.label} <ChevronRight size={14} />
+              <p className="flex items-center gap-1 text-[16px] font-extrabold leading-tight tracking-tight" style={{ color: ink }}>
+                {t.label} <ChevronRight size={15} />
               </p>
-              <p className="mt-1 text-[10.5px] font-semibold leading-snug opacity-80" style={{ color: ink }}>
+              <p className="mt-1 text-[11px] font-semibold leading-snug opacity-80" style={{ color: ink }}>
                 {t.sub}
               </p>
             </div>
@@ -308,8 +316,8 @@ export function OccasionMosaic({ tiles }) {
             {t.photo ? (
               <span
                 aria-hidden="true"
-                className={`pointer-events-none absolute bottom-0 right-0 overflow-hidden rounded-tl-3xl ${
-                  wide ? 'h-[92%] w-[34%]' : 'h-[52%] w-[58%]'
+                className={`pointer-events-none absolute bottom-0 right-0 overflow-hidden rounded-tl-[28px] ${
+                  wide ? 'h-[92%] w-[34%]' : 'h-[54%] w-[58%]'
                 }`}
               >
                 <ProductImage src={t.photo} emoji={t.emoji} alt="" className="!bg-transparent h-full w-full" />
@@ -317,7 +325,7 @@ export function OccasionMosaic({ tiles }) {
             ) : (
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-3 -right-2 select-none text-[64px] opacity-25"
+                className="pointer-events-none absolute -bottom-3 -right-2 select-none text-[68px] opacity-25"
               >
                 {t.emoji}
               </span>

@@ -95,8 +95,8 @@ export default function BrandBanner() {
           customer who wants a cake tonight and is shown a wedding is a
           customer who leaves. The mosaic below already leads with events;
           this row's job is to make the fork legible, not to pick a side. */}
-      <section className="px-4" aria-label="Plan a celebration, or shop the essentials">
-        <div className="grid grid-cols-2 gap-2.5">
+      <section className="px-5" aria-label="Plan a celebration, or shop the essentials">
+        <div className="grid grid-cols-2 gap-3">
           <Door
             to="/plan"
             photo={PLAN_PHOTO}
@@ -145,7 +145,7 @@ function Door({ to, photo, eyebrow, label, fact, tint }) {
   return (
     <Link
       to={to}
-      className="group relative isolate flex min-h-[104px] flex-col justify-end overflow-hidden rounded-2xl p-2.5 shadow-[var(--shadow-1)] ring-1 ring-hairline/10 transition-transform active:scale-[0.98]"
+      className="group relative isolate flex min-h-[114px] flex-col justify-end overflow-hidden rounded-[24px] p-3 shadow-[0_16px_34px_-18px_rgba(0,0,0,0.4)] transition-transform active:scale-[0.98]"
     >
       {photo && (
         <img
@@ -160,20 +160,20 @@ function Door({ to, photo, eyebrow, label, fact, tint }) {
       <span aria-hidden="true" className="absolute inset-0 -z-10" style={{ background: tint }} />
       <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
-      <span className="flex items-start justify-between gap-1">
+      <span className="flex items-start justify-between gap-1.5">
         <span className="min-w-0">
-          <span className="block text-[8px] font-extrabold uppercase tracking-[0.12em] text-white/75">
+          <span className="block text-[8.5px] font-extrabold uppercase tracking-[0.12em] text-white/75">
             {eyebrow}
           </span>
-          <span className="mt-0.5 block text-[12.5px] font-extrabold leading-tight text-white">
+          <span className="mt-0.5 block text-[13.5px] font-extrabold leading-tight tracking-tight text-white">
             {label}
           </span>
-          <span className="mt-0.5 block truncate text-[9px] font-medium text-white/70">
+          <span className="mt-0.5 block truncate text-[9.5px] font-medium text-white/70">
             {fact}
           </span>
         </span>
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/95 text-plum-950 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-          <ArrowUpRight size={11} strokeWidth={3} />
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/95 text-plum-950 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+          <ArrowUpRight size={12} strokeWidth={3} />
         </span>
       </span>
     </Link>

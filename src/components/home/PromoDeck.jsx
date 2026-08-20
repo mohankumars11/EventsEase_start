@@ -51,9 +51,9 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
   }
 
   return (
-    <div className="px-4">
+    <div className="px-5">
       <div
-        className="relative overflow-hidden rounded-3xl"
+        className="a-raised relative overflow-hidden rounded-[32px]"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMouseEnter={() => setHeld(true)}
@@ -73,27 +73,27 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
               the height; this is the utility rail (plan / festival / coupon)
               and only has to be a legible, tappable headline. Everything the
               trim saves goes straight into the panel underneath. */}
-          <div className="relative flex min-h-[118px] items-center gap-3 px-4 py-4">
+          <div className="relative flex min-h-[126px] items-center gap-3.5 px-5 py-5">
             {/* The art is a big soft emoji rather than a photograph: this deck
                 changes every five seconds and a stock photo that swaps that
                 often reads as a slideshow of adverts. */}
-            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[86px] leading-none opacity-25 blur-[0.5px]">
+            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[92px] leading-none opacity-25 blur-[0.5px]">
               {slide.art}
             </span>
 
             <div className="relative min-w-0 flex-1">
               {slide.eyebrow && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2.5 py-1 text-[9.5px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
                   {slide.eyebrow}
                 </span>
               )}
-              <p className="mt-1.5 font-serif text-[21px] font-extrabold leading-[1.04] text-white drop-shadow-sm">
+              <p className="mt-2 font-serif text-[23px] font-extrabold leading-[1.06] tracking-tight text-white drop-shadow-sm">
                 {slide.title}
               </p>
-              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-white/85">
+              <p className="mt-1 max-w-[86%] text-[11.5px] font-medium leading-snug text-white/85">
                 {slide.body}
               </p>
-              <span className="mt-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-[11px] font-extrabold text-plum-900 shadow-sm">
+              <span className="mt-3 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3.5 py-2 text-[11.5px] font-extrabold text-plum-900 shadow-sm">
                 {slide.cta} <ArrowRight size={12} strokeWidth={3} />
               </span>
             </div>
