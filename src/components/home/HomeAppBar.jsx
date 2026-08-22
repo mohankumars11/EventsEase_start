@@ -112,7 +112,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
                 the S it belongs to, so the lockup and its caption no longer
                 shared a left edge. A caption that does not align with the
                 name above it is not a caption, it is a second element. */}
-            <p className="brand-wipe mt-0.5 truncate text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-royal-800/70">
+            <p className="brand-wipe -mt-0.5 truncate text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-royal-800/70">
               {BRAND.categoryLine}
             </p>
           </div>
@@ -157,6 +157,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
             )}
           </Link>
 
+          <span className="flex shrink-0 items-center gap-1.5">
           {user ? (
             /* ProfileDropdown takes all three of these — it calls `onSignOut`
                directly and reads `profile` for the initials and the role-based
@@ -175,6 +176,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               Sign in
             </Link>
           )}
+          </span>
         </div>
 
         {/* ── The city, on its own line under the brand ─────────────────

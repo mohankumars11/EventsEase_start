@@ -120,10 +120,19 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
 
             Navy is the mark's own ground — it is what the wordmark stands on
             for the splash, and gold on navy is the highest-contrast pairing
-            the brand owns. The hairline goes gold to match the letter rather
-            than saffron, which was a third warm colour nobody asked for. */}
-        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-[9px] bg-royal-950/78 ring-1 ring-gold-300/40 backdrop-blur-[2px]">
-          <Monogram size={20} />
+            the brand owns.
+
+            SOLID navy, not 78% over a blur. Translucent, the seal took the
+            colour of whatever photograph was behind it, so on a bright frame
+            it went pale and the gold S inside it disappeared — which is the
+            one thing a hallmark must never do. A seal is stamped ON the
+            object; it does not let the object show through.
+
+            Bigger too: 40px carrying a 26px glyph rather than 36 carrying 20.
+            A Spencerian S is mostly hairline, and 20px of it over a busy
+            photograph is not a mark, it is a smudge. */}
+        <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[11px] bg-royal-950 shadow-[0_4px_12px_-4px_rgba(6,20,72,0.85)] ring-1 ring-gold-300/55">
+          <Monogram size={26} />
         </span>
       </div>
 

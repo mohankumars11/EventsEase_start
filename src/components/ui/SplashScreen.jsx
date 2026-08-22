@@ -23,6 +23,18 @@ const FADE_MS = 480
  *   1.62s  the rule opens outward from the centre
  *   3.00s  hold ends, 0.48s fade
  *
+ * ── No cities on this screen ──────────────────────────────────────────────
+ * It carried "BENGALURU · MYSORE" along the bottom. That is the first thing
+ * anybody ever sees of Sambramo, and to somebody in Hyderabad it reads as a
+ * closed door before they have seen a single thing the app does. The pilot
+ * is real and it is stated — on the city control in the app bar, where it is
+ * an answer to a question the customer has actually asked, and on the
+ * waitlist form. Not here, where it can only lose people.
+ *
+ * It also unbalanced the composition: an absolutely-positioned line at the
+ * bottom of a flex-centred column means the mark is centred in the viewport
+ * and the screen is not centred around the mark.
+ *
  * ── Navy, per the reference ───────────────────────────────────────────────
  * The app is pure white everywhere else and this is the one screen that is
  * not, deliberately: the reference sets the mark on deep blue, a splash is
@@ -139,10 +151,6 @@ export default function SplashScreen() {
           <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-l from-transparent to-gold-400/80" />
         </div>
       </div>
-
-      <p className="absolute bottom-10 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">
-        {BRAND.pilotCities.join(' · ')}
-      </p>
     </div>
   )
 }

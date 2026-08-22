@@ -1,4 +1,5 @@
-import { useId } from 'react'
+import { useId, useState, useEffect } from 'react'
+import { fetchBranding } from '../../lib/branding'
 
 /**
  * The Sambramo lockup — a gold Spencerian S over the wordmark.
@@ -85,14 +86,54 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
   const fallback = useId()
   const gid = gradientId ?? `gold-${fallback}`
 
+  /* ── An uploaded logo wins, everywhere, with no other file changed ───────
+     Putting the lookup HERE rather than at each call site is the whole
+     design: the app bars, the tab bar, every celebration card, both auth
+     screens, the planner, the admin rail and the splash all draw through
+     this component, so an admin uploading a file in the console replaces the
+     mark in all of them at once and nothing else has to know.
+
+     The drawn mark is not a placeholder for the upload — it is the fallback
+     that renders before the fetch resolves, when nothing has been uploaded,
+     and if the image 404s later. There is never a frame with no logo. */
+  const [uploaded, setUploaded] = useState(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchBranding().then(b => { if (!cancelled) setUploaded(b) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (uploaded?.url && !failed) {
+    return (
+      <img
+        src={uploaded.url}
+        alt={uploaded.alt || 'Sambramo'}
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        /* contain, not cover: a logo cropped to fill a square is a logo with
+           its swash cut off. Whatever aspect the brand uploads, all of it
+           shows and the square is the padding. */
+        className={`object-contain ${className}`}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+
   /* ── Two ramps, and the small one is not a shortcut ──────────────────────
      The highlight stop is what makes the letter look gilded, and it is also
-     near-white — which on a white ground at 20px turns a third of the stroke
-     invisible and leaves a broken S. Above ~30px the stroke is wide enough
-     to carry the highlight and still read; below it the letter needs to be
-     one solid, darker metal. This is the same reason the old kolam mark had
-     a `solid` variant below 24px. */
-  const small = size < 30
+     near-white — which on a white ground turns a third of the stroke
+     invisible and leaves a broken S.
+
+     The threshold was 30 and that was too generous: the app bar draws at 32
+     and the mark there was washing out on white, which is the single most
+     visible instance of it in the whole product. Only the splash and the
+     admin previews are big enough for the stroke to carry a highlight and
+     still read, so the gilded ramp starts at 44 and everything below it —
+     app bar, card hallmark, tab bar — gets one solid, darker metal. */
+  const small = size < 44
 
   return (
     <svg
@@ -108,9 +149,9 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
         <linearGradient id={gid} x1="16" y1="10" x2="50" y2="56" gradientUnits="userSpaceOnUse">
           {small ? (
             <>
-              <stop offset="0%"   stopColor="#D9A445" />
-              <stop offset="50%"  stopColor="#B8823A" />
-              <stop offset="100%" stopColor="#8C5F22" />
+              <stop offset="0%"   stopColor="#D4A03F" />
+              <stop offset="50%"  stopColor="#AE7A31" />
+              <stop offset="100%" stopColor="#83571C" />
             </>
           ) : (
             <>
@@ -159,7 +200,7 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
            1.6 in a 64 box at font-size 46 is roughly a 3.5% stroke — enough
            to carry the letter at 22px, not enough to close the counters. */
         stroke={`url(#${gid})`}
-        strokeWidth={small ? 2.1 : 1.6}
+        strokeWidth={small ? 2.6 : 1.6}
         strokeLinejoin="round"
         style={{
           fontFamily: '"Pinyon Script", "Snell Roundhand", "Apple Chancery", cursive',

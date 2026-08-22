@@ -99,6 +99,11 @@ export const NAV = [
         title: 'Content Studio',
         description: 'Decor, cuisines, tiers, festivals and offers — everything else a customer sees.',
       },
+      {
+        id: 'brand', label: 'Logo & Brand', emoji: '✒️',
+        title: 'Logo & Brand',
+        description: 'Upload the brand mark. It replaces the drawn logo on every screen at once.',
+      },
     ],
   },
   {
