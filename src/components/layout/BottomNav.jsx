@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 
 /**
  * Phone-first primary navigation.
@@ -293,11 +293,11 @@ export default function BottomNav() {
                   saturated thing on screen and it was saying nothing — a
                   sparkle is what every app puts on its "magic" button.
 
-                  The kolam is the product's own mark, and its ramp was
-                  drawn to sit on plum (see SambramoMark) — so the chip is
-                  plum, which makes the one branded object in the navigation
-                  also the one dark object on a light bar. That is exactly
-                  the weight a primary action wants, and it reads as
+                  The monogram is the product's own mark, and it is gold —
+                  so the chip is navy, which is the ground the mark is drawn
+                  to sit on. It also makes the one branded object in the
+                  navigation the one dark object on a light bar, which is
+                  exactly the weight a primary action wants, and it reads as
                   Sambramo rather than as a generic accent.
 
                   `solid` because below ~24px the monoline centre closes up;
@@ -316,25 +316,24 @@ export default function BottomNav() {
                   reading as a mark on the BAR rather than on the tab. The
                   pill is attached to the thing it selects.
 
-                  The primary tab keeps its plum disc — it is branded rather
+                  The primary tab keeps its navy disc — it is branded rather
                   than selected — so it never takes the pill. */}
               <span
                 className={`flex h-8 w-11 items-center justify-center rounded-full transition-all ${
                   primary
                     ? active
-                      ? 'bg-plum-700 ring-2 ring-saffron-400 shadow-md shadow-plum-700/35'
-                      : 'bg-plum-700 shadow-sm shadow-plum-700/25'
+                      ? 'bg-royal-900 ring-2 ring-gold-300 shadow-md shadow-royal-900/35'
+                      : 'bg-royal-900 shadow-sm shadow-royal-900/25'
                     : active && !locked
                       ? 'bg-accent/[0.12]'
                       : ''
                 }`}
-                style={primary ? { '--sambramo-knockout': '#6d28d9' } : undefined}
               >
                 {/* The badge anchors to the icon, not to the 32px row, so it
                     sits on the bag's corner rather than floating above it. */}
                 <span className="relative flex items-center justify-center">
                   {primary
-                    ? <SambramoMark size={21} variant="solid" title="" />
+                    ? <Monogram size={22} />
                     : <Icon size={20} strokeWidth={active ? 2.4 : 2} />}
                   {/* A locked tab carries neither. Both are claims that
                       something is happening, and nothing is. */}
@@ -368,7 +367,7 @@ export default function BottomNav() {
               </span>
               <span className={`whitespace-nowrap text-[10.5px] leading-none ${
                 locked ? 'font-medium text-ink-mute/70'
-                  : primary ? 'font-bold text-plum-700'
+                  : primary ? 'font-bold text-royal-800'
                   : active ? 'font-extrabold' : 'font-medium'
               }`}>
                 {label}

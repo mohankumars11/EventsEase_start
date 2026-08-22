@@ -1,5 +1,5 @@
 import { BRAND } from '../../config/sambramo'
-import SambramoMark from './SambramoMark'
+import { Monogram } from './SambramoWordmark'
 
 /**
  * The two lines that can hang under the wordmark, as the phrases they are set
@@ -108,10 +108,10 @@ export default function SambramoLogo({
 
   return (
     <span className={`group/logo inline-flex items-center ${className}`} style={{ gap: `${gap}px` }}>
-      <SambramoMark
-        size={markSize}
-        className="shrink-0 transition-transform duration-700 ease-out group-hover/logo:rotate-90"
-      />
+      {/* The hover used to turn this 90°, which was right for a kolam — a
+          rotationally symmetric figure looks the same at every quarter turn.
+          The mark is a letter now, and a letter on its side is a mistake. */}
+      <Monogram size={markSize} className="shrink-0" />
 
       {/* Wordmark and caption in one column — this is what puts their left
           edges on the same line, and what the mark is centred against. */}

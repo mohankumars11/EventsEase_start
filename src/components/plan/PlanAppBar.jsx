@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, X, ArrowLeft } from 'lucide-react'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 import CityButton from '../common/CityButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
@@ -83,7 +83,7 @@ export default function PlanAppBar({ query = '', onQueryChange }) {
             <ArrowLeft size={20} />
           </button>
 
-          <SambramoMark size={26} className="hidden shrink-0 sm:block" />
+          <Monogram size={26} className="hidden shrink-0 sm:block" />
 
           {/* The city, from the same control the other two bars use — so it is
               stated once here rather than asked again by a banner. */}

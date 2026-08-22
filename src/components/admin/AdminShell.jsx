@@ -3,7 +3,7 @@ import { Menu, X, Search, RefreshCw, Command, ChevronRight, LogOut } from 'lucid
 import { BRAND } from '../../config/sambramo'
 import { INK, STATUS } from '../../config/dataviz'
 import { NAV, NAV_BY_ID } from '../../config/adminNav'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 
 /**
  * The frame the whole console sits in.
@@ -93,7 +93,7 @@ export default function AdminShell({
         {/* Brand */}
         <div className="px-4 pt-5 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <SambramoMark size={30} />
+            <Monogram size={28} />
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-bold text-ink leading-none tracking-tight">
                 {BRAND.name}

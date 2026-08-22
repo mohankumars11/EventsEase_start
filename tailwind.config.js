@@ -196,6 +196,10 @@ export default {
         // different from the rest of the page.
         sans:    ['Manrope', 'system-ui', 'sans-serif'],
         serif:   ['Playfair Display', 'Georgia', 'serif'],
+        /* The monogram only. A Spencerian capital — the flag at the top and
+           the open lower curl are what make the mark, and neither exists in a
+           book serif. One glyph is loaded, not a text face. */
+        script:  ['Pinyon Script', 'Snell Roundhand', 'Apple Chancery', 'cursive'],
         display: ['Playfair Display', 'Georgia', 'serif'],
         body:    ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
       },

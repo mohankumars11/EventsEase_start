@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 import CityButton from '../common/CityButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
@@ -122,7 +122,7 @@ export default function AppBar({
               </Link>
             )
           ) : (
-            <SambramoMark size={30} className="shrink-0" />
+            <Monogram size={28} className="shrink-0" />
           )}
 
           {title ? (

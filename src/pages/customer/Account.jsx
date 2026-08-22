@@ -14,7 +14,8 @@ import { BRAND } from '../../config/sambramo'
 import { CANCELLATION, RETURN_TERMS, CATEGORY_RULES } from '../../config/policies'
 import AppBar from '../../components/layout/AppBar'
 import SambramoLogo from '../../components/ui/SambramoLogo'
-import SambramoMark from '../../components/ui/SambramoMark'
+import ChatWidget from '../../components/customer/ChatWidget'
+import { Monogram } from '../../components/ui/SambramoWordmark'
 import ReferAndEarn from '../../components/customer/ReferAndEarn'
 import AccountSettings from '../../components/customer/AccountSettings'
 
@@ -219,6 +220,7 @@ export default function Account() {
         <Policies />
 
         <Support />
+        <ChatWidget />
 
         {user ? (
           <section className="px-4">
@@ -276,7 +278,7 @@ function Identity({ profile, user }) {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <SambramoMark size={172} title="" />
+          <Monogram size={172} />
         </span>
 
         <div className="relative flex items-center gap-3.5">
@@ -321,7 +323,7 @@ function GuestPanel() {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <SambramoMark size={172} title="" />
+          <Monogram size={172} />
         </span>
 
         <div className="relative">
@@ -579,6 +581,23 @@ function Support() {
   )
 }
 
+/* ── The assistant ────────────────────────────────────────────────────────
+   It used to be mounted in App and therefore live on every screen, as a
+   floating dock in the bottom-right corner. On Home that corner is busy —
+   ResumePrompt and the date badge both want it, the tab bar is directly
+   under it, and the assistant sat over the last row of celebration cards.
+   A support control that covers merchandise is a support control that costs
+   money.
+
+   So it lives here, on the one screen whose whole job is "I need something
+   from Sambramo, not from the catalogue". It sits directly under the human
+   contacts above it deliberately: the order is phone, WhatsApp, then bot,
+   because that is the order of how much a person actually wants.
+
+   It keeps its own floating dock rather than being inlined into the page:
+   the panel is a conversation and wants the height, and on THIS screen the
+   bottom-right corner is empty. That is the whole difference — the dock was
+   never the problem, the screen it was docked to was. */
 /* ── The sign-off ─────────────────────────────────────────────────────────
    The one place in the app where the lockup gets to sit on its own with air
    around it. `caption="emotion"` rather than the descriptor: somebody on their

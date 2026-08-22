@@ -10,7 +10,6 @@ import Navbar from './components/layout/Navbar'
 import BottomNav from './components/layout/BottomNav'
 import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
-import ChatWidget from './components/customer/ChatWidget'
 import JourneyTracker from './components/common/JourneyTracker'
 import ResumePrompt from './components/common/ResumePrompt'
 import SplashScreen from './components/ui/SplashScreen'
@@ -505,12 +504,6 @@ export default function App() {
                   /dashboard/customer are two routes onto one screen and the
                   card belongs to neither of them in particular. */}
               <ResumePrompt />
-              {/* One assistant for the whole app, opened by the Help tab in
-                  BottomNav. It used to be mounted inside three separate
-                  shells, which is why it floated over the page: a component
-                  living inside the layout it must not disturb has nowhere to
-                  go but on top of it. */}
-              <ChatWidget />
               {/* The mark, once, on a device's first open. An overlay over a
                   mounted app rather than a gate in front of one — mounted
                   last so it paints above everything, and dismissible by tap

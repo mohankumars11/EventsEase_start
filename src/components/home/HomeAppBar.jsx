@@ -79,7 +79,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
 
   return (
     <header ref={barRef} className="home-appbar a-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
-      <div className="mx-auto max-w-3xl px-4 pb-3 pt-3">
+      <div className="mx-auto max-w-3xl px-4 pb-2.5 pt-2">
         {/* ── The lockup, top left ─────────────────────────────────────
             The brand goes where a brand goes. It used to be a 30px kolam
             glyph sharing a row with the city, the cart and the account menu
@@ -90,9 +90,9 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
             wayfinding sits under it. That ordering is what every consumer
             app converges on for the same reason: the first thing a person
             who arrived from a link needs is to know whose app this is. */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <SambramoWordmark size={30} layout="inline" />
+            <SambramoWordmark size={28} layout="inline" />
 
             {/* ── The caption, revealed left to right ──────────────────
                 It said "Every emotion, valued", which is a feeling and not
@@ -106,17 +106,15 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
                 competitor screenshots, and it is not needed. Naming the
                 category is the whole job.
 
-                The gold rule travels with it, so the reveal reads as one
-                gesture rather than two things arriving at once. */}
-            <div className="mt-1.5 flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="brand-rule block h-px w-5 shrink-0 rounded-full bg-gradient-to-r from-gold-400 to-gold-200"
-              />
-              <p className="brand-wipe truncate text-[10px] font-extrabold uppercase tracking-[0.16em] text-royal-800/75">
-                {BRAND.categoryLine}
-              </p>
-            </div>
+                There was a short gold rule leading it. It read as a
+                flourish and measured as a gap: five pixels of rule plus
+                eight of flex gap pushed the line thirteen pixels right of
+                the S it belongs to, so the lockup and its caption no longer
+                shared a left edge. A caption that does not align with the
+                name above it is not a caption, it is a second element. */}
+            <p className="brand-wipe mt-0.5 truncate text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-royal-800/70">
+              {BRAND.categoryLine}
+            </p>
           </div>
 
           {/* ── The basket ───────────────────────────────────────────
@@ -188,7 +186,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
             is left is one basket of services reached from Plan, and a bag
             icon in the app bar for it would be the e-commerce metaphor
             surviving the commerce. */}
-        <div className="mt-2.5">
+        <div className="mt-2">
           <CityButton
             subtitle={
               firstName

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import RotatingPhoto from './RotatingPhoto'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -113,16 +113,17 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
             as something stamped onto the object, which is exactly the claim
             this card is making.
 
-            `solid` because the kolam's monoline centre closes up below
-            ~24px — the petals fill and the pulli is knocked out instead, and
-            that knockout must be painted the SEAL's own colour rather than
-            inheriting --bar (the app bar's white, which would punch a white
-            hole through a plum square). Same contract as the Plan tab. */}
-        <span
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-[9px] bg-plum-950/70 ring-1 ring-saffron-400/45 backdrop-blur-[2px]"
-          style={{ '--sambramo-knockout': '#2e1065' }}
-        >
-          <SambramoMark size={19} variant="solid" title="" />
+            The seal was plum with a saffron hairline, which was right when
+            the mark inside it was a plum-ground kolam. The mark is gold now,
+            and gold on plum is two warm-adjacent colours fighting: the S went
+            muddy at 20px, which is the only size this is ever drawn at.
+
+            Navy is the mark's own ground — it is what the wordmark stands on
+            for the splash, and gold on navy is the highest-contrast pairing
+            the brand owns. The hairline goes gold to match the letter rather
+            than saffron, which was a third warm colour nobody asked for. */}
+        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-[9px] bg-royal-950/78 ring-1 ring-gold-300/40 backdrop-blur-[2px]">
+          <Monogram size={20} />
         </span>
       </div>
 
