@@ -25,13 +25,21 @@ import { supabase } from '../lib/supabase'
  * Every query therefore fails soft: a missing table or column resolves to an
  * empty array and its name lands in `missing`, rather than taking the whole
  * dashboard down with a red error. The views that need it say so in place —
- * see AdminServices, which explains exactly which migration to run. The
- * queries whose absence really is fatal (`orders`, `events`) surface as
- * `error` in the normal way.
+ * see AdminServices, which explains exactly which migration to run. The one
+ * query whose absence really is fatal (`events`) surfaces as `error` in the
+ * normal way.
+ *
+ * `orders` used to be in that set, and taking it out is what makes the shop
+ * removal survivable. Migration 054 drops the table, and the SQL is pasted by
+ * hand at some point after the deploy that stops reading it. For the window
+ * in between, a REQUIRED `orders` would set `fatal` and put a full-page error
+ * over the whole console — including every event screen, which needs nothing
+ * from the shop. Soft-failing it means the console keeps working and the shop
+ * views simply read zero, which is the honest answer once the table is gone.
  */
 
 /** Tables that must load for the dashboard to mean anything. */
-const REQUIRED = new Set(['orders', 'events'])
+const REQUIRED = new Set(['events'])
 
 /**
  * Postgres/PostgREST codes for "you asked for something that isn't there":

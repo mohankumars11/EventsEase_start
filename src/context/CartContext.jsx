@@ -334,27 +334,18 @@ export function CartProvider({ children }) {
   // adding a cake to the shop cart used to leave the badge reading 0.
   const cartCount = totalCount + productCount
 
-  // The app has two genuinely different carts — shop products (delivered
-  // goods) and event services/packages (quoted work) — and one cart icon
-  // in the header. Send people to whichever one actually has their stuff
-  // in it, preferring products since that's the checkout-now flow.
+  // There is one cart now, and one place it lives.
   //
-  // ── Guests go to the services cart too, now ─────────────────────────
-  // This used to send every signed-out visitor to /shop/cart, because the
-  // services cart was customer-only and a tap on the cart icon would have
-  // bounced them to /login. That was the right call for the guard that
-  // existed and the wrong shape for the funnel: a guest who had just added
-  // a decoration setup tapped the cart, saw an empty *shop* basket, and
-  // reasonably concluded the add had failed.
+  // This used to fork three ways between /shop/cart and the services cart,
+  // preferring products because that was the checkout-now flow — and it fell
+  // back to /shop/cart when both were empty. With the storefront leaving,
+  // that fallback is a cart icon pointing at a route that will not exist.
   //
-  // The services cart is public now — browse and fill it freely, sign in at
-  // send, exactly as the shop does — so the honest answer is to point at
-  // whichever cart holds their things regardless of who they are.
-  const cartPath = productCount > 0
-    ? '/shop/cart'
-    : totalCount > 0
-      ? '/dashboard/customer/cart'
-      : '/shop/cart'
+  // Repointed ahead of the removal rather than with it, so "the cart icon
+  // goes somewhere real" and "the shop is gone" are two changes that can be
+  // verified separately. The services cart has been public since the guard
+  // came off, so there is no signed-out case to special-case either.
+  const cartPath = '/dashboard/customer/cart'
 
   return (
     <CartContext.Provider value={{

@@ -33,6 +33,10 @@ export const OVERALL_SUBJECT_ID = 'sambramo-coordination'
 export const OVERALL_SUBJECT_NAME = 'Sambramo coordination'
 
 const MISSING_COLUMN = '42703'
+// Postgres raises this when ON CONFLICT names a tuple that no unique
+// constraint matches. It is how the database tells us which side of
+// migration 054 it is on — see saveReview.
+const NO_MATCHING_CONSTRAINT = '42P10'
 
 /** Which column ties a review to the celebration it came from. */
 function sourceColumns(subjectType, subjectId) {
@@ -92,26 +96,52 @@ export async function saveReview({
     subject_type: kind,
     subject_id: serviceId,
     subject_name: serviceName,
-    order_id: null,
     rating,
     comment: comment?.trim() || null,
   }
 
   const source = sourceColumns(subjectType, subjectId)
 
-  // The upsert conflicts on the source tuple, so editing a rating updates the
-  // row rather than adding a second one. Migration 050 widens that constraint
-  // to include `event_id`; before it is applied the event path takes the
-  // fallback below and the conflict target does not include it.
-  const conflict = subjectType === 'event'
-    ? 'customer_id,subject_type,subject_id,order_id,enquiry_id,event_id'
-    : 'customer_id,subject_type,subject_id,order_id,enquiry_id'
+  /* ── Two migrations, one build ────────────────────────────────────────
+   *
+   * The upsert conflicts on the source tuple so that editing a rating
+   * updates the row instead of adding a second one. Which tuple is correct
+   * depends on two migrations that are pasted by hand, independently of any
+   * deploy, so this build has to work on a database that has had neither,
+   * either, or both.
+   *
+   *   050  widens the constraint to include `event_id`.
+   *   054  removes the shop, and with it `reviews_catalog.order_id` — so the
+   *        constraint is rebuilt without it.
+   *
+   * Naming a column the constraint does not have raises 42P10, and naming a
+   * column the table does not have raises 42703. So we ask for the newest
+   * shape first and let the database tell us it is behind, which is the same
+   * thing the 050 fallback below has always done. Ordering the deploy against
+   * the SQL is then not something anyone has to get right.
+   */
+  const target = (withOrderId, withEvent) => [
+    'customer_id', 'subject_type', 'subject_id',
+    ...(withOrderId ? ['order_id'] : []),
+    'enquiry_id',
+    ...(withEvent ? ['event_id'] : []),
+  ].join(',')
 
-  let { data, error } = await supabase
-    .from('reviews_catalog')
-    .upsert({ ...base, ...source }, { onConflict: conflict })
-    .select()
-    .single()
+  const isEvent = subjectType === 'event'
+  const legacyColumn = { order_id: null }
+
+  const attempt = (payload, onConflict) =>
+    supabase.from('reviews_catalog').upsert(payload, { onConflict }).select().single()
+
+  // Post-054: no order_id anywhere.
+  let { data, error } = await attempt({ ...base, ...source }, target(false, isEvent))
+
+  // Pre-054: the column is still there and the constraint still names it.
+  if (error && error.code === NO_MATCHING_CONSTRAINT) {
+    ;({ data, error } = await attempt(
+      { ...base, ...legacyColumn, ...source }, target(true, isEvent),
+    ))
+  }
 
   if (error && (error.code === MISSING_COLUMN || /event_id/.test(error.message ?? ''))) {
     // ── Migration 050 is not applied ──────────────────────────────────
@@ -120,13 +150,14 @@ export async function saveReview({
     // the service's rating and will simply not be labelled verified until
     // somebody pastes the SQL. Losing a customer's written review because a
     // migration is pending would be much the worse trade.
-    ;({ data, error } = await supabase
-      .from('reviews_catalog')
-      .upsert({ ...base, enquiry_id: null }, {
-        onConflict: 'customer_id,subject_type,subject_id,order_id,enquiry_id',
-      })
-      .select()
-      .single())
+    ;({ data, error } = await attempt(
+      { ...base, enquiry_id: null }, target(false, false),
+    ))
+    if (error && error.code === NO_MATCHING_CONSTRAINT) {
+      ;({ data, error } = await attempt(
+        { ...base, ...legacyColumn, enquiry_id: null }, target(true, false),
+      ))
+    }
     if (error) throw new Error(error.message)
     return { review: data, degraded: true }
   }
