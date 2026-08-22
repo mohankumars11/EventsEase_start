@@ -181,11 +181,11 @@ export default function CelebrationTracker() {
 
   if (state === 'loading') {
     return (
-      <div className="home-canvas min-h-screen pb-bottom-nav">
+      <div className="a-canvas min-h-screen pb-bottom-nav">
         <TrackerHeader title="Your celebration" />
         <div className="mx-auto max-w-2xl space-y-3 px-4 pt-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />
+            <div key={i} className="h-20 animate-pulse a-well" />
           ))}
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function CelebrationTracker() {
 
   if (state === 'missing' || !journey) {
     return (
-      <div className="home-canvas min-h-screen pb-bottom-nav">
+      <div className="a-canvas min-h-screen pb-bottom-nav">
         <TrackerHeader title="Your celebration" />
         <div className="mx-auto max-w-2xl px-4 pt-10 text-center">
           <p className="text-sm font-bold text-ink">We couldn't find that celebration</p>
@@ -218,7 +218,7 @@ export default function CelebrationTracker() {
   const owes = priced && !settlement.settled && !journey.cancelled
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
       <TrackerHeader title={item.title} />
 
       <div className="mx-auto max-w-2xl space-y-4 px-4 pb-10 pt-4">
@@ -251,7 +251,7 @@ export default function CelebrationTracker() {
         />
 
         {/* ── Where it is ──────────────────────────────────────────── */}
-        <section className="rounded-2xl bg-surface p-4 ring-1 ring-hairline/[0.08]">
+        <section className="a-card p-4">
           <h2 className="mb-3 text-[14px] font-extrabold text-ink">Where it is</h2>
           <JourneyStepper
             stages={journey.cancelled ? [{ ...CANCELLED_STAGE, reached: true, current: true, at: journey.cancelledAt }] : journey.stages}
@@ -271,7 +271,7 @@ export default function CelebrationTracker() {
             important half being the same either way: the price, and the
             button that pays it, in the same eyeline. */}
         {sent && (
-          <section className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
+          <section className="overflow-hidden a-card">
             <div className="flex items-center gap-2 border-b border-hairline/[0.08] px-4 py-3">
               <FileText size={15} className="shrink-0 text-accent" />
               <h2 className="flex-1 text-[14px] font-extrabold text-ink">Your plan</h2>
@@ -338,7 +338,7 @@ export default function CelebrationTracker() {
             customer whose celebration came through the builder or the
             services cart could be quoted and have no way to pay. */}
         {!sent && priced && (
-          <section className="overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08]">
+          <section className="overflow-hidden a-card">
             <div className="flex items-center gap-2 border-b border-hairline/[0.08] px-4 py-3">
               <FileText size={15} className="shrink-0 text-accent" />
               <h2 className="flex-1 text-[14px] font-extrabold text-ink">Your confirmed price</h2>
@@ -390,7 +390,7 @@ export default function CelebrationTracker() {
 
         {/* ── Everything that actually happened ────────────────────── */}
         {journey.timeline.length > 0 && (
-          <section className="rounded-2xl bg-surface p-4 ring-1 ring-hairline/[0.08]">
+          <section className="a-card p-4">
             <h2 className="mb-3 text-[14px] font-extrabold text-ink">Everything so far</h2>
             <ol className="space-y-3">
               {journey.timeline.map(t => (

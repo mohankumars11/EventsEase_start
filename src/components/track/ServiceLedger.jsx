@@ -31,7 +31,7 @@ export default function ServiceLedger({ ledger, className = '' }) {
   const { counts } = ledger
 
   return (
-    <section className={`overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08] ${className}`}>
+    <section className={`overflow-hidden a-card ${className}`}>
       <div className="border-b border-hairline/[0.08] px-4 py-3.5">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-[14px] font-extrabold text-ink">Everything you ordered</h2>

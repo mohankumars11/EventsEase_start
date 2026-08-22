@@ -73,7 +73,7 @@ export default function OrderTracker() {
 
   if (state === 'loading') {
     return (
-      <div className="home-canvas min-h-screen pb-bottom-nav">
+      <div className="a-canvas min-h-screen pb-bottom-nav">
         <TrackerHeader title="Your order" />
         <div className="mx-auto max-w-2xl space-y-3 px-4 pt-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -86,7 +86,7 @@ export default function OrderTracker() {
 
   if (state === 'missing') {
     return (
-      <div className="home-canvas min-h-screen pb-bottom-nav">
+      <div className="a-canvas min-h-screen pb-bottom-nav">
         <TrackerHeader title="Your order" />
         <div className="mx-auto max-w-2xl px-4 pt-10 text-center">
           <p className="text-sm font-bold text-ink">We couldn't find that order</p>
@@ -105,7 +105,7 @@ export default function OrderTracker() {
   const items = order.order_items ?? []
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
       <TrackerHeader title={`Order #${String(order.id).slice(0, 8).toUpperCase()}`} />
 
       <div className="mx-auto max-w-2xl space-y-4 px-4 pb-10 pt-4">
