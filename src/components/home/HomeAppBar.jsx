@@ -131,21 +131,33 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               So it comes back, in the app bar rather than as a fifth tab.
               A tab bar holds places; a basket is a state, and every catalogue
               app in the country puts it top right. It renders only when there
-              is something in it: a permanently visible empty bag teaches the
-              eye to skip the spot, so it is not there on the day it finally
-              has a number in it. */}
-          {cartCount > 0 && (
-            <Link
-              to={cartPath}
-              aria-label={`Your basket, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-              className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink outline outline-1 -outline-offset-1 outline-ink/12 transition-transform active:scale-95"
-            >
-              <ShoppingBag size={18} />
+              is something in it.
+
+              It was briefly hidden while empty, on the reasoning that an
+              always-empty bag teaches the eye to skip the spot. That is true
+              of a bag that only ever holds what you already chose — and wrong
+              here, because this bag is also the way IN to buying a single
+              service. Somebody who wants only a photographer has no reason to
+              open "Plan"; the bag is the affordance they already understand,
+              and it cannot recruit anyone while invisible.
+
+              So it is always here, and the basket it opens is a browse
+              surface when it is empty rather than an apology. The badge is
+              what appears and disappears. */}
+          <Link
+            to={cartPath}
+            aria-label={cartCount > 0
+              ? `Your basket, ${cartCount} item${cartCount === 1 ? '' : 's'}`
+              : 'Your basket — browse individual services'}
+            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink outline outline-1 -outline-offset-1 outline-ink/12 transition-transform active:scale-95"
+          >
+            <ShoppingBag size={18} />
+            {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-royal-800 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
-            </Link>
-          )}
+            )}
+          </Link>
 
           {user ? (
             /* ProfileDropdown takes all three of these — it calls `onSignOut`

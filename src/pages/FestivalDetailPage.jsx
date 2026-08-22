@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { CalendarDays, Bell, Check, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { FESTIVALS } from '../data/festivals'
+import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { BRAND } from '../config/sambramo'
 import AppBar from '../components/layout/AppBar'
 import RemoteImage from '../components/common/RemoteImage'
@@ -42,7 +43,18 @@ import { recordInterest, answerFor, flushPending } from '../lib/festivalInterest
 export default function FestivalDetailPage() {
   const { id } = useParams()
   const { city } = useCity()
-  const festival = FESTIVALS.find(f => f.id === id)
+  /* Two lists, and the rail is built from the longer one. FESTIVALS has
+     eight richly described festivals; UPCOMING_FESTIVALS has nine with a name,
+     a date and an emoji — and five of those nine are not in FESTIVALS at all.
+     Those five are exactly the ones that used to be routed into shop shelves
+     because they had no page of their own.
+
+     Falling back means every tile in "Coming up" lands on a page that knows
+     what it is called and when it falls, instead of five of them reading
+     "We're still building This festival". */
+  const rich = FESTIVALS.find(f => f.id === id)
+  const listed = UPCOMING_FESTIVALS.find(f => f.id === id)
+  const festival = rich ?? listed ?? null
 
   const [answer, setAnswer] = useState(() => answerFor(id))
   const [busy, setBusy] = useState(false)
@@ -67,13 +79,19 @@ export default function FestivalDetailPage() {
     setBusy(false)
   }
 
-  // An unknown id still gets a real page. The festival rail is generated from
-  // FESTIVALS so this should not happen, but a shared link outliving a
-  // renamed festival should not land on "not found" when the honest answer —
-  // we are not open for this yet — is the same answer either way.
+  // An id in neither list still gets a real page rather than "not found" —
+  // a shared link outliving a renamed festival should land on the same honest
+  // answer as everything else here, which is that we are not open for it yet.
   const name = festival?.name ?? 'This festival'
   const emoji = festival?.emoji ?? '🪔'
-  const when = festival?.month ? `${festival.month}${festival.duration ? ` · ${festival.duration}` : ''}` : null
+  /* FESTIVALS carries a human month ("October – November · 5 days");
+     UPCOMING_FESTIVALS carries a real date. Prefer the prose, fall back to
+     the date formatted the way the rest of the app formats dates. */
+  const when = rich?.month
+    ? `${rich.month}${rich.duration ? ` · ${rich.duration}` : ''}`
+    : listed?.date
+      ? new Date(listed.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      : null
 
   return (
     <div className="a-canvas min-h-screen pb-bottom-nav">
@@ -109,8 +127,8 @@ export default function FestivalDetailPage() {
                 {when}
               </p>
             )}
-            {festival?.tagline && (
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{festival.tagline}</p>
+            {rich?.tagline && (
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{rich.tagline}</p>
             )}
           </div>
         </div>

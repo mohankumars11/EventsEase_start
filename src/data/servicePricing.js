@@ -177,7 +177,7 @@ export const SERVICE_GROUPS = [
         desc: 'Experienced purohit for the rite, in your language' },
       { id: 'pooja', name: 'Pooja samagri & setup', emoji: '🪔', unit: 'fixed', base: 5000, scales: false,
         desc: 'Every item on the list, arranged before the muhurat' },
-      { id: 'mehendi', name: 'Mehendi artists', emoji: '🪷', unit: 'fixed', base: 8000, scales: true,
+      { id: 'mehendi', name: 'Mehendi artists', emoji: '🤲', unit: 'fixed', base: 8000, scales: true,
         desc: 'Bridal and guest mehendi' },
     ],
   },

@@ -9,6 +9,7 @@ import { friendlyError } from '../../context/ToastContext'
 import AppBar from '../../components/layout/AppBar'
 import BookingSheet from '../../components/customer/BookingSheet'
 import PriceLock from '../../components/plan/PriceLock'
+import EmptyBasket from '../../components/customer/EmptyBasket'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 
 export default function Cart() {
@@ -278,20 +279,7 @@ export default function Cart() {
         <h1 className="sr-only">My cart</h1>
 
         {!hasAnything ? (
-          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <div className="text-6xl">🛒</div>
-            <h2 className="font-bold text-gray-800">Your cart is empty</h2>
-            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
-              Browse a function or festival and add the services you need — a
-              cook, a priest, decorations. Nothing is booked until you approve a quote.
-            </p>
-            <Link
-              to="/services"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
-            >
-              Browse occasions
-            </Link>
-          </div>
+          <EmptyBasket />
         ) : (
           <div className="space-y-6">
             {Object.entries(byEvent).map(([eventId, data]) => (
