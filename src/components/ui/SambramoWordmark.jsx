@@ -122,31 +122,53 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
     )
   }
 
-  /* ── Two ramps, and the small one is not a shortcut ──────────────────────
-     The highlight stop is what makes the letter look gilded, and it is also
-     near-white — which on a white ground turns a third of the stroke
-     invisible and leaves a broken S.
-
-     The threshold was 30 and that was too generous: the app bar draws at 32
-     and the mark there was washing out on white, which is the single most
-     visible instance of it in the whole product. Only the splash and the
-     admin previews are big enough for the stroke to carry a highlight and
-     still read, so the gilded ramp starts at 44 and everything below it —
-     app bar, card hallmark, tab bar — gets one solid, darker metal. */
+  /* Below ~44px the near-white highlight stop turns a third of the stroke
+     invisible on white, so small marks get one solid, darker metal on a
+     heavier stroke. */
   const small = size < 44
 
   return (
     <svg
+      /* ── The viewBox IS the letter ────────────────────────────────────────
+         Measured, and measured twice, because the first measurement was
+         wrong in a way that looked right.
+
+         `getBBox` on an SVG <text> reports the layout box — for this face,
+         124.8 tall at font-size 100, most of which is ascender room Pinyon
+         reserves for swashes. Sizing to that left the S filling half its box
+         and floating in padding, which is what produced a gap between the
+         mark and the wordmark that no margin could close.
+
+         Canvas `measureText` reports the real ink — but only if the font has
+         actually loaded. The first run measured before it had, silently got
+         the cursive fallback, and reported ink of 46 × 69: a letter half
+         again TALLER than wide. Pinyon's S is the opposite, and sizing to
+         those numbers scaled it to nearly double its box, so the flag ran off
+         the right edge and was clipped.
+
+         With document.fonts.check() true and the advance cross-checked
+         against the SVG's own box, the ink at font-size 100 is:
+
+           left 1 · right 90 · ascent 70 · descent 0
+           → 91 wide × 70 tall, and the letter does not descend at all
+
+         So the viewBox is that ink, plus 3 units of air for the stroke to
+         live in, with the text origin at (0, 0). No arithmetic to place the
+         glyph — the box is drawn around where the glyph already is. */
+      viewBox="-4 -73 97 76"
       width={size}
-      height={size}
-      viewBox="0 0 64 64"
+      /* The mark is wider than it is tall. Forcing it into a square would
+         mean either padding it vertically — the gap again — or squashing it.
+         So the height follows the letter, and the square containers it sits
+         in (the card seal, the tab chip) centre it themselves. */
+      height={Math.round(size * (76 / 97))}
       fill="none"
       className={className}
       role="img"
       aria-label="Sambramo"
     >
       <defs>
-        <linearGradient id={gid} x1="16" y1="10" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gid} x1="0" y1="-70" x2="70" y2="0" gradientUnits="userSpaceOnUse">
           {small ? (
             <>
               <stop offset="0%"   stopColor="#D4A03F" />
@@ -166,55 +188,23 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
         </linearGradient>
       </defs>
 
-      {/* ── Sized to the INK, measured on a canvas ──────────────────────────
-          This was sized against getBBox on the <text>, which reported 89.1 ×
-          124.8 at font-size 100 — and that is the layout box, not the letter.
-          Pinyon Script spends an enormous amount of its em on ascender and
-          descender space for swashes it does not always use, so fitting the
-          layout box to the viewBox left the actual S filling about half of
-          it, floating in padding. On the splash that padding read as a gap
-          between the mark and the wordmark that no margin could close,
-          because it was inside the SVG.
-
-          Canvas `measureText` reports the real thing. At font-size 100:
-
-            actualBoundingBoxLeft   -5     ink starts 5 right of the origin
-            actualBoundingBoxRight  51
-            actualBoundingBoxAscent 68
-            actualBoundingBoxDescent 1     the S barely drops below baseline
-            → ink 46 wide × 69 tall, centred at (28, -33.5) from the origin
-
-          Fit by height, leaving ~4 top and bottom in the 64 box:
-            font-size  100 × (56 / 69) ≈ 81
-            ink then   37.3 × 55.9, centred at (22.7, −27.1)
-            x          32 − 22.7  = 9.3
-            y          32 + 27.1  = 59.1   (alphabetic baseline, not central)
-
-          The letter is taller than it is wide, so the horizontal margin is
-          larger than the vertical. That is the glyph's own proportion and
-          fitting to width instead would push the S out of the box top and
-          bottom — which is the mistake the second attempt made. */}
       <text
-        x="9.3"
-        y="59.1"
+        x="0"
+        y="0"
         fill={`url(#${gid})`}
-        /* ── The weight is added, because the face has none ──────────────
-           The reference S is heavy: broad strokes with a visible taper.
-           Pinyon Script is the right LETTERFORM — the flag, the spine, the
-           open lower curl — and the wrong weight; it is a hairline face, and
-           a hairline gold letter on a white page is a rumour.
-
-           Stroking the glyph in its own gradient thickens every stroke by
-           twice the width while leaving the skeleton untouched, which is
-           what a heavier cut of the same script would do. `paint-order` puts
-           the stroke behind the fill so the highlight in the middle of the
-           gradient still reads as a highlight rather than being outlined. */
+        /* Pinyon Script is the right LETTERFORM — the flag, the spine, the
+           open lower curl — and the wrong weight: it is a hairline face, and
+           a hairline gold letter on a white page is a rumour. Stroking the
+           glyph in its own gradient thickens every stroke while leaving the
+           skeleton untouched, which is what a heavier cut would do.
+           `paint-order` puts the stroke behind the fill so the highlight in
+           the middle of the gradient still reads as a highlight. */
         stroke={`url(#${gid})`}
-        strokeWidth={small ? 2.6 : 1.6}
+        strokeWidth={small ? 3.6 : 2.2}
         strokeLinejoin="round"
         style={{
           fontFamily: '"Pinyon Script", "Snell Roundhand", "Apple Chancery", cursive',
-          fontSize: '81px',
+          fontSize: '100px',
           fontWeight: 400,
           paintOrder: 'stroke fill',
         }}
