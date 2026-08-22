@@ -387,7 +387,7 @@ export default function BottomNav() {
                 aria-current={active && !locked ? 'page' : undefined}
                 aria-label={
                   primary ? 'Plan my celebration'
-                    : locked ? 'Track — unlocks once you place an event order with us'
+                    : locked ? 'Track — unlocks once you book a celebration with us'
                     : undefined
                 }
                 className={tabClass}

@@ -1,15 +1,12 @@
 import { useMemo, useState, lazy, Suspense } from 'react'
 import { ArrowRight, RefreshCw, Loader2 } from 'lucide-react'
-import { SHOP_CATEGORIES } from '../../config/shop'
 import { formatINR } from '../../utils/format'
 import {
   INK, STATUS, CATEGORICAL,
-  shopCategoryColor, compactINR, compactCount,
+  compactINR, compactCount,
 } from '../../config/dataviz'
 import {
-  orderLines, paidOnly, dailySeries, monthlySeries, weekdayHeatmap,
-  productDemand, productBuckets, categoryDemand, areaDemand,
-  orderLifecycle, eventFunnel, serviceDemand, customerStats, headline,
+  areaDemand, eventFunnel, serviceDemand, customerStats, headline,
 } from '../../lib/analytics'
 import {
   HeroFigure, StatTile, ChartCard, BarRows, ShareBar, Funnel, Heatmap,
@@ -55,85 +52,58 @@ export default function CommandCenter({ data, onNavigate }) {
   const [windowDays, setWindowDays] = useState(30)
 
   const {
-    orders = [], products = [], events = [], proposals = [], profiles = [],
-    vendors = [], enquiries = [], returns = [], complaints = [], interest = [],
+    events = [], proposals = [], payments = [], profiles = [],
+    vendors = [], enquiries = [], complaints = [], interest = [],
     refreshing, loadedAt, refresh,
   } = data
 
   const model = useMemo(() => {
-    const lines = orderLines(orders)
     const proposalValue = proposals.reduce((s, p) => s + (Number(p.total_amount) || 0), 0)
 
-    const kpis = headline({ orders, events, proposalValue, windowDays })
-    const series = dailySeries(lines, windowDays)
-    const monthly = monthlySeries(lines, 6)
-    const categories = categoryDemand(SHOP_CATEGORIES, lines)
-    const productRows = productDemand(products, lines, { windowDays })
-    const buckets = productBuckets(productRows)
-    const lifecycle = orderLifecycle(orders)
-    const concierge = eventFunnel(events)
-    const services = serviceDemand(enquiries)
-    const customers = customerStats(profiles, orders, events)
-    const geography = areaDemand({ orders, events, enquiries, interest })
-    const heat = weekdayHeatmap(lines, 12)
+    const kpis       = headline({ events, enquiries, payments, proposalValue, windowDays })
+    const concierge  = eventFunnel(events)
+    const services   = serviceDemand(enquiries)
+    const customers  = customerStats(profiles, events, payments)
+    const geography  = areaDemand({ events, enquiries, interest })
 
-    // Monthly revenue split by category, for the stacked bars. Built from the
-    // same category rows so the colours are pinned to the same ids.
-    const monthlyByCategory = monthly.map(m => ({ label: m.label }))
-    const paid = paidOnly(lines)
-    for (const cat of categories) {
-      monthly.forEach((m, i) => { monthlyByCategory[i][cat.id] = 0 })
-    }
-    for (const l of paid) {
-      const t = new Date(l.created_at)
-      const label = t.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
-      const row = monthlyByCategory.find(r => r.label === label)
-      if (row) row[l.category || 'Uncategorized'] = (row[l.category || 'Uncategorized'] ?? 0) + (Number(l.subtotal) || 0)
-    }
+    return { kpis, concierge, services, customers, geography, proposalValue }
+  }, [events, proposals, payments, profiles, enquiries, interest, windowDays])
 
-    return {
-      lines, kpis, series, monthly, monthlyByCategory, categories,
-      productRows, buckets, lifecycle, concierge, services, customers, geography, heat,
-      proposalValue,
-    }
-  }, [orders, products, events, proposals, profiles, enquiries, interest, windowDays])
+  const { kpis, concierge, services, customers, geography } = model
 
-  const { kpis, series, categories, productRows, buckets, lifecycle, concierge, services, customers, geography, heat, monthlyByCategory } = model
+  /* The bars draw the top slice; the table under the card carries the rest. */
+  const topServices = [...(services.services ?? [])]
+    .sort((a, b) => b.enquiries - a.enquiries)
+    .slice(0, 8)
 
   /* ── The attention queue ────────────────────────────────────────────── */
   const alerts = useMemo(() => {
     const list = []
-    const stuck = lifecycle.stages.reduce((s, st) => s + st.stuck, 0)
 
-    if (lifecycle.awaitingPayment > 0) list.push({
-      id: 'payments', tone: 'critical', nav: 'orders',
-      title: `${lifecycle.awaitingPayment} payment${lifecycle.awaitingPayment !== 1 ? 's' : ''} to confirm`,
-      detail: `${formatINR(lifecycle.awaitingPaymentValue)} the customer says they sent. Nothing tells us it arrived — check the UPI app and tick them off.`,
+    /* Money somebody says they sent. GATEWAY_VERIFIED and ADMIN_VERIFIED both
+       have a witness; CUSTOMER_CLAIMED_PAID has only the customer's word, and
+       that gap is the payment-confirmation backlog. */
+    const claimed = payments.filter(p => p.status === 'CUSTOMER_CLAIMED_PAID')
+    if (claimed.length > 0) list.push({
+      id: 'payments', tone: 'critical', nav: 'requests',
+      title: `${claimed.length} payment${claimed.length !== 1 ? 's' : ''} to confirm`,
+      detail: `${formatINR(claimed.reduce((t, p) => t + (Number(p.amount) || 0), 0))} the customer says they sent. Nothing tells us it arrived — check the bank and tick them off.`,
     })
-    if (stuck > 0) list.push({
-      id: 'stuck', tone: 'serious', nav: 'lifecycle',
-      title: `${stuck} order${stuck !== 1 ? 's' : ''} not moving`,
-      detail: 'Sitting at the same stage past its normal turnaround.',
-    })
+
     const newRequests = events.filter(e => e.status === 'REQUEST_RECEIVED').length
     if (newRequests > 0) list.push({
       id: 'requests', tone: 'warning', nav: 'new_requests',
       title: `${newRequests} celebration request${newRequests !== 1 ? 's' : ''} unanswered`,
       detail: 'A concierge enquiry with nobody assigned to it yet.',
     })
-    const openReturns = returns.filter(r => r.status === 'requested').length
-    if (openReturns > 0) list.push({
-      id: 'returns', tone: 'serious', nav: 'support',
-      title: `${openReturns} return${openReturns !== 1 ? 's' : ''} awaiting a decision`, detail: 'Approve and refund, or reject with a reason.',
-    })
     const openComplaints = complaints.filter(c => c.status === 'open').length
     if (openComplaints > 0) list.push({
-      id: 'complaints', tone: 'critical', nav: 'support',
+      id: 'complaints', tone: 'critical', nav: 'complaints',
       title: `${openComplaints} complaint${openComplaints !== 1 ? 's' : ''} open`, detail: 'Unanswered, and the customer is waiting.',
     })
     const openQuotes = enquiries.filter(e => e.status === 'open').length
     if (openQuotes > 0) list.push({
-      id: 'quotes', tone: 'warning', nav: 'support',
+      id: 'quotes', tone: 'warning', nav: 'enquiries',
       title: `${openQuotes} service enquir${openQuotes !== 1 ? 'ies' : 'y'} without a quote`,
       detail: 'Somebody asked what it costs and has not been told.',
     })
@@ -142,32 +112,8 @@ export default function CommandCenter({ data, onNavigate }) {
       id: 'vendors', tone: 'warning', nav: 'vendors',
       title: `${pendingVendors} partner${pendingVendors !== 1 ? 's' : ''} awaiting review`, detail: 'Nobody can be sourced from an unapproved vendor.',
     })
-    const noPhoto = productRows.filter(p => !p.orphan && !p.image_url).length
-    if (noPhoto > 0) list.push({
-      id: 'photos', tone: 'warning', nav: 'catalog',
-      title: `${noPhoto} product${noPhoto !== 1 ? 's' : ''} with no photograph`,
-      detail: 'An emoji tile on a shop shelf is a product nobody buys.',
-    })
     return list
-  }, [lifecycle, events, returns, complaints, enquiries, vendors, productRows])
-
-  /* ── Derived display rows ───────────────────────────────────────────── */
-
-  // Sorted by the figure the bars actually draw. `productDemand` returns rows
-  // ranked by paid revenue, and this card ranks by value ORDERED — leaving it
-  // on the default sort put a longer bar below a shorter one, which reads as a
-  // broken chart even though both numbers were right.
-  const topProducts = productRows
-    .filter(p => p.demandUnits > 0)
-    .sort((a, b) => b.demandValue - a.demandValue)
-    .slice(0, 8)
-  const topServices = services.services.slice(0, 8)
-  const photographed = productRows.filter(p => !p.orphan && p.image_source === 'actual').length
-  const catalogueSize = productRows.filter(p => !p.orphan).length
-  const soldEver = productRows.filter(p => !p.orphan && p.everSold).length
-
-  const categoriesRanked = [...categories].sort((a, b) => b.demandValue - a.demandValue)
-  const anySales = categories.some(c => c.demandUnits > 0)
+  }, [payments, events, complaints, enquiries, vendors])
 
   return (
     <div className="space-y-6">
@@ -179,11 +125,10 @@ export default function CommandCenter({ data, onNavigate }) {
             value={compactINR(kpis.revenue)}
             delta={kpis.revenueDelta}
             deltaPeriod={`vs prior ${windowDays}`}
-            spark={series.map(d => d.revenue)}
             accent={CATEGORICAL[5]}
             sub={
               kpis.unconfirmed > 0
-                ? `${formatINR(kpis.unconfirmed)} more was ordered and is waiting on payment confirmation.`
+                ? `${formatINR(kpis.unconfirmed)} more is claimed paid and waiting on confirmation.`
                 : `${formatINR(kpis.revenueAllTime)} taken since launch.`
             }
           />
@@ -218,24 +163,24 @@ export default function CommandCenter({ data, onNavigate }) {
       {/* ── KPI row ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <StatTile
-          label="Orders" value={compactCount(kpis.orders)} delta={kpis.ordersDelta}
-          deltaPeriod="vs prior" spark={series.map(d => d.orders)} accent={CATEGORICAL[0]}
-          sub={`${kpis.units} items`} onClick={() => onNavigate('lifecycle')}
-        />
-        <StatTile
-          label="Avg order" value={kpis.aov ? formatINR(kpis.aov) : '—'}
-          sub="paid orders only" accent={CATEGORICAL[0]}
-        />
-        <StatTile
-          label="Awaiting payment" value={formatINR(lifecycle.awaitingPaymentValue)}
-          sub={`${lifecycle.awaitingPayment} order${lifecycle.awaitingPayment !== 1 ? 's' : ''}`}
-          tone={lifecycle.awaitingPayment > 0 ? STATUS.critical : undefined}
-          onClick={() => onNavigate('orders')}
-        />
-        <StatTile
-          label="Celebration requests" value={compactCount(kpis.enquiries)}
-          delta={kpis.enquiriesDelta} deltaPeriod="vs prior"
+          label="Celebrations booked" value={compactCount(kpis.requests)}
+          delta={kpis.requestsDelta} deltaPeriod="vs prior" accent={CATEGORICAL[0]}
           sub={`${concierge.total} live`} onClick={() => onNavigate('new_requests')}
+        />
+        <StatTile
+          label="Avg celebration" value={kpis.aov ? formatINR(kpis.aov) : '—'}
+          sub="verified payments only" accent={CATEGORICAL[0]}
+        />
+        <StatTile
+          label="Awaiting confirmation" value={formatINR(kpis.unconfirmed)}
+          sub="customer says paid"
+          tone={kpis.unconfirmed > 0 ? STATUS.critical : undefined}
+          onClick={() => onNavigate('requests')}
+        />
+        <StatTile
+          label="Service enquiries" value={compactCount(kpis.enquiries)}
+          delta={kpis.enquiriesDelta} deltaPeriod="vs prior"
+          sub="asked, not yet quoted" onClick={() => onNavigate('enquiries')}
         />
         <StatTile
           label="Proposal pipeline" value={compactINR(kpis.proposalValue)}
@@ -287,124 +232,18 @@ export default function CommandCenter({ data, onNavigate }) {
       </div>
 
       {/* ── Trend ────────────────────────────────────────────────────── */}
-      <ChartCard
-        title="Ordered vs paid"
-        sub="The filled area is what customers ordered; the line is what has been confirmed as received. The gap between them is your payment-confirmation backlog, not lost interest."
-        table={{
-          columns: [
-            { key: 'label', label: 'Day' },
-            { key: 'demand', label: 'Ordered', render: r => formatINR(r.demand) },
-            { key: 'revenue', label: 'Paid', render: r => formatINR(r.revenue) },
-            { key: 'orders', label: 'Orders' },
-          ],
-          rows: series.filter(d => d.demand > 0 || d.orders > 0),
-        }}
-      >
-        <Suspense fallback={<ChartSkeleton height={240} />}>
-          <ChartKit.DemandRevenueTrend data={series} />
-        </Suspense>
-        <ThinDataNote n={series.reduce((s, d) => s + d.orders, 0)} noun="orders" />
-      </ChartCard>
+      
 
       {/* ── Category demand ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <ChartCard
-          title="Where the money comes from"
-          sub="Share of everything customers have ordered, by shelf."
-          table={{
-            columns: [
-              { key: 'label', label: 'Category' },
-              { key: 'demandUnits', label: 'Units ordered' },
-              { key: 'demandValue', label: 'Ordered', render: r => formatINR(r.demandValue) },
-              { key: 'revenue', label: 'Paid', render: r => formatINR(r.revenue) },
-              { key: 'products', label: 'Distinct items' },
-            ],
-            rows: categoriesRanked.map(c => ({ ...c, key: c.id })),
-          }}
-        >
-          {anySales ? (
-            <>
-              <ShareBar
-                segments={categoriesRanked.map(c => ({
-                  id: c.id, label: c.label, value: c.demandValue, color: shopCategoryColor(c.id),
-                }))}
-                format={formatINR}
-              />
-              <div className="mt-5">
-                <BarRows
-                  rows={categoriesRanked.map(c => ({
-                    id: c.id, emoji: c.emoji, label: c.label, value: c.demandValue,
-                    color: shopCategoryColor(c.id),
-                    note: `${c.demandUnits} units · ${c.products} distinct item${c.products === 1 ? '' : 's'} · ${productRows.filter(p => p.category === c.id && !p.orphan).length} listed`,
-                  }))}
-                  format={formatINR}
-                />
-              </div>
-            </>
-          ) : (
-            <EmptyNote icon="🛍️">
-              No shop orders yet. The moment the first one lands, this splits by shelf.
-            </EmptyNote>
-          )}
-        </ChartCard>
+        
 
-        <ChartCard
-          title="Shelf mix, month by month"
-          sub="Whether the shop is broadening or leaning harder on one shelf."
-          table={{
-            columns: [
-              { key: 'label', label: 'Month' },
-              ...categoriesRanked.map(c => ({ key: c.id, label: c.label, render: r => formatINR(r[c.id] ?? 0) })),
-            ],
-            rows: monthlyByCategory,
-          }}
-        >
-          {anySales ? (
-            <Suspense fallback={<ChartSkeleton height={240} />}>
-              <ChartKit.StackedCategoryBars
-                data={monthlyByCategory}
-                series={categoriesRanked
-                  .filter(c => c.revenue > 0)
-                  .map(c => ({ key: c.id, label: c.label, color: shopCategoryColor(c.id) }))}
-              />
-            </Suspense>
-          ) : (
-            <EmptyNote icon="📊">Six months of history will appear here as it accumulates.</EmptyNote>
-          )}
-        </ChartCard>
+        
       </div>
 
       {/* ── The two funnels ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <ChartCard
-          title="Shop order lifecycle"
-          sub="Bar length is how many orders have reached that stage; the figure on the right is how many are sitting there now."
-          table={{
-            columns: [
-              { key: 'status', label: 'Stage' },
-              { key: 'reached', label: 'Reached' },
-              { key: 'at', label: 'Here now' },
-              { key: 'value', label: 'Value here', render: r => formatINR(r.value) },
-              { key: 'stuck', label: 'Overdue' },
-            ],
-            rows: lifecycle.stages.map(s => ({ ...s, key: s.status })),
-          }}
-          actions={
-            <button onClick={() => onNavigate('lifecycle')} className="text-[11px] font-semibold text-plum-700 hover:text-plum-800">
-              Full view →
-            </button>
-          }
-        >
-          {lifecycle.total === 0 ? (
-            <EmptyNote icon="📦">No orders yet.</EmptyNote>
-          ) : (
-            <Funnel
-              stages={lifecycle.stages}
-              labelKey="status"
-              footnote={`${lifecycle.completionRate}% of every order ever placed has been delivered. ${lifecycle.cancelled} cancelled.`}
-            />
-          )}
-        </ChartCard>
+        
 
         <ChartCard
           title="Celebration pipeline"
@@ -431,34 +270,7 @@ export default function CommandCenter({ data, onNavigate }) {
 
       {/* ── Products & services demand ───────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <ChartCard
-          title="Most wanted products"
-          sub="By value ordered, cancellations excluded."
-          actions={
-            <button onClick={() => onNavigate('products')} className="text-[11px] font-semibold text-plum-700 hover:text-plum-800">
-              All products →
-            </button>
-          }
-          table={{
-            columns: [
-              { key: 'name', label: 'Product' },
-              { key: 'demandUnits', label: 'Ordered' },
-              { key: 'units', label: 'Paid' },
-              { key: 'revenue', label: 'Revenue', render: r => formatINR(r.revenue) },
-            ],
-            rows: topProducts.map(p => ({ ...p, key: p.id })),
-          }}
-        >
-          <BarRows
-            rows={topProducts.map(p => ({
-              id: p.id, emoji: p.emoji, label: p.name, value: p.demandValue,
-              color: shopCategoryColor(p.category),
-              note: `${p.demandUnits} ordered · ${p.units} paid${p.paidRate != null && p.paidRate < 100 ? ` (${p.paidRate}% confirmed)` : ''}`,
-            }))}
-            format={formatINR}
-            emptyNote="Nothing has been ordered yet."
-          />
-        </ChartCard>
+        
 
         <ChartCard
           title="Most wanted event services"
@@ -492,19 +304,7 @@ export default function CommandCenter({ data, onNavigate }) {
 
       {/* ── Rhythm & geography ───────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <ChartCard
-          title="When people buy"
-          sub="Units ordered per day over the last twelve weeks. Weekends run across the middle of the grid."
-          table={{
-            columns: [
-              { key: 'iso', label: 'Date' },
-              { key: 'value', label: 'Units' },
-            ],
-            rows: heat.columns.flatMap(c => c.days).filter(d => d.value > 0).map(d => ({ ...d, key: d.iso })),
-          }}
-        >
-          <Heatmap columns={heat.columns} max={heat.max} />
-        </ChartCard>
+        
 
         <ChartCard
           title="Where the demand is"
@@ -550,73 +350,31 @@ export default function CommandCenter({ data, onNavigate }) {
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           <HealthMeter
-            label="Catalogue actually selling"
-            value={soldEver} max={catalogueSize}
-            caption={`${soldEver} of ${catalogueSize}`}
-            note="Items with at least one order ever. A shelf nobody has bought from is a shelf, not a business."
-            onClick={() => onNavigate('products')}
-          />
-          <HealthMeter
-            label="Real photographs"
-            value={photographed} max={catalogueSize}
-            caption={`${photographed} of ${catalogueSize}`}
-            note="Products showing what will actually arrive, rather than a licensed lookalike."
-            onClick={() => onNavigate('catalog')}
-          />
-          <HealthMeter
             label="Payments confirmed"
-            value={lifecycle.total - lifecycle.awaitingPayment} max={Math.max(1, lifecycle.total)}
-            caption={`${lifecycle.total - lifecycle.awaitingPayment} of ${lifecycle.total}`}
+            value={payments.filter(p => ['GATEWAY_VERIFIED', 'ADMIN_VERIFIED'].includes(p.status)).length}
+            max={Math.max(1, payments.length)}
+            caption={`${payments.filter(p => ['GATEWAY_VERIFIED', 'ADMIN_VERIFIED'].includes(p.status)).length} of ${payments.length}`}
             note="Direct UPI has no gateway callback, so this only moves when somebody checks the bank."
-            onClick={() => onNavigate('orders')}
+            onClick={() => onNavigate('requests')}
+          />
+          <HealthMeter
+            label="Requests that get a proposal"
+            value={concierge.stages?.find(st => st.id === 'proposal')?.count ?? 0}
+            max={Math.max(1, concierge.total)}
+            caption={`${concierge.stages?.find(st => st.id === 'proposal')?.count ?? 0} of ${concierge.total}`}
+            note="A celebration request that never gets priced is a customer who asked and heard nothing."
+            onClick={() => onNavigate('requests')}
           />
           <HealthMeter
             label="Customers who come back"
             value={customers.repeatBuyers} max={Math.max(1, customers.buyers)}
             caption={`${customers.repeatRate}%`}
-            note={`${customers.repeatBuyers} of ${customers.buyers} buyers have ordered more than once.`}
+            note={`${customers.repeatBuyers} of ${customers.buyers} customers have celebrated with us more than once.`}
             onClick={() => onNavigate('customers')}
           />
         </div>
       </div>
 
-      {/* ── Catalogue attention split ────────────────────────────────── */}
-      <ChartCard
-        title="The catalogue, sorted by what to do about it"
-        sub="Every product falls into exactly one of these. Pre-launch, almost all of them are in the last bucket — that is expected, and it is the list to work through."
-        table={{
-          columns: [
-            { key: 'label', label: 'Bucket' },
-            { key: 'count', label: 'Products' },
-            { key: 'examples', label: 'For example' },
-          ],
-          rows: BUCKET_META.map(b => ({
-            key: b.id, label: b.label, count: buckets[b.id].length,
-            examples: buckets[b.id].slice(0, 3).map(p => p.name).join(', ') || '—',
-          })),
-        }}
-        actions={
-          <button onClick={() => onNavigate('products')} className="text-[11px] font-semibold text-plum-700 hover:text-plum-800">
-            Product intelligence →
-          </button>
-        }
-      >
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {BUCKET_META.map(b => (
-            <button
-              key={b.id}
-              onClick={() => onNavigate('products')}
-              className="text-left p-3.5 rounded-xl border border-gray-100 hover:border-plum-200 hover:shadow-sm transition-all"
-              style={{ background: INK.plane }}
-            >
-              <div className="text-xl mb-1" aria-hidden="true">{b.emoji}</div>
-              <div className="text-xl font-bold" style={{ color: INK.primary }}>{buckets[b.id].length}</div>
-              <div className="text-[11px] font-semibold text-gray-700 mt-0.5">{b.label}</div>
-              <div className="text-[10px] mt-1 leading-snug" style={{ color: INK.muted }}>{b.hint}</div>
-            </button>
-          ))}
-        </div>
-      </ChartCard>
     </div>
   )
 }

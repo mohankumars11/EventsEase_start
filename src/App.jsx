@@ -243,23 +243,6 @@ function AppRoutes() {
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<ScreenShell><FestivalDetailPage /></ScreenShell>} />
 
-      {/* ── The shop is gone ────────────────────────────────────────
-          Sambramo sold two unrelated things — a coordinator-led celebration
-          and same-day cakes, flowers and gifts — and the second one was a
-          different business with different economics, no supplier, and
-          twenty better-capitalised competitors in Bengaluru alone.
-
-          These URLs are in the wild: festival banners, the chat widget, the
-          old tab bar, bookmarks. They redirect rather than falling through
-          to the catch-all, so an old link lands somewhere deliberate.
-
-          /shop/cart goes to the celebration cart rather than home. It is the
-          one shop URL where somebody had committed something, and it was the
-          default `cartPath` in every build shipped before this one. */}
-      <Route path="/shop/cart" element={<Navigate to="/dashboard/customer/cart" replace />} />
-      <Route path="/shop/*"    element={<Navigate to="/" replace />} />
-      <Route path="/shop"      element={<Navigate to="/" replace />} />
-
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it
           offers the two ways to actually engage: hand the occasion over to

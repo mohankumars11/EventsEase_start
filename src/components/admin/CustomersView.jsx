@@ -3,7 +3,7 @@ import { X, Phone, MessageCircle, Mail, Search } from 'lucide-react'
 import { EVENT_STATUSES, STATUS_CSS } from '../../config/sambramo'
 import { formatINR, formatDate } from '../../utils/format'
 import { INK, STATUS, CATEGORICAL } from '../../config/dataviz'
-import { customerStats, acquisitionByMonth, orderLines } from '../../lib/analytics'
+import { customerStats, acquisitionByMonth } from '../../lib/analytics'
 import { StatTile, ChartCard, BarRows, Meter, EmptyNote, DataTable, SectionHead } from './viz/Primitives'
 import { ChartSkeleton } from './CommandCenter'
 
@@ -20,32 +20,30 @@ const GroupedBars = lazy(() => import('./charts/ChartKit').then(m => ({ default:
  *     shop selling cakes and gifts this is the number that decides whether
  *     acquisition spend is ever recoverable, and it was not computed anywhere.
  *
- *   NEW VS RETURNING, month by month. Whether this month's orders came from
+ *   NEW VS RETURNING, month by month. Whether this month's celebrations came from
  *     new people or the same people. Two businesses with identical revenue
  *     curves and opposite answers here are not the same business.
  *
- * Repeat is counted on orders PLACED rather than orders paid: a second order
+ * Repeat is counted on celebrations BOOKED rather than paid: a second booking
  * sitting unconfirmed on direct UPI is still a customer who came back, whatever
  * the bank has done about it yet.
  */
 
 const SORTS = [
   { id: 'spend',  label: 'Total spend' },
-  { id: 'orders', label: 'Orders' },
   { id: 'events', label: 'Celebrations' },
   { id: 'recent', label: 'Most recent' },
   { id: 'name',   label: 'Name' },
 ]
 
 export default function CustomersView({ data }) {
-  const { profiles = [], orders = [], events = [], reviews = [] } = data
+  const { profiles = [], events = [], payments = [], reviews = [] } = data
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('spend')
   const [selected, setSelected] = useState(null)
 
-  const stats = useMemo(() => customerStats(profiles, orders, events), [profiles, orders, events])
-  const acquisition = useMemo(() => acquisitionByMonth(orders, 6), [orders])
-  const lines = useMemo(() => orderLines(orders), [orders])
+  const stats = useMemo(() => customerStats(profiles, events, payments), [profiles, events, payments])
+  const acquisition = useMemo(() => acquisitionByMonth(events, 6), [events])
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -56,7 +54,6 @@ export default function CustomersView({ data }) {
           c.email?.toLowerCase().includes(q))
       : stats.rows
     return [...list].sort((a, b) => {
-      if (sortBy === 'orders') return b.orderCount - a.orderCount
       if (sortBy === 'events') return b.eventCount - a.eventCount
       if (sortBy === 'name')   return (a.full_name ?? '').localeCompare(b.full_name ?? '')
       if (sortBy === 'recent') return new Date(b.created_at) - new Date(a.created_at)
@@ -86,7 +83,7 @@ export default function CustomersView({ data }) {
                   sub={stats.totalCustomers ? `${Math.round((stats.buyers / stats.totalCustomers) * 100)}% of signups` : null} />
         <StatTile label="Ordered twice or more" value={stats.repeatBuyers}
                   tone={stats.repeatRate >= 20 ? STATUS.good : undefined} sub={`${stats.repeatRate}% repeat rate`} />
-        <StatTile label="Average order" value={stats.aov ? formatINR(stats.aov) : '—'} sub="paid orders" />
+        <StatTile label="Average customer" value={stats.avgPerCustomer ? formatINR(stats.avgPerCustomer) : '—'} sub="verified payments" />
         <StatTile label="Revenue per buyer" value={stats.revenuePerBuyer ? formatINR(stats.revenuePerBuyer) : '—'}
                   sub="not a lifetime value" />
         <StatTile label="Reviews written" value={reviews.length} />
@@ -99,14 +96,14 @@ export default function CustomersView({ data }) {
           table={{
             columns: [
               { key: 'label', label: 'Month' },
-              { key: 'new', label: 'First orders' },
-              { key: 'returning', label: 'Repeat orders' },
+              { key: 'new', label: 'First celebrations' },
+              { key: 'returning', label: 'Repeat celebrations' },
             ],
             rows: acquisition.map(a => ({ ...a, key: a.label })),
           }}
         >
           {acquisition.every(a => !a.new && !a.returning) ? (
-            <EmptyNote icon="📈">No orders in the last six months.</EmptyNote>
+            <EmptyNote icon="📈">No celebrations in the last six months.</EmptyNote>
           ) : (
             <Suspense fallback={<ChartSkeleton height={200} />}>
               <GroupedBars
@@ -192,15 +189,12 @@ export default function CustomersView({ data }) {
                     <td className="px-4 py-3 text-right text-gray-600">{c.city || '—'}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{formatDate(c.created_at)}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-gray-700">
-                      {c.orderCount}
-                      {c.paidCount !== c.orderCount && (
-                        <span className="text-[10px]" style={{ color: INK.muted }}> ({c.paidCount} paid)</span>
-                      )}
+                      {c.eventCount}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-bold text-gray-900">{formatINR(c.totalSpend)}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-gray-700">{c.eventCount}</td>
                     <td className="px-4 py-3 text-right text-gray-500">
-                      {c.lastOrder ? `${c.daysSince}d ago` : '—'}
+                      {c.lastEvent ? `${c.daysSince}d ago` : '—'}
                     </td>
                   </tr>
                 ))}
@@ -213,10 +207,8 @@ export default function CustomersView({ data }) {
       {selectedCustomer && (
         <CustomerDetailPanel
           customer={selectedCustomer}
-          orders={orders.filter(o => o.customer_id === selectedCustomer.id)}
           events={events.filter(e => e.customer_id === selectedCustomer.id)}
           reviews={reviews.filter(r => r.customer_id === selectedCustomer.id)}
-          lines={lines.filter(l => l.customer_id === selectedCustomer.id)}
           onClose={() => setSelected(null)}
         />
       )}
@@ -224,20 +216,7 @@ export default function CustomersView({ data }) {
   )
 }
 
-function CustomerDetailPanel({ customer, orders, events, reviews, lines, onClose }) {
-  /* What this person actually buys — their own top products. */
-  const favourites = useMemo(() => {
-    const map = new Map()
-    for (const l of lines) {
-      const key = l.product_name ?? 'Unknown'
-      if (!map.has(key)) map.set(key, { id: key, label: key, value: 0, units: 0 })
-      const row = map.get(key)
-      row.value += Number(l.subtotal) || 0
-      row.units += Number(l.qty) || 0
-    }
-    return [...map.values()].sort((a, b) => b.value - a.value).slice(0, 6)
-  }, [lines])
-
+function CustomerDetailPanel({ customer, events, reviews, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
          onClick={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -275,34 +254,11 @@ function CustomerDetailPanel({ customer, orders, events, reviews, lines, onClose
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Mini label="Total spend" value={formatINR(customer.totalSpend)} />
-            <Mini label="Orders" value={customer.orderCount} sub={`${customer.paidCount} paid`} />
             <Mini label="Celebrations" value={customer.eventCount} />
-            <Mini label="Last order" value={customer.lastOrder ? `${customer.daysSince}d ago` : '—'} />
+            <Mini label="Celebrations" value={customer.eventCount} />
+            <Mini label="Last celebration" value={customer.lastEvent ? `${customer.daysSince}d ago` : '—'} />
           </div>
 
-          {favourites.length > 0 && (
-            <div>
-              <SectionHead title="What they buy" />
-              <BarRows rows={favourites.map(f => ({ ...f, color: CATEGORICAL[0], note: `${f.units} units` }))}
-                       format={formatINR} />
-            </div>
-          )}
-
-          {orders.length > 0 && (
-            <div>
-              <SectionHead title="Order history" />
-              <DataTable
-                columns={[
-                  { key: 'when', label: 'When', render: o => formatDate(o.created_at) },
-                  { key: 'items', label: 'Items', render: o => (o.order_items ?? []).length },
-                  { key: 'status', label: 'Status' },
-                  { key: 'payment_status', label: 'Payment' },
-                  { key: 'total', label: 'Total', render: o => formatINR(o.total) },
-                ]}
-                rows={orders.map(o => ({ ...o, key: o.id }))}
-              />
-            </div>
-          )}
 
           {events.length > 0 && (
             <div>
@@ -326,9 +282,9 @@ function CustomerDetailPanel({ customer, orders, events, reviews, lines, onClose
             </p>
           )}
 
-          {orders.length === 0 && events.length === 0 && (
+          {events.length === 0 && (
             <EmptyNote icon="🌱">
-              Signed up and has never ordered. Worth one message.
+              Signed up and has never celebrated with us. Worth one message.
             </EmptyNote>
           )}
         </div>

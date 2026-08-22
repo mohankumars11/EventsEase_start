@@ -69,7 +69,7 @@ export default function TrackHub() {
           Track
         </h1>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-mute">
-          Every celebration and every order, with what happens next.
+          Every celebration, with what happens next.
         </p>
       </header>
 
@@ -308,11 +308,11 @@ function SignedOutPitch() {
     <div className="mx-auto max-w-3xl space-y-6 px-5 pb-12 pt-5">
       <div className="a-raised a-rail overflow-hidden p-6 pt-7">
         <p className="font-serif text-[23px] font-extrabold leading-[1.15] tracking-tight text-ink">
-          Track unlocks when you place an event order with us
+          Track unlocks when you book a celebration with us
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-mute">
           There is nothing to set up and nothing to switch on. The moment you send us a
-          celebration or place an order, this is where you watch it happen — every step,
+          celebration, this is where you watch it happen — every step,
           every payment, one screen, from that day until your event is over.
         </p>
 
@@ -407,11 +407,11 @@ function LockedState() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-serif text-[21px] font-extrabold leading-[1.15] tracking-tight text-ink">
-              Track unlocks when you place an event order with us
+              Track unlocks when you book a celebration with us
             </p>
             <p className="mt-2 text-[13px] leading-relaxed text-ink-mute">
               There is nothing to set up and nothing to switch on. The moment you send us a
-              celebration or place an order, this screen fills in — and stays filled in from
+              celebration, this screen fills in — and stays filled in from
               that day until your event is over.
             </p>
           </div>

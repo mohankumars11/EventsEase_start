@@ -56,46 +56,7 @@ export function dayKey(d) {
 export function daysBetween(a, b) {
   return Math.round((startOfDay(b) - startOfDay(a)) / 86400000)
 }
-
-/* ── Order lines ───────────────────────────────────────────────────────── */
-
-/**
- * Flatten orders into line items, carrying down the order-level facts each
- * line needs to be counted by time, place and payment state.
- *
- * Cancelled orders are dropped here rather than at each call site: a cancelled
- * order is neither demand nor revenue, and forgetting that filter in one of a
- * dozen aggregations is exactly the class of bug this module exists to stop.
- */
-export function orderLines(orders = []) {
-  const lines = []
-  for (const o of orders) {
-    if (o.status === 'cancelled') continue
-    for (const item of o.order_items ?? []) {
-      lines.push({
-        ...item,
-        order_id:       o.id,
-        customer_id:    o.customer_id,
-        created_at:     o.created_at,
-        order_status:   o.status,
-        payment_status: o.payment_status,
-        paid:           o.payment_status === 'paid',
-        address:        o.address ?? null,
-      })
-    }
-  }
-  return lines
-}
-
-export const paidOnly = lines => lines.filter(l => l.paid)
-
-/** Money on a line. `subtotal` is the source of truth; the product falls back. */
-const lineValue = l => Number(l.subtotal ?? (l.unit_price ?? 0) * (l.qty ?? 0)) || 0
-const lineQty   = l => Number(l.qty ?? 0) || 0
-
 export function sumValue(lines) { return lines.reduce((s, l) => s + lineValue(l), 0) }
-export function sumQty(lines)   { return lines.reduce((s, l) => s + lineQty(l), 0) }
-
 export function between(lines, from, to) {
   return lines.filter(l => {
     const t = new Date(l.created_at)
@@ -114,296 +75,6 @@ export function pctDelta(curr, prev) {
   if (!prev) return curr > 0 ? 100 : 0
   return Math.round(((curr - prev) / prev) * 100)
 }
-
-/* ── Time series ───────────────────────────────────────────────────────── */
-
-/**
- * A dense daily series over the last `days` days, ending today.
- *
- * Dense matters: a gap-free axis is the difference between "we sold nothing on
- * Tuesday" and "Tuesday is missing", and a sparse series drawn as a line
- * silently connects Monday to Wednesday as though Tuesday never happened.
- */
-export function dailySeries(lines, days = 30, today = new Date()) {
-  const end = startOfDay(today)
-  const buckets = new Map()
-  for (let i = days - 1; i >= 0; i--) {
-    const d = addDays(end, -i)
-    buckets.set(dayKey(d), { iso: dayKey(d), date: d, revenue: 0, demand: 0, units: 0, orders: new Set() })
-  }
-  for (const l of lines) {
-    const b = buckets.get(dayKey(new Date(l.created_at)))
-    if (!b) continue
-    const v = lineValue(l)
-    b.demand += v
-    b.units  += lineQty(l)
-    b.orders.add(l.order_id)
-    if (l.paid) b.revenue += v
-  }
-  return [...buckets.values()].map(b => ({
-    iso:     b.iso,
-    label:   b.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-    revenue: b.revenue,
-    demand:  b.demand,
-    units:   b.units,
-    orders:  b.orders.size,
-  }))
-}
-
-/** Monthly buckets, oldest first — the view a founder reads for a trend. */
-export function monthlySeries(lines, months = 6, today = new Date()) {
-  const end = new Date(today.getFullYear(), today.getMonth(), 1)
-  const buckets = new Map()
-  for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(end.getFullYear(), end.getMonth() - i, 1)
-    buckets.set(`${d.getFullYear()}-${d.getMonth()}`, {
-      key: `${d.getFullYear()}-${d.getMonth()}`,
-      label: d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
-      revenue: 0, demand: 0, units: 0, orders: new Set(),
-    })
-  }
-  for (const l of lines) {
-    const t = new Date(l.created_at)
-    const b = buckets.get(`${t.getFullYear()}-${t.getMonth()}`)
-    if (!b) continue
-    const v = lineValue(l)
-    b.demand += v
-    b.units += lineQty(l)
-    b.orders.add(l.order_id)
-    if (l.paid) b.revenue += v
-  }
-  return [...buckets.values()].map(b => ({ ...b, orders: b.orders.size }))
-}
-
-/**
- * A 7×N grid of units sold, weekday × week — the "when do people buy" heatmap.
- *
- * Weekday is the y-axis rather than the x because celebrations cluster on
- * weekends, and a Sat/Sun band running across the top of the grid is the whole
- * point of drawing it.
- */
-export function weekdayHeatmap(lines, weeks = 12, today = new Date()) {
-  const end = startOfDay(today)
-  // Wind back to the Sunday that starts the earliest week, so columns are
-  // whole weeks rather than a ragged offset.
-  const firstDay = addDays(end, -(weeks * 7 - 1))
-  const start = addDays(firstDay, -firstDay.getDay())
-  const cells = new Map()
-  for (const l of lines) {
-    const t = startOfDay(new Date(l.created_at))
-    if (t < start || t > end) continue
-    const k = dayKey(t)
-    cells.set(k, (cells.get(k) ?? 0) + lineQty(l))
-  }
-
-  const columns = []
-  for (let w = 0; ; w++) {
-    const colStart = addDays(start, w * 7)
-    if (colStart > end) break
-    const days = []
-    for (let d = 0; d < 7; d++) {
-      const date = addDays(colStart, d)
-      days.push({
-        iso: dayKey(date),
-        date,
-        future: date > end,
-        value: cells.get(dayKey(date)) ?? 0,
-      })
-    }
-    columns.push({ label: colStart.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), days })
-  }
-  const max = Math.max(0, ...[...cells.values()])
-  return { columns, max }
-}
-
-/* ── Per-product demand ────────────────────────────────────────────────── */
-
-/**
- * One row per product, with everything needed to answer "should we keep
- * selling this, photograph it, or drop it".
- *
- * Built from the CATALOGUE outward rather than from the order lines inward.
- * The difference is the whole point: aggregating order lines gives you the
- * products that sold, and the single most useful list on a pre-launch
- * dashboard is the opposite one — the 300-odd products nobody has ever
- * ordered. A product with no rows in `order_items` cannot appear in a
- * group-by over `order_items`, so it has to start from `products`.
- *
- * Order lines that no longer match a catalogue row (product deleted, or an
- * older order placed before migration 022 snapshotted the category) are kept
- * as their own rows, flagged `orphan`, rather than dropped — their revenue is
- * real and silently losing it would make the totals disagree with Revenue.
- */
-export function productDemand(products = [], lines = [], { windowDays = 30, today = new Date() } = {}) {
-  const end = addDays(startOfDay(today), 1)          // through end of today
-  const currFrom = addDays(end, -windowDays)
-  const prevFrom = addDays(currFrom, -windowDays)
-
-  const byProduct = new Map()
-  const orphans = new Map()
-
-  for (const p of products) {
-    byProduct.set(p.id, {
-      id: p.id,
-      name: p.name,
-      // Carried through so the drill-down can show what the customer reads.
-      // A product's own copy is the first thing to check when it never sells,
-      // and it used to be the one field the analytics dropped.
-      description: p.description ?? null,
-      category: p.category,
-      occasion: p.occasion ?? null,
-      price: Number(p.price) || 0,
-      emoji: p.emoji,
-      image_url: p.image_url ?? null,
-      image_alt: p.image_alt ?? null,
-      image_source: p.image_source ?? null,
-      image_updated_at: p.image_updated_at ?? null,
-      is_active: p.is_active !== false,
-      listedAt: p.created_at ?? null,
-      orphan: false,
-      lines: [],
-    })
-  }
-
-  for (const l of lines) {
-    const row = byProduct.get(l.product_id)
-    if (row) { row.lines.push(l); continue }
-    // No catalogue match — bucket by the name snapshotted on the line.
-    const key = l.product_name ?? 'Unknown product'
-    if (!orphans.has(key)) {
-      orphans.set(key, {
-        id: `orphan:${key}`,
-        name: key,
-        description: null,
-        category: l.category ?? 'Uncategorized',
-        occasion: l.occasion ?? null,
-        price: Number(l.unit_price) || 0,
-        emoji: '📦',
-        image_url: null, image_alt: null, image_source: null, image_updated_at: null,
-        is_active: false, listedAt: null,
-        orphan: true,
-        lines: [],
-      })
-    }
-    orphans.get(key).lines.push(l)
-  }
-
-  const rows = [...byProduct.values(), ...orphans.values()].map(row => {
-    const { lines: ls, ...rest } = row
-    const paid = ls.filter(l => l.paid)
-    const curr = between(ls, currFrom, end)
-    const prev = between(ls, prevFrom, currFrom)
-    const dates = ls.map(l => new Date(l.created_at)).sort((a, b) => a - b)
-
-    const demandUnits = sumQty(ls)
-    const paidUnits   = sumQty(paid)
-
-    return {
-      ...rest,
-      // Demand: everything a customer placed. Revenue: what was paid for.
-      demandUnits,
-      demandValue:  sumValue(ls),
-      units:        paidUnits,
-      revenue:      sumValue(paid),
-      orders:       new Set(ls.map(l => l.order_id)).size,
-      buyers:       new Set(ls.map(l => l.customer_id).filter(Boolean)).size,
-      // How much of the demand actually turned into money. On direct UPI this
-      // is a payment-confirmation number, not a customer-intent one.
-      paidRate:     demandUnits ? Math.round((paidUnits / demandUnits) * 100) : null,
-      currUnits:    sumQty(curr),
-      prevUnits:    sumQty(prev),
-      trend:        pctDelta(sumQty(curr), sumQty(prev)),
-      firstSold:    dates[0] ?? null,
-      lastSold:     dates.at(-1) ?? null,
-      daysSinceSale: dates.length ? daysBetween(dates.at(-1), today) : null,
-      everSold:     ls.length > 0,
-    }
-  })
-
-  return rows.sort((a, b) => b.revenue - a.revenue || b.demandUnits - a.demandUnits)
-}
-
-/**
- * Split the catalogue into the four things a founder can act on.
- *
- * Deliberately four named buckets and not a scatter plot with quadrant labels:
- * "Stars / Sleepers / Steady / Never sold" is a to-do list, and the underlying
- * scatter is drawn alongside it for anyone who wants the shape.
- *
- *   star    — selling, and selling more than it was
- *   fading  — selling, but less than it was  (a photo or a price problem)
- *   steady  — selling flat
- *   dormant — has sold before, nothing in the current window
- *   unsold  — never sold at all; the biggest bucket pre-launch, by design
- */
-export function productBuckets(rows) {
-  const out = { star: [], fading: [], steady: [], dormant: [], unsold: [] }
-  for (const r of rows) {
-    if (!r.everSold)                       { out.unsold.push(r);  continue }
-    if (r.currUnits === 0)                 { out.dormant.push(r); continue }
-    if (r.trend >= 20)                     { out.star.push(r);    continue }
-    if (r.trend <= -20)                    { out.fading.push(r);  continue }
-    out.steady.push(r)
-  }
-  return out
-}
-
-/* ── Categories & occasions ────────────────────────────────────────────── */
-
-/**
- * Revenue, demand and unit share per shop category.
- *
- * Every known category is returned even at zero, in SHOP_CATEGORIES order, so
- * the colour assigned to a category never moves when its sales do — the
- * recolour-on-filter failure the palette rules exist to prevent. Callers may
- * sort the returned array freely; the `id` carries the colour, not the index.
- */
-export function categoryDemand(categories = [], lines = []) {
-  const map = new Map()
-  for (const l of lines) {
-    const key = l.category || 'Uncategorized'
-    if (!map.has(key)) map.set(key, [])
-    map.get(key).push(l)
-  }
-  const known = categories.map(c => {
-    const ls = map.get(c.id) ?? []
-    map.delete(c.id)
-    return buildCategoryRow(c.id, c.label, c.emoji, ls)
-  })
-  // Anything left is a category no longer in SHOP_CATEGORIES — an old
-  // 'Hampers' line from before migration 031, say. Shown, never dropped.
-  const legacy = [...map.entries()].map(([id, ls]) => buildCategoryRow(id, id, '📦', ls))
-  return [...known, ...legacy]
-}
-
-function buildCategoryRow(id, label, emoji, ls) {
-  const paid = ls.filter(l => l.paid)
-  return {
-    id, label, emoji,
-    revenue:     sumValue(paid),
-    demandValue: sumValue(ls),
-    units:       sumQty(paid),
-    demandUnits: sumQty(ls),
-    orders:      new Set(ls.map(l => l.order_id)).size,
-    products:    new Set(ls.map(l => l.product_id ?? l.product_name)).size,
-  }
-}
-
-/** Same shape, keyed by the occasion snapshot (Diwali, Birthday, …). */
-export function occasionDemand(lines = []) {
-  const map = new Map()
-  for (const l of lines) {
-    const key = l.occasion || 'No occasion'
-    if (!map.has(key)) map.set(key, [])
-    map.get(key).push(l)
-  }
-  return [...map.entries()]
-    .map(([id, ls]) => buildCategoryRow(id, id, '🎊', ls))
-    .sort((a, b) => b.demandValue - a.demandValue)
-}
-
-/* ── Geography ─────────────────────────────────────────────────────────── */
-
 /**
  * Where the demand is, from every table that knows a place.
  *
@@ -421,49 +92,27 @@ export function occasionDemand(lines = []) {
  * normalised (trim + title case) before grouping — otherwise "bengaluru",
  * "Bengaluru " and "BENGALURU" are three cities on the founder's map.
  */
-export function areaDemand({ orders = [], events = [], enquiries = [], interest = [] } = {}) {
+export function areaDemand({ events = [], enquiries = [], interest = [] } = {}) {
   const cities = new Map()
-  const pincodes = new Map()
 
   const city = key => {
     const k = normaliseCity(key)
     if (!k) return null
     if (!cities.has(k)) {
       cities.set(k, {
-        city: k, orders: 0, revenue: 0, units: 0,
-        events: 0, enquiries: 0, interest: 0, pincodes: new Set(), customers: new Set(),
+        city: k, events: 0, enquiries: 0, interest: 0, customers: new Set(),
       })
     }
     return cities.get(k)
   }
 
-  for (const o of orders) {
-    if (o.status === 'cancelled') continue
-    const addr = o.address ?? {}
-    const row = city(addr.city)
-    if (row) {
-      row.orders += 1
-      row.units += (o.order_items ?? []).reduce((s, i) => s + (Number(i.qty) || 0), 0)
-      if (o.payment_status === 'paid') row.revenue += Number(o.total) || 0
-      if (o.customer_id) row.customers.add(o.customer_id)
-      if (addr.pincode) row.pincodes.add(String(addr.pincode))
-    }
-    const pin = String(addr.pincode ?? '').trim()
-    if (/^\d{6}$/.test(pin)) {
-      if (!pincodes.has(pin)) {
-        pincodes.set(pin, { pincode: pin, city: normaliseCity(addr.city) || '—', orders: 0, revenue: 0, units: 0 })
-      }
-      const p = pincodes.get(pin)
-      p.orders += 1
-      p.units += (o.order_items ?? []).reduce((s, i) => s + (Number(i.qty) || 0), 0)
-      if (o.payment_status === 'paid') p.revenue += Number(o.total) || 0
-    }
-  }
-
   for (const e of events) {
     if (e.status === 'CANCELLED') continue
     const row = city(e.city)
-    if (row) row.events += 1
+    if (row) {
+      row.events += 1
+      if (e.customer_id) row.customers.add(e.customer_id)
+    }
   }
 
   for (const e of enquiries) {
@@ -478,10 +127,9 @@ export function areaDemand({ orders = [], events = [], enquiries = [], interest 
 
   return {
     cities: [...cities.values()]
-      .map(c => ({ ...c, pincodes: c.pincodes.size, customers: c.customers.size,
-                   signals: c.orders + c.events + c.enquiries + c.interest }))
-      .sort((a, b) => b.signals - a.signals || b.revenue - a.revenue),
-    pincodes: [...pincodes.values()].sort((a, b) => b.orders - a.orders || b.revenue - a.revenue),
+      .map(c => ({ ...c, customers: c.customers.size,
+                   signals: c.events + c.enquiries + c.interest }))
+      .sort((a, b) => b.signals - a.signals || b.events - a.events),
   }
 }
 
@@ -490,11 +138,6 @@ export function normaliseCity(raw) {
   if (!s) return null
   return s.toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase())
 }
-
-/* ── Order lifecycle ───────────────────────────────────────────────────── */
-
-export const ORDER_FLOW = ['placed', 'processing', 'dispatched', 'delivered']
-
 /**
  * The shop order funnel, plus the two things a funnel alone never tells you:
  * what is stuck, and what it is worth.
@@ -510,50 +153,6 @@ export const ORDER_FLOW = ['placed', 'processing', 'dispatched', 'delivered']
  * a second city legitimately takes longer than a warehouse pick.
  */
 const STUCK_AFTER = { placed: 2, processing: 2, dispatched: 3 }
-
-export function orderLifecycle(orders = [], today = new Date()) {
-  const live = orders.filter(o => o.status !== 'cancelled')
-
-  const stages = ORDER_FLOW.map((status, i) => {
-    const at = live.filter(o => o.status === status)
-    // Reached = at this stage or any later one. A funnel counts arrivals, not
-    // residents: three orders sitting in 'placed' and one delivered is not a
-    // 25% delivery rate off a base of one.
-    const reached = live.filter(o => ORDER_FLOW.indexOf(o.status) >= i)
-    const stuck = at.filter(o => ageInDays(o.updated_at ?? o.created_at, today) >= (STUCK_AFTER[status] ?? Infinity))
-    return {
-      status,
-      at: at.length,
-      reached: reached.length,
-      value: at.reduce((s, o) => s + (Number(o.total) || 0), 0),
-      stuck: stuck.length,
-      stuckOrders: stuck,
-      oldestDays: at.length ? Math.max(...at.map(o => ageInDays(o.updated_at ?? o.created_at, today))) : 0,
-    }
-  })
-
-  const cancelled = orders.filter(o => o.status === 'cancelled')
-  const awaitingPayment = live.filter(o => o.payment_status === 'pending')
-
-  return {
-    stages,
-    total: live.length,
-    cancelled: cancelled.length,
-    cancelledValue: cancelled.reduce((s, o) => s + (Number(o.total) || 0), 0),
-    // The direct-UPI backlog: orders the customer says they have paid for and
-    // nobody has confirmed against the bank statement yet.
-    awaitingPayment: awaitingPayment.length,
-    awaitingPaymentValue: awaitingPayment.reduce((s, o) => s + (Number(o.total) || 0), 0),
-    awaitingPaymentOrders: awaitingPayment.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
-    refunded: orders.filter(o => o.payment_status === 'refunded').length,
-    // Completion against everything ever placed, cancellations included —
-    // the honest denominator.
-    completionRate: orders.length
-      ? Math.round((live.filter(o => o.status === 'delivered').length / orders.length) * 100)
-      : 0,
-  }
-}
-
 export function ageInDays(ts, today = new Date()) {
   if (!ts) return 0
   return Math.max(0, Math.floor((today - new Date(ts)) / 86400000))
@@ -645,51 +244,53 @@ export function serviceDemand(enquiries = []) {
  * confirmation is a customer who came back, whatever the bank has done about
  * it yet.
  */
-export function customerStats(profiles = [], orders = [], events = [], today = new Date()) {
-  const live = orders.filter(o => o.status !== 'cancelled')
+export function customerStats(profiles = [], events = [], payments = [], today = new Date()) {
+  /* A "buyer" used to mean somebody with an order. It means somebody with a
+     celebration now, and spend is the sum of their verified payments rather
+     than order totals — the only two payment states with a witness behind
+     them are GATEWAY_VERIFIED and ADMIN_VERIFIED. */
+  const VERIFIED = new Set(['GATEWAY_VERIFIED', 'ADMIN_VERIFIED'])
+  const paidFor = new Map()
+  for (const p of payments) {
+    if (!VERIFIED.has(p.status)) continue
+    const key = p.event_id ?? p.enquiry_id
+    if (!key) continue
+    paidFor.set(key, (paidFor.get(key) ?? 0) + (Number(p.amount) || 0))
+  }
+
   const byCustomer = new Map()
-  for (const o of live) {
-    if (!o.customer_id) continue
-    if (!byCustomer.has(o.customer_id)) byCustomer.set(o.customer_id, [])
-    byCustomer.get(o.customer_id).push(o)
+  for (const e of events) {
+    if (!e.customer_id) continue
+    if (!byCustomer.has(e.customer_id)) byCustomer.set(e.customer_id, [])
+    byCustomer.get(e.customer_id).push(e)
   }
 
   const rows = profiles.map(p => {
     const mine = byCustomer.get(p.id) ?? []
-    const paid = mine.filter(o => o.payment_status === 'paid')
-    const myEvents = events.filter(e => e.customer_id === p.id)
-    const dates = mine.map(o => new Date(o.created_at)).sort((a, b) => a - b)
+    const dates = mine.map(e => new Date(e.created_at)).sort((a, b) => a - b)
     return {
       ...p,
-      orderCount: mine.length,
-      paidCount:  paid.length,
-      totalSpend: paid.reduce((s, o) => s + (Number(o.total) || 0), 0),
-      eventCount: myEvents.length,
-      firstOrder: dates[0] ?? null,
-      lastOrder:  dates.at(-1) ?? null,
+      eventCount: mine.length,
+      totalSpend: mine.reduce((s, e) => s + (paidFor.get(e.id) ?? 0), 0),
+      firstEvent: dates[0] ?? null,
+      lastEvent:  dates.at(-1) ?? null,
       daysSince:  dates.length ? daysBetween(dates.at(-1), today) : null,
       repeat:     mine.length > 1,
     }
   })
 
-  const buyers = rows.filter(r => r.orderCount > 0)
+  const buyers = rows.filter(r => r.eventCount > 0)
+  const repeatBuyers = buyers.filter(r => r.repeat)
   const revenue = buyers.reduce((s, r) => s + r.totalSpend, 0)
-  const paidOrders = live.filter(o => o.payment_status === 'paid')
 
   return {
-    rows: rows.sort((a, b) => b.totalSpend - a.totalSpend || b.orderCount - a.orderCount),
+    rows: rows.sort((a, b) => b.totalSpend - a.totalSpend || b.eventCount - a.eventCount),
     totalCustomers: profiles.length,
     buyers: buyers.length,
-    repeatBuyers: buyers.filter(r => r.repeat).length,
-    repeatRate: buyers.length ? Math.round((buyers.filter(r => r.repeat).length / buyers.length) * 100) : 0,
-    // Average ORDER value, which is what "AOV" means, computed over paid
-    // orders only — mixing in unconfirmed ones would inflate it.
-    aov: paidOrders.length ? Math.round(revenue / paidOrders.length) : 0,
-    // Average revenue per paying customer. Not called LTV: with a few weeks of
-    // history and no churn model, a lifetime-value figure would be fiction.
-    revenuePerBuyer: buyers.filter(r => r.totalSpend > 0).length
-      ? Math.round(revenue / buyers.filter(r => r.totalSpend > 0).length)
-      : 0,
+    repeatBuyers: repeatBuyers.length,
+    repeatRate: buyers.length ? Math.round((repeatBuyers.length / buyers.length) * 100) : 0,
+    revenue,
+    avgPerCustomer: buyers.length ? Math.round(revenue / buyers.length) : 0,
   }
 }
 
@@ -697,8 +298,8 @@ export function customerStats(profiles = [], orders = [], events = [], today = n
  * New vs returning buyers by month — does growth come from new people or the
  * same people coming back?
  */
-export function acquisitionByMonth(orders = [], months = 6, today = new Date()) {
-  const live = [...orders.filter(o => o.status !== 'cancelled')]
+export function acquisitionByMonth(events = [], months = 6, today = new Date()) {
+  const live = [...events.filter(e => e.status !== 'CANCELLED')]
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
   const seen = new Set()
   const end = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -710,11 +311,11 @@ export function acquisitionByMonth(orders = [], months = 6, today = new Date()) 
       new: 0, returning: 0,
     })
   }
-  for (const o of live) {
-    const t = new Date(o.created_at)
+  for (const e of live) {
+    const t = new Date(e.created_at)
     const b = buckets.get(`${t.getFullYear()}-${t.getMonth()}`)
-    const isNew = o.customer_id && !seen.has(o.customer_id)
-    if (o.customer_id) seen.add(o.customer_id)
+    const isNew = e.customer_id && !seen.has(e.customer_id)
+    if (e.customer_id) seen.add(e.customer_id)
     if (!b) continue
     if (isNew) b.new += 1
     else b.returning += 1
@@ -733,38 +334,50 @@ export function acquisitionByMonth(orders = [], months = 6, today = new Date()) 
  * and it is a PIPELINE number — proposals sent, not money received. It is
  * shown beside revenue, never added to it.
  */
-export function headline({ orders = [], events = [], proposalValue = 0, windowDays = 30, today = new Date() } = {}) {
-  const lines = orderLines(orders)
-  const end = addDays(startOfDay(today), 1)
+export function headline({
+  events = [], enquiries = [], payments = [], proposalValue = 0,
+  windowDays = 30, today = new Date(),
+} = {}) {
+  const end      = addDays(startOfDay(today), 1)
   const currFrom = addDays(end, -windowDays)
   const prevFrom = addDays(currFrom, -windowDays)
 
-  const curr = between(lines, currFrom, end)
-  const prev = between(lines, prevFrom, currFrom)
-  const currPaid = paidOnly(curr)
-  const prevPaid = paidOnly(prev)
+  const inWindow = (rows, from, to) => rows.filter(r => {
+    const t = new Date(r.created_at)
+    return t >= from && t < to
+  })
 
-  const currOrders = orders.filter(o => o.status !== 'cancelled' && new Date(o.created_at) >= currFrom)
-  const prevOrders = orders.filter(o => o.status !== 'cancelled' && new Date(o.created_at) >= prevFrom && new Date(o.created_at) < currFrom)
+  /* Collected means the money is actually ours. GATEWAY_VERIFIED and
+     ADMIN_VERIFIED are the two states with a witness behind them — a webhook
+     or a human who looked at the bank. CUSTOMER_CLAIMED_PAID is a claim, and
+     counting a claim as revenue is how a dashboard starts lying. */
+  const VERIFIED = new Set(['GATEWAY_VERIFIED', 'ADMIN_VERIFIED'])
+  const paid     = payments.filter(p => VERIFIED.has(p.status))
+  const claimed  = payments.filter(p => p.status === 'CUSTOMER_CLAIMED_PAID')
+  const amount   = rows => rows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
 
-  const currEvents = events.filter(e => new Date(e.created_at) >= currFrom)
-  const prevEvents = events.filter(e => new Date(e.created_at) >= prevFrom && new Date(e.created_at) < currFrom)
+  const currPaid = inWindow(paid, currFrom, end)
+  const prevPaid = inWindow(paid, prevFrom, currFrom)
+  const currEvents = inWindow(events, currFrom, end)
+  const prevEvents = inWindow(events, prevFrom, currFrom)
+  const currEnq = inWindow(enquiries, currFrom, end)
+  const prevEnq = inWindow(enquiries, prevFrom, currFrom)
 
   return {
     windowDays,
-    revenue:        sumValue(currPaid),
-    revenueDelta:   pctDelta(sumValue(currPaid), sumValue(prevPaid)),
-    revenueAllTime: sumValue(paidOnly(lines)),
-    demand:         sumValue(curr),
-    demandDelta:    pctDelta(sumValue(curr), sumValue(prev)),
-    // Money customers committed to that has not been confirmed as received.
-    unconfirmed:    sumValue(curr) - sumValue(currPaid),
-    orders:         currOrders.length,
-    ordersDelta:    pctDelta(currOrders.length, prevOrders.length),
-    units:          sumQty(curr),
-    aov:            currPaid.length ? Math.round(sumValue(currPaid) / new Set(currPaid.map(l => l.order_id)).size) : 0,
-    enquiries:      currEvents.length,
-    enquiriesDelta: pctDelta(currEvents.length, prevEvents.length),
+    revenue:        amount(currPaid),
+    revenueDelta:   pctDelta(amount(currPaid), amount(prevPaid)),
+    revenueAllTime: amount(paid),
+    // Somebody has pressed "I've paid" and nothing has confirmed it arrived.
+    unconfirmed:    amount(inWindow(claimed, currFrom, end)),
+    requests:       currEvents.length,
+    requestsDelta:  pctDelta(currEvents.length, prevEvents.length),
+    enquiries:      currEnq.length,
+    enquiriesDelta: pctDelta(currEnq.length, prevEnq.length),
+    // What a settled celebration is worth on average, verified only.
+    aov:            currPaid.length
+      ? Math.round(amount(currPaid) / new Set(currPaid.map(p => p.event_id ?? p.enquiry_id)).size)
+      : 0,
     proposalValue,
   }
 }

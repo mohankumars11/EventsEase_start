@@ -36,7 +36,7 @@
  *    seventh shop category does not get a generated hue — it folds into
  *    "Other". `categoricalFor()` enforces this.
  *  · Colour follows the entity, never its rank. Sorting a category chart by
- *    revenue must not repaint it, which is why `SHOP_CATEGORY_COLORS` keys off
+ *    revenue must not repaint it, which is why a pinned colour map keys off
  *    the category id rather than an array index at render time.
  *  · SEQUENTIAL (magnitude — heatmaps) is one hue, light→dark. Never a rainbow.
  *  · STATUS colours mean good/warning/serious/critical and are never reused as
@@ -45,7 +45,6 @@
  *    comes from a coloured dot or swatch next to the text.
  */
 
-import { SHOP_CATEGORIES } from './shop'
 
 /* ── Categorical: identity ─────────────────────────────────────────────── */
 
@@ -70,23 +69,6 @@ export const OTHER = '#898781'
 export function categoricalFor(index) {
   return index >= 0 && index < CATEGORICAL.length ? CATEGORICAL[index] : OTHER
 }
-
-/**
- * Shop category → hue, pinned by id.
- *
- * Pinned rather than positional so a category with zero sales keeps its colour
- * instead of handing it to whoever sorts above it. Five categories today; the
- * map is built from SHOP_CATEGORIES so adding a sixth needs no edit here.
- */
-export const SHOP_CATEGORY_COLORS = Object.fromEntries(
-  SHOP_CATEGORIES.map((c, i) => [c.id, categoricalFor(i)]),
-)
-
-export function shopCategoryColor(id) {
-  return SHOP_CATEGORY_COLORS[id] ?? OTHER
-}
-
-/* ── Sequential: magnitude ─────────────────────────────────────────────── */
 
 /**
  * One hue, light→dark, for continuous magnitude — the demand heatmap and the

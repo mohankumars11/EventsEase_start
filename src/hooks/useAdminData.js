@@ -49,7 +49,7 @@ function isAbsent(error) {
 }
 
 const EMPTY = {
-  events: [], proposals: [], profiles: [],
+  events: [], proposals: [], payments: [], profiles: [],
   vendors: [], enquiries: [], reviews: [], complaints: [],
   interest: [], services: [],
 }
@@ -75,6 +75,15 @@ export default function useAdminData() {
         .order('created_at', { ascending: false }),
 
       proposals: () => supabase.from('event_proposals').select('id, event_id, total_amount, status, created_at'),
+
+      /* The concierge side's money. This was never loaded because revenue was
+         read off `orders`, which is gone — so without it the Command Center
+         would report a business with no income. `milestone_id` needs migration
+         046; the query soft-fails to [] without it like every other. */
+      payments: () => supabase
+        .from('event_payments')
+        .select('id, event_id, enquiry_id, amount, status, payment_type, created_at, paid_at, due_at')
+        .order('created_at', { ascending: false }),
 
       profiles: () => supabase
         .from('profiles')

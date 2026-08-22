@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { MapPin, Search } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
-import { SHOP_CATEGORIES } from '../../config/shop'
 import { formatINR } from '../../utils/format'
-import { INK, STATUS, CATEGORICAL, shopCategoryColor, compactINR, sequentialStep } from '../../config/dataviz'
-import { orderLines, areaDemand, categoryDemand, normaliseCity } from '../../lib/analytics'
+import { INK, STATUS, CATEGORICAL, compactINR, sequentialStep } from '../../config/dataviz'
+import { areaDemand, normaliseCity } from '../../lib/analytics'
 import {
   ChartCard, BarRows, ShareBar, StatTile, SectionHead, EmptyNote, DataTable,
 } from './viz/Primitives'
@@ -41,14 +40,12 @@ import {
  */
 
 export default function AreaDemand({ data }) {
-  const { orders = [], events = [], enquiries = [], interest = [] } = data
-  const [search, setSearch] = useState('')
+  const { events = [], enquiries = [], interest = [] } = data
   const [selectedCity, setSelectedCity] = useState(null)
 
-  const lines = useMemo(() => orderLines(orders), [orders])
   const geo = useMemo(
-    () => areaDemand({ orders, events, enquiries, interest }),
-    [orders, events, enquiries, interest],
+    () => areaDemand({ events, enquiries, interest }),
+    [events, enquiries, interest],
   )
 
   const pilot = BRAND.pilotCities.map(normaliseCity)
@@ -68,24 +65,10 @@ export default function AreaDemand({ data }) {
     .filter(c => c.interest > 0)
     .sort((a, b) => b.interest - a.interest)
 
-  const filteredPincodes = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return geo.pincodes
-    return geo.pincodes.filter(p => p.pincode.includes(q) || p.city.toLowerCase().includes(q))
-  }, [geo.pincodes, search])
 
-  const maxPin = Math.max(1, ...geo.pincodes.map(p => p.orders))
 
   /* What sells where — category mix for the selected (or busiest) city. */
   const cityForMix = selectedCity ?? servedRows.find(c => c.orders > 0)?.city ?? servedRows[0]?.city
-  const cityLines = useMemo(
-    () => lines.filter(l => normaliseCity(l.address?.city) === cityForMix),
-    [lines, cityForMix],
-  )
-  const cityCategories = useMemo(
-    () => categoryDemand(SHOP_CATEGORIES, cityLines).sort((a, b) => b.demandValue - a.demandValue),
-    [cityLines],
-  )
 
   const totals = {
     deliveries: geo.cities.reduce((s, c) => s + c.orders, 0),
@@ -97,9 +80,7 @@ export default function AreaDemand({ data }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatTile label="Deliveries placed" value={totals.deliveries} sub={`across ${totals.places} place${totals.places === 1 ? '' : 's'}`} />
         <StatTile label="Revenue by place" value={compactINR(totals.revenue)} sub="confirmed received" />
-        <StatTile label="Pincodes reached" value={geo.pincodes.length} sub="six-digit, from delivery addresses" />
         <StatTile
           label="Waitlist signups" value={totals.waitlist}
           sub={`${waitlist.length} cit${waitlist.length === 1 ? 'y' : 'ies'} outside the pilot`}
@@ -156,116 +137,6 @@ export default function AreaDemand({ data }) {
             </button>
           ))}
         </div>
-      </ChartCard>
-
-      {/* ── What sells where ─────────────────────────────────────────── */}
-      <ChartCard
-        title={`What ${cityForMix ?? 'each city'} buys`}
-        sub="Shelf mix for the selected city. Two cities that shop differently want two different front pages."
-        table={{
-          columns: [
-            { key: 'label', label: 'Shelf' },
-            { key: 'demandUnits', label: 'Units' },
-            { key: 'demandValue', label: 'Ordered', render: r => formatINR(r.demandValue) },
-            { key: 'revenue', label: 'Paid', render: r => formatINR(r.revenue) },
-          ],
-          rows: cityCategories.map(c => ({ ...c, key: c.id })),
-        }}
-      >
-        {cityLines.length === 0 ? (
-          <EmptyNote icon="🛒">
-            No shop orders have shipped to {cityForMix ?? 'this city'} yet.
-          </EmptyNote>
-        ) : (
-          <>
-            <ShareBar
-              segments={cityCategories
-                .filter(c => c.demandValue > 0)
-                .map(c => ({ id: c.id, label: c.label, value: c.demandValue, color: shopCategoryColor(c.id) }))}
-              format={formatINR}
-            />
-            <div className="mt-5">
-              <BarRows
-                rows={cityCategories.filter(c => c.demandValue > 0).map(c => ({
-                  id: c.id, emoji: c.emoji, label: c.label, value: c.demandValue,
-                  color: shopCategoryColor(c.id), note: `${c.demandUnits} units`,
-                }))}
-                format={formatINR}
-              />
-            </div>
-          </>
-        )}
-      </ChartCard>
-
-      {/* ── Pincodes ─────────────────────────────────────────────────── */}
-      <ChartCard
-        title="Down to the pincode"
-        sub="Only shop deliveries carry one. This is the grain that decides where a partner kitchen should sit."
-        actions={
-          <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-300" />
-            <input
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Pincode or city"
-              className="pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg w-40 focus:outline-none focus:border-plum-400"
-            />
-          </div>
-        }
-        table={{
-          columns: [
-            { key: 'pincode', label: 'Pincode' },
-            { key: 'city', label: 'City' },
-            { key: 'orders', label: 'Deliveries' },
-            { key: 'units', label: 'Units' },
-            { key: 'revenue', label: 'Revenue', render: r => formatINR(r.revenue) },
-          ],
-          rows: filteredPincodes.map(p => ({ ...p, key: p.pincode })),
-        }}
-      >
-        {filteredPincodes.length === 0 ? (
-          <EmptyNote icon="📍">
-            {geo.pincodes.length === 0
-              ? 'No delivery address has carried a six-digit pincode yet.'
-              : 'No pincode matches that search.'}
-          </EmptyNote>
-        ) : (
-          <>
-            {/* Sequential blue, one hue, light→dark: this is magnitude, and a
-                hue per pincode would be a rainbow on a value scale. The count
-                is written on every tile, so the colour is never the only way
-                to read it. */}
-            <div className="flex flex-wrap gap-2">
-              {filteredPincodes.slice(0, 60).map(p => {
-                const step = sequentialStep(p.orders, maxPin)
-                // White ink only once the fill is dark enough to carry it.
-                const dark = p.orders / maxPin > 0.45
-                return (
-                  <div
-                    key={p.pincode}
-                    title={`${p.pincode} · ${p.city} · ${p.orders} deliveries · ${formatINR(p.revenue)}`}
-                    className="rounded-xl px-3 py-2 border"
-                    style={{
-                      background: step ?? INK.plane,
-                      borderColor: step ? 'transparent' : INK.grid,
-                    }}
-                  >
-                    <div className="text-xs font-bold tabular-nums" style={{ color: dark ? '#fff' : INK.primary }}>
-                      {p.pincode}
-                    </div>
-                    <div className="text-[10px] tabular-nums" style={{ color: dark ? 'rgba(255,255,255,0.85)' : INK.secondary }}>
-                      {p.orders} · {compactINR(p.revenue)}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            {filteredPincodes.length > 60 && (
-              <p className="text-[11px] mt-3" style={{ color: INK.muted }}>
-                Showing the 60 busiest. Switch to the table for all {filteredPincodes.length}.
-              </p>
-            )}
-          </>
-        )}
       </ChartCard>
 
       {/* ── Expansion ────────────────────────────────────────────────── */}

@@ -7,7 +7,6 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { friendlyError } from '../../context/ToastContext'
 import AppBar from '../../components/layout/AppBar'
-import CartBridge from '../../components/common/CartBridge'
 import BookingSheet from '../../components/customer/BookingSheet'
 import PriceLock from '../../components/plan/PriceLock'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
@@ -277,13 +276,6 @@ export default function Cart() {
       />
       <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
         <h1 className="sr-only">My cart</h1>
-
-        {/* The other half of the split. This cart and the shop bag share one
-            icon and one badge, so each has to admit the other exists or the
-            count is a lie — see CartBridge. Above the contents here rather
-            than below them, because this page's own list can run long and the
-            bridge must be seen without scrolling to the end. */}
-        <CartBridge side="services" className="mb-5" />
 
         {!hasAnything ? (
           <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">

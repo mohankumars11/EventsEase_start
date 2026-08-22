@@ -9,10 +9,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-maskable.svg'],
       manifest: {
-        name: 'Sambramo — Celebrations, arranged. Essentials, delivered.',
+        name: 'Sambramo — Celebrations, arranged. Nothing left to chance.',
         short_name: 'Sambramo',
         description:
-          'A real coordinator arranges your celebration end to end, and the shop delivers the essentials — cakes, hampers, flowers, pooja and party supplies.',
+          'A real coordinator arranges your celebration end to end — venue, decor, catering, photography and the priest — and brings back one clear price.',
         theme_color: '#2e1065',
         background_color: '#FFF8F0',
         display: 'standalone',

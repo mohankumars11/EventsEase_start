@@ -9,7 +9,7 @@ import { LIVE_CITIES, DEFAULT_CITY } from './cities'
 // The halves are the source and the sentences are derived, so the two forms
 // physically cannot disagree. Holding both as separate literals is how the
 // codebase ended up with four different wordings of the same sentence.
-const TAGLINE_PARTS   = ['Celebrations, arranged', 'Essentials, delivered']
+const TAGLINE_PARTS   = ['Celebrations, arranged', 'Nothing left to chance']
 const SIGNATURE_PARTS = ['Your Moment.', 'Our Magic.']
 
 export const BRAND = {
@@ -17,10 +17,11 @@ export const BRAND = {
   // Three lines, three jobs — they are not interchangeable.
   //
   // `tagline` is the descriptor that rides with the logo and answers "what is
-  // this?" in one read. It names both halves of the business deliberately:
-  // the concierge *arranges* (sources vendors, negotiates, coordinates) and
-  // the shop *delivers* (cakes, hampers, flowers, pooja and party essentials).
-  // "Arranged" also carries the floral sense, which ties back to the mark.
+  // this?" in one read. It used to name both halves of the business — the
+  // concierge *arranged* and the shop *delivered*. There is one half now, so
+  // the second line answers the objection the concierge model actually faces
+  // rather than advertising a shelf that no longer exists.
+  // "Arranged" still carries the floral sense, which ties back to the mark.
   //
   // `signature` is the emotional line used on hero panels, where the job is
   // feeling rather than explanation.
@@ -95,10 +96,10 @@ export const MVP_MODE = true  // Human-assisted concierge model
 /**
  * One string per role, not per surface.
  *
- * "Plan My Celebration" had drifted into two variants across five places and the
- * shop had four near-identical labels ("Shop essentials" / "Shop the essentials" /
- * "Browse the shop" / "See the full shop"), all pointing at the same destination.
- * Different words for one destination is what makes an app feel like several apps.
+ * "Plan My Celebration" had drifted into two variants across five places, and
+ * the shop had four near-identical labels for one destination before it left.
+ * Different words for one destination is what makes an app feel like several
+ * apps.
  *
  * The action/navigation split is deliberate rather than an oversight: a header
  * button is a wayfinding label and should stay plain, while a hero button is a
@@ -110,7 +111,6 @@ export const CTA = {
   planNav:    'Plan a celebration',       // header, footer, tab bar → the hub
   catalog:    'Browse services & packages',
   catalogNav: 'Services & packages',
-  shop:       'Shop the essentials',
 }
 
 /**
