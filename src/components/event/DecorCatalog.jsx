@@ -10,7 +10,7 @@ import {
 } from '../../data/decorCatalog'
 import { formatINR } from '../../utils/format'
 import useDecorPhotos from '../../hooks/useDecorPhotos'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 
 /**
  * The décor catalogue, on the occasion's own page.

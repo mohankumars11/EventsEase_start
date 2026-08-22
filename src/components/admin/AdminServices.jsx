@@ -12,7 +12,7 @@ import {
   deleteService, uploadServiceImage, removeServiceImage, isMissingTable,
   slugify, SERVICE_GROUP_OPTIONS, UNIT_OPTIONS,
 } from '../../lib/serviceCatalog'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 import { SectionHead, EmptyNote, Meter, StatTile } from './viz/Primitives'
 
 /**

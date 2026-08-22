@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { compressImage } from './productImages'
+import { compressImage } from './imageUpload'
 import { slugify, isMissingTable } from './serviceCatalog'
 import { SERVICE_GROUPS } from '../data/servicePricing'
 import { DECOR_THEME_CATALOGUE, DECOR_FAMILIES } from '../data/decorThemes'

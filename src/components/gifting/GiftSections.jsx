@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import {
   ChevronRight, Camera, Clock, Receipt, Phone, ShieldCheck, RefreshCw,
 } from 'lucide-react'
-import ProductImage from '../shop/ProductImage'
+import RemoteImage from '../common/RemoteImage'
 import PhotoDeck from './PhotoDeck'
 import { festivalPill, TILE_COLOURS, TILE_WASH } from '../../data/giftingHome'
 
@@ -101,7 +101,7 @@ export function SquareTile({ to, label, sub, emoji, colour, photo, query, size =
         style={{ backgroundColor: bg }}
       >
         {photo || query ? (
-          <ProductImage
+          <RemoteImage
             src={photo}
             query={photo ? undefined : query}
             emoji={emoji}
@@ -217,7 +217,7 @@ export function SquareGrid({ items, cols = 3, className = '' }) {
               ) : (
                 <span className="block h-full w-full" style={{ backgroundColor: bg }}>
                   {t.photo || deck[0] || t.query ? (
-                    <ProductImage
+                    <RemoteImage
                       src={t.photo ?? deck[0]}
                       query={(t.photo ?? deck[0]) ? undefined : t.query}
                       emoji={t.emoji}
@@ -303,8 +303,8 @@ export function OccasionMosaic({ tiles }) {
               className={`relative overflow-hidden ${wide ? 'h-28' : 'h-32'}`}
               style={{ background: wash }}
             >
-              {/* `<img>` rather than ProductImage: this slot wants the photo
-                  or nothing at all. ProductImage falls back to a centred emoji
+              {/* `<img>` rather than RemoteImage: this slot wants the photo
+                  or nothing at all. RemoteImage falls back to a centred emoji
                   plate, which on a saturated wash renders as one enormous
                   glyph floating in the middle of the block — worse than the
                   clean colour field it is standing in for. The wash IS the

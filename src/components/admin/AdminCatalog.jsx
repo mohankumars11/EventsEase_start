@@ -10,7 +10,7 @@ import { formatINR } from '../../utils/format'
 import { INK, STATUS, shopCategoryColor } from '../../config/dataviz'
 import { uploadProductImage, revertToStock, fetchImageCoverage } from '../../lib/productImages'
 import { QuickPhotoSheet } from './PhotoIntake'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 
 /**
  * The shop catalogue, and the screen that makes "you get what you saw" true.

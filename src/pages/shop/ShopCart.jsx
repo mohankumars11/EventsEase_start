@@ -18,10 +18,10 @@ import { BRAND } from '../../config/sambramo'
 import { friendlyError } from '../../context/ToastContext'
 import { IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl } from '../../lib/payment/upiProvider'
 import DeliveryLocationPicker from '../../components/shop/DeliveryLocationPicker'
-import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/shop/UpiAppIcons'
+import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../../components/common/UpiAppIcons'
 import { getAddressErrors, scrubDigits } from '../../utils/validators'
 import FulfilmentNote from '../../components/shop/FulfilmentNote'
-import ProductImage from '../../components/shop/ProductImage'
+import RemoteImage from '../../components/common/RemoteImage'
 import CheckoutHeader from '../../components/shop/CheckoutHeader'
 import CheckoutFooter from '../../components/shop/CheckoutFooter'
 import SavingsStack from '../../components/shop/SavingsStack'
@@ -618,7 +618,7 @@ export default function ShopCart() {
               <ul className="divide-y divide-ink/[0.07]">
                 {cart.products.map(p => (
                   <li key={p.key} className="flex items-start gap-3 px-4 py-4 sm:px-5">
-                    <ProductImage
+                    <RemoteImage
                       src={p.product.image_url}
                       emoji={p.product.emoji}
                       alt={p.product.name}

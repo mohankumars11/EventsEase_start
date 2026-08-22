@@ -7,7 +7,7 @@ import { BRAND } from '../../config/sambramo'
 import { EVENT_LIST } from '../../data/eventServicesData'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { formatINR } from '../../utils/format'
-import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../shop/UpiAppIcons'
+import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../common/UpiAppIcons'
 
 /**
  * The end of an occasion page.

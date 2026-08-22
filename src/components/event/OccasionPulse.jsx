@@ -1,6 +1,6 @@
 import { Users, Sparkles, ShieldCheck, UtensilsCrossed, Palette, TrendingUp } from 'lucide-react'
 import { formatINR } from '../../utils/format'
-import DetailRotator from '../shop/DetailRotator'
+import DetailRotator from '../common/DetailRotator'
 
 /**
  * The occasion page's live answer, sitting where three dead numbers used to.

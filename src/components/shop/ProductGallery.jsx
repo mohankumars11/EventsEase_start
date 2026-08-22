@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import ProductImage from './ProductImage'
+import RemoteImage from '../common/RemoteImage'
 
 /**
  * The photographs and the clip, as one thing that moves.
@@ -118,7 +118,7 @@ export default function ProductGallery({
   if (count === 0) {
     return (
       <div className="shop-card aspect-square overflow-hidden">
-        <ProductImage query={query} emoji={emoji} alt={alt} className="h-full w-full" drift priority />
+        <RemoteImage query={query} emoji={emoji} alt={alt} className="h-full w-full" drift priority />
       </div>
     )
   }

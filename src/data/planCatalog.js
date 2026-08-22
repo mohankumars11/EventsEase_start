@@ -11,7 +11,7 @@ import { GENERATED_DECOR_PHOTOS } from '../config/generatedDecorSamples'
  * which happens to line up one-to-one with EVENT_DATA's ids.
  *
  * These are static URLs, so a card can cycle through all four for free. The
- * alternative — ProductImage's live `query` search — is capped at 24 lookups
+ * alternative — RemoteImage's live `query` search — is capped at 24 lookups
  * per page load app-wide, and fifteen occasions times four frames is sixty.
  */
 function photosFor(occasionId) {

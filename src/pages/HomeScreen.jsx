@@ -17,7 +17,7 @@ import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
-import ProductImage from '../components/shop/ProductImage'
+import RemoteImage from '../components/common/RemoteImage'
 import OffersGrid from '../components/home/OffersGrid'
 import StickyCartBar from '../components/shop/StickyCartBar'
 import { useCart } from '../context/CartContext'
@@ -432,7 +432,7 @@ export default function HomeScreen() {
                     to={festivalHref(f)}
                     className="group relative h-36 w-[148px] shrink-0 snap-start overflow-hidden rounded-2xl ring-1 ring-hairline/10"
                   >
-                    <ProductImage
+                    <RemoteImage
                       query={`${f.name} festival India celebration`}
                       emoji={f.emoji}
                       className="absolute inset-0 h-full w-full"

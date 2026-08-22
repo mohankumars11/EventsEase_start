@@ -35,7 +35,7 @@ import { OCCASIONS } from '../data/planCatalog'
  * shop is where somebody buys on the first visit.
  *
  * ── The photographs are already in the repo ───────────────────────────────
- * Same constraint as the mosaic: `ProductImage`'s live search is capped at 24
+ * Same constraint as the mosaic: `RemoteImage`'s live search is capped at 24
  * lookups per page load app-wide, so nothing here resolves at runtime. Every URL
  * comes from a committed resolver output.
  *

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, Plus, Check, ShieldAlert } from 'lucide-react'
-import ProductImage from '../shop/ProductImage'
+import RemoteImage from '../common/RemoteImage'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -159,7 +159,7 @@ export function AddOnShelf({ addOns, selected, onToggle, className = '' }) {
               ].join(' ')}
             >
               <span className="relative block">
-                <ProductImage
+                <RemoteImage
                   src={a.image}
                   query={a.query}
                   emoji={a.emoji}

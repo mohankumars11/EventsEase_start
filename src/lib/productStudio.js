@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { prepareImage, extFor } from './productImages'
+import { prepareImage, extFor } from './imageUpload'
 
 /**
  * Everything the Product Studio reads and writes.

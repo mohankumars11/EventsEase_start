@@ -12,7 +12,7 @@ import {
   removeItemImage, isMissingTable, isMissingKindColumn, slugify,
   uploadItemImages, itemGallery, setGalleryCover, removeGalleryImage,
 } from '../../lib/contentStudio'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 import { SectionHead, EmptyNote, Meter, StatTile } from './viz/Primitives'
 
 /**

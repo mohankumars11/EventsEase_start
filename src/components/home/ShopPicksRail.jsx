@@ -5,7 +5,7 @@ import { selectActive } from '../../lib/activeProducts'
 import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
 import { FREE_DELIVERY_THRESHOLD } from '../../config/shop'
 import { useShopCategories } from '../../hooks/useShopCategories'
-import ProductImage from '../shop/ProductImage'
+import RemoteImage from '../common/RemoteImage'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -122,7 +122,7 @@ export default function ShopPicksRail() {
               className="home-card group flex flex-col"
             >
               <span className="relative block">
-                <ProductImage
+                <RemoteImage
                   src={p.image_url}
                   query={`${p.name} ${p.category}`}
                   className="aspect-square w-full"

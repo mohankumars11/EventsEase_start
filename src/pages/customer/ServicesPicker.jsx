@@ -6,7 +6,7 @@ import { PACKAGE_COUNT } from '../../data/occasionPackages'
 import { leadSample, SAMPLES_BY_EVENT } from '../../config/decorSamples'
 import { useAuth } from '../../context/AuthContext'
 import AppBar from '../../components/layout/AppBar'
-import ProductImage from '../../components/shop/ProductImage'
+import RemoteImage from '../../components/common/RemoteImage'
 
 /**
  * The occasions catalogue — every celebration we price, in one grid.
@@ -170,7 +170,7 @@ export default function ServicesPicker() {
               // in config/decorSamples. This card used to run a live Unsplash
               // search — fifteen cards, fifteen of the 24 searches
               // lib/unsplash.js permits per page load, to fetch a photograph
-              // this repo already holds. ProductImage still takes the query as
+              // this repo already holds. RemoteImage still takes the query as
               // its fallback for an occasion with no samples yet.
               const lead = leadSample(ev.id)
               const samples = SAMPLES_BY_EVENT[ev.id]?.length ?? 0
@@ -180,7 +180,7 @@ export default function ServicesPicker() {
                   onClick={() => navigate(`/services/${ev.id}`)}
                   className="home-card flex flex-col text-left"
                 >
-                  <ProductImage
+                  <RemoteImage
                     src={lead?.photo}
                     alt={lead?.alt}
                     query={`Indian ${ev.name} celebration`}

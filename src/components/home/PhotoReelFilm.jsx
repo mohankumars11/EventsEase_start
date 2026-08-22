@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Store } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { REEL_BEATS } from '../../config/homeReel'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 
 /**
  * The photographic film on Home. Real HD frames, one changing button.

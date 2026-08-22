@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Check, Plus, Sparkles, MapPin, ShoppingCart } from 'lucide-react'
 import OptionArt from './OptionArt'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 import { themeCost, DECOR_SCALES } from '../../data/decorThemes'
 import { DECOR_ADDONS } from '../../data/decorPackages'
 import { THEME_PHOTOS } from '../../config/generatedServicePhotos'

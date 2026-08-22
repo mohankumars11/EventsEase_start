@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from './ImageSourceBadge'
 
 /**
  * Several photographs of one thing, swiped through.

@@ -5,8 +5,8 @@ import {
   buildOptionGroups, defaultSelections, computeOrder, selectionSignature,
 } from '../../config/customizers'
 import { cakeFacts } from '../../data/cakeStyles'
-import ProductImage from './ProductImage'
-import ImageSourceBadge from './ImageSourceBadge'
+import RemoteImage from '../common/RemoteImage'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 import FulfilmentNote from './FulfilmentNote'
 
 /**
@@ -110,7 +110,7 @@ export default function ProductCustomizeSheet({ product, groups: providedGroups,
 
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="relative shrink-0">
-          <ProductImage
+          <RemoteImage
             src={product.image_url}
             query={product.name}
             emoji={product.emoji}
@@ -119,7 +119,7 @@ export default function ProductCustomizeSheet({ product, groups: providedGroups,
             scrim
           >
             <ImageSourceBadge source={product.image_source} size="sm" className="absolute bottom-2 left-3" />
-          </ProductImage>
+          </RemoteImage>
           <button
             onClick={onClose}
             aria-label="Close"

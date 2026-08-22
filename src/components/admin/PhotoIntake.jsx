@@ -4,7 +4,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import {
   uploadGalleryImages, fetchImageAsFile, imageUrlsFromText,
 } from '../../lib/productStudio'
-import { QUALITY_MODES, ORIGINAL_MAX_BYTES } from '../../lib/productImages'
+import { QUALITY_MODES, ORIGINAL_MAX_BYTES } from '../../lib/imageUpload'
 import { usePasteImages } from '../../hooks/usePasteImages'
 
 /**

@@ -40,7 +40,7 @@ import { OCCASIONS } from '../data/planCatalog'
  *
  * ── Every tile has real photography ───────────────────────────────────────
  * Four committed HD frames each, cross-faded by RotatingPhoto. No emoji tiles
- * anywhere in the mosaic, and no runtime image search: `ProductImage`'s live
+ * anywhere in the mosaic, and no runtime image search: `RemoteImage`'s live
  * `query` path is capped at 24 lookups per page load app-wide, and fourteen
  * tiles times four frames is fifty-six. Every URL below is already resolved and
  * in the repo, so the mosaic costs zero API calls.

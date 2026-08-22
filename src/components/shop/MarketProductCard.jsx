@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Plus, Minus, BadgeCheck, Truck, Smartphone, Flame, CalendarHeart, Ticket, PenLine } from 'lucide-react'
-import ProductImage from './ProductImage'
-import DetailRotator from './DetailRotator'
+import RemoteImage from '../common/RemoteImage'
+import DetailRotator from '../common/DetailRotator'
 import RatingBadge from '../reviews/RatingBadge'
 import { formatINR } from '../../utils/format'
 import { FULFILMENT, FREE_DELIVERY_THRESHOLD, CUSTOMIZABLE_CATEGORIES } from '../../config/shop'
@@ -76,7 +76,7 @@ export default function MarketProductCard({
   return (
     <article className="shop-card group flex flex-col">
       <Link to={`/shop/product/${p.id}`} className="block relative">
-        <ProductImage
+        <RemoteImage
           src={p.image_url}
           query={p.name}
           emoji={p.emoji}

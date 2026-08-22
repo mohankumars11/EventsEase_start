@@ -1,6 +1,6 @@
 import { Check, Star, Minus, Plus, Info } from 'lucide-react'
 import OptionArt from './OptionArt'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 import { packCost, packUnitLabel, defaultPackQty } from '../../data/servicePacks'
 import { PACK_PHOTOS } from '../../config/generatedServicePhotos'
 import { formatINR } from '../../utils/format'

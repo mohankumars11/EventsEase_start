@@ -1,6 +1,6 @@
 import { ShieldCheck, Headset, RotateCcw, Phone, MessageCircle } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
-import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from './UpiAppIcons'
+import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../common/UpiAppIcons'
 
 /**
  * The footer a checkout is allowed to have.

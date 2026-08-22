@@ -28,7 +28,7 @@ import { fetchUnsplashPhoto } from '../../lib/unsplash'
 // Every zoom is disabled under `prefers-reduced-motion: reduce` via the
 // `.product-photo` / `.ken-burns` rules in index.css. The opacity fade
 // survives, because removing it would reintroduce the blank-frame flash.
-export default function ProductImage({
+export default function RemoteImage({
   src,
   query,
   emoji,

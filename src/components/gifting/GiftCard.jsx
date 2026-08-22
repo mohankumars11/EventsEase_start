@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Plus, Minus, Clock, Zap, Star } from 'lucide-react'
-import ProductImage from '../shop/ProductImage'
+import RemoteImage from '../common/RemoteImage'
 import { formatINR } from '../../utils/format'
 import { useCartLine } from '../shop/useProductAdd'
 import { useIsConfigurable } from '../../hooks/useProductOptions'
@@ -69,7 +69,7 @@ export default function GiftCard({
     <article className={`group relative flex flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_10px_22px_-16px_rgba(6,60,42,0.28)] transition-shadow duration-300 hover:shadow-[0_20px_40px_-20px_rgba(6,60,42,0.4)] ${className}`}>
       <Link to={`/shop/product/${p.id}`} className="block">
         <div className="relative">
-          <ProductImage
+          <RemoteImage
             src={p.image_url}
             query={p.image_url ? undefined : `${p.name} ${p.category}`}
             emoji={p.emoji}
