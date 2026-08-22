@@ -166,24 +166,37 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
         </linearGradient>
       </defs>
 
-      {/* ── The size and the offset are measured, not eyeballed ────────────
-          A script face sets its capitals oddly against the em, and Pinyon
-          Script is worse than most: getBBox on the glyph at font-size 100
-          reports ink 89.1 wide by 124.8 tall, and — because textAnchor
-          centres on the ADVANCE and this S carries a long entry stroke — the
-          ink's own centre sits 18.9 to the RIGHT of the anchor.
+      {/* ── Sized to the INK, measured on a canvas ──────────────────────────
+          This was sized against getBBox on the <text>, which reported 89.1 ×
+          124.8 at font-size 100 — and that is the layout box, not the letter.
+          Pinyon Script spends an enormous amount of its em on ascender and
+          descender space for swashes it does not always use, so fitting the
+          layout box to the viewBox left the actual S filling about half of
+          it, floating in padding. On the splash that padding read as a gap
+          between the mark and the wordmark that no margin could close,
+          because it was inside the SVG.
 
-          Both numbers were read off the rendered glyph rather than guessed,
-          because guessing produced a letter at two-fifths of the box on the
-          first attempt and a clipped one on the second.
+          Canvas `measureText` reports the real thing. At font-size 100:
 
-             font-size  100 × (56 / 124.8) ≈ 46, to leave a 4px margin
-             x          32 − (18.9 × 0.46) ≈ 23.3, to put ink centre on 32 */}
+            actualBoundingBoxLeft   -5     ink starts 5 right of the origin
+            actualBoundingBoxRight  51
+            actualBoundingBoxAscent 68
+            actualBoundingBoxDescent 1     the S barely drops below baseline
+            → ink 46 wide × 69 tall, centred at (28, -33.5) from the origin
+
+          Fit by height, leaving ~4 top and bottom in the 64 box:
+            font-size  100 × (56 / 69) ≈ 81
+            ink then   37.3 × 55.9, centred at (22.7, −27.1)
+            x          32 − 22.7  = 9.3
+            y          32 + 27.1  = 59.1   (alphabetic baseline, not central)
+
+          The letter is taller than it is wide, so the horizontal margin is
+          larger than the vertical. That is the glyph's own proportion and
+          fitting to width instead would push the S out of the box top and
+          bottom — which is the mistake the second attempt made. */}
       <text
-        x="23.3"
-        y="32"
-        textAnchor="middle"
-        dominantBaseline="central"
+        x="9.3"
+        y="59.1"
         fill={`url(#${gid})`}
         /* ── The weight is added, because the face has none ──────────────
            The reference S is heavy: broad strokes with a visible taper.
@@ -195,16 +208,13 @@ export function Monogram({ size = 40, gradientId, className = '' }) {
            twice the width while leaving the skeleton untouched, which is
            what a heavier cut of the same script would do. `paint-order` puts
            the stroke behind the fill so the highlight in the middle of the
-           gradient still reads as a highlight rather than being outlined.
-
-           1.6 in a 64 box at font-size 46 is roughly a 3.5% stroke — enough
-           to carry the letter at 22px, not enough to close the counters. */
+           gradient still reads as a highlight rather than being outlined. */
         stroke={`url(#${gid})`}
         strokeWidth={small ? 2.6 : 1.6}
         strokeLinejoin="round"
         style={{
           fontFamily: '"Pinyon Script", "Snell Roundhand", "Apple Chancery", cursive',
-          fontSize: '46px',
+          fontSize: '81px',
           fontWeight: 400,
           paintOrder: 'stroke fill',
         }}

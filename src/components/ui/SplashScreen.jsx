@@ -130,6 +130,13 @@ export default function SplashScreen() {
       <div className="relative flex flex-col items-center">
         {/* The mark, written.
 
+            No margin between this and the wordmark beyond a negative nudge.
+            The gap that used to sit here was not spacing — it was empty
+            viewBox inside the SVG, because the glyph was sized against its
+            layout box rather than its ink. Fixing the fit closed it, and the
+            -1 takes up the last of the letter's own bottom bearing so the
+            wordmark sits under the S rather than below its box.
+
             There was a shine here — a pale band sweeping across on the same
             diagonal as the gold, meant to read as light catching the gilding.
             It did not. The band was bounded by the letter's BOX rather than
@@ -146,12 +153,12 @@ export default function SplashScreen() {
           <Monogram size={132} />
         </div>
 
-        <h1 className="ink-rise mt-1 font-display text-[42px] font-bold leading-none text-white">
+        <h1 className="ink-rise -mt-1 font-display text-[42px] font-bold leading-none text-white">
           Sambramo
           <sup className="ml-1 align-super text-[0.3em] font-semibold text-white/60">®</sup>
         </h1>
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-2.5 flex items-center gap-3">
           <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-r from-transparent to-gold-400/80" />
           <p className="ink-rise ink-rise-late text-[10.5px] font-extrabold uppercase tracking-[0.24em] text-white/70">
             {BRAND.categoryLine}
