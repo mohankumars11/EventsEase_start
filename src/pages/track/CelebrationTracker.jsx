@@ -14,7 +14,7 @@ import SettlePayment, { PayButton } from '../../components/track/SettlePayment'
 import ServiceLedger from '../../components/track/ServiceLedger'
 import PaymentReceipt from '../../components/track/PaymentReceipt'
 import CelebrationReviews from '../../components/track/CelebrationReviews'
-import { TrackerHeader } from './OrderTracker'
+import TrackerHeader from '../../components/track/TrackerHeader'
 
 /**
  * One celebration, tracked end to end.

@@ -1,6 +1,3 @@
-import { formatINR } from '../utils/format'
-import { describeReasons } from './orderJourney'
-import { normaliseCity } from './analytics'
 
 /**
  * The admin's inbox.
@@ -14,8 +11,8 @@ import { normaliseCity } from './analytics'
  * existed). Both are the classic failure of this pattern and both are
  * unfixable after the fact, because there is no way to tell which side lied.
  *
- * So the feed is a VIEW over the rows the dashboard already loads: orders,
- * returns, complaints, service enquiries, celebration requests, reviews,
+ * So the feed is a VIEW over the rows the dashboard already loads:
+ * complaints, service enquiries, celebration requests, reviews,
  * vendor applications, waitlist signups. It cannot drift from the truth
  * because it IS the truth, re-read. It is also complete on day one — every
  * order ever placed has a notification, including the ones from before this
@@ -42,13 +39,9 @@ import { normaliseCity } from './analytics'
  * off the genuinely urgent ones are gone too.
  */
 export const KINDS = {
-  payment_claimed:  { label: 'Payment to confirm',   emoji: '💰', priority: 'high',   nav: 'lifecycle', tone: 'critical' },
-  return_requested: { label: 'Return requested',     emoji: '📮', priority: 'high',   nav: 'support',   tone: 'serious'  },
-  complaint:        { label: 'Complaint',            emoji: '⚠️', priority: 'high',   nav: 'support',   tone: 'critical' },
-  order_placed:     { label: 'New order',            emoji: '🛍️', priority: 'high',   nav: 'orders',    tone: 'good'     },
+  complaint:        { label: 'Complaint',            emoji: '⚠️', priority: 'high',   nav: 'complaints', tone: 'critical' },
   event_request:    { label: 'Celebration request',  emoji: '🎉', priority: 'high',   nav: 'new_requests', tone: 'good'  },
-  enquiry:          { label: 'Service enquiry',      emoji: '📋', priority: 'normal', nav: 'support',   tone: 'good'     },
-  order_cancelled:  { label: 'Order cancelled',      emoji: '🚫', priority: 'normal', nav: 'orders',    tone: 'serious'  },
+  enquiry:          { label: 'Service enquiry',      emoji: '📋', priority: 'normal', nav: 'enquiries', tone: 'good'     },
   vendor_applied:   { label: 'Partner application',  emoji: '🤝', priority: 'normal', nav: 'vendors',   tone: 'good'     },
   review:           { label: 'New review',           emoji: '⭐', priority: 'low',    nav: 'reviews',   tone: 'good'     },
   city_interest:    { label: 'Waitlist signup',      emoji: '🗺️', priority: 'low',    nav: 'geography', tone: 'good'     },
@@ -64,7 +57,7 @@ const shortId = id => String(id ?? '').slice(0, 8).toUpperCase()
  * and cheap enough to recompute on every render.
  */
 export function buildFeed({
-  orders = [], returns = [], complaints = [], enquiries = [],
+  complaints = [], enquiries = [],
   events = [], reviews = [], vendors = [], interest = [],
 } = {}) {
   const items = []
@@ -73,48 +66,9 @@ export function buildFeed({
     items.push({ key: `${type}:${id}`, type, at: new Date(at), title, detail, ...KINDS[type], ...extra })
   }
 
-  for (const o of orders) {
-    const who = o.profiles?.full_name ?? 'A customer'
-    const ref = `#${shortId(o.id)}`
-
-    // The city is free text a customer typed, so it is title-cased and
-    // trimmed here as it is everywhere else — "bengaluru " reads as a typo in
-    // our own product, not as the customer's.
-    const city = normaliseCity(o.address?.city)
-
-    push('order_placed', o.id, o.created_at,
-      `New order ${ref} · ${formatINR(o.total)}`,
-      `${who} ordered ${(o.order_items ?? []).length} item${(o.order_items ?? []).length === 1 ? '' : 's'}${city ? ` to ${city}` : ''}.`,
-      { orderId: o.id })
-
-    // A pending payment on a live order is a customer who has pressed "I've
-    // paid" and is waiting. It is keyed separately from the order itself so
-    // reading "new order" does not silently mark the money as handled.
-    if (o.payment_status === 'pending' && o.status !== 'cancelled') {
-      push('payment_claimed', o.id, o.created_at,
-        `${formatINR(o.total)} to confirm on ${ref}`,
-        `${who} says the UPI payment was sent. Nothing tells us it arrived — check the bank.`,
-        { orderId: o.id })
-    }
-
-    if (o.status === 'cancelled') {
-      push('order_cancelled', o.id, o.cancelled_at ?? o.updated_at,
-        `Order ${ref} cancelled`,
-        o.cancellation_reason || `${who} cancelled before it was dispatched.`,
-        { orderId: o.id })
-    }
-  }
-
-  for (const r of returns) {
-    push('return_requested', r.id, r.requested_at,
-      `Return on #${shortId(r.order_id)}`,
-      `${r.profiles?.full_name ?? 'A customer'} — ${describeReasons(r)}`,
-      { orderId: r.order_id, returnId: r.id, resolved: r.status !== 'requested' })
-  }
-
   for (const c of complaints) {
     push('complaint', c.id, c.created_at,
-      `Complaint about a${c.subject_type === 'order' ? 'n order' : ` ${c.subject_type}`}`,
+      `Complaint about a ${c.subject_type}`,
       `${c.profiles?.full_name ?? 'A customer'} — ${(c.message ?? '').slice(0, 90)}`,
       { resolved: c.status === 'resolved' })
   }

@@ -17,10 +17,10 @@ import PlanAppBar from '../../components/plan/PlanAppBar'
 import ServiceShelf from '../../components/plan/ServiceShelf'
 import PerksDeck from '../../components/plan/PerksDeck'
 import PromiseTicker from '../../components/plan/PromiseTicker'
-import OffersRail from '../../components/shop/OffersRail'
+import OffersRail from '../../components/plan/OffersRail'
 import OccasionCard from '../../components/home/OccasionCard'
 import TierRail from '../../components/home/TierRail'
-import { usePublicOffers, bestOfferFor } from '../../hooks/usePublicOffers'
+import { OFFER_BY_ID } from '../../data/celebrationOffers'
 
 /**
  * The plan hub — everything Sambramo can be asked for, on one screen.
@@ -62,7 +62,6 @@ export default function PlanHub() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { totalCount, cartPath } = useCart()
   const { city, chosen } = useCity()
-  const offers = usePublicOffers()
   const [query, setQuery] = useState('')
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
 
@@ -273,7 +272,7 @@ export default function PlanHub() {
                 <OccasionCard
                   key={o.id}
                   occasion={o}
-                  offer={bestOfferFor(o.fromPrice, offers)}
+                  offer={OFFER_BY_ID.first_booking}
                   stagger={i * 260}
                 />
               ))}
@@ -290,7 +289,7 @@ export default function PlanHub() {
             emoji, name, guest band — which meant the ladder appeared twice in
             the app in two different designs, and only one of them carried the
             photographs, the floor price and the coordination percentage. */}
-        <TierRail offer={bestOfferFor(50000, offers)} />
+        <TierRail offer={OFFER_BY_ID.first_booking} />
 
         {/* ── Perks ─────────────────────────────────────────────────── */}
         <PerksDeck />

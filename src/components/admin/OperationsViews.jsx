@@ -3,8 +3,6 @@ import { Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { formatINR, formatDate } from '../../utils/format'
-import { ORDER_FLOW } from '../../lib/analytics'
-import { describeReasons } from '../../lib/orderJourney'
 import { EmptyNote } from './viz/Primitives'
 
 /**
@@ -163,126 +161,6 @@ const ORDER_STATUS_CSS = {
   cancelled:  { bg: 'bg-red-100',    text: 'text-red-700'    },
 }
 
-export function OrdersContent({ data, onOpenOrder }) {
-  const toast = useToast()
-  const { orders = [], refresh } = data
-  const [acting, setActing] = useState(null)
-
-  async function advanceStatus(order) {
-    const next = ORDER_FLOW[ORDER_FLOW.indexOf(order.status) + 1]
-    if (!next) return
-    setActing(order.id)
-    const { error } = await supabase.from('orders').update({ status: next }).eq('id', order.id)
-    if (error) toast.error(friendlyError(error, 'Could not move this order forward.'))
-    else {
-      toast.success(`Order #${order.id.slice(0, 8).toUpperCase()} → ${next}.`)
-      await refresh()
-    }
-    setActing(null)
-  }
-
-  // Direct-UPI orders have no gateway callback, so a customer tapping
-  // "I've completed the payment" only creates a payment_status='pending'
-  // order — this is the manual step where an admin, after checking the
-  // UPI app/bank statement for that amount, confirms it actually arrived.
-  async function markPaid(order) {
-    if (!confirm(`Confirm ₹${order.total} was received via UPI for order #${order.id.slice(0, 8).toUpperCase()}?`)) return
-    setActing(order.id)
-    const { error } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id)
-    if (error) toast.error(friendlyError(error, 'Could not mark this order paid.'))
-    else {
-      toast.success(`Payment confirmed for #${order.id.slice(0, 8).toUpperCase()}.`)
-      await refresh()
-    }
-    setActing(null)
-  }
-
-  return (
-    <div className="space-y-4">
-      {orders.length === 0 ? (
-        <div className="card p-14 text-center">
-          <div className="text-4xl mb-3">🛍️</div>
-          <p className="text-gray-500 text-sm font-medium">No orders yet.</p>
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[800px]">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {['Order', 'Customer', 'Items', 'Total', 'Payment', 'Status', 'Actions'].map(col => (
-                    <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {orders.map(order => {
-                  const css = ORDER_STATUS_CSS[order.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
-                  const next = ORDER_FLOW[ORDER_FLOW.indexOf(order.status) + 1]
-                  return (
-                    <tr
-                      key={order.id}
-                      onClick={() => onOpenOrder?.(order.id)}
-                      className="hover:bg-purple-50/30 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-mono text-xs font-semibold text-gray-900">#{order.id.slice(0, 8).toUpperCase()}</div>
-                        <div className="text-gray-500 text-[11px] mt-0.5">{formatDate(order.created_at)}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs text-gray-700">{order.profiles?.full_name ?? '—'}</div>
-                        <div className="text-[11px] text-gray-500">{order.profiles?.phone ?? order.address?.phone ?? ''}</div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-600">
-                        {order.order_items?.length ?? 0} item{order.order_items?.length !== 1 ? 's' : ''}
-                      </td>
-                      <td className="px-4 py-3 text-xs font-semibold text-gray-900">{formatINR(order.total)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[11px] font-semibold ${order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-500'}`}>
-                          {order.payment_status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${css.bg} ${css.text}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      {/* The row opens the journey; the buttons must not. */}
-                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center gap-1.5">
-                          {order.payment_status === 'pending' && (
-                            <button onClick={() => markPaid(order)} disabled={acting === order.id}
-                              className="px-2.5 py-1 bg-green-600 text-ink text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
-                              Mark Paid
-                            </button>
-                          )}
-                          {next && order.status !== 'cancelled' && (
-                            <button onClick={() => advanceStatus(order)} disabled={acting === order.id}
-                              className="px-2.5 py-1 bg-plum-600 text-white text-xs font-medium rounded-lg hover:bg-plum-700 transition-colors disabled:opacity-50">
-                              {acting === order.id ? <Loader2 size={11} className="animate-spin" /> : `Mark ${next}`}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50">
-            <p className="text-xs text-gray-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ── Reviews ───────────────────────────────────────────────────────────── */
-
 export function ReviewsContent({ data }) {
   const toast = useToast()
   const { reviews = [], refresh } = data
@@ -372,55 +250,40 @@ export function ReviewsContent({ data }) {
   )
 }
 
-/* ── Support: returns, complaints, service requests ────────────────────── */
+/* ── Support: complaints and service requests ──────────────────────────── */
 
 const SUPPORT_PILLS = [
-  { id: 'returns',    label: 'Returns',          emoji: '↩️' },
   { id: 'complaints', label: 'Complaints',       emoji: '⚠️' },
   { id: 'requests',   label: 'Service Requests', emoji: '📋' },
 ]
 
 /**
- * Returns, complaints and service enquiries.
+ * Complaints and service enquiries.
  *
- * ── Why this is three screens now, not one "Support" tab ─────────────────
+ * ── Why these are separate screens, not one "Support" tab ────────────────
  * They were pills on one page because they are all "somebody wrote in". But
- * that is a shape, not a subject: a return is an ORDER problem, a complaint is
- * a PERSON problem, and a service enquiry is an unpriced EVENT. Filing them
- * together meant an admin working the order queue had to leave it, open
- * Support, and remember which of three pills held the returns.
+ * that is a shape, not a subject: a complaint is a PERSON problem and a
+ * service enquiry is an unpriced EVENT. Filing them together meant an admin
+ * had to open Support and remember which pill held what.
+ *
+ * There was a third — returns — and it was the clearest case of all, being an
+ * ORDER problem. It left with the shop.
  *
  * So each is exported on its own and sits in its own domain group. The
  * component stays single because the logic — reply, resolve, quote — is
  * genuinely shared; `only` fixes which section renders and drops the pill bar.
  */
-function SupportContent({ data, onOpenOrder, only }) {
+function SupportContent({ data, only }) {
   const toast = useToast()
-  const { returns = [], complaints = [], enquiries = [], refresh } = data
+  const { complaints = [], enquiries = [], refresh } = data
 
-  const [pill, setPill]   = useState(only ?? 'returns')
+  const [pill, setPill]   = useState(only ?? 'complaints')
   const [acting, setActing] = useState(null)
   const [replyingId, setReplyingId] = useState(null)
   const [replyText, setReplyText]   = useState('')
   const [quotingId, setQuotingId]   = useState(null)
   const [quotePrice, setQuotePrice] = useState('')
   const [quoteNotes, setQuoteNotes] = useState('')
-
-  async function resolveReturn(id, status) {
-    setActing(id)
-    const { error } = await supabase.from('return_requests')
-      .update({ status, resolved_at: new Date().toISOString() }).eq('id', id)
-    if (!error && status === 'refunded') {
-      const row = returns.find(r => r.id === id)
-      if (row) await supabase.from('orders').update({ payment_status: 'refunded' }).eq('id', row.order_id)
-    }
-    if (error) toast.error(friendlyError(error, 'Could not update this return request.'))
-    else {
-      toast.success(status === 'refunded' ? 'Marked refunded — the order was updated too.' : `Return marked ${status}.`)
-      await refresh()
-    }
-    setActing(null)
-  }
 
   function startReply(item) {
     setReplyingId(item.id)
@@ -490,11 +353,6 @@ function SupportContent({ data, onOpenOrder, only }) {
             }`}
           >
             {p.emoji} {p.label}
-            {p.id === 'returns' && returns.filter(r => r.status === 'requested').length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px]">
-                {returns.filter(r => r.status === 'requested').length}
-              </span>
-            )}
             {p.id === 'complaints' && complaints.filter(c => c.status === 'open').length > 0 && (
               <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px]">
                 {complaints.filter(c => c.status === 'open').length}
@@ -503,50 +361,6 @@ function SupportContent({ data, onOpenOrder, only }) {
           </button>
         ))}
       </div>
-
-      {active === 'returns' && (
-        returns.length === 0 ? <EmptyNote icon="↩️">No return requests.</EmptyNote> : (
-          <div className="space-y-3">
-            {returns.map(r => (
-              <div key={r.id} className="card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">{r.profiles?.full_name ?? '—'}</p>
-                    <p className="text-xs text-gray-500">
-                      Order #{r.order_id.slice(0, 8).toUpperCase()} · {formatINR(r.orders?.total)} · {formatDate(r.requested_at)}
-                    </p>
-                    <p className="text-sm text-gray-700 mt-1.5">{describeReasons(r)}{r.comment ? ` — ${r.comment}` : ''}</p>
-                  </div>
-                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    r.status === 'requested' ? 'bg-amber-100 text-amber-700' :
-                    r.status === 'refunded'  ? 'bg-green-100 text-green-700' :
-                    r.status === 'rejected'  ? 'bg-red-100 text-red-700' :
-                    r.status === 'refund_pending' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                  }`}>{r.status.replace(/_/g, ' ')}</span>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {/* The decision lives in the order journey, where the policy
-                      check and the calculated refund amount are — approving a
-                      return from a card that shows neither is how a delivery
-                      fee gets refunded on a changed-mind return. */}
-                  <button
-                    onClick={() => onOpenOrder?.(r.order_id)}
-                    className="px-3 py-1.5 bg-plum-600 text-white text-xs font-semibold rounded-lg hover:bg-plum-700"
-                  >
-                    Open the order &amp; decide
-                  </button>
-                  {r.status === 'requested' && (
-                    <button onClick={() => resolveReturn(r.id, 'rejected')} disabled={acting === r.id}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 disabled:opacity-50">
-                      Reject outright
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      )}
 
       {active === 'complaints' && (
         complaints.length === 0 ? <EmptyNote icon="⚠️">No complaints.</EmptyNote> : (
@@ -699,7 +513,6 @@ function SupportContent({ data, onOpenOrder, only }) {
  * The three, each in its own domain. Same component, one section apiece —
  * see the note on SupportContent for why they were split.
  */
-export const ReturnsView    = props => <SupportContent {...props} only="returns" />
 export const ComplaintsView = props => <SupportContent {...props} only="complaints" />
 export const EnquiriesView  = props => <SupportContent {...props} only="requests" />
 

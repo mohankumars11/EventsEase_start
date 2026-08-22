@@ -10,8 +10,8 @@ import AdminShell from '../../components/admin/AdminShell'
 import CommandCenter from '../../components/admin/CommandCenter'
 import NotificationCenter, { NotificationInbox } from '../../components/admin/NotificationCenter'
 import {
-  VendorsContent, OrdersContent, ReviewsContent,
-  ReturnsView, ComplaintsView, EnquiriesView,
+  VendorsContent, ReviewsContent,
+  ComplaintsView, EnquiriesView,
 } from '../../components/admin/OperationsViews'
 
 /**
@@ -36,17 +36,12 @@ import {
  */
 
 const EventRequests       = lazy(() => import('../../components/admin/EventRequests'))
-const ProductIntelligence = lazy(() => import('../../components/admin/ProductIntelligence'))
 const AreaDemand          = lazy(() => import('../../components/admin/AreaDemand'))
-const OrderLifecycle      = lazy(() => import('../../components/admin/OrderLifecycle'))
 const CustomersView       = lazy(() => import('../../components/admin/CustomersView'))
-const AdminCatalog        = lazy(() => import('../../components/admin/AdminCatalog'))
-const ProductStudio       = lazy(() => import('../../components/admin/ProductStudio'))
 const AdminServices       = lazy(() => import('../../components/admin/AdminServices'))
 const ContentStudio       = lazy(() => import('../../components/admin/ContentStudio'))
 const DecorPhotoStudio    = lazy(() => import('../../components/admin/DecorPhotoStudio'))
 const DateConsole         = lazy(() => import('../../components/admin/DateConsole'))
-const OrderJourney        = lazy(() => import('../../components/admin/OrderJourney'))
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -55,16 +50,13 @@ export default function AdminDashboard() {
   const data        = useAdminData()
 
   const [activeNav, setActiveNav] = useState('overview')
-  // Which order's journey is open. An id rather than the row, so the drawer
-  // re-reads from `data` after a refresh instead of showing a stale copy.
-  const [journeyId, setJourneyId] = useState(null)
 
   const notifications = useNotifications(data, {
     onToast: item => toast.info(`${item.emoji} ${item.title}`),
   })
 
   const {
-    events = [], orders = [], vendors = [], returns = [], complaints = [],
+    events = [], vendors = [], complaints = [],
     enquiries = [], loading, refreshing, error, refresh,
   } = data
 
@@ -73,11 +65,9 @@ export default function AdminDashboard() {
     unread:     notifications.unread,
     new:        events.filter(e => e.status === 'REQUEST_RECEIVED').length,
     enquiries:  enquiries.filter(e => e.status === 'open').length,
-    orders:     orders.filter(o => o.status !== 'cancelled' && o.payment_status === 'pending').length,
-    returns:    returns.filter(r => ['requested', 'approved', 'refund_pending'].includes(r.status)).length,
     complaints: complaints.filter(c => c.status === 'open').length,
     vendors:    vendors.filter(v => v.status === 'PENDING_REVIEW').length,
-  }), [notifications.unread, events, enquiries, orders, returns, complaints, vendors])
+  }), [notifications.unread, events, enquiries, complaints, vendors])
 
   /**
    * `resolveNav` maps retired ids onto their new home rather than dropping
@@ -88,8 +78,6 @@ export default function AdminDashboard() {
     setActiveNav(resolveNav(id))
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
-
-  const openOrder = setJourneyId
 
   return (
     <AdminShell
@@ -124,47 +112,26 @@ export default function AdminDashboard() {
 
             {/* Events */}
             {activeNav === 'requests'  && <EventRequests data={data} navigate={navigate} />}
-            {activeNav === 'enquiries' && <EnquiriesView data={data} onOpenOrder={openOrder} />}
+            {activeNav === 'enquiries' && <EnquiriesView data={data} />}
             {activeNav === 'services'  && <AdminServices data={data} />}
             {activeNav === 'dates'     && <DateConsole />}
 
-            {/* Orders */}
-            {activeNav === 'allorders' && <OrdersContent data={data} onOpenOrder={openOrder} />}
-            {activeNav === 'lifecycle' && <OrderLifecycle data={data} onOpenOrder={openOrder} />}
-            {activeNav === 'returns'   && <ReturnsView data={data} onOpenOrder={openOrder} />}
-
             {/* Catalogue */}
-            {activeNav === 'studio'      && <ProductStudio />}
-            {activeNav === 'catalog'     && <AdminCatalog />}
             {activeNav === 'decorphotos' && <DecorPhotoStudio />}
             {activeNav === 'content'     && <ContentStudio onNavigate={go} />}
 
             {/* People */}
             {activeNav === 'customers'  && <CustomersView data={data} />}
-            {activeNav === 'complaints' && <ComplaintsView data={data} onOpenOrder={openOrder} />}
+            {activeNav === 'complaints' && <ComplaintsView data={data} />}
             {activeNav === 'reviews'    && <ReviewsContent data={data} />}
             {activeNav === 'vendors'    && <VendorsContent data={data} />}
 
             {/* Insight */}
-            {activeNav === 'products'  && <ProductIntelligence data={data} onNavigate={go} />}
             {activeNav === 'geography' && <AreaDemand data={data} />}
           </Suspense>
         </div>
       )}
 
-      {/* The journey opens over whichever screen raised it, so an admin
-          triaging the payment queue never loses their place in it. */}
-      {journeyId && (
-        <Suspense fallback={null}>
-          <OrderJourney
-            order={orders.find(o => o.id === journeyId)}
-            events={data.orderEvents}
-            returns={returns}
-            onClose={() => setJourneyId(null)}
-            onRefresh={refresh}
-          />
-        </Suspense>
-      )}
     </AdminShell>
   )
 }

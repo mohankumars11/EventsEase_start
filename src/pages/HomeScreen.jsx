@@ -1,26 +1,24 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Clock, ChevronRight, PhoneCall,
   MessageCircle, SearchX, CalendarHeart, ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { selectActive } from '../lib/activeProducts'
 import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
-import { useShopCategories } from '../hooks/useShopCategories'
 import { FESTIVALS } from '../data/festivals'
 import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
 import { OCCASIONS } from '../data/planCatalog'
-import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
+import { ALL_SERVICES } from '../data/servicePricing'
+import { allOffers } from '../lib/allOffers'
+import { OFFER_BY_ID } from '../data/celebrationOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
 import RemoteImage from '../components/common/RemoteImage'
 import OffersGrid from '../components/home/OffersGrid'
-import StickyCartBar from '../components/shop/StickyCartBar'
-import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
@@ -30,9 +28,7 @@ import BrandBanner from '../components/home/BrandBanner'
 import ServiceMosaic from '../components/home/ServiceMosaic'
 import PhotoReelFilm from '../components/home/PhotoReelFilm'
 import TierRail from '../components/home/TierRail'
-import ShopPicksRail from '../components/home/ShopPicksRail'
-import { QuickRail, SquareGrid } from '../components/gifting/GiftSections'
-import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
+import { SquareGrid, TILE_COLOURS } from '../components/home/SquareGrid'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -68,18 +64,17 @@ import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
    appeared on the customer's own front door. */
 
 const FESTIVAL_DETAIL_IDS = new Set(FESTIVALS.map(f => f.id))
-const FESTIVAL_SHOP_ROUTE = {
-  'independence-day': { category: 'Party Essentials', occasion: 'Independence Day' },
-  'raksha-bandhan':   { category: 'Gifts', occasion: 'Rakhi' },
-  'janmashtami':      { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
-  'dussehra':         { category: 'Pooja & Essentials', occasion: 'Navratri' },
-  'new-years-eve':    { category: 'Gifts', occasion: 'New Year' },
-}
+/* Five of the eight festivals had no detail page, so they were routed into a
+   shop shelf instead — Rakhi to Gifts, Janmashtami to Pooja, and anything
+   unrecognised to /shop/Gifts. Every one of those destinations is gone.
+
+   A festival we cannot yet describe on its own page is still a celebration we
+   arrange, so the planner is the honest fallback rather than a category that
+   no longer exists. Giving the remaining five their own entries in
+   data/festivals would remove the fork entirely; until then this is one line
+   instead of a lookup table. */
 function festivalHref(f) {
-  if (FESTIVAL_DETAIL_IDS.has(f.id)) return `/festivals/${f.id}`
-  const route = FESTIVAL_SHOP_ROUTE[f.id] ?? { category: 'Gifts' }
-  const qs = route.occasion ? `?occasion=${encodeURIComponent(route.occasion)}` : ''
-  return `/shop/${encodeURIComponent(route.category)}${qs}`
+  return FESTIVAL_DETAIL_IDS.has(f.id) ? `/festivals/${f.id}` : '/plan'
 }
 function daysUntil(dateStr) {
   const today = new Date()
@@ -96,8 +91,7 @@ export default function HomeScreen() {
   const { user, profile } = useAuth()
   const [celebrations, setCelebrations] = useState([])
   const [query, setQuery] = useState('')
-  const offers = usePublicOffers()
-  const { productCount } = useCart()
+  const offers = allOffers()
 
   const firstName =
     profile?.full_name?.split(' ')[0] ??
@@ -155,7 +149,8 @@ export default function HomeScreen() {
   }, [])
 
   const nextFestival = upcoming[0]
-  const bestOffer = offers[0]
+  // The claimable one leads — an offer that applies itself is not news.
+  const bestOffer = offers.find(o => o.action === 'claim') ?? offers[0]
 
   /* ── The deck carries what is TIME-SENSITIVE, and nothing else ──────────
      There used to be a permanent "Tell us what's being celebrated / Plan a
@@ -188,8 +183,8 @@ export default function HomeScreen() {
       key: `fest-${nextFestival.id}`,
       eyebrow: `${urgency(nextFestival.days)} to go`,
       title: nextFestival.name,
-      body: 'Sweets, decor, pooja essentials and the whole celebration — sorted before the day arrives.',
-      cta: FESTIVAL_DETAIL_IDS.has(nextFestival.id) ? 'Plan this festival' : 'Shop the festival',
+      body: 'Decor, catering, priest and photography — arranged before the day arrives.',
+      cta: 'Plan this festival',
       to: festivalHref(nextFestival),
       art: nextFestival.emoji,
       background: 'linear-gradient(120deg,#b45309 0%,#d97706 45%,#c62828 100%)',
@@ -197,16 +192,12 @@ export default function HomeScreen() {
     bestOffer && {
       key: `offer-${bestOffer.id}`,
       eyebrow: 'Live offer',
-      title: bestOffer.discount_type === 'percent'
-        ? `${Number(bestOffer.discount_value)}% off the shop`
-        : `${formatINR(bestOffer.discount_value)} off the shop`,
-      body: `Use code ${bestOffer.code} at checkout${
-        Number(bestOffer.min_order_amount) > 0 ? ` on orders above ${formatINR(bestOffer.min_order_amount)}` : ''
-      }.`,
-      cta: 'Start shopping',
-      to: '/shop',
+      title: `${bestOffer.headline} your celebration`,
+      body: `${bestOffer.condition} Quote the code ${bestOffer.code} on your enquiry.`,
+      cta: 'Start planning',
+      to: bestOffer.to,
       art: '🎁',
-      background: 'linear-gradient(120deg,#0e523c 0%,#12694c 50%,#1c8560 100%)',
+      background: 'linear-gradient(120deg,#4c1d95 0%,#6d28d9 50%,#7c3aed 100%)',
     },
   ].filter(Boolean)
 
@@ -242,29 +233,7 @@ export default function HomeScreen() {
       {searching ? (
         <SearchResults query={query.trim()} onClear={() => setQuery('')} />
       ) : (
-        /* The tail padding exists to clear StickyCartBar, so it is only spent
-           when that bar is on screen. Reserved unconditionally it left roughly
-           300px of empty plum under the support strip for every visitor with an
-           empty cart, which reads as a page that failed to finish loading.
-
-           ── The vertical rhythm ─────────────────────────────────────────
-           One `space-y-8` used to separate everything, and 32px between every
-           pair is not a rhythm — it is the absence of one. On a 390px phone it
-           also reads as much more than 32px, because each neighbour is a
-           rounded card with its own padding and a soft shadow, so the eye
-           measures card-edge to card-edge and sees the gap plus two inner
-           margins.
-
-           The page now spaces by *relationship* rather than by default:
-
-             8px    inside a block that is one idea (the hero pair below)
-             24px   between two sections that are different ideas
-             +8px   only before the closing explanatory tail
-
-           Everything the trim saves is real screen: the occasion grid, which
-           is the thing people are here to tap, arrives most of a phone-height
-           earlier than it did. */
-        <div className={`mx-auto max-w-3xl space-y-4 pt-0 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
+        <div className="mx-auto max-w-3xl space-y-4 pt-0 pb-8">
 
           {/* ── The name, once, properly ──────────────────────────────
               Nobody has heard of Sambramo yet: there is no rating, no order
@@ -276,16 +245,6 @@ export default function HomeScreen() {
               see the component for why that trade is worth making now and why
               it is written to expire once there is recall to trade on. */}
           <BrandBanner />
-
-          {/* ── The seven ways in ─────────────────────────────────────
-              The same square rail the storefront opens with, in the same
-              place, for the same reason: most people arriving here want a
-              thing rather than a celebration, and the fastest route to a
-              thing should not be below three sections of argument.
-
-              Square tiles with the name underneath — see SquareTile for why
-              the caption sits below the photograph rather than over it. */}
-          <QuickRail items={QUICK_RAIL} />
 
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
@@ -355,17 +314,12 @@ export default function HomeScreen() {
               different controls. */}
           <OffersGrid />
 
-          {/* ── Real products, priced, one tap from the front door ────
-              The only section on Home that was ever a straight product
-              rail, and it used to sit tenth. */}
-          <ShopPicksRail />
-
           {/* ── The six scales of celebration ─────────────────────────
               The tiers are the axis customers actually start on: nobody
               thinks "I want the premium package", they think "there'll be
               about sixty people". One rail serves every occasion, and it
               carries a real scale, a real price and a live coupon. */}
-          <TierRail offer={bestOfferFor(50000, offers)} />
+          <TierRail offer={OFFER_BY_ID.first_booking} />
 
           {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single
@@ -493,25 +447,17 @@ export default function HomeScreen() {
         </div>
       )}
 
-      {/* ── One occupant of the bottom strip at a time ──────────────────
-          Three separate components can float in this band on Home —
-          ResumePrompt (App.jsx), StickyCartBar, and DateInterestBadge — and
-          all three used to be z-40, in the same place, with no knowledge of
-          each other. Which one you could actually read came down to DOM
-          order, and with a cart AND an unfinished journey the corner was
-          three cards stacked on top of one another.
+      {/* ── The bottom strip ────────────────────────────────────────
+          Three components used to float in this band — ResumePrompt
+          (App.jsx), StickyCartBar and DateInterestBadge — all at z-40, in the
+          same place, with no knowledge of each other. Which one you could
+          actually read came down to DOM order.
 
-          The order is by how much the customer has already committed:
-
-            ResumePrompt      they started a celebration and stopped
-            StickyCartBar     they have items waiting
-            DateInterestBadge an ambient nudge, and the first to yield
-
-          ResumePrompt self-gates to Home, so this file only has to arbitrate
-          its own two — and the cart bar's condition is the same `productCount`
-          it gates itself on, read here rather than duplicated. */}
-      <StickyCartBar />
-      {productCount === 0 && <DateInterestBadge />}
+          The cart bar left with the shop, so the arbitration is gone too:
+          ResumePrompt self-gates to Home, and the badge is the only other
+          occupant. It no longer waits for an empty cart, because there is no
+          cart on this screen to be full. */}
+      <DateInterestBadge />
     </div>
   )
 }
@@ -610,46 +556,35 @@ function SupportStrip() {
 
 /* ── Search ───────────────────────────────────────────────────────────── */
 /**
- * One search box over both halves of the business.
+ * One search box over everything we arrange.
  *
- * Someone typing "birthday" might want a cake delivered tomorrow or a party
- * arranged next month, and the app has no way to know which — so it answers
- * both, labelled, rather than guessing and being wrong half the time. The
- * local matches (occasions, festivals, categories) render instantly; the
- * product query is debounced behind them.
+ * This used to answer for both halves of the business — a debounced `products`
+ * query alongside the local matches, because somebody typing "birthday" might
+ * have wanted a cake tomorrow or a party next month.
+ *
+ * With the shop gone the obvious move is to delete the query and keep the
+ * local lists, and that would have been a mistake: it leaves a search box on
+ * the front door matching eleven occasions and eight festivals, so "catering",
+ * "photographer", "mehendi" and "mandap" all return nothing. A search that
+ * finds nothing is worse than no search.
+ *
+ * So it searches the services too. They are local — SERVICE_GROUPS is what the
+ * quote engine itself prices from — which means no query, no debounce, no
+ * loading state and no dependency on a migration having been applied.
  */
 function SearchResults({ query, onClear }) {
   const navigate = useNavigate()
-  const shopCategories = useShopCategories()
-  const [products, setProducts] = useState(null)
-  const reqId = useRef(0)
   const needle = query.toLowerCase()
 
   const occasions = EVENT_TYPES.filter(t => t.label.toLowerCase().includes(needle) || t.tagline?.toLowerCase().includes(needle))
   const festivals = FESTIVALS.filter(f => f.name.toLowerCase().includes(needle))
-  const categories = shopCategories.filter(c => c.label.toLowerCase().includes(needle) || c.tagline?.toLowerCase().includes(needle))
+  const services = ALL_SERVICES.filter(
+    v => v.name.toLowerCase().includes(needle) || v.desc?.toLowerCase().includes(needle),
+  ).slice(0, 8)
 
-  useEffect(() => {
-    const id = ++reqId.current
-    setProducts(null)
-    const t = setTimeout(() => {
-      const term = query.replace(/[%,]/g, ' ')
-      // Search reached retired products too — same omission as the shop rail,
-      // and worse here, because a search result is something the customer
-      // asked for by name and will assume is buyable.
-      selectActive(
-        'id, name, price, emoji, image_url, category',
-        q => q
-          .or(`name.ilike.%${term}%,description.ilike.%${term}%,occasion.ilike.%${term}%`)
-          .limit(8)
-      ).then(({ data }) => { if (id === reqId.current) setProducts(data ?? []) })
-    }, 260)
-    return () => clearTimeout(t)
-  }, [query])
 
   const nothing =
-    occasions.length === 0 && festivals.length === 0 &&
-    categories.length === 0 && products !== null && products.length === 0
+    occasions.length === 0 && festivals.length === 0 && services.length === 0
 
   if (nothing) {
     return (
@@ -685,28 +620,15 @@ function SearchResults({ query, onClear }) {
         </Group>
       )}
 
-      {categories.length > 0 && (
-        <Group title="Browse the shop" hint="Delivered, no planning needed">
-          {categories.map(c => (
-            <Row key={c.id} emoji={c.emoji} label={c.label} sub={c.tagline}
-                 onClick={() => navigate(`/shop/${encodeURIComponent(c.id)}`)} />
+      {services.length > 0 && (
+        <Group title="Book just this one thing" hint="No whole celebration required">
+          {services.map(v => (
+            <Row key={v.id} emoji={v.emoji} label={v.name} sub={v.desc}
+                 onClick={() => navigate(`/service/${v.id}`)} />
           ))}
         </Group>
       )}
 
-      <Group title="Buy this" hint={products === null ? 'Searching…' : `${products.length} item${products.length === 1 ? '' : 's'}`}>
-        {products === null
-          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="a-well h-14 animate-pulse" />)
-          : products.map(p => (
-              <Row
-                key={p.id}
-                emoji={p.emoji}
-                label={p.name}
-                sub={`${p.category} · ${formatINR(p.price)}`}
-                onClick={() => navigate(`/shop/product/${p.id}`)}
-              />
-            ))}
-      </Group>
     </div>
   )
 }

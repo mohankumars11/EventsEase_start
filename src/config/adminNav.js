@@ -77,49 +77,11 @@ export const NAV = [
     ],
   },
   {
-    id: 'orders',
-    label: 'Orders',
-    hint: 'The shop business',
-    emoji: '🛍️',
-    items: [
-      {
-        id: 'allorders', label: 'All Orders', emoji: '🧾', badge: 'orders',
-        title: 'All Orders',
-        description: 'Every shop order, newest first. Open any one for its full journey.',
-      },
-      {
-        id: 'lifecycle', label: 'Order Lifecycle', emoji: '🔄',
-        title: 'Order Lifecycle',
-        description: 'The pipe from placed to delivered, and the two places orders pile up.',
-      },
-      {
-        id: 'returns', label: 'Returns & Refunds', emoji: '↩️', badge: 'returns',
-        title: 'Returns & Refunds',
-        description: 'What came back, why, and what we owe — measured against the policy.',
-      },
-    ],
-  },
-  {
     id: 'catalogue',
     label: 'Catalogue',
-    hint: 'What we sell',
+    hint: 'What a customer sees',
     emoji: '🏬',
     items: [
-      {
-        /* The screen this group is really about. Everything a customer sees —
-           the shelves, the photographs, the clips, the story, the questions,
-           the price, the rating — is edited here, and a whole supplier PDF can
-           be read into it in one go. Listed first because filling the shop in
-           is the job; fixing one photo is a follow-up. */
-        id: 'studio', label: 'Product Studio', emoji: '🏬',
-        title: 'Product Studio',
-        description: 'Everything we sell — add it, photograph it, film it, price it, tell its story.',
-      },
-      {
-        id: 'catalog', label: 'Photo Coverage', emoji: '🖼️',
-        title: 'Photo Coverage',
-        description: 'The camera queue: which products still have a stock lookalike instead of the real thing.',
-      },
       {
         /* Its own screen rather than a tab inside Content Studio, which is
            where a "decor" section already lives. That one edits decor LEVELS
@@ -174,11 +136,6 @@ export const NAV = [
     emoji: '📈',
     items: [
       {
-        id: 'products', label: 'Product Intelligence', emoji: '📦',
-        title: 'Product Intelligence',
-        description: 'Every item in the shop, ranked by what it actually does.',
-      },
-      {
         id: 'geography', label: 'Area Demand', emoji: '🗺️',
         title: 'Area Demand',
         description: 'Where orders ship, where celebrations are planned, and where to open next.',
@@ -196,19 +153,25 @@ export const NAV_BY_ID = Object.fromEntries(NAV_ITEMS.map(i => [i.id, i]))
  * screen — the same reason the customer-facing routes keep their redirects.
  */
 export const NAV_ALIASES = {
-  /* 'studio' used to mean Content Studio and now means Product Studio. The old
-     id is in bookmarks and in the `nav` field of already-written notifications,
-     so Content Studio moved to its own id rather than the two fighting over
-     one — and anything still asking for 'contentstudio' resolves too. */
+  /* 'studio' meant Content Studio, then Product Studio, and now nothing —
+     Product Studio left with the shop. Both old ids resolve to the Content
+     Studio they originally described. */
   contentstudio:   'content',
+  studio:          'content',
+  catalog:         'content',
   new_requests:    'requests',
   under_review:    'requests',
   vendor_sourcing: 'requests',
   proposals:       'requests',
   confirmed:       'requests',
   upcoming:        'requests',
-  orders:          'allorders',
-  support:         'returns',
+  /* The shop's ids are gone; resolveNav falls back to 'overview' for anything
+     unknown, so they need no entry. `support` does: lib/notifications still
+     writes nav:'support' on complaint and enquiry rows, and both of those are
+     event-side and very much alive. It used to resolve to Returns, which no
+     longer exists — pointed at Complaints, which is where a person who wrote
+     in is actually dealt with. */
+  support:         'complaints',
 }
 
 export function resolveNav(id) {

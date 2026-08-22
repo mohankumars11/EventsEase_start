@@ -3,7 +3,6 @@ import { ArrowUpRight } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
 import { BRAND } from '../../config/sambramo'
 import { CATALOG_STATS, OCCASIONS } from '../../data/planCatalog'
-import { CATALOGUE_PHOTOS } from '../../config/imagery'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -46,14 +45,11 @@ import { formatINR } from '../../utils/format'
  * coming back, that it is not where it was.
  */
 
-/* The photograph behind each door. Committed URLs, not a runtime search — the
+/* The photograph behind the door. A committed URL, not a runtime search — the
    live-search budget is 24 per page load app-wide and the mosaic below already
-   has fourteen tiles that need none of it. */
+   has tiles that need none of it. */
 const PLAN_PHOTO = OCCASIONS.find(o => o.id === 'wedding')?.photos?.[0]
   ?? OCCASIONS.find(o => o.photos?.length)?.photos?.[0]
-  ?? null
-const SHOP_PHOTO = CATALOGUE_PHOTOS['Cakes']?.['Birthday']
-  ?? CATALOGUE_PHOTOS['Flowers']?.['Anniversary']
   ?? null
 
 export default function BrandBanner() {
@@ -85,38 +81,29 @@ export default function BrandBanner() {
         </div>
       </section>
 
-      {/* ── The doors ────────────────────────────────────────────────
-          On white, below the bar, as two ordinary cards. This is the only
-          place on Home where both halves of the business are offered
-          together — every other CTA belongs to one specific shelf.
+      {/* ── The door ─────────────────────────────────────────────────
+          There were two of these, side by side and equal in weight: plan a
+          celebration, or shop the essentials. The fork was the whole point
+          of the row — it was the one place on Home that offered both halves
+          of the business at once.
 
-          Side by side and equal in weight. Events are the primary revenue
-          line and the temptation is to make that door bigger, but a
-          customer who wants a cake tonight and is shown a wedding is a
-          customer who leaves. The mosaic below already leads with events;
-          this row's job is to make the fork legible, not to pick a side. */}
-      <section className="px-5" aria-label="Plan a celebration, or shop the essentials">
-        <div className="grid grid-cols-2 gap-3">
-          <Door
-            to="/plan"
-            photo={PLAN_PHOTO}
-            eyebrow="We arrange it"
-            label="Plan a celebration"
-            /* Computed, never typed. CATALOG_STATS is derived from the same
-               EVENT_DATA the catalogue itself renders, so this cannot claim an
-               occasion that is not on sale. */
-            fact={`${CATALOG_STATS.occasions} occasions · from ${formatINR(CATALOG_STATS.fromPrice)}`}
-            tint="rgba(109,40,217,0.34)"
-          />
-          <Door
-            to="/shop"
-            photo={SHOP_PHOTO}
-            eyebrow="Delivered to you"
-            label="Shop the essentials"
-            fact="Cakes, gifts, flowers, pooja"
-            tint="rgba(14,82,60,0.34)"
-          />
-        </div>
+          There is one half now. A two-column grid holding a single card is
+          a layout waiting for something that is not coming, so the door goes
+          full width and takes the emphasis the fork was deliberately
+          withholding from it. */}
+      <section className="px-5" aria-label="Plan a celebration">
+        <Door
+          to="/plan"
+          photo={PLAN_PHOTO}
+          eyebrow="We arrange it, end to end"
+          label="Plan a celebration"
+          /* Computed, never typed. CATALOG_STATS is derived from the same
+             EVENT_DATA the catalogue itself renders, so this cannot claim an
+             occasion that is not on sale. */
+          fact={`${CATALOG_STATS.occasions} occasions · from ${formatINR(CATALOG_STATS.fromPrice)}`}
+          tint="rgba(109,40,217,0.34)"
+          className="min-h-[132px]"
+        />
       </section>
     </div>
   )
@@ -125,27 +112,25 @@ export default function BrandBanner() {
 /**
  * One door. A photograph you can see through, a label, and a fact.
  *
- * ── Why these are panels and not buttons ──────────────────────────────────
- * Two pills reading "Plan a celebration" and "Shop the essentials" are two
- * labels. They say the two things exist and nothing about either, so the choice
- * is made on the words alone — and to a first-time visitor those words are
- * nearly synonymous.
+ * ── Why this is a panel and not a button ──────────────────────────────────
+ * A pill reading "Plan a celebration" is a label. It says the thing exists and
+ * nothing about it, so the tap is decided on four words.
  *
- * These are doors you can see through. Each carries a real photograph from that
- * half of the catalogue and a real number: the count of occasions and the honest
- * entry price on one, the shelves on the other. The photograph persuades, the
- * number qualifies, and the label just names the door.
+ * This is a door you can see through. It carries a real photograph from the
+ * catalogue and a real number — the count of occasions and the honest entry
+ * price. The photograph persuades, the number qualifies, and the label just
+ * names the door.
  *
- * The tint is a light per-door wash — plum for the concierge half, forest for
- * the shop — because that is the colour rule the whole app runs on. It is a
- * wash and not a scrim: all the text contrast comes from the bottom ramp, so
- * the tint can stay light enough that the photograph is still a photograph.
+ * The tint is a light plum wash, because that is the colour rule the whole app
+ * runs on. It is a wash and not a scrim: all the text contrast comes from the
+ * bottom ramp, so the tint can stay light enough that the photograph is still
+ * a photograph.
  */
-function Door({ to, photo, eyebrow, label, fact, tint }) {
+function Door({ to, photo, eyebrow, label, fact, tint, className = '' }) {
   return (
     <Link
       to={to}
-      className="group relative isolate flex min-h-[114px] flex-col justify-end overflow-hidden rounded-[24px] p-3 shadow-[0_16px_34px_-18px_rgba(0,0,0,0.4)] transition-transform active:scale-[0.98]"
+      className={`group relative isolate flex min-h-[114px] flex-col justify-end overflow-hidden rounded-[24px] p-3 shadow-[0_16px_34px_-18px_rgba(0,0,0,0.4)] transition-transform active:scale-[0.98] ${className}`}
     >
       {photo && (
         <img

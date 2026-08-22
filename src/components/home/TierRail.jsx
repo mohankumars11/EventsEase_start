@@ -87,11 +87,11 @@ export default function TierRail({ offer }) {
   // real scroll container and why it never resumes after a touch.
   const { ref: trackRef, active, handlers } = useAutoScrollRail(CELEBRATION_TIERS.length)
 
-  const offerLabel = offer
-    ? offer.discount_type === 'percent'
-      ? `${Number(offer.discount_value)}% off`
-      : `${formatINR(offer.discount_value)} off`
-    : null
+  // A celebration offer states its own headline ("10% off"), because what it
+  // takes off is a quote a coordinator writes rather than a subtotal a
+  // checkout computes. This used to be handed a shop coupon row and derive the
+  // label from discount_type/discount_value; there are no coupon rows now.
+  const offerLabel = offer?.headline ?? null
 
   return (
     <section

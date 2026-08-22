@@ -63,11 +63,11 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
 
   // What the ribbon says. Percent coupons are stated as the percentage
   // (which is what people remember); flat ones as the rupee amount.
-  const offerLabel = offer
-    ? offer.discount_type === 'percent'
-      ? `${Number(offer.discount_value)}% OFF`
-      : `${formatINR(offer.discount_value)} OFF`
-    : null
+  // A celebration offer carries its own headline ("10% off"), because it comes
+  // off a quote a coordinator writes rather than a subtotal a checkout adds
+  // up. This was handed a shop coupon row and derived the label from
+  // discount_type/discount_value; there are no coupon rows any more.
+  const offerLabel = offer?.headline?.toUpperCase() ?? null
 
   return (
     <Link

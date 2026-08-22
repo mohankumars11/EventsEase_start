@@ -33,23 +33,17 @@ const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const CelebrationBuilder = lazy(() => import('./pages/plan/CelebrationBuilder'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
-const Shop               = lazy(() => import('./pages/shop/Shop'))
-const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
-const ProductDetail      = lazy(() => import('./pages/shop/ProductDetail'))
-const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
 
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
 const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
 const EventServices  = lazy(() => import('./pages/customer/EventServices'))
-const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
 const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
 const Cart           = lazy(() => import('./pages/customer/Cart'))
 const Account        = lazy(() => import('./pages/customer/Account'))
 
 // Track — every celebration and every order, with the steps and the payments.
 const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
-const OrderTracker        = lazy(() => import('./pages/track/OrderTracker'))
 const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'))
 
 // Vendor & Admin
@@ -249,66 +243,22 @@ function AppRoutes() {
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<ScreenShell><FestivalDetailPage /></ScreenShell>} />
 
-      {/* ── Shop (public browsing, checkout requires login) ── */}
-      <Route path="/shop" element={<ScreenShell><Shop /></ScreenShell>} />
-      {/* Public: a guest can build and review a cart, and is asked to sign
-          in at checkout. Gating the cart page itself bounced anyone who
-          tapped the cart icon straight to /login, which reads as "your
-          items are gone" and is the classic way to lose a basket.
+      {/* ── The shop is gone ────────────────────────────────────────
+          Sambramo sold two unrelated things — a coordinator-led celebration
+          and same-day cakes, flowers and gifts — and the second one was a
+          different business with different economics, no supplier, and
+          twenty better-capitalised competitors in Bengaluru alone.
 
-          ── Why the checkout has no site chrome ──────────────────────
-          It was on AppShell, so a customer one tap from paying got, stacked
-          above the thing they came to do: the marketing navbar, a "Pilot —
-          Bengaluru — somewhere else? [notify me]" bar, a marquee of festivals
-          sliding sideways, a "Back to Home" link — and beneath it a 400px
-          footer offering birthdays, weddings, baby showers, a sitemap, two
-          contact buttons and the pilot notice a second time.
+          These URLs are in the wild: festival banners, the chat widget, the
+          old tab bar, bookmarks. They redirect rather than falling through
+          to the catch-all, so an old link lands somewhere deliberate.
 
-          Every one of those is a way out of a checkout, and two actively
-          argued with it: the banner invited someone mid-purchase to register
-          interest in a city we don't serve, and the ticker moved continuously
-          beside a form they were typing an address into. No storefront of any
-          size ships its full site header on its checkout, and this is why.
-
-          The page draws its own instead — CheckoutHeader (one exit, the
-          brand, a padlock, a three-step rail) and CheckoutFooter (payment
-          methods, the refund promise, a human to call). The tab bar stays: it
-          is the app's navigation, not the marketing site's. */}
-      <Route path="/shop/cart" element={<ScreenShell><ShopCart /></ScreenShell>} />
-      <Route path="/shop/product/:id" element={<ScreenShell><ProductDetail /></ScreenShell>} />
-      {/* Cakes used to get their own storefront (CakeShop), because the old
-          ShopCategory could express neither the 50-odd occasion tags nor the
-          fact that every cake is configurable. The rebuilt listing does both
-          — occasion chips come from `groupsForCategory`, which already routes
-          Cakes through its own taxonomy, and a configurable row renders
-          "Choose options" instead of a one-tap Add — so the shelf no longer
-          needs a second page, and having one meant the most-visited shelf in
-          the shop was the one screen that did not look like the shop.
-          /shop/Cakes?occasion=Birthday still resolves; the param is read the
-          same way. */}
-      {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
-          festival banners, the chat widget, anything a customer bookmarked — so
-          it redirects rather than falling through to an empty category page. */}
-      <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
-
-      {/* ── Shopping by the moment, not the shelf ──────────────────────
-          An occasion is not a category, and it was being served as one.
-          The mosaic's "Birthday" tile pointed at /shop/Cakes?occasion=
-          Birthday — so a customer who told us what they were shopping FOR
-          got one shelf's answer to it, and the birthday flowers, the
-          birthday gifts and the personalised birthday mug were all
-          filtered out of a page that had just promised them birthdays.
-
-          This route asks the catalogue the question the customer actually
-          asked: everything tagged with this occasion, whatever shelf it
-          lives on. It is served by ShopCategory because it needs that
-          screen's grid, sort and price filters exactly — an occasion is a
-          constraint on the catalogue, the same way "today" already is.
-
-          Declared BEFORE /shop/:category so "occasion" is never mistaken
-          for the name of a shelf. */}
-      <Route path="/shop/occasion/:occasion" element={<ScreenShell><ShopCategory /></ScreenShell>} />
-      <Route path="/shop/:category" element={<ScreenShell><ShopCategory /></ScreenShell>} />
+          /shop/cart goes to the celebration cart rather than home. It is the
+          one shop URL where somebody had committed something, and it was the
+          default `cartPath` in every build shipped before this one. */}
+      <Route path="/shop/cart" element={<Navigate to="/dashboard/customer/cart" replace />} />
+      <Route path="/shop/*"    element={<Navigate to="/" replace />} />
+      <Route path="/shop"      element={<Navigate to="/" replace />} />
 
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it
@@ -426,19 +376,19 @@ function AppRoutes() {
           shop now: browse freely, sign in when you add something. */}
       <Route path="/dashboard/customer/services" element={<Navigate to="/services" replace />} />
       <Route path="/dashboard/customer/events/:eventId" element={<LegacyEventRedirect />} />
-      {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
-      <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
+      {/* This pointed into the shop's pooja shelf, which no longer exists.
+          Pooja is a celebration we arrange, not a box we post. */}
+      <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/plan" replace />} />
       {/* The four signed-in customer screens. They were on the dashboard
           shell, which is now vendor/admin only: a customer checking an order
           does not need an operations navbar, and the pilot-city notify-me form
           above it was addressed to somebody who has already bought. Each draws
           the shared app bar instead — one back control, the screen's name, the
           cart and the account menu. */}
-      <Route path="/dashboard/customer/orders" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><MyOrders /></ScreenShell>
-        </ProtectedRoute>
-      } />
+      {/* Orders were shop parcels. Track is where a customer's relationship
+          with us lives now, and it is the honest destination for anyone
+          following an old "my orders" link. */}
+      <Route path="/dashboard/customer/orders" element={<Navigate to="/track" replace />} />
       <Route path="/dashboard/customer/requests" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <ScreenShell><MyRequests /></ScreenShell>
@@ -497,11 +447,7 @@ function AppRoutes() {
           trackers below stay guarded, because those DO show somebody's own
           data. */}
       <Route path="/track" element={<ScreenShell><TrackHub /></ScreenShell>} />
-      <Route path="/track/order/:orderId" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><OrderTracker /></ScreenShell>
-        </ProtectedRoute>
-      } />
+      <Route path="/track/order/:orderId" element={<Navigate to="/track" replace />} />
       {/* One component, two doors: a wizard celebration lives in `events`, a
           builder or cart one in `service_enquiries`. The customer is owed one
           screen regardless of which table it landed in. */}

@@ -5,17 +5,11 @@ import { supabase } from '../lib/supabase'
  * One load of everything the admin dashboard reasons about.
  *
  * ── What this replaces ───────────────────────────────────────────────────
- * Every tab used to fetch for itself. Revenue pulled `orders` with their line
- * items; Customers pulled the same `orders` again plus profiles, events and
- * reviews; Shop Orders pulled `orders` a third time with a different select.
- * Opening three tabs meant three full table scans of the same rows, each one
- * with its own loading spinner, and — worse — three chances for the same
- * question to be asked slightly differently.
- *
- * Now the dashboard loads once and every view reads the same rows. Which also
- * makes cross-view analysis possible at all: "which products sell in Mysore"
- * needs orders and products in the same place, and no per-tab fetch was ever
- * going to produce that.
+ * Every tab used to fetch for itself, and several fetched the same rows with
+ * slightly different selects — which meant three table scans to open three
+ * tabs, three spinners, and three chances for the same question to be asked
+ * three ways. Now the dashboard loads once and every view reads the same rows,
+ * which is also what makes cross-view analysis possible at all.
  *
  * ── Tolerating a database that is one migration behind ───────────────────
  * Migrations here are applied BY HAND in the Supabase SQL editor, and `git
@@ -55,9 +49,9 @@ function isAbsent(error) {
 }
 
 const EMPTY = {
-  orders: [], products: [], events: [], proposals: [], profiles: [],
-  vendors: [], enquiries: [], reviews: [], returns: [], complaints: [],
-  interest: [], services: [], orderEvents: [],
+  events: [], proposals: [], profiles: [],
+  vendors: [], enquiries: [], reviews: [], complaints: [],
+  interest: [], services: [],
 }
 
 export default function useAdminData() {
@@ -75,19 +69,6 @@ export default function useAdminData() {
     setError(null)
 
     const queries = {
-      // Line items come nested rather than as a second query: PostgREST
-      // returns them in one round trip and every per-product number below
-      // needs the order's date, address and payment state alongside them.
-      orders: () => supabase
-        .from('orders')
-        .select('id, customer_id, status, subtotal, delivery_fee, discount, total, address, payment_status, created_at, updated_at, cancelled_at, order_items(id, product_id, product_name, category, occasion, unit_price, qty, subtotal), profiles!customer_id(full_name, phone)')
-        .order('created_at', { ascending: false }),
-
-      products: () => supabase
-        .from('products')
-        .select('id, name, category, occasion, description, price, emoji, image_url, image_alt, image_source, image_updated_at, is_active, created_at')
-        .order('name'),
-
       events: () => supabase
         .from('events')
         .select('*, profiles!customer_id(full_name, email, phone)')
@@ -108,7 +89,6 @@ export default function useAdminData() {
 
       enquiries: () => supabase.from('service_enquiries').select('*').order('created_at', { ascending: false }),
       reviews:   () => supabase.from('reviews_catalog').select('*').order('created_at', { ascending: false }),
-      returns:   () => supabase.from('return_requests').select('*, orders(id,total), profiles!customer_id(full_name, phone)').order('requested_at', { ascending: false }),
       complaints:() => supabase.from('complaints').select('*, profiles!customer_id(full_name, phone)').order('created_at', { ascending: false }),
       interest:  () => supabase.from('city_interest_requests').select('city, created_at').order('created_at', { ascending: false }),
 
@@ -122,12 +102,7 @@ export default function useAdminData() {
       // timeline. Bounded rather than unbounded: a year of transitions is
       // more than any screen reads, and the cap keeps this from becoming the
       // slowest query on the dashboard as the shop grows.
-      orderEvents: () => supabase
-        .from('order_events')
-        .select('id, order_id, kind, from_value, to_value, actor_role, note, created_at')
-        .order('created_at', { ascending: true })
-        .limit(5000),
-    }
+     }
 
     const keys = Object.keys(queries)
     const results = await Promise.all(keys.map(k => queries[k]().then(r => r, err => ({ error: err }))))
