@@ -1,7 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="15" fill="#2e1065"/>
-  <g transform="translate(32 32) scale(.74) translate(-32 -32)">
-    <path fill="#fbbf24" d="M38 26C48 22 60 28 60 32C60 36 48 42 38 38C42 48 36 60 32 60C28 60 22 48 26 38C16 42 4 36 4 32C4 28 16 22 26 26C22 16 28 4 32 4C36 4 42 16 38 26Z"/>
-    <circle cx="32" cy="32" r="5.5" fill="#2e1065"/>
-  </g>
+  <!-- The browser-tab mark.
+       A standalone SVG cannot load a webfont, so this cannot be the
+       Spencerian S the app draws — the app icons (icon-512.png,
+       icon-maskable-512.png) are rendered from the real component instead.
+       A favicon is 16px of tab furniture, where a hairline script letter
+       would be mud regardless, so this is the initial in the wordmark's own
+       serif with the brand's two colours. -->
+  <rect width="64" height="64" rx="15" fill="#061448"/>
+  <defs>
+    <linearGradient id="g" x1="18" y1="12" x2="46" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F6E3A8"/>
+      <stop offset="50%" stop-color="#D9A445"/>
+      <stop offset="100%" stop-color="#A8762B"/>
+    </linearGradient>
+  </defs>
+  <text x="32" y="34" text-anchor="middle" dominant-baseline="central"
+        font-family="Georgia, 'Times New Roman', serif" font-size="44"
+        font-style="italic" font-weight="700" fill="url(#g)">S</text>
 </svg>

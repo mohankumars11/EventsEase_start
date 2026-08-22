@@ -117,48 +117,57 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
             </p>
           </div>
 
-          {/* ── The basket ───────────────────────────────────────────
-              This was folded into the Plan tab when the shop left, on the
-              argument that a bag icon is a promise of a till and what is left
-              is an enquiry. That was half right and the wrong half won:
-              services ARE bought one at a time here — somebody short only a
-              photographer adds one thing and checks out — and hiding the
-              basket behind a tab labelled "Plan" hides it from exactly that
-              person.
+          {/* ── The controls, as ONE group ────────────────────────────
+              This row is `justify-between`: the lockup on the left, the
+              controls on the right. The basket used to be a sibling of both,
+              which made three children — and `justify-between` spreads three
+              children across the full width, so the bag was pinned to the
+              middle of the bar with forty points of nothing either side of
+              it. It looked like a spacing value; it was a count.
 
-              So it comes back, in the app bar rather than as a fifth tab.
-              A tab bar holds places; a basket is a state, and every catalogue
-              app in the country puts it top right. It renders only when there
-              is something in it.
-
-              It was briefly hidden while empty, on the reasoning that an
-              always-empty bag teaches the eye to skip the spot. That is true
-              of a bag that only ever holds what you already chose — and wrong
-              here, because this bag is also the way IN to buying a single
-              service. Somebody who wants only a photographer has no reason to
-              open "Plan"; the bag is the affordance they already understand,
-              and it cannot recruit anyone while invisible.
-
-              So it is always here, and the basket it opens is a browse
-              surface when it is empty rather than an apology. The badge is
-              what appears and disappears. */}
-          <Link
-            to={cartPath}
-            aria-label={cartCount > 0
-              ? `Your basket, ${cartCount} item${cartCount === 1 ? '' : 's'}`
-              : 'Your basket — browse individual services'}
-            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink outline outline-1 -outline-offset-1 outline-ink/12 transition-transform active:scale-95"
-          >
-            <ShoppingBag size={18} />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-royal-800 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
-          </Link>
-
+              One wrapper, and the pair travels together at 6px. */}
           <span className="flex shrink-0 items-center gap-1.5">
-          {user ? (
+            {/* ── The basket ───────────────────────────────────────────
+                This was folded into the Plan tab when the shop left, on the
+                argument that a bag icon is a promise of a till and what is left
+                is an enquiry. That was half right and the wrong half won:
+                services ARE bought one at a time here — somebody short only a
+                photographer adds one thing and checks out — and hiding the
+                basket behind a tab labelled "Plan" hides it from exactly that
+                person.
+
+                So it comes back, in the app bar rather than as a fifth tab.
+                A tab bar holds places; a basket is a state, and every catalogue
+                app in the country puts it top right. It renders only when there
+                is something in it.
+
+                It was briefly hidden while empty, on the reasoning that an
+                always-empty bag teaches the eye to skip the spot. That is true
+                of a bag that only ever holds what you already chose — and wrong
+                here, because this bag is also the way IN to buying a single
+                service. Somebody who wants only a photographer has no reason to
+                open "Plan"; the bag is the affordance they already understand,
+                and it cannot recruit anyone while invisible.
+
+                So it is always here, and the basket it opens is a browse
+                surface when it is empty rather than an apology. The badge is
+                what appears and disappears. */}
+            <Link
+              to={cartPath}
+              aria-label={cartCount > 0
+                ? `Your basket, ${cartCount} item${cartCount === 1 ? '' : 's'}`
+                : 'Your basket — browse individual services'}
+              className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink outline outline-1 -outline-offset-1 outline-ink/12 transition-transform active:scale-95"
+            >
+              <ShoppingBag size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-royal-800 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
+
+            {user ? (
             /* ProfileDropdown takes all three of these — it calls `onSignOut`
                directly and reads `profile` for the initials and the role-based
                menu. Rendering it bare (as this did at first) hands a signed-in
