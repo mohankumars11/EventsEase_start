@@ -51,17 +51,42 @@ export const BRAND = {
   emotion:   'Every emotion, valued',
   /* ── The category line ────────────────────────────────────────────────
      What rides under the wordmark in the app's own chrome.
+
      `emotion` held this slot and is a feeling rather than an answer, which
      is the wrong trade for a brand nobody has heard of: the feeling is
      already carried by the photograph on every card below it, and the one
      line under the name is the only place the category gets named.
 
-     Not "India's FIRST event booking app". The superlative is unverifiable,
-     it is the kind of claim a competitor screenshots, and naming the
-     category does the whole job without it. 25 characters, which still fits
-     under the wordmark on a 360px screen — the constraint that killed the
-     long descriptor here before. */
-  categoryLine: "India's event booking app",
+     ── Why not "India's" ──────────────────────────────────────────────
+     It was "India's event booking app" for a while, and it is the same
+     mistake as the cities on the splash, pointing the other way. Naming the
+     pilot closed a door on somebody in Hyderabad before they saw anything;
+     claiming the country opens one they cannot walk through — they tap,
+     and the app tells them we are live in two cities. A disappointed
+     stranger is worse than an uninformed one.
+
+     It also spends the line on geography. "India's" says nothing about what
+     the app does, it cannot be proved, and it never becomes true — at
+     fifteen cities it is just as unverifiable as at two.
+
+     ── Why not "an ... app" ───────────────────────────────────────────
+     "An event booking app, end to end" was the next proposal. Three things
+     are wrong with it: a descriptor is a label and labels do not take an
+     article; "app" is the one fact a reader already holds, since they are
+     inside it; and "end to end" then modifies the app, when the thing that
+     is end to end is the booking.
+
+     ── What is left ───────────────────────────────────────────────────
+     Two jobs in twenty-five characters. "Event booking" names the category
+     on sight, which is the whole point of the line. "End to end" is the
+     differentiator and the only part a competitor cannot also print: every
+     other service books you ONE vendor, and this one books the day.
+
+     It also has no expiry. It is as true in Bengaluru now as in fifteen
+     cities later, so the lockup never has to change because the footprint
+     did. And it takes the tagline's own `<noun>, <qualifier>` comma, so the
+     two lines read as one voice. */
+  categoryLine: 'Event booking, end to end',
   // The hero and both auth panels set the second sentence in saffron on its
   // own line, so every one of them had this string typed out by hand and split
   // around markup — three copies of the brand's most repeated line, each free
