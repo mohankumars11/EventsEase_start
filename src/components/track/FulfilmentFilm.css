@@ -1,9 +1,14 @@
-/* BrandFilm's animation engine.
+/* The drawn-film animation engine.
  *
- * Roughly 45 classes and 30 keyframes that exist for one component,
- * components/home/BrandFilm.jsx. They lived in index.css and were about a
- * third of it, which made every unrelated read of that file longer than it
- * needed to be. Moved out wholesale — same rules, same order, no edits.
+ * Written for components/home/BrandFilm, which was the gifting film on Home —
+ * its own header said it existed to sell "a hamper you can send tonight", so
+ * it left with the shop. FulfilmentFilm on the Track screen shares the CSS and
+ * is now its only consumer, which is why this sits here rather than in
+ * components/home.
+ *
+ * FulfilmentFilm uses roughly eight of the classes below. The rest are dead
+ * and can be trimmed; they are left in place for now because deleting
+ * keyframes by eye is how an animation quietly loses a frame.
  *
  * Plain CSS rather than @layer utilities, which is the convention
  * planBuilder.css already set for component-scoped stylesheets. Leaving the

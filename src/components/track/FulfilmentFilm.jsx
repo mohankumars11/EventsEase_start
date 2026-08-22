@@ -1,3 +1,4 @@
+import './FulfilmentFilm.css'
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
@@ -16,8 +17,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  * commit, not after.
  *
  * ── Why it is drawn rather than filmed ────────────────────────────────────
- * The same reasoning as `components/home/BrandFilm.jsx`, which this reuses the
- * CSS of: Sambramo is pre-launch with no supplier, so real footage would be
+ * The same reasoning as the gifting film that used to run on Home, whose CSS
+ * this inherited: Sambramo is pre-launch with no supplier, so real footage would be
  * stock video of somebody else's warehouse. Drawing it costs no bytes, never
  * loses the autoplay roulette against data-saver, and is retimed by one
  * constant.

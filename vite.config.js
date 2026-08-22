@@ -13,8 +13,8 @@ export default defineConfig({
         short_name: 'Sambramo',
         description:
           'A real coordinator arranges your celebration end to end — venue, decor, catering, photography and the priest — and brings back one clear price.',
-        theme_color: '#2e1065',
-        background_color: '#FFF8F0',
+        theme_color: '#FFFFFF',
+        background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
         icons: [

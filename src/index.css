@@ -44,7 +44,10 @@
     --ink-mute:    107 91 133;     /* #6B5B85 */
     --ink-faint:   122 107 148;    /* #7A6B94 — white cards only */
     --surface:     255 255 255;
-    --surface-sunk: 124 58 237;    /* used at low alpha: bg-surface-sunk/5 */
+    /* Used only at low alpha (bg-surface-sunk/5). It was plum-600, which is
+       why every "sunk" surface in the app read faintly lavender rather than
+       recessed. A recess is not a colour. */
+    --surface-sunk: 17 15 25;      /* used at low alpha: bg-surface-sunk/5 */
     --hairline:     31 16 51;      /* used at low alpha: ring-hairline/10 */
     --accent:      124 58 237;     /* plum-600 */
 
@@ -1328,15 +1331,39 @@
      from the page tint into the aurora sweep and the moment-tile gradients,
      which is where a customer actually reads it — on the thing they are
      choosing, not on the paper it sits on. */
+  /* ── Pure white, and how a card survives it ──────────────────────────
+     This ramp used to be warm ivory: --a-canvas was #FFF8F0 and a card was
+     #FFFFFF, so the card was LIGHTER than the page and needed no shadow to
+     read as raised. That model cannot survive the page going white — a white
+     card on a white page separated by a 7% hairline measures about 1.06:1,
+     which is visible on a good monitor and gone on a phone in daylight.
+
+     So the separation moves from tone to line-plus-contact:
+
+       hairline 0.12   the card edge. ~1.3:1 — a drawn edge, not a halo.
+       contact shadow  two layers, both with NEGATIVE spread, so twelve cards
+                       on a screen do not become twelve grey smudges. The
+                       first layer is a 1px contact line under the bottom
+                       edge; the second is a short, tight ambient.
+       --a-low         a real neutral for RECESSED things. Inverting the
+                       relationship — sinking the container instead of
+                       raising each card — is what lets a dense grid scale.
+
+     Two things fall out of this for free. The ink ramp becomes legal: the
+     header of this file records --ink-faint at 4.4:1 on the tinted ground,
+     which fails AA, and 4.8:1 on white, which passes. And `body` and
+     --notch already assumed #FFFFFF — the ivory canvas was the only surface
+     in the app disagreeing with its own base. */
   .a-canvas, .a-shop {
-    --a-canvas: #FFF8F0;
-    --a-low:    #FBEFDE;
+    --a-canvas: #FFFFFF;
+    --a-low:    #F5F5F7;
     --a-surf:   #FFFFFF;
     --a-high:   #FFFFFF;
-    --a-line:   42 30 20;
-    --a-shadow: 0 18px 44px -22px rgba(60, 40, 20, 0.22);
-    --a-sheet:  0 -12px 48px -16px rgba(60, 40, 20, 0.20);
-    background: var(--a-canvas, #FFF8F0);
+    --a-line:   17 15 25;
+    --a-shadow: 0 8px 24px -8px rgb(17 15 25 / 0.12), 0 2px 6px -2px rgb(17 15 25 / 0.06);
+    --a-contact: 0 1px 2px -1px rgb(17 15 25 / 0.06), 0 4px 12px -6px rgb(17 15 25 / 0.08);
+    --a-sheet:  0 -8px 32px -12px rgb(17 15 25 / 0.14);
+    background: var(--a-canvas, #FFFFFF);
   }
   .a-canvas {
     --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
@@ -1361,31 +1388,41 @@
   .a-card {
     @apply relative rounded-[28px];
     background: var(--a-surf, #FFFFFF);
-    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.07);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.12);
     outline-offset: -1px;
+    box-shadow: var(--a-contact, 0 1px 2px -1px rgb(17 15 25 / 0.06), 0 4px 12px -6px rgb(17 15 25 / 0.08));
   }
+  /* A card inside a sunk group. The ground is already doing the separating,
+     so stacking a shadow on top of it is the smudge this system avoids. */
+  .a-well .a-card,
+  .a-group .a-card { box-shadow: none; }
   /* A card that is genuinely above the page — a sheet, a dialog, a hero. */
   .a-raised {
     @apply relative rounded-[28px];
     background: var(--a-surf, #FFFFFF);
-    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.06);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.08);
     outline-offset: -1px;
-    box-shadow: var(--a-shadow, 0 18px 44px -22px rgba(60, 40, 20, 0.22));
+    box-shadow: var(--a-shadow, 0 8px 24px -8px rgb(17 15 25 / 0.12), 0 2px 6px -2px rgb(17 15 25 / 0.06));
+  }
+  /* The recessed container. Cards sit IN it, not on it. */
+  .a-group {
+    @apply relative rounded-[28px];
+    background: var(--a-low, #F5F5F7);
   }
   /* Sunk: belongs to the room rather than sitting on it. Replaces the old
      `.home-glass` / `bg-surface-sunk/5` idiom, which on a white ground was
      white on white. */
   .a-well {
     @apply relative rounded-[24px];
-    background: var(--a-low, #FBEFDE);
+    background: var(--a-low, #F5F5F7);
   }
   /* A card on a card, or a selected state that must not rely on colour. */
   .a-high {
-    background: var(--a-high, #FDFBFF);
-    outline: 1px solid rgb(var(--a-line, 42 30 20) / 0.08);
+    background: var(--a-high, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.12);
     outline-offset: -1px;
   }
-  .a-hairline { border-color: rgb(var(--a-line, 42 30 20) / 0.08); }
+  .a-hairline { border-color: rgb(var(--a-line, 17 15 25) / 0.08); }
 
   /* ── The brand light ────────────────────────────────────────────────
      A hero ground. `background-size` is oversized so `aurora-pan` has

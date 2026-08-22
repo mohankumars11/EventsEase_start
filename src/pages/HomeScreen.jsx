@@ -9,11 +9,12 @@ import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
 import { FESTIVALS } from '../data/festivals'
 import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
-import { OCCASIONS } from '../data/planCatalog'
+import { OCCASIONS, CATALOG_STATS } from '../data/planCatalog'
 import { ALL_SERVICES } from '../data/servicePricing'
 import { allOffers } from '../lib/allOffers'
 import { OFFER_BY_ID } from '../data/celebrationOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
+import OccasionCard from '../components/home/OccasionCard'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
@@ -23,12 +24,8 @@ import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
-import BrandFilm from '../components/home/BrandFilm'
 import BrandBanner from '../components/home/BrandBanner'
-import ServiceMosaic from '../components/home/ServiceMosaic'
-import PhotoReelFilm from '../components/home/PhotoReelFilm'
 import TierRail from '../components/home/TierRail'
-import { SquareGrid, TILE_COLOURS } from '../components/home/SquareGrid'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -124,30 +121,6 @@ export default function HomeScreen() {
   // The deck is assembled from what is true today, in the order that matters
   // to whoever is looking. A returning customer with a celebration underway
   // does not need the "plan a celebration" pitch first.
-  /**
-   * The celebration occasions, as square tiles.
-   *
-   * The colour is assigned by position rather than stored per occasion, so
-   * the palette cycles evenly down the grid and adding a sixteenth occasion
-   * cannot leave it colourless. `photos` is up to four real, committed
-   * photographs (see planCatalog), which is what lets the tile deal them —
-   * the emoji underneath is only reached when an occasion has none.
-   */
-  const occasionTiles = useMemo(() => {
-    const keys = Object.keys(TILE_COLOURS)
-    return OCCASIONS.map((o, i) => ({
-      id: o.id,
-      to: `/services/${o.id}`,
-      label: o.label ?? o.name,
-      meta: Number.isFinite(o.fromPrice) ? `from ${formatINR(o.fromPrice)}` : null,
-      emoji: o.emoji,
-      // The whole set, not the first: several photographs is what makes
-      // the tile a deck rather than a still. See PhotoDeck.
-      photos: o.photos ?? [],
-      colour: keys[i % keys.length],
-    }))
-  }, [])
-
   const nextFestival = upcoming[0]
   // The claimable one leads — an offer that applies itself is not news.
   const bestOffer = offers.find(o => o.action === 'claim') ?? offers[0]
@@ -235,15 +208,16 @@ export default function HomeScreen() {
       ) : (
         <div className="mx-auto max-w-3xl space-y-4 pt-0 pb-8">
 
-          {/* ── The name, once, properly ──────────────────────────────
-              Nobody has heard of Sambramo yet: there is no rating, no order
-              count and no ad recall, so a visitor arriving from a link met a
-              search box and a gradient and had no idea whose app this was.
+          {/* ── The wordmark, and nothing under it ────────────────────
+              BrandBanner used to carry a full-width "Plan a celebration"
+              door beneath the name — itself the survivor of a two-door fork
+              that also offered the shop.
 
-              This is the only section on Home that carries no price, no coupon
-              and no live data, which is exactly the cost of putting it first —
-              see the component for why that trade is worth making now and why
-              it is written to expire once there is recall to trade on. */}
+              It is gone, and the reason is the grid below rather than
+              tidiness. A single CTA above fifteen priced occasions asks the
+              customer to commit before being shown anything, and every one
+              of those cards already lands on the planner. The door was one
+              more tap in front of the merchandise. */}
           <BrandBanner />
 
           {activeEvents.length > 0 && (
@@ -287,21 +261,40 @@ export default function HomeScreen() {
               films still do their job, one screen further down, for an
               audience that has already seen the goods. ══════════════ */}
 
-          {/* ── What are we celebrating ───────────────────────────────
-              The merchandising grid, and the highest-intent thing on the
-              page: it is the question a customer arrives already holding.
-              Fifteen occasions, three to a row, each with its real entry
-              price under the name. */}
+          {/* ── Every celebration we arrange ─────────────────────────
+              The whole point of the screen. Fifteen occasions, each its own
+              card: four real photographs of that occasion cross-fading, the
+              honest entry price, what it includes, and the offer that
+              applies — the same OccasionCard the planner uses, so one
+              occasion does not look like two different products depending on
+              which screen you met it on.
+
+              This used to be a tile grid of names on colour, sitting fourth
+              behind a shortcut rail of shop shelves, a promo deck and a
+              banner. It is first now, and it is cards rather than tiles,
+              because a photographed card with a price on it is the thing a
+              customer is here to browse. Two to a row on a phone, which is
+              what every catalogue app settled on — three made the
+              photographs too small to be evidence of anything. */}
           <section aria-labelledby="occasions-heading">
             <div className="px-5">
-              <h2 id="occasions-heading" className="text-[18px] font-extrabold tracking-tight text-ink">
+              <h2 id="occasions-heading" className="text-[19px] font-extrabold tracking-tight text-ink">
                 What are we celebrating?
               </h2>
               <p className="mt-0.5 text-[12px] text-ink-mute">
-                Every one of these, arranged end to end — pick yours.
+                {CATALOG_STATS.occasions} occasions, arranged end to end — every price real.
               </p>
             </div>
-            <SquareGrid className="mt-3.5" items={occasionTiles} />
+            <div className="mt-3.5 grid grid-cols-2 gap-3.5 px-4">
+              {OCCASIONS.map((o, i) => (
+                <OccasionCard
+                  key={o.id}
+                  occasion={o}
+                  offer={OFFER_BY_ID.first_booking}
+                  stagger={i * 260}
+                />
+              ))}
+            </div>
           </section>
 
           {/* ── Every offer, four at a time ───────────────────────────
@@ -334,34 +327,6 @@ export default function HomeScreen() {
               argument for the brand rather than the catalogue, and it now
               runs after the catalogue rather than in front of it. ══ */}
 
-          {/* ── Everything we do ──────────────────────────────────────
-              What a visitor can even get here — whole celebrations, single
-              services, cakes, flowers, decor, pooja, gifting, and a
-              heritage-crafts shelf nobody else in these two cities lists.
-              A range is shown as a grid rather than said in a sentence.
-              See config/homeMosaic.js. */}
-          <ServiceMosaic />
-
-          {/* ── The gifting film ──────────────────────────────────────
-              Everything above argues with a tier, a price, a coupon, a
-              countdown. None of it shows what any of it is FOR. The film
-              does, in five beats, and its tap target moves with the story:
-              the planner on beat one, a hamper you can send tonight by
-              beat five.
-
-              It renders once, here, for everyone. It used to be welded to
-              the deck at the top for signed-out visitors and deferred for
-              signed-in ones — two placements and a branch, to decide which
-              audience got a film before they had seen a price. Neither
-              does now, so the branch is gone. */}
-          <BrandFilm />
-
-          {/* ── The same story, in photographs ────────────────────────
-              The mosaic says what the shelves ARE; this says that they
-              exist. A drawn hamper is our idea of gifting, and a photograph
-              of gold zari on crepe silk is a thing you can buy — a
-              pre-launch brand needs both. See config/homeReel.js. */}
-          <PhotoReelFilm />
 
           {/* ── Festivals, counting down ────────────────────────────── */}
           {upcoming.length > 0 && (

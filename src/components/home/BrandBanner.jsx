@@ -1,9 +1,5 @@
-import { Link } from 'react-router-dom'
-import { ArrowUpRight } from 'lucide-react'
 import SambramoMark from '../ui/SambramoMark'
 import { BRAND } from '../../config/sambramo'
-import { CATALOG_STATS, OCCASIONS } from '../../data/planCatalog'
-import { formatINR } from '../../utils/format'
 
 /**
  * The masthead bar, and — separately, underneath it — the two doors.
@@ -45,13 +41,6 @@ import { formatINR } from '../../utils/format'
  * coming back, that it is not where it was.
  */
 
-/* The photograph behind the door. A committed URL, not a runtime search — the
-   live-search budget is 24 per page load app-wide and the mosaic below already
-   has tiles that need none of it. */
-const PLAN_PHOTO = OCCASIONS.find(o => o.id === 'wedding')?.photos?.[0]
-  ?? OCCASIONS.find(o => o.photos?.length)?.photos?.[0]
-  ?? null
-
 export default function BrandBanner() {
   return (
     /* One child of Home's section flow, not two: the doors belong to the bar
@@ -81,86 +70,6 @@ export default function BrandBanner() {
         </div>
       </section>
 
-      {/* ── The door ─────────────────────────────────────────────────
-          There were two of these, side by side and equal in weight: plan a
-          celebration, or shop the essentials. The fork was the whole point
-          of the row — it was the one place on Home that offered both halves
-          of the business at once.
-
-          There is one half now. A two-column grid holding a single card is
-          a layout waiting for something that is not coming, so the door goes
-          full width and takes the emphasis the fork was deliberately
-          withholding from it. */}
-      <section className="px-5" aria-label="Plan a celebration">
-        <Door
-          to="/plan"
-          photo={PLAN_PHOTO}
-          eyebrow="We arrange it, end to end"
-          label="Plan a celebration"
-          /* Computed, never typed. CATALOG_STATS is derived from the same
-             EVENT_DATA the catalogue itself renders, so this cannot claim an
-             occasion that is not on sale. */
-          fact={`${CATALOG_STATS.occasions} occasions · from ${formatINR(CATALOG_STATS.fromPrice)}`}
-          tint="rgba(109,40,217,0.34)"
-          className="min-h-[132px]"
-        />
-      </section>
     </div>
-  )
-}
-
-/**
- * One door. A photograph you can see through, a label, and a fact.
- *
- * ── Why this is a panel and not a button ──────────────────────────────────
- * A pill reading "Plan a celebration" is a label. It says the thing exists and
- * nothing about it, so the tap is decided on four words.
- *
- * This is a door you can see through. It carries a real photograph from the
- * catalogue and a real number — the count of occasions and the honest entry
- * price. The photograph persuades, the number qualifies, and the label just
- * names the door.
- *
- * The tint is a light plum wash, because that is the colour rule the whole app
- * runs on. It is a wash and not a scrim: all the text contrast comes from the
- * bottom ramp, so the tint can stay light enough that the photograph is still
- * a photograph.
- */
-function Door({ to, photo, eyebrow, label, fact, tint, className = '' }) {
-  return (
-    <Link
-      to={to}
-      className={`group relative isolate flex min-h-[114px] flex-col justify-end overflow-hidden rounded-[24px] p-3 shadow-[0_16px_34px_-18px_rgba(0,0,0,0.4)] transition-transform active:scale-[0.98] ${className}`}
-    >
-      {photo && (
-        <img
-          src={photo}
-          alt=""
-          loading="eager"
-          fetchpriority="high"
-          decoding="async"
-          className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-      )}
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={{ background: tint }} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-
-      <span className="flex items-start justify-between gap-1.5">
-        <span className="min-w-0">
-          <span className="block text-[8.5px] font-extrabold uppercase tracking-[0.12em] text-white/75">
-            {eyebrow}
-          </span>
-          <span className="mt-0.5 block text-[13.5px] font-extrabold leading-tight tracking-tight text-white">
-            {label}
-          </span>
-          <span className="mt-0.5 block truncate text-[9.5px] font-medium text-white/70">
-            {fact}
-          </span>
-        </span>
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/95 text-plum-950 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-          <ArrowUpRight size={12} strokeWidth={3} />
-        </span>
-      </span>
-    </Link>
   )
 }
