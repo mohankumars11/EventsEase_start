@@ -3,15 +3,15 @@ import { Monogram } from './SambramoWordmark'
 import { BRAND } from '../../config/sambramo'
 
 const SEEN_KEY = 'sambramo_splash_v2'
-const HOLD_MS = 3000
+const HOLD_MS = 4000
 const FADE_MS = 480
 
 /**
  * The mark, written, on the first open.
  *
  * ── The choreography ──────────────────────────────────────────────────────
- * Three seconds, and every one of them is doing something. A splash that
- * simply holds a static logo for three seconds is three seconds of nothing;
+ * Four seconds. A splash that simply holds a static logo for four seconds is
+ * four seconds of nothing;
  * a splash that spends them assembling the mark is the brand introducing
  * itself, and it is the reason a script monogram is worth having at all.
  *
@@ -21,7 +21,14 @@ const FADE_MS = 480
  *   1.25s  the light travels across the gilding, once
  *   1.50s  the category line
  *   1.62s  the rule opens outward from the centre
- *   3.00s  hold ends, 0.48s fade
+ *   2.32s  the composition is complete
+ *   4.00s  hold ends, 0.48s fade
+ *
+ * The last element lands at 2.32s and the hold runs to 4.00s, which leaves
+ * about 1.7s of stillness on a finished mark. That gap is the point rather
+ * than slack: an animation that ends at the same instant the screen leaves
+ * reads as a glitch, and the eye needs a beat on the completed lockup for it
+ * to be the thing you remember rather than the motion.
  *
  * ── No cities on this screen ──────────────────────────────────────────────
  * It carried "BENGALURU · MYSORE" along the bottom. That is the first thing
@@ -46,7 +53,8 @@ const FADE_MS = 480
  * It is an overlay over a mounted, interactive app rather than a gate in
  * front of one. If the timer never fires, if the font never loads, if
  * something throws inside it — the app underneath is already rendered, and a
- * tap dismisses this. Three seconds is long enough that a tap-out matters.
+ * tap dismisses this. At four seconds the tap-out matters more, not less:
+ * it is the difference between a brand moment and being held up.
  *
  * Gated in localStorage under a v2 key: v1 shipped with a different splash,
  * and somebody who saw that one has not seen this.
