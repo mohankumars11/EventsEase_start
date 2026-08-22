@@ -36,3 +36,7 @@ Thumbs.db
 .claude/
 .vercel
 .env*
+
+# Pre-deletion catalogue dumps from scripts/export-shop-catalogue.mjs.
+# These hold order rows, which carry customer addresses — never commit them.
+backup/
