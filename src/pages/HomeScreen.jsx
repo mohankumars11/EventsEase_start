@@ -15,6 +15,7 @@ import { allOffers } from '../lib/allOffers'
 import { OFFER_BY_ID } from '../data/celebrationOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
 import OccasionCard from '../components/home/OccasionCard'
+import IntroCards from '../components/home/IntroCards'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
@@ -24,7 +25,6 @@ import HomeAppBar from '../components/home/HomeAppBar'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
-import BrandBanner from '../components/home/BrandBanner'
 import TierRail from '../components/home/TierRail'
 
 /**
@@ -60,19 +60,23 @@ import TierRail from '../components/home/TierRail'
    a request raised in the celebration builder or the services cart never
    appeared on the customer's own front door. */
 
-const FESTIVAL_DETAIL_IDS = new Set(FESTIVALS.map(f => f.id))
-/* Five of the eight festivals had no detail page, so they were routed into a
-   shop shelf instead — Rakhi to Gifts, Janmashtami to Pooja, and anything
-   unrecognised to /shop/Gifts. Every one of those destinations is gone.
+/* Every festival goes to its own page, and every one of those pages is a
+   locked door that asks whether the customer is waiting for it.
 
-   A festival we cannot yet describe on its own page is still a celebration we
-   arrange, so the planner is the honest fallback rather than a category that
-   no longer exists. Giving the remaining five their own entries in
-   data/festivals would remove the fork entirely; until then this is one line
-   instead of a lookup table. */
+   This forked twice before. First it sent five of the eight into shop
+   shelves, because they had no detail page and Gifts was somewhere to put
+   them. Then, with the shop gone, it sent those five to the planner — which
+   was honest but threw away the reason they tapped: they wanted Diwali, and
+   the planner does not know what Diwali is.
+
+   There is no fork now. FestivalDetailPage handles a festival it has content
+   for and one it does not identically, because the answer is the same for
+   both — we are not open for this yet — and it captures the intent either
+   way. See the page for why the question has a NO button. */
 function festivalHref(f) {
-  return FESTIVAL_DETAIL_IDS.has(f.id) ? `/festivals/${f.id}` : '/plan'
+  return `/festivals/${f.id}`
 }
+
 function daysUntil(dateStr) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -208,18 +212,6 @@ export default function HomeScreen() {
       ) : (
         <div className="mx-auto max-w-3xl space-y-4 pt-0 pb-8">
 
-          {/* ── The wordmark, and nothing under it ────────────────────
-              BrandBanner used to carry a full-width "Plan a celebration"
-              door beneath the name — itself the survivor of a two-door fork
-              that also offered the shop.
-
-              It is gone, and the reason is the grid below rather than
-              tidiness. A single CTA above fifteen priced occasions asks the
-              customer to commit before being shown anything, and every one
-              of those cards already lands on the planner. The door was one
-              more tap in front of the merchandise. */}
-          <BrandBanner />
-
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
               <h2 className="px-4 text-[15px] font-extrabold text-ink">
@@ -290,12 +282,18 @@ export default function HomeScreen() {
                 <OccasionCard
                   key={o.id}
                   occasion={o}
-                  offer={OFFER_BY_ID.first_booking}
                   stagger={i * 260}
                 />
               ))}
             </div>
           </section>
+
+          {/* ── What this app is ─────────────────────────────────────
+              Under the grid rather than above it. A first-time visitor
+              scrolls the merchandise first whatever the page says, so the
+              explanation sits where they arrive after it has raised the
+              question. */}
+          <IntroCards />
 
           {/* ── Every offer, four at a time ───────────────────────────
               Moved up with the rest of commerce. The four celebration
@@ -375,7 +373,7 @@ export default function HomeScreen() {
                           only words telling you the tile is tappable — was
                           effectively not printed. */}
                       <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-300">
-                        {FESTIVAL_DETAIL_IDS.has(f.id) ? 'Plan it' : 'Shop it'}
+                        Tell us you want it
                         <ArrowRight size={10} />
                       </span>
                     </span>

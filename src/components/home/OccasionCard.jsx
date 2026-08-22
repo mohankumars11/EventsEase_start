@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { BadgeCheck } from 'lucide-react'
 import RotatingPhoto from './RotatingPhoto'
 import SambramoMark from '../ui/SambramoMark'
 import { formatINR } from '../../utils/format'
@@ -92,6 +91,15 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
           stagger={stagger}
         />
 
+        {/* An offer that applies to every occasion equally, printed on every
+            occasion equally, is a watermark. The grid used to carry fifteen
+            identical "10% OFF" ribbons, which devalues both the offer and the
+            cards it is stamped on — and the same offer already has a slide in
+            the deck above and a tile in the offers row below.
+
+            The ribbon stays for the case it was built for: an offer that is
+            true of THIS occasion and not the others. Callers that pass a
+            blanket offer now pass nothing. */}
         {offerLabel && (
           <span className="absolute left-3 top-3 rounded-full bg-chilli-600 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-white shadow-sm">
             {offerLabel}
@@ -126,17 +134,21 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
           is full contrast for free, and the photograph is no longer half
           covered by the gradient that was protecting the text. */}
       <div className="flex flex-1 flex-col px-4 py-3.5">
-        <span className="flex items-center gap-1 text-[8.5px] font-extrabold uppercase tracking-[0.1em] text-saffron-700">
-          <BadgeCheck size={10} strokeWidth={3} className="shrink-0" />
-          Arranged by Sambramo
-        </span>
+        {/* There was an eyebrow here. First it said "Arranged by Sambramo"
+            on all fifteen cards, which the eye stops reading by the third;
+            then it carried the occasion's tagline, which is a sentence and
+            clamped to one line arrived as "BIRTHDAYS DESERVE TO B…".
 
+            A truncated sentence is worse than no line at all, and the card
+            does not need one: a photograph, a name, a price and a count is
+            the whole grammar of a catalogue card, and every extra row above
+            the name pushes the price further from the thing it prices. */}
         {/* Two lines, then ellipsis — not `truncate`. Half these names are
             two words ("Naming Ceremony", "Housewarming (Griha Pravesh)") and
             a single-line clamp cut most of them mid-word, which is how a
             catalogue of fifteen occasions ends up looking like a list of
             database keys. */}
-        <span className="mt-1.5 line-clamp-2 text-[15px] font-extrabold leading-tight tracking-tight text-ink">
+        <span className="line-clamp-2 text-[15px] font-extrabold leading-tight tracking-tight text-ink">
           {o.name}
         </span>
 

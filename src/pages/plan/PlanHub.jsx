@@ -272,7 +272,6 @@ export default function PlanHub() {
                 <OccasionCard
                   key={o.id}
                   occasion={o}
-                  offer={OFFER_BY_ID.first_booking}
                   stagger={i * 260}
                 />
               ))}

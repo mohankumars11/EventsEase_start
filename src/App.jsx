@@ -13,6 +13,7 @@ import ErrorBoundary from './components/layout/ErrorBoundary'
 import ChatWidget from './components/customer/ChatWidget'
 import JourneyTracker from './components/common/JourneyTracker'
 import ResumePrompt from './components/common/ResumePrompt'
+import SplashScreen from './components/ui/SplashScreen'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
@@ -510,6 +511,11 @@ export default function App() {
                   living inside the layout it must not disturb has nowhere to
                   go but on top of it. */}
               <ChatWidget />
+              {/* The mark, once, on a device's first open. An overlay over a
+                  mounted app rather than a gate in front of one — mounted
+                  last so it paints above everything, and dismissible by tap
+                  so it can never trap anyone on a logo. */}
+              <SplashScreen />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —

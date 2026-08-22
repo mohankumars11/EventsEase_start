@@ -49,6 +49,19 @@ export const BRAND = {
   // under the wordmark on a 360px phone — which is why the caption no longer
   // has to be hidden there.
   emotion:   'Every emotion, valued',
+  /* ── The category line ────────────────────────────────────────────────
+     What rides under the wordmark in the app's own chrome.
+     `emotion` held this slot and is a feeling rather than an answer, which
+     is the wrong trade for a brand nobody has heard of: the feeling is
+     already carried by the photograph on every card below it, and the one
+     line under the name is the only place the category gets named.
+
+     Not "India's FIRST event booking app". The superlative is unverifiable,
+     it is the kind of claim a competitor screenshots, and naming the
+     category does the whole job without it. 25 characters, which still fits
+     under the wordmark on a 360px screen — the constraint that killed the
+     long descriptor here before. */
+  categoryLine: "India's event booking app",
   // The hero and both auth panels set the second sentence in saffron on its
   // own line, so every one of them had this string typed out by hand and split
   // around markup — three copies of the brand's most repeated line, each free

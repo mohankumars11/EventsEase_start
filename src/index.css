@@ -1424,6 +1424,35 @@
   }
   .a-hairline { border-color: rgb(var(--a-line, 17 15 25) / 0.08); }
 
+  /* ── The wordmark caption, revealed left to right ────────────────────
+     A clip-path wipe rather than a fade or a typewriter. A fade says nothing
+     about direction; a typewriter re-lays out the line on every frame, which
+     on a caption sitting under a logo makes the logo appear to twitch.
+     Clipping leaves the text's box at its final size from frame one, so
+     nothing around it moves — only the reveal travels.
+
+     `inset()` from the right edge to zero, once, on mount. It is chrome the
+     customer sees on every cold open, so it is quick and it does not loop:
+     an animation that repeats in an app bar is a distraction with a permanent
+     licence. */
+  .brand-wipe {
+    animation: brand-wipe 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  }
+  @keyframes brand-wipe {
+    from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+    to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+  }
+
+  /* The gold hairline that travels with it. */
+  .brand-rule {
+    animation: brand-rule 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+    transform-origin: left center;
+  }
+  @keyframes brand-rule {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
   /* ── The brand light ────────────────────────────────────────────────
      A hero ground. `background-size` is oversized so `aurora-pan` has
      somewhere to travel; the animation moves background-position only. */
@@ -1553,6 +1582,19 @@
     .a-stagger > * {
       animation: none !important;
       opacity: 1 !important;
+      transform: none !important;
+    }
+    /* Both of these start clipped or scaled to nothing under `both`, so
+       cancelling the animation without restoring the end state would leave
+       the wordmark's caption invisible and its rule at zero width. Same trap
+       the planBuilder block documents. */
+    .brand-wipe {
+      animation: none !important;
+      clip-path: none !important;
+      opacity: 1 !important;
+    }
+    .brand-rule {
+      animation: none !important;
       transform: none !important;
     }
   }

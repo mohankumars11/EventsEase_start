@@ -139,6 +139,43 @@ export default {
         // The savings colour. Never used for anything that isn't money off
         // or genuinely urgent — the moment it decorates a heading it stops
         // meaning "offer".
+        /* ── The brand blue ──────────────────────────────────────────
+           Sambramo's wordmark colour. Deep enough to read as ceremonial
+           rather than corporate — a royal indigo-blue, the colour of a
+           wedding invitation card rather than a bank. 800 is the ink the
+           wordmark is set in on white; 950 is for the rare dark surface.
+
+           It sits beside plum rather than replacing it: plum stays the
+           product's interaction colour (buttons, the Plan tab, selection),
+           and royal is the *identity* colour. Two jobs, two ramps — the
+           moment a brand colour also means "tap this", every logo on the
+           page starts looking like a button. */
+        royal: {
+          50:  '#eff4ff',
+          100: '#dbe6fe',
+          200: '#bfd3fe',
+          300: '#93b4fd',
+          400: '#608cfa',
+          500: '#3b66f6',
+          600: '#2546eb',
+          700: '#1d34d8',
+          800: '#102a8f',   // the wordmark
+          900: '#0b1f6b',
+          950: '#061448',
+        },
+        /* Leaf gold for the monogram. Metallic gold is three stops — a pale
+           highlight, a saturated body, a burnt shadow — and a single flat
+           yellow reads as plastic. These are the three the gradient runs
+           through. */
+        gold: {
+          100: '#fdf3c8',
+          200: '#f7e3a1',
+          300: '#eccd74',
+          400: '#e0b44f',
+          500: '#c9973a',
+          600: '#a8762b',
+          700: '#7d551d',
+        },
         chilli: {
           50:  '#fef3f2',
           100: '#fde0dd',

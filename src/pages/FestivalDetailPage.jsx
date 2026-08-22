@@ -1,566 +1,213 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Calendar, MapPin, Clock, CheckCircle, ChevronRight, Sparkles, Phone } from 'lucide-react'
+import { CalendarDays, Bell, Check, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { FESTIVALS } from '../data/festivals'
 import { BRAND } from '../config/sambramo'
 import AppBar from '../components/layout/AppBar'
-import { useScrollReveal } from '../hooks/useScrollReveal'
-import { fetchUnsplashPhoto } from '../lib/unsplash'
+import RemoteImage from '../components/common/RemoteImage'
+import { useCity } from '../context/CityContext'
+import { recordInterest, answerFor, flushPending } from '../lib/festivalInterest'
 
+/**
+ * A festival, behind a locked door — and the door asks a question.
+ *
+ * ── Why this page is a lock and not a catalogue ───────────────────────────
+ * It used to be a full festival page: the foods, the rituals, the menu
+ * packages, the gift hampers. Every one of those was aspirational. We do not
+ * yet sell a Diwali package, and a page that lists one is a promise the
+ * business cannot keep — which is the same mistake the storefront made and
+ * the reason it is gone.
+ *
+ * So it says what is true: we are building this, it is not open yet.
+ *
+ * ── Why an apology is not enough ──────────────────────────────────────────
+ * A locked door that only apologises wastes the most valuable property it
+ * has: it is standing in front of somebody who arrived already wanting this
+ * exact thing, on their own initiative, before we advertised it. That is the
+ * highest-intent traffic in the app and it is seasonal — it will not be back
+ * for eleven months.
+ *
+ * So the door asks one question, and it is one tap to answer. Not a form: an
+ * email field converts a fraction of what a button does, and we do not need
+ * an email to learn what we are actually trying to learn.
+ *
+ * ── Why NO is a button and not an absence ─────────────────────────────────
+ * The tempting design is a single "Notify me". It measures nothing. "Forty
+ * people opened Diwali and two tapped notify" is a very different fact from
+ * "forty opened it and thirty-eight said no", and only the second design can
+ * tell them apart — the first reads both as two signups. A no is cheap for
+ * the customer to give and is the answer that stops us building the wrong
+ * festival first.
+ */
 export default function FestivalDetailPage() {
-  useScrollReveal()
-  const { id }   = useParams()
-  const [photo, setPhoto] = useState(null)
-
+  const { id } = useParams()
+  const { city } = useCity()
   const festival = FESTIVALS.find(f => f.id === id)
 
-  useEffect(() => {
-    setPhoto(null)
-    if (!festival) return
-    let cancelled = false
-    fetchUnsplashPhoto(`${festival.name} festival India celebration`).then(p => {
-      if (!cancelled) setPhoto(p)
-    })
-    return () => { cancelled = true }
-  }, [id])
+  const [answer, setAnswer] = useState(() => answerFor(id))
+  const [busy, setBusy] = useState(false)
 
-  if (!festival) {
-    return (
-      <div className="min-h-screen bg-cream pb-bottom-nav">
-        <AppBar tone="plum" backTo="/" title="Festival not found" />
-        <div className="mx-auto max-w-3xl px-4 pt-5">
-          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <div className="text-5xl">🪔</div>
-            <h1 className="font-bold text-gray-800">We don't have a page for that festival</h1>
-            <p className="max-w-xs text-sm leading-relaxed text-gray-500">
-              We still plan it — every occasion in the catalogue is priced and bookable.
-            </p>
-            <Link
-              to="/services"
-              className="mt-1 inline-block rounded-xl bg-saffron-500 px-6 py-3 font-bold text-plum-950 transition-colors hover:bg-saffron-600"
-            >
-              Browse occasions
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+  // Replay anything captured while migration 055 was still unapplied. Silent,
+  // and this is the one screen where the round trip is already being paid.
+  useEffect(() => { flushPending() }, [])
+
+  // Reset when moving between festivals; the component is reused across ids.
+  useEffect(() => { setAnswer(answerFor(id)) }, [id])
+
+  async function answerWith(value) {
+    if (busy) return
+    setBusy(true)
+    setAnswer(value)            // optimistic: the tap must feel instant
+    await recordInterest({
+      festivalId: id,
+      festivalName: festival?.name ?? id,
+      answer: value,
+      city,
+    })
+    setBusy(false)
   }
 
-  // The wizard already reads ?type= and ?festival= (PlanningWizard) and the
-  // catalogue reads ?festival= (ServicesPicker). This page never used either:
-  // all six of its calls to action pointed at /signup, so the highest-intent
-  // seasonal traffic in the app — somebody reading about their own festival —
-  // was met with an account form before it had been told a single price. That
-  // also contradicts the rule the shop, the catalogue and the wizard follow:
-  // browse freely, sign in at the moment there is something to save.
-  const planHref = `/plan/custom?type=festival&festival=${id}`
-  const catalogHref = `/services?festival=${id}`
-
-  const {
-    name, tagline, emoji, gradientFrom, gradientTo, accentHex,
-    month, duration, region, description, emotionalHook,
-    foods, rituals, services, menuPackages, giftHampers, customizationOptions,
-  } = festival
-
-  const heroGradient = `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`
+  // An unknown id still gets a real page. The festival rail is generated from
+  // FESTIVALS so this should not happen, but a shared link outliving a
+  // renamed festival should not land on "not found" when the honest answer —
+  // we are not open for this yet — is the same answer either way.
+  const name = festival?.name ?? 'This festival'
+  const emoji = festival?.emoji ?? '🪔'
+  const when = festival?.month ? `${festival.month}${festival.duration ? ` · ${festival.duration}` : ''}` : null
 
   return (
-    <div className="min-h-screen bg-cream pb-bottom-nav">
-      <AppBar tone="plum" backTo="/" title={name} subtitle={`${month} · ${duration}`} />
+    <div className="a-canvas min-h-screen pb-bottom-nav">
+      <AppBar backTo="/" title={name} subtitle={when ?? undefined} />
 
-      {/* ═══════════════════════════════════════════════
-          SECTION 1 — Emotional Hero
-      ═══════════════════════════════════════════════ */}
-      <section
-        className="relative overflow-hidden px-4 pb-16 pt-12"
-        style={photo
-          ? {
-              backgroundImage: `linear-gradient(135deg, ${gradientFrom}cc 0%, ${gradientTo}cc 100%), url(${photo.url})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }
-          : { background: heroGradient }
-        }
-      >
-        {/* Decorative blobs */}
-        <div
-          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
-          style={{ backgroundColor: '#ffffff' }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-          style={{ backgroundColor: '#000000' }}
-        />
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-4 space-y-4">
 
-        <div className="relative mx-auto max-w-3xl text-center">
-          {/* Emoji — full-size hero art when no photo, small accent badge when one loads */}
-          {photo ? (
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-sunk/[0.07] backdrop-blur-sm text-3xl mb-5">
-              {emoji}
-            </div>
-          ) : (
-            <div className="text-7xl sm:text-8xl mb-5 float inline-block">{emoji}</div>
-          )}
-
-          {/* Name */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
-            {name}
-          </h1>
-
-          {/* Tagline */}
-          <p className="text-ink-soft text-lg sm:text-xl font-medium mb-6 max-w-2xl mx-auto">
-            {tagline}
-          </p>
-
-          {/* Emotional hook */}
-          <blockquote className="text-ink-soft text-base sm:text-lg italic max-w-2xl mx-auto mb-8 leading-relaxed border-l-4 border-hairline/10 pl-4 text-left">
-            "{emotionalHook}"
-          </blockquote>
-
-          {/* Badges */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
-              <Calendar size={13} /> {month}
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
-              <Clock size={13} /> {duration}
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-surface-sunk/[0.07] text-ink text-sm font-medium px-4 py-1.5 rounded-full backdrop-blur-sm">
-              <MapPin size={13} /> {region}
-            </span>
-          </div>
-
-          {/* CTA */}
-          <Link
-            to={planHref}
-            className="inline-flex items-center gap-2 bg-white font-bold px-8 py-3.5 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 text-base"
-            style={{ color: gradientFrom }}
-          >
-            <Sparkles size={18} /> Plan This {name}
-          </Link>
-        </div>
-
-        {photo && (
-          <a
-            href={photo.photographerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute bottom-3 right-4 text-[11px] text-ink-mute hover:text-ink-soft transition-colors"
-          >
-            Photo by {photo.photographerName} on Unsplash
-          </a>
-        )}
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          SECTION 2 — Foods
-      ═══════════════════════════════════════════════ */}
-      <section className="px-4 py-10 sm:py-16 bg-white">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-12 reveal">
-            <span
-              className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-              style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
-            >
-              {emoji} Festival Flavors
-            </span>
-            <h2 className="section-title">Traditional Foods &amp; Flavors</h2>
-            <p className="section-subtitle max-w-2xl mx-auto">
-              Every dish tells a story — recipes passed down through generations, cooked with love and served with joy
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {foods.map((food, i) => (
-              <FoodCard key={food.name} food={food} accentHex={accentHex} delay={i} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          SECTION 3 — Rituals
-      ═══════════════════════════════════════════════ */}
-      <section className="px-4 py-10 sm:py-16" style={{ backgroundColor: '#fafafa' }}>
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-12 reveal">
-            <span
-              className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-              style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
-            >
-              🙏 Sacred Traditions
-            </span>
-            <h2 className="section-title">Sacred Rituals &amp; Traditions</h2>
-            <p className="section-subtitle">
-              The rituals that give {name} its heart — moments that connect generations
-            </p>
-          </div>
-
-          <div className="relative">
-            {/* Vertical connector line */}
-            <div
-              className="absolute left-6 top-0 bottom-0 w-0.5 hidden sm:block"
-              style={{ backgroundColor: `${accentHex}30` }}
+        {/* ── The festival, as itself ──────────────────────────────────
+            The lock is the message, but leading with it makes the page an
+            error. The photograph and the date come first so the screen is
+            still about the festival somebody came looking for. */}
+        <div className="a-card overflow-hidden">
+          <div className="relative h-40 bg-royal-900">
+            <RemoteImage
+              query={festival ? `${festival.name} festival India celebration` : 'Indian festival celebration'}
+              emoji={emoji}
+              alt=""
+              className="absolute inset-0 h-full w-full"
+              cinematic
             />
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-royal-800 backdrop-blur-[2px]">
+              <Lock size={10} strokeWidth={3} /> Not open yet
+            </span>
+          </div>
 
-            <div className="space-y-6">
-              {rituals.map((ritual, i) => (
-                <div key={ritual.name} className={`reveal reveal-delay-${Math.min(i + 1, 4)}`}>
-                  <div className="flex gap-5">
-                    {/* Timeline dot */}
-                    <div
-                      className="hidden sm:flex w-12 h-12 rounded-full items-center justify-center text-xl shrink-0 shadow-md z-10"
-                      style={{ backgroundColor: accentHex }}
-                    >
-                      {ritual.emoji}
-                    </div>
-
-                    {/* Card */}
-                    <div className="flex-1 bg-white rounded-2xl border border-orange-100 p-6 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl sm:hidden">{ritual.emoji}</span>
-                          <h3 className="font-bold text-gray-900 text-lg">{ritual.name}</h3>
-                        </div>
-                        {ritual.timing && (
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full whitespace-nowrap">
-                            <Clock size={10} className="inline mr-1" />{ritual.timing}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 text-sm leading-relaxed mb-4">{ritual.description}</p>
-                      {ritual.items?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items needed</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {ritual.items.map(item => (
-                              <span
-                                key={item}
-                                className="text-xs px-2.5 py-1 rounded-full font-medium"
-                                style={{ backgroundColor: `${accentHex}15`, color: accentHex }}
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="px-4 py-3.5">
+            <h1 className="text-[19px] font-extrabold leading-tight tracking-tight text-ink">
+              {name}
+            </h1>
+            {when && (
+              <p className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-ink-mute">
+                <CalendarDays size={13} className="shrink-0 text-royal-700" />
+                {when}
+              </p>
+            )}
+            {festival?.tagline && (
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{festival.tagline}</p>
+            )}
           </div>
         </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════
-          SECTION 4 — Menu Packages
-      ═══════════════════════════════════════════════ */}
-      <section className="px-4 py-10 sm:py-16 bg-white">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-12 reveal">
-            <span
-              className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-              style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
-            >
-              🍽️ Menu Packages
-            </span>
-            <h2 className="section-title">Curated Menu Packages</h2>
-            <p className="section-subtitle">
-              Thoughtfully designed menus for every budget and guest count
+        {/* ── The lock, and the question ───────────────────────────────── */}
+        <div className="a-card overflow-hidden">
+          <div className="a-rail px-4 pb-4 pt-5">
+            <h2 className="text-[16px] font-extrabold tracking-tight text-ink">
+              We're still building {name}
+            </h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+              Doing a festival properly means the priest, the decor, the food and
+              the timings all lined up for that one date — and we would rather
+              open it late than sell you a version of it that is not ready.
+              It is being put together for {BRAND.pilotCities.join(' and ')} now.
             </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {menuPackages.map((pkg, i) => (
-              <div
-                key={pkg.name}
-                className={`reveal reveal-delay-${i + 1} relative rounded-2xl border-2 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                  pkg.highlight
-                    ? 'border-transparent shadow-lg'
-                    : 'border-orange-100 bg-white shadow-sm'
-                }`}
-                style={pkg.highlight ? { background: heroGradient } : {}}
-              >
-                {pkg.highlight && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-xs font-bold px-3 py-1 rounded-full shadow"
-                    style={{ color: gradientFrom }}>
-                    ★ {pkg.highlight}
-                  </span>
-                )}
-
-                <h3
-                  className={`font-bold text-xl mb-1 ${pkg.highlight ? 'text-ink' : 'text-gray-900'}`}
-                >
-                  {pkg.name}
-                </h3>
-                <p
-                  className={`text-sm font-semibold mb-4 ${pkg.highlight ? 'text-ink-soft' : 'text-saffron-600'}`}
-                >
-                  Custom quote — priced to your guest count &amp; needs
+            {answer === null ? (
+              <>
+                <p className="mt-4 text-[13.5px] font-extrabold text-ink">
+                  Are you waiting for this one?
+                </p>
+                <p className="mt-0.5 text-[11.5px] text-ink-mute">
+                  One tap. It decides which festival we finish first.
                 </p>
 
-                <ul className="space-y-2 mb-6">
-                  {pkg.items.map(item => (
-                    <li key={item} className={`flex items-center gap-2 text-sm ${pkg.highlight ? 'text-ink-soft' : 'text-gray-600'}`}>
-                      <CheckCircle
-                        size={14}
-                        className="shrink-0"
-                        style={{ color: pkg.highlight ? 'white' : accentHex }}
-                      />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to={planHref}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                    pkg.highlight
-                      ? 'bg-white hover:bg-orange-50'
-                      : 'border-2 hover:bg-orange-50'
-                  }`}
-                  style={pkg.highlight ? { color: gradientFrom } : { borderColor: accentHex, color: accentHex }}
-                >
-                  Request a Quote <ChevronRight size={14} />
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          SECTION 4B — Gift Hampers (book & get this free)
-      ═══════════════════════════════════════════════ */}
-      {giftHampers?.length > 0 && (
-        <section className="px-4 py-10 sm:py-16" style={{ background: `linear-gradient(135deg, ${gradientFrom}10 0%, ${gradientTo}10 100%)` }}>
-          <div className="mx-auto max-w-3xl">
-            <div className="text-center mb-10 reveal">
-              <span
-                className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-                style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
-              >
-                🎁 Special Offer
-              </span>
-              <h2 className="section-title">Book {name} & Get This Free</h2>
-              <p className="section-subtitle">A festive gift hamper on us — no extra planning needed</p>
-            </div>
-
-            {giftHampers.map(hamper => (
-              <div
-                key={hamper.name}
-                className="reveal relative rounded-2xl border-2 p-6 sm:p-8 bg-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-6"
-                style={{ borderColor: accentHex }}
-              >
-                {hamper.highlight && (
-                  <span
-                    className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-ink shadow"
-                    style={{ background: heroGradient }}
+                <div className="mt-3 flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => answerWith('yes')}
+                    disabled={busy}
+                    className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-royal-800 px-4 text-[13.5px] font-extrabold text-white shadow-[0_8px_20px_-10px_rgba(16,42,143,0.95)] transition-transform active:scale-[0.97] disabled:opacity-60"
                   >
-                    {hamper.highlight}
-                  </span>
-                )}
-                <div className="flex-1">
-                  <h3 className="font-bold text-xl text-gray-900 mb-1">{hamper.name}</h3>
-                  <p className="text-2xl font-extrabold mb-3" style={{ color: accentHex }}>{hamper.price}</p>
-                  <ul className="flex flex-wrap gap-2">
-                    {hamper.items.map(item => (
-                      <li key={item} className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-full px-3 py-1">
-                        <CheckCircle size={13} style={{ color: accentHex }} className="shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                    <Bell size={15} strokeWidth={2.6} /> Yes, notify me
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => answerWith('no')}
+                    disabled={busy}
+                    className="min-h-[48px] shrink-0 rounded-full px-5 text-[13.5px] font-extrabold text-ink-soft outline outline-1 -outline-offset-1 outline-ink/15 transition-transform active:scale-[0.97] disabled:opacity-60"
+                  >
+                    Not this one
+                  </button>
                 </div>
-                <Link
-                  to={planHref}
-                  className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-ink transition-all hover:opacity-90"
-                  style={{ background: heroGradient }}
+              </>
+            ) : (
+              /* ── After the tap ──────────────────────────────────────
+                 Both answers are thanked, and neither is undone silently —
+                 the control stays visible so somebody who mis-tapped can
+                 change it, which is also how a no becomes a yes later. */
+              <div className="mt-4">
+                <p className="flex items-center gap-2 text-[13.5px] font-extrabold text-ink">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-700 text-white">
+                    <Check size={13} strokeWidth={3.2} />
+                  </span>
+                  {answer === 'yes' ? "You're on the list" : 'Noted — thank you'}
+                </p>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">
+                  {answer === 'yes'
+                    ? `We'll message you the moment ${name} opens in ${city ?? BRAND.pilotCities[0]}. No other mail, ever.`
+                    : 'That is genuinely useful — it tells us where not to spend the next month.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => answerWith(answer === 'yes' ? 'no' : 'yes')}
+                  disabled={busy}
+                  className="mt-2.5 text-[11.5px] font-extrabold text-royal-700 underline underline-offset-2 disabled:opacity-60"
                 >
-                  Claim This Offer <ChevronRight size={14} />
-                </Link>
+                  {answer === 'yes' ? 'Actually, take me off' : 'Changed my mind — notify me'}
+                </button>
               </div>
-            ))}
+            )}
           </div>
-        </section>
-      )}
+        </div>
 
-      {/* ═══════════════════════════════════════════════
-          SECTION 5 — Customization
-      ═══════════════════════════════════════════════ */}
-      <section className="px-4 py-10 sm:py-16" style={{ backgroundColor: '#fafafa' }}>
-        <div className="mx-auto max-w-3xl">
-          <div className="reveal text-center mb-10">
-            <span
-              className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-              style={{ backgroundColor: `${accentHex}20`, color: accentHex }}
-            >
-              ✨ Personalize
+        {/* ── The thing that IS open ───────────────────────────────────
+            A locked page with no way forward is a dead end. Every occasion
+            in the catalogue is priced and bookable today, and a festival is
+            a gathering — most of what somebody wants for one is already
+            here under another name. */}
+        <Link
+          to="/plan"
+          className="a-card flex items-center gap-3.5 p-4 transition-transform active:scale-[0.985]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-plum-700 to-plum-500 text-white">
+            <Sparkles size={19} strokeWidth={2.2} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14.5px] font-extrabold leading-snug text-ink">
+              A gathering at home, though — that we can do now
             </span>
-            <h2 className="section-title">Make It Yours</h2>
-            <p className="section-subtitle">
-              Every family celebrates differently — we customize every detail to match your vision
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-8 reveal">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {customizationOptions.map((option, i) => (
-                <label key={option} className="flex items-start gap-3 cursor-pointer group">
-                  <div
-                    className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: accentHex }}
-                  >
-                    <CheckCircle size={12} className="text-ink" />
-                  </div>
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
-                    {option}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div className="border-t border-orange-100 pt-6 text-center">
-              <p className="text-gray-500 text-sm mb-4">
-                Have something specific in mind? Our event experts will make it happen.
-              </p>
-              <Link
-                to={planHref}
-                className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-ink shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-                style={{ background: heroGradient }}
-              >
-                Request Custom Menu <ChevronRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          SECTION 6 — Services
-      ═══════════════════════════════════════════════ */}
-      <section className="px-4 py-10 sm:py-16 bg-white">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-8 reveal">
-            <h2 className="section-title">Services You'll Need</h2>
-            <p className="section-subtitle">Everything to make your {name} celebration complete</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3 reveal">
-            {services.map(service => (
-              <Link
-                key={service}
-                to={catalogHref}
-                className="group flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-medium text-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-                style={{ borderColor: accentHex, color: accentHex }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = accentHex
-                  e.currentTarget.style.color = '#ffffff'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = accentHex
-                }}
-              >
-                {service} <ChevronRight size={13} />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          SECTION 7 — Bottom CTA
-      ═══════════════════════════════════════════════ */}
-      <section
-        className="relative overflow-hidden px-4 py-12 sm:py-20"
-        style={{ background: heroGradient }}
-      >
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="text-9xl absolute top-4 right-8 select-none">{emoji}</div>
-          <div className="text-7xl absolute bottom-4 left-8 select-none">{emoji}</div>
-        </div>
-
-        <div className="relative mx-auto max-w-3xl text-center reveal">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-ink mb-4 leading-tight">
-            Make This {name} the One <br className="hidden sm:block" />
-            They'll Always Remember
-          </h2>
-          <p className="text-ink-soft text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-            {description}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to={planHref}
-              className="inline-flex items-center justify-center gap-2 bg-white font-bold px-8 py-3.5 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all text-base"
-              style={{ color: gradientFrom }}
-            >
-              <Sparkles size={18} /> Plan This {name}
-            </Link>
-            {/* "Talk to an expert" now rings one. It opened a signup form,
-                which is the one thing somebody who wants to speak to a human
-                has already decided against. */}
-            <a
-              href={`tel:${BRAND.supportPhone}`}
-              className="inline-flex items-center justify-center gap-2 bg-surface-sunk/[0.07] border-2 border-hairline/10 text-ink font-bold px-8 py-3.5 rounded-2xl hover:bg-surface-sunk/[0.07] transition-all text-base backdrop-blur-sm"
-            >
-              <Phone size={17} /> Talk to an expert
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-/* ── Food card subcomponent ──────────────────────────────── */
-function FoodCard({ food, accentHex, delay }) {
-  return (
-    <div className={`reveal reveal-delay-${Math.min(delay + 1, 4)} group relative bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300`}>
-      {/* Gradient header */}
-      <div
-        className="h-20 flex items-center justify-center text-4xl"
-        style={{ backgroundColor: `${accentHex}15` }}
-      >
-        {food.emoji}
-      </div>
-
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-bold text-gray-900 text-base leading-tight">{food.name}</h3>
-          {food.customizable && (
-            <span
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0"
-              style={{ backgroundColor: `${accentHex}15`, color: accentHex }}
-            >
-              Customizable
+            <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-soft">
+              Decor, catering, a priest and photography, priced before you commit.
             </span>
-          )}
-        </div>
-
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{food.category}</span>
-
-        <p className="text-xs text-gray-500 leading-relaxed mt-2 mb-3">{food.description}</p>
-
-        <p className="text-sm font-semibold" style={{ color: accentHex }}>{food.price}</p>
-
-        {/* Custom options — revealed on hover */}
-        {food.customizable && food.customOptions?.length > 0 && (
-          <div className="mt-3 max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-300">
-            <div className="border-t border-orange-100 pt-3">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Options</p>
-              <div className="flex flex-col gap-1">
-                {food.customOptions.map(opt => (
-                  <span key={opt} className="text-xs text-gray-600 flex items-center gap-1">
-                    <span style={{ color: accentHex }}>•</span> {opt}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+          </span>
+          <ArrowRight size={17} className="shrink-0 text-royal-700" />
+        </Link>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, Route, ShoppingBag, User, Lock } from 'lucide-react'
+import { Home, Sparkles, Route, User, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
@@ -96,7 +96,7 @@ function usePublishedHeight(ref, enabled) {
 
 export default function BottomNav() {
   const { user, profile } = useAuth()
-  const { cartCount, cartPath } = useCart()
+  const { cartPath } = useCart()
   const { pathname } = useLocation()
   const barRef = useRef(null)
   // Three counts, no row payload — see the hook. It self-gates on role, so
@@ -187,9 +187,17 @@ export default function BottomNav() {
    */
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
-    { to: '/shop',         icon: Store,         label: 'Shop' },
     // `icon` is the fallback for this row; a primary tab renders the
     // kolam instead and never reaches it.
+    /* Plan carries the basket now. The Cart tab held `cart_items` and
+       `cart_packages` — services and packages, not goods — and its terminal
+       action is an enquiry with an estimate band, not a checkout. A bag icon
+       in a tab bar is a promise of a till.
+
+       The count is not on this tab. It briefly was, and it meant the tab bar
+       and the app bar both carried the same number — two badges for one
+       basket, which is one of them lying the moment they disagree. The app
+       bar owns it; this tab owns the destination. */
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
     // The badge counts only what is WAITING ON THE CUSTOMER — a plan to
     // approve, an answered enquiry. An order awaiting payment confirmation is
@@ -214,7 +222,6 @@ export default function BottomNav() {
       // the one audience it must never tell "you have nothing with us".
       locked: activity.loaded && !tracking,
     },
-    { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
     { to: '/account',      icon: User,          label: 'Account' },
   ]
 
@@ -242,16 +249,17 @@ export default function BottomNav() {
   // occasion catalogue, reached from the Plan hub's own shelves, and it is
   // certainly not part of Track.
   const ADOPTED = [
-    { tab: '/plan',  prefixes: ['/service/', '/festivals/', '/services'] },
+    // `/dashboard/customer/cart` is on this list because the basket lives
+    // under Plan now and its own tab is gone — without it, opening the
+    // basket lights nothing at all.
+    { tab: '/plan',  prefixes: ['/service/', '/festivals/', '/services', cartPath] },
   ]
 
   function isActive(to) {
     if (!to) return false
-    // The cart is the most specific claim on its own URL; nothing else may
-    // match it, which is what stops Shop lighting up on /shop/cart.
-    if (to !== cartPath && (pathname === cartPath || pathname.startsWith(cartPath + '/'))) {
-      return false
-    }
+    // There used to be a guard here stopping Shop lighting up on /shop/cart,
+    // because two tabs both had a claim on that URL. One tab owns the basket
+    // now, so the ambiguity it existed for is gone.
     if (HOME_PATHS.includes(to)) return HOME_PATHS.includes(pathname)
     if (pathname === to || pathname.startsWith(to + '/')) return true
     const adopted = ADOPTED.find(a => a.tab === to)
