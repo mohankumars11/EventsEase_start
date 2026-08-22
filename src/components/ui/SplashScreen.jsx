@@ -2,113 +2,63 @@ import { useState, useEffect } from 'react'
 import { Monogram } from './SambramoWordmark'
 import { BRAND } from '../../config/sambramo'
 
-const SEEN_KEY = 'sambramo_splash_v2'
 const HOLD_MS = 4000
 const FADE_MS = 480
 
 /**
- * The mark, written, on the first open.
+ * The mark, written, every time the app opens.
  *
  * ── The choreography ──────────────────────────────────────────────────────
- * Four seconds. A splash that simply holds a static logo for four seconds is
- * four seconds of nothing;
- * a splash that spends them assembling the mark is the brand introducing
- * itself, and it is the reason a script monogram is worth having at all.
+ * Four seconds, and the first 2.3 of them are doing something:
  *
  *   0.18s  the S begins to arrive, top to bottom — the direction a
  *          Spencerian capital is actually written
  *   1.15s  the letter is complete; the wordmark rises under it
- *   1.25s  the light travels across the gilding, once
  *   1.50s  the category line
- *   1.62s  the rule opens outward from the centre
+ *   1.62s  the rules open outward from the centre
  *   2.32s  the composition is complete
  *   4.00s  hold ends, 0.48s fade
  *
- * The last element lands at 2.32s and the hold runs to 4.00s, which leaves
- * about 1.7s of stillness on a finished mark. That gap is the point rather
- * than slack: an animation that ends at the same instant the screen leaves
- * reads as a glitch, and the eye needs a beat on the completed lockup for it
- * to be the thing you remember rather than the motion.
+ * The ~1.7s of stillness on the finished mark is the point rather than
+ * slack: an animation that ends at the same instant the screen leaves reads
+ * as a glitch, and the eye needs a beat on the completed lockup for that,
+ * rather than the motion, to be the thing remembered.
  *
- * ── No cities on this screen ──────────────────────────────────────────────
- * It carried "BENGALURU · MYSORE" along the bottom. That is the first thing
- * anybody ever sees of Sambramo, and to somebody in Hyderabad it reads as a
- * closed door before they have seen a single thing the app does. The pilot
- * is real and it is stated — on the city control in the app bar, where it is
- * an answer to a question the customer has actually asked, and on the
- * waitlist form. Not here, where it can only lose people.
+ * ── Every open, not once per device ───────────────────────────────────────
+ * This was gated in localStorage and shown once. It is now shown on every
+ * cold open, which is the owner's call and the conventional one — most
+ * consumer apps in the category do the same.
  *
- * It also unbalanced the composition: an absolutely-positioned line at the
- * bottom of a flex-centred column means the mark is centred in the viewport
- * and the screen is not centred around the mark.
+ * "Every open" means every page load, not every navigation: the component is
+ * mounted once in App, outside the router, so moving between screens does
+ * not re-trigger it. In the Capacitor build that maps to a cold start —
+ * resuming from background does not reload the WebView, so somebody
+ * switching apps is not made to watch it again.
  *
- * ── Navy, per the reference ───────────────────────────────────────────────
- * The app is pure white everywhere else and this is the one screen that is
- * not, deliberately: the reference sets the mark on deep blue, a splash is
- * the one moment a brand is allowed to be only itself, and coming out of it
- * into white makes the app feel like it opened rather than like it was
- * already there. It runs once per device, so the cost is paid once.
+ * ── Why it starts in `showing` ────────────────────────────────────────────
+ * Rather than deciding in an effect. There is nothing to decide any more, and
+ * a first render that returns null would flash the app underneath for a frame
+ * before the splash covered it — which is worse than no splash.
  *
  * ── Why it can never trap anyone ──────────────────────────────────────────
  * It is an overlay over a mounted, interactive app rather than a gate in
- * front of one. If the timer never fires, if the font never loads, if
+ * front of one. If a timer never fires, if the font never loads, if
  * something throws inside it — the app underneath is already rendered, and a
- * tap dismisses this. At four seconds the tap-out matters more, not less:
- * it is the difference between a brand moment and being held up.
- *
- * Gated in localStorage under a v2 key: v1 shipped with a different splash,
- * and somebody who saw that one has not seen this.
+ * tap dismisses it. That matters more now, not less: four seconds on every
+ * single launch is only a brand moment for as long as it stays skippable.
  */
-/* ── One decision per page load, not one per mount ────────────────────────
- * The obvious implementation reads localStorage on mount and writes the flag
- * in the same breath. Under StrictMode that is broken: React deliberately
- * runs the effect twice in development, so the first pass writes "seen" and
- * the second pass reads it back and skips — the splash never appears in dev,
- * appears in production, and the difference is invisible until somebody
- * screenshots it.
- *
- * Holding the decision in a module variable makes the component idempotent:
- * the second mount, and any remount after it, get the same answer as the
- * first. The flag is persisted when the splash has actually finished rather
- * than when it starts, so a cold open that is killed at 0.4s shows it again
- * next time — which is the behaviour somebody would expect from a splash
- * they never saw.
- */
-let decision = null   // null = not yet decided this page load
-
 export default function SplashScreen() {
-  const [state, setState] = useState('checking')   // checking | showing | leaving | done
+  const [state, setState] = useState('showing')   // showing | leaving | done
 
   useEffect(() => {
-    if (decision === null) {
-      try {
-        decision = localStorage.getItem(SEEN_KEY) === '1' ? 'skip' : 'show'
-      } catch {
-        // Private mode or storage disabled. Skip — the failure mode for
-        // guessing wrong is a three-second splash on every single launch.
-        decision = 'skip'
-      }
-    }
-    if (decision === 'skip') { setState('done'); return }
-
-    setState('showing')
-
     const leave = setTimeout(() => setState('leaving'), HOLD_MS)
-    const gone  = setTimeout(() => {
-      setState('done')
-      decision = 'skip'
-      try { localStorage.setItem(SEEN_KEY, '1') } catch { /* nothing to do */ }
-    }, HOLD_MS + FADE_MS)
+    const gone  = setTimeout(() => setState('done'),    HOLD_MS + FADE_MS)
     return () => { clearTimeout(leave); clearTimeout(gone) }
   }, [])
 
-  function dismiss() {
-    setState('done')
-    decision = 'skip'
-    try { localStorage.setItem(SEEN_KEY, '1') } catch { /* nothing to do */ }
-  }
+  const dismiss = () => setState('done')
 
-  if (state === 'checking' || state === 'done') return null
+  if (state === 'done') return null
 
   return (
     <div
