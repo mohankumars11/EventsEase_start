@@ -26,6 +26,8 @@ import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
 import TierRail from '../components/home/TierRail'
+import DoorstepFilm from '../components/home/DoorstepFilm'
+import SourcingSlider from '../components/home/SourcingSlider'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -122,50 +124,42 @@ export default function HomeScreen() {
     .sort((a, b) => a.days - b.days)
     .slice(0, 8), [])
 
-  // The deck is assembled from what is true today, in the order that matters
-  // to whoever is looking. A returning customer with a celebration underway
-  // does not need the "plan a celebration" pitch first.
-  const nextFestival = upcoming[0]
   // The claimable one leads — an offer that applies itself is not news.
   const bestOffer = offers.find(o => o.action === 'claim') ?? offers[0]
 
-  /* ── The deck carries what is TIME-SENSITIVE, and nothing else ──────────
-     There used to be a permanent "Tell us what's being celebrated / Plan a
-     celebration" slide at the front of this deck, and removing it is the
-     single biggest fix on this screen.
+  /* ── What the deck carries, and why the festival slide left ─────────────
+     This used to open on whichever festival was closest — today that is
+     Raksha Bandhan, nine days out — and the slide is gone at the product
+     owner's call. The reasoning is sound and worth writing down, because the
+     obvious reading is that a countdown is the most time-sensitive thing on
+     the page and therefore belongs first.
 
-     It was the second of five identical "Plan a celebration" buttons above
-     the fold — the brand band had two doors, this deck had one, the drawn
-     film's first beat had one, the mosaic's hero had one, and the signed-out
-     tail had one. Repeating a button five times is not emphasis. It teaches
-     the eye that this shape is wallpaper, so the one at the bottom — placed
-     after the argument has actually been made, which is the moment it is most
-     likely to be pressed — is the one that gets skipped.
+     It is time-sensitive; it is just not OURS. A festival slide sells a date
+     the customer already knows about, against a deadline we did not set, into
+     a week when every decorator in the city is quoting the same thing. It also
+     duplicated a whole rail: "Coming up" further down this page already lists
+     eight festivals with the same countdown and the same link, so the deck was
+     spending its first slide restating a section the customer had not scrolled
+     to yet.
 
-     Worse, it was a permanent slide in a rotating panel. The whole point of a
-     deck is that it shows what is true TODAY: a festival that is nine days
-     away, a coupon that expires. "You can plan a celebration" is true every
-     day forever, so it was a slide that never told anyone anything new while
-     occupying a third of the rotation.
+     What replaced it is the three things that are true about US rather than
+     about the calendar: the standing 10% off a first celebration, the estimate
+     you can have in two minutes without speaking to anyone, and the fact that
+     one resource is as bookable as the whole event. Those are the arguments
+     that survive a week when there is no festival in range at all — which is
+     most weeks, and which is exactly when the old deck was thinnest.
 
-     The planner is not harder to reach for its absence — it is the left-hand
-     door in the band directly above, the hero of the mosaic below, and a tab
-     in the bar. It has simply stopped being said five times.
+     Note what this does to the earlier doctrine here: the deck was "TIME-
+     SENSITIVE, and nothing else", and two of these three slides are permanent
+     truths. That rule was written to keep a fifth "Plan a celebration" button
+     out of the rotation, and it still does — none of these three is that
+     button. They are three different offers with three different destinations,
+     which is what a rotating panel is for. A deck of one slide is a banner.
 
-     The fallback below matters: with no festival in range and no live coupon
-     the deck would render nothing, so it keeps ONE slide rather than leaving a
-     hole where the hero was. */
+     The fallback below matters: with no live offer the deck would render only
+     two slides, so it keeps its floor rather than leaving a hole where the
+     hero was. */
   const slides = [
-    nextFestival && {
-      key: `fest-${nextFestival.id}`,
-      eyebrow: `${urgency(nextFestival.days)} to go`,
-      title: nextFestival.name,
-      body: 'Decor, catering, priest and photography — arranged before the day arrives.',
-      cta: 'Plan this festival',
-      to: festivalHref(nextFestival),
-      art: nextFestival.emoji,
-      background: 'linear-gradient(120deg,#b45309 0%,#d97706 45%,#c62828 100%)',
-    },
     bestOffer && {
       key: `offer-${bestOffer.id}`,
       eyebrow: 'Live offer',
@@ -176,27 +170,62 @@ export default function HomeScreen() {
       art: '🎁',
       background: 'linear-gradient(120deg,#4c1d95 0%,#6d28d9 50%,#7c3aed 100%)',
     },
+    /* The estimate. Deliberately promises a RANGE and says why it moves —
+       utils/quote.js returns a range rather than a figure because there is no
+       signed supplier behind this catalogue yet, and a number to the rupee
+       would imply a rate card that does not exist. "Priced at this week's
+       rates" is the honest version of that limitation and reads as a feature,
+       which it also genuinely is: a quote built on last quarter's costs is
+       worth less, not more. */
+    {
+      key: 'estimate',
+      eyebrow: 'No call, no wait',
+      title: 'Your price in two minutes',
+      body: 'Build the celebration and see a real range at this week’s market rates — not “contact us”.',
+      cta: 'Get my estimate',
+      to: '/plan/build',
+      art: '🧮',
+      background: 'linear-gradient(120deg,#0b3d2e 0%,#1c8560 52%,#38a47b 100%)',
+    },
+    /* Individuals and businesses, one resource or all of them. The catalogue
+       has carried `corporate_event` and thirty individually bookable services
+       for a long time; Home simply never said so, so anyone who wanted a
+       purohit for Thursday read a page of wedding packages and left. The
+       SourcingSlider below makes the same argument at length — this slide is
+       the one line of it that reaches somebody who never scrolls that far. */
+    {
+      key: 'audience',
+      eyebrow: 'Individuals & businesses',
+      title: 'One purohit, or a launch for 400',
+      body: 'A cook, a sound system, a decorator — take one resource, or hand us the whole celebration.',
+      cta: 'See what we source',
+      to: '/plan#services-heading',
+      art: '🧑‍🍳',
+      background: 'linear-gradient(120deg,#b45309 0%,#d97706 48%,#e8720c 100%)',
+    },
   ].filter(Boolean)
 
-  /* Nothing timely to show — no festival within range, no live coupon. Rather
-     than render an empty band where the deck was, fall back to the one thing
-     that is always true. This is the ONLY path on which the planner CTA
-     appears in the deck, so on any ordinary day it does not. */
-  if (slides.length === 0) {
-    slides.push({
-      key: 'plan',
-      eyebrow: 'Concierge',
-      title: activeEvents.length > 0 ? 'Planning another one?' : 'Tell us what’s being celebrated',
-      body: 'Venue, decor, food, photography — one team arranges all of it and one number answers for it.',
-      cta: CTA.planNav,
-      to: '/plan',
-      art: '🎊',
-      background: 'linear-gradient(120deg,#6d28d9 0%,#a21caf 55%,#c026d3 100%)',
-    })
-  }
+  /* The empty-deck fallback that used to sit here is gone with the reason for
+     it. Two of the three slides above are unconditional, so `slides` can no
+     longer be empty and the guard was dead code — and dead code that pushes a
+     fifth "Plan a celebration" button into the rotation is the specific thing
+     the note above says this deck must not do. If both literal slides ever
+     become conditional, the floor has to come back. */
 
-  // A returning customer sees what's next for them before the pitch.
-  if (activeEvents.length > 0) slides.reverse()
+  /* A returning customer sees the offer LAST rather than first, which is the
+     opposite of what this line used to do and the correct way round.
+
+     The reverse() it replaces was written when the deck was a festival and an
+     offer, and it meant "show the timely thing first". With three slides it
+     only shuffled them. The real point is narrower and worth stating: the
+     leading offer is `first_booking`, which celebrationOffers marks one per
+     customer. Opening a returning customer's deck on a discount they have
+     already spent is the one arrangement here that can actively annoy
+     somebody, so they get the estimate first and the offer at the back. */
+  if (activeEvents.length > 0 && bestOffer) {
+    const led = slides.findIndex(s => s.key === `offer-${bestOffer.id}`)
+    if (led === 0) slides.push(slides.shift())
+  }
 
   // The festival rail advances itself; `upcoming` is capped at 8.
   const festivalRail = useAutoScrollRail(upcoming.length)
@@ -222,10 +251,12 @@ export default function HomeScreen() {
           )}
 
           {/* ── The hero ──────────────────────────────────────────────
-              What is live right now: the festival closest to today, the
-              best coupon checkout will honour, the planner. Three slides
-              that rotate, all of them time-sensitive — see PromoDeck for
-              why nothing permanent is allowed in here.
+              Three slides, and all three are arguments about us rather than
+              about the calendar: the live offer, the two-minute estimate,
+              and the fact that one resource is as bookable as the whole
+              event. The festival countdown that used to lead is gone — see
+              the note where `slides` is built for why, and for what that
+              costs the old "nothing permanent in the deck" rule.
 
               The brand film used to be welded underneath it for signed-out
               visitors. It now sits below the catalogue with the rest of
@@ -288,6 +319,24 @@ export default function HomeScreen() {
             </div>
           </section>
 
+          {/* ── Or just one thing ─────────────────────────────────────
+              Directly under the occasion grid, because the grid is what
+              raises the objection: fifteen cards, every one of them a whole
+              celebration, and nothing on the page yet saying that a purohit
+              for Thursday morning or a company annual day is also a thing we
+              do. Both already are — `corporate_event` is one of the fifteen,
+              and PlanHub has listed the individually bookable services since
+              it was rebuilt — so this panel is not a new promise, it is Home
+              finally making one it could always keep.
+
+              It is a rail rather than a grid on purpose: the claim is the
+              range, which a rail demonstrates by moving through it. See
+              SourcingSlider for why it names the work rather than the price,
+              and for why it does NOT say "just the cook" — IntroCards, the
+              panel immediately below, already owns that sentence, so the two
+              deliberately split the argument rather than repeat it. */}
+          <SourcingSlider />
+
           {/* ── What this app is ─────────────────────────────────────
               Under the grid rather than above it. A first-time visitor
               scrolls the merchandise first whatever the page says, so the
@@ -311,6 +360,27 @@ export default function HomeScreen() {
               about sixty people". One rail serves every occasion, and it
               carries a real scale, a real price and a live coupon. */}
           <TierRail offer={OFFER_BY_ID.first_booking} />
+
+          {/* ── What the price lock actually buys ─────────────────────
+              Immediately under the tier rail, because the rail is where the
+              lock is first mentioned — its footer reads "Build it, then hold
+              the price for ₹1,000" and then the page moves on. That is the
+              mechanic with the offer left out.
+
+              The offer is the visit: a Bandhu arrives at your door with the
+              proposal, reads it with you and changes what does not fit,
+              before anything is booked and while the money is still
+              refundable. It is the most unusual thing this business does and
+              it was stated nowhere a browsing customer would meet it.
+
+              A clip rather than a card because a card can only assert a
+              sequence and this one has to show it — the whole persuasion is
+              that the visit HAPPENS, in order, with you in the room. Drawn
+              rather than filmed for the reason every film in this app is
+              drawn: pre-launch, no supplier, and stock footage of somebody
+              else's coordinator is the borrowed-brand problem the Bandhu name
+              exists to avoid. */}
+          <DoorstepFilm />
 
           {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single

@@ -10,13 +10,13 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  * above the fold, and the reason they all run one is that a home screen has
  * exactly one piece of prime real estate and more than one thing worth
  * putting in it. A static hero picks a winner forever; this one rotates
- * through the three that are actually live right now — plan a celebration,
- * the festival that is closest, the best coupon the checkout will honour.
+ * through the several things worth saying at once — on Home today, the live
+ * offer, the instant estimate, and "book one thing or all of it".
  *
  * Rules it follows so it doesn't become the thing people scroll past:
- *   — Slides are passed in, never invented here. A caller that has no
- *     festival within range or no live coupon passes two slides and the deck
- *     shows two.
+ *   — Slides are passed in, never invented here. This component knows nothing
+ *     about festivals, offers or estimates; a caller with two things to say
+ *     passes two slides and the deck shows two.
  *   — It stops advancing the moment it is touched. Swiping back to a slide
  *     the deck then pulls away from is the classic carousel injury.
  *   — Under reduced motion it does not auto-advance at all; the dots still

@@ -1,0 +1,260 @@
+/* The doorstep clip's animation engine.
+ *
+ * Self-contained on purpose. components/track/FulfilmentFilm.css carries a
+ * very similar engine, and importing it here instead of repeating the six
+ * shared rules was the obvious move — but that file is a 390-line stylesheet
+ * with a documented tail of dead keyframes, and pulling it onto Home means
+ * every future trim of it has to be re-verified against two screens on a box
+ * that cannot run a build. Roughly forty lines are duplicated below and the
+ * two films stay independent, which is the cheaper of the two debts.
+ *
+ * Everything is transform or opacity only (one documented exception in beat
+ * six), so the clip stays on the compositor and never triggers layout. It runs
+ * inside the commerce block on Home and must not cost scroll smoothness.
+ *
+ * ── The timing contract ────────────────────────────────────────────────
+ * BEAT_MS is 3400 — longer than the Track film's 3000, because these beats
+ * carry a mechanic (what the price lock actually buys) rather than a mood, and
+ * a mechanic has to be read rather than felt. Each beat splits three ways:
+ *
+ *   0–200ms       the cut lands, ground still cross-fading
+ *   200–1800ms    the subject arrives and resolves
+ *   1800–3400ms   the settled frame — which must NOT be still, or the panel
+ *                 dies for a second and a half
+ *
+ * That last third is why several rules carry a second, looping animation after
+ * the entrance (comma-separated, with its own delay).
+ *
+ * ── The two transform-boxes ────────────────────────────────────────────
+ *   fill-box   origin is the element's own bounding box, for anything
+ *              pivoting about the middle of itself.
+ *   view-box   origin is the 0 0 200 120 canvas, for anything whose pivot the
+ *              JSX names in those coordinates.
+ * Neither is the default: an untagged transform on an SVG child pivots about
+ * the SVG root's top-left corner.
+ */
+
+.df-pivot { transform-box: view-box; }
+
+/* ── Shared paint ─────────────────────────────────────────────────────── */
+
+/* A lens vignette on a lit surface, not a dark scrim — the grounds are warm
+   and this is the falloff at the edge of a softbox. */
+.df-vignette {
+  background: radial-gradient(125% 100% at 56% 42%, transparent 44%, rgba(92, 58, 26, 0.19) 100%);
+  pointer-events: none;
+}
+
+/* Film grain: the cheapest cue that something is photographed rather than
+   diagrammed. Above ~7% it stops being grain and starts being noise. */
+.df-grain {
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='dfn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23dfn)'/%3E%3C/svg%3E");
+}
+
+/* Ambient motes. Travel is in px because a percentage translate on a 5px dot
+   is 5px of travel; sized against the tallest the card gets. */
+@keyframes df-mote {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  14%  { opacity: var(--mote-o, 0.2); }
+  84%  { opacity: var(--mote-o, 0.2); }
+  100% { opacity: 0; transform: translateY(-268px) scale(1.2); }
+}
+.df-mote { bottom: -12px; animation: df-mote linear infinite; }
+
+/* Caption: three lines in reading order. */
+@keyframes df-line {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: none; }
+}
+.df-line   { animation: df-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.df-line-2 { animation-delay: 0.10s; }
+.df-line-3 { animation-delay: 0.20s; }
+
+/* The generic entrance. Driven by longhands from the JSX so each drawing can
+   stagger across a different number of pieces without a numbered class per
+   step — same approach FulfilmentFilm settled on. */
+@keyframes df-rise {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.94); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* The two shared sustained motions, used with their own delays so nothing in
+   a frame moves in step with anything else. */
+@keyframes df-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes df-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}
+
+/* ── Beat 1: the lock ─────────────────────────────────────────────────── */
+
+/* The shackle falls into the body and settles — the beat is the sound of a
+   click, drawn. It overshoots then rests, or it reads as a lock sliding
+   rather than closing. */
+@keyframes df-shackle {
+  0%   { opacity: 0; transform: translateY(-16px); }
+  55%  { opacity: 1; transform: translateY(2px); }
+  72%  { transform: translateY(-1px); }
+  100% { opacity: 1; transform: none; }
+}
+.df-shackle {
+  transform-box: fill-box; transform-origin: center bottom;
+  animation: df-shackle 0.85s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+}
+
+/* The ring that leaves the lock at the moment it closes. */
+@keyframes df-clack {
+  0%   { opacity: 0;    transform: scale(0.5); }
+  30%  { opacity: 0.55; }
+  100% { opacity: 0;    transform: scale(1.9); }
+}
+.df-clack {
+  transform-box: fill-box; transform-origin: center;
+  animation: df-clack 1.1s ease-out 0.7s both;
+}
+
+/* ── Beat 2: the journey ──────────────────────────────────────────────── */
+
+/* The rider crosses, then hangs at the settled position with a light bob. Two
+   animations rather than one long set: the arrival is eased and the bob is
+   not, and a single keyframe list cannot carry both timing functions. */
+@keyframes df-ride {
+  0%   { opacity: 0; transform: translateX(-64px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.df-ride {
+  transform-box: fill-box;
+  animation:
+    df-ride 1.5s cubic-bezier(0.22, 1, 0.36, 1) both,
+    df-float 1.6s ease-in-out 1.5s infinite;
+}
+
+@keyframes df-wheel { to { transform: rotate(360deg); } }
+.df-wheel { transform-box: fill-box; transform-origin: center; animation: df-wheel 0.75s linear infinite; }
+
+/* The road slipping backwards under the wheels. Travel matches the dash pitch
+   exactly (28 units) so the loop has no visible seam. */
+@keyframes df-road { to { transform: translateX(-28px); } }
+.df-road { transform-box: view-box; animation: df-road 0.7s linear infinite; }
+
+/* ── Beat 3: the doorstep ─────────────────────────────────────────────── */
+
+/* The door swings inwards. scaleX from the hinge is the honest 2D reading of
+   a door opening away from you — a rotate would send the far edge through the
+   wall. */
+@keyframes df-door {
+  0%   { transform: scaleX(1); }
+  100% { transform: scaleX(0.12); }
+}
+.df-door {
+  transform-box: fill-box; transform-origin: left center;
+  animation: df-door 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
+}
+
+/* The light that falls out of the opened door, arriving as it swings. */
+@keyframes df-spill {
+  0%   { opacity: 0;    transform: scaleX(0.2); }
+  100% { opacity: 0.55; transform: scaleX(1); }
+}
+.df-spill {
+  transform-box: fill-box; transform-origin: left center;
+  animation: df-spill 1.2s ease-out 0.7s both;
+}
+
+/* ── Beat 4: read it together ─────────────────────────────────────────── */
+
+/* A finger travelling down the lines of the proposal. Steps rather than a
+   smooth translate: reading is discrete, and a linear glide down a list of
+   line items reads as a scanner, not a person. */
+@keyframes df-trace {
+  0%   { opacity: 0; transform: translateY(0); }
+  12%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(30px); }
+}
+.df-trace {
+  transform-box: fill-box;
+  animation: df-trace 2.6s steps(4, end) 0.5s both;
+}
+
+/* ── Beat 5: changed on the spot ──────────────────────────────────────── */
+
+/* The struck line. A left-anchored scaleX is a pen drawn across the words,
+   which is the gesture; growing it from the centre is a highlight, which is a
+   different and much weaker claim. */
+@keyframes df-strike {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+.df-strike {
+  transform-box: fill-box; transform-origin: left center;
+  animation: df-strike 0.5s cubic-bezier(0.65, 0, 0.35, 1) 0.45s both;
+}
+
+/* What replaces it, arriving only after the strike has landed. */
+@keyframes df-swap {
+  0%   { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: none; }
+}
+/* Timed against the beat rather than against the strike alone. Measured over
+   CDP at the original 1.35s delay, the replacement line reached full opacity
+   with about 1.5s of a 3.4s beat left — so the beat spent more than half its
+   length showing a deletion with nothing put in its place, which is the
+   opposite of what it claims. Pulled forward to 1.05s (strike now lands at
+   0.95s), the settled "changed" frame holds for roughly 1.9s. */
+.df-swap {
+  transform-box: fill-box;
+  animation: df-swap 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.05s both;
+}
+
+/* The pen that does it, riding in and then resting. */
+@keyframes df-pen {
+  0%   { opacity: 0; transform: translate(18px, -10px) rotate(-14deg); }
+  100% { opacity: 1; transform: none; }
+}
+.df-pen {
+  transform-box: fill-box; transform-origin: bottom left;
+  animation: df-pen 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Beat 6: only then ────────────────────────────────────────────────── */
+
+/* The tick draws itself. dasharray/offset is the one place this stylesheet
+   animates something other than transform or opacity — it is a 34-unit path
+   on a single element and costs nothing measurable. */
+@keyframes df-tick {
+  0%   { stroke-dashoffset: 34; }
+  100% { stroke-dashoffset: 0; }
+}
+.df-tick {
+  stroke-dasharray: 34;
+  animation: df-tick 0.6s cubic-bezier(0.65, 0, 0.35, 1) 0.75s both;
+}
+
+/* The seal the tick sits in, landing first. */
+@keyframes df-seal {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-25deg); }
+  65%  { opacity: 1; transform: scale(1.08) rotate(3deg); }
+  100% { opacity: 1; transform: none; }
+}
+.df-seal {
+  transform-box: fill-box; transform-origin: center;
+  animation:
+    df-seal 0.75s cubic-bezier(0.34, 1.4, 0.5, 1) both,
+    df-breathe 2.2s ease-in-out 0.9s infinite;
+}
+
+/* The refund arc — the held amount going back the way it came. */
+@keyframes df-return {
+  0%   { opacity: 0; transform: translateX(0); }
+  20%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-46px); }
+}
+.df-return { transform-box: fill-box; animation: df-return 2.2s ease-in-out 1.1s both; }
