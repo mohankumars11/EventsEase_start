@@ -12,6 +12,10 @@
  */
 export const FOCUSED_ROUTES = [
   '/plan/custom',
+  // The guided journey. One question per screen for up to thirty screens —
+  // a tab bar under that is a permanent offer to give up, and the chat
+  // bubble sits exactly where its Continue button is.
+  '/celebrate',
   '/plan/confirmation',
   '/login',
   '/signup',

@@ -169,6 +169,8 @@ export function buildQuote({
   mode = 'full',
   includeCatering = true,
   includeDecor = true,
+  extras = [],
+  menuAllowance = null,
 }) {
   const tier = TIER_BY_ID[tierId]
   const guests = Number(guestCount) || 0
@@ -177,7 +179,17 @@ export function buildQuote({
   const cuisine = includeCatering ? CUISINE_BY_ID[cuisineId] : null
   const level = includeDecor ? DECOR_LEVEL_BY_ID[decorLevelId] : null
 
-  const plate = perPlateFor({ cuisine, menu, menuAllowance: tier.menuAllowance, vegOnly, guestCount: guests })
+  // The allowance the SURFACE showed, when it differs from the tier's own.
+  //
+  // The guided journey groups the eight pricing rungs into four circles and
+  // states one dish allowance per circle (see data/guestCircles.js). The
+  // resolved rung underneath can include fewer dishes — so without this
+  // override the engine would charge ₹30 a plate as a surcharge on dishes the
+  // app itself pre-ticked and called "included". Being surprised by a charge
+  // for something you were told came as standard is the single fastest way to
+  // lose a customer at the reveal.
+  const allowance = menuAllowance ?? tier.menuAllowance
+  const plate = perPlateFor({ cuisine, menu, menuAllowance: allowance, vegOnly, guestCount: guests })
   const cateringTotal = cuisine ? plate.perPlate * guests : 0
   const decor = decorCostFor({ level, themeId, addonIds, guestCount: guests })
   const coordination = tier.coordinationFee
@@ -191,7 +203,43 @@ export function buildQuote({
     })
   const servicesTotal = services.reduce((sum, s) => sum + s.amount, 0)
 
-  const subtotal = coordination + decor.total + cateringTotal + servicesTotal
+  /**
+   * Already-priced lines the caller worked out for itself.
+   *
+   * ── Why this exists ───────────────────────────────────────────────────
+   * `serviceIds` prices against `servicePricing.js`, which carries ONE base
+   * rate per service — right for the builder's tick-list, and not enough for
+   * the guided journey, which sells the named packages in `servicePacks.js`:
+   * "Half day — one photographer" and "Wedding — multi-day coverage" are the
+   * same `photography` service and a ten-fold difference in price. Collapsing
+   * them onto one base rate would mean the estimate at the end of the journey
+   * described a booking nobody made.
+   *
+   * So the journey resolves its own packs — it is the surface that knows the
+   * quantity, the unit and which pack was chosen — and hands the results in
+   * here as finished lines. They join the subtotal exactly where `services`
+   * does, which is what keeps the bundle discount, the platform fee and the
+   * GST split all correct without either side knowing about the other.
+   *
+   * Each entry is `{ key, label, detail, amount }`. Anything without a
+   * positive numeric amount is dropped rather than trusted: a NaN reaching
+   * the subtotal turns the whole quote into "₹NaN", which is the one output
+   * worse than no price at all.
+   */
+  const extraLines = (extras ?? [])
+    .filter(e => e && Number.isFinite(Number(e.amount)) && Number(e.amount) > 0)
+    .map(e => ({
+      key: e.key ?? `extra_${e.label}`,
+      label: e.label,
+      detail: e.detail ?? '',
+      amount: Math.round(Number(e.amount)),
+      serviceId: e.serviceId ?? null,
+      packId: e.packId ?? null,
+      qty: e.qty ?? 1,
+    }))
+  const extrasTotal = extraLines.reduce((sum, e) => sum + e.amount, 0)
+
+  const subtotal = coordination + decor.total + cateringTotal + servicesTotal + extrasTotal
 
   // The discount is only real when there is actually a bundle to discount.
   // Applying it to a decor-only booking would be a 10% price cut in exchange
@@ -223,7 +271,7 @@ export function buildQuote({
   const share = subtotal > 0 ? discountedSubtotal / subtotal : 1
   const tax = taxFor({
     cateringBase: cateringTotal * share,
-    servicesBase: (decor.total + servicesTotal) * share,
+    servicesBase: (decor.total + servicesTotal + extrasTotal) * share,
     platformBase: coordination * share + platformFeeAmount,
   })
 
@@ -238,6 +286,8 @@ export function buildQuote({
     decor: { level, ...decor },
     services,
     servicesTotal,
+    extras: extraLines,
+    extrasTotal,
     coordination,
     subtotal,
     bundle: { applied: bundleRate > 0, rate: bundleRate, amount: bundleAmount },
@@ -301,6 +351,10 @@ export function quoteLines(quote) {
           : service.scales ? `Scaled to ${quote.guests} guests` : 'For the event',
       amount,
     })
+  }
+
+  for (const extra of quote.extras ?? []) {
+    lines.push({ key: extra.key, label: extra.label, detail: extra.detail, amount: extra.amount })
   }
 
   lines.push({

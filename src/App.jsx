@@ -31,6 +31,7 @@ const FestivalDetailPage = lazy(() => import('./pages/FestivalDetailPage'))
 const PlanHub            = lazy(() => import('./pages/plan/PlanHub'))
 const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const CelebrationBuilder = lazy(() => import('./pages/plan/CelebrationBuilder'))
+const CelebrationJourney = lazy(() => import('./pages/plan/CelebrationJourney'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 
@@ -285,6 +286,22 @@ function AppRoutes() {
           same reason the wizard and the catalog are — a price behind a login
           is a price nobody sees. Login is asked at send, where there is
           something to save. */}
+      {/* ── The guided journey ─────────────────────────────────────
+          The door every occasion card now opens, and the one built for the
+          customer who has NOT already decided what they want. One question
+          per screen, in the order a family actually decides, and — the rule
+          the whole flow is organised around — no price until the end.
+
+          BareShell, not ScreenShell: this is a single-decision flow and the
+          tab bar at the bottom of it is an invitation to abandon halfway. It
+          is in FOCUSED_ROUTES for the same reason, so the chat bubble does
+          not float over its action bar either.
+
+          Public, like every other planning door. A price behind a login is a
+          price nobody sees, and here the price is the payoff for nine
+          minutes of work. Sign-in is asked at send. */}
+      <Route path="/celebrate/:occasionId" element={<BareShell><CelebrationJourney /></BareShell>} />
+
       <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
       <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
 

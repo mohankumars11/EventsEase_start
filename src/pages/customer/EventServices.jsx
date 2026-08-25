@@ -587,6 +587,38 @@ export default function EventServices() {
           />
         </div>
 
+        {/* ── The third door, for the customer who has not decided ──
+            TwoDoors above asks "the whole celebration, or just one thing?"
+            and both of its answers assume somebody who already knows roughly
+            what they want. Most people arriving on this page do not: they
+            tapped an occasion because a birthday is coming, and the first
+            thing this screen does is quote them.
+
+            Occasion cards on home and /plan open the guided journey now, so
+            this page is reached mainly by people who came looking for the
+            catalogue — but it is also where EventFooter's occasion links and
+            every old bookmark land, and those visitors deserve the same door.
+            One quiet line, under the two that were already here rather than
+            above them: somebody who came to browse prices should not have a
+            nine-minute flow put in front of the prices. */}
+        <Link
+          to={`/celebrate/${event.id}`}
+          className="rise-in mt-3 flex items-center gap-3 rounded-[22px] bg-surface-sunk/[0.05] px-4 py-3.5 transition-transform active:scale-[0.99]"
+          style={{ '--rise-delay': '360ms' }}
+        >
+          <span aria-hidden="true" className="text-[20px] leading-none">🧭</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px] font-extrabold leading-snug text-ink">
+              Not sure where to start?
+            </span>
+            <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
+              We'll walk you through it one question at a time — the food, the look, the
+              photographs — and show you the price at the end.
+            </span>
+          </span>
+          <ChevronRight size={17} className="shrink-0 text-ink-mute" />
+        </Link>
+
         {/* ── See it, price it, pick it ──────────────────────
             "What does it look like and what does it cost" is the question
             people ask before "what is in the package", and the tabs below
