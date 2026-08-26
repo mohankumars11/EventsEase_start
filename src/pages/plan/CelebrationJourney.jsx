@@ -911,6 +911,20 @@ export default function CelebrationJourney() {
               A real person reads your whole plan, sources the vendors, negotiates, and comes back
               with one proposal and one price. You approve it before anything is booked.
             </p>
+
+            {/* Said here because this is the moment somebody wonders whether
+                they have just committed to something. Track lists this under
+                "Waiting to be confirmed" until a coordinator's proposal is
+                approved — so the sentence on this screen and the heading on
+                that one have to be the same sentence. */}
+            <div className="mx-auto mt-4 max-w-md rounded-2xl bg-surface-sunk/[0.05] px-4 py-3.5 text-left">
+              <p className="text-[12.5px] font-extrabold text-ink">This is a request, not a booking.</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
+                No vendor has been engaged, no date is held and nothing is owed. You will find it in
+                Track under <span className="font-bold text-ink">Waiting to be confirmed</span> — it
+                moves across to your confirmed celebrations once you approve the proposal.
+              </p>
+            </div>
             <p className="mt-3 text-[12px] text-ink-mute">
               Reference{' '}
               <span className="font-mono font-bold text-ink-soft">

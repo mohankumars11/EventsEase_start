@@ -60,6 +60,24 @@ export default function TrackHub() {
   }, [items, filter])
 
   const celebrations = shown.filter(i => i.kind === 'celebration')
+
+  /**
+   * Requested, and confirmed, are not the same thing and must not look it.
+   *
+   * Everything a customer sends landed in one "Your celebrations" list, in
+   * the same card, whether a coordinator had confirmed it or it had been
+   * submitted ninety seconds ago. So a family who sent an enquiry saw it
+   * sitting in the Track tab looking exactly like a booking — and a booking
+   * is what "Track" means. Nothing on the screen said the vendors had not
+   * been engaged, the date was not held, and no money was owed.
+   *
+   * The instinct is to hide unconfirmed requests from Track entirely. That
+   * is worse: a customer who sends a plan and then cannot find it anywhere
+   * concludes it was lost, and sends it again or rings. So they stay, under
+   * their own heading, said plainly.
+   */
+  const awaiting = celebrations.filter(c => c.stage !== 'confirmed' && c.stage !== 'done')
+  const booked = celebrations.filter(c => c.stage === 'confirmed' || c.stage === 'done')
   const orders = shown.filter(i => i.kind === 'order')
 
   return (
@@ -124,13 +142,37 @@ export default function TrackHub() {
 
           <Filters filter={filter} onChange={setFilter} counts={counts} />
 
-          {celebrations.length > 0 && (
-            <section aria-labelledby="celebrations-heading">
-              <h2 id="celebrations-heading" className="px-5 text-[17px] font-extrabold tracking-tight text-ink">
-                Your celebrations
-              </h2>
+          {awaiting.length > 0 && (
+            <section aria-labelledby="awaiting-heading">
+              <div className="px-5">
+                <h2 id="awaiting-heading" className="text-[17px] font-extrabold tracking-tight text-ink">
+                  Waiting to be confirmed
+                </h2>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-ink-mute">
+                  {awaiting.length === 1 ? 'This one is' : 'These are'} with a coordinator. Nothing is
+                  booked, no vendor is engaged and no date is held until you approve the proposal —
+                  and nothing is owed before that.
+                </p>
+              </div>
               <div className="a-stagger mt-3.5 space-y-3.5 px-5">
-                {celebrations.map(c => <CelebrationCard key={c.key} item={c} />)}
+                {awaiting.map(c => <CelebrationCard key={c.key} item={c} />)}
+              </div>
+            </section>
+          )}
+
+          {booked.length > 0 && (
+            <section aria-labelledby="celebrations-heading">
+              <div className="px-5">
+                <h2 id="celebrations-heading" className="text-[17px] font-extrabold tracking-tight text-ink">
+                  Confirmed celebrations
+                </h2>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-ink-mute">
+                  Approved and being coordinated. This is where the vendors, the payments and the
+                  day itself are tracked.
+                </p>
+              </div>
+              <div className="a-stagger mt-3.5 space-y-3.5 px-5">
+                {booked.map(c => <CelebrationCard key={c.key} item={c} />)}
               </div>
             </section>
           )}
