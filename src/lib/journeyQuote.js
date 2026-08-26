@@ -147,6 +147,12 @@ export function journeyToText(state, chapters) {
     }
 
     const picked = selections?.[chapter.id]?.packIds ?? []
+    // A typed request is reported whether or not a package was also chosen.
+    // "The same halwai who did my brother's wedding" is the most actionable
+    // line a coordinator can be handed, and it must not be swallowed just
+    // because the customer also ticked a pack next to it.
+    const custom = (selections?.[chapter.id]?.custom ?? '').trim()
+    if (custom) lines.push(`  ${chapter.title} — THEY ASKED FOR: ${custom}`)
     if (!picked.length) {
       // Recorded rather than omitted. "Skipped: photography" tells a
       // coordinator not to ring about it; silence tells them nothing, and

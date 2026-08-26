@@ -18,6 +18,7 @@ import { DECOR_LEVEL_BY_ID } from '../../data/decorPackages'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { SPECIAL_REQUESTS } from '../../data/menuPairings'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
+import { DEFAULT_SOURCING, SOURCING_BY_ID } from '../../data/cateringModel'
 import { journeyQuote, journeyToText, journeyServiceRows } from '../../lib/journeyQuote'
 import { celebrationSavings } from '../../lib/savings'
 import { EXTRA_DISH_RATE, quoteToText } from '../../utils/quote'
@@ -31,6 +32,7 @@ import ChapterStep, { autoAdvances } from '../../components/journey/ChapterStep'
 import { GuestStep, CircleStep, VenueStep, MealGateStep } from '../../components/journey/ScaleSteps'
 import { CuisineStep, CourseStep, courseStepsFor } from '../../components/journey/MenuSteps'
 import MenuAllStep from '../../components/journey/MenuAllStep'
+import SourcingStep from '../../components/journey/SourcingStep'
 import ExtrasShelf from '../../components/journey/ExtrasShelf'
 import { DecorLevelStep, DecorThemeStep, DecorAddonStep, DecorOwnStep } from '../../components/journey/DecorSteps'
 import PairingSheet from '../../components/journey/PairingSheet'
@@ -194,6 +196,14 @@ export default function CelebrationJourney() {
    * Karnataka spread and shown a total with ₹65,000 of lunch in it.
    */
   const [serveMeal, setServeMeal] = useState(null)
+  /**
+   * Who is buying the groceries. See data/cateringModel.js.
+   *
+   * Defaults to full catering, which is what every quote silently assumed
+   * before this existed — so a customer who never reaches the question is
+   * priced exactly as they were.
+   */
+  const [cateringMode, setCateringMode] = useState(DEFAULT_SOURCING)
   const [vegOnly, setVegOnly] = useState(blueprint.vegDefault ?? true)
   const [menu, setMenu] = useState({})
   const [specialTags, setSpecialTags] = useState([])
@@ -329,6 +339,10 @@ export default function CelebrationJourney() {
       } else {
         list.push({ key: 'menu_all' })
       }
+      // Asked AFTER the menu, never before. "Who is buying the groceries" is
+      // an abstract question until there is a spread to buy them for; asked
+      // first it is a pricing question, asked here it is a practical one.
+      list.push({ key: 'sourcing' })
     }
 
     // ── How it looks ─────────────────────────────────────────────────
@@ -422,6 +436,12 @@ export default function CelebrationJourney() {
         }
       case 'cuisine':
         return { key: s.key, emoji: cuisine?.emoji ?? '🍛', title: 'The spread', section: SECTIONS.food, status: cuisineId ? 'chosen' : 'todo', summary: cuisine?.name ?? 'Not chosen yet' }
+      case 'sourcing':
+        return {
+          key: s.key, emoji: '🛒', title: 'The groceries', section: SECTIONS.food,
+          status: 'chosen',
+          summary: SOURCING_BY_ID[cateringMode]?.name ?? 'We do all of it',
+        }
       case 'menu_all': {
         const n = COURSES.reduce((t, c) => t + (menu?.[c.id]?.length ?? 0), 0)
         return { key: s.key, emoji: '🍲', title: 'The menu', section: SECTIONS.food, status: n ? 'chosen' : 'todo', summary: n ? `${n} dishes chosen` : 'Nothing picked yet' }
@@ -458,7 +478,7 @@ export default function CelebrationJourney() {
         return { key: s.key, emoji: '📞', title: 'Your details', section: SECTIONS.finish, status: contactBlocked(contact) ? 'todo' : 'chosen', summary: contact.name?.trim() || 'Who we should call' }
     }
   }), [steps, choices, selections, menu, guests, circle, circleId, venue, occasionId, ctx, extras,
-       serveMeal, cuisine, cuisineId, decorLevelId, decorLevel, decorChoiceId, themeId, addonIds, contact])
+       serveMeal, cateringMode, cuisine, cuisineId, decorLevelId, decorLevel, decorChoiceId, themeId, addonIds, contact])
 
   const stepIndex = Math.max(0, steps.findIndex(s => s.key === stepKey))
   const step = steps[stepIndex] ?? steps[0]
@@ -478,10 +498,10 @@ export default function CelebrationJourney() {
 
   const quote = useMemo(
     () => journeyQuote(
-      { circleId: circle.id, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, selections, includeCatering: serveMeal !== false },
+      { circleId: circle.id, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, selections, includeCatering: serveMeal !== false, cateringMode },
       chapters,
     ),
-    [circle.id, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, selections, chapters, serveMeal],
+    [circle.id, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, selections, chapters, serveMeal, cateringMode],
   )
 
   const savings = useMemo(() => {
@@ -489,10 +509,11 @@ export default function CelebrationJourney() {
     return celebrationSavings({
       tierId: quote.tier.id, guestCount: guests, cuisineId, vegOnly, menu,
       decorLevelId, themeId, addonIds, serviceIds: [], mode: 'full',
-      includeCatering: serveMeal !== false, includeDecor: !!decorLevelId && decorLevelId !== 'none',
+      includeCatering: serveMeal !== false, cateringMode,
+      includeDecor: !!decorLevelId && decorLevelId !== 'none',
       extras: quote.extras, menuAllowance: allowance,
     })
-  }, [quote, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, allowance, serveMeal])
+  }, [quote, guests, cuisineId, vegOnly, menu, decorLevelId, themeId, addonIds, allowance, serveMeal, cateringMode])
 
   /* ── Moving ───────────────────────────────────────────────────────── */
   const topRef = useRef(null)
@@ -654,10 +675,10 @@ export default function CelebrationJourney() {
     // Carried explicitly rather than inferred from a missing cuisine: a
     // journey restored mid-flow, before the meal question was reached, is
     // not the same state as one where the customer said there is no meal.
-    serveMeal, includeCatering: serveMeal !== false,
+    serveMeal, includeCatering: serveMeal !== false, cateringMode,
   }), [occasionId, guests, circle.id, venue, choices, selections, cuisineId, vegOnly, menu,
       specialTags, specialRequests, decorLevelId, decorChoiceId, themeId, addonIds, eventDate, timeSlot,
-      chosenCity, contact, stepKey, serveMeal])
+      chosenCity, contact, stepKey, serveMeal, cateringMode])
 
   const submit = useCallback(async (override) => {
     const s = override ?? stateForDraft()
@@ -706,6 +727,9 @@ export default function CelebrationJourney() {
         `  Where: ${s.chosenCity} — ${venueLabel}`,
         '',
         `Raised through the guided journey (${CIRCLE_BY_ID[s.circleId]?.name ?? ''}, ${s.guests} guests).`,
+        liveCuisine
+          ? `FOOD SOURCING: ${SOURCING_BY_ID[s.cateringMode ?? 'full']?.name ?? 'We do all of it'}`
+          : 'FOOD: none — no catering on this booking',
         '',
         journeyToText(s, liveChapters),
         '',
@@ -819,6 +843,7 @@ export default function CelebrationJourney() {
       setSelections(d.selections ?? {})
       setCuisineId(d.cuisineId ?? null)
       setServeMeal(d.serveMeal ?? null)
+      setCateringMode(d.cateringMode ?? DEFAULT_SOURCING)
       setVegOnly(d.vegOnly ?? true)
       setMenu(d.menu ?? {})
       setSpecialTags(d.specialTags ?? [])
@@ -1030,6 +1055,14 @@ export default function CelebrationJourney() {
         />
       )}
 
+      {step?.key === 'sourcing' && (
+        <SourcingStep
+          value={cateringMode}
+          onChange={v => { setCateringMode(v); scheduleAdvance() }}
+          cuisine={cuisine}
+        />
+      )}
+
       {step?.key === 'decor_own' && (
         <DecorOwnStep
           step={decorStep}
@@ -1097,6 +1130,7 @@ export default function CelebrationJourney() {
           selections={selections}
           decorLabel={decorOptionFor(occasionId, decorChoiceId, ctx)?.name ?? null}
           extrasCount={extras.length}
+          sourcing={SOURCING_BY_ID[cateringMode]}
           onOpenMap={() => setMapOpen(true)}
           onSaveExit={() => navigate('/plan')}
           onRestart={() => {

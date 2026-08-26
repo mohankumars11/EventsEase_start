@@ -3,6 +3,7 @@ import { Check, ChevronDown, X } from 'lucide-react'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
 import { StepFrame } from './JourneyChrome'
 import OptionCard from './OptionCard'
+import CustomRequest from './CustomRequest'
 
 /**
  * What kind of thing each extra is, for the headings on this screen.
@@ -229,6 +230,11 @@ export default function ExtrasShelf({ chapters, selections, onChange, onSkip, gu
                       />
                     ))}
                   </div>
+
+                  <CustomRequest
+                    value={selection.custom}
+                    onChange={text => onChange(chapter, { ...selection, custom: text })}
+                  />
 
                   <button
                     type="button"

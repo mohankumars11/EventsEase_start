@@ -462,7 +462,9 @@ export const EVENT_DATA = {
       SVC.catering, SVC.menu, SVC.dining, SVC.cake, SVC.welcome_drinks,
       SVC.dj, SVC.emcee, SVC.photography, SVC.videography, SVC.photobooth,
       SVC.memory_wall, SVC.return_gifts, SVC.invitations, SVC.cleanup,
-      SVC.bar, SVC.live_counters, SVC.folk, SVC.signage, SVC.livestream,
+      // No SVC.folk — a dollu kunitha troupe belongs to a wedding procession
+      // or a shop opening, not to a graduation party.
+      SVC.bar, SVC.live_counters, SVC.signage, SVC.livestream,
     ],
   },
 
@@ -552,7 +554,11 @@ export const EVENT_DATA = {
       SVC.photography, SVC.videography, SVC.drone,
       SVC.sweets, SVC.cake, SVC.gifting, SVC.return_gifts,
       SVC.nadaswaram, SVC.drum, SVC.catering, SVC.cooks, SVC.menu,
-      SVC.decor, SVC.balloon_arch, SVC.invitations, SVC.cleanup,
+      // No SVC.decor and no SVC.balloon_arch. "Theme Decoration — balloons,
+      // props and themed setups" and a balloon arch both describe a room, and
+      // this occasion happens around an object in a delivery bay.
+      // SVC.vehicle_decor and SVC.floral are the decoration here.
+      SVC.invitations, SVC.cleanup,
     ],
   },
 
@@ -718,10 +724,13 @@ export const EVENT_DATA = {
     tagline: 'The first letter, written with a finger in rice',
     description: 'Vijayadashami morning or a chosen muhurtham — the slate, the priest, the photographs and a small lunch.',
     services: [
-      SVC.priest, SVC.pooja, SVC.floral, SVC.decor, SVC.balloon_arch,
+      // No balloon arch and no premium hampers. This is twenty minutes in
+      // front of a lamp before school; the return gift here is a pencil box,
+      // and a family that wanted an arch would have tapped Birthday.
+      SVC.priest, SVC.pooja, SVC.floral, SVC.decor,
       SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.cake,
       SVC.photography, SVC.videography, SVC.bhajan, SVC.nadaswaram,
-      SVC.return_gifts, SVC.sweets, SVC.gifting, SVC.invitations, SVC.cleanup,
+      SVC.return_gifts, SVC.sweets, SVC.invitations, SVC.cleanup,
     ],
   },
 

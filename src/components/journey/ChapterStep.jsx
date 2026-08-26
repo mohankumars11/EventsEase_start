@@ -1,6 +1,7 @@
 import { SERVICE_PACKS, PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
 import { StepFrame } from './JourneyChrome'
 import OptionCard from './OptionCard'
+import CustomRequest from './CustomRequest'
 
 /**
  * One chapter, on its own screen.
@@ -148,6 +149,14 @@ function ServiceChapter({ chapter, value, onChange, guestCount, circleId }) {
           You can choose more than one here.
         </p>
       )}
+
+      {/* The way out of a list that does not contain what somebody wants.
+          See CustomRequest — a family who cannot find their own halwai here
+          leaves, and an abandoned journey tells a coordinator nothing. */}
+      <CustomRequest
+        value={selection.custom}
+        onChange={text => onChange({ ...selection, custom: text })}
+      />
     </StepFrame>
   )
 }

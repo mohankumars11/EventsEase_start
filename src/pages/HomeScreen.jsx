@@ -15,6 +15,7 @@ import { allOffers } from '../lib/allOffers'
 import { OFFER_BY_ID } from '../data/celebrationOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
 import OccasionCard from '../components/home/OccasionCard'
+import MarketRateCard from '../components/home/MarketRateCard'
 import IntroCards from '../components/home/IntroCards'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
@@ -307,6 +308,17 @@ export default function HomeScreen() {
               <p className="mt-0.5 text-[12px] text-ink-mute">
                 {CATALOG_STATS.occasions} occasions, arranged end to end — every price real.
               </p>
+            </div>
+
+            {/* ── What the prices are pegged to ──────────────────────────
+                Directly under "every price real", because that sentence is
+                a claim and this is the evidence for it. It expands to name
+                the commodities the food rate is read from and, just as
+                importantly, to say which costs do NOT move with a daily
+                index — see the header of MarketRateCard for why the smaller
+                claim is the durable one. */}
+            <div className="mt-3.5">
+              <MarketRateCard />
             </div>
             <div className="mt-3.5 grid grid-cols-2 gap-3.5 px-4">
               {OCCASIONS.map((o, i) => (

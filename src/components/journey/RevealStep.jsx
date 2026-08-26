@@ -6,6 +6,7 @@ import { quoteLines } from '../../utils/quote'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
 import { formatINR } from '../../utils/format'
 import { COURSES, dishesFor } from '../../data/cuisineMenus'
+import { PART_LABEL } from '../../data/cateringModel'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
 /**
@@ -47,7 +48,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 export default function RevealStep({
   quote, occasionName, occasionEmoji, circle, guests, cuisine, menu, vegOnly,
   decorLevel, decorLabel, chapters, selections, onEdit, savings,
-  onOpenMap, onRestart, onSaveExit, extrasCount,
+  onOpenMap, onRestart, onSaveExit, extrasCount, sourcing,
 }) {
   const reduced = useReducedMotion()
   const [revealed, setRevealed] = useState(reduced)
@@ -103,8 +104,24 @@ export default function RevealStep({
           <SummaryRow
             emoji={cuisine.emoji}
             label={cuisine.name}
-            value={`${dishCount} dishes${vegOnly ? ' · pure veg' : ''} · ₹${quote.plate.perPlate}/plate`}
+            /* The BILLED rate, not the full-plate rate. A family who is
+               buying their own groceries must not read back a number they
+               are not paying, on the screen whose whole job is reading the
+               plan back before they send it. */
+            value={`${dishCount} dishes${vegOnly ? ' · pure veg' : ''} · ₹${quote.catering.perPlate}/plate`}
             onEdit={() => onEdit('cuisine')}
+          />
+        )}
+        {cuisine && sourcing && (
+          <SummaryRow
+            emoji={sourcing.emoji}
+            label={sourcing.name}
+            value={
+              quote.catering.share < 1
+                ? `${Math.round(quote.catering.share * 100)}% of a full plate — you are buying the rest`
+                : 'Provisions, cooking and serving, all of it'
+            }
+            onEdit={() => onEdit('sourcing')}
           />
         )}
         {decorLevel && decorLevel.id !== 'none' && (
@@ -252,6 +269,26 @@ export default function RevealStep({
           <li>· Anything added after the coordinator’s call — it goes on a revised estimate first.</li>
         </ul>
       </div>
+
+      {/* ── The groceries, said out loud ──────────────────────────────
+          A customer who chose to buy their own provisions has an estimate
+          that is missing the single largest line in their real spend, and
+          the estimate must say so where they cannot miss it. Being under-
+          quoted is not a kindness; it is the same surprise as being over-
+          charged, arriving later. */}
+      {cuisine && sourcing && quote.catering.share < 1 && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-amber-50 px-4 py-3.5 ring-1 ring-amber-200">
+          <ShieldCheck size={16} className="mt-px shrink-0 text-amber-700" />
+          <p className="text-[12px] leading-relaxed text-amber-900">
+            <span className="font-extrabold">This figure does not include {
+              quote.catering.excludes.map(part => PART_LABEL[part]).join(' or ')
+            }.</span>{' '}
+            You told us you are arranging that yourself, so it is not ours to quote. Your
+            coordinator will send a costed shopping list by weight so you know what to expect at
+            the market.
+          </p>
+        </div>
+      )}
 
       {/* The menu, in full, because it is the thing most likely to be
           checked twice and the hardest to remember thirty screens later. */}
