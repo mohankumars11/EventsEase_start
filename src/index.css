@@ -1475,6 +1475,16 @@
      easing matters more than the duration: a linear wipe reads mechanical, so
      it starts fast and settles, the way a pen does.
    */
+  /* ── Retired with the Spencerian S ───────────────────────────────────
+     `.ink-write` swept a mask down a letterform, which is how a Spencerian
+     capital is actually written and the reason the effect earned its 1.15s.
+     There is no letterform any more — the mark is the word — and a wipe
+     applied to a WORD does not read as handwriting. It reads as a loading
+     bar filling, which is the one thing a launch screen must not look like.
+
+     Kept as a class rather than deleted so an uploaded logo could use it,
+     but nothing renders it today. If nothing does by the next brand pass,
+     delete it and its keyframes together. */
   .ink-write {
     animation: ink-write 1150ms cubic-bezier(0.16, 0.84, 0.28, 1) 180ms both;
   }
@@ -1487,23 +1497,114 @@
   /* The wordmark, after the mark. Rises rather than wipes: the S was drawn,
      so the name should arrive as a caption to it rather than compete with a
      second directional gesture. */
+  /* The word arriving. The 1150ms delay these three carried was the S being
+     written above them — with it gone, the splash held a blank aqua screen
+     for over a second before anything appeared, which reads as the app
+     having failed to start rather than as anticipation. They now open
+     almost immediately and the composition settles at 1.4s, leaving the
+     stillness on the finished mark that the four-second hold is for. */
   .ink-rise {
-    animation: ink-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) 1150ms both;
+    animation: ink-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
   }
   @keyframes ink-rise {
     from { opacity: 0; transform: translateY(10px); letter-spacing: 0.06em; }
     to   { opacity: 1; transform: translateY(0);    letter-spacing: -0.015em; }
   }
-  .ink-rise-late { animation-delay: 1500ms; }
+  .ink-rise-late { animation-delay: 550ms; }
 
   /* A hairline that opens outward from the centre under the name. */
   .ink-rule {
-    animation: ink-rule 700ms cubic-bezier(0.22, 1, 0.36, 1) 1620ms both;
+    animation: ink-rule 700ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
     transform-origin: center;
   }
   @keyframes ink-rule {
     from { transform: scaleX(0); opacity: 0; }
     to   { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     COMFORTABLE AQUA — the brand ground
+     ══════════════════════════════════════════════════════════════════
+
+     The surface the brand stands on: the app icon, the splash, the seal on
+     a celebration card, the tab bar's primary chip. It replaces navy, which
+     was the ground for the gold Spencerian S and had no reason to survive
+     the S being retired.
+
+     ── It is two gradients, not one ────────────────────────────────────
+     A single linear ramp corner-to-corner is flat — it reads as a coloured
+     rectangle, which is what a brand ground must not be. The reference tile
+     has depth: the colour travels on the diagonal AND the light pools
+     off-centre, the way it does on anything with a surface.
+
+     So: a linear ramp carries the hue from the deep corner to the light
+     one, and a wide radial sits over it, offset toward the far corner, to
+     put the light somewhere specific. The radial is the "radius" half of
+     the name and it is the whole difference between this and a swatch.
+
+     ── Why it is fixed and not animated ───────────────────────────────
+     `.a-aurora` next door pans its background under a 14s animation, which
+     is right for a hero panel somebody scrolls past. This is the app icon
+     and the launch screen — surfaces a person sees for four seconds at a
+     time, hundreds of times. Movement there is not a brand moment, it is a
+     tic. It holds still.
+
+     Every value is written out rather than referencing the palette, because
+     these same stops have to be reproduced by the icon renderer running
+     outside the build (scripts/render-brand-assets.mjs). Two copies is one
+     more than ideal; a Tailwind class the renderer cannot resolve is worse. */
+  .brand-aqua {
+    background-color: #1B5C73;
+    background-image:
+      radial-gradient(120% 100% at 88% 92%, rgba(140, 224, 214, 0.55) 0%, rgba(85, 178, 175, 0) 62%),
+      linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%);
+  }
+
+  /* The same ground for a small square — a seal, a chip, an avatar.
+     The stops are pulled tighter because a 40px square shows perhaps a
+     third of a 135° ramp; at the full spread a seal reads as one flat
+     mid-teal and the gradient is wasted. */
+  .brand-aqua-chip {
+    background-color: #1B5C73;
+    background-image:
+      radial-gradient(110% 110% at 85% 90%, rgba(150, 230, 220, 0.5) 0%, rgba(85, 178, 175, 0) 70%),
+      linear-gradient(140deg, #17566C 0%, #2F8AA0 55%, #55B2AF 100%);
+  }
+
+  /* The wordmark on a white ground.
+     A gradient in TYPE, not behind it — the same ramp the ground uses, so
+     "Sambramo" on white and "Sambramo" on the splash are recognisably the
+     same object rather than two different logos.
+
+     The fallback colour underneath is not defensive decoration: if
+     background-clip:text is unsupported or the gradient fails to paint,
+     transparent fill is an invisible logo. aqua-800 is the stop that clears
+     4.5:1 on white on its own. */
+  .brand-aqua-text {
+    color: #1B5C73;
+    background-image: linear-gradient(118deg, #134A5E 0%, #1B5C73 30%, #2F8AA0 68%, #3D96A4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ── The wordmark, fitted to the screen ─────────────────────────────
+     Wherever the name is the subject of the screen — the splash, the auth
+     panels, the app icon — it is centred and sized against the VIEWPORT
+     rather than set at a fixed px. A 42px wordmark is comfortable on a
+     412px Pixel and cramped on a 360px Galaxy A-series, which is most of
+     this market; hard-coding one number picks a winner between them.
+
+     clamp() with a vw middle term means the mark keeps the same optical
+     margin either side on every handset — the floor stops it collapsing on
+     a 320px device, the ceiling stops it becoming a billboard on a tablet.
+     The tracking tightens as it grows, which is what a type designer does
+     by hand at display sizes and what makes the difference between "large
+     text" and a wordmark. */
+  .brand-wordmark-fit {
+    font-size: clamp(2rem, 13.5vw, 4.25rem);
+    letter-spacing: -0.028em;
+    line-height: 0.95;
   }
 
   /* ── The brand light ────────────────────────────────────────────────

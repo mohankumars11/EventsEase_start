@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import RotatingPhoto from './RotatingPhoto'
-import { Monogram } from '../ui/SambramoWordmark'
+import { Sparkles } from 'lucide-react'
+import { BrandSeal } from '../ui/SambramoWordmark'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -139,8 +140,10 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
             Bigger too: 40px carrying a 26px glyph rather than 36 carrying 20.
             A Spencerian S is mostly hairline, and 20px of it over a busy
             photograph is not a mark, it is a smudge. */}
-        <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[11px] bg-royal-950 shadow-[0_4px_12px_-4px_rgba(6,20,72,0.85)] ring-1 ring-gold-300/55">
-          <Monogram size={26} />
+        <span className="absolute right-3 top-3 shadow-[0_4px_12px_-4px_rgba(12,53,67,0.85)]">
+          <BrandSeal size={40} radius={12}>
+            <Sparkles size={17} strokeWidth={2.4} />
+          </BrandSeal>
         </span>
       </div>
 

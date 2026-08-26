@@ -13,26 +13,35 @@ export default defineConfig({
         short_name: 'Sambramo',
         description:
           'A real coordinator arranges your celebration end to end — venue, decor, catering, photography and the priest — and brings back one clear price.',
-        theme_color: '#FFFFFF',
-        background_color: '#FFFFFF',
+        /* Both are the aqua ground, not white.
+           `background_color` is what Android paints for the split-second
+           between tapping the icon and the WebView painting its first
+           frame. White there meant a white flash, then an aqua splash —
+           a visible blink on every single cold start. Matching it to the
+           splash's own deep corner makes the launch look continuous. */
+        theme_color: '#1B5C73',
+        background_color: '#1B5C73',
         display: 'standalone',
         start_url: '/',
         /* ── PNG, not SVG, and why ────────────────────────────────────
-           These were two hand-drawn SVGs of the old kolam on plum. The mark
-           is a Spencerian capital now, set in a webfont — and a standalone
-           SVG used as an app icon cannot load an external font, so the icon
-           could not be the logo the app actually draws.
+           The icon is the WORDMARK — "Sambramo" in white on the Comfortable
+           Aqua ground — and a standalone SVG used as an app icon cannot load
+           a webfont. It would fall back to whatever face the launcher
+           happens to have, which for a wordmark is the difference between a
+           logo and some text.
 
-           So they are rendered: the real Monogram component, on the real
-           navy, exported at 1024 through the browser that already has the
-           font. The icon is now the same object as the mark on the splash
-           rather than a second drawing of it that can drift.
+           So both files are rendered by a browser that already has Playfair
+           Display, at 1024 and downscaled — see
+           scripts/render-brand-assets.mjs, which also holds the gradient
+           stops in the one other place they are written outside index.css.
 
-           Two purposes, deliberately. `maskable` bleeds navy to every edge
-           with the letter at 55%, because Android crops it to whatever shape
-           the launcher wants; `any` keeps its own rounded square for the
-           platforms that do not crop. Shipping one file for both is how an
-           icon ends up either clipped or floating in a white square. */
+           Two purposes, deliberately. `maskable` bleeds the gradient to
+           every edge with the word at 60% of the width, because Android
+           crops it to whatever shape the launcher wants and only a centred
+           circle of 80% diameter is guaranteed to survive; `any` keeps its
+           own rounded square for the platforms that do not crop. Shipping
+           one file for both is how an icon ends up either clipped or
+           floating in a white box. */
         icons: [
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },

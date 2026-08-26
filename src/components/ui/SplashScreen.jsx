@@ -1,28 +1,33 @@
 import { useState, useEffect } from 'react'
-import { Monogram } from './SambramoWordmark'
+import SambramoWordmark from './SambramoWordmark'
 import { BRAND } from '../../config/sambramo'
 
 const HOLD_MS = 4000
 const FADE_MS = 480
 
 /**
- * The mark, written, every time the app opens.
+ * The name, on the brand's own ground, every time the app opens.
  *
- * ── The choreography ──────────────────────────────────────────────────────
- * Four seconds, and the first 2.3 of them are doing something:
+ * ── What changed, and why the choreography changed with it ────────────────
+ * This used to write a gold Spencerian S onto navy, top to bottom, and rise
+ * the wordmark under it. The S is retired — it was illegible at the sizes the
+ * rest of the app draws the mark at, and it made the brand a letter rather
+ * than a name nobody has heard yet. So there is no letter to write.
  *
- *   0.18s  the S begins to arrive, top to bottom — the direction a
- *          Spencerian capital is actually written
- *   1.15s  the letter is complete; the wordmark rises under it
- *   1.50s  the category line
- *   1.62s  the rules open outward from the centre
- *   2.32s  the composition is complete
+ * A wipe-on effect applied to a word rather than a letterform reads as a
+ * loading bar, not as handwriting. The word arrives instead: it rises and
+ * settles, once, and the ground behind it is what carries the brand.
+ *
+ *   0.10s  the wordmark rises
+ *   0.55s  the category line
+ *   0.70s  the rules open outward from the centre
+ *   1.40s  the composition is complete
  *   4.00s  hold ends, 0.48s fade
  *
- * The ~1.7s of stillness on the finished mark is the point rather than
- * slack: an animation that ends at the same instant the screen leaves reads
- * as a glitch, and the eye needs a beat on the completed lockup for that,
- * rather than the motion, to be the thing remembered.
+ * The stillness on the finished lockup is the point rather than slack: an
+ * animation that ends at the same instant the screen leaves reads as a
+ * glitch, and the eye needs a beat on the completed mark for that, rather
+ * than the motion, to be the thing remembered.
  *
  * ── Every open, not once per device ───────────────────────────────────────
  * This was gated in localStorage and shown once. It is now shown on every
@@ -64,56 +69,46 @@ export default function SplashScreen() {
     <div
       role="presentation"
       onClick={dismiss}
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-royal-950 transition-opacity"
+      className="brand-aqua fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden px-8 transition-opacity"
       style={{ opacity: state === 'leaving' ? 0 : 1, transitionDuration: `${FADE_MS}ms` }}
     >
-      {/* A single soft bloom behind the mark. The reference photographs the S
-          on velvet, which has a sheen; a flat navy rectangle does not. One
-          radial at low opacity is the whole of that — a texture image would
-          be a download on the first screen anybody ever sees. */}
+      {/* A soft bloom behind the mark, so the word sits in light rather than
+          on a slab. `.brand-aqua` already pools its own highlight toward the
+          bottom-right corner; this one is centred on the LOCKUP, which is
+          what stops the wordmark reading as pasted onto the gradient.
+
+          White at 14%, not a blue radial — the old one was tuned to lift a
+          gold letter off navy, and the same blue over the aqua ramp turns
+          the middle of the screen grey. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(96,140,250,0.16) 0%, rgba(6,20,72,0) 68%)' }}
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%)' }}
       />
 
-      <div className="relative flex flex-col items-center">
-        {/* The mark, written.
-
-            No margin between this and the wordmark beyond a negative nudge.
-            The gap that used to sit here was not spacing — it was empty
-            viewBox inside the SVG, because the glyph was sized against its
-            layout box rather than its ink. Fixing the fit closed it, and the
-            -1 takes up the last of the letter's own bottom bearing so the
-            wordmark sits under the S rather than below its box.
-
-            There was a shine here — a pale band sweeping across on the same
-            diagonal as the gold, meant to read as light catching the gilding.
-            It did not. The band was bounded by the letter's BOX rather than
-            its ink, so it swept over the navy either side of the S and read
-            as exactly what it was: a grey rectangle passing over the logo.
-
-            Clipping it to the glyph would mean masking with the letter, and
-            the letter is live type — the mask would need the outline the
-            whole design is deliberately not committing to. So it is gone.
-            The gradient already carries a highlight, and a mark being
-            written is enough of a moment without a second effect arguing
-            with it. */}
-        <div className="ink-write">
-          <Monogram size={132} />
+      {/* ── The lockup ────────────────────────────────────────────────
+          Centred on both axes, and sized against the VIEWPORT rather than at
+          a fixed px — see `.brand-wordmark-fit`. A 42px wordmark is
+          comfortable on a 412px Pixel and cramped on a 360px Galaxy, which
+          is most of this market; one hard-coded number picks a winner
+          between the two. `w-full` with `max-w-md` gives the word the whole
+          screen to be centred in while keeping it off the edges on a
+          tablet. */}
+      <div className="relative flex w-full max-w-md flex-col items-center">
+        <div className="ink-rise w-full">
+          <SambramoWordmark fit onLight={false} registered />
         </div>
 
-        <h1 className="ink-rise -mt-1 font-display text-[42px] font-bold leading-none text-white">
-          Sambramo
-          <sup className="ml-1 align-super text-[0.3em] font-semibold text-white/60">®</sup>
-        </h1>
-
-        <div className="mt-2.5 flex items-center gap-3">
-          <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-r from-transparent to-gold-400/80" />
-          <p className="ink-rise ink-rise-late text-[10.5px] font-extrabold uppercase tracking-[0.24em] text-white/70">
+        {/* The category line, under a pair of rules that open from the
+            centre. The rules were gold, which was the S's colour and has no
+            job here; white at 45% is the same gesture in the ground's own
+            light. */}
+        <div className="mt-3.5 flex w-full items-center justify-center gap-3">
+          <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-r from-transparent to-white/45" />
+          <p className="ink-rise ink-rise-late text-center text-[10.5px] font-extrabold uppercase tracking-[0.24em] text-white/80">
             {BRAND.categoryLine}
           </p>
-          <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-l from-transparent to-gold-400/80" />
+          <span aria-hidden="true" className="ink-rule block h-px w-9 rounded-full bg-gradient-to-l from-transparent to-white/45" />
         </div>
       </div>
     </div>

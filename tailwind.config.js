@@ -150,6 +150,39 @@ export default {
            and royal is the *identity* colour. Two jobs, two ramps — the
            moment a brand colour also means "tap this", every logo on the
            page starts looking like a button. */
+        /* ── Comfortable Aqua — the brand ground ─────────────────────
+           Replaces navy as the colour the brand is *stood on*: the app
+           icon, the splash, the tab bar's primary chip, the seal on a
+           celebration card. Sampled from the reference tile the owner
+           supplied — a deep teal-blue at the top-left corner running out to
+           a light turquoise at the bottom-right.
+
+           Why a whole ramp rather than the two stops the gradient needs:
+           the ground is not only ever a gradient. It is also a 40px seal, a
+           32px tab chip, a text colour for the wordmark on white, and a
+           focus ring — and each of those wants a different point on the
+           same curve. Two hex codes and a pile of one-off `opacity`
+           modifiers is how a brand colour turns into eleven slightly
+           different brand colours.
+
+           `800` is the wordmark's colour on a white ground. It is the
+           darkest stop that still reads as aqua rather than as navy — the
+           thing this ramp exists to stop being — and it clears 4.5:1 on
+           white, which the lighter stops do not. Never letter a wordmark in
+           500 or above on white; it is a surface colour, not an ink. */
+        aqua: {
+          50:  '#EDF8F7',
+          100: '#D2EDEA',
+          200: '#A8DBD5',
+          300: '#7CC7C0',
+          400: '#55B2AF',   // the gradient's far corner
+          500: '#3D96A4',
+          600: '#2F8AA0',   // the gradient's midpoint
+          700: '#256F8A',
+          800: '#1B5C73',   // the gradient's near corner, and the ink on white
+          900: '#134A5E',
+          950: '#0C3543',
+        },
         royal: {
           50:  '#eff4ff',
           100: '#dbe6fe',

@@ -15,7 +15,6 @@ import { CANCELLATION, RETURN_TERMS, CATEGORY_RULES } from '../../config/policie
 import AppBar from '../../components/layout/AppBar'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import ChatWidget from '../../components/customer/ChatWidget'
-import { Monogram } from '../../components/ui/SambramoWordmark'
 import ReferAndEarn from '../../components/customer/ReferAndEarn'
 import AccountSettings from '../../components/customer/AccountSettings'
 
@@ -278,7 +277,13 @@ function Identity({ profile, user }) {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <Monogram size={172} />
+          {/* A watermark, not a mark. This was a 172px Spencerian S at 13%
+              opacity, slowly rotating off the corner. With the S retired,
+              rendering the brand SEAL here would put a rotating filled
+              square in the corner — a square is the one shape that looks
+              wrong turning, because its corners sweep. A single open glyph
+              rotates cleanly and is what a watermark wants to be. */}
+          <Sparkles size={172} strokeWidth={1.1} className="text-white" />
         </span>
 
         <div className="relative flex items-center gap-3.5">
@@ -323,7 +328,13 @@ function GuestPanel() {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <Monogram size={172} />
+          {/* A watermark, not a mark. This was a 172px Spencerian S at 13%
+              opacity, slowly rotating off the corner. With the S retired,
+              rendering the brand SEAL here would put a rotating filled
+              square in the corner — a square is the one shape that looks
+              wrong turning, because its corners sweep. A single open glyph
+              rotates cleanly and is what a watermark wants to be. */}
+          <Sparkles size={172} strokeWidth={1.1} className="text-white" />
         </span>
 
         <div className="relative">

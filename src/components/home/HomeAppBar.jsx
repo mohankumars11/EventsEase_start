@@ -161,7 +161,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
             >
               <ShoppingBag size={18} />
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-royal-800 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-aqua-700 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -180,7 +180,7 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
           ) : (
             <Link
               to="/login"
-              className="tap-tall shrink-0 rounded-full bg-royal-800 px-4 py-2 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(16,42,143,0.9)] transition-transform active:scale-95"
+              className="tap-tall shrink-0 brand-aqua-chip rounded-full px-4 py-2 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(12,53,67,0.9)] transition-transform active:scale-95"
             >
               Sign in
             </Link>

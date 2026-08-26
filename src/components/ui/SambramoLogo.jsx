@@ -1,5 +1,5 @@
 import { BRAND } from '../../config/sambramo'
-import { Monogram } from './SambramoWordmark'
+
 
 /**
  * The two lines that can hang under the wordmark, as the phrases they are set
@@ -74,7 +74,6 @@ export default function SambramoLogo({
   captionClassName = '',
   className = '',
 }) {
-  const wordColor = ground === 'onDark' ? 'text-white' : 'text-plum-950'
 
   const mode  = caption === true ? 'descriptor' : caption
   const parts = mode ? CAPTION_PARTS[mode]?.() : null
@@ -107,16 +106,30 @@ export default function SambramoLogo({
   const gap = Math.round(markSize * 0.3)
 
   return (
-    <span className={`group/logo inline-flex items-center ${className}`} style={{ gap: `${gap}px` }}>
-      {/* The hover used to turn this 90°, which was right for a kolam — a
-          rotationally symmetric figure looks the same at every quarter turn.
-          The mark is a letter now, and a letter on its side is a mistake. */}
-      <Monogram size={markSize} className="shrink-0" />
+    /* ── There is no mark beside the name any more ──────────────────────
+       This was [mark] [wordmark over caption], and the whole file was
+       organised around holding those two in a lockup: `markSize`, the
+       optical `gap`, the 1.28 factor that made the mark bracket a
+       two-line stack. All of it existed to stop the Spencerian S sitting
+       visibly high against the type.
 
-      {/* Wordmark and caption in one column — this is what puts their left
-          edges on the same line, and what the mark is centred against. */}
-      <span className="inline-flex flex-col min-w-0">
-        <span className={`font-display font-bold tracking-tight leading-none ${wordSize} ${wordColor}`}>
+       The S is retired (see SambramoWordmark) and the name is the mark, so
+       the lockup collapses to one column and every one of those numbers
+       stops having anything to align. `markSize` and `gap` are computed
+       above and no longer read — left in place only because `markSize`
+       still documents the ratio a future mark would need; delete both when
+       it is clear nothing is coming back.
+
+       Centred rather than left-aligned: on the auth panels this is the
+       subject of the screen, and a lockup that is the subject of a screen
+       is centred on it. */
+    <span className={`group/logo inline-flex flex-col items-center text-center ${className}`}>
+      <span className="inline-flex min-w-0 flex-col items-center">
+        <span
+          className={`font-display font-bold tracking-tight leading-none ${wordSize} ${
+            ground === 'onDark' ? 'text-white' : 'brand-aqua-text'
+          }`}
+        >
           {BRAND.name}
         </span>
 
@@ -127,7 +140,7 @@ export default function SambramoLogo({
             either way. */}
         {parts && (
           <span
-            className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug ${isEmotion ? 'tracking-[0.12em]' : 'tracking-[0.11em]'} uppercase ${capColor} ${captionClassName}`}
+            className={`mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 ${capSize} font-semibold leading-snug ${isEmotion ? 'tracking-[0.12em]' : 'tracking-[0.11em]'} uppercase ${capColor} ${captionClassName}`}
           >
             {parts.map((part, i) => (
               <span key={part} className="flex items-center gap-1.5 whitespace-nowrap">

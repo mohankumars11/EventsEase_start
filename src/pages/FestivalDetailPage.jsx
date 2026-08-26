@@ -104,7 +104,7 @@ export default function FestivalDetailPage() {
             error. The photograph and the date come first so the screen is
             still about the festival somebody came looking for. */}
         <div className="a-card overflow-hidden">
-          <div className="relative h-40 bg-royal-900">
+          <div className="brand-aqua relative h-40">
             <RemoteImage
               query={festival ? `${festival.name} festival India celebration` : 'Indian festival celebration'}
               emoji={emoji}
@@ -160,7 +160,7 @@ export default function FestivalDetailPage() {
                     type="button"
                     onClick={() => answerWith('yes')}
                     disabled={busy}
-                    className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-royal-800 px-4 text-[13.5px] font-extrabold text-white shadow-[0_8px_20px_-10px_rgba(16,42,143,0.95)] transition-transform active:scale-[0.97] disabled:opacity-60"
+                    className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full brand-aqua-chip px-4 text-[13.5px] font-extrabold text-white shadow-[0_8px_20px_-10px_rgba(12,53,67,0.95)] transition-transform active:scale-[0.97] disabled:opacity-60"
                   >
                     <Bell size={15} strokeWidth={2.6} /> Yes, notify me
                   </button>

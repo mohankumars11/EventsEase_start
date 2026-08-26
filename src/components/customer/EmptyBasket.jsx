@@ -68,7 +68,7 @@ export default function EmptyBasket() {
         <div className="mt-4 flex flex-wrap gap-2.5">
           <Link
             to="/services"
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-royal-800 px-5 text-[13.5px] font-extrabold text-white shadow-[0_8px_20px_-10px_rgba(16,42,143,0.95)] transition-transform active:scale-[0.97]"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-full brand-aqua-chip px-5 text-[13.5px] font-extrabold text-white shadow-[0_8px_20px_-10px_rgba(12,53,67,0.95)] transition-transform active:scale-[0.97]"
           >
             Browse individual services <ArrowRight size={15} strokeWidth={2.6} />
           </Link>

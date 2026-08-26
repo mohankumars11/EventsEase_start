@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
-import { Monogram } from '../ui/SambramoWordmark'
 
 /**
  * Phone-first primary navigation.
@@ -322,8 +321,8 @@ export default function BottomNav() {
                 className={`flex h-8 w-11 items-center justify-center rounded-full transition-all ${
                   primary
                     ? active
-                      ? 'bg-royal-900 ring-2 ring-gold-300 shadow-md shadow-royal-900/35'
-                      : 'bg-royal-900 shadow-sm shadow-royal-900/25'
+                      ? 'brand-aqua-chip ring-2 ring-aqua-200 shadow-md shadow-aqua-900/35'
+                      : 'brand-aqua-chip shadow-sm shadow-aqua-900/25'
                     : active && !locked
                       ? 'bg-accent/[0.12]'
                       : ''
@@ -332,9 +331,18 @@ export default function BottomNav() {
                 {/* The badge anchors to the icon, not to the 32px row, so it
                     sits on the bag's corner rather than floating above it. */}
                 <span className="relative flex items-center justify-center">
-                  {primary
-                    ? <Monogram size={22} />
-                    : <Icon size={20} strokeWidth={active ? 2.4 : 2} />}
+                  {/* The primary tab used to hold a 22px Spencerian S. A
+                      Spencerian capital is defined by its hairlines, and at
+                      22px those fall below a device pixel — so the mark the
+                      app showed on every screen was a gold smudge. The chip
+                      carries the brand now (the aqua ground), and the tab
+                      carries its own icon, white, like every other tab.
+                      One system instead of one exception. */}
+                  <Icon
+                    size={20}
+                    strokeWidth={active ? 2.4 : 2}
+                    className={primary ? 'text-white' : undefined}
+                  />
                   {/* A locked tab carries neither. Both are claims that
                       something is happening, and nothing is. */}
                   {!locked && badge > 0 && (

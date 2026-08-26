@@ -1,20 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- The browser-tab mark.
-       A standalone SVG cannot load a webfont, so this cannot be the
-       Spencerian S the app draws — the app icons (icon-512.png,
-       icon-maskable-512.png) are rendered from the real component instead.
-       A favicon is 16px of tab furniture, where a hairline script letter
-       would be mud regardless, so this is the initial in the wordmark's own
-       serif with the brand's two colours. -->
-  <rect width="64" height="64" rx="15" fill="#061448"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sambramo">
+  <!-- The browser-tab mark, on the Comfortable Aqua ground.
+
+       ── Why this one keeps a letter when nothing else does ──────────────
+       The app icon and the splash carry the full wordmark now; the gold
+       Spencerian S is retired everywhere. This is the single exception, and
+       it is a mechanical one rather than a design choice: a favicon is drawn
+       at 16 CSS pixels. "Sambramo" is eight characters, so each would get
+       two pixels of width — not small type, no type at all. Anything legible
+       in a browser tab is one glyph or a shape.
+
+       So it is one glyph, and deliberately NOT the retired mark: a plain
+       bold sans S in the wordmark's own voice, white on the ground, rather
+       than the ornate gold script the brand has moved off. It reads as the
+       app icon's little sibling, which is what a favicon should be.
+
+       ── Why the gradient is written out ─────────────────────────────────
+       A standalone SVG cannot resolve a Tailwind class or load a webfont, so
+       the stops are literal and the face is a system stack. These values are
+       the same ramp as `.brand-aqua-chip` in src/index.css — if that changes,
+       change this in the same commit. -->
   <defs>
-    <linearGradient id="g" x1="18" y1="12" x2="46" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F6E3A8"/>
-      <stop offset="50%" stop-color="#D9A445"/>
-      <stop offset="100%" stop-color="#A8762B"/>
+    <linearGradient id="aqua" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#17566C"/>
+      <stop offset="55%"  stop-color="#2F8AA0"/>
+      <stop offset="100%" stop-color="#55B2AF"/>
     </linearGradient>
+    <radialGradient id="sheen" cx="0.85" cy="0.9" r="1.1">
+      <stop offset="0%"   stop-color="#96E6DC" stop-opacity="0.5"/>
+      <stop offset="70%"  stop-color="#55B2AF" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <text x="32" y="34" text-anchor="middle" dominant-baseline="central"
-        font-family="Georgia, 'Times New Roman', serif" font-size="44"
-        font-style="italic" font-weight="700" fill="url(#g)">S</text>
+
+  <rect width="64" height="64" rx="15" fill="url(#aqua)"/>
+  <rect width="64" height="64" rx="15" fill="url(#sheen)"/>
+
+  <text x="32" y="33.5" text-anchor="middle" dominant-baseline="central"
+        font-family="'Manrope', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="38" font-weight="800" letter-spacing="-1.5" fill="#FFFFFF">S</text>
 </svg>

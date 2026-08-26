@@ -88,7 +88,7 @@ export default function BrandStudio() {
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-royal-800 px-4 text-sm font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl brand-aqua-chip px-4 text-sm font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             {busy ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
             {hasUpload ? 'Replace logo' : 'Upload logo'}
@@ -140,9 +140,9 @@ export default function BrandStudio() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="card overflow-hidden">
           <div className="border-b border-gray-100 px-4 py-2.5 text-[12px] font-bold text-gray-600">
-            On navy — the splash
+            On the aqua ground — the splash
           </div>
-          <div key={`dark-${nonce}`} className="flex items-center justify-center bg-royal-950 px-6 py-10">
+          <div key={`dark-${nonce}`} className="brand-aqua flex items-center justify-center px-6 py-10">
             <SambramoWordmark size={92} layout="stacked" onLight={false} registered />
           </div>
         </div>
@@ -175,8 +175,8 @@ export default function BrandStudio() {
         </div>
 
         <div key={`seal-${nonce}`} className="mt-6">
-          <p className="mb-2 text-[12px] font-bold text-gray-600">The card hallmark, on navy</p>
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-[11px] bg-royal-950 ring-1 ring-gold-300/55">
+          <p className="mb-2 text-[12px] font-bold text-gray-600">The card seal, on the aqua ground</p>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-[12px]">
             <Monogram size={26} />
           </span>
         </div>

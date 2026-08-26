@@ -5,7 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-512.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#FFFFFF" />
+    <!-- The Android status bar and the task-switcher card.
+         White was right when the brand ground was navy and only the splash
+         used it; now the launch screen, the app icon and the tab chip are
+         all Comfortable Aqua, and a white status bar above an aqua splash
+         is a seam across the top of the first screen anybody sees.
+         #1B5C73 is aqua-800 — the deep corner of the ramp, which is what
+         the top of the screen actually shows. -->
+    <meta name="theme-color" content="#1B5C73" />
     <!-- These two strings are the one place the brand lines can't be read from
          src/config/sambramo.js — this file is static and ships before any JS.
          They are copied from BRAND.tagline and BRAND.descriptor verbatim; if
