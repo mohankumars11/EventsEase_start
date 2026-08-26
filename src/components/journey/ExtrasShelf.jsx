@@ -1,8 +1,43 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
 import { StepFrame } from './JourneyChrome'
 import OptionCard from './OptionCard'
+
+/**
+ * What kind of thing each extra is, for the headings on this screen.
+ *
+ * ── Why this table and not `groupForService` ────────────────────────────
+ * servicePricing.js already groups services six ways and carries a palette
+ * for them, which looks like exactly the right thing to reuse and is not.
+ * That table only covers the ~30 services the estimator prices directly;
+ * more than half of what lands on this shelf — nadaswaram, bhajan, folk,
+ * drone, livestream, valet, washrooms, medical, hospitality, nanny — is not
+ * in it, and `groupForService` falls back to the first group. Grouping by it
+ * would have filed nine of a reception's fourteen extras under "The basics",
+ * which is worse than no grouping at all.
+ *
+ * So the shelf keeps its own, and it is exhaustive over every serviceId any
+ * blueprint uses. Anything unlisted falls to the last section rather than the
+ * first, because "the unglamorous things" is the honest home for a service
+ * nobody has classified yet — and it sorts to the bottom, where a mystery
+ * belongs.
+ */
+const SECTIONS = [
+  { id: 'rite', label: 'The rite', services: ['priest', 'pooja', 'nadaswaram', 'bhajan', 'inauguration'] },
+  { id: 'table', label: 'Food & drink', services: ['cake', 'dining', 'live_counters', 'bar', 'ice_cream', 'sweets'] },
+  { id: 'memories', label: 'Photos & film', services: ['photography', 'videography', 'drone', 'livestream', 'photobooth', 'memory_wall'] },
+  { id: 'moments', label: 'Music & the moments', services: ['dj', 'live_music', 'drum', 'folk', 'entertainment', 'choreography', 'emcee', 'fireworks', 'av_setup', 'signage'] },
+  { id: 'ready', label: 'Getting ready', services: ['makeup', 'mehendi', 'bridal_wear', 'wedding_car', 'baraat'] },
+  { id: 'vehicle', label: 'The vehicle', services: ['vehicle_decor', 'vehicle_care'] },
+  { id: 'guests', label: 'Looking after guests', services: ['hospitality', 'nanny', 'kids_play', 'transport', 'valet', 'bouncers', 'medical'] },
+  { id: 'ground', label: 'The unglamorous things', services: ['power', 'cooling', 'washrooms', 'tent', 'cleanup', 'venue', 'return_gifts', 'gifting', 'invitations'] },
+]
+
+const SECTION_OF = Object.fromEntries(
+  SECTIONS.flatMap(sec => sec.services.map(id => [id, sec.id])),
+)
+const FALLBACK_SECTION = SECTIONS[SECTIONS.length - 1].id
 
 /**
  * Everything else, on one screen.
@@ -53,13 +88,34 @@ export default function ExtrasShelf({ chapters, selections, onChange, onSkip, gu
 
   const chosenCount = chapters.filter(ch => (selections?.[ch.id]?.packIds?.length ?? 0) > 0).length
 
+  /**
+   * Grouped, because fourteen identical cards in a column is the wall this
+   * screen was built to replace, one level down. Blueprint order is preserved
+   * inside each section — it is the order a family decides in, and re-sorting
+   * by name or by price would undo the one thing the blueprint knows.
+   *
+   * Empty sections do not render, so a vahana pooja shows two headings and a
+   * reception shows five.
+   */
+  const grouped = useMemo(() => {
+    const byId = new Map()
+    for (const ch of chapters) {
+      const key = SECTION_OF[ch.serviceId] ?? FALLBACK_SECTION
+      if (!byId.has(key)) byId.set(key, [])
+      byId.get(key).push(ch)
+    }
+    return SECTIONS
+      .map(sec => ({ ...sec, items: byId.get(sec.id) ?? [] }))
+      .filter(sec => sec.items.length)
+  }, [chapters])
+
   if (!chapters.length) return null
 
   return (
     <StepFrame
       overline="Anything else"
       question="A few more things families add."
-      why="None of these is expected and none of them is a decision you have to make now. They are here in one place rather than as eleven more questions — open anything you are curious about, and ignore the rest."
+      why={`None of these is expected, and none of them is a decision you have to make now. They are here in one place rather than as ${chapters.length} more questions — open anything you are curious about, and ignore the rest.`}
       footnote="Everything here is optional. Continue without opening any of it."
     >
       {chosenCount > 0 && (
@@ -68,8 +124,14 @@ export default function ExtrasShelf({ chapters, selections, onChange, onSkip, gu
         </p>
       )}
 
-      <div className="space-y-2.5">
-        {chapters.map(chapter => {
+      {grouped.map(section => (
+        <section key={section.id} className="mb-5 last:mb-0">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
+            {section.label}
+            <span className="ml-1.5 font-bold text-ink-mute/70">{section.items.length}</span>
+          </p>
+          <div className="space-y-2.5">
+        {section.items.map(chapter => {
           const selection = selections?.[chapter.id] ?? { packIds: [], qty: {} }
           const picked = selection.packIds ?? []
           const declined = !!selection.skipped
@@ -181,7 +243,9 @@ export default function ExtrasShelf({ chapters, selections, onChange, onSkip, gu
             </div>
           )
         })}
-      </div>
+          </div>
+        </section>
+      ))}
     </StepFrame>
   )
 }
