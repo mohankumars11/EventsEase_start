@@ -132,14 +132,17 @@ try {
   const evalArg = flag('eval', null)
   if (evalArg) {
     await evaluate(ws, evalArg)
-    await sleep(600)
+    // Long enough for the 340ms auto-advance AND the re-render it causes.
+    // At 600ms the shot lands mid-transition and comes back blank, which
+    // reads exactly like a crash.
+    await sleep(1600)
   }
 
   if (clickSel) {
     const hit = await evaluate(ws, `
       (() => { const el = document.querySelector(${JSON.stringify(clickSel)}); el?.click(); return !!el })()`)
     if (!hit) console.warn(`  ! selector matched nothing: ${clickSel}`)
-    await sleep(700)
+    await sleep(900)
   }
 
   const heading = await evaluate(ws, `document.querySelector('h1,h2')?.textContent?.trim() ?? '(no heading)'`)

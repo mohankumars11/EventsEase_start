@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, Pencil, ShieldCheck, Sparkles } from 'lucide-react'
+import {
+  BookmarkCheck, ChevronDown, Pencil, Plus, RotateCcw, ShieldCheck, SlidersHorizontal, Sparkles,
+} from 'lucide-react'
 import { quoteLines } from '../../utils/quote'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
 import { formatINR } from '../../utils/format'
@@ -44,7 +46,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  */
 export default function RevealStep({
   quote, occasionName, occasionEmoji, circle, guests, cuisine, menu, vegOnly,
-  decorLevel, chapters, selections, onEdit, savings,
+  decorLevel, decorLabel, chapters, selections, onEdit, savings,
+  onOpenMap, onRestart, onSaveExit, extrasCount,
 }) {
   const reduced = useReducedMotion()
   const [revealed, setRevealed] = useState(reduced)
@@ -107,9 +110,13 @@ export default function RevealStep({
         {decorLevel && decorLevel.id !== 'none' && (
           <SummaryRow
             emoji={decorLevel.emoji}
-            label={decorLevel.name}
-            value={quote.decor.theme?.name ?? 'Décor and styling'}
-            onEdit={() => onEdit('decor_level')}
+            /* The occasion's own name for the setup where it has one.
+               A family who chose "Banana stems and a toran" should not be
+               read back "Home Touch" — that is the rung underneath, and it
+               is a word they have never seen. */
+            label={decorLabel ?? decorLevel.name}
+            value={decorLabel ? decorLevel.name : (quote.decor.theme?.name ?? 'Décor and styling')}
+            onEdit={() => onEdit(decorLabel ? 'decor_own' : 'decor_level')}
           />
         )}
         {chosenChapters.map(ch => (
@@ -270,6 +277,80 @@ export default function RevealStep({
           </div>
         </details>
       )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          WHAT YOU CAN DO WITH IT
+          ══════════════════════════════════════════════════════════════
+
+          Every row above has its own "Change", which is the right control
+          for "the photographer should be full day". It is the wrong control
+          for the three things a person actually wants at the end of a long
+          flow and could not do:
+
+            · see everything at once, including what they DECLINED — the
+              summary above lists only what was chosen, so a family who said
+              no to the videographer on screen nine has no way to find that
+              decision again from here;
+            · look at the eleven optional things they skipped past, now that
+              they have seen the number and know what they have left to
+              spend;
+            · put it down and come back, without the anxiety of wondering
+              whether a half-finished plan survives closing the app.
+
+          The last one is the reason this block exists at all. The bar at the
+          top has always said "Save", and nobody reads an app bar at the
+          moment they are deciding whether to spend two lakh rupees. It is
+          said here, in words, next to the number it applies to.
+
+          "Start again" is deliberately last, deliberately plain, and
+          deliberately confirms — it is the least-used control on the screen
+          and the most expensive to hit by accident. */}
+      <div className="mt-5 rounded-[24px] bg-surface-sunk/[0.04] p-4">
+        <p className="text-[12.5px] font-extrabold text-ink">Not quite right yet?</p>
+        <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-mute">
+          Nothing here is booked. Change any part of it, or come back to it later — your plan is
+          saved on this device as you go.
+        </p>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {onOpenMap && (
+            <button
+              type="button"
+              onClick={onOpenMap}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-[12.5px] font-bold text-ink ring-1 ring-hairline/15 transition-colors hover:bg-surface-sunk/[0.04]"
+            >
+              <SlidersHorizontal size={14} /> Every part of it
+            </button>
+          )}
+          {extrasCount > 0 && (
+            <button
+              type="button"
+              onClick={() => onEdit('extras')}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-[12.5px] font-bold text-ink ring-1 ring-hairline/15 transition-colors hover:bg-surface-sunk/[0.04]"
+            >
+              <Plus size={14} /> Add something
+            </button>
+          )}
+          {onSaveExit && (
+            <button
+              type="button"
+              onClick={onSaveExit}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-[12.5px] font-bold text-ink ring-1 ring-hairline/15 transition-colors hover:bg-surface-sunk/[0.04]"
+            >
+              <BookmarkCheck size={14} /> Save for later
+            </button>
+          )}
+          {onRestart && (
+            <button
+              type="button"
+              onClick={onRestart}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-white px-3 text-[12.5px] font-bold text-ink-mute ring-1 ring-hairline/15 transition-colors hover:bg-surface-sunk/[0.04]"
+            >
+              <RotateCcw size={14} /> Start again
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

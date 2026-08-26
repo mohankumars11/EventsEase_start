@@ -161,3 +161,65 @@ export function DecorAddonStep({ addonIds, onAddons }) {
     </StepFrame>
   )
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE OCCASION'S OWN DECORATION
+   ══════════════════════════════════════════════════════════════════════
+
+   One screen instead of three, with options written for this occasion
+   rather than for a hall.
+
+   The generic ladder above asks how much, then what colour, then what
+   extras — three real decisions when the answer is a styled function in a
+   banquet hall, and three wrong ones everywhere else. "Home Touch — the
+   entrance, the cake table, and the corner everyone photographs" is a
+   description of a birthday party, and it was being shown on a screen about
+   a motorcycle, a plot of bare land, and a shop shutter.
+
+   So an occasion can bring its own setups: "banana stems either side of the
+   shutter", "the kunda area levelled and laid out", "marigold curtains and
+   painted matkas". Each one carries the décor level and palette it is
+   actually built from, so the estimate comes out of exactly the same engine
+   and the price does not move. What changes is that the customer is asked
+   about their own function.
+
+   See the `decor` block in data/celebrationBlueprints.js. */
+
+export function DecorOwnStep({ step, choiceId, onChoose }) {
+  return (
+    <StepFrame
+      overline="How it looks"
+      question={step.question}
+      why={step.why}
+      footnote="Fresh flowers and real fabric, set up before your guests arrive and cleared afterwards."
+    >
+      <div className="space-y-2.5">
+        {step.options.map(option => (
+          <OptionCard
+            key={option.id}
+            emoji={option.emoji}
+            name={option.name}
+            desc={option.desc}
+            includes={option.includes}
+            note={option.note}
+            selected={choiceId === option.id}
+            onToggle={() => onChoose(option)}
+          />
+        ))}
+
+        {/* Declining is a card here rather than only a button in the bar, so
+            it reads as one of the answers rather than as giving up on the
+            screen. Same argument as the refusal control itself. */}
+        <div className="pt-1">
+          <OptionCard
+            emoji="🚫"
+            name={step.skipLabel ?? 'No decoration needed'}
+            desc="Nothing is quoted for decor, and nobody will ring you about it."
+            selected={choiceId === 'none'}
+            onToggle={() => onChoose({ id: 'none', levelId: 'none', themeId: null })}
+          />
+        </div>
+      </div>
+    </StepFrame>
+  )
+}

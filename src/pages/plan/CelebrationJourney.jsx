@@ -9,7 +9,8 @@ import { friendlyError } from '../../context/ToastContext'
 import { BRAND } from '../../config/sambramo'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import {
-  blueprintFor, chaptersFor, defaultGuestsFor, defaultVenueFor, isOutdoorVenue, venueLabelFor,
+  blueprintFor, chaptersFor, coreChapters, extraChapters, decorStepFor, decorOptionFor,
+  menuModeFor, defaultGuestsFor, defaultVenueFor, isOutdoorVenue, venueLabelFor,
 } from '../../data/celebrationBlueprints'
 import { CIRCLE_BY_ID, circleForGuests, allowanceFor } from '../../data/guestCircles'
 import { CUISINE_BY_ID, COURSES, dishesFor, defaultMenu } from '../../data/cuisineMenus'
@@ -29,7 +30,9 @@ import StepJumper from '../../components/journey/StepJumper'
 import ChapterStep, { autoAdvances } from '../../components/journey/ChapterStep'
 import { GuestStep, CircleStep, VenueStep, MealGateStep } from '../../components/journey/ScaleSteps'
 import { CuisineStep, CourseStep, courseStepsFor } from '../../components/journey/MenuSteps'
-import { DecorLevelStep, DecorThemeStep, DecorAddonStep } from '../../components/journey/DecorSteps'
+import MenuAllStep from '../../components/journey/MenuAllStep'
+import ExtrasShelf from '../../components/journey/ExtrasShelf'
+import { DecorLevelStep, DecorThemeStep, DecorAddonStep, DecorOwnStep } from '../../components/journey/DecorSteps'
 import PairingSheet from '../../components/journey/PairingSheet'
 import RevealStep from '../../components/journey/RevealStep'
 import ContactBlock, { contactBlocked, eventDateBlocked, phoneDigitsOf } from '../../components/plan/ContactBlock'
@@ -69,19 +72,41 @@ import PriceLock from '../../components/plan/PriceLock'
  * somebody was not warned about is worse at the reveal than a number was
  * early.
  *
- * ── One decision per screen ───────────────────────────────────────────
+ * ── One decision per screen, and not one screen more ──────────────────
  * Thirty services in a grid is a procurement form. This asks one question at
  * a time, in the order a family actually decides — who is coming, how big,
  * where, the rite, the cake, the food, the look, the memories, the guests,
  * what they take home, and the unglamorous things that decide whether any of
  * it works. Each question carries the single sentence that earns it. See
- * data/celebrationBlueprints.js, which holds all fifteen occasions.
+ * data/celebrationBlueprints.js, which holds all twenty-five occasions.
  *
- * ── And it is short when it should be ─────────────────────────────────
- * The blueprint's `showIf` gates every chapter on what has already been
- * answered, so a thirty-guest birthday at home is ten questions and a
- * six-hundred-guest wedding is twenty-nine. Nobody is asked about a generator
- * for their living room.
+ * The corollary took a second pass to get right. One-question-per-screen is
+ * only a kindness while the questions are worth asking: measured after the
+ * catalogue grew, an aksharabhyasa — a twenty-minute rite before school — was
+ * twenty-four screens, and a vahana pooja was twenty-six. Four things fixed
+ * that without removing a single service, and all four are declared on the
+ * blueprint rather than decided here:
+ *
+ *   `core`     which chapters earn their own screen. Everything else goes on
+ *              ONE shelf near the end (ExtrasShelf), openable in place.
+ *   `decor`    what decoration means at this occasion — and it is answer-
+ *              aware, so a four-year-old's party is offered a themed backdrop
+ *              and a seventieth is offered a garlanded chair and a lamp.
+ *   `menu`     seven course screens where the menu is a project, one screen
+ *              with seven sections where it is a meal.
+ *   `food`     whether there is a meal at all, asked once, where the honest
+ *              answer can be no.
+ *
+ * ── And every option is narrowed to the answer ────────────────────────
+ * `showIf` decides whether a chapter appears; `packsFor` and `recommendFor`
+ * decide what is on it. The flow correctly stopped offering a magician at a
+ * sixtieth and then offered that family the same five cakes it offers a
+ * four-year-old. It does not any more — see `narrow()` in the blueprints.
+ *
+ * Net effect, at each occasion's own default headcount: a vahana pooja went
+ * from 26 screens to 13, an aksharabhyasa from 24 to 11, a wedding from 32 to
+ * 25 — because a wedding genuinely is that many decisions and nothing else in
+ * this catalogue is.
  */
 
 /** A journey waiting out a login, then submitted on the way back. */
@@ -174,6 +199,16 @@ export default function CelebrationJourney() {
   const [specialTags, setSpecialTags] = useState([])
   const [specialRequests, setSpecialRequests] = useState('')
   const [decorLevelId, setDecorLevelId] = useState(null)
+  /**
+   * The occasion's own décor answer, where the occasion has its own.
+   *
+   * `decorLevelId` stays the thing the quote engine prices — it has to, or
+   * every occasion with bespoke décor copy would need its own pricing path.
+   * This is the label beside it: "Banana stems and a toran" rather than
+   * "Home Touch", which is what the customer actually chose and the only
+   * name they will recognise on the estimate.
+   */
+  const [decorChoiceId, setDecorChoiceId] = useState(null)
   const [themeId, setThemeId] = useState(null)
   const [addonIds, setAddonIds] = useState([])
   const [eventDate, setEventDate] = useState(searchParams.get('date') ?? '')
@@ -217,12 +252,30 @@ export default function CelebrationJourney() {
     return out
   }, [blueprint, choices])
 
-  const chapters = useMemo(
-    () => chaptersFor(occasionId, {
-      flags, guests, circleId: circle.id, outdoor: isOutdoorVenue(occasionId, venue), venueKind: venue,
-    }),
-    [occasionId, flags, guests, circle.id, venue],
-  )
+  /**
+   * Everything the blueprint's gates read, in one place.
+   *
+   * `showIf`, `packsFor`, `recommendFor`, `core` and `decor` are all
+   * functions of this object now, so it has to be built once and passed
+   * everywhere — an answer-aware flow whose two callers disagree about the
+   * context is worse than one that was never answer-aware.
+   */
+  const ctx = useMemo(() => ({
+    flags, guests, circleId: circle.id,
+    outdoor: isOutdoorVenue(occasionId, venue), venueKind: venue,
+  }), [flags, guests, circle.id, occasionId, venue])
+
+  const chapters = useMemo(() => chaptersFor(occasionId, ctx), [occasionId, ctx])
+
+  /** The decisions that earn a screen, and the ones that share a shelf. */
+  const core = useMemo(() => coreChapters(occasionId, chapters, ctx), [occasionId, chapters, ctx])
+  const extras = useMemo(() => extraChapters(occasionId, chapters, ctx), [occasionId, chapters, ctx])
+
+  /** How decoration is asked at this occasion, for this answer. */
+  const decorStep = useMemo(() => decorStepFor(occasionId, ctx), [occasionId, ctx])
+
+  /** Seven screens of menu, or one. */
+  const menuMode = useMemo(() => menuModeFor(occasionId, guests), [occasionId, guests])
 
   /**
    * The flow, as a flat list of screens.
@@ -246,12 +299,21 @@ export default function CelebrationJourney() {
       // had already offered a bouncy castle and a magician to a family
       // planning a sixtieth. A question that gates other questions cannot be
       // asked after them.
-      ...chapters.filter(ch => ch.kind === 'choice').map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
+      ...core.filter(ch => ch.kind === 'choice').map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
       { key: 'guests' },
-      { key: 'circle' },
-      { key: 'venue' },
-      ...chapters.filter(ch => ch.kind !== 'choice' && beforeFood(ch)).map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
     ]
+
+    // ── The scale question, only where it is a question ──────────────
+    // Four circles is a useful thing to ask a family who said 120 and could
+    // reasonably mean either of two rungs. At fifteen guests there is one
+    // honest answer and the screen is a tap the customer pays for with
+    // nothing. It is derived from the headcount below that.
+    if (guests >= 40) list.push({ key: 'circle' })
+
+    list.push(
+      { key: 'venue' },
+      ...core.filter(ch => ch.kind !== 'choice' && beforeFood(ch)).map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
+    )
 
     // ── Is there a meal at all? ──────────────────────────────────────
     // Asked once, immediately before the food, and only where the answer
@@ -260,22 +322,35 @@ export default function CelebrationJourney() {
     // function ends with a packet of kesari bath.
     if (blueprint.food?.optional) list.push({ key: 'meal_gate' })
     if (serveMeal !== false) {
-      list.push(
-        { key: 'cuisine' },
-        ...courseStepsFor(allowance, menu).map(c => ({ key: `course:${c.id}`, course: c })),
-      )
+      list.push({ key: 'cuisine' })
+      // Seven screens where the menu is a project, one where it is a meal.
+      if (menuMode === 'courses') {
+        list.push(...courseStepsFor(allowance, menu).map(c => ({ key: `course:${c.id}`, course: c })))
+      } else {
+        list.push({ key: 'menu_all' })
+      }
     }
-    list.push({ key: 'decor_level' })
-    if (decorLevelId && decorLevelId !== 'none') {
-      list.push({ key: 'decor_theme' }, { key: 'decor_addons' })
+
+    // ── How it looks ─────────────────────────────────────────────────
+    // `none` means the occasion already asked — a vahana pooja chose its
+    // garland eight screens ago, and the generic ladder afterwards would be
+    // offering a motorcycle a cake table.
+    if (decorStep.mode === 'own') {
+      list.push({ key: 'decor_own' })
+    } else if (decorStep.mode !== 'none') {
+      list.push({ key: 'decor_level' })
+      if (decorLevelId && decorLevelId !== 'none') {
+        list.push({ key: 'decor_theme' }, { key: 'decor_addons' })
+      }
     }
+
     list.push(
-      ...chapters.filter(ch => ch.kind !== 'choice' && !beforeFood(ch)).map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
-      { key: 'reveal' },
-      { key: 'details' },
+      ...core.filter(ch => ch.kind !== 'choice' && !beforeFood(ch)).map(ch => ({ key: `ch:${ch.id}`, chapter: ch })),
     )
+    if (extras.length) list.push({ key: 'extras' })
+    list.push({ key: 'reveal' }, { key: 'details' })
     return list
-  }, [chapters, allowance, menu, decorLevelId, blueprint.food, serveMeal])
+  }, [core, extras, guests, allowance, menu, menuMode, decorStep, decorLevelId, blueprint.food, serveMeal])
 
   /**
    * The whole plan as a board — every screen, what state it is in, and what
@@ -347,6 +422,26 @@ export default function CelebrationJourney() {
         }
       case 'cuisine':
         return { key: s.key, emoji: cuisine?.emoji ?? '🍛', title: 'The spread', section: SECTIONS.food, status: cuisineId ? 'chosen' : 'todo', summary: cuisine?.name ?? 'Not chosen yet' }
+      case 'menu_all': {
+        const n = COURSES.reduce((t, c) => t + (menu?.[c.id]?.length ?? 0), 0)
+        return { key: s.key, emoji: '🍲', title: 'The menu', section: SECTIONS.food, status: n ? 'chosen' : 'todo', summary: n ? `${n} dishes chosen` : 'Nothing picked yet' }
+      }
+      case 'decor_own': {
+        const option = decorOptionFor(occasionId, decorChoiceId, ctx)
+        return {
+          key: s.key, emoji: '🎨', title: 'Decoration', section: SECTIONS.look,
+          status: !decorChoiceId ? 'todo' : decorChoiceId === 'none' ? 'declined' : 'chosen',
+          summary: option?.name ?? (decorChoiceId === 'none' ? 'None needed' : 'Not chosen yet'),
+        }
+      }
+      case 'extras': {
+        const added = extras.filter(ch => (selections[ch.id]?.packIds?.length ?? 0) > 0).length
+        return {
+          key: s.key, emoji: '➕', title: 'Anything else', section: SECTIONS.day,
+          status: added ? 'chosen' : 'todo',
+          summary: added ? `${added} of ${extras.length} added` : `${extras.length} optional extras`,
+        }
+      }
       case 'decor_level':
         return {
           key: s.key, emoji: '🎨', title: 'Decoration', section: SECTIONS.look,
@@ -362,8 +457,8 @@ export default function CelebrationJourney() {
       default:
         return { key: s.key, emoji: '📞', title: 'Your details', section: SECTIONS.finish, status: contactBlocked(contact) ? 'todo' : 'chosen', summary: contact.name?.trim() || 'Who we should call' }
     }
-  }), [steps, choices, selections, menu, guests, circle, circleId, venue, occasionId,
-       serveMeal, cuisine, cuisineId, decorLevelId, decorLevel, themeId, addonIds, contact])
+  }), [steps, choices, selections, menu, guests, circle, circleId, venue, occasionId, ctx, extras,
+       serveMeal, cuisine, cuisineId, decorLevelId, decorLevel, decorChoiceId, themeId, addonIds, contact])
 
   const stepIndex = Math.max(0, steps.findIndex(s => s.key === stepKey))
   const step = steps[stepIndex] ?? steps[0]
@@ -555,13 +650,13 @@ export default function CelebrationJourney() {
   const stateForDraft = useCallback(() => ({
     occasionId, guests, circleId: circle.id, venue, choices, selections,
     cuisineId, vegOnly, menu, specialTags, specialRequests,
-    decorLevelId, themeId, addonIds, eventDate, timeSlot, chosenCity, contact, stepKey,
+    decorLevelId, decorChoiceId, themeId, addonIds, eventDate, timeSlot, chosenCity, contact, stepKey,
     // Carried explicitly rather than inferred from a missing cuisine: a
     // journey restored mid-flow, before the meal question was reached, is
     // not the same state as one where the customer said there is no meal.
     serveMeal, includeCatering: serveMeal !== false,
   }), [occasionId, guests, circle.id, venue, choices, selections, cuisineId, vegOnly, menu,
-      specialTags, specialRequests, decorLevelId, themeId, addonIds, eventDate, timeSlot,
+      specialTags, specialRequests, decorLevelId, decorChoiceId, themeId, addonIds, eventDate, timeSlot,
       chosenCity, contact, stepKey, serveMeal])
 
   const submit = useCallback(async (override) => {
@@ -729,6 +824,7 @@ export default function CelebrationJourney() {
       setSpecialTags(d.specialTags ?? [])
       setSpecialRequests(d.specialRequests ?? '')
       setDecorLevelId(d.decorLevelId ?? null)
+      setDecorChoiceId(d.decorChoiceId ?? null)
       setThemeId(d.themeId ?? null)
       setAddonIds(d.addonIds ?? [])
       setEventDate(d.eventDate ?? '')
@@ -803,12 +899,14 @@ export default function CelebrationJourney() {
     (step?.key === 'meal_gate' && serveMeal === null) ||
     (step?.key === 'cuisine' && !cuisineId) ||
     (step?.key === 'decor_level' && !decorLevelId) ||
+    (step?.key === 'decor_own' && !decorChoiceId) ||
     (isDetails && (!!contactBlocked(contact) || !!eventDateBlocked(eventDate)))
 
   const primaryLabel = isDetails
     ? (submitting ? 'Sending…' : 'Send this to a coordinator')
     : isReveal ? 'Looks right — what happens next?'
     : step?.key === 'decor_addons' ? 'Done with the look'
+    : step?.key === 'extras' ? 'Done — show me the estimate'
     : 'Continue'
 
   const canSkip = chapter && chapter.kind === 'service' && chapter.optional !== false
@@ -904,6 +1002,19 @@ export default function CelebrationJourney() {
         />
       )}
 
+      {step?.key === 'menu_all' && cuisine && (
+        <MenuAllStep
+          cuisine={cuisine}
+          vegOnly={vegOnly}
+          menu={menu}
+          allowance={allowance}
+          extraRate={EXTRA_DISH_RATE}
+          onToggleDish={tapDish}
+          onResetCourse={resetCourse}
+          onOpenDish={(courseId, dish) => setPairing({ dish, courseId })}
+        />
+      )}
+
       {step?.course && cuisine && (
         <CourseStep
           key={step.course.id}
@@ -916,6 +1027,23 @@ export default function CelebrationJourney() {
           onToggleDish={tapDish}
           onResetCourse={() => resetCourse(step.course.id)}
           onOpenDish={(courseId, dish) => setPairing({ dish, courseId })}
+        />
+      )}
+
+      {step?.key === 'decor_own' && (
+        <DecorOwnStep
+          step={decorStep}
+          choiceId={decorChoiceId}
+          onChoose={option => {
+            setDecorChoiceId(option.id)
+            setDecorLevelId(option.levelId)
+            // The palette comes with the setup rather than being a second
+            // question — "banana stems and a toran" is already marigold, and
+            // asking a family to also pick a colour for it is a screen that
+            // exists to be answered rather than to be decided.
+            if (option.themeId) setThemeId(option.themeId)
+            scheduleAdvance()
+          }}
         />
       )}
 
@@ -941,6 +1069,19 @@ export default function CelebrationJourney() {
         <DecorAddonStep addonIds={addonIds} onAddons={setAddonIds} />
       )}
 
+      {step?.key === 'extras' && (
+        <ExtrasShelf
+          chapters={extras}
+          selections={selections}
+          onChange={(chapter, value) => setSelections(current => ({ ...current, [chapter.id]: value }))}
+          onSkip={chapter => setSelections(current => ({
+            ...current, [chapter.id]: { packIds: [], qty: {}, skipped: true },
+          }))}
+          guestCount={guests}
+          circleId={circle.id}
+        />
+      )}
+
       {isReveal && (
         <RevealStep
           quote={quote}
@@ -954,13 +1095,36 @@ export default function CelebrationJourney() {
           decorLevel={decorLevel}
           chapters={chapters}
           selections={selections}
+          decorLabel={decorOptionFor(occasionId, decorChoiceId, ctx)?.name ?? null}
+          extrasCount={extras.length}
+          onOpenMap={() => setMapOpen(true)}
+          onSaveExit={() => navigate('/plan')}
+          onRestart={() => {
+            // Confirmed, because it is the one control on this screen that
+            // throws away nine minutes of work and it sits beside three that
+            // do not. `clearDraft` as well as the state reset — otherwise the
+            // resume prompt offers to restore the plan they just discarded.
+            if (!window.confirm('Start this plan again from the first question? Nothing you have chosen will be kept.')) return
+            clearDraft(RESUME_KEY)
+            setChoices({}); setSelections({}); setCuisineId(null); setMenu({})
+            setServeMeal(null); setDecorLevelId(null); setDecorChoiceId(null)
+            setThemeId(null); setAddonIds([]); setCircleId(null)
+            setGuests(defaultGuestsFor(occasionId))
+            setVenue(defaultVenueFor(occasionId))
+            setStepKey(null)
+          }}
           savings={savings}
-          onEdit={key => goTo(
-            key === 'guests' ? 'guests'
-              : key === 'cuisine' ? 'cuisine'
-              : key === 'decor_level' ? 'decor_level'
-              : `ch:${key}`,
-          )}
+          /* A chapter that lives on the extras shelf has no screen of its
+             own to jump to, so "Change" on its summary row has to land on
+             the shelf. Sending it to `ch:power` would have navigated to a
+             key that is not in `steps`, and the flow would have bounced the
+             customer to the first screen it could find. */
+          onEdit={key => {
+            if (key === 'guests' || key === 'cuisine') return goTo(key)
+            if (key === 'decor_level' || key === 'decor_own') return goTo(key)
+            if (key === 'menu_all') return goTo('menu_all')
+            return goTo(steps.some(st => st.key === `ch:${key}`) ? `ch:${key}` : 'extras')
+          }}
         />
       )}
 

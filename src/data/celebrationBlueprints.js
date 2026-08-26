@@ -347,9 +347,179 @@ const mealOptional = ({ question, why, yes, no }) => ({
   no: { emoji: '🚫', name: no.name, desc: no.desc },
 })
 
+/* ══════════════════════════════════════════════════════════════════════
+   HOW LONG A JOURNEY IS ALLOWED TO BE
+   ══════════════════════════════════════════════════════════════════════
+
+   Measured after the ten new occasions landed, at each occasion's own
+   default headcount:
+
+     aksharabhyasa   24 screens      a twenty-minute rite before school
+     vehicle_pooja   26 screens      a garland and a lemon in a delivery bay
+     mundan          31 screens
+     reception       41 screens
+
+   Twenty-four screens to arrange a slate, a lamp and a purohit is not a
+   guided journey, it is an endurance test — and the person who abandons it
+   at screen nine is the person who would have booked. A wedding earns
+   twenty-something screens because a wedding genuinely is twenty-something
+   decisions. Nothing else in this catalogue does.
+
+   Three things were making every occasion the same length, and each is
+   fixed by a field on the blueprint rather than by deleting anything. That
+   distinction matters: the answer is not a shorter catalogue, it is the
+   same catalogue asked at the right altitude.
+
+   ── 1 · `core` — which decisions earn their own screen ─────────────────
+
+   A chapter is either CORE (its own screen, in the order a family decides
+   it) or an EXTRA, and every extra for the whole occasion is collected onto
+   ONE screen near the end: a shelf of compact cards that open in place.
+
+   Nothing is removed. A family that wants the drone, the misting fans and
+   the sky lanterns can still have all three; they are simply not three
+   separate interruptions between the cake and the photographer. The
+   groundwork chapters are the clearest case — a generator, portable
+   washrooms and an ambulance are exactly the things nobody arrives wanting
+   and some functions genuinely need, which is the definition of a shelf
+   rather than of a question.
+
+   `core` is a list of chapter ids, and it is deliberately short: five for a
+   vahana pooja, thirteen for a wedding. An occasion with no `core` list
+   keeps every chapter as its own screen, so this can never silently swallow
+   an occasion nobody has looked at yet.
+
+   ── 2 · `decor` — what decoration MEANS at this occasion ───────────────
+
+   The décor step asked all twenty-five occasions the same three questions
+   from the same six-rung ladder: how much, what colour, what extras. For a
+   new vehicle it offered "Home Touch — the entrance, the cake table, and
+   the corner everyone photographs", which is a description of a birthday
+   party, on a screen about a motorcycle. There is no cake table. There is
+   no room.
+
+   So decoration belongs to the occasion, in one of three shapes:
+
+     'none'    the occasion already has a decoration chapter of its own and
+               the generic ladder is pure noise. A vahana pooja's decoration
+               IS the garland, and it was chosen eight screens ago.
+     'own'     one screen of setups written for this occasion — "rangoli and
+               a toran at the gate", "banana stems either side of the
+               shutter". Each maps to a real décor level underneath, so the
+               quote engine is untouched and the price is the same price.
+     'levels'  the generic ladder, kept for the occasions it was written for:
+               a wedding, a reception, a sangeet — functions in a hall where
+               how-much and what-colour genuinely are two decisions.
+
+   ── 3 · `menu` — one screen or seven ───────────────────────────────────
+
+   Seven course screens is right for a family choosing a wedding spread and
+   absurd for twenty people at an aksharabhyasa. Below the point where the
+   menu is a project, all seven courses go on one screen as sections that
+   open in place, pre-filled with our suggestion — so the honest default is
+   one tap, and the family who wants to go through it dish by dish still can.
+
+   'auto' decides on the headcount, which is the right axis: the same
+   occasion at forty guests and at four hundred genuinely is a different
+   amount of deciding. */
+
+/**
+ * Which chapters are core — for THIS customer, not for this occasion.
+ *
+ * `core` may be a list or a function of the same ctx `showIf` receives, and
+ * for any occasion whose first question genuinely changes the celebration it
+ * is a function. A four-year-old's birthday and a grandfather's
+ * shashtiabdapoorthi are the same entry in this file and share almost
+ * nothing: one leads with a bouncy castle and a fondant cake, the other with
+ * a homa, a veena and a wall of photographs from sixty years. Handing both
+ * families the identical six screens is the generic-catalogue failure this
+ * whole file exists to avoid, one level further in.
+ *
+ * A choice chapter is ALWAYS core. It gates what comes after it, so it can
+ * never be filed on a shelf behind the questions it decides.
+ */
+export function coreChapters(occasionId, chapters, ctx) {
+  const declared = blueprintFor(occasionId).core
+  const core = typeof declared === 'function' ? declared(safeCtx(ctx)) : declared
+  if (!core) return chapters
+  const set = new Set(core)
+  return chapters.filter(ch => ch.kind === 'choice' || set.has(ch.id))
+}
+
+/** Everything else, for the one shelf screen. */
+export function extraChapters(occasionId, chapters, ctx) {
+  const declared = blueprintFor(occasionId).core
+  const core = typeof declared === 'function' ? declared(safeCtx(ctx)) : declared
+  if (!core) return []
+  const set = new Set(core)
+  return chapters.filter(ch => ch.kind === 'service' && !set.has(ch.id))
+}
+
+/* ── Décor ─────────────────────────────────────────────────────────── */
+
+/** The generic ladder: how much → what colour → what extras. */
+const decorLevels = ({ why } = {}) => ({ mode: 'levels', why })
+
+/**
+ * No generic décor screens at all.
+ *
+ * `because` is shown nowhere — it is here so that the next person to read
+ * this file knows the omission was a decision rather than an oversight.
+ */
+const decorNone = ({ because }) => ({ mode: 'none', because })
+
+/**
+ * One screen, written for this occasion.
+ *
+ * Every option carries `levelId` and `themeId` so the estimate is produced
+ * by exactly the same code path as the generic ladder. This changes what the
+ * customer is asked, never what anything costs.
+ */
+const decorOwn = ({ question, why, options, skipLabel = 'No decoration needed' }) => ({
+  mode: 'own', question, why, options, skipLabel,
+})
+
+/**
+ * The décor question for this occasion and this answer.
+ *
+ * Also a function where it needs to be. "How is the room being set up?" has
+ * a different set of true answers for a teenager's birthday (a neon sign, a
+ * light rig, a photo wall) and for a seventieth (a garlanded chair, a
+ * lamp, and sixty years of photographs on a wall) — and offering the second
+ * family a balloon arch is the same species of mistake as offering a griha
+ * pravesha a resort.
+ */
+export function decorStepFor(occasionId, ctx) {
+  const declared = blueprintFor(occasionId).decor
+  const block = typeof declared === 'function' ? declared(safeCtx(ctx)) : declared
+  return block ?? { mode: 'levels' }
+}
+
+/** The décor option chosen, by its own name rather than the rung's. */
+export function decorOptionFor(occasionId, choiceId, ctx) {
+  const block = decorStepFor(occasionId, ctx)
+  if (block.mode !== 'own') return null
+  return block.options.find(o => o.id === choiceId) ?? null
+}
+
+/* ── The menu ──────────────────────────────────────────────────────── */
+
+/**
+ * Above this headcount the menu is a project worth seven screens; below it,
+ * it is one screen with seven sections. 75 is the top of the Close Circle
+ * band in guestCircles.js — the same seam every other size decision uses.
+ */
+const MENU_SCREEN_THRESHOLD = 75
+
+export function menuModeFor(occasionId, guests) {
+  const declared = blueprintFor(occasionId).menu ?? 'auto'
+  if (declared !== 'auto') return declared
+  return (guests ?? 0) >= MENU_SCREEN_THRESHOLD ? 'courses' : 'single'
+}
+
 /* ── Reusable chapters, each taking its own reason ─────────────────── */
 
-const photography = ({ why, packIds = ['photo_half_day', 'photo_full_day'], recommend, question = 'Who is photographing this?', showIf }) => svc({
+const photography = ({ why, packIds = ['photo_half_day', 'photo_full_day'], recommend, question = 'Who is photographing this?', showIf, ...narrowing }) => svc({
   serviceId: 'photography',
   title: 'Photos',
   emoji: '📸',
@@ -359,9 +529,10 @@ const photography = ({ why, packIds = ['photo_half_day', 'photo_full_day'], reco
   recommend: recommend ?? { close: 'photo_half_day', family: 'photo_full_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
   skipLabel: 'A cousin with a good phone is doing it',
   showIf,
+  ...narrowing,
 })
 
-const videography = ({ why, packIds = ['video_event', 'video_cinematic'], recommend, showIf }) => svc({
+const videography = ({ why, packIds = ['video_event', 'video_cinematic'], recommend, showIf, ...narrowing }) => svc({
   serviceId: 'videography',
   title: 'Video',
   emoji: '🎬',
@@ -371,9 +542,10 @@ const videography = ({ why, packIds = ['video_event', 'video_cinematic'], recomm
   recommend: recommend ?? { close: null, family: 'video_event', full_house: 'video_cinematic', grand: 'video_cinematic' },
   skipLabel: 'Photographs are enough',
   showIf,
+  ...narrowing,
 })
 
-const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_standing', 'dining_floor', 'dining_lounge'], recommend, showIf }) => svc({
+const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_standing', 'dining_floor', 'dining_lounge'], recommend, showIf, ...narrowing }) => svc({
   serviceId: 'dining',
   title: 'Seating',
   emoji: '🪑',
@@ -383,9 +555,10 @@ const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_
   recommend: recommend ?? { close: 'dining_floor', family: 'dining_buffet_standing', full_house: 'dining_round', grand: 'dining_round' },
   skipLabel: 'The venue provides all of it',
   showIf,
+  ...narrowing,
 })
 
-const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium'], recommend, showIf }) => svc({
+const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium', 'gift_kids'], recommend, showIf, ...narrowing }) => svc({
   serviceId: 'return_gifts',
   title: 'Return gifts',
   emoji: '🎁',
@@ -395,9 +568,10 @@ const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium'
   recommend: recommend ?? { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
   skipLabel: 'We have already bought them',
   showIf,
+  ...narrowing,
 })
 
-const invitations = ({ why, showIf }) => svc({
+const invitations = ({ why, showIf, ...narrowing }) => svc({
   serviceId: 'invitations',
   title: 'Invites',
   emoji: '💌',
@@ -408,9 +582,10 @@ const invitations = ({ why, showIf }) => svc({
   recommend: { close: 'invite_digital', family: 'invite_digital', full_house: 'invite_printed', grand: 'invite_printed' },
   skipLabel: 'The invitations are already out',
   showIf,
+  ...narrowing,
 })
 
-const cleanup = ({ why, showIf }) => svc({
+const cleanup = ({ why, showIf, ...narrowing }) => svc({
   serviceId: 'cleanup',
   title: 'After',
   emoji: '🧹',
@@ -420,6 +595,7 @@ const cleanup = ({ why, showIf }) => svc({
   recommend: { close: 'clean_basic', family: 'clean_basic', full_house: 'clean_deep', grand: 'clean_deep' },
   skipLabel: 'The venue handles the clearing',
   showIf,
+  ...narrowing,
 })
 
 /**
@@ -538,24 +714,179 @@ export const BLUEPRINTS = {
   birthday: {
     id: 'birthday',
     opening: 'Let’s build this birthday one piece at a time.',
-    promise: 'Nine or ten quick questions. Nothing is booked, and there is no price until you have seen everything.',
+    promise: 'A short set of questions, and they change with whose birthday it is. Nothing is booked, and there is no price until you have seen everything.',
     cuisineLead: ['karnataka', 'north_indian', 'indo_chinese', 'chaat_street', 'multi_cuisine'],
     vegDefault: true,
-    venue: anywhere({
-      why: 'A birthday is the one occasion that genuinely happens anywhere, so this is a real question rather than a formality. It also decides the rest of the flow — a lawn turns on the generator and the fans, a banquet hall turns them off.',
-    }),
+
+    /* ── Six birthdays, not one ────────────────────────────────────────
+       This is the occasion the whole answer-aware design was built for,
+       because "birthday" in this catalogue covers a four-year-old's cartoon
+       party and a grandfather's shashtiabdapoorthi — two functions with
+       nothing in common except the word, and until now they were offered
+       the same six screens and the same five cakes.
+
+       Each of these lists is what a family planning THAT birthday names
+       without being prompted. Everything absent from a list still exists
+       and is one tap away on the extras shelf; it is simply not standing
+       between them and the cake. */
+    core: ctx => {
+      if (ctx.flags.elder) {
+        // A sixtieth or seventieth is a rite first and a party second. The
+        // morning homa fixes the clock, the veena lets three generations
+        // talk through lunch, and the wall of photographs is the thing the
+        // family actually stands at. No DJ, no play zone, no fireworks.
+        return ['priest', 'pooja', 'cake', 'dining', 'live_music', 'memory_wall', 'photography', 'return_gifts']
+      }
+      if (ctx.flags.milestone) {
+        // A thirtieth or a fiftieth is the one that gets photographed
+        // properly and talked about after, so the film and the host earn
+        // their screens where a return gift does not.
+        return ['cake', 'dining', 'dj', 'emcee', 'photography', 'videography', 'memory_wall']
+      }
+      if (ctx.flags.kids) {
+        // Under twelve. What decides whether this party works is what the
+        // children are doing, and everything else is arranged around it.
+        return ['cake', 'dining', 'kids_play', 'folk', 'photography', 'return_gifts']
+      }
+      // Teenager, or an adult birthday. Music, a corner to photograph in,
+      // and food that keeps coming.
+      return ['cake', 'dining', 'dj', 'photobooth', 'photography']
+    },
+
+    /* ── And the decoration is not one question either ─────────────────
+       "Home Touch — the entrance, the cake table, and the corner everyone
+       photographs" is a fair description of an adult birthday at home and a
+       poor one of a jungle-safari party for thirty eight-year-olds, and an
+       actively wrong one of a shashtiabdapoorthi, where the decoration is a
+       garlanded chair, a lamp and a photo wall. */
+    decor: ctx => {
+      if (ctx.flags.elder) {
+        return decorOwn({
+          question: 'How is the hall being set up?',
+          why: 'At a sixtieth the decoration has two jobs: somewhere the elders are seated and honoured, and somewhere the family can stand and look at photographs. A balloon arch is for a different birthday.',
+          options: [
+            {
+              id: 'seat_lamp',
+              emoji: '🪔',
+              name: 'The seat, the lamp and the entrance',
+              desc: 'Garlanded chairs for the couple or the elder, a traditional lamp, and the door done with a toran and rangoli.',
+              includes: ['Garlanded seating for the elders', 'Brass lamp and pooja corner', 'Mango-leaf toran and rangoli at the door', 'Set up before the muhurtham, cleared after'],
+              levelId: 'home_touch',
+              themeId: 'marigold_temple',
+            },
+            {
+              id: 'stage_wall',
+              emoji: '🖼️',
+              name: 'A felicitation stage and a photo wall',
+              desc: 'A proper front of the room for the felicitation and the speeches, the memory wall mounted well, and the tables styled.',
+              includes: ['Felicitation backdrop with fresh florals', 'Memory wall mounting and lighting', 'Table centrepieces and linen', 'Warm lighting through the hall'],
+              levelId: 'classic',
+              themeId: 'traditional_red_gold',
+            },
+            {
+              id: 'full_hall',
+              emoji: '✨',
+              name: 'The whole hall, designed',
+              desc: 'For a shashtiabdapoorthi with three hundred guests — a designer draws it, and the palette runs through the stage, the tables and the entrance.',
+              includes: ['Designed stage with layered draping and florals', 'Entrance installation and welcome signage', 'Photo and tribute corner', 'Full table styling and uplighting', 'Designer visit before the day'],
+              levelId: 'signature',
+              themeId: 'mysuru_royal',
+            },
+          ],
+          skipLabel: 'The hall or the family is decorating it',
+        })
+      }
+      if (ctx.flags.kids) {
+        return decorOwn({
+          question: 'What is the party themed as?',
+          why: 'For anybody under twelve the decoration IS the party — the child chose a theme weeks ago and will be looking for it the moment they walk in. What changes is how much of the room it covers, not what colour it is.',
+          options: [
+            {
+              id: 'backdrop',
+              emoji: '🎈',
+              name: 'A themed backdrop and balloons',
+              desc: 'The theme they picked, on an 8ft backdrop behind the cake table, with a balloon arch and the entrance done.',
+              includes: ['Themed backdrop, about 8 ft', 'Balloon arch or pillars in the theme', 'Cake table styling', 'Entrance and name banner', 'Setup and clearing by our team'],
+              levelId: 'home_touch',
+              themeId: 'pastel',
+            },
+            {
+              id: 'themed_room',
+              emoji: '🦸',
+              name: 'The room done to the theme',
+              desc: 'Backdrop, balloons, themed props through the space, a dressed food table and the children’s seating.',
+              includes: ['Everything in the backdrop setup', 'Themed props and standees through the room', 'Children’s table styling', 'Ceiling balloon or drape work', 'Warm lighting'],
+              levelId: 'classic',
+              themeId: 'pastel',
+            },
+            {
+              id: 'designed_party',
+              emoji: '🎪',
+              name: 'A designed party set',
+              desc: 'A designer builds the theme as a set — entrance, backdrop, play corner and photo wall all in one world. For a hall party.',
+              includes: ['Designed themed entrance installation', 'Full backdrop and photo wall', 'Decorated play and activity corner', 'Full table styling', 'Designer visit before the day'],
+              levelId: 'signature',
+              themeId: 'pastel',
+            },
+          ],
+          skipLabel: 'We have the decoration sorted',
+        })
+      }
+      if (ctx.flags.loud && !ctx.flags.milestone) {
+        // Teenager or a straightforward adult birthday. Light, not floral.
+        return decorOwn({
+          question: 'How is the space being set up?',
+          why: 'A teenage or adult birthday is lit rather than decorated. What people photograph is a corner and a sign, and what makes the room feel like an evening is the lighting — not centrepieces.',
+          options: [
+            {
+              id: 'lights_corner',
+              emoji: '💡',
+              name: 'Lighting and a photo corner',
+              desc: 'Festoon and fairy lighting across the space, a backdrop worth standing in front of, and the food and cake table dressed.',
+              includes: ['Festoon or fairy lighting across the space', 'Photo backdrop, about 8 ft', 'Cake and food table styling', 'Entrance styling', 'Setup and clearing by our team'],
+              levelId: 'home_touch',
+              themeId: 'white_gold',
+            },
+            {
+              id: 'neon_night',
+              emoji: '🎧',
+              name: 'A proper night look',
+              desc: 'Uplighting through the room, a neon or light-up name sign, a styled photo wall and the tables done.',
+              includes: ['Ambient uplighting through the room', 'Neon or light-up name sign', 'Styled photo wall with props', 'Table styling and linen', 'Dance-floor lighting wash'],
+              levelId: 'classic',
+              themeId: 'white_gold',
+            },
+            {
+              id: 'designed_night',
+              emoji: '✨',
+              name: 'Designed by a stylist',
+              desc: 'For a big evening in a hall — a designer draws the look and it runs through the entrance, the floor, the bar and the photo corner.',
+              includes: ['Designed entrance and stage installation', 'Programmed lighting design', 'Photo installation and selfie corner', 'Full table and lounge styling', 'Designer visit before the day'],
+              levelId: 'signature',
+              themeId: 'rose_gold',
+            },
+          ],
+          skipLabel: 'No decoration — just the lights that are there',
+        })
+      }
+      // A milestone. This is the one the generic ladder was actually written
+      // for: a styled function in a hall, where how-much and what-colour are
+      // genuinely two separate decisions.
+      return decorLevels()
+    },
+
     chapters: [
       ask({
         id: 'who',
         title: 'Whose',
         emoji: '🎈',
         question: 'Whose birthday are we planning?',
-        why: 'It changes almost everything below — the cake, the entertainment, whether there is a ritual in the morning, and how loud the evening gets.',
+        why: 'It changes almost everything below — the cake, the entertainment, whether there is a ritual in the morning, how loud the evening gets, and how many questions we ask you at all.',
         options: [
-          { id: 'toddler', emoji: '🧸', name: 'A little one, under five', desc: 'Short, bright, and finished before the afternoon nap.', flags: { kids: true, ritual: false, loud: false } },
+          { id: 'toddler', emoji: '🧸', name: 'A little one, under five', desc: 'Short, bright, and finished before the afternoon nap.', flags: { kids: true, toddler: true, ritual: false, loud: false } },
           { id: 'child', emoji: '🦸', name: 'A child, five to twelve', desc: 'A theme they chose themselves, games, and thirty screaming friends.', flags: { kids: true, ritual: false, loud: true } },
-          { id: 'teen', emoji: '🎧', name: 'A teenager', desc: 'Music, lights, a photo corner, and adults kept at a respectful distance.', flags: { kids: false, ritual: false, loud: true } },
-          { id: 'adult', emoji: '🥂', name: 'An adult birthday', desc: 'Friends and family together, dinner, and a proper evening of it.', flags: { kids: false, ritual: false, loud: true } },
+          { id: 'teen', emoji: '🎧', name: 'A teenager', desc: 'Music, lights, a photo corner, and adults kept at a respectful distance.', flags: { kids: false, teen: true, ritual: false, loud: true } },
+          { id: 'adult', emoji: '🥂', name: 'An adult birthday', desc: 'Friends and family together, dinner, and a proper evening of it.', flags: { kids: false, adult: true, ritual: false, loud: true } },
           { id: 'milestone', emoji: '✨', name: 'A milestone — 18th, 21st, 30th, 40th, 50th', desc: 'The one that gets photographed properly and talked about after.', flags: { kids: false, ritual: false, loud: true, milestone: true } },
           { id: 'elder', emoji: '🪔', name: 'An elder — 60th, 70th, 80th', desc: 'Shashtiabdapoorthi, sahasrachandra darshana, or simply the day the whole family comes.', flags: { kids: false, ritual: true, loud: false, elder: true } },
         ],
@@ -588,12 +919,41 @@ export const BLUEPRINTS = {
         emoji: '🎂',
         question: 'What are we cutting?',
         why: 'The one photograph that ends up framed. Everything else on this page is the evening — this is the minute.',
+        // The declared superset. `packsFor` narrows it to the answer, which is
+        // the whole point: a fondant cartoon cake and a dessert table are not
+        // things anybody orders for a seventieth, and a 1kg cream cake does
+        // not feed a hall of three hundred.
         packIds: ['cake_cream_1kg', 'cake_photo', 'cake_fondant', 'cake_tiered', 'cake_dessert_table'],
-        recommend: { close: 'cake_cream_1kg', family: 'cake_cream_1kg', full_house: 'cake_tiered', grand: 'cake_tiered' },
-        skipLabel: 'We are getting the cake ourselves',
+        packsFor: ctx => {
+          if (ctx.flags.toddler) return ['cake_cream_1kg', 'cake_photo', 'cake_fondant']
+          if (ctx.flags.kids) return ['cake_fondant', 'cake_photo', 'cake_cream_1kg', 'cake_dessert_table']
+          if (ctx.flags.elder) return ['cake_cream_1kg', 'cake_photo', 'cake_tiered']
+          if (ctx.flags.milestone) return ['cake_tiered', 'cake_fondant', 'cake_dessert_table', 'cake_cream_1kg']
+          return ['cake_cream_1kg', 'cake_photo', 'cake_tiered', 'cake_dessert_table']
+        },
+        recommendFor: ctx => {
+          if (ctx.flags.toddler) return { close: 'cake_cream_1kg', family: 'cake_cream_1kg', full_house: 'cake_photo', grand: 'cake_photo' }
+          if (ctx.flags.kids) return { close: 'cake_fondant', family: 'cake_fondant', full_house: 'cake_fondant', grand: 'cake_dessert_table' }
+          if (ctx.flags.elder) return { close: 'cake_cream_1kg', family: 'cake_cream_1kg', full_house: 'cake_photo', grand: 'cake_tiered' }
+          if (ctx.flags.milestone) return { close: 'cake_tiered', family: 'cake_tiered', full_house: 'cake_tiered', grand: 'cake_dessert_table' }
+          return { close: 'cake_cream_1kg', family: 'cake_cream_1kg', full_house: 'cake_tiered', grand: 'cake_tiered' }
+        },
       }),
       dining({
         why: 'A children’s party runs standing and spilling; a sixtieth needs the elders seated with a table to put a plate down on. The two cost differently and feel completely different.',
+        // A leaf meal at a teenager's birthday and a lounge setup at a
+        // shashtiabdapoorthi are both answers nobody wants offered to them.
+        packsFor: ctx => {
+          if (ctx.flags.elder) return ['dining_leaf', 'dining_round', 'dining_floor']
+          if (ctx.flags.kids) return ['dining_floor', 'dining_buffet_standing', 'dining_round']
+          if (ctx.flags.teen) return ['dining_buffet_standing', 'dining_lounge', 'dining_round']
+          return ['dining_round', 'dining_buffet_standing', 'dining_lounge', 'dining_leaf']
+        },
+        recommendFor: ctx => {
+          if (ctx.flags.elder) return { close: 'dining_floor', family: 'dining_leaf', full_house: 'dining_leaf', grand: 'dining_round' }
+          if (ctx.flags.kids) return { close: 'dining_floor', family: 'dining_floor', full_house: 'dining_buffet_standing', grand: 'dining_round' }
+          return { close: 'dining_round', family: 'dining_buffet_standing', full_house: 'dining_round', grand: 'dining_round' }
+        },
       }),
       svc({
         serviceId: 'kids_play',
@@ -602,7 +962,12 @@ export const BLUEPRINTS = {
         question: 'What are the children doing while the adults talk?',
         why: 'Unoccupied children decide how long the adults stay. A supervised corner is the difference between a party that ends at eight and one that ends at six.',
         packIds: ['kids_bouncy', 'kids_play_zone', 'kids_activity'],
-        recommend: { close: 'kids_activity', family: 'kids_bouncy', full_house: 'kids_play_zone', grand: 'kids_play_zone' },
+        // A bouncy castle for a two-year-old is an insurance claim; soft play
+        // and an activity table are what that age actually gets.
+        packsFor: ctx => (ctx.flags.toddler ? ['kids_activity', 'kids_play_zone'] : ['kids_bouncy', 'kids_play_zone', 'kids_activity']),
+        recommendFor: ctx => (ctx.flags.toddler
+          ? { close: 'kids_activity', family: 'kids_activity', full_house: 'kids_play_zone', grand: 'kids_play_zone' }
+          : { close: 'kids_activity', family: 'kids_bouncy', full_house: 'kids_play_zone', grand: 'kids_play_zone' }),
         skipLabel: 'No children coming, or they will amuse themselves',
         showIf: ctx => ctx.flags.kids || ctx.guests >= 100,
       }),
@@ -613,7 +978,11 @@ export const BLUEPRINTS = {
         question: 'Is somebody performing?',
         why: 'Forty minutes of a magician holds a room of eight-year-olds better than any amount of decoration, and the parents remember who booked it.',
         packIds: ['folk_magic_kids', 'folk_mascot', 'folk_south'],
-        recommend: { close: 'folk_magic_kids', family: 'folk_magic_kids', full_house: 'folk_magic_kids', grand: 'folk_south' },
+        // A mascot delights a four-year-old and embarrasses a ten-year-old.
+        packsFor: ctx => (ctx.flags.toddler ? ['folk_mascot', 'folk_magic_kids'] : ['folk_magic_kids', 'folk_mascot']),
+        recommendFor: ctx => (ctx.flags.toddler
+          ? { close: 'folk_mascot', family: 'folk_mascot', full_house: 'folk_mascot', grand: 'folk_magic_kids' }
+          : { close: 'folk_magic_kids', family: 'folk_magic_kids', full_house: 'folk_magic_kids', grand: 'folk_magic_kids' }),
         skipLabel: 'No performer',
         showIf: ctx => ctx.flags.kids,
       }),
@@ -624,7 +993,18 @@ export const BLUEPRINTS = {
         question: 'What is the music?',
         why: 'A rig too big for the room is worse than no rig at all — it clears the floor. These are sized to the space, not to the wattage.',
         packIds: ['dj_house', 'dj_standard', 'dj_premium'],
-        recommend: { close: 'dj_house', family: 'dj_standard', full_house: 'dj_standard', grand: 'dj_premium' },
+        // A teenager wants the rig; a children's party wants a speaker and a
+        // playlist, and a premium console at one is money set on fire.
+        packsFor: ctx => {
+          if (ctx.flags.kids) return ['dj_house', 'dj_standard']
+          if (ctx.flags.teen) return ['dj_standard', 'dj_premium', 'dj_house']
+          return ['dj_house', 'dj_standard', 'dj_premium']
+        },
+        recommendFor: ctx => {
+          if (ctx.flags.kids) return { close: 'dj_house', family: 'dj_house', full_house: 'dj_standard', grand: 'dj_standard' }
+          if (ctx.flags.teen) return { close: 'dj_standard', family: 'dj_standard', full_house: 'dj_premium', grand: 'dj_premium' }
+          return { close: 'dj_house', family: 'dj_standard', full_house: 'dj_standard', grand: 'dj_premium' }
+        },
         skipLabel: 'A speaker and a playlist is fine',
         showIf: ctx => ctx.flags.loud,
       }),
@@ -635,7 +1015,12 @@ export const BLUEPRINTS = {
         question: 'Live music instead, or as well?',
         why: 'For a sixtieth or a seventieth, a veena or a flute through the meal does what a DJ cannot. Elders stay, and conversation is still possible.',
         packIds: ['music_classical_duo', 'music_band', 'music_ghazal_sufi'],
-        recommend: { close: 'music_classical_duo', family: 'music_classical_duo', full_house: 'music_classical_duo', grand: 'music_band' },
+        packsFor: ctx => (ctx.flags.elder
+          ? ['music_classical_duo', 'music_ghazal_sufi']
+          : ['music_band', 'music_ghazal_sufi', 'music_classical_duo']),
+        recommendFor: ctx => (ctx.flags.elder
+          ? { close: 'music_classical_duo', family: 'music_classical_duo', full_house: 'music_classical_duo', grand: 'music_classical_duo' }
+          : { close: 'music_ghazal_sufi', family: 'music_band', full_house: 'music_band', grand: 'music_band' }),
         skipLabel: 'No live music',
         showIf: ctx => ctx.flags.elder || ctx.flags.milestone,
       }),
@@ -653,6 +1038,9 @@ export const BLUEPRINTS = {
       photography({
         why: 'Somebody has to be looking at the face when the candles go out, and it cannot be the person holding the cake.',
         packIds: ['photo_half_day', 'photo_full_day'],
+        recommendFor: ctx => (ctx.flags.elder || ctx.flags.milestone
+          ? { close: 'photo_half_day', family: 'photo_full_day', full_house: 'photo_full_day', grand: 'photo_full_day' }
+          : { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' }),
       }),
       videography({
         why: 'A three-minute film gets watched every year. Four hundred photographs get watched once.',
@@ -664,7 +1052,16 @@ export const BLUEPRINTS = {
         question: 'A booth in the corner?',
         why: 'It gives every guest something to do in the first twenty minutes, which is the awkward part of every party, and it prints the only souvenir anyone keeps.',
         packIds: ['booth_classic', 'booth_360', 'booth_mirror'],
-        recommend: { family: 'booth_classic', full_house: 'booth_classic', grand: 'booth_360' },
+        // The 360 spinner is the entire point at a teenager's party and a
+        // trip hazard at a seventieth.
+        packsFor: ctx => {
+          if (ctx.flags.teen || ctx.flags.milestone) return ['booth_360', 'booth_mirror', 'booth_classic']
+          if (ctx.flags.elder) return ['booth_classic', 'booth_mirror']
+          return ['booth_classic', 'booth_mirror', 'booth_360']
+        },
+        recommendFor: ctx => (ctx.flags.teen || ctx.flags.milestone
+          ? { close: 'booth_classic', family: 'booth_360', full_house: 'booth_360', grand: 'booth_360' }
+          : { family: 'booth_classic', full_house: 'booth_classic', grand: 'booth_mirror' }),
         skipLabel: 'No booth',
       }),
       svc({
@@ -674,7 +1071,9 @@ export const BLUEPRINTS = {
         question: 'A wall of photographs from the years?',
         why: 'At a sixtieth this is where the whole family ends up standing, pointing, and telling each other stories. It is worth more than the stage.',
         packIds: ['memwall_string', 'memwall_timeline', 'memwall_tribute_film'],
-        recommend: { close: 'memwall_string', family: 'memwall_string', full_house: 'memwall_timeline', grand: 'memwall_tribute_film' },
+        recommendFor: ctx => (ctx.flags.elder
+          ? { close: 'memwall_string', family: 'memwall_timeline', full_house: 'memwall_timeline', grand: 'memwall_tribute_film' }
+          : { close: 'memwall_string', family: 'memwall_string', full_house: 'memwall_timeline', grand: 'memwall_timeline' }),
         skipLabel: 'Not this time',
         showIf: ctx => ctx.flags.elder || ctx.flags.milestone,
       }),
@@ -685,13 +1084,19 @@ export const BLUEPRINTS = {
         question: 'Something for the cake-cutting itself?',
         why: 'Cold pyro is indoor-safe and smokeless, and it turns fifteen seconds into the clip that goes on every family group.',
         packIds: ['fire_cold_pyro', 'fire_lantern', 'fire_outdoor'],
+        // Never offered where there are toddlers in the room.
+        packsFor: ctx => (ctx.flags.toddler ? ['fire_lantern'] : ['fire_cold_pyro', 'fire_lantern', 'fire_outdoor']),
         recommend: { full_house: 'fire_cold_pyro', grand: 'fire_cold_pyro' },
         skipLabel: 'Just the candles',
       }),
       returnGifts({
         why: 'In this city a guest who leaves empty-handed notices. It does not have to be expensive — it has to exist.',
-        packIds: ['gift_kids', 'gift_budget', 'gift_mid', 'gift_premium'],
-        recommend: { close: 'gift_budget', family: 'gift_kids', full_house: 'gift_mid', grand: 'gift_mid' },
+        packsFor: ctx => (ctx.flags.kids
+          ? ['gift_kids', 'gift_budget', 'gift_mid']
+          : ['gift_budget', 'gift_mid', 'gift_premium']),
+        recommendFor: ctx => (ctx.flags.kids
+          ? { close: 'gift_kids', family: 'gift_kids', full_house: 'gift_kids', grand: 'gift_mid' }
+          : { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' }),
       }),
       invitations({
         why: 'A digital invite reaches the WhatsApp groups in an hour. A printed card is what you hand to the people you are asking properly.',
@@ -720,6 +1125,36 @@ export const BLUEPRINTS = {
       homeDesc: 'Your house or the apartment clubhouse — where the baby is comfortable and there is somewhere to put a cot.',
       packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
     }),
+    core: ctx => (ctx.flags.party && !ctx.flags.ritual
+      ? ['cake', 'dining', 'kids_play', 'photography', 'videography', 'return_gifts']
+      : ctx.flags.party
+        ? ['priest', 'pooja', 'cake', 'dining', 'photography', 'videography', 'return_gifts']
+        : ['priest', 'pooja', 'nadaswaram', 'dining', 'photography', 'return_gifts']),
+    decor: ctx => (ctx.flags.party ? decorLevels() : decorOwn({
+      question: 'How is the house being set up?',
+      why: 'A morning ayushya homa with the grandparents needs three things decorated: the homa corner, the child’s seat, and the door. There is no stage and no cake table, because there is no cake yet.',
+      options: [
+        {
+          id: 'homa_corner',
+          emoji: '🪔',
+          name: 'The homa corner and the entrance',
+          desc: 'The kunda laid out and decorated, a small floral seat for the child, and a toran and rangoli at the door.',
+          includes: ['Homa corner laid out and decorated', 'Floral seat or cradle for the child', 'Mango-leaf toran and rangoli', 'Set up before the muhurtham'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'homa_room',
+          emoji: '🌼',
+          name: 'The corner and the whole room',
+          desc: 'The above, plus the seating for the elders, a name backdrop for the family photographs, and warm lighting.',
+          includes: ['Everything in the corner setup', 'Name backdrop for family photographs', 'Elder seating and table styling', 'Warm lighting through the room'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'The family is doing the decoration',
+    })),
     chapters: [
       ask({
         id: 'shape',
@@ -849,6 +1284,43 @@ export const BLUEPRINTS = {
       why: 'A seemantha or godh bharai is usually at the mother-to-be’s parents’ house or a small hall nearby, because she should not be travelling far in the seventh month. That is why there is no resort on this list.',
       homeDesc: 'The family home or the apartment clubhouse — a sofa she can actually rest on, and a washroom that is not down a corridor.',
       packIds: ['venue_community', 'venue_banquet', 'venue_lawn'],
+    }),
+    core: ctx => (ctx.flags.ritual
+      ? ['priest', 'pooja', 'makeup', 'dining', 'photography', 'return_gifts']
+      : ['makeup', 'cake', 'dining', 'emcee', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the room being set up?',
+      why: 'A seemantha is a seated function in a house or a small hall, and the decoration is one corner of it: where she sits, and what is behind her in every photograph. There is no stage and no dance floor.',
+      options: [
+        {
+          id: 'seat_corner',
+          emoji: '🌸',
+          name: 'The seat, and a floral corner',
+          desc: 'A decorated chair or swing for her, a flower backdrop behind it, and the entrance done. Everything the photographs need and nothing else.',
+          includes: ['Decorated seat or jhula', 'Floral or drape backdrop, about 8 ft', 'Entrance toran and rangoli', 'Set up before guests arrive, cleared after'],
+          levelId: 'home_touch',
+          themeId: 'pastel',
+        },
+        {
+          id: 'full_room',
+          emoji: '🎀',
+          name: 'The whole room styled',
+          desc: 'The seat, the backdrop, the gift and bangle table, hanging florals, and the tables the guests sit at.',
+          includes: ['Everything in the corner setup', 'Bangle and gift table styling', 'Hanging floral or drape work', 'Table centrepieces and linen', 'Pathway and ambient lighting'],
+          levelId: 'classic',
+          themeId: 'pastel',
+        },
+        {
+          id: 'designed',
+          emoji: '✨',
+          name: 'Designed by a stylist',
+          desc: 'A designer draws the setup before anything is ordered and the palette runs through the whole room. For a large hall function.',
+          includes: ['Designer visit and a drawn plan', 'Designed backdrop with fresh florals', 'Photo corner installation', 'Full table styling and uplighting'],
+          levelId: 'signature',
+          themeId: 'pastel',
+        },
+      ],
+      skipLabel: 'The family is decorating it themselves',
     }),
     chapters: [
       ask({
@@ -989,6 +1461,43 @@ export const BLUEPRINTS = {
       packIds: ['venue_community', 'venue_banquet'],
       footnote: 'No lawn or resort on this list — a homa in open wind is a problem the decorator cannot fix.',
     },
+    core: ctx => (ctx.flags.homa
+      ? ['priest', 'pooja', 'nadaswaram', 'dining', 'photography', 'return_gifts']
+      : ['priest', 'pooja', 'dining', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the house being set up?',
+      why: 'A namakarana needs three things decorated and nothing else: where the homa sits, the cradle, and the door people come through. A stage and a dance floor would be somebody else’s function.',
+      options: [
+        {
+          id: 'cradle',
+          emoji: '🌼',
+          name: 'The cradle and the pooja corner',
+          desc: 'A floral cradle, the homa space laid out properly, and rangoli and a mango toran at the door.',
+          includes: ['Floral cradle decoration', 'Homa and pooja corner setup', 'Rangoli and mango-leaf toran at the entrance', 'Setup before the muhurtham, cleared after'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'cradle_room',
+          emoji: '🪷',
+          name: 'Cradle, corner and the whole room',
+          desc: 'The above, plus the seating area, the name backdrop the family photographs happen against, and lighting.',
+          includes: ['Everything in the cradle setup', 'Name backdrop for family photographs', 'Guest seating and table styling', 'Warm lighting through the room'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'hall',
+          emoji: '✨',
+          name: 'A full hall setup',
+          desc: 'For a namakarana in a booked hall with two hundred guests — designed backdrop, entrance installation and every table.',
+          includes: ['Designed backdrop with fresh florals', 'Entrance installation and welcome signage', 'Full table styling', 'Ambient and stage lighting'],
+          levelId: 'signature',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'The family is arranging the decoration',
+    }),
     chapters: [
       ask({
         id: 'rite',
@@ -1096,6 +1605,72 @@ export const BLUEPRINTS = {
       why: 'An anniversary runs from a table for two to a hall for four hundred, and the answer here is what tells us which one we are planning.',
       homeDesc: 'The terrace, the garden or the dining room — where most of the anniversaries we do actually happen.',
     }),
+    // The widest spread of any occasion here. A candlelit table for two and a
+    // shashtipoorthi for three hundred are both "anniversary", and the first
+    // one is three decisions.
+    core: ctx => {
+      if (ctx.flags.intimate) return ['cake', 'dining', 'photography']
+      if (ctx.flags.milestone) return ['priest', 'cake', 'dining', 'live_music', 'memory_wall', 'photography', 'return_gifts']
+      if (ctx.flags.party) return ['cake', 'dining', 'dj', 'photography', 'return_gifts']
+      return ['cake', 'dining', 'photography', 'return_gifts']
+    },
+    decor: ctx => {
+      if (ctx.flags.intimate) {
+        return decorOwn({
+          question: 'How is the table being set up?',
+          why: 'For two people the decoration is one table and the light around it. Anything more is a hall setup with two chairs in it, which is the opposite of the evening you are booking.',
+          options: [
+            {
+              id: 'candle_table',
+              emoji: '🕯️',
+              name: 'A candlelit table',
+              desc: 'Candle pathway to the table, floating flowers, fairy lights and rose petals. Set up while you are out and cleared after.',
+              includes: ['Candle pathway and table candles', 'Floating flowers and petal work', 'Fairy lights around the space', 'Set up in your absence, cleared after'],
+              levelId: 'home_touch',
+              themeId: 'rose_gold',
+            },
+            {
+              id: 'terrace',
+              emoji: '🌙',
+              name: 'A terrace or garden setting',
+              desc: 'The table, plus a draped canopy, a floral arch to sit under and lighting through the whole space.',
+              includes: ['Draped canopy over the table', 'Floral arch and backdrop', 'Lighting across the terrace or garden', 'Weather backup arranged'],
+              levelId: 'classic',
+              themeId: 'rose_gold',
+            },
+          ],
+          skipLabel: 'No setup — just the dinner',
+        })
+      }
+      if (ctx.flags.milestone) {
+        return decorOwn({
+          question: 'How is the hall being set up?',
+          why: 'A fiftieth or a shashtipoorthi is a felicitation. What the decoration has to give you is a front of the room where the couple are honoured, and a wall the family stands at.',
+          options: [
+            {
+              id: 'stage_wall',
+              emoji: '🖼️',
+              name: 'A felicitation stage and a photo wall',
+              desc: 'Garlanded seating at the front, a floral backdrop for the speeches, and the memory wall mounted and lit.',
+              includes: ['Garlanded seating for the couple', 'Floral felicitation backdrop', 'Memory wall mounting and lighting', 'Entrance and welcome board'],
+              levelId: 'classic',
+              themeId: 'traditional_red_gold',
+            },
+            {
+              id: 'designed',
+              emoji: '✨',
+              name: 'The whole hall, designed',
+              desc: 'A designer draws it, and the palette runs through the stage, the tables and the entrance. For three hundred guests.',
+              includes: ['Designed stage with layered draping and florals', 'Entrance installation and signage', 'Photo and tribute corner', 'Full table styling and uplighting'],
+              levelId: 'signature',
+              themeId: 'mysuru_royal',
+            },
+          ],
+          skipLabel: 'The hall or the family is decorating it',
+        })
+      }
+      return decorLevels()
+    },
     chapters: [
       ask({
         id: 'mood',
@@ -1246,6 +1821,43 @@ export const BLUEPRINTS = {
       packIds: [],
       footnote: 'No lawn, no resort, no banquet hall as the main venue — a gruha pravesha is held at the house being entered, and that is not a preference.',
     },
+    core: ctx => (ctx.flags.homa
+      ? ['priest', 'pooja', 'nadaswaram', 'precleanup', 'dining', 'photography', 'return_gifts']
+      : ['priest', 'pooja', 'precleanup', 'dining', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the house being decorated?',
+      why: 'A gruha pravesha decorates the THRESHOLD. Everything that matters happens at the door — the kalasha carried over it, the first step, the photograph. The inside of a house with no furniture in it yet is not where this money goes.',
+      options: [
+        {
+          id: 'threshold',
+          emoji: '🪷',
+          name: 'The entrance, done properly',
+          desc: 'Mango-leaf toran across the door, banana stems either side, a fresh rangoli on the morning, and the pooja corner laid out.',
+          includes: ['Fresh mango-leaf toran across the main door', 'Banana stems at both sides of the entrance', 'Hand-drawn rangoli on the morning', 'Homa and kalasha corner setup', 'Cleared the same afternoon'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'threshold_rooms',
+          emoji: '🌿',
+          name: 'Entrance and the rooms',
+          desc: 'The threshold work, plus floral through the main rooms, the dining area styled, and lighting for a house with no fittings up yet.',
+          includes: ['Everything in the entrance setup', 'Floral work through the main rooms', 'Dining area styling for the lunch', 'Temporary warm lighting where fittings are not in'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'full',
+          emoji: '✨',
+          name: 'Entrance, rooms and the compound',
+          desc: 'For a house with a compound and two hundred guests — the approach, the gate, a shaded seating area outside, and the whole interior.',
+          includes: ['Everything in the rooms setup', 'Gate and approach styling', 'Shaded outdoor seating area', 'Pathway lighting from the gate', 'Designer visit before the day'],
+          levelId: 'signature',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'We are decorating the house ourselves',
+    }),
     chapters: [
       ask({
         id: 'rite',
@@ -1366,6 +1978,37 @@ export const BLUEPRINTS = {
       packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
       extra: [atOffice('The office cafeteria, the terrace or a floor cleared for the evening. Most team get-togethers we do are here.')],
     }),
+    core: ctx => {
+      if (ctx.flags.speeches) return ['dining', 'emcee', 'cake', 'photography']
+      if (ctx.flags.formal) return ['dining', 'emcee', 'photography']
+      if (ctx.flags.kids) return ['dining', 'dj', 'kids_play', 'photography']
+      return ['dining', 'dj', 'cake', 'photography']
+    },
+    decor: decorOwn({
+      question: 'How much setting up is there?',
+      why: 'A get-together is the one occasion where decoration is genuinely optional — most of them need lights, somewhere to put the food, and nothing else. Choose the smallest thing that is true.',
+      options: [
+        {
+          id: 'lights_only',
+          emoji: '💡',
+          name: 'Lights and a food table',
+          desc: 'Fairy lights across the space, the buffet table dressed, and a corner that photographs well. Set up and taken down the same evening.',
+          includes: ['Fairy or festoon lighting across the space', 'Buffet and drinks table styling', 'One photographable corner', 'Setup and clearing by our team'],
+          levelId: 'home_touch',
+          themeId: 'white_gold',
+        },
+        {
+          id: 'themed',
+          emoji: '🎈',
+          name: 'A themed setup',
+          desc: 'A backdrop, balloons or florals to a theme, table styling and proper lighting. For a party with a reason rather than a Saturday.',
+          includes: ['Themed backdrop, about 8 ft', 'Balloon or floral installation', 'Table centrepieces and linen', 'Pathway and ambient lighting'],
+          levelId: 'classic',
+          themeId: 'pastel',
+        },
+      ],
+      skipLabel: 'No decoration — just the food and the music',
+    }),
     chapters: [
       ask({
         id: 'kind',
@@ -1466,6 +2109,23 @@ export const BLUEPRINTS = {
       ],
       packIds: ['venue_community', 'venue_banquet', 'venue_resort', 'venue_lawn'],
     },
+    // Thirteen, which is what a wedding genuinely is. Everything else — the
+    // drone, the stream, the transport, the signage, the groundwork — is on
+    // the shelf, where a family who wants it finds it all in one place
+    // instead of one interruption at a time.
+    core: ctx => {
+      const base = ['priest', 'pooja', 'makeup', 'bridal_wear', 'wedding_car',
+        'dining', 'photography', 'videography', 'return_gifts', 'invitations']
+      // The pre-wedding functions only earn a screen if they were ticked on
+      // the first question. A family doing only the muhurtham should not be
+      // asked how many mehendi artists they need.
+      if (ctx.flags.haldi || ctx.flags.mehendi) base.splice(2, 0, 'mehendi')
+      if (ctx.flags.sangeet) base.splice(3, 0, 'choreography', 'dj')
+      if (ctx.flags.north) base.push('baraat')
+      if (ctx.flags.south) base.push('nadaswaram')
+      return base
+    },
+    decor: decorLevels(),
     chapters: [
       ask({
         id: 'functions',
@@ -1727,6 +2387,12 @@ export const BLUEPRINTS = {
       why: 'An engagement is the first event both families attend together, so the room matters more than its size. It also sets what we need to bring — a lawn in April needs fans and a generator.',
       packIds: ['venue_community', 'venue_banquet', 'venue_resort', 'venue_lawn'],
     }),
+    core: ctx => (ctx.flags.ritual && !ctx.flags.party
+      ? ['priest', 'pooja', 'nadaswaram', 'dining', 'photography', 'return_gifts']
+      : ctx.flags.ritual
+        ? ['priest', 'makeup', 'cake', 'dining', 'photography', 'return_gifts']
+        : ['makeup', 'cake', 'dining', 'dj', 'photography', 'return_gifts']),
+    decor: decorLevels(),
     chapters: [
       ask({
         id: 'format',
@@ -1842,6 +2508,12 @@ export const BLUEPRINTS = {
       homeDesc: 'The terrace, the compound or the clubhouse. Works beautifully up to about a hundred, and the noise rules are yours rather than a hall manager’s.',
       packIds: ['venue_banquet', 'venue_resort', 'venue_lawn', 'venue_community'],
     }),
+    core: ctx => {
+      if (ctx.flags.production) return ['choreography', 'dj', 'emcee', 'entertainment', 'dining', 'photography', 'videography']
+      if (ctx.flags.bar) return ['dj', 'bar', 'dining', 'emcee', 'photography']
+      return ['choreography', 'dj', 'dining', 'photography']
+    },
+    decor: decorLevels(),
     chapters: [
       ask({
         id: 'format',
@@ -1954,6 +2626,41 @@ export const BLUEPRINTS = {
       ],
       packIds: ['venue_community', 'venue_banquet'],
     },
+    core: ['priest', 'pooja', 'nadaswaram', 'dining', 'photography', 'return_gifts'],
+    decor: decorOwn({
+      question: 'How is the pandal being set up?',
+      why: 'An upanayanam runs for three hours around a homa kunda, and everything decorated is within about ten feet of it. The rest of the space needs shade and seating, not styling.',
+      options: [
+        {
+          id: 'ritual',
+          emoji: '🪷',
+          name: 'The homa space and the entrance',
+          desc: 'The kunda area laid out and decorated, seating mats for the family, and a toran and rangoli at the door.',
+          includes: ['Homa kunda area decorated and laid out', 'Seating mats and family arrangement', 'Mango-leaf toran and rangoli at the entrance', 'Setup before the muhurtham'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'pandal',
+          emoji: '⛺',
+          name: 'A decorated pandal',
+          desc: 'A shamiana over the rite and the guests, draped and floral, with the dining area styled for the leaf meal.',
+          includes: ['Draped pandal over the rite and seating', 'Floral work at the kunda and the entrance', 'Dining area styling for the leaf meal', 'Lighting through the pandal'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'full',
+          emoji: '✨',
+          name: 'Full traditional setup',
+          desc: 'For an upanayanam in a mantapa with three hundred guests — designed floral work, entrance installation and every table.',
+          includes: ['Designed floral work across the mantapa', 'Entrance installation and signage', 'Full seating and table styling', 'Designer visit before the day'],
+          levelId: 'signature',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'The mantapa decorates it, or the family is',
+    }),
     chapters: [
       ask({
         id: 'shape',
@@ -2067,6 +2774,34 @@ export const BLUEPRINTS = {
       packIds: ['venue_community', 'venue_banquet'],
       footnote: 'No lawn or resort here on purpose — an eight-month pregnancy and an outdoor afternoon function do not belong on the same page.',
     },
+    core: ctx => (ctx.flags.bangles
+      ? ['priest', 'pooja', 'makeup', 'mehendi', 'dining', 'photography', 'return_gifts']
+      : ['priest', 'pooja', 'makeup', 'dining', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the room being set up?',
+      why: 'She sits in one place for three hours and every photograph is taken there. That seat and what is behind it is the whole decoration; the rest of the house is a house.',
+      options: [
+        {
+          id: 'seat',
+          emoji: '🌺',
+          name: 'The seat and a floral backdrop',
+          desc: 'A decorated chair or swing, a flower backdrop, the arati and bangle table, and the entrance.',
+          includes: ['Decorated seat or jhula', 'Floral backdrop, about 8 ft', 'Arati and bangle table styling', 'Entrance toran and rangoli'],
+          levelId: 'home_touch',
+          themeId: 'traditional_red_gold',
+        },
+        {
+          id: 'room',
+          emoji: '🎀',
+          name: 'The whole room',
+          desc: 'The seat and backdrop, plus hanging florals, guest seating styled, and lighting warm enough to photograph in.',
+          includes: ['Everything in the seat setup', 'Hanging floral or drape work', 'Guest seating and table styling', 'Warm ambient lighting'],
+          levelId: 'classic',
+          themeId: 'traditional_red_gold',
+        },
+      ],
+      skipLabel: 'The family is doing the decoration',
+    }),
     chapters: [
       ask({
         id: 'style',
@@ -2173,6 +2908,34 @@ export const BLUEPRINTS = {
       packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
       extra: [atOffice('The office, the auditorium or the department floor — the send-off colleagues organise, with the family invited.')],
     }),
+    core: ctx => (ctx.flags.formal
+      ? ['memory_wall', 'emcee', 'av_setup', 'dining', 'photography', 'gifting']
+      : ['memory_wall', 'dining', 'cake', 'photography', 'gifting']),
+    decor: decorOwn({
+      question: 'How is the room being set up?',
+      why: 'A send-off needs a wall people stand at, a front of the room to be felicitated in, and lighting that does not make the photographs orange. It does not need a mandap.',
+      options: [
+        {
+          id: 'simple',
+          emoji: '🖼️',
+          name: 'The tribute wall and the front',
+          desc: 'The photo wall set up properly, a backdrop at the front for the felicitation, and the entrance done.',
+          includes: ['Tribute wall installation and mounting', 'Backdrop at the front of the room', 'Entrance and welcome board', 'Setup and clearing by our team'],
+          levelId: 'home_touch',
+          themeId: 'white_gold',
+        },
+        {
+          id: 'styled',
+          emoji: '🎊',
+          name: 'The room styled around it',
+          desc: 'The wall and the front, plus table styling, stage lighting and a photo corner for the colleagues.',
+          includes: ['Everything in the tribute setup', 'Table centrepieces and linen', 'Stage and ambient lighting', 'Photo corner for group photographs'],
+          levelId: 'classic',
+          themeId: 'white_gold',
+        },
+      ],
+      skipLabel: 'The venue or the office is handling it',
+    }),
     chapters: [
       ask({
         id: 'host',
@@ -2270,6 +3033,34 @@ export const BLUEPRINTS = {
       why: 'A graduation party is a family lunch and a friends’ evening pretending to be one event. Where it is decides which of the two it actually becomes.',
       homeDesc: 'The house, the terrace or the clubhouse — the cheapest and the loudest, in the good sense.',
       packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
+    }),
+    core: ctx => (ctx.flags.young
+      ? ['cake', 'dining', 'dj', 'photobooth', 'photography']
+      : ['cake', 'dining', 'memory_wall', 'photography', 'emcee']),
+    decor: decorOwn({
+      question: 'How is it being set up?',
+      why: 'A graduation party is a wall to photograph the certificate against and a room the friends will stay in. Anything more elaborate is being bought for the parents rather than the graduate.',
+      options: [
+        {
+          id: 'photo_wall',
+          emoji: '🎓',
+          name: 'A photo wall and lights',
+          desc: 'A backdrop with the name and the year, props, festoon lighting, and the food table dressed.',
+          includes: ['Name and year backdrop, about 8 ft', 'Graduation props for photographs', 'Festoon or fairy lighting', 'Food and cake table styling'],
+          levelId: 'home_touch',
+          themeId: 'white_gold',
+        },
+        {
+          id: 'full',
+          emoji: '✨',
+          name: 'The room styled',
+          desc: 'The backdrop, plus table styling, a photo corner and proper lighting. For a hall rather than a house.',
+          includes: ['Designed backdrop and entrance arch', 'Photo corner installation', 'Table centrepieces and linen', 'Pathway and ambient lighting'],
+          levelId: 'classic',
+          themeId: 'rose_gold',
+        },
+      ],
+      skipLabel: 'No decoration needed',
     }),
     chapters: [
       ask({
@@ -2375,6 +3166,40 @@ export const BLUEPRINTS = {
       packIds: ['venue_banquet', 'venue_resort', 'venue_lawn', 'venue_community'],
       footnote: 'No "at home" on this list — if a team event is at somebody’s house, plan it as a Get-Together instead and the flow will fit it better.',
     },
+    core: ctx => {
+      if (ctx.flags.av && !ctx.flags.stage) return ['av_setup', 'emcee', 'dining', 'livestream']
+      if (ctx.flags.travel) return ['dining', 'transport', 'entertainment', 'photography']
+      if (ctx.flags.awards) return ['av_setup', 'emcee', 'dining', 'gifting', 'photography', 'signage']
+      if (ctx.flags.press) return ['av_setup', 'emcee', 'signage', 'dining', 'photography', 'videography']
+      return ['av_setup', 'emcee', 'entertainment', 'dining', 'kids_play', 'photography']
+    },
+    decor: ctx => ((ctx.flags.av && !ctx.flags.stage) || ctx.flags.travel
+      ? decorOwn({
+        question: 'How much setting up is there?',
+        why: 'A town hall and an offsite are rooms with a screen in them. Branding, a lit backdrop and clear signage is the whole job — a floral installation would be somebody else’s event.',
+        options: [
+          {
+            id: 'branded',
+            emoji: '🪧',
+            name: 'Backdrop, branding and signage',
+            desc: 'A branded backdrop behind the speaker, standees, wayfinding and a dressed registration desk.',
+            includes: ['Branded stage backdrop', 'Standees and wayfinding signage', 'Registration desk styling', 'Setup and clearing outside working hours'],
+            levelId: 'home_touch',
+            themeId: 'white_gold',
+          },
+          {
+            id: 'branded_room',
+            emoji: '💡',
+            name: 'Branding and the room lit',
+            desc: 'The branding, plus lighting across the room and the seating and table setup for a full day.',
+            includes: ['Everything in the branding setup', 'Ambient and stage lighting', 'Seating and table styling', 'Breakout area setup'],
+            levelId: 'classic',
+            themeId: 'white_gold',
+          },
+        ],
+        skipLabel: 'Facilities or marketing is handling it',
+      })
+      : decorLevels()),
     chapters: [
       ask({
         id: 'type',
@@ -2616,6 +3441,27 @@ export const BLUEPRINTS = {
       yes: { name: 'Yes — there is a proper meal', desc: 'Family coming home for lunch afterwards. We will plan the spread with you.' },
       no: { name: 'No meal — sweets and prasada only', desc: 'The usual. Skip straight past the menu; the sweets are a question further down.' },
     }),
+    /* ── Ten vehicles, and they are not one journey ────────────────────
+       Somebody who has just bought a scooter is standing in a delivery bay
+       with about forty minutes. Somebody whose tractor is arriving in a
+       village has the whole day and half the street coming. The first
+       question already sorted them; this is what the sorting is FOR. */
+    core: ctx => {
+      // Four. Samagri stays in core even here: if a purohit is coming, the
+      // coconut and the lemons are not an optional extra, and the question
+      // takes one tap.
+      if (ctx.flags.quick) return ['priest', 'pooja', 'vehicle_decor', 'vehicle_photography']
+      if (ctx.flags.commercial) return ['priest', 'pooja', 'vehicle_decor', 'drum', 'sweets', 'vehicle_photography', 'gifting']
+      if (ctx.flags.car) return ['priest', 'pooja', 'vehicle_decor', 'vehicle_photography', 'sweets', 'vehicle_care']
+      return ['priest', 'pooja', 'vehicle_decor', 'vehicle_photography', 'sweets']
+    },
+    // The decoration IS the garland, and it was chosen on its own screen
+    // eight questions ago. Running the generic ladder afterwards would offer
+    // a motorcycle "Home Touch — the entrance, the cake table, and the corner
+    // everyone photographs", which is a description of a birthday party.
+    decor: decorNone({
+      because: 'the vehicle_decor chapter is this occasion’s decoration, in full',
+    }),
     chapters: [
       ask({
         id: 'vehicle',
@@ -2675,7 +3521,22 @@ export const BLUEPRINTS = {
         question: 'How is the vehicle being dressed?',
         why: 'This is the photograph. Everything else about this morning is forty minutes long; the garland on the bonnet is what stays on the family group for the next decade.',
         packIds: ['vdec_two_wheeler', 'vdec_car_classic', 'vdec_car_premium', 'vdec_commercial'],
-        recommend: { close: 'vdec_car_classic', family: 'vdec_car_classic', full_house: 'vdec_car_premium', grand: 'vdec_car_premium' },
+        // The whole reason the first question exists. Offering somebody who
+        // has just bought a Bullet a "Car — full floral handover" with a red
+        // carpet at the driver door is the app not having listened to the
+        // answer it asked for two screens ago.
+        packsFor: ctx => {
+          if (ctx.flags.twoWheeler) return ['vdec_two_wheeler']
+          if (ctx.flags.commercial) return ['vdec_commercial', 'vdec_car_classic']
+          if (ctx.flags.luxury) return ['vdec_car_premium', 'vdec_car_classic']
+          return ['vdec_car_classic', 'vdec_car_premium']
+        },
+        recommendFor: ctx => {
+          if (ctx.flags.twoWheeler) return { close: 'vdec_two_wheeler', family: 'vdec_two_wheeler', full_house: 'vdec_two_wheeler', grand: 'vdec_two_wheeler' }
+          if (ctx.flags.commercial) return { close: 'vdec_commercial', family: 'vdec_commercial', full_house: 'vdec_commercial', grand: 'vdec_commercial' }
+          if (ctx.flags.luxury) return { close: 'vdec_car_premium', family: 'vdec_car_premium', full_house: 'vdec_car_premium', grand: 'vdec_car_premium' }
+          return { close: 'vdec_car_classic', family: 'vdec_car_classic', full_house: 'vdec_car_premium', grand: 'vdec_car_premium' }
+        },
         skipLabel: 'We are buying the garland ourselves',
       }),
       svc({
@@ -2686,6 +3547,9 @@ export const BLUEPRINTS = {
         question: 'Who is photographing the handover?',
         why: 'The keys change hands in about four seconds, and the person receiving them cannot photograph it. What most families are left with is a phone picture under a showroom fluorescent tube.',
         packIds: ['photo_half_day', 'photo_full_day'],
+        // Forty minutes in a delivery bay is never a full day, whatever the
+        // headcount elsewhere in the flow says.
+        packsFor: ctx => (ctx.flags.quick ? ['photo_half_day'] : ['photo_half_day', 'photo_full_day']),
         recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_half_day', grand: 'photo_full_day' },
         skipLabel: 'A phone is fine for this',
       }),
@@ -2740,8 +3604,16 @@ export const BLUEPRINTS = {
         question: 'Sweets for the street and the office?',
         why: 'The part of this occasion that actually costs money, and the part everybody underestimates. Neighbours, the office, the watchman, the temple — the count is always higher than the guest list.',
         packIds: ['sweet_temple', 'sweet_traditional', 'sweet_premium', 'sweet_corporate'],
-        multi: true,
-        recommend: { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' },
+        // A branded office box belongs to a fleet purchase, not to a family
+        // buying a scooter; a scooter buys a hundred temple packets.
+        packsFor: ctx => {
+          if (ctx.flags.fleet || ctx.flags.commercial) return ['sweet_corporate', 'sweet_traditional', 'sweet_temple']
+          if (ctx.flags.quick) return ['sweet_temple', 'sweet_traditional']
+          return ['sweet_temple', 'sweet_traditional', 'sweet_premium']
+        },
+        recommendFor: ctx => (ctx.flags.commercial
+          ? { close: 'sweet_traditional', family: 'sweet_corporate', full_house: 'sweet_corporate', grand: 'sweet_corporate' }
+          : { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' }),
         skipLabel: 'We will buy the sweets ourselves',
       }),
       svc({
@@ -2762,6 +3634,12 @@ export const BLUEPRINTS = {
         question: 'Detailing, coating or accessories?',
         why: 'Booked for a day AFTER the pooja, at a workshop, never on the morning itself. It is on this page because the showroom will quote you for exactly this at roughly three times the price while you are still holding the keys.',
         packIds: ['vcare_bike_polish', 'vcare_detail', 'vcare_coating', 'vcare_accessories'],
+        // A ₹22,000 ceramic coating quoted against a ₹90,000 scooter is not
+        // an upsell, it is an error. Seat covers and 7D mats cut to a model
+        // are equally meaningless on a motorcycle.
+        packsFor: ctx => (ctx.flags.twoWheeler
+          ? ['vcare_bike_polish']
+          : ['vcare_detail', 'vcare_coating', 'vcare_accessories']),
         multi: true,
         recommend: {},
         skipLabel: 'No — nothing extra for the vehicle',
@@ -2823,6 +3701,36 @@ export const BLUEPRINTS = {
       homeDesc: 'The house or the apartment clubhouse, with a pandal in the compound if the numbers need one.',
       packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
     }),
+    core: ctx => {
+      if (ctx.flags.stage) return ['priest', 'pooja', 'bridal_wear', 'makeup', 'dining', 'nadaswaram', 'photography', 'videography', 'emcee', 'return_gifts']
+      if (ctx.flags.hall) return ['priest', 'pooja', 'bridal_wear', 'makeup', 'dining', 'nadaswaram', 'photography', 'return_gifts']
+      return ['priest', 'pooja', 'bridal_wear', 'dining', 'photography', 'return_gifts']
+    },
+    decor: ctx => (ctx.flags.hall ? decorLevels() : decorOwn({
+      question: 'How is the room being set up?',
+      why: 'For the rite and close family, the decoration is where she sits and what is behind her. A stage belongs to the evening version of this function, not the morning one.',
+      options: [
+        {
+          id: 'seat',
+          emoji: '🌺',
+          name: 'The seat and a floral backdrop',
+          desc: 'A decorated seat, a flower backdrop for the photographs, the arati thalis laid out, and the entrance done.',
+          includes: ['Decorated seat for the honoree', 'Floral backdrop, about 8 ft', 'Arati and gift table styling', 'Entrance toran and rangoli'],
+          levelId: 'home_touch',
+          themeId: 'traditional_red_gold',
+        },
+        {
+          id: 'room',
+          emoji: '🌼',
+          name: 'The whole room',
+          desc: 'The seat and backdrop, plus hanging florals, the family seating styled and warm lighting through the space.',
+          includes: ['Everything in the seat setup', 'Hanging floral or drape work', 'Family seating and table styling', 'Warm lighting for photographs'],
+          levelId: 'classic',
+          themeId: 'traditional_red_gold',
+        },
+      ],
+      skipLabel: 'The family is doing the decoration',
+    })),
     chapters: [
       ask({
         id: 'scale_kind',
@@ -2997,6 +3905,34 @@ export const BLUEPRINTS = {
       yes: { name: 'Yes — a meal for everybody who came', desc: 'At home or at a hall. We will plan the spread with you.' },
       no: { name: 'No meal — the temple, and home', desc: 'The rite and the prasada only. Skip the menu.' },
     }),
+    core: ctx => (ctx.venueKind === 'pilgrimage'
+      ? ['priest', 'pooja', 'transport', 'photography', 'dining', 'return_gifts']
+      : ['priest', 'pooja', 'dining', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the house being set up?',
+      why: 'Most of this morning happens at a temple, where nothing may be decorated at all. What can be is the house the child is brought back to — the door, and the corner the lunch is served from.',
+      options: [
+        {
+          id: 'entrance',
+          emoji: '🌿',
+          name: 'The entrance, for the return',
+          desc: 'Mango-leaf toran, a rangoli at the door and a small floral corner for the arati when the child comes back in.',
+          includes: ['Mango-leaf toran across the door', 'Hand-drawn rangoli on the morning', 'Floral arati corner', 'Cleared the same afternoon'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'entrance_room',
+          emoji: '🎀',
+          name: 'Entrance and the lunch room',
+          desc: 'The door work, plus the dining area styled for the meal and a small backdrop for the family photographs.',
+          includes: ['Everything in the entrance setup', 'Dining area styling for the meal', 'Small backdrop for family photographs', 'Warm lighting'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'No decoration — it is at the temple',
+    }),
     chapters: [
       ask({
         id: 'age',
@@ -3131,6 +4067,43 @@ export const BLUEPRINTS = {
       packIds: ['venue_community', 'venue_banquet'],
       footnote: 'No lawn or resort here — a homa in open wind with a six-month-old is not something a decorator can fix.',
     },
+    core: ctx => (ctx.flags.hall
+      ? ['priest', 'pooja', 'dining', 'cake', 'photography', 'videography', 'return_gifts']
+      : ['priest', 'pooja', 'dining', 'photography', 'return_gifts']),
+    decor: decorOwn({
+      question: 'How is the room being set up?',
+      why: 'Everything about this rite happens on one mat: the child, the silver bowl, the tray of objects, and three generations leaning over it. That is what gets decorated.',
+      options: [
+        {
+          id: 'seat',
+          emoji: '🍚',
+          name: 'The seat, the tray and the door',
+          desc: 'A decorated seat or lap-mat for the child, the tray of objects laid out properly, and a toran and rangoli at the entrance.',
+          includes: ['Decorated seat or mat for the child', 'Tray of objects laid out and dressed', 'Mango-leaf toran and rangoli', 'Set up before the muhurtham'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'backdrop',
+          emoji: '🌼',
+          name: 'A name backdrop and the room',
+          desc: 'The seat and tray, plus a floral backdrop for the family photographs, guest seating styled, and lighting.',
+          includes: ['Everything in the seat setup', 'Floral name backdrop for photographs', 'Guest seating and table styling', 'Warm lighting through the room'],
+          levelId: 'classic',
+          themeId: 'pastel',
+        },
+        {
+          id: 'hall',
+          emoji: '✨',
+          name: 'A full hall setup',
+          desc: 'For a mukhe bhaat with two hundred guests — a designed backdrop, an entrance installation and every table styled.',
+          includes: ['Designed backdrop with fresh florals', 'Entrance installation and welcome signage', 'Full table styling', 'Ambient and stage lighting'],
+          levelId: 'signature',
+          themeId: 'pastel',
+        },
+      ],
+      skipLabel: 'The family is arranging the decoration',
+    }),
     chapters: [
       ask({
         id: 'tradition',
@@ -3283,6 +4256,15 @@ export const BLUEPRINTS = {
       ],
       packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
     },
+    core: ctx => {
+      // The same evening as the muhurtham means the couple have been awake
+      // since three and the hall is being rebuilt around them. Fewer
+      // decisions is not a compromise there, it is the correct plan.
+      if (ctx.flags.tight) return ['dining', 'makeup', 'photography', 'videography', 'emcee', 'return_gifts']
+      if (ctx.flags.bar) return ['dining', 'bar', 'live_counters', 'dj', 'live_music', 'photography', 'emcee']
+      return ['dining', 'live_counters', 'cake', 'makeup', 'wedding_car', 'dj', 'photography', 'videography', 'emcee', 'return_gifts']
+    },
+    decor: decorLevels(),
     chapters: [
       ask({
         id: 'kind',
@@ -3528,6 +4510,43 @@ export const BLUEPRINTS = {
       yes: { name: 'Yes — a proper meal for invited guests', desc: 'A lunch or dinner for the people you invited. We will plan the spread.' },
       no: { name: 'Refreshments and sweets only', desc: 'Tea, a snack and sweet boxes for the street. Skip the menu screens.' },
     }),
+    core: ctx => (ctx.flags.footfall
+      ? ['priest', 'inauguration', 'drum', 'signage', 'sweets', 'photography']
+      : ['priest', 'inauguration', 'signage', 'sweets', 'photography', 'emcee']),
+    decor: decorOwn({
+      question: 'How is the frontage being decorated?',
+      why: 'Everything a passer-by sees happens in the two metres in front of your shutter. That is what gets decorated — not an interior nobody has walked into yet, and not a stage there is no room for.',
+      options: [
+        {
+          id: 'frontage',
+          emoji: '🌿',
+          name: 'Banana stems and a toran',
+          desc: 'The traditional minimum, and it reads instantly: banana stems either side of the shutter, a mango-leaf toran across it, and a rangoli on the pavement.',
+          includes: ['Banana stems at both sides of the shutter', 'Mango-leaf toran across the frontage', 'Rangoli on the pavement', 'Set up before the muhurtham, cleared before trading'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'arch',
+          emoji: '🎊',
+          name: 'A floral arch and carpet',
+          desc: 'An arch across the entrance, a red carpet to the door, marigold along the frontage, and the interior counters dressed.',
+          includes: ['Floral or balloon arch across the entrance', 'Red carpet from the road to the door', 'Marigold work along the full frontage', 'Interior counter and till styling', 'Pavement permission checked'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'launch',
+          emoji: '✨',
+          name: 'A full launch set',
+          desc: 'For a showroom opening — designed entrance installation, lit signage, an interior styled for photographs, and a stage for the chief guest.',
+          includes: ['Designed entrance installation', 'Lit nameboard and façade treatment', 'Interior styled for press photographs', 'Small stage for the ribbon and the speeches', 'Designer visit before the day'],
+          levelId: 'signature',
+          themeId: 'traditional_red_gold',
+        },
+      ],
+      skipLabel: 'We are decorating the shop ourselves',
+    }),
     chapters: [
       ask({
         id: 'business',
@@ -3760,6 +4779,41 @@ export const BLUEPRINTS = {
       packIds: [],
       footnote: 'No banquet halls or resorts as the venue — the rite is the ground itself.',
     },
+    core: ['priest', 'pooja', 'dining', 'photography'],
+    decor: decorOwn({
+      question: 'What is being set up on the plot?',
+      why: 'There is nothing here. No walls, no shade, no power and no floor — so "decoration" on a bhoomi pooja means the structure the rite happens under, and it is the difference between a ceremony and forty people standing on rubble in the sun.',
+      options: [
+        {
+          id: 'rite_corner',
+          emoji: '🪔',
+          name: 'The homa corner only',
+          desc: 'The kunda area levelled, laid out and decorated, with a small canopy over it and the kalasha dressed. For a rite with fifteen people.',
+          includes: ['Kunda area levelled and laid out', 'Small canopy over the rite', 'Kalasha and samagri arrangement dressed', 'Everything carried in and out the same day'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'pandal',
+          emoji: '⛺',
+          name: 'A pandal over the rite and the guests',
+          desc: 'A shamiana covering the ceremony and the seating, draped and floral, with the approach from the road marked.',
+          includes: ['Shamiana over the rite and the seating', 'Draping and floral work at the kunda', 'Approach path from the road marked and dressed', 'Seating laid out under cover'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'full_site',
+          emoji: '🏗️',
+          name: 'The whole site set up',
+          desc: 'For a commercial ground-breaking with contractors and staff — pandal, a stage, branding, and a dining area on the plot.',
+          includes: ['Large pandal over rite, seating and dining', 'Stage and branded backdrop', 'Site signage and safety marking', 'Full dining area on the plot', 'Designer and site visit before the day'],
+          levelId: 'signature',
+          themeId: 'white_gold',
+        },
+      ],
+      skipLabel: 'The contractor is putting up the shamiana',
+    }),
     chapters: [
       ask({
         id: 'rite',
@@ -3893,6 +4947,34 @@ export const BLUEPRINTS = {
       yes: { name: 'Yes — a lunch for the family', desc: 'A meal at home or a hall afterwards. We will plan the spread.' },
       no: { name: 'No — the rite, and home', desc: 'Prasada, and back to a normal day. Skip the menu.' },
     }),
+    // Three. This is a twenty-minute rite before school, and a family that
+    // wanted a party would have tapped Birthday.
+    core: ['priest', 'pooja', 'photography'],
+    decor: decorOwn({
+      question: 'Is anything being set up?',
+      why: 'Most families do this in front of the lamp they already have. If you want anything at all it is a clean corner, flowers, and the slate and rice tray laid out properly — and it is completely normal to want none of it.',
+      options: [
+        {
+          id: 'corner',
+          emoji: '🪔',
+          name: 'The pooja corner, laid out',
+          desc: 'Flowers, the lamp dressed, the Saraswati photograph framed, and the slate and rice tray arranged for the photograph.',
+          includes: ['Floral work at the pooja corner', 'Lamp and Saraswati frame dressed', 'Slate and rice tray arranged', 'Rangoli at the door'],
+          levelId: 'home_touch',
+          themeId: 'marigold_temple',
+        },
+        {
+          id: 'room',
+          emoji: '🌼',
+          name: 'The corner and a small backdrop',
+          desc: 'The above, plus a backdrop for the family photograph and seating for the grandparents. For a morning you are making a lunch of.',
+          includes: ['Everything in the corner setup', 'Small backdrop for the family photograph', 'Seating arrangement for the elders', 'Warm lighting'],
+          levelId: 'classic',
+          themeId: 'marigold_temple',
+        },
+      ],
+      skipLabel: 'Nothing — the lamp at home is enough',
+    }),
     chapters: [
       ask({
         id: 'occasion',
@@ -3984,6 +5066,71 @@ export const BLUEPRINTS = {
       homeDesc: 'The terrace, the compound or the garden. Easiest by a distance, because it is your own floor.',
       packIds: ['venue_lawn', 'venue_resort', 'venue_community', 'venue_banquet'],
     }),
+    core: ctx => {
+      if (ctx.flags.haldi && ctx.flags.mehendi) return ['mehendi', 'dining', 'drum', 'photography', 'videography']
+      if (ctx.flags.mehendi) return ['mehendi', 'dining', 'live_counters', 'photography']
+      return ['dining', 'drum', 'photography', 'videography']
+    },
+    decor: ctx => (ctx.flags.mehendi && !ctx.flags.haldi
+      ? decorOwn({
+        question: 'How is the mehendi being set up?',
+        why: 'A mehendi is forty women sitting still for two hours with their hands out. What the decoration has to provide is somewhere comfortable to sit, light the artists can actually work in, and a wall the cousins photograph against.',
+        options: [
+          {
+            id: 'seating',
+            emoji: '🪷',
+            name: 'Low seating and good light',
+            desc: 'Cushions and low tables for the artists and the guests, warm working light, and a floral corner.',
+            includes: ['Cushioned low seating and mats', 'Low tables for the artists', 'Warm working light where they sit', 'Floral corner for photographs'],
+            levelId: 'home_touch',
+            themeId: 'marigold_temple',
+          },
+          {
+            id: 'full_mehendi',
+            emoji: '🌼',
+            name: 'A full mehendi setup',
+            desc: 'The seating and light, plus a marigold canopy, a decorated seat for the bride, a photo wall and a paan or chaat corner dressed.',
+            includes: ['Marigold canopy over the seating', 'Decorated bridal seat', 'Marigold photo wall', 'Counter and food area styling', 'Ambient and working lighting'],
+            levelId: 'classic',
+            themeId: 'marigold_temple',
+          },
+        ],
+        skipLabel: 'No decoration — just the artists',
+      })
+      : decorOwn({
+        question: 'How is the haldi being set up?',
+        why: 'A haldi has its own decor language and it is nothing like a sangeet: matkas, marigold curtains, low seating, yellow, and a floor that is allowed to be ruined. A draped stage would be in the wrong place all morning.',
+        options: [
+          {
+            id: 'marigold',
+            emoji: '💛',
+            name: 'Marigold, matkas and a seat',
+            desc: 'Marigold curtains and strings, painted matkas, a decorated low seat, and the floor covered so nobody is paying for it later.',
+            includes: ['Marigold curtains and hanging strings', 'Painted matkas and traditional props', 'Decorated low seat for the couple', 'Floor covering across the haldi area', 'Cleared the same day'],
+            levelId: 'home_touch',
+            themeId: 'marigold_temple',
+          },
+          {
+            id: 'full_haldi',
+            emoji: '🌼',
+            name: 'The whole morning set up',
+            desc: 'The marigold work, plus a canopy, a photo wall, the food counters dressed and seating for the guests who are staying dry.',
+            includes: ['Everything in the marigold setup', 'Canopy over the haldi area', 'Marigold photo wall with props', 'Counter and food area styling', 'Guest seating away from the splash'],
+            levelId: 'classic',
+            themeId: 'marigold_temple',
+          },
+          {
+            id: 'designed_haldi',
+            emoji: '✨',
+            name: 'Designed by a stylist',
+            desc: 'For a lawn haldi with three hundred guests — a designer builds the whole yellow world, entrance to photo corner.',
+            includes: ['Designed entrance and canopy installation', 'Full marigold and floral installation', 'Photo installation and swing', 'Lounge seating and counter styling', 'Designer visit before the day'],
+            levelId: 'signature',
+            themeId: 'marigold_temple',
+          },
+        ],
+        skipLabel: 'The family is doing the decoration',
+      })),
     chapters: [
       ask({
         id: 'functions',
@@ -4143,6 +5290,34 @@ export const BLUEPRINTS = {
       homeDesc: 'The house that is being packed up, or the terrace. For a family send-off this is almost always the right answer.',
       packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
       extra: [atOffice('The office, the cafeteria, or a floor cleared for the evening — for a colleague’s send-off.')],
+    }),
+    core: ctx => (ctx.flags.speeches || ctx.flags.office
+      ? ['dining', 'memory_wall', 'av_setup', 'emcee', 'photography', 'gifting']
+      : ['dining', 'memory_wall', 'cake', 'photography', 'gifting']),
+    decor: decorOwn({
+      question: 'How is the room being set up?',
+      why: 'The decoration on this evening has one job: give people somewhere to stand together and something to stand in front of. A stage would put the person leaving on the wrong side of the room.',
+      options: [
+        {
+          id: 'wall_lights',
+          emoji: '🖼️',
+          name: 'The memory wall and warm light',
+          desc: 'The photo wall mounted and lit properly, festoon lighting across the room, and the table dressed.',
+          includes: ['Memory wall mounting and lighting', 'Festoon or fairy lighting', 'Dining and cake table styling', 'Setup and clearing by our team'],
+          levelId: 'home_touch',
+          themeId: 'white_gold',
+        },
+        {
+          id: 'styled',
+          emoji: '✨',
+          name: 'The room styled around it',
+          desc: 'The wall and the lighting, plus a photo corner, table styling and a small front of the room for the speeches.',
+          includes: ['Everything in the memory wall setup', 'Photo corner with a guest book', 'Full table styling and linen', 'Small backdrop for the speeches', 'Ambient lighting through the room'],
+          levelId: 'classic',
+          themeId: 'white_gold',
+        },
+      ],
+      skipLabel: 'No decoration — just the room',
     }),
     chapters: [
       ask({
@@ -4327,16 +5502,63 @@ export function blueprintFor(occasionId) {
   return BLUEPRINTS[occasionId] ?? { ...GENERIC_BLUEPRINT, id: occasionId ?? 'generic' }
 }
 
+/** Every gate in this file reads the same shape, whatever the caller passed. */
+function safeCtx(ctx) {
+  return { flags: {}, guests: 0, circleId: 'family', outdoor: false, venueKind: null, ...ctx }
+}
+
 /**
- * The chapters this particular customer should actually see.
+ * The chapters this particular customer should actually see, with their
+ * options already narrowed to the answer they gave.
  *
- * `showIf` is evaluated against everything answered so far, which is what
- * keeps a thirty-guest birthday at home from being asked about generators and
+ * Two jobs, and the second one is new.
+ *
+ * `showIf` decides WHETHER a chapter appears, which is what keeps a
+ * thirty-guest birthday at home from being asked about generators and
  * ambulances. A chapter with no `showIf` is always shown.
+ *
+ * `packsFor` and `recommendFor` then decide WHAT IS ON IT. This is the part
+ * that was missing: the flow correctly stopped offering a magician at a
+ * sixtieth, and then offered that family the identical five cakes it offers a
+ * four-year-old — a 1kg cream cake, a photo cake, a fondant cartoon cake, a
+ * tiered cake and a dessert table. Two of those five are things nobody has
+ * ever ordered for a shashtiabdapoorthi, and their presence on the card is
+ * the app admitting it does not know whose birthday this is.
+ *
+ * So a chapter may declare `packIds` as the full set it could ever offer —
+ * which is what scripts/check-celebration-journey.mjs validates, and it must
+ * stay a plain array for that reason — and `packsFor(ctx)` as the subset that
+ * is true for this answer. The result is filtered back against the declared
+ * set, so a narrowing function can never smuggle in a pack the checker has
+ * not seen, and an empty or unusable result falls back to the full list
+ * rather than rendering a question with no answers.
  */
 export function chaptersFor(occasionId, ctx) {
-  const safeCtx = { flags: {}, guests: 0, circleId: 'family', outdoor: false, venueKind: null, ...ctx }
-  return blueprintFor(occasionId).chapters.filter(
-    ch => typeof ch.showIf !== 'function' || ch.showIf(safeCtx),
-  )
+  const c = safeCtx(ctx)
+  return blueprintFor(occasionId).chapters
+    .filter(ch => typeof ch.showIf !== 'function' || ch.showIf(c))
+    .map(ch => narrow(ch, c))
+}
+
+function narrow(chapter, ctx) {
+  if (!chapter.packsFor && !chapter.recommendFor) return chapter
+
+  const declared = chapter.packIds ?? []
+  let packIds = declared
+  if (chapter.packsFor) {
+    const allowed = new Set(declared)
+    const picked = (chapter.packsFor(ctx) ?? []).filter(id => allowed.has(id))
+    if (picked.length) packIds = picked
+  }
+
+  // A recommendation for a pack this answer no longer offers pre-selects
+  // nothing, so the screen opens blank and every customer is asked to have an
+  // opinion about crew sizes. Dropped rather than left dangling.
+  const source = chapter.recommendFor ? chapter.recommendFor(ctx) : chapter.recommend
+  const recommend = {}
+  for (const [circleId, packId] of Object.entries(source ?? {})) {
+    if (packId && packIds.includes(packId)) recommend[circleId] = packId
+  }
+
+  return { ...chapter, packIds, recommend }
 }
