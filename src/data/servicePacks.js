@@ -1746,6 +1746,205 @@ export const SERVICE_PACKS = {
       },
     ],
   },
+
+  /* ═══════════ Vehicle decoration ═══════════
+     Everything else on this shelf is bought for a room. This is bought for an
+     object, and the difference matters: the customer is standing in a showroom
+     delivery bay or a temple yard with a two-hour window, not planning a
+     function. So the packs are named by VEHICLE, not by décor level — somebody
+     who has just taken delivery of a Bullet should not have to work out
+     whether they need "Premium" or "Classic". */
+  vehicle_decor: {
+    blurb: 'Garlands, ribbon and the lemon under the wheel — set up at the showroom or the temple, in the window you actually have.',
+    unitHint: 'Priced for the vehicle, not for the guest count. Fitted on site and removable before you drive.',
+    packs: [
+      {
+        id: 'vdec_two_wheeler',
+        name: 'Two-wheeler dressing',
+        emoji: '🏍️',
+        blurb: 'Bike, scooter or EV — handlebar garland, ribbon on the mirrors, a rose on the tank and the lemons.',
+        price: 1800, unit: 'event',
+        tint: ['#0891b2', '#cffafe'],
+        popular: true,
+        includes: ['Fresh marigold and rose garland', 'Ribbon and bow on handlebars and mirrors', 'Lemons and kumkuma for the wheels', 'Fitted at the showroom or at home'],
+        note: 'Fresh flowers wilt in about four hours in the sun — we fit as close to your muhurtham as the showroom allows.',
+      },
+      {
+        id: 'vdec_car_classic',
+        name: 'Car — garland and ribbon',
+        emoji: '🚗',
+        blurb: 'The traditional dressing. Bonnet garland, ribbon across the grille, lemons under both front wheels.',
+        price: 3800, unit: 'event',
+        tint: ['#b45309', '#fde68a'],
+        popular: true,
+        includes: ['Full bonnet garland in marigold and rose', 'Ribbon and bow across the grille', 'Lemons, kumkuma and turmeric', 'Dashboard idol placement', 'Fitted before you leave the showroom'],
+      },
+      {
+        id: 'vdec_car_premium',
+        name: 'Car — full floral handover',
+        emoji: '💐',
+        blurb: 'For the photographs. Dense floral bonnet work, a red carpet at the door and a name board with the family name.',
+        price: 12500, unit: 'event',
+        tint: ['#be123c', '#ffe4e6'],
+        includes: ['Dense floral bonnet and grille installation', 'Red carpet strip at the driver door', 'Printed name board or number-plate cover', 'Rose petals for the handover', 'Floral removal after the shoot'],
+        note: 'Showroom permission is needed for a red carpet inside the delivery bay. We ask on your behalf.',
+      },
+      {
+        id: 'vdec_commercial',
+        name: 'Lorry, tractor or commercial',
+        emoji: '🚜',
+        blurb: 'A working vehicle is dressed differently — banana stems at the cabin, a heavy garland, and the sign written by hand.',
+        price: 5500, unit: 'event',
+        tint: ['#15803d', '#dcfce7'],
+        includes: ['Banana stems and mango-leaf toran at the cabin', 'Heavy marigold garland across the front', 'Hand-painted name or "Shubham" board', 'Lemons and coconut for the wheels', 'Setup at the yard, the site or the showroom'],
+      },
+    ],
+  },
+
+  /* ═══════════ Detailing & protection ═══════════
+     Not a celebration service at all, and on the shelf anyway. This is the
+     spend that actually happens at a vehicle handover in India — the accessory
+     bill is routinely a tenth of the vehicle price — and a platform that
+     arranges the garland but cannot arrange the mats is describing half a day.
+     Everything here is quoted through a workshop, never by us. */
+  vehicle_care: {
+    blurb: 'Booked at a workshop we have used, in the days after the handover rather than the morning of it.',
+    unitHint: 'The vehicle goes to the workshop; we coordinate the slot. Nothing here happens on the pooja day.',
+    packs: [
+      {
+        id: 'vcare_bike_polish',
+        name: 'Two-wheeler polish & coating',
+        emoji: '🧴',
+        blurb: 'Teflon coating, chain treatment and a proper wash before the first ride.',
+        price: 2500, unit: 'event',
+        tint: ['#0369a1', '#e0f2fe'],
+        includes: ['Full wash and dry', 'Teflon or wax coat on painted panels', 'Chain clean and lube', 'Chrome and alloy polish'],
+      },
+      {
+        id: 'vcare_detail',
+        name: 'Pre-delivery detail',
+        emoji: '✨',
+        blurb: 'What the showroom wash misses — transit wax, interior vacuum, glass and trim.',
+        price: 4500, unit: 'event',
+        tint: ['#7c3aed', '#ede9fe'],
+        popular: true,
+        includes: ['Transit-wax removal and full exterior wash', 'Interior vacuum and dashboard dress', 'Glass, mirror and trim clean', 'Tyre dressing'],
+      },
+      {
+        id: 'vcare_coating',
+        name: 'Ceramic coating',
+        emoji: '🛡️',
+        blurb: 'A 3-year coating with a real warranty card, applied over two days at the workshop.',
+        price: 22000, unit: 'event',
+        tint: ['#0f172a', '#94a3b8'],
+        includes: ['Paint correction and decontamination', '9H ceramic coating, 3-year warranty card', 'Glass and alloy coating', 'Two-day workshop slot booked around you'],
+        note: 'Price varies with vehicle size — a hatchback and a seven-seater are not the same job. The figure shown is for a mid-size sedan.',
+      },
+      {
+        id: 'vcare_accessories',
+        name: 'Mats, covers and fitting',
+        emoji: '🧰',
+        blurb: '7D mats, seat covers, mud flaps and the camera — sourced and fitted, without the showroom markup.',
+        price: 9000, unit: 'event',
+        tint: ['#b45309', '#fef3c7'],
+        includes: ['7D floor mats cut to the model', 'Seat covers in your choice of material', 'Mud flaps and door-edge guards', 'Reverse camera and sensor fitting, if wanted'],
+        note: 'We quote against the exact variant. Fitting is at a workshop, not at your home.',
+      },
+    ],
+  },
+
+  /* ═══════════ Sweets & distribution ═══════════
+     Bought by the hundred, for people who were never invited. That single fact
+     is why it could not be sold as a "return gift": the count follows the
+     STREET, the office and the temple rather than the guest list, and a family
+     opening a shop orders two thousand boxes for a function forty people
+     attend. Quantity is the customer's to set, and the stepper says so. */
+  sweets: {
+    blurb: 'Boxed, sealed and counted, delivered to the house the evening before so nothing is being collected on the morning.',
+    unitHint: 'Priced per box, and you set the count. Most families order about one and a half boxes per guest, plus the neighbours.',
+    packs: [
+      {
+        id: 'sweet_temple',
+        name: 'Temple prasada packets',
+        emoji: '🪔',
+        blurb: 'Small sealed packets — kesari bath, ladoo or chitranna — for handing out at the temple and to the street.',
+        price: 60, unit: 'unit', unitLabel: 'packet', defaultQty: 100,
+        tint: ['#b45309', '#fde68a'],
+        includes: ['Sealed 80g packet', 'Choice of ladoo, kesari bath or chitranna', 'Made the same morning', 'Delivered to the temple or the house'],
+      },
+      {
+        id: 'sweet_traditional',
+        name: 'Traditional sweet box',
+        emoji: '🍬',
+        blurb: 'The box everybody expects — mysore pak, badusha, kaju katli and a chocolate for the children.',
+        price: 120, unit: 'unit', unitLabel: 'box', defaultQty: 150,
+        tint: ['#be123c', '#ffe4e6'],
+        popular: true,
+        includes: ['Four-piece assorted box', 'Printed sleeve with your name and the date', 'Sealed and food-safe', 'Delivered the evening before'],
+      },
+      {
+        id: 'sweet_premium',
+        name: 'Premium dry-fruit box',
+        emoji: '🥮',
+        blurb: 'For the people you cannot hand a ₹120 box to — the boss, the in-laws, the family priest.',
+        price: 320, unit: 'unit', unitLabel: 'box', defaultQty: 40,
+        tint: ['#7c3aed', '#ede9fe'],
+        includes: ['Dry fruit and premium mithai assortment', 'Rigid presentation box with ribbon', 'Personalised card per box', 'Separate delivery list, if you have one'],
+      },
+      {
+        id: 'sweet_corporate',
+        name: 'Branded box for the office or the street',
+        emoji: '🏪',
+        blurb: 'Your shop name printed on the sleeve. What a new business actually hands out for a fortnight after opening.',
+        price: 220, unit: 'unit', unitLabel: 'box', defaultQty: 250,
+        tint: ['#0891b2', '#cffafe'],
+        includes: ['Your logo and number on the sleeve', 'Two-piece mithai and a card', 'Bulk rate above 500 boxes', 'Split delivery across several days'],
+        note: 'Artwork needs three working days. Bring a logo file or we will set the name in type.',
+      },
+    ],
+  },
+
+  /* ═══════════ Inauguration ═══════════
+     A shop opening is not a party with a shop in it. The whole morning turns on
+     four minutes — the ribbon, the lamp, the nameplate, and whoever was invited
+     to do it — and every one of those four things is somebody's job on the day.
+     Nothing else on this shelf covers them. */
+  inauguration: {
+    blurb: 'The four minutes the photographs come from, rehearsed once beforehand so nobody is holding scissors and waiting.',
+    unitHint: 'One price for the ceremony itself. The band, the homa and the sweets are booked separately.',
+    packs: [
+      {
+        id: 'inaug_ribbon',
+        name: 'Ribbon, lamp and nameplate',
+        emoji: '🎗️',
+        blurb: 'The essentials, done properly — a real ribbon, a brass kuthu vilakku, and the nameplate under a cloth.',
+        price: 6500, unit: 'event',
+        tint: ['#b45309', '#fde68a'],
+        popular: true,
+        includes: ['Satin ribbon, stands and ceremonial scissors', 'Brass lamp, wicks, oil and matches', 'Nameplate veiling cloth and unveiling cord', 'Aarti plate and garland for the guest', 'One rehearsal with your photographer'],
+      },
+      {
+        id: 'inaug_full',
+        name: 'Full opening morning',
+        emoji: '🎊',
+        blurb: 'Arch, carpet, the ribbon ceremony, a host on the mic and somebody managing the crowd on the pavement.',
+        price: 28000, unit: 'event',
+        tint: ['#be123c', '#ffe4e6'],
+        includes: ['Entrance arch and red carpet to the shutter', 'Ribbon ceremony kit and rehearsal', 'Host on a mic for the running order', 'Flower shower at the first entry', 'Pavement crowd management', 'Board and standee placement'],
+        note: 'A pavement arch may need a local permission. We check the rules for your street before quoting.',
+      },
+      {
+        id: 'inaug_chief_guest',
+        name: 'Chief guest hosting',
+        emoji: '🏅',
+        blurb: 'For the person you asked to cut it — received properly, garlanded, seated, felicitated and seen off.',
+        price: 9500, unit: 'event',
+        tint: ['#0f172a', '#fbbf24'],
+        includes: ['Reception at the car and a shawl and garland', 'Reserved seating and a bottle of water nobody forgets', 'Memento, engraved with the date', 'A written two-minute citation for the host to read', 'Photograph handover before they leave'],
+      },
+    ],
+  },
+
 }
 
 /**

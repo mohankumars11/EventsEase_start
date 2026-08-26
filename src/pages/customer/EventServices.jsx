@@ -4,6 +4,7 @@ import {
   ArrowLeft, ShoppingCart, Sparkles, Pencil, LayoutGrid, Package,
   Search, ChevronRight, MapPin, ShieldCheck, X,
 } from 'lucide-react'
+import { defaultGuestsFor } from '../../data/celebrationBlueprints'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { toWizardType } from '../../data/occasionMap'
 import {
@@ -95,8 +96,9 @@ import { supabase } from '../../lib/supabase'
 // visit's intent, not a standing order.
 const CART_INTENT_KEY = 'sambramo_cart_intent'
 
-/** The headcount the page opens on before anyone has said anything. */
-const DEFAULT_GUESTS = 120
+/* The headcount this page opens on belongs to the occasion — see the table
+   in data/celebrationBlueprints.js for why a vahana pooja must not open on
+   the same number a reception does. */
 
 /** Run once the state change that preceded it has been committed and painted. */
 function afterPaint(fn) {
@@ -134,13 +136,13 @@ export default function EventServices() {
   const [activeTab, setActiveTab] = useState(
     () => (new URLSearchParams(location.search).get('tab') === 'services' ? 'services' : 'packages')
   ) // 'packages' | 'services'
-  const [guestCount, setGuestCount] = useState(DEFAULT_GUESTS)
+  const [guestCount, setGuestCount] = useState(() => defaultGuestsFor(eventId))
   const [tierTouched, setTierTouched] = useState(false)
   // Seeded from the default headcount rather than left null for the effect
   // below to fill in. Null meant the header rendered "tell us the headcount"
   // for one frame before the estimate replaced it — a flash of the empty
   // state on a page that already knows the answer.
-  const [selectedTier, setSelectedTier] = useState(() => tierForGuests(DEFAULT_GUESTS)?.id ?? null)
+  const [selectedTier, setSelectedTier] = useState(() => tierForGuests(defaultGuestsFor(eventId))?.id ?? null)
   const [tierPrompt, setTierPrompt]  = useState(null)
   const [query, setQuery]           = useState('')
   const [pendingAdd, setPendingAdd] = useState(null)
@@ -385,7 +387,7 @@ export default function EventServices() {
   useEffect(() => {
     setQuery('')
     setTierTouched(false)
-    setGuestCount(DEFAULT_GUESTS)
+    setGuestCount(defaultGuestsFor(eventId))
     // A scale dialog left open across an occasion change would be asking the
     // customer to agree to a griha pravesh's Special Day while the page
     // behind it has become a birthday.
@@ -838,7 +840,7 @@ export default function EventServices() {
                         key={svc.id}
                         service={svc}
                         eventId={eventId}
-                        guestCount={guestCount || DEFAULT_GUESTS}
+                        guestCount={guestCount || defaultGuestsFor(eventId)}
                         vegOnly={profile.vegOnly}
                         index={i}
                         inCart={hasItem(eventId, svc.id)}

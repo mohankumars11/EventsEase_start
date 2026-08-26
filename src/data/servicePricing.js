@@ -203,6 +203,16 @@ export const SERVICE_GROUPS = [
         desc: 'Projector, screens and mics for speeches' },
       { id: 'tent', name: 'Tent / pandal / shamiana', emoji: '⛺', unit: 'fixed', base: 25000, scales: true,
         desc: 'Covered structure for an outdoor or home event' },
+      // The three that do not scale with a guest list at all. A car is
+      // garlanded once whether four people watch or four hundred, and a
+      // ribbon is cut once. `scales: false` is the honest answer and it is
+      // also the cheap one, which is the point.
+      { id: 'vehicle_decor', name: 'Vehicle decoration', emoji: '🚗', unit: 'fixed', base: 4500, scales: false,
+        desc: 'Garland, florals, ribbon and name decal on the new vehicle' },
+      { id: 'vehicle_care', name: 'Detailing & protection', emoji: '✨', unit: 'fixed', base: 9000, scales: false,
+        desc: 'Pre-delivery detail, coating, mats and seat covers' },
+      { id: 'inauguration', name: 'Inauguration & ribbon ceremony', emoji: '✂️', unit: 'fixed', base: 12000, scales: false,
+        desc: 'Ribbon, nameplate unveiling, lamp and chief-guest hosting' },
     ],
   },
   {
@@ -222,6 +232,14 @@ export const SERVICE_GROUPS = [
         desc: 'Digital and printed cards, menu cards, signage' },
       { id: 'ice_cream', name: 'Dessert / ice cream counter', emoji: '🍦', unit: 'per_guest', base: 60,
         desc: 'Live counter, separate from the meal' },
+      // Not a return gift and not a dessert counter: a sweet box is bought by
+      // the HUNDRED and handed to people who were never at the function —
+      // neighbours, the office, the temple, the watchman. Pricing it per
+      // guest would have quoted a shop opening for its forty attendees
+      // rather than for the two thousand boxes it actually buys.
+      { id: 'sweets', name: 'Sweets & mithai distribution', emoji: '🍬', unit: 'per_unit', base: 120,
+        unitLabel: 'box', qtyFor: g => Math.max(25, Math.round((g || 0) * 1.5)),
+        desc: 'Boxed sweets for neighbours, colleagues and the temple' },
       { id: 'candle_setup', name: 'Candle & romantic setup', emoji: '🕯️', unit: 'fixed', base: 8000, scales: false,
         desc: 'Candle pathway, floating flowers, fairy lights' },
     ],

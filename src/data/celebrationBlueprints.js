@@ -81,7 +81,7 @@
 // one. A chapter that opens on a sensible answer they can change asks them
 // only to disagree, which is much easier.
 
-import { SERVICE_PACKS } from './servicePacks'
+import { SERVICE_PACKS, PACK_BY_ID } from './servicePacks'
 
 /* ── Chapter builders ──────────────────────────────────────────────────
    Written as small factories rather than repeated literals, because
@@ -104,6 +104,248 @@ const ask = rest => ({ kind: 'choice', optional: false, ...rest })
 
 /** Every pack under a service, in catalogue order — the default option set. */
 const allPacks = serviceId => (SERVICE_PACKS[serviceId]?.packs ?? []).map(p => p.id)
+
+/* ══════════════════════════════════════════════════════════════════════
+   WHERE IT HAPPENS — and why that question is not the same question twice
+   ══════════════════════════════════════════════════════════════════════
+
+   Until this pass, every occasion was asked the identical venue question with
+   the identical seven answers: your home, already booked, community hall,
+   banquet hall, garden or lawn, resort or farmhouse. One list, fifteen
+   occasions, and for a good half of them the list was visibly wrong.
+
+   The clearest case, and the one that started this: a griha pravesha was
+   offered a resort. A gruhapravesha is the rite of entering THE NEW HOUSE. It
+   cannot be held at a resort, a lawn or a banquet hall — not as a matter of
+   taste but as a matter of what the ceremony is. Offering the choice does not
+   read as flexibility, it reads as an app that does not know what it is
+   selling, and the family closes it. The same failure ran through the
+   catalogue: a bhoomi pooja is on the plot, a vahana pooja is around the
+   vehicle, a shop opening is in front of the shutter, an aksharabhyasa is at
+   the temple or in front of the house lamp.
+
+   So the venue question now belongs to the occasion. Three shapes:
+
+     `fixed`    There is exactly ONE honest answer. It is shown as a card that
+                is already chosen, explained rather than offered, and the flow
+                moves on. A choice with one real answer is not a choice; it is
+                a delay dressed as respect.
+
+     `options`  Answers particular to this occasion — "at the temple", "at the
+                showroom on delivery", "at our office", "on the site". These
+                are first-class, not an "other" box.
+
+     `packIds`  Which of the hire-able venues genuinely apply, in the order
+                this occasion would consider them. An empty list removes the
+                "let us find one" group completely, because for a vahana pooja
+                there is nothing to find.
+
+   A `fixed` venue can still carry a second answer, and often should: plenty of
+   families hold the pooja at the new flat and the lunch at a hall down the
+   road, and pretending otherwise is the same error in the other direction.
+
+   `outdoor: true` on an option is what turns on the generator, the misting
+   fans and the portable washrooms further down. It is set from the real
+   answer rather than guessed — a bhoomi pooja is the most outdoor function in
+   the catalogue and used to be treated as indoors because "the site" was not
+   an answer anybody could give. */
+
+/**
+ * The headcount an occasion opens on, before anybody has said anything.
+ *
+ * 110–120 was the single default everywhere, and it is the right one for a
+ * birthday, a wedding or a reception — the size of function this app was
+ * built around, and a number most families recognise as "the usual one".
+ *
+ * It is the wrong one for half of what the life-cycle audit added, and wrong
+ * in the most expensive direction. A vahana pooja is four people in a
+ * showroom delivery bay. An aksharabhyasa is a child, two parents and a
+ * purohit, before school. Opening those on 120 guests prices in lunch for a
+ * hundred and twenty people, and greets somebody who came to garland a
+ * scooter with a six-figure estimate — which is exactly the failure the
+ * no-price-until-the-end rule exists to prevent, arriving through a forgotten
+ * default rather than through a decision anybody made.
+ *
+ * Anybody can still move the number, and moving it is the point of both
+ * screens that read this. This only decides what they see before they touch
+ * anything.
+ *
+ * The numbers are the median a coordinator would expect, not a floor and not
+ * an ambition: a half-saree at 150 because in coastal Andhra it genuinely is,
+ * a reception at 250 because that is what a reception is for.
+ */
+export const OCCASION_DEFAULT_GUESTS = {
+  vehicle_pooja: 15,
+  aksharabhyasa: 20,
+  bhoomi_pooja:  40,
+  farewell:      45,
+  annaprashana:  60,
+  mundan:        60,
+  shop_opening:  60,
+  haldi:        120,
+  half_saree:   150,
+  reception:    250,
+}
+
+/** 110 stays the answer for every occasion the table above does not name. */
+export const DEFAULT_GUESTS = 110
+
+export function defaultGuestsFor(occasionId) {
+  return OCCASION_DEFAULT_GUESTS[occasionId] ?? DEFAULT_GUESTS
+}
+
+export const OWN_VENUE = 'own_venue'
+export const BOOKED_VENUE = 'booked_venue'
+
+const HOME_INCLUDES = [
+  'Site visit and layout plan',
+  'Power and access check',
+  'Society or neighbour coordination',
+  'Furniture moved and put back',
+]
+
+const atHome = (desc, name = 'At home, or our own place') => ({
+  id: OWN_VENUE, emoji: '🏠', name, desc, includes: HOME_INCLUDES,
+})
+
+const alreadyBooked = (desc = 'Tell your coordinator which one, and we work to its rules, its timings and its restrictions.') => ({
+  id: BOOKED_VENUE, emoji: '✅', name: 'We have already booked a venue', desc,
+})
+
+const atTemple = (desc, name = 'At the temple') => ({
+  id: 'temple', emoji: '🛕', name, desc, outdoor: true,
+  includes: [
+    'Temple office spoken to and the slot confirmed',
+    'Purohit coordinated with the temple’s own',
+    'Everything carried in and carried out',
+    'Prasada distribution at the gate',
+  ],
+})
+
+const atOffice = (desc, name = 'At our own office') => ({
+  id: 'office', emoji: '🏢', name, desc,
+  includes: [
+    'Floor survey and a layout that fits the desks',
+    'Facilities and security coordination',
+    'Silent setup outside working hours',
+    'Everything cleared before the next morning',
+  ],
+})
+
+/** The venue block for an occasion that can genuinely be held anywhere. */
+const anywhere = ({ why, packIds = ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'], homeDesc, extra = [] }) => ({
+  question: 'Where is it happening?',
+  why,
+  options: [
+    atHome(homeDesc ?? 'Your house, the terrace, or the apartment clubhouse. No hire charge — we survey the space and plan the layout around your furniture.'),
+    alreadyBooked(),
+    ...extra,
+  ],
+  packIds,
+})
+
+/** The default, for an occasion nobody has written a venue block for yet. */
+export const GENERIC_VENUE = anywhere({
+  why: 'This decides more than it looks: an outdoor function needs power, fans and washrooms that a banquet hall already has. Tell us now and we only ask about the things you actually need.',
+})
+
+/** Venue answers that put the function outdoors, from the packs themselves. */
+const OUTDOOR_PACKS = new Set(['venue_lawn', 'venue_resort'])
+
+/**
+ * The venue question for this occasion, normalised.
+ *
+ * Returns `{ question, why, footnote, fixed, options, packIds }` where every
+ * entry in `options` is a finished card — a custom answer or a resolved venue
+ * pack — so the step renders one list and does not have to know which is which.
+ */
+export function venueStepFor(occasionId) {
+  const block = blueprintFor(occasionId).venue ?? GENERIC_VENUE
+  const resolve = opt => {
+    if (!opt?.pack) return opt
+    const pack = PACK_BY_ID[opt.pack]
+    if (!pack) return null
+    return {
+      id: pack.id,
+      emoji: pack.emoji,
+      name: pack.name,
+      desc: pack.blurb,
+      includes: pack.includes,
+      note: pack.note,
+      outdoor: OUTDOOR_PACKS.has(pack.id),
+      hired: true,
+    }
+  }
+  return {
+    question: block.question ?? 'Where is it happening?',
+    why: block.why ?? GENERIC_VENUE.why,
+    footnote: block.footnote ?? null,
+    findLabel: block.findLabel ?? 'Or let us find one',
+    fixed: block.fixed ? resolve(block.fixed) : null,
+    options: (block.options ?? []).map(resolve).filter(Boolean),
+    hired: (block.packIds ?? []).map(id => resolve({ pack: id })).filter(Boolean),
+  }
+}
+
+/** Every venue answer this occasion accepts, flat — for lookups. */
+function venueAnswers(occasionId) {
+  const step = venueStepFor(occasionId)
+  return [step.fixed, ...step.options, ...step.hired].filter(Boolean)
+}
+
+/** The answer chosen, as a coordinator should read it in the request. */
+export function venueLabelFor(occasionId, value) {
+  if (!value) return 'Not decided'
+  return venueAnswers(occasionId).find(o => o.id === value)?.name ?? 'Not decided'
+}
+
+/** Does this answer put the function under the sky? Gates the groundwork. */
+export function isOutdoorVenue(occasionId, value) {
+  if (!value) return false
+  return !!venueAnswers(occasionId).find(o => o.id === value)?.outdoor
+}
+
+/**
+ * The answer to pre-select on arrival.
+ *
+ * Only ever a `fixed` venue — an occasion with one honest answer opens on it
+ * already chosen. Everything else opens on nothing, because guessing between
+ * a hall and a lawn on somebody's behalf is guessing about the budget.
+ */
+export function defaultVenueFor(occasionId) {
+  return venueStepFor(occasionId).fixed?.id ?? null
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   IS THERE A MEAL AT ALL?
+   ══════════════════════════════════════════════════════════════════════
+
+   The flow used to require a cuisine and a full menu from every customer,
+   because every occasion in the original fifteen feeds people. Half of what
+   this pass added does not. A vahana pooja is forty minutes in a temple yard
+   and ends with a packet of kesari bath; a shop opening feeds nobody and hands
+   out two thousand sweet boxes; an aksharabhyasa is a slate and a lamp before
+   school.
+
+   Forcing those customers through five courses of a Karnataka spread to reach
+   the end of the flow does two bad things at once: it wastes four screens, and
+   it produces an estimate with ₹65,000 of catering in it for a function with
+   no lunch — which is not a mistake anybody forgives.
+
+   So an occasion can declare its meal optional, and the flow asks once. `no`
+   removes the cuisine screen, every course screen, and the catering line from
+   the quote. `yes` behaves exactly as it always did.
+
+   Occasions where the meal is the point — a wedding, a gruhapravesha, a
+   half-saree — do NOT get this question. Offering to skip lunch at a function
+   whose whole social contract is lunch is its own kind of not listening. */
+const mealOptional = ({ question, why, yes, no }) => ({
+  optional: true,
+  question,
+  why,
+  yes: { emoji: '🍽️', name: yes.name, desc: yes.desc },
+  no: { emoji: '🚫', name: no.name, desc: no.desc },
+})
 
 /* ── Reusable chapters, each taking its own reason ─────────────────── */
 
@@ -131,7 +373,7 @@ const videography = ({ why, packIds = ['video_event', 'video_cinematic'], recomm
   showIf,
 })
 
-const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_standing', 'dining_floor', 'dining_lounge'], recommend }) => svc({
+const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_standing', 'dining_floor', 'dining_lounge'], recommend, showIf }) => svc({
   serviceId: 'dining',
   title: 'Seating',
   emoji: '🪑',
@@ -140,9 +382,10 @@ const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_
   packIds,
   recommend: recommend ?? { close: 'dining_floor', family: 'dining_buffet_standing', full_house: 'dining_round', grand: 'dining_round' },
   skipLabel: 'The venue provides all of it',
+  showIf,
 })
 
-const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium'], recommend }) => svc({
+const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium'], recommend, showIf }) => svc({
   serviceId: 'return_gifts',
   title: 'Return gifts',
   emoji: '🎁',
@@ -151,9 +394,10 @@ const returnGifts = ({ why, packIds = ['gift_budget', 'gift_mid', 'gift_premium'
   packIds,
   recommend: recommend ?? { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
   skipLabel: 'We have already bought them',
+  showIf,
 })
 
-const invitations = ({ why }) => svc({
+const invitations = ({ why, showIf }) => svc({
   serviceId: 'invitations',
   title: 'Invites',
   emoji: '💌',
@@ -163,9 +407,10 @@ const invitations = ({ why }) => svc({
   multi: true,
   recommend: { close: 'invite_digital', family: 'invite_digital', full_house: 'invite_printed', grand: 'invite_printed' },
   skipLabel: 'The invitations are already out',
+  showIf,
 })
 
-const cleanup = ({ why }) => svc({
+const cleanup = ({ why, showIf }) => svc({
   serviceId: 'cleanup',
   title: 'After',
   emoji: '🧹',
@@ -174,6 +419,7 @@ const cleanup = ({ why }) => svc({
   packIds: ['clean_basic', 'clean_deep', 'clean_green'],
   recommend: { close: 'clean_basic', family: 'clean_basic', full_house: 'clean_deep', grand: 'clean_deep' },
   skipLabel: 'The venue handles the clearing',
+  showIf,
 })
 
 /**
@@ -206,7 +452,7 @@ const groundwork = [
     multi: true,
     recommend: {},
     skipLabel: 'It is indoors and air-conditioned',
-    showIf: ctx => ctx.outdoor,
+    showIf: ctx => ctx.outdoor && ctx.guests >= 60,
   }),
   svc({
     serviceId: 'washrooms',
@@ -254,8 +500,31 @@ const groundwork = [
   }),
 ]
 
+/**
+ * The groundwork, minus the questions this occasion asks in its own words.
+ *
+ * Two occasions ask a groundwork question better than the generic version
+ * does, because they know something it does not:
+ *
+ *   housewarming  "Where are eighty cars going in an apartment complex?" is
+ *                 a sharper question than "Where is everybody parking?", and
+ *                 it is the single most common complaint after a gruha
+ *                 pravesha.
+ *   shop_opening  the crowd being managed is on a public pavement outside
+ *                 somebody else's shop, which is a different job from a
+ *                 guard on a gate.
+ *
+ * Both used to get BOTH — their own chapter, then the generic one eleven
+ * screens later, asking the same thing again with worse copy. Two different
+ * chapter ids, so nothing collided and nothing failed; the customer was just
+ * asked about parking twice, which is exactly how an app stops feeling like
+ * it is paying attention.
+ */
+const groundworkWithout = (...serviceIds) =>
+  groundwork.filter(ch => !serviceIds.includes(ch.serviceId))
+
 /* ══════════════════════════════════════════════════════════════════════
-   THE FIFTEEN
+   THE OCCASIONS
    ══════════════════════════════════════════════════════════════════════ */
 
 export const BLUEPRINTS = {
@@ -272,6 +541,9 @@ export const BLUEPRINTS = {
     promise: 'Nine or ten quick questions. Nothing is booked, and there is no price until you have seen everything.',
     cuisineLead: ['karnataka', 'north_indian', 'indo_chinese', 'chaat_street', 'multi_cuisine'],
     vegDefault: true,
+    venue: anywhere({
+      why: 'A birthday is the one occasion that genuinely happens anywhere, so this is a real question rather than a formality. It also decides the rest of the flow — a lawn turns on the generator and the fans, a banquet hall turns them off.',
+    }),
     chapters: [
       ask({
         id: 'who',
@@ -443,6 +715,11 @@ export const BLUEPRINTS = {
     promise: 'A few questions about the morning and the evening. No price until the end.',
     cuisineLead: ['karnataka', 'udupi', 'tamil', 'north_indian', 'multi_cuisine'],
     vegDefault: true,
+    venue: anywhere({
+      why: 'Most first birthdays are at home or in a small hall, because the baby has to nap somewhere and the grandparents have to sit down. Tell us which and we plan the room around both.',
+      homeDesc: 'Your house or the apartment clubhouse — where the baby is comfortable and there is somewhere to put a cot.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
+    }),
     chapters: [
       ask({
         id: 'shape',
@@ -568,6 +845,11 @@ export const BLUEPRINTS = {
     promise: 'Everything below is optional and nothing shows a price until the end.',
     cuisineLead: ['karnataka', 'tamil', 'andhra', 'north_indian', 'chaat_street'],
     vegDefault: true,
+    venue: anywhere({
+      why: 'A seemantha or godh bharai is usually at the mother-to-be’s parents’ house or a small hall nearby, because she should not be travelling far in the seventh month. That is why there is no resort on this list.',
+      homeDesc: 'The family home or the apartment clubhouse — a sofa she can actually rest on, and a washroom that is not down a corridor.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_lawn'],
+    }),
     chapters: [
       ask({
         id: 'style',
@@ -696,6 +978,17 @@ export const BLUEPRINTS = {
     promise: 'Everything is built around your muhurtham. No price until you have seen the whole plan.',
     cuisineLead: ['karnataka', 'udupi', 'tamil', 'jain_satvik', 'andhra'],
     vegDefault: true,
+    venue: {
+      question: 'Where is the namakarana being held?',
+      why: 'A homa needs shelter, a lamp needs still air, and a newborn should not be out for long. Those three facts remove most of a generic venue list, so this one only offers what a namakarana is actually held in.',
+      options: [
+        atHome('The house or the apartment clubhouse. Most namakaranas are, and it is the easiest thing for a mother six weeks after a delivery.'),
+        atTemple('The temple your family goes to. We speak to the office, confirm the slot and coordinate with their purohit.'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community', 'venue_banquet'],
+      footnote: 'No lawn or resort on this list — a homa in open wind is a problem the decorator cannot fix.',
+    },
     chapters: [
       ask({
         id: 'rite',
@@ -799,6 +1092,10 @@ export const BLUEPRINTS = {
     promise: 'A short flow. No price until you have chosen everything.',
     cuisineLead: ['north_indian', 'karnataka', 'continental', 'multi_cuisine', 'mughlai'],
     vegDefault: false,
+    venue: anywhere({
+      why: 'An anniversary runs from a table for two to a hall for four hundred, and the answer here is what tells us which one we are planning.',
+      homeDesc: 'The terrace, the garden or the dining room — where most of the anniversaries we do actually happen.',
+    }),
     chapters: [
       ask({
         id: 'mood',
@@ -910,6 +1207,45 @@ export const BLUEPRINTS = {
     promise: 'Built around your muhurtham. No price until you have seen everything.',
     cuisineLead: ['karnataka', 'udupi', 'tamil', 'andhra', 'jain_satvik'],
     vegDefault: true,
+    // The occasion that made this whole venue rework necessary. A gruha
+    // pravesha is the rite of entering THE NEW HOUSE; offering a resort as an
+    // alternative is not flexibility, it is not knowing what the ceremony is.
+    // The second answer is the real one families take — pooja at the flat,
+    // lunch at a hall down the road, because a new flat has no kitchen.
+    venue: {
+      question: 'The pooja is at the new house. Where is the lunch?',
+      why: 'The rite itself can only happen at the house you are entering, so we have not asked. What families genuinely differ on is the meal afterwards — a house with no kitchen, no gas connection and eighty guests is a real problem, and a hall two streets away is a real answer.',
+      fixed: {
+        id: 'new_home',
+        emoji: '🔑',
+        name: 'The pooja is at the new home',
+        desc: 'Where else. We survey the flat or the house beforehand, plan where the homa kunda sits, and work out how a kitchen with no gas yet feeds your guests.',
+        includes: [
+          'Site visit before the muhurtham',
+          'Homa placement and smoke clearance checked',
+          'Power, water and lift access confirmed',
+          'Society permission drafted for you',
+        ],
+      },
+      options: [
+        {
+          id: 'new_home',
+          emoji: '🏠',
+          name: 'Everything at the new house',
+          desc: 'Pooja and lunch both, served in the empty rooms or on the terrace. Our kitchen team works out of a temporary setup — this is the most common answer.',
+          includes: ['Temporary cooking setup outside the house', 'Serving team who bring everything', 'Floor or leaf seating planned room by room', 'The house left clean the same afternoon'],
+        },
+        {
+          id: 'hall_nearby',
+          emoji: '🍽️',
+          name: 'Pooja at the house, lunch at a hall nearby',
+          desc: 'For a large guest list, or a flat where two hundred people genuinely will not fit. We find and book the hall within walking or two-minute driving distance.',
+          includes: ['Hall shortlisted within a kilometre', 'Rate negotiated and booked', 'Guests directed from the flat to the hall', 'Both ends coordinated on one timeline'],
+        },
+      ],
+      packIds: [],
+      footnote: 'No lawn, no resort, no banquet hall as the main venue — a gruha pravesha is held at the house being entered, and that is not a preference.',
+    },
     chapters: [
       ask({
         id: 'rite',
@@ -1013,7 +1349,7 @@ export const BLUEPRINTS = {
         recommend: { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
       }),
       invitations({ why: 'A gruhapravesha invite goes out late because the muhurtham is fixed late. Digital is what actually reaches people in time.' }),
-      ...groundwork,
+      ...groundworkWithout('valet'),
       cleanup({ why: 'Two hundred banana leaves and a homa kunda, out of a brand-new house, the same afternoon.' }),
     ],
   },
@@ -1025,6 +1361,11 @@ export const BLUEPRINTS = {
     promise: 'Short and simple. Skip anything you do not need — the price comes at the end.',
     cuisineLead: ['indo_chinese', 'north_indian', 'chaat_street', 'karnataka', 'continental'],
     vegDefault: false,
+    venue: anywhere({
+      why: 'The most open question in the catalogue — a get-together is whatever the host wants it to be. Where it is decides the noise limit, the closing time and whether we bring power.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
+      extra: [atOffice('The office cafeteria, the terrace or a floor cleared for the evening. Most team get-togethers we do are here.')],
+    }),
     chapters: [
       ask({
         id: 'kind',
@@ -1116,6 +1457,15 @@ export const BLUEPRINTS = {
     promise: 'This is the longest one — around fifteen questions. You can skip any of them, and there is no price until the end.',
     cuisineLead: ['mysuru_royal', 'karnataka', 'north_indian', 'multi_cuisine', 'tamil', 'andhra'],
     vegDefault: true,
+    venue: {
+      question: 'Where is the wedding?',
+      why: 'The single biggest decision in this flow and the one everything else is arranged around. It sets the muhurtham window, the catering rules, the decorator’s access and whether we are bringing power and washrooms with us.',
+      options: [
+        alreadyBooked('Almost every wedding has the hall booked before anything else. Tell your coordinator which, and we work to its kitchen rules, its decor restrictions and its access timings.'),
+        atHome('A home wedding — the compound, the street outside, a pandal over both. Still done, and we plan the whole build rather than the hall.'),
+      ],
+      packIds: ['venue_community', 'venue_banquet', 'venue_resort', 'venue_lawn'],
+    },
     chapters: [
       ask({
         id: 'functions',
@@ -1373,6 +1723,10 @@ export const BLUEPRINTS = {
     promise: 'Around ten questions, all skippable. The price comes once at the end.',
     cuisineLead: ['karnataka', 'north_indian', 'tamil', 'andhra', 'multi_cuisine'],
     vegDefault: true,
+    venue: anywhere({
+      why: 'An engagement is the first event both families attend together, so the room matters more than its size. It also sets what we need to bring — a lawn in April needs fans and a generator.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_resort', 'venue_lawn'],
+    }),
     chapters: [
       ask({
         id: 'format',
@@ -1483,6 +1837,11 @@ export const BLUEPRINTS = {
     promise: 'Around ten questions. Nothing priced until you have built the whole evening.',
     cuisineLead: ['north_indian', 'mughlai', 'indo_chinese', 'chaat_street', 'multi_cuisine'],
     vegDefault: false,
+    venue: anywhere({
+      why: 'A sangeet needs a floor, a sound limit that lets you use it, and somewhere the rehearsals can happen the day before. Not every hall gives you all three, and we check before booking.',
+      homeDesc: 'The terrace, the compound or the clubhouse. Works beautifully up to about a hundred, and the noise rules are yours rather than a hall manager’s.',
+      packIds: ['venue_banquet', 'venue_resort', 'venue_lawn', 'venue_community'],
+    }),
     chapters: [
       ask({
         id: 'format',
@@ -1585,6 +1944,16 @@ export const BLUEPRINTS = {
     promise: 'Everything below is built around the muhurtham. No price until the end.',
     cuisineLead: ['karnataka', 'udupi', 'tamil', 'jain_satvik', 'andhra'],
     vegDefault: true,
+    venue: {
+      question: 'Where is the upanayanam?',
+      why: 'A homa runs for two to three hours and needs shelter, still air and somewhere the smoke can go. That rules out the open-lawn end of a generic venue list, which is why this one is shorter.',
+      options: [
+        atHome('The house or the compound, with a pandal over the homa kunda. The most common answer, and the one most families’ traditions assume.'),
+        atTemple('The temple hall your family uses. We confirm the slot, coordinate with their purohit and carry everything in and out.'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community', 'venue_banquet'],
+    },
     chapters: [
       ask({
         id: 'shape',
@@ -1688,6 +2057,16 @@ export const BLUEPRINTS = {
     promise: 'Short and gentle. No price until you have chosen everything.',
     cuisineLead: ['tamil', 'andhra', 'karnataka', 'udupi', 'jain_satvik'],
     vegDefault: true,
+    venue: {
+      question: 'Where is the seemantham?',
+      why: 'Traditionally at the mother-to-be’s parents’ house, and practically, wherever she is most comfortable sitting for three hours in her seventh or eighth month. That is the whole reason this list is short.',
+      options: [
+        atHome('Her parents’ house or your own, which is where the great majority of these happen.', 'At home — usually her parents’ house'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community', 'venue_banquet'],
+      footnote: 'No lawn or resort here on purpose — an eight-month pregnancy and an outdoor afternoon function do not belong on the same page.',
+    },
     chapters: [
       ask({
         id: 'style',
@@ -1788,6 +2167,12 @@ export const BLUEPRINTS = {
     promise: 'Around nine questions. The price arrives once, at the end.',
     cuisineLead: ['karnataka', 'north_indian', 'multi_cuisine', 'udupi', 'continental'],
     vegDefault: true,
+    venue: anywhere({
+      why: 'A retirement runs one of two ways — the office does it, or the family does it — and the room says which. Both are worth doing properly, and they need different things.',
+      homeDesc: 'The house or the apartment clubhouse, for a family send-off rather than an office one.',
+      packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
+      extra: [atOffice('The office, the auditorium or the department floor — the send-off colleagues organise, with the family invited.')],
+    }),
     chapters: [
       ask({
         id: 'host',
@@ -1881,6 +2266,11 @@ export const BLUEPRINTS = {
     promise: 'Eight or nine quick questions, and the price at the end.',
     cuisineLead: ['indo_chinese', 'north_indian', 'continental', 'chaat_street', 'multi_cuisine'],
     vegDefault: false,
+    venue: anywhere({
+      why: 'A graduation party is a family lunch and a friends’ evening pretending to be one event. Where it is decides which of the two it actually becomes.',
+      homeDesc: 'The house, the terrace or the clubhouse — the cheapest and the loudest, in the good sense.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
+    }),
     chapters: [
       ask({
         id: 'level',
@@ -1975,6 +2365,16 @@ export const BLUEPRINTS = {
     promise: 'Around twelve questions. One consolidated estimate at the end, with GST shown separately.',
     cuisineLead: ['multi_cuisine', 'north_indian', 'continental', 'indo_chinese', 'karnataka'],
     vegDefault: false,
+    venue: {
+      question: 'Where is it being held?',
+      why: 'A corporate event lives on logistics — access for a truck, a lift that takes a screen, power for the rig, and a security desk that has your vendor list. All of it follows from this answer.',
+      options: [
+        atOffice('Your own floor, cafeteria or auditorium. Cheapest, and the one with the most rules — we work to your facilities and security process.'),
+        alreadyBooked('Tell your coordinator which venue and we deal with its AV vendor, its exclusivity clauses and its overtime rates.'),
+      ],
+      packIds: ['venue_banquet', 'venue_resort', 'venue_lawn', 'venue_community'],
+      footnote: 'No "at home" on this list — if a team event is at somebody’s house, plan it as a Get-Together instead and the flow will fit it better.',
+    },
     chapters: [
       ask({
         id: 'type',
@@ -2125,6 +2525,1759 @@ export const BLUEPRINTS = {
       cleanup({ why: 'Most corporate venues bill by the hour past the booked window. This is a fixed cost against a variable one.' }),
     ],
   },
+
+
+  /* ═══════════════════════ NEW VEHICLE ═══════════════════════════════
+     The occasion this catalogue was most obviously missing.
+
+     Roughly every new vehicle sold in India gets a garland, a lemon under
+     the wheel and a trip to a temple, and the arranging of it is done by
+     whoever in the family is free that morning — usually badly, always in a
+     hurry, and inside a delivery window the showroom controls. Nobody sells
+     it as a service, which is exactly why it belongs here.
+
+     ── The one thing this flow gets right that a generic one cannot ──────
+     "Vehicle" is not one thing. A Bullet, a Swift, a school van and a
+     tractor are four different mornings with four different decorations,
+     four different rites and four completely different amounts of money.
+     So the first question sorts them, and every chapter after it is gated
+     on the answer: nobody buying a scooter is offered a drone, and nobody
+     inaugurating a lorry is offered a fondant cake.
+
+     ── And the flow is SHORT ─────────────────────────────────────────────
+     This is the one occasion in the catalogue where the customer is under
+     time pressure while using the app — often standing in a showroom with
+     the keys in the other hand. A scooter pooja is eight screens. That is
+     deliberate, and it is why the meal question is a gate rather than five
+     screens of menu. */
+  vehicle_pooja: {
+    id: 'vehicle_pooja',
+    opening: 'Congratulations. Let’s get the pooja and the photographs right.',
+    promise: 'A short one — built around your delivery slot. No price until you have seen everything.',
+    cuisineLead: ['karnataka', 'udupi', 'north_indian', 'chaat_street', 'multi_cuisine'],
+    vegDefault: true,
+    venue: {
+      question: 'Where is the pooja happening?',
+      why: 'This is the only decision here with a clock attached. A showroom gives you a delivery bay for about forty minutes; a temple gives you a slot; your own portico gives you the whole morning. What can be set up depends entirely on which.',
+      options: [
+        {
+          id: 'showroom',
+          emoji: '🏬',
+          name: 'At the showroom, on delivery',
+          desc: 'The decorator and the photographer meet you in the delivery bay. The most common answer, and the tightest window.',
+          includes: [
+            'Delivery slot confirmed with the showroom',
+            'Decorator on site fifteen minutes before you',
+            'Permission asked for a carpet and a name board',
+            'Everything cleared before you drive out',
+          ],
+          note: 'Some showrooms will not allow an outside decorator into the bay. We check yours before confirming anything.',
+        },
+        {
+          id: 'temple',
+          emoji: '🛕',
+          name: 'At the temple',
+          desc: 'The vehicle is driven to the temple and the archana done there. We meet you at the gate with the garland, the samagri and the prasada packets.',
+          outdoor: true,
+          includes: [
+            'Archana booked in your name and nakshatra',
+            'Garland, coconut, lemons and camphor carried in',
+            'Prasada packets for whoever is with you',
+            'Photographer briefed on where he is allowed to stand',
+          ],
+        },
+        {
+          id: 'own_venue',
+          emoji: '🏠',
+          name: 'At home, in the portico or the compound',
+          desc: 'The purohit comes to you, the rangoli goes down in front of the gate, and there is no clock on any of it.',
+          includes: [
+            'Purohit at your door at the muhurtham',
+            'Rangoli and toran at the gate',
+            'Full decoration, with time to photograph it',
+            'Sweets handed out to the street',
+          ],
+        },
+        {
+          id: 'workplace',
+          emoji: '🏭',
+          name: 'At the office, the yard or the site',
+          desc: 'For a commercial vehicle joining a fleet — done where it will actually work, with the crew who will drive it.',
+          outdoor: true,
+          includes: ['Setup at the yard or the site gate', 'Pooja with the driver and the crew', 'Sweets for the whole shift', 'Company name board fitted'],
+        },
+      ],
+      packIds: [],
+      footnote: 'No halls, lawns or resorts on this list — a vahana pooja happens where the vehicle is.',
+    },
+    food: mealOptional({
+      question: 'Is there a meal afterwards, or just sweets?',
+      why: 'Most vehicle poojas end with a packet of kesari bath and everybody going to work. Some become a full family lunch. Both are completely normal, and answering honestly here saves you four screens of menu and a large number in the estimate.',
+      yes: { name: 'Yes — there is a proper meal', desc: 'Family coming home for lunch afterwards. We will plan the spread with you.' },
+      no: { name: 'No meal — sweets and prasada only', desc: 'The usual. Skip straight past the menu; the sweets are a question further down.' },
+    }),
+    chapters: [
+      ask({
+        id: 'vehicle',
+        title: 'What you bought',
+        emoji: '🔑',
+        question: 'What have you bought?',
+        why: 'Everything below changes on this answer — the decoration, the length of the rite, whether a drone is worth anything, and how many sweet boxes the street is expecting. A tractor and a scooter are not the same morning.',
+        options: [
+          { id: 'bike', emoji: '🏍️', name: 'A motorcycle', desc: 'Bullet, Classic, sports or commuter — the garland goes on the handlebars.', flags: { twoWheeler: true } },
+          { id: 'scooter', emoji: '🛵', name: 'A scooter or a moped', desc: 'The most-bought vehicle in the country, and the one nobody arranges anything for.', flags: { twoWheeler: true } },
+          { id: 'ev_two', emoji: '⚡', name: 'An electric two-wheeler', desc: 'Ather, Ola, iQube, Chetak. Same rite, and no exhaust to work around with the camphor.', flags: { twoWheeler: true, ev: true } },
+          { id: 'car', emoji: '🚗', name: 'A car', desc: 'Hatchback, sedan or SUV — decided over months, and worth a proper morning.', flags: { car: true } },
+          { id: 'ev_car', emoji: '🔋', name: 'An electric car', desc: 'We keep the camphor and the lamp well away from the charging port. It matters.', flags: { car: true, ev: true } },
+          { id: 'luxury', emoji: '🏎️', name: 'A luxury or imported car', desc: 'The one the dealership does a handover ceremony for. Photographs to match.', flags: { car: true, luxury: true, big: true } },
+          { id: 'auto', emoji: '🛺', name: 'An auto-rickshaw', desc: 'A livelihood rather than a purchase. The pooja matters more here than almost anywhere.', flags: { commercial: true } },
+          { id: 'commercial', emoji: '🚚', name: 'A lorry, tempo or goods vehicle', desc: 'Banana stems at the cabin, a heavy garland, and the name painted across the front.', flags: { commercial: true, big: true } },
+          { id: 'tractor', emoji: '🚜', name: 'A tractor or farm equipment', desc: 'The biggest of these celebrations by a distance, and usually the whole village attends.', flags: { commercial: true, big: true, farm: true } },
+          { id: 'fleet', emoji: '🚌', name: 'A bus, van or fleet vehicle', desc: 'A school van, a staff bus, or several at once joining a fleet.', flags: { commercial: true, big: true, fleet: true } },
+        ],
+      }),
+      ask({
+        id: 'occasion_kind',
+        title: 'The morning',
+        emoji: '🌅',
+        question: 'How much of a thing is this?',
+        why: 'Some families want the archana done and the keys in hand inside half an hour. Others have waited years for this and want the street to see it. Both are normal; they are planned completely differently.',
+        options: [
+          { id: 'quick', emoji: '⏱️', name: 'Quick and traditional', desc: 'Garland, lemon, archana, photograph, done. Under an hour.', flags: { quick: true } },
+          { id: 'family', emoji: '👨‍👩‍👧', name: 'The family is coming', desc: 'Parents, in-laws and a few neighbours, sweets handed round, photographs taken properly.', flags: {} },
+          { id: 'celebration', emoji: '🎉', name: 'A proper celebration', desc: 'A long-awaited purchase. Full decoration, a band if you want one, and a meal afterwards.', flags: { big: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'The rite',
+        emoji: '🙏',
+        question: 'Who is performing the vahana pooja?',
+        why: 'A purohit who does these regularly knows both the short form and the long one, brings his own kit, and will not keep a showroom delivery bay waiting while somebody fetches a coconut.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_home_pooja', grand: 'priest_homam' },
+        skipLabel: 'The temple priest or a family elder is doing it',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Shall we bring the samagri?',
+        why: 'Coconut, lemons, kumkuma, camphor, agarbatti, a garland and the plantain — the list somebody in every family ends up buying at seven in the morning on the way to the showroom.',
+        packIds: ['pooja_basic', 'pooja_homam_kit'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_basic', grand: 'pooja_homam_kit' },
+        skipLabel: 'We have bought everything already',
+      }),
+      svc({
+        serviceId: 'vehicle_decor',
+        title: 'The vehicle',
+        emoji: '🚗',
+        question: 'How is the vehicle being dressed?',
+        why: 'This is the photograph. Everything else about this morning is forty minutes long; the garland on the bonnet is what stays on the family group for the next decade.',
+        packIds: ['vdec_two_wheeler', 'vdec_car_classic', 'vdec_car_premium', 'vdec_commercial'],
+        recommend: { close: 'vdec_car_classic', family: 'vdec_car_classic', full_house: 'vdec_car_premium', grand: 'vdec_car_premium' },
+        skipLabel: 'We are buying the garland ourselves',
+      }),
+      svc({
+        serviceId: 'photography',
+        id: 'vehicle_photography',
+        title: 'Photos',
+        emoji: '📸',
+        question: 'Who is photographing the handover?',
+        why: 'The keys change hands in about four seconds, and the person receiving them cannot photograph it. What most families are left with is a phone picture under a showroom fluorescent tube.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_half_day', grand: 'photo_full_day' },
+        skipLabel: 'A phone is fine for this',
+      }),
+      svc({
+        serviceId: 'videography',
+        id: 'vehicle_videography',
+        title: 'Video',
+        emoji: '🎬',
+        question: 'A short film of it?',
+        why: 'Ninety seconds — the shutter going up, the garland going on, the first drive out. It is the single most-shared thing anybody makes out of a day like this.',
+        packIds: ['video_invite', 'video_event', 'video_cinematic'],
+        recommend: { family: 'video_invite', full_house: 'video_event', grand: 'video_cinematic' },
+        skipLabel: 'Photographs are enough',
+      }),
+      svc({
+        serviceId: 'drone',
+        title: 'Aerial',
+        emoji: '🚁',
+        question: 'A drone shot of the first drive?',
+        why: 'One overhead pass as the vehicle leaves. It earns its place on an open road or a farm and nowhere else — inside a city showroom there is nothing for it to see, and we would rather say so than take the money.',
+        packIds: ['drone_basic', 'drone_full'],
+        recommend: { grand: 'drone_basic' },
+        skipLabel: 'Not needed',
+        showIf: ctx => ctx.flags.luxury || ctx.flags.farm || ctx.flags.big,
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram at the gate?',
+        why: 'Traditional for the first entry of anything into a house — a bride, a kalasha, or a vehicle. Fifteen minutes of it, as you drive in.',
+        packIds: ['nadaswaram_pair', 'shehnai_pair'],
+        recommend: { grand: 'nadaswaram_pair' },
+        skipLabel: 'Not this time',
+        showIf: ctx => ctx.flags.big || ctx.flags.farm,
+      }),
+      svc({
+        serviceId: 'drum',
+        title: 'The band',
+        emoji: '🥁',
+        question: 'Dhol or a band for the drive home?',
+        why: 'For a tractor arriving in a village or a lorry joining a fleet this is not decoration, it is the announcement. The whole street comes out for it.',
+        packIds: ['drum_dhol', 'drum_chende', 'drum_band'],
+        recommend: { full_house: 'drum_dhol', grand: 'drum_band' },
+        skipLabel: 'No band',
+        showIf: ctx => ctx.flags.big || ctx.flags.commercial,
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Sweets for the street and the office?',
+        why: 'The part of this occasion that actually costs money, and the part everybody underestimates. Neighbours, the office, the watchman, the temple — the count is always higher than the guest list.',
+        packIds: ['sweet_temple', 'sweet_traditional', 'sweet_premium', 'sweet_corporate'],
+        multi: true,
+        recommend: { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' },
+        skipLabel: 'We will buy the sweets ourselves',
+      }),
+      svc({
+        serviceId: 'cake',
+        title: 'Cake',
+        emoji: '🎂',
+        question: 'A cake as well?',
+        why: 'Increasingly common with a first car, and genuinely nice if there are children in the house. A photo cake of the vehicle needs two days’ notice.',
+        packIds: ['cake_cream_1kg', 'cake_photo', 'cake_fondant'],
+        recommend: { family: 'cake_cream_1kg', full_house: 'cake_photo', grand: 'cake_fondant' },
+        skipLabel: 'No cake',
+        showIf: ctx => !ctx.flags.quick,
+      }),
+      svc({
+        serviceId: 'vehicle_care',
+        title: 'Protection',
+        emoji: '✨',
+        question: 'Detailing, coating or accessories?',
+        why: 'Booked for a day AFTER the pooja, at a workshop, never on the morning itself. It is on this page because the showroom will quote you for exactly this at roughly three times the price while you are still holding the keys.',
+        packIds: ['vcare_bike_polish', 'vcare_detail', 'vcare_coating', 'vcare_accessories'],
+        multi: true,
+        recommend: {},
+        skipLabel: 'No — nothing extra for the vehicle',
+      }),
+      svc({
+        serviceId: 'gifting',
+        title: 'For the driver',
+        emoji: '🎀',
+        question: 'Something for whoever will be driving it?',
+        why: 'For a commercial vehicle the driver is the person whose year this changes. A shawl and a small gift on the day is how that is marked, and it is remembered for a long time.',
+        packIds: ['hamper_festive', 'hamper_corporate'],
+        recommend: { family: 'hamper_festive', full_house: 'hamper_corporate', grand: 'hamper_corporate' },
+        skipLabel: 'Not needed',
+        showIf: ctx => !!ctx.flags.commercial,
+      }),
+      // Both of these only exist if people come back to the house. For the
+      // scooter bought on a Tuesday morning — which is most of them — the
+      // flow ends at the sweets, and it should.
+      returnGifts({
+        why: 'Only if the family is coming home afterwards — a small thing for the people who took a morning off to be there.',
+        packIds: ['gift_budget', 'gift_mid'],
+        recommend: { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
+        showIf: ctx => ctx.guests >= 25,
+      }),
+      // Almost never shown, and it has to be here: a tractor pooja in a village
+      // with three hundred people and a lunch on the threshing floor needs
+      // parking marshals and a generator exactly as much as a wedding does.
+      // Every one of these is gated past a headcount a showroom handover
+      // never reaches.
+      ...groundwork,
+      cleanup({
+        why: 'Flowers off the bonnet, the coconut swept up, and the portico back to normal before you have to park in it.',
+        showIf: ctx => ctx.guests >= 25,
+      }),
+    ],
+  },
+
+  /* ═══════════════════ HALF-SAREE / RITU KALA ════════════════════════
+     Missing from the original fifteen, and it should not have been. In
+     coastal Andhra, Telangana and much of Tamil Nadu the langa voni runs at
+     genuine wedding scale — four hundred guests, a stage, a videographer and
+     a full leaf meal — and a family planning one was being handed the
+     birthday flow.
+
+     ── The line this copy walks ──────────────────────────────────────────
+     The function marks a girl's coming of age, and the app is talking to her
+     parents while she is very likely reading over their shoulder. So nothing
+     here names the reason, everything names the celebration, and she is the
+     guest of honour rather than the subject. That is also exactly how the
+     invitation is worded in every family that holds one. */
+  half_saree: {
+    id: 'half_saree',
+    opening: 'Let’s plan the half-saree function properly.',
+    promise: 'Around fifteen questions, in the order a family decides them. No price until the end.',
+    cuisineLead: ['andhra', 'tamil', 'karnataka', 'udupi', 'multi_cuisine'],
+    vegDefault: true,
+    venue: anywhere({
+      why: 'A langa voni is either a morning at home with the close family or an evening function with a stage — and the two need completely different rooms. This answer also decides whether we bring power and fans with us.',
+      homeDesc: 'The house or the apartment clubhouse, with a pandal in the compound if the numbers need one.',
+      packIds: ['venue_community', 'venue_banquet', 'venue_lawn', 'venue_resort'],
+    }),
+    chapters: [
+      ask({
+        id: 'scale_kind',
+        title: 'The day',
+        emoji: '🌺',
+        question: 'What kind of function is this?',
+        why: 'These range from a morning rite with twenty relatives to an evening reception with a stage and four hundred guests. Both are called the same thing and almost nothing about them is the same.',
+        options: [
+          { id: 'ritual_only', emoji: '🪔', name: 'The rite, and close family', desc: 'The pooja, the elders, the gifts, and lunch at home. A morning.', flags: { ritual: true } },
+          { id: 'traditional', emoji: '🌼', name: 'Traditional function with lunch', desc: 'The rite in the morning, a hall, and a leaf meal for both sides of the family.', flags: { ritual: true, hall: true } },
+          { id: 'grand', emoji: '✨', name: 'A full function with a stage', desc: 'An evening reception — stage, entry, photographer, and the whole extended family.', flags: { ritual: true, hall: true, stage: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'The rite',
+        emoji: '🙏',
+        question: 'Who is conducting the ceremony?',
+        why: 'A purohit who knows this particular samskara and your family’s tradition. The sequence genuinely differs between Telugu, Tamil and Kannada families, and it matters to the grandmothers in the room.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'Our family purohit is coming',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri and the ritual items?',
+        why: 'Haldi, kumkuma, the five fruits, the arati thalis, the coconut, and the bangles the aunts will distribute. Bought and laid out the night before rather than at six in the morning.',
+        packIds: ['pooja_basic', 'pooja_homam_kit'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'The family is arranging it',
+      }),
+      svc({
+        serviceId: 'bridal_wear',
+        title: 'Draping',
+        emoji: '🥻',
+        question: 'Somebody to drape the half-saree?',
+        why: 'The langa voni is being worn for the first time, in front of everybody, and it has to sit correctly for four hours and photograph well doing it. A draper takes twenty minutes and removes the one thing that can go visibly wrong.',
+        packIds: ['bridal_draping', 'bridal_stylist', 'bridal_trousseau'],
+        recommend: { close: 'bridal_draping', family: 'bridal_draping', full_house: 'bridal_stylist', grand: 'bridal_stylist' },
+        skipLabel: 'Her mother and aunts are doing it',
+      }),
+      svc({
+        serviceId: 'makeup',
+        title: 'Makeup',
+        emoji: '💄',
+        question: 'Makeup and hair?',
+        why: 'Age-appropriate and photograph-appropriate are the two things to get right, and a stylist who does these regularly knows the difference. Jasmine, a plait, and nothing that looks like a bridal trial.',
+        packIds: ['makeup_guest', 'makeup_bridal', 'makeup_multi_day'],
+        recommend: { close: 'makeup_guest', family: 'makeup_guest', full_house: 'makeup_bridal', grand: 'makeup_bridal' },
+        skipLabel: 'No professional makeup',
+      }),
+      svc({
+        serviceId: 'mehendi',
+        title: 'Mehendi',
+        emoji: '🪷',
+        question: 'Mehendi the evening before?',
+        why: 'Usually the night before, at home, with the cousins. It is the part of the whole occasion the honoree actually looks forward to.',
+        packIds: ['mehendi_guest', 'mehendi_bridal', 'mehendi_premium'],
+        recommend: { close: 'mehendi_guest', family: 'mehendi_guest', full_house: 'mehendi_bridal', grand: 'mehendi_bridal' },
+        skipLabel: 'No mehendi',
+      }),
+      dining({
+        why: 'A half-saree lunch is a leaf meal, seated, and the extended family will measure it against the last one they attended. This is not the occasion for a standing buffet.',
+        packIds: ['dining_leaf', 'dining_floor', 'dining_round', 'dining_buffet_standing'],
+        recommend: { close: 'dining_floor', family: 'dining_leaf', full_house: 'dining_leaf', grand: 'dining_leaf' },
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram for the entry?',
+        why: 'Playing as she walks in. In a Telugu or Tamil family this is not an extra — it is what the entry sounds like.',
+        packIds: ['nadaswaram_pair', 'nadaswaram_troupe'],
+        recommend: { close: 'nadaswaram_pair', family: 'nadaswaram_pair', full_house: 'nadaswaram_troupe', grand: 'nadaswaram_troupe' },
+        skipLabel: 'Not this time',
+      }),
+      svc({
+        serviceId: 'live_music',
+        title: 'Music',
+        emoji: '🎻',
+        question: 'Music through the meal?',
+        why: 'A veena or a flute duo through lunch, which lets the elders keep talking. A DJ at a function with three generations in the room empties the hall.',
+        packIds: ['music_classical_duo', 'music_band'],
+        recommend: { full_house: 'music_classical_duo', grand: 'music_classical_duo' },
+        skipLabel: 'No live music',
+        showIf: ctx => !!ctx.flags.hall,
+      }),
+      photography({
+        question: 'Who is photographing this?',
+        why: 'The photographs from this function end up in the wedding album ten years later. It is worth somebody who has shot one before and knows what the elders will want framed.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_full_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'The entry, the rite, and the blessings from the elders. Ten minutes of film that will be watched again at her wedding.',
+      }),
+      svc({
+        serviceId: 'photobooth',
+        title: 'Photo corner',
+        emoji: '🤳',
+        question: 'A corner for the cousins?',
+        why: 'It gives thirty teenagers something to do that is not standing near the food, and it is where half the photographs anybody keeps come from.',
+        packIds: ['booth_classic', 'booth_360', 'booth_mirror'],
+        recommend: { full_house: 'booth_classic', grand: 'booth_360' },
+        skipLabel: 'No booth',
+        showIf: ctx => ctx.flags.stage || ctx.guests >= 150,
+      }),
+      svc({
+        serviceId: 'emcee',
+        title: 'Host',
+        emoji: '🎙️',
+        question: 'Somebody running the evening?',
+        why: 'With a stage and four hundred guests, somebody has to hold the running order — otherwise the entry happens while half the hall is still at the buffet.',
+        packIds: ['emcee_standard', 'emcee_full'],
+        recommend: { full_house: 'emcee_standard', grand: 'emcee_full' },
+        skipLabel: 'The family will run it',
+        showIf: ctx => ctx.flags.stage || ctx.guests >= 200,
+      }),
+      returnGifts({
+        why: 'Blouse pieces, arishina-kumkuma and a small gift for the women — the tradition at this function specifically. Counted properly, because running out is remembered.',
+        packIds: ['gift_budget', 'gift_mid', 'gift_premium'],
+        recommend: { close: 'gift_budget', family: 'gift_mid', full_house: 'gift_mid', grand: 'gift_premium' },
+      }),
+      invitations({ why: 'Printed for the elders and digital for everybody else, worded the way this function is traditionally worded.' }),
+      ...groundwork,
+      cleanup({ why: 'Four hundred leaves, a stage and a floral backdrop, cleared the same night — because the hall is booked again from ten tomorrow.' }),
+    ],
+  },
+
+  /* ═════════════════ MUNDAN / CHUDAKARANA ════════════════════════════
+     A temple morning and a lunch. It needs its own flow because half of it
+     happens somewhere we do not control: a tonsure at Tirupati,
+     Dharmasthala or the family temple has a queue, a slot, and rules about
+     what may be carried in. Planned as "a small birthday" it produces a
+     decorated hall that nobody reaches until two in the afternoon. */
+  mundan: {
+    id: 'mundan',
+    opening: 'Let’s plan the mundan, and what happens after it.',
+    promise: 'Ten or so questions. Nothing is booked, and the price comes at the end.',
+    cuisineLead: ['karnataka', 'udupi', 'tamil', 'north_indian', 'multi_cuisine'],
+    vegDefault: true,
+    venue: {
+      question: 'Where is the tonsure being done?',
+      why: 'A temple has a queue and a slot and will not wait for you. A rite at home runs on your own muhurtham. Everything after it — the lunch, the photographs, the travel — is arranged completely differently in each case.',
+      options: [
+        atTemple('The temple your family goes to. We confirm the slot, coordinate with their purohit, and carry everything in and out.', 'At our family temple'),
+        {
+          id: 'pilgrimage',
+          emoji: '🚌',
+          name: 'At a pilgrimage temple',
+          desc: 'Tirupati, Dharmasthala, Palani, Ghati Subramanya. A travel day as much as a function, and it starts at four in the morning.',
+          outdoor: true,
+          includes: [
+            'Slot and darshan timing checked for your date',
+            'Travel and a meeting point for the whole party',
+            'Everything carried, because nothing can be bought there',
+            'Prasada distribution arranged at the gate',
+          ],
+          note: 'Big temples restrict cameras and outside materials. We confirm the rules for yours before quoting.',
+        },
+        atHome('The homa, the barber and the first lock of hair, all in the house, on your own clock.', 'At home, with a purohit'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community', 'venue_banquet'],
+      footnote: 'No lawns or resorts — a chudakarana is held at a temple or at home.',
+    },
+    food: mealOptional({
+      question: 'Is there a lunch afterwards?',
+      why: 'Some families do the tonsure at the temple and go home. Most feed whoever came. Telling us now decides whether the next four screens are about food, or are skipped entirely.',
+      yes: { name: 'Yes — a meal for everybody who came', desc: 'At home or at a hall. We will plan the spread with you.' },
+      no: { name: 'No meal — the temple, and home', desc: 'The rite and the prasada only. Skip the menu.' },
+    }),
+    chapters: [
+      ask({
+        id: 'age',
+        title: 'The child',
+        emoji: '👶',
+        question: 'How old is the child?',
+        why: 'A one-year-old and a three-year-old are two completely different mornings for everybody present, and it decides whether the lunch is at home with a cot in the next room or at a hall.',
+        options: [
+          { id: 'infant', emoji: '🍼', name: 'Under a year', desc: 'Short, quiet, and everything arranged around a nap.', flags: { infant: true } },
+          { id: 'toddler', emoji: '🧸', name: 'One to three', desc: 'The usual age, and the one that needs a distraction ready.', flags: {} },
+          { id: 'older', emoji: '🎈', name: 'Older than three', desc: 'Old enough to have an opinion about it, which changes how the morning is handled.', flags: { older: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'Purohit',
+        emoji: '🙏',
+        question: 'Who is performing the chudakarana?',
+        why: 'The rite is short but it is fixed to a muhurtham, and in most traditions there is a homa before it. A purohit who does these knows how to keep a fifteen-month-old still for the four minutes that matter.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'The temple priest is performing it',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri and the homa setup?',
+        why: 'The homa kit, the silver razor if your family keeps one, turmeric, and the cloth the hair is collected in. All of it on the list the purohit sends the night before.',
+        packIds: ['pooja_basic', 'pooja_homam_kit'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'The family is arranging it',
+      }),
+      svc({
+        serviceId: 'transport',
+        title: 'Getting there',
+        emoji: '🚌',
+        question: 'How is everybody getting to the temple?',
+        why: 'A pilgrimage tonsure is a convoy leaving at four in the morning with grandparents, a baby and a great deal of luggage. One tempo traveller beats six cars and four wrong turns.',
+        packIds: ['trans_tempo', 'trans_bus', 'trans_cabs'],
+        recommend: { close: 'trans_cabs', family: 'trans_tempo', full_house: 'trans_bus', grand: 'trans_bus' },
+        skipLabel: 'We are making our own way',
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram at the house?',
+        why: 'As the child is brought back in after the tonsure. Fifteen minutes, and it turns an arrival into a return.',
+        packIds: ['nadaswaram_pair', 'nadaswaram_troupe'],
+        recommend: { full_house: 'nadaswaram_pair', grand: 'nadaswaram_pair' },
+        skipLabel: 'Not this time',
+      }),
+      dining({
+        why: 'A mundan lunch is a family lunch — floor seating at home for thirty, a leaf meal in a hall for a hundred and fifty. Neither works standing, with a toddler in the room.',
+        packIds: ['dining_floor', 'dining_leaf', 'dining_round', 'dining_buffet_standing'],
+        recommend: { close: 'dining_floor', family: 'dining_floor', full_house: 'dining_leaf', grand: 'dining_leaf' },
+      }),
+      svc({
+        serviceId: 'cake',
+        title: 'Cake',
+        emoji: '🎂',
+        question: 'A cake at home afterwards?',
+        why: 'Not traditional, and completely normal now — particularly when the mundan and the first birthday fall within a month of each other.',
+        packIds: ['cake_cream_1kg', 'cake_photo', 'cake_fondant'],
+        recommend: { family: 'cake_cream_1kg', full_house: 'cake_cream_1kg', grand: 'cake_photo' },
+        skipLabel: 'No cake',
+      }),
+      photography({
+        question: 'Who is photographing the tonsure?',
+        why: 'The face at the first cut is the photograph, and it happens once. Temples restrict where a camera may stand, and somebody who has shot one there already knows where that is.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'Short — the homa, the first cut, and the child being brought home. Not the whole morning.',
+        packIds: ['video_invite', 'video_event'],
+        recommend: { family: 'video_invite', full_house: 'video_event', grand: 'video_event' },
+      }),
+      svc({
+        serviceId: 'nanny',
+        title: 'For the children',
+        emoji: '👶',
+        question: 'Somebody to help with the small ones?',
+        why: 'A room full of cousins under five, a mother holding the child of the hour, and a lunch to get through. A trained minder for four hours is the cheapest sanity on this page.',
+        packIds: ['nanny_standard', 'nanny_creche'],
+        recommend: { full_house: 'nanny_standard', grand: 'nanny_creche' },
+        skipLabel: 'The family will manage',
+        showIf: ctx => ctx.guests >= 60,
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Sweets for the neighbours and the temple?',
+        why: 'Prasada at the temple gate and a box to the houses on either side. Small money, and it is what makes the day known.',
+        packIds: ['sweet_temple', 'sweet_traditional', 'sweet_premium'],
+        recommend: { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' },
+        skipLabel: 'We will buy them ourselves',
+      }),
+      returnGifts({
+        why: 'Arishina-kumkuma and a small thing for the women who came. Modest by tradition at this function — it is not a wedding.',
+        packIds: ['gift_budget', 'gift_mid'],
+        recommend: { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
+      }),
+      invitations({ why: 'Almost always digital for this one — the muhurtham is confirmed late and half the family is being told on a group.' }),
+      ...groundwork,
+      cleanup({ why: 'A homa kunda and a hundred leaves, out of a house with a toddler asleep in it.' }),
+    ],
+  },
+
+  /* ══════════════════ ANNAPRASHANA / FIRST RICE ══════════════════════
+     Choroonu in Kerala, mukhe bhaat in Bengal, annaprashana nearly
+     everywhere else. A short rite, an enormous number of photographs, and
+     three generations in one room — which is the whole planning problem,
+     because the room is usually a flat and half the people in it are over
+     seventy or under three. */
+  annaprashana: {
+    id: 'annaprashana',
+    opening: 'Let’s plan the first rice properly.',
+    promise: 'Around a dozen questions, most of them quick. The price comes once, at the end.',
+    cuisineLead: ['karnataka', 'udupi', 'bengali', 'kerala', 'tamil'],
+    vegDefault: true,
+    venue: {
+      question: 'Where is the annaprashana?',
+      why: 'A newborn, a homa and a lamp all want the same thing: shelter and still air. That removes most of a generic venue list, so this one only offers what these are actually held in.',
+      options: [
+        atHome('The house or the apartment clubhouse — where the baby can be put down and the grandparents can sit.'),
+        atTemple('The family temple, which is the tradition in Kerala especially. We book the slot and coordinate with their purohit.'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community', 'venue_banquet'],
+      footnote: 'No lawn or resort here — a homa in open wind with a six-month-old is not something a decorator can fix.',
+    },
+    chapters: [
+      ask({
+        id: 'tradition',
+        title: 'Tradition',
+        emoji: '🍚',
+        question: 'Which tradition are you following?',
+        why: 'The rite differs more than people expect. The Bengali mukhe bhaat puts the maternal uncle at the centre of it, the Kerala choroonu is at the temple, and the payasam is not the same payasam. It changes the purohit, the menu and the setup.',
+        options: [
+          { id: 'south', emoji: '🪔', name: 'South Indian annaprashana', desc: 'At home or the temple, with a homa, the silver spoon and payasam.', flags: { south: true } },
+          { id: 'bengali', emoji: '🍛', name: 'Bengali mukhe bhaat', desc: 'The mama feeds the first mouthful, and it is a full function with a proper spread.', flags: { bengali: true, hall: true } },
+          { id: 'kerala', emoji: '🌴', name: 'Kerala choroonu', desc: 'Usually at the temple — Guruvayur or the family temple — followed by a sadya.', flags: { temple: true, south: true } },
+          { id: 'north', emoji: '🕉️', name: 'North Indian annaprashan', desc: 'A havan at home, the tray of objects, and a lunch for the family.', flags: { north: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'Purohit',
+        emoji: '🙏',
+        question: 'Who is conducting it?',
+        why: 'Short rite, fixed muhurtham, and a homa before it in most families. Somebody who has done these knows to keep it to twenty-five minutes, because the baby has a limit and everybody in the room knows what it is.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'Our family purohit is coming',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri and the ritual items?',
+        why: 'The silver bowl and spoon, the tray of objects for the child to choose from, the new clothes, and the samagri for the homa. One list, sourced together, laid out before the purohit arrives.',
+        packIds: ['pooja_basic', 'pooja_homam_kit'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'The family is arranging it',
+      }),
+      dining({
+        why: 'Three generations in one room, and the oldest of them need a chair and somewhere to put a plate down. This decision is what determines whether the grandparents stay for the whole lunch.',
+        packIds: ['dining_leaf', 'dining_floor', 'dining_round', 'dining_buffet_standing'],
+        recommend: { close: 'dining_floor', family: 'dining_leaf', full_house: 'dining_leaf', grand: 'dining_round' },
+      }),
+      svc({
+        serviceId: 'cake',
+        title: 'Cake',
+        emoji: '🎂',
+        question: 'A cake as well?',
+        why: 'Common now, and it makes the afternoon feel like an occasion to the cousins who are too young to care about a homa.',
+        packIds: ['cake_cream_1kg', 'cake_photo', 'cake_fondant'],
+        recommend: { family: 'cake_cream_1kg', full_house: 'cake_photo', grand: 'cake_fondant' },
+        skipLabel: 'No cake',
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram during the rite?',
+        why: 'Through the feeding itself. It covers the gap while the baby decides whether to cooperate, which is not a small thing.',
+        packIds: ['nadaswaram_pair', 'nadaswaram_troupe'],
+        recommend: { full_house: 'nadaswaram_pair', grand: 'nadaswaram_troupe' },
+        skipLabel: 'Not this time',
+      }),
+      svc({
+        serviceId: 'bhajan',
+        title: 'Devotional',
+        emoji: '🎼',
+        question: 'Bhajans while lunch is laid?',
+        why: 'Fills the flat hour between the rite ending and the food being ready, which is otherwise when guests start looking at their phones.',
+        packIds: ['bhajan_mandali', 'bhajan_carnatic'],
+        recommend: { full_house: 'bhajan_mandali', grand: 'bhajan_carnatic' },
+        skipLabel: 'Not needed',
+        showIf: ctx => ctx.guests >= 80,
+      }),
+      photography({
+        question: 'Who is photographing the first mouthful?',
+        why: 'The face when the payasam lands is what the whole family is here for, and it happens exactly once. Nobody holding a baby can take it.',
+      }),
+      videography({
+        why: 'Twenty minutes of film — the homa, the feeding and the tray of objects. Watched every year on that date.',
+      }),
+      svc({
+        serviceId: 'livestream',
+        title: 'For those away',
+        emoji: '📡',
+        question: 'Family watching from elsewhere?',
+        why: 'Grandparents who cannot travel, and the sibling abroad. For a rite this short, a stream is the difference between them seeing it and hearing about it.',
+        packIds: ['stream_single', 'stream_multi'],
+        recommend: { family: 'stream_single', full_house: 'stream_single', grand: 'stream_multi' },
+        skipLabel: 'Everybody will be here',
+      }),
+      svc({
+        serviceId: 'photobooth',
+        title: 'Photo corner',
+        emoji: '🤳',
+        question: 'A corner for the family photographs?',
+        why: 'Every family group wants one with the baby, and without a set corner it happens in a doorway with a fridge in the background.',
+        packIds: ['booth_classic', 'booth_mirror'],
+        recommend: { full_house: 'booth_classic', grand: 'booth_mirror' },
+        skipLabel: 'No booth',
+        showIf: ctx => ctx.guests >= 80,
+      }),
+      svc({
+        serviceId: 'nanny',
+        title: 'For the children',
+        emoji: '👶',
+        question: 'Help with the small ones?',
+        why: 'The mother will be holding the baby all day and cannot also watch four cousins under six. Four hours of a trained minder is the whole difference.',
+        packIds: ['nanny_standard', 'nanny_creche'],
+        recommend: { full_house: 'nanny_standard', grand: 'nanny_creche' },
+        skipLabel: 'The family will manage',
+        showIf: ctx => ctx.guests >= 60,
+      }),
+      returnGifts({
+        why: 'Silver, or a small useful thing, and arishina-kumkuma for the women. One of the occasions where families genuinely do spend on the return gift.',
+        packIds: ['gift_budget', 'gift_mid', 'gift_premium'],
+        recommend: { close: 'gift_budget', family: 'gift_mid', full_house: 'gift_mid', grand: 'gift_premium' },
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Sweets for the neighbours?',
+        why: 'A box to the flats on the floor and one to the office. Cheap, and it is how the news travels.',
+        packIds: ['sweet_traditional', 'sweet_temple', 'sweet_premium'],
+        recommend: { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' },
+        skipLabel: 'We will buy them ourselves',
+      }),
+      invitations({ why: 'Digital, almost always — the date is fixed to a muhurtham that is confirmed about ten days out.' }),
+      ...groundwork,
+      cleanup({ why: 'A homa kunda, a hundred leaves, and a flat that has a sleeping baby in it by four o’clock.' }),
+    ],
+  },
+
+  /* ═══════════════════════ RECEPTION ═════════════════════════════════
+     Priced as a line inside "wedding" until now, which is wrong in the way
+     that costs a family the most money. A reception is a different day, a
+     different hall and a different guest list — the office, the neighbours,
+     the people who could not attend a muhurtham at 5:40 in the morning —
+     and it is frequently the more expensive of the two, because it is the
+     one with a stage, a buffet and four hundred people arriving at once. */
+  reception: {
+    id: 'reception',
+    opening: 'Let’s plan the reception as its own evening.',
+    promise: 'About eighteen questions. Nothing is booked, and there is no price until you have seen everything.',
+    cuisineLead: ['multi_cuisine', 'north_indian', 'mysuru_royal', 'mughlai', 'indo_chinese'],
+    vegDefault: false,
+    venue: {
+      question: 'Where is the reception?',
+      why: 'A reception is judged on how quickly four hundred people get through the door, the stage and the buffet. That is a property of the room more than of anything we can bring, so it is the first thing to fix.',
+      options: [
+        alreadyBooked('Most receptions have the hall booked first. Tell your coordinator which one and we work to its kitchen rules, its decor restrictions and its access timings.'),
+        atHome('A reception in the compound, with a pandal. Works up to about two hundred and gives you the timings a hall would not.'),
+      ],
+      packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
+    },
+    chapters: [
+      ask({
+        id: 'kind',
+        title: 'The evening',
+        emoji: '🥂',
+        question: 'What kind of reception is this?',
+        why: 'A reception on the same evening as the muhurtham and one hosted a week later by the other side are two different events with two different guest lists — and one of them has a couple who have been awake since three in the morning.',
+        options: [
+          { id: 'same_day', emoji: '⏰', name: 'The same evening as the wedding', desc: 'Straight after the muhurtham. Everything has to be built while the wedding is still going on.', flags: { sameDay: true, tight: true } },
+          { id: 'separate', emoji: '📅', name: 'A separate day', desc: 'The usual — its own hall, its own invitation, its own guest list.', flags: {} },
+          { id: 'hometown', emoji: '🏘️', name: 'A second reception in the hometown', desc: 'For the family and the village who could not travel to the wedding.', flags: { hometown: true } },
+          { id: 'cocktail', emoji: '🍸', name: 'A cocktail reception', desc: 'Evening, standing, a bar and a live band rather than a leaf meal.', flags: { standing: true, bar: true } },
+        ],
+      }),
+      dining({
+        why: 'This is where the seating decision is most visible: a standing buffet moves four hundred people in ninety minutes, a seated meal takes three hours and is what the elders came for. Choose the one that matches the list you actually invited.',
+        packIds: ['dining_round', 'dining_buffet_standing', 'dining_leaf', 'dining_lounge'],
+        recommend: { close: 'dining_round', family: 'dining_round', full_house: 'dining_buffet_standing', grand: 'dining_round' },
+      }),
+      svc({
+        serviceId: 'live_counters',
+        title: 'Live counters',
+        emoji: '🥘',
+        question: 'Live counters as well as the meal?',
+        why: 'Counters are what stops the queue at a reception. Chaat and a dosa counter absorb the first forty minutes, which is when everybody arrives at once and the main buffet is not open yet.',
+        packIds: ['counter_chaat', 'counter_dosa', 'counter_grill', 'counter_pasta_global'],
+        multi: true,
+        recommend: { full_house: 'counter_chaat', grand: 'counter_chaat' },
+        skipLabel: 'The buffet is enough',
+      }),
+      svc({
+        serviceId: 'bar',
+        title: 'Drinks',
+        emoji: '🍹',
+        question: 'A bar or a mocktail counter?',
+        why: 'At an Indian reception the mocktail counter does more work than the bar — it is where the people who are not drinking spend the evening, and it keeps them out of the buffet queue.',
+        packIds: ['bar_mocktail', 'bar_full', 'bar_flair'],
+        recommend: { full_house: 'bar_mocktail', grand: 'bar_mocktail' },
+        skipLabel: 'No bar',
+      }),
+      svc({
+        serviceId: 'cake',
+        title: 'Cake',
+        emoji: '🎂',
+        question: 'Is there a cake cutting?',
+        why: 'Standard at a reception now, and it gives the evening a moment with a time on it — which is what stops a reception being three hours of a queue.',
+        packIds: ['cake_tiered', 'cake_fondant', 'cake_dessert_table', 'cake_cream_1kg'],
+        recommend: { close: 'cake_cream_1kg', family: 'cake_tiered', full_house: 'cake_tiered', grand: 'cake_tiered' },
+        skipLabel: 'No cake',
+      }),
+      svc({
+        serviceId: 'makeup',
+        title: 'Styling',
+        emoji: '💄',
+        question: 'Makeup and styling for the evening?',
+        why: 'A reception look is a different one from the muhurtham, done in about an hour, usually in a hall side room with bad light. A stylist who does receptions brings their own.',
+        packIds: ['makeup_bridal', 'makeup_multi_day', 'makeup_groom', 'makeup_guest'],
+        multi: true,
+        recommend: { close: 'makeup_bridal', family: 'makeup_bridal', full_house: 'makeup_bridal', grand: 'makeup_multi_day' },
+        skipLabel: 'Already arranged',
+      }),
+      svc({
+        serviceId: 'wedding_car',
+        title: 'The entry',
+        emoji: '🚗',
+        question: 'How is the couple arriving?',
+        why: 'The entry is the second-most photographed minute of the evening. A decorated car at the porch, or a vintage one, is the whole difference between arriving and making an entrance.',
+        packIds: ['car_sedan', 'car_luxury', 'car_vintage'],
+        recommend: { family: 'car_sedan', full_house: 'car_luxury', grand: 'car_vintage' },
+        skipLabel: 'We are arranging the car',
+      }),
+      svc({
+        serviceId: 'dj',
+        title: 'Music',
+        emoji: '🎵',
+        question: 'What is the music?',
+        why: 'A reception rig has two jobs — background for two hours of a queue, then a floor for the last forty minutes. A rig sized only for the second one makes conversation impossible all evening.',
+        packIds: ['dj_house', 'dj_standard', 'dj_premium'],
+        recommend: { close: 'dj_house', family: 'dj_standard', full_house: 'dj_standard', grand: 'dj_premium' },
+        skipLabel: 'No DJ',
+      }),
+      svc({
+        serviceId: 'live_music',
+        title: 'Live',
+        emoji: '🎻',
+        question: 'Live music as well, or instead?',
+        why: 'A band or a ghazal duo through the meal is what a reception with three generations in the room actually needs. The DJ can have the last hour.',
+        packIds: ['music_band', 'music_ghazal_sufi', 'music_classical_duo', 'music_dj_band'],
+        recommend: { full_house: 'music_band', grand: 'music_band' },
+        skipLabel: 'No live music',
+      }),
+      svc({
+        serviceId: 'emcee',
+        title: 'Host',
+        emoji: '🎙️',
+        question: 'Somebody running the evening?',
+        why: 'Without a host, the cake gets cut while the photographer is eating and the speeches never happen. This is the cheapest thing on the page that changes how the whole evening feels.',
+        packIds: ['emcee_standard', 'emcee_full'],
+        recommend: { family: 'emcee_standard', full_house: 'emcee_standard', grand: 'emcee_full' },
+        skipLabel: 'The family will run it',
+      }),
+      svc({
+        serviceId: 'entertainment',
+        title: 'The act',
+        emoji: '💃',
+        question: 'Any performances?',
+        why: 'A dance troupe for the entry, or stilt walkers at the door. Fifteen minutes of it changes the temperature of an evening that is otherwise a very long queue.',
+        packIds: ['ent_stilt_welcome', 'ent_dance_troupe', 'ent_cheer_led'],
+        recommend: { grand: 'ent_stilt_welcome' },
+        skipLabel: 'No performances',
+        showIf: ctx => ctx.guests >= 250,
+      }),
+      photography({
+        question: 'Who is photographing the reception?',
+        why: 'Four hundred stage photographs, each one a family that will ask for theirs. This is a two-photographer evening at almost any size, and one photographer means half of them never get sent.',
+        packIds: ['photo_half_day', 'photo_full_day', 'photo_wedding_full'],
+        recommend: { close: 'photo_half_day', family: 'photo_full_day', full_house: 'photo_full_day', grand: 'photo_wedding_full' },
+      }),
+      videography({
+        why: 'The entry, the cake, the speeches and the floor. A reception film is shorter than a wedding film and gets watched a great deal more often.',
+        packIds: ['video_event', 'video_cinematic', 'video_wedding_cinema'],
+        recommend: { close: 'video_event', family: 'video_event', full_house: 'video_cinematic', grand: 'video_wedding_cinema' },
+      }),
+      svc({
+        serviceId: 'photobooth',
+        title: 'Photo booth',
+        emoji: '🤳',
+        question: 'A booth away from the stage?',
+        why: 'It takes pressure off the stage queue, which is the single biggest complaint at every reception ever held. Guests who have been photographed already stop queueing.',
+        packIds: ['booth_360', 'booth_classic', 'booth_mirror'],
+        recommend: { full_house: 'booth_classic', grand: 'booth_360' },
+        skipLabel: 'No booth',
+      }),
+      svc({
+        serviceId: 'livestream',
+        title: 'For those away',
+        emoji: '📡',
+        question: 'Streaming it for family abroad?',
+        why: 'Half the reason a hometown reception exists is the people who could not travel. If some of them still cannot, this is how they attend.',
+        packIds: ['stream_single', 'stream_multi'],
+        recommend: { full_house: 'stream_single', grand: 'stream_multi' },
+        skipLabel: 'Everybody will be here',
+      }),
+      svc({
+        serviceId: 'hospitality',
+        title: 'Guests',
+        emoji: '🙋',
+        question: 'Ushers and a cloakroom?',
+        why: 'Four hundred people arriving inside twenty minutes, most carrying a gift and looking for somewhere to put it. Without ushers that is a bottleneck at the door and a pile on a table.',
+        packIds: ['hosp_ushers', 'hosp_guest_manager', 'hosp_cloakroom'],
+        multi: true,
+        recommend: { full_house: 'hosp_ushers', grand: 'hosp_guest_manager' },
+        skipLabel: 'The family will manage the door',
+      }),
+      svc({
+        serviceId: 'fireworks',
+        title: 'The moment',
+        emoji: '🎆',
+        question: 'Something for the entry or the cake?',
+        why: 'Cold pyro is indoor-safe and smokeless. Fifteen seconds of it is what turns the entry into the clip that goes on every family group that night.',
+        packIds: ['fire_cold_pyro', 'fire_outdoor', 'fire_lantern'],
+        recommend: { full_house: 'fire_cold_pyro', grand: 'fire_cold_pyro' },
+        skipLabel: 'Not needed',
+      }),
+      returnGifts({
+        why: 'Four hundred of them, counted, at the door, with somebody handing them out. The counting is the part that goes wrong.',
+        packIds: ['gift_budget', 'gift_mid', 'gift_premium'],
+        recommend: { close: 'gift_budget', family: 'gift_mid', full_house: 'gift_mid', grand: 'gift_premium' },
+      }),
+      invitations({ why: 'A reception invitation goes to a wider and more formal list than the wedding — the office, the neighbours, the business contacts. Printed still matters for this one.' }),
+      svc({
+        serviceId: 'signage',
+        title: 'Signage',
+        emoji: '🪧',
+        question: 'Welcome board and wayfinding?',
+        why: 'A hall with three functions running in it on a Saturday, and your guests looking for yours. One board at the gate solves it.',
+        packIds: ['sign_welcome', 'sign_seating'],
+        multi: true,
+        recommend: { full_house: 'sign_welcome', grand: 'sign_welcome' },
+        skipLabel: 'Not needed',
+      }),
+      ...groundwork,
+      cleanup({ why: 'Halls charge by the hour past the booked window, and a reception always overruns. This is a fixed cost against a variable one.' }),
+    ],
+  },
+
+  /* ═══════════════ SHOP & BUSINESS OPENING ═══════════════════════════
+     Entirely absent from the catalogue, and one of the largest single-day
+     celebration spends in the country outside a wedding. A new shop, clinic,
+     showroom, office or restaurant opens with a homa at dawn, a ribbon at
+     the muhurtham, a band on the pavement, and sweet boxes going out for a
+     fortnight afterwards.
+
+     ── Why it is not just "corporate event" ──────────────────────────────
+     A corporate event is indoors, invited, and run to an agenda. This is on
+     a pavement, uninvited by design — the whole point is that the street
+     sees it — and its success is counted in footfall rather than in
+     attendance. Almost nothing transfers. */
+  shop_opening: {
+    id: 'shop_opening',
+    opening: 'Let’s open it properly. The morning first, then the street.',
+    promise: 'Around sixteen questions, built around your muhurtham. No price until the end.',
+    cuisineLead: ['karnataka', 'north_indian', 'chaat_street', 'indo_chinese', 'multi_cuisine'],
+    vegDefault: true,
+    venue: {
+      question: 'Where is the opening?',
+      why: 'At the premises — that is what an opening is, so we have not asked. What we do need to know is what happens to the people you invited, because a shop floor is not somewhere forty guests can sit down for lunch.',
+      fixed: {
+        id: 'the_premises',
+        emoji: '🏪',
+        name: 'At the new premises',
+        desc: 'Where else. We survey the frontage beforehand — how wide the pavement is, where an arch can stand, whether the board can be lit, and what the neighbouring shops will tolerate.',
+        includes: [
+          'Frontage survey and a layout for the morning',
+          'Pavement width and local permission checked',
+          'Power drawn without tripping a new connection',
+          'Everything cleared before trading starts',
+        ],
+      },
+      options: [
+        {
+          id: 'the_premises',
+          emoji: '🏪',
+          name: 'Everything at the premises',
+          desc: 'Homa, ribbon, band and refreshments all at the shop. The usual answer.',
+          outdoor: true,
+          includes: ['Homa setup inside before the shutter opens', 'Arch, carpet and crowd management outside', 'Refreshment counter that does not block the door', 'Full clear-down before trading'],
+        },
+        {
+          id: 'hall_nearby',
+          emoji: '🍽️',
+          name: 'Opening at the shop, lunch at a hall nearby',
+          desc: 'For a launch where the guests you actually invited need to sit down somewhere that is not a shop floor.',
+          includes: ['Hall found and booked within walking distance', 'Guests directed from the shop to the hall', 'Both ends run on one timeline', 'Separate arrangements for the street and for the invited'],
+        },
+      ],
+      packIds: [],
+      footnote: 'A shop opening happens at the shop. The only real question is where the people who came for it sit down.',
+    },
+    food: mealOptional({
+      question: 'Is there a meal, or refreshments only?',
+      why: 'Most openings hand out sweets, tea and a snack to whoever walks past, and feed nobody a proper meal. Some do a full lunch for invited guests. Telling us now decides whether we plan a kitchen or a counter.',
+      yes: { name: 'Yes — a proper meal for invited guests', desc: 'A lunch or dinner for the people you invited. We will plan the spread.' },
+      no: { name: 'Refreshments and sweets only', desc: 'Tea, a snack and sweet boxes for the street. Skip the menu screens.' },
+    }),
+    chapters: [
+      ask({
+        id: 'business',
+        title: 'The business',
+        emoji: '🏪',
+        question: 'What are you opening?',
+        why: 'A jewellery showroom, a clinic and a restaurant all open on the same morning ritual and then diverge completely — in who is invited, what the street expects, and whether a band on the pavement helps you or embarrasses you.',
+        options: [
+          { id: 'retail', emoji: '🛍️', name: 'A shop or retail store', desc: 'Groceries, garments, mobile, hardware. Footfall from day one is the entire point.', flags: { footfall: true } },
+          { id: 'showroom', emoji: '💎', name: 'A showroom', desc: 'Jewellery, vehicles, furniture, electronics. The most elaborate openings in the country.', flags: { footfall: true, grandOpen: true } },
+          { id: 'food', emoji: '🍽️', name: 'A restaurant, café or bakery', desc: 'The opening IS the marketing, and the first week decides the next year.', flags: { footfall: true, tasting: true } },
+          { id: 'clinic', emoji: '🩺', name: 'A clinic, lab or pharmacy', desc: 'Quieter and more formal — a chief guest, a lamp, and a professional guest list.', flags: { formal: true } },
+          { id: 'office', emoji: '🏢', name: 'An office or a new branch', desc: 'A homa, the team, and a photograph for the company page.', flags: { formal: true } },
+          { id: 'factory', emoji: '🏭', name: 'A factory, warehouse or workshop', desc: 'A machine pooja as much as an opening, and the staff are the guests.', flags: { formal: true, industrial: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'The homa',
+        emoji: '🙏',
+        question: 'Which rite is being performed?',
+        why: 'A Ganapati homa before the shutter goes up is standard, and for a factory there is usually a machine or yantra pooja as well. The muhurtham for it is what the entire morning is built around.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_homam', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'Our family purohit is doing it',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri and the homa setup?',
+        why: 'Delivered to a premises with no cupboards, no kitchen and quite possibly no water yet. That is the actual difficulty, and it is why this is worth handing over.',
+        packIds: ['pooja_basic', 'pooja_homam_kit', 'pooja_annadanam'],
+        recommend: { close: 'pooja_basic', family: 'pooja_homam_kit', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'We are arranging it',
+      }),
+      svc({
+        serviceId: 'inauguration',
+        title: 'The ribbon',
+        emoji: '✂️',
+        question: 'How is it being inaugurated?',
+        why: 'The four minutes every photograph comes from. Without somebody whose job it is, this is three people holding scissors and nobody sure when to cut.',
+        packIds: ['inaug_ribbon', 'inaug_full', 'inaug_chief_guest'],
+        multi: true,
+        recommend: { close: 'inaug_ribbon', family: 'inaug_ribbon', full_house: 'inaug_full', grand: 'inaug_full' },
+        skipLabel: 'We will handle the ribbon ourselves',
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram for the opening?',
+        why: 'Playing from before dawn until the shutter goes up. On a South Indian commercial street this is the sound that tells four hundred people something has opened.',
+        packIds: ['nadaswaram_pair', 'nadaswaram_troupe', 'shehnai_pair'],
+        recommend: { close: 'nadaswaram_pair', family: 'nadaswaram_pair', full_house: 'nadaswaram_troupe', grand: 'nadaswaram_troupe' },
+        skipLabel: 'Not this time',
+      }),
+      svc({
+        serviceId: 'drum',
+        title: 'The band',
+        emoji: '🥁',
+        question: 'A band on the pavement?',
+        why: 'Pure footfall. Twenty minutes of chende or dhol outside a new shop pulls a crowd that a hoarding cannot, and the crowd is the point of the morning.',
+        packIds: ['drum_dhol', 'drum_chende', 'drum_band'],
+        recommend: { family: 'drum_dhol', full_house: 'drum_chende', grand: 'drum_band' },
+        skipLabel: 'No band',
+        showIf: ctx => !!ctx.flags.footfall,
+      }),
+      svc({
+        serviceId: 'folk',
+        title: 'The act',
+        emoji: '🪗',
+        question: 'A troupe or performers outside?',
+        why: 'Dollu kunitha or a stilt walker at the door holds a pavement crowd for an hour rather than four minutes. For a showroom opening this is the single most effective spend on the page.',
+        packIds: ['folk_south', 'folk_north', 'folk_mascot'],
+        recommend: { full_house: 'folk_south', grand: 'folk_south' },
+        skipLabel: 'No performers',
+        showIf: ctx => ctx.flags.footfall || ctx.flags.grandOpen,
+      }),
+      svc({
+        serviceId: 'signage',
+        title: 'Branding',
+        emoji: '🪧',
+        question: 'Boards, standees and the hoarding?',
+        why: 'The nameplate under a cloth, a welcome board at the door, the opening-offer standee inside, and the flex on the road. This is the part of the morning that is still working next week.',
+        packIds: ['sign_welcome', 'sign_seating'],
+        multi: true,
+        recommend: { close: 'sign_welcome', family: 'sign_welcome', full_house: 'sign_welcome', grand: 'sign_welcome' },
+        skipLabel: 'Our own printer is doing it',
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Sweet boxes for the street and the customers?',
+        why: 'The biggest line on this page and the one everybody underestimates. Everybody who walks in on day one gets a box, and so does every shop on the street, and so does every customer for a week.',
+        packIds: ['sweet_corporate', 'sweet_traditional', 'sweet_temple', 'sweet_premium'],
+        multi: true,
+        recommend: { close: 'sweet_traditional', family: 'sweet_corporate', full_house: 'sweet_corporate', grand: 'sweet_corporate' },
+        skipLabel: 'We are ordering the sweets ourselves',
+      }),
+      svc({
+        serviceId: 'emcee',
+        title: 'Host',
+        emoji: '🎙️',
+        question: 'Somebody on the mic?',
+        why: 'To announce the muhurtham, introduce the chief guest, keep the pavement moving and read the opening offers out. Without one, a hundred people stand around waiting for something to be announced.',
+        packIds: ['emcee_standard', 'emcee_corporate', 'emcee_full'],
+        recommend: { family: 'emcee_standard', full_house: 'emcee_corporate', grand: 'emcee_corporate' },
+        skipLabel: 'We will manage',
+      }),
+      photography({
+        question: 'Who is photographing the opening?',
+        why: 'The ribbon, the chief guest, the first customer and the frontage — and every one of those goes straight onto a page, a poster and a WhatsApp status. This is marketing collateral, not memories.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'A one-minute reel of the shutter going up, the crowd, and the first sale. It is the launch advertisement, and it costs less than one hoarding.',
+        packIds: ['video_invite', 'video_event', 'video_cinematic'],
+        recommend: { close: 'video_invite', family: 'video_invite', full_house: 'video_event', grand: 'video_cinematic' },
+      }),
+      svc({
+        serviceId: 'drone',
+        title: 'Aerial',
+        emoji: '🚁',
+        question: 'A drone pass over the frontage?',
+        why: 'Worth it only for a large showroom, a factory, or a frontage with a real crowd outside it. In a narrow commercial street it cannot fly, and we will tell you that rather than take the money.',
+        packIds: ['drone_basic', 'drone_full'],
+        recommend: { grand: 'drone_basic' },
+        skipLabel: 'Not needed',
+        showIf: ctx => ctx.flags.grandOpen || ctx.flags.industrial,
+      }),
+      svc({
+        serviceId: 'gifting',
+        title: 'Gifting',
+        emoji: '🎀',
+        question: 'Hampers for the chief guest and the first customers?',
+        why: 'Somebody was asked to cut the ribbon, and somebody was the first sale. Both should leave with something, and neither should be handed the same box as the street.',
+        packIds: ['hamper_festive', 'hamper_corporate', 'hamper_luxury'],
+        recommend: { family: 'hamper_festive', full_house: 'hamper_corporate', grand: 'hamper_luxury' },
+        skipLabel: 'Not needed',
+      }),
+      svc({
+        serviceId: 'hospitality',
+        title: 'Front of house',
+        emoji: '🙋',
+        question: 'Ushers and a reception desk?',
+        why: 'On day one your own staff are still learning the shop. Somebody else should be receiving guests, collecting numbers and pointing people at the counter.',
+        packIds: ['hosp_ushers', 'hosp_guest_manager', 'hosp_cloakroom'],
+        recommend: { full_house: 'hosp_ushers', grand: 'hosp_guest_manager' },
+        skipLabel: 'Our team will handle it',
+      }),
+      svc({
+        serviceId: 'bouncers',
+        // Its own id, because `groundwork` further down carries a `bouncers`
+        // chapter too and two chapters cannot share one.
+        id: 'pavement_crowd',
+        title: 'Crowd',
+        emoji: '🛡️',
+        question: 'Somebody managing the pavement?',
+        why: 'A queue outside a new shop is the goal and also the problem — it blocks the neighbours’ doors and the road. Two marshals is the difference between a crowd and a complaint.',
+        packIds: ['sec_guard', 'sec_bouncer', 'sec_ladies'],
+        recommend: { full_house: 'sec_guard', grand: 'sec_bouncer' },
+        skipLabel: 'Not needed',
+        showIf: ctx => ctx.flags.footfall || ctx.guests >= 150,
+      }),
+      invitations({ why: 'A printed card for the trade and the chief guest, and a digital one for everybody else. Both need to carry the muhurtham time, not just the date.' }),
+      ...groundworkWithout('bouncers'),
+      cleanup({ why: 'The homa ash, the arch, the flowers and four hundred tea cups — off a pavement you have to trade on tomorrow morning.' }),
+    ],
+  },
+
+  /* ═════════════════════ BHOOMI POOJA ════════════════════════════════
+     The rite that starts a house, and the hardest function in the whole
+     catalogue to actually hold — because it is held on a bare plot.
+
+     There is no shade, no power, no water, no washroom and no parking, and
+     the guests are the family elders. Every generic flow treats those as
+     optional extras behind a guest-count gate. Here they ARE the event, so
+     the venue answer marks the site as outdoors and the groundwork chapters
+     come up for everybody rather than for the large ones only. */
+  bhoomi_pooja: {
+    id: 'bhoomi_pooja',
+    opening: 'Let’s get the ground-breaking right — starting with the shade.',
+    promise: 'Thirteen or so questions, most of them about things nobody thinks of until the morning. No price until the end.',
+    cuisineLead: ['karnataka', 'udupi', 'tamil', 'andhra', 'jain_satvik'],
+    vegDefault: true,
+    venue: {
+      question: 'The pooja is on the site. Where does everybody eat?',
+      why: 'A bhoomi pooja happens on the plot — that is the entire ceremony, so we have not asked. What genuinely varies is what happens at eleven o’clock, when forty relatives are standing on rubble in the sun and are hungry.',
+      fixed: {
+        id: 'the_site',
+        emoji: '🧱',
+        name: 'On the site itself',
+        desc: 'We visit the plot beforehand and plan what has to be carried in: shade, seating, water, power and a washroom. This is the only occasion in the catalogue with none of those already there.',
+        includes: [
+          'Site visit and an access check for a tempo',
+          'Levelling and clearing where the homa will sit',
+          'Shade, water and seating planned for the guest count',
+          'Everything carried in and carried out the same day',
+        ],
+      },
+      options: [
+        {
+          id: 'the_site',
+          emoji: '⛺',
+          name: 'Everything on the site, under a pandal',
+          desc: 'A shamiana over the pooja and the seating, a temporary kitchen at the edge, and the meal served on the plot. The traditional answer.',
+          outdoor: true,
+          includes: ['Pandal over the rite and the dining', 'Temporary kitchen and water supply', 'Portable washroom for the elders', 'Full clear-down before dusk'],
+        },
+        {
+          id: 'home_after',
+          emoji: '🏠',
+          name: 'Pooja on the site, lunch at home',
+          desc: 'The rite on the plot, then everybody drives to the house. Simplest if the site is close and the guest list is small.',
+          outdoor: true,
+          includes: ['Rite and seating on the plot only', 'Guests directed to the house afterwards', 'Meal arranged at the house', 'One timeline across both ends'],
+        },
+        {
+          id: 'hall_nearby',
+          emoji: '🍽️',
+          name: 'Pooja on the site, lunch at a hall nearby',
+          desc: 'For a large family, or a plot with no vehicle access. We find a hall within a few minutes and run both ends on one clock.',
+          outdoor: true,
+          includes: ['Hall shortlisted near the site', 'Rate negotiated and booked', 'Transport between the two arranged', 'Both ends coordinated'],
+        },
+      ],
+      packIds: [],
+      footnote: 'No banquet halls or resorts as the venue — the rite is the ground itself.',
+    },
+    chapters: [
+      ask({
+        id: 'rite',
+        title: 'The rite',
+        emoji: '🧱',
+        question: 'Which rite is being performed?',
+        why: 'It sets the length of the morning, the samagri list, and how much of a structure has to be standing before anybody arrives.',
+        options: [
+          { id: 'bhoomi', emoji: '🪔', name: 'Bhoomi pooja / ground-breaking', desc: 'The nagara pratishtha, the first dig, and the kalasha. Two hours or so.', flags: {} },
+          { id: 'shilanyas', emoji: '🧱', name: 'Shilanyas / foundation stone', desc: 'The first stone laid in the foundation trench, usually with the whole family present.', flags: { extended: true } },
+          { id: 'vaastu', emoji: '🧭', name: 'Vaastu shanti before construction', desc: 'A fuller homa, run by a vaastu-following purohit, before any digging starts.', flags: { homa: true, extended: true } },
+          { id: 'commercial', emoji: '🏗️', name: 'A commercial or apartment project', desc: 'Contractors, engineers and staff as well as family. A working site with a ceremony on it.', flags: { homa: true, commercial: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'Purohit',
+        emoji: '🙏',
+        question: 'Who is conducting it?',
+        why: 'A purohit who will read the plot against your family tradition and the vaastu, confirm the muhurtham, and tell you which corner the first dig goes in. That last one is not a detail to guess at.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_homam', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'Our family purohit is coming',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri, kalasha and the homa setup?',
+        why: 'Navadhanya, the copper kalasha, the silver naga, bricks, cement for the first stone, mango leaves, and the whole list — carried to a plot with nothing on it. There is no shop to run to.',
+        packIds: ['pooja_basic', 'pooja_homam_kit', 'pooja_annadanam'],
+        recommend: { close: 'pooja_basic', family: 'pooja_homam_kit', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'The family is arranging it',
+      }),
+      dining({
+        why: 'On a plot this is not a preference — it is whether there is anywhere at all to sit. Floor seating under a pandal is the traditional answer and it works; a standing buffet on rubble does not.',
+        packIds: ['dining_floor', 'dining_leaf', 'dining_round', 'dining_buffet_standing'],
+        recommend: { close: 'dining_floor', family: 'dining_floor', full_house: 'dining_leaf', grand: 'dining_leaf' },
+      }),
+      svc({
+        serviceId: 'nadaswaram',
+        title: 'Mangala vadya',
+        emoji: '🪈',
+        question: 'Nadaswaram for the first dig?',
+        why: 'Playing as the ground is broken. On an empty plot with no walls it is the only thing that makes the moment feel like a ceremony rather than a site visit.',
+        packIds: ['nadaswaram_pair', 'nadaswaram_troupe'],
+        recommend: { family: 'nadaswaram_pair', full_house: 'nadaswaram_pair', grand: 'nadaswaram_troupe' },
+        skipLabel: 'Not this time',
+      }),
+      photography({
+        question: 'Who is photographing the first dig?',
+        why: 'The photograph that goes at the front of the album you make when the house is finished — the family standing on bare ground, three years before it is a house.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'Short. The homa, the first dig, and the blessings — not the whole morning.',
+        packIds: ['video_invite', 'video_event'],
+        recommend: { family: 'video_invite', full_house: 'video_event', grand: 'video_event' },
+      }),
+      svc({
+        serviceId: 'drone',
+        title: 'Aerial',
+        emoji: '🚁',
+        question: 'A drone shot of the plot?',
+        why: 'The one occasion where a drone genuinely earns its place — an overhead of the empty plot, taken once, which cannot ever be taken again once the foundation goes in.',
+        packIds: ['drone_basic', 'drone_full'],
+        recommend: { family: 'drone_basic', full_house: 'drone_basic', grand: 'drone_full' },
+        skipLabel: 'Not needed',
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Sweets for the workers and the neighbours?',
+        why: 'The mason, the contractor and his crew are at this ceremony, and they will be on this site for two years. This is the first thing you ever give them.',
+        packIds: ['sweet_traditional', 'sweet_temple', 'sweet_premium'],
+        recommend: { close: 'sweet_temple', family: 'sweet_traditional', full_house: 'sweet_traditional', grand: 'sweet_premium' },
+        skipLabel: 'We will arrange them',
+      }),
+      returnGifts({
+        why: 'A small thing for the family who came and stood in the sun. Modest — this is a beginning, not a celebration of anything finished.',
+        packIds: ['gift_budget', 'gift_mid'],
+        recommend: { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
+      }),
+      svc({
+        serviceId: 'transport',
+        title: 'Getting there',
+        emoji: '🚌',
+        question: 'How is everybody reaching the site?',
+        why: 'A plot on the edge of the city, an unmade approach road, and forty relatives who have never been there. One vehicle from the house beats twelve cars and four phone calls asking for the location.',
+        packIds: ['trans_tempo', 'trans_bus', 'trans_cabs'],
+        recommend: { family: 'trans_tempo', full_house: 'trans_bus', grand: 'trans_bus' },
+        skipLabel: 'Everybody is making their own way',
+        showIf: ctx => ctx.guests >= 40,
+      }),
+      invitations({ why: 'Digital only, in practice — the muhurtham is confirmed a week out, and the location needs a map pin far more than it needs a card.' }),
+      ...groundwork,
+      cleanup({ why: 'A homa kunda, a pandal and a hundred leaves, off a plot that has to be handed to a contractor on Monday.' }),
+    ],
+  },
+
+  /* ═════════════ AKSHARABHYASA / VIDYARAMBHAM ════════════════════════
+     The smallest occasion in the catalogue, deliberately kept that way.
+
+     A child is shown the first letter — usually on Vijayadashami morning,
+     at a temple or in front of the house lamp, in about twenty minutes. The
+     temptation is to inflate it into a party; the honest flow is eight
+     questions and a short one. A family that wanted a party would have
+     tapped Birthday. */
+  aksharabhyasa: {
+    id: 'aksharabhyasa',
+    opening: 'Let’s keep this one small and get it right.',
+    promise: 'Eight or nine questions, and most families skip half of them. The price comes at the end.',
+    cuisineLead: ['karnataka', 'udupi', 'kerala', 'tamil', 'jain_satvik'],
+    vegDefault: true,
+    venue: {
+      question: 'Where is the aksharabhyasa?',
+      why: 'Almost always the temple or the house lamp — and on Vijayadashami the temple will have a queue of forty families behind you. Which one decides whether we are booking a slot or bringing a purohit to your door.',
+      options: [
+        atTemple('Vijayadashami morning at the temple, with a hundred other families. We book the slot early and hold your place.'),
+        atHome('In front of the lamp at home, with a purohit and the grandparents. Quieter, and you keep your own timing.'),
+        alreadyBooked(),
+      ],
+      packIds: ['venue_community'],
+      footnote: 'No halls, lawns or resorts — this is a twenty-minute rite, not a function.',
+    },
+    food: mealOptional({
+      question: 'Is there a lunch afterwards?',
+      why: 'Most families do this before school and eat at home. Some make a lunch of it for the grandparents. There is no expectation either way, and saying so now saves you four screens.',
+      yes: { name: 'Yes — a lunch for the family', desc: 'A meal at home or a hall afterwards. We will plan the spread.' },
+      no: { name: 'No — the rite, and home', desc: 'Prasada, and back to a normal day. Skip the menu.' },
+    }),
+    chapters: [
+      ask({
+        id: 'occasion',
+        title: 'The day',
+        emoji: '✏️',
+        question: 'When is it being done?',
+        why: 'Vijayadashami is the traditional day and also the busiest morning of the year at every temple in the state. If that is your date, the arrangements have to be made differently — and earlier.',
+        options: [
+          { id: 'vijayadashami', emoji: '🪔', name: 'On Vijayadashami', desc: 'The traditional morning. Every temple is full, and slots go weeks ahead.', flags: { busy: true } },
+          { id: 'muhurtham', emoji: '📅', name: 'On a muhurtham our purohit gives', desc: 'A quieter day chosen for the child. Everything about it is easier.', flags: {} },
+          { id: 'school', emoji: '🎒', name: 'Before the first day of school', desc: 'Tied to the admission rather than the calendar, and usually at home.', flags: { home: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'priest',
+        title: 'Purohit',
+        emoji: '🙏',
+        question: 'Who is conducting it?',
+        why: 'Twenty minutes of it, and it wants somebody who will sit at the child’s level and not rush. On Vijayadashami a temple purohit has forty families to get through, which is worth knowing before you choose.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_home_pooja', grand: 'priest_home_pooja' },
+        skipLabel: 'The temple priest is doing it',
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'The slate, the rice tray and the samagri?',
+        why: 'A slate and chalk, a tray of raw rice, a new book, the Saraswati photograph, flowers and the lamp. Small things, every one of which somebody has to buy the evening before.',
+        packIds: ['pooja_basic', 'pooja_homam_kit'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_basic', grand: 'pooja_basic' },
+        skipLabel: 'We have everything',
+      }),
+      photography({
+        question: 'Who is photographing the first letter?',
+        why: 'A hand over a hand, writing "Om" in rice. It takes four seconds, both parents are holding the child, and it is the only photograph anybody wants from this morning.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_half_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'Ninety seconds of it, if you want it at all. Most families do not, and that is a perfectly good answer.',
+        packIds: ['video_invite', 'video_event'],
+        recommend: { family: 'video_invite', full_house: 'video_invite', grand: 'video_event' },
+      }),
+      svc({
+        serviceId: 'bhajan',
+        title: 'Devotional',
+        emoji: '🎼',
+        question: 'A Saraswati bhajan sitting?',
+        why: 'Only if you are making a morning of it at home with the grandparents. At the temple there is already more sound than anybody needs.',
+        packIds: ['bhajan_carnatic', 'bhajan_mandali'],
+        recommend: { grand: 'bhajan_carnatic' },
+        skipLabel: 'Not needed',
+        showIf: ctx => !!ctx.flags.home || ctx.guests >= 40,
+      }),
+      svc({
+        serviceId: 'sweets',
+        title: 'Sweets',
+        emoji: '🍬',
+        question: 'Prasada and sweets to hand out?',
+        why: 'Kesari bath at the temple gate and a box to the neighbours. That is the whole extent of it, and it is enough.',
+        packIds: ['sweet_temple', 'sweet_traditional'],
+        recommend: { close: 'sweet_temple', family: 'sweet_temple', full_house: 'sweet_traditional', grand: 'sweet_traditional' },
+        skipLabel: 'We will buy them ourselves',
+      }),
+      returnGifts({
+        why: 'A pencil box, a slate or a small book for the cousins who came. Nothing more is expected at this one.',
+        packIds: ['gift_kids', 'gift_budget'],
+        recommend: { close: 'gift_kids', family: 'gift_kids', full_house: 'gift_budget', grand: 'gift_budget' },
+      }),
+      cleanup({ why: 'Only if you have made a lunch of it. Otherwise there is genuinely nothing to clear, and you should skip this.' }),
+    ],
+  },
+
+  /* ══════════════════════ HALDI & MEHENDI ════════════════════════════
+     Treated as a line inside the sangeet until now, which is how a family
+     ends up with a sangeet stage and no marigold. Haldi is a separate
+     morning with its own decor language — matkas, marigold, yellow, floor
+     seating, water — its own dress code, and one quite specific problem:
+     everything gets ruined, including the venue, including the lens. */
+  haldi: {
+    id: 'haldi',
+    opening: 'Let’s plan the haldi morning — and where the turmeric ends up.',
+    promise: 'Around fourteen questions. Nothing is booked, and the price comes at the end.',
+    cuisineLead: ['north_indian', 'karnataka', 'chaat_street', 'gujarati_rajasthani', 'multi_cuisine'],
+    vegDefault: true,
+    venue: anywhere({
+      why: 'Haldi ruins floors, and every banquet hall in the country knows it — many will not allow it indoors at all, and the rest charge for the cleaning. A terrace or a lawn is the honest answer, and we read the venue’s rules before booking anything.',
+      homeDesc: 'The terrace, the compound or the garden. Easiest by a distance, because it is your own floor.',
+      packIds: ['venue_lawn', 'venue_resort', 'venue_community', 'venue_banquet'],
+    }),
+    chapters: [
+      ask({
+        id: 'functions',
+        title: 'Which',
+        emoji: '💛',
+        question: 'Which functions are we planning?',
+        why: 'Haldi and mehendi are often the same morning and often two different days. They need completely different setups — one is wet and yellow, the other needs good light and somewhere for forty women to sit still for two hours.',
+        multi: true,
+        options: [
+          { id: 'haldi', emoji: '💛', name: 'Haldi', desc: 'Morning, outdoors, marigold and matkas, and everybody in yellow.', flags: { haldi: true, messy: true } },
+          { id: 'mehendi', emoji: '🪷', name: 'Mehendi', desc: 'Afternoon into evening — seating, light, and artists working right through it.', flags: { mehendi: true, seated: true } },
+          { id: 'both', emoji: '🌼', name: 'Both, on the same day', desc: 'Haldi in the morning, mehendi after lunch, one setup that has to do both.', flags: { haldi: true, mehendi: true, messy: true, seated: true } },
+        ],
+      }),
+      svc({
+        serviceId: 'mehendi',
+        title: 'Mehendi',
+        emoji: '🪷',
+        question: 'How many artists do you need?',
+        why: 'This is arithmetic rather than taste: one artist does about six pairs of hands an hour. Forty women and two artists is a queue that is still going at midnight — and the bride’s own mehendi takes four hours on its own.',
+        packIds: ['mehendi_bridal', 'mehendi_guest', 'mehendi_premium'],
+        multi: true,
+        recommend: { close: 'mehendi_bridal', family: 'mehendi_bridal', full_house: 'mehendi_premium', grand: 'mehendi_premium' },
+        skipLabel: 'No mehendi at this function',
+        showIf: ctx => !!ctx.flags.mehendi,
+      }),
+      svc({
+        serviceId: 'makeup',
+        title: 'Getting ready',
+        emoji: '💄',
+        question: 'Makeup for the morning?',
+        why: 'A haldi look has to survive turmeric and photograph well doing it, which is a different job from a bridal trial. Most stylists price it inside a multi-day package, and that is usually the cheaper way round.',
+        packIds: ['makeup_guest', 'makeup_bridal', 'makeup_multi_day'],
+        recommend: { close: 'makeup_guest', family: 'makeup_bridal', full_house: 'makeup_multi_day', grand: 'makeup_multi_day' },
+        skipLabel: 'Already arranged with the bridal team',
+      }),
+      dining({
+        why: 'A haldi crowd eats standing, in the garden, out of a bowl, with turmeric on their hands. A mehendi crowd cannot use their hands at all for two hours — which is a genuine catering problem, and one we plan around.',
+        packIds: ['dining_lounge', 'dining_floor', 'dining_buffet_standing', 'dining_round'],
+        recommend: { close: 'dining_floor', family: 'dining_lounge', full_house: 'dining_lounge', grand: 'dining_round' },
+      }),
+      svc({
+        serviceId: 'live_counters',
+        title: 'Counters',
+        emoji: '🥘',
+        question: 'Live counters for the morning?',
+        why: 'A chaat counter and a dosa counter is exactly right for a function where people eat in stages across four hours rather than sitting down at once. It is also the only food that survives a mehendi queue.',
+        packIds: ['counter_chaat', 'counter_dosa', 'counter_grill', 'counter_pasta_global'],
+        multi: true,
+        recommend: { family: 'counter_chaat', full_house: 'counter_chaat', grand: 'counter_chaat' },
+        skipLabel: 'The main spread is enough',
+      }),
+      svc({
+        serviceId: 'ice_cream',
+        title: 'Something cold',
+        emoji: '🍦',
+        question: 'An ice cream or paan counter?',
+        why: 'A haldi is a hot morning outdoors, and this is the counter people actually queue at. A paan counter at the end of a mehendi is the traditional close.',
+        packIds: ['dessert_icecream', 'dessert_paan', 'dessert_candy_cart', 'dessert_nitrogen'],
+        multi: true,
+        recommend: { family: 'dessert_icecream', full_house: 'dessert_icecream', grand: 'dessert_paan' },
+        skipLabel: 'Not needed',
+      }),
+      svc({
+        serviceId: 'drum',
+        title: 'The dhol',
+        emoji: '🥁',
+        question: 'Dhol for the haldi?',
+        why: 'The single most important booking of the morning, and the cheapest. A haldi without a dhol is forty people politely applying turmeric; with one it is the function everybody remembers from the entire wedding.',
+        packIds: ['drum_dhol', 'drum_chende', 'drum_band'],
+        recommend: { close: 'drum_dhol', family: 'drum_dhol', full_house: 'drum_dhol', grand: 'drum_band' },
+        skipLabel: 'No dhol',
+        showIf: ctx => !!ctx.flags.haldi,
+      }),
+      svc({
+        serviceId: 'dj',
+        title: 'Music',
+        emoji: '🎵',
+        question: 'Sound for the rest of it?',
+        why: 'Something to carry the four hours the dhol is not playing. A small rig outdoors, not a sangeet rig — this is a morning function, and the neighbours have not been invited.',
+        packIds: ['dj_house', 'dj_standard'],
+        recommend: { close: 'dj_house', family: 'dj_house', full_house: 'dj_standard', grand: 'dj_standard' },
+        skipLabel: 'A speaker and a playlist is fine',
+      }),
+      svc({
+        serviceId: 'folk',
+        title: 'The act',
+        emoji: '🪗',
+        question: 'A folk troupe?',
+        why: 'Dollu kunitha, a lavani troupe or a bhangra group for twenty minutes. It gives the morning a shape and gets the older relatives out of their chairs, which nothing else on this page does.',
+        packIds: ['folk_south', 'folk_north'],
+        recommend: { full_house: 'folk_north', grand: 'folk_north' },
+        skipLabel: 'No performers',
+        showIf: ctx => ctx.guests >= 100,
+      }),
+      photography({
+        question: 'Who is photographing the haldi?',
+        why: 'The best photographs of the entire wedding come from this morning — the light is right, nobody is posing, and everybody is laughing. It also destroys a lens, so book somebody who expects that.',
+        packIds: ['photo_half_day', 'photo_full_day', 'photo_wedding_full'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'The haldi reel is the one that gets posted the same evening, before the wedding has even happened.',
+        packIds: ['video_invite', 'video_event', 'video_cinematic'],
+        recommend: { close: 'video_invite', family: 'video_event', full_house: 'video_cinematic', grand: 'video_cinematic' },
+      }),
+      svc({
+        serviceId: 'drone',
+        title: 'Aerial',
+        emoji: '🚁',
+        question: 'A drone over the haldi?',
+        why: 'One overhead of everybody in yellow around the bride. It is a shot that only works outdoors, and only works at this function.',
+        packIds: ['drone_basic', 'drone_full'],
+        recommend: { full_house: 'drone_basic', grand: 'drone_basic' },
+        skipLabel: 'Not needed',
+        showIf: ctx => ctx.outdoor,
+      }),
+      svc({
+        serviceId: 'photobooth',
+        title: 'Photo corner',
+        emoji: '🤳',
+        question: 'A corner for the cousins?',
+        why: 'A marigold wall and a set of props. At a mehendi, where half the guests are sitting still with their hands out, it is the only thing the other half can do.',
+        packIds: ['booth_classic', 'booth_360', 'booth_mirror'],
+        recommend: { full_house: 'booth_classic', grand: 'booth_360' },
+        skipLabel: 'No booth',
+      }),
+      returnGifts({
+        why: 'A potli, bangles, or a small favour for the women. At a mehendi specifically this is expected rather than optional.',
+        packIds: ['gift_budget', 'gift_mid', 'gift_premium'],
+        recommend: { close: 'gift_budget', family: 'gift_budget', full_house: 'gift_mid', grand: 'gift_mid' },
+      }),
+      invitations({ why: 'Usually one card covering all the pre-wedding functions, with the haldi timing on it — which people do miss, because it is the one that starts at eight in the morning.' }),
+      ...groundwork,
+      cleanup({ why: 'Turmeric on a floor, marigold everywhere, and a venue that will charge you for both if it is still there tomorrow. The one occasion where the deep clean is genuinely not optional.' }),
+    ],
+  },
+
+  /* ═══════════════════════ FAREWELL ══════════════════════════════════
+     The occasion nobody plans and everybody attends: the dinner before a
+     flight. A son leaving for a master's abroad, a family moving cities, a
+     colleague transferring, parents closing a house after thirty years.
+
+     Emotionally the heaviest evening in this catalogue and structurally the
+     simplest — one room, one meal, and a way for people to say something.
+     Everything in this flow is built around that last part, because it is
+     the part that always gets forgotten and is always the reason the
+     evening happened at all. */
+  farewell: {
+    id: 'farewell',
+    opening: 'Let’s make the last evening worth the trouble.',
+    promise: 'Twelve or so questions, and you can skip most of them. The price comes once, at the end.',
+    cuisineLead: ['north_indian', 'karnataka', 'indo_chinese', 'multi_cuisine', 'chaat_street'],
+    vegDefault: false,
+    venue: anywhere({
+      why: 'A farewell is an evening of people talking to one person. A room that is too big for the number, or too loud, is the one thing that stops that happening — so this answer matters more here than the size of it does.',
+      homeDesc: 'The house that is being packed up, or the terrace. For a family send-off this is almost always the right answer.',
+      packIds: ['venue_banquet', 'venue_community', 'venue_resort', 'venue_lawn'],
+      extra: [atOffice('The office, the cafeteria, or a floor cleared for the evening — for a colleague’s send-off.')],
+    }),
+    chapters: [
+      ask({
+        id: 'kind',
+        title: 'The send-off',
+        emoji: '✈️',
+        question: 'Who is leaving, and where to?',
+        why: 'A student flying out for a master’s and a colleague transferring branches are two completely different evenings — one has grandparents crying at a dining table, the other has forty people in a booked restaurant. The rest of this flow follows from which.',
+        options: [
+          { id: 'abroad', emoji: '🎓', name: 'Going abroad to study', desc: 'The whole family comes, the grandparents especially, and it runs long.', flags: { family: true, emotional: true } },
+          { id: 'work_abroad', emoji: '🌍', name: 'Moving abroad for work', desc: 'Family and friends together, usually a weekend, usually a proper dinner.', flags: { family: true, emotional: true } },
+          { id: 'city', emoji: '🚚', name: 'Moving to another city', desc: 'A house being packed up, and the neighbours who want to say goodbye.', flags: { family: true } },
+          { id: 'colleague', emoji: '💼', name: 'A colleague leaving the team', desc: 'The office send-off — speeches, a memento, and dinner somewhere booked.', flags: { office: true, speeches: true } },
+          { id: 'elders_move', emoji: '🏡', name: 'Parents moving to be with family', desc: 'A house being closed after thirty years, and the whole street invited.', flags: { family: true, emotional: true, elder: true } },
+        ],
+      }),
+      dining({
+        why: 'The room decides whether people talk to each other or eat in a queue. For an evening whose entire purpose is people saying things to one person, seated beats standing every single time.',
+        packIds: ['dining_round', 'dining_lounge', 'dining_buffet_standing', 'dining_floor', 'dining_leaf'],
+        recommend: { close: 'dining_round', family: 'dining_round', full_house: 'dining_buffet_standing', grand: 'dining_round' },
+      }),
+      svc({
+        serviceId: 'memory_wall',
+        title: 'The years',
+        emoji: '🖼️',
+        question: 'A wall of photographs, or a film?',
+        why: 'This is the thing that makes the evening. A timeline of somebody’s twenty-two years, or their eleven years on a team, is where everybody ends up standing and telling each other stories — and it is the one thing the person leaving actually takes with them.',
+        packIds: ['memwall_string', 'memwall_timeline', 'memwall_tribute_film'],
+        recommend: { close: 'memwall_string', family: 'memwall_timeline', full_house: 'memwall_timeline', grand: 'memwall_tribute_film' },
+        skipLabel: 'Not this time',
+      }),
+      svc({
+        serviceId: 'av_setup',
+        title: 'For the speeches',
+        emoji: '🖥️',
+        question: 'A screen and a microphone?',
+        why: 'Somebody has made a slideshow. Somebody else wants to say something and cannot be heard past the third table. Both of those are the reason the evening exists, and both need equipment.',
+        packIds: ['av_basic', 'av_conference', 'av_hybrid'],
+        recommend: { close: 'av_basic', family: 'av_basic', full_house: 'av_basic', grand: 'av_conference' },
+        skipLabel: 'We will manage without',
+      }),
+      svc({
+        serviceId: 'cake',
+        title: 'Cake',
+        emoji: '🎂',
+        question: 'A cake to cut?',
+        why: 'It gives the evening a moment with a time on it, which is what stops a farewell drifting into people quietly looking at their watches.',
+        packIds: ['cake_cream_1kg', 'cake_photo', 'cake_tiered'],
+        recommend: { close: 'cake_cream_1kg', family: 'cake_cream_1kg', full_house: 'cake_photo', grand: 'cake_tiered' },
+        skipLabel: 'No cake',
+      }),
+      svc({
+        serviceId: 'emcee',
+        title: 'Host',
+        emoji: '🎙️',
+        question: 'Somebody running the evening?',
+        why: 'Without a host, the speeches either do not happen at all or all happen at once at half past eleven. With one, everybody who wanted to say something gets ninety seconds, and the evening ends on the right note.',
+        packIds: ['emcee_standard', 'emcee_corporate', 'emcee_full'],
+        recommend: { family: 'emcee_standard', full_house: 'emcee_standard', grand: 'emcee_corporate' },
+        skipLabel: 'A friend is doing it',
+        showIf: ctx => ctx.flags.speeches || ctx.guests >= 60,
+      }),
+      svc({
+        serviceId: 'live_music',
+        title: 'Music',
+        emoji: '🎻',
+        question: 'Live music through dinner?',
+        why: 'A ghazal or a guitar duo at conversation volume. For an evening this heavy a DJ is the wrong instrument entirely — people came to talk.',
+        packIds: ['music_ghazal_sufi', 'music_classical_duo', 'music_band'],
+        recommend: { full_house: 'music_ghazal_sufi', grand: 'music_band' },
+        skipLabel: 'No live music',
+      }),
+      svc({
+        serviceId: 'dj',
+        title: 'Later',
+        emoji: '🎵',
+        question: 'Music for after the speeches?',
+        why: 'Once the serious part is over the friends will want an hour of it. A small rig, and only if the room is right for one.',
+        packIds: ['dj_house', 'dj_standard'],
+        recommend: { full_house: 'dj_house', grand: 'dj_standard' },
+        skipLabel: 'A playlist is fine',
+        showIf: ctx => !ctx.flags.elder,
+      }),
+      photography({
+        question: 'Who is photographing the evening?',
+        why: 'The last photograph of everybody in one room, which is exactly the one nobody remembers to take. In a year it is the only one anybody looks for.',
+        packIds: ['photo_half_day', 'photo_full_day'],
+        recommend: { close: 'photo_half_day', family: 'photo_half_day', full_house: 'photo_full_day', grand: 'photo_full_day' },
+      }),
+      videography({
+        why: 'The speeches, mostly. A recording of what people said is the thing that gets watched on a bad week eight thousand kilometres away.',
+        packIds: ['video_event', 'video_cinematic'],
+        recommend: { family: 'video_event', full_house: 'video_event', grand: 'video_cinematic' },
+      }),
+      svc({
+        serviceId: 'livestream',
+        title: 'For those away',
+        emoji: '📡',
+        question: 'Streaming it for family elsewhere?',
+        why: 'At a farewell this is nearly always needed, because the family is already scattered — that is usually the reason somebody is leaving in the first place.',
+        packIds: ['stream_single', 'stream_multi'],
+        recommend: { family: 'stream_single', full_house: 'stream_single', grand: 'stream_multi' },
+        skipLabel: 'Everybody will be here',
+      }),
+      svc({
+        serviceId: 'photobooth',
+        title: 'Photo corner',
+        emoji: '🤳',
+        question: 'A booth with a printer?',
+        why: 'Instant prints, and a book everybody signs beside it. That book is the single most-kept object anybody has ever taken onto a flight.',
+        packIds: ['booth_classic', 'booth_mirror', 'booth_360'],
+        recommend: { family: 'booth_classic', full_house: 'booth_classic', grand: 'booth_360' },
+        skipLabel: 'No booth',
+      }),
+      svc({
+        serviceId: 'gifting',
+        title: 'The gift',
+        emoji: '🎀',
+        question: 'A gift or a memento?',
+        why: 'It has to fit in a suitcase with a 23kg limit, which quietly rules out most of what people instinctively buy. We keep that in mind when we suggest.',
+        packIds: ['hamper_festive', 'hamper_corporate', 'hamper_luxury'],
+        recommend: { close: 'hamper_festive', family: 'hamper_festive', full_house: 'hamper_corporate', grand: 'hamper_luxury' },
+        skipLabel: 'Already sorted',
+      }),
+      returnGifts({
+        why: 'Only if it is a large evening. At a family send-off nobody expects to be given anything, and offering it can read oddly.',
+        packIds: ['gift_budget', 'gift_mid'],
+        recommend: { full_house: 'gift_budget', grand: 'gift_mid' },
+      }),
+      invitations({ why: 'Digital, and usually about four days out — because these are decided late, and the date moves with a visa or a joining letter.' }),
+      ...groundwork,
+      cleanup({ why: 'A house that is being packed up, or a hall that has to be handed back. Either way somebody is doing this at midnight.' }),
+    ],
+  },
+
 }
 
 /* ── Fallback ──────────────────────────────────────────────────────────

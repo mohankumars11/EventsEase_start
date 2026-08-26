@@ -37,6 +37,29 @@ export function DecorLevelStep({ levelId, onLevel, circle, guests }) {
             onToggle={() => onLevel(level.id)}
           />
         ))}
+
+        {/* ── The answer this screen did not have ────────────────────────
+            Every other chapter in the flow can be declined; this one could
+            not. `none` exists in decorPackages.js and is marked hidden,
+            which was right for the tier ladder — a tier IS a decorated
+            celebration — and wrong here, where the customer is choosing one
+            thing at a time. So a family whose cousin does the decoration, or
+            who booked a hall that decorates it for them, had to pick a level
+            they did not want and pay for it in the estimate, because Continue
+            stayed disabled until they did.
+
+            It is last rather than first: the honest default is that there IS
+            decoration, and the refusal should be findable rather than
+            leading. */}
+        <div className="pt-1">
+          <OptionCard
+            emoji="🚫"
+            name="No decoration needed"
+            desc="The venue decorates it, or the family is doing it. Nothing is quoted for decor, and nobody will ring you about it."
+            selected={levelId === 'none'}
+            onToggle={() => onLevel('none')}
+          />
+        </div>
       </div>
     </StepFrame>
   )

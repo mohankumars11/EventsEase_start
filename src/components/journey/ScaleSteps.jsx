@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { Minus, Plus, Users, Phone } from 'lucide-react'
+import { Check, Minus, Plus, Users, Phone } from 'lucide-react'
 import { GUEST_CIRCLES, circleForGuests, dishCountFor, MAX_PRICEABLE_GUESTS } from '../../data/guestCircles'
-import { SERVICE_PACKS, PACK_BY_ID } from '../../data/servicePacks'
+import { venueStepFor } from '../../data/celebrationBlueprints'
 import { BRAND } from '../../config/sambramo'
 import { StepFrame } from './JourneyChrome'
 import OptionCard from './OptionCard'
@@ -236,64 +236,115 @@ export function CircleStep({ guests, circleId, onCircle, onGuests }) {
    banquet hall turns them off. Asking at the end would mean either offering
    a generator to everybody or to nobody, and both are wrong.
 
-   "I have my own place" and "already booked" are first-class answers, not
-   an escape hatch. A large share of gruha praveshas and namakaranas happen
-   at home, and a flow that treats that as the exception makes those families
-   feel like they are using it wrong. */
+   ── What changed, and why it had to ────────────────────────────────────
+   This step used to render ONE list for all fifteen occasions: your home,
+   already booked, community hall, banquet hall, garden or lawn, resort or
+   farmhouse. For a good half of them that list was visibly wrong, and the
+   clearest case is the one that started the rework — a griha pravesha was
+   offered a resort. A gruhapravesha is the rite of entering the new house.
+   It cannot be held anywhere else, and offering the alternative does not
+   read as flexibility. It reads as an app that does not know what it is
+   selling, which is a far more expensive impression than a missing option.
 
-export const OWN_VENUE = 'own_venue'
-export const BOOKED_VENUE = 'booked_venue'
+   So the answers now come from the occasion's own blueprint — see the
+   `venue` block in data/celebrationBlueprints.js, which also explains the
+   three shapes. This component only renders what it is handed:
 
-/** Venue answers that put the function outdoors, which gates the groundwork. */
-const OUTDOOR_PACKS = new Set(['venue_lawn', 'venue_resort'])
+     · a `fixed` answer is stated rather than offered, already chosen, with
+       the reason it is the only honest one;
+     · `options` are the answers particular to this occasion — the temple,
+       the showroom, the site, the office — as first-class cards;
+     · `hired` are the venues we would find, and an occasion can have none.
 
-export function outdoorFor(venueChoice) {
-  return OUTDOOR_PACKS.has(venueChoice)
-}
+   "At home" and "already booked" stay first-class wherever they apply. A
+   large share of gruha praveshas and namakaranas happen at home, and a flow
+   that treats that as the exception makes those families feel like they are
+   using it wrong. */
 
-export function VenueStep({ value, onChange, city, onOpenCityPicker }) {
-  const packs = (SERVICE_PACKS.venue?.packs ?? []).map(p => p.id).map(id => PACK_BY_ID[id])
+export { OWN_VENUE, BOOKED_VENUE } from '../../data/celebrationBlueprints'
+
+export function VenueStep({ occasionId, value, onChange, city, onOpenCityPicker }) {
+  const step = venueStepFor(occasionId)
+
+  // A fixed venue IS the answer, so it is recorded on arrival rather than
+  // making somebody tap a card with no alternative beside it. The screen
+  // still explains itself — it has simply stopped pretending to be a
+  // question. `silent` tells the page not to auto-advance off a screen the
+  // customer has not read yet.
+  useEffect(() => {
+    if (step.fixed && !value) onChange(step.fixed.id, { silent: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [occasionId])
 
   return (
     <StepFrame
       overline="Where"
-      question="Where is it happening?"
-      why="This decides more than it looks: an outdoor function needs power, fans and washrooms that a banquet hall already has. Tell us now and we only ask about the things you actually need."
-      footnote={`Everything is arranged in ${city}. Change your city from the home screen if that is wrong.`}
+      question={step.question}
+      why={step.why}
+      footnote={step.footnote ?? `Everything is arranged in ${city}. Change your city from the home screen if that is wrong.`}
     >
+      {step.fixed && (
+        <div className="mb-4 overflow-hidden rounded-[22px] bg-teal-50 ring-1 ring-teal-200/70">
+          <div className="flex items-start gap-3 p-4">
+            <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-[21px]">
+              {step.fixed.emoji}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-2 text-[14.5px] font-extrabold leading-snug text-teal-900">
+                {step.fixed.name}
+                <span className="rounded-full bg-teal-600 px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider text-white">
+                  Settled
+                </span>
+              </p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-teal-800">{step.fixed.desc}</p>
+              {step.fixed.includes?.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {step.fixed.includes.map(line => (
+                    <li key={line} className="flex items-start gap-1.5 text-[11.5px] leading-snug text-teal-700">
+                      <Check size={11} className="mt-[3px] shrink-0" strokeWidth={3} />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2.5">
-        <OptionCard
-          emoji="🏠"
-          name="At home, or our own place"
-          desc="Your house, the terrace, or the apartment clubhouse. No hire charge — we survey the space and plan the layout around your furniture."
-          includes={['Site visit and layout plan', 'Power and access check', 'Society coordination', 'Furniture moved and put back']}
-          selected={value === OWN_VENUE}
-          onToggle={() => onChange(OWN_VENUE)}
-        />
-        <OptionCard
-          emoji="✅"
-          name="We have already booked a venue"
-          desc="Tell your coordinator which one and we work to its rules, its timings and its restrictions."
-          selected={value === BOOKED_VENUE}
-          onToggle={() => onChange(BOOKED_VENUE)}
-        />
-
-        <p className="pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
-          Or let us find one
-        </p>
-
-        {packs.filter(p => p && p.id !== 'venue_home').map(pack => (
+        {step.options.map(option => (
           <OptionCard
-            key={pack.id}
-            emoji={pack.emoji}
-            name={pack.name}
-            desc={pack.blurb}
-            includes={pack.includes}
-            note={pack.note}
-            selected={value === pack.id}
-            onToggle={() => onChange(pack.id)}
+            key={`${option.id}:${option.name}`}
+            emoji={option.emoji}
+            name={option.name}
+            desc={option.desc}
+            includes={option.includes}
+            note={option.note}
+            selected={value === option.id}
+            onToggle={() => onChange(option.id)}
           />
         ))}
+
+        {step.hired.length > 0 && (
+          <>
+            <p className="pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-mute">
+              {step.findLabel}
+            </p>
+            {step.hired.map(pack => (
+              <OptionCard
+                key={pack.id}
+                emoji={pack.emoji}
+                name={pack.name}
+                desc={pack.desc}
+                includes={pack.includes}
+                note={pack.note}
+                selected={value === pack.id}
+                onToggle={() => onChange(pack.id)}
+              />
+            ))}
+          </>
+        )}
       </div>
 
       {onOpenCityPicker && (
@@ -305,6 +356,49 @@ export function VenueStep({ value, onChange, city, onOpenCityPicker }) {
           Planning somewhere other than {city}? Change city
         </button>
       )}
+    </StepFrame>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   4 · IS THERE A MEAL AT ALL?
+   ══════════════════════════════════════════════════════════════════════
+
+   Shown only for occasions whose blueprint says the meal is genuinely
+   optional — a vahana pooja, a shop opening, an aksharabhyasa, a mundan.
+   See the `mealOptional` note in data/celebrationBlueprints.js for why
+   forcing five courses of a Karnataka spread on somebody whose function
+   ends with a packet of kesari bath is worse than four wasted screens: it
+   produces an estimate carrying ₹65,000 of catering for a lunch that does
+   not exist, which is not a mistake anybody forgives.
+
+   Two answers, and "no" is exactly as prominent as "yes". That is the
+   whole point of the screen. */
+
+export function MealGateStep({ food, value, onChange }) {
+  return (
+    <StepFrame
+      overline="The meal"
+      question={food.question}
+      why={food.why}
+      footnote="Either answer is normal. Choosing “no” removes the menu screens and the catering line from your estimate."
+    >
+      <div className="space-y-2.5">
+        <OptionCard
+          emoji={food.yes.emoji}
+          name={food.yes.name}
+          desc={food.yes.desc}
+          selected={value === true}
+          onToggle={() => onChange(true)}
+        />
+        <OptionCard
+          emoji={food.no.emoji}
+          name={food.no.name}
+          desc={food.no.desc}
+          selected={value === false}
+          onToggle={() => onChange(false)}
+        />
+      </div>
     </StepFrame>
   )
 }

@@ -63,6 +63,20 @@ const CATALOG_TO_WIZARD = {
   'seemantham':      'other',
   'retirement':      'other',
   'graduation':      'other',
+  // The ten the life-cycle audit added. Three have an honest parent in
+  // EVENT_TYPES; the rest are 'other', which is exactly what that entry is
+  // for. Nothing here is load-bearing for the journey — it only decides the
+  // label a dashboard prints for `events.event_type`.
+  'reception':       'wedding',
+  'haldi':           'wedding',
+  'shop_opening':    'corporate',
+  'vehicle_pooja':   'other',
+  'half_saree':      'other',
+  'mundan':          'other',
+  'annaprashana':    'other',
+  'bhoomi_pooja':    'other',
+  'aksharabhyasa':   'other',
+  'farewell':        'other',
 }
 
 /**

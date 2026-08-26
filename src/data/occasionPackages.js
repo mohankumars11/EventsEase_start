@@ -164,6 +164,84 @@ export const OCCASION_PROFILES = {
     signature: ['Stage, screens and mics tested before the room fills', 'A spread that suits every diet in the office', 'Registration, signage and someone running the clock'],
     promise: 'Run to a schedule, invoiced with GST, and nobody from your team spending the day on logistics.',
   },
+
+  /* ── The ten the life-cycle audit added ─────────────────────────────
+     Three of these are the first entries in this table whose `essentials`
+     are not food or photography, because three of them are not functions in
+     a room: a vahana pooja is bought as a garland and a purohit, a shop
+     opening as a ribbon and two thousand sweet boxes, a bhoomi pooja as a
+     homa on bare ground. A tier for any of them that quietly assumed a
+     caterer would have been a tier describing somebody else's day. */
+  vehicle_pooja: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'vehicle_decor', 'photography'],
+    signature: ['The garland, the lemons and the first drive', 'A purohit at the showroom or the temple, on time', 'Sweets for the street and the office'],
+    promise: 'Arranged around the delivery slot, so the only thing you have to do that morning is take the keys.',
+  },
+  half_saree: {
+    cuisine: 'andhra',
+    vegOnly: true,
+    essentials: ['priest', 'pooja', 'photography', 'makeup'],
+    signature: ['The rite performed the way your family keeps it', 'A stage and an entry worth photographing', 'A leaf meal for both sides of the family'],
+    promise: 'The whole day arranged around her, with nobody in the family having to run it.',
+  },
+  mundan: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'pooja', 'photography'],
+    signature: ['The purohit, the slot and the samagri, all confirmed', 'Somebody photographing the first cut', 'A lunch for whoever came, at home or a hall'],
+    promise: 'The temple, the rite and the meal handled together, so the morning is not four separate phone calls.',
+  },
+  annaprashana: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'pooja', 'photography'],
+    signature: ['The homa, the silver spoon and the tray of objects', 'The first mouthful, photographed properly', 'A meal three generations can all sit down to'],
+    promise: 'Every ritual item and the purohit arranged, so the family can simply hold the baby.',
+  },
+  reception: {
+    cuisine: 'multi_cuisine',
+    vegOnly: false,
+    essentials: ['photography', 'videography', 'emcee'],
+    signature: ['A stage four hundred people will queue for', 'A spread that moves without a queue', 'Photography and film across the whole evening'],
+    promise: 'One coordinator holding the evening, so your family greets guests instead of managing a buffet.',
+  },
+  shop_opening: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'inauguration', 'sweets', 'photography'],
+    signature: ['Ganapati homa timed to the muhurtham', 'The ribbon, the lamp and the nameplate', 'Sweet boxes for the street and every first customer'],
+    promise: 'The shutter goes up on time, the street turns up, and nobody from your team spends the morning on logistics.',
+  },
+  bhoomi_pooja: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'pooja', 'tent', 'photography'],
+    signature: ['The homa and the first dig, in the right corner', 'Shade, water and seating carried onto a bare plot', 'An aerial photograph of the land before it changes'],
+    promise: 'Everything a plot does not have — shade, power, water, a washroom — brought to it for the morning.',
+  },
+  aksharabhyasa: {
+    cuisine: 'karnataka',
+    vegOnly: true,
+    essentials: ['priest', 'pooja', 'photography'],
+    signature: ['A purohit who will sit at the child’s level', 'The slate, the rice tray and the first letter', 'Prasada for the family and the neighbours'],
+    promise: 'Small, correct and finished before school — which is exactly what this one should be.',
+  },
+  haldi: {
+    cuisine: 'north_indian',
+    vegOnly: true,
+    essentials: ['mehendi', 'photography', 'cleanup'],
+    signature: ['Marigold, matkas and a morning built for yellow', 'Enough mehendi artists that nobody queues', 'The photographs everybody uses from the whole wedding'],
+    promise: 'The messiest morning of the wedding, run by people who expect the mess and clean it up.',
+  },
+  farewell: {
+    cuisine: 'north_indian',
+    vegOnly: false,
+    essentials: ['memory_wall', 'photography', 'av_setup'],
+    signature: ['A wall of the years, or a film of them', 'A microphone, so the speeches actually happen', 'A room where people can hear each other'],
+    promise: 'The last evening arranged by somebody who is not in the room, so everybody in it can be present.',
+  },
 }
 
 /** The default profile for an occasion the table above has not been taught yet. */

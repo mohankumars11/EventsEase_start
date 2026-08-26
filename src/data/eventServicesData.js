@@ -110,6 +110,19 @@ const SVC = {
   live_counters:  { id: 'live_counters',  name: 'Live Food Counters',   emoji: '🥘', category: 'Catering',      desc: 'Chaat, dosa, tandoor and global live counters',  priceHint: '₹120 – ₹220/head',     priceMin: 120,    priceMax: 220 },
   nanny:          { id: 'nanny',          name: 'Childcare & Nannies',  emoji: '👶', category: 'Hospitality',   desc: 'Trained childminders and a supervised crèche',   priceHint: '₹3,500 – ₹18,000',     priceMin: 3500,   priceMax: 18000 },
   signage:        { id: 'signage',        name: 'Signage & Seating Charts', emoji: '🪧', category: 'Stationery', desc: 'Welcome boards, wayfinding, seating charts',     priceHint: '₹6,500 – ₹9,500',      priceMin: 6500,   priceMax: 9500 },
+
+  // ── The four the life-cycle audit added ───────────────────────────────
+  // Everything above is a service for a function held in a room. These four
+  // exist because whole categories of Indian celebration are not held in a
+  // room at all: a vahana pooja happens around a vehicle in a temple yard or a
+  // portico, a shop opening happens on the pavement in front of a shutter, and
+  // both spend most of their money on things this catalogue could not name. A
+  // family distributing four hundred boxes of mysore pak after a griha
+  // pravesha was, until now, being quoted "Return Gifts".
+  vehicle_decor:  { id: 'vehicle_decor',  name: 'Vehicle Decoration',   emoji: '🚗', category: 'Decor',         desc: 'Florals, ribbon, garland, lemon and name decal for the new vehicle', priceHint: '₹1,200 – ₹18,000', priceMin: 1200, priceMax: 18000 },
+  vehicle_care:   { id: 'vehicle_care',   name: 'Detailing & Protection', emoji: '✨', category: 'Vehicle',     desc: 'Pre-delivery detail, ceramic coating, mats and seat covers',         priceHint: '₹2,500 – ₹35,000', priceMin: 2500, priceMax: 35000 },
+  sweets:         { id: 'sweets',         name: 'Sweets & Mithai Distribution', emoji: '🍬', category: 'F&B',   desc: 'Boxed sweets for neighbours, colleagues and the temple',             priceHint: '₹60 – ₹450/box',   priceMin: 60,   priceMax: 450 },
+  inauguration:   { id: 'inauguration',   name: 'Inauguration & Ribbon Ceremony', emoji: '✂️', category: 'Ritual', desc: 'Ribbon, nameplate unveiling, lamp and chief-guest hosting',        priceHint: '₹3,500 – ₹40,000', priceMin: 3500, priceMax: 40000 },
 }
 
 export const EVENT_DATA = {
@@ -477,6 +490,292 @@ export const EVENT_DATA = {
       SVC.drone, SVC.bar, SVC.live_counters, SVC.signage, SVC.washrooms, SVC.cooling,
     ],
   },
+
+  /* ══════════════════════════════════════════════════════════════════════
+     THE TEN THE LIFE-CYCLE AUDIT ADDED
+     ══════════════════════════════════════════════════════════════════════
+
+     The first fifteen were the occasions anybody would list if asked to name
+     Indian celebrations. Walking a real life from the seventh month of a
+     pregnancy to a seventy-fifth birthday turns up ten more that are not
+     edge cases at all — several of them out-spend occasions already on the
+     list, and every one of them needs vendors, a muhurtham, decoration and a
+     meal for a hundred people.
+
+     What they have in common is that none of them is a party. Which is
+     exactly why they were missed: the catalogue was organised around the
+     things people throw, and a large share of Indian celebration spending
+     goes on things people PERFORM — a rite around a vehicle, a rite on a
+     plot of land, a rite the first time a child is fed rice or handed a
+     slate.
+
+     · vehicle_pooja   the most common unplanned celebration in the country.
+                       Every new car, bike, scooter, tractor, lorry and auto
+                       is garlanded and taken to a temple, and nobody sells
+                       the arranging of it.
+     · half_saree      Ritu Kala Samskara / Langa Voni / Pavadai Dhavani.
+                       In coastal Andhra, Telangana and Tamil Nadu this runs
+                       at wedding scale — four hundred guests, a stage, a
+                       photographer and a full leaf meal.
+     · mundan          Chudakarana. Temple tonsure plus a lunch at home.
+     · annaprashana    Choroonu / first rice. Three generations, one spoon.
+     · reception       Held on a different day, in a different hall, for a
+                       different guest list than the wedding — and priced as
+                       one line item inside "wedding" until now.
+     · shop_opening    A shutter, a ribbon, a Ganapati homa, a band and two
+                       thousand sweet boxes. Entirely absent.
+     · bhoomi_pooja    The rite that starts a house. Held on bare ground with
+                       no power, no shade and no water.
+     · aksharabhyasa   Vidyarambham. Vijayadashami morning, a slate, a priest.
+     · haldi           A whole morning with its own decor, its own dress code
+                       and its own photographer, treated until now as a line
+                       inside sangeet.
+     · farewell        The send-off before a flight — a going-abroad dinner,
+                       a transfer, a bidaai lunch. Quietly enormous demand. */
+
+  vehicle_pooja: {
+    id: 'vehicle_pooja',
+    name: 'New Vehicle Pooja',
+    emoji: '🚗',
+    icon: '🔑',
+    gradient: 'from-sky-500 via-blue-500 to-indigo-500',
+    bgColor: 'bg-sky-50',
+    borderColor: 'border-sky-200',
+    textColor: 'text-sky-800',
+    accentColor: 'text-sky-600',
+    badgeColor: 'bg-sky-100 text-sky-700',
+    heroGradient: 'from-sky-600 via-blue-500 to-indigo-500',
+    tagline: 'The keys are yours. Let us do the rest properly.',
+    description: 'Car, bike, scooter, tractor, lorry or auto — the garland, the pooja, the photographs and the sweets, arranged around your delivery slot.',
+    services: [
+      SVC.vehicle_decor, SVC.floral, SVC.priest, SVC.pooja, SVC.vehicle_care,
+      SVC.photography, SVC.videography, SVC.drone,
+      SVC.sweets, SVC.cake, SVC.gifting, SVC.return_gifts,
+      SVC.nadaswaram, SVC.drum, SVC.catering, SVC.cooks, SVC.menu,
+      SVC.decor, SVC.balloon_arch, SVC.invitations, SVC.cleanup,
+    ],
+  },
+
+  half_saree: {
+    id: 'half_saree',
+    name: 'Half-Saree Ceremony',
+    emoji: '🌺',
+    icon: '🪞',
+    gradient: 'from-fuchsia-500 via-pink-500 to-rose-400',
+    bgColor: 'bg-fuchsia-50',
+    borderColor: 'border-fuchsia-200',
+    textColor: 'text-fuchsia-800',
+    accentColor: 'text-fuchsia-600',
+    badgeColor: 'bg-fuchsia-100 text-fuchsia-700',
+    heroGradient: 'from-fuchsia-600 via-pink-500 to-rose-400',
+    tagline: 'Langa voni, and the day she is the guest of honour',
+    description: 'Ritu Kala Samskara — the rite, the stage, the photographs and a full leaf meal for both sides of the family.',
+    services: [
+      SVC.venue, SVC.priest, SVC.pooja, SVC.floral, SVC.decor, SVC.stage,
+      SVC.lighting, SVC.makeup, SVC.mehendi, SVC.bridal_wear,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.welcome_drinks,
+      SVC.photography, SVC.videography, SVC.photobooth,
+      SVC.nadaswaram, SVC.bhajan, SVC.live_music, SVC.emcee,
+      SVC.return_gifts, SVC.gifting, SVC.invitations, SVC.cleanup,
+      SVC.valet, SVC.power, SVC.hospitality, SVC.signage, SVC.live_counters,
+    ],
+  },
+
+  mundan: {
+    id: 'mundan',
+    name: 'Mundan / Chudakarana',
+    emoji: '✂️',
+    icon: '👶',
+    gradient: 'from-amber-400 via-orange-400 to-rose-400',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    textColor: 'text-amber-800',
+    accentColor: 'text-amber-600',
+    badgeColor: 'bg-amber-100 text-amber-700',
+    heroGradient: 'from-amber-500 via-orange-400 to-rose-400',
+    tagline: 'The first haircut, and the lunch after it',
+    description: 'Temple tonsure or a rite at home — the purohit, the barber, the photographs and a meal for the family who came.',
+    services: [
+      SVC.priest, SVC.pooja, SVC.floral, SVC.decor, SVC.balloon_arch,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.cake,
+      SVC.photography, SVC.videography, SVC.nadaswaram, SVC.bhajan,
+      SVC.return_gifts, SVC.sweets, SVC.invitations, SVC.cleanup,
+      SVC.transport, SVC.hospitality, SVC.nanny,
+    ],
+  },
+
+  annaprashana: {
+    id: 'annaprashana',
+    name: 'Annaprashana (First Rice)',
+    emoji: '🍚',
+    icon: '🥣',
+    gradient: 'from-lime-400 via-emerald-400 to-teal-400',
+    bgColor: 'bg-lime-50',
+    borderColor: 'border-lime-200',
+    textColor: 'text-lime-800',
+    accentColor: 'text-lime-600',
+    badgeColor: 'bg-lime-100 text-lime-700',
+    heroGradient: 'from-lime-500 via-emerald-400 to-teal-400',
+    tagline: 'The first mouthful, in front of everybody',
+    description: 'Choroonu, mukhe bhaat, annaprashana — the rite, the silver spoon, the tray of objects, and the meal afterwards.',
+    services: [
+      SVC.priest, SVC.pooja, SVC.floral, SVC.decor, SVC.balloon_arch,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.cake,
+      SVC.photography, SVC.videography, SVC.photobooth,
+      SVC.nadaswaram, SVC.bhajan, SVC.livestream,
+      SVC.return_gifts, SVC.sweets, SVC.invitations, SVC.cleanup, SVC.nanny,
+    ],
+  },
+
+  reception: {
+    id: 'reception',
+    name: 'Wedding Reception',
+    emoji: '🥂',
+    icon: '💐',
+    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+    bgColor: 'bg-violet-50',
+    borderColor: 'border-violet-200',
+    textColor: 'text-violet-800',
+    accentColor: 'text-violet-600',
+    badgeColor: 'bg-violet-100 text-violet-700',
+    heroGradient: 'from-violet-600 via-purple-500 to-fuchsia-500',
+    tagline: 'The evening the whole city is invited to',
+    description: 'A different hall, a different guest list and a different day from the muhurtham — planned as the event it actually is.',
+    services: [
+      SVC.venue, SVC.stage, SVC.decor, SVC.floral, SVC.lighting,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.welcome_drinks,
+      SVC.live_counters, SVC.bar, SVC.ice_cream, SVC.cake,
+      SVC.dj, SVC.live_music, SVC.emcee, SVC.entertainment, SVC.choreography,
+      SVC.photography, SVC.videography, SVC.drone, SVC.photobooth, SVC.livestream,
+      SVC.makeup, SVC.bridal_wear, SVC.wedding_car,
+      SVC.return_gifts, SVC.gifting, SVC.invitations, SVC.signage,
+      SVC.valet, SVC.bouncers, SVC.hospitality, SVC.power, SVC.cooling,
+      SVC.washrooms, SVC.medical, SVC.transport, SVC.fireworks, SVC.cleanup,
+    ],
+  },
+
+  shop_opening: {
+    id: 'shop_opening',
+    name: 'Shop & Business Opening',
+    emoji: '🏪',
+    icon: '🎗️',
+    gradient: 'from-yellow-400 via-amber-500 to-orange-500',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-yellow-200',
+    textColor: 'text-yellow-800',
+    accentColor: 'text-yellow-600',
+    badgeColor: 'bg-yellow-100 text-yellow-700',
+    heroGradient: 'from-yellow-500 via-amber-500 to-orange-500',
+    tagline: 'Open the shutter on the right morning, properly',
+    description: 'Ganapati homa, the ribbon, the band, the hoarding and two thousand sweet boxes — a launch the street remembers.',
+    services: [
+      SVC.inauguration, SVC.priest, SVC.pooja, SVC.floral, SVC.decor,
+      SVC.balloon_arch, SVC.lighting, SVC.signage, SVC.tent,
+      SVC.nadaswaram, SVC.drum, SVC.folk, SVC.dj, SVC.emcee, SVC.entertainment,
+      SVC.sweets, SVC.catering, SVC.cooks, SVC.menu, SVC.welcome_drinks,
+      SVC.live_counters, SVC.photography, SVC.videography, SVC.drone,
+      SVC.gifting, SVC.return_gifts, SVC.invitations, SVC.hospitality,
+      SVC.bouncers, SVC.valet, SVC.power, SVC.cleanup, SVC.av_setup,
+    ],
+  },
+
+  bhoomi_pooja: {
+    id: 'bhoomi_pooja',
+    name: 'Bhoomi Pooja',
+    emoji: '🧱',
+    icon: '⛏️',
+    gradient: 'from-stone-400 via-amber-600 to-orange-600',
+    bgColor: 'bg-stone-50',
+    borderColor: 'border-stone-200',
+    textColor: 'text-stone-800',
+    accentColor: 'text-stone-600',
+    badgeColor: 'bg-stone-100 text-stone-700',
+    heroGradient: 'from-stone-600 via-amber-600 to-orange-500',
+    tagline: 'The first day of a house that does not exist yet',
+    description: 'Ground-breaking, foundation-laying or a shilanyas — held on bare ground, which is the whole planning problem.',
+    services: [
+      SVC.priest, SVC.pooja, SVC.tent, SVC.floral, SVC.decor,
+      SVC.dining, SVC.catering, SVC.cooks, SVC.menu, SVC.welcome_drinks,
+      SVC.photography, SVC.videography, SVC.drone,
+      SVC.nadaswaram, SVC.drum, SVC.sweets, SVC.return_gifts,
+      SVC.power, SVC.washrooms, SVC.cooling, SVC.valet,
+      SVC.transport, SVC.hospitality, SVC.cleanup, SVC.invitations,
+    ],
+  },
+
+  aksharabhyasa: {
+    id: 'aksharabhyasa',
+    name: 'Aksharabhyasa / Vidyarambham',
+    emoji: '✏️',
+    icon: '📖',
+    gradient: 'from-indigo-400 via-blue-500 to-cyan-400',
+    bgColor: 'bg-indigo-50',
+    borderColor: 'border-indigo-200',
+    textColor: 'text-indigo-800',
+    accentColor: 'text-indigo-600',
+    badgeColor: 'bg-indigo-100 text-indigo-700',
+    heroGradient: 'from-indigo-600 via-blue-500 to-cyan-400',
+    tagline: 'The first letter, written with a finger in rice',
+    description: 'Vijayadashami morning or a chosen muhurtham — the slate, the priest, the photographs and a small lunch.',
+    services: [
+      SVC.priest, SVC.pooja, SVC.floral, SVC.decor, SVC.balloon_arch,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.cake,
+      SVC.photography, SVC.videography, SVC.bhajan, SVC.nadaswaram,
+      SVC.return_gifts, SVC.sweets, SVC.gifting, SVC.invitations, SVC.cleanup,
+    ],
+  },
+
+  haldi: {
+    id: 'haldi',
+    name: 'Haldi & Mehendi',
+    emoji: '💛',
+    icon: '🪷',
+    gradient: 'from-yellow-300 via-amber-400 to-lime-400',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-yellow-200',
+    textColor: 'text-yellow-800',
+    accentColor: 'text-yellow-600',
+    badgeColor: 'bg-yellow-100 text-yellow-700',
+    heroGradient: 'from-yellow-400 via-amber-400 to-lime-400',
+    tagline: 'The morning everyone ends up yellow',
+    description: 'Haldi, mehendi or both — matkas, marigold, a mehendi corner and a photographer who expects to get turmeric on the lens.',
+    services: [
+      SVC.venue, SVC.decor, SVC.floral, SVC.stage, SVC.lighting,
+      SVC.mehendi, SVC.makeup, SVC.bridal_wear,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.welcome_drinks,
+      SVC.live_counters, SVC.ice_cream, SVC.bar,
+      SVC.dj, SVC.drum, SVC.folk, SVC.live_music, SVC.choreography,
+      SVC.photography, SVC.videography, SVC.drone, SVC.photobooth,
+      SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.cooling, SVC.power, SVC.washrooms, SVC.hospitality, SVC.valet,
+    ],
+  },
+
+  farewell: {
+    id: 'farewell',
+    name: 'Farewell & Send-Off',
+    emoji: '✈️',
+    icon: '🧳',
+    gradient: 'from-cyan-500 via-sky-500 to-blue-600',
+    bgColor: 'bg-cyan-50',
+    borderColor: 'border-cyan-200',
+    textColor: 'text-cyan-800',
+    accentColor: 'text-cyan-600',
+    badgeColor: 'bg-cyan-100 text-cyan-700',
+    heroGradient: 'from-cyan-600 via-sky-500 to-blue-600',
+    tagline: 'The dinner before the flight',
+    description: 'Going abroad, moving cities, leaving a college or a team — the last evening everybody is in the same room.',
+    services: [
+      SVC.venue, SVC.decor, SVC.lighting, SVC.memory_wall, SVC.stage,
+      SVC.catering, SVC.cooks, SVC.menu, SVC.dining, SVC.welcome_drinks,
+      SVC.live_counters, SVC.cake, SVC.ice_cream, SVC.bar,
+      SVC.dj, SVC.live_music, SVC.emcee, SVC.av_setup,
+      SVC.photography, SVC.videography, SVC.photobooth, SVC.livestream,
+      SVC.gifting, SVC.return_gifts, SVC.invitations, SVC.cleanup,
+      SVC.valet, SVC.transport, SVC.hospitality, SVC.power,
+    ],
+  },
+
 }
 
 export const EVENT_LIST = Object.values(EVENT_DATA)
