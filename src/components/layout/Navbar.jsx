@@ -28,7 +28,6 @@ const NAV_LINKS = [
 // account-scoped history pages moved into the profile menu, where people
 // already look for "my stuff", and Dashboard is the logo/home tap.
 const CUSTOMER_LINKS = [
-  { to: '/shop',                        label: 'Shop' },
   { to: '/dashboard/customer/events',   label: 'My Celebrations' },
 ]
 
@@ -118,11 +117,6 @@ export default function Navbar() {
                 </button>
               )
             ))}
-            {!user && (
-              <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
-                Shop
-              </Link>
-            )}
             {isCustomer && CUSTOMER_LINKS.map(({ to, label }) => (
               <Link key={to} to={to} className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
                 {label}
@@ -226,8 +220,6 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <MobileLink to="/shop">Shop</MobileLink>
-              <div className="border-t border-hairline/10 my-2" />
               <div className="flex gap-2">
                 <Link
                   to="/login"

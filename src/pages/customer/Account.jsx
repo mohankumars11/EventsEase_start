@@ -150,13 +150,6 @@ export default function Account() {
               label="My orders" sub="Deliveries, returns and refunds"
               meta={fmtCount(counts.orders)} i={0}
             />
-            {productCount > 0 && (
-              <Row
-                to="/shop/cart" icon={ShoppingBag}
-                label="Shop basket" sub="Cakes, gifts, flowers and essentials"
-                badge={productCount} i={1}
-              />
-            )}
             {totalCount > 0 && (
               <Row
                 to="/dashboard/customer/cart" icon={LayoutGrid}
@@ -632,12 +625,6 @@ function BrandFoot() {
             className="flex items-center gap-1.5 rounded-xl bg-plum-900 px-3.5 py-2 text-[11px] font-extrabold text-white"
           >
             <Sparkles size={12} /> Plan a celebration
-          </Link>
-          <Link
-            to="/shop"
-            className="flex items-center gap-1.5 rounded-xl bg-surface px-3.5 py-2 text-[11px] font-extrabold text-ink ring-1 ring-hairline/10"
-          >
-            <Store size={12} /> Shop the essentials
           </Link>
         </div>
       </div>

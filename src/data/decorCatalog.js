@@ -311,7 +311,7 @@ export const DECOR_CATALOG = [
     name: 'Anniversary Arch Backdrop',
     emoji: '🎊',
     category: 'backdrop',
-    occasions: ['anniversary'],
+    occasions: ['anniversary', 'half_saree', 'farewell'],
     price: 2499, priceTo: 3699,
     blurb: 'A balloon arch over a clean panel with your years on it. Where the cake gets cut and the photograph gets taken.',
     includes: [
@@ -346,7 +346,7 @@ export const DECOR_CATALOG = [
     name: 'Rose Canopy Backdrop',
     emoji: '🌺',
     category: 'floral',
-    occasions: ['anniversary', 'engagement', 'wedding'],
+    occasions: ['anniversary', 'engagement', 'wedding', 'reception'],
     price: 8499, priceTo: 14999,
     blurb: 'Fresh roses on a canopy frame with seating under it. Not artificial — cut that morning, and it shows.',
     includes: [
@@ -364,7 +364,7 @@ export const DECOR_CATALOG = [
     name: 'Fresh Flower Photo Wall',
     emoji: '🌷',
     category: 'floral',
-    occasions: ['anniversary', 'engagement', 'wedding', 'sangeet'],
+    occasions: ['anniversary', 'engagement', 'wedding', 'sangeet', 'reception', 'haldi', 'half_saree'],
     price: 7499, priceTo: 16999,
     blurb: 'An 8×8 wall of real flowers. Guests queue at it — that is what you are buying, and it is worth the number.',
     includes: [
@@ -399,7 +399,7 @@ export const DECOR_CATALOG = [
     name: '“Our Years” Photo String',
     emoji: '🖼️',
     category: 'photo',
-    occasions: ['anniversary'],
+    occasions: ['anniversary', 'farewell'],
     price: 1499, priceTo: 2299,
     blurb: 'Send us the photographs. We print them and hang them in order, one per year, with lights along the line.',
     includes: [
@@ -417,7 +417,7 @@ export const DECOR_CATALOG = [
     name: 'Memory Wall & Timeline',
     emoji: '📜',
     category: 'photo',
-    occasions: ['anniversary', 'retirement', 'graduation'],
+    occasions: ['anniversary', 'retirement', 'graduation', 'farewell'],
     price: 4999, priceTo: 8499,
     blurb: 'The whole story, printed and mounted as one display — the wedding, the children, the houses, the trips.',
     includes: [
@@ -435,7 +435,7 @@ export const DECOR_CATALOG = [
     name: 'Photo Booth Corner & Props',
     emoji: '📷',
     category: 'photo',
-    occasions: ['anniversary', 'birthday', 'engagement', 'get_together', 'graduation', 'corporate_event'],
+    occasions: ['anniversary', 'birthday', 'engagement', 'get_together', 'graduation', 'corporate_event', 'reception', 'haldi', 'half_saree', 'farewell'],
     price: 5499, priceTo: 8999,
     blurb: 'A dressed corner, real lighting and props people actually pick up — plus instant prints they take home.',
     includes: [
@@ -511,7 +511,7 @@ export const DECOR_CATALOG = [
     name: 'Surprise Car Décor',
     emoji: '🚗',
     category: 'extras',
-    occasions: ['anniversary', 'engagement', 'wedding'],
+    occasions: ['anniversary', 'engagement', 'wedding', 'reception'],
     price: 2499, priceTo: 4999,
     blurb: 'Their car, dressed while they are inside. Works best as the thing they find on the way out.',
     includes: [
@@ -528,7 +528,7 @@ export const DECOR_CATALOG = [
     name: 'LED Marquee Letters',
     emoji: '🔤',
     category: 'lighting',
-    occasions: ['anniversary', 'birthday', 'engagement', 'graduation', 'get_together'],
+    occasions: ['anniversary', 'birthday', 'engagement', 'graduation', 'get_together', 'reception', 'farewell'],
     price: 1899, priceTo: 4499,
     blurb: 'Four-foot light-up letters — initials, a number, or the word. Rented for the evening, delivered and collected.',
     includes: [
@@ -545,7 +545,7 @@ export const DECOR_CATALOG = [
     name: 'Fairy-Light Canopy',
     emoji: '✨',
     category: 'lighting',
-    occasions: ['anniversary', 'engagement', 'get_together', 'sangeet'],
+    occasions: ['anniversary', 'engagement', 'get_together', 'sangeet', 'reception', 'haldi', 'farewell'],
     price: 3499, priceTo: 7999,
     blurb: 'Warm strings run corner to corner overhead. The single highest-impact rupee in décor after dark.',
     includes: [
@@ -563,7 +563,7 @@ export const DECOR_CATALOG = [
     name: 'Cold Sparkler Entry',
     emoji: '🎇',
     category: 'extras',
-    occasions: ['anniversary', 'birthday', 'engagement', 'wedding', 'sangeet'],
+    occasions: ['anniversary', 'birthday', 'engagement', 'wedding', 'sangeet', 'reception'],
     price: 3499, priceTo: 7499,
     blurb: 'Indoor-safe cold pyro for the entrance or the cake cutting. No heat, no smoke, licensed operator.',
     includes: [
@@ -580,7 +580,7 @@ export const DECOR_CATALOG = [
     name: 'Cake & Dessert Table Styling',
     emoji: '🍰',
     category: 'table',
-    occasions: ['anniversary', 'birthday', 'first_birthday', 'baby_shower', 'engagement', 'graduation', 'retirement'],
+    occasions: ['anniversary', 'birthday', 'first_birthday', 'baby_shower', 'engagement', 'graduation', 'retirement', 'reception', 'farewell', 'annaprashana', 'mundan'],
     price: 1499, priceTo: 3999,
     blurb: 'Tiered stands, cloth, a lit backdrop and the whole spread arranged as the photograph everyone takes.',
     includes: [
@@ -598,7 +598,7 @@ export const DECOR_CATALOG = [
     name: 'Welcome Board & Entry Balloons',
     emoji: '🪧',
     category: 'entrance',
-    occasions: ['anniversary', 'birthday', 'first_birthday', 'baby_shower', 'engagement', 'graduation', 'housewarming'],
+    occasions: ['anniversary', 'birthday', 'first_birthday', 'baby_shower', 'engagement', 'graduation', 'housewarming', 'reception', 'shop_opening', 'farewell', 'annaprashana', 'mundan', 'aksharabhyasa', 'half_saree'],
     price: 1999, priceTo: 3299,
     blurb: 'A printed board with their names and a balloon cluster at the door, so guests know they are in the right place.',
     includes: [
@@ -615,7 +615,7 @@ export const DECOR_CATALOG = [
     name: 'Dry-Ice First Dance',
     emoji: '🌫️',
     category: 'extras',
-    occasions: ['anniversary', 'engagement', 'wedding'],
+    occasions: ['anniversary', 'engagement', 'wedding', 'reception'],
     price: 2999, priceTo: 5999,
     blurb: 'Low fog that sits on the floor for the first dance. Not a smoke machine — this one stays at ankle height.',
     includes: [
@@ -768,7 +768,7 @@ export const DECOR_CATALOG = [
     name: 'Pastel Balloon Arch',
     emoji: '🍼',
     category: 'balloon',
-    occasions: ['baby_shower'],
+    occasions: ['baby_shower', 'annaprashana', 'mundan'],
     price: 2499, priceTo: 3999,
     blurb: 'A soft garland over the seat of honour, with the mother-to-be’s chair styled as the centrepiece.',
     includes: [
@@ -786,7 +786,7 @@ export const DECOR_CATALOG = [
     name: 'Floral Swing / Jhula Setup',
     emoji: '🌼',
     category: 'floral',
-    occasions: ['baby_shower', 'seemantham', 'naming_ceremony'],
+    occasions: ['baby_shower', 'seemantham', 'naming_ceremony', 'half_saree'],
     price: 7999, priceTo: 17999,
     blurb: 'A flower-dressed jhula as the centrepiece — the shot every godh bharai and seemantham is built around.',
     includes: [
@@ -822,7 +822,7 @@ export const DECOR_CATALOG = [
     name: 'Bangle & Mehendi Corner',
     emoji: '💫',
     category: 'extras',
-    occasions: ['baby_shower', 'seemantham', 'sangeet'],
+    occasions: ['baby_shower', 'seemantham', 'sangeet', 'haldi', 'half_saree'],
     price: 3499, priceTo: 6999,
     blurb: 'The glass-bangle table, mehendi seating and a mirror corner — the bit the women in the family actually gather at.',
     includes: [
@@ -857,7 +857,7 @@ export const DECOR_CATALOG = [
     name: 'Cradle & Floral Canopy',
     emoji: '👶',
     category: 'floral',
-    occasions: ['naming_ceremony'],
+    occasions: ['naming_ceremony', 'annaprashana'],
     price: 6499, priceTo: 13999,
     blurb: 'The cradle dressed in fresh flowers under a fabric canopy, lit for the moment the name is said.',
     includes: [
@@ -876,7 +876,7 @@ export const DECOR_CATALOG = [
     name: 'Name Reveal Backdrop',
     emoji: '✍️',
     category: 'backdrop',
-    occasions: ['naming_ceremony', 'first_birthday'],
+    occasions: ['naming_ceremony', 'first_birthday', 'annaprashana', 'mundan'],
     price: 2799, priceTo: 4999,
     blurb: 'A printed backdrop carrying the child’s name and its meaning, with a styled table for the blessings.',
     includes: [
@@ -898,7 +898,7 @@ export const DECOR_CATALOG = [
     name: 'Entrance Toran & Rangoli',
     emoji: '🪔',
     category: 'entrance',
-    occasions: ['housewarming', 'thread_ceremony', 'naming_ceremony', 'seemantham'],
+    occasions: ['housewarming', 'thread_ceremony', 'naming_ceremony', 'seemantham', 'mundan', 'annaprashana', 'aksharabhyasa', 'vehicle_pooja', 'shop_opening', 'half_saree'],
     price: 2499, priceTo: 4499,
     blurb: 'Mango-leaf toran across the door, a fresh rangoli on the threshold and marigold along the frame.',
     includes: [
@@ -917,7 +917,7 @@ export const DECOR_CATALOG = [
     name: 'Griha Pravesh Pooja Setup',
     emoji: '🕉️',
     category: 'ritual',
-    occasions: ['housewarming'],
+    occasions: ['housewarming', 'annaprashana', 'aksharabhyasa', 'mundan', 'bhoomi_pooja', 'shop_opening', 'vehicle_pooja'],
     price: 5999, priceTo: 12999,
     blurb: 'Kalash, havan kund and seating laid out the way the purohit will want it, with the samagri counted out in advance.',
     includes: [
@@ -935,7 +935,7 @@ export const DECOR_CATALOG = [
     name: 'Full Griha Pravesh Décor',
     emoji: '🏡',
     category: 'floral',
-    occasions: ['housewarming'],
+    occasions: ['housewarming', 'shop_opening'],
     price: 8999, priceTo: 19999,
     blurb: 'Entrance, pooja space, terrace lighting and a shaded seating area for the relatives who stay all afternoon.',
     includes: [
@@ -953,7 +953,7 @@ export const DECOR_CATALOG = [
     name: 'Homam & Ritual Space',
     emoji: '🔥',
     category: 'ritual',
-    occasions: ['thread_ceremony', 'naming_ceremony', 'seemantham'],
+    occasions: ['thread_ceremony', 'naming_ceremony', 'seemantham', 'mundan', 'annaprashana', 'aksharabhyasa', 'bhoomi_pooja'],
     price: 5499, priceTo: 11999,
     blurb: 'Havan kund, mats, kalash and samagri, laid out for the full vidhi rather than assembled while the priest waits.',
     includes: [
@@ -971,7 +971,7 @@ export const DECOR_CATALOG = [
     name: 'Shaded Guest Pandal',
     emoji: '⛱️',
     category: 'extras',
-    occasions: ['thread_ceremony', 'housewarming', 'naming_ceremony', 'get_together', 'seemantham'],
+    occasions: ['thread_ceremony', 'housewarming', 'naming_ceremony', 'get_together', 'seemantham', 'haldi', 'bhoomi_pooja', 'shop_opening', 'half_saree'],
     price: 7999, priceTo: 24999,
     blurb: 'A pandal, chairs and fans for a morning function that will run well into the afternoon, because they always do.',
     includes: [
@@ -994,7 +994,7 @@ export const DECOR_CATALOG = [
     name: 'Ring Ceremony Stage',
     emoji: '💍',
     category: 'stage',
-    occasions: ['engagement'],
+    occasions: ['engagement', 'half_saree'],
     price: 9999, priceTo: 24999,
     blurb: 'A floral or fabric backdrop, two chairs and lighting set for the exchange — built so the photographs work, not just the room.',
     includes: [
@@ -1051,7 +1051,7 @@ export const DECOR_CATALOG = [
     name: 'Reception Stage',
     emoji: '👑',
     category: 'stage',
-    occasions: ['wedding', 'engagement'],
+    occasions: ['wedding', 'engagement', 'reception'],
     price: 19999, priceTo: 74999,
     blurb: 'A lit backdrop, the couple’s seating and a rig that works for both the eye in the room and the camera in front of it.',
     includes: [
@@ -1070,7 +1070,7 @@ export const DECOR_CATALOG = [
     name: 'Entrance Gate & Pathway',
     emoji: '🌿',
     category: 'entrance',
-    occasions: ['wedding', 'engagement', 'sangeet'],
+    occasions: ['wedding', 'engagement', 'sangeet', 'reception'],
     price: 12999, priceTo: 39999,
     blurb: 'The gate, the walkway and the welcome board — the first thing four hundred people see, and the one they judge the rest by.',
     includes: [
@@ -1088,7 +1088,7 @@ export const DECOR_CATALOG = [
     name: 'Dance Floor & Lighting Rig',
     emoji: '🕺',
     category: 'lighting',
-    occasions: ['sangeet', 'get_together', 'birthday', 'wedding'],
+    occasions: ['sangeet', 'get_together', 'birthday', 'wedding', 'haldi'],
     price: 14999, priceTo: 44999,
     blurb: 'A floor, a rig and the seating pulled back — built for the performances rather than for sitting through them.',
     includes: [
@@ -1106,7 +1106,7 @@ export const DECOR_CATALOG = [
     name: 'Haldi & Mehendi Backdrop',
     emoji: '💛',
     category: 'backdrop',
-    occasions: ['sangeet', 'wedding'],
+    occasions: ['sangeet', 'wedding', 'haldi'],
     price: 5499, priceTo: 14999,
     blurb: 'Marigold, yellow drape, umbrellas and low seating — the daytime half of the same weekend, and the most colourful thing we build.',
     includes: [
@@ -1130,7 +1130,7 @@ export const DECOR_CATALOG = [
     name: 'Terrace & Backyard Setup',
     emoji: '🌇',
     category: 'lighting',
-    occasions: ['get_together', 'birthday', 'anniversary'],
+    occasions: ['get_together', 'birthday', 'anniversary', 'farewell'],
     price: 4999, priceTo: 11999,
     blurb: 'String lights, low seating and a drinks corner — the version that needs no venue booking at all.',
     includes: [
@@ -1149,7 +1149,7 @@ export const DECOR_CATALOG = [
     name: 'Lounge Seating & Tables',
     emoji: '🛋️',
     category: 'extras',
-    occasions: ['get_together', 'corporate_event', 'retirement'],
+    occasions: ['get_together', 'corporate_event', 'retirement', 'farewell'],
     price: 6999, priceTo: 18999,
     blurb: 'Sofas, low tables and lamps arranged so people can actually hear each other — which is the whole point of a get-together.',
     includes: [
@@ -1166,7 +1166,7 @@ export const DECOR_CATALOG = [
     name: 'Felicitation Stage',
     emoji: '🎖️',
     category: 'stage',
-    occasions: ['retirement', 'corporate_event', 'graduation'],
+    occasions: ['retirement', 'corporate_event', 'graduation', 'farewell'],
     price: 8999, priceTo: 22999,
     blurb: 'A backdrop, a podium and lighting set for the speeches, the shawl and the photograph with the plaque.',
     includes: [
@@ -1202,7 +1202,7 @@ export const DECOR_CATALOG = [
     name: 'Branded Stage & Backdrop',
     emoji: '🏢',
     category: 'stage',
-    occasions: ['corporate_event'],
+    occasions: ['corporate_event', 'shop_opening'],
     price: 11999, priceTo: 34999,
     blurb: 'A printed backdrop, podium and stage lighting set to your brand colours — supplied from your own artwork, not a template.',
     includes: [
@@ -1220,7 +1220,7 @@ export const DECOR_CATALOG = [
     name: 'Registration & Entrance',
     emoji: '🗂️',
     category: 'entrance',
-    occasions: ['corporate_event'],
+    occasions: ['corporate_event', 'shop_opening'],
     price: 5999, priceTo: 14999,
     blurb: 'A welcome desk, standees, signage and a branded entrance, so four hundred arrivals do not become a queue in a corridor.',
     includes: [

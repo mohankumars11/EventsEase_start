@@ -331,11 +331,12 @@ function SignedOutPitch() {
         </ul>
 
         <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+          {/* One way on, not two. The second button here was "Browse the
+              shop", and /shop is not a route on this branch — so it was a
+              link to a 404 sitting beside the only thing this screen wants
+              somebody to do. */}
           <Link to="/plan" className="a-btn-primary flex-1">
             <Sparkles size={16} /> Plan a celebration
-          </Link>
-          <Link to="/shop" className="a-btn-quiet flex-1">
-            <Store size={16} /> Browse the shop
           </Link>
         </div>
 
@@ -447,11 +448,12 @@ function LockedState() {
         </p>
 
         <div className="flex flex-col gap-2.5 px-6 py-5 sm:flex-row">
+          {/* One way on, not two. The second button here was "Browse the
+              shop", and /shop is not a route on this branch — so it was a
+              link to a 404 sitting beside the only thing this screen wants
+              somebody to do. */}
           <Link to="/plan" className="a-btn-primary flex-1">
             <Sparkles size={16} /> Plan a celebration
-          </Link>
-          <Link to="/shop" className="a-btn-quiet flex-1">
-            <Store size={16} /> Browse the shop
           </Link>
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
 import { CIRCLE_BY_ID, circleForGuests, allowanceFor } from '../../data/guestCircles'
 import { CUISINE_BY_ID, COURSES, dishesFor, defaultMenu } from '../../data/cuisineMenus'
 import { DECOR_LEVEL_BY_ID } from '../../data/decorPackages'
+import { ALL_CATALOG_ITEMS } from '../../data/decorCatalog'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { SPECIAL_REQUESTS } from '../../data/menuPairings'
 import { PACK_BY_ID, defaultPackQty } from '../../data/servicePacks'
@@ -34,7 +35,8 @@ import { CuisineStep, CourseStep, courseStepsFor } from '../../components/journe
 import MenuAllStep from '../../components/journey/MenuAllStep'
 import SourcingStep from '../../components/journey/SourcingStep'
 import ExtrasShelf from '../../components/journey/ExtrasShelf'
-import { DecorLevelStep, DecorThemeStep, DecorAddonStep, DecorOwnStep } from '../../components/journey/DecorSteps'
+import { DecorLevelStep, DecorAddonStep, DecorOwnStep } from '../../components/journey/DecorSteps'
+import DecorThemePicker from '../../components/journey/DecorThemePicker'
 import PairingSheet from '../../components/journey/PairingSheet'
 import RevealStep from '../../components/journey/RevealStep'
 import ContactBlock, { contactBlocked, eventDateBlocked, phoneDigitsOf } from '../../components/plan/ContactBlock'
@@ -126,6 +128,9 @@ const RESUME_KEY = 'sambramo_journey_resume'
  * rite (which fixes the clock), the cake, and how people sit to eat — all
  * three of which are really questions about the meal anyway.
  */
+/** Decoration setups by id, for naming them in the coordinator's note. */
+const CATALOG_BY_ID = Object.fromEntries(ALL_CATALOG_ITEMS.map(i => [i.id, i]))
+
 const BEFORE_FOOD_SERVICES = new Set(['priest', 'pooja', 'nadaswaram', 'cake', 'dining'])
 const beforeFood = ch =>
   ch.id === 'precleanup' || (ch.kind === 'service' && BEFORE_FOOD_SERVICES.has(ch.serviceId))
@@ -221,6 +226,17 @@ export default function CelebrationJourney() {
   const [decorChoiceId, setDecorChoiceId] = useState(null)
   const [themeId, setThemeId] = useState(null)
   const [addonIds, setAddonIds] = useState([])
+  /**
+   * The real decoration setups chosen, and anything typed instead.
+   *
+   * The palette question this replaced picked one of thirteen colours; this
+   * picks any number of the occasion's actual setups from decorCatalog.js.
+   * `themeId` is still set underneath — the quote engine prices a palette
+   * delta and removing that is a separate change — but nothing asks the
+   * customer for it any more.
+   */
+  const [decorSetupIds, setDecorSetupIds] = useState([])
+  const [decorBrief, setDecorBrief] = useState('')
   const [eventDate, setEventDate] = useState(searchParams.get('date') ?? '')
   const [timeSlot, setTimeSlot] = useState(searchParams.get('slot') ?? '')
   const [chosenCity, setChosenCity] = useState(city ?? BRAND.pilotCities[0])
@@ -469,7 +485,13 @@ export default function CelebrationJourney() {
           summary: decorLevel?.name ?? 'Not chosen yet',
         }
       case 'decor_theme':
-        return { key: s.key, emoji: '🎨', title: 'The colours', section: SECTIONS.look, status: themeId ? 'chosen' : 'todo', summary: themeId ? 'Chosen' : 'Not chosen yet' }
+        return {
+          key: s.key, emoji: '🖼️', title: 'The setups', section: SECTIONS.look,
+          status: decorSetupIds.length || decorBrief.trim() ? 'chosen' : 'todo',
+          summary: decorSetupIds.length
+            ? `${decorSetupIds.length} setup${decorSetupIds.length === 1 ? '' : 's'} chosen`
+            : decorBrief.trim() ? 'Described in your own words' : 'Nothing chosen yet',
+        }
       case 'decor_addons':
         return { key: s.key, emoji: '✨', title: 'Extra touches', section: SECTIONS.look, status: addonIds.length ? 'chosen' : 'todo', summary: addonIds.length ? `${addonIds.length} added` : 'None added' }
       case 'reveal':
@@ -478,7 +500,7 @@ export default function CelebrationJourney() {
         return { key: s.key, emoji: '📞', title: 'Your details', section: SECTIONS.finish, status: contactBlocked(contact) ? 'todo' : 'chosen', summary: contact.name?.trim() || 'Who we should call' }
     }
   }), [steps, choices, selections, menu, guests, circle, circleId, venue, occasionId, ctx, extras,
-       serveMeal, cateringMode, cuisine, cuisineId, decorLevelId, decorLevel, decorChoiceId, themeId, addonIds, contact])
+       serveMeal, cateringMode, cuisine, cuisineId, decorLevelId, decorLevel, decorChoiceId, themeId, addonIds, decorSetupIds, decorBrief, contact])
 
   const stepIndex = Math.max(0, steps.findIndex(s => s.key === stepKey))
   const step = steps[stepIndex] ?? steps[0]
@@ -671,13 +693,13 @@ export default function CelebrationJourney() {
   const stateForDraft = useCallback(() => ({
     occasionId, guests, circleId: circle.id, venue, choices, selections,
     cuisineId, vegOnly, menu, specialTags, specialRequests,
-    decorLevelId, decorChoiceId, themeId, addonIds, eventDate, timeSlot, chosenCity, contact, stepKey,
+    decorLevelId, decorChoiceId, themeId, addonIds, decorSetupIds, decorBrief, eventDate, timeSlot, chosenCity, contact, stepKey,
     // Carried explicitly rather than inferred from a missing cuisine: a
     // journey restored mid-flow, before the meal question was reached, is
     // not the same state as one where the customer said there is no meal.
     serveMeal, includeCatering: serveMeal !== false, cateringMode,
   }), [occasionId, guests, circle.id, venue, choices, selections, cuisineId, vegOnly, menu,
-      specialTags, specialRequests, decorLevelId, decorChoiceId, themeId, addonIds, eventDate, timeSlot,
+      specialTags, specialRequests, decorLevelId, decorChoiceId, themeId, addonIds, decorSetupIds, decorBrief, eventDate, timeSlot,
       chosenCity, contact, stepKey, serveMeal, cateringMode])
 
   const submit = useCallback(async (override) => {
@@ -732,6 +754,16 @@ export default function CelebrationJourney() {
           : 'FOOD: none — no catering on this booking',
         '',
         journeyToText(s, liveChapters),
+        // The decoration brief, which is the one part of a plan a family is
+        // most likely to have a photograph of and the part a designer cannot
+        // guess. Named setups first, then anything typed.
+        (s.decorSetupIds ?? []).length
+          ? ['DECOR SETUPS', ...(s.decorSetupIds ?? [])
+              .map(id => `  ${CATALOG_BY_ID[id]?.name ?? id}`)].join('\n')
+          : '',
+        (s.decorBrief ?? '').trim()
+          ? ['DECOR — THEY ASKED FOR', `  ${s.decorBrief.trim()}`].join('\n')
+          : '',
         '',
         quoteToText(liveQuote, { menu: liveCuisine ? s.menu : {}, cuisine: liveCuisine, vegOnly: s.vegOnly }),
         note ? `\nFOR THE KITCHEN\n  ${note}` : '',
@@ -852,6 +884,8 @@ export default function CelebrationJourney() {
       setDecorChoiceId(d.decorChoiceId ?? null)
       setThemeId(d.themeId ?? null)
       setAddonIds(d.addonIds ?? [])
+      setDecorSetupIds(d.decorSetupIds ?? [])
+      setDecorBrief(d.decorBrief ?? '')
       setEventDate(d.eventDate ?? '')
       setTimeSlot(d.timeSlot ?? '')
       setChosenCity(d.chosenCity ?? city ?? BRAND.pilotCities[0])
@@ -1096,7 +1130,15 @@ export default function CelebrationJourney() {
         />
       )}
       {step?.key === 'decor_theme' && (
-        <DecorThemeStep themeId={themeId} onTheme={id => { setThemeId(id); scheduleAdvance() }} levelId={decorLevelId} />
+        <DecorThemePicker
+          occasionId={occasionId}
+          chosenIds={decorSetupIds}
+          onToggle={id => setDecorSetupIds(current =>
+            current.includes(id) ? current.filter(x => x !== id) : [...current, id])}
+          custom={decorBrief}
+          onCustom={setDecorBrief}
+          levelName={decorLevel?.name}
+        />
       )}
       {step?.key === 'decor_addons' && (
         <DecorAddonStep addonIds={addonIds} onAddons={setAddonIds} />
