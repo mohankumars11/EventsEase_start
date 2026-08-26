@@ -2002,7 +2002,13 @@ export const BLUEPRINTS = {
     }),
     core: ctx => {
       if (ctx.flags.speeches) return ['dining', 'emcee', 'cake', 'photography']
+      if (ctx.flags.screen) return ['dining', 'av_setup', 'photography']
       if (ctx.flags.formal) return ['dining', 'emcee', 'photography']
+      // A family lunch or a festival meal is a MEAL. It does not want a DJ,
+      // it wants everybody seated and the elders comfortable, and the
+      // photographs are of the family rather than of a party.
+      if (ctx.flags.elders && !ctx.flags.loud) return ['dining', 'photography', 'cake']
+      if (ctx.flags.afternoon) return ['dining', 'cake', 'photography']
       if (ctx.flags.kids) return ['dining', 'dj', 'kids_play', 'photography']
       return ['dining', 'dj', 'cake', 'photography']
     },
@@ -2037,15 +2043,34 @@ export const BLUEPRINTS = {
         title: 'Who',
         emoji: '🥳',
         question: 'Who is coming?',
-        why: 'The food and the music are completely different for the office and for the old school batch, and neither is what a society Sunday needs.',
+        why: 'The food and the music are completely different for the office, for the old school batch and for a family lunch — and none of them is what a society Sunday needs. This is the answer everything below is built on.',
         options: [
           { id: 'friends', emoji: '🎉', name: 'Friends — a reunion or a catch-up', desc: 'Late, loud, and nobody wants a stage.', flags: { loud: true, formal: false } },
+          // The one the original four were missing, and the most common
+          // get-together in the country: the whole family, three generations,
+          // on a Sunday. It is not a party and it is not an office event, and
+          // it was being offered a DJ.
+          { id: 'family', emoji: '👨‍👩‍👧‍👦', name: 'The whole family', desc: 'Uncles, aunts, cousins and the grandparents. A long lunch rather than an evening.', flags: { loud: false, formal: false, kids: true, elders: true } },
+          { id: 'festival', emoji: '🪔', name: 'A festival lunch or dinner', desc: 'Ugadi, Deepavali, Onam, Eid, Christmas — the family meal that goes with the day.', flags: { loud: false, formal: false, kids: true, elders: true, ritual: true } },
           { id: 'office', emoji: '💼', name: 'The team from work', desc: 'A meal, some structure, and everybody home at a reasonable hour.', flags: { loud: false, formal: true } },
-          { id: 'society', emoji: '🏘️', name: 'The apartment or the street', desc: 'All ages, children everywhere, and food that suits everybody.', flags: { loud: true, formal: false, kids: true } },
+          { id: 'society', emoji: '🏘️', name: 'The apartment or the street', desc: 'All ages, children everywhere, and food that suits everybody.', flags: { loud: true, formal: false, kids: true, elders: true } },
+          { id: 'kitty', emoji: '☕', name: 'A kitty party or a ladies’ lunch', desc: 'An afternoon, a good table, and the food is the whole point.', flags: { loud: false, formal: false, afternoon: true } },
           { id: 'farewell', emoji: '👋', name: 'A farewell or a welcome', desc: 'Somebody is leaving or arriving, and there will be speeches.', flags: { loud: false, formal: true, speeches: true } },
+          { id: 'sports', emoji: '📺', name: 'A match screening or a games night', desc: 'A screen, snacks that keep coming, and nobody sitting down to eat.', flags: { loud: true, formal: false, screen: true } },
         ],
       }),
       dining({ why: 'Standing and grazing keeps a get-together moving. Seated dinner turns it into a function, which may or may not be what you want.', recommend: { close: 'dining_buffet_standing', family: 'dining_buffet_standing', full_house: 'dining_round', grand: 'dining_round' } }),
+      svc({
+        serviceId: 'av_setup',
+        title: 'The screen',
+        emoji: '📺',
+        question: 'How big does the screen need to be?',
+        why: 'A television in a corner works for eight people and fails for forty. A projector and a proper sound feed is the difference between everybody watching and half the room asking what just happened.',
+        packIds: ['av_basic', 'av_conference', 'av_hybrid'],
+        recommend: { close: 'av_basic', family: 'av_basic', full_house: 'av_conference', grand: 'av_conference' },
+        skipLabel: 'The television is enough',
+        showIf: ctx => !!ctx.flags.screen,
+      }),
       svc({
         serviceId: 'dj',
         title: 'Music',
@@ -3189,6 +3214,11 @@ export const BLUEPRINTS = {
       footnote: 'No "at home" on this list — if a team event is at somebody’s house, plan it as a Get-Together instead and the flow will fit it better.',
     },
     core: ctx => {
+      // An office festival or a floor opening is a rite with a team around
+      // it — the purohit comes first and the AV is beside the point.
+      if (ctx.flags.ritual) return ['priest', 'pooja', 'dining', 'photography', 'signage']
+      if (ctx.flags.outdoorEvent) return ['dining', 'transport', 'gifting', 'photography', 'signage']
+      if (ctx.flags.multiDay) return ['av_setup', 'dining', 'hospitality', 'signage']
       if (ctx.flags.av && !ctx.flags.stage) return ['av_setup', 'emcee', 'dining', 'livestream']
       if (ctx.flags.travel) return ['dining', 'transport', 'entertainment', 'photography']
       if (ctx.flags.awards) return ['av_setup', 'emcee', 'dining', 'gifting', 'photography', 'signage']
@@ -3235,7 +3265,46 @@ export const BLUEPRINTS = {
           { id: 'townhall', emoji: '🗣️', name: 'Town hall or conference', desc: 'Presentations, a panel, and everybody able to hear at the back.', flags: { av: true } },
           { id: 'offsite', emoji: '🏝️', name: 'Offsite or team outing', desc: 'A day away, activities, and travel to arrange.', flags: { travel: true } },
           { id: 'awards', emoji: '🏆', name: 'Awards night or annual dinner', desc: 'A stage, a host, a run sheet and dinner after.', flags: { stage: true, awards: true, formal: true } },
+          // Six more, because "corporate event" was five options for a
+          // category that is genuinely a dozen, and the five it had were all
+          // the large ones. Most corporate spend is on the small recurring
+          // things below, which had nowhere to go.
+          { id: 'office_opening', emoji: '🏢', name: 'New office or floor opening', desc: 'A homa in the morning, a ribbon, and the team seeing the place for the first time.', flags: { av: true, ritual: true } },
+          { id: 'festival', emoji: '🪔', name: 'Office festival celebration', desc: 'Deepavali, Ayudha pooja, Ugadi, Christmas — the day the office actually looks forward to.', flags: { ritual: true, kids: true } },
+          { id: 'milestone', emoji: '🎂', name: 'Company anniversary or a milestone', desc: 'A round number of years, a cake, and somebody saying something worth hearing.', flags: { stage: true, awards: true } },
+          { id: 'clients', emoji: '🤝', name: 'Client or dealer meet', desc: 'A presentation, a good dinner, and the room laid out so people actually talk.', flags: { av: true, formal: true, brand: true } },
+          { id: 'training', emoji: '📋', name: 'Training, induction or a workshop', desc: 'Several days, a screen, breakout tables and food that arrives on a clock.', flags: { av: true, formal: true, multiDay: true } },
+          { id: 'sports', emoji: '🏏', name: 'Sports day or a tournament', desc: 'A ground, a scoreboard, water everywhere and a trophy at the end.', flags: { travel: true, kids: true, awards: true, outdoorEvent: true } },
         ],
+      }),
+      // ── The two chapters a corporate blueprint had no room for ──────
+      // "Corporate event" was five kinds of large staged event, and adding
+      // the office festival, the floor opening and the Ayudha pooja to that
+      // question meant naming a purohit in `core` that no chapter provided.
+      // A core id with no chapter behind it does not crash — it is filtered
+      // out — so the office-opening flow would simply have had no purohit
+      // and nobody would have noticed until a Deepavali booking arrived.
+      svc({
+        serviceId: 'priest',
+        title: 'The rite',
+        emoji: '🙏',
+        question: 'Which pooja is being performed?',
+        why: 'An Ayudha pooja on the machines, a Ganapati homa for a new floor, a Lakshmi pooja at Deepavali. Fixed to a muhurtham, and the rest of the morning is arranged around it rather than the other way round.',
+        packIds: ['priest_home_pooja', 'priest_homam'],
+        recommend: { close: 'priest_home_pooja', family: 'priest_home_pooja', full_house: 'priest_homam', grand: 'priest_homam' },
+        skipLabel: 'Somebody internal is arranging it',
+        showIf: ctx => !!ctx.flags.ritual,
+      }),
+      svc({
+        serviceId: 'pooja',
+        title: 'Samagri',
+        emoji: '🪔',
+        question: 'Samagri and the setup?',
+        why: 'Delivered to an office that has a pantry and no pooja room, laid out before anybody arrives, and cleared before the floor goes back to work.',
+        packIds: ['pooja_basic', 'pooja_homam_kit', 'pooja_annadanam'],
+        recommend: { close: 'pooja_basic', family: 'pooja_basic', full_house: 'pooja_homam_kit', grand: 'pooja_homam_kit' },
+        skipLabel: 'Admin is arranging it',
+        showIf: ctx => !!ctx.flags.ritual,
       }),
       svc({
         serviceId: 'av_setup',

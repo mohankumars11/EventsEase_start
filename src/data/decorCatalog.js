@@ -1233,6 +1233,153 @@ export const DECOR_CATALOG = [
     setup: '3–4 hrs', where: 'Venue entrance and foyer',
     query: 'corporate event registration desk entrance signage welcome branded foyer',
   },
+
+  /* ══════════════════════════════════════════════════════════════════
+     NEW VEHICLE — the setups this catalogue had nothing for.
+
+     A vahana pooja was being offered a doorway toran and a home pooja
+     table, which are the right answer for a house and describe nothing
+     about a motorcycle. What a family chooses between here is what goes ON
+     the vehicle, and it differs completely by what they bought: a handlebar
+     garland is not a bonnet installation is not banana stems on a lorry
+     cabin. Each is a real setup with its own photograph.
+  ══════════════════════════════════════════════════════════════════ */
+
+  {
+    id: 'veh-bike-garland',
+    name: 'Two-Wheeler Garland & Ribbon',
+    emoji: '🏍️',
+    category: 'floral',
+    occasions: ['vehicle_pooja'],
+    price: 1499, priceTo: 2199,
+    blurb: 'Handlebar garland, ribbon and bow on the mirrors, a rose on the tank and the lemons under the wheels.',
+    includes: [
+      'Fresh marigold and rose handlebar garland',
+      'Satin ribbon and bow across the mirrors',
+      'Single rose on the tank or the seat',
+      'Lemons, kumkuma and turmeric for the wheels',
+      'Fitted at the showroom or at your door',
+    ],
+    setup: '20–30 min', where: 'At the showroom or your gate',
+    popular: true,
+    query: 'royal enfield motorcycle parked garland showroom delivery day',
+  },
+  {
+    id: 'veh-car-bonnet',
+    name: 'Car Bonnet Garland',
+    emoji: '🚗',
+    category: 'floral',
+    occasions: ['vehicle_pooja'],
+    price: 3499, priceTo: 4999,
+    blurb: 'The traditional dressing — a full garland across the bonnet, ribbon over the grille, lemons under both front wheels.',
+    includes: [
+      'Full bonnet garland in marigold and rose',
+      'Ribbon and bow across the grille',
+      'Lemons, kumkuma and coconut for the wheels',
+      'Dashboard idol placed and secured',
+      'Removed cleanly before you drive',
+    ],
+    setup: '30–45 min', where: 'Delivery bay or your portico',
+    popular: true,
+    query: 'car bonnet covered flowers wedding decorated vehicle front',
+  },
+  {
+    id: 'veh-car-floral-premium',
+    name: 'Full Floral Handover',
+    emoji: '💐',
+    category: 'floral',
+    occasions: ['vehicle_pooja'],
+    price: 11999, priceTo: 16999,
+    blurb: 'For the photographs. Dense floral work across the bonnet and grille, a red carpet at the door and a printed name board.',
+    includes: [
+      'Dense floral installation on bonnet and grille',
+      'Red carpet strip at the driver door',
+      'Printed name board or number-plate cover',
+      'Rose petals for the handover moment',
+      'Floral removal after the shoot',
+    ],
+    setup: '60–90 min', where: 'Showroom delivery bay',
+    query: 'luxury car handover flowers red carpet dealership celebration',
+  },
+  {
+    id: 'veh-commercial-cabin',
+    name: 'Lorry & Tractor Cabin Dressing',
+    emoji: '🚜',
+    category: 'floral',
+    occasions: ['vehicle_pooja'],
+    price: 4999, priceTo: 7499,
+    blurb: 'A working vehicle is dressed differently — banana stems at the cabin, a heavy garland across the front, the name painted by hand.',
+    includes: [
+      'Banana stems and mango-leaf toran at the cabin',
+      'Heavy marigold garland across the front',
+      'Hand-painted name or “Shubham” board',
+      'Lemons and coconut for the wheels',
+      'Setup at the yard, the site or the showroom',
+    ],
+    setup: '45–60 min', where: 'Yard, site or showroom',
+    query: 'indian truck lorry decorated flowers garland front new vehicle',
+  },
+  {
+    id: 'veh-pooja-tray',
+    name: 'Vahana Pooja Thali & Samagri',
+    emoji: '🪔',
+    category: 'ritual',
+    occasions: ['vehicle_pooja'],
+    price: 999, priceTo: 1799,
+    blurb: 'Everything the purohit will ask for, laid out on the thali before he arrives — coconut, camphor, lemons, kumkuma and agarbatti.',
+    includes: [
+      'Arati thali with lamp, camphor and wicks',
+      'Coconut, betel leaves and plantains',
+      'Lemons, kumkuma, turmeric and akshate',
+      'Agarbatti and a small idol for the dashboard',
+      'Delivered to the showroom or the temple gate',
+    ],
+    setup: '15 min', where: 'Showroom, temple or home',
+    popular: true,
+    query: 'hindu pooja thali coconut camphor lemon ritual items india',
+  },
+
+  /* ══════════════════════════════════════════════════════════════════
+     RECEPTION — its own stage, not the wedding's.
+  ══════════════════════════════════════════════════════════════════ */
+
+  {
+    id: 'recep-stage-floral',
+    name: 'Reception Stage — Floral Backdrop',
+    emoji: '💒',
+    category: 'stage',
+    occasions: ['reception', 'engagement'],
+    price: 34999, priceTo: 74999,
+    blurb: 'The thing four hundred people queue to be photographed in front of. Raised, lit for the camera, built the night before.',
+    includes: [
+      'Raised platform with carpeted steps',
+      'Fresh floral backdrop, 12–16 ft',
+      'Two decorated seats and a side table',
+      'Stage wash and key lighting for photographs',
+      'Overnight build, cleared after the event',
+    ],
+    setup: 'Night before', where: 'Banquet hall or lawn',
+    popular: true,
+    query: 'indian wedding reception stage flower backdrop couple seats lights',
+  },
+  {
+    id: 'recep-destination',
+    name: 'Destination Reception Setup',
+    emoji: '🌴',
+    category: 'stage',
+    occasions: ['reception'],
+    price: 89999, priceTo: 199999,
+    blurb: 'A resort lawn or a beachfront, built as one designed world — entrance, walkway, stage and lounge in a single palette.',
+    includes: [
+      'Designed entrance installation and walkway',
+      'Stage with drape and imported floral work',
+      'Lounge seating clusters across the lawn',
+      'Full lighting design including pathway and canopy',
+      'Designer site visit and a three-day build',
+    ],
+    setup: '2–3 days', where: 'Resort lawn or beachfront',
+    query: 'destination wedding reception resort lawn decoration lights evening',
+  },
 ]
 
 /* ═══════════════════════════════════════════════════════════

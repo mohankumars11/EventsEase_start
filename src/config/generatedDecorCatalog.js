@@ -9,7 +9,7 @@
 //   node scripts/resolve-decor-catalog.mjs --dry-run
 //   node scripts/resolve-decor-catalog.mjs --only-missing
 //
-// Resolved 2026-08-14 from pexels. 60 items.
+// Resolved 2026-08-26 from pexels. 67 items.
 
 export const GENERATED_CATALOG_PHOTOS = {
   "anniv-arch-backdrop": {
@@ -295,9 +295,9 @@ export const GENERATED_CATALOG_PHOTOS = {
     source: "stock",
   },
   "house-entrance-toran": {
-    url:    "https://images.pexels.com/photos/4239726/pexels-photo-4239726.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-    alt:    "Beautiful house entrance surrounded by greenery and vibrant yellow facade on a sunny day.",
-    credit: "Photo by alleksana on Pexels",
+    url:    "https://images.pexels.com/photos/37046911/pexels-photo-37046911.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A woman focused on painting intricate rangoli patterns with vibrant colors outdoors.",
+    credit: "Photo by Nowrin Sanjana on Pexels",
     source: "stock",
   },
   "house-full-decor": {
@@ -307,9 +307,9 @@ export const GENERATED_CATALOG_PHOTOS = {
     source: "stock",
   },
   "house-pooja-setup": {
-    url:    "https://images.pexels.com/photos/7685507/pexels-photo-7685507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-    alt:    "Close-up of a woman holding a decorated coconut kalash, symbolizing traditional Indian rituals.",
-    credit: "Photo by RDNE Stock project on Pexels",
+    url:    "https://images.pexels.com/photos/34939995/pexels-photo-34939995.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A couple in traditional attire participates in a vibrant Indian ritual indoors.",
+    credit: "Photo by Ankush Chaure on Pexels",
     source: "stock",
   },
   "naming-cradle": {
@@ -322,6 +322,18 @@ export const GENERATED_CATALOG_PHOTOS = {
     url:    "https://images.pexels.com/photos/36976741/pexels-photo-36976741.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "A beautiful pink-themed christening setup with a baby in a seat, floral arrangements, and balloons.",
     credit: "Photo by Jayford Batobato on Pexels",
+    source: "stock",
+  },
+  "recep-destination": {
+    url:    "https://images.pexels.com/photos/34597474/pexels-photo-34597474.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Charming outdoor wedding reception at sunset with string lights.",
+    credit: "Photo by Caleb Oquendo on Pexels",
+    source: "stock",
+  },
+  "recep-stage-floral": {
+    url:    "https://images.pexels.com/photos/29967503/pexels-photo-29967503.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Beautiful Indian couple in traditional wedding attire seated on a decorated stage with floral backdrop.",
+    credit: "Photo by Mrj   Cinematic on Pexels",
     source: "stock",
   },
   "ret-felicitation": {
@@ -352,6 +364,36 @@ export const GENERATED_CATALOG_PHOTOS = {
     url:    "https://images.pexels.com/photos/7781959/pexels-photo-7781959.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "An outdoor setting with rows of empty green plastic chairs arranged on a paved area, creating a pattern.",
     credit: "Photo by Adrian Bancu on Pexels",
+    source: "stock",
+  },
+  "veh-bike-garland": {
+    url:    "https://images.pexels.com/photos/10155606/pexels-photo-10155606.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Side view of a Royal Enfield motorcycle parked against a corrugated wall in daylight.",
+    credit: "Photo by Matheus Triaquim on Pexels",
+    source: "stock",
+  },
+  "veh-car-bonnet": {
+    url:    "https://images.pexels.com/photos/36285952/pexels-photo-36285952.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "White classic car decorated with flowers and ribbons for a wedding, parked outdoors.",
+    credit: "Photo by YL Lew on Pexels",
+    source: "stock",
+  },
+  "veh-car-floral-premium": {
+    url:    "https://images.pexels.com/photos/10029775/pexels-photo-10029775.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Sleek white electric car on display in a modern showroom on a red carpet.",
+    credit: "Photo by I'm Zion on Pexels",
+    source: "stock",
+  },
+  "veh-commercial-cabin": {
+    url:    "https://images.pexels.com/photos/29057952/pexels-photo-29057952.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Detailed view of a large truck on an Indian road highlighting transportation and logistics.",
+    credit: "Photo by Shantum Singh on Pexels",
+    source: "stock",
+  },
+  "veh-pooja-tray": {
+    url:    "https://images.pexels.com/photos/6175832/pexels-photo-6175832.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of an Indian ritual thali with offerings in an ornate tray held by a hand.",
+    credit: "Photo by Arya Video ROCKY on Pexels",
     source: "stock",
   },
   "wed-entrance-gate": {

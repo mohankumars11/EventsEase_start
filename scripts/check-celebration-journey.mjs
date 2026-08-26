@@ -116,6 +116,45 @@ for (const [oid, bp] of Object.entries(M.BLUEPRINTS)) {
 }
 console.log(`   ${Object.values(M.BLUEPRINTS).reduce((n, b) => n + b.chapters.length, 0)} chapters checked`)
 
+/* ── 2b · Every `core` id names a chapter that exists ──────────────────────
+   `coreChapters` filters the chapter list by id, so a core entry with no
+   chapter behind it is not an error — it is simply dropped. That is the worst
+   possible failure mode: the office-opening flow silently had no purohit
+   because `core` named 'priest' and the corporate blueprint had no priest
+   chapter, and nothing anywhere said so.
+
+   `core` may be a function of ctx, so it is probed across the flag
+   combinations its own choice chapters can produce, plus the empty one. */
+console.log('\n2b · Core lists name real chapters')
+{
+  let checked = 0
+  for (const [oid, bp] of Object.entries(M.BLUEPRINTS)) {
+    if (!bp.core) continue
+    const ids = new Set(bp.chapters.map(c => c.id))
+
+    // Every flag any of this occasion's choice options can set, tried one at
+    // a time and all together — enough to reach every branch a `core`
+    // function realistically has.
+    const flagSets = [{}]
+    for (const ch of bp.chapters.filter(c => c.kind === 'choice')) {
+      for (const o of ch.options) flagSets.push({ ...(o.flags ?? {}) })
+    }
+    flagSets.push(Object.assign({}, ...flagSets))
+
+    for (const flags of flagSets) {
+      const ctx = { flags, guests: 150, circleId: 'family', outdoor: false, venueKind: null }
+      const core = typeof bp.core === 'function' ? bp.core(ctx) : bp.core
+      for (const id of core) {
+        if (!ids.has(id)) {
+          bad(`${oid}: core names "${id}" but no chapter has that id — it is silently dropped`)
+        }
+      }
+      checked += 1
+    }
+  }
+  console.log(`   ${checked} core lists resolved across every answer`)
+}
+
 /* ── 3 · The flow is the right length at both ends ────────────────────── */
 console.log('\n3 · Flow length under real answers')
 const SCENES = [
