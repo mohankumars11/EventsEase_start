@@ -82,6 +82,7 @@
 // only to disagree, which is much easier.
 
 import { SERVICE_PACKS, PACK_BY_ID } from './servicePacks'
+import { stillNeeded } from './venueCapabilities'
 
 /* ── Chapter builders ──────────────────────────────────────────────────
    Written as small factories rather than repeated literals, because
@@ -554,7 +555,11 @@ const dining = ({ why, packIds = ['dining_leaf', 'dining_round', 'dining_buffet_
   packIds,
   recommend: recommend ?? { close: 'dining_floor', family: 'dining_buffet_standing', full_house: 'dining_round', grand: 'dining_round' },
   skipLabel: 'The venue provides all of it',
-  showIf,
+  // A banquet hall, a mantapa and a resort all come with chairs, tables and
+  // linen. The old skip label admitted this was possible and then asked
+  // anyway; now the question is not put to somebody who has already told us
+  // the answer. A home, a lawn and a bare plot still need every stick of it.
+  showIf: ctx => stillNeeded(ctx.venueKind, 'furniture') && (typeof showIf !== 'function' || showIf(ctx)),
   ...narrowing,
 })
 
@@ -594,17 +599,31 @@ const cleanup = ({ why, showIf, ...narrowing }) => svc({
   packIds: ['clean_basic', 'clean_deep', 'clean_green'],
   recommend: { close: 'clean_basic', family: 'clean_basic', full_house: 'clean_deep', grand: 'clean_deep' },
   skipLabel: 'The venue handles the clearing',
-  showIf,
+  showIf: ctx => stillNeeded(ctx.venueKind, 'cleanup') && (typeof showIf !== 'function' || showIf(ctx)),
   ...narrowing,
 })
 
 /**
  * The chapters nobody asks for and every large or outdoor function needs.
  *
- * Gated hard, because offering a 62 kVA generator to somebody planning a
- * thirty-guest birthday in their living room makes the whole app look like it
- * is not listening. They appear for a marquee, a lawn, or a headcount past
- * the point where the venue's own supply stops being enough.
+ * Gated on TWO things, and the second one was missing.
+ *
+ * The headcount gate was always here: offering a 62 kVA generator to somebody
+ * planning a thirty-guest birthday in their living room makes the app look
+ * like it is not listening.
+ *
+ * The venue gate is new, and it fixes a louder version of the same failure. A
+ * customer who has just told us they booked a banquet hall — which has
+ * chairs, a generator, a car park, washrooms and a cleaning crew — was then
+ * offered all five, because the only thing the flow remembered about their
+ * answer was whether it was outdoors. Every one of those questions is the app
+ * forgetting an answer it already has.
+ *
+ * `stillNeeded` deliberately returns true for `'partial'` and `'unknown'`: a
+ * hall with forty parking spaces and three hundred guests still needs
+ * marshals, and a venue we know nothing about cannot be assumed to have
+ * anything. Suppressing a question we are unsure about is how a function ends
+ * up without washrooms.
  */
 const groundwork = [
   svc({
@@ -616,7 +635,7 @@ const groundwork = [
     packIds: ['power_25kva', 'power_62kva', 'power_ups'],
     recommend: { full_house: 'power_25kva', grand: 'power_62kva' },
     skipLabel: 'The venue has its own backup',
-    showIf: ctx => ctx.outdoor || ctx.guests >= 150,
+    showIf: ctx => stillNeeded(ctx.venueKind, 'power') && (ctx.outdoor || ctx.guests >= 150),
   }),
   svc({
     serviceId: 'cooling',
@@ -628,7 +647,7 @@ const groundwork = [
     multi: true,
     recommend: {},
     skipLabel: 'It is indoors and air-conditioned',
-    showIf: ctx => ctx.outdoor && ctx.guests >= 60,
+    showIf: ctx => stillNeeded(ctx.venueKind, 'cooling') && ctx.outdoor && ctx.guests >= 60,
   }),
   svc({
     serviceId: 'washrooms',
@@ -639,7 +658,7 @@ const groundwork = [
     packIds: ['wash_standard', 'wash_luxury'],
     recommend: {},
     skipLabel: 'The venue has plenty',
-    showIf: ctx => ctx.outdoor && ctx.guests >= 150,
+    showIf: ctx => stillNeeded(ctx.venueKind, 'washrooms') && ctx.outdoor && ctx.guests >= 150,
   }),
   svc({
     serviceId: 'valet',
@@ -650,7 +669,10 @@ const groundwork = [
     packIds: ['valet_marshals', 'valet_full'],
     recommend: { full_house: 'valet_marshals', grand: 'valet_full' },
     skipLabel: 'Parking is not a problem here',
-    showIf: ctx => ctx.guests >= 120,
+    // `'partial'` still asks: a hall with forty spaces and three hundred
+    // guests is exactly when marshals are the difference between a function
+    // and an argument with the neighbours.
+    showIf: ctx => stillNeeded(ctx.venueKind, 'parking') && ctx.guests >= 120,
   }),
   svc({
     serviceId: 'medical',
