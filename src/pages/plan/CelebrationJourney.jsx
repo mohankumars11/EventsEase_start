@@ -30,6 +30,7 @@ import { slotByKey } from '../../lib/demand'
 
 import { JourneyBar, JourneyActions, ACTION_BAR_CLEARANCE } from '../../components/journey/JourneyChrome'
 import StepJumper from '../../components/journey/StepJumper'
+import CustomRequest from '../../components/journey/CustomRequest'
 import ChapterStep, { autoAdvances } from '../../components/journey/ChapterStep'
 import { GuestStep, CircleStep, VenueStep, MealGateStep } from '../../components/journey/ScaleSteps'
 import { CuisineStep, CourseStep, courseStepsFor } from '../../components/journey/MenuSteps'
@@ -130,6 +131,39 @@ const RESUME_KEY = 'sambramo_journey_resume'
  * rite (which fixes the clock), the cake, and how people sit to eat — all
  * three of which are really questions about the meal anyway.
  */
+/**
+ * What the "not listed here" line says, per screen.
+ *
+ * A generic "anything else?" gets generic answers. Naming the thing the
+ * screen is about — the hall, the spread, the seating — is what turns the
+ * box from a suggestion form into a way of finishing the actual decision.
+ */
+const NOTE_LABEL = {
+  circle: 'Is your celebration a different size to all of these?',
+  venue: 'Venue not on this list? Tell us where',
+  venue_catering: 'Anything the venue has told you about food?',
+  meal_gate: 'Something else about the food?',
+  cuisine: 'A cuisine or a dish we have not listed?',
+  menu_all: 'A family recipe, an allergy, or a dish we do not have?',
+  sourcing: 'Anything else about who is buying what?',
+  decor_level: 'Something specific in mind for the decoration?',
+  decor_own: 'Something specific in mind for the decoration?',
+  decor_addons: 'Another finishing touch you want?',
+  extras: 'Something else entirely? Tell us',
+}
+
+const NOTE_PLACEHOLDER = {
+  venue: 'e.g. Sri Krishna Kalyana Mantapa on Sarjapur Road — we have not booked it yet',
+  venue_catering: 'e.g. the hall said outside caterers are allowed but their own kitchen is cheaper',
+  cuisine: 'e.g. a Konkani spread — my mother-in-law is from Mangaluru',
+  menu_all: 'e.g. no garlic in the sambar, and a small Jain counter for six guests',
+  sourcing: 'e.g. we will buy the rice and dal, you bring everything else',
+  decor_level: 'e.g. the marigold and mirror-work setup from my cousin’s wedding',
+  decor_own: 'e.g. the marigold and mirror-work setup from my cousin’s wedding',
+  decor_addons: 'e.g. a name board in Kannada for the entrance',
+  extras: 'e.g. a nadaswaram troupe from our own village — we will give you the number',
+}
+
 /** Decoration setups by id, for naming them in the coordinator's note. */
 const CATALOG_BY_ID = Object.fromEntries(ALL_CATALOG_ITEMS.map(i => [i.id, i]))
 
@@ -259,6 +293,22 @@ export default function CelebrationJourney() {
   /* ── Where we are ─────────────────────────────────────────────────── */
   const [stepKey, setStepKey] = useState(null)
   const [mapOpen, setMapOpen] = useState(false)
+  /**
+   * "Not listed here? Tell us" — for the screens that are not service
+   * chapters.
+   *
+   * A service chapter carries its note inside its own selection
+   * (`selections[id].custom`), because it belongs to that booking. The
+   * screens either side of them — the venue, the cuisine, the menu, the
+   * décor scale, the seating, who is buying the groceries — had no such
+   * place, and those are exactly the screens where somebody has a specific
+   * thing in mind that our four cards do not cover: a hall we have not
+   * listed, a family recipe, an allergy, a cook's own list.
+   *
+   * Keyed by step key rather than by chapter, so it works for a screen that
+   * has no chapter behind it at all.
+   */
+  const [stepNotes, setStepNotes] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [enquiryId, setEnquiryId] = useState(null)
@@ -744,10 +794,10 @@ export default function CelebrationJourney() {
     // Carried explicitly rather than inferred from a missing cuisine: a
     // journey restored mid-flow, before the meal question was reached, is
     // not the same state as one where the customer said there is no meal.
-    serveMeal, includeCatering: serveMeal !== false, cateringMode, outsideCatering,
+    serveMeal, includeCatering: serveMeal !== false, cateringMode, outsideCatering, stepNotes,
   }), [occasionId, guests, circle.id, venue, choices, selections, cuisineId, vegOnly, menu,
       specialTags, specialRequests, decorLevelId, decorChoiceId, themeId, addonIds, decorSetupIds, decorBrief, eventDate, timeSlot,
-      chosenCity, contact, stepKey, serveMeal, cateringMode, outsideCatering])
+      chosenCity, contact, stepKey, serveMeal, cateringMode, outsideCatering, stepNotes])
 
   const submit = useCallback(async (override) => {
     const s = override ?? stateForDraft()
@@ -810,6 +860,18 @@ export default function CelebrationJourney() {
           ? ['DECOR SETUPS', ...(s.decorSetupIds ?? [])
               .map(id => `  ${CATALOG_BY_ID[id]?.name ?? id}`)].join('\n')
           : '',
+        // Everything typed on a screen that is not a service chapter.
+        // Named by the screen it was typed on, because "no garlic in the
+        // sambar" on the menu screen and "no garlic" on the venue screen
+        // mean different things to the person sourcing.
+        Object.entries(s.stepNotes ?? {})
+          .filter(([, text]) => (text ?? '').trim())
+          .map(([key, text]) => {
+            const label = NOTE_LABEL[key]
+              ?? (key.startsWith('course:') ? `About the ${key.slice(7)}` : key)
+            return `  ${label}\n    ${text.trim()}`
+          })
+          .join('\n'),
         (s.decorBrief ?? '').trim()
           ? ['DECOR — THEY ASKED FOR', `  ${s.decorBrief.trim()}`].join('\n')
           : '',
@@ -926,6 +988,7 @@ export default function CelebrationJourney() {
       setServeMeal(d.serveMeal ?? null)
       setCateringMode(d.cateringMode ?? DEFAULT_SOURCING)
       setOutsideCatering(d.outsideCatering ?? null)
+      setStepNotes(d.stepNotes ?? {})
       setVegOnly(d.vegOnly ?? true)
       setMenu(d.menu ?? {})
       setSpecialTags(d.specialTags ?? [])
@@ -1351,6 +1414,29 @@ export default function CelebrationJourney() {
               {error}
             </p>
           )}
+        </div>
+      )}
+
+      {/* ── The way out of every list in the flow ─────────────────────
+          Rendered here, once, rather than added to eight step components —
+          which is not laziness: a component-by-component rollout is how
+          three of them end up missing it and nobody notices. One render site
+          means the guarantee is structural.
+
+          Service chapters and the décor picker keep their own box, because
+          theirs is stored against the thing being booked and travels with
+          it. This covers everything else, and is deliberately absent from
+          exactly three screens: the estimate and the contact page, which
+          already have a free-text box each, and the headcount, where the
+          answer is a number and a sentence about it would be noise. */}
+      {step && !isReveal && !isDetails && step.key !== 'guests' && !chapter && step.key !== 'decor_theme' && (
+        <div className="mx-auto max-w-2xl px-4">
+          <CustomRequest
+            value={stepNotes[step.key] ?? ''}
+            onChange={text => setStepNotes(current => ({ ...current, [step.key]: text }))}
+            label={NOTE_LABEL[step.key] ?? 'Something we have not listed? Tell us'}
+            placeholder={NOTE_PLACEHOLDER[step.key]}
+          />
         </div>
       )}
 
