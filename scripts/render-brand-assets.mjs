@@ -68,7 +68,7 @@ const RAMP = 'linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FB
  */
 async function inlineFace() {
   const css = await fetch(
-    'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap',
+    'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&display=swap',
         /* A FULL Chrome UA, not a short one.
        Google Fonts sniffs this and serves woff2 only to browsers it
        recognises; an abbreviated string gets the legacy TTF stylesheet, the
@@ -82,7 +82,7 @@ async function inlineFace() {
   const urls = [...css.matchAll(/url\((https:[^)]+\.woff2)\)/g)].map(m => m[1])
   if (!urls.length) throw new Error('Google Fonts returned no woff2 for Playfair Display')
   const buf = Buffer.from(await fetch(urls[urls.length - 1]).then(r => r.arrayBuffer()))
-  return `@font-face{font-family:'Playfair Display';font-style:normal;font-weight:700;`
+  return `@font-face{font-family:'Playfair Display';font-style:normal;font-weight:800;`
     + `src:url(data:font/woff2;base64,${buf.toString('base64')}) format('woff2');}`
 }
 
@@ -117,9 +117,15 @@ ${face}
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
   }
+  /* Tracking is tighter here than the in-app wordmark's -0.022em, and
+     deliberately so. The word is fitted to a WIDTH, so every em of tracking
+     removed is width freed for the letters themselves — at -0.045em the cap
+     height comes out about 5% larger inside the same tile. Display sizes
+     want tighter fit anyway; this is the same adjustment a type designer
+     makes by hand, done for the one size the icon is ever drawn at. */
   #word {
-    font-family:'Playfair Display', Georgia, serif; font-weight:700; color:#fff;
-    letter-spacing:-0.022em; line-height:1; white-space:nowrap;
+    font-family:'Playfair Display', Georgia, serif; font-weight:800; color:#fff;
+    letter-spacing:-0.045em; line-height:1; white-space:nowrap;
     /* Set by the fitter below once the face has actually loaded. */
     font-size:100px;
   }
@@ -135,11 +141,11 @@ ${face}
        the fallback face after 6s produces a wrong-looking icon, which is a
        problem somebody can SEE; hanging produces nothing at all. */
     const settled = Promise.all([
-      document.fonts.load('700 100px "Playfair Display"'),
+      document.fonts.load('800 100px "Playfair Display"'),
       document.fonts.ready,
     ])
     await Promise.race([settled, new Promise(r => setTimeout(r, 4000))])
-    window.__faceOk = document.fonts.check('700 100px "Playfair Display"')
+    window.__faceOk = document.fonts.check('800 100px "Playfair Display"')
     const el = document.getElementById('word')
     const target = ${size} * ${widthRatio}
     // Two passes: measure at a known size, scale, then correct for the
@@ -149,7 +155,22 @@ ${face}
     el.style.fontSize = (100 * target / w) + 'px'
     w = el.getBoundingClientRect().width
     el.style.fontSize = (parseFloat(el.style.fontSize) * target / w) + 'px'
-    return { fontSize: el.style.fontSize, width: el.getBoundingClientRect().width, target, faceOk: window.__faceOk }
+    /* Cap height, measured off the real ink rather than derived from the
+       font size. getBoundingClientRect().height on a line box reports
+       leading as well, which for Playfair is about a third more than the
+       letters actually occupy — and sizing decisions made against that
+       number are why the word looked smaller than its metrics claimed. */
+    const probe = document.createElement('canvas').getContext('2d')
+    /* Read the weight off the COMPUTED style. el.style.fontWeight is the
+       inline one, which is empty here because the weight comes from the
+       stylesheet — canvas would then be handed (space)82px Playfair Display,
+       fail to parse it, and silently keep its default 10px sans font. The
+       cap height reported would be of the wrong face at the wrong size. */
+    const cs = getComputedStyle(el)
+    probe.font = cs.fontWeight + ' ' + el.style.fontSize + ' "Playfair Display"'
+    const m = probe.measureText('Sambramo')
+    const cap = (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0)
+    return { fontSize: el.style.fontSize, width: el.getBoundingClientRect().width, cap, target, faceOk: window.__faceOk }
   }
 </script>
 </body></html>`
@@ -223,9 +244,35 @@ try {
      only looks like a cropping bug once you see it.
      512 CSS px with deviceScaleFactor 1 is unambiguous, and at icon sizes
      the type holds up perfectly well. */
+  /* ── How much of the tile the word spans ──────────────────────────
+     Raised from 0.78 / 0.60. At those ratios the wordmark was correct by
+     the numbers and wrong on a home screen: "Sambramo" is eight characters
+     of a serif with a modest x-height, so 78% of the WIDTH bought a cap
+     height of only about 82px on a 512 tile — the word read as a caption
+     under the icon rather than as the icon.
+
+     `any` can take 0.88 because nothing crops it; 31px of clear space
+     either side at 512 is still comfortably outside the corner radius at
+     the vertical centre, where the tile is at full width.
+
+     0.76 on the maskable tile is not a round number, it is the ceiling.
+     For this word the cap height runs about 0.165 of the width, so the
+     furthest ink from centre is hypot(w/2, 0.0825w) = 0.5068w, and the
+     guaranteed-visible radius is 0.4 x tile. That solves to w <= 0.789 of
+     the tile; 0.76 keeps roughly 10px of margin at 512 for the launchers
+     that mask slightly tighter than the spec. Anything above 0.79 puts the
+     S and the o under the crop on a circular mask.
+
+     `maskable` is the constrained one. Android crops it to whatever shape
+     the launcher wants and only a centred circle of 80% diameter is
+     guaranteed to survive — radius 204.8 at 512. At 0.72 the word is 369
+     wide, so its far corner sits at hypot(184, ~30) ≈ 187 from centre.
+     Inside the circle with ~18px to spare, which is the margin a
+     teardrop mask actually needs. Going to 0.78 here would put the S and
+     the o under the crop on some launchers. */
   const JOBS = [
-    { file: 'icon-512.png',          size: 512, widthRatio: 0.78, radius: 115, label: 'any (rounded square)' },
-    { file: 'icon-maskable-512.png', size: 512, widthRatio: 0.60, radius: 0,   label: 'maskable (full bleed, 80% safe zone)' },
+    { file: 'icon-512.png',          size: 512, widthRatio: 0.92, radius: 115, label: 'any (rounded square)' },
+    { file: 'icon-maskable-512.png', size: 512, widthRatio: 0.76, radius: 0,   label: 'maskable (full bleed, 80% safe zone)' },
   ]
 
   for (const job of JOBS) {
@@ -251,8 +298,18 @@ try {
     if (!shot.result?.data) throw new Error(`capture failed for ${job.file}`)
     writeFileSync(join(OUT, job.file), Buffer.from(shot.result.data, 'base64'))
     console.log(`  ${job.file.padEnd(24)} ${job.label}`)
-    console.log(`      wordmark ${Math.round(parseFloat(fit.fontSize))}px, `
-      + `spanning ${Math.round(fit.width)} of ${Math.round(fit.target)} allowed at ${job.size}`)
+    console.log(`      wordmark ${Math.round(parseFloat(fit.fontSize))}px `
+      + `(cap ~${Math.round(fit.cap)}px, ${Math.round(100 * fit.cap / job.size)}% of the tile), `
+      + `spanning ${Math.round(fit.width)} of ${Math.round(fit.target)}`)
+    if (job.file.includes('maskable')) {
+      const reach = Math.hypot(fit.width / 2, fit.cap / 2)
+      const safe = job.size * 0.4
+      console.log(`      furthest ink ${Math.round(reach)}px from centre; safe radius ${Math.round(safe)}px`)
+      if (reach > safe) {
+        console.warn('      WARNING: the wordmark can be cropped by a circular mask.')
+        process.exitCode = 1
+      }
+    }
     if (!fit.faceOk) {
       console.warn('      WARNING: Playfair Display did not load — icon set in a fallback face.')
       process.exitCode = 1
