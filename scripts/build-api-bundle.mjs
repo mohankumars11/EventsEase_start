@@ -76,14 +76,38 @@ export { specModeFor, DISCUSS_SERVICES, QUOTE_ONLY_SERVICES, setupSpec } from ${
 export { TAX } from ${JSON.stringify(join(ROOT, 'src/config/legal.js'))}
 `
 
-/** Hash of every source that feeds the bundle, so staleness is detectable. */
+/**
+ * Hash of every source that feeds the bundle, so staleness is detectable.
+ *
+ * ── Line endings are normalised, and that is not cosmetic ────────────
+ * The first version hashed raw bytes and the production build failed on
+ * the first deploy:
+ *
+ *     bundle was built from  ef67239207408ee5     (Windows)
+ *     sources now hash to    8e7b24af38c0c7b3     (Vercel)
+ *
+ * Same files, same commit. Git checks out CRLF on Windows and LF on
+ * Linux, so a byte hash describes the CHECKOUT rather than the content —
+ * and the bundle could never be current on both machines at once. The
+ * check would have failed every deploy for ever, while being perfectly
+ * green locally.
+ *
+ * Stripping \r makes the hash a property of the source instead of the
+ * platform. UTF-8 is read explicitly for the same reason: this repo is
+ * full of em-dashes and rupee signs, and a default-encoding read would
+ * make the hash depend on the locale too.
+ */
 function inputHash(metafile) {
   const files = Object.keys(metafile?.inputs ?? {})
     .filter(f => f.includes('src'))
     .sort()
   const h = createHash('sha256')
   for (const f of files) {
-    try { h.update(readFileSync(join(ROOT, f))) } catch { h.update(f) }
+    try {
+      h.update(readFileSync(join(ROOT, f), 'utf8').replace(/\r\n/g, '\n'))
+    } catch {
+      h.update(f)
+    }
   }
   return h.digest('hex').slice(0, 16)
 }
