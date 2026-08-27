@@ -79,7 +79,7 @@ export default function OccasionCard({ occasion, offer, stagger = 0 }) {
          from inside the journey and from the plan hub. What a cold tap on an
          occasion gets now is the first question instead of the first price.
          See pages/plan/CelebrationJourney. */
-      to={`/celebrate/${o.id}`}
+      to={`/book/when?occasion=${o.id}`}
       className="group relative flex flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_14px_30px_-18px_rgba(42,30,20,0.35)] transition-transform active:scale-[0.98]"
     >
       {/* ── The photograph ────────────────────────────────────────

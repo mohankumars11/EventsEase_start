@@ -654,8 +654,11 @@ export default function EventServices() {
       <div
         ref={contentRef}
         className="sticky z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
-        style={{ top: 'var(--event-appbar-h, 3.5rem)' }}
-        style={{ scrollMarginTop: '56px' }}
+        // One `style`, not two. JSX keeps the LAST duplicate attribute and
+        // silently drops the rest, so `top` was never applied and this
+        // sticky tab bar sat under the app bar rather than below it. The
+        // build warned; nothing at runtime could.
+        style={{ top: 'var(--event-appbar-h, 3.5rem)', scrollMarginTop: '56px' }}
       >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">
           <TabButton
