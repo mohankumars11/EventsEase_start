@@ -40,3 +40,7 @@ Thumbs.db
 # Pre-deletion catalogue dumps from scripts/export-shop-catalogue.mjs.
 # These hold order rows, which carry customer addresses — never commit them.
 backup/
+
+# Local demo session for scripts/demo-scenario.mjs — a real auth token.
+.demo-session.json
+.demo-partner-session.json

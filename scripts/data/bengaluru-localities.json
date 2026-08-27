@@ -1,0 +1,52 @@
+{
+  "_note": "Bengaluru localities with approximate centroids. Public geographic fact, not scraped business data. `tier` drives seeding density: 1 = pilot micro-market (deep supply), 2 = adjacent, 3 = outer (deliberately thin, so the fill-rate measurement sees a realistic edge).",
+  "localities": [
+    { "name": "Koramangala",        "lat": 12.9352, "lng": 77.6245, "tier": 1, "market": "south-central" },
+    { "name": "HSR Layout",         "lat": 12.9116, "lng": 77.6389, "tier": 1, "market": "south-central" },
+    { "name": "Indiranagar",        "lat": 12.9784, "lng": 77.6408, "tier": 1, "market": "south-central" },
+    { "name": "Domlur",             "lat": 12.9608, "lng": 77.6387, "tier": 1, "market": "south-central" },
+    { "name": "Ejipura",            "lat": 12.9420, "lng": 77.6270, "tier": 1, "market": "south-central" },
+    { "name": "BTM Layout",         "lat": 12.9166, "lng": 77.6101, "tier": 1, "market": "south-central" },
+
+    { "name": "Jayanagar",          "lat": 12.9250, "lng": 77.5938, "tier": 1, "market": "south" },
+    { "name": "JP Nagar",           "lat": 12.9063, "lng": 77.5857, "tier": 1, "market": "south" },
+    { "name": "Banashankari",       "lat": 12.9250, "lng": 77.5667, "tier": 1, "market": "south" },
+    { "name": "Basavanagudi",       "lat": 12.9422, "lng": 77.5738, "tier": 1, "market": "south" },
+    { "name": "Bannerghatta Road",  "lat": 12.8900, "lng": 77.5970, "tier": 2, "market": "south" },
+    { "name": "Hulimavu",           "lat": 12.8790, "lng": 77.6000, "tier": 2, "market": "south" },
+
+    { "name": "Whitefield",         "lat": 12.9698, "lng": 77.7500, "tier": 1, "market": "east" },
+    { "name": "Hoodi",              "lat": 12.9920, "lng": 77.7160, "tier": 1, "market": "east" },
+    { "name": "Marathahalli",       "lat": 12.9591, "lng": 77.6974, "tier": 1, "market": "east" },
+    { "name": "Kadugodi",           "lat": 12.9950, "lng": 77.7600, "tier": 2, "market": "east" },
+    { "name": "KR Puram",           "lat": 13.0070, "lng": 77.6960, "tier": 2, "market": "east" },
+    { "name": "Bellandur",          "lat": 12.9260, "lng": 77.6762, "tier": 2, "market": "east" },
+    { "name": "Sarjapur Road",      "lat": 12.9010, "lng": 77.6874, "tier": 2, "market": "east" },
+
+    { "name": "Malleshwaram",       "lat": 13.0035, "lng": 77.5709, "tier": 2, "market": "north" },
+    { "name": "Rajajinagar",        "lat": 12.9916, "lng": 77.5526, "tier": 2, "market": "north" },
+    { "name": "Hebbal",             "lat": 13.0358, "lng": 77.5970, "tier": 2, "market": "north" },
+    { "name": "RT Nagar",           "lat": 13.0206, "lng": 77.5945, "tier": 2, "market": "north" },
+    { "name": "Yelahanka",          "lat": 13.1007, "lng": 77.5963, "tier": 3, "market": "north" },
+    { "name": "Jalahalli",          "lat": 13.0450, "lng": 77.5200, "tier": 3, "market": "north" },
+    { "name": "Peenya",             "lat": 13.0280, "lng": 77.5190, "tier": 3, "market": "north" },
+    { "name": "Devanahalli",        "lat": 13.2490, "lng": 77.7110, "tier": 3, "market": "north" },
+
+    { "name": "Ulsoor",             "lat": 12.9820, "lng": 77.6270, "tier": 2, "market": "central" },
+    { "name": "Frazer Town",        "lat": 13.0002, "lng": 77.6150, "tier": 2, "market": "central" },
+    { "name": "Kammanahalli",       "lat": 13.0159, "lng": 77.6408, "tier": 2, "market": "central" },
+    { "name": "Banaswadi",          "lat": 13.0140, "lng": 77.6510, "tier": 2, "market": "central" },
+    { "name": "CV Raman Nagar",     "lat": 12.9850, "lng": 77.6650, "tier": 2, "market": "central" },
+
+    { "name": "Vijayanagar",        "lat": 12.9719, "lng": 77.5300, "tier": 2, "market": "west" },
+    { "name": "Nagarbhavi",         "lat": 12.9600, "lng": 77.5100, "tier": 3, "market": "west" },
+    { "name": "Kengeri",            "lat": 12.9082, "lng": 77.4855, "tier": 3, "market": "west" },
+    { "name": "Uttarahalli",        "lat": 12.9080, "lng": 77.5460, "tier": 3, "market": "west" },
+    { "name": "Kanakapura Road",    "lat": 12.8900, "lng": 77.5500, "tier": 3, "market": "west" },
+
+    { "name": "Bommanahalli",       "lat": 12.9010, "lng": 77.6200, "tier": 2, "market": "south-east" },
+    { "name": "Begur",              "lat": 12.8650, "lng": 77.6250, "tier": 3, "market": "south-east" },
+    { "name": "Electronic City",    "lat": 12.8452, "lng": 77.6602, "tier": 3, "market": "south-east" },
+    { "name": "Anekal",             "lat": 12.7110, "lng": 77.6960, "tier": 3, "market": "south-east" }
+  ]
+}

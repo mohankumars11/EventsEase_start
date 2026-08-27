@@ -1,10 +1,119 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+/**
+ * Serve `api/*.js` from the dev server.
+ *
+ * ── Why this exists ─────────────────────────────────────────────────
+ * `api/` is Vercel serverless. In production Vercel runs those files; in
+ * development nothing does, so every endpoint 404s and the only way to
+ * exercise a payment or a dispatch is to deploy. That is a terrible loop
+ * for a feature whose whole point is a race condition.
+ *
+ * `vercel dev` is the official answer and it is heavy — it boots a second
+ * server, wants a linked project, and on a 3.9 GB box it competes with
+ * Vite for the memory Vite is already short of.
+ *
+ * ── Why `ssrLoadModule` rather than a plain import ──────────────────
+ * Node cannot load these handlers directly once they import from `src/`:
+ * the sources use extensionless relative imports that Node's ESM
+ * resolver will not follow. `ssrLoadModule` runs them through Vite's own
+ * resolution — the same one the browser build uses — so a handler can
+ * import the real pricing engine instead of carrying a second copy of
+ * the rate card that drifts.
+ *
+ * It also hot-reloads, so editing a handler does not need a restart.
+ *
+ * ── Dev only ────────────────────────────────────────────────────────
+ * `apply: 'serve'` keeps every byte of this out of the production bundle.
+ * On Vercel the real runtime serves these files and this plugin does not
+ * exist.
+ */
+function devApi() {
+  return {
+    name: 'sambramo-dev-api',
+    apply: 'serve',
+
+    /**
+     * Put `.env` into `process.env`, the way Vercel does.
+     *
+     * Vite loads `.env` into `import.meta.env` for CLIENT code, and only
+     * the `VITE_`-prefixed half of it. A serverless handler reads
+     * `process.env.SUPABASE_SERVICE_ROLE_KEY` — deliberately unprefixed,
+     * because a service-role key that reached the browser bundle would be
+     * a full database bypass shipped to every visitor.
+     *
+     * So in dev those variables are simply absent and every handler
+     * fails on a missing key, which looks like a broken endpoint rather
+     * than a missing environment. This closes that gap and nothing else:
+     * `loadEnv(mode, root, '')` reads the same file Vercel's dashboard
+     * mirrors, and it never touches the client bundle.
+     */
+    config(_, { mode }) {
+      const env = loadEnv(mode, process.cwd(), '')
+      for (const [k, v] of Object.entries(env)) {
+        if (process.env[k] === undefined) process.env[k] = v
+      }
+    },
+
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/')) return next()
+
+        const route = req.url.split('?')[0].replace(/^\/api\//, '').replace(/\/$/, '')
+        if (!/^[a-z0-9-]+$/i.test(route)) return next()
+
+        let mod
+        try {
+          mod = await server.ssrLoadModule(`/api/${route}.js`)
+        } catch (err) {
+          if (String(err?.message ?? '').includes('Failed to load url')) return next()
+          server.config.logger.error(`[dev-api] ${route}: ${err.stack ?? err}`)
+          res.statusCode = 500
+          res.setHeader('content-type', 'application/json')
+          return res.end(JSON.stringify({ error: 'Handler failed to load', detail: String(err?.message ?? err) }))
+        }
+
+        // Vercel hands the handler a parsed body. Vite does not, so the
+        // stream is read here — except where the handler has opted out
+        // (`config.api.bodyParser === false`), which the Razorpay webhook
+        // does because its signature is an HMAC over the exact bytes.
+        const wantsRaw = mod.config?.api?.bodyParser === false
+        if (!wantsRaw && req.method !== 'GET' && req.method !== 'HEAD') {
+          const chunks = []
+          for await (const c of req) chunks.push(c)
+          const raw = Buffer.concat(chunks).toString('utf8')
+          try { req.body = raw ? JSON.parse(raw) : {} } catch { req.body = {} }
+        }
+
+        // The handful of Express-ish helpers the handlers actually use.
+        res.status = code => { res.statusCode = code; return res }
+        res.json = payload => {
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify(payload))
+          return res
+        }
+
+        try {
+          await mod.default(req, res)
+        } catch (err) {
+          server.config.logger.error(`[dev-api] ${route}: ${err.stack ?? err}`)
+          if (!res.writableEnded) {
+            res.statusCode = 500
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ error: String(err?.message ?? err) }))
+          }
+        }
+      })
+    },
+  }
+}
 
 export default defineConfig({
   plugins: [
     react(),
+    devApi(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-512.png', 'icon-maskable-512.png'],

@@ -35,6 +35,10 @@ const CelebrationJourney = lazy(() => import('./pages/plan/CelebrationJourney'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 
+// Instant booking — the marketplace bucket. Short flow, real dispatch,
+// pay per master. The pre-book journey above is untouched.
+const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
+
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
 const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
@@ -301,6 +305,11 @@ function AppRoutes() {
           price nobody sees, and here the price is the payoff for nine
           minutes of work. Sign-in is asked at send. */}
       <Route path="/celebrate/:occasionId" element={<BareShell><CelebrationJourney /></BareShell>} />
+
+      {/* Instant booking. BareShell for the same reason the journey uses
+          it: a flow with its own progress bar and its own action bar does
+          not also want the app's tab bar competing at the bottom. */}
+      <Route path="/book/instant" element={<BareShell><InstantBooking /></BareShell>} />
 
       <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
       <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />

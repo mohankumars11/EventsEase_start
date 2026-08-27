@@ -214,3 +214,81 @@ export function toDateKey(date) {
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   WHICH TRADE DOES THIS SERVICE GO TO?
+   ══════════════════════════════════════════════════════════════════════
+
+   Instant dispatch matches on TRADE, not on the customer's word for what
+   they want. The two are genuinely different vocabularies and the note at
+   the top of VENDOR_CATEGORIES already says why: a customer shops for
+   "Theme decoration" and "Floral decoration" as two choices; both are one
+   business, "Decoration & Floral", and dispatching on the customer's word
+   would find nobody at all.
+
+   Written as a map rather than a field on each service, because the
+   service catalogue lives in data/servicePricing.js and data/
+   eventServicesData.js — the concierge's authority — and adding a
+   dispatch-only field to it would make instant booking's needs leak into
+   quotes that have nothing to do with dispatch.
+
+   Anything absent here is NOT INSTANT-DISPATCHABLE, and that is the safe
+   default: an unmapped service falls to pre-book rather than being
+   broadcast to a trade somebody guessed at.
+*/
+export const TRADE_FOR_SERVICE = {
+  decor:          'Decoration & Floral',
+  floral:         'Decoration & Floral',
+  stage:          'Decoration & Floral',
+  mandap:         'Decoration & Floral',
+  vehicle_decor:  'Decoration & Floral',
+  balloon:        'Decoration & Floral',
+
+  catering:       'Catering & Food',
+  cooks:          'Catering & Food',
+  welcome_drinks: 'Catering & Food',
+  ice_cream:      'Catering & Food',
+  sweets:         'Catering & Food',
+
+  cake:           'Cake & Desserts',
+
+  photography:    'Photography',
+  photobooth:     'Photography',
+  videography:    'Videography',
+
+  dj:             'DJ & Music',
+  live_music:     'Live Entertainment',
+  drum:           'Live Entertainment',
+  entertainment:  'Live Entertainment',
+  choreography:   'Live Entertainment',
+  kids_play:      'Live Entertainment',
+  emcee:          'Anchor & MC',
+
+  makeup:         'Bridal Makeup & Hair',
+  bridal_wear:    'Bridal Makeup & Hair',
+  mehendi:        'Mehendi Artist',
+
+  dining:         'Tent & Furniture',
+  tent:           'Tent & Furniture',
+  cleanup:        'Tent & Furniture',
+
+  lighting:       'Event Lighting',
+  av_setup:       'Sound & AV',
+
+  invitations:    'Invitation & Printing',
+  transport:      'Transportation',
+  bouncers:       'Security Services',
+  venue:          'Venue',
+}
+
+/** Dispatchable if we know which trade to ask. Nothing else qualifies. */
+export function tradeFor(serviceId) {
+  return TRADE_FOR_SERVICE[serviceId] ?? null
+}
+
+/** Every service a given trade can be dispatched for. Used by the seeder. */
+export const SERVICES_FOR_TRADE = Object.entries(TRADE_FOR_SERVICE)
+  .reduce((acc, [service, trade]) => {
+    (acc[trade] ??= []).push(service)
+    return acc
+  }, {})

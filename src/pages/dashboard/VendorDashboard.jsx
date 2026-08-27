@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   CheckCircle2, Circle, ChevronRight, LogOut, Loader2, AlertCircle,
-  MessageCircle, Star, TrendingUp, ArrowRight,
+  MessageCircle, Star, TrendingUp, ArrowRight, Bell,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -11,6 +11,7 @@ import { VENDOR_STATUS, VENDOR_PLANS, formatPrice } from '../../config/vendor'
 import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
+import OfferInbox from '../../components/vendor/OfferInbox'
 
 /**
  * The partner's console.
@@ -33,6 +34,10 @@ import VendorAvailability from '../../components/vendor/VendorAvailability'
  */
 
 const TABS = [
+  // Jobs first, and it is the only tab whose position is load-bearing.
+  // An offer lives for 45 seconds; a partner who has to find the right
+  // tab has already lost it. Everything else here can wait.
+  { id: 'offers',       label: 'Jobs',         icon: Bell             },
   { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
   { id: 'list',         label: 'Your list',    icon: ClipboardList   },
   { id: 'availability', label: 'Availability', icon: CalendarDays    },
@@ -65,8 +70,8 @@ export default function VendorDashboard() {
   // The tab lives in the URL so the checklist can link straight at the thing
   // it is asking for, and so a vendor who reloads mid-edit lands back where
   // they were rather than on Overview.
-  const tab = TABS.some(t => t.id === params.get('tab')) ? params.get('tab') : 'overview'
-  const setTab = id => setParams(id === 'overview' ? {} : { tab: id }, { replace: true })
+  const tab = TABS.some(t => t.id === params.get('tab')) ? params.get('tab') : 'offers'
+  const setTab = id => setParams(id === 'offers' ? {} : { tab: id }, { replace: true })
 
   const firstName    = profile?.full_name?.split(' ')[0] ?? 'there'
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
@@ -213,6 +218,24 @@ export default function VendorDashboard() {
       </nav>
 
       <div className="mt-6">
+        {/* Live jobs. Rendered only for an approved partner — an
+            unverified one is not in the dispatch pool (match_partners
+            filters on is_verified), so an inbox for them would be a
+            permanently empty box with a promise in it. */}
+        {tab === 'offers' && (
+          vendor?.is_verified ? (
+            <OfferInbox vendorId={vendor.id} />
+          ) : (
+            <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
+              <p className="text-[14px] font-extrabold text-ink">Jobs start once you are approved</p>
+              <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
+                We check every master before sending them work. Finish your
+                list and your calendar, and we will take it from there.
+              </p>
+            </div>
+          )
+        )}
+
         {tab === 'overview' && (
           <Overview
             vendor={vendor} stats={stats} checklist={checklist}

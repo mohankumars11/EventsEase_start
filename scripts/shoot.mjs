@@ -25,13 +25,13 @@
  * journey forward to a screen that is not the first one.
  */
 import { spawn } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const [route, outFile, ...rest] = process.argv.slice(2)
 if (!route || !outFile) {
-  console.error('usage: node scripts/shoot.mjs <route> <out.png> [--click <sel>] [--taps <n>] [--wait <ms>]')
+  console.error('usage: node scripts/shoot.mjs <route> <out.png> [--click <sel>] [--taps <n>] [--wait <ms>] [--session <file>]')
   process.exit(1)
 }
 const flag = (name, fallback) => {
@@ -112,6 +112,25 @@ try {
 
   await rpc(ws, 'Runtime.enable')
   await rpc(ws, 'Page.enable')
+  /* ── A signed-in session, for the screens behind RLS ──────────────
+   * `--session <file>` takes the JSON scripts/demo-scenario.mjs writes.
+   * The matching board and the partner offer inbox both read tables
+   * whose policies key on auth.uid(), so anonymously they render empty —
+   * correctly. Photographing them needs a real session.
+   *
+   * localStorage is origin-scoped, so the page has to exist before it
+   * can be written: navigate to the origin first, seed the token, then
+   * go to the route. Setting it before any navigation writes to
+   * "about:blank" and is silently discarded. */
+  const sessionFile = flag('session', null)
+  if (sessionFile) {
+    await rpc(ws, 'Page.navigate', { url: base + '/' })
+    await sleep(1200)
+    const { storageKey, session } = JSON.parse(readFileSync(sessionFile, 'utf8'))
+    await evaluate(ws, `localStorage.setItem(${JSON.stringify(storageKey)}, ${JSON.stringify(JSON.stringify(session))}), 'ok'`)
+    await sleep(200)
+  }
+
   await rpc(ws, 'Page.navigate', { url: base + route })
   await sleep(settle + 900)
 
