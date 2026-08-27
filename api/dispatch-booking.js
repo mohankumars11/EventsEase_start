@@ -54,8 +54,42 @@ import {
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-/** Seeded partners are dispatchable only when explicitly allowed. */
-const ALLOW_SYNTHETIC = process.env.ALLOW_SYNTHETIC_DISPATCH === 'true'
+/**
+ * Who, if anyone, may be matched to the seeded network.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS PER-CUSTOMER AND NOT A GLOBAL SWITCH
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * There are 221 invented Bengaluru partners in the database, and they are
+ * what makes the product demonstrable — with one real partner, two lines
+ * in three go STANDING and the matching screen honestly shows almost
+ * nothing happening.
+ *
+ * A global `ALLOW_SYNTHETIC_DISPATCH=true` would fix the demo and break
+ * the promise: a real customer would be told "Sri Lakshmi Decorators
+ * accepted your booking" about a business that does not exist. No money
+ * can move today (there are no payment keys), but being shown a confirmed
+ * master who is fictional is a trust failure with or without a payment.
+ *
+ * So the flag names ONE customer. That account sees the seeded network;
+ * every other customer gets the real one, and the honest empty state that
+ * comes with it. The demo works and nobody is lied to.
+ *
+ *   SYNTHETIC_DEMO_CUSTOMER  a single profile id, or unset
+ *
+ * `ALLOW_SYNTHETIC_DISPATCH` still works for local development, where
+ * every customer is you. It is deliberately NOT read when NODE_ENV is
+ * production: a stray env var on the host must not be able to switch this
+ * on for everybody, which is the shape of the bug PROJECT_SUMMARY records
+ * about `testPaymentProvider` and free merchandise.
+ */
+const IS_PROD = process.env.NODE_ENV === 'production'
+const DEMO_CUSTOMER = process.env.SYNTHETIC_DEMO_CUSTOMER || null
+const ALLOW_SYNTHETIC_GLOBALLY = !IS_PROD && process.env.ALLOW_SYNTHETIC_DISPATCH === 'true'
+
+const mayUseSeededNetwork = customerId =>
+  ALLOW_SYNTHETIC_GLOBALLY || (!!DEMO_CUSTOMER && customerId === DEMO_CUSTOMER)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -74,6 +108,9 @@ export default async function handler(req, res) {
   if (lat == null || lng == null) return res.status(400).json({ error: 'lat and lng required' })
   if (!Array.isArray(lines) || lines.length === 0) return res.status(400).json({ error: 'at least one line required' })
   if (lines.length > 20)    return res.status(400).json({ error: 'too many lines' })
+
+  // Decided once, from the caller's own id, and passed to every match.
+  const allowSeeded = mayUseSeededNetwork(customerId)
 
   // ── Price every line before writing anything ──────────────────────
   // Done first so a service that cannot be priced fails the request
@@ -160,7 +197,7 @@ export default async function handler(req, res) {
       p_point: point,
       p_radius_m: radiusM,
       p_date: eventDate,
-      p_allow_synthetic: ALLOW_SYNTHETIC,
+      p_allow_synthetic: allowSeeded,
       p_limit: wave.partners,
       p_exclude: [],
     })
