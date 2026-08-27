@@ -129,35 +129,76 @@ export default function InstantBooking() {
     if (!user) { navigate('/login', { state: { from: { pathname: '/book/instant' } } }); return }
     setSending(true); setError(null)
 
-    const res = await fetch('/api/dispatch-booking', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        customerId: user.id,
-        occasionId,
-        occasionName: occasion?.name ?? 'Celebration',
-        eventDate: date.toISOString().slice(0, 10),
-        guestCount: guests,
-        radiusKm: DEFAULT_RADIUS_KM,
-        lat: area.lat,
-        lng: area.lng,
-        addressText: `${area.name}, Bengaluru`,
-        areaLabel: area.name,
-        city: 'Bengaluru',
-        // Selections only. No prices — see the header.
-        lines: picked.map(id => ({
-          serviceId: id,
-          durationId: durations[id] ?? defaultDurationFor(guests),
-          note: notes[id] ?? null,
-        })),
-      }),
-    })
+    /**
+     * Everything below is inside try/finally, and the `finally` is the
+     * point.
+     *
+     * The first version awaited the fetch and then `res.json()` with
+     * neither. Any response that was not JSON — a platform error page, a
+     * proxy timeout, a dropped connection — rejected the await, so
+     * `setSending(false)` never ran. The button sat on "Finding masters…"
+     * for ever, with no error, no way back, and nothing in the UI to say
+     * anything had gone wrong.
+     *
+     * That is the worst failure this screen can have. A visible error is
+     * recoverable; a spinner that never resolves is a dead end on the one
+     * screen where somebody is about to spend twenty thousand rupees.
+     */
+    try {
+      const res = await fetch('/api/dispatch-booking', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          customerId: user.id,
+          occasionId,
+          occasionName: occasion?.name ?? 'Celebration',
+          eventDate: date.toISOString().slice(0, 10),
+          guestCount: guests,
+          radiusKm: DEFAULT_RADIUS_KM,
+          lat: area.lat,
+          lng: area.lng,
+          addressText: `${area.name}, Bengaluru`,
+          areaLabel: area.name,
+          city: 'Bengaluru',
+          // Selections only. No prices — see the header.
+          lines: picked.map(id => ({
+            serviceId: id,
+            durationId: durations[id] ?? defaultDurationFor(guests),
+            note: notes[id] ?? null,
+          })),
+        }),
+      })
 
-    const body = await res.json()
-    setSending(false)
-    if (!res.ok) { setError(body.error ?? 'Could not send that'); return }
-    setRequestId(body.requestId)
-    setStep(4)
+      // Read as TEXT first. A 500 from the hosting platform is an HTML
+      // page, and `res.json()` on it throws a parse error that says
+      // nothing useful — so the raw first line is kept and shown, which
+      // is what actually identifies the problem.
+      const raw = await res.text()
+      let body
+      try {
+        body = JSON.parse(raw)
+      } catch {
+        setError(
+          res.ok
+            ? 'The server sent something unexpected. Please try again.'
+            : `Booking service error (${res.status}). ${raw.slice(0, 120)}`,
+        )
+        return
+      }
+
+      if (!res.ok) { setError(body.error ?? body.detail ?? 'Could not send that'); return }
+      if (!body.requestId) { setError('The booking was not created. Please try again.'); return }
+
+      setRequestId(body.requestId)
+      setStep(4)
+    } catch (err) {
+      // Offline, DNS, CORS, an aborted request. The customer does not
+      // need the distinction; they need to know it did not go through
+      // and that nothing was charged.
+      setError(`Could not reach the booking service. Nothing has been charged. (${err?.message ?? 'network error'})`)
+    } finally {
+      setSending(false)
+    }
   }
 
   /* ── 4 · Matching ─────────────────────────────────────────────── */

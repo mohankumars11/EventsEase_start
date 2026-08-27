@@ -93,7 +93,22 @@ export default function useAdminData() {
 
       vendors: () => supabase
         .from('vendors')
-        .select('*, profiles(full_name, email, phone)')
+        // The foreign key is NAMED, and it has to be.
+        //
+        // `vendors` used to have exactly one reference to `profiles` —
+        // `profile_id`, the partner's own login — so a bare `profiles(...)`
+        // embed was unambiguous. Migration 067 added a second:
+        // `verified_by`, the operator who approved them.
+        //
+        // PostgREST will not guess between two paths. It refuses the whole
+        // request, which took out the entire Command Center with
+        // "more than one relationship was found for 'vendors' and
+        // 'profiles'" — every admin screen at once, because they all share
+        // this one load.
+        //
+        // Refusing is the right behaviour: guessing would have silently
+        // shown the APPROVER's name where the partner's belongs.
+        .select('*, profiles!vendors_profile_id_fkey(full_name, email, phone)')
         .order('created_at', { ascending: false }),
 
       enquiries: () => supabase.from('service_enquiries').select('*').order('created_at', { ascending: false }),

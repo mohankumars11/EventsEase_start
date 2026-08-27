@@ -44,3 +44,4 @@ backup/
 # Local demo session for scripts/demo-scenario.mjs — a real auth token.
 .demo-session.json
 .demo-partner-session.json
+.demo-admin-session.json

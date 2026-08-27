@@ -42,11 +42,14 @@
  * master in that trade is approved or frees the date up.
  */
 import { createClient } from '@supabase/supabase-js'
-import { priceLine, lineSplit } from '../src/lib/instantPricing.js'
-import { tradeFor } from '../src/config/vendor.js'
-import { OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM, PLATFORM_FEE_RATE } from '../src/config/instantBooking.js'
-import { POLICY_VERSION } from '../src/config/policies.js'
-import { DISCUSS_SERVICES } from '../src/data/instantSetups.js'
+// One import, and it has an extension Node can resolve. See the header of
+// scripts/build-api-bundle.mjs for why this is a bundle rather than five
+// imports from src/ — in short, because five imports from src/ throw at
+// import time in production and cannot be caught here.
+import {
+  priceLine, lineSplit, tradeFor, specModeFor,
+  OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM, PLATFORM_FEE_RATE, POLICY_VERSION,
+} from './_lib/pricing.bundle.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -126,7 +129,7 @@ export default async function handler(req, res) {
     service_id: input.serviceId,
     service_name: quote.serviceName,
     trade,
-    spec_mode: DISCUSS_SERVICES.has(input.serviceId) ? 'discuss' : 'standard',
+    spec_mode: specModeFor(input.serviceId),
     customer_note: input.note ?? null,
     reference_photo_url: input.photoUrl ?? null,
     ...lineSplit(quote.paise, PLATFORM_FEE_RATE),

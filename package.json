@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "node scripts/build-api-bundle.mjs --check && vite build",
+    "preview": "vite preview",
+    "build:api": "node scripts/build-api-bundle.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
