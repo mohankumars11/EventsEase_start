@@ -38,6 +38,7 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 // Instant booking — the marketplace bucket. Short flow, real dispatch,
 // pay per master. The pre-book journey above is untouched.
 const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
+const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
@@ -310,6 +311,9 @@ function AppRoutes() {
           it: a flow with its own progress bar and its own action bar does
           not also want the app's tab bar competing at the bottom. */}
       <Route path="/book/instant" element={<BareShell><InstantBooking /></BareShell>} />
+
+      {/* The two doors, for a date that could honestly take either lane. */}
+      <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />
 
       <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
       <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />

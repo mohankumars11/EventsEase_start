@@ -1,3 +1,4 @@
+import { INSTANT_HORIZON_DAYS, CHOOSE_MIN_DAYS } from '../config/pricing'
 import { useSyncExternalStore } from 'react'
 import { todayISO } from '../utils/format'
 
@@ -105,10 +106,64 @@ export function useEventDate() {
  * celebrating?" with the occasions, the offers and the prices around it, and
  * forwards this query string into the wizard when the customer is ready.
  */
-export function planHrefFor(picked) {
+export function planHrefFor(picked, occasionId = null) {
   const params = new URLSearchParams()
   if (picked?.event_date) params.set('date', picked.event_date)
   if (picked?.time_slot) params.set('slot', picked.time_slot)
+  if (occasionId) params.set('occasion', occasionId)
   const qs = params.toString()
+
+  /* ── The fork ────────────────────────────────────────────────────────
+   *
+   * A date near enough to book directly goes to instant dispatch; a
+   * date far enough to plan properly goes to the guided journey. This is
+   * the ONLY place that decision is made, for the same reason the
+   * comment above gives about the three entry points drifting: a second
+   * copy of this rule would eventually send the same customer to two
+   * different products.
+   *
+   * ── The customer is never asked in OUR words ─────────────────────
+   * "Instant booking" and "pre-booking" name our machinery. A family
+   * knows when their daughter's birthday is; they do not know, and
+   * should not have to care, that thirty days is where dispatch stops
+   * working.
+   *
+   * At the ends of the range there is one honest answer and the fork is
+   * silent. In the middle — three to thirty days — both lanes are real
+   * and genuinely different products, so the customer chooses between
+   * them in their own terms. See pages/book/ChooseLane.
+   *
+   * ── A flexible date is not an instant date ──────────────────────
+   * `flexible_date` means "somewhere around then", and dispatch blocks a
+   * specific day on a specific master's calendar. Offering a master a
+   * job whose date might move is how a master stops trusting the
+   * notifications, so anything flexible goes to the journey regardless
+   * of how soon it is.
+   */
+  if (picked?.event_date && !picked?.flexible_date) {
+    const day = new Date(picked.event_date)
+    day.setHours(0, 0, 0, 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const daysOut = Math.round((day - today) / 86_400_000)
+
+    /* ── Under three days: book, do not ask ──────────────────────────
+     * There is no time for a coordinator to source anything, so offering
+     * that door would be offering something we cannot deliver. One
+     * honest answer, so no question. */
+    if (daysOut >= 0 && daysOut < CHOOSE_MIN_DAYS) {
+      return `/book/instant?${qs}`
+    }
+
+    /* ── Three to thirty days: both are real, so ask ─────────────────
+     * A naming ceremony in three weeks can genuinely go either way, and
+     * they are different products. Silently picking one hands somebody a
+     * quick-booking flow for something they wanted to think about, with
+     * no way back but abandoning. See pages/book/ChooseLane. */
+    if (daysOut >= CHOOSE_MIN_DAYS && daysOut <= INSTANT_HORIZON_DAYS) {
+      return `/book/choose?${qs}`
+    }
+  }
+
   return qs ? `/plan?${qs}` : '/plan'
 }

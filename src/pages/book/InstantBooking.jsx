@@ -4,7 +4,7 @@ import { ArrowLeft, Camera, Info, PencilLine } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { StepFrame, ACTION_BAR_CLEARANCE } from '../../components/journey/JourneyChrome'
 import MatchingBoard from '../../components/book/MatchingBoard'
-import { CORE_AREAS, BENGALURU_AREAS } from '../../data/bengaluruAreas'
+import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
 import { specModeFor, INSTANT_DURATIONS, defaultDurationFor } from '../../data/instantSetups'
 import { tradeFor } from '../../config/vendor'
@@ -92,9 +92,28 @@ export default function InstantBooking() {
    */
   const resumeId = params.get('request')
 
-  const [step, setStep] = useState(resumeId ? 4 : 0)
-  const [date, setDate] = useState(null)
-  const [area, setArea] = useState(null)
+  /**
+   * A date handed over by whoever sent us here.
+   *
+   * `planHrefFor` in hooks/useEventDate forks on the date and appends it,
+   * so a customer arriving from the home card or an occasion tile has
+   * ALREADY answered "when is it?". Asking again is precisely the
+   * complaint that hook exists to fix — its header describes the app
+   * looking like it had not been listening when the same question was
+   * put three times.
+   *
+   * Parsed at midnight local rather than through `new Date('2026-08-29')`,
+   * which JavaScript reads as UTC and renders as the 28th anywhere west
+   * of Greenwich. Bengaluru is east, so it would not have shown here —
+   * which is exactly the kind of bug that ships.
+   */
+  const handedDate = params.get('date')
+
+  const [step, setStep] = useState(resumeId ? 4 : handedDate ? 1 : 0)
+  const [date, setDate] = useState(
+    handedDate ? new Date(`${handedDate}T00:00:00`) : null,
+  )
+  const [where, setWhere] = useState(null)
   const [guests, setGuests] = useState(30)
   const [picked, setPicked] = useState([])
   const [durations, setDurations] = useState({})
@@ -121,6 +140,16 @@ export default function InstantBooking() {
   }, [picked, guests, durations])
 
   const total = Object.values(quotes).reduce((n, q) => n + (q?.paise ?? 0), 0)
+
+  // Resolved once per render and read by both the step gate and the
+  // dispatch call, so the screen cannot say 'ready' about a location the
+  // request then refuses.
+  const whereReady = useMemo(() => whereIsReady(where), [where])
+
+  // TODO: read from customer_addresses once the customer has one saved.
+  // Until then every first booking types six digits, which is the case
+  // WhereStep is built around.
+  const savedAddress = null
 
   const toggle = id =>
     setPicked(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]))
@@ -155,10 +184,19 @@ export default function InstantBooking() {
           eventDate: date.toISOString().slice(0, 10),
           guestCount: guests,
           radiusKm: DEFAULT_RADIUS_KM,
-          lat: area.lat,
-          lng: area.lng,
-          addressText: `${area.name}, Bengaluru`,
-          areaLabel: area.name,
+          // The VENUE's point, never the customer's.
+          //
+          // This is the line the whole location rework exists for. It
+          // used to send the area the customer had tapped for
+          // themselves, so a family in Bellandur booking a mantapa in
+          // Rajajinagar had masters matched fifteen kilometres from the
+          // job. lib/eventLocation resolves whichever of the three
+          // answers was given and always yields the point the WORK
+          // happens at.
+          lat: whereReady.point.lat,
+          lng: whereReady.point.lng,
+          addressText: whereReady.point.addressText,
+          areaLabel: whereReady.point.areaLabel,
           city: 'Bengaluru',
           // Selections only. No prices — see the header.
           lines: picked.map(id => ({
@@ -257,53 +295,15 @@ export default function InstantBooking() {
     {
       frame: {
         overline: 'Where',
-        question: 'Which part of Bengaluru?',
-        why: `We look for masters within ${DEFAULT_RADIUS_KM} km first, then widen if nobody nearby is free.`,
+        question: 'Where is it happening?',
+        // Says what it means. The old heading was 'Which part of
+        // Bengaluru?', which reads as 'where are you' — and dispatch
+        // needs 'where is the work'. See components/book/WhereStep.
+        why: 'We match masters to the venue, not to where you live.',
       },
       body: (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            {CORE_AREAS.map(a => (
-              <button
-                key={a.name}
-                onClick={() => setArea(a)}
-                className={`rounded-2xl px-3 py-2.5 text-left text-[13px] font-extrabold transition ${
-                  area?.name === a.name
-                    ? 'bg-saffron-400 text-plum-950'
-                    : 'bg-white ring-1 ring-ink/[0.08] text-ink'
-                }`}
-              >
-                {a.name}
-              </button>
-            ))}
-          </div>
-
-          <details className="text-[12px]">
-            <summary className="cursor-pointer font-extrabold text-ink-mute">
-              Somewhere else in Bengaluru
-            </summary>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {BENGALURU_AREAS.filter(a => a.tier === 3).map(a => (
-                <button
-                  key={a.name}
-                  onClick={() => setArea(a)}
-                  className={`rounded-2xl px-3 py-2.5 text-left text-[13px] font-extrabold transition ${
-                    area?.name === a.name
-                      ? 'bg-saffron-400 text-plum-950'
-                      : 'bg-white ring-1 ring-ink/[0.08] text-ink'
-                  }`}
-                >
-                  {a.name}
-                </button>
-              ))}
-            </div>
-            {/* Measured, not guessed: tier 3 completed 73% of baskets
-                against tier 1's 97%. Saying so beats a silent bad
-                experience. */}
-            <p className="mt-2 text-[11.5px] leading-snug text-ink-mute">
-              Fewer masters work out here, so some services may take longer to fill.
-            </p>
-          </details>
+        <div className="space-y-5">
+          <WhereStep value={where} onChange={setWhere} savedAddress={savedAddress} />
 
           <div>
             <p className="text-[12px] font-extrabold text-ink-soft">How many people?</p>
@@ -321,11 +321,20 @@ export default function InstantBooking() {
               ))}
             </div>
           </div>
+
+          {/* Stated where the radius is decided, not buried in a footnote. */}
+          {whereReady.ok && (
+            <p className="text-[11.5px] leading-snug text-ink-mute">
+              We look for masters within {DEFAULT_RADIUS_KM} km of{' '}
+              {whereReady.point.areaLabel}, then widen if nobody nearby is free.
+            </p>
+          )}
         </div>
       ),
-      ready: !!area,
+      // 'undecided' is a real answer and a real dead end for dispatch —
+      // it routes to the coordinator rather than pretending to match.
+      ready: whereReady.ok,
     },
-
     /* ── 2 · What ───────────────────────────────────────────────── */
     {
       frame: {
@@ -416,7 +425,13 @@ export default function InstantBooking() {
       frame: {
         overline: 'Your booking',
         question: formatINR(Math.round(total / 100)),
-        why: `${picked.length} master${picked.length === 1 ? '' : 's'} · ${area?.name} · ${date?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+        // Reads back the VENUE, so the customer confirms where the work
+        // lands rather than where they happen to live.
+        why: [
+          `${picked.length} master${picked.length === 1 ? '' : 's'}`,
+          whereReady.ok ? whereReady.point.areaLabel : null,
+          date?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }),
+        ].filter(Boolean).join(' · '),
       },
       body: (
         <div className="space-y-4">

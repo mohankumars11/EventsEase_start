@@ -90,6 +90,17 @@ export const INSTANT_HORIZON_DAYS = 30
 export const FLOAT_MIN_DAYS = 30
 
 /**
+ * Under this many days, do not offer the coordinator lane.
+ *
+ * A coordinator cannot source, negotiate and confirm a celebration in
+ * two days, so putting that door on screen would be offering something
+ * we cannot deliver. Above it, both lanes are real and the customer
+ * chooses — see pages/book/ChooseLane for why that question is worth a
+ * screen rather than a silent fork.
+ */
+export const CHOOSE_MIN_DAYS = 3
+
+/**
  * The collar. This is the product, not a technicality.
  *
  * An unbounded "your price may change" is unsellable to a family planning
