@@ -3,6 +3,7 @@ import { Bell, BellOff, Loader2, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { alertsAvailability, enableAlerts, disableAlerts } from '../../lib/push'
+import { nativeDiagnostics } from '../../lib/nativePush'
 
 /**
  * "Turn on job alerts."
@@ -43,6 +44,7 @@ export default function JobAlerts({ vendorId }) {
   const [problem, setProblem] = useState(null)
   const [tested, setTested] = useState(null)
   const [testing, setTesting] = useState(false)
+  const [diag, setDiag] = useState(null)
 
   /** Is a device already registered for this master? */
   const refresh = useCallback(async () => {
@@ -211,6 +213,25 @@ export default function JobAlerts({ vendorId }) {
                 {testing && <Loader2 size={13} className="animate-spin" />}
                 Send me a test alert
               </button>
+              {/* Only when the answer is surprising.
+
+                  An installed APK that reports itself as a browser has
+                  one of two problems needing opposite fixes, and which
+                  one it is can only be read off the device. */}
+              <button
+                onClick={() => setDiag(d => (d ? null : nativeDiagnostics()))}
+                className="mt-2 block text-[11px] font-bold text-ink-mute underline-offset-2 hover:underline"
+              >
+                {diag ? 'Hide' : 'Why does it say that?'}
+              </button>
+
+              {diag && (
+                <pre className="mt-1.5 overflow-x-auto rounded-xl bg-ink/[0.04] p-2.5 text-[10.5px] leading-relaxed text-ink-soft">
+                  {Object.entries(diag).map(([k, v]) =>
+                    `${k.padEnd(11)}${v === null ? '-' : String(v)}`).join(String.fromCharCode(10))}
+                </pre>
+              )}
+
               {tested && (
                 <p className="mt-2 text-[11.5px] font-semibold leading-snug text-ink-soft">{tested}</p>
               )}

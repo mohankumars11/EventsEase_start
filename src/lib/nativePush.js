@@ -192,3 +192,57 @@ export async function disableNativePush({ profileId }) {
     return { ok: false, reason: 'error', detail: err?.message ?? String(err) }
   }
 }
+
+/**
+ * What the native bridge actually looks like from inside the page.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS ON A SCREEN AND NOT IN A CONSOLE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * A phone running an installed APK reported "Registered as a browser",
+ * meaning `window.Capacitor` was absent inside the app. There are two
+ * possible reasons and they need opposite fixes:
+ *
+ *   the shell is not Capacitor at all      the site was added to the
+ *                                          home screen, not installed
+ *
+ *   Capacitor is there but did not inject  the WebView lacks
+ *                                          DOCUMENT_START_SCRIPT, so
+ *                                          the bridge never reaches a
+ *                                          REMOTE server.url — the
+ *                                          fallback injector only
+ *                                          rewrites local assets
+ *
+ * The first is a misunderstanding; the second means abandoning
+ * server.url and bundling the web assets, which changes how every
+ * future deploy reaches a phone. Choosing between them by reasoning
+ * about Android versions is guesswork. This reads the answer off the
+ * device in one line.
+ *
+ * Costs nothing in a browser: the strings are short and the whole thing
+ * is behind a tap.
+ */
+export function nativeDiagnostics() {
+  if (typeof window === 'undefined') return { where: 'no window' }
+
+  const ua = navigator.userAgent ?? ''
+  const cap = window.Capacitor
+
+  return {
+    // The decisive one. `undefined` in an installed APK means the
+    // bridge did not inject.
+    bridge: cap ? 'present' : 'ABSENT',
+    platform: cap?.getPlatform?.() ?? null,
+    isNative: !!cap?.isNativePlatform?.(),
+    // Which plugins the bridge exposed. An empty list with a present
+    // bridge means `npx cap sync` did not run before the build.
+    plugins: cap?.Plugins ? Object.keys(cap.Plugins).join(', ') : null,
+    // A Capacitor WebView reports `wv` in its user agent; a Chrome tab
+    // does not. This separates "installed APK whose bridge failed" from
+    // "site added to the home screen", which is the whole question.
+    webview: /\bwv\b/.test(ua),
+    standalone: window.matchMedia?.('(display-mode: standalone)')?.matches ?? false,
+    ua: ua.slice(0, 110),
+  }
+}
