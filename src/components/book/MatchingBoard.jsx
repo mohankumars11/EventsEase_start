@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, Loader2, MapPinned, Search } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
-import { MATCHING, PARTIAL } from '../../config/instantBooking'
+import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID } from '../../config/instantBooking'
 import { openRazorpay } from '../../lib/razorpayCheckout'
 import TradeSprite, { LiveLine } from './TradeSprite'
+import PaidConfirmation from './PaidConfirmation'
 
 /**
  * "Three of five masters have accepted."
@@ -112,7 +113,7 @@ function LineRow({ line, offers }) {
           {state === 'accepted' && (
             <>
               <Check size={12} className="text-forest-600" />
-              {MATCHING.accepted}
+              {line.status === 'paid' ? MATCHING.paid : ACCEPTED_ROW.glance}
               {won?.distance_m != null && (
                 <span className="font-semibold text-ink-mute/70">
                   · {(won.distance_m / 1000).toFixed(1)} km
@@ -153,6 +154,56 @@ function LineRow({ line, offers }) {
 }
 
 /**
+ * A master who has accepted and is waiting for the money.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS A SECOND ROW AND NOT A LONGER FIRST ONE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The list is scanned. Eight rows of name-state-price are read in about
+ * a second, and every word added to one of them is a word added to all
+ * eight — which is what made the original board terse in the first
+ * place, correctly.
+ *
+ * But exactly one state in that list is a decision the customer has to
+ * make, and it is invisible when it looks like the other seven. So the
+ * accepted-and-unpaid row grows a band underneath it: the sentence and
+ * the button. Nothing else in the list changes, and the band disappears
+ * the moment it is paid.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE SENTENCE NAMES THE DATE, NOT OUR INTERNAL STATE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * "Awaiting payment" is a status field. "Ramesh has accepted and is
+ * holding your date — pay to confirm him" is what is actually true: the
+ * master has cleared that Saturday on the strength of an acceptance, and
+ * `match_partners` will not offer them another job on it.
+ *
+ * That is also the honest reason to pay promptly, which is why it is the
+ * sentence rather than a nag.
+ */
+function AwaitingPayment({ line, master, onPay, paying }) {
+  return (
+    <li className="border-b border-ink/[0.06] pb-3.5 last:border-0">
+      <div className="rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200/70">
+        <p className="text-[12.5px] font-semibold leading-relaxed text-forest-900">
+          {ACCEPTED_ROW.waiting(master)}
+        </p>
+        <button
+          onClick={onPay}
+          disabled={paying}
+          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl bg-forest-600 py-2.5 text-[13.5px] font-extrabold text-white transition active:scale-[0.99] disabled:opacity-60"
+        >
+          {paying && <Loader2 size={14} className="animate-spin" />}
+          {ACCEPTED_ROW.payOne(formatINR(Math.round(line.quoted_amount_paise / 100)))}
+        </button>
+      </div>
+    </li>
+  )
+}
+
+/**
  * @param requestId  null until the server has created the booking. The
  *                   board renders anyway — see `pending`.
  * @param pending    what the customer picked, as { id, name }[]. Used to
@@ -165,13 +216,20 @@ function LineRow({ line, offers }) {
  * @param failed     a dispatch error, surfaced here rather than back on
  *                   the form the customer has already left.
  */
-export default function MatchingBoard({ requestId, onPay, pending = [], area = null, failed = null, onRetry }) {
+export default function MatchingBoard({ requestId, onPay, pending = [], area = null, eventDate = null, failed = null, onRetry }) {
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState(null)
   // Set only when the server says this deployment is charging a test
   // amount. Shown on the screen, because a customer being charged ₹1 for
   // a ₹31,200 basket must be able to see that is what is happening.
   const [testCharge, setTestCharge] = useState(null)
+  /* The line ids a completed payment covered.
+   *
+   * Held rather than derived, because by the time the confirmation
+   * renders those lines have moved from 'accepted' to 'paid' and a
+   * filter on the current state could not tell them apart from lines
+   * paid ten minutes ago in an earlier tap. */
+  const [justPaid, setJustPaid] = useState(null)
   const [lines, setLines] = useState([])
   const [offers, setOffers] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -210,7 +268,11 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       if (!ids.length) return
       const { data: o } = await supabase
         .from('dispatch_offers')
-        .select('id, line_id, status, distance_m')
+        // The winning master's name travels with the offer. A row that
+        // says 'someone has accepted' is weaker than one that says
+        // 'Ramesh Decorators has accepted', and the name is public
+        // information about a business, not about a person.
+        .select('id, line_id, status, distance_m, vendors(business_name)')
         .in('line_id', ids)
       if (!dead) setOffers(o ?? [])
     }
@@ -352,9 +414,12 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         return
       }
 
-      // Deliberately NOT "paid". The webhook decides that.
+      /* Deliberately NOT marking anything paid. The webhook decides
+         that, and PaidConfirmation shows the difference: it opens on
+         "Payment received — confirming", and only says the date is
+         blocked once the LINES say so. */
       setPayError(null)
-      onPay?.(payableLines)
+      setJustPaid(payableLines.map(l => l.id))
     } catch (err) {
       setPayError(`Could not reach the payment service. Nothing has been charged.`)
     } finally {
@@ -409,6 +474,26 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
     ? lines
     : pending.map(x => ({ id: x.id, service_name: x.name, status: 'pending', __pre: true }))
 
+  /* The whole screen, after a payment.
+   *
+   * Not a toast and not a banner on top of the board: the board is a
+   * live search, and continuing to show a search under a confirmation
+   * makes the confirmation look provisional. The lines still hunting
+   * are named ON the confirmation instead, which is where somebody who
+   * has just paid actually wants to read about them. */
+  if (justPaid) {
+    return (
+      <PaidConfirmation
+        paidLines={lines.filter(l => justPaid.includes(l.id))}
+        offers={offers}
+        eventDate={eventDate}
+        area={area}
+        stillLooking={stillLooking}
+        onDone={() => onPay?.(lines.filter(l => justPaid.includes(l.id)))}
+      />
+    )
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-40 pt-6">
       <p className="type-overline text-saffron-700">Your masters</p>
@@ -462,11 +547,26 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       )}
 
       <ul className="mt-5 rounded-[22px] bg-white px-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-ink/[0.06]">
-        {showing.map(l => (
-          l.__pre
-            ? <PendingRow key={l.id} id={l.id} name={l.service_name} />
-            : <LineRow key={l.id} line={l} offers={offers} />
-        ))}
+        {showing.map(l => {
+          if (l.__pre) return <PendingRow key={l.id} id={l.id} name={l.service_name} />
+
+          const row = <LineRow key={l.id} line={l} offers={offers} />
+          // Only for a line somebody has said yes to and nobody has paid
+          // for. Every other state is a glance, not a decision.
+          if (l.status !== 'accepted') return row
+
+          const won = offers.find(o => o.line_id === l.id && o.status === 'ACCEPTED')
+          return [
+            row,
+            <AwaitingPayment
+              key={l.id + '-pay'}
+              line={l}
+              master={won?.vendors?.business_name ?? null}
+              paying={paying}
+              onPay={() => pay([l])}
+            />,
+          ]
+        })}
       </ul>
 
       {/* Only while some have accepted and some have not. The header

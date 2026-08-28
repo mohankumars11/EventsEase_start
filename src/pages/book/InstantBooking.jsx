@@ -274,6 +274,7 @@ export default function InstantBooking() {
           // answers and the list does not reflow when it does.
           pending={picked.map(id => ({ id, name: SERVICE_BY_ID[id]?.name ?? id }))}
           area={whereReady?.point?.areaLabel ?? null}
+          eventDate={date?.toISOString().slice(0, 10) ?? null}
           failed={error}
           onRetry={() => { setError(null); dispatch() }}
         />

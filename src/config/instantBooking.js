@@ -430,3 +430,79 @@ export const SEARCH_LINES = (area, notified) => [
   'Nothing is charged until a master says yes',
   'You can close the app — we will alert you',
 ]
+
+
+/**
+ * A master has said yes and is waiting to be paid.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE GAP THIS FILLS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The board already lets a customer pay for whoever has accepted so far,
+ * without waiting for the slowest line. It has done since it was built.
+ * It just never SAID so — an accepted row read "Confirmed · 1.2 km", the
+ * pay button appeared at the bottom, and nothing connected the two.
+ *
+ * So the customer's reasonable reading was: three of five have accepted,
+ * I should wait for the other two. Which is the exact behaviour the
+ * per-line design exists to avoid, arrived at through the interface
+ * rather than the schema.
+ *
+ * ── Why the date is the thing named ─────────────────────────────────
+ * "Waiting for payment" describes our internal state. "He is holding
+ * your date until you pay" describes the customer's, and it is also
+ * true: the master has cleared that Saturday on the strength of an
+ * acceptance, and `match_partners` will not offer them another job on
+ * it. Somebody who understands that pays now.
+ */
+export const ACCEPTED_ROW = {
+  glance: 'Ready — pay to confirm',
+
+  // Said on the row itself, once a master is waiting.
+  waiting: name =>
+    `${name ?? 'Your master'} has accepted and is holding your date. Pay to confirm them.`,
+
+  // The per-line button. Names the amount, because a button that says
+  // only "Pay" on a screen with five prices is a button nobody presses.
+  payOne: amt => `Pay ${amt} · confirm`,
+
+  // And the reassurance under it, unchanged from the bottom bar because
+  // it is the same promise.
+  onlyAccepted: 'You only pay for masters who said yes.',
+}
+
+/**
+ * After the money has gone.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TWO SCREENS, BECAUSE THERE ARE TWO FACTS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Razorpay's callback fires in the browser. It means a dialog closed
+ * successfully — it does not mean the money is recorded, because the
+ * webhook is the only witness and it lands a second or two later.
+ *
+ * A screen that said "Confirmed!" on the callback would be claiming
+ * something it does not know, on the one screen where being wrong is
+ * most expensive. So it says the true thing first, and the stronger
+ * thing when the line actually turns paid.
+ */
+export const PAID = {
+  pending: {
+    title: 'Payment received',
+    body: 'We are confirming it with your masters. This takes a few seconds.',
+  },
+  done: {
+    title: 'Your date is blocked',
+    body: n => n === 1
+      ? 'Your master has your booking and will call you shortly to agree the details.'
+      : `All ${n} masters have your booking and will call you shortly to agree the details.`,
+  },
+  held: 'Your money is held safely with Sambramo and is released to your masters 24 hours after the event — not before.',
+  next: [
+    ['Your master calls you', 'Within 30 minutes of confirming, to agree colours, timing and the exact setup.'],
+    ['We keep looking for the rest', 'Any service still unfilled stays in search. Nothing you have paid for is affected.'],
+    ['Something wrong on the day?', 'Raise it from the booking and we hold the payout until it is settled.'],
+  ],
+}
