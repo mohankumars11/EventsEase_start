@@ -45,6 +45,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { createOrder, providerName } from './_lib/payments.js'
+import { testChargePaise } from './_lib/testCharge.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -81,19 +82,35 @@ export default async function handler(req, res) {
     })
   }
 
-  const amountPaise = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
+  const quotedPaise = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
   const first = payable[0].booking_requests
+
+  /* The ₹1 live-mode smoke test.
+   *
+   * Off unless PAYMENT_TEST_CHARGE_PAISE is set. When it is, the gateway
+   * is handed that amount instead of the real one — see the header of
+   * api/_lib/testCharge.js for why the mock provider cannot answer the
+   * question this answers, and for the three things that stop it being
+   * left on. The QUOTE is untouched: only what is charged changes. */
+  const testPaise = testChargePaise()
+  const amountPaise = testPaise ?? quotedPaise
 
   const order = await createOrder({
     amountPaise,
     // Razorpay caps receipts at 40 characters.
     receipt: `sb_${payable[0].request_id}`.slice(0, 40),
+    // The webhook reads these back off the order to know which lines this
+    // payment funds. It is the only link between one captured payment and
+    // the N escrow holds it becomes, so nothing here is decoration.
     notes: {
+      kind: 'booking_lines',
       customerId,
       lineIds: payable.map(l => l.id).join(','),
       eventDate: first?.event_date ?? '',
       area: first?.area_label ?? '',
       lines: String(payable.length),
+      quotedPaise: String(quotedPaise),
+      testCharge: testPaise ? 'true' : 'false',
     },
   })
 
@@ -104,6 +121,9 @@ export default async function handler(req, res) {
     orderId: order.id,
     amountPaise,
     keyId: order.keyId,
+    // Stated rather than implied. A screen that shows ₹1 while the basket
+    // says ₹31,200 and does not say why is a screen somebody deploys.
+    testCharge: testPaise ? { chargedPaise: testPaise, quotedPaise } : null,
     lines: payable.map(l => ({
       id: l.id, name: l.service_name, paise: l.quoted_amount_paise,
     })),

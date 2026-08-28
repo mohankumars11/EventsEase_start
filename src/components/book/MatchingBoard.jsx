@@ -3,6 +3,7 @@ import { Check, Loader2, MapPinned, Search } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { MATCHING, PARTIAL } from '../../config/instantBooking'
+import { openRazorpay } from '../../lib/razorpayCheckout'
 
 /**
  * "Three of five masters have accepted."
@@ -144,6 +145,12 @@ function LineRow({ line, offers }) {
 }
 
 export default function MatchingBoard({ requestId, onPay }) {
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState(null)
+  // Set only when the server says this deployment is charging a test
+  // amount. Shown on the screen, because a customer being charged ₹1 for
+  // a ₹31,200 basket must be able to see that is what is happening.
+  const [testCharge, setTestCharge] = useState(null)
   const [lines, setLines] = useState([])
   const [offers, setOffers] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -203,6 +210,81 @@ export default function MatchingBoard({ requestId, onPay }) {
     }
   }, [requestId])
 
+  /**
+   * Open a Razorpay checkout for every master who has accepted so far.
+   *
+   * ── The amount is not sent from here ──────────────────────────────
+   * Only line ids go up. `api/create-booking-payment` re-reads every
+   * amount from `booking_lines.quoted_amount_paise` and sums them
+   * server-side — a client that could name its own total could name ₹1.
+   *
+   * ── And this does not mark anything paid ──────────────────────────
+   * The checkout's success callback is not a witness: somebody who pays
+   * and closes the tab leaves a captured payment this app never hears
+   * about. `api/razorpay-webhook` is the only thing that writes the
+   * escrow hold. So on success this screen says "confirming", and the
+   * board's own polling shows the line turn paid when the webhook lands.
+   */
+  async function pay(payableLines) {
+    setPaying(true); setPayError(null)
+    try {
+      const res = await fetch('/api/create-booking-payment', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          customerId: (await supabase.auth.getUser()).data.user?.id,
+          lineIds: payableLines.map(l => l.id),
+        }),
+      })
+
+      // Read as text first: a platform error page is HTML, and res.json()
+      // on it throws a parse error that says nothing useful.
+      const raw = await res.text()
+      let body
+      try { body = JSON.parse(raw) } catch {
+        setPayError(`Payment service error (${res.status}).`); return
+      }
+      if (!res.ok) { setPayError(body.error ?? body.detail ?? 'Could not start the payment'); return }
+
+      /* The mock provider, in development only.
+       *
+       * It exists so the escrow path can be exercised without a gateway,
+       * and it settles by calling its own webhook WITH A REAL SIGNATURE —
+       * so the one security-critical line in api/razorpay-webhook.js is
+       * genuinely tested rather than skipped. `api/_lib/payments.js`
+       * refuses to produce it when NODE_ENV is production. */
+      if (body.provider === 'mock' && body.mockSettleUrl) {
+        await fetch(body.mockSettleUrl, { method: 'POST' })
+        onPay?.(payableLines)
+        return
+      }
+
+      if (body.provider !== 'razorpay') {
+        setPayError('Payments are not switched on yet.'); return
+      }
+
+      setTestCharge(body.testCharge ?? null)
+
+      const opened = await openRazorpay({
+        keyId: body.keyId,
+        orderId: body.orderId,
+        amountPaise: body.amountPaise,
+        description: body.testCharge ? 'Test payment' : 'Your masters',
+        onDismiss: () => setPaying(false),
+      })
+
+      if (!opened.ok) { setPayError(opened.error); return }
+
+      // Deliberately NOT "paid". The webhook decides that.
+      setPayError(null)
+      onPay?.(payableLines)
+    } catch (err) {
+      setPayError(`Could not reach the payment service. Nothing has been charged.`)
+    } finally {
+      setPaying(false)
+    }
+  }
+
   const accepted = useMemo(() => lines.filter(l => stateOf(l) === 'accepted'), [lines])
   const payable = useMemo(
     () => accepted.filter(l => l.status === 'accepted'), [accepted])
@@ -247,11 +329,24 @@ export default function MatchingBoard({ requestId, onPay }) {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.06] bg-white/95 p-4 backdrop-blur">
           <div className="mx-auto max-w-2xl">
             <button
-              onClick={() => onPay?.(payable)}
+              onClick={() => pay(payable)}
+              disabled={paying}
               className="w-full rounded-2xl bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
             >
-              {MATCHING.payCta(payable.length, formatINR(Math.round(payTotal / 100)))}
+              {paying ? 'Opening payment…' : MATCHING.payCta(payable.length, formatINR(Math.round(payTotal / 100)))}
             </button>
+
+            {testCharge && (
+              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-center text-[11.5px] font-bold leading-snug text-amber-900 ring-1 ring-amber-200">
+                Test mode — you are being charged{' '}
+                {formatINR(Math.round(testCharge.chargedPaise / 100))}, not{' '}
+                {formatINR(Math.round(testCharge.quotedPaise / 100))}.
+              </p>
+            )}
+
+            {payError && (
+              <p className="mt-2 text-center text-[12px] font-bold text-amber-800">{payError}</p>
+            )}
             <p className="mt-2 text-center text-[11px] font-semibold text-ink-mute">
               You only pay for masters who said yes.
             </p>

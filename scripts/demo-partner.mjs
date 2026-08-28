@@ -106,7 +106,34 @@ const { data: found } = await admin.rpc('match_partners', {
   p_allow_synthetic: false, p_limit: 10, p_exclude: [],
 })
 const visible = (found ?? []).some(m => m.vendor_id === vendor.id)
-console.log(`\n   dispatch can see them:   ${visible ? '✓ yes' : '✗ NO — one of the four steps did not take'}`)
+
+/* When the answer is no, say which rule said no.
+ *
+ * This used to print "one of the four steps did not take", which is
+ * wrong on the case that actually happens. `match_partners` has a fifth
+ * rule the four steps above know nothing about: a master already holding
+ * an ACCEPTED offer on that date is not offered a second job that day.
+ *
+ * So a leftover accept from yesterday's test makes a correctly onboarded
+ * partner look broken, and the message sends you to re-check four things
+ * that are all fine. A diagnostic that points at the wrong cause costs
+ * more than no diagnostic. */
+let why = 'one of the four steps did not take'
+if (!visible) {
+  const { data: busy } = await admin
+    .from('dispatch_offers')
+    .select('line_id, booking_lines!inner(status, booking_requests!inner(event_date))')
+    .eq('vendor_id', vendor.id)
+    .eq('status', 'ACCEPTED')
+  const sameDay = (busy ?? []).filter(
+    o => o.booking_lines?.booking_requests?.event_date === saturday
+      && !['cancelled', 'expired'].includes(o.booking_lines?.status),
+  )
+  if (sameDay.length) {
+    why = `they already accepted a job on ${saturday}, so dispatch will not offer a second`
+  }
+}
+console.log(`\n   dispatch can see them:   ${visible ? 'yes' : 'NO - ' + why}`)
 
 /* ── Their session ─────────────────────────────────────────────────── */
 const { data: prof } = await admin.from('profiles').select('email').eq('id', vendor.profile_id).single()

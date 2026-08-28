@@ -12,6 +12,7 @@ import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
+import JobAlerts from '../../components/vendor/JobAlerts'
 
 /**
  * The partner's console.
@@ -224,7 +225,13 @@ export default function VendorDashboard() {
             permanently empty box with a promise in it. */}
         {tab === 'offers' && (
           vendor?.is_verified ? (
-            <OfferInbox vendorId={vendor.id} />
+            <div className="space-y-4">
+              {/* Above the inbox deliberately: an empty inbox with alerts
+                  off is a master who will never know a job arrived, and
+                  that is the first thing worth telling them. */}
+              <JobAlerts vendorId={vendor.id} />
+              <OfferInbox vendorId={vendor.id} />
+            </div>
           ) : (
             <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
               <p className="text-[14px] font-extrabold text-ink">Jobs start once you are approved</p>

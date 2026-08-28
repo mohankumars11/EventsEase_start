@@ -45,3 +45,18 @@ backup/
 .demo-session.json
 .demo-partner-session.json
 .demo-admin-session.json
+
+# Generated per build target by scripts/capacitor-config.mjs.
+# Committing one would ship the partner app under the customer's id.
+capacitor.config.json
+
+# Android signing keys. NEVER commit these.
+# Losing the release keystore means the app can never be updated on
+# Play Store again — not fixed, not recovered. New package name, new
+# listing, every install lost. Back it up somewhere off this machine.
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+!android/app/google-services.json
+!android/app/src/*/google-services.json

@@ -35,13 +35,51 @@ export function VendorsContent({ data }) {
   const [acting, setActing]       = useState(null)
   const [filterStatus, setFilter] = useState('')
 
+  /**
+   * Approve, reject or suspend a partner.
+   *
+   * ── Why this is an RPC and not an UPDATE ────────────────────────────
+   * It used to write `{ status: 'APPROVED' }` straight at the vendors
+   * row, and after migration 078 that silently did nothing: three columns
+   * describe "is this partner approved", `verification_status` is the
+   * source of truth, and a trigger derives `status` and `is_verified`
+   * from it on every write. Setting the derived column left the source
+   * untouched, so the trigger dutifully changed it back — and the button
+   * showed a success toast over a no-op.
+   *
+   * `set_vendor_verification` writes the source of truth, stamps who
+   * approved and when, and is the same call the onboarding script uses.
+   * One path in, so this cannot drift out of step again.
+   */
   async function updateStatus(vendorId, status, reason = null) {
     setActing(vendorId + status)
-    const patch = { status }
-    if (reason) patch.rejection_reason = reason
-    const { error } = await supabase.from('vendors').update(patch).eq('id', vendorId)
-    if (error) toast.error(friendlyError(error, 'Could not update this vendor.'))
-    else {
+
+    // The RPC speaks the source-of-truth vocabulary; this screen has
+    // always spoken the legacy one.
+    const target = {
+      APPROVED: 'approved',
+      REJECTED: 'rejected',
+      SUSPENDED: 'suspended',
+      PENDING_REVIEW: 'submitted',
+    }[status] ?? 'submitted'
+
+    const { data, error } = await supabase.rpc('set_vendor_verification', {
+      p_vendor_id: vendorId,
+      p_status: target,
+      p_note: reason ?? null,
+    })
+
+    if (error) {
+      toast.error(friendlyError(error, 'Could not update this vendor.'))
+    } else if (!data?.ok) {
+      // The RPC refuses rather than throwing, so a permission failure
+      // arrives here as a reason rather than as a red console line.
+      toast.error(
+        data?.reason === 'not_permitted'
+          ? 'You do not have permission to approve partners.'
+          : `Could not update this vendor (${data?.reason ?? 'unknown'}).`,
+      )
+    } else {
       toast.success(`Vendor ${status.toLowerCase().replace(/_/g, ' ')}.`)
       await refresh()
     }

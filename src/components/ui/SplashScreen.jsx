@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import SambramoWordmark from './SambramoWordmark'
 import { BRAND } from '../../config/sambramo'
+import { isPartnerSurface } from '../../config/surface'
 
 const HOLD_MS = 4000
 const FADE_MS = 480
@@ -53,12 +54,35 @@ const FADE_MS = 480
  * single launch is only a brand moment for as long as it stays skippable.
  */
 export default function SplashScreen() {
-  const [state, setState] = useState('showing')   // showing | leaving | done
+  /* ── Not in the partner app ───────────────────────────────────────────
+   * "Every open" above is the owner's call and it holds for customers,
+   * where opening the app is a browsing decision and four seconds is a
+   * brand moment.
+   *
+   * The partner app is not opened by a decision. It is opened by a push
+   * notification about a job that expires in 45 seconds, and those four
+   * seconds are spent from that clock — on a logo, while the offer is
+   * being shown to four other masters at the same time.
+   *
+   * That is not a taste judgement about the animation. It is the one
+   * place in the product where a brand moment costs a master money.
+   *
+   * Customer surface: unchanged, every open, exactly as before. */
+  const [state, setState] = useState(() => (isPartnerSurface() ? 'done' : 'showing'))
 
   useEffect(() => {
+    // Without this guard the timers would drag a splash that never showed
+    // back onto the screen four seconds in — `done` is a terminal state
+    // for the render, but not for a setTimeout that has already been
+    // scheduled.
+    if (state === 'done') return
     const leave = setTimeout(() => setState('leaving'), HOLD_MS)
     const gone  = setTimeout(() => setState('done'),    HOLD_MS + FADE_MS)
     return () => { clearTimeout(leave); clearTimeout(gone) }
+    // Deliberately mount-only. `state` is read once to decide whether the
+    // timers are needed at all; re-running on every transition would
+    // restart the hold each time it changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const dismiss = () => setState('done')

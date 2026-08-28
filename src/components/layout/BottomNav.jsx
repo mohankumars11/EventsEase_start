@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Home, Sparkles, Route, User, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { isPartnerSurface } from '../../config/surface'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
@@ -103,11 +104,26 @@ export default function BottomNav() {
   const activity = useCustomerActivity()
 
   const role = profile?.role
-  const hidden = role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
+
+  /* The partner app has no Home, Plan, Track or Cart.
+   *
+   * The role test below catches a signed-in master, but the person most
+   * likely to see this bar is a decorator who has just opened the partner
+   * link and has no account yet — no role, so no guard. They were being
+   * shown the customer app's tab bar on the page asking them to join,
+   * with a Cart in it.
+   *
+   * Keyed to the surface rather than the path, because every partner
+   * route is reachable on the customer host too and the bar is correct
+   * there. */
+  const onPartnerApp = isPartnerSurface()
+
+  const hidden = onPartnerApp || role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
   // Hooks cannot sit behind the early returns below, so the visibility test is
   // computed first and passed in.
   usePublishedHeight(barRef, !hidden)
 
+  if (onPartnerApp) return null
   if (role === 'vendor' || role === 'admin') return null
 
   // Full-screen focused flows own the whole viewport — a tab bar under a

@@ -42,6 +42,7 @@
  * master in that trade is approved or frees the date up.
  */
 import { createClient } from '@supabase/supabase-js'
+import { notifyPartners } from './_lib/fcm.js'
 // One import, and it has an extension Node can resolve. See the header of
 // scripts/build-api-bundle.mjs for why this is a bundle rather than five
 // imports from src/ — in short, because five imports from src/ throw at
@@ -238,7 +239,24 @@ export default async function handler(req, res) {
       expires_at: expiresAt,
     }).eq('id', line.id)
 
-    results.push({ lineId: line.id, serviceId: line.service_id, standing: false, notified: offers.length })
+    /* The buzz. Without it the offer expires unseen.
+     *
+     * Deliberately NOT awaited into the response path in a way that can
+     * fail the request: a booking whose notification failed is still a
+     * real booking, and the customer is waiting. `notifyPartners` never
+     * throws — it reports and swallows. */
+    const push = await notifyPartners(db, {
+      vendorIds: matches.map(m => m.vendor_id),
+      title: line.service_name,
+      body: `${new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} · ${areaLabel ?? city} · you earn ₹${Math.round(line.partner_amount_paise / 100).toLocaleString('en-IN')}`,
+      url: '/dashboard/vendor',
+      lineId: line.id,
+    })
+
+    results.push({
+      lineId: line.id, serviceId: line.service_id, standing: false,
+      notified: offers.length, pushed: push.sent ?? 0,
+    })
   }
 
   return res.status(200).json({

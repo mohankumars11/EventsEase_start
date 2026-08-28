@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { isPartnerSurface, homeFor, SURFACE } from './config/surface'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
@@ -54,6 +55,7 @@ const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
 const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'))
 
 // Vendor & Admin
+const PartnerLanding   = lazy(() => import('./pages/partner/PartnerLanding'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -95,6 +97,36 @@ function DashboardRedirect() {
   if (profile.role === 'vendor') return <Navigate to="/dashboard/vendor"   replace />
   if (profile.role === 'admin')  return <Navigate to="/dashboard/admin"    replace />
   return <Navigate to="/dashboard/customer" replace />
+}
+
+/**
+ * `/` means two different things depending on which app this is.
+ *
+ * Both apps are ONE deployment of one bundle. What separates them is the
+ * hostname — sambramo-partners.vercel.app and the Capacitor partner
+ * flavour resolve to the partner surface; everything else is a customer.
+ *
+ * A master who opens the partner app wants today's jobs. Landing them on
+ * the customer home — festivals, occasion tiles, the shop — is landing
+ * them in the wrong product, and it is what happened until this existed.
+ *
+ * This changes the LANDING and nothing else. Every route stays reachable
+ * on both hosts and every permission is still decided by role and RLS.
+ * A surface is not a security boundary, and treating a hostname as one is
+ * how you end up with an app whose access control can be changed by
+ * typing a different URL.
+ */
+function RootScreen() {
+  const { profile, loading } = useAuth()
+
+  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+  if (loading) return null
+
+  const to = homeFor(SURFACE.partner, {
+    signedIn: !!profile,
+    role: profile?.role ?? null,
+  })
+  return <Navigate to={to} replace />
 }
 
 /** A UUID, as opposed to a catalogue slug like `birthday`. */
@@ -242,7 +274,7 @@ function AppRoutes() {
           the wild in the tab bar, in post-login redirects, in the profile menu
           and in anything a customer has bookmarked. It keeps its guard, so the
           signed-out variant is only ever reachable at `/`. */}
-      <Route path="/"       element={<ScreenShell><HomeScreen /></ScreenShell>} />
+      <Route path="/"       element={<RootScreen />} />
       <Route path="/signup"         element={<BareShell><SignupPage /></BareShell>} />
       <Route path="/login"          element={<BareShell><LoginPage /></BareShell>} />
       <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
@@ -478,6 +510,18 @@ function AppRoutes() {
           <ScreenShell><CelebrationTracker /></ScreenShell>
         </ProtectedRoute>
       } />
+
+      {/* ── The partner front door ─────────────────────
+          Public and unprotected on purpose. This is the page a master
+          reaches from a WhatsApp forward or a shop visit, before any
+          account exists — putting it behind ProtectedRoute would send
+          every prospective partner to a login for an account they have
+          not created.
+
+          config/surface.js sends the partner hostname's root here, which
+          is why the path is also aliased at '/partner'. */}
+      <Route path="/partner"      element={<BareShell><PartnerLanding /></BareShell>} />
+      <Route path="/partner/join" element={<BareShell><PartnerLanding /></BareShell>} />
 
       {/* ── Vendor onboarding ──────────────────────── */}
       <Route path="/onboarding/vendor" element={

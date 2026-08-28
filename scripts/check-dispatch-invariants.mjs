@@ -28,7 +28,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
-import { loadSrc, ROOT } from './lib/loadSrc.mjs'
+import { loadSrc, ROOT, readEnv } from './lib/loadSrc.mjs'
 
 /* ── Credentials, read from .env directly ──────────────────────────────
  * Not via a dotenv dependency: this script is a gate and should not
@@ -357,6 +357,30 @@ console.log('\n9 · Row-level security, as a signed-in customer')
       }
     }
   }
+}
+
+/* ── 10 · Nothing that only belongs in a test is still switched on ────
+ *
+ * These are the two settings that make the app cheap to test and ruinous
+ * to launch with. Both are invisible from any screen a person would look
+ * at before going live, and both fail silently in the direction of
+ * "everything seems fine":
+ *
+ *   PAYMENT_TEST_CHARGE_PAISE   every booking collects ₹1
+ *   ALLOW_SYNTHETIC_DISPATCH    jobs go to 221 partners who do not exist
+ *
+ * This section is the reason it is safe to have built either of them. */
+{
+  console.log('
+  10 · test switches')
+
+  const test = readEnv('PAYMENT_TEST_CHARGE_PAISE')
+  if (test) bad(`PAYMENT_TEST_CHARGE_PAISE=${test} — every booking would charge ₹${Number(test) / 100}, not the quote`)
+  else ok('payments charge the real amount')
+
+  const synth = readEnv('ALLOW_SYNTHETIC_DISPATCH')
+  if (synth && synth !== 'false') bad(`ALLOW_SYNTHETIC_DISPATCH=${synth} — jobs would be dispatched to partners who do not exist`)
+  else ok('dispatch reaches real partners only')
 }
 
 /* ── Verdict ─────────────────────────────────────────────────────────── */

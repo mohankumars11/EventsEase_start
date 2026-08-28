@@ -7,11 +7,19 @@
     "dev": "vite",
     "build": "node scripts/build-api-bundle.mjs --check && vite build",
     "preview": "vite preview",
-    "build:api": "node scripts/build-api-bundle.mjs"
+    "build:api": "node scripts/build-api-bundle.mjs",
+    "app:customer": "node scripts/capacitor-config.mjs customer && npm run build && npx cap sync",
+    "app:partner": "node scripts/capacitor-config.mjs partner && npm run build && npx cap sync"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/push-notifications": "^8.1.2",
     "@supabase/supabase-js": "^2.44.4",
+    "firebase": "^12.18.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.400.0",
     "qrcode": "^1.5.4",
@@ -21,6 +29,7 @@
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.39",

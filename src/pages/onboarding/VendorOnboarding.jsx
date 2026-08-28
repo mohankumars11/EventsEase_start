@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES } from '../../config/vendor'
+import { resolvePincode } from '../../lib/eventLocation'
 
 const CATEGORIES = VENDOR_CATEGORIES
 
@@ -185,6 +186,52 @@ export default function VendorOnboarding() {
         .upsert(payload, { onConflict: 'profile_id' })
 
       if (vendorErr) throw vendorErr
+
+      /* ── Turn the pincode into a point, or the partner is invisible ──
+       *
+       * This is the step that was missing, and it fails in the worst
+       * possible way: silently. `match_partners()` requires
+       * `vendors.location`, PostgREST cannot write a geography column,
+       * and the form only ever stored six digits of text. So a master
+       * could finish signup, be approved, list their trades, and never
+       * receive a single job — with every screen showing them fully
+       * onboarded and nothing anywhere reporting a problem.
+       *
+       * It happened to the only real partner in the database, and took
+       * an hour to find. `partner_readiness()` (migration 079) now
+       * reports it, and this stops it happening.
+       */
+      const { data: saved } = await supabase
+        .from('vendors').select('id').eq('profile_id', user.id).maybeSingle()
+
+      if (saved?.id) {
+        const place = resolvePincode(form.pincode)
+
+        if (!place) {
+          // Saved, but not dispatchable. Said plainly rather than
+          // letting them walk away believing they are live.
+          setError(
+            `We have your details, but we are not matching masters in ${form.pincode} yet. ` +
+            `We will be in touch when we reach your area.`,
+          )
+          setSaving(false)
+          return
+        }
+
+        const { data: located } = await supabase.rpc('set_partner_location', {
+          p_vendor_id: saved.id,
+          p_pincode: form.pincode,
+          p_lat: place.lat,
+          p_lng: place.lng,
+          p_area: place.area,
+        })
+
+        if (!located?.ok) {
+          setError('We could not place your business on the map. Please check the pincode.')
+          setSaving(false)
+          return
+        }
+      }
 
       navigate('/dashboard/vendor', { replace: true })
     } catch (err) {
