@@ -210,12 +210,39 @@ jobs:
       - name: What is being published
         run: ls -lh apks/
 
+      # ══════════════════════════════════════════════════════════════
+      # The notes go in a FILE, not in an argument
+      # ══════════════════════════════════════════════════════════════
+      #
+      # They were an inline multi-line string, and its continuation lines
+      # sat at column 0 — which ends a YAML block scalar. Everything after
+      # the first blank line became a top-level YAML key, the workflow
+      # stopped parsing, and GitHub produced a run with ZERO jobs named
+      # after the file path instead of after the workflow.
+      #
+      # That failure mode is worth recognising: a run with no jobs and a
+      # path for a name is always a YAML parse error, never a build
+      # problem, and no amount of reading the build logs will show it.
+      - name: Write the release notes
+        run: |
+          {
+            echo "Debug builds from \`${{ github.sha }}\`."
+            echo
+            echo "**Install on an Android phone:** tap a link below, then allow your browser to install unknown apps when asked."
+            echo
+            echo "- [Sambramo — customer](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk)"
+            echo "- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk)"
+            echo
+            echo "Both apps load the live site, so a deploy reaches them without a reinstall. A new APK is only needed when something native changes — push, permissions, a plugin, the icon."
+          } > notes.md
+          cat notes.md
+
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Deleted first so the tag moves. `gh release create` refuses
-          # to overwrite, and an --edit path would leave the old assets
+          # Deleted first so the tag moves. `gh release create` refuses to
+          # overwrite, and an --edit path would leave the old assets
           # attached alongside the new ones.
           gh release delete android-latest --yes --cleanup-tag || true
 
@@ -223,14 +250,7 @@ jobs:
             apks/sambramo-customer.apk \
             apks/sambramo-partner.apk \
             --title "Sambramo — Android test builds" \
-            --notes "Debug builds from \`${{ github.sha }}\`.
-
-**Install on an Android phone:** tap a link below, then allow the browser to install unknown apps when asked.
-
-- [Sambramo (customer)](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk)
-- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk)
-
-Both apps load the live site, so a deploy reaches them without a new install. A new APK is only needed when something native changes — push, permissions, a plugin, the icon."
+            --notes-file notes.md
 
       - name: The links
         run: |
