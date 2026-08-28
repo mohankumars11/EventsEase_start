@@ -115,6 +115,17 @@ export default defineConfig({
     react(),
     devApi(),
     VitePWA({
+      /* Off inside the native build.
+       *
+       * A service worker precaching the app shell is the right thing on
+       * the web and actively harmful in a WebView: the assets are
+       * already local, so the cache buys nothing, and it introduces a
+       * second copy of the app that can be served instead of the one
+       * that was installed. That is how a relaunch kept showing code
+       * from hours earlier.
+       *
+       * Set by the Android workflow before `vite build`. */
+      disable: process.env.CAPACITOR_BUILD === 'true',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-512.png', 'icon-maskable-512.png'],
       manifest: {

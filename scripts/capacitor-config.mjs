@@ -67,6 +67,48 @@ const TARGETS = {
 }
 
 const target = process.argv[2]
+
+/**
+ * Bundled, or pointed at the live site?
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY BUNDLED IS NOW THE DEFAULT
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `server.url` was the original choice and its argument was good: a
+ * deploy reaches every installed phone in minutes, and a store release
+ * is only needed when something native changes. On a product whose copy
+ * and prices change daily, that is worth a great deal.
+ *
+ * It does not survive contact with Android.
+ *
+ * ── The bridge ──────────────────────────────────────────────────────
+ * Capacitor injects `window.Capacitor` through
+ * `WebViewCompat.addDocumentStartJavaScript`, and falls back to
+ * `WebViewLocalServer`'s injector when the WebView lacks
+ * DOCUMENT_START_SCRIPT. That fallback rewrites LOCAL assets only — a
+ * remote origin gets nothing. When it fails there is no error: the page
+ * loads perfectly and `window.Capacitor` is simply undefined, so the
+ * app reports itself as a browser and native push cannot be registered
+ * at all. Which is exactly what a real device reported.
+ *
+ * ── And the service worker ──────────────────────────────────────────
+ * vite-plugin-pwa precaches the app shell. Inside a WebView that cache
+ * is far stickier than in Chrome, so "I deployed, relaunch the app"
+ * kept showing code from hours earlier — the instant-update benefit
+ * that justified server.url in the first place, not actually arriving.
+ *
+ * So: the web assets are compiled INTO the apk. The bridge is then
+ * guaranteed, push works, and what is on the phone is what was built.
+ *
+ * The cost is real and worth stating plainly: every change now needs a
+ * new APK. That is the ordinary way an app works, and it is the price
+ * of the app being an app.
+ *
+ * `--remote` keeps the old behaviour, for live-reload during native
+ * development where it is genuinely useful.
+ */
+const REMOTE = process.argv.includes('--remote')
 if (!TARGETS[target]) {
   console.error(`\n  Usage: node scripts/capacitor-config.mjs <${Object.keys(TARGETS).join('|')}>\n`)
   process.exit(1)
@@ -81,8 +123,11 @@ const config = {
   // `cap sync`, and the native project expects the directory to exist.
   webDir: 'dist',
 
+  /* Bundled: no `url`, so the WebView loads the assets inside the apk
+     over the https scheme Capacitor serves them on. With --remote the
+     url comes back and the app loads the live site instead. */
   server: {
-    url: t.url,
+    ...(REMOTE ? { url: t.url } : {}),
     // HTTPS only. `cleartext: false` means a downgraded connection fails
     // rather than silently loading over HTTP — on an app that carries a
     // customer's address and a master's earnings, that is not a setting
@@ -126,4 +171,4 @@ writeFileSync(join(ROOT, 'capacitor.config.json'), JSON.stringify(config, null, 
 
 console.log(`\n  capacitor.config.json → ${t.appName}`)
 console.log(`    id   ${t.appId}`)
-console.log(`    url  ${t.url}\n`)
+console.log(`    mode ${REMOTE ? 'remote — ' + t.url : 'bundled into the apk'}\n`)

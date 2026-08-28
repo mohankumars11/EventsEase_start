@@ -10,17 +10,36 @@ name: Android APKs
 # also running. Every one of those is free on a GitHub runner.
 #
 # ══════════════════════════════════════════════════════════════════════
-# NO SECRETS, AND NO WEB BUILD
+# THE WEB APP IS COMPILED INTO THE APK
 # ══════════════════════════════════════════════════════════════════════
 #
-# capacitor.config.json sets `server.url` to the live site, so the APK is
-# a native shell around a hosted web app. That means this workflow never
-# needs VITE_SUPABASE_URL, the Firebase config, or any other secret — it
-# compiles Java and packages a WebView.
+# It used to be a shell around the live site (`server.url`), and the
+# argument was good — a deploy reached every phone in minutes. It did
+# not survive contact with Android:
 #
-# It also means a deploy to Vercel reaches every installed phone
-# immediately. A new APK is only needed when something NATIVE changes:
-# push configuration, permissions, a plugin, the icon.
+#   the bridge      Capacitor injects window.Capacitor with
+#                   addDocumentStartJavaScript and falls back to an
+#                   injector that only rewrites LOCAL assets. When the
+#                   fallback is taken, a REMOTE origin gets nothing — no
+#                   error, the page just loads without a bridge, so the
+#                   app reports itself as a browser and native push
+#                   cannot register. A real device did exactly this.
+#
+#   the cache       vite-plugin-pwa precaches the shell, and a WebView
+#                   holds that far harder than Chrome. Relaunching after
+#                   a deploy kept serving code from hours earlier — the
+#                   instant-update benefit not actually arriving.
+#
+# So there is a real `vite build` now, its output ships inside the apk,
+# and the service worker is disabled for it. Every change needs a new
+# APK. That is how an app works, and it is the price of the app being an
+# app rather than a bookmark.
+#
+# ── No secrets, still ────────────────────────────────────────────────
+# .env.android holds only values already public in the browser bundle:
+# the Supabase anon key (RLS decides what it may read) and the Firebase
+# web config (the service account does the authorising, on the server).
+# That file documents the rule at length.
 #
 # ══════════════════════════════════════════════════════════════════════
 # DEBUG, DELIBERATELY
@@ -43,9 +62,16 @@ on:
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
     paths:
+      # The apk now CONTAINS the web app, so a change to src/ is a change
+      # to the app. Everything that ships inside it belongs here.
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.js'
       - 'android/**'
       - 'capacitor.config.json'
       - 'scripts/capacitor-config.mjs'
+      - '.env.android'
       - 'package.json'
       - '.github/workflows/android.yml'
 
@@ -118,21 +144,30 @@ jobs:
       # Not blank on purpose. If server.url is ever removed and somebody
       # forgets this step exists, the app opens on a sentence saying so
       # rather than on white.
-      - name: Stub the web assets
+      # ══════════════════════════════════════════════════════════════
+      # The real build, and what makes the two apps different
+      # ══════════════════════════════════════════════════════════════
+      #
+      # VITE_SURFACE is the important line. Bundled assets are served
+      # from localhost in BOTH apps, so the hostname check that separates
+      # the customer site from the partner site cannot work here — the
+      # partner APK would identify itself as the customer app and show
+      # the customer home. Stamping it at compile time makes it the one
+      # signal that cannot be wrong.
+      #
+      # CAPACITOR_BUILD turns off the service worker: precaching is
+      # pointless when the assets are already local, and it is how a
+      # relaunch ended up serving a stale copy of the app.
+      - name: Build the web app
+        env:
+          CAPACITOR_BUILD: 'true'
+          VITE_SURFACE: ${{ matrix.flavour }}
         run: |
-          mkdir -p dist
-          printf '%s\n' \
-            '<!doctype html><meta charset="utf-8"><title>Sambramo</title>' \
-            '<body style="font-family:system-ui;padding:2rem;text-align:center">' \
-            '<p>This shell loads Sambramo from the web.</p>' \
-            '<p>If you are reading this, the app could not reach the site.</p>' \
-            > dist/index.html
-          ls -l dist/
+          set -a; . ./.env.android; set +a
+          npm run build
+          ls -la dist/ | head
+          test -f dist/index.html
 
-      # Copies the plugins' native code into the Android project. Without
-      # it @capacitor/push-notifications is a JS package with no Android
-      # side and the app registers nothing — which is exactly the state
-      # that produced "no notifications are coming".
       - name: Sync Capacitor
         run: npx cap sync android
 

@@ -67,6 +67,26 @@ export const SURFACE = { customer: 'customer', partner: 'partner' }
  * to somebody who is not one.
  */
 export function currentSurface() {
+  /* ── A bundled native build has no hostname to read ──────────────
+   *
+   * Everything below decides the surface from `window.location.hostname`,
+   * which works for two websites and not at all for two APKs: Capacitor
+   * serves bundled assets from `localhost` in BOTH apps, so the partner
+   * app would identify itself as the customer app and show the customer
+   * home.
+   *
+   * So the native build stamps its identity in at compile time.
+   * `VITE_SURFACE` is set by the Android workflow per flavour and is
+   * constant-folded into the bundle, which makes it the one signal that
+   * cannot be wrong: the partner APK is built from partner sources and
+   * says so, with no runtime inference involved.
+   *
+   * Checked FIRST, and deliberately. On the web it is unset and the
+   * hostname rules below apply exactly as before. */
+  const stamped = import.meta.env?.VITE_SURFACE
+  if (stamped === 'partner')  return SURFACE.partner
+  if (stamped === 'customer') return SURFACE.customer
+
   if (typeof window === 'undefined') return SURFACE.customer
 
   // A local override, for working on the partner app without editing
