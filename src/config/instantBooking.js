@@ -354,3 +354,79 @@ export function assertTier(text, tier) {
   }
   return text
 }
+
+
+/**
+ * A face per trade, for the matching screen.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY EMOJI HERE, WHEN THE APP USES PHOTOGRAPHS EVERYWHERE ELSE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The standing visual rule is real photographs, never illustrations, and
+ * it holds on every screen that SELLS something — a customer choosing a
+ * decorator needs to see decoration.
+ *
+ * This screen sells nothing. It is a live status of work being done on
+ * somebody's behalf, and the subject is a PERSON who is being asked, not
+ * a service being displayed. A photograph here would be a stock model
+ * standing in for a master who has not accepted yet — a picture of a
+ * person the customer is not going to get. That is worse than a symbol.
+ *
+ * These are also the only glyphs that render at 19px, in a moving
+ * element, on every phone, with no image to load on a screen that must
+ * appear in one frame.
+ *
+ * Keyed by TRADE — the value in `vendor_services.category`, which is
+ * what dispatch matches on — with service ids as a fallback for the
+ * pre-flight rows, which exist before any trade is known.
+ */
+export const TRADE_FACE = {
+  'Decoration & Floral':   '🎈',
+  'Photography':           '📷',
+  'Videography':           '🎥',
+  'Catering & Food':       '🍲',
+  'Cooks':                 '👨‍🍳',
+  'Cake & Desserts':       '🎂',
+  'DJ & Music':            '🎧',
+  'Live Entertainment':    '🎤',
+  'Dhol & Band':           '🥁',
+  'Mehendi Artist':        '🖐️',
+  'Bridal Makeup & Hair':  '💄',
+  'Priest & Rituals':      '🪔',
+  'Anchor & MC':           '🎙️',
+  'Event Lighting':        '💡',
+  'Tent & Furniture':      '⛺',
+  'Dining & Service':      '🍽️',
+  'Transport':             '🚐',
+  'Security':              '🛡️',
+
+  // Service ids, for the rows drawn before the server has answered.
+  decor: '🎈', cake: '🎂', photography: '📷', videography: '🎥',
+  catering: '🍲', cooks: '👨‍🍳', dj: '🎧', mehendi: '🖐️', makeup: '💄',
+  drum: '🥁', dining: '🍽️', priest: '🪔', emcee: '🎙️', lighting: '💡',
+}
+
+/**
+ * What the screen says while it waits, cycling every few seconds.
+ *
+ * Every line is a true statement about what dispatch is doing at that
+ * moment. None is a countdown, a percentage, or an estimate that cannot
+ * be kept — `false_urgency` in config/legal.js is the named pattern this
+ * must never become, and "3 people are viewing this" is exactly the
+ * thing it forbids.
+ *
+ * The point is not information. The customer has already been told what
+ * is happening by the header. The point is that a screen which never
+ * changes is a screen that has crashed, to anybody who cannot see the
+ * network traffic.
+ */
+export const SEARCH_LINES = (area, notified) => [
+  notified > 0
+    ? `${notified} ${notified === 1 ? 'master is' : 'masters are'} looking at your job right now`
+    : 'Reaching the masters closest to your venue',
+  area ? `Asking masters in and around ${area}` : 'Asking masters near your venue',
+  'The first to accept gets the job',
+  'Nothing is charged until a master says yes',
+  'You can close the app — we will alert you',
+]

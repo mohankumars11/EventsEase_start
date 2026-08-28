@@ -1763,3 +1763,39 @@
     }
   }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   The matching screen's two motions
+   ══════════════════════════════════════════════════════════════════════
+
+   Both exist for one reason: between state changes, that screen does not
+   move, and a page that is not moving is a page that has crashed to
+   anyone who has not read the code. Neither carries information --
+   `components/book/TradeSprite.jsx` explains why that separation is the
+   whole point.
+
+   Kept as plain keyframes rather than Tailwind config so they survive a
+   tailwind.config.js edit without a dev-server restart, which is its own
+   recurring trap in this project. */
+
+@keyframes sb-bob {
+  0%, 100% { transform: translateY(0)      rotate(0deg);   }
+  30%      { transform: translateY(-3.5px) rotate(-5deg);  }
+  60%      { transform: translateY(-1px)   rotate(4deg);   }
+}
+
+/* 2.4s, not 1s. Fast bobbing reads as agitation; this should read as
+   somebody working, not somebody panicking. */
+.sb-bob { animation: sb-bob 2.4s ease-in-out infinite; }
+
+@keyframes sb-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.sb-fade-in { animation: sb-fade-in 420ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-bob, .sb-fade-in { animation: none; }
+}

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { MATCHING, PARTIAL } from '../../config/instantBooking'
 import { openRazorpay } from '../../lib/razorpayCheckout'
+import TradeSprite, { LiveLine } from './TradeSprite'
 
 /**
  * "Three of five masters have accepted."
@@ -93,7 +94,14 @@ function LineRow({ line, offers }) {
 
   return (
     <li className="flex items-center gap-3 border-b border-ink/[0.06] py-3 last:border-0">
-      <span className={`h-2 w-2 shrink-0 rounded-full ${PIP[state]}`} />
+      {/* The face replaces the 8px dot. Same information -- the sprite
+          only animates while `active` -- carried by something a person
+          recognises in a glance instead of a coloured pixel. */}
+      <TradeSprite
+        trade={line.trade}
+        serviceId={line.service_id}
+        active={state === 'searching' || state === 'standing'}
+      />
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-extrabold leading-tight text-ink">
@@ -406,6 +414,10 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         ))}
       </div>
 
+      {(phase === 'sending' || phase === 'hunting' || phase === 'standing') && (
+        <LiveLine area={area} notified={asked} />
+      )}
+
       {head?.note && (
         <p className="mt-3.5 rounded-[18px] bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">
           {head.note}
@@ -428,7 +440,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       <ul className="mt-5 rounded-[22px] bg-white px-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-ink/[0.06]">
         {showing.map(l => (
           l.__pre
-            ? <PendingRow key={l.id} name={l.service_name} />
+            ? <PendingRow key={l.id} id={l.id} name={l.service_name} />
             : <LineRow key={l.id} line={l} offers={offers} />
         ))}
       </ul>
@@ -483,10 +495,10 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
  * booking existing. It carries the real service name, so the list does
  * not reflow when the server answers — the row simply gains a state.
  */
-function PendingRow({ name }) {
+function PendingRow({ id, name }) {
   return (
     <li className="flex items-center gap-3 border-b border-ink/[0.05] py-3.5 last:border-0">
-      <Loader2 size={15} className="shrink-0 animate-spin text-ink-mute" />
+      <TradeSprite serviceId={id} trade={null} active />
       <span className="min-w-0 flex-1 truncate text-[14.5px] font-bold text-ink">{name}</span>
       <span className="shrink-0 text-[12.5px] font-semibold text-ink-mute">Reaching masters…</span>
     </li>

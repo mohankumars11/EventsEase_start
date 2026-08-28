@@ -158,8 +158,83 @@ export default function useAdminData() {
 
   const refresh = useCallback(() => load(true), [load])
 
+  /* ══════════════════════════════════════════════════════════════════
+     The console listens. It used to load once and go deaf.
+     ══════════════════════════════════════════════════════════════════
+
+     Every screen in the admin console shares this one load, and it ran
+     exactly once on mount. Nothing polled, nothing subscribed. So a
+     partner who signed up while the dashboard was open never appeared,
+     a booking placed thirty seconds ago was invisible, and the only way
+     to see anything new was to know to press Refresh.
+
+     That reads as "the data is not reaching the database". It was
+     reaching it. Both partner signups were sitting in `vendors`, correct
+     and complete, on a screen that had stopped asking.
+
+     ── Why a debounce and not a refresh per event ──────────────────
+     One partner signup is several rows: a profile, a vendor, and a
+     service list. A booking is a request plus N lines plus 5N offers —
+     a four-service basket is more than twenty INSERTs inside a second,
+     and each one arrives as its own event. Refreshing per event would
+     fire twenty full dashboard loads, every one of them redundant with
+     the last.
+
+     So events are collapsed into one reload a second later. The console
+     is never more than a second behind, and a busy Saturday does not
+     turn the admin's browser into a load generator. */
+  const [liveAt, setLiveAt] = useState(null)
+
+  useEffect(() => {
+    let timer = null
+    const nudge = () => {
+      setLiveAt(new Date())
+      clearTimeout(timer)
+      timer = setTimeout(() => load(true), 1000)
+    }
+
+    /* One channel, several tables. Each is here because somebody is
+       waiting on it:
+
+         vendors            a partner signed up or was approved
+         profiles           a customer or partner account was created
+         booking_requests   somebody started an instant booking
+         dispatch_offers    a master accepted, or an offer expired
+         complaints         a dispute was raised
+
+       Deliberately NOT booking_lines: a basket writes one line per
+       service and they always arrive with the request, which is already
+       listened to above. */
+    const channel = supabase
+      .channel('admin-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vendors' }, nudge)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, nudge)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_requests' }, nudge)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_offers' }, nudge)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints' }, nudge)
+      .subscribe()
+
+    /* The floor under Realtime.
+     *
+     * Realtime needs the table in the `supabase_realtime` publication,
+     * and a table nobody remembered to add is silent rather than loud —
+     * the subscription succeeds and no events ever come. A console that
+     * is quietly forty minutes stale is worse than one that is honestly
+     * one minute stale, so it also reloads on a timer.
+     *
+     * Same pattern as hooks/useNotifications.js: Realtime where it
+     * works, a poll as the guarantee, never trust Realtime alone. */
+    const floor = setInterval(() => load(true), 60_000)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(floor)
+      supabase.removeChannel(channel)
+    }
+  }, [load])
+
   return useMemo(
-    () => ({ ...data, missing, loading, refreshing, error, loadedAt, refresh }),
-    [data, missing, loading, refreshing, error, loadedAt, refresh],
+    () => ({ ...data, missing, loading, refreshing, error, loadedAt, liveAt, refresh }),
+    [data, missing, loading, refreshing, error, loadedAt, liveAt, refresh],
   )
 }
