@@ -13,6 +13,7 @@ import VendorServiceList from '../../components/vendor/VendorServiceList'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
+import MyJobs from '../../components/vendor/MyJobs'
 
 /**
  * The partner's console.
@@ -225,12 +226,24 @@ export default function VendorDashboard() {
             permanently empty box with a promise in it. */}
         {tab === 'offers' && (
           vendor?.is_verified ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Above the inbox deliberately: an empty inbox with alerts
                   off is a master who will never know a job arrived, and
                   that is the first thing worth telling them. */}
               <JobAlerts vendorId={vendor.id} />
+
+              {/* New offers, which expire in 45 seconds. */}
               <OfferInbox vendorId={vendor.id} />
+
+              {/* And everything already accepted.
+                  Below the inbox because an expiring offer is urgent and a
+                  job next Saturday is not -- but on the SAME tab, because
+                  a master who accepted a job and then could not find it
+                  anywhere had no way to know the tap had worked. */}
+              <div>
+                <p className="mb-2 type-overline text-ink-mute">Your jobs</p>
+                <MyJobs vendorId={vendor.id} />
+              </div>
             </div>
           ) : (
             <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
