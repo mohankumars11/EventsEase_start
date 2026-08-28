@@ -281,13 +281,13 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
   async function pay(payableLines) {
     setPaying(true); setPayError(null)
     try {
+      const uid = (await supabase.auth.getUser()).data.user?.id
+      if (!uid) { setPayError('Please sign in again to pay.'); return }
+
       const res = await fetch('/api/create-booking-payment', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          customerId: (await supabase.auth.getUser()).data.user?.id,
-          lineIds: payableLines.map(l => l.id),
-        }),
+        body: JSON.stringify({ customerId: uid, lineIds: payableLines.map(l => l.id) }),
       })
 
       // Read as text first: a platform error page is HTML, and res.json()
@@ -318,15 +318,39 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
 
       setTestCharge(body.testCharge ?? null)
 
+      /* The customer, so Razorpay does not open on a contact form.
+       *
+       * Read here rather than held in state: this runs once per tap, and
+       * a stale profile in a long-lived component would prefill the
+       * wrong number. */
+      const { data: me } = await supabase
+        .from('profiles').select('full_name, email, phone').eq('id', uid).maybeSingle()
+
       const opened = await openRazorpay({
         keyId: body.keyId,
         orderId: body.orderId,
         amountPaise: body.amountPaise,
-        description: body.testCharge ? 'Test payment' : 'Your masters',
+        // What they are paying for, in the sheet, in their words. Not
+        // "Order #4821": the last line somebody reads before paying
+        // should be the thing they wanted.
+        description: body.testCharge
+          ? 'Test payment · ₹1'
+          : payableLines.length === 1
+            ? payableLines[0].service_name
+            : `${payableLines.length} masters for your celebration`,
+        customer: { name: me?.full_name, email: me?.email, phone: me?.phone },
+        notes: { lines: String(payableLines.length) },
         onDismiss: () => setPaying(false),
       })
 
-      if (!opened.ok) { setPayError(opened.error); return }
+      // A dismissed sheet is not a failure. Somebody who backed out gets
+      // their button back and no red text.
+      if (opened.dismissed) return
+      if (!opened.ok) {
+        setPayError(opened.error)
+        if (opened.detail) console.warn('[payment]', opened.detail)
+        return
+      }
 
       // Deliberately NOT "paid". The webhook decides that.
       setPayError(null)
