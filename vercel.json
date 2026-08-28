@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/dispatch-waves",
-      "schedule": "* * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }

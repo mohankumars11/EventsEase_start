@@ -155,6 +155,10 @@ export default function MatchingBoard({ requestId, onPay }) {
   const [offers, setOffers] = useState([])
   const [loaded, setLoaded] = useState(false)
   const pollRef = useRef(null)
+  const waveRef = useRef(null)
+  // Whether any line is still looking for a master. Kept in a ref so the
+  // poll effect can read it without listing it as a dependency.
+  const huntingRef = useRef(true)
 
   /**
    * Realtime, with polling underneath it.
@@ -190,8 +194,35 @@ export default function MatchingBoard({ requestId, onPay }) {
       if (!dead) setOffers(o ?? [])
     }
 
+    /* ── The screen advances its own waves ─────────────────────────
+     *
+     * `api/dispatch-waves` widens the radius — 5 km, then 10, then 15 —
+     * for lines nobody has answered. It wants to run every minute.
+     *
+     * The Vercel Hobby plan allows one cron run per DAY, and a
+     * `* * * * *` schedule does not degrade at runtime: it fails the
+     * deploy outright. See CRON_NOTE.md.
+     *
+     * So the widening happens here, from the screen of the person
+     * waiting for it — which is the only moment it is urgent. The daily
+     * cron underneath catches bookings whose customer closed the tab.
+     *
+     * Every 15 seconds, not every 3: a wave is 45 seconds long and
+     * calling this on every poll would be four requests per wave doing
+     * nothing. It stops the moment nothing is hunting. */
+    async function nudgeWaves() {
+      try { await fetch('/api/dispatch-waves', { method: 'POST' }) }
+      catch { /* a failed nudge is the cron's job. Never a visible error. */ }
+    }
+
     read()
     pollRef.current = setInterval(read, 3000)
+    waveRef.current = setInterval(() => {
+      // `hunting` is read from the ref rather than closed over, because
+      // this effect is keyed on requestId and must not restart whenever
+      // the line list changes.
+      if (huntingRef.current) nudgeWaves()
+    }, 15000)
 
     const channel = supabase
       .channel(`booking-${requestId}`)
@@ -206,6 +237,7 @@ export default function MatchingBoard({ requestId, onPay }) {
     return () => {
       dead = true
       clearInterval(pollRef.current)
+      clearInterval(waveRef.current)
       supabase.removeChannel(channel)
     }
   }, [requestId])
@@ -290,6 +322,9 @@ export default function MatchingBoard({ requestId, onPay }) {
     () => accepted.filter(l => l.status === 'accepted'), [accepted])
   const payTotal = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
   const stillLooking = lines.length - accepted.length
+  // Fed to the wave nudge above. A booking where everybody has answered
+  // has nothing left to widen for, and should stop asking the server to.
+  huntingRef.current = stillLooking > 0
 
   if (!loaded) {
     return (
