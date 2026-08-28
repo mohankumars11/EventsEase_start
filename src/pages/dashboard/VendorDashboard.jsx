@@ -16,6 +16,7 @@ import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
 import OfferHistory from '../../components/vendor/OfferHistory'
 import PartnerResume from '../../components/vendor/PartnerResume'
+import InstallTheApp from '../../components/vendor/InstallTheApp'
 
 /**
  * The partner's console.
@@ -148,6 +149,12 @@ export default function VendorDashboard() {
           find out whether anything is, and the answer used to require
           finding the right tab. This states the single most pressing
           fact about their day and links straight at it. */}
+      {/* Only ever visible in a browser — the component checks for the
+          Capacitor bridge and renders nothing inside the app. So seeing
+          it at all is unambiguous proof this is not the app, which is
+          the distinction that cost hours to establish by other means. */}
+      <InstallTheApp />
+
       <PartnerResume vendorId={vendor.id} />
 
       {/* ── Header ───────────────────────────────────────── */}

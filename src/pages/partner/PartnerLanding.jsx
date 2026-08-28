@@ -3,6 +3,7 @@ import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin } from 'luci
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { PARTNER_PLANS, LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
+import InstallTheApp from '../../components/vendor/InstallTheApp'
 
 /**
  * The front door of the partner app.
@@ -103,6 +104,11 @@ export default function PartnerLanding() {
             </Link>
           </div>
         )}
+
+        {/* Also here, because a master who has not signed up yet is the
+            one most likely to have arrived from a WhatsApp forward and
+            never leave the browser. */}
+        <div className="mt-6"><InstallTheApp /></div>
 
         {/* The launch offer, stated where somebody deciding will see it. */}
         {/* Sign-up carries the role in the URL.
