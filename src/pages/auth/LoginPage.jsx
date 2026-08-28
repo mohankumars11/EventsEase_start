@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-re
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
+import { isNativeApp } from '../../lib/nativePush'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 
 const RESEND_SECONDS = 60
@@ -18,6 +19,31 @@ function otpErrorMessage(msg = '') {
   return msg || 'Something went wrong. Please try again.'
 }
 
+/**
+ * Google sign-in is not offered inside the app, and that is deliberate.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * OAUTH LEAVES THE APP AND DOES NOT COME BACK
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `signInWithOAuth` navigates to accounts.google.com. Capacitor hands
+ * any off-origin navigation to the system browser, so the person ends
+ * up in Chrome — and `redirectTo` is built from `window.location.origin`,
+ * which inside a bundled app is `https://localhost`. Google rejects that
+ * as a redirect URI, and even if it did not, the session would land in
+ * Chrome and the app would still be signed out.
+ *
+ * The reported symptom was exactly this: "the app is installed, but when
+ * I log in it opens in Chrome."
+ *
+ * Making it work natively means a custom URL scheme, a deep-link
+ * handler, and another OAuth client in the Google console — a project in
+ * itself. And it buys nothing, because the email code below has no
+ * redirect at all: it is two API calls, it never leaves the WebView, and
+ * it already works.
+ *
+ * So on native there is one way in, and it is the one that works.
+ */
 export default function LoginPage() {
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
@@ -222,13 +248,20 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
-                <div className="flex-1 h-px bg-gray-100" />
-              </div>
+              {/* The divider belongs to the Google button, so it goes
+                  with it. A rule saying "or" above nothing is a screen
+                  that looks broken. */}
+              {!isNativeApp() && (
+                <div className="flex items-center gap-3 my-6">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+              )}
 
-              <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
+              {!isNativeApp() && (
+                <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
+              )}
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 New to Sambramo?{' '}
