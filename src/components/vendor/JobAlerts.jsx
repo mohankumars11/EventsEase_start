@@ -35,6 +35,14 @@ import { nativeDiagnostics } from '../../lib/nativePush'
  * obviously yes. Everything above the button exists to make that yes
  * informed rather than reflexive.
  */
+/* Read once, at module load. `isNativeApp()` reads window.Capacitor,
+   which the bundled APK injects before any of this evaluates. */
+const NATIVE = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.()
+
+/* Stamped by the build. Short enough to read aloud over a phone call,
+   which is how this will actually be used. */
+const BUILD = (import.meta.env?.VITE_BUILD ?? 'dev').slice(0, 7)
+
 export default function JobAlerts({ vendorId }) {
   const { user } = useAuth()
 
@@ -195,6 +203,28 @@ export default function JobAlerts({ vendorId }) {
               what is installed — and that difference decides whether a
               missing notification is a bug or a build that never
               happened. Worth two words on screen. */}
+          {/* ══════════════════════════════════════════════════════
+              What is actually running, always visible
+              ══════════════════════════════════════════════════════
+
+              Two apps with the same name and the same icon can sit
+              side by side on an Android home screen: the installed APK,
+              and a shortcut to the website added earlier. Tapping the
+              wrong one looks identical and behaves completely
+              differently — no bridge, no native push, and code cached
+              from whenever the shortcut was last opened.
+
+              Hours were spent on "I installed it and nothing changed"
+              without either of us being able to tell which one was
+              open. This line answers it in two words, with no tapping,
+              and the build id proves whether the code is current. */}
+          <p className="mt-1.5 text-[11px] font-bold">
+            <span className={NATIVE ? 'text-forest-700' : 'text-amber-700'}>
+              {NATIVE ? '● Android app' : '● Browser / home-screen shortcut'}
+            </span>
+            <span className="ml-1.5 font-semibold text-ink-mute">build {BUILD}</span>
+          </p>
+
           {on && registered[0]?.platform && (
             <p className="mt-1.5 text-[11px] font-bold text-ink-mute">
               Registered as {registered[0].platform === 'web'

@@ -23,12 +23,52 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-com
 
 const params = new URLSearchParams(self.location.search)
 
+/* Baked in at build time, and the query string is only a fallback.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THE URL WAS THE WRONG PLACE TO KEEP THIS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The config used to arrive ONLY as query parameters on the
+ * registration URL. That works exactly once, on a browser that has
+ * never seen this worker: after that, whether `self.location.search`
+ * still carries them depends on which registration the browser decides
+ * to reuse, and a worker previously registered without them keeps
+ * serving from that URL.
+ *
+ * When it goes wrong there is no error anywhere. `config.apiKey` is
+ * null, the `if` below is skipped, `onBackgroundMessage` is never
+ * attached — and FCM still delivers the push. The browser receives a
+ * message no handler claims and shows nothing at all, while every
+ * server-side signal says the send succeeded.
+ *
+ * That is precisely the shape of "no notification arrived, and nothing
+ * anywhere says why".
+ *
+ * `scripts/write-sw-config.mjs` writes the values below into dist/ at
+ * build time from the same VITE_FIREBASE_* variables the app uses, so
+ * the worker is self-sufficient. The placeholder is what ships in the
+ * repo; a build always replaces it.
+ *
+ * None of it is secret — the Firebase web config identifies the project
+ * and authorises nothing. Sending is authorised by
+ * FIREBASE_SERVICE_ACCOUNT, on the server, which never reaches a
+ * browser.
+ */
+const BAKED = '__FIREBASE_SW_CONFIG__'
+
+const baked = (() => {
+  try {
+    return BAKED.startsWith('__') ? null : JSON.parse(atob(BAKED))
+  } catch { return null }
+})()
+
 const config = {
-  apiKey:            params.get('apiKey'),
-  authDomain:        params.get('authDomain'),
-  projectId:         params.get('projectId'),
-  messagingSenderId: params.get('senderId'),
-  appId:             params.get('appId'),
+  apiKey:            params.get('apiKey')    || baked?.apiKey,
+  authDomain:        params.get('authDomain')|| baked?.authDomain,
+  projectId:         params.get('projectId') || baked?.projectId,
+  messagingSenderId: params.get('senderId')  || baked?.messagingSenderId,
+  appId:             params.get('appId')     || baked?.appId,
 }
 
 if (config.apiKey && config.projectId) {

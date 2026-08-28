@@ -162,11 +162,25 @@ jobs:
         env:
           CAPACITOR_BUILD: 'true'
           VITE_SURFACE: ${{ matrix.flavour }}
+          # Shown on the alerts card. Two apps with the same name and
+          # icon can sit side by side on a home screen -- the installed
+          # APK and a shortcut to the website -- and this is how anyone
+          # can tell which one is open, and whether its code is current.
+          VITE_BUILD: ${{ github.sha }}
         run: |
           set -a; . ./.env.android; set +a
           npm run build
+
+          # The push service worker cannot read import.meta.env, so its
+          # config is baked in here. Without this it initialises with
+          # nulls, never attaches onBackgroundMessage, and every push is
+          # delivered to a browser that shows nothing -- with no error
+          # on either side. The script exits non-zero rather than skip.
+          node scripts/write-sw-config.mjs
+
           ls -la dist/ | head
           test -f dist/index.html
+          grep -q '__FIREBASE_SW_CONFIG__' dist/firebase-messaging-sw.js             && { echo 'service worker config was NOT baked'; exit 1; } || true
 
       - name: Sync Capacitor
         run: npx cap sync android
