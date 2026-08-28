@@ -203,19 +203,78 @@ export default async function handler(req, res) {
 
   const { data: point } = await db.rpc('point_of', { p_lat: lat, p_lng: lng })
 
-  const results = []
-  for (const line of createdLines) {
-    const { data: matches, error: matchErr } = await db.rpc('match_partners', {
-      p_trade: line.trade,
-      p_point: point,
-      p_radius_m: radiusM,
-      p_date: eventDate,
-      p_allow_synthetic: allowSeeded,
-      p_limit: wave.partners,
-      p_exclude: [],
+  /**
+   * Everyone real first, then invented partners to fill the wave.
+   *
+   * ══════════════════════════════════════════════════════════════════
+   * A SEEDED PARTNER MUST NEVER TAKE A REAL ONE'S SLOT
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * `match_partners` orders by rating, then distance. The 221 seeded
+   * partners were generated with ratings between 4.1 and 4.9. A real
+   * partner who signed up yesterday has `rating_avg = 0`.
+   *
+   * So with one call and a limit of five, the five best-rated matches
+   * were invented businesses every single time, and the only real
+   * partner in Bengaluru with a registered device was never offered a
+   * job at all. Measured on a live Jayanagar booking: 20 partners
+   * notified, 19 fictional, and zero pushes sent — because fictional
+   * partners have no phones.
+   *
+   * That is the whole of "no notifications are coming". The demo
+   * network was not decorating the board; it was consuming it.
+   *
+   * So the pool is built in two passes. Real partners are taken first,
+   * always, however they are rated. Seeded ones fill whatever is left,
+   * and only when this customer is on the demo list.
+   */
+  async function poolFor(line) {
+    const real = await db.rpc('match_partners', {
+      p_trade: line.trade, p_point: point, p_radius_m: radiusM, p_date: eventDate,
+      p_allow_synthetic: false, p_limit: wave.partners, p_exclude: [],
     })
+    if (real.error) return { error: real.error }
 
-    if (matchErr) return res.status(500).json({ error: `match_partners: ${matchErr.message}` })
+    const found = real.data ?? []
+    const tagged = found.map(m => ({ ...m, seeded: false }))
+    if (!allowSeeded || found.length >= wave.partners) return { matches: tagged }
+
+    // Fill the rest. `p_exclude` stops the real ones coming back a
+    // second time and being offered the same job twice.
+    const filler = await db.rpc('match_partners', {
+      p_trade: line.trade, p_point: point, p_radius_m: radiusM, p_date: eventDate,
+      p_allow_synthetic: true,
+      p_limit: wave.partners - found.length,
+      p_exclude: found.map(m => m.vendor_id),
+    })
+    if (filler.error) return { error: filler.error }
+
+    // Tagged rather than re-queried: match_partners returns only
+    // (vendor_id, distance_m, rating), so which pass a row came from is
+    // the only thing that knows whether it is a real business.
+    return { matches: [...tagged, ...(filler.data ?? []).map(m => ({ ...m, seeded: true }))] }
+  }
+
+  /**
+   * Every line at once.
+   *
+   * This loop was sequential, and each pass is a match, an insert, an
+   * update and a push — so a four-service basket was sixteen round
+   * trips end to end. Measured against production: 10.8 seconds with
+   * the customer watching a button say "Finding masters…".
+   *
+   * The lines are independent by construction — that is the point of
+   * migration 059 — so there was never a reason to wait.
+   */
+  const results = await Promise.all(createdLines.map(line => dispatchLine(line)))
+
+  const failure = results.find(r => r?.fatal)
+  if (failure) return res.status(500).json({ error: failure.fatal })
+
+  async function dispatchLine(line) {
+    const { matches, error: matchErr } = await poolFor(line)
+
+    if (matchErr) return { fatal: `match_partners: ${matchErr.message}` }
 
     if (!matches?.length) {
       // Nobody to ask. NOT an expiry — see migration 069. Showing a
@@ -229,8 +288,7 @@ export default async function handler(req, res) {
         stand_until: new Date(new Date(eventDate).getTime() - 86400000).toISOString(),
       }).eq('id', line.id)
 
-      results.push({ lineId: line.id, serviceId: line.service_id, standing: true, notified: 0 })
-      continue
+      return { lineId: line.id, serviceId: line.service_id, standing: true, notified: 0 }
     }
 
     const offers = matches.map(m => ({
@@ -243,7 +301,7 @@ export default async function handler(req, res) {
     }))
 
     const { error: offerErr } = await db.from('dispatch_offers').insert(offers)
-    if (offerErr) return res.status(500).json({ error: `dispatch_offers: ${offerErr.message}` })
+    if (offerErr) return { fatal: `dispatch_offers: ${offerErr.message}` }
 
     await db.from('booking_lines').update({
       status: 'dispatching',
@@ -265,10 +323,14 @@ export default async function handler(req, res) {
       lineId: line.id,
     })
 
-    results.push({
+    return {
       lineId: line.id, serviceId: line.service_id, standing: false,
       notified: offers.length, pushed: push.sent ?? 0,
-    })
+      // How much of this wave is a real business. The matching screen
+      // says "5 masters notified" and it must not be counting ghosts
+      // when somebody is deciding whether to trust it.
+      real: matches.filter(m => !m.seeded).length,
+    }
   }
 
   return res.status(200).json({
