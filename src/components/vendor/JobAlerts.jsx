@@ -41,6 +41,8 @@ export default function JobAlerts({ vendorId }) {
   const [registered, setRegistered] = useState(null)   // null = still checking
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState(null)
+  const [tested, setTested] = useState(null)
+  const [testing, setTesting] = useState(false)
 
   /** Is a device already registered for this master? */
   const refresh = useCallback(async () => {
@@ -79,6 +81,38 @@ export default function JobAlerts({ vendorId }) {
       return
     }
     await refresh()
+  }
+
+  /**
+   * Send one push to this device, now.
+   *
+   * "No notifications are coming" cannot be answered from the server:
+   * FCM accepts every send and returns 200, the token is healthy, and
+   * the dispatcher reports it pushed. Every signal on our side says it
+   * worked while the phone stays silent.
+   *
+   * At least six things cause that and none is visible from a server —
+   * permission granted but muted at OS level, a service worker that
+   * never initialised, battery optimisation, Do Not Disturb, a dropped
+   * notification channel, or an app that was never really installed.
+   *
+   * One button collapses all six into: it buzzed, or it did not.
+   */
+  async function sendTest() {
+    setTesting(true); setTested(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/test-alert', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${session?.access_token ?? ''}` },
+      })
+      const body = await res.json().catch(() => ({}))
+      setTested(body.scan ?? (body.ok ? 'Sent.' : 'Could not send.'))
+    } catch {
+      setTested('Could not reach the server.')
+    } finally {
+      setTesting(false)
+    }
   }
 
   async function turnOff() {
@@ -151,6 +185,36 @@ export default function JobAlerts({ vendorId }) {
               <TriangleAlert size={13} className="mt-0.5 shrink-0" />
               {problem}
             </p>
+          )}
+
+          {/* What KIND of device this is.
+              A token registered as 'web' from something the owner
+              believes is the Android app means the Android app is not
+              what is installed — and that difference decides whether a
+              missing notification is a bug or a build that never
+              happened. Worth two words on screen. */}
+          {on && registered[0]?.platform && (
+            <p className="mt-1.5 text-[11px] font-bold text-ink-mute">
+              Registered as {registered[0].platform === 'web'
+                ? 'a browser / home-screen app'
+                : `the ${registered[0].platform} app`}
+            </p>
+          )}
+
+          {on && (
+            <>
+              <button
+                onClick={sendTest}
+                disabled={testing}
+                className="mt-2.5 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-[12.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
+              >
+                {testing && <Loader2 size={13} className="animate-spin" />}
+                Send me a test alert
+              </button>
+              {tested && (
+                <p className="mt-2 text-[11.5px] font-semibold leading-snug text-ink-soft">{tested}</p>
+              )}
+            </>
           )}
 
           <button
