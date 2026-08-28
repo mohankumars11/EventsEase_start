@@ -36,9 +36,25 @@ export default function SignupPage() {
     if (ref) localStorage.setItem('ee_pending_ref', ref.toUpperCase())
   }, [location.search])
 
+  /* The role can arrive in the URL, and then the chooser is skipped.
+
+     A master reaching this from the partner landing page has already
+     answered "who are you?" — by reading a page headed "Work that comes
+     to you" and pressing "Join as a partner". Asking again is a step
+     that can only be got wrong, and getting it wrong here creates a
+     CUSTOMER account for somebody who came to sell. That is not visible
+     to them until the dashboard is empty.
+
+     Read once, at mount. Not a live read of the query string: changing
+     it mid-signup would move somebody between forms. */
+  const roleFromUrl = (() => {
+    const r = new URLSearchParams(location.search).get('role')
+    return r === 'vendor' || r === 'customer' ? r : null
+  })()
+
   // steps: role → info → otp
-  const [step, setStep]               = useState('role')
-  const [role, setRole]               = useState(null)
+  const [step, setStep]               = useState(roleFromUrl ? 'info' : 'role')
+  const [role, setRole]               = useState(roleFromUrl)
   const [fullName, setFullName]       = useState('')
   const [email, setEmail]             = useState('')
   const [phone, setPhone]             = useState('')          // optional, for profile only
@@ -53,7 +69,11 @@ export default function SignupPage() {
   // Only auto-redirect if they land here already authenticated
   // Don't redirect mid-OTP flow
   useEffect(() => {
-    if (user && profile && step === 'role') redirectByRole(profile.role)
+    // 'info' as well as 'role'. Keying this on 'role' alone meant a
+    // signed-in partner arriving from /partner/join — who now skips
+    // straight to 'info' — was shown a signup form for the account they
+    // already have, instead of being sent to their dashboard.
+    if (user && profile && (step === 'role' || step === 'info')) redirectByRole(profile.role)
   }, [user, profile])
 
   useEffect(() => {
@@ -63,7 +83,17 @@ export default function SignupPage() {
   }, [resendTimer])
 
   function redirectByRole(r) {
-    if (r === 'vendor')     navigate('/onboarding/vendor', { replace: true })
+    /* A vendor goes to their DASHBOARD, not to the onboarding form.
+     *
+     * Onboarding prefills from the existing row, so sending an
+     * established partner there is not destructive — it is just wrong.
+     * They came to work, and they are shown a form asking for a
+     * business name they entered weeks ago.
+     *
+     * The dashboard is right for both cases: a partner with no vendor
+     * row gets its "Set up my profile" door, which is the same
+     * onboarding one tap further on. */
+    if (r === 'vendor')     navigate('/dashboard/vendor', { replace: true })
     else if (r === 'admin') navigate('/dashboard/admin',   { replace: true })
     else if (from)          navigate(from.pathname + (from.search ?? ''), { replace: true })
     else                    navigate('/dashboard/customer', { replace: true })

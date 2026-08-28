@@ -115,18 +115,44 @@ export function AuthProvider({ children }) {
   }
 
   // ── Profile completion after phone OTP ───────────────
+  /**
+   * Finish a profile after the OTP.
+   *
+   * ── It must never overwrite a role somebody already has ──────────
+   * This is an UPSERT keyed on the user id, and the signup form always
+   * carries a role — so a partner who passed through /signup again, for
+   * any reason at all, was silently demoted to 'customer'. Their vendor
+   * row, their approval and their service list all survived; only the
+   * role changed, and the role is the one field that decides whether
+   * they can open their own dashboard.
+   *
+   * The symptom is "I cannot log in as a partner". Nothing errors, the
+   * sign-in succeeds, and the guard on /dashboard/vendor bounces them
+   * to the join page — which reads as a broken login rather than as a
+   * field that was quietly rewritten.
+   *
+   * It cost the only real partner in the network their account.
+   *
+   * So an existing profile keeps its role and only fills blanks. The
+   * name is still updated, because somebody retyping it means it.
+   */
   async function completeProfile({ fullName, role, city, phone }) {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) throw new Error('Not authenticated')
+
+    const { data: existing } = await supabase
+      .from('profiles').select('role, city, phone').eq('id', authUser.id).maybeSingle()
 
     const { data, error } = await supabase
       .from('profiles')
       .upsert({
         id:        authUser.id,
         full_name: fullName,
-        role:      role ?? 'customer',
-        city:      city ?? null,
-        phone:     phone ?? authUser.phone ?? null,
+        // An account that is already a vendor or an admin stays one. A
+        // role only arrives from this form for an account that has none.
+        role:      existing?.role ?? role ?? 'customer',
+        city:      city  ?? existing?.city  ?? null,
+        phone:     phone ?? existing?.phone ?? authUser.phone ?? null,
         email:     authUser.email ?? null,
       }, { onConflict: 'id' })
       .select()

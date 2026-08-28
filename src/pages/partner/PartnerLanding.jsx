@@ -89,7 +89,7 @@ export default function PartnerLanding() {
         ) : (
           <div className="mt-6 space-y-2.5">
             <Link
-              to="/partner/join"
+              to="/signup?role=vendor"
               className="flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
             >
               Join as a partner
@@ -105,6 +105,13 @@ export default function PartnerLanding() {
         )}
 
         {/* The launch offer, stated where somebody deciding will see it. */}
+        {/* Sign-up carries the role in the URL.
+
+            /partner and /partner/join both render THIS page, so the CTA
+            used to link to the page it was already on and did nothing at
+            all. The role has to travel because SignupPage opens on a
+            "who are you?" step, and a master who has just read a page
+            headed "Work that comes to you" has answered that question. */}
         {LAUNCH_OFFER && (
           <p className="mt-4 rounded-2xl bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">
             {LAUNCH_NOTE}
@@ -191,7 +198,7 @@ export default function PartnerLanding() {
         </section>
 
         <Link
-          to="/partner/join"
+          to="/signup?role=vendor"
           className="mt-9 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
         >
           Join as a partner
