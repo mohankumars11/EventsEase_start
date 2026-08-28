@@ -97,3 +97,20 @@ android/.gradle/
 android/local.properties
 android/.idea/
 android/app/release/
+
+# ── One deliberate exception ─────────────────────────────────────────
+# `.env*` is ignored above, and it must stay that way: .env holds the
+# service role key, the Firebase service account and the Razorpay
+# secret.
+#
+# .env.android is the opposite kind of file. Every value in it is
+# already public in the browser bundle served from sambramoh.vercel.app
+# -- the Supabase ANON key and the Firebase WEB config -- and the APK
+# build needs them at compile time. The file itself explains the rule at
+# length, and the rule is: if it is already in the browser it may be
+# there, if it is not it may not.
+#
+# Negated explicitly rather than force-added, so the exception is
+# visible to anyone reading this file instead of hidden in a git
+# command somebody ran once.
+!.env.android
