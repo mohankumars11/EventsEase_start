@@ -14,6 +14,7 @@ import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
+import OfferHistory from '../../components/vendor/OfferHistory'
 
 /**
  * The partner's console.
@@ -244,6 +245,11 @@ export default function VendorDashboard() {
                 <p className="mb-2 type-overline text-ink-mute">Your jobs</p>
                 <MyJobs vendorId={vendor.id} />
               </div>
+
+              {/* Last, and collapsed. It answers "why am I not getting
+                  work", which is a question asked occasionally — not a
+                  thing to scroll past on the way to today's jobs. */}
+              <OfferHistory vendorId={vendor.id} />
             </div>
           ) : (
             <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">

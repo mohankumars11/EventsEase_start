@@ -181,6 +181,9 @@ function JobCard({ job, onChange }) {
   const [contact, setContact] = useState(null)
   const [loadingContact, setLoadingContact] = useState(false)
   const [marking, setMarking] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [why, setWhy] = useState('')
+  const [cancelling, setCancelling] = useState(false)
   const [problem, setProblem] = useState(null)
 
   const paid = ['paid', 'in_progress', 'delivered', 'settled'].includes(job.status)
@@ -195,6 +198,39 @@ function JobCard({ job, onChange }) {
     if (error) { setProblem(error.message); return }
     if (!data?.ok) { setProblem(data?.scan ?? 'Not available yet'); return }
     setContact(data.customer)
+  }
+
+  /**
+   * A master pulling out of a job they accepted.
+   *
+   * ══════════════════════════════════════════════════════════════════
+   * THE FRICTION IS THE FEATURE
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * This is the most damaging thing that can happen to a customer in
+   * this product: they find out when nobody arrives. A one-tap cancel
+   * makes it the easy option on a morning when a better job came along.
+   *
+   * So a reason is REQUIRED, at least a sentence, enforced in the
+   * database (migration 081) and not merely in this form. It is stored,
+   * and it is what an operator reads when deciding whether this master
+   * keeps getting dispatched. That is the deterrent — not a fee, which
+   * a master would simply price into the next quote.
+   *
+   * The customer is refunded in FULL. No ladder: they did nothing
+   * wrong, and a partial refund for somebody else's cancellation is how
+   * a marketplace loses a customer permanently.
+   */
+  async function cancelJob() {
+    setCancelling(true); setProblem(null)
+    const { data, error } = await supabase.rpc('partner_cancel_line', {
+      p_line_id: job.line_id, p_reason: why.trim(),
+    })
+    setCancelling(false)
+    if (error) { setProblem(error.message); return }
+    if (!data?.ok) { setProblem(data?.scan ?? 'Could not cancel this job'); return }
+    setCancelOpen(false); setWhy('')
+    onChange?.()
   }
 
   async function markDone() {
@@ -323,6 +359,60 @@ function JobCard({ job, onChange }) {
         <p className="mt-2.5 text-center text-[11.5px] font-semibold text-ink-mute">
           Payout releases 24 hours after the event.
         </p>
+      )}
+
+      {/* ── Pulling out ────────────────────────────────────────────
+          Only while there is still a job to pull out of. Deliberately
+          a plain text link and not a button: it is available, it is
+          not offered. */}
+      {['accepted', 'paid', 'in_progress'].includes(job.status) && (
+        cancelOpen ? (
+          <div className="mt-3 rounded-2xl bg-amber-50 p-3.5 ring-1 ring-amber-200">
+            <p className="text-[13px] font-extrabold text-amber-900">
+              Cannot do this job any more?
+            </p>
+            <p className="mt-1 text-[12px] leading-relaxed text-amber-900/85">
+              The customer is refunded in full and told straight away. Tell them
+              why — this is read by Sambramo and it affects the jobs you are
+              offered next.
+            </p>
+            <textarea
+              value={why}
+              onChange={e => setWhy(e.target.value)}
+              rows={2}
+              placeholder="My van broke down and I cannot reach Koramangala by 6pm…"
+              className="mt-2 w-full resize-none rounded-xl bg-white p-2.5 text-[12.5px] text-ink outline-none ring-1 ring-amber-200 focus:ring-amber-400"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={cancelJob}
+                disabled={cancelling || why.trim().length < 10}
+                className="flex items-center gap-1.5 rounded-2xl bg-amber-600 px-3.5 py-2 text-[12.5px] font-extrabold text-white disabled:opacity-50"
+              >
+                {cancelling && <Loader2 size={13} className="animate-spin" />}
+                Cancel this job
+              </button>
+              <button
+                onClick={() => { setCancelOpen(false); setWhy('') }}
+                className="rounded-2xl px-3 py-2 text-[12.5px] font-bold text-ink-mute"
+              >
+                Keep it
+              </button>
+            </div>
+            {why.trim().length > 0 && why.trim().length < 10 && (
+              <p className="mt-1.5 text-[11.5px] font-semibold text-amber-800">
+                A few more words — the customer will read this.
+              </p>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setCancelOpen(true)}
+            className="mt-2.5 w-full py-1.5 text-[11.5px] font-bold text-ink-mute underline-offset-2 hover:underline"
+          >
+            I can no longer do this job
+          </button>
+        )
       )}
 
       {problem && (

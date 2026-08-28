@@ -7,6 +7,7 @@ import { openRazorpay } from '../../lib/razorpayCheckout'
 import TradeSprite, { LiveLine } from './TradeSprite'
 import PaidConfirmation from './PaidConfirmation'
 import CustomerAlerts from './CustomerAlerts'
+import CancelLine from './CancelLine'
 
 /**
  * "Three of five masters have accepted."
@@ -184,7 +185,7 @@ function LineRow({ line, offers }) {
  * That is also the honest reason to pay promptly, which is why it is the
  * sentence rather than a nag.
  */
-function AwaitingPayment({ line, master, onPay, paying }) {
+function AwaitingPayment({ line, master, onPay, onCancel, paying }) {
   return (
     <li className="border-b border-ink/[0.06] pb-3.5 last:border-0">
       <div className="rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200/70">
@@ -198,6 +199,18 @@ function AwaitingPayment({ line, master, onPay, paying }) {
         >
           {paying && <Loader2 size={14} className="animate-spin" />}
           {ACCEPTED_ROW.payOne(formatINR(Math.round(line.quoted_amount_paise / 100)))}
+        </button>
+
+        {/* Quiet, and always present.
+            A cancel that has to be hunted for is a support call, and one
+            that is as loud as the pay button invites second thoughts on
+            a screen that does not need them. It is a text link under the
+            action, which is where people look for the way out. */}
+        <button
+          onClick={onCancel}
+          className="mt-1.5 w-full py-1.5 text-[12px] font-bold text-forest-800/70 underline-offset-2 hover:underline"
+        >
+          Cancel this service
         </button>
       </div>
     </li>
@@ -231,6 +244,8 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
    * filter on the current state could not tell them apart from lines
    * paid ten minutes ago in an earlier tap. */
   const [justPaid, setJustPaid] = useState(null)
+  // The line whose cancellation sheet is open, if any.
+  const [cancelling, setCancelling] = useState(null)
   const [lines, setLines] = useState([])
   const [offers, setOffers] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -550,6 +565,16 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         </div>
       )}
 
+      {cancelling && (
+        <CancelLine
+          line={cancelling}
+          onClose={() => setCancelling(null)}
+          // The board is already subscribed to booking_lines, so the row
+          // updates itself the moment the RPC commits. Nothing to refresh.
+          onCancelled={() => setCancelling(null)}
+        />
+      )}
+
       <ul className="mt-5 rounded-[22px] bg-white px-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-ink/[0.06]">
         {showing.map(l => {
           if (l.__pre) return <PendingRow key={l.id} id={l.id} name={l.service_name} />
@@ -568,6 +593,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
               master={won?.vendors?.business_name ?? null}
               paying={paying}
               onPay={() => pay([l])}
+              onCancel={() => setCancelling(l)}
             />,
           ]
         })}

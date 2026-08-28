@@ -23,6 +23,7 @@ import { formatINR } from '../utils/format'
 import RemoteImage from '../components/common/RemoteImage'
 import OffersGrid from '../components/home/OffersGrid'
 import HomeAppBar from '../components/home/HomeAppBar'
+import LiveBookingStrip from '../components/home/LiveBookingStrip'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
@@ -236,6 +237,13 @@ export default function HomeScreen() {
   return (
     <div className="a-canvas min-h-screen pb-bottom-nav">
       <HomeAppBar query={query} onQueryChange={setQuery} />
+
+      {/* Above everything, and only when there is a live booking.
+          A customer who dispatched four services and came back to the
+          home screen had no way of knowing three masters were waiting
+          to be paid -- the only screen that knew was the matching
+          board, reachable only by remembering it existed. */}
+      <LiveBookingStrip />
 
       {searching ? (
         <SearchResults query={query.trim()} onClear={() => setQuery('')} />
