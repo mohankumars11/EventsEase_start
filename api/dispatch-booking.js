@@ -86,11 +86,23 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
  * about `testPaymentProvider` and free merchandise.
  */
 const IS_PROD = process.env.NODE_ENV === 'production'
-const DEMO_CUSTOMER = process.env.SYNTHETIC_DEMO_CUSTOMER || null
+/* A comma-separated list, not one id.
+ *
+ * Testing this needs more than one account -- a customer, a second
+ * customer to check that two bookings do not collide, and whichever
+ * throwaway address was used to reproduce the last bug. Naming one id
+ * meant editing an env var and redeploying between runs, which is the
+ * kind of friction that ends with somebody setting the global flag
+ * instead. The safety property is unchanged: an account not on this
+ * list can never be matched to a partner that does not exist. */
+const DEMO_CUSTOMERS = new Set(
+  (process.env.SYNTHETIC_DEMO_CUSTOMER ?? '')
+    .split(',').map(s => s.trim()).filter(Boolean))
+
 const ALLOW_SYNTHETIC_GLOBALLY = !IS_PROD && process.env.ALLOW_SYNTHETIC_DISPATCH === 'true'
 
 const mayUseSeededNetwork = customerId =>
-  ALLOW_SYNTHETIC_GLOBALLY || (!!DEMO_CUSTOMER && customerId === DEMO_CUSTOMER)
+  ALLOW_SYNTHETIC_GLOBALLY || DEMO_CUSTOMERS.has(customerId)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
