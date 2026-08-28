@@ -79,42 +79,52 @@ jobs:
           node-version: '20'
           cache: npm
 
-      # `npx cap sync` copies the Capacitor plugins' native code into the
-      # Android project and rewrites the generated config from
-      # capacitor.config.json. Without it, @capacitor/push-notifications
-      # is a JS package with no Android side and the app registers
-      # nothing -- which is exactly the state that produced "no
-      # notifications are coming".
-      - name: Install and sync Capacitor
+      # ══════════════════════════════════════════════════════════════
+      # One command per step, deliberately
+      # ══════════════════════════════════════════════════════════════
+      #
+      # These four used to be one step, and when it failed the only
+      # thing visible without admin rights on the repo was the step
+      # NAME — which named four commands. Job logs need admin auth to
+      # download; step names and conclusions do not.
+      #
+      # So each command is its own step. A failure now says which one,
+      # to anybody who can see the run at all.
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Write the Capacitor config
+        run: node scripts/capacitor-config.mjs ${{ matrix.flavour }}
+
+      # `cap sync` runs `cap copy`, which copies webDir into the Android
+      # assets folder and FAILS if that folder does not exist. dist/ is
+      # gitignored, so a fresh checkout has nothing there.
+      #
+      # A stub rather than a real `vite build`: capacitor.config.json
+      # sets server.url to the live site, so the WebView never loads
+      # these files, and building them would mean putting every VITE_
+      # secret into this repository to produce assets nothing reads.
+      #
+      # Not blank on purpose. If server.url is ever removed and somebody
+      # forgets this step exists, the app opens on a sentence saying so
+      # rather than on white.
+      - name: Stub the web assets
         run: |
-          npm ci --no-audit --no-fund
-          node scripts/capacitor-config.mjs ${{ matrix.flavour }}
-
-          # `cap sync` runs `cap copy`, which copies webDir into the
-          # Android assets folder and FAILS if that folder does not
-          # exist. dist/ is gitignored, so on a fresh checkout there is
-          # nothing there.
-          #
-          # A stub rather than a real `vite build`: capacitor.config.json
-          # sets server.url to the live site, so the WebView never loads
-          # these files. Building them would mean putting every VITE_
-          # secret into this repository to produce assets nothing reads.
-          #
-          # The page is not blank on purpose. If server.url is ever
-          # removed and somebody forgets this step exists, the app opens
-          # on a sentence that says exactly what happened rather than on
-          # white.
           mkdir -p dist
-          cat > dist/index.html <<'HTML'
-          <!doctype html><meta charset="utf-8">
-          <title>Sambramo</title>
-          <body style="font-family:system-ui;padding:2rem;text-align:center">
-          <p>This shell loads Sambramo from the web.</p>
-          <p>If you are reading this, the app could not reach the site.</p>
-          </body>
-          HTML
+          printf '%s\n' \
+            '<!doctype html><meta charset="utf-8"><title>Sambramo</title>' \
+            '<body style="font-family:system-ui;padding:2rem;text-align:center">' \
+            '<p>This shell loads Sambramo from the web.</p>' \
+            '<p>If you are reading this, the app could not reach the site.</p>' \
+            > dist/index.html
+          ls -l dist/
 
-          npx cap sync android
+      # Copies the plugins' native code into the Android project. Without
+      # it @capacitor/push-notifications is a JS package with no Android
+      # side and the app registers nothing — which is exactly the state
+      # that produced "no notifications are coming".
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build
         working-directory: android
