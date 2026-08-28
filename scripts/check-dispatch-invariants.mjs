@@ -251,7 +251,10 @@ console.log('\n8 · Disintermediation')
     // With no rows there are no keys to inspect, so this is checked
     // against the migration text instead of silently passing.
     const view = readFileSync(
-      join(ROOT, 'supabase/migrations/068_offer_masking_and_contact_release.sql'), 'utf8')
+      // 076, not 068. 068 created this view; 076 REPLACED it — dropping
+      // security_invoker and scoping the WHERE clause instead. Checking a
+      // superseded definition proves nothing about the database.
+      join(ROOT, 'supabase/migrations/076_offer_feed_is_its_own_boundary.sql'), 'utf8')
     // Comments are stripped FIRST, and this is not a detail. The view
     // body carries the line "`address_text` is deliberately absent from
     // this view" — so scanning the raw text finds `address_text` and
@@ -261,9 +264,23 @@ console.log('\n8 · Disintermediation')
     // muted checker protects nothing. This one guards the difference
     // between a partner seeing an area and a partner seeing somebody's
     // front door, so it has to be believable.
-    const body = view
-      .slice(view.indexOf('CREATE OR REPLACE VIEW partner_offer_feed'),
-             view.indexOf('COMMENT ON VIEW partner_offer_feed'))
+    // Normalised FIRST, and this is the bug this check itself had.
+    //
+    // The repo checks out CRLF on Windows. In the comment-stripping
+    // pattern the dot does not match a carriage return, and $ without
+    // /m wants end-of-string — so with CRLF the stripper matched
+    // nothing at all. The comment saying `address_text` is ABSENT was
+    // then scanned as though it were SQL, and this checker reported a
+    // leak that did not exist. Twice, because the live-row check below
+    // was seeded with the static result instead of standing alone.
+    //
+    // A checker that cries wolf gets muted, and a muted checker
+    // protects nothing. This one guards the difference between a
+    // master seeing an area and a master seeing somebody's front door.
+    const sql = view.split(String.fromCharCode(13)).join('')
+    const body = sql
+      .slice(sql.search(/CREATE (OR REPLACE )?VIEW partner_offer_feed/),
+             sql.indexOf('COMMENT ON VIEW partner_offer_feed'))
       .split('\n')
       .map(line => line.replace(/--.*$/, ''))
       .join('\n')
@@ -275,7 +292,11 @@ console.log('\n8 · Disintermediation')
 
     if (data?.length) {
       const keys = Object.keys(data[0])
-      const live = leaks.concat(keys.filter(k => ['address_text', 'phone', 'full_name'].includes(k)))
+      // Deliberately NOT seeded with `leaks`. This asks a different
+      // question — what the DEPLOYED view actually returns — and a
+      // second failure that only echoes the first tells you nothing
+      // about which of the two is wrong.
+      const live = keys.filter(k => ['address_text', 'phone', 'full_name', 'customer_id'].includes(k))
       if (live.length) bad(`live feed row exposes: ${[...new Set(live)].join(', ')}`)
       else ok('live feed row exposes no identity')
     }
@@ -371,8 +392,7 @@ console.log('\n9 · Row-level security, as a signed-in customer')
  *
  * This section is the reason it is safe to have built either of them. */
 {
-  console.log('
-  10 · test switches')
+  console.log('\n  10 - test switches')
 
   const test = readEnv('PAYMENT_TEST_CHARGE_PAISE')
   if (test) bad(`PAYMENT_TEST_CHARGE_PAISE=${test} — every booking would charge ₹${Number(test) / 100}, not the quote`)

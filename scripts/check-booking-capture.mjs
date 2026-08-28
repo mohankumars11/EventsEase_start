@@ -35,6 +35,16 @@
  * that cannot be provoked without paying.
  *
  * Nothing is charged. An order that is never paid expires on its own.
+ *
+ * ── Against the deployed function ────────────────────────────────────
+ *   node scripts/check-booking-capture.mjs --live
+ *
+ * POSTs the signed payload to https://sambramoh.vercel.app instead of
+ * calling the handler in this process. That is a different question and
+ * the more important one: it proves the DEPLOYED code, the production
+ * RAZORPAY_WEBHOOK_SECRET and the production Supabase credentials agree
+ * with each other. A local pass and a live failure is the normal shape
+ * of a webhook bug.
  */
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
@@ -122,8 +132,11 @@ const signature = crypto
   .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
   .update(Buffer.from(body, 'utf8')).digest('hex')
 
+const LIVE = process.argv.includes('--live')
+const LIVE_URL = process.env.LIVE_URL ?? 'https://sambramoh.vercel.app'
+
 /** Vercel's req/res, reduced to what the handler touches. */
-function invoke(raw, sig) {
+function invokeLocal(raw, sig) {
   let status = 0, payload = null
   const req = {
     method: 'POST',
@@ -140,6 +153,21 @@ function invoke(raw, sig) {
   }
   return webhook(req, res).then(() => ({ status, payload }))
 }
+
+async function invokeLive(raw, sig) {
+  const r = await fetch(`${LIVE_URL}/api/razorpay-webhook`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-razorpay-signature': sig },
+    body: raw,
+  })
+  const text = await r.text()
+  let payload; try { payload = JSON.parse(text) } catch { payload = text.slice(0, 200) }
+  return { status: r.status, payload }
+}
+
+const invoke = LIVE ? invokeLive : invokeLocal
+if (LIVE) console.log(`    (against ${LIVE_URL})
+`)
 
 /* The signature check itself, before anything that depends on it. A
    handler that accepted a bad signature would make every check below
