@@ -245,6 +245,26 @@ export default function OfferInbox({ vendorId }) {
     // "Somebody else just took it" is the MAJORITY outcome with five
     // masters on every offer, not an error. It gets a calm sentence, not
     // a red banner.
+    /* The customer is told, from here, after the database has decided.
+     *
+     * Not from a trigger: an HTTP call inside the transaction would hold
+     * a row lock on the line while FCM answers, and a failed send would
+     * roll back an acceptance that had already been won. The accept must
+     * stand whether or not anybody can be told about it.
+     *
+     * Not awaited, and errors are swallowed on purpose. A master who
+     * accepted a job must never see a spinner or a failure because a
+     * notification did not go out — their booking is real either way,
+     * and the customer's own board is subscribed to Realtime regardless.
+     * This is the channel that reaches somebody who closed the app. */
+    if (data?.ok && action === 'accept') {
+      fetch('/api/notify-customer', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ lineId: data.line_id ?? data.lineId, event: 'accepted' }),
+      }).catch(() => {})
+    }
+
     if (!data?.ok) {
       setFlash({
         taken:   'That one just went to another master',

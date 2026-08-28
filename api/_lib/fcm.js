@@ -104,14 +104,117 @@ async function accessToken(sa) {
 /**
  * Send one message to one device.
  *
- * DATA-ONLY, deliberately. A `notification` payload is rendered by the
- * browser before the service worker sees it, which means no control over
- * the tag, the actions, or what happens on tap — and two banners for the
+ * ══════════════════════════════════════════════════════════════════════
+ * DATA-ONLY FOR A BROWSER. A REAL NOTIFICATION FOR A PHONE.
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * This used to be data-only for everything, and the reasoning was sound
+ * for the web: a `notification` payload is rendered by the browser
+ * before the service worker sees it, so there is no control over the
+ * tag, the actions, or what happens on tap — and two banners for the
  * same job when a later wave arrives. Data-only hands every message to
  * `onBackgroundMessage` in public/firebase-messaging-sw.js, which
  * collapses them by line id.
+ *
+ * On a phone it is simply wrong, and silently so.
+ *
+ * A data-only message on Android is delivered to the APP, not to the
+ * system tray. `@capacitor/push-notifications` raises
+ * `pushNotificationReceived` and nothing else — no banner, no sound, no
+ * icon — and if the app is backgrounded or killed, which is the only
+ * state that matters for a 45-second job offer, absolutely nothing
+ * happens. On iOS a data-only message without `content-available` is
+ * not even guaranteed delivery.
+ *
+ * So a master with the app installed on their phone got exactly what was
+ * reported: nothing. FCM accepted every send and returned 200.
+ *
+ * ── The fix, and why it is per-platform and not global ──────────────
+ * `platform` comes from the `push_tokens` row, written by whichever
+ * path registered the device (lib/push.js writes 'web',
+ * lib/nativePush.js writes 'android' or 'ios'). A native token gets a
+ * `notification` block so the OS draws the banner; a web token keeps
+ * data-only so the service worker keeps its control.
+ *
+ * `data` travels in BOTH cases, because the tap handler on either side
+ * reads the same fields.
  */
-export async function sendPush({ token, title, body, url, lineId, ttlSeconds = 120 }) {
+/**
+ * The FCM v1 message, shaped for the device that will receive it.
+ *
+ * Split out because the difference between a phone that buzzes and a
+ * phone that does nothing is four lines of JSON, and those four lines
+ * deserve to be readable rather than buried in a fetch call.
+ */
+function buildMessage({ token, title, body, url, lineId, platform, ttlSeconds }) {
+  const isNative = platform === 'android' || platform === 'ios'
+
+  const data = {
+    title:  String(title ?? 'New job'),
+    body:   String(body ?? ''),
+    url:    String(url ?? '/dashboard/vendor'),
+    lineId: String(lineId ?? ''),
+  }
+
+  const message = { token, data }
+
+  if (isNative) {
+    /* The OS draws this one. Without it there is no banner, no sound and
+       no icon — the app is simply handed some JSON, and a killed app is
+       not handed anything at all. */
+    message.notification = { title: data.title, body: data.body }
+  }
+
+  message.android = {
+    // A job offer lives 45 seconds. A notification delivered after it
+    // expired is worse than none — it sends a master to a job that is
+    // gone, which is exactly how they learn to ignore the alerts.
+    ttl: `${ttlSeconds}s`,
+    priority: 'HIGH',
+    ...(isNative && {
+      notification: {
+        // A named channel, because on Android 8 and later a notification
+        // with no channel is dropped by the OS without a word. The
+        // channel is created by the app at startup.
+        channel_id: 'sambramo_jobs',
+        sound: 'default',
+        // Collapses waves of the same job into one banner rather than
+        // three, which is what the service worker does on the web.
+        tag: data.lineId || undefined,
+        // Opens the app rather than merely dismissing.
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      },
+    }),
+  }
+
+  if (platform === 'ios') {
+    message.apns = {
+      headers: {
+        'apns-priority': '10',
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + ttlSeconds),
+      },
+      payload: {
+        aps: {
+          alert: { title: data.title, body: data.body },
+          sound: 'default',
+          // Wakes the app so it can refresh the offer list behind the
+          // banner. Without it iOS may deliver the alert and never run
+          // any of our code.
+          'content-available': 1,
+          'thread-id': data.lineId || undefined,
+        },
+      },
+    }
+  }
+
+  if (platform === 'web') {
+    message.webpush = { headers: { TTL: String(ttlSeconds), Urgency: 'high' } }
+  }
+
+  return message
+}
+
+export async function sendPush({ token, title, body, url, lineId, platform = 'web', ttlSeconds = 120 }) {
   const sa = serviceAccount()
   if (!sa) return { ok: false, reason: 'not_configured' }
 
@@ -124,26 +227,7 @@ export async function sendPush({ token, title, body, url, lineId, ttlSeconds = 1
         method: 'POST',
         headers: { authorization: `Bearer ${bearer}`, 'content-type': 'application/json' },
         body: JSON.stringify({
-          message: {
-            token,
-            data: {
-              title: String(title ?? 'New job'),
-              body: String(body ?? ''),
-              url: String(url ?? '/dashboard/vendor'),
-              lineId: String(lineId ?? ''),
-            },
-            android: {
-              // A job offer lives 45 seconds. A notification delivered
-              // after it expired is worse than none — it sends a master
-              // to a job that is gone, which is exactly how they learn to
-              // ignore the alerts.
-              ttl: `${ttlSeconds}s`,
-              priority: 'HIGH',
-            },
-            webpush: {
-              headers: { TTL: String(ttlSeconds), Urgency: 'high' },
-            },
-          },
+          message: buildMessage({ token, title, body, url, lineId, platform, ttlSeconds }),
         }),
       },
     )
@@ -182,7 +266,7 @@ export async function notifyPartners(db, { vendorIds, title, body, url, lineId }
 
   const { data: tokens } = await db
     .from('push_tokens')
-    .select('token, profile_id')
+    .select('token, profile_id, platform')
     .in('profile_id', profileIds)
     .eq('app', 'partner')
     .lt('failure_count', 5)
@@ -193,7 +277,7 @@ export async function notifyPartners(db, { vendorIds, title, body, url, lineId }
   const dead = []
 
   await Promise.all(tokens.map(async t => {
-    const r = await sendPush({ token: t.token, title, body, url, lineId })
+    const r = await sendPush({ token: t.token, platform: t.platform, title, body, url, lineId })
     if (r.ok) sent++
     else if (r.reason === 'dead_token') dead.push(t.token)
   }))

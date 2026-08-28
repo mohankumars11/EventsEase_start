@@ -55,11 +55,49 @@ export function nativePlatform() {
  * native bridge code that can never run there, and most visitors are
  * customers who will never register as a partner.
  */
+/**
+ * The Android channel, without which the OS drops the notification.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ANDROID 8 AND LATER DISCARD A NOTIFICATION WITH NO CHANNEL
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Silently. No error to the sender, no entry in logcat that says why,
+ * and FCM still returns 200 — the message was delivered and the OS threw
+ * it away. `api/_lib/fcm.js` names `sambramo_jobs`, so this is the other
+ * half of that line, and shipping one without the other is a system that
+ * reports success and buzzes nothing.
+ *
+ * IMPORTANCE_HIGH, and it is the difference between a banner and a line
+ * in the shade. A job offer expires in 45 seconds: a master who has to
+ * pull down the notification shade to discover it has already lost it.
+ * This is the one alert in the product that earns the interruption.
+ */
+async function ensureChannel(PushNotifications) {
+  if (nativePlatform() !== 'android') return
+  try {
+    await PushNotifications.createChannel({
+      id: 'sambramo_jobs',
+      name: 'Job offers',
+      description: 'A customer near you needs what you do',
+      importance: 5,          // IMPORTANCE_HIGH — heads-up banner + sound
+      visibility: 1,          // VISIBILITY_PUBLIC — readable on the lock screen
+      sound: 'default',
+      vibration: true,
+      lights: true,
+    })
+  } catch {
+    /* Already exists, or an Android version that does not have channels.
+       Neither is a reason to stop registering the device. */
+  }
+}
+
 export async function enableNativePush({ profileId, app = 'partner' }) {
   if (!isNativeApp()) return { ok: false, reason: 'not_native' }
 
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications')
+    await ensureChannel(PushNotifications)
 
     let permission = await PushNotifications.checkPermissions()
     if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {

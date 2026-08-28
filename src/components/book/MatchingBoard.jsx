@@ -6,6 +6,7 @@ import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID } from '../../config/instantBooki
 import { openRazorpay } from '../../lib/razorpayCheckout'
 import TradeSprite, { LiveLine } from './TradeSprite'
 import PaidConfirmation from './PaidConfirmation'
+import CustomerAlerts from './CustomerAlerts'
 
 /**
  * "Three of five masters have accepted."
@@ -526,6 +527,9 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       {(phase === 'sending' || phase === 'hunting' || phase === 'standing') && (
         <LiveLine area={area} notified={asked} />
       )}
+
+      {/* The offer to be told, exactly where the promise is made. */}
+      {(phase === 'hunting' || phase === 'standing') && <CustomerAlerts />}
 
       {head?.note && (
         <p className="mt-3.5 rounded-[18px] bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">

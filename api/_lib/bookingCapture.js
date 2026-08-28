@@ -1,4 +1,5 @@
 import { splitCharge } from './testCharge.js'
+import { sendPush } from './fcm.js'
 
 /**
  * One captured payment → N escrow holds, one per line.
@@ -160,5 +161,46 @@ export async function captureBookingPayment(db, { entity, booking }) {
   // is not an error — that is the retry path, again.
   if (statusErr) return { ok: false, error: statusErr.message }
 
+  /* And tell them, because "your date is blocked" is the sentence the
+   * whole flow has been building towards and the customer may well have
+   * closed the tab by now. Sent from the webhook rather than the browser
+   * for exactly that reason — this is the only place that KNOWS. */
+  await notifyPaid(db, held).catch(() => {})
+
   return { ok: true, lines: held.length, capturedPaise, testCharge: booking.isTestCharge }
+}
+
+
+/**
+ * "Your date is blocked."
+ *
+ * Best effort and deliberately unawaited by its caller's error path: a
+ * payment that was captured and recorded must not be reported as failed
+ * because a push did not send. The webhook returning non-2xx would make
+ * Razorpay retry a capture that already succeeded.
+ */
+async function notifyPaid(db, lineIds) {
+  const { data: lines } = await db
+    .from('booking_lines')
+    .select('id, service_name, booking_requests!inner(customer_id)')
+    .in('id', lineIds)
+
+  const customerId = lines?.[0]?.booking_requests?.customer_id
+  if (!customerId) return
+
+  const { data: tokens } = await db
+    .from('push_tokens').select('token, platform')
+    .eq('profile_id', customerId).eq('app', 'customer').lt('failure_count', 5)
+  if (!tokens?.length) return
+
+  const n = lines.length
+  const title = 'Your date is blocked'
+  const body = n === 1
+    ? `${lines[0].service_name} is confirmed. Your master will call you shortly.`
+    : `${n} masters confirmed. They will call you shortly.`
+
+  await Promise.all(tokens.map(t => sendPush({
+    token: t.token, platform: t.platform, title, body,
+    url: '/track', lineId: lines[0].id, ttlSeconds: 3600,
+  }).catch(() => {})))
 }
