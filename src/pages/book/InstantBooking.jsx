@@ -6,6 +6,7 @@ import { StepFrame, ACTION_BAR_CLEARANCE } from '../../components/journey/Journe
 import MatchingBoard from '../../components/book/MatchingBoard'
 import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
+import { SERVICE_BY_ID } from '../../data/servicePricing'
 import { specModeFor, INSTANT_DURATIONS, defaultDurationFor } from '../../data/instantSetups'
 import { tradeFor } from '../../config/vendor'
 import { DISCUSS_CARD, DEFAULT_RADIUS_KM } from '../../config/instantBooking'
@@ -156,6 +157,25 @@ export default function InstantBooking() {
 
   async function dispatch() {
     if (!user) { navigate('/login', { state: { from: { pathname: '/book/instant' } } }); return }
+
+    /* The screen moves first, and the request goes second.
+     *
+     * The dispatch round trip is about six seconds against production —
+     * it prices every line, matches partners twice per line, writes the
+     * offers and sends the pushes. All of that used to happen while the
+     * customer looked at a disabled button reading "Finding masters…",
+     * and only then did the screen change.
+     *
+     * Six seconds of a dead button after the biggest commitment in the
+     * flow is where somebody decides the app is broken and leaves. So
+     * step 4 is entered immediately: MatchingBoard already knows which
+     * services were picked, so it draws the real rows and fills them in
+     * as the server answers. Nothing is faked — every row says exactly
+     * what is true of it, starting at "Reaching masters…".
+     *
+     * The booking is still only real when the server says so. This
+     * changes when the screen moves, not when the booking exists. */
+    setStep(4)
     setSending(true); setError(null)
 
     /**
@@ -228,7 +248,6 @@ export default function InstantBooking() {
       if (!body.requestId) { setError('The booking was not created. Please try again.'); return }
 
       setRequestId(body.requestId)
-      setStep(4)
     } catch (err) {
       // Offline, DNS, CORS, an aborted request. The customer does not
       // need the distinction; they need to know it did not go through
@@ -239,15 +258,25 @@ export default function InstantBooking() {
     }
   }
 
-  /* ── 4 · Matching ─────────────────────────────────────────────── */
-  if (step === 4 && requestId) {
+  /* ── 4 · Matching ───────────────────────────────────────────────
+     Entered with requestId still null. See dispatch() above. */
+  if (step === 4) {
     return (
       // `a-canvas` is the app's own ground, the same class the celebration
       // journey uses. Without it the near-transparent tint this had let
       // the body's gradient through and the screen read as a different
       // product.
       <div className={`a-canvas min-h-screen ${ACTION_BAR_CLEARANCE}`}>
-        <MatchingBoard requestId={requestId} onPay={() => navigate('/track')} />
+        <MatchingBoard
+          requestId={requestId}
+          onPay={() => navigate('/track')}
+          // The picked services, so the rows exist before the server
+          // answers and the list does not reflow when it does.
+          pending={picked.map(id => ({ id, name: SERVICE_BY_ID[id]?.name ?? id }))}
+          area={whereReady?.point?.areaLabel ?? null}
+          failed={error}
+          onRetry={() => { setError(null); dispatch() }}
+        />
       </div>
     )
   }

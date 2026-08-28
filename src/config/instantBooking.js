@@ -206,16 +206,86 @@ export const STANDARD_CARD = null
  * Every string here is a fragment, not a sentence, because they sit
  * beside a service name and a number that already carry the meaning.
  */
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS WAS REWRITTEN
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The first version said "Finding", "5 notified", "Still looking". Every
+ * word was true and the screen was unreadable — because the terseness
+ * rule above was applied to the one screen in the app where the customer
+ * does not already know what is happening.
+ *
+ * Everywhere else, brevity works: somebody choosing a cake knows they
+ * are choosing a cake, so the label only has to name the option. Here
+ * they have just pressed a button and are watching a page do something
+ * invisible on their behalf, for a minute or more, having committed to
+ * nothing yet. "5 notified" does not tell them that five real businesses
+ * are looking at their job on a phone right now, that the first to say
+ * yes gets it, that this normally takes about a minute, or that they can
+ * close the app and be told.
+ *
+ * So the rule bends here, and only here: the ROW labels stay short
+ * because the pip beside them carries the state, and a HEADER above them
+ * says in plain sentences what is going on. Short words for the things
+ * being repeated eight times; real sentences for the thing said once.
+ */
 export const MATCHING = {
-  searching:  'Finding',
-  notified:   n => `${n} notified`,
-  accepted:   'Booked',
-  widening:   n => `Widening to ${n} km`,
-  none:       'None free',
-  // Tier 1. The pip row beside it does the actual communicating.
+  /* ── Row labels ────────────────────────────────────────────────
+     Short, because each is repeated once per service and the pip
+     beside it already carries the colour. But plain: "Finding" was a
+     verb with no object. */
+  searching:  'Asking masters',
+  notified:   n => (n === 1 ? '1 master has it' : `${n} masters have it`),
+  accepted:   'Confirmed',
+  widening:   n => `Looking within ${n} km`,
+  none:       'Nobody free yet',
+  paid:       'Paid · confirmed',
+
+  /* ── The header, which is the part that was missing ────────────
+     One state at a time, in sentences, saying what is happening and
+     what happens next. */
+  head: {
+    sending: area => ({
+      title: 'Reaching masters now',
+      body: area
+        ? `We are contacting the masters closest to ${area}.`
+        : 'We are contacting the masters closest to your venue.',
+    }),
+
+    hunting: (n, area) => ({
+      title: 'Finding your masters',
+      body: n > 0
+        ? `${n} ${n === 1 ? 'master has' : 'masters have'} your job on their phone right now${area ? `, near ${area}` : ''}. The first to accept gets it.`
+        : 'We are reaching out to masters near your venue.',
+      // The honest expectation. Left unsaid, a minute of nothing reads
+      // as a broken page — which is exactly what was reported.
+      note: 'Most reply within a minute. You can close the app — we will alert you the moment someone accepts.',
+    }),
+
+    partial: (a, t) => ({
+      title: `${a} of ${t} confirmed`,
+      body: 'You can pay for these now. We keep looking for the rest — nothing waits on the last one.',
+    }),
+
+    complete: n => ({
+      title: n === 1 ? 'Your master is confirmed' : `All ${n} masters confirmed`,
+      body: 'Pay to lock the date. Their details reach you the moment payment is through.',
+    }),
+
+    standing: area => ({
+      title: 'Still searching',
+      body: `No master near ${area ?? 'your venue'} is free for this yet. We have widened the search and we keep asking as masters come free.`,
+      note: 'We will alert you the moment one accepts. Nothing has been charged.',
+    }),
+  },
+
   progress:   (a, t) => `${a} of ${t}`,
-  // The one call to action, and it names the number and nothing else.
   payCta:     (n, amt) => `Pay for ${n} · ${amt}`,
+
+  /* Said under the pay button, every time. The single most important
+     sentence on the screen. */
+  payAssurance: 'You only pay for masters who said yes.',
 }
 
 /**

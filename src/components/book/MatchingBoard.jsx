@@ -144,7 +144,20 @@ function LineRow({ line, offers }) {
   )
 }
 
-export default function MatchingBoard({ requestId, onPay }) {
+/**
+ * @param requestId  null until the server has created the booking. The
+ *                   board renders anyway — see `pending`.
+ * @param pending    what the customer picked, as { id, name }[]. Used to
+ *                   draw the real rows before the server has answered,
+ *                   so pressing "Find my masters" moves the screen in a
+ *                   frame instead of after six seconds of a disabled
+ *                   button. Measured: the dispatch round trip is ~6s on
+ *                   production, and it was ALL dead time.
+ * @param area       the venue's locality, for the header sentence.
+ * @param failed     a dispatch error, surfaced here rather than back on
+ *                   the form the customer has already left.
+ */
+export default function MatchingBoard({ requestId, onPay, pending = [], area = null, failed = null, onRetry }) {
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState(null)
   // Set only when the server says this deployment is charging a test
@@ -326,37 +339,107 @@ export default function MatchingBoard({ requestId, onPay }) {
   // has nothing left to widen for, and should stop asking the server to.
   huntingRef.current = stillLooking > 0
 
-  if (!loaded) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-ink-mute">
-        <Loader2 size={20} className="animate-spin" />
-      </div>
-    )
-  }
+  /* Which of the five things is happening, as one word.
+   *
+   * Derived rather than stored: every input is already on screen, and a
+   * second copy of "what state is this booking in" is a second thing
+   * that can disagree with the rows underneath it. */
+  const phase =
+    failed                       ? 'failed'
+    : !requestId                 ? 'sending'
+    : accepted.length === 0      ? (lines.every(l => l.dispatch_mode === 'standing') && lines.length ? 'standing' : 'hunting')
+    : stillLooking > 0           ? 'partial'
+    :                              'complete'
+
+  // How many masters are actually holding this job right now. The number
+  // the customer most wants and was never shown.
+  const asked = offers.filter(o => o.status === 'OFFERED').length
+
+  const head =
+    phase === 'sending'  ? MATCHING.head.sending(area)
+    : phase === 'hunting'  ? MATCHING.head.hunting(asked, area)
+    : phase === 'standing' ? MATCHING.head.standing(area)
+    : phase === 'partial'  ? MATCHING.head.partial(accepted.length, lines.length)
+    : phase === 'complete' ? MATCHING.head.complete(accepted.length)
+    :                        null
+
+  /* No spinner-only state any more.
+   *
+   * There used to be one, and it was shown for the whole dispatch round
+   * trip — a blank screen with a spinner, after a button that had also
+   * been a spinner. The customer had pressed one thing and watched two
+   * different loading states without ever being told what was being
+   * loaded.
+   *
+   * The picked services are known on the client, so the real rows are
+   * drawn immediately and fill in as the server answers. */
+  const showing = loaded && lines.length
+    ? lines
+    : pending.map(x => ({ id: x.id, service_name: x.name, status: 'pending', __pre: true }))
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-40 pt-6">
       <p className="type-overline text-saffron-700">Your masters</p>
-      <h1 className="mt-1.5 font-serif text-[26px] font-extrabold leading-[1.14] tracking-tight text-ink sm:text-[30px]">
-        {MATCHING.progress(accepted.length, lines.length)}
+
+      <h1 className="mt-1.5 flex items-start gap-2.5 font-serif text-[26px] font-extrabold leading-[1.14] tracking-tight text-ink sm:text-[30px]">
+        {/* A live dot, not a spinner.
+            A spinner says "wait"; this says "something is happening out
+            there". It is the only motion on the screen while nothing has
+            been accepted, and it stops the moment everything has. */}
+        {(phase === 'sending' || phase === 'hunting' || phase === 'standing') && (
+          <span className="relative mt-2.5 flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-saffron-400 opacity-70" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-saffron-500" />
+          </span>
+        )}
+        {head?.title ?? MATCHING.progress(accepted.length, showing.length)}
       </h1>
 
+      {head?.body && (
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{head.body}</p>
+      )}
+
       {/* The scoreboard. Read in a glance, before any word is. */}
-      <div className="mt-3 flex gap-1.5" aria-hidden="true">
-        {lines.map(l => (
-          <span key={l.id} className={`h-1.5 flex-1 rounded-full ${PIP[stateOf(l)]}`} />
+      <div className="mt-4 flex gap-1.5" aria-hidden="true">
+        {showing.map(l => (
+          <span key={l.id} className={`h-1.5 flex-1 rounded-full ${l.__pre ? 'bg-ink/[0.08]' : PIP[stateOf(l)]}`} />
         ))}
       </div>
 
+      {head?.note && (
+        <p className="mt-3.5 rounded-[18px] bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">
+          {head.note}
+        </p>
+      )}
+
+      {failed && (
+        <div className="mt-4 rounded-[18px] bg-amber-50 p-4 ring-1 ring-amber-200">
+          <p className="text-[14px] font-extrabold text-amber-900">That did not go through</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-amber-900/80">{failed}</p>
+          <p className="mt-1 text-[12.5px] font-bold text-amber-900">Nothing has been charged.</p>
+          {onRetry && (
+            <button onClick={onRetry} className="mt-3 rounded-2xl bg-amber-400 px-4 py-2.5 text-[13.5px] font-extrabold text-plum-950">
+              Try again
+            </button>
+          )}
+        </div>
+      )}
+
       <ul className="mt-5 rounded-[22px] bg-white px-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-ink/[0.06]">
-        {lines.map(l => <LineRow key={l.id} line={l} offers={offers} />)}
+        {showing.map(l => (
+          l.__pre
+            ? <PendingRow key={l.id} name={l.service_name} />
+            : <LineRow key={l.id} line={l} offers={offers} />
+        ))}
       </ul>
 
-      {/* Stated once, calmly, and never as an apology. */}
-      {stillLooking > 0 && (
+      {/* Only while some have accepted and some have not. The header
+          already carries the sentence when nothing has been accepted at
+          all — saying it twice made the screen read as anxious. */}
+      {accepted.length > 0 && stillLooking > 0 && (
         <p className="mt-4 flex items-start gap-2 rounded-[18px] bg-surface-sunk/[0.05] p-3.5 text-[12.5px] font-semibold leading-snug text-ink-soft">
           <MapPinned size={14} className="mt-0.5 shrink-0 text-ink-mute" />
-          {PARTIAL.scan}
+          {PARTIAL.detail}
         </p>
       )}
 
@@ -389,5 +472,23 @@ export default function MatchingBoard({ requestId, onPay }) {
         </div>
       )}
     </div>
+  )
+}
+
+
+/**
+ * A service the customer picked, before the server has said anything.
+ *
+ * Shown for the second or two between pressing the button and the
+ * booking existing. It carries the real service name, so the list does
+ * not reflow when the server answers — the row simply gains a state.
+ */
+function PendingRow({ name }) {
+  return (
+    <li className="flex items-center gap-3 border-b border-ink/[0.05] py-3.5 last:border-0">
+      <Loader2 size={15} className="shrink-0 animate-spin text-ink-mute" />
+      <span className="min-w-0 flex-1 truncate text-[14.5px] font-bold text-ink">{name}</span>
+      <span className="shrink-0 text-[12.5px] font-semibold text-ink-mute">Reaching masters…</span>
+    </li>
   )
 }
