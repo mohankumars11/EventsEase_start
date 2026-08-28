@@ -15,6 +15,7 @@ import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
 import OfferHistory from '../../components/vendor/OfferHistory'
+import PartnerResume from '../../components/vendor/PartnerResume'
 
 /**
  * The partner's console.
@@ -141,6 +142,13 @@ export default function VendorDashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+      {/* Above the header, above the tabs, above everything.
+          A master opens this app because something is happening or to
+          find out whether anything is, and the answer used to require
+          finding the right tab. This states the single most pressing
+          fact about their day and links straight at it. */}
+      <PartnerResume vendorId={vendor.id} />
 
       {/* ── Header ───────────────────────────────────────── */}
       <header className="flex flex-wrap items-start justify-between gap-4">

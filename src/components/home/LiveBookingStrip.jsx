@@ -37,11 +37,24 @@ import TradeSprite from '../book/TradeSprite'
  * teach the customer that this screen lies.
  */
 export default function LiveBookingStrip() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [lines, setLines] = useState([])
 
+  /* A master is not a customer, even when they have been one.
+   *
+   * Every test account in this database has booked something — that is
+   * how the flow gets tested — so a vendor account has live
+   * booking_lines of its own, and RLS correctly returns them. The
+   * result was "4 masters are waiting for you" on the partner app,
+   * about bookings the master had made themselves.
+   *
+   * RLS answers "may this person see this row", which it did, correctly.
+   * Whether the row BELONGS on this screen is a product question and
+   * has to be answered here. */
+  const isCustomer = !profile || profile.role === 'customer'
+
   const read = useCallback(async () => {
-    if (!user?.id) return
+    if (!user?.id || !isCustomer) return
 
     // The customer's own live bookings. `booking_lines` is scoped by RLS
     // to the caller (migration 074), so this needs no customer filter —
@@ -55,10 +68,10 @@ export default function LiveBookingStrip() {
       .limit(12)
 
     setLines(data ?? [])
-  }, [user?.id])
+  }, [user?.id, isCustomer])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id || !isCustomer) return
     read()
     const ch = supabase
       .channel('home-live')
@@ -70,9 +83,9 @@ export default function LiveBookingStrip() {
     // keeping the strip honest, which is why it exists regardless.
     const floor = setInterval(read, 25_000)
     return () => { clearInterval(floor); supabase.removeChannel(ch) }
-  }, [read, user?.id])
+  }, [read, user?.id, isCustomer])
 
-  if (!user || !lines.length) return null
+  if (!user || !isCustomer || !lines.length) return null
 
   const hunting  = lines.filter(l => l.status === 'dispatching')
   const waiting  = lines.filter(l => l.status === 'accepted')

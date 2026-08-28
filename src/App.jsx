@@ -119,14 +119,31 @@ function DashboardRedirect() {
 function RootScreen() {
   const { profile, loading } = useAuth()
 
-  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
   if (loading) return null
 
-  const to = homeFor(SURFACE.partner, {
-    signedIn: !!profile,
-    role: profile?.role ?? null,
-  })
-  return <Navigate to={to} replace />
+  /* ── The ROLE decides, before the hostname does ──────────────────
+   *
+   * This used to check the surface first, so a vendor was only sent to
+   * their dashboard on the partner hostname. Inside the Android app the
+   * hostname check did not hold, and the result was a master looking at
+   * the customer home — "Finding 4 masters near Koramangala", about
+   * bookings they had made themselves while testing.
+   *
+   * That is absurd on its face, and the surface was never the right
+   * thing to key it on. A signed-in vendor has no use for the customer
+   * home on ANY host: not on sambramoh.vercel.app, not in either app,
+   * not on a preview URL. The hostname only ever answered "which app is
+   * this", and the real question is "who is this".
+   *
+   * So the role is checked first and the surface is the fallback, for
+   * the one case the role cannot answer: a visitor who is not signed in
+   * yet. */
+  if (profile?.role === 'vendor') return <Navigate to="/dashboard/vendor" replace />
+  if (profile?.role === 'admin')  return <Navigate to="/dashboard/admin"  replace />
+
+  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+
+  return <Navigate to={homeFor(SURFACE.partner, { signedIn: !!profile, role: profile?.role ?? null })} replace />
 }
 
 /** A UUID, as opposed to a catalogue slug like `birthday`. */
