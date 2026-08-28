@@ -49,6 +49,12 @@ on:
       - 'package.json'
       - '.github/workflows/android.yml'
 
+# The release job writes to the repo. Declared once, at the top, and
+# scoped to nothing else — the default token can read everything, and
+# broadening it further is not needed to attach two files.
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -164,3 +170,69 @@ jobs:
           # Long enough to install on a few phones, short enough that
           # stale builds do not accumulate and get installed by mistake.
           retention-days: 14
+
+  # ══════════════════════════════════════════════════════════════════
+  # A link that can actually be tapped
+  # ══════════════════════════════════════════════════════════════════
+  #
+  # Workflow ARTIFACTS require the person downloading them to be signed
+  # in to GitHub — including on a public repository — and the download
+  # control is frequently inert on a phone browser. So the one place the
+  # APK was published was the one place it could not be installed from.
+  #
+  # Release assets have none of that. They are plain URLs, they work
+  # signed out, and tapping one on Android hands the file straight to the
+  # package installer:
+  #
+  #   https://github.com/<owner>/<repo>/releases/download/android-latest/sambramo-partner.apk
+  #
+  # ── One rolling tag, not one per build ────────────────────────────
+  # `android-latest` is deleted and recreated every run, so the URL above
+  # never changes and can be sent to a partner once. Versioned releases
+  # are what the Play Store track is for; this is a test build, and a
+  # test build that needs a new link every time is a support burden.
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only when both flavours built. A release carrying one of the two
+    # apps is worse than no release: somebody installs the partner app,
+    # looks for the customer one, and finds a stale copy from days ago.
+    if: success()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: apks
+          merge-multiple: true
+
+      - name: What is being published
+        run: ls -lh apks/
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Deleted first so the tag moves. `gh release create` refuses
+          # to overwrite, and an --edit path would leave the old assets
+          # attached alongside the new ones.
+          gh release delete android-latest --yes --cleanup-tag || true
+
+          gh release create android-latest \
+            apks/sambramo-customer.apk \
+            apks/sambramo-partner.apk \
+            --title "Sambramo — Android test builds" \
+            --notes "Debug builds from \`${{ github.sha }}\`.
+
+**Install on an Android phone:** tap a link below, then allow the browser to install unknown apps when asked.
+
+- [Sambramo (customer)](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk)
+- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk)
+
+Both apps load the live site, so a deploy reaches them without a new install. A new APK is only needed when something native changes — push, permissions, a plugin, the icon."
+
+      - name: The links
+        run: |
+          echo "Customer: https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk"
+          echo "Partner:  https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk"
