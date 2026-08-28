@@ -4,6 +4,59 @@ import { clearJourney } from '../lib/journey'
 
 const AuthContext = createContext(null)
 
+/**
+ * Which role wins when a signup form and an existing row disagree.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * PROMOTE, NEVER DEMOTE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Two failures have already come from getting this wrong, in opposite
+ * directions, and both presented as a broken login rather than as a
+ * field that changed:
+ *
+ *   Form always wins   an established partner who passed through
+ *                      /signup again was rewritten to 'customer'. Their
+ *                      vendor row, approval and service list all
+ *                      survived — only access was lost.
+ *
+ *   Row always wins    a NEW partner could never be created at all,
+ *                      because fetchProfile writes a placeholder row the
+ *                      instant a session appears, and that placeholder
+ *                      said 'customer'. The form then had nothing left
+ *                      to say. That was the fix for the first bug.
+ *
+ * So neither wins outright. A role may go up and may not come down:
+ * somebody who is already a vendor or an admin stays one, and anybody
+ * else becomes whatever they asked to be.
+ *
+ * 'admin' is not reachable from any form. It is ranked here so that
+ * nothing a signup page sends can reach down and take it away.
+ */
+const ROLE_RANK = { customer: 0, vendor: 1, admin: 2 }
+
+export function mergeRole(existing, requested) {
+  const e = ROLE_RANK[existing] ?? -1
+  const r = ROLE_RANK[requested] ?? -1
+  if (e < 0 && r < 0) return 'customer'
+  return e >= r ? existing : requested
+}
+
+/**
+ * The role somebody asked for, parked across a redirect.
+ *
+ * Google's OAuth flow leaves this origin and returns to /auth/callback,
+ * so nothing in React state survives it — and the profile row is created
+ * on the way back in, before any form has run. Without this, "Join as a
+ * partner" followed by "Continue with Google" produced a customer
+ * account every time, silently. Same mechanism as `ee_pending_ref`.
+ */
+export const PENDING_ROLE = 'ee_pending_role'
+
+function pendingRole() {
+  try { return localStorage.getItem(PENDING_ROLE) } catch { return null }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)
   const [profile, setProfile] = useState(null)
@@ -43,7 +96,11 @@ export function AuthProvider({ children }) {
           email:      authUser?.email ?? null,
           full_name:  meta.full_name ?? meta.name ?? null,
           phone:      authUser?.phone ?? null,
-          role:       'customer',
+          // Not hardcoded 'customer'. This row is written the instant a
+          // session appears — before any signup form runs — so hardcoding
+          // it made the form's answer unreachable, and every partner who
+          // signed up with Google got a customer account.
+          role:       pendingRole() === 'vendor' ? 'vendor' : 'customer',
         }, { onConflict: 'id' })
         .select()
         .single()
@@ -150,7 +207,7 @@ export function AuthProvider({ children }) {
         full_name: fullName,
         // An account that is already a vendor or an admin stays one. A
         // role only arrives from this form for an account that has none.
-        role:      existing?.role ?? role ?? 'customer',
+        role:      mergeRole(existing?.role, role),
         city:      city  ?? existing?.city  ?? null,
         phone:     phone ?? existing?.phone ?? authUser.phone ?? null,
         email:     authUser.email ?? null,
@@ -159,6 +216,9 @@ export function AuthProvider({ children }) {
       .single()
 
     if (error) throw error
+    // Spent. Left set, it would make the next account created in this
+    // browser a partner too.
+    try { localStorage.removeItem(PENDING_ROLE) } catch { /* storage off */ }
     setProfile(data)
     return data
   }

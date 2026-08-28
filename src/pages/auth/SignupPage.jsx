@@ -52,6 +52,17 @@ export default function SignupPage() {
     return r === 'vendor' || r === 'customer' ? r : null
   })()
 
+  /* Parked before any button can leave this origin.
+
+     "Continue with Google" navigates to accounts.google.com and comes
+     back to /auth/callback, where the profile row is created. Nothing
+     in React state crosses that, so the intent has to be written down
+     somewhere the return trip can read it. */
+  useEffect(() => {
+    if (!roleFromUrl) return
+    try { localStorage.setItem('ee_pending_role', roleFromUrl) } catch { /* storage off */ }
+  }, [roleFromUrl])
+
   // steps: role → info → otp
   const [step, setStep]               = useState(roleFromUrl ? 'info' : 'role')
   const [role, setRole]               = useState(roleFromUrl)
@@ -105,6 +116,11 @@ export default function SignupPage() {
 
   function handleRoleSelect(r) {
     setRole(r)
+    // Parked for the same reason as roleFromUrl above: the very next
+    // thing this person may press is "Continue with Google", which
+    // leaves the origin and comes back to a callback that has no idea
+    // what they chose.
+    try { localStorage.setItem('ee_pending_role', r) } catch { /* storage off */ }
     setStep('info')
     setError(null)
   }

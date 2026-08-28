@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
+import { isPartnerSurface } from '../../config/surface'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import SambramoLogo from '../ui/SambramoLogo'
 import { CTA } from '../../config/sambramo'
@@ -69,7 +70,18 @@ export default function Navbar() {
   }
 
   const isCustomer = profile?.role === 'customer'
-  const showCart   = !profile || isCustomer
+
+  /* No shopping cart in the partner app.
+   *
+   * `!profile` was the hole: a signed-out visitor is treated as a
+   * customer-in-waiting, which is right on the customer app and wrong on
+   * the partner one. A decorator opening the partner link was shown a
+   * shopping bag in the bar above a page asking them to sell — the first
+   * icon on the screen belonged to the other product.
+   *
+   * Keyed on the surface, not the role, because the person this affects
+   * most has no role yet. */
+  const showCart   = !isPartnerSurface() && (!profile || isCustomer)
 
   const navClass = scrolled
     ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
