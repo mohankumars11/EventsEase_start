@@ -60,3 +60,29 @@ keystore.properties
 google-services.json
 !android/app/google-services.json
 !android/app/src/*/google-services.json
+
+# ── Service-account keys ─────────────────────────────────────────────
+# FIREBASE_SERVICE_ACCOUNT is a real credential: it can send a push to
+# every device registered to this project. It lives in .env (ignored
+# above) and in Vercel's encrypted store, and nowhere else. These
+# patterns catch the JSON file Google hands you on download, whatever
+# you happened to name it.
+*firebase-adminsdk*.json
+*service-account*.json
+serviceAccountKey.json
+
+# ── Apple signing ────────────────────────────────────────────────────
+# The iOS equivalent of the Android keystore above. An .p8 is an APNs
+# key that can push to every install; a .p12 plus a provisioning profile
+# is enough to sign an app as you.
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+ios/App/App/GoogleService-Info.plist
+
+# ── Anything a script writes that holds a live token ─────────────────
+# The demo session files above are the known ones. This catches the
+# next one before it is committed rather than after.
+*-session.json
+.demo-*.json
