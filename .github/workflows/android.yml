@@ -76,7 +76,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22, and it is not a preference. @capacitor/cli 8.5 declares
+          # engines.node >= 22.0.0, so `npx cap sync` refuses to run on
+          # 20 -- which is why it worked on the dev machine (Node 24) and
+          # failed on every runner.
+          node-version: '22'
           cache: npm
 
       # ══════════════════════════════════════════════════════════════

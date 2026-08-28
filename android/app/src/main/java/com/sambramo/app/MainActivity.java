@@ -1,4 +1,4 @@
-package com.sambramo.partner;
+package com.sambramo.app;
 
 import com.getcapacitor.BridgeActivity;
 
