@@ -100,16 +100,37 @@ export default async function handler(req, res) {
 
   const sent = results.filter(r => r.ok).length
 
+  /* A dead token is the commonest failure and the only one with an
+   * action attached, so it is handled rather than merely reported.
+   *
+   * FCM invalidates a token when the app is reinstalled, when browser
+   * site data is cleared, or when the service worker is replaced —
+   * which the config change just did to every existing web
+   * registration. The row then points at nothing, and the honest fix is
+   * to drop it and ask for alerts to be switched on again. */
+  const dead = results.filter(r => r.reason === 'dead_token')
+  if (dead.length) {
+    await db.from('push_tokens').delete()
+      .in('token', tokens.filter((_, i) => results[i].reason === 'dead_token').map(t => t.token))
+  }
+
   return res.status(200).json({
     ok: sent > 0,
     sent,
     of: tokens.length,
+    // The real reason, per device. Withholding it left "could not send"
+    // as the entire diagnosis, which is not something anybody can act
+    // on — and the answer was already in hand.
+    why: results.filter(r => !r.ok).map(r => [r.platform, r.reason, r.detail].filter(Boolean).join(': ')),
+    deadRemoved: dead.length,
     // The whole point. If FCM accepted it and nothing appeared, the fault
     // is on the device — and this says so rather than leaving somebody to
     // conclude the app is broken.
     scan: sent > 0
       ? 'Sent. If nothing appears within ten seconds, the block is on this phone — check that notifications are allowed for Sambramo in your phone settings, and that battery saver is off.'
-      : 'The server could not send to this device.',
+      : dead.length
+        ? 'This device had expired. It has been removed — turn alerts off and on again to re-register it.'
+        : `Could not send. ${results.map(r => r.reason ?? '').filter(Boolean).join(', ')}`,
     results,
   })
 }

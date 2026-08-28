@@ -117,7 +117,18 @@ export default function JobAlerts({ vendorId }) {
         headers: { authorization: `Bearer ${session?.access_token ?? ''}` },
       })
       const body = await res.json().catch(() => ({}))
-      setTested(body.scan ?? (body.ok ? 'Sent.' : 'Could not send.'))
+      /* The reason travels with the sentence.
+       *
+       * "Could not send to this device" was the whole diagnosis, and
+       * nobody can act on it — while the endpoint already knew whether
+       * FCM said UNREGISTERED, or the credential was rejected, or the
+       * platform was wrong. Withholding what we know is not brevity. */
+      const why = (body.why ?? []).filter(Boolean).join(' · ')
+      setTested([body.scan, why].filter(Boolean).join('  —  '))
+
+      // A pruned dead token means the row is gone; the card must stop
+      // claiming alerts are on.
+      if (body.deadRemoved) await refresh()
     } catch {
       setTested('Could not reach the server.')
     } finally {
