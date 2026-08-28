@@ -1,0 +1,98 @@
+apply plugin: 'com.android.application'
+
+android {
+    /* ── One native project, two apps ──────────────────────────────────
+     *
+     * `npx cap add android` bakes a single applicationId into this file,
+     * so building both apps would mean two copies of the whole native
+     * project — 3.2 MB duplicated, and every native change made twice
+     * with one of them eventually forgotten.
+     *
+     * Product flavours are Android's own answer. `namespace` stays fixed
+     * (it is the Java package the generated sources live in); the
+     * applicationId — what Play Store treats as the app's identity —
+     * comes from the flavour.
+     *
+     *   ./gradlew assembleCustomerRelease
+     *   ./gradlew assemblePartnerRelease
+     *
+     * Each flavour has its own source set for google-services.json,
+     * because FCM keys the config to the applicationId and one file
+     * cannot serve both. */
+    namespace = "com.sambramo.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        // No applicationId here — the flavour supplies it. Leaving one
+        // would make it the default and silently win for any build that
+        // forgot to name a flavour.
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    flavorDimensions "audience"
+
+    productFlavors {
+        customer {
+            dimension "audience"
+            applicationId "com.sambramo.app"
+            // Read by MainActivity to point the WebView at the right host.
+            buildConfigField "String", "SITE_URL", '"https://sambramoh.vercel.app"'
+        }
+        partner {
+            dimension "audience"
+            applicationId "com.sambramo.partner"
+            buildConfigField "String", "SITE_URL", '"https://sambramo-partners.vercel.app"'
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    // The BoM pins every Firebase library to one compatible set, so a
+    // version bump cannot leave messaging and analytics disagreeing.
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

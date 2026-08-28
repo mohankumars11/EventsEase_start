@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sambramo Partners</string>
+    <string name="title_activity_main">Sambramo Partners</string>
+    <string name="package_name">com.sambramo.partner</string>
+    <string name="custom_url_scheme">com.sambramo.partner</string>
+</resources>

@@ -86,3 +86,14 @@ ios/App/App/GoogleService-Info.plist
 # next one before it is committed rather than after.
 *-session.json
 .demo-*.json
+
+# ── Android build products ───────────────────────────────────────────
+# The Capacitor project itself IS committed — CI needs it to build the
+# APK, and it was its absence that made every workflow run fail. What is
+# not committed is anything Gradle generates or anything machine-local.
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/app/release/

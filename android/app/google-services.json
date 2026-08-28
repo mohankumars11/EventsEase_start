@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "456707017962",
+    "project_id": "sambramo",
+    "storage_bucket": "sambramo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456707017962:android:9033899cec7bf7d0dd5b93",
+        "android_client_info": {
+          "package_name": "com.sambramo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgU7yJOeBOU1dajJxBCfK6nuZZM6qHTUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456707017962:android:814bd175e3ace06add5b93",
+        "android_client_info": {
+          "package_name": "com.sambramo.partner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgU7yJOeBOU1dajJxBCfK6nuZZM6qHTUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
