@@ -1799,3 +1799,47 @@
 @media (prefers-reduced-motion: reduce) {
   .sb-bob, .sb-fade-in { animation: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   The ticket shape
+   ══════════════════════════════════════════════════════════════════════
+
+   A discount rendered as a row of text is a line item. The same number
+   with a notch bitten out of each side and a dashed tear line is a
+   ticket, and people treat a ticket as something they HAVE. That is the
+   whole difference between "8% is applied" and "I got 8% off", and it
+   costs two pseudo-elements.
+
+   The notches are painted with the PAGE ground, not white, because these
+   cards sit on `a-canvas` — a hardcoded white circle would show as a
+   pale disc against it wherever the ground is tinted. */
+
+.sb-ticket-stub {
+  position: relative;
+  border-right: 1.5px dashed currentColor;
+  opacity: 1;
+}
+
+/* The dash needs to be faint without dragging the icon and label down
+   with it, so the opacity lands on the border alone. */
+.sb-ticket-stub::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-right: 1.5px dashed var(--a-canvas, #fff);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* The two bites, top and bottom of the tear line. */
+.sb-ticket-stub::before {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--a-canvas, #fff);
+  box-shadow: 0 calc(100% + 14px) 0 0 var(--a-canvas, #fff);
+}

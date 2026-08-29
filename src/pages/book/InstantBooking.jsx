@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiUrl } from '../../lib/api'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Camera, Info, PencilLine } from 'lucide-react'
@@ -9,6 +9,9 @@ import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
 import ServiceOptions from '../../components/book/ServiceOptions'
 import { optionsFor, defaultOptions, optionMultiplier, optionSummary } from '../../data/instantOptions'
+import { offersFor, applyOffer } from '../../config/offers'
+import OfferCard from '../../components/offers/OfferCard'
+import OfferUnlocked from '../../components/offers/OfferUnlocked'
 import { SERVICE_BY_ID } from '../../data/servicePricing'
 import { specModeFor, INSTANT_DURATIONS, defaultDurationFor } from '../../data/instantSetups'
 import { tradeFor } from '../../config/vendor'
@@ -137,6 +140,15 @@ export default function InstantBooking() {
    * before anybody answers anything and skipping the questions costs
    * the base rate rather than nothing. */
   const [options, setOptions] = useState({})
+  const [offerId, setOfferId] = useState(null)
+  /* The offer to CELEBRATE, and the set already seen.
+   *
+   * An unlock fires when a basket crosses a threshold it did not meet a
+   * moment ago — never on load, never twice for the same offer. A
+   * celebration that repeats is decoration, and decoration teaches
+   * people to ignore the one that matters. */
+  const [unlocked, setUnlocked] = useState(null)
+  const seenOffers = useRef(new Set())
   const [notes, setNotes] = useState({})
   const [requestId, setRequestId] = useState(() => {
     if (resumeId) return resumeId
@@ -174,6 +186,29 @@ export default function InstantBooking() {
     }
     return out
   }, [picked, guests, durations, options])
+
+  /* What this basket qualifies for, recomputed as it changes. */
+  const offers = useMemo(() => offersFor({
+    subtotalPaise: total,
+    lineCount: picked.length,
+    eventDate: date?.toISOString().slice(0, 10) ?? null,
+    // Pre-launch: everybody's first. Reads from the customer's history
+    // once there is history to read.
+    isFirstBooking: true,
+  }), [total, picked.length, date])
+
+  const chosenOffer = offers.find(o => o.id === offerId && o.eligible) ?? null
+  const discountPaise = chosenOffer ? applyOffer(chosenOffer.id, total).discountPaise : 0
+
+  /* Announce a newly eligible offer, once. */
+  useEffect(() => {
+    const fresh = offers.find(o => o.eligible && !seenOffers.current.has(o.id))
+    if (!fresh) return
+    seenOffers.current.add(fresh.id)
+    // Only once the customer has actually built something — an unlock on
+    // an empty basket is a popup, not a reward.
+    if (picked.length > 0) setUnlocked(fresh)
+  }, [offers, picked.length])
 
   const total = Object.values(quotes).reduce((n, q) => n + (q?.paise ?? 0), 0)
 
@@ -311,6 +346,14 @@ export default function InstantBooking() {
       setSending(false)
     }
   }
+
+  const offerSheet = unlocked ? (
+    <OfferUnlocked
+      offer={unlocked}
+      onClose={() => setUnlocked(null)}
+      onUse={setOfferId}
+    />
+  ) : null
 
   /* ── 4 · Matching ───────────────────────────────────────────────
      Entered with requestId still null. See dispatch() above. */
@@ -556,6 +599,23 @@ export default function InstantBooking() {
       },
       body: (
         <div className="space-y-4">
+          {/* What this basket has earned, and what it nearly has.
+              Locked offers stay visible saying what would unlock them —
+              hiding one until it applies means somebody finds out
+              afterwards that they nearly had something. */}
+          {offers.length > 0 && (
+            <div className="space-y-2">
+              {offers.slice(0, 3).map(o => (
+                <OfferCard
+                  key={o.id}
+                  offer={o}
+                  applied={offerId === o.id}
+                  onApply={setOfferId}
+                />
+              ))}
+            </div>
+          )}
+
           <ul className="rounded-[22px] bg-white px-4 ring-1 ring-ink/[0.06]">
             {picked.map(id => {
               const q = quotes[id]
@@ -593,6 +653,7 @@ export default function InstantBooking() {
 
   return (
     <div className={`a-canvas min-h-screen ${ACTION_BAR_CLEARANCE}`}>
+      {offerSheet}
       <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 pt-4">
         <button
           onClick={() => (step === 0 ? navigate(-1) : setStep(step - 1))}
