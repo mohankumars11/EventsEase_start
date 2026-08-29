@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES } from '../../config/vendor'
-import { resolvePincode } from '../../lib/eventLocation'
+import { lookupPincode } from '../../lib/pincodeDirectory'
 
 const CATEGORIES = VENDOR_CATEGORIES
 
@@ -205,14 +205,26 @@ export default function VendorOnboarding() {
         .from('vendors').select('id').eq('profile_id', user.id).maybeSingle()
 
       if (saved?.id) {
-        const place = resolvePincode(form.pincode)
+        /* Asked of the DATABASE, not of the bundle.
+         *
+         * This used to call `resolvePincode`, which reads the 88 pincodes
+         * compiled into the JavaScript. After migration 085 that is the
+         * offline fallback and not the truth — so a master in an area we
+         * activated last week would have been told we do not serve them,
+         * by a table baked into the APK they installed a month ago. The
+         * partner side has to read the same switch the customer side
+         * does. */
+        const place = await lookupPincode(form.pincode)
 
-        if (!place) {
+        if (place.status !== 'served') {
           // Saved, but not dispatchable. Said plainly rather than
-          // letting them walk away believing they are live.
+          // letting them walk away believing they are live — and the two
+          // reasons get different words, because one of them is a typo.
           setError(
-            `We have your details, but we are not matching masters in ${form.pincode} yet. ` +
-            `We will be in touch when we reach your area.`,
+            place.status === 'unknown'
+              ? `We cannot find the pincode ${form.pincode}. Worth checking those six digits.`
+              : `We have your details, but we are not matching masters in ${form.pincode} yet. ` +
+                `We will be in touch when we reach your area.`,
           )
           setSaving(false)
           return

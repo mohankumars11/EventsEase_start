@@ -114,3 +114,8 @@ android/app/release/
 # visible to anyone reading this file instead of hidden in a git
 # command somebody ran once.
 !.env.android
+
+# Raw Nominatim responses cached by scripts/activate-pincodes.mjs.
+# Regenerable working state, not repo content — the coordinates that
+# matter live in the `pincodes` table.
+scripts/data/pincode-geocode-cache.json
