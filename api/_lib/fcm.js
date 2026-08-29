@@ -288,3 +288,105 @@ export async function notifyPartners(db, { vendorIds, title, body, url, lineId }
 
   return { sent, pruned: dead.length, attempted: tokens.length }
 }
+
+/**
+ * One push pass for a whole booking.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * A MASTER OFFERED THREE SERVICES IS ONE PERSON WITH ONE PHONE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `notifyPartners` was called once per line. For a booking where the
+ * same decorator matches decor, floral and stage, that is three token
+ * lookups returning the same rows and three notifications inside a
+ * second — which is how a master learns to silence the app, and the
+ * silenced master is the one who then misses a real job.
+ *
+ * So: one query for every token in the wave, one message per master, and
+ * the message names the booking rather than a single line when they were
+ * offered more than one.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * FAILURE IS COUNTED, NOT THROWN
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * A booking whose notification failed is still a real booking with a
+ * customer watching a screen. Nothing here can fail the request that is
+ * waiting on it.
+ */
+export async function notifyForWave(db, wave, { eventDate, areaLabel, city }) {
+  const empty = { sent: 0, perLine: {} }
+  if (!pushConfigured() || !wave?.lines?.length) return empty
+
+  const vendorIds = wave.allVendorIds ?? []
+  if (!vendorIds.length) return empty
+
+  // Which lines each vendor was offered, so one master gets one message.
+  const byVendor = new Map()
+  for (const l of wave.lines) {
+    for (const v of l.vendorIds ?? []) {
+      if (!byVendor.has(v)) byVendor.set(v, [])
+      byVendor.get(v).push(l)
+    }
+  }
+
+  const { data: vendors } = await db
+    .from('vendors').select('id, profile_id').in('id', vendorIds).not('profile_id', 'is', null)
+
+  const profileOf = new Map((vendors ?? []).map(v => [v.id, v.profile_id]))
+  const profileIds = [...new Set([...profileOf.values()])]
+  if (!profileIds.length) return empty
+
+  // ONE query for every device in the wave.
+  const { data: tokens } = await db
+    .from('push_tokens')
+    .select('token, platform, profile_id')
+    .in('profile_id', profileIds)
+    .eq('app', 'partner')
+    .lt('failure_count', 5)
+
+  if (!tokens?.length) return empty
+
+  const byProfile = new Map()
+  for (const t of tokens) {
+    if (!byProfile.has(t.profile_id)) byProfile.set(t.profile_id, [])
+    byProfile.get(t.profile_id).push(t)
+  }
+
+  const day = eventDate
+    ? new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    : ''
+  const where = areaLabel ?? city ?? ''
+
+  const perLine = {}
+  const dead = []
+  let sent = 0
+
+  await Promise.all([...byVendor.entries()].map(async ([vendorId, lines]) => {
+    const profileId = profileOf.get(vendorId)
+    const devices = profileId ? byProfile.get(profileId) : null
+    if (!devices?.length) return
+
+    const earns = lines.reduce((n, l) => n + (l.partnerAmountPaise ?? 0), 0)
+
+    const title = lines.length === 1
+      ? lines[0].serviceName
+      : `${lines.length} jobs near you`
+
+    const body = `${day} · ${where} · you earn ₹${Math.round(earns / 100).toLocaleString('en-IN')}`
+
+    await Promise.all(devices.map(async t => {
+      const r = await sendPush({
+        token: t.token, platform: t.platform, title, body,
+        url: '/dashboard/vendor',
+        lineId: lines[0].lineId,
+      })
+      if (r.ok) { sent++; for (const l of lines) perLine[l.lineId] = (perLine[l.lineId] ?? 0) + 1 }
+      else if (r.reason === 'dead_token') dead.push(t.token)
+    }))
+  }))
+
+  if (dead.length) await db.from('push_tokens').delete().in('token', dead)
+
+  return { sent, perLine }
+}

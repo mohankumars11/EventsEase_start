@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLivePoll } from '../../hooks/useLivePoll'
 import {
   CalendarDays, MapPin, Phone, User, IndianRupee, Loader2, Check,
   CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight,
@@ -120,9 +121,12 @@ export default function MyJobs({ vendorId }) {
       .channel(`partner-jobs-${vendorId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_lines' }, read)
       .subscribe()
-    const floor = setInterval(read, 20_000)
-    return () => { clearInterval(floor); supabase.removeChannel(ch) }
+    /* The poll lives in useLivePoll now: it stops while the screen is
+       hidden and catches up in one shot on return. */
+    return () => { supabase.removeChannel(ch) }
   }, [read, vendorId])
+
+  useLivePoll(read, 20_000, [read])
 
   if (jobs === null) {
     return (

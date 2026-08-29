@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useLivePoll } from './useLivePoll'
 import { supabase } from '../lib/supabase'
 
 /**
@@ -224,7 +225,8 @@ export default function useAdminData() {
      *
      * Same pattern as hooks/useNotifications.js: Realtime where it
      * works, a poll as the guarantee, never trust Realtime alone. */
-    const floor = setInterval(() => load(true), 60_000)
+    /* The poll lives in useLivePoll now: it stops while the screen is
+       hidden and catches up in one shot on return. */
 
     return () => {
       clearTimeout(timer)
@@ -232,6 +234,8 @@ export default function useAdminData() {
       supabase.removeChannel(channel)
     }
   }, [load])
+
+  useLivePoll(() => load(true), 60_000, [load])
 
   return useMemo(
     () => ({ ...data, missing, loading, refreshing, error, loadedAt, liveAt, refresh }),

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLivePoll } from '../../hooks/useLivePoll'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Bell } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -81,9 +82,12 @@ export default function LiveBookingStrip() {
     // Realtime needs the table in the supabase_realtime publication
     // (migration 080). Until that is applied this poll is the only thing
     // keeping the strip honest, which is why it exists regardless.
-    const floor = setInterval(read, 25_000)
-    return () => { clearInterval(floor); supabase.removeChannel(ch) }
+    /* The poll lives in useLivePoll now: it stops while the screen is
+       hidden and catches up in one shot on return. */
+    return () => { supabase.removeChannel(ch) }
   }, [read, user?.id, isCustomer])
+
+  useLivePoll(read, 25_000, [read])
 
   if (!user || !isCustomer || !lines.length) return null
 
