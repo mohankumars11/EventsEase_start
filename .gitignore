@@ -129,3 +129,4 @@ scripts/data/pincode-geocode-cache.json
 # Committing it would put a binary the size of the whole app into every
 # clone, for evidence that is only current until the next capture.
 docs/test-report/
+.demo-request.txt

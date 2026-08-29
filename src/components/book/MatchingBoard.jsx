@@ -3,13 +3,14 @@ import { apiUrl } from '../../lib/api'
 import { Check, Loader2, MapPinned, Search, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
-import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID } from '../../config/instantBooking'
+import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID, isGone } from '../../config/instantBooking'
 import { openRazorpay } from '../../lib/razorpayCheckout'
 import TradeSprite, { LiveLine } from './TradeSprite'
 import PaidConfirmation from './PaidConfirmation'
 import { IS_NATIVE_APP, APP_BUILD } from '../common/AppBadge'
 import CustomerAlerts from './CustomerAlerts'
 import CancelLine from './CancelLine'
+import MasterSticker from './MasterSticker'
 
 /**
  * "Three of five masters have accepted."
@@ -97,8 +98,16 @@ function LineRow({ line, offers, onCancel }) {
   const notified = offers.filter(o => o.line_id === line.id).length
   const won = offers.find(o => o.line_id === line.id && o.status === 'ACCEPTED')
 
+  /* A line the customer cancelled stays on the board, greyed and
+     labelled. Removing it silently is the same class of bug as counting
+     it: the customer taps Cancel, the row disappears, and there is
+     nothing left on the screen that agrees with what they just did. */
+  const gone = isGone(line)
+
   return (
-    <li className="flex items-center gap-3 border-b border-ink/[0.06] py-3 last:border-0">
+    <li className={`flex items-center gap-3 border-b border-ink/[0.06] py-3 last:border-0 ${
+      gone ? 'opacity-55' : ''
+    }`}>
       {/* The face replaces the 8px dot. Same information -- the sprite
           only animates while `active` -- carried by something a person
           recognises in a glance instead of a coloured pixel. */}
@@ -114,7 +123,14 @@ function LineRow({ line, offers, onCancel }) {
         </p>
 
         <p className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-bold text-ink-mute">
-          {state === 'accepted' && (
+          {gone && (
+            <>
+              <X size={12} className="text-ink-mute" />
+              {line.status === 'expired' ? 'Expired — nobody took it' : 'Cancelled'}
+            </>
+          )}
+
+          {!gone && state === 'accepted' && (
             <>
               <Check size={12} className="text-forest-600" />
               {line.status === 'paid' ? MATCHING.paid : ACCEPTED_ROW.glance}
@@ -126,7 +142,7 @@ function LineRow({ line, offers, onCancel }) {
             </>
           )}
 
-          {state === 'searching' && (
+          {!gone && state === 'searching' && (
             <>
               <Loader2 size={12} className="animate-spin text-saffron-600" />
               {notified > 0 ? MATCHING.notified(notified) : MATCHING.searching}
@@ -137,7 +153,7 @@ function LineRow({ line, offers, onCancel }) {
           )}
 
           {/* No timer. There is nobody to count down. */}
-          {state === 'standing' && (
+          {!gone && state === 'standing' && (
             <>
               <Search size={12} className="text-ink-mute" />
               {PARTIAL.glance}
@@ -157,8 +173,11 @@ function LineRow({ line, offers, onCancel }) {
       {/* Small, grey, and always there while the line is live.
           A cancel that has to be hunted for is a support call; one as
           loud as the price competes with it. This is the size of an
-          affordance somebody only looks for when they want it. */}
-      {onCancel && (
+          affordance somebody only looks for when they want it.
+
+          Not on a line that is already over -- cancelling a cancelled
+          service is a button that can only produce an error. */}
+      {onCancel && !gone && (
         <button
           onClick={onCancel}
           aria-label={`Cancel ${line.service_name}`}
@@ -465,11 +484,31 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
     }
   }
 
-  const accepted = useMemo(() => lines.filter(l => stateOf(l) === 'accepted'), [lines])
+  /* ══════════════════════════════════════════════════════════════════
+     A CANCELLED LINE IS NOT A LINE ANYBODY IS WAITING ON
+     ══════════════════════════════════════════════════════════════════
+
+     Every count here used to run over `lines`, cancelled ones included.
+     A booking of three where two were cancelled and one was paid read
+     "1 of 3 confirmed", under "we keep looking for the rest", with two
+     grey pips suggesting two searches still running. Nothing was still
+     running. The customer had cancelled them himself a moment earlier.
+
+     It was survivable while the numbers were the loudest thing on the
+     screen. It is not now: the sticker above says CONFIRMED in green
+     while the sentence beside it says we are still looking, and of the
+     two the picture is the one people believe.
+
+     So the counts run over the lines that are still in play. The
+     cancelled ones stay VISIBLE -- a service that vanishes silently is
+     its own bug -- but they are labelled and they are not counted. */
+  const live = useMemo(() => lines.filter(l => !isGone(l)), [lines])
+
+  const accepted = useMemo(() => live.filter(l => stateOf(l) === 'accepted'), [live])
   const payable = useMemo(
     () => accepted.filter(l => l.status === 'accepted'), [accepted])
   const payTotal = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
-  const stillLooking = lines.length - accepted.length
+  const stillLooking = live.length - accepted.length
   // Fed to the wave nudge above. A booking where everybody has answered
   // has nothing left to widen for, and should stop asking the server to.
   huntingRef.current = stillLooking > 0
@@ -485,8 +524,8 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
    * this one knows the whole picture. */
   useEffect(() => {
     if (!loaded || !lines.length) return
-    const live = lines.some(l => ['pending', 'dispatching', 'accepted'].includes(l.status))
-    if (!live) { try { localStorage.removeItem('sambramo_live_booking') } catch { /* storage off */ } }
+    const stillOpen = lines.some(l => ['pending', 'dispatching', 'accepted'].includes(l.status))
+    if (!stillOpen) { try { localStorage.removeItem('sambramo_live_booking') } catch { /* storage off */ } }
   }, [loaded, lines])
 
   /* Which of the five things is happening, as one word.
@@ -497,7 +536,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
   const phase =
     failed                       ? 'failed'
     : !requestId                 ? 'sending'
-    : accepted.length === 0      ? (lines.every(l => l.dispatch_mode === 'standing') && lines.length ? 'standing' : 'hunting')
+    : accepted.length === 0      ? (live.every(l => l.dispatch_mode === 'standing') && live.length ? 'standing' : 'hunting')
     : stillLooking > 0           ? 'partial'
     :                              'complete'
 
@@ -509,8 +548,8 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
     phase === 'sending'  ? MATCHING.head.sending(area)
     : phase === 'hunting'  ? MATCHING.head.hunting(asked, area)
     : phase === 'standing' ? MATCHING.head.standing(area)
-    : phase === 'partial'  ? MATCHING.head.partial(accepted.length, lines.length)
-    : phase === 'complete' ? MATCHING.head.complete(accepted.length)
+    : phase === 'partial'  ? MATCHING.head.partial(accepted.length, live.length)
+    : phase === 'complete' ? MATCHING.head.complete(accepted.length, payable.length)
     :                        null
 
   /* No spinner-only state any more.
@@ -526,6 +565,9 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
   const showing = loaded && lines.length
     ? lines
     : pending.map(x => ({ id: x.id, service_name: x.name, status: 'pending', __pre: true }))
+
+  // What the counts and the pips run over. See `live` above for why.
+  const liveShowing = showing.filter(l => !isGone(l))
 
   /* The whole screen, after a payment.
    *
@@ -549,6 +591,27 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-40 pt-6">
+      {/* ══════════════════════════════════════════════════════════════
+          The state of the booking, before a word of it is read
+          ══════════════════════════════════════════════════════════════
+
+          Above the headline rather than below it, because it is the
+          faster read: somebody who opens this screen at a traffic light
+          knows whether they owe money from across the room, and only
+          then reads which service and how much.
+
+          It is fed `showing`, not `lines` -- the same array the rows
+          below are drawn from, including the optimistic pre-dispatch
+          placeholders. Feeding it anything else would let the picture
+          and the rows disagree, and the picture is the one people
+          believe.
+
+          It changes on its own: this component already re-renders on
+          Realtime and on the visibility-aware poll, so a master
+          accepting turns the sticker while the customer is looking at
+          it, with no reload and nothing to tap. */}
+      <MasterSticker lines={showing} className="-mx-1 mb-1" />
+
       <p className="type-overline text-saffron-700">Your masters</p>
 
       <h1 className="mt-1.5 flex items-start gap-2.5 font-serif text-[26px] font-extrabold leading-[1.14] tracking-tight text-ink sm:text-[30px]">
@@ -562,16 +625,18 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-saffron-500" />
           </span>
         )}
-        {head?.title ?? MATCHING.progress(accepted.length, showing.length)}
+        {head?.title ?? MATCHING.progress(accepted.length, liveShowing.length)}
       </h1>
 
       {head?.body && (
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{head.body}</p>
       )}
 
-      {/* The scoreboard. Read in a glance, before any word is. */}
+      {/* The scoreboard. Read in a glance, before any word is.
+          One pip per line still in play -- a cancelled service has no
+          progress left to show. */}
       <div className="mt-4 flex gap-1.5" aria-hidden="true">
-        {showing.map(l => (
+        {liveShowing.map(l => (
           <span key={l.id} className={`h-1.5 flex-1 rounded-full ${l.__pre ? 'bg-ink/[0.08]' : PIP[stateOf(l)]}`} />
         ))}
       </div>

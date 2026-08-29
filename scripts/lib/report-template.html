@@ -93,6 +93,12 @@
     line-height: 1.04; letter-spacing: -.015em; margin: 0;
   }
   .dek { max-width: 60ch; font-size: 18.5px; color: var(--muted); margin: 0; }
+  .stamp .live { color: var(--forest); font-weight: 800; }
+  .stamp .live::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--forest); margin-right: 7px;
+    vertical-align: middle;
+  }
   .stamp {
     display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 4px;
     font-size: 13px; font-weight: 600; color: var(--muted);
@@ -221,7 +227,7 @@
 <div class="wrap">
 
   <header class="head">
-    <p class="eyebrow">Nothing deploys until you have seen this</p>
+    <p class="eyebrow">Approved, deployed, and verified live</p>
     <h1>The deploy gate</h1>
     <p class="dek">
       Every screen photographed from the production bundle, with a live
@@ -230,8 +236,9 @@
     </p>
     <p class="stamp">
       <span><!--DATE--></span>
-      <span>branch feature/without-shopping</span>
-      <span>not yet deployed</span>
+      <span>feature/without-shopping</span>
+      <span>commit 6ba31fb</span>
+      <span class="live">live on sambramoh.vercel.app</span>
     </p>
   </header>
 
@@ -241,7 +248,8 @@
       the submitted test report of every button functionality and every
       screenshot of the web page. Otherwise, no deployment should happen at
       all. I can't download again and again.</q>
-      &nbsp;— so this is the report, and the deploy is waiting on you.
+      &nbsp;— so this was the report. You read it, you said go, and it is
+      out. What follows is what shipped and what is still open.
     </p>
   </div>
 
@@ -425,34 +433,47 @@
   </section>
 
   <section>
-    <h2>Before this goes to production</h2>
-    <p class="sub">Three things, and two of them are yours to decide.</p>
+    <h2>It is live. Two things are still open.</h2>
+    <p class="sub">
+      Verified by content, not by a green tick: four strings that exist
+      only in this commit were fetched back out of the production bundles
+      — the board's new query, the decor forks, the real rate-card tier
+      names, and the dead-row warning. Both API functions answer their
+      CORS preflight and reject GET, which is correct for POST-only
+      endpoints.
+    </p>
 
     <div class="ask">
-      <h3>The client and the server must ship together</h3>
+      <h3>A ₹1 test payment is the last unproven thing</h3>
       <p>
-        Decor pricing changed on both sides. The deployed API still carries
-        the old bundle, so until this deploy lands the screen and the server
-        would disagree on a decor booking. Nothing half-deploys here.
+        The paid screen above is real UI driven by a test fixture, not by
+        money. Running one real ₹1 payment through the live checkout is
+        what closes it, and it also exercises the webhook against the
+        live keys rather than the test ones. Ask and I will give you the
+        steps.
       </p>
     </div>
 
     <div class="ask">
-      <h3>The 221 seeded partners</h3>
+      <h3>Test rows sitting in a money table</h3>
       <p>
-        They are reachable from your account in production today, by design,
-        so you could test. Before a real customer books, either remove your
-        account from <code>SYNTHETIC_DEMO_CUSTOMER</code> or purge them. Say
-        which and I will do it.
+        <code>check-booking-capture.mjs</code> left a ₹1 escrow hold
+        (<code>pay_TEST580a40438a69</code>) against a real ₹9,560 line,
+        and flipped that line to paid. The ledger is meant to answer
+        “what is Sambramo holding right now” with one SUM, and a fixture
+        row makes that answer wrong. It is your money table, so I have
+        not touched it — say the word and I will clear the row and put
+        the line back.
       </p>
     </div>
 
     <div class="ask">
-      <h3>Your word on the deploy</h3>
+      <h3>And the seeded partners, when you are ready</h3>
       <p>
-        Everything above is committed to nothing yet — the working tree is
-        staged and waiting. Say go and it deploys, then the APKs build from
-        the same commit.
+        Still reachable from your account in production, by design, so
+        you can keep testing. Before a real customer books: remove your
+        account from <code>SYNTHETIC_DEMO_CUSTOMER</code>, or purge all
+        221. Not urgent today; fatal on launch day.
       </p>
     </div>
   </section>

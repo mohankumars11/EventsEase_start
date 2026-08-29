@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Check, CalendarDays, MapPin, Loader2, ShieldCheck, Phone, Search } from 'lucide-react'
+import { CalendarDays, MapPin, Loader2, ShieldCheck, Phone, Search } from 'lucide-react'
 import { formatINR } from '../../utils/format'
 import { PAID } from '../../config/instantBooking'
 import TradeSprite from './TradeSprite'
+import MasterSticker from './MasterSticker'
 
 /**
  * The screen after the money moves.
@@ -63,15 +64,30 @@ export default function PaidConfirmation({ paidLines, offers, eventDate, area, s
 
       {/* ── The mark ─────────────────────────────────────────────── */}
       <div className="flex flex-col items-center text-center">
-        <span
-          className={`flex h-16 w-16 items-center justify-center rounded-full transition-all duration-500 ${
-            confirmed ? 'bg-forest-600 text-white' : 'bg-forest-100 text-forest-700'
-          } ${landed ? 'scale-100' : 'scale-90'}`}
-        >
-          {confirmed
-            ? <Check size={30} strokeWidth={3} className="sb-fade-in motion-reduce:animate-none" />
-            : <Loader2 size={26} className="animate-spin" />}
-        </span>
+        {/* Two different marks, because there are two different facts.
+
+            The sticker says "YOUR BOOKING IS CONFIRMED", which is
+            precisely the claim this screen refuses to make until the
+            LINES say so -- see the header. So it appears only on the
+            confirmed state, and the spinner holds the seconds before it.
+
+            It replaces the tick circle rather than sitting above it: the
+            sticker carries its own tick, and two green ticks stacked is
+            the same fact drawn twice. */}
+        {confirmed ? (
+          <MasterSticker
+            lines={paidLines}
+            className={`w-full max-w-sm transition-transform duration-500 ${landed ? 'scale-100' : 'scale-95'}`}
+          />
+        ) : (
+          <span
+            className={`flex h-16 w-16 items-center justify-center rounded-full bg-forest-100 text-forest-700 transition-all duration-500 ${
+              landed ? 'scale-100' : 'scale-90'
+            }`}
+          >
+            <Loader2 size={26} className="animate-spin" />
+          </span>
+        )}
 
         <h1 className="mt-4 font-serif text-[26px] font-extrabold leading-tight tracking-tight text-ink sm:text-[30px]">
           {head.title}

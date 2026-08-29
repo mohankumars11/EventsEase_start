@@ -294,9 +294,22 @@ export const MATCHING = {
       body: 'You can pay for these now. We keep looking for the rest — nothing waits on the last one.',
     }),
 
-    complete: n => ({
+    /* `complete` means every line has a master. It does NOT mean every
+       line is paid, and the two need different sentences.
+
+       One sentence served both, and it was written for the unpaid case:
+       a customer looking at a service they had already paid for was told
+       to "pay to lock the date", beside a row reading "Paid · confirmed"
+       and a green sticker saying the booking is confirmed. Three things
+       on one screen, two of them right.
+
+       `owed` is how many still want money. Zero means the job is done
+       and the screen should say so rather than ask again. */
+    complete: (n, owed = n) => ({
       title: n === 1 ? 'Your master is confirmed' : `All ${n} masters confirmed`,
-      body: 'Pay to lock the date. Their details reach you the moment payment is through.',
+      body: owed === 0
+        ? 'Paid and locked. Your master will call to confirm the details before the day.'
+        : 'Pay to lock the date. Their details reach you the moment payment is through.',
     }),
 
     standing: area => ({
@@ -407,6 +420,62 @@ export function assertTier(text, tier) {
  * what dispatch matches on — with service ids as a fallback for the
  * pre-flight rows, which exist before any trade is known.
  */
+/* ══════════════════════════════════════════════════════════════════════
+   WHICH STICKER A BOOKING IS SHOWING
+   ══════════════════════════════════════════════════════════════════════
+
+   A booking is many lines in different states at once, so "the state"
+   is a choice about which one the customer most needs to see.
+
+     'pending'    a master has said yes and is holding a date nobody has
+                  paid for. Outranks everything: it is the only state
+                  waiting on the CUSTOMER, and the unpaid hold expires
+                  (migration 082), so a missed payment loses the master
+                  they already had.
+
+     'reaching'   work in progress, nothing owed. Being done FOR them.
+
+     'confirmed'  every line paid, every date held. Only when nothing is
+                  searching and nothing is owed -- a green "confirmed"
+                  over a service still hunting is a promise nobody made,
+                  discovered at the venue.
+
+   This is the same precedence LiveBookingStrip uses for its headline,
+   and deliberately so: the home card and the matching screen must not
+   describe one booking two different ways.
+
+   It lives HERE, next to the copy for the same states, rather than in
+   the component that draws it -- a component that imports three images
+   cannot be loaded by a checker, and this rule is worth checking. See
+   scripts/check-master-sticker.mjs. */
+
+/* Paid, and everything a paid line becomes afterwards. A line that has
+   moved on to `delivered` has not stopped being confirmed. */
+const STICKER_SETTLED = new Set(['paid', 'in_progress', 'delivered', 'settled'])
+/* Gone, and not part of the picture either way. Counting a cancelled
+   line as "still searching" would hold the screen on REACHING forever. */
+const STICKER_GONE = new Set(['cancelled', 'expired'])
+
+/** A line nobody is waiting on any more. Cancelled or expired. */
+export const isGone = line => STICKER_GONE.has(line?.status)
+
+/** @returns {'pending'|'reaching'|'confirmed'|null} */
+export function stickerFor(lines = []) {
+  const live = lines.filter(l => !STICKER_GONE.has(l.status))
+  if (!live.length) return null
+
+  // Waiting on the customer.
+  if (live.some(l => l.status === 'accepted')) return 'pending'
+
+  // Waiting on a master.
+  if (live.some(l => l.status === 'pending' || l.status === 'dispatching')) return 'reaching'
+
+  // Nothing outstanding on either side.
+  if (live.every(l => STICKER_SETTLED.has(l.status))) return 'confirmed'
+
+  return null
+}
+
 export const TRADE_FACE = {
   'Decoration & Floral':   '🎈',
   'Photography':           '📷',

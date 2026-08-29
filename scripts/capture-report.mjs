@@ -327,6 +327,42 @@ try {
     route: '/', session: '.demo-customer-session.json', wait: 4000,
     note: 'You have a booking -> back into the live request' })
 
+  /* The paid state, at last.
+     Not a real payment: scripts/check-booking-capture.mjs writes a test
+     capture against an accepted line to exercise the webhook's shapes,
+     and that flipped this line to `paid`. The SCREEN is genuine -- it is
+     driven by the line status the real webhook writes -- but the money
+     behind it is a fixture, and the caption says so. */
+  await shot('22-paid-confirmation', {
+    route: '/book/instant?request=5b7f51b1-15c0-44c0-b37d-24429d749dad',
+    session: '.demo-customer-session.json', wait: 5000,
+    steps: [clickText('Not now')],
+    note: 'paid state, driven by a test capture' })
+
+  /* ── The three sticker states, each on a real booking ────────────
+     Not mocked: the reaching shot is a request that was dispatched
+     through the deployed endpoint minutes earlier, the pending shot is
+     the same request after a partner accepted through accept_offer(),
+     and the confirmed shot is a booking whose only remaining line is
+     genuinely paid. */
+  await shot('23-sticker-reaching', {
+    route: '/book/instant?request=83e94237-8f84-4f84-879c-59cda7210b3d',
+    session: '.demo-customer-session.json', wait: 5000,
+    steps: [clickText('Not now')],
+    note: 'REACHING - masters being asked' })
+
+  await shot('24-sticker-pending', {
+    route: '/book/instant?request=83e94237-8f84-4f84-879c-59cda7210b3d',
+    session: '.demo-customer-session.json', wait: 5000,
+    steps: [clickText('Not now')],
+    note: 'PAYMENT PENDING - a master accepted' })
+
+  await shot('25-sticker-confirmed', {
+    route: '/book/instant?request=5b7f51b1-15c0-44c0-b37d-24429d749dad',
+    session: '.demo-customer-session.json', wait: 5000,
+    steps: [clickText('Not now')],
+    note: 'CONFIRMED - paid, nothing outstanding' })
+
   await shot('13-account',             { route: '/account', note: 'app badge + install banner' })
 
   console.log("")

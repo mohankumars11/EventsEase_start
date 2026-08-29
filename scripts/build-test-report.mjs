@@ -37,6 +37,9 @@ const SHOTS = [
     fixed: true,
     say: 'A real request with three services. Anu events accepted the photography through <code>accept_offer()</code> from their own signed-in session — the same call the Accept button makes — and the board says so by name, at 0.5 km, with a pay button for that one line. The other two keep hunting. <b>Fixed here:</b> every row used to draw the same generic sparkle, because the board never selected <code>service_id</code> or <code>trade</code>. It now reads camera, balloon, cake.' },
 
+  { f: '22-paid-confirmation.jpg', t: 'A line that has been paid for',
+    say: 'Photography reads <b>Paid · confirmed</b> in green at the full ₹9,560 while the other two keep hunting — the per-service model, working. <b>Read this one carefully:</b> no rupee moved. <code>check-booking-capture.mjs</code> writes a test capture (<code>pay_TEST…</code>, a ₹1 hold) against an accepted line to exercise the webhook’s shapes, and that is what flipped this line. The screen is genuine; the money behind it is a fixture. A real ₹1 payment is still the one thing outstanding. One nit visible here: the subhead still says “you can pay for these now” when the only payable line is already paid.' },
+
   { f: '15-cancel-sheet.jpg', t: 'Cancelling one service',
     say: 'Scoped to the one service and it says so. The refund line is fetched from <code>cancellation_quote()</code> before the button is drawn, so the customer sees the consequence first — here “nothing has been charged, so there is nothing to refund”, which is the correct answer for a line that is accepted but unpaid.' },
 
