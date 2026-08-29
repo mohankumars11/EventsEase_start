@@ -184,6 +184,7 @@ function JobCard({ job, onChange }) {
   const [cancelOpen, setCancelOpen] = useState(false)
   const [why, setWhy] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [standing, setStanding] = useState(null)
   const [problem, setProblem] = useState(null)
 
   const paid = ['paid', 'in_progress', 'delivered', 'settled'].includes(job.status)
@@ -221,6 +222,20 @@ function JobCard({ job, onChange }) {
    * wrong, and a partial refund for somebody else's cancellation is how
    * a marketplace loses a customer permanently.
    */
+  /* What this will cost them, asked the moment the panel opens.
+   *
+   * A master must know they are one cancellation from suspension while
+   * they can still change their mind. Telling them afterwards is a
+   * penalty they had no chance to avoid — `hidden_costs` in
+   * config/legal.js, which applies to partners exactly as it does to
+   * customers.
+   */
+  async function openCancel() {
+    setCancelOpen(true); setStanding(null)
+    const { data } = await supabase.rpc('partner_standing', { p_vendor_id: job.vendor_id })
+    if (data?.ok) setStanding(data)
+  }
+
   async function cancelJob() {
     setCancelling(true); setProblem(null)
     const { data, error } = await supabase.rpc('partner_cancel_line', {
@@ -230,6 +245,9 @@ function JobCard({ job, onChange }) {
     if (error) { setProblem(error.message); return }
     if (!data?.ok) { setProblem(data?.scan ?? 'Could not cancel this job'); return }
     setCancelOpen(false); setWhy('')
+    // Said plainly whichever way it went — a suspension must never be
+    // something a master discovers later from an empty job list.
+    if (data.scan) setProblem(data.scan)
     onChange?.()
   }
 
@@ -372,10 +390,21 @@ function JobCard({ job, onChange }) {
               Cannot do this job any more?
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-amber-900/85">
-              The customer is refunded in full and told straight away. Tell them
-              why — this is read by Sambramo and it affects the jobs you are
-              offered next.
+              Sambramo takes the job back and finds the customer another master.
+              Tell them why — this is read by Sambramo.
             </p>
+
+            {/* The standing, before the button. This is the sentence that
+                stops a master dropping a Saturday for a better offer. */}
+            {standing && (
+              <p className={`mt-2 rounded-xl px-3 py-2 text-[12px] font-extrabold leading-snug ring-1 ${
+                standing.remaining <= 1
+                  ? 'bg-rose-50 text-rose-900 ring-rose-200'
+                  : 'bg-white/70 text-amber-950 ring-amber-200'
+              }`}>
+                {standing.warning}
+              </p>
+            )}
             <textarea
               value={why}
               onChange={e => setWhy(e.target.value)}
@@ -407,7 +436,7 @@ function JobCard({ job, onChange }) {
           </div>
         ) : (
           <button
-            onClick={() => setCancelOpen(true)}
+            onClick={openCancel}
             className="mt-2.5 w-full py-1.5 text-[11.5px] font-bold text-ink-mute underline-offset-2 hover:underline"
           >
             I can no longer do this job

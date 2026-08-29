@@ -153,6 +153,27 @@ export default function VendorDashboard() {
           Capacitor bridge and renders nothing inside the app. So seeing
           it at all is unambiguous proof this is not the app, which is
           the distinction that cost hours to establish by other means. */}
+      {/* Suspension is said out loud.
+          `match_partners` requires is_verified, so a suspended master
+          silently receives nothing — and silence is indistinguishable
+          from a quiet week. Somebody whose income has stopped is owed
+          the reason on the first screen, not a support call. */}
+      {vendor.suspended_at && (
+        <div className="mb-4 rounded-[22px] bg-rose-50 p-4 ring-1 ring-rose-200">
+          <p className="text-[15px] font-extrabold text-rose-900">Your account is suspended</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-rose-900/85">
+            {vendor.suspended_reason ?? 'Contact Sambramo.'} You will not be
+            offered jobs until this is resolved.
+          </p>
+          <a
+            href={`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent('My Sambramo partner account is suspended and I would like to discuss it.')}`}
+            className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2.5 text-[13.5px] font-extrabold text-white"
+          >
+            Talk to Sambramo
+          </a>
+        </div>
+      )}
+
       <InstallTheApp />
 
       <PartnerResume vendorId={vendor.id} />
