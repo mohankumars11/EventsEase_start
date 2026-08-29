@@ -74,7 +74,7 @@ export { OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM, DEFAULT_RADIUS_KM, PLATFORM
 export { POLICY_VERSION, instantCancellationRung, CANCELLATION_LADDER } from ${JSON.stringify(join(ROOT, 'src/config/policies.js'))}
 export { specModeFor, DISCUSS_SERVICES, QUOTE_ONLY_SERVICES, setupSpec } from ${JSON.stringify(join(ROOT, 'src/data/instantSetups.js'))}
 export { TAX } from ${JSON.stringify(join(ROOT, 'src/config/legal.js'))}
-export { optionMultiplier, optionSummary, defaultOptions, optionsFor } from ${JSON.stringify(join(ROOT, 'src/data/serviceOptions.js'))}
+export { optionMultiplier, optionSummary, defaultOptions, optionsFor } from ${JSON.stringify(join(ROOT, 'src/data/instantOptions.js'))}
 `
 
 /**

@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { optionsFor } from '../../data/serviceOptions'
+import { optionsFor } from '../../data/instantOptions'
 import TradeSprite from './TradeSprite'
 
 /**
