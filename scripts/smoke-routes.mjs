@@ -243,11 +243,25 @@ try {
     // "rendered" in any sense worth passing.
     const boundary = /Something went wrong on our side/i.test(text)
 
+    /* And a BLANK page is a failure too.
+     *
+     * This gate passed 14 of 14 against a bundle whose JavaScript was
+     * missing entirely — the server fell back to index.html for every
+     * chunk, nothing mounted, and the checks above saw no exception
+     * because no code ran to throw one.
+     *
+     * A test that passes on a white screen is worse than no test: it
+     * spends the trust of a green tick on nothing. So a route must
+     * produce visible text, which is the cheapest possible proof that
+     * React actually mounted. */
+    const blank = text.trim().length < 10
+
     const bad = [...new Set(caught)]
-    if (bad.length || boundary) {
-      failures.push({ route, bad, boundary })
+    if (bad.length || boundary || blank) {
+      failures.push({ route, bad, boundary, blank })
       console.log(`  ✗ ${route}`)
       if (boundary) console.log('      the error boundary rendered')
+      if (blank)    console.log('      the page rendered NOTHING — did the bundle load?')
       for (const b of bad.slice(0, 2)) console.log('      ' + b)
     } else {
       console.log(`  ✓ ${route}`)
