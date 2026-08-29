@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Bell } from 'lucide-react'
+import { ChevronRight, Bell, MapPin } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -107,38 +107,92 @@ export default function LiveBookingStrip() {
 
   const tone = waiting.length ? 'saffron' : hunting.length ? 'forest' : 'ink'
 
+  const day = lines[0].booking_requests?.event_date
+  const when = day ? new Date(day + 'T00:00:00') : null
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const days = when ? Math.round((when - today) / 86400000) : null
+
+  /* "Tomorrow" beats "30 Aug" and "in 4 days" beats both when it is
+     further out. Somebody glancing at a home screen is orienting, not
+     reading a calendar. */
+  const whenLabel = days === 0 ? 'Today'
+    : days === 1 ? 'Tomorrow'
+    : days != null && days > 0 && days < 7 ? `In ${days} days`
+    : when ? when.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    : ''
+
   return (
-    <Link
-      to={`/book/instant?request=${req}`}
-      className={`mx-4 mt-3 flex items-center gap-3 rounded-[22px] p-3.5 ring-1 transition active:scale-[0.995] ${
-        tone === 'saffron' ? 'bg-saffron-400/15 ring-saffron-300/60'
-        : tone === 'forest' ? 'bg-forest-50 ring-forest-200/70'
-        : 'bg-white ring-ink/[0.06]'
-      }`}
-    >
-      {/* The faces of the services still moving. Three at most: this is a
-          strip, not the board. */}
-      <span className="flex shrink-0 -space-x-2">
-        {(hunting.length ? hunting : waiting.length ? waiting : confirmed).slice(0, 3).map(l => (
-          <TradeSprite key={l.id} trade={l.trade} serviceId={l.service_id} active={!!hunting.length} size={30} />
-        ))}
-      </span>
+    <section className="mx-4 mt-4">
+      {/* Named, the way the reference does it. "You have a booking" tells
+          somebody the card is THEIRS before they read a word of it —
+          which is the difference between a card people scan past and one
+          they tap. */}
+      <p className="mb-2 type-overline text-ink-mute">You have a booking</p>
 
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-extrabold leading-tight text-ink">
-          {headline}
-        </span>
-        <span className="mt-0.5 block truncate text-[12px] font-semibold text-ink-soft">
-          {waiting.length
-            ? `Pay ${formatINR(Math.round(waiting.reduce((n, l) => n + l.quoted_amount_paise, 0) / 100))} to confirm your date`
-            : hunting.length
-              ? 'We will alert you the moment someone accepts'
-              : 'Your masters will call you to agree the details'}
-        </span>
-      </span>
+      <Link
+        to={`/book/instant?request=${req}`}
+        className={`block overflow-hidden rounded-[22px] bg-white ring-1 transition active:scale-[0.995] ${
+          waiting.length ? 'ring-saffron-300/70' : 'ring-ink/[0.07]'
+        }`}
+      >
+        {/* The band carries the state and nothing else does, so the card
+            below it can stay white and legible. */}
+        <div className={`flex items-center gap-2 px-4 py-2 text-[11.5px] font-extrabold ${
+          waiting.length ? 'bg-saffron-400/20 text-saffron-900'
+          : hunting.length ? 'bg-forest-50 text-forest-800'
+          : 'bg-plum-50 text-plum-800'
+        }`}>
+          {hunting.length > 0 && (
+            <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-forest-500 opacity-75 motion-reduce:hidden" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-forest-600" />
+            </span>
+          )}
+          <span className="min-w-0 flex-1 truncate">{headline}</span>
+          {whenLabel && <span className="shrink-0 opacity-70">{whenLabel}</span>}
+        </div>
 
-      {waiting.length > 0 && <Bell size={15} className="shrink-0 text-saffron-700" />}
-      <ChevronRight size={17} className="shrink-0 text-ink-mute" />
-    </Link>
+        <div className="flex items-center gap-3 p-4">
+          {/* The faces of what is actually being booked. Three at most —
+              a fourth adds nothing a "+2" does not say better. */}
+          <span className="flex shrink-0 -space-x-2.5">
+            {lines.slice(0, 3).map(l => (
+              <TradeSprite key={l.id} trade={l.trade} serviceId={l.service_id} active={!!hunting.length} size={36} />
+            ))}
+            {lines.length > 3 && (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.06] text-[11px] font-extrabold text-ink-soft ring-2 ring-white">
+                +{lines.length - 3}
+              </span>
+            )}
+          </span>
+
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14.5px] font-extrabold leading-tight text-ink">
+              {lines.slice(0, 2).map(l => l.service_name).join(', ')}
+              {lines.length > 2 ? ` +${lines.length - 2}` : ''}
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
+              {area && <><MapPin size={12} className="shrink-0 text-ink-mute" />{area}</>}
+            </span>
+          </span>
+
+          <ChevronRight size={18} className="shrink-0 text-ink-mute" />
+        </div>
+
+        {/* The one row that is a decision rather than a status. Only when
+            money is actually owed. */}
+        {waiting.length > 0 && (
+          <div className="flex items-center justify-between border-t border-saffron-300/40 bg-saffron-400/10 px-4 py-3">
+            <span className="text-[12.5px] font-bold text-saffron-900">
+              Pay to confirm your date
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-3.5 py-1.5 text-[12.5px] font-extrabold text-plum-950">
+              <Bell size={12} />
+              {formatINR(Math.round(waiting.reduce((n, l) => n + l.quoted_amount_paise, 0) / 100))}
+            </span>
+          </div>
+        )}
+      </Link>
+    </section>
   )
 }

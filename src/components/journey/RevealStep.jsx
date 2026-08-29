@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import { offersFor } from '../../config/offers'
+import OfferCard from '../offers/OfferCard'
 import {
   BookmarkCheck, ChevronDown, Pencil, Plus, RotateCcw, ShieldCheck, SlidersHorizontal, Sparkles,
 } from 'lucide-react'
@@ -50,6 +52,19 @@ export default function RevealStep({
   decorLevel, decorLabel, chapters, selections, onEdit, savings,
   onOpenMap, onRestart, onSaveExit, extrasCount, sourcing,
 }) {
+  /* The offers this basket qualifies for.
+   *
+   * Priced against the LOW end of the range, deliberately. An offer
+   * quoted against the high end is a saving the customer may never see,
+   * and a range whose discount is itself a range is not a number
+   * anybody can act on. */
+  const prebookOffers = useMemo(() => offersFor({
+    subtotalPaise: Math.round((quote?.range?.low ?? 0) * 100),
+    lineCount: chapters?.length ?? 0,
+    eventDate: null,
+    isFirstBooking: true,
+  }), [quote?.range?.low, chapters?.length])
+
   const reduced = useReducedMotion()
   const [revealed, setRevealed] = useState(reduced)
   const [openBreakdown, setOpenBreakdown] = useState(false)
@@ -186,6 +201,28 @@ export default function RevealStep({
           </p>
         )}
       </div>
+
+      {/* ── What this booking has earned ──────────────────────────
+          The same offer engine the instant flow uses, on the pre-book
+          reveal — because a customer who has just spent twenty minutes
+          building a wedding is the LAST person who should discover
+          afterwards that a discount existed.
+
+          Locked ones stay visible saying what would unlock them. On a
+          pre-book journey that is genuinely useful: "add one more
+          service" is a decision somebody can still act on here, where
+          on the instant flow it is a nudge. */}
+      {prebookOffers.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {prebookOffers.slice(0, 2).map(o => (
+            <OfferCard key={o.id} offer={o} applied={false} compact />
+          ))}
+          <p className="px-1 text-[11px] leading-snug text-ink-mute">
+            Applied when your coordinator confirms the booking. Sambramo funds
+            these — your masters are paid their full rate.
+          </p>
+        </div>
+      )}
 
       {/* ── Why it is a range and not a figure ───────────────────── */}
       <p className="mt-3 flex items-start gap-2 px-1 text-[11.5px] leading-relaxed text-ink-mute">
