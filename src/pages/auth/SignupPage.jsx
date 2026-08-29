@@ -200,11 +200,14 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
-      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      /* The session comes back from the verify. Handing it straight to
+         completeProfile removes a getUser round trip from the slowest
+         moment in the whole app. */
+      const verified = await verifyEmailOtp(email.trim().toLowerCase(), code)
       const phoneFormatted = phone.trim()
         ? (phone.trim().startsWith('+') ? phone.trim() : `+91${phone.replace(/\D/g, '')}`)
         : null
-      await completeProfile({ fullName, role, phone: phoneFormatted })
+      await completeProfile({ fullName, role, phone: phoneFormatted, user: verified?.user ?? verified?.data?.user })
       // Explicit redirect — don't wait for useEffect
       const target = role === 'vendor' ? '/onboarding/vendor'
                    : role === 'admin'  ? '/dashboard/admin'

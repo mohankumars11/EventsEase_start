@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearJourney } from '../lib/journey'
 
@@ -62,6 +62,19 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  /* True while completeProfile is mid-flight.
+   *
+   * Signing in fires onAuthStateChange, which calls fetchProfile — and
+   * fetchProfile WRITES a placeholder row when it finds none. During
+   * sign-up that races completeProfile writing the real one: two
+   * selects, two upserts, on the same row, milliseconds apart, with the
+   * loser's values silently winning about half the time.
+   *
+   * It is also two more round trips at the slowest moment in the app.
+   * completeProfile ends by calling setProfile itself, so there is
+   * nothing for the listener to do except get in the way. */
+  const completing = useRef(false)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -71,7 +84,7 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
+      if (session?.user) { if (!completing.current) fetchProfile(session.user.id) }
       else { setProfile(null); setLoading(false) }
     })
 
@@ -193,9 +206,27 @@ export function AuthProvider({ children }) {
    * So an existing profile keeps its role and only fills blanks. The
    * name is still updated, because somebody retyping it means it.
    */
-  async function completeProfile({ fullName, role, city, phone }) {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+  async function completeProfile({ fullName, role, city, phone, user: known }) {
+    /* The user is passed in, not fetched.
+     *
+     * This began with `await supabase.auth.getUser()` — a network round
+     * trip to ask the server about a session the caller was holding.
+     * Verifying an OTP already returns the user, so the trip bought
+     * nothing and cost a second of somebody staring at the code screen
+     * wondering whether their tap registered.
+     *
+     * Counted, sign-in was five sequential round trips: verify, getUser,
+     * select, upsert, and fetchProfile's own select behind it. On mobile
+     * data that is the "it goes back to the OTP page" everybody
+     * reported — not a bounce, just a long enough wait to look like one.
+     *
+     * Falls back to the old path when nobody passes a user, so no caller
+     * breaks. */
+    const authUser = known ?? (await supabase.auth.getUser()).data.user
     if (!authUser) throw new Error('Not authenticated')
+
+    completing.current = true
+    try {
 
     const { data: existing } = await supabase
       .from('profiles').select('role, city, phone').eq('id', authUser.id).maybeSingle()
@@ -219,8 +250,12 @@ export function AuthProvider({ children }) {
     // Spent. Left set, it would make the next account created in this
     // browser a partner too.
     try { localStorage.removeItem(PENDING_ROLE) } catch { /* storage off */ }
-    setProfile(data)
-    return data
+      setProfile(data)
+      setLoading(false)
+      return data
+    } finally {
+      completing.current = false
+    }
   }
 
   // ── Email / password (kept for admin access) ─────────

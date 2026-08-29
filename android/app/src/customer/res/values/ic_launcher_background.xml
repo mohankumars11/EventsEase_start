@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The adaptive icon's background layer.
+
+  main/res sets this to #FFFFFF, which is right for the Capacitor default
+  (a dark compass on white) and wrong for ours: the foreground is a
+  coloured tile, so a white background shows as a ring around it on every
+  launcher that uses the adaptive path — and adaptive is the default on
+  Android 8 and later, which is nearly every phone.
+
+  Matched to the darkest stop of each flavour's gradient so the seam is
+  invisible even where a launcher masks tighter than the foreground art.
+-->
+<resources>
+    <color name="ic_launcher_background">#2E1065</color>
+</resources>

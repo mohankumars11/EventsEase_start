@@ -133,7 +133,10 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      /* The session comes back from the verify. Handing it straight to
+         completeProfile removes a getUser round trip from the slowest
+         moment in the whole app. */
+      const verified = await verifyEmailOtp(email.trim().toLowerCase(), code)
       // If redirected here from a gated page (e.g. /plan), go back there.
       // Otherwise /dashboard — DashboardRedirect will route by role once profile loads.
       if (from) navigate(from.pathname + (from.search ?? ''), { replace: true })
