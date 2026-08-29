@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-api-bundle.mjs --check && vite build",
+    "build": "node scripts/build-api-bundle.mjs --check && vite build && node scripts/write-version.mjs",
     "preview": "vite preview",
     "build:api": "node scripts/build-api-bundle.mjs",
     "app:customer": "node scripts/capacitor-config.mjs customer && npm run build && npx cap sync",

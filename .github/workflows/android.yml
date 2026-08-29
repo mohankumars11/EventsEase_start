@@ -178,6 +178,11 @@ jobs:
           # on either side. The script exits non-zero rather than skip.
           node scripts/write-sw-config.mjs
 
+          # Publishes which build this is, so an INSTALLED app can notice
+          # a newer one exists. The apk cannot update itself and there is
+          # no store updater yet.
+          node scripts/write-version.mjs
+
           ls -la dist/ | head
           test -f dist/index.html
           grep -q '__FIREBASE_SW_CONFIG__' dist/firebase-messaging-sw.js             && { echo 'service worker config was NOT baked'; exit 1; } || true

@@ -14,6 +14,8 @@ import ErrorBoundary from './components/layout/ErrorBoundary'
 import JourneyTracker from './components/common/JourneyTracker'
 import ResumePrompt from './components/common/ResumePrompt'
 import SplashScreen from './components/ui/SplashScreen'
+import UpdateAvailable from './components/common/UpdateAvailable'
+import { isPartnerSurface as _isPartner } from './config/surface'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
@@ -604,6 +606,10 @@ export default function App() {
                   last so it paints above everything, and dismissible by tap
                   so it can never trap anyone on a logo. */}
               <SplashScreen />
+              {/* Only ever visible in the installed app, and only when a
+                  newer build actually exists. See the component — the web
+                  updates itself, so it renders nothing there. */}
+              <UpdateAvailable app={_isPartner() ? 'partner' : 'customer'} />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —
