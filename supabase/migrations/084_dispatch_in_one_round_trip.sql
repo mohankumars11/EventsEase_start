@@ -41,6 +41,18 @@
 
 BEGIN;
 
+-- `extensions` is NOT optional here.
+--
+-- Supabase installs PostGIS into the `extensions` schema (see migration
+-- 057: `CREATE EXTENSION postgis WITH SCHEMA extensions`). A SECURITY
+-- DEFINER function pins its own search_path, so one set to `public`
+-- alone cannot see ST_Distance or ST_DWithin at all — the function
+-- creates fine and fails at CALL time with "function
+-- st_distance(extensions.geography, extensions.geography) does not
+-- exist", which reads like a type problem and is a visibility one.
+--
+-- Migrations 057 and 060 both set `public, extensions` for exactly this
+-- reason.
 CREATE OR REPLACE FUNCTION public.dispatch_wave(
   p_request_id       UUID,
   p_point            GEOGRAPHY,
@@ -54,7 +66,7 @@ CREATE OR REPLACE FUNCTION public.dispatch_wave(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_line     RECORD;

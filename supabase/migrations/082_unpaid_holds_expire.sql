@@ -45,6 +45,18 @@ BEGIN;
 CREATE OR REPLACE FUNCTION public.unpaid_hold_minutes()
 RETURNS INT LANGUAGE SQL IMMUTABLE AS $$ SELECT 45 $$;
 
+-- `extensions` is NOT optional here.
+--
+-- Supabase installs PostGIS into the `extensions` schema (see migration
+-- 057: `CREATE EXTENSION postgis WITH SCHEMA extensions`). A SECURITY
+-- DEFINER function pins its own search_path, so one set to `public`
+-- alone cannot see ST_Distance or ST_DWithin at all — the function
+-- creates fine and fails at CALL time with "function
+-- st_distance(extensions.geography, extensions.geography) does not
+-- exist", which reads like a type problem and is a visibility one.
+--
+-- Migrations 057 and 060 both set `public, extensions` for exactly this
+-- reason.
 CREATE OR REPLACE FUNCTION public.match_partners(
   p_trade           TEXT,
   p_point           GEOGRAPHY,
@@ -58,7 +70,7 @@ RETURNS TABLE (vendor_id UUID, distance_m INT, rating NUMERIC)
 LANGUAGE SQL
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
   SELECT
     v.id,
@@ -133,7 +145,7 @@ CREATE OR REPLACE FUNCTION public.expire_unpaid_acceptances()
 RETURNS INT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_n INT;
