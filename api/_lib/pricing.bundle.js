@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 0b390ca930954b75
+// inputs: 10e496dfc89b0583
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
