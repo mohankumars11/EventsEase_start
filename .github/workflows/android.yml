@@ -201,7 +201,13 @@ jobs:
       # and passes the other thirteen.
       - name: Open every screen
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser             || sudo snap install chromium || true
+          # No install. The ubuntu-latest image ships Google Chrome at
+          # /usr/bin/google-chrome, which the script already looks for.
+          # `apt install chromium-browser` on 24.04 is a snap shim that
+          # either fails or lands somewhere the script does not check,
+          # and installing a browser onto a runner that has one is a
+          # minute of every build spent on nothing.
+          which google-chrome google-chrome-stable chromium 2>/dev/null || true
           node scripts/smoke-routes.mjs
 
       - name: Sync Capacitor

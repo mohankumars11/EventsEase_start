@@ -118,9 +118,21 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 const profile = mkdtempSync(join(tmpdir(), 'sb-smoke-'))
 const CDP = 9412
 
+/* --no-sandbox on Linux, and it is not optional there.
+ *
+ * A CI runner executes as root, and Chrome refuses to start headless as
+ * root with its sandbox on — it exits before opening the debugging
+ * port, so the only symptom is this script timing out waiting for a
+ * port that will never appear. On Windows the sandbox is fine and the
+ * flag is left off, because disabling a security boundary by habit is
+ * how it ends up disabled where it mattered. */
+const LINUX = process.platform === 'linux'
+
 const browser = spawn(EDGE, [
   '--headless=new', `--remote-debugging-port=${CDP}`, `--user-data-dir=${profile}`,
-  '--no-first-run', '--disable-gpu', '--disable-dev-shm-usage', 'about:blank',
+  '--no-first-run', '--disable-gpu', '--disable-dev-shm-usage',
+  ...(LINUX ? ['--no-sandbox', '--disable-setuid-sandbox'] : []),
+  'about:blank',
 ], { stdio: 'ignore' })
 
 let ws, id = 0
@@ -144,7 +156,14 @@ try {
     } catch { /* not up yet */ }
     if (!url) await sleep(250)
   }
-  if (!url) throw new Error('browser did not expose a debugging port')
+  if (!url) {
+    // Naming the two things that actually cause this, because the
+    // symptom — a timeout — points at neither.
+    throw new Error(
+      'browser did not expose a debugging port. On Linux this is almost '
+      + 'always the sandbox refusing to run as root; check that '
+      + '--no-sandbox was applied.')
+  }
 
   ws = new WebSocket(url)
   await new Promise(r => { ws.onopen = r })
