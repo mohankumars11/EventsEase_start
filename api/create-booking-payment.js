@@ -64,6 +64,42 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'lineIds required' })
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     LIVE KEYS WITHOUT A LIVE WEBHOOK SECRET TAKE MONEY AND LOSE IT
+     ══════════════════════════════════════════════════════════════
+
+     Razorpay's test and live webhooks are separate objects with
+     separate secrets. Switching the API keys to live does not carry the
+     test webhook across — so a live payment arrives signed with a
+     secret this server has never seen, the signature check rejects it,
+     and `api/_lib/bookingCapture.js` never runs.
+
+     The customer is charged. Nothing is recorded. The line stays
+     unpaid, the master is never confirmed, and the only trace is a row
+     in somebody else's dashboard.
+
+     That is the worst state this system can reach, and it is entirely
+     preventable: refuse to open the checkout at all. No money is taken,
+     the customer sees a sentence instead of a silent loss, and the fix
+     is one environment variable.
+
+     Deliberately checked here rather than trusted to a deployment
+     checklist. A checklist is a thing somebody does once. */
+  const isLive = String(process.env.RAZORPAY_KEY_ID ?? '').startsWith('rzp_live')
+  const hasLiveWebhook = !!process.env.RAZORPAY_WEBHOOK_SECRET_LIVE
+
+  if (isLive && !hasLiveWebhook) {
+    return res.status(503).json({
+      error: 'Payments are being switched on',
+      detail:
+        'Live keys are configured but the live webhook secret is not, so a '
+        + 'payment could be taken without being recorded. Set '
+        + 'RAZORPAY_WEBHOOK_SECRET_LIVE from the webhook created in Razorpay '
+        + 'Live mode.',
+      scan: 'Payments are back in a moment — nothing has been charged.',
+    })
+  }
+
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
 
   // Ownership is checked here rather than trusted, because this runs with

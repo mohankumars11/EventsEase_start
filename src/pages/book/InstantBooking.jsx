@@ -78,6 +78,48 @@ const dayLabel = (d, i) =>
 /* Where the in-flight booking id is parked between visits. */
 const LIVE_BOOKING = 'sambramo_live_booking'
 
+/* And where the half-finished ANSWERS are kept.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * LEAVING THIS SCREEN USED TO THROW EVERYTHING AWAY
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * A customer picks a date, types an address, chooses six services and
+ * answers the options — then takes a call, or backs out to check
+ * something, and comes back to an empty form. Every one of those taps
+ * is gone.
+ *
+ * The pre-book journey has never had this problem: it saves as it goes
+ * and offers to resume. The instant flow, which is the one used by
+ * somebody in a hurry, was the one that forgot.
+ *
+ * ── Answers, not a booking ──────────────────────────────────────────
+ * This is the DRAFT — what they told us before anything was sent. The
+ * booking id (LIVE_BOOKING) is separate and means something different:
+ * a real request on the server with masters being asked about it.
+ *
+ * Cleared when it is dispatched, so a finished booking cannot repopulate
+ * the next one.
+ *
+ * ── Why a day ───────────────────────────────────────────────────────
+ * Long enough to cover a call, a night's sleep, a commute. Short enough
+ * that a draft from last week does not surface as though it were
+ * today's plan — the event date in it would be stale and the prices
+ * would have moved.
+ */
+const DRAFT = 'sambramo_instant_draft'
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000
+
+function readDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT)
+    if (!raw) return null
+    const d = JSON.parse(raw)
+    if (!d?.at || Date.now() - d.at > DRAFT_TTL_MS) return null
+    return d
+  } catch { return null }
+}
+
 export default function InstantBooking() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -125,21 +167,35 @@ export default function InstantBooking() {
     // being found for them right now did not come back to fill in a
     // form again.
     try { if (localStorage.getItem(LIVE_BOOKING)) return 4 } catch { /* storage off */ }
+
+    /* And back to the step they were on.
+     *
+     * Restoring the answers but not the position is half a resume: the
+     * customer lands on "When is it?" with a date already chosen and
+     * has to tap Continue through four screens they have finished. */
+    const d = readDraft()
+    if (d?.step != null) return Math.min(d.step, 3)
+
     return handedDate ? 1 : 0
   })
-  const [date, setDate] = useState(
-    handedDate ? new Date(`${handedDate}T00:00:00`) : null,
-  )
-  const [where, setWhere] = useState(null)
-  const [guests, setGuests] = useState(30)
-  const [picked, setPicked] = useState([])
-  const [durations, setDurations] = useState({})
+  const [date, setDate] = useState(() => {
+    if (handedDate) return new Date(`${handedDate}T00:00:00`)
+    // Re-hydrated from the draft. Stored as ISO because a Date does not
+    // survive JSON, and a draft that restored every answer EXCEPT the
+    // date would drop somebody back on step 0 to pick it again.
+    const iso = readDraft()?.date
+    return iso ? new Date(iso) : null
+  })
+  const [where, setWhere] = useState(() => readDraft()?.where ?? null)
+  const [guests, setGuests] = useState(() => readDraft()?.guests ?? 30)
+  const [picked, setPicked] = useState(() => readDraft()?.picked ?? [])
+  const [durations, setDurations] = useState(() => readDraft()?.durations ?? {})
   /* The choices per service — { photography: { style: 'candid' } }.
    *
    * Defaulted the moment a service is picked, so a price can be shown
    * before anybody answers anything and skipping the questions costs
    * the base rate rather than nothing. */
-  const [options, setOptions] = useState({})
+  const [options, setOptions] = useState(() => readDraft()?.options ?? {})
   const [offerId, setOfferId] = useState(null)
   /* The offer to CELEBRATE, and the set already seen.
    *
@@ -149,7 +205,25 @@ export default function InstantBooking() {
    * people to ignore the one that matters. */
   const [unlocked, setUnlocked] = useState(null)
   const seenOffers = useRef(new Set())
-  const [notes, setNotes] = useState({})
+  const [notes, setNotes] = useState(() => readDraft()?.notes ?? {})
+
+  /* Written on every change, read on mount.
+   *
+   * An effect rather than a save button: somebody who leaves this screen
+   * did not intend to save, and asking them to would be asking them to
+   * predict that they were about to be interrupted. */
+  useEffect(() => {
+    if (step >= 4) return          // dispatched — the booking id owns it now
+    if (!picked.length && !where) return   // nothing worth keeping yet
+    try {
+      localStorage.setItem(DRAFT, JSON.stringify({
+        at: Date.now(),
+        step, guests, picked, durations, options, notes, where,
+        date: date ? date.toISOString() : null,
+        occasionId,
+      }))
+    } catch { /* storage off */ }
+  }, [step, guests, picked, durations, options, notes, where, date, occasionId])
   const [requestId, setRequestId] = useState(() => {
     if (resumeId) return resumeId
     // Picked up from the last visit. Cleared as soon as the board says
@@ -348,7 +422,12 @@ export default function InstantBooking() {
        * This is the id, not the answers: what to show them is read from
        * the server, which is the only thing that knows what has happened
        * since. */
-      try { localStorage.setItem(LIVE_BOOKING, body.requestId) } catch { /* storage off */ }
+      try {
+        localStorage.setItem(LIVE_BOOKING, body.requestId)
+        // The answers have become a booking. Keeping them would offer to
+        // resume a form whose result already exists.
+        localStorage.removeItem(DRAFT)
+      } catch { /* storage off */ }
     } catch (err) {
       // Offline, DNS, CORS, an aborted request. The customer does not
       // need the distinction; they need to know it did not go through
@@ -376,6 +455,51 @@ export default function InstantBooking() {
       // the body's gradient through and the screen read as a different
       // product.
       <div className={`a-canvas min-h-screen ${ACTION_BAR_CLEARANCE}`}>
+        {offerSheet}
+
+        {/* ══════════════════════════════════════════════════════════
+            A way out of the screen people spend the longest on
+            ══════════════════════════════════════════════════════════
+
+            This block returned BEFORE the page header, so the matching
+            screen had no back arrow, no close, no anything. A customer
+            watching masters be found could not leave except by killing
+            the app — on the one screen they sit on for a minute, having
+            just committed to a booking.
+
+            Back does not cancel. It leaves the booking running and goes
+            to Track, because that is what "back" means here: the
+            masters keep being asked whether or not somebody is
+            watching, and pretending otherwise would be the more
+            frightening lie.
+
+            Cancelling is the OTHER control, per service, on each row —
+            because a booking is per line and always has been. */}
+        <header className="mx-auto flex max-w-2xl items-center gap-2 px-4 pt-4">
+          <button
+            onClick={() => navigate('/track')}
+            className="rounded-full p-2 text-ink-soft transition active:scale-95"
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+
+          <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-ink-soft">
+            {occasion?.name ?? 'Your booking'}
+            {whereReady?.point?.areaLabel ? ` · ${whereReady.point.areaLabel}` : ''}
+          </span>
+
+          {/* Says where "back" goes, because an unlabelled arrow on a
+              screen somebody is anxious about is a gamble they will not
+              take. */}
+          <button
+            onClick={() => navigate('/track')}
+            className="rounded-full bg-ink/[0.05] px-3 py-1.5 text-[12px] font-extrabold text-ink-soft transition active:scale-95"
+          >
+            Track it later
+          </button>
+        </header>
+
         <MatchingBoard
           requestId={requestId}
           onPay={() => navigate('/track')}

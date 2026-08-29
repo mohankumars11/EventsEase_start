@@ -45,7 +45,23 @@ function readRawBody(req) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  /* Test and live webhooks are separate objects with separate secrets.
+   *
+   * Razorpay keeps them per-mode: switching the API keys to live does
+   * NOT carry the test webhook over, and the live one is created by
+   * hand with its own secret. During the switch both may be delivering
+   * — a test payment retrying while a live one arrives — so both are
+   * accepted, and whichever verifies wins.
+   *
+   * The alternative is a window where one mode's deliveries all fail
+   * signature and the payments they describe go unrecorded. Money in,
+   * nothing written, is the single worst state this system has. */
+  const secrets = [
+    process.env.RAZORPAY_WEBHOOK_SECRET,
+    process.env.RAZORPAY_WEBHOOK_SECRET_LIVE,
+  ].filter(Boolean)
+
+  const secret = secrets[0]
   if (!secret) return res.status(503).json({ error: 'Webhook is not configured' })
 
   const raw = await readRawBody(req)
