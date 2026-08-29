@@ -42,6 +42,7 @@
  * master in that trade is approved or frees the date up.
  */
 import { createClient } from '@supabase/supabase-js'
+import { cors } from './_lib/cors.js'
 import { notifyPartners } from './_lib/fcm.js'
 // One import, and it has an extension Node can resolve. See the header of
 // scripts/build-api-bundle.mjs for why this is a bundle rather than five
@@ -105,6 +106,9 @@ const mayUseSeededNetwork = customerId =>
   ALLOW_SYNTHETIC_GLOBALLY || DEMO_CUSTOMERS.has(customerId)
 
 export default async function handler(req, res) {
+  // Preflight, and the headers every response needs. See _lib/cors.js.
+  if (cors(req, res)) return
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 

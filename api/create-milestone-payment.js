@@ -32,6 +32,7 @@
 // about. `api/razorpay-webhook.js` is what actually marks money received.
 // This endpoint only opens the order and parks a PENDING row.
 import { createClient } from '@supabase/supabase-js'
+import { cors } from './_lib/cors.js'
 
 // Kept in step with src/config/celebrationPayments.js by
 // scripts/check-payment-schedule.mjs, which fails the build if these drift —
@@ -55,6 +56,9 @@ const LOCK_AMOUNT = 1000
 const PAYMENT_METHOD = 'upi'
 
 export default async function handler(req, res) {
+  // Preflight, and the headers every response needs. See _lib/cors.js.
+  if (cors(req, res)) return
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { subjectType, subjectId, milestoneId, scheduleVersion } = req.body || {}

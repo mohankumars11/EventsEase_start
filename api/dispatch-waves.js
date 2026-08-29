@@ -40,6 +40,7 @@
  * the first of those impossible rather than merely unlikely.
  */
 import { createClient } from '@supabase/supabase-js'
+import { cors } from './_lib/cors.js'
 import { OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM } from './_lib/pricing.bundle.js'
 
 const url = process.env.VITE_SUPABASE_URL
@@ -59,6 +60,9 @@ function authorised(req) {
 }
 
 export default async function handler(req, res) {
+  // Preflight, and the headers every response needs. See _lib/cors.js.
+  if (cors(req, res)) return
+
   if (!authorised(req)) return res.status(401).json({ error: 'Unauthorised' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 

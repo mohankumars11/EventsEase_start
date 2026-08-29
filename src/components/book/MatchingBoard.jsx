@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Loader2, MapPinned, Search } from 'lucide-react'
+import { apiUrl } from '../../lib/api'
+import { Check, Loader2, MapPinned, Search, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID } from '../../config/instantBooking'
@@ -89,7 +90,7 @@ function remaining(iso) {
   return s > 0 ? s : 0
 }
 
-function LineRow({ line, offers }) {
+function LineRow({ line, offers, onCancel }) {
   const state = stateOf(line)
   const secs = useCountdown(state === 'searching' ? line.expires_at : null)
   const notified = offers.filter(o => o.line_id === line.id).length
@@ -151,6 +152,20 @@ function LineRow({ line, offers }) {
       >
         {formatINR(Math.round(line.quoted_amount_paise / 100))}
       </span>
+
+      {/* Small, grey, and always there while the line is live.
+          A cancel that has to be hunted for is a support call; one as
+          loud as the price competes with it. This is the size of an
+          affordance somebody only looks for when they want it. */}
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          aria-label={`Cancel ${line.service_name}`}
+          className="-mr-1 shrink-0 rounded-full p-1.5 text-ink-mute/50 transition hover:bg-ink/[0.05] hover:text-ink-soft"
+        >
+          <X size={15} />
+        </button>
+      )}
     </li>
   )
 }
@@ -310,7 +325,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
      * calling this on every poll would be four requests per wave doing
      * nothing. It stops the moment nothing is hunting. */
     async function nudgeWaves() {
-      try { await fetch('/api/dispatch-waves', { method: 'POST' }) }
+      try { await fetch(apiUrl('/api/dispatch-waves'), { method: 'POST' }) }
       catch { /* a failed nudge is the cron's job. Never a visible error. */ }
     }
 
@@ -362,7 +377,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       const uid = (await supabase.auth.getUser()).data.user?.id
       if (!uid) { setPayError('Please sign in again to pay.'); return }
 
-      const res = await fetch('/api/create-booking-payment', {
+      const res = await fetch(apiUrl('/api/create-booking-payment'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ customerId: uid, lineIds: payableLines.map(l => l.id) }),
@@ -451,6 +466,21 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
   // Fed to the wave nudge above. A booking where everybody has answered
   // has nothing left to widen for, and should stop asking the server to.
   huntingRef.current = stillLooking > 0
+
+  /* Release the parked booking once nothing is live.
+   *
+   * InstantBooking reopens on the last booking id it saw, which is right
+   * while masters are being found and wrong the moment they are all paid
+   * or cancelled — a finished booking would then hijack every new one.
+   *
+   * Keyed on the lines rather than on a completion event, because a
+   * customer can finish a booking from three different screens and only
+   * this one knows the whole picture. */
+  useEffect(() => {
+    if (!loaded || !lines.length) return
+    const live = lines.some(l => ['pending', 'dispatching', 'accepted'].includes(l.status))
+    if (!live) { try { localStorage.removeItem('sambramo_live_booking') } catch { /* storage off */ } }
+  }, [loaded, lines])
 
   /* Which of the five things is happening, as one word.
    *
@@ -579,9 +609,25 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         {showing.map(l => {
           if (l.__pre) return <PendingRow key={l.id} id={l.id} name={l.service_name} />
 
-          const row = <LineRow key={l.id} line={l} offers={offers} />
-          // Only for a line somebody has said yes to and nobody has paid
-          // for. Every other state is a glance, not a decision.
+          const row = (
+            <LineRow
+              key={l.id}
+              line={l}
+              offers={offers}
+              /* Cancel belongs on a line that is still SEARCHING too, and
+                 that is where it was missing.
+                 A customer who books a photographer by mistake and
+                 watches "Asking masters" has no way out at all — not
+                 back, not out, nothing. Nobody has accepted, so nothing
+                 is owed and the refund is 100%: this is the cheapest
+                 cancellation in the whole ladder and it was the only one
+                 with no button. */
+              onCancel={['dispatching', 'accepted'].includes(l.status)
+                ? () => setCancelling(l)
+                : null}
+            />
+          )
+
           if (l.status !== 'accepted') return row
 
           const won = offers.find(o => o.line_id === l.id && o.status === 'ACCEPTED')

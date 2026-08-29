@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { apiUrl } from './api'
 import { openCheckout } from './payment/razorpayProvider'
 import { SETTLEMENT_ID, SCHEDULE_VERSION } from '../config/celebrationPayments'
 
@@ -62,7 +63,7 @@ export async function openCelebrationPayment({ subjectType, subjectId, contact =
   // ladder collected. A client that could name its own amount could name ₹1.
   let res
   try {
-    res = await fetch('/api/create-milestone-payment', {
+    res = await fetch(apiUrl('/api/create-milestone-payment'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

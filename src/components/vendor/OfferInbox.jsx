@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { apiUrl } from '../../lib/api'
 import { Camera, Check, Clock, MapPin, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -258,7 +259,7 @@ export default function OfferInbox({ vendorId }) {
      * and the customer's own board is subscribed to Realtime regardless.
      * This is the channel that reaches somebody who closed the app. */
     if (data?.ok && action === 'accept') {
-      fetch('/api/notify-customer', {
+      fetch(apiUrl('/api/notify-customer'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ lineId: data.line_id ?? data.lineId, event: 'accepted' }),

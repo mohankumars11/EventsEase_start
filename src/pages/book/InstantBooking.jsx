@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { apiUrl } from '../../lib/api'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Camera, Info, PencilLine } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -69,6 +70,9 @@ const dayLabel = (d, i) =>
   i === 0 ? 'Today' : i === 1 ? 'Tomorrow'
     : d.toLocaleDateString('en-IN', { weekday: 'short' })
 
+/* Where the in-flight booking id is parked between visits. */
+const LIVE_BOOKING = 'sambramo_live_booking'
+
 export default function InstantBooking() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -110,7 +114,14 @@ export default function InstantBooking() {
    */
   const handedDate = params.get('date')
 
-  const [step, setStep] = useState(resumeId ? 4 : handedDate ? 1 : 0)
+  const [step, setStep] = useState(() => {
+    if (resumeId) return 4
+    // A parked booking wins over a fresh start. Somebody with masters
+    // being found for them right now did not come back to fill in a
+    // form again.
+    try { if (localStorage.getItem(LIVE_BOOKING)) return 4 } catch { /* storage off */ }
+    return handedDate ? 1 : 0
+  })
   const [date, setDate] = useState(
     handedDate ? new Date(`${handedDate}T00:00:00`) : null,
   )
@@ -119,7 +130,13 @@ export default function InstantBooking() {
   const [picked, setPicked] = useState([])
   const [durations, setDurations] = useState({})
   const [notes, setNotes] = useState({})
-  const [requestId, setRequestId] = useState(resumeId)
+  const [requestId, setRequestId] = useState(() => {
+    if (resumeId) return resumeId
+    // Picked up from the last visit. Cleared as soon as the board says
+    // there is nothing left to watch, so a finished booking does not
+    // hijack the next one.
+    try { return localStorage.getItem(LIVE_BOOKING) } catch { return null }
+  })
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
 
@@ -194,7 +211,7 @@ export default function InstantBooking() {
      * screen where somebody is about to spend twenty thousand rupees.
      */
     try {
-      const res = await fetch('/api/dispatch-booking', {
+      const res = await fetch(apiUrl('/api/dispatch-booking'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -248,6 +265,18 @@ export default function InstantBooking() {
       if (!body.requestId) { setError('The booking was not created. Please try again.'); return }
 
       setRequestId(body.requestId)
+      /* Written down immediately.
+       *
+       * A customer who presses back, or is pulled away by a call, has a
+       * booking that is live on the server with masters being asked
+       * about it — and until now the app forgot the id the moment the
+       * component unmounted. They came back to an empty form and the
+       * only way to reach their own booking was to start another one.
+       *
+       * This is the id, not the answers: what to show them is read from
+       * the server, which is the only thing that knows what has happened
+       * since. */
+      try { localStorage.setItem(LIVE_BOOKING, body.requestId) } catch { /* storage off */ }
     } catch (err) {
       // Offline, DNS, CORS, an aborted request. The customer does not
       // need the distinction; they need to know it did not go through

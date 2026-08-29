@@ -33,6 +33,7 @@
  * label on it.
  */
 import { createClient } from '@supabase/supabase-js'
+import { cors } from './_lib/cors.js'
 import { sendPush, pushConfigured } from './_lib/fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
@@ -40,6 +41,9 @@ const anonKey = process.env.VITE_SUPABASE_ANON_KEY
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req, res) {
+  // Preflight, and the headers every response needs. See _lib/cors.js.
+  if (cors(req, res)) return
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey || !anonKey) return res.status(500).json({ error: 'Supabase not configured' })
 

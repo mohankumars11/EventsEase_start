@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { apiUrl } from '../../lib/api'
 import { Bell, BellOff, Loader2, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -112,7 +113,7 @@ export default function JobAlerts({ vendorId }) {
     setTesting(true); setTested(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/test-alert', {
+      const res = await fetch(apiUrl('/api/test-alert'), {
         method: 'POST',
         headers: { authorization: `Bearer ${session?.access_token ?? ''}` },
       })
