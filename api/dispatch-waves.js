@@ -68,6 +68,19 @@ export default async function handler(req, res) {
 
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
 
+  /* First, release the abandoned acceptances.
+   *
+   * An `accepted` line nobody paid for holds its master's whole date
+   * out of the market (migration 082). Left alone it does that for
+   * ever, and the observed result was the only real photographer in
+   * Bengaluru being correctly invisible to every booking — every part
+   * working as designed, and no job fillable.
+   *
+   * Done before the waves widen, so a master freed here can be matched
+   * in the same run rather than the next one. */
+  const { data: releasedHolds } = await db.rpc('expire_unpaid_acceptances').then(r => r, () => ({ data: null }))
+
+
   // Offers nobody answered are marked before the queue is read, so a line
   // whose window has just closed is picked up on this pass rather than
   // the next one.
