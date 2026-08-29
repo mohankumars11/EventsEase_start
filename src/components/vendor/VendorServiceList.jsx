@@ -5,6 +5,12 @@ import {
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
+import { TRADE_FOR_SERVICE } from '../../config/vendor'
+
+/* The trades `match_partners` can match on, read from the same map
+   dispatch uses — so this list cannot drift from what actually works.
+   A hand-typed copy goes stale the first time a trade is added. */
+const DISPATCH_TRADES = [...new Set(Object.values(TRADE_FOR_SERVICE))].sort()
 
 /**
  * The vendor's price list.
@@ -70,7 +76,9 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
     // stay "quote on request" rather than becoming a free item.
     const payload = {
       name:        fields.name.trim(),
-      category:    fields.category.trim() || null,
+      // Never null: the form requires it, and a row without a trade
+      // is a row dispatch cannot see.
+      category:    fields.category.trim(),
       description: fields.description.trim() || null,
       price:        fields.price === '' ? null : Number(fields.price),
       unit:         fields.unit,
@@ -194,6 +202,26 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                         No price
                       </span>
                     )}
+                    {/* ══════════════════════════════════════════════════
+                        The silence that cost a partner every job
+                        ══════════════════════════════════════════════════
+
+                        `match_partners` joins on `category`. A row whose
+                        category is null, or is free text no trade
+                        matches, is offered to NOBODY -- and nothing said
+                        so anywhere. A real partner has a row reading
+                        "videpgraphy" that has never once been dispatched,
+                        and from this screen it looked identical to the
+                        row beside it that works.
+
+                        The picker above now makes the field required, so
+                        no new row can be born dead. This is for the rows
+                        that already were. */}
+                    {s.is_active && !DISPATCH_TRADES.includes(s.category) && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
+                        Never offered — fix the work type
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-plum-700 font-semibold mt-0.5">{describeService(s)}</div>
                   {s.description && (
@@ -308,6 +336,45 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
             placeholder="Same as your profile"
           />
         </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          The field that decides whether this partner gets any work
+          ══════════════════════════════════════════════════════════
+
+          `vendor_services.category` is what `match_partners` joins on.
+          A row whose category is blank matches NOTHING — the partner is
+          invisible to dispatch for that service, permanently, with no
+          error anywhere.
+
+          It used to be a small optional "Tag as …" link beside the save
+          button, carrying `hidden sm:inline-flex` — so on a phone it did
+          not exist. Every service added from a phone had a null
+          category. Measured across the three real partners: five of
+          seventeen rows were unmatched, including BOTH rows of the
+          newest partner, who therefore never received one offer.
+
+          A required select of the trades dispatch actually knows, and
+          not free text: a partner typing "Photgraphy" was writing a row
+          that could never match, and nothing told them. */}
+      <div>
+        <label className="label" htmlFor="svc-trade">
+          What kind of work is this? <span className="text-red-600">*</span>
+        </label>
+        <select
+          id="svc-trade"
+          className="input"
+          value={f.category}
+          onChange={e => set('category', e.target.value)}
+          required
+        >
+          <option value="">Choose one…</option>
+          {DISPATCH_TRADES.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
+          This is how customers find you. Jobs are matched on it, so a
+          service without one is never offered to you.
+        </p>
       </div>
 
       <div>

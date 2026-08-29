@@ -104,16 +104,42 @@ export const OFFER_WINDOW_SECONDS = Number(
  * 22 km, and the partner's own `service_radius_km` still has to agree.
  */
 export const WAVES = [
-  { wave: 1, partners: 5, radiusMultiplier: 1 },
-  { wave: 2, partners: 5, radiusMultiplier: 2 },
-  { wave: 3, partners: 8, radiusMultiplier: 3 },
+  /* A wave is "the next N nearest masters who have not been asked yet".
+   *
+   * It used to be "widen the circle" — 5 km, then 10, then 15. That
+   * excluded willing masters by geometry: one at 10.5 km with a 10 km
+   * setting was invisible for a job they would have driven to, and
+   * nobody was asked.
+   *
+   * Migration 086 removed the radius as a FILTER, so widening a circle
+   * that no longer filters is meaningless. The purpose waves actually
+   * served — do not notify two hundred people about one cake — is kept
+   * by asking in batches, nearest outward, until somebody says yes.
+   *
+   * `radiusMultiplier` stays at 1 because the radius is a backstop now,
+   * not a dial. */
+  { wave: 1, partners: 5,  radiusMultiplier: 1 },
+  { wave: 2, partners: 10, radiusMultiplier: 1 },
+  { wave: 3, partners: 20, radiusMultiplier: 1 },
 ]
 
-/** Beyond this a "nearby master" is a two-hour drive and the promise is false. */
-export const MAX_RADIUS_KM = 25
+/* The backstop, matching max_dispatch_radius_m() in migration 086.
+ *
+ * City scale, not neighbourhood scale. Far enough that no willing master
+ * in Bengaluru is excluded; close enough that a corrupt coordinate
+ * cannot offer a Koramangala birthday to somebody in Hyderabad.
+ *
+ * This is not a promise about how far a master will travel — that is the
+ * master's decision, made on the offer card, which shows the distance. */
+export const MAX_RADIUS_KM = 60
 
-/** Default the picker opens on. Most Bengaluru bookings fill inside it. */
-export const DEFAULT_RADIUS_KM = 5
+/* What dispatch asks for. No longer a customer-facing choice.
+ *
+ * The customer was being asked to pick a search radius, which is a
+ * question about our matching engine dressed up as a question about
+ * their party. They have no way to answer it well, and every answer
+ * except the largest cost them masters. */
+export const DEFAULT_RADIUS_KM = 60
 
 /* ═══════════════════════════════════════════════════════════════════
    MONEY

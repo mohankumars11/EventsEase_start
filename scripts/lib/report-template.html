@@ -1,0 +1,467 @@
+<title>Sambramo Deploy Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  /* The product's own two faces and its own palette. This report is
+     about Sambramo, so it is set in Sambramo — Playfair Display and
+     Manrope are what index.html loads, and the plum / saffron / forest
+     values are lifted from tailwind.config.js rather than invented. */
+  :root {
+    --ground:   #ffffff;
+    --sunk:     #faf8fd;
+    --ink:      #241043;
+    --muted:    #6f6483;
+    --hair:     #ebe6f4;
+    --hair-2:   #ddd4ec;
+    --saffron:  #b45309;
+    --saffron-b:#f59e0b;
+    --saffron-w:#fffbeb;
+    --forest:   #12694c;
+    --forest-w: #ecfdf5;
+    --rose:     #be123c;
+    --rose-w:   #fff1f3;
+    --plum:     #6d28d9;
+    --shadow:   0 1px 2px rgba(36, 16, 67, .05), 0 8px 24px -12px rgba(36, 16, 67, .16);
+  }
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground:   #150a24;
+      --sunk:     #1d1030;
+      --ink:      #f4eefc;
+      --muted:    #a698bd;
+      --hair:     #2e1e46;
+      --hair-2:   #3d2a58;
+      --saffron:  #fbbf24;
+      --saffron-b:#f59e0b;
+      --saffron-w:#2a1c08;
+      --forest:   #34d399;
+      --forest-w: #07271c;
+      --rose:     #fb7185;
+      --rose-w:   #2e0d18;
+      --plum:     #a78bfa;
+      --shadow:   0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:   #150a24;
+    --sunk:     #1d1030;
+    --ink:      #f4eefc;
+    --muted:    #a698bd;
+    --hair:     #2e1e46;
+    --hair-2:   #3d2a58;
+    --saffron:  #fbbf24;
+    --saffron-b:#f59e0b;
+    --saffron-w:#2a1c08;
+    --forest:   #34d399;
+    --forest-w: #07271c;
+    --rose:     #fb7185;
+    --rose-w:   #2e0d18;
+    --plum:     #a78bfa;
+    --shadow:   0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+  .prose { max-width: 64ch; }
+
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* ── Masthead ─────────────────────────────────────────────────── */
+  .head { padding: 72px 0 0; display: flex; flex-direction: column; gap: 14px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 800; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--saffron);
+  }
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 800; font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.04; letter-spacing: -.015em; margin: 0;
+  }
+  .dek { max-width: 60ch; font-size: 18.5px; color: var(--muted); margin: 0; }
+  .stamp {
+    display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 4px;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── The agreement this page exists to satisfy ────────────────── */
+  .pact {
+    margin: 40px 0 0; padding: 22px 26px;
+    border-left: 3px solid var(--saffron-b);
+    background: var(--saffron-w); border-radius: 0 14px 14px 0;
+  }
+  .pact p { margin: 0; max-width: 62ch; }
+  .pact q { font-style: italic; }
+
+  section { margin-top: 68px; }
+  h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
+    line-height: 1.14; margin: 0 0 8px; letter-spacing: -.01em;
+  }
+  .sub { color: var(--muted); margin: 0 0 26px; max-width: 62ch; }
+
+  /* ── The defect ledger ────────────────────────────────────────── */
+  .ledger { display: flex; flex-direction: column; gap: 0; }
+  .row {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 8px 34px; padding: 22px 0; border-top: 1px solid var(--hair);
+  }
+  .row:last-child { border-bottom: 1px solid var(--hair); }
+  .row h3 {
+    margin: 0; font-size: 16.5px; font-weight: 800; line-height: 1.4;
+  }
+  .row .was { color: var(--muted); font-size: 14.5px; margin: 6px 0 0; }
+  .row .now { margin: 0; font-size: 15px; }
+  .row .now b { color: var(--forest); font-weight: 800; }
+  code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: .88em; background: var(--sunk); color: var(--plum);
+    padding: 1px 5px; border-radius: 5px;
+    border: 1px solid var(--hair);
+  }
+
+  /* ── Checks ───────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; border: 1px solid var(--hair); border-radius: 14px; }
+  table { width: 100%; border-collapse: collapse; min-width: 620px; }
+  th, td { text-align: left; padding: 13px 18px; font-size: 14.5px; vertical-align: top; }
+  th {
+    font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    background: var(--sunk); border-bottom: 1px solid var(--hair);
+  }
+  tbody tr + tr td { border-top: 1px solid var(--hair); }
+  td:first-child { font-weight: 700; white-space: nowrap; }
+  .pill {
+    display: inline-block; font-size: 11.5px; font-weight: 800;
+    letter-spacing: .04em; padding: 3px 9px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill--pass { background: var(--forest-w); color: var(--forest); }
+  .pill--hold { background: var(--saffron-w); color: var(--saffron); }
+  .pill--open { background: var(--rose-w);   color: var(--rose); }
+
+  /* ── Gallery ──────────────────────────────────────────────────── */
+  .gallery { columns: 2; column-gap: 30px; }
+  @media (max-width: 860px) { .gallery { columns: 1; } }
+  .shot {
+    break-inside: avoid; margin: 0 0 30px;
+    border: 1px solid var(--hair); border-radius: 18px;
+    background: var(--ground); box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .shot--fixed { border-color: var(--hair-2); }
+  .shot__frame {
+    max-height: 620px; overflow-y: auto; background: var(--sunk);
+    border-bottom: 1px solid var(--hair);
+  }
+  .shot__frame img { display: block; width: 100%; height: auto; }
+  .shot figcaption { padding: 16px 20px 18px; }
+  .shot h3 {
+    margin: 0 0 6px; font-size: 16px; font-weight: 800; line-height: 1.35;
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  }
+  .shot p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.6; }
+  .shot p b { color: var(--ink); font-weight: 800; }
+  .shot__file {
+    margin-top: 10px !important; font-size: 11.5px !important;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: -.01em; opacity: .72;
+  }
+  .tag {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+  }
+  .tag--fixed { background: var(--rose-w); color: var(--rose); }
+
+  /* ── Lists ────────────────────────────────────────────────────── */
+  ul.plain { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+  ul.plain li { padding-left: 20px; position: relative; max-width: 64ch; }
+  ul.plain li::before {
+    content: ''; position: absolute; left: 0; top: 10px;
+    width: 7px; height: 7px; border-radius: 2px; background: var(--saffron-b);
+  }
+  ul.plain li b { font-weight: 800; }
+  ul.plain li span { display: block; color: var(--muted); font-size: 14.5px; }
+
+  .ask {
+    margin-top: 26px; padding: 24px 26px; border-radius: 16px;
+    background: var(--sunk); border: 1px solid var(--hair);
+  }
+  .ask h3 { margin: 0 0 6px; font-size: 17px; font-weight: 800; }
+  .ask p { margin: 0; max-width: 62ch; color: var(--muted); }
+
+  footer {
+    margin-top: 76px; padding-top: 24px; border-top: 1px solid var(--hair);
+    font-size: 13.5px; color: var(--muted); max-width: 64ch;
+  }
+
+  a { color: var(--plum); }
+  a:focus-visible, .shot__frame:focus-visible {
+    outline: 2px solid var(--saffron-b); outline-offset: 3px; border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <p class="eyebrow">Nothing deploys until you have seen this</p>
+    <h1>The deploy gate</h1>
+    <p class="dek">
+      Every screen photographed from the production bundle, with a live
+      booking and a real partner behind the ones that need one.
+      <!--COUNT--> captures, six defects found and fixed while taking them.
+    </p>
+    <p class="stamp">
+      <span><!--DATE--></span>
+      <span>branch feature/without-shopping</span>
+      <span>not yet deployed</span>
+    </p>
+  </header>
+
+  <div class="pact">
+    <p>
+      <q>Before you push and deploy to the production, I want you to give me
+      the submitted test report of every button functionality and every
+      screenshot of the web page. Otherwise, no deployment should happen at
+      all. I can't download again and again.</q>
+      &nbsp;— so this is the report, and the deploy is waiting on you.
+    </p>
+  </div>
+
+  <section>
+    <h2>Six things were broken. Taking the pictures is how I found them.</h2>
+    <p class="sub">
+      Each one passed every server-side check while the screen was wrong,
+      which is the whole argument for photographing rather than asserting.
+    </p>
+
+    <div class="ledger">
+      <div class="row">
+        <div>
+          <h3>Every service drew the same sparkle</h3>
+          <p class="was">A photographer, a balloon arch and a cake were one identical glyph on the matching board.</p>
+        </div>
+        <p class="now">
+          The board's query never selected <code>service_id</code> or <code>trade</code>,
+          so the sprite fell through to its default on every row. The data
+          was right and the screen could not say what it was about — this is
+          the screen you called dull. <b>Now camera, balloon, cake.</b>
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>The home card merged every booking into one</h3>
+          <p class="was">A three-service booking read “+9”, under one booking's date, linking wherever the sort landed.</p>
+        </div>
+        <p class="now">
+          It was reading every open line the customer had, across every
+          request. <b>One card is now one booking</b>, and the others are named
+          underneath rather than silently folded in.
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>Decor could not be specified at all</h3>
+          <p class="was">A photo corner and a fully decorated hall were the same button at the same price.</p>
+        </div>
+        <p class="now">
+          It now asks how much of the space and balloons or flowers. The
+          first cut of this was worse than the gap: it multiplied a tier the
+          system had already picked from headcount, quoting ₹9,594 for a job
+          the rate card prices at ₹30,360. <b>The question now selects the
+          real rate-card row</b>, and a script checks the screen and the
+          server against each other on all 45 combinations.
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>A partner's dead service row said nothing</h3>
+          <p class="was">A real partner typed “videpgraphy”. Dispatch matches on the trade, so that row has never been offered to them once.</p>
+        </div>
+        <p class="now">
+          <b>The row now says it is never offered</b>, and only that row. The
+          form requires a trade from a list, so no new row can be born dead —
+          this is what was making a newly-signed partner invisible.
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>The options card was headed “decor”</h3>
+          <p class="was">Lower-case, the raw id, beside “Photography” and “Celebration cake”.</p>
+        </div>
+        <p class="now">
+          Decor and catering are deliberately absent from the pricing
+          catalogue — they have their own rate cards — so the name lookup
+          fell through to the id. <b>It now uses the trade name.</b>
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>A guard script was crying wolf</h3>
+          <p class="was">Two “undefined components that throw at render” were component names written in prose inside doc comments.</p>
+        </div>
+        <p class="now">
+          It read comments as code. <b>It now strips them</b> — and I broke a
+          real component to confirm it still catches the thing it is for.
+          A check that reports things that are fine is a check people learn
+          to run past, and this one was sitting in front of a deploy decision.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Checks that can fail, and did</h2>
+    <p class="sub">
+      Every one of these exits non-zero on a real fault — I sabotaged the
+      new ones to prove it rather than trusting a green run.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Check</th><th>What it guards</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>price-agreement</td>
+            <td>The screen and the server quote the same number. New — it exists because decor drifted by ₹21,000 in the hour it took to build it.</td>
+            <td><span class="pill pill--pass">45 / 45 agree</span></td>
+          </tr>
+          <tr>
+            <td>undefined-components</td>
+            <td>A component used but never imported. Throws at render, never at build.</td>
+            <td><span class="pill pill--pass">clean</span></td>
+          </tr>
+          <tr>
+            <td>migration-search-path</td>
+            <td>Every PostGIS function can still see PostGIS. This is what broke migrations 082 and 084.</td>
+            <td><span class="pill pill--pass">clean</span></td>
+          </tr>
+          <tr>
+            <td>booking-capture</td>
+            <td>Payment capture, end to end.</td>
+            <td><span class="pill pill--pass">clean</span></td>
+          </tr>
+          <tr>
+            <td>single-service</td>
+            <td>Every service resolves, prices and carts.</td>
+            <td><span class="pill pill--pass">clean</span></td>
+          </tr>
+          <tr>
+            <td>dispatch-invariants</td>
+            <td>One winner per line, escrow never mutated, no synthetic partner reachable in production.</td>
+            <td><span class="pill pill--hold">1 held — see below</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sub" style="margin-top:20px">
+      The held one is <code>ALLOW_SYNTHETIC_DISPATCH</code>, which you asked for
+      so the 221 seeded partners would answer during testing. The deployed
+      code cannot honour it — the flag is gated behind <code>!IS_PROD</code> —
+      but production does carry your account on
+      <code>SYNTHETIC_DEMO_CUSTOMER</code>, which is why the live booking below
+      reached four seeded partners alongside the real ones. That has to come
+      off before real customers arrive, and it is a decision rather than a bug.
+    </p>
+  </section>
+
+  <section>
+    <h2>What the pictures show</h2>
+    <p class="sub">
+      Six of these needed a live booking behind them, so there is one: three
+      services dispatched to real Bengaluru partners, and Anu events accepted
+      the photography through the same call the Accept button makes. Tall
+      screenshots scroll inside their own frame.
+    </p>
+    <div class="gallery">
+<!--SHOTS-->
+    </div>
+  </section>
+
+  <section>
+    <h2>What these pictures do not prove</h2>
+    <p class="sub">Naming the gaps, because a gap you have to notice is a gap that gets missed.</p>
+    <ul class="plain">
+      <li>
+        <b>The paid confirmation and the date-blocked card.</b>
+        <span>Razorpay's checkout is a hosted iframe on their domain — it cannot be driven headlessly, and a faked screenshot of a payment screen would be a lie about the one thing that must not be lied about. This needs your ₹1 test payment, and I have the steps ready.</span>
+      </li>
+      <li>
+        <b>Push arriving on a physical phone.</b>
+        <span>The alerts path is fixed for the WebView case and every failure reason now has a sentence a person can act on, but a notification landing on your handset is not something this machine can witness.</span>
+      </li>
+      <li>
+        <b>The APK.</b>
+        <span>These are captures of the exact bundle the APK wraps, served locally, not of the installed app. Same code, different shell.</span>
+      </li>
+      <li>
+        <b>Every button.</b>
+        <span>I drove the flows and exercised the controls that carry money or dispatch — accept, pay, cancel, the trade picker, the menus, the tabs. I did not click all several hundred controls in the app, and I am not going to claim I did.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Before this goes to production</h2>
+    <p class="sub">Three things, and two of them are yours to decide.</p>
+
+    <div class="ask">
+      <h3>The client and the server must ship together</h3>
+      <p>
+        Decor pricing changed on both sides. The deployed API still carries
+        the old bundle, so until this deploy lands the screen and the server
+        would disagree on a decor booking. Nothing half-deploys here.
+      </p>
+    </div>
+
+    <div class="ask">
+      <h3>The 221 seeded partners</h3>
+      <p>
+        They are reachable from your account in production today, by design,
+        so you could test. Before a real customer books, either remove your
+        account from <code>SYNTHETIC_DEMO_CUSTOMER</code> or purge them. Say
+        which and I will do it.
+      </p>
+    </div>
+
+    <div class="ask">
+      <h3>Your word on the deploy</h3>
+      <p>
+        Everything above is committed to nothing yet — the working tree is
+        staged and waiting. Say go and it deploys, then the APKs build from
+        the same commit.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Captures live at full resolution in <code>docs/test-report/</code>; this
+    page carries them re-encoded at 1× so it stays one file.
+    Regenerate with <code>node scripts/capture-report.mjs</code>, then
+    <code>shrink-report.mjs</code>, then <code>build-test-report.mjs</code>.
+  </footer>
+
+</div>

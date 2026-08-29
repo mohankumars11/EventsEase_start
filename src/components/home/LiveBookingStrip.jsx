@@ -91,11 +91,36 @@ export default function LiveBookingStrip() {
 
   if (!user || !isCustomer || !lines.length) return null
 
-  const hunting  = lines.filter(l => l.status === 'dispatching')
-  const waiting  = lines.filter(l => l.status === 'accepted')
-  const confirmed = lines.filter(l => l.status === 'paid')
+  /* ══════════════════════════════════════════════════════════════════
+     ONE CARD IS ONE BOOKING
+     ══════════════════════════════════════════════════════════════════
+
+     The read above is deliberately unfiltered -- RLS scopes it to the
+     caller and adding a customer id here is how a policy gets bypassed
+     by accident later. But unfiltered means EVERY open line the
+     customer has, across every booking they have made.
+
+     Unsplit, that produced one card claiming eleven services under a
+     single date, with the sprites of one booking, the date of another
+     and a tap that led to whichever request happened to sort first.
+     Three live bookings read as one incoherent one.
+
+     So the rows are grouped and the newest request wins the card. The
+     count, the date, the area, the sprites and the link then all
+     describe the same booking, which is the only way the card can be
+     read at a glance. */
   const req = lines[0].request_id
+  const mine = lines.filter(l => l.request_id === req)
+
+  const hunting   = mine.filter(l => l.status === 'dispatching')
+  const waiting   = mine.filter(l => l.status === 'accepted')
+  const confirmed = mine.filter(l => l.status === 'paid')
   const area = lines[0].booking_requests?.area_label
+
+  // Other bookings are not hidden -- they are named, and /track lists
+  // them. A card that silently drops two bookings is the bug again in a
+  // quieter form.
+  const others = new Set(lines.filter(l => l.request_id !== req).map(l => l.request_id)).size
 
   /* One sentence, and it is chosen by what needs the customer MOST.
    * Money owed beats a search in progress, because one is a decision
@@ -156,20 +181,20 @@ export default function LiveBookingStrip() {
           {/* The faces of what is actually being booked. Three at most —
               a fourth adds nothing a "+2" does not say better. */}
           <span className="flex shrink-0 -space-x-2.5">
-            {lines.slice(0, 3).map(l => (
+            {mine.slice(0, 3).map(l => (
               <TradeSprite key={l.id} trade={l.trade} serviceId={l.service_id} active={!!hunting.length} size={36} />
             ))}
-            {lines.length > 3 && (
+            {mine.length > 3 && (
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.06] text-[11px] font-extrabold text-ink-soft ring-2 ring-white">
-                +{lines.length - 3}
+                +{mine.length - 3}
               </span>
             )}
           </span>
 
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[14.5px] font-extrabold leading-tight text-ink">
-              {lines.slice(0, 2).map(l => l.service_name).join(', ')}
-              {lines.length > 2 ? ` +${lines.length - 2}` : ''}
+              {mine.slice(0, 2).map(l => l.service_name).join(', ')}
+              {mine.length > 2 ? ` +${mine.length - 2}` : ''}
             </span>
             <span className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
               {area && <><MapPin size={12} className="shrink-0 text-ink-mute" />{area}</>}
@@ -193,6 +218,18 @@ export default function LiveBookingStrip() {
           </div>
         )}
       </Link>
+
+      {/* Named, not hidden. The card above is one booking; if there are
+          more, saying so is the difference between a card that is
+          focused and a card that is lying by omission. */}
+      {others > 0 && (
+        <Link
+          to="/track"
+          className="mt-1.5 block px-1 text-[12.5px] font-semibold text-ink-mute underline underline-offset-2"
+        >
+          {others === 1 ? '1 more booking' : `${others} more bookings`} — see all
+        </Link>
+      )}
     </section>
   )
 }

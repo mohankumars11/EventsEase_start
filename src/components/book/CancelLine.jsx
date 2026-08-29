@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2, TriangleAlert } from 'lucide-react'
+import { X, Check, Loader2, TriangleAlert } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 
@@ -35,11 +35,12 @@ import { formatINR } from '../../utils/format'
  * `cancellation_quote()` and `cancel_line()` share one implementation in
  * migration 081, so what is shown is what is paid, by construction.
  */
-export default function CancelLine({ line, onCancelled, onClose }) {
+export default function CancelLine({ line, onCancelled, onClose, onSwap }) {
   const [quote, setQuote] = useState(null)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState(null)
   const [reason, setReason] = useState('')
+  const [done, setDone] = useState(null)
 
   /* Asked as the sheet opens, before anything is pressable.
    *
@@ -65,11 +66,59 @@ export default function CancelLine({ line, onCancelled, onClose }) {
     setBusy(false)
     if (error) { setProblem(missingMigration(error) ? MISSING : error.message); return }
     if (!data?.ok) { setProblem(data?.scan ?? 'Could not cancel this'); return }
-    onCancelled?.(data)
+    // Cancelled. Offer the swap rather than just closing — somebody who
+    // drops a photographer usually still wants a photographer.
+    setDone(data)
   }
 
   const held = quote?.held_paise ?? 0
   const paid = held > 0
+
+  /* ── Cancelled, and the obvious next question answered ────────────
+     A customer who drops a photographer usually still wants one — they
+     dropped THIS photographer, or changed the shape of the day. Closing
+     the sheet and returning them to a board with a gap in it makes them
+     work out on their own that starting again is the way to replace it.
+
+     Booking again rather than swapping in place, and stated plainly:
+     the cancelled line is a real row with its own refund and its own
+     master, and quietly reusing it would make one booking's history
+     into two bookings' history. */
+  if (done) {
+    return (
+      <div className="fixed inset-0 z-[120] flex items-end justify-center bg-ink/40 backdrop-blur-sm sm:items-center">
+        <div className="w-full max-w-md rounded-t-[26px] bg-white p-5 text-center sm:rounded-[26px]">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-forest-100 text-forest-700">
+            <Check size={26} strokeWidth={3} />
+          </span>
+          <h2 className="mt-3 font-serif text-[20px] font-extrabold text-ink">
+            {line.service_name} is cancelled
+          </h2>
+          {done.refunded_paise > 0 && (
+            <p className="mt-1.5 text-[13px] font-bold text-forest-800">
+              {formatINR(Math.round(done.refunded_paise / 100))} is on its way back to you
+            </p>
+          )}
+          <p className="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
+            Everything else on your booking is untouched.
+          </p>
+
+          <button
+            onClick={() => { onCancelled?.(done); onSwap?.() }}
+            className="mt-4 w-full rounded-2xl bg-saffron-400 py-3.5 text-[14.5px] font-extrabold text-plum-950"
+          >
+            Book a different {String(line.service_name).toLowerCase()}
+          </button>
+          <button
+            onClick={() => onCancelled?.(done)}
+            className="mt-1.5 w-full py-2 text-[13px] font-bold text-ink-mute"
+          >
+            No thanks
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[120] flex items-end justify-center bg-ink/40 backdrop-blur-sm sm:items-center">

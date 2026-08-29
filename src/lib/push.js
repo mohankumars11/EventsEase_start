@@ -242,7 +242,9 @@ import { isNativeApp, enableNativePush, disableNativePush, nativePlatform } from
 
 /** Can this device receive alerts at all, and if not, why not. */
 export function alertsAvailability() {
-  if (isNativeApp()) {
+  // Same rule as enableAlerts: a bridge means native, whatever
+  // isNativePlatform() happens to answer.
+  if (typeof window !== 'undefined' && window.Capacitor) {
     // The native shell always can. The only question is permission, and
     // that is asked at the moment the master taps.
     return { ok: true, via: 'native', platform: nativePlatform() }
@@ -258,7 +260,36 @@ export function alertsAvailability() {
  * when a 45-second offer arrives.
  */
 export async function enableAlerts({ profileId, app = 'partner' }) {
-  if (isNativeApp()) return enableNativePush({ profileId, app })
+  /* ══════════════════════════════════════════════════════════════════
+     THE WEB PATH CANNOT WORK INSIDE THE APP, SO IT MUST NOT BE TRIED
+     ══════════════════════════════════════════════════════════════════
+
+     An Android WebView does not implement the Notification API at all.
+     `'Notification' in window` is false, so `pushAvailability()` returns
+     `no_notifications` and the whole thing fails INSTANTLY — before any
+     permission dialog, with a message that says nothing.
+
+     That is exactly what a real device reported: tap "Turn on alerts",
+     no system dialog, immediate "Could not turn alerts on".
+
+     The old test was `isNativeApp()`, which reads
+     `window.Capacitor.isNativePlatform()`. If the bridge is present but
+     that one function is missing or throws, the code silently chose a
+     path that CANNOT succeed in a WebView.
+
+     So the test is now "is there a Capacitor bridge at all", and the
+     native attempt goes first. Web push is the fallback for an actual
+     browser — never a fallback for a bridge that answered oddly. */
+  const hasBridge = typeof window !== 'undefined' && !!window.Capacitor
+
+  if (hasBridge) {
+    const r = await enableNativePush({ profileId, app })
+    // Only 'not_native' means the plugin genuinely is not there. Every
+    // other failure is a real native failure and must be reported as
+    // itself rather than retried down a path that cannot work.
+    if (r.reason !== 'not_native') return r
+  }
+
   return enablePush({ profileId, app })
 }
 

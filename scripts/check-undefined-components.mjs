@@ -30,8 +30,28 @@ function walk(dir, out = []) {
 
 let problems = 0
 
+/* Comments are not code, and this file's own house style is long
+   explanatory headers that name components in prose -- "the obvious
+   reading is an automatic `<Navigate>`", "a `<Link>` wrapping a
+   `<button>`". Read as JSX those are two undefined components, and the
+   check reported both as crashes that throw at render.
+
+   A guard that reports things that are fine is a guard people learn to
+   run past, which is worse than not having it: the two false positives
+   here sat in front of a real deployment decision.
+
+   Block comments and line comments go first, then the scan. String
+   literals are left alone -- a component name inside a string is not
+   something this can crash on either, but stripping strings would need
+   a parser and the comment cases are the ones that actually occur. */
+function withoutComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^\s*\/\/.*$/gm, ' ')
+}
+
 for (const file of walk('src')) {
-  const src = readFileSync(file, 'utf8')
+  const src = withoutComments(readFileSync(file, 'utf8'))
 
   // `<Foo`, `<Foo.Bar` — only capitalised tags; lowercase ones are HTML.
   const used = new Set(

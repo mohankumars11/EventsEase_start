@@ -288,7 +288,13 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
     async function read() {
       const { data: l } = await supabase
         .from('booking_lines')
-        .select('id, service_name, status, dispatch_mode, expires_at, quoted_amount_paise')
+        /* `service_id` and `trade` are not decoration. TradeSprite reads
+           both, and with neither selected every row fell through to the
+           generic sparkle -- a photographer, a cake and a balloon arch
+           all drawn as the same glyph. That is the screen reading as
+           "dull": the data was right and the row could not say what it
+           was about. */
+        .select('id, service_id, service_name, trade, status, dispatch_mode, expires_at, quoted_amount_paise')
         .eq('request_id', requestId)
         .order('created_at')
 
@@ -610,6 +616,12 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
           // The board is already subscribed to booking_lines, so the row
           // updates itself the moment the RPC commits. Nothing to refresh.
           onCancelled={() => setCancelling(null)}
+          /* Book again rather than swap in place. The board is a live
+             search on a request that already exists; adding a line to it
+             mid-flight would need a second dispatch the customer never
+             asked for. A fresh booking is one tap and is what actually
+             happens. */
+          onSwap={() => { window.location.href = '/book/instant' }}
         />
       )}
 

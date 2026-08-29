@@ -8,7 +8,7 @@ import MatchingBoard from '../../components/book/MatchingBoard'
 import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
 import ServiceOptions from '../../components/book/ServiceOptions'
-import { optionsFor, defaultOptions, optionMultiplier, optionSummary } from '../../data/instantOptions'
+import { optionsFor, defaultOptions, optionMultiplier, optionSummary, setupChoice } from '../../data/instantOptions'
 import { offersFor, applyOffer } from '../../config/offers'
 import OfferCard from '../../components/offers/OfferCard'
 import OfferUnlocked from '../../components/offers/OfferUnlocked'
@@ -246,6 +246,10 @@ export default function InstantBooking() {
         serviceId: id,
         guestCount: guests,
         durationId: durations[id] ?? defaultDurationFor(guests),
+        /* Decor is priced from a rate-card row, not a multiplier, so the
+           chosen setup has to reach priceLine itself. Null for every
+           other service, which is what it already assumed. */
+        setupId: setupChoice(id, options[id] ?? defaultOptions(id)),
       })
       /* The same multiplier the server applies, so the number on screen
          is the number that gets charged. Applied here rather than baked
@@ -405,6 +409,12 @@ export default function InstantBooking() {
           lines: picked.map(id => ({
             serviceId: id,
             durationId: durations[id] ?? defaultDurationFor(guests),
+            /* Decor and catering are priced from their own rate cards
+               rather than by multiplier, so the ROW has to travel with
+               the line. Without it the server re-picks the tier from
+               headcount and quotes a different number from the one on
+               the screen the customer just agreed to. */
+            setupId: setupChoice(id, options[id] ?? defaultOptions(id)),
             // Choice IDS only. The multiplier is looked up server-side in
             // api/dispatch-booking.js — a client that invented one would
             // be sending a field nothing reads.
@@ -731,7 +741,17 @@ export default function InstantBooking() {
             <ServiceOptions
               key={id}
               serviceId={id}
-              serviceName={SERVICE_BY_ID[id]?.name ?? id}
+              /* Decor and catering are absent from SERVICE_BY_ID on
+                 purpose -- data/servicePricing.js excludes them because
+                 they have their own rate cards. The fallback was the raw
+                 id, so this card was headed "decor" in lower case beside
+                 "Photography" and "Celebration cake".
+
+                 The trade name is the right answer, not the tier name:
+                 the tier is the first question ASKED inside this card,
+                 so heading it "Balloon & backdrop" would label the card
+                 with one of its own options. */
+              serviceName={SERVICE_BY_ID[id]?.name ?? tradeFor(id) ?? id}
               trade={tradeFor(id)}
               value={options[id] ?? defaultOptions(id)}
               onChange={next => setOptions(o => ({ ...o, [id]: next }))}
@@ -741,6 +761,10 @@ export default function InstantBooking() {
                 const q = priceLine({
                   serviceId: id, guestCount: guests,
                   durationId: durations[id] ?? defaultDurationFor(guests),
+                  // The candidate's OWN setup, so tapping "Full function
+                  // decor" shows what that row costs rather than what the
+                  // currently selected one costs.
+                  setupId: setupChoice(id, candidate),
                 })
                 if (!q?.paise) return null
                 return Math.round(q.paise * optionMultiplier(id, candidate) / 100)

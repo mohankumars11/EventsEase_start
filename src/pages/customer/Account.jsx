@@ -243,7 +243,13 @@ export default function Account() {
           On the customer side this was missing entirely, so there was no
           way to tell an installed app from a Chrome shortcut with the
           same icon. */}
-      <div className="mt-8 space-y-3">
+      {/* Clear of the furniture below it.
+          `pb-bottom-nav` on the page wrapper accounts for the tab bar and
+          nothing else — the chat button is a separate fixed element in
+          the bottom-right corner, and this block was landing underneath
+          both of them. The last thing on a page has to clear everything
+          floating over it, not just the tallest one. */}
+      <div className="mt-8 space-y-3 pb-24">
         <InstallTheApp app="customer" />
         <AppBadge className="text-center" />
       </div>

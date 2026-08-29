@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 1ebd8f0e1570804c
+// inputs: 0b390ca930954b75
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -2643,12 +2643,26 @@ var OFFER_WINDOW_SECONDS = Number(
   typeof process !== "undefined" && process.env?.OFFER_WINDOW_SECONDS || 45
 );
 var WAVES = [
+  /* A wave is "the next N nearest masters who have not been asked yet".
+   *
+   * It used to be "widen the circle" — 5 km, then 10, then 15. That
+   * excluded willing masters by geometry: one at 10.5 km with a 10 km
+   * setting was invisible for a job they would have driven to, and
+   * nobody was asked.
+   *
+   * Migration 086 removed the radius as a FILTER, so widening a circle
+   * that no longer filters is meaningless. The purpose waves actually
+   * served — do not notify two hundred people about one cake — is kept
+   * by asking in batches, nearest outward, until somebody says yes.
+   *
+   * `radiusMultiplier` stays at 1 because the radius is a backstop now,
+   * not a dial. */
   { wave: 1, partners: 5, radiusMultiplier: 1 },
-  { wave: 2, partners: 5, radiusMultiplier: 2 },
-  { wave: 3, partners: 8, radiusMultiplier: 3 }
+  { wave: 2, partners: 10, radiusMultiplier: 1 },
+  { wave: 3, partners: 20, radiusMultiplier: 1 }
 ];
-var MAX_RADIUS_KM = 25;
-var DEFAULT_RADIUS_KM = 5;
+var MAX_RADIUS_KM = 60;
+var DEFAULT_RADIUS_KM = 60;
 var PLATFORM_FEE_RATE2 = 0.08;
 var INSTANT_RATE_MULTIPLIER = 1.3;
 
@@ -2952,6 +2966,55 @@ var SERVICES_FOR_TRADE = Object.entries(TRADE_FOR_SERVICE).reduce((acc, [service
 
 // src/data/instantOptions.js
 var SERVICE_OPTIONS = {
+  /* ── Decor ────────────────────────────────────────────────────────
+       The service this file's own header names as the worst offender,
+       and it had no forks at all: "Balloon & backdrop, Rs 5,590" and
+       nothing else. A photo corner and a decorated hall were the same
+       button at the same price, which is a master arriving to an
+       argument -- the exact failure the instant flow was meant to end.
+  
+       ── Why `coverage` carries no `mult` ─────────────────────────────
+       Because decor is NOT priced by multiplier. data/instantSetups.js
+       holds three real setups -- lite, standard, full -- each with its
+       own base, its own per-guest rate and its own `includes` list, and
+       lib/instantPricing.js picks one from the headcount.
+  
+       My first cut of this asked "how much of the space?" and multiplied
+       the chosen tier by 1.8. At thirty guests that scaled the LITE
+       setup, producing a number that matches nothing on the rate card and
+       under-prices a real full-function job. Two systems deciding the
+       same thing, disagreeing, and the customer paying the difference.
+  
+       So this group SELECTS THE TIER instead. `setup: true` marks it, the
+       choice ids are the real setup ids, and optionMultiplier skips it --
+       the price comes from the rate card, which is where decor prices
+       have always lived. The comment in instantSetups.js promising "they
+       can still change it" is finally true.
+  
+       ── `material` is a genuine multiplier ───────────────────────────
+       Fresh flowers against balloons is a real cost difference that sits
+       inside every tier, and the ladder does not express it. */
+  decor: [
+    {
+      id: "setup",
+      setup: true,
+      question: "How much of the space?",
+      choices: [
+        { id: "lite", label: "Balloon & backdrop", scan: "One photo corner, where the cake goes" },
+        { id: "standard", label: "Themed setup", scan: "The corner, the entrance and the tables" },
+        { id: "full", label: "Full function decor", scan: "Walls, ceiling and the whole room" }
+      ]
+    },
+    {
+      id: "material",
+      question: "Balloons or flowers?",
+      choices: [
+        { id: "balloons", label: "Balloons", scan: "Arches, clusters, foil letters", mult: 1 },
+        { id: "mixed", label: "Balloons and flowers", scan: "Fresh flowers on the backdrop", mult: 1.3 },
+        { id: "floral", label: "Mostly fresh flowers", scan: "Garlands and arrangements", mult: 1.65 }
+      ]
+    }
+  ],
   photography: [
     {
       id: "style",
@@ -3167,6 +3230,7 @@ var HAS_OPTIONS = new Set(Object.keys(SERVICE_OPTIONS));
 function optionMultiplier(serviceId, picked = {}) {
   let mult = 1;
   for (const group of optionsFor(serviceId)) {
+    if (group.setup) continue;
     const chosen = group.choices.find((c) => c.id === picked[group.id]);
     mult *= chosen?.mult ?? 1;
   }

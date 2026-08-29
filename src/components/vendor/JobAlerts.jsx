@@ -78,16 +78,33 @@ export default function JobAlerts({ vendorId }) {
     setBusy(false)
 
     if (!r.ok) {
+      /* Every reason the two paths can return, named.
+       *
+       * The map used to cover four of them, so `no_notifications` — the
+       * one an Android WebView always produces — fell through to
+       * "Could not turn alerts on", which is what a real device
+       * reported and which says nothing at all.
+       *
+       * A message a person cannot act on is the same as no message. */
+      const SAYS = {
+        not_configured:   'Alerts are not set up on this build.',
+        declined:         'You said no to alerts. Turn them on in your phone settings for Sambramo, then try again.',
+        unsupported:      'This browser cannot show alerts. The app can — install it from the banner above.',
+        no_notifications: 'This browser cannot show alerts. The app can — install it from the banner above.',
+        no_service_worker:'This browser cannot show alerts. The app can — install it from the banner above.',
+        denied:           'Alerts are blocked for Sambramo. Turn them back on in your phone settings, then try again.',
+        no_token:         'Could not get a device id. Check your connection and try again.',
+        save_failed:      'Could not save this device. Sign out and back in, then try again.',
+        not_native:       'The push plugin is missing from this build.',
+        error:            'Something went wrong turning alerts on.',
+      }
+
       setProblem(
-        r.scan ??
-        // Every failure here is ordinary — a declined prompt, an old
-        // browser, no config. None of them is a fault worth an error
-        // colour, and none should suggest the app is broken.
-        { not_configured: 'Alerts are not set up on this site yet.',
-          declined:       'You said no to alerts. You can turn them on any time.',
-          unsupported:    'This browser cannot show alerts. The app can.',
-          no_token:       'Could not turn alerts on. Try again in a moment.',
-        }[r.reason] ?? 'Could not turn alerts on.',
+        [SAYS[r.reason] ?? r.scan ?? 'Could not turn alerts on.',
+         // The technical reason, kept. Withholding it is what turned
+         // this into three rounds of guessing.
+         r.detail ? `(${String(r.detail).slice(0, 90)})` : `[${r.reason ?? 'unknown'}]`,
+        ].filter(Boolean).join(' '),
       )
       return
     }

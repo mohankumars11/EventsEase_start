@@ -61,6 +61,56 @@
  */
 
 export const SERVICE_OPTIONS = {
+  /* ── Decor ────────────────────────────────────────────────────────
+     The service this file's own header names as the worst offender,
+     and it had no forks at all: "Balloon & backdrop, Rs 5,590" and
+     nothing else. A photo corner and a decorated hall were the same
+     button at the same price, which is a master arriving to an
+     argument -- the exact failure the instant flow was meant to end.
+
+     ── Why `coverage` carries no `mult` ─────────────────────────────
+     Because decor is NOT priced by multiplier. data/instantSetups.js
+     holds three real setups -- lite, standard, full -- each with its
+     own base, its own per-guest rate and its own `includes` list, and
+     lib/instantPricing.js picks one from the headcount.
+
+     My first cut of this asked "how much of the space?" and multiplied
+     the chosen tier by 1.8. At thirty guests that scaled the LITE
+     setup, producing a number that matches nothing on the rate card and
+     under-prices a real full-function job. Two systems deciding the
+     same thing, disagreeing, and the customer paying the difference.
+
+     So this group SELECTS THE TIER instead. `setup: true` marks it, the
+     choice ids are the real setup ids, and optionMultiplier skips it --
+     the price comes from the rate card, which is where decor prices
+     have always lived. The comment in instantSetups.js promising "they
+     can still change it" is finally true.
+
+     ── `material` is a genuine multiplier ───────────────────────────
+     Fresh flowers against balloons is a real cost difference that sits
+     inside every tier, and the ladder does not express it. */
+  decor: [
+    {
+      id: 'setup',
+      setup: true,
+      question: 'How much of the space?',
+      choices: [
+        { id: 'lite',     label: 'Balloon & backdrop',  scan: 'One photo corner, where the cake goes' },
+        { id: 'standard', label: 'Themed setup',        scan: 'The corner, the entrance and the tables' },
+        { id: 'full',     label: 'Full function decor', scan: 'Walls, ceiling and the whole room' },
+      ],
+    },
+    {
+      id: 'material',
+      question: 'Balloons or flowers?',
+      choices: [
+        { id: 'balloons', label: 'Balloons',             scan: 'Arches, clusters, foil letters', mult: 1 },
+        { id: 'mixed',    label: 'Balloons and flowers', scan: 'Fresh flowers on the backdrop',  mult: 1.3 },
+        { id: 'floral',   label: 'Mostly fresh flowers', scan: 'Garlands and arrangements',      mult: 1.65 },
+      ],
+    },
+  ],
+
   photography: [
     {
       id: 'style',
@@ -304,10 +354,19 @@ export const HAS_OPTIONS = new Set(Object.keys(SERVICE_OPTIONS))
 export function optionMultiplier(serviceId, picked = {}) {
   let mult = 1
   for (const group of optionsFor(serviceId)) {
+    // A `setup` group names a row on the rate card rather than scaling
+    // one. Multiplying by it as well would charge for the choice twice.
+    if (group.setup) continue
     const chosen = group.choices.find(c => c.id === picked[group.id])
     mult *= chosen?.mult ?? 1
   }
   return mult
+}
+
+/** The rate-card row a `setup` group selects, if this service has one. */
+export function setupChoice(serviceId, picked = {}) {
+  const group = optionsFor(serviceId).find(g => g.setup)
+  return group ? (picked[group.id] ?? group.choices[0].id) : null
 }
 
 /** What the customer chose, as a sentence for the master's job card. */
