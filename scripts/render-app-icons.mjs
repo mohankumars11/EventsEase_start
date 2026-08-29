@@ -14,36 +14,34 @@
  * neither said Sambramo.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THE ICON IS A LETTER AND NOT THE WORD
+ * THE WORD, NOT A MARK — AND WHAT THAT COSTS
  * ══════════════════════════════════════════════════════════════════════
  *
- * A launcher icon is 48dp. On a 1080p phone that is about 108 real
- * pixels, and it sits below a two-line label that already says
- * "Sambramo" and "Sambramo Partners".
+ * The tile is the wordmark. No letterform, no glyph, no symbol.
  *
- * "Sambramo" is eight characters of a serif with a modest x-height. At
- * 108px across, its cap height lands near 18px — legible on a monitor at
- * 512, illegible in a hand. Zomato ships a letterform. Blinkit ships a
- * letterform. Swiggy ships a letterform. Not fashion: it is the only
- * thing that survives being 12mm wide.
+ * I argued for a single S and was overruled, and the reasoning behind
+ * the decision is sound: a symbol is only worth its space once people
+ * already recognise it. Nobody recognises a Sambramo mark yet, and a
+ * pretty glyph on an unknown brand is a tile that says nothing at all.
+ * The name has to do the work until it is worth trademarking.
  *
- * So the tile carries the S, at the weight and colour the brand uses,
- * and the WORD appears where there is room for it — on the splash, at
- * full size, which is the screen this file also renders.
+ * The cost, stated once and then designed around: at mdpi the tile is
+ * 48 real pixels, and eight characters across 44px of usable width is
+ * about 5px per letter. It will not be READ at that size — it will be
+ * recognised as a shape, the way a wordmark on a distant shopfront is.
  *
- * ══════════════════════════════════════════════════════════════════════
- * THE TWO APPS MUST BE TELLABLE APART ACROSS A ROOM
- * ══════════════════════════════════════════════════════════════════════
+ * So everything below is aimed at making that shape as distinct as it
+ * can be:
  *
- * A master and a customer may both have both installed. Same name, same
- * first letter — so the difference cannot be the glyph, it has to be the
- * colour and the shape behind it.
+ *   a condensed heavy SANS, not the serif    serif detail at 5px is mud
+ *   uppercase                                even shape, no descenders
+ *   93% of the tile width                    every pixel of the word
+ *   one line, tight tracking                 two lines halve the height
  *
- *   customer   deep plum ground, white S            calm, the brand
- *   partner    saffron ground, plum S, corner notch  warm, worker-facing
- *
- * The notch is the load-bearing part: colour alone fails for the ~8% of
- * men with a colour vision deficiency, and a shape difference does not.
+ * The partner tile adds PARTNERS underneath. That is what separates the
+ * two apps now that neither has a symbol — and it is a better separator
+ * than a notch was, because it is legible as a WORD the moment the tile
+ * is bigger than a launcher.
  *
  * ══════════════════════════════════════════════════════════════════════
  * WHAT THIS CANNOT DO
@@ -69,25 +67,28 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 const APPS = {
   customer: {
     dir: 'customer',
-    // Deep plum into a warmer violet. Dark grounds make a white glyph
-    // read at any size, and this is the app's own 950/800 ramp.
-    bg: 'linear-gradient(155deg, #2e1065 0%, #4c1d95 55%, #5b21b6 100%)',
+    /* The brand ground, lifted verbatim from `.brand-aqua` in
+       index.css. Not a new palette invented for the icon: the tile, the
+       splash and the app's own auth screens are then the same surface,
+       and a phone showing the icon next to the splash shows one colour
+       rather than two that nearly match. */
+    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(140,224,214,.55) 0%, rgba(85,178,175,0) 62%), linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%)',
+    solid: '#1B5C73',
     fg: '#FFFFFF',
-    accent: '#fbbf24',
-    notch: false,
-    splashWord: '#FFFFFF',
+    second: null,
     splashSub: 'Celebrations, arranged',
   },
   partner: {
     dir: 'partner',
-    // Saffron. The colour every partner-facing action in the app already
-    // uses, so the icon is the first instance of a pattern rather than a
-    // one-off.
-    bg: 'linear-gradient(155deg, #f59e0b 0%, #fbbf24 55%, #fcd34d 100%)',
-    fg: '#2e1065',
-    accent: '#2e1065',
-    notch: true,
-    splashWord: '#2e1065',
+    // The same aqua. The apps are one brand and should look it.
+    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(140,224,214,.55) 0%, rgba(85,178,175,0) 62%), linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%)',
+    solid: '#1B5C73',
+    fg: '#FFFFFF',
+    /* What tells them apart, now that neither has a symbol. A word is a
+       better separator than a shape: it is unambiguous the moment the
+       tile is any bigger than a launcher, and it says what the app IS
+       rather than merely that it is different. */
+    second: 'PARTNERS',
     splashSub: 'Work that comes to you',
   },
 }
@@ -123,55 +124,83 @@ function iconPage({ size, app, shape, safeRatio }) {
   const a = APPS[app]
   const radius = shape === 'round' ? '50%' : `${Math.round(size * 0.22)}px`
 
-  /* The glyph fills `safeRatio` of the tile. For the adaptive foreground
-     that is 0.62 — the OS masks to the middle 72 of 108dp (0.667), and a
-     letterform whose ink runs to the edge of the safe circle looks
-     cramped in every launcher that crops tighter than the spec. */
-  const glyph = Math.round(size * safeRatio)
+  /* The word spans `safeRatio` of the tile.
+     0.93 on the square, because nothing crops it. 0.74 on the adaptive
+     layer, because the OS keeps only the middle 72 of 108dp and a
+     wordmark whose ink reaches the edge of that circle loses its first
+     and last letter on any launcher that masks tighter than the spec. */
+  const w = Math.round(size * safeRatio)
+
+  /* Sized from the WIDTH, not chosen. A condensed heavy sans sets
+     "SAMBRAMO" at roughly 0.52 x its font-size per character, so eight
+     characters want a size near w/4.2. Solving for the width is what
+     keeps the word the same visual weight at 48px and at 432. */
+  const fs = Math.round(w / 4.15)
+
+  const secondFs = Math.round(fs * 0.40)
 
   return `<!doctype html><meta charset="utf-8">
 <style>
-  html,body { margin:0; padding:0; width:${size}px; height:${size}px; overflow:hidden; }
+  html,body { margin:0; padding:0; width:${size}px; height:${size}px; overflow:hidden;
+              background:${a.solid}; }
   .tile {
     width:${size}px; height:${size}px; border-radius:${radius};
-    background:${shape === 'adaptive' ? a.bg : a.bg};
-    display:flex; align-items:center; justify-content:center;
+    background:${a.bg};
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
     position:relative; overflow:hidden;
   }
-  /* A soft light from the top-left, so the tile is not a flat slab.
-     Two stops only — an icon is looked at for a third of a second. */
-  .tile::before {
-    content:''; position:absolute; inset:0;
-    background: radial-gradient(circle at 28% 22%, rgba(255,255,255,.28), transparent 62%);
-  }
-  ${a.notch ? `
-  /* The shape difference. A saffron tile and a plum tile are one
-     colour apart; this corner is what separates them for somebody who
-     cannot see that difference. */
-  .tile::after {
-    content:''; position:absolute;
-    right:${-size * 0.14}px; top:${-size * 0.14}px;
-    width:${size * 0.42}px; height:${size * 0.42}px;
-    border-radius:50%;
-    background:${a.accent};
-    opacity:.16;
-  }` : ''}
-  .s {
-    position:relative;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-weight:700;
-    font-size:${glyph}px;
+  .word {
+    font-family: 'Arial Narrow', 'Helvetica Neue', Arial, system-ui, sans-serif;
+    font-weight: 900;
+    font-stretch: condensed;
+    font-size:${fs}px;
     line-height:1;
+    letter-spacing:${(-fs * 0.012).toFixed(2)}px;
     color:${a.fg};
-    letter-spacing:-0.02em;
-    /* Optical centring. A serif S sits visually low in its box; the
-       nudge is small and it is the difference between centred and
-       nearly centred, which is all anybody sees. */
-    transform: translateY(${Math.round(size * 0.012)}px);
-    text-shadow: 0 ${Math.round(size * 0.012)}px ${Math.round(size * 0.03)}px rgba(0,0,0,.18);
+    white-space:nowrap;
+    /* No scale here. It is measured and applied by __fit() below.
+       The first cut guessed the width from a per-character ratio and
+       then corrected with scaleX — but the element's LAYOUT width is
+       still the natural text width, so it overflowed the tile and
+       overflow:hidden ate the S and the O. The tile read "AMBRAM".
+       A guess plus a correction is two chances to be wrong; measuring
+       is one. */
+    text-shadow: 0 ${Math.max(1, Math.round(size * 0.008))}px ${Math.round(size * 0.02)}px rgba(0,0,0,.22);
   }
+  ${a.second ? `
+  .second {
+    margin-top:${Math.round(size * 0.03)}px;
+    font-family: 'Arial Narrow', 'Helvetica Neue', Arial, system-ui, sans-serif;
+    font-weight:700;
+    font-size:${secondFs}px;
+    letter-spacing:${(secondFs * 0.18).toFixed(2)}px;
+    /* The tracking is what makes a small word read as a label rather
+       than a smudge. It also stops PARTNERS competing with the name
+       above it, which is the thing being promoted. */
+    color:${a.fg};
+    opacity:.86;
+    white-space:nowrap;
+  }` : ''}
 </style>
-<div class="tile"><span class="s">S</span></div>`
+<div class="tile">
+  <span class="word" id="w">SAMBRAMO</span>
+  ${a.second ? `<span class="second">${a.second}</span>` : ''}
+</div>
+<script>
+  /* Measure, then fit. Called over CDP before the capture.
+     scrollWidth is the natural width the browser laid out; the ratio to
+     the target is the exact horizontal scale, and transform-origin
+     centre keeps it centred while it shrinks. */
+  window.__fit = function () {
+    var el = document.getElementById('w')
+    var natural = el.scrollWidth
+    var target = ${w}
+    var k = target / natural
+    el.style.transformOrigin = 'center center'
+    el.style.transform = 'scaleX(' + k.toFixed(4) + ')'
+    return { natural: natural, target: target, scale: k }
+  }
+</script>`
 }
 
 /* ── The splash ───────────────────────────────────────────────────── */
@@ -199,7 +228,7 @@ function splashPage({ w, h, app }) {
     font-family: Georgia, 'Times New Roman', serif;
     font-weight:700;
     font-size:${Math.round(short * 0.155)}px;
-    color:${a.splashWord};
+    color:${a.fg};
     letter-spacing:-0.015em;
     text-shadow: 0 ${Math.round(short * 0.006)}px ${Math.round(short * 0.02)}px rgba(0,0,0,.16);
   }
@@ -207,7 +236,7 @@ function splashPage({ w, h, app }) {
     position:relative;
     margin-top:${Math.round(short * 0.045)}px;
     width:${Math.round(short * 0.16)}px; height:2px;
-    background:${a.splashWord}; opacity:.45;
+    background:${a.fg}; opacity:.45;
   }
   .sub {
     position:relative;
@@ -217,7 +246,7 @@ function splashPage({ w, h, app }) {
     font-size:${Math.round(short * 0.033)}px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:${a.splashWord}; opacity:.8;
+    color:${a.fg}; opacity:.8;
   }
 </style>
 <div class="bg">
@@ -278,7 +307,11 @@ async function shoot(html, w, h, outPath) {
     width: w, height: h, deviceScaleFactor: 1, mobile: false,
   })
   await send('Page.navigate', { url: pathToFileURL(file).href })
-  await sleep(240)
+  await sleep(260)
+  // Fit the word to the tile before the shot. Without this the wordmark
+  // is laid out at its natural width and clipped at both ends.
+  await send('Runtime.evaluate', { expression: 'window.__fit && window.__fit()', returnByValue: true })
+  await sleep(120)
   const shot = await send('Page.captureScreenshot', {
     format: 'png', clip: { x: 0, y: 0, width: w, height: h, scale: 1 },
   })
@@ -305,6 +338,7 @@ try {
   }
 
   await send('Page.enable')
+  await send('Runtime.enable')
 
   let n = 0
   for (const app of Object.keys(APPS)) {
@@ -312,12 +346,12 @@ try {
     console.log(`\n  ${app}`)
 
     for (const d of LAUNCHER) {
-      await shoot(iconPage({ size: d.px, app, shape: 'square', safeRatio: 0.60 }),
+      await shoot(iconPage({ size: d.px, app, shape: 'square', safeRatio: 0.93 }),
         d.px, d.px, join(res, d.dir, 'ic_launcher.png')); n++
-      await shoot(iconPage({ size: d.px, app, shape: 'round', safeRatio: 0.56 }),
+      await shoot(iconPage({ size: d.px, app, shape: 'round', safeRatio: 0.72 }),
         d.px, d.px, join(res, d.dir, 'ic_launcher_round.png')); n++
       // The adaptive layer. Bigger canvas, smaller glyph: the OS crops it.
-      await shoot(iconPage({ size: d.fg, app, shape: 'adaptive', safeRatio: 0.38 }),
+      await shoot(iconPage({ size: d.fg, app, shape: 'adaptive', safeRatio: 0.74 }),
         d.fg, d.fg, join(res, d.dir, 'ic_launcher_foreground.png')); n++
     }
     console.log(`    launcher   ${LAUNCHER.length * 3} files`)

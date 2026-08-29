@@ -5,6 +5,7 @@ import {
   CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import PartnerFigure from './PartnerFigure'
 import { formatINR } from '../../utils/format'
 
 /**
@@ -152,7 +153,12 @@ export default function MyJobs({ vendorId }) {
   if (!jobs.length) {
     return (
       <div className="rounded-[22px] bg-white p-5 text-center ring-1 ring-ink/[0.06]">
-        <p className="text-[14px] font-extrabold text-ink">No jobs yet</p>
+        {/* An empty list is the screen a master sees most often before
+            their first job, and a bare sentence on it reads as a dead
+            app. The figure is what makes waiting feel like being part of
+            something rather than looking at nothing. */}
+        <div className="flex justify-center"><PartnerFigure size={110} /></div>
+        <p className="mt-1 text-[14px] font-extrabold text-ink">No jobs yet</p>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
           Jobs you accept appear here with the date, the area and what you earn.
         </p>

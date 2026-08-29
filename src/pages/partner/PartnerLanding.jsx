@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import PartnerFigure from '../../components/vendor/PartnerFigure'
 import { PARTNER_PLANS, LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 
@@ -70,7 +71,16 @@ export default function PartnerLanding() {
       </header>
 
       <main className="mx-auto max-w-2xl px-5">
-        <h1 className="mt-8 font-serif text-[32px] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-[38px]">
+        {/* A master, drawn. The first thing on the first screen a
+            partner ever sees, because "is this app for me" is answered
+            by a picture faster than by a sentence — and an illustration
+            can say "somebody who does this work" without claiming to be
+            a particular person. */}
+        <div className="mt-6 flex justify-center">
+          <PartnerFigure trade="Decoration & Floral" live size={148} />
+        </div>
+
+        <h1 className="mt-4 font-serif text-[32px] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-[38px]">
           Work that comes to you.
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
