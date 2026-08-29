@@ -7,6 +7,7 @@ import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID } from '../../config/instantBooki
 import { openRazorpay } from '../../lib/razorpayCheckout'
 import TradeSprite, { LiveLine } from './TradeSprite'
 import PaidConfirmation from './PaidConfirmation'
+import { IS_NATIVE_APP, APP_BUILD } from '../common/AppBadge'
 import CustomerAlerts from './CustomerAlerts'
 import CancelLine from './CancelLine'
 
@@ -587,6 +588,13 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
           <p className="text-[14px] font-extrabold text-amber-900">That did not go through</p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-amber-900/80">{failed}</p>
           <p className="mt-1 text-[12.5px] font-bold text-amber-900">Nothing has been charged.</p>
+          {/* Which build this happened on, and whether it is the app or a
+              browser. A report of "it does not work" costs an afternoon
+              without these two facts and five minutes with them — we
+              spent that afternoon already. */}
+          <p className="mt-2 text-[10.5px] font-semibold text-amber-900/55">
+            {IS_NATIVE_APP ? 'app' : 'browser'} · build {APP_BUILD}
+          </p>
           {onRetry && (
             <button onClick={onRetry} className="mt-3 rounded-2xl bg-amber-400 px-4 py-2.5 text-[13.5px] font-extrabold text-plum-950">
               Try again

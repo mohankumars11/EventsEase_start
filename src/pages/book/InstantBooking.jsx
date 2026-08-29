@@ -337,6 +337,10 @@ export default function InstantBooking() {
     setStep(4)
     setSending(true); setError(null)
 
+    // Declared out here so `finally` can clear the timer whichever way
+    // the try block leaves.
+    let ctl, deadline
+
     /**
      * Everything below is inside try/finally, and the `finally` is the
      * point.
@@ -353,8 +357,28 @@ export default function InstantBooking() {
      * screen where somebody is about to spend twenty thousand rupees.
      */
     try {
+      /* A deadline, because a hanging request is the worst failure here.
+       *
+       * This was a bare fetch with no timeout. If the request never
+       * settled — a WebView holding a connection, a phone that lost
+       * signal mid-flight, a cold function that never answered — the
+       * screen sat on "Reaching masters…" for ever, with no error, no
+       * retry and no way to tell whether anything had been sent.
+       *
+       * Reported exactly that way, and it is indistinguishable from the
+       * app being broken. A visible failure is recoverable; a spinner
+       * that never resolves is a dead end on the screen where somebody
+       * has just committed to a booking.
+       *
+       * 30 seconds: longer than the slowest measured dispatch (5.5s on
+       * a cold function) by a wide margin, short enough that nobody
+       * decides the app is dead first. */
+      ctl = new AbortController()
+      deadline = setTimeout(() => ctl.abort(), 30_000)
+
       const res = await fetch(apiUrl('/api/dispatch-booking'), {
         method: 'POST',
+        signal: ctl.signal,
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           customerId: user.id,
@@ -429,11 +453,19 @@ export default function InstantBooking() {
         localStorage.removeItem(DRAFT)
       } catch { /* storage off */ }
     } catch (err) {
-      // Offline, DNS, CORS, an aborted request. The customer does not
-      // need the distinction; they need to know it did not go through
-      // and that nothing was charged.
-      setError(`Could not reach the booking service. Nothing has been charged. (${err?.message ?? 'network error'})`)
+      /* Offline, DNS, CORS, a timeout. The customer does not need the
+       * distinction — but WE do when they report it, so the reason is
+       * kept in the sentence rather than swallowed.
+       *
+       * The abort is named separately because "it took too long" and
+       * "there is no connection" lead to different next actions: one is
+       * worth retrying immediately, the other is not. */
+      const timedOut = err?.name === 'AbortError'
+      setError(timedOut
+        ? 'That took too long to reach Sambramo. Nothing has been charged — tap Try again.'
+        : `Could not reach Sambramo. Check your connection — nothing has been charged. (${err?.message ?? 'network error'})`)
     } finally {
+      if (deadline) clearTimeout(deadline)
       setSending(false)
     }
   }
