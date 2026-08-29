@@ -328,9 +328,22 @@ jobs:
           # attached alongside the new ones.
           gh release delete android-latest --yes --cleanup-tag || true
 
+          # Published BESIDE the apks, in the release they come from.
+          #
+          # The update prompt compares the installed build against this.
+          # It first compared against the WEBSITE's build and told every
+          # user to update forever — the site deploys on every push, the
+          # apk only when src/ changes, so two current builds always
+          # carry different shas. A value published here can only ever
+          # describe a build that was actually packaged.
+          printf '{"build":"%s","builtAt":"%s"}\n' \
+            "${{ github.sha }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apks/version.json
+          cat apks/version.json
+
           gh release create android-latest \
             apks/sambramo-customer.apk \
             apks/sambramo-partner.apk \
+            apks/version.json \
             --title "Sambramo — Android test builds" \
             --notes-file notes.md
 

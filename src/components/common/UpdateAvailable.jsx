@@ -20,17 +20,28 @@ import { isNativeApp } from '../../lib/nativePush'
  * broken booking screen has no way of knowing a fixed one exists.
  *
  * ══════════════════════════════════════════════════════════════════════
- * HOW IT KNOWS
+ * IT MUST COMPARE APK TO APK
  * ══════════════════════════════════════════════════════════════════════
  *
- * `VITE_BUILD` is stamped into the bundle at compile time — the commit
- * the APK was built from. `/version.json` is written by the same build
- * and served from the LIVE site, which always reflects the newest
- * deploy.
+ * The first version compared the APK's stamped build against the
+ * WEBSITE's build, and told every user to update, forever, on the
+ * newest APK there was.
  *
- * Different values mean a newer build exists. That is the whole test,
- * and it is honest in both directions: it cannot claim an update that
- * was not built, and it cannot miss one that was.
+ * Those two are legitimately different and always will be. The site
+ * deploys on every push; the APK rebuilds only when something under
+ * src/ changes. Two current builds, two different shas — so "they
+ * differ" answers a question nobody asked.
+ *
+ * The right comparison is against the newest APK, and the honest place
+ * to publish that is the release the APK itself comes from. The Android
+ * workflow uploads `version.json` beside the two .apk files, so the
+ * value can only ever describe a build that actually exists.
+ *
+ * ── Failing safe ────────────────────────────────────────────────────
+ * Anything unclear — a failed fetch, a missing file, 'dev', a value
+ * equal to ours — shows nothing. A false "update available" is worse
+ * than a missed one: it teaches people to dismiss the prompt, and the
+ * time it matters is the time they will.
  *
  * ── Why not a version number ────────────────────────────────────────
  * A number has to be bumped, and the one time somebody forgets is the
@@ -53,9 +64,11 @@ import { isNativeApp } from '../../lib/nativePush'
 const BUILD = (import.meta.env?.VITE_BUILD ?? 'dev').slice(0, 7)
 const DISMISS_KEY = 'sambramo_update_dismissed'
 
-/* Where a new build is announced. Absolute, because the app's own origin
-   is `https://localhost` and has no idea what the live site is. */
-const ORIGIN = import.meta.env?.VITE_API_ORIGIN || 'https://sambramoh.vercel.app'
+/* Published beside the APKs, in the release they come from — so it
+   cannot describe a build that was never packaged. A release asset is a
+   plain CDN URL with no API rate limit, unlike the GitHub API. */
+const VERSION_URL =
+  'https://github.com/mohankumars11/EventsEase_start/releases/download/android-latest/version.json'
 
 export default function UpdateAvailable({ app = 'customer' }) {
   const [latest, setLatest] = useState(null)
@@ -70,13 +83,19 @@ export default function UpdateAvailable({ app = 'customer' }) {
       try {
         // `no-store`, or the WebView will happily serve the copy it
         // fetched on the launch that told it it was up to date.
-        const res = await fetch(`${ORIGIN}/version.json`, { cache: 'no-store' })
+        const res = await fetch(VERSION_URL, { cache: 'no-store' })
         if (!res.ok) return
         const body = await res.json()
         if (dead) return
 
         const live = String(body.build ?? '').slice(0, 7)
-        if (!live || live === BUILD) return
+
+        /* Every uncertain case is silence.
+         *
+         * No value, our own value, or a placeholder from a build that
+         * did not stamp itself — none of those is evidence that a newer
+         * APK exists, and only evidence should produce a prompt. */
+        if (!live || live === 'dev' || live === BUILD) return
 
         try {
           if (localStorage.getItem(DISMISS_KEY) === live) return
