@@ -39,11 +39,27 @@ import { isNativeApp } from '../../lib/nativePush'
 
 /* The rolling release tag. Every build replaces it, so this URL is
    permanent and can be sent to a master once. */
-const APK = 'https://github.com/mohankumars11/EventsEase_start/releases/download/android-latest/sambramo-partner.apk'
+const BASE = 'https://github.com/mohankumars11/EventsEase_start/releases/download/android-latest'
+
+const APPS = {
+  partner: {
+    apk: `${BASE}/sambramo-partner.apk`,
+    label: 'Install the Sambramo Partners app',
+    title: 'You are using the website',
+    // Said as what they lose, not what we want.
+    why: 'A job is offered for 45 seconds and the first master to accept gets it. The app buzzes your phone even when it is closed; a browser tab cannot.',
+  },
+  customer: {
+    apk: `${BASE}/sambramo-customer.apk`,
+    label: 'Install the Sambramo app',
+    title: 'Get the app',
+    why: 'Masters reply while you are doing something else. The app tells you the moment one accepts — a browser tab has to be open to tell you anything.',
+  },
+}
 
 const DISMISSED = 'sambramo_install_dismissed'
 
-export default function InstallTheApp() {
+export default function InstallTheApp({ app = 'partner' }) {
   const [gone, setGone] = useState(() => {
     try { return localStorage.getItem(DISMISSED) === '1' } catch { return false }
   })
@@ -73,21 +89,19 @@ export default function InstallTheApp() {
 
       <p className="flex items-center gap-2 pr-6 text-[14.5px] font-extrabold leading-tight">
         <Smartphone size={16} className="shrink-0 text-saffron-400" />
-        You are using the website
+        {APPS[app].title}
       </p>
 
       {/* The reason, stated as what they lose rather than what we want. */}
       <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/75">
-        A job is offered for 45 seconds and the first master to accept gets
-        it. The app buzzes your phone even when it is closed; a browser tab
-        cannot.
+        {APPS[app].why}
       </p>
 
       <a
-        href={APK}
+        href={APPS[app].apk}
         className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[14px] font-extrabold text-plum-950 transition active:scale-[0.99]"
       >
-        <Download size={16} /> Install the Sambramo Partners app
+        <Download size={16} /> {APPS[app].label}
       </a>
 
       <p className="mt-2 text-center text-[11px] leading-snug text-white/50">

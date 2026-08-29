@@ -7,6 +7,8 @@ import { StepFrame, ACTION_BAR_CLEARANCE } from '../../components/journey/Journe
 import MatchingBoard from '../../components/book/MatchingBoard'
 import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
+import ServiceOptions from '../../components/book/ServiceOptions'
+import { optionsFor, defaultOptions, optionMultiplier, optionSummary } from '../../data/serviceOptions'
 import { SERVICE_BY_ID } from '../../data/servicePricing'
 import { specModeFor, INSTANT_DURATIONS, defaultDurationFor } from '../../data/instantSetups'
 import { tradeFor } from '../../config/vendor'
@@ -129,6 +131,12 @@ export default function InstantBooking() {
   const [guests, setGuests] = useState(30)
   const [picked, setPicked] = useState([])
   const [durations, setDurations] = useState({})
+  /* The choices per service — { photography: { style: 'candid' } }.
+   *
+   * Defaulted the moment a service is picked, so a price can be shown
+   * before anybody answers anything and skipping the questions costs
+   * the base rate rather than nothing. */
+  const [options, setOptions] = useState({})
   const [notes, setNotes] = useState({})
   const [requestId, setRequestId] = useState(() => {
     if (resumeId) return resumeId
@@ -148,14 +156,24 @@ export default function InstantBooking() {
   const quotes = useMemo(() => {
     const out = {}
     for (const id of picked) {
-      out[id] = priceLine({
+      const q = priceLine({
         serviceId: id,
         guestCount: guests,
         durationId: durations[id] ?? defaultDurationFor(guests),
       })
+      /* The same multiplier the server applies, so the number on screen
+         is the number that gets charged. Applied here rather than baked
+         into priceLine, because the rate card and the choices are
+         different things and the card should stay readable on its own. */
+      if (q?.paise) {
+        const m = optionMultiplier(id, options[id] ?? defaultOptions(id))
+        q.paise = Math.round(q.paise * m)
+        q.rupees = Math.round(q.paise / 100)
+      }
+      out[id] = q
     }
     return out
-  }, [picked, guests, durations])
+  }, [picked, guests, durations, options])
 
   const total = Object.values(quotes).reduce((n, q) => n + (q?.paise ?? 0), 0)
 
@@ -170,7 +188,10 @@ export default function InstantBooking() {
   const savedAddress = null
 
   const toggle = id =>
+  {
     setPicked(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]))
+    setOptions(o => (o[id] ? o : { ...o, [id]: defaultOptions(id) }))
+  }
 
   async function dispatch() {
     if (!user) { navigate('/login', { state: { from: { pathname: '/book/instant' } } }); return }
@@ -239,6 +260,10 @@ export default function InstantBooking() {
           lines: picked.map(id => ({
             serviceId: id,
             durationId: durations[id] ?? defaultDurationFor(guests),
+            // Choice IDS only. The multiplier is looked up server-side in
+            // api/dispatch-booking.js — a client that invented one would
+            // be sending a field nothing reads.
+            options: options[id] ?? defaultOptions(id),
             note: notes[id] ?? null,
           })),
         }),
@@ -479,7 +504,44 @@ export default function InstantBooking() {
       ready: picked.length > 0,
     },
 
-    /* ── 3 · The number ─────────────────────────────────────────── */
+    /* ── 3 · What exactly ───────────────────────────────────────
+       Only for services that actually ask something. A step that
+       renders an empty page for a basket of cake and lighting is a
+       step that teaches people to tap Next without reading. */
+    ...(picked.some(id => optionsFor(id).length) ? [{
+      frame: {
+        overline: 'Your booking',
+        question: 'What exactly?',
+        why: 'These change the price, so they are asked now rather than agreed on a phone call afterwards.',
+      },
+      body: (
+        <div className="space-y-3">
+          {picked.filter(id => optionsFor(id).length).map(id => (
+            <ServiceOptions
+              key={id}
+              serviceId={id}
+              serviceName={SERVICE_BY_ID[id]?.name ?? id}
+              trade={tradeFor(id)}
+              value={options[id] ?? defaultOptions(id)}
+              onChange={next => setOptions(o => ({ ...o, [id]: next }))}
+              /* The live price for a hypothetical answer, so each card
+                 carries the number that choice would make it. */
+              priceOf={candidate => {
+                const q = priceLine({
+                  serviceId: id, guestCount: guests,
+                  durationId: durations[id] ?? defaultDurationFor(guests),
+                })
+                if (!q?.paise) return null
+                return Math.round(q.paise * optionMultiplier(id, candidate) / 100)
+              }}
+            />
+          ))}
+        </div>
+      ),
+      ready: true,
+    }] : []),
+
+    /* ── 4 · The number ─────────────────────────────────────────── */
     {
       frame: {
         overline: 'Your booking',

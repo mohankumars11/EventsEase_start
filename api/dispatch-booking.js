@@ -49,6 +49,8 @@ import { notifyForWave } from './_lib/fcm.js'
 // imports from src/ — in short, because five imports from src/ throw at
 // import time in production and cannot be caught here.
 import {
+  optionMultiplier,
+  optionSummary,
   priceLine, lineSplit, tradeFor, specModeFor,
   OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM, PLATFORM_FEE_RATE, POLICY_VERSION,
 } from './_lib/pricing.bundle.js'
@@ -145,6 +147,20 @@ export default async function handler(req, res) {
       cuisineId: l.cuisineId ?? null,
     })
     if (!q) return res.status(400).json({ error: `cannot price ${l.serviceId}` })
+
+    /* What the customer chose, priced HERE.
+     *
+     * The client sends choice IDS — 'candid', 'bridal', 'nonveg' — and
+     * never an amount or a multiplier. The multiplier is looked up from
+     * data/serviceOptions.js on this side, so a client that made up
+     * `mult: 0.01` would be sending a field nothing reads.
+     *
+     * Same rule the rate card has always had: the browser names WHAT,
+     * the server decides WHAT IT COSTS. */
+    const optionMult = optionMultiplier(l.serviceId, l.options ?? {})
+    q.paise  = Math.round(q.paise * optionMult)
+    q.rupees = Math.round(q.paise / 100)
+    q.optionSummary = optionSummary(l.serviceId, l.options ?? {})
 
     priced.push({ input: l, quote: q, trade })
   }

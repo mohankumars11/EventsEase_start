@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import AppBadge from '../../components/common/AppBadge'
+import InstallTheApp from '../../components/vendor/InstallTheApp'
 import { Link } from 'react-router-dom'
 import {
   ChevronRight, ChevronDown, CalendarHeart, ClipboardList, Route as RouteIcon,
@@ -236,7 +238,16 @@ export default function Account() {
 
         <BrandFoot />
       </div>
-    </div>
+    
+      {/* Which app this is, and how current. See components/common/AppBadge.
+          On the customer side this was missing entirely, so there was no
+          way to tell an installed app from a Chrome shortcut with the
+          same icon. */}
+      <div className="mt-8 space-y-3">
+        <InstallTheApp app="customer" />
+        <AppBadge className="text-center" />
+      </div>
+</div>
   )
 }
 
