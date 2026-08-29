@@ -187,6 +187,20 @@ export default function InstantBooking() {
     return out
   }, [picked, guests, durations, options])
 
+
+  const total = Object.values(quotes).reduce((n, q) => n + (q?.paise ?? 0), 0)
+
+  /* Below `total`, and that is not a style choice.
+   *
+   * These read `total`, and they were written ABOVE its declaration.
+   * `const` is hoisted but not initialised, so the reference landed in
+   * the temporal dead zone and every render of this screen threw
+   * "Cannot access before initialization" — which the error boundary
+   * caught and turned into "Something went wrong on our side".
+   *
+   * It survived review because the file reads top-to-bottom as though
+   * it works, and it survived a local build because Vite does not
+   * evaluate the component. Only running it finds this. */
   /* What this basket qualifies for, recomputed as it changes. */
   const offers = useMemo(() => offersFor({
     subtotalPaise: total,
@@ -209,8 +223,6 @@ export default function InstantBooking() {
     // an empty basket is a popup, not a reward.
     if (picked.length > 0) setUnlocked(fresh)
   }, [offers, picked.length])
-
-  const total = Object.values(quotes).reduce((n, q) => n + (q?.paise ?? 0), 0)
 
   // Resolved once per render and read by both the step gate and the
   // dispatch call, so the screen cannot say 'ready' about a location the

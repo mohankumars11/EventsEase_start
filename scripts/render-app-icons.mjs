@@ -124,11 +124,20 @@ function iconPage({ size, app, shape, safeRatio }) {
   const a = APPS[app]
   const radius = shape === 'round' ? '50%' : `${Math.round(size * 0.22)}px`
 
-  /* The word spans `safeRatio` of the tile.
-     0.93 on the square, because nothing crops it. 0.74 on the adaptive
-     layer, because the OS keeps only the middle 72 of 108dp and a
-     wordmark whose ink reaches the edge of that circle loses its first
-     and last letter on any launcher that masks tighter than the spec. */
+  /* The word spans `safeRatio` of the tile, and every number here came
+     down after seeing it on a phone.
+     
+     0.93 / 0.72 / 0.74 were the ceilings the geometry allows, and a
+     ceiling is the wrong place to sit: a launcher that rounds a corner
+     slightly harder, or an OEM skin that insets the tile, eats the S
+     and the O — and the report was exactly that, "not visible at
+     either end".
+     
+     0.80 on the square leaves a tenth of the tile clear on each side.
+     0.62 on the round one, where the corners are gone entirely and the
+     word's own width is the diameter it has to live inside. 0.56 on the
+     adaptive layer, which the OS crops to the middle 72 of 108dp — the
+     tightest mask of the three and the one that must never clip. */
   const w = Math.round(size * safeRatio)
 
   /* Sized from the WIDTH, not chosen. A condensed heavy sans sets
@@ -346,12 +355,12 @@ try {
     console.log(`\n  ${app}`)
 
     for (const d of LAUNCHER) {
-      await shoot(iconPage({ size: d.px, app, shape: 'square', safeRatio: 0.93 }),
+      await shoot(iconPage({ size: d.px, app, shape: 'square', safeRatio: 0.80 }),
         d.px, d.px, join(res, d.dir, 'ic_launcher.png')); n++
-      await shoot(iconPage({ size: d.px, app, shape: 'round', safeRatio: 0.72 }),
+      await shoot(iconPage({ size: d.px, app, shape: 'round', safeRatio: 0.62 }),
         d.px, d.px, join(res, d.dir, 'ic_launcher_round.png')); n++
       // The adaptive layer. Bigger canvas, smaller glyph: the OS crops it.
-      await shoot(iconPage({ size: d.fg, app, shape: 'adaptive', safeRatio: 0.74 }),
+      await shoot(iconPage({ size: d.fg, app, shape: 'adaptive', safeRatio: 0.56 }),
         d.fg, d.fg, join(res, d.dir, 'ic_launcher_foreground.png')); n++
     }
     console.log(`    launcher   ${LAUNCHER.length * 3} files`)
