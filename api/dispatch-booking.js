@@ -102,6 +102,11 @@ const DEMO_CUSTOMERS = new Set(
   (process.env.SYNTHETIC_DEMO_CUSTOMER ?? '')
     .split(',').map(s => s.trim()).filter(Boolean))
 
+/* The ceiling on `booking_requests.radius_km`, from migration 058's
+   CHECK. Not the same thing as MAX_RADIUS_KM, which is how far dispatch
+   actually looks -- see the note at the insert below. */
+const STORED_RADIUS_MAX = 25
+
 const ALLOW_SYNTHETIC_GLOBALLY = !IS_PROD && process.env.ALLOW_SYNTHETIC_DISPATCH === 'true'
 
 const mayUseSeededNetwork = customerId =>
@@ -177,7 +182,30 @@ export default async function handler(req, res) {
     p_occasion_name:  occasionName ?? 'Celebration',
     p_event_date:     eventDate,
     p_guest_count:    guestCount,
-    p_radius_km:      Math.min(radiusKm, MAX_RADIUS_KM),
+    /* ══════════════════════════════════════════════════════════════
+       CLAMPED TO WHAT THE COLUMN WILL ACCEPT, NOT TO WHAT WE SEARCH
+       ══════════════════════════════════════════════════════════════
+
+       `booking_requests.radius_km` carries CHECK (radius_km BETWEEN 1
+       AND 25) from migration 058, written when 25 km was the widest a
+       customer could ask for.
+
+       Migration 086 then made the customer's radius stop filtering at
+       all -- dispatch reaches the whole city, bounded by
+       max_dispatch_radius_m() at 60 km -- and MAX_RADIUS_KM moved to 60
+       to match. The CHECK did not move with it, so the first booking
+       that asked for 60 km was rejected by the database and every
+       instant booking failed with a 500. It shipped that way.
+
+       So the STORED value is clamped to what the column allows, while
+       the SEARCH below still runs at the full radius. The two were
+       always different things; only now do they hold different numbers.
+
+       Migration 088 raises the CHECK to 100, matching
+       vendors.service_radius_km (057). Once it is applied this clamp can
+       become Math.min(radiusKm, MAX_RADIUS_KM) again -- but it must not
+       be removed before then, and it is harmless afterwards. */
+    p_radius_km:      Math.min(radiusKm, MAX_RADIUS_KM, STORED_RADIUS_MAX),
     p_lat:            lat,
     p_lng:            lng,
     p_address_text:   addressText ?? '',
