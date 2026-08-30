@@ -59,6 +59,54 @@ export function providerName() {
  */
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET ?? 'dev-webhook-secret'
 
+/**
+ * What this Razorpay account can actually take.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS ON THE SERVER
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * It was in the browser first, and it could never have worked:
+ * api.razorpay.com/v1/methods sends no CORS headers, so the fetch dies
+ * with "Failed to fetch" on every load. The client then treated the
+ * failure as "UPI not available", omitted the display config, and the
+ * sheet opened on cards and wallets — which is the exact bug the probe
+ * was written to fix, reintroduced by the fix itself.
+ *
+ * Measured from a real browser on the production origin before this was
+ * moved: `{ ok: false, error: "Failed to fetch" }`.
+ *
+ * Here there is no origin and no preflight. The key id is public — it is
+ * handed to the browser anyway — so this adds no exposure.
+ *
+ * Cached for the life of the lambda: the answer changes when somebody
+ * activates a payment method in a dashboard, which is not something that
+ * happens between two checkouts.
+ *
+ * Fails OPEN as null, and the caller treats null as "do not force an
+ * order". A checkout must never fail to open because a preference could
+ * not be checked.
+ */
+let methodsCache = null
+export async function enabledMethods() {
+  if (methodsCache) return methodsCache
+  if (!KEY_ID) return null
+  try {
+    const ctl = new AbortController()
+    const t = setTimeout(() => ctl.abort(), 2500)
+    const res = await fetch(
+      'https://api.razorpay.com/v1/methods?key_id=' + encodeURIComponent(KEY_ID),
+      { signal: ctl.signal },
+    )
+    clearTimeout(t)
+    if (!res.ok) return null
+    methodsCache = await res.json()
+    return methodsCache
+  } catch {
+    return null
+  }
+}
+
 export async function createOrder({ amountPaise, receipt, notes = {} }) {
   const provider = providerName()
 

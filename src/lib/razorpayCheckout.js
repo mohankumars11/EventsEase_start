@@ -53,15 +53,20 @@
  * Neither state was a bug in Razorpay. Both were this file assuming
  * something it could have asked.
  *
- * `enabledMethods()` asks — /v1/methods, keyed by the public key id the
- * browser already holds, which is the same call checkout.js makes. UPI
- * goes first only when the account reports it live, and
- * `show_default_blocks: true` keeps every other enabled method in the
- * sheet underneath it.
+ * So it asks — and it asks from the SERVER, which is the part I got
+ * wrong on the first attempt. `api.razorpay.com/v1/methods` sends no
+ * CORS headers, so asking from the browser dies with "Failed to fetch"
+ * on every single load. The client read that failure as "UPI is not
+ * available", omitted the config, and reproduced the exact bug the probe
+ * had been written to fix.
  *
- * The probe fails OPEN. Any error, any timeout, and the config is
- * omitted and the sheet opens exactly as it did before. A payment screen
- * must never fail to open because a preference could not be checked.
+ * `api/create-booking-payment` now answers it in the same response that
+ * carries the order: `upiEnabled` is true, false, or null when the probe
+ * itself could not get an answer.
+ *
+ * Only true forces the order. null and false both leave the sheet
+ * alone — a payment screen must never fail to open, or open wrong,
+ * because a preference could not be checked.
  *
  * ══════════════════════════════════════════════════════════════════════
  * PREFILL IS NOT A CONVENIENCE
@@ -171,6 +176,9 @@ export function openRazorpay({
   customer = {},
   notes = {},
   onDismiss,
+  // From api/create-booking-payment: true, false, or null when the
+  // server could not get an answer out of Razorpay.
+  upiEnabled = null,
 }) {
   return new Promise(async resolve => {
     const ready = await loadSdk()
@@ -195,8 +203,9 @@ export function openRazorpay({
      * And the whole thing is skipped when the probe says UPI is not
      * live, which is the state that broke the sheet the first time this
      * was attempted — a forced block Razorpay could not fill. */
-    const methods = await enabledMethods(keyId)
-    const upiFirst = methods?.upi === true
+    // Strictly true. `null` means the server could not tell, and a
+    // maybe is not a reason to reorder somebody's payment screen.
+    const upiFirst = upiEnabled === true
 
     const rzp = new window.Razorpay({
       key: keyId,

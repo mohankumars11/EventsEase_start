@@ -447,6 +447,9 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
 
       const opened = await openRazorpay({
         keyId: body.keyId,
+        // Decided server-side, because api.razorpay.com/v1/methods
+        // sends no CORS headers and the browser cannot ask.
+        upiEnabled: body.upiEnabled,
         orderId: body.orderId,
         amountPaise: body.amountPaise,
         // What they are paying for, in the sheet, in their words. Not

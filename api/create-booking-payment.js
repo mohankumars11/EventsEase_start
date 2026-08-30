@@ -45,7 +45,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
-import { createOrder, providerName } from './_lib/payments.js'
+import { createOrder, providerName, enabledMethods } from './_lib/payments.js'
 import { testChargePaise } from './_lib/testCharge.js'
 
 const url = process.env.VITE_SUPABASE_URL
@@ -156,8 +156,15 @@ export default async function handler(req, res) {
 
   if (!order.ok) return res.status(502).json({ error: order.error })
 
+  /* Which methods to put first in the sheet, decided here because
+     the browser cannot ask: /v1/methods sends no CORS headers. */
+  const methods = await enabledMethods()
+
   return res.status(200).json({
     provider: providerName(),
+    // null when the probe could not answer. The client must treat null
+    // as "do not force an order", never as "UPI is off".
+    upiEnabled: methods ? methods.upi === true : null,
     orderId: order.id,
     amountPaise,
     keyId: order.keyId,
