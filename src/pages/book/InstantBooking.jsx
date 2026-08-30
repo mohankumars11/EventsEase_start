@@ -107,6 +107,27 @@ const LIVE_BOOKING = 'sambramo_live_booking'
  * today's plan — the event date in it would be stale and the prices
  * would have moved.
  */
+/* ══════════════════════════════════════════════════════════════════════
+   THE MATCHING BOARD IS THE STEP AFTER THE BASKET, WHATEVER THAT IS
+   ══════════════════════════════════════════════════════════════════════
+
+   STEPS below holds the five screens a customer fills in: When, Where,
+   What, What exactly, and the review that carries the Find my masters
+   button. The board comes after all of them.
+
+   This was the literal 4, and adding the What-exactly step is what broke
+   it: the review moved to index 4, where the board early-return already
+   sat. The board won, the review screen became unreachable, and with it
+   its onPrimary: dispatch. Continue walked from What-exactly straight
+   onto an empty board, no request was ever sent, and every customer sat
+   on Reaching masters for ever while the API was perfectly healthy.
+
+   Named and derived from the count so the next step somebody inserts
+   cannot do the same thing. scripts/repro-dispatch.mjs presses the
+   button and fails when nothing is sent. */
+const BASKET_STEPS = 5
+const MATCHING_STEP = BASKET_STEPS
+
 const DRAFT = 'sambramo_instant_draft'
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000
 
@@ -162,11 +183,11 @@ export default function InstantBooking() {
   const handedDate = params.get('date')
 
   const [step, setStep] = useState(() => {
-    if (resumeId) return 4
+    if (resumeId) return MATCHING_STEP
     // A parked booking wins over a fresh start. Somebody with masters
     // being found for them right now did not come back to fill in a
     // form again.
-    try { if (localStorage.getItem(LIVE_BOOKING)) return 4 } catch { /* storage off */ }
+    try { if (localStorage.getItem(LIVE_BOOKING)) return MATCHING_STEP } catch { /* storage off */ }
 
     /* And back to the step they were on.
      *
@@ -174,7 +195,7 @@ export default function InstantBooking() {
      * customer lands on "When is it?" with a date already chosen and
      * has to tap Continue through four screens they have finished. */
     const d = readDraft()
-    if (d?.step != null) return Math.min(d.step, 3)
+    if (d?.step != null) return Math.min(d.step, MATCHING_STEP - 1)
 
     return handedDate ? 1 : 0
   })
@@ -213,7 +234,7 @@ export default function InstantBooking() {
    * did not intend to save, and asking them to would be asking them to
    * predict that they were about to be interrupted. */
   useEffect(() => {
-    if (step >= 4) return          // dispatched — the booking id owns it now
+    if (step >= MATCHING_STEP) return          // dispatched — the booking id owns it now
     if (!picked.length && !where) return   // nothing worth keeping yet
     try {
       localStorage.setItem(DRAFT, JSON.stringify({
@@ -316,7 +337,7 @@ export default function InstantBooking() {
    * The basket steps are where an offer is real, so that is where it is
    * announced. */
   useEffect(() => {
-    if (step >= 4) return
+    if (step >= MATCHING_STEP) return
     const fresh = offers.find(o => o.eligible && !seenOffers.current.has(o.id))
     if (!fresh) return
     seenOffers.current.add(fresh.id)
@@ -361,7 +382,7 @@ export default function InstantBooking() {
      *
      * The booking is still only real when the server says so. This
      * changes when the screen moves, not when the booking exists. */
-    setStep(4)
+    setStep(MATCHING_STEP)
     setSending(true); setError(null)
 
     // Declared out here so `finally` can clear the timer whichever way
@@ -505,7 +526,7 @@ export default function InstantBooking() {
 
   // Belt and braces: a sheet that was already open when the customer
   // pressed dispatch must not survive onto the matching board either.
-  const offerSheet = unlocked && step < 4 ? (
+  const offerSheet = unlocked && step < MATCHING_STEP ? (
     <OfferUnlocked
       offer={unlocked}
       onClose={() => setUnlocked(null)}
@@ -513,9 +534,9 @@ export default function InstantBooking() {
     />
   ) : null
 
-  /* ── 4 · Matching ───────────────────────────────────────────────
+  /* ── 5 · Matching ───────────────────────────────────────────────
      Entered with requestId still null. See dispatch() above. */
-  if (step === 4) {
+  if (step === MATCHING_STEP) {
     return (
       // `a-canvas` is the app's own ground, the same class the celebration
       // journey uses. Without it the near-transparent tint this had let
