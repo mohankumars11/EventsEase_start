@@ -130,3 +130,7 @@ scripts/data/pincode-geocode-cache.json
 # clone, for evidence that is only current until the next capture.
 docs/test-report/
 .demo-request.txt
+
+# The sandbox keys, and the generated schema parts (see docs/SANDBOX.md).
+.env.sandbox
+supabase/sandbox/

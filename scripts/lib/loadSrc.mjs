@@ -68,10 +68,27 @@ export async function loadSrc(spec) {
  *
  * `process.env` wins, so CI or a one-off override still works.
  */
+/* Which environment the scripts talk to.
+
+   SAMBRAMO_ENV=sandbox reads .env.sandbox instead of .env, so every
+   check, capture and repro under scripts/ can be pointed at a throwaway
+   database by setting one variable.
+
+   It exists because there was only ever one Supabase project and one
+   deployment, so every test run wrote to the database real customers
+   use -- and two outages in two days were found by the CEO rather than
+   by any check. A staging environment is not a nicety here; it is what
+   makes it safe to check anything at all.
+
+   Explicit process.env still wins, so CI and one-off overrides behave
+   exactly as before. */
+export const ENV_NAME = process.env.SAMBRAMO_ENV ?? "production"
+export const ENV_FILE = ENV_NAME === "production" ? ".env" : ".env." + ENV_NAME
+
 export function readEnv(key) {
   if (process.env[key]) return process.env[key]
   try {
-    const src = readFileSync(join(ROOT, '.env'), 'utf8')
+    const src = readFileSync(join(ROOT, ENV_FILE), "utf8")
     const m = src.match(new RegExp(`^${key}=(.*)$`, 'm'))
     return m ? m[1].trim() : null
   } catch {
