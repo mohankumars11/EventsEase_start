@@ -33,6 +33,18 @@ const dataUri = f => `data:image/jpeg;base64,${readFileSync(join(SMALL, f)).toSt
    Everything else was already working and is here because a claim
    without a picture is the thing that stopped being accepted. */
 const SHOTS = [
+  { f: '23-sticker-reaching.jpg', t: 'Reaching masters',
+    fixed: true,
+    say: 'The first of the three stickers, on a booking dispatched through the deployed endpoint moments before: <b>10 masters have your job on their phone right now</b>. It sits above the headline because it is the faster read — somebody who opens this at a traffic light knows what is happening before a word of type resolves. Nothing draws a frame around it: the artwork’s ground and the app’s ground are both pure white, so it reads as part of the page.' },
+
+  { f: '24-sticker-pending.jpg', t: 'A master said yes',
+    fixed: true,
+    say: 'The same booking after <code>sariyo eventss</code> accepted through <code>accept_offer()</code> — no reload, no tap. The sticker turned on its own because it is derived from the same array the rows are drawn from. <b>Look at the distance: 10.5 km.</b> That is the partner the old 5 km radius excluded from every job they would have driven to; migration 086 is why they are here at all.' },
+
+  { f: '25-sticker-confirmed.jpg', t: 'Paid, and the date is held',
+    fixed: true,
+    say: 'Green only when nothing is searching and nothing is owed — a confirmed sticker over a service still hunting would be a promise nobody made. <b>Three bugs it forced into the open:</b> cancelled lines were being counted (this read “1 of 3 confirmed” with two dead pips), they carried no label and kept a cancel button that could only error, and a paid line was still being told to “pay to lock the date”. All three are fixed here.' },
+
   { f: '14-matching-board.jpg', t: 'The matching board, live',
     fixed: true,
     say: 'A real request with three services. Anu events accepted the photography through <code>accept_offer()</code> from their own signed-in session — the same call the Accept button makes — and the board says so by name, at 0.5 km, with a pay button for that one line. The other two keep hunting. <b>Fixed here:</b> every row used to draw the same generic sparkle, because the board never selected <code>service_id</code> or <code>trade</code>. It now reads camera, balloon, cake.' },

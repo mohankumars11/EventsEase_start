@@ -227,17 +227,19 @@
 <div class="wrap">
 
   <header class="head">
-    <p class="eyebrow">Approved, deployed, and verified live</p>
+    <p class="eyebrow">Shipped, verified, and one outage confessed</p>
     <h1>The deploy gate</h1>
     <p class="dek">
       Every screen photographed from the production bundle, with a live
       booking and a real partner behind the ones that need one.
-      <!--COUNT--> captures, six defects found and fixed while taking them.
+      <!--COUNT--> captures, nine defects found and fixed while taking them —
+      including one I caused, which took instant booking down for
+      roughly an hour.
     </p>
     <p class="stamp">
       <span><!--DATE--></span>
       <span>feature/without-shopping</span>
-      <span>commit 6ba31fb</span>
+      <span>commits 6ba31fb &rarr; dabcab1</span>
       <span class="live">live on sambramoh.vercel.app</span>
     </p>
   </header>
@@ -341,6 +343,70 @@
   </section>
 
   <section>
+    <h2>I broke instant booking, and here is how</h2>
+    <p class="sub">
+      The first deploy of the day raised the customer’s search radius from
+      5 km to 60 so no willing master in Bengaluru would be excluded. It
+      did not raise the database constraint that stores it.
+    </p>
+
+    <div class="ledger">
+      <div class="row">
+        <div>
+          <h3>Every booking returned a 500</h3>
+          <p class="was"><code>booking_requests.radius_km</code> carries
+          <code>CHECK (radius_km BETWEEN 1 AND 25)</code> from migration 058.
+          The shipped client asked for 60.</p>
+        </div>
+        <p class="now">
+          Confirmed against production: 25 km passes, 26 is rejected. Every
+          customer pressing <b>Find my masters</b> got an error for about an
+          hour. <b>Fixed within minutes of finding it</b> — the stored value is
+          clamped to what the column accepts while the search still runs at the
+          full radius, and migration 088 raises the constraint to 100 so the
+          stored number can tell the truth again.
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>Every check was green while it was down</h3>
+          <p class="was">Price agreement, components, search paths, the sticker
+          rules, fourteen routes, twenty-four screenshots. All honest, none of
+          them writes a row.</p>
+        </div>
+        <p class="now">
+          The smoke test opens <code>/book/instant</code> and confirms it
+          renders, which it does — the failure was on the far side of an
+          address, a service and a button, in a constraint no amount of reading
+          the front end would surface. <b>A schema constraint and the code that
+          writes to it can only be checked together, by writing.</b>
+          <code>check-dispatch-live.mjs</code> now books a real two-line
+          booking against the deployed API, asserts the prices and the
+          notifications, and cancels both lines behind itself.
+        </p>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>Then three commits silently did not deploy</h3>
+          <p class="was">Vercel kept serving the previous build. The site stayed
+          up. The only symptom was a bundle hash that never changed.</p>
+        </div>
+        <p class="now">
+          <code>npm run build</code> begins with a staleness check on the
+          server-side pricing bundle, and I had been running
+          <code>vite build</code> directly, which skips it. The guard was right
+          — it was refusing to ship a client whose pricing rules the server did
+          not have. <b>Worth knowing:</b> a 200 on an asset URL proves nothing
+          here, because everything outside <code>/api/</code> rewrites to
+          <code>index.html</code>. Check the content type.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <h2>Checks that can fail, and did</h2>
     <p class="sub">
       Every one of these exits non-zero on a real fault — I sabotaged the
@@ -433,47 +499,54 @@
   </section>
 
   <section>
-    <h2>It is live. Two things are still open.</h2>
+    <h2>Where it stands</h2>
     <p class="sub">
-      Verified by content, not by a green tick: four strings that exist
-      only in this commit were fetched back out of the production bundles
-      — the board's new query, the decor forks, the real rate-card tier
-      names, and the dead-row warning. Both API functions answer their
-      CORS preflight and reject GET, which is correct for POST-only
-      endpoints.
+      Live and verified by content, not by a green tick: the entry bundle
+      was fetched with a cache-buster, the new copy read back out of it,
+      all three stickers confirmed as <code>image/webp</code> rather than
+      a rewrite, and a real two-line booking put through the deployed API
+      end to end — 200, both lines priced, 10 masters notified, both
+      cleaned up behind it.
     </p>
 
     <div class="ask">
-      <h3>A ₹1 test payment is the last unproven thing</h3>
+      <h3>A &#8377;1 test payment is still the last unproven thing</h3>
       <p>
-        The paid screen above is real UI driven by a test fixture, not by
-        money. Running one real ₹1 payment through the live checkout is
-        what closes it, and it also exercises the webhook against the
-        live keys rather than the test ones. Ask and I will give you the
-        steps.
+        The confirmed sticker above sits on a line whose paid status came
+        from a test fixture, not from money. One real payment through the
+        live checkout closes it and exercises the webhook against the live
+        keys. Ask and I will give you the steps.
       </p>
     </div>
 
     <div class="ask">
-      <h3>Test rows sitting in a money table</h3>
+      <h3>Two test rows in a money table</h3>
       <p>
-        <code>check-booking-capture.mjs</code> left a ₹1 escrow hold
-        (<code>pay_TEST580a40438a69</code>) against a real ₹9,560 line,
-        and flipped that line to paid. The ledger is meant to answer
-        “what is Sambramo holding right now” with one SUM, and a fixture
-        row makes that answer wrong. It is your money table, so I have
-        not touched it — say the word and I will clear the row and put
-        the line back.
+        <code>check-booking-capture.mjs</code> left a &#8377;1 escrow hold
+        (<code>pay_TEST580a40438a69</code>) against a real &#8377;9,560 line
+        and flipped it to paid. The ledger is meant to answer &ldquo;what is
+        Sambramo holding right now&rdquo; with one SUM, and a fixture row makes
+        that answer wrong. It is your money table, so I have not touched it —
+        say the word and I will clear it.
       </p>
     </div>
 
     <div class="ask">
-      <h3>And the seeded partners, when you are ready</h3>
+      <h3>Migration 088, when you have a minute</h3>
       <p>
-        Still reachable from your account in production, by design, so
-        you can keep testing. Before a real customer books: remove your
-        account from <code>SYNTHETIC_DEMO_CUSTOMER</code>, or purge all
-        221. Not urgent today; fatal on launch day.
+        Raises the radius constraint to 100 so the stored number records what
+        was actually asked for. <b>Not urgent</b> — the clamp is written to be
+        correct before and after it is applied, and bookings work either way.
+      </p>
+    </div>
+
+    <div class="ask">
+      <h3>And the 221 seeded partners</h3>
+      <p>
+        Still reachable from your account in production, by design, so you can
+        keep testing. Before a real customer books: remove your account from
+        <code>SYNTHETIC_DEMO_CUSTOMER</code>, or purge them. Fatal on launch
+        day, harmless today.
       </p>
     </div>
   </section>
