@@ -32,22 +32,36 @@
  * proved.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THE FORCED UPI BLOCK WAS REMOVED
+ * UPI IS PREFERRED, NEVER IMPOSED
  * ══════════════════════════════════════════════════════════════════════
  *
- * This used to pass `config.display.blocks.upi` with
- * `sequence: ['block.upi']`, to put UPI first for zero MDR. Right
- * intent, and it broke the sheet.
+ * This has been wrong in both directions, and the lesson is the same
+ * both times: it guessed.
  *
- * A forced block names a method the ACCOUNT must have enabled. On an
- * account where that method is not live — which is every account in
- * test mode, and any account mid-activation — Razorpay renders a block
- * it cannot fill. The reported symptom was exact: the phone field would
- * not take ten digits, and pressing pay did nothing at all.
+ * First it hard-coded `config.display.blocks.upi` with
+ * `sequence: ['block.upi']` to put UPI first for zero MDR. A forced
+ * block names a method the ACCOUNT must have live, and on an account
+ * without it Razorpay renders a block it cannot fill. The symptom was
+ * exact: the contact field stopped taking ten digits and pressing pay
+ * did nothing at all.
  *
- * Razorpay already surfaces UPI first for Indian customers on its own.
- * The zero-MDR preference is not worth a checkout that cannot open, so
- * it is a preference now and not a constraint.
+ * So the block was removed outright — and on a live account that DOES
+ * have UPI, Razorpay then filled the sheet with cards and wallets and
+ * left UPI out of it. In India. On the method that costs Sambramo
+ * nothing in MDR and is how most people actually pay.
+ *
+ * Neither state was a bug in Razorpay. Both were this file assuming
+ * something it could have asked.
+ *
+ * `enabledMethods()` asks — /v1/methods, keyed by the public key id the
+ * browser already holds, which is the same call checkout.js makes. UPI
+ * goes first only when the account reports it live, and
+ * `show_default_blocks: true` keeps every other enabled method in the
+ * sheet underneath it.
+ *
+ * The probe fails OPEN. Any error, any timeout, and the config is
+ * omitted and the sheet opens exactly as it did before. A payment screen
+ * must never fail to open because a preference could not be checked.
  *
  * ══════════════════════════════════════════════════════════════════════
  * PREFILL IS NOT A CONVENIENCE
@@ -63,6 +77,46 @@
  */
 
 const SDK = 'https://checkout.razorpay.com/v1/checkout.js'
+
+/* What this Razorpay ACCOUNT can actually take, asked at run time.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY ASK INSTEAD OF ASSUMING
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * A forced UPI block names a method the account must have live. Force it
+ * on an account without UPI and Razorpay renders a block it cannot fill:
+ * the sheet half-opens, the contact field stops taking ten digits, and
+ * pressing pay does nothing. That happened, which is why the block was
+ * removed entirely -- and removing it is why UPI then stopped appearing
+ * on an account that DOES have UPI live.
+ *
+ * Both states were wrong because both guessed. This asks.
+ *
+ *  takes only key_id, which is public by design -- the
+ * browser already receives it to open the sheet at all. It is what
+ * checkout.js itself calls.
+ *
+ * Fails OPEN: any error, any timeout, and this returns null, the config
+ * is omitted, and the sheet behaves exactly as it did before. A payment
+ * screen must never fail to open because a preference could not be
+ * checked. */
+let methodsCache = null
+async function enabledMethods(keyId) {
+  if (methodsCache?.key === keyId) return methodsCache.value
+  try {
+    const ctl = new AbortController()
+    const t = setTimeout(() => ctl.abort(), 2500)
+    const url = "https://api.razorpay.com/v1/methods?key_id=" + encodeURIComponent(keyId)
+    const res = await fetch(url, { signal: ctl.signal })
+    clearTimeout(t)
+    const value = res.ok ? await res.json() : null
+    methodsCache = { key: keyId, value }
+    return value
+  } catch {
+    return null
+  }
+}
 
 /** Sambramo's own mark, for the top of the sheet. Absolute by necessity. */
 const LOGO = typeof window !== 'undefined' ? `${window.location.origin}/icon-512.png` : ''
@@ -124,6 +178,26 @@ export function openRazorpay({
       return resolve({ ok: false, error: 'Could not reach the payment page. Check your connection and try again.' })
     }
 
+    /* UPI first, but only on an account that has UPI live.
+     *
+     * Verified against the live account before this was written:
+     * /v1/methods reports upi true, card true, 45 banks, four wallets.
+     * With no display config Razorpay put card and wallets in the sheet
+     * and left UPI out of it — on the one market where UPI is how people
+     * actually pay, and the one method that costs Sambramo nothing in
+     * MDR.
+     *
+     * `show_default_blocks: true` is what makes this a preference rather
+     * than an imposition: UPI is placed first and every other enabled
+     * method still renders underneath it, so somebody without a UPI app
+     * loses nothing.
+     *
+     * And the whole thing is skipped when the probe says UPI is not
+     * live, which is the state that broke the sheet the first time this
+     * was attempted — a forced block Razorpay could not fill. */
+    const methods = await enabledMethods(keyId)
+    const upiFirst = methods?.upi === true
+
     const rzp = new window.Razorpay({
       key: keyId,
       order_id: orderId,
@@ -160,6 +234,21 @@ export function openRazorpay({
 
       // Nothing is faster than a card the customer has already used.
       remember_customer: true,
+
+      /* Omitted entirely when the probe could not confirm UPI. A payment
+         sheet that will not open is infinitely worse than one that opens
+         with the methods in Razorpay own order. */
+      ...(upiFirst ? {
+        config: {
+          display: {
+            blocks: {
+              upi: { name: 'Pay by UPI', instruments: [{ method: 'upi' }] },
+            },
+            sequence: ['block.upi'],
+            preferences: { show_default_blocks: true },
+          },
+        },
+      } : {}),
 
       handler(response) {
         resolve({
