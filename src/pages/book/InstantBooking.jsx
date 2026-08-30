@@ -292,15 +292,38 @@ export default function InstantBooking() {
   const chosenOffer = offers.find(o => o.id === offerId && o.eligible) ?? null
   const discountPaise = chosenOffer ? applyOffer(chosenOffer.id, total).discountPaise : 0
 
-  /* Announce a newly eligible offer, once. */
+  /* Announce a newly eligible offer, once — and only while it can still
+     be honoured.
+   *
+   * ══════════════════════════════════════════════════════════════════
+   * AN OFFER AFTER DISPATCH IS A PROMISE THE APP CANNOT KEEP
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * This used to fire on any step, matching board included. It looked
+   * like a reward and was worth nothing: once the booking is dispatched
+   * the price is already written to `booking_lines.quoted_amount_paise`
+   * by the server, the pay button sums those rows, and
+   * api/create-booking-payment re-reads them from the database. Nothing
+   * downstream of dispatch has ever heard of `offerId`.
+   *
+   * So the customer was shown "Flat 300 off — use it on this booking"
+   * over a booking whose total could not move, and would have found the
+   * full amount waiting at the checkout. A discount that does not arrive
+   * is worse than no discount: it is the moment somebody decides the
+   * app is lying to them, and it lands on the screen where they are
+   * about to hand over money.
+   *
+   * The basket steps are where an offer is real, so that is where it is
+   * announced. */
   useEffect(() => {
+    if (step >= 4) return
     const fresh = offers.find(o => o.eligible && !seenOffers.current.has(o.id))
     if (!fresh) return
     seenOffers.current.add(fresh.id)
     // Only once the customer has actually built something — an unlock on
     // an empty basket is a popup, not a reward.
     if (picked.length > 0) setUnlocked(fresh)
-  }, [offers, picked.length])
+  }, [offers, picked.length, step])
 
   // Resolved once per render and read by both the step gate and the
   // dispatch call, so the screen cannot say 'ready' about a location the
@@ -480,7 +503,9 @@ export default function InstantBooking() {
     }
   }
 
-  const offerSheet = unlocked ? (
+  // Belt and braces: a sheet that was already open when the customer
+  // pressed dispatch must not survive onto the matching board either.
+  const offerSheet = unlocked && step < 4 ? (
     <OfferUnlocked
       offer={unlocked}
       onClose={() => setUnlocked(null)}
