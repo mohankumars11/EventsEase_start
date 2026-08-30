@@ -160,7 +160,14 @@ export async function enableNativePush({ profileId, app = 'partner' }) {
  * paths see the same shape.
  */
 export async function onNativePushAction(handler) {
-  if (!isNativeApp()) return () => {}
+  /* The bridge, not isNativePlatform().
+
+     Same reason lib/push.js stopped trusting it: if the bridge is there
+     but that one function is missing or throws, this returned a no-op
+     and the listener was never registered -- which is indistinguishable
+     from a notification that does nothing when you tap it. */
+  const hasBridge = typeof window !== 'undefined' && !!window.Capacitor
+  if (!hasBridge) return () => {}
 
   const { PushNotifications } = await import('@capacitor/push-notifications')
 

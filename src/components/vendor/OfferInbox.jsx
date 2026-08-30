@@ -231,7 +231,21 @@ export default function OfferInbox({ vendorId }) {
         { event: '*', schema: 'public', table: 'dispatch_offers', filter: `vendor_id=eq.${vendorId}` },
         read)
       .subscribe()
-    return () => { clearInterval(poll.current); supabase.removeChannel(channel) }
+    /* A push that landed while this screen was open.
+
+       PushRouter turns a foreground notification into this event rather
+       than navigating -- pulling somebody off the job they are reading
+       because a second one arrived is worse than the two-second wait.
+       The poll would catch it anyway; this just makes the row appear at
+       the same moment the phone buzzes. */
+    const onPush = () => read()
+    window.addEventListener('sambramo:push', onPush)
+
+    return () => {
+      clearInterval(poll.current)
+      supabase.removeChannel(channel)
+      window.removeEventListener('sambramo:push', onPush)
+    }
   }, [vendorId, read])
 
   async function answer(offerId, action) {

@@ -15,6 +15,7 @@ import JourneyTracker from './components/common/JourneyTracker'
 import ResumePrompt from './components/common/ResumePrompt'
 import SplashScreen from './components/ui/SplashScreen'
 import UpdateAvailable from './components/common/UpdateAvailable'
+import PushRouter from './components/common/PushRouter'
 import { isPartnerSurface as _isPartner } from './config/surface'
 
 // The landing page is the entry point for essentially all first-time
@@ -610,6 +611,14 @@ export default function App() {
                   newer build actually exists. See the component — the web
                   updates itself, so it renders nothing there. */}
               <UpdateAvailable app={_isPartner() ? 'partner' : 'customer'} />
+              {/* Takes a master to the job they tapped.
+
+                  Inside the router because it navigates, and mounted
+                  once for the whole app rather than on the dashboard:
+                  the tap that matters most is the one that arrives
+                  while the partner is somewhere else entirely, or
+                  while the app is closed. Renders nothing. */}
+              <PushRouter />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —
