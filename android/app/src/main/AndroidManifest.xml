@@ -7,7 +7,7 @@
          Since Android 11 an app cannot enumerate other installed apps
          unless it declares what it is looking for. Without this,
          Razorpay checkout asks the system "is there a UPI app here",
-         gets an empty answer, and does not offer UPI at all -- which is
+         gets an empty answer, and does not offer UPI at all — which is
          why the sheet showed only cards, netbanking and wallets in the
          APK while the identical checkout in Chrome showed UPI first and
          took a real rupee.

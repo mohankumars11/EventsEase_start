@@ -215,6 +215,13 @@ jobs:
           which google-chrome google-chrome-stable chromium 2>/dev/null || true
           node scripts/smoke-routes.mjs
 
+      # A double hyphen in a manifest comment is illegal XML and fails
+      # the merger four minutes into the build, with an error that names
+      # the gradle task rather than the punctuation. It has cost two
+      # builds. This costs ten milliseconds.
+      - name: Manifest is well-formed
+        run: node scripts/check-android-manifest.mjs
+
       - name: Sync Capacitor
         run: npx cap sync android
 
