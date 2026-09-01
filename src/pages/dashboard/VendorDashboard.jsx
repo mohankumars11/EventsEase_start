@@ -171,7 +171,11 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    /* pb-28 clears the fixed partner tab bar. Without it the last job
+       card sits under the bar and looks cut off -- and on the customer
+       surface, where that bar does not render, it is 7rem of harmless
+       whitespace at the very bottom of a scrolled page. */
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28">
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
@@ -269,88 +273,15 @@ export default function VendorDashboard() {
         />
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          FIVE CARDS, NOT A STRIP THAT SCROLLS OFF THE EDGE
-          ══════════════════════════════════════════════════════════════
+      {/* The five destinations live in the bottom bar now --
+          components/layout/PartnerBottomNav. They have been a scrolling
+          strip and a card grid; both made a partner reach this page and
+          scroll before they could go anywhere. A fixed bar is where the
+          thumb already is, and it survives scrolling.
 
-          This was a horizontal rail with `scrollbar-hide`. Five labels do
-          not fit 412px, so Availability and Account sat past the right
-          edge with nothing indicating they were there — reachable only by
-          a swipe nobody knew to make. Reported as buttons that do not
-          work; they were buttons nobody could see.
+          Clearance so the last card is not under the bar. */}
+      <div className="h-1" />
 
-          A grid cannot hide anything. Every destination is on screen at
-          once, which is what a partner with four minutes between jobs
-          needs — Porter and Rapido both do exactly this on their home
-          screen for the same reason.
-
-          ── Jobs is deliberately the full width ────────────────────────
-          It is the only one that is time-critical, it carries the count
-          that decides whether anything else matters today, and burying
-          it in a fifth of a tab bar is what made "your jobs is not even
-          visible" a fair thing to say.
-
-          The live count sits on it because a number is the fastest
-          possible answer to "is there anything for me right now". */}
-      <nav className="mt-5 grid grid-cols-2 gap-2.5">
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const active = tab === id
-          const isJobs = id === 'offers'
-          const needs = id === 'list' && stats.activeServices === 0
-
-          /* What each card says under its name. A label alone makes
-             somebody open it to find out whether it was worth opening. */
-          const scan =
-            /* upcomingBookings, not a live offer count -- there is no
-               such field on stats, and a card that silently always says
-               the same thing is the kind of dead UI this whole pass is
-               about. OfferInbox owns the live count and polls for it. */
-            isJobs        ? (stats.upcomingBookings ? `${stats.upcomingBookings} coming up` : 'New work arrives here')
-            : id === 'earnings'     ? 'What you have made'
-            : id === 'availability' ? 'Days you cannot work'
-            : id === 'list'         ? (needs ? 'Add what you do' : 'What you offer')
-            : id === 'overview'     ? 'How you are doing'
-            :                         'You and your payouts'
-
-          return (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              aria-current={active ? 'page' : undefined}
-              className={`${isJobs ? 'col-span-2' : ''} flex items-center gap-3 rounded-[20px] p-4 text-left transition active:scale-[0.99] ${
-                active
-                  ? 'bg-saffron-400 ring-2 ring-saffron-500'
-                  : 'bg-white ring-1 ring-ink/[0.07]'
-              }`}
-            >
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                active ? 'bg-plum-950/10 text-plum-950' : 'bg-saffron-400/15 text-saffron-800'
-              }`}>
-                <Icon size={18} />
-              </span>
-
-              <span className="min-w-0 flex-1">
-                <span className={`block text-[14.5px] font-extrabold leading-tight ${
-                  active ? 'text-plum-950' : 'text-ink'
-                }`}>
-                  {label}
-                </span>
-                <span className={`block truncate text-[11.5px] font-semibold leading-snug ${
-                  active ? 'text-plum-950/70' : 'text-ink-mute'
-                }`}>
-                  {scan}
-                </span>
-              </span>
-
-              {/* A dot only where something is actually wrong, and never
-                  on the card you are already looking at. */}
-              {needs && !active && (
-                <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" aria-label="needs attention" />
-              )}
-            </button>
-          )
-        })}
-      </nav>
 
       <div className="mt-6">
         {/* Live jobs. Rendered only for an approved partner — an

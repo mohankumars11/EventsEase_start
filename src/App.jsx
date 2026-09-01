@@ -16,6 +16,7 @@ import ResumePrompt from './components/common/ResumePrompt'
 import SplashScreen from './components/ui/SplashScreen'
 import UpdateAvailable from './components/common/UpdateAvailable'
 import PushRouter from './components/common/PushRouter'
+import PartnerBottomNav from './components/layout/PartnerBottomNav'
 import { isPartnerSurface as _isPartner } from './config/surface'
 
 // The landing page is the entry point for essentially all first-time
@@ -624,6 +625,9 @@ export default function App() {
                   while the partner is somewhere else entirely, or
                   while the app is closed. Renders nothing. */}
               <PushRouter />
+              {/* The partner app gets its own tab bar. BottomNav returns
+                  null on this surface -- see its header. */}
+              <PartnerBottomNav />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —
