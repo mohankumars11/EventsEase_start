@@ -18,6 +18,8 @@ import OfferHistory from '../../components/vendor/OfferHistory'
 import PartnerResume from '../../components/vendor/PartnerResume'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PayoutDetails from '../../components/vendor/PayoutDetails'
+import TermsGate from '../../components/vendor/TermsGate'
+import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
 /**
  * The partner's console.
@@ -140,6 +142,25 @@ export default function VendorDashboard() {
         </div>
       </div>
     )
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     NOTHING LOADS UNTIL THE TERMS ARE ANSWERED
+     ══════════════════════════════════════════════════════════════════
+
+     The cancellation ladder (081) and the three-strike suspension (083)
+     are already enforced in the database against partners who were
+     never shown either rule. Consent obtained after the charge is not
+     consent, so this sits in front of the dashboard rather than in a
+     menu.
+
+     After the !vendor check on purpose: somebody without a vendor row
+     is still onboarding and has nothing to agree to yet.
+
+     Version-aware. A partner who accepted v1 sees this again when the
+     substance changes, and not for a typo -- see config/partnerTerms. */
+  if (vendor.terms_version !== PARTNER_TERMS_VERSION) {
+    return <TermsGate vendorId={vendor.id} onAccepted={refresh} />
   }
 
   return (
