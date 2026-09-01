@@ -83,6 +83,16 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    /* Razorpay's own Android checkout.
+
+       The JS checkout in the WebView will not offer UPI -- it declines
+       an app-switch it cannot guarantee returning from, which inside a
+       WebView is correct. This SDK owns the switch: it starts PhonePe or
+       GPay as a real activity and gets the result through the activity
+       lifecycle. It is what every Indian app you would compare this to
+       is using. */
+    implementation 'com.razorpay:checkout:1.6.41'
+
     implementation project(':capacitor-cordova-android-plugins')
 }
 

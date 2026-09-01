@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID, isGone } from '../../config/instantBooking'
 import { openRazorpay } from '../../lib/razorpayCheckout'
+import { openRazorpayNative, hasNativeCheckout } from '../../lib/razorpayNative'
 import TradeSprite, { LiveLine } from './TradeSprite'
 import PaidConfirmation from './PaidConfirmation'
 import { IS_NATIVE_APP, APP_BUILD } from '../common/AppBadge'
@@ -446,30 +447,65 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         .from('profiles').select('full_name, email, phone').eq('id', uid).maybeSingle()
 
       /* ══════════════════════════════════════════════════════════════
-         IN THE APP, PAY IN THE PHONE'S OWN BROWSER
+         THE APP PAYS THROUGH RAZORPAY'S OWN ANDROID SHEET
          ══════════════════════════════════════════════════════════════
 
-         Razorpay's JS checkout offers UPI in Chrome and refuses to in an
-         Android WebView. Measured on one account with one order: UPI
-         first in the browser, where a real rupee cleared today; cards,
-         netbanking and wallets only in the APK. Declaring <queries> in
-         the manifest was necessary and not sufficient — checkout.js will
-         not commit to a UPI app-switch it cannot guarantee returning
-         from, and inside a WebView that caution is justified.
+         checkout.js offers UPI in Chrome and refuses to in a WebView. It
+         will not commit to an app-switch it cannot guarantee returning
+         from, and inside a WebView that is correct rather than a bug —
+         the customer leaves for PhonePe and nothing reliably tells the
+         WebView what happened.
 
-         So the app stops trying. /pay is a page that does nothing but
-         open the sheet, and @capacitor/browser hands it to the real
-         browser — the one already proven to take UPI.
+         The native SDK owns that switch: it starts the UPI app as a real
+         activity and gets the result through the activity lifecycle.
+         That is the whole difference, and it is what a shop-bought
+         Indian app ships. A Play Store install is this same APK, so this
+         is what makes it behave like one.
 
-         Only public identifiers travel: order id, key id, amount. Every
-         one is given to a browser anyway to draw a sheet at all. The
-         ORDER fixes the amount server-side, so a tampered URL changes
-         the figure on that page and not a paisa of what is charged.
+         Three paths, in descending order of how it should feel:
 
-         Nothing is reported back. api/razorpay-webhook remains the only
-         witness that money moved, and this board already polls every two
-         seconds — the customer returns to a screen that has turned green
-         without being told anything. */
+           native sheet     UPI, cards, everything, inside the app
+           phone's browser   an older APK with no plugin. UPI works,
+                             but the customer leaves the app to pay
+           in-app JS sheet   last resort. Cards and netbanking, no UPI,
+                             which still beats a checkout that will not
+                             open at all */
+      if (hasNativeCheckout()) {
+        const r = await openRazorpayNative({
+          keyId: body.keyId,
+          orderId: body.orderId,
+          amountPaise: body.amountPaise,
+          description: body.testCharge
+            ? 'Test payment · ₹1'
+            : payableLines.length === 1
+              ? payableLines[0].service_name
+              : `${payableLines.length} masters for your celebration`,
+          customer: { name: me?.full_name, email: me?.email, phone: me?.phone },
+          notes: { lines: String(payableLines.length) },
+        })
+
+        setPaying(false)
+        if (r.ok) {
+          /* Deliberately NOT marking anything paid — the webhook decides,
+             exactly as on the web. PaidConfirmation opens on "payment
+             received" and only says the date is blocked once the LINES
+             say so. */
+          setPayError(null)
+          setJustPaid(payableLines.map(l => l.id))
+          return
+        }
+        if (r.dismissed) return          // backed out. No error, no red.
+        if (!r.unavailable) { setPayError(r.error); return }
+        // Plugin refused to open. Fall through to the paths below.
+      }
+
+      /* No native sheet in this build. Hand the payment to the phone's
+         browser, where UPI does work, rather than showing a sheet with
+         UPI missing. Only public identifiers travel: order id, key id
+         and amount, all of which a browser is given anyway to draw a
+         sheet at all — and the ORDER fixes the real amount server-side.
+         Nothing is reported back; the webhook is still the only witness
+         and this board polls every two seconds. */
       if (IS_NATIVE_APP) {
         const q = new URLSearchParams({
           order: body.orderId,
@@ -483,15 +519,9 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         try {
           const { Browser } = await import('@capacitor/browser')
           await Browser.open({ url: apiUrl(`/pay?${q}`), presentationStyle: 'popover' })
-          // The sheet is somewhere else now. The button goes back to
-          // normal and the board keeps watching the lines.
           setPaying(false)
           return
         } catch (err) {
-          /* The plugin is missing, or the browser would not open. Fall
-             through to the in-app sheet: cards and netbanking still work
-             there, and a checkout that opens without UPI beats one that
-             does not open. */
           console.warn('[payment] external browser unavailable', err)
         }
       }
