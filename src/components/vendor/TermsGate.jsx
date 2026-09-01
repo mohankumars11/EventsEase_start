@@ -7,7 +7,6 @@ import { supabase } from '../../lib/supabase'
 import {
   PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION,
 } from '../../config/partnerTerms'
-import SambramoWordmark from '../ui/SambramoWordmark'
 
 /**
  * The seven rules, and the tick that says they were read.
@@ -67,12 +66,21 @@ export default function TermsGate({ vendorId, onAccepted }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    /* fixed, not min-h-screen: the vendor dashboard renders inside a
+       shell that paints the app bar, and a consent screen with the
+       customer chrome above it is neither full-screen nor obviously
+       the partner app. This covers everything. */
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-white">
       {/* Saffron, because this is the partner app and it should look like
           it from the first screen. */}
       <div className="bg-gradient-to-br from-saffron-500 to-saffron-400 px-5 pb-7 pt-10">
-        <SambramoWordmark className="h-7 text-plum-950" />
-        <p className="mt-1 text-[11.5px] font-extrabold uppercase tracking-[0.14em] text-plum-950/70">
+        {/* Set as type rather than the wordmark component: that lockup
+           paints its own brand teal, and teal on saffron is the one
+           pairing this header cannot have. */}
+        <p className="font-serif text-[22px] font-extrabold leading-none tracking-tight text-plum-950">
+          Sambramo
+        </p>
+        <p className="mt-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-plum-950/65">
           Partners
         </p>
         <h1 className="mt-5 font-serif text-[27px] font-extrabold leading-[1.12] tracking-tight text-plum-950">
@@ -167,7 +175,10 @@ export default function TermsGate({ vendorId, onAccepted }) {
             type="button"
             onClick={accept}
             disabled={!agreed || saving}
-            className="btn-primary mt-3 w-full disabled:opacity-40"
+            /* Saffron, not the shared plum button. This is the partner
+               app and its primary action should be its own colour --
+               the same one now on the launcher icon. */
+            className="mt-3 w-full rounded-full bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
           >
             {saving
               ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Saving…</span>
