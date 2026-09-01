@@ -52,7 +52,7 @@ const TABS = [
   // out what they have earned, in that order.
   { id: 'earnings',     label: 'Earnings',     icon: IndianRupee     },
   { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
-  { id: 'list',         label: 'Your list',    icon: ClipboardList   },
+  { id: 'list',         label: 'Listing',      icon: ClipboardList   },
   { id: 'availability', label: 'Availability', icon: CalendarDays    },
   { id: 'account',      label: 'Account',      icon: UserCog         },
 ]

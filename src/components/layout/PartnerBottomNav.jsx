@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, CalendarDays, ClipboardList, UserCog } from 'lucide-react'
+import { Bell, IndianRupee, Store, CalendarDays, UserCog } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -25,18 +25,6 @@ import { useAuth } from '../../context/AuthContext'
  * phone, which is below the size a thumb reliably hits, and the whole
  * point of this bar is that it is hit without looking.
  *
- * ══════════════════════════════════════════════════════════════════════
- * THE ORDER IS NOT ALPHABETICAL AND NOT A GUESS
- * ══════════════════════════════════════════════════════════════════════
- *
- *   Jobs        first, and the default. It is why the app is opened.
- *   Earnings    second, because it is why the app is KEPT.
- *   Calendar    third — the one that costs a partner money when it is
- *               ignored, since dispatch offers work on days nobody
- *               blocked.
- *   My work     the service list. Set once, edited rarely.
- *   Account     payouts and profile. Deepest because it is opened least.
- *
  * ── It drives the URL, not local state ──────────────────────────────
  * Each tab writes `?tab=`, which the dashboard already reads. So the
  * back button works, a link can point at Earnings, and the bar and the
@@ -44,12 +32,32 @@ import { useAuth } from '../../context/AuthContext'
  * and it is the address bar.
  */
 
+/* ── The five, and why they sit in this order ──────────────────────
+ *
+ *   Jobs      what is live right now. The default, and why the app opens.
+ *   Earnings  what the work was worth — and the history of every job,
+ *             which is what "my work" actually means once a job is over.
+ *   Listing   the business itself: what you offer and what it costs.
+ *             Set up once, revisited when the business changes.
+ *   Calendar  the days you cannot work. Costs money when it is ignored,
+ *             because dispatch offers jobs on days nobody blocked.
+ *   Account   you, and where your money goes. Opened least, so last.
+ *
+ * "My work" was the label here and it was doing two jobs at once: it
+ * pointed at the SERVICE LIST, while the thing a partner means by "my
+ * work" is the jobs they have done — and those already live under
+ * Earnings, next to what each one paid. One name for two ideas is how a
+ * tab bar stops being scannable.
+ *
+ * So the tab is named for what is behind it. "Listing" is also the word
+ * this market already uses: a decorator on JustDial or WedMeGood has a
+ * listing, and knows what it is without being taught. */
 const TABS = [
-  { id: 'offers',       label: 'Jobs',      icon: Bell },
-  { id: 'earnings',     label: 'Earnings',  icon: IndianRupee },
-  { id: 'availability', label: 'Calendar',  icon: CalendarDays },
-  { id: 'list',         label: 'My work',   icon: ClipboardList },
-  { id: 'account',      label: 'Account',   icon: UserCog },
+  { id: 'offers',       label: 'Jobs',     icon: Bell },
+  { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
+  { id: 'list',         label: 'Listing',  icon: Store },
+  { id: 'availability', label: 'Calendar', icon: CalendarDays },
+  { id: 'account',      label: 'Account',  icon: UserCog },
 ]
 
 export default function PartnerBottomNav() {

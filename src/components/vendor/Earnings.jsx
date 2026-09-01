@@ -196,8 +196,14 @@ export default function Earnings({ vendorId, onAddPayout }) {
       {/* ── Job by job, so a number can be traced ─────────────────── */}
       {jobs.length > 0 && (
         <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          {/* Named "your work", not "every job". This list IS the work
+              history a partner goes looking for, and the bar no longer
+              has a tab called My work pointing somewhere else. */}
           <p className="text-[12px] font-extrabold uppercase tracking-wider text-ink-mute">
-            Every job
+            Your work
+          </p>
+          <p className="mt-0.5 text-[12px] font-semibold text-ink-mute">
+            Every job you have taken, and what it paid.
           </p>
           <ul className="mt-2 divide-y divide-ink/[0.06]">
             {jobs.slice(0, 25).map(j => {
