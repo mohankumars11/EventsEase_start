@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import PartnerFigure from './PartnerFigure'
 import { formatINR } from '../../utils/format'
 import JobLifecycle from './JobLifecycle'
+import ClaimPayment from './ClaimPayment'
 
 /**
  * Everything that happens after a master taps Accept.
@@ -455,6 +456,12 @@ function JobCard({ job, onChange }) {
           </button>
         )
       )}
+
+      {/* ── Once the work is done, the money ──────────────────────────
+          Only on a delivered job. ClaimPayment asks claimable() and
+          renders the reason when it is not ready, so a partner is never
+          told no without being told why. */}
+      {job.delivered_at && <ClaimPayment lineId={job.line_id} onClaimed={onChange} />}
 
       {/* ── Every step, and which one this job is on ─────────────────
           A partner looking at a status word knows one thing and wonders
