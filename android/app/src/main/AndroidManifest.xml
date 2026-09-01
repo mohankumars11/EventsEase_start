@@ -18,16 +18,13 @@
          manifest should be making. Anything that can handle a upi: link
          qualifies.
 
-         MainActivity.java is the other half -- it hands the link over
-         once Razorpay offers it. Neither half works alone. -->
+         Capacitor already hands the link over: Bridge.launchIntent fires
+         an ACTION_VIEW intent for any scheme that is not the app own.
+         It just could not RESOLVE one without this. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" />
         </intent>
     </queries>
 
