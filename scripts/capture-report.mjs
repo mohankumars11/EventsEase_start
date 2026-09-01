@@ -390,6 +390,11 @@ try {
     route: '/dashboard/vendor?tab=earnings', session: '.demo-partner-session.json', wait: 4500,
     note: 'four buckets, and every job' })
 
+  /* Step 5: money owed on a finished job, with somewhere to send it. */
+  await shot('35-claim-payment', {
+    route: '/dashboard/vendor', session: '.demo-partner-session.json', wait: 5000,
+    note: 'yours to claim, and where it goes' })
+
   await shot('13-account',             { route: '/account', note: 'app badge + install banner' })
 
   console.log("")
