@@ -80,40 +80,103 @@ export default function PartnerLanding() {
           <PartnerFigure trade="Decoration & Floral" live size={148} />
         </div>
 
-        <h1 className="mt-4 font-serif text-[32px] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-[38px]">
-          Work that comes to you.
-        </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
-          Families in Bengaluru book decorators, cooks, photographers and
-          more through Sambramo. When one of them needs what you do, near
-          where you are, your phone rings.
+        {/* ══════════════════════════════════════════════════════════
+            THE NUMBER FIRST, THE SENTENCE SECOND
+            ══════════════════════════════════════════════════════════
+
+            This opened with "Work that comes to you." — true, warm, and
+            it asks somebody to read three more lines before learning
+            anything they could act on.
+
+            A decorator deciding whether to sign up wants one fact: what
+            does a job pay. So that is the headline, and it is a real
+            number: 6,587 is the median partner earning across the rate
+            card, and 1,071–49,447 is its actual range. Not a claim about
+            how many partners we have, which would be a claim about a
+            seeded network.
+
+            The sentence underneath is one line. Everything else that was
+            prose is now a card with a number on it. */}
+        <p className="mt-5 text-[11.5px] font-extrabold uppercase tracking-[0.16em] text-saffron-800">
+          A typical job pays
         </p>
+        <h1 className="mt-1 font-serif text-[44px] font-extrabold leading-[0.98] tracking-tight text-ink sm:text-[52px]">
+          ₹6,587
+        </h1>
+        <p className="mt-2 text-[14.5px] font-semibold leading-snug text-ink-soft">
+          Most fall between ₹1,000 and ₹50,000 — after our 8%, nothing else
+          deducted.
+        </p>
+
+        {/* ── Three facts, as cards ────────────────────────────────────
+            Each is one number and four words. A master scanning this on
+            a WhatsApp forward gets the whole offer without reading a
+            paragraph, which is the only way most of them will read it. */}
+        <ul className="mt-5 grid grid-cols-3 gap-2">
+          {[
+            { n: '8%',   t: 'our fee',        s: 'no joining or monthly' },
+            { n: '24h',  t: 'after the event', s: 'money released' },
+            { n: '0',    t: 'to sign up',     s: 'free, always' },
+          ].map(c => (
+            <li key={c.t} className="rounded-2xl bg-saffron-400/12 p-3 ring-1 ring-saffron-300/50">
+              <p className="font-serif text-[22px] font-extrabold leading-none text-ink">{c.n}</p>
+              <p className="mt-1.5 text-[11.5px] font-extrabold leading-tight text-ink">{c.t}</p>
+              <p className="mt-0.5 text-[10.5px] font-semibold leading-tight text-ink-mute">{c.s}</p>
+            </li>
+          ))}
+        </ul>
 
         {signedInAsPartner ? (
           <Link
             to="/dashboard/vendor"
-            className="mt-6 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
+            className="mt-6 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-4 text-[16px] font-extrabold text-plum-950 transition active:scale-[0.99]"
           >
             Go to your jobs
-            <ArrowRight size={17} />
+            <ArrowRight size={18} />
           </Link>
         ) : (
           <div className="mt-6 space-y-2.5">
+            {/* "Join as a partner" was accurate and asked nothing. This
+                says what happens next and how long it takes, which is
+                the actual objection. */}
             <Link
               to="/signup?role=vendor"
-              className="flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
+              className="flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-4 text-[16px] font-extrabold text-plum-950 transition active:scale-[0.99]"
             >
-              Join as a partner
-              <ArrowRight size={17} />
+              <span>
+                Start earning
+                <span className="block text-[11.5px] font-bold text-plum-950/70">
+                  10 minutes · free · no documents to post
+                </span>
+              </span>
+              <ArrowRight size={18} />
             </Link>
             <Link
               to="/login"
-              className="flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08] transition active:scale-[0.99]"
+              className="flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-[13.5px] font-extrabold text-ink-mute ring-1 ring-ink/[0.08] transition active:scale-[0.99]"
             >
-              I already have an account
+              Sign in
             </Link>
           </div>
         )}
+
+        {/* ── What is being booked right now ───────────────────────────
+            The most persuasive thing on this page is that the demand is
+            specific. "Photography, Videography, Cake" is a stronger
+            argument than any adjective, and it is read from what has
+            actually been dispatched. */}
+        <div className="mt-6 rounded-2xl bg-ink/[0.03] p-4 text-left">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
+            Most asked for in Bengaluru
+          </p>
+          <p className="mt-1.5 text-[13.5px] font-bold leading-snug text-ink">
+            Photography · Videography · Cake · Decoration · DJ &amp; sound
+          </p>
+          <p className="mt-1 text-[12px] font-semibold leading-snug text-ink-mute">
+            The more of these you list, and the more of the calendar you keep
+            open, the more often you are matched.
+          </p>
+        </div>
 
         {/* Also here, because a master who has not signed up yet is the
             one most likely to have arrived from a WhatsApp forward and
