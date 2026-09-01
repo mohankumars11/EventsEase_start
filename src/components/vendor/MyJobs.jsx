@@ -172,7 +172,10 @@ export default function MyJobs({ vendorId }) {
   const past = jobs.filter(j => j.status === 'settled')
 
   return (
-    <div className="space-y-3">
+    /* The scroll target for the resume card. Named rather than
+       computed: a card that says "Next: Photography" should land the
+       partner on the job, not near it. */
+    <div id="your-jobs" className="space-y-3 scroll-mt-4">
       {live.map(j => <JobCard key={j.line_id} job={j} onChange={read} />)}
 
       {past.length > 0 && (

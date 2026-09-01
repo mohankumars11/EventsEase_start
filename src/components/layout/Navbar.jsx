@@ -36,6 +36,7 @@ export default function Navbar() {
   const { user, profile, signOut } = useAuth()
   const { cartCount, cartPath } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  const closeMenu = () => setMenuOpen(false)
   const [scrolled, setScrolled] = useState(false)
   const navigate   = useNavigate()
   const location   = useLocation()
@@ -68,6 +69,11 @@ export default function Navbar() {
     if (profile.role === 'admin')  return '/dashboard/admin'
     return '/dashboard/customer'
   }
+
+  /* The SURFACE, not the role. A customer signing into the partner
+     app should still see the partner header — it is which app was
+     installed, not who is holding it. */
+  const isPartnerApp = isPartnerSurface()
 
   const isCustomer = profile?.role === 'customer'
 
@@ -104,12 +110,36 @@ export default function Navbar() {
                 overflowed: it was hidden below 640px, and now only the very
                 narrowest phones, where the bar also holds the cart and the
                 menu button, have to drop it. */}
-            <SambramoLogo
-              size={32}
-              ground="onLight"
-              caption="emotion"
-              captionClassName="hidden min-[360px]:flex"
-            />
+            {/* ══════════════════════════════════════════════════════
+                THE PARTNER APP SAYS WHAT IT IS
+                ══════════════════════════════════════════════════════
+
+                "Every emotion, valued" is the customer promise, and it is
+                a good one. On the partner app it is the wrong sentence
+                entirely: a decorator opening this at 7am to see whether
+                there is work has no use for how the customer feels, and
+                the two apps then wear the same header on the same phone.
+
+                So the earning app is named as the earning app —
+                "PARTNERS", in the saffron that is now its icon and its
+                buttons. It also removes the one line that made a partner
+                glancing at their home screen unsure which of the two
+                Sambramos they had opened. */}
+            {isPartnerApp ? (
+              <span className="flex items-baseline gap-2">
+                <SambramoLogo size={32} ground="onLight" />
+                <span className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-saffron-700">
+                  Partners
+                </span>
+              </span>
+            ) : (
+              <SambramoLogo
+                size={32}
+                ground="onLight"
+                caption="emotion"
+                captionClassName="hidden min-[360px]:flex"
+              />
+            )}
           </Link>
 
           {/* Desktop nav links */}
@@ -188,7 +218,7 @@ export default function Navbar() {
         <div className="border-t border-hairline/10 bg-surface px-4 py-4 flex flex-col gap-1">
           {!user && NAV_LINKS.map(({ label, hash, to }) => (
             to ? (
-              <MobileLink key={label} to={to}>{label}</MobileLink>
+              <MobileLink key={label} to={to} onNavigate={closeMenu}>{label}</MobileLink>
             ) : (
               <button
                 key={label}
@@ -216,12 +246,12 @@ export default function Navbar() {
 
               {isCustomer && (
                 <>
-                  <MobileLink to="/services">Services &amp; packages</MobileLink>
-                  <MobileLink to="/dashboard/customer/orders">My Orders</MobileLink>
-                  <MobileLink to="/dashboard/customer/requests">My Requests</MobileLink>
+                  <MobileLink to="/services" onNavigate={closeMenu}>Services &amp; packages</MobileLink>
+                  <MobileLink to="/dashboard/customer/orders" onNavigate={closeMenu}>My Orders</MobileLink>
+                  <MobileLink to="/dashboard/customer/requests" onNavigate={closeMenu}>My Requests</MobileLink>
                 </>
               )}
-              <MobileLink to={dashboardLink()}>Dashboard</MobileLink>
+              <MobileLink to={dashboardLink()} onNavigate={closeMenu}>Dashboard</MobileLink>
 
               <button
                 onClick={() => { signOut(); navigate('/') }}
@@ -257,10 +287,19 @@ export default function Navbar() {
   )
 }
 
-function MobileLink({ to, children }) {
+/* Closes the menu on tap, not on the route changing.
+ *
+ * The menu was dismissed by an effect watching location.pathname, which
+ * works for every link EXCEPT the one pointing at the page you are
+ * already on. Tapping "Dashboard" from /dashboard/vendor changed no
+ * pathname, fired no effect, and left the panel sitting open over the
+ * screen -- reported, accurately, as "the dashboard button does not
+ * work". It navigated perfectly; it just never got out of the way. */
+function MobileLink({ to, children, onNavigate }) {
   return (
     <Link
       to={to}
+      onClick={onNavigate}
       className="text-sm font-medium text-ink-soft py-3 px-3 rounded-lg hover:bg-surface-sunk/[0.07] hover:text-ink transition-colors"
     >
       {children}

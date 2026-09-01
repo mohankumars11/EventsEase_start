@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLivePoll } from '../../hooks/useLivePoll'
-import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarDays, CircleDollarSign, PartyPopper, Bell } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { ArrowRight, CalendarDays, CircleDollarSign, PartyPopper, Bell, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 
@@ -86,6 +86,45 @@ export default function PartnerResume({ vendorId }) {
   if (!card) return null
 
   const Icon = card.icon
+
+  /* ══════════════════════════════════════════════════════════════════
+     A LINK TO THE PAGE YOU ARE ON IS A DEAD TAP
+     ══════════════════════════════════════════════════════════════════
+
+     Every card here pointed at /dashboard/vendor, and this component is
+     rendered ON /dashboard/vendor. Tapping "Next: Photography" navigated
+     to the route already loaded: no pathname change, no scroll, no
+     feedback. Reported as "the arrow does not work", and it was right.
+
+     On any other screen it still navigates, which is what it is for. On
+     the dashboard it scrolls to the jobs instead — which is where the
+     card was trying to send somebody anyway, and which also answers the
+     other half of the complaint: the jobs list was below three cards and
+     a tab bar, and nobody was reaching it. */
+  const location = useLocation()
+  const alreadyHere = location.pathname === card.to
+
+  if (alreadyHere) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          const el = document.getElementById('your-jobs')
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }}
+        className={`mb-4 flex w-full items-center gap-3 rounded-[22px] p-4 text-left ring-1 transition active:scale-[0.995] ${card.cls}`}
+      >
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${card.badge}`}>
+          <card.icon size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14.5px] font-extrabold leading-snug">{card.title}</span>
+          <span className="block text-[12.5px] leading-snug opacity-80">{card.body}</span>
+        </span>
+        <ChevronRight size={18} className="shrink-0 opacity-60" />
+      </button>
+    )
+  }
 
   return (
     <Link

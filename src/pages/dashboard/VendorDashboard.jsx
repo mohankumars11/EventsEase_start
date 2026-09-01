@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
@@ -16,6 +16,7 @@ import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
 import OfferHistory from '../../components/vendor/OfferHistory'
 import PartnerResume from '../../components/vendor/PartnerResume'
+import CalendarNudge from '../../components/vendor/CalendarNudge'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PayoutDetails from '../../components/vendor/PayoutDetails'
 import TermsGate from '../../components/vendor/TermsGate'
@@ -71,6 +72,8 @@ export default function VendorDashboard() {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
+
+  const [calendarDismissed, setCalendarDismissed] = useState(false)
 
   const account = useVendorAccount()
   const {
@@ -255,27 +258,94 @@ export default function VendorDashboard() {
         </div>
       </section>
 
-      {/* ── Tabs ─────────────────────────────────────────── */}
-      {/* Scrolls rather than wraps on a phone: four labels wrapping to two rows
-          pushes the content below the fold on the screen most partners use. */}
-      <nav className="flex gap-1 mt-6 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-hide">
+      {/* Only when the calendar really is out of date, and dismissible
+          for the session. See the component for why it is not a
+          permanent banner. */}
+      {!calendarDismissed && (
+        <CalendarNudge
+          availability={availability}
+          onOpen={() => { setTab('availability'); setCalendarDismissed(true) }}
+          onDismiss={() => setCalendarDismissed(true)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          FIVE CARDS, NOT A STRIP THAT SCROLLS OFF THE EDGE
+          ══════════════════════════════════════════════════════════════
+
+          This was a horizontal rail with `scrollbar-hide`. Five labels do
+          not fit 412px, so Availability and Account sat past the right
+          edge with nothing indicating they were there — reachable only by
+          a swipe nobody knew to make. Reported as buttons that do not
+          work; they were buttons nobody could see.
+
+          A grid cannot hide anything. Every destination is on screen at
+          once, which is what a partner with four minutes between jobs
+          needs — Porter and Rapido both do exactly this on their home
+          screen for the same reason.
+
+          ── Jobs is deliberately the full width ────────────────────────
+          It is the only one that is time-critical, it carries the count
+          that decides whether anything else matters today, and burying
+          it in a fifth of a tab bar is what made "your jobs is not even
+          visible" a fair thing to say.
+
+          The live count sits on it because a number is the fastest
+          possible answer to "is there anything for me right now". */}
+      <nav className="mt-5 grid grid-cols-2 gap-2.5">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = tab === id
-          const badge  = id === 'list' && stats.activeServices === 0
+          const isJobs = id === 'offers'
+          const needs = id === 'list' && stats.activeServices === 0
+
+          /* What each card says under its name. A label alone makes
+             somebody open it to find out whether it was worth opening. */
+          const scan =
+            /* upcomingBookings, not a live offer count -- there is no
+               such field on stats, and a card that silently always says
+               the same thing is the kind of dead UI this whole pass is
+               about. OfferInbox owns the live count and polls for it. */
+            isJobs        ? (stats.upcomingBookings ? `${stats.upcomingBookings} coming up` : 'New work arrives here')
+            : id === 'earnings'     ? 'What you have made'
+            : id === 'availability' ? 'Days you cannot work'
+            : id === 'list'         ? (needs ? 'Add what you do' : 'What you offer')
+            : id === 'overview'     ? 'How you are doing'
+            :                         'You and your payouts'
+
           return (
             <button
               key={id}
               onClick={() => setTab(id)}
               aria-current={active ? 'page' : undefined}
-              className={`shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              className={`${isJobs ? 'col-span-2' : ''} flex items-center gap-3 rounded-[20px] p-4 text-left transition active:scale-[0.99] ${
                 active
-                  ? 'bg-plum-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-plum-50 hover:text-plum-700'
+                  ? 'bg-saffron-400 ring-2 ring-saffron-500'
+                  : 'bg-white ring-1 ring-ink/[0.07]'
               }`}
             >
-              <Icon size={16} /> {label}
-              {badge && !active && (
-                <span className="w-1.5 h-1.5 rounded-full bg-saffron-500" aria-label="needs attention" />
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                active ? 'bg-plum-950/10 text-plum-950' : 'bg-saffron-400/15 text-saffron-800'
+              }`}>
+                <Icon size={18} />
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className={`block text-[14.5px] font-extrabold leading-tight ${
+                  active ? 'text-plum-950' : 'text-ink'
+                }`}>
+                  {label}
+                </span>
+                <span className={`block truncate text-[11.5px] font-semibold leading-snug ${
+                  active ? 'text-plum-950/70' : 'text-ink-mute'
+                }`}>
+                  {scan}
+                </span>
+              </span>
+
+              {/* A dot only where something is actually wrong, and never
+                  on the card you are already looking at. */}
+              {needs && !active && (
+                <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" aria-label="needs attention" />
               )}
             </button>
           )
