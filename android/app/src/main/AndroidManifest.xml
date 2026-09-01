@@ -1,5 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ══════════════════════════════════════════════════════════════
+         WHAT THIS APP IS ALLOWED TO SEE
+         ══════════════════════════════════════════════════════════════
+
+         Since Android 11 an app cannot enumerate other installed apps
+         unless it declares what it is looking for. Without this,
+         Razorpay checkout asks the system "is there a UPI app here",
+         gets an empty answer, and does not offer UPI at all -- which is
+         why the sheet showed only cards, netbanking and wallets in the
+         APK while the identical checkout in Chrome showed UPI first and
+         took a real rupee.
+
+         Declared by INTENT rather than by package name on purpose: a
+         list of packages goes stale the day a new UPI app matters, and
+         picking which wallets a customer may use is not a decision this
+         manifest should be making. Anything that can handle a upi: link
+         qualifies.
+
+         MainActivity.java is the other half -- it hands the link over
+         once Razorpay offers it. Neither half works alone. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
 
     <application
         android:allowBackup="true"
