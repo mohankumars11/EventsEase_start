@@ -217,6 +217,24 @@ try {
   await send('Runtime.enable'); await send('Page.enable')
   await send('Emulation.setDeviceMetricsOverride', { width: 412, height: 915, deviceScaleFactor: 2, mobile: true })
 
+  /* Which app is this? VITE_SURFACE is stamped at build time and decides
+     isPartnerSurface(). Every partner screenshot taken before this line
+     existed was the CUSTOMER bundle, so the saffron PARTNERS header, the
+     partner splash and the partner tab bar could not appear in any of
+     them -- and none of that UI had ever actually been seen.
+
+     Printed rather than asserted: both surfaces are legitimate to
+     capture. What is not legitimate is not knowing which one you have.
+
+       npm run build                       -> customer
+       VITE_SURFACE=partner npm run build  -> partner */
+  const idx = readFileSync(join(DIST, "index.html"), "utf8")
+  const stamp = JSON.parse(readFileSync(join(DIST, "version.json"), "utf8"))
+  const isPartnerBundle = stamp.surface === "partner"
+  console.log("")
+  console.log("  Bundle surface: " + (isPartnerBundle ? "PARTNER" : "CUSTOMER"))
+  if (!isPartnerBundle) console.log("  (rebuild with VITE_SURFACE=partner for partner screens)")
+
   console.log(`\n  Capturing into docs/test-report/\n`)
 
   await shot('01-customer-home',        { route: '/' })

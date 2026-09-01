@@ -30,9 +30,16 @@ if (!existsSync(DIST)) {
 
 const build = (process.env.VITE_BUILD ?? process.env.GITHUB_SHA ?? 'dev').slice(0, 40)
 
+/* Which app this bundle is. VITE_SURFACE decides isPartnerSurface()
+   and is constant-folded, so nothing in the output reliably says it
+   afterwards -- which is how a run of partner screenshots turned out
+   to be the customer app. Recorded here so it can be read back. */
+const surface = process.env.VITE_SURFACE === 'partner' ? 'partner' : 'customer'
+
 writeFileSync(join(DIST, 'version.json'), JSON.stringify({
   build,
+  surface,
   builtAt: new Date().toISOString(),
 }, null, 2) + '\n', 'utf8')
 
-console.log(`  version.json  build ${build.slice(0, 7)}`)
+console.log(`  version.json  build ${build.slice(0, 7)} · ${surface}`)
