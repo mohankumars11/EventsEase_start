@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_STATUS, VENDOR_PLANS, formatPrice } from '../../config/vendor'
+import { LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
 import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
@@ -579,6 +580,47 @@ function Account({ vendor, profile, plan, businessName }) {
 
       <section>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your plan</h2>
+
+        {/* ══════════════════════════════════════════════════════════════
+            THE PILOT IS FREE, AND THE PRICES ARE STILL SHOWN
+            ══════════════════════════════════════════════════════════════
+
+            LAUNCH_OFFER puts every partner on the top tier at no cost,
+            and the cards underneath were still offering "Switch to
+            Growth — ₹499/mo" to somebody already getting more than
+            Growth for nothing. That is not a discount, it is a contra-
+            diction, and it invites a partner to pay for a downgrade.
+
+            The prices stay visible on purpose. A partner who joins on
+            "free" and later discovers there was always a paid tier feels
+            sold to; one who joins knowing what it will cost, and that it
+            is waived while the network is being built, has been told the
+            truth twice. config/partnerPlans.js makes the same argument
+            at length.
+
+            What changes when charging starts is the copy here and
+            LAUNCH_OFFER — not the partner's expectations. */}
+        {LAUNCH_OFFER && (
+          <div className="mb-4 rounded-[20px] bg-forest-50 p-4 ring-1 ring-forest-200">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
+                <Star size={16} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-extrabold text-forest-900">
+                  Everything is free while we build Bengaluru
+                </p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-forest-800/85">
+                  {LAUNCH_NOTE}
+                </p>
+                <p className="mt-2 text-[12px] font-bold text-forest-800">
+                  The prices below are what the plans will cost later. Nothing is
+                  charged today, and nothing starts without us telling you first.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {VENDOR_PLANS.map(p => {
             const current = p.id === plan.id
@@ -607,7 +649,14 @@ function Account({ vendor, profile, plan, businessName }) {
                     </li>
                   ))}
                 </ul>
-                {current ? (
+                {LAUNCH_OFFER ? (
+                  /* No upgrade button during the pilot: there is nothing
+                     above what this partner already has, and a button
+                     saying otherwise would be selling a downgrade. */
+                  <div className="w-full mt-5 rounded-xl border border-forest-200 bg-forest-50 py-2.5 text-center text-xs font-bold text-forest-800">
+                    Included free right now
+                  </div>
+                ) : current ? (
                   <div className="w-full mt-5 text-xs font-semibold text-center text-gray-500 border border-gray-100 rounded-xl py-2.5">
                     Your plan
                   </div>
