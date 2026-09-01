@@ -385,6 +385,11 @@ try {
     route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json', wait: 4000,
     note: 'bank dropdown and IFSC lookup' })
 
+  /* Step 3: where every rupee currently is. */
+  await shot('34-earnings', {
+    route: '/dashboard/vendor?tab=earnings', session: '.demo-partner-session.json', wait: 4500,
+    note: 'four buckets, and every job' })
+
   await shot('13-account',             { route: '/account', note: 'app badge + install banner' })
 
   console.log("")

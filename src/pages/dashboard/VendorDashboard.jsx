@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   CheckCircle2, Circle, ChevronRight, LogOut, Loader2, AlertCircle,
-  MessageCircle, Star, TrendingUp, ArrowRight, Bell,
+  MessageCircle, Star, TrendingUp, ArrowRight, Bell, IndianRupee,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -19,6 +19,7 @@ import PartnerResume from '../../components/vendor/PartnerResume'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PayoutDetails from '../../components/vendor/PayoutDetails'
 import TermsGate from '../../components/vendor/TermsGate'
+import Earnings from '../../components/vendor/Earnings'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
 /**
@@ -46,6 +47,9 @@ const TABS = [
   // An offer lives for 45 seconds; a partner who has to find the right
   // tab has already lost it. Everything else here can wait.
   { id: 'offers',       label: 'Jobs',         icon: Bell             },
+  // Second only to Jobs. A partner opens this app to work and to find
+  // out what they have earned, in that order.
+  { id: 'earnings',     label: 'Earnings',     icon: IndianRupee     },
   { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
   { id: 'list',         label: 'Your list',    icon: ClipboardList   },
   { id: 'availability', label: 'Availability', icon: CalendarDays    },
@@ -318,6 +322,10 @@ export default function VendorDashboard() {
               </p>
             </div>
           )
+        )}
+
+        {tab === 'earnings' && (
+          <Earnings vendorId={vendor?.id} onAddPayout={() => setTab('account')} />
         )}
 
         {tab === 'overview' && (
