@@ -80,10 +80,30 @@ const APPS = {
   },
   partner: {
     dir: 'partner',
-    // The same aqua. The apps are one brand and should look it.
-    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(140,224,214,.55) 0%, rgba(85,178,175,0) 62%), linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%)',
-    solid: '#1B5C73',
-    fg: '#FFFFFF',
+    /* ── Saffron, and loudly ──────────────────────────────────────────
+       This was the customer's aqua, distinguished only by the word
+       PARTNERS underneath. On a home screen full of icons that is not a
+       distinction: two Sambramo tiles in the same teal, and a master
+       hunting for the one that pays them.
+
+       Rapido is yellow. Porter is yellow and blue. Swiggy's delivery app
+       is orange where the customer app is orange-red. Every one of them
+       makes the earning app the loud one, because it is opened in a
+       hurry, often outdoors, often one-handed, and it has to be found in
+       under a second.
+
+       This is the saffron already in tailwind.config.js — the colour of
+       every CTA in the product — not a new one invented for the icon. It
+       is the app's own "act now" colour, which is exactly what the
+       partner app is for. Against the customer's teal it is unmistakable
+       at 48px.
+
+       Plum, not white, for the mark: white on saffron fails contrast at
+       icon sizes and goes muddy under a launcher's shadow. Plum-950 on
+       saffron is the same pairing the pay button already uses. */
+    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(255,214,120,.65) 0%, rgba(245,158,11,0) 62%), linear-gradient(135deg, #B45309 0%, #D97706 30%, #F59E0B 66%, #FBBF24 100%)',
+    solid: '#D97706',
+    fg: '#2E1065',
     /* What tells them apart, now that neither has a symbol. A word is a
        better separator than a shape: it is unambiguous the moment the
        tile is any bigger than a launcher, and it says what the app IS

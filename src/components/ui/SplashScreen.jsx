@@ -3,7 +3,13 @@ import SambramoWordmark from './SambramoWordmark'
 import { BRAND } from '../../config/sambramo'
 import { isPartnerSurface } from '../../config/surface'
 
+/* Four seconds for a customer, one and a half for a partner.
+ *
+ * A customer opens the app to browse and the mark is worth the beat. A
+ * partner opens it because a job is waiting, and every second of logo
+ * comes out of a clock somebody else is racing too. */
 const HOLD_MS = 4000
+const PARTNER_HOLD_MS = 1500
 const FADE_MS = 480
 
 /**
@@ -54,21 +60,25 @@ const FADE_MS = 480
  * single launch is only a brand moment for as long as it stays skippable.
  */
 export default function SplashScreen() {
-  /* ── Not in the partner app ───────────────────────────────────────────
-   * "Every open" above is the owner's call and it holds for customers,
-   * where opening the app is a browsing decision and four seconds is a
-   * brand moment.
+  /* ── The partner app shows it too, briefly ───────────────────────────
+   * This was disabled outright for partners, and the reasoning was sound
+   * then: the app is opened by a push about a job, and four seconds of
+   * logo came out of a 45-second offer window while the same job sat on
+   * four other phones.
    *
-   * The partner app is not opened by a decision. It is opened by a push
-   * notification about a job that expires in 45 seconds, and those four
-   * seconds are spent from that clock — on a logo, while the offer is
-   * being shown to four other masters at the same time.
+   * The window is not 45 seconds any more. OFFER_WINDOW_SECONDS is
+   * overridden to 900 on the server, so the number that decision rested
+   * on is off by a factor of twenty, and a second and a half now costs a
+   * master nothing measurable.
    *
-   * That is not a taste judgement about the animation. It is the one
-   * place in the product where a brand moment costs a master money.
+   * What it buys is real: an earning app that opens on a blank white
+   * flash looks unfinished, and this is the app somebody is deciding
+   * whether to trust with their Saturdays.
    *
-   * Customer surface: unchanged, every open, exactly as before. */
-  const [state, setState] = useState(() => (isPartnerSurface() ? 'done' : 'showing'))
+   * Shorter, though. The reasoning is retired, not reversed. */
+  const hold = isPartnerSurface() ? PARTNER_HOLD_MS : HOLD_MS
+
+  const [state, setState] = useState("showing")
 
   useEffect(() => {
     // Without this guard the timers would drag a splash that never showed
@@ -76,8 +86,8 @@ export default function SplashScreen() {
     // for the render, but not for a setTimeout that has already been
     // scheduled.
     if (state === 'done') return
-    const leave = setTimeout(() => setState('leaving'), HOLD_MS)
-    const gone  = setTimeout(() => setState('done'),    HOLD_MS + FADE_MS)
+    const leave = setTimeout(() => setState('leaving'), hold)
+    const gone  = setTimeout(() => setState('done'),    hold + FADE_MS)
     return () => { clearTimeout(leave); clearTimeout(gone) }
     // Deliberately mount-only. `state` is read once to decide whether the
     // timers are needed at all; re-running on every transition would
