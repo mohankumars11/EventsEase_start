@@ -363,6 +363,28 @@ try {
     steps: [clickText('Not now')],
     note: 'CONFIRMED - paid, nothing outstanding' })
 
+  /* Step 1 of the partner build: the terms gate. Mohan events has its
+     acceptance cleared, so this is the screen a partner meets. */
+  await shot('30-terms-gate', {
+    route: '/dashboard/vendor', session: '.demo-partner-session.json', wait: 4500,
+    note: 'seven rules, pinned consent' })
+
+  await shot('31-terms-long', {
+    route: '/dashboard/vendor', session: '.demo-partner-session.json', wait: 4000,
+    steps: [clickText('Read the full terms')],
+    note: 'the long form, expanded' })
+
+  /* Step 2: every stage of one job, opened. Mohan events has a real
+     accepted job awaiting payment behind this. */
+  await shot('32-job-lifecycle', {
+    route: '/dashboard/vendor', session: '.demo-partner-session.json', wait: 5000,
+    steps: [clickText('Where this job stands')],
+    note: 'six steps, and which one it is on' })
+
+  await shot('33-payout-details', {
+    route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json', wait: 4000,
+    note: 'bank dropdown and IFSC lookup' })
+
   await shot('13-account',             { route: '/account', note: 'app badge + install banner' })
 
   console.log("")

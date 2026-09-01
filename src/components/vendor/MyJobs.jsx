@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import {
   CalendarDays, MapPin, Phone, User, IndianRupee, Loader2, Check,
-  CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight,
+  CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight, ChevronDown,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import PartnerFigure from './PartnerFigure'
 import { formatINR } from '../../utils/format'
+import JobLifecycle from './JobLifecycle'
 
 /**
  * Everything that happens after a master taps Accept.
@@ -196,6 +197,7 @@ function JobCard({ job, onChange }) {
   const [cancelling, setCancelling] = useState(false)
   const [standing, setStanding] = useState(null)
   const [problem, setProblem] = useState(null)
+  const [showSteps, setShowSteps] = useState(false)
 
   const paid = ['paid', 'in_progress', 'delivered', 'settled'].includes(job.status)
   const step = Math.max(0, STEPS.indexOf(job.status))
@@ -453,6 +455,29 @@ function JobCard({ job, onChange }) {
           </button>
         )
       )}
+
+      {/* ── Every step, and which one this job is on ─────────────────
+          A partner looking at a status word knows one thing and wonders
+          about four: has the customer paid, when do I get their number,
+          when do I get my money, and what am I meant to do next. All
+          four answers were already in the row and none was shown.
+
+          Collapsed by default. The card above is what a partner reads
+          in a hurry; this is what they open when they want to know
+          where a job actually stands. */}
+      <button
+        type="button"
+        onClick={() => setShowSteps(v => !v)}
+        aria-expanded={showSteps}
+        className="mt-3 flex w-full items-center justify-between border-t border-ink/[0.06] pt-3 text-left"
+      >
+        <span className="text-[12.5px] font-extrabold text-ink">
+          {showSteps ? 'Hide the steps' : 'Where this job stands'}
+        </span>
+        <ChevronDown size={16} className={`text-ink-mute transition-transform ${showSteps ? 'rotate-180' : ''}`} />
+      </button>
+
+      {showSteps && <JobLifecycle job={job} />}
 
       {problem && (
         <p className="mt-2 flex items-start gap-1.5 text-[12px] font-bold leading-snug text-amber-800">
