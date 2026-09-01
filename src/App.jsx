@@ -22,6 +22,7 @@ import { isPartnerSurface as _isPartner } from './config/surface'
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
 import HomeScreen from './pages/HomeScreen'
+import PayBridge from './pages/PayBridge'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -540,6 +541,10 @@ function AppRoutes() {
 
           config/surface.js sends the partner hostname's root here, which
           is why the path is also aliased at '/partner'. */}
+      {/* The payment sheet, opened in the phone real browser. It carries no
+          session and needs no chrome -- see the page header. */}
+      <Route path="/pay" element={<BareShell><PayBridge /></BareShell>} />
+
       <Route path="/partner"      element={<BareShell><PartnerLanding /></BareShell>} />
       <Route path="/partner/join" element={<BareShell><PartnerLanding /></BareShell>} />
 

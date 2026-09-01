@@ -445,6 +445,57 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
       const { data: me } = await supabase
         .from('profiles').select('full_name, email, phone').eq('id', uid).maybeSingle()
 
+      /* ══════════════════════════════════════════════════════════════
+         IN THE APP, PAY IN THE PHONE'S OWN BROWSER
+         ══════════════════════════════════════════════════════════════
+
+         Razorpay's JS checkout offers UPI in Chrome and refuses to in an
+         Android WebView. Measured on one account with one order: UPI
+         first in the browser, where a real rupee cleared today; cards,
+         netbanking and wallets only in the APK. Declaring <queries> in
+         the manifest was necessary and not sufficient — checkout.js will
+         not commit to a UPI app-switch it cannot guarantee returning
+         from, and inside a WebView that caution is justified.
+
+         So the app stops trying. /pay is a page that does nothing but
+         open the sheet, and @capacitor/browser hands it to the real
+         browser — the one already proven to take UPI.
+
+         Only public identifiers travel: order id, key id, amount. Every
+         one is given to a browser anyway to draw a sheet at all. The
+         ORDER fixes the amount server-side, so a tampered URL changes
+         the figure on that page and not a paisa of what is charged.
+
+         Nothing is reported back. api/razorpay-webhook remains the only
+         witness that money moved, and this board already polls every two
+         seconds — the customer returns to a screen that has turned green
+         without being told anything. */
+      if (IS_NATIVE_APP) {
+        const q = new URLSearchParams({
+          order: body.orderId,
+          key: body.keyId,
+          amount: String(body.amountPaise),
+          for: payableLines.length === 1
+            ? payableLines[0].service_name
+            : `${payableLines.length} masters for your celebration`,
+          upi: body.upiEnabled === true ? '1' : body.upiEnabled === false ? '0' : '',
+        })
+        try {
+          const { Browser } = await import('@capacitor/browser')
+          await Browser.open({ url: apiUrl(`/pay?${q}`), presentationStyle: 'popover' })
+          // The sheet is somewhere else now. The button goes back to
+          // normal and the board keeps watching the lines.
+          setPaying(false)
+          return
+        } catch (err) {
+          /* The plugin is missing, or the browser would not open. Fall
+             through to the in-app sheet: cards and netbanking still work
+             there, and a checkout that opens without UPI beats one that
+             does not open. */
+          console.warn('[payment] external browser unavailable', err)
+        }
+      }
+
       const opened = await openRazorpay({
         keyId: body.keyId,
         // Decided server-side, because api.razorpay.com/v1/methods

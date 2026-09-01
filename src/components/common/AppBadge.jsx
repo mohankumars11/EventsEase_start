@@ -27,7 +27,16 @@ import { isNativeApp, nativePlatform } from '../../lib/nativePush'
  * afternoon.
  */
 
-const NATIVE = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.()
+/* Inside the app, or in a browser?
+ *
+ * The test is the BRIDGE, not `isNativePlatform()`. That call has been
+ * wrong three times in this codebase — it silently routed push down the
+ * web path, it silently skipped registering the notification-tap
+ * listener, and it decides this origin, where being wrong would make an
+ * absolute URL come out relative.
+ *
+ * If `window.Capacitor` exists at all, this is the app. */
+const NATIVE = typeof window !== 'undefined' && !!window.Capacitor
 const BUILD = (import.meta.env?.VITE_BUILD ?? 'dev').slice(0, 7)
 
 export default function AppBadge({ className = '' }) {
