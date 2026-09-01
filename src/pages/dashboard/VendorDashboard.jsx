@@ -17,6 +17,7 @@ import MyJobs from '../../components/vendor/MyJobs'
 import OfferHistory from '../../components/vendor/OfferHistory'
 import PartnerResume from '../../components/vendor/PartnerResume'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
+import PayoutDetails from '../../components/vendor/PayoutDetails'
 
 /**
  * The partner's console.
@@ -323,6 +324,15 @@ export default function VendorDashboard() {
             onSetRange={setRangeStatus}
             onUpdateVendor={updateVendor}
           />
+        )}
+
+        {tab === 'account' && (
+          <>
+            {/* Before the business details: a partner reading this tab is
+                far more likely to be here about money than about their
+                Instagram link. */}
+            <div className="mb-4"><PayoutDetails vendorId={vendor?.id} /></div>
+          </>
         )}
 
         {tab === 'account' && (
