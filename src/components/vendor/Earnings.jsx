@@ -90,7 +90,7 @@ export default function Earnings({ vendorId, onAddPayout }) {
     {
       id: 'ready', icon: Banknote, tone: 'forest',
       label: 'Ready to be paid out', value: sum(buckets.ready), n: buckets.ready.length,
-      scan: 'Delivered, and past the 24-hour window.',
+      scan: 'Delivered successfully. Yours to claim.',
     },
     {
       id: 'held', icon: ShieldCheck, tone: 'saffron',

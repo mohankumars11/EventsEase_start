@@ -116,8 +116,8 @@ export default function JobLifecycle({ job }) {
       body: settled
         ? 'Sent to your saved payout account.'
         : releaseDue
-          ? `24 hours after the event — ${releaseDue.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} — if nobody raises a problem.`
-          : '24 hours after the event, if nobody raises a problem.',
+          ? `Once the event is completed successfully and nothing is disputed — expected ${releaseDue.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}.`
+          : 'Once the event is completed successfully and nothing is disputed.',
     },
   ]
 

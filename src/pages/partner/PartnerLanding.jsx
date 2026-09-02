@@ -39,7 +39,7 @@ const POINTS = [
   {
     icon: IndianRupee,
     title: 'The price is on the job before you accept',
-    body: 'You see exactly what you earn — after our fee and taxes — before you say yes. No negotiating, no quoting, no haggling.',
+    body: 'You see exactly what you earn, in rupees, before you say yes. Nothing is added afterwards and nothing is billed to you. No negotiating, no quoting, no haggling.',
   },
   {
     icon: CalendarCheck,
@@ -48,8 +48,8 @@ const POINTS = [
   },
   {
     icon: BadgeCheck,
-    title: 'Paid 24 hours after the event',
-    body: 'The customer pays us up front and we hold it. Once the day is done and nothing is disputed, it comes to your account.',
+    title: 'Paid once the event is done',
+    body: 'The customer pays up front and Sambramo holds it — so the money exists before you set out. Once the event is completed successfully and nothing is disputed, it comes to your account.',
   },
 ]
 
@@ -104,8 +104,8 @@ export default function PartnerLanding() {
           ₹6,587
         </h1>
         <p className="mt-2 text-[14.5px] font-semibold leading-snug text-ink-soft">
-          Most fall between ₹1,000 and ₹50,000 — after our 8%, nothing else
-          deducted.
+          Most fall between ₹1,000 and ₹50,000, and large functions go well
+          past ₹1 lakh. What you see on a job is what reaches you.
         </p>
 
         {/* ── Three facts, as cards ────────────────────────────────────
@@ -114,9 +114,20 @@ export default function PartnerLanding() {
             paragraph, which is the only way most of them will read it. */}
         <ul className="mt-5 grid grid-cols-3 gap-2">
           {[
-            { n: '8%',   t: 'our fee',        s: 'no joining or monthly' },
-            { n: '24h',  t: 'after the event', s: 'money released' },
-            { n: '0',    t: 'to sign up',     s: 'free, always' },
+            /* No commission on this page.
+             *
+             * A percentage in a signup hero is the number a decorator
+             * decides on before reading anything else, and it is not the
+             * number that matters — what reaches them is, and that is the
+             * headline above. It is set out in full in the partner terms,
+             * which must be accepted before any work is taken, so nobody
+             * finds out at their first payout.
+             *
+             * What replaces it is the thing they actually asked: is there
+             * a cost to joining, and when do I get paid. */
+            { n: '₹0',   t: 'to join',        s: 'free, and free to stay' },
+            { n: 'Paid', t: 'once it is done', s: 'no waiting on invoices' },
+            { n: 'You',  t: 'pick the jobs',  s: 'decline anything' },
           ].map(c => (
             <li key={c.t} className="rounded-2xl bg-saffron-400/12 p-3 ring-1 ring-saffron-300/50">
               <p className="font-serif text-[22px] font-extrabold leading-none text-ink">{c.n}</p>
@@ -225,9 +236,10 @@ export default function PartnerLanding() {
             What it costs
           </h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-            We take <strong className="font-extrabold text-ink">8%</strong> of
-            each job, and nothing else. No joining fee, no monthly charge
-            while we are building the network.
+            Free while we build the network in Bengaluru — no joining fee and no
+            monthly charge. Sambramo's share of a booking is already taken out of
+            the earning you see, never billed to you, and it is set out in full in
+            the partner terms you accept before your first job.
           </p>
 
           <div className="mt-4 space-y-2.5">

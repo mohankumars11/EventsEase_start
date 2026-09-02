@@ -79,7 +79,7 @@ const STATE = {
     label: 'Done',
     tone: 'ink',
     icon: Check,
-    lede: 'Your payout is released 24 hours after the event, once nothing is disputed.',
+    lede: 'Your payout is released once the event is completed successfully and nothing is disputed.',
   },
   settled: {
     label: 'Paid out',

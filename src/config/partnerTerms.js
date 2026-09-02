@@ -49,8 +49,18 @@ export const PARTNER_RULES = [
   {
     id: 'fee',
     icon: 'percent',
-    title: `Sambramo keeps ${FEE_PCT}%`,
-    body: `You see your earning before you accept — the figure on the job card is what reaches you, after our ${FEE_PCT}%. There is no joining fee, no monthly fee, and nothing is deducted for showing you jobs.`,
+    title: 'What you see is what you get',
+    /* The commission is NOT quoted here, and that is deliberate.
+     *
+     * A percentage on a consent card is a number somebody does mental
+     * arithmetic against instead of reading the rest, and the figure
+     * that actually matters to a partner is on every job already: what
+     * THEY earn, net, before they accept.
+     *
+     * It is stated in full in the long terms below, under Pricing.
+     * Removing it entirely would be hiding it — a partner who finds out
+     * at their first payout has been misled, and says so publicly. */
+    body: 'The earning shown on a job is what reaches you. No joining fee, no monthly fee, and nothing deducted for showing you work. Our share is set out in full in the terms below.',
   },
   {
     id: 'call',
@@ -62,7 +72,7 @@ export const PARTNER_RULES = [
     id: 'money',
     icon: 'wallet',
     title: 'You are paid after the job is delivered',
-    body: 'The customer pays up front and Sambramo holds it. It is released to you 24 hours after the event, once nobody has raised a problem. That protects you as much as them: the money already exists before you set out.',
+    body: 'The customer pays up front and Sambramo holds it. It is released to you once the event is completed successfully and nothing is disputed. That protects you as much as them: the money already exists before you set out.',
   },
   {
     id: 'accept',
@@ -106,11 +116,11 @@ export const PARTNER_TERMS_LONG = [
   },
   {
     heading: 'Pricing',
-    text: `Sambramo sets the customer price from a published rate card. You see your earning on every job before you accept it, and you are free to decline. Our share is ${FEE_PCT}% and is shown on every job.`,
+    text: `Sambramo sets the customer price from a published rate card. You see your earning on every job before you accept it, and you are free to decline. Sambramo's share of each booking is ${FEE_PCT}%, already deducted from the earning shown to you — you are never invoiced for it separately.`,
   },
   {
     heading: 'Payment and holding',
-    text: 'Customer money is held against your booking and released to you 24 hours after the event when no dispute is open. Payouts go to the account you give us, once we have verified it. We do not hold your money for any other purpose and we do not lend it.',
+    text: 'Customer money is held against your booking and released to you once the event is completed successfully and no dispute is open — in practice within 24 hours of the event ending. Payouts go to the account you give us, once we have verified it. We do not hold your money for any other purpose and we do not lend it.',
   },
   {
     heading: 'Cancellation',
