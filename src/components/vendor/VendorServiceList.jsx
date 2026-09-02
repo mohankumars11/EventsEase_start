@@ -6,6 +6,7 @@ import {
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
+import AddFromCatalogue from './AddFromCatalogue'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
@@ -58,6 +59,10 @@ const BLANK = {
 }
 
 export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove }) {
+  /* The catalogue picker replaces the free-text add. See
+     AddFromCatalogue and data/partnerCatalogue for why. */
+  const [picking, setPicking] = useState(false)
+
   const toast = useToast()
   // null = closed, 'new' = the add form, or an id being edited. One at a time:
   // two open forms on a phone is two half-finished items.
@@ -120,11 +125,19 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           </p>
         </div>
         {editing !== 'new' && (
-          <button onClick={() => setEditing('new')} className="btn-plum text-sm">
-            <Plus size={16} /> Add an item
+          <button onClick={() => setPicking(true)} className="btn-plum text-sm">
+            <Plus size={16} /> Add what you do
           </button>
         )}
       </header>
+
+      {picking && (
+        <AddFromCatalogue
+          existing={services}
+          onAdd={onAdd}
+          onClose={() => setPicking(false)}
+        />
+      )}
 
       {editing === 'new' && (
         <ServiceForm
