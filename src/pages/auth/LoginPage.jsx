@@ -6,6 +6,7 @@ import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { isNativeApp } from '../../lib/nativePush'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import { isPartnerSurface } from '../../config/surface'
 
 const RESEND_SECONDS = 60
 
@@ -45,6 +46,9 @@ function otpErrorMessage(msg = '') {
  * So on native there is one way in, and it is the one that works.
  */
 export default function LoginPage() {
+  /* Which of the two apps this bundle is. Stamped at build time by
+     VITE_SURFACE, so it is a constant, not a guess about the URL. */
+  const PARTNER = isPartnerSurface()
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -202,12 +206,43 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
         <div className="w-full max-w-md">
 
-          {/* Mobile logo */}
-          <div className="flex md:hidden justify-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <SambramoLogo size={36} ground="onLight" caption />
-            </Link>
-          </div>
+          {/* ══════════════════════════════════════════════════════════
+              THE PARTNER APP SIGNS YOU IN AS THE PARTNER APP
+              ══════════════════════════════════════════════════════════
+
+              One codebase serves two apps, and this screen was showing
+              both of them the customer's front door: the teal wordmark
+              over "CELEBRATIONS, ARRANGED · NOTHING LEFT TO CHANCE". A
+              decorator who downloaded Sambramo Partners, tapped the
+              saffron icon and got that has every reason to think they
+              opened the wrong app — and sign-in is the worst screen in
+              the product to make somebody doubt where they are.
+
+              So the partner app signs in under its own navy lockup, with
+              a line about work rather than about celebrations. Same form,
+              same Google button, same code path. Only the identity
+              changes, because only the identity was wrong. */}
+          {PARTNER ? (
+            <div className="mb-8 rounded-[22px] bg-plum-950 px-5 py-5 text-center">
+              <span className="flex items-baseline justify-center gap-2">
+                <span className="font-serif text-[26px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+                  Partners
+                </span>
+              </span>
+              <p className="mt-2 text-[12px] font-bold uppercase tracking-[0.12em] text-saffron-400">
+                Work near you · Paid after every event
+              </p>
+            </div>
+          ) : (
+            <div className="flex md:hidden justify-center mb-8">
+              <Link to="/" className="inline-flex items-center gap-2">
+                <SambramoLogo size={36} ground="onLight" caption />
+              </Link>
+            </div>
+          )}
 
           {/* ── Step 1: Email input ── */}
           {step === 'email' && (
@@ -223,7 +258,11 @@ export default function LoginPage() {
                 </div>
               )}
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
-              <p className="text-gray-500 text-sm mb-8">Enter your email — we'll send you a login code.</p>
+              <p className="text-gray-500 text-sm mb-8">
+                {PARTNER
+                  ? 'Sign in to see the jobs near you.'
+                  : "Enter your email — we'll send you a login code."}
+              </p>
 
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
@@ -246,7 +285,12 @@ export default function LoginPage() {
                 {error && <ErrorBox message={error} />}
 
                 <button type="submit" disabled={loading}
-                  className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
+                  /* Saffron on the partner app: it is the accept colour on
+                     every job card, so the button that starts the session
+                     matches the button that earns the money. */
+                  className={`w-full py-3.5 text-base rounded-2xl font-extrabold disabled:opacity-60 disabled:cursor-not-allowed ${
+                    PARTNER ? 'bg-saffron-400 text-plum-950' : 'btn-plum'
+                  }`}>
                   {loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
               </form>

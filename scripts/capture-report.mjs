@@ -327,6 +327,28 @@ try {
     route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json', wait: 3000,
     note: 'partner menu — no customer items' })
 
+  /* ── The handbook, opened ──────────────────────────────────────────
+
+     "How it works" and "What it costs" used to be two tabs on a second
+     nav bar the landing page carried. They now live under Account, and
+     that move is only real if somebody can find them — so this scrolls
+     to the fold and opens it, because a screenshot of the top of a long
+     tab is how a section gets called done without anybody seeing it.
+
+     It also puts the full terms back within reach: until now the only
+     place they rendered was the gate you accept them on, so the
+     agreement a partner is held to vanished the moment they agreed. */
+  await shot('19b-partner-handbook', {
+    route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json',
+    steps: [`(() => {
+      const b = [...document.querySelectorAll('button')]
+        .find(x => x.textContent.includes('How Sambramo works'))
+      if (!b) return 'NOT FOUND'
+      b.click(); b.scrollIntoView({ block: 'start' })
+      return 'opened'
+    })()`],
+    wait: 2500, note: 'how it works + the terms, inside Account' })
+
   /* The complaint, photographed: the partner tapping the menu was shown
      customer items. This opens it as a partner and lets the picture say
      what is in there. */

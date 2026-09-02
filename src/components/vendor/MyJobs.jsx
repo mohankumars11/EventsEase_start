@@ -389,11 +389,6 @@ function JobCard({ job, onChange }) {
         </button>
       )}
 
-      {job.status === 'delivered' && (
-        <p className="mt-2.5 text-center text-[11.5px] font-semibold text-ink-mute">
-          Payout releases 24 hours after the event.
-        </p>
-      )}
 
       {/* ── Pulling out ────────────────────────────────────────────
           Only while there is still a job to pull out of. Deliberately

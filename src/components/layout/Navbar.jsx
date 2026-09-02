@@ -89,9 +89,25 @@ export default function Navbar() {
    * most has no role yet. */
   const showCart   = !isPartnerSurface() && (!profile || isCustomer)
 
-  const navClass = scrolled
-    ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
-    : 'bg-surface border-b border-hairline/10'
+  /* ══════════════════════════════════════════════════════════════════
+     THE PARTNER APP WEARS A DARK BAR
+     ══════════════════════════════════════════════════════════════════
+
+     The customer app is white and airy, which suits somebody browsing
+     for a birthday. The partner app is a work tool, opened in a hurry
+     and often outdoors, and a solid dark bar does two things a white one
+     cannot: it is legible in sunlight, and it tells somebody which of
+     the two Sambramos they have opened before they read a word.
+
+     plum-950 rather than a new navy. It is the darkest colour the brand
+     already has, it is what the saffron CTA sits on everywhere else, and
+     inventing a second dark for one bar is how a palette stops being
+     one. */
+  const navClass = isPartnerApp
+    ? 'bg-plum-950 border-b border-white/10'
+    : scrolled
+      ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
+      : 'bg-surface border-b border-hairline/10'
 
   const linkClass = 'text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07]'
 
@@ -126,9 +142,15 @@ export default function Navbar() {
                 glancing at their home screen unsure which of the two
                 Sambramos they had opened. */}
             {isPartnerApp ? (
+              /* White on navy. The wordmark's own teal disappears against
+                 plum-950, so the partner lockup is set as type — which is
+                 also why PARTNERS can be the loud half here and the muted
+                 half on white. */
               <span className="flex items-baseline gap-2">
-                <SambramoLogo size={32} ground="onLight" />
-                <span className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-saffron-700">
+                <span className="font-serif text-[21px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/85">
                   Partners
                 </span>
               </span>
@@ -203,6 +225,10 @@ export default function Navbar() {
               className="p-2.5 rounded-lg text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07] transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              /* Inherits ink on the customer's white bar; needs white on
+                 the partner's navy one, or it is a dark icon on a dark
+                 ground. */
+              style={isPartnerApp ? { color: '#fff' } : undefined}
               aria-expanded={menuOpen}
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}

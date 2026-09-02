@@ -215,11 +215,12 @@ export default function JobAlerts({ vendorId }) {
             {on ? 'Job alerts are on' : 'Turn on job alerts'}
           </p>
 
-          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
+          {/* On, this is a settings row and says one thing. Off, it has to
+              earn a tap, so it keeps the reason — a master who understands
+              WHY 45 seconds matters is a master who leaves alerts on. */}
+          <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
             {on
-              ? `We will buzz your ${registered.map(r => r.device_label ?? 'device').join(' and ')} the moment a job near you comes up.`
-              /* States the real constraint. A master who understands WHY
-                 45 seconds matters is a master who leaves alerts on. */
+              ? 'We will buzz your phone when a job near you comes up.'
               : 'A job is offered to a few masters at once and the first to accept gets it. Without alerts you will only see jobs while this page is open.'}
           </p>
 
@@ -230,19 +231,12 @@ export default function JobAlerts({ vendorId }) {
             </p>
           )}
 
-          /* ── The build stamp and the registration line are gone ────
-
-             They were built while chasing a push bug that is now fixed,
-             and they earned their place then. On the home screen of a
-             working app they are debug output: "● Browser / home-screen
-             shortcut  build dev" tells a decorator nothing they can act
-             on, and it sat directly above the two controls that do
-             something.
-
-             The distinction still matters when push breaks -- an APK and
-             a home-screen shortcut look identical and behave completely
-             differently -- so it is kept, one tap away, under Details.
-             It is just no longer the first thing on the card. */
+          {/* The build stamp and the registration line moved behind
+              Details. They were built while chasing a push bug that is
+              fixed, and on a working app they are debug output above the
+              two controls that do something. Still one tap away, because
+              the next time push breaks an APK and a home-screen shortcut
+              look identical and behave completely differently. */}
           {showDetails && (
             <div className="mt-2 rounded-xl bg-ink/[0.03] p-2.5 text-[11px] font-bold text-ink-mute">
               <p>
@@ -259,59 +253,71 @@ export default function JobAlerts({ vendorId }) {
             </div>
           )}
 
-          {on && (
-            <>
+          {/* ══════════════════════════════════════════════════════════
+              TWO CONTROLS, ON ONE ROW
+              ══════════════════════════════════════════════════════════
+
+              This was a stacked column: a full-width test button, then
+              Details, then Turn off — three rows of chrome for a setting
+              that is already on and working, sitting directly above the
+              jobs the app was opened for.
+
+              Alerts are a switch. A switch is one line of text and the
+              controls that change it, side by side, the way every other
+              row of settings in this app is laid out. Test sits next to
+              it because "is this actually working" is the only other
+              question anybody has about a notification, and the honest
+              answer is a buzz in your hand rather than a status label. */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <button
+              onClick={on ? turnOff : turnOn}
+              disabled={busy}
+              className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-[13px] font-extrabold transition active:scale-[0.98] disabled:opacity-50 ${
+                on ? 'bg-white text-ink-soft ring-1 ring-ink/[0.08]' : 'bg-saffron-400 text-plum-950'
+              }`}
+            >
+              {busy && <Loader2 size={13} className="animate-spin" />}
+              {on ? 'Turn off' : 'Turn on alerts'}
+            </button>
+
+            {on && (
               <button
                 onClick={sendTest}
                 disabled={testing}
-                className="mt-2.5 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-[12.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2 text-[13px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
               >
                 {testing && <Loader2 size={13} className="animate-spin" />}
-                Send me a test alert
+                Test alert
               </button>
-              {/* Only when the answer is surprising.
+            )}
 
-                  An installed APK that reports itself as a browser has
-                  one of two problems needing opposite fixes, and which
-                  one it is can only be read off the device. */}
+            {/* Only when the answer is surprising. An installed APK that
+                reports itself as a browser has one of two problems needing
+                opposite fixes, and which one it is can only be read off
+                the device. */}
+            {on && (
               <button
                 onClick={() => {
-                  /* One toggle for both: what am I running, and why did
-                     a send fail. Two separate disclosures on one small
-                     card is two things to discover. */
                   setShowDetails(v => !v)
                   setDiag(d => (d ? null : nativeDiagnostics()))
                 }}
-                className="mt-2 block text-[11px] font-bold text-ink-mute underline-offset-2 hover:underline"
+                className="ml-auto text-[11.5px] font-bold text-ink-mute underline-offset-2 hover:underline"
               >
-                {showDetails ? 'Hide details' : 'Details'}
+                {showDetails ? 'Hide' : 'Details'}
               </button>
+            )}
+          </div>
 
-              {diag && (
-                <pre className="mt-1.5 overflow-x-auto rounded-xl bg-ink/[0.04] p-2.5 text-[10.5px] leading-relaxed text-ink-soft">
-                  {Object.entries(diag).map(([k, v]) =>
-                    `${k.padEnd(11)}${v === null ? '-' : String(v)}`).join(String.fromCharCode(10))}
-                </pre>
-              )}
-
-              {tested && (
-                <p className="mt-2 text-[11.5px] font-semibold leading-snug text-ink-soft">{tested}</p>
-              )}
-            </>
+          {diag && (
+            <pre className="mt-1.5 overflow-x-auto rounded-xl bg-ink/[0.04] p-2.5 text-[10.5px] leading-relaxed text-ink-soft">
+              {Object.entries(diag).map(([k, v]) =>
+                `${k.padEnd(11)}${v === null ? '-' : String(v)}`).join(String.fromCharCode(10))}
+            </pre>
           )}
 
-          <button
-            onClick={on ? turnOff : turnOn}
-            disabled={busy}
-            className={`mt-3 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-[13.5px] font-extrabold transition active:scale-[0.98] disabled:opacity-50 ${
-              on
-                ? 'bg-white text-ink-soft ring-1 ring-ink/[0.08]'
-                : 'bg-saffron-400 text-plum-950'
-            }`}
-          >
-            {busy && <Loader2 size={14} className="animate-spin" />}
-            {on ? 'Turn off' : 'Turn on alerts'}
-          </button>
+          {tested && (
+            <p className="mt-2 text-[11.5px] font-semibold leading-snug text-ink-soft">{tested}</p>
+          )}
         </div>
       </div>
     </div>

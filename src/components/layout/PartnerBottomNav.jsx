@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, Store, CalendarDays, UserCog, Wallet, HelpCircle, Tag, LogIn } from 'lucide-react'
+import { Bell, IndianRupee, Store, CalendarDays, UserCog } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -52,31 +52,6 @@ import { useAuth } from '../../context/AuthContext'
  * So the tab is named for what is behind it. "Listing" is also the word
  * this market already uses: a decorator on JustDial or WedMeGood has a
  * listing, and knows what it is without being taught. */
-/* ── Before anybody signs in ───────────────────────────────────────
- *
- * A partner who has just tapped a WhatsApp link gets an APP, not a
- * marketing page they have to thumb to the bottom of. That is how every
- * product they already use behaves: Zomato, Flipkart and Rapido all let
- * you look around before they ask who you are, and asking first is the
- * single most reliable way to lose somebody who was only curious.
- *
- * Three questions and one action, because those are the three questions
- * a partner actually arrives with:
- *
- *   Earn         what do I make
- *   How it works what do I have to do
- *   Costs        what does it take from me
- *   Sign in      the one thing that needs an account
- *
- * The same bar, in the same place, before and after signing in — so the
- * app does not rearrange itself the moment somebody commits to it. */
-const SIGNED_OUT_TABS = [
-  { id: 'earn',  label: 'Earn',         icon: Wallet,     to: '/partner/join' },
-  { id: 'how',   label: 'How it works', icon: HelpCircle, to: '/partner/join?tab=how' },
-  { id: 'costs', label: 'Costs',        icon: Tag,        to: '/partner/join?tab=costs' },
-  { id: 'in',    label: 'Sign in',      icon: LogIn,      to: '/login' },
-]
-
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
   { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
@@ -90,27 +65,31 @@ export default function PartnerBottomNav() {
   const [params] = useSearchParams()
   const { profile } = useAuth()
 
+  /* ══════════════════════════════════════════════════════════════════
+     ONE BAR, AND ONLY WHERE IT NAVIGATES
+     ══════════════════════════════════════════════════════════════════
+
+     There were briefly two: a browse bar on the landing and this one
+     after signing in. Two bars in one app is two mental models — the
+     thing at the bottom of the screen changed meaning depending on
+     whether you had an account, which is the opposite of what a fixed
+     bar is for.
+
+     So there is one, it has the five destinations a partner works from,
+     and the landing has none. What the landing used to put in tabs —
+     how it works, what it costs — now lives under Account, where
+     somebody looks for it once rather than being asked to browse it
+     before they have signed up. */
   if (!isPartnerSurface()) return null
+  if (!pathname.startsWith('/dashboard/vendor')) return null
+  if (!profile) return null
 
-  const onLanding = pathname.startsWith('/partner')
-  const onDashboard = pathname.startsWith('/dashboard/vendor')
-  if (!onLanding && !onDashboard) return null
+  const items = TABS.map(t => ({
+    ...t,
+    to: t.id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${t.id}`,
+  }))
 
-  /* Signed out on the landing: the browse bar. Signed out anywhere else,
-     or mid-signup, nothing — a one-way flow does not want four ways out
-     of it. */
-  const signedOut = !profile
-  if (signedOut && !onLanding) return null
-  if (!signedOut && !onDashboard) return null
-
-  const items = signedOut
-    ? SIGNED_OUT_TABS
-    : TABS.map(t => ({
-        ...t,
-        to: t.id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${t.id}`,
-      }))
-
-  const active = params.get('tab') ?? (signedOut ? 'earn' : 'offers')
+  const active = params.get('tab') ?? 'offers'
 
   return (
     <nav
@@ -131,9 +110,7 @@ export default function PartnerBottomNav() {
     >
       <ul className="mx-auto flex max-w-2xl items-stretch">
         {items.map(({ id, label, icon: Icon, to }) => {
-          /* Sign in is an action rather than a place, so it never wears
-             the active pill — there is no "you are on Sign in" state. */
-          const on = id !== 'in' && active === id
+          const on = active === id
           return (
             <li key={id} className="flex-1">
               <Link

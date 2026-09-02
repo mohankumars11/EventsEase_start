@@ -6,6 +6,7 @@ import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { isNativeApp } from '../../lib/nativePush'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import { isPartnerSurface } from '../../config/surface'
 
 const RESEND_SECONDS = 60
 
@@ -49,6 +50,9 @@ const TRUST_POINTS = [
  * So on native there is one way in, and it is the one that works.
  */
 export default function SignupPage() {
+  /* Which of the two apps this bundle is. Stamped at build time by
+     VITE_SURFACE, so it is a constant, not a guess about the URL. */
+  const PARTNER = isPartnerSurface()
   const { sendEmailOtp, verifyEmailOtp, completeProfile, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -279,12 +283,30 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white overflow-y-auto">
         <div className="w-full max-w-md">
 
-          {/* Mobile logo */}
-          <div className="flex md:hidden justify-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <SambramoLogo size={36} ground="onLight" caption />
-            </Link>
-          </div>
+          {/* Signing up wears the same identity as signing in. See
+              LoginPage for why the customer lockup was the wrong thing to
+              show somebody who deliberately installed the partner app. */}
+          {PARTNER ? (
+            <div className="mb-8 rounded-[22px] bg-plum-950 px-5 py-5 text-center">
+              <span className="flex items-baseline justify-center gap-2">
+                <span className="font-serif text-[26px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+                  Partners
+                </span>
+              </span>
+              <p className="mt-2 text-[12px] font-bold uppercase tracking-[0.12em] text-saffron-400">
+                Free to join · Free to stay
+              </p>
+            </div>
+          ) : (
+            <div className="flex md:hidden justify-center mb-8">
+              <Link to="/" className="inline-flex items-center gap-2">
+                <SambramoLogo size={36} ground="onLight" caption />
+              </Link>
+            </div>
+          )}
 
           {/* ── Step: Role selection ── */}
           {step === 'role' && (

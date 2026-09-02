@@ -20,6 +20,7 @@ import PartnerResume from '../../components/vendor/PartnerResume'
 import CalendarNudge from '../../components/vendor/CalendarNudge'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PayoutDetails from '../../components/vendor/PayoutDetails'
+import PartnerHandbook from '../../components/vendor/PartnerHandbook'
 import TermsGate from '../../components/vendor/TermsGate'
 import Earnings from '../../components/vendor/Earnings'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
@@ -259,15 +260,19 @@ export default function VendorDashboard() {
       {/* Leads the page whenever the vendor is not live, because it is the only
           fact that changes what the rest of the page means. Once approved it
           stays but stops shouting. */}
-      {/* Once, on the home tab, and only while it still says something.
-          "You are live on Sambramo" is worth a card the first week and is
-          three lines of furniture above every screen after that — and it
-          was above EVERY tab. A partner who is live knows they are live;
-          the pill in the header says so in one word.
+      {/* Only when something is WRONG.
 
-          Not live is different: rejected or pending changes what the whole
-          app means, so that keeps its card everywhere. */}
-      {(tab === 'offers' || statusMeta.blocking) && (
+          "You are live on Sambramo" was three lines of green congratulating
+          a partner for a state they can already read in one word: the Live
+          pill sits next to their business name at the top of every tab. A
+          card that repeats the pill is not reassurance, it is the app
+          talking about itself above the jobs somebody opened it to see.
+
+          Pending or rejected is the opposite — it changes what every other
+          screen on the app means, and a partner who does not know they are
+          not live will sit waiting for jobs that are never coming. That
+          keeps its card, on every tab. */}
+      {statusMeta.blocking && (
       <section className={`card mt-6 p-4 sm:p-5 flex items-start gap-3 ${TONES[statusMeta.tone].card}`}>
         <CheckCircle2 size={20} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
         <div className="flex-1 min-w-0">
@@ -396,6 +401,14 @@ export default function VendorDashboard() {
 
         {tab === 'account' && (
           <Account vendor={vendor} profile={profile} plan={plan} businessName={businessName} />
+        )}
+
+        {/* Last on the tab, because it is reference rather than a setting —
+            and reference somebody has to be able to FIND. This is where
+            "how it works" and the full terms live now that the landing is
+            one page again. */}
+        {tab === 'account' && (
+          <div className="mt-4"><PartnerHandbook /></div>
         )}
       </div>
     </div>
