@@ -241,17 +241,56 @@ const db = createClient(url, key, { auth: { persistSession: false } })
    on their own venue.
 
    Chunked: one 273-row statement that fails tells you nothing about which
-   row was wrong. */
+   row was wrong.
+
+   ── And a failed chunk falls back to one row at a time ──────────────
+   A chunk is a single statement, so ONE unacceptable row rolls back the
+   other 49. The first real run lost exactly that: 50 skipped, 49 of them
+   perfectly good. Retrying the chunk row by row costs 50 round trips on
+   a path that almost never runs, and turns "50 venues missing" into a
+   named list of the ones genuinely at fault.
+
+   ── Why there is no client-side dedupe above ────────────────────────
+   OSM carries some halls twice -- a node somebody pinned and a way
+   somebody later traced -- so two osm_ids describe one building.
+   `onConflict: 'osm_id'` cannot see that, and 094's `uq_venues_name_spot`
+   (same name, same spot to 4dp) correctly refuses the second.
+
+   The obvious fix is to collapse them here before sending. It was tried
+   and it does not fully work: `toFixed(4)` rounds a binary double while
+   Postgres rounds a numeric half-up, and they disagree on values sitting
+   on the 5th-decimal boundary -- 12.95505 is 12.9551 to Postgres and
+   12.9550 here, because the stored double is really 12.955049999...
+   Such a pair looks distinct in JavaScript and identical to the index.
+
+   Being bug-compatible with Postgres numeric rounding is a worse bet
+   than letting the database be the authority on its own constraint. So
+   the duplicates are simply sent, refused, and named. On the Bengaluru
+   extract that is 2 of 273, and both were the same hall twice. */
 let written = 0, skipped = 0
+const refused = []
 for (let i = 0; i < rows.length; i += 50) {
   const chunk = rows.slice(i, i + 50)
   const { error } = await db.from('venues')
     .upsert(chunk, { onConflict: 'osm_id', ignoreDuplicates: false })
-  if (error) { console.error(`  chunk ${i}: ${error.message}`); skipped += chunk.length; continue }
-  written += chunk.length
+  if (!error) { written += chunk.length; continue }
+
+  console.error(`  chunk ${i}: ${error.message} — retrying row by row`)
+  for (const row of chunk) {
+    const { error: rowErr } = await db.from('venues')
+      .upsert(row, { onConflict: 'osm_id', ignoreDuplicates: false })
+    if (rowErr) { skipped++; refused.push(`${row.name} (${row.osm_id}): ${rowErr.message}`) }
+    else written++
+  }
 }
 
 console.log(`\n  upserted            ${written}`)
-if (skipped) console.log(`  skipped             ${skipped}`)
+if (skipped) {
+  console.log(`  skipped             ${skipped}`)
+  /* Named, not counted. "50 skipped" sent the last run looking for a
+     problem with the chunking; "these two halls are already in the table
+     under a different OSM id" is a fact somebody can act on. */
+  for (const r of refused) console.log(`   · ${r}`)
+}
 console.log('\n  Venue data © OpenStreetMap contributors (ODbL).\n')
 if (skipped) process.exit(1)
