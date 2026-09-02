@@ -83,9 +83,19 @@ const send = (m, p = {}) => new Promise(res => { const n = ++id; pending.set(n, 
 const evalJs = async e => (await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true }))?.result?.value
 
 await send('Page.enable')
-await send('Page.navigate', { url: `http://localhost:${PORT}/partner/join` })
+/* `/` and not `/partner/join`, deliberately.
+ *
+ * The APK opens the root, and RootScreen redirects a signed-out partner
+ * to the landing. Testing the landing directly would prove the landing
+ * is right while saying nothing about the screen a partner ACTUALLY sees
+ * when the splash finishes -- which is the thing being asked about, and
+ * the thing a broken redirect would take away without touching any of
+ * the files this check otherwise covers. */
+await send('Page.navigate', { url: `http://localhost:${PORT}/` })
 await sleep(5000)
 await evalJs(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+
+const landedOn = await evalJs('location.pathname')
 
 const nav = await evalJs(`(() => {
   const bars = document.querySelectorAll('nav[aria-label="Partner sections"]')
@@ -101,6 +111,10 @@ const nav = await evalJs(`(() => {
 
 const EXPECT = ['Jobs', 'Earnings', 'Listing', 'Calendar', 'Account']
 const fails = []
+
+/* Rule 0: the splash hands off to the landing, not to a dead root. */
+if (landedOn !== '/partner/join')
+  fails.push(`opening / landed on ${landedOn}, expected /partner/join`)
 
 if (nav.bars !== 1) fails.push(`expected exactly 1 tab bar on the landing, found ${nav.bars}`)
 else {
@@ -121,7 +135,10 @@ else {
 
 browser.kill(); server.close()
 
-console.log(`\n  Landing, signed out\n`)
+console.log(`
+  Opening / as a signed-out partner, the way the APK does
+`)
+console.log(`  landed on          ${landedOn}`)
 console.log(`  tab bars           ${nav.bars}`)
 if (nav.labels) console.log(`  tabs               ${nav.labels.join(' · ')}`)
 if (nav.hrefs) for (const [i, h] of nav.hrefs.entries()) console.log(`    ${nav.labels[i].padEnd(9)} -> ${h}`)
