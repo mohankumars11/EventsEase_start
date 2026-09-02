@@ -327,6 +327,21 @@ try {
     route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json', wait: 3000,
     note: 'partner menu — no customer items' })
 
+  /* ── The venue panel, on the listing tab ───────────────────────────
+
+     This account lists "Venue booking" among its nine services, so the
+     claim search is what it should see. The gate reads the trade off the
+     service row using TRADE_FOR_SERVICE.venue -- the stored value is
+     'Venue', not 'venue', and the first cut compared against the
+     lowercase string, which would have matched nothing for every venue
+     partner, silently, forever.
+
+     The OSM attribution line is visible in this shot, which is the ODbL
+     condition for storing and showing that data at all. */
+  await shot('17c-venue-panel', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json', wait: 3500,
+    note: 'listing tab -- claim your venue, with OSM attribution' })
+
   /* ── A tab tapped before there is an account ───────────────────────
 
      The bar is on the landing now, which is only an improvement if the

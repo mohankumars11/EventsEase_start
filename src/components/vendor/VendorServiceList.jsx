@@ -7,11 +7,15 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddFromCatalogue from './AddFromCatalogue'
+import VenueManager from './VenueManager'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
    A hand-typed copy goes stale the first time a trade is added. */
 const DISPATCH_TRADES = [...new Set(Object.values(TRADE_FOR_SERVICE))].sort()
+
+/* The trade a venue partner's service row carries. */
+const VENUE_TRADE = TRADE_FOR_SERVICE.venue
 
 /**
  * The vendor's price list.
@@ -130,6 +134,24 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           </button>
         )}
       </header>
+
+      {/* ── The venue, for the partners who are one ──────────────────
+          For a decorator "your listing" is a price list. For a venue
+          manager it is the building, its halls and its calendar — the
+          same question asked of a different kind of business, not a
+          separate feature, which is why it lives here rather than
+          claiming a sixth seat on a tab bar that is full at five.
+
+          Rendered above the price list because a venue's calendar is the
+          thing that earns; its per-plate extras are the footnote. */}
+      <VenueManager
+        vendorId={vendor?.id}
+        /* Read from the same map dispatch uses, not typed. The trade
+           stored on a service row is 'Venue', not 'venue', and a
+           hardcoded lowercase string here would have matched nothing --
+           silently, for every venue partner, forever. */
+        canClaim={services.some(s => s.category === VENUE_TRADE)}
+      />
 
       {picking && (
         <AddFromCatalogue

@@ -8,6 +8,7 @@ import MatchingBoard from '../../components/book/MatchingBoard'
 import WhereStep, { whereIsReady } from '../../components/book/WhereStep'
 import { priceLine } from '../../lib/instantPricing'
 import ServiceOptions from '../../components/book/ServiceOptions'
+import VenuePicker from '../../components/book/VenuePicker'
 import { optionsFor, defaultOptions, optionMultiplier, optionSummary, setupChoice } from '../../data/instantOptions'
 import { offersFor, applyOffer } from '../../config/offers'
 import OfferCard from '../../components/offers/OfferCard'
@@ -217,6 +218,9 @@ export default function InstantBooking() {
    * before anybody answers anything and skipping the questions costs
    * the base rate rather than nothing. */
   const [options, setOptions] = useState(() => readDraft()?.options ?? {})
+  /* The chosen hall. Sent with the request so dispatch can anchor to it;
+     null is the normal case and means "measure from the customer". */
+  const [venueSpaceId, setVenueSpaceId] = useState(() => readDraft()?.venueSpaceId ?? null)
   const [offerId, setOfferId] = useState(null)
   /* The offer to CELEBRATE, and the set already seen.
    *
@@ -239,12 +243,12 @@ export default function InstantBooking() {
     try {
       localStorage.setItem(DRAFT, JSON.stringify({
         at: Date.now(),
-        step, guests, picked, durations, options, notes, where,
+        step, guests, picked, durations, options, notes, where, venueSpaceId,
         date: date ? date.toISOString() : null,
         occasionId,
       }))
     } catch { /* storage off */ }
-  }, [step, guests, picked, durations, options, notes, where, date, occasionId])
+  }, [step, guests, picked, durations, options, notes, where, venueSpaceId, date, occasionId])
   const [requestId, setRequestId] = useState(() => {
     if (resumeId) return resumeId
     // Picked up from the last visit. Cleared as soon as the board says
@@ -435,6 +439,12 @@ export default function InstantBooking() {
           eventDate: date.toISOString().slice(0, 10),
           guestCount: guests,
           radiusKm: DEFAULT_RADIUS_KM,
+          /* The exact hall, when one was picked from the list.
+             lib/eventLocation below already resolves WHERE the work
+             happens; this names WHICH listed space it is, so the venue's
+             own calendar can be held and dispatch can anchor to its real
+             coordinates rather than to an area centroid. */
+          venueSpaceId,
           // The VENUE's point, never the customer's.
           //
           // This is the line the whole location rework exists for. It
@@ -819,6 +829,42 @@ export default function InstantBooking() {
           ))}
         </div>
       ),
+      ready: true,
+    }] : []),
+
+    /* ── 3b · Which hall ─────────────────────────────────────────
+       Only when a venue is in the basket, and it is a step of its own
+       because it obeys different rules from everything above it.
+
+       Every other service on this screen is matched inside a radius from
+       where the customer is. A venue is the one thing people
+       deliberately travel across the city for -- somebody in Indiranagar
+       books a hall in Yelahanka for a wedding without thinking about it
+       -- so `venues_available()` takes no radius at all and this step
+       offers no distance control.
+
+       Picking one also moves the ANCHOR: `venue_space_id` on the request
+       makes dispatch measure every other master's distance from the hall
+       rather than from the customer's home. Without that, a decorator is
+       offered a job described as nearby that is 20 km from where they
+       would actually set up. */
+    ...(picked.includes('venue') ? [{
+      frame: {
+        overline: 'Your booking',
+        question: 'Which hall?',
+        why: 'Anywhere in Bengaluru. Green means it is free on your date.',
+      },
+      body: (
+        <VenuePicker
+          date={date}
+          guests={guests}
+          value={venueSpaceId}
+          onPick={(id) => setVenueSpaceId(id)}
+        />
+      ),
+      /* Not gated. A customer who cannot find a hall they like should be
+         able to carry on and let a coordinator source one, rather than
+         being trapped on a step by our own thin supply. */
       ready: true,
     }] : []),
 

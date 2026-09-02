@@ -117,7 +117,7 @@ export default async function handler(req, res) {
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
 
   const {
-    customerId, occasionId, occasionName, eventDate, guestCount = 40,
+    customerId, occasionId, occasionName, eventDate, guestCount = 40, venueSpaceId = null,
     radiusKm = 5, lat, lng, addressText, areaLabel, city = 'Bengaluru',
     notes = null, lines = [],
   } = req.body ?? {}
@@ -211,6 +211,24 @@ export default async function handler(req, res) {
 
   const request = { id: created.request_id }
 
+  /* The chosen hall, when the customer picked one from the live list.
+   *
+   * Written after creation rather than threaded through
+   * `create_booking_request`: that RPC is called from more than one place
+   * and changing its signature to carry an optional column would make
+   * every caller learn about venues. A separate UPDATE is one statement
+   * and it happens before dispatch, which is all that matters --
+   * `dispatch_origin` reads this column to decide where to search from.
+   *
+   * A failure here is logged, not fatal. The booking is real and paid for
+   * either way; what is lost is the anchor, and falling back to the
+   * customer's own point is exactly what happened before this existed. */
+  if (venueSpaceId) {
+    const { error: anchorErr } = await db.from('booking_requests')
+      .update({ venue_space_id: venueSpaceId }).eq('id', request.id)
+    if (anchorErr) console.error(`venue anchor: ${anchorErr.message}`)
+  }
+
   // ── The lines ─────────────────────────────────────────────────────
   const lineRows = priced.map(({ input, quote, trade }) => ({
     request_id: request.id,
@@ -239,7 +257,32 @@ export default async function handler(req, res) {
   const radiusM = Math.round(Math.min(radiusKm * wave.radiusMultiplier, MAX_RADIUS_KM) * 1000)
   const expiresAt = new Date(Date.now() + OFFER_WINDOW_SECONDS * 1000).toISOString()
 
-  const { data: point } = await db.rpc('point_of', { p_lat: lat, p_lng: lng })
+  /**
+   * Where to search from.
+   *
+   * ══════════════════════════════════════════════════════════════════
+   * THE VENUE, IF THERE IS ONE — NOT THE CUSTOMER'S HOUSE
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * `dispatch_origin` (095) returns the chosen hall's coordinates when
+   * the request has one, and falls back to the request's own location
+   * when it does not. A party at home is unaffected.
+   *
+   * Before this, a customer in Indiranagar holding their function at a
+   * resort in Yelahanka got decorators matched to INDIRANAGAR. Every one
+   * of them was offered a job described as nearby that was 20 km from
+   * where they would actually have to set up — which ends as a no-show,
+   * or as an acceptance somebody regrets and cancels, and the
+   * cancellation ladder charges them for it.
+   *
+   * A NULL comes back only if the request has no location at all, which
+   * cannot happen — `create_booking_request` writes it with the row. The
+   * fallback is kept anyway because dispatching to the centre of the
+   * Earth is the one failure mode worse than not dispatching.
+   */
+  const { data: anchored } = await db.rpc('dispatch_origin', { p_request_id: request.id })
+  const { data: fallback } = await db.rpc('point_of', { p_lat: lat, p_lng: lng })
+  const point = anchored ?? fallback
 
   /**
    * The whole wave, in one call.
