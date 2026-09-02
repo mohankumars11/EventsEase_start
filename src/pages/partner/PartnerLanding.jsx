@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin } from 'lucide-react'
+import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import PartnerFigure from '../../components/vendor/PartnerFigure'
 import { PARTNER_PLANS, LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
@@ -53,11 +55,30 @@ const POINTS = [
 ]
 
 export default function PartnerLanding() {
-  const { user, profile } = useAuth()
+  const { user, profile, signInWithGoogle } = useAuth()
   const signedInAsPartner = !!user && profile?.role === 'vendor'
 
+  const [googleBusy, setGoogleBusy] = useState(false)
+  const [googleError, setGoogleError] = useState(null)
+
+  async function handleGoogle() {
+    setGoogleBusy(true)
+    setGoogleError(null)
+    try {
+      await signInWithGoogle()
+      /* On the web the line above navigates away, so nothing after it
+         runs. On native it returns as soon as the Custom Tab is open and
+         the session arrives later through the deep link, which is why the
+         spinner is cleared here rather than left spinning forever. */
+    } catch (err) {
+      setGoogleError(err?.message ?? 'Google sign-in failed. Try email instead.')
+    } finally {
+      setGoogleBusy(false)
+    }
+  }
+
   return (
-    <div className="a-canvas min-h-screen pb-16">
+    <div className="a-canvas min-h-screen pb-28">
       {/* ══════════════════════════════════════════════════════════════
           THE SAME NAVY BAR THE APP WEARS
           ══════════════════════════════════════════════════════════════
@@ -174,11 +195,41 @@ export default function PartnerLanding() {
               </span>
               <ArrowRight size={18} />
             </Link>
+            {/* ══════════════════════════════════════════════════════════
+                GOOGLE, ON THE FIRST SCREEN
+                ══════════════════════════════════════════════════════════
+
+                It was two taps away: reach the landing, tap Sign in, and
+                only then find "Continue with Google". Every app this one
+                is judged against puts it on the door, because for most
+                people it IS the fastest way in: no email to type, no code
+                to wait for, no password to invent. Asking a decorator on
+                a building site to switch to their inbox for a six digit
+                code is where a sign-up is lost.
+
+                Same handler as the login page, and in the APK it now
+                opens a Custom Tab rather than being hidden. See
+                lib/googleAuth.js. */}
+            <GoogleSignInButton
+              onClick={handleGoogle}
+              loading={googleBusy}
+              fullWidth
+              label="Continue with Google"
+            />
+
+            {googleError && (
+              <p className="text-center text-[12px] font-semibold text-rose-700">
+                {googleError}
+              </p>
+            )}
+
+            {/* Sign in stays, quietly, for somebody who already has an
+                account and did not use Google to make it. */}
             <Link
               to="/login"
               className="flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-[13.5px] font-extrabold text-ink-mute ring-1 ring-ink/[0.08] transition active:scale-[0.99]"
             >
-              Sign in
+              Sign in with email
             </Link>
           </div>
         )}

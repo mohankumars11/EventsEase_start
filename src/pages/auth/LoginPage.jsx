@@ -4,7 +4,6 @@ import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-re
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
-import { isNativeApp } from '../../lib/nativePush'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { isPartnerSurface } from '../../config/surface'
 
@@ -52,7 +51,25 @@ export default function LoginPage() {
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  /* Where to go once signed in.
+   *
+   * Router state is how a redirected route asks for this, and it works
+   * until the page is reloaded or arrived at cold, when state is gone and
+   * a partner lands on the dashboard root instead of the tab they tapped.
+   * `?next=` survives both, and is what the partner tab bar sends when a
+   * signed out tap needs an account first.
+   *
+   * Same-origin paths only. An open redirect on a login page is how a
+   * phishing link gets to wear your domain: sign in on the real site,
+   * get bounced somewhere else entirely, with the trust already spent. */
+  const rawNext = new URLSearchParams(location.search).get('next')
+  const safeNext = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+    ? rawNext
+    : null
   const from = location.state?.from
+    ?? (safeNext
+      ? { pathname: safeNext.split('?')[0], search: safeNext.includes('?') ? `?${safeNext.split('?')[1]}` : '' }
+      : null)
 
   const [step, setStep]               = useState('email')   // email | sent | otp
   const [email, setEmail]             = useState('')
@@ -298,17 +315,13 @@ export default function LoginPage() {
               {/* The divider belongs to the Google button, so it goes
                   with it. A rule saying "or" above nothing is a screen
                   that looks broken. */}
-              {!isNativeApp() && (
-                <div className="flex items-center gap-3 my-6">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
-                  <div className="flex-1 h-px bg-gray-100" />
-                </div>
-              )}
+              <div className="flex items-center gap-3 my-6">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
 
-              {!isNativeApp() && (
-                <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
-              )}
+              <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 New to Sambramo?{' '}

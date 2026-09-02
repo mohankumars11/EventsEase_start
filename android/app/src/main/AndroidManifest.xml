@@ -50,6 +50,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!--
+                Google sign in comes home through here.
+
+                Google refuses OAuth from an embedded WebView, so the app
+                hands the sign in to a Custom Tab (a real Chrome) and
+                Google redirects back to com.sambramo.partner://auth or
+                com.sambramo.app://auth. This filter is what makes Android
+                reopen the app on that URL instead of offering a browser.
+
+                The scheme is ${applicationId} because the two flavours
+                have two different ids, and each app must claim only its
+                own. Both URLs also have to be listed under Supabase,
+                Authentication, URL Configuration, Redirect URLs.
+
+                launchMode is singleTask above, which is what makes
+                appUrlOpen fire on the running activity rather than
+                starting a second copy of the app.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${applicationId}" android:host="auth" />
+            </intent-filter>
+
         </activity>
 
         <provider

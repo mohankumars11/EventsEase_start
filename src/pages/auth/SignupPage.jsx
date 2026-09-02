@@ -4,7 +4,6 @@ import { AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Mail } from 'lucide-re
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
-import { isNativeApp } from '../../lib/nativePush'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { isPartnerSurface } from '../../config/surface'
 
@@ -354,9 +353,7 @@ export default function SignupPage() {
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
 
-              {!isNativeApp() && (
-                <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
-              )}
+              <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
 
               {error && <ErrorBox message={error} className="mt-4" />}
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { startGoogleSignIn } from '../lib/googleAuth'
 import { clearJourney } from '../lib/journey'
 
 const AuthContext = createContext(null)
@@ -291,15 +292,13 @@ export function AuthProvider({ children }) {
   }
 
   // ── Google OAuth ──────────────────────────────────────
+  /* Two very different flows behind one call. On the web this is the
+     ordinary redirect it always was; in the APK it is a Custom Tab and a
+     deep link, because Google will not sign anybody in from inside a
+     WebView. See lib/googleAuth.js — that is where the reasoning lives,
+     and why the button used to be hidden on native rather than broken. */
   async function signInWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo:  `${window.location.origin}/dashboard`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
-    if (error) throw error
+    await startGoogleSignIn()
   }
 
   // ── Sign out ──────────────────────────────────────────

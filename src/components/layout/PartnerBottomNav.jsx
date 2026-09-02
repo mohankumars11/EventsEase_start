@@ -66,30 +66,48 @@ export default function PartnerBottomNav() {
   const { profile } = useAuth()
 
   /* ══════════════════════════════════════════════════════════════════
-     ONE BAR, AND ONLY WHERE IT NAVIGATES
+     ONE BAR, AND IT IS THERE BEFORE YOU SIGN IN
      ══════════════════════════════════════════════════════════════════
 
-     There were briefly two: a browse bar on the landing and this one
-     after signing in. Two bars in one app is two mental models — the
-     thing at the bottom of the screen changed meaning depending on
-     whether you had an account, which is the opposite of what a fixed
-     bar is for.
+     There were briefly two bars: a browse bar on the landing with its own
+     four tabs, and this one after signing in. That is two mental models —
+     the thing at the bottom of the screen changed meaning depending on
+     whether you had an account.
 
-     So there is one, it has the five destinations a partner works from,
-     and the landing has none. What the landing used to put in tabs —
-     how it works, what it costs — now lives under Account, where
-     somebody looks for it once rather than being asked to browse it
-     before they have signed up. */
+     The fix for that was to delete the second bar, and it went one step
+     too far: the landing ended up with NO bar, so the app only looked
+     like an app once you were signed in. Reported exactly that way: "there
+     is no navigation bar on the very first page itself, customer needs to
+     log in to see the navigation bar."
+
+     So it is the SAME five tabs, in the same order, in the same place,
+     signed in or not. What changes is only where they lead: signed out,
+     every tab except Jobs goes to sign-in and comes back to the tab that
+     was tapped. Nothing is hidden and nothing is renamed, because the bar
+     is also how somebody learns what the app contains before they have
+     committed to it. Zomato and Rapido both show you the whole app and
+     ask for an account at the point you need one. */
   if (!isPartnerSurface()) return null
-  if (!pathname.startsWith('/dashboard/vendor')) return null
-  if (!profile) return null
+
+  const onLanding   = pathname.startsWith('/partner')
+  const onDashboard = pathname.startsWith('/dashboard/vendor')
+  if (!onLanding && !onDashboard) return null
+
+  /* Signed out anywhere but the landing means mid sign-up, and a one-way
+     flow does not want five ways out of it. */
+  const signedOut = !profile
+  if (signedOut && !onLanding) return null
 
   const items = TABS.map(t => ({
     ...t,
-    to: t.id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${t.id}`,
+    to: signedOut
+      /* `next` so the tap is not lost: sign in, land on what you tapped. */
+      ? (t.id === 'offers' ? '/partner/join' : `/login?next=${encodeURIComponent(`/dashboard/vendor?tab=${t.id}`)}`)
+      : (t.id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${t.id}`),
   }))
 
-  const active = params.get('tab') ?? 'offers'
+  /* On the landing, Jobs is where you are. */
+  const active = signedOut ? 'offers' : (params.get('tab') ?? 'offers')
 
   return (
     <nav

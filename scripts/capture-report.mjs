@@ -327,6 +327,27 @@ try {
     route: '/dashboard/vendor?tab=account', session: '.demo-partner-session.json', wait: 3000,
     note: 'partner menu — no customer items' })
 
+  /* ── A tab tapped before there is an account ───────────────────────
+
+     The bar is on the landing now, which is only an improvement if the
+     tabs LEAD somewhere. A bar whose buttons do nothing is worse than no
+     bar: it is an app that looks broken rather than an app that looks
+     locked.
+
+     So this taps Earnings while signed out and photographs where it
+     lands. It should be sign-in, wearing the partner lockup, with the
+     tapped destination carried in ?next= so the tap is not lost. */
+  await shot('04b-signed-out-tab', {
+    route: '/partner/join',
+    steps: [`(() => {
+      const a = [...document.querySelectorAll('nav a')]
+        .find(x => x.textContent.includes('Earnings'))
+      if (!a) return 'NO EARNINGS TAB'
+      a.click()
+      return a.getAttribute('href')
+    })()`],
+    wait: 2500, note: 'tapping Earnings signed out -> sign in, tap remembered' })
+
   /* ── The handbook, opened ──────────────────────────────────────────
 
      "How it works" and "What it costs" used to be two tabs on a second

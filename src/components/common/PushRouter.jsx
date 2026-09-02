@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { onNativePushAction } from '../../lib/nativePush'
+import { registerReturnListener } from '../../lib/googleAuth'
 
 /**
  * Take the master to the job they just tapped.
@@ -47,6 +48,20 @@ import { onNativePushAction } from '../../lib/nativePush'
  */
 export default function PushRouter() {
   const navigate = useNavigate()
+
+  /* Google sign-in comes home through a deep link, and it has to be
+     listened for from boot rather than from the moment somebody taps the
+     button.
+
+     Android may kill a backgrounded app while a Custom Tab is in front of
+     it. When Google then redirects, the app is relaunched cold and
+     `appUrlOpen` fires during startup — before any button handler has run.
+     A listener registered only by the button would miss it, and the
+     partner would come back to a signed-out app with no idea why.
+
+     Cheap to do here: the module no-ops on the web, and this component
+     already mounts exactly once for the same reason. */
+  useEffect(() => { registerReturnListener() }, [])
 
   useEffect(() => {
     let stop = () => {}
