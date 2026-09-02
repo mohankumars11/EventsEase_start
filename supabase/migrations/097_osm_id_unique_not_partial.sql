@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════════
--- 096 · The seed could not write a single row
+-- 097 · The seed could not write a single row
 -- ══════════════════════════════════════════════════════════════════════
 --
 -- APPLY BY HAND in Supabase → SQL Editor. Apply 094 first.

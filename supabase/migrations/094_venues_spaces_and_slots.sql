@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.venues (
 
 -- Re-running the OSM seed must not duplicate Bengaluru.
 --
--- NOT partial, and 096 exists because the first cut was. ON CONFLICT
+-- NOT partial, and 097 exists because the first cut was. ON CONFLICT
 -- cannot infer a partial index from a bare column list, so the seeder
 -- could not write a single row. The predicate was also unnecessary:
 -- NULL is not equal to NULL, so a plain UNIQUE already permits any

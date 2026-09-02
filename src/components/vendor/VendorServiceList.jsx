@@ -8,6 +8,7 @@ import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddFromCatalogue from './AddFromCatalogue'
 import VenueManager from './VenueManager'
+import ServiceSpecs from './ServiceSpecs'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
@@ -267,6 +268,25 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                       <Clock size={11} />
                       {s.lead_time_days === 0 ? 'Same-day possible' : `${s.lead_time_days} day${s.lead_time_days === 1 ? '' : 's'} notice`}
                     </p>
+                  )}
+
+                  {/* ── What they actually do ──────────────────────────
+                      Keyed by TRADE, so a caterer answers their cuisines
+                      once rather than once per row. Folded shut, because
+                      a caterer has four groups and thirty-odd boxes and
+                      this screen is opened to check a price, not to fill
+                      in a profile. */}
+                  {/* `'specs' in s` is the migration check. The hook
+                      selects '*', so the key is present exactly when 098
+                      has been applied -- and offering a Save that writes
+                      a column the database does not have would fail on
+                      the one tap that matters. Same convention as 096. */}
+                  {'specs' in s && (
+                    <ServiceSpecs
+                      trade={s.category}
+                      value={s.specs}
+                      onSave={next => onUpdate(s.id, { specs: next })}
+                    />
                   )}
                 </div>
 
