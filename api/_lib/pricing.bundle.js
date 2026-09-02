@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 10e496dfc89b0583
+// inputs: c058a1a6e12a0cae
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -241,6 +241,21 @@ var SERVICE_GROUPS = [
         base: 8e3,
         scales: true,
         desc: "Bridal and guest mehendi"
+      },
+      /* Dispatchable since 2025 and unpriceable until now.
+         `mandap` had a trade and no rate card anywhere, so priceLine
+         returned null and api/dispatch-booking answered "cannot price
+         mandap" with a 400. Anybody who picked it lost their whole
+         booking, not just the line. Found by pricing all 62 services at
+         three headcounts, which is now scripts/check-every-price.mjs. */
+      {
+        id: "mandap",
+        name: "Mandap setup",
+        emoji: "\u{1F6D5}",
+        unit: "fixed",
+        base: 22e3,
+        scales: true,
+        desc: "Pillars, canopy, floral work and the seating for the rite"
       }
     ]
   },
@@ -405,6 +420,253 @@ var SERVICE_GROUPS = [
         base: 8e3,
         scales: false,
         desc: "Candle pathway, floating flowers, fairy lights"
+      }
+    ]
+  },
+  ,
+  /* ══════════════════════════════════════════════════════════════════
+       THE THINGS A FUNCTION NEEDS THAT NOBODY PUTS ON A WISH LIST
+       ══════════════════════════════════════════════════════════════════
+  
+       Power, washrooms, a first-aid post, ushers who know where the
+       bathroom is. Nobody opens a planning app looking for a generator,
+       and every outdoor function in Bengaluru needs one.
+  
+       They were in the catalogue with no price and no trade, which meant a
+       coordinator could talk about them and nobody could be dispatched to
+       supply them. Rates are Bengaluru day-hire, mid-2026.
+    */
+  {
+    id: "groundwork",
+    label: "Making the place work",
+    hint: "The parts guests only notice when they are missing",
+    surface: "bg-gradient-to-br from-cyan-50 via-white to-white",
+    spine: "bg-gradient-to-b from-cyan-400 to-teal-600",
+    tile: "bg-cyan-50 text-cyan-700 ring-cyan-200/70",
+    ink: "text-cyan-700",
+    services: [
+      {
+        id: "power",
+        name: "Power backup / generator",
+        emoji: "\u{1F50C}",
+        unit: "fixed",
+        base: 14e3,
+        scales: true,
+        desc: "Silent diesel generator, delivered and manned for the day"
+      },
+      {
+        id: "cooling",
+        name: "Cooling, fans & heaters",
+        emoji: "\u2744\uFE0F",
+        unit: "fixed",
+        base: 12e3,
+        scales: true,
+        desc: "Portable AC, mist fans or patio heaters for an open venue"
+      },
+      {
+        id: "washrooms",
+        name: "Portable washrooms",
+        emoji: "\u{1F6BB}",
+        unit: "fixed",
+        base: 15e3,
+        scales: true,
+        desc: "Serviced cabins for a lawn or farmhouse with none"
+      },
+      {
+        id: "medical",
+        name: "Medical & first aid",
+        emoji: "\u{1F3E5}",
+        unit: "fixed",
+        base: 9e3,
+        scales: false,
+        desc: "Trained attendant on site; ambulance on standby if needed"
+      },
+      {
+        id: "valet",
+        name: "Valet & parking",
+        emoji: "\u{1F17F}\uFE0F",
+        unit: "fixed",
+        base: 8e3,
+        scales: true,
+        desc: "Uniformed drivers, key tags and traffic marshalling"
+      },
+      {
+        id: "signage",
+        name: "Signage & seating charts",
+        emoji: "\u{1FAA7}",
+        unit: "fixed",
+        base: 4500,
+        scales: true,
+        desc: "Welcome boards, directions, table plans and name cards"
+      },
+      {
+        id: "balloon_arch",
+        name: "Balloon arch",
+        emoji: "\u{1F388}",
+        unit: "fixed",
+        base: 4500,
+        scales: false,
+        desc: "One arch for the entrance or behind the cake table"
+      },
+      /* Three more that were dispatchable with no price. Same failure as
+         `mandap` above: a 400 on the whole booking. */
+      {
+        id: "balloon",
+        name: "Balloon decoration",
+        emoji: "\u{1F388}",
+        unit: "fixed",
+        base: 7e3,
+        scales: true,
+        desc: "Arches, clusters and foil letters across the space"
+      },
+      {
+        id: "lighting",
+        name: "Event lighting",
+        emoji: "\u{1F4A1}",
+        unit: "fixed",
+        base: 11e3,
+        scales: true,
+        desc: "Ambient lights, uplighting and the stage wash"
+      }
+    ]
+  },
+  {
+    id: "people",
+    label: "People who look after your guests",
+    hint: "Hired by the day, briefed by you",
+    surface: "bg-gradient-to-br from-violet-50 via-white to-white",
+    spine: "bg-gradient-to-b from-violet-400 to-purple-600",
+    tile: "bg-violet-50 text-violet-700 ring-violet-200/70",
+    ink: "text-violet-700",
+    services: [
+      {
+        id: "hospitality",
+        name: "Ushers & guest hospitality",
+        emoji: "\u{1F64F}",
+        unit: "per_unit",
+        base: 1200,
+        unitLabel: "person",
+        qtyFor: (g) => Math.max(2, Math.round((g || 0) / 60)),
+        desc: "Welcoming guests, directions, looking after elders"
+      },
+      {
+        id: "nanny",
+        name: "Childcare & nannies",
+        emoji: "\u{1F9F8}",
+        unit: "per_unit",
+        base: 1500,
+        unitLabel: "person",
+        qtyFor: () => 2,
+        desc: "Trained help so parents can attend the function"
+      },
+      {
+        id: "live_counters",
+        name: "Live food counters",
+        emoji: "\u{1F373}",
+        unit: "per_guest",
+        base: 180,
+        desc: "Chaat, dosa, pasta or grill, cooked in front of guests"
+      },
+      /* Priced per guest and NOT per drink. A per-drink rate is
+         unquotable before the day and is the single most common source
+         of an argument about a bar bill afterwards. */
+      {
+        id: "bar",
+        name: "Bar & mocktail counters",
+        emoji: "\u{1F379}",
+        unit: "per_guest",
+        base: 260,
+        desc: "Bartenders, glassware, ice and mixers. Mocktails or licensed bar"
+      },
+      {
+        id: "menu",
+        name: "Customised menu",
+        emoji: "\u{1F4CB}",
+        unit: "per_guest",
+        base: 480,
+        desc: "A menu built around your family\u2019s tastes, with a tasting first"
+      },
+      {
+        id: "welcome_drinks",
+        name: "Welcome drinks",
+        emoji: "\u{1F964}",
+        unit: "per_guest",
+        base: 90,
+        desc: "Something cold in everyone\u2019s hand as they arrive"
+      }
+    ]
+  },
+  {
+    id: "traditions",
+    label: "The traditional parts",
+    hint: "Booked separately, and usually first",
+    surface: "bg-gradient-to-br from-amber-50 via-white to-white",
+    spine: "bg-gradient-to-b from-amber-400 to-orange-600",
+    tile: "bg-amber-50 text-amber-700 ring-amber-200/70",
+    ink: "text-amber-700",
+    services: [
+      {
+        id: "nadaswaram",
+        name: "Nadaswaram / shehnai",
+        emoji: "\u{1F3BA}",
+        unit: "fixed",
+        base: 12e3,
+        scales: false,
+        desc: "Traditional ensemble for the muhurta and the procession"
+      },
+      {
+        id: "bhajan",
+        name: "Bhajan & devotional music",
+        emoji: "\u{1F549}\uFE0F",
+        unit: "fixed",
+        base: 8e3,
+        scales: false,
+        desc: "Singers and accompaniment for a pooja or satsang"
+      },
+      {
+        id: "folk",
+        name: "Folk & cultural troupes",
+        emoji: "\u{1F941}",
+        unit: "fixed",
+        base: 15e3,
+        scales: false,
+        desc: "Dollu Kunitha, Veeragase and other Karnataka folk forms"
+      },
+      {
+        id: "baraat",
+        name: "Baraat & procession",
+        emoji: "\u{1F40E}",
+        unit: "fixed",
+        base: 25e3,
+        scales: false,
+        desc: "Band, lighting, horse or vintage car for the groom\u2019s arrival"
+      },
+      {
+        id: "wedding_car",
+        name: "Wedding & vintage cars",
+        emoji: "\u{1F697}",
+        unit: "fixed",
+        base: 18e3,
+        scales: false,
+        desc: "Decorated car with a driver, for the couple"
+      },
+      {
+        id: "livestream",
+        name: "Live streaming",
+        emoji: "\u{1F4E1}",
+        unit: "fixed",
+        base: 16e3,
+        scales: false,
+        desc: "Multi-camera stream for family who cannot travel"
+      },
+      {
+        id: "drone",
+        name: "Drone & aerial coverage",
+        emoji: "\u{1F681}",
+        unit: "fixed",
+        base: 14e3,
+        scales: false,
+        desc: "Aerial video of the venue, the procession and the crowd"
       }
     ]
   }
@@ -2921,6 +3183,12 @@ var SERVICE_UNITS = [
 ];
 var UNIT_BY_ID = Object.fromEntries(SERVICE_UNITS.map((u) => [u.id, u]));
 var TRADE_FOR_SERVICE = {
+  /* ── Everything below the first block was added in stage 3 ────────
+     Until then 26 services in the catalogue had a price and no trade:
+     quotable, and matchable by nobody. A partner who listed one got a
+     row dispatch could never see, was never offered a job, and was
+     never told why -- the same failure as the "videpgraphy" row, but
+     built deliberately rather than typed by accident. */
   decor: "Decoration & Floral",
   floral: "Decoration & Floral",
   stage: "Decoration & Floral",
@@ -2954,7 +3222,58 @@ var TRADE_FOR_SERVICE = {
   invitations: "Invitation & Printing",
   transport: "Transportation",
   bouncers: "Security Services",
-  venue: "Venue"
+  venue: "Venue",
+  /* ── Stage 3 ─────────────────────────────────────────────────────── */
+  // Catering: a live counter is its own supplier, wheeled in and run by
+  // its own staff, and is routinely booked without the main caterer.
+  live_counters: "Catering & Food",
+  // Same trade as 'catering', which it overlaps. Mapping it here rather
+  // than leaving it unmatchable means the worst case is a customer
+  // booking two catering lines -- never a job sent to somebody who
+  // cannot cook it.
+  menu: "Catering & Food",
+  hospitality: "Guest Services",
+  nanny: "Guest Services",
+  // Drinks. A bar supplier holds a licence and carries stock; a caterer
+  // generally does neither, which is why this is not 'Catering & Food'.
+  bar: "Bar & Beverages",
+  // Performers. 'drum' already covered dhol; nadaswaram and shehnai are a
+  // different tradition with different players, and a wedding that wants
+  // one will not accept the other.
+  folk: "Live Entertainment",
+  nadaswaram: "Live Entertainment",
+  bhajan: "Live Entertainment",
+  baraat: "Live Entertainment",
+  // Media. Both are separately bookable from a photographer: a drone
+  // operator and a streaming crew arrive with their own kit and often
+  // their own licence.
+  livestream: "Videography",
+  drone: "Videography",
+  memory_wall: "Decoration & Floral",
+  // Overlaps 'balloon'; same trade, same reasoning as 'menu' above.
+  balloon_arch: "Decoration & Floral",
+  // Site infrastructure. Hired by the day, delivered on a truck.
+  power: "Power & Cooling",
+  cooling: "Power & Cooling",
+  washrooms: "Safety & Facilities",
+  medical: "Safety & Facilities",
+  // Vehicles and the ground.
+  wedding_car: "Transportation",
+  vehicle_care: "Transportation",
+  valet: "Valet Parking",
+  // Print.
+  signage: "Invitation & Printing",
+  // Ritual. A purohit is not an entertainer and must not be sent an
+  // entertainer's jobs -- the single clearest case for a trade of its own.
+  priest: "Priest & Rituals",
+  pooja: "Priest & Rituals",
+  // Gifts.
+  return_gifts: "Gifts & Favours",
+  gifting: "Gifts & Favours",
+  // Effects and one-off setups.
+  fireworks: "Event Lighting",
+  candle_setup: "Decoration & Floral",
+  inauguration: "Decoration & Floral"
 };
 function tradeFor(serviceId) {
   return TRADE_FOR_SERVICE[serviceId] ?? null;

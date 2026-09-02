@@ -40,6 +40,19 @@ export const VENDOR_CATEGORIES = [
   'Sound & AV',
   'Valet Parking',
   'Security Services',
+  /* ── Added when the catalogue was made fully dispatchable ────────
+     Each one is a genuinely separate business in Bengaluru, not a
+     sub-speciality of a trade already on this list. A bar supplier
+     holds a licence a caterer does not; a generator hire firm owns
+     trucks; a purohit is not an entertainer. Folding any of them into
+     a neighbouring trade would broadcast their jobs to people who
+     cannot do them, which is how partners learn to ignore alerts. */
+  'Bar & Beverages',
+  'Guest Services',
+  'Power & Cooling',
+  'Safety & Facilities',
+  'Priest & Rituals',
+  'Gifts & Favours',
   'Other',
 ]
 
@@ -129,29 +142,60 @@ export const VENDOR_STATUS = {
  *
  * The wording matters more than it looks. The database says BLOCKED; a vendor
  * reading their own calendar thinks "I'm busy that day", not "I am blocked".
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * EVERY STATE CARRIES ITS OWN CONSEQUENCE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `label` is the noun on the legend. `verb` is what the partner is choosing
+ * to DO when they tap it, and `consequence` is what happens to them after
+ * they do — "we will send you jobs", "we will not". A picker built out of
+ * nouns alone ("Open · Partly booked · Busy") asks somebody to translate
+ * three database words into an outcome, and the partner most likely to get
+ * that wrong is the one this app is built for.
+ *
+ * `cell` is the calendar square, `chip` the big button in the day sheet.
  */
 export const AVAILABILITY_STATES = {
   OPEN: {
     label: 'Open',
     short: 'Open',
+    verb:  'Open — send me jobs',
+    consequence: 'You can be booked on this day.',
     // Deliberately quiet. Open is the default for most of the year, and a
     // calendar where 340 days shout is a calendar nobody scans.
     cell:  'bg-white text-gray-700 border-gray-200 hover:border-plum-300',
     dot:   'bg-emerald-500',
+    swatch: 'bg-white ring-1 ring-inset ring-gray-300',
+    chip:  'border-emerald-500 bg-emerald-50 text-emerald-900',
+    chipIcon: 'bg-emerald-600 text-white',
   },
   LIMITED: {
     label: 'Partly booked',
     short: 'Partly',
+    verb:  'Partly booked — a few slots left',
+    consequence: 'You can still be booked, up to the number of jobs you set.',
     cell:  'bg-amber-50 text-amber-800 border-amber-300',
     dot:   'bg-amber-500',
+    swatch: 'bg-amber-300',
+    chip:  'border-amber-500 bg-amber-50 text-amber-900',
+    chipIcon: 'bg-amber-500 text-white',
   },
   BLOCKED: {
     label: 'Busy',
     short: 'Busy',
+    verb:  'Busy — do not send me jobs',
+    consequence: 'You will not be offered anything on this day.',
     cell:  'bg-rose-50 text-rose-700 border-rose-300 line-through decoration-rose-400',
     dot:   'bg-rose-500',
+    swatch: 'bg-rose-400',
+    chip:  'border-rose-500 bg-rose-50 text-rose-900',
+    chipIcon: 'bg-rose-600 text-white',
   },
 }
+
+/** The order the three read in, from most available to least. */
+export const AVAILABILITY_ORDER = ['OPEN', 'LIMITED', 'BLOCKED']
 
 /**
  * Tap order for a calendar cell.
@@ -160,6 +204,13 @@ export const AVAILABILITY_STATES = {
  * opens the calendar to do — they are marking the Saturday they just got
  * booked for a wedding, and making that two taps instead of one is the
  * difference between a calendar that stays current and one that doesn't.
+ *
+ * KEPT, BUT NO LONGER WIRED TO THE GRID. Tapping a square now opens a picker
+ * that names all three states and says what each one costs, because a cycle
+ * is only discoverable to somebody who already knows it is a cycle — and
+ * "partly booked" was unreachable in practice: nobody taps a Saturday twice
+ * to find out what happens. This stays for any surface that wants a one-tap
+ * toggle in a tight space.
  */
 export const AVAILABILITY_CYCLE = ['OPEN', 'BLOCKED', 'LIMITED']
 
@@ -168,15 +219,32 @@ export function nextAvailabilityState(current) {
   return AVAILABILITY_CYCLE[(i + 1) % AVAILABILITY_CYCLE.length]
 }
 
+/**
+ * How far ahead a partner is asked to answer for.
+ *
+ * Six months, because that is how far ahead this market books the events that
+ * pay best: a wedding date is fixed at the engagement and the muhurtham is
+ * often set a season in advance, so the Saturday somebody is enquiring about
+ * today is routinely in February. A calendar that only knows about the next
+ * four weeks is silent on exactly the bookings worth the most.
+ */
+export const CALENDAR_HORIZON_MONTHS = 6
+
 /** 0 = Sunday, matching JS getDay() and vendors.weekly_days_off. */
 export const WEEKDAYS = [
-  { id: 0, short: 'S', label: 'Sunday'    },
-  { id: 1, short: 'M', label: 'Monday'    },
-  { id: 2, short: 'T', label: 'Tuesday'   },
-  { id: 3, short: 'W', label: 'Wednesday' },
-  { id: 4, short: 'T', label: 'Thursday'  },
-  { id: 5, short: 'F', label: 'Friday'    },
-  { id: 6, short: 'S', label: 'Saturday'  },
+  { id: 0, short: 'S', label: 'Sunday',    abbr: 'Sun' },
+  { id: 1, short: 'M', label: 'Monday',    abbr: 'Mon' },
+  { id: 2, short: 'T', label: 'Tuesday',   abbr: 'Tue' },
+  { id: 3, short: 'W', label: 'Wednesday', abbr: 'Wed' },
+  { id: 4, short: 'T', label: 'Thursday',  abbr: 'Thu' },
+  { id: 5, short: 'F', label: 'Friday',    abbr: 'Fri' },
+  { id: 6, short: 'S', label: 'Saturday',  abbr: 'Sat' },
+]
+
+/** Month names, long and short. One list, so the two can never drift. */
+export const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
 /**
@@ -237,6 +305,12 @@ export function toDateKey(date) {
    broadcast to a trade somebody guessed at.
 */
 export const TRADE_FOR_SERVICE = {
+  /* ── Everything below the first block was added in stage 3 ────────
+     Until then 26 services in the catalogue had a price and no trade:
+     quotable, and matchable by nobody. A partner who listed one got a
+     row dispatch could never see, was never offered a job, and was
+     never told why -- the same failure as the "videpgraphy" row, but
+     built deliberately rather than typed by accident. */
   decor:          'Decoration & Floral',
   floral:         'Decoration & Floral',
   stage:          'Decoration & Floral',
@@ -279,6 +353,67 @@ export const TRADE_FOR_SERVICE = {
   transport:      'Transportation',
   bouncers:       'Security Services',
   venue:          'Venue',
+  /* ── Stage 3 ─────────────────────────────────────────────────────── */
+
+  // Catering: a live counter is its own supplier, wheeled in and run by
+  // its own staff, and is routinely booked without the main caterer.
+  live_counters:  'Catering & Food',
+  // Same trade as 'catering', which it overlaps. Mapping it here rather
+  // than leaving it unmatchable means the worst case is a customer
+  // booking two catering lines -- never a job sent to somebody who
+  // cannot cook it.
+  menu:           'Catering & Food',
+  hospitality:    'Guest Services',
+  nanny:          'Guest Services',
+
+  // Drinks. A bar supplier holds a licence and carries stock; a caterer
+  // generally does neither, which is why this is not 'Catering & Food'.
+  bar:            'Bar & Beverages',
+
+  // Performers. 'drum' already covered dhol; nadaswaram and shehnai are a
+  // different tradition with different players, and a wedding that wants
+  // one will not accept the other.
+  folk:           'Live Entertainment',
+  nadaswaram:     'Live Entertainment',
+  bhajan:         'Live Entertainment',
+  baraat:         'Live Entertainment',
+
+  // Media. Both are separately bookable from a photographer: a drone
+  // operator and a streaming crew arrive with their own kit and often
+  // their own licence.
+  livestream:     'Videography',
+  drone:          'Videography',
+  memory_wall:    'Decoration & Floral',
+  // Overlaps 'balloon'; same trade, same reasoning as 'menu' above.
+  balloon_arch:   'Decoration & Floral',
+
+  // Site infrastructure. Hired by the day, delivered on a truck.
+  power:          'Power & Cooling',
+  cooling:        'Power & Cooling',
+  washrooms:      'Safety & Facilities',
+  medical:        'Safety & Facilities',
+
+  // Vehicles and the ground.
+  wedding_car:    'Transportation',
+  vehicle_care:   'Transportation',
+  valet:          'Valet Parking',
+
+  // Print.
+  signage:        'Invitation & Printing',
+
+  // Ritual. A purohit is not an entertainer and must not be sent an
+  // entertainer's jobs -- the single clearest case for a trade of its own.
+  priest:         'Priest & Rituals',
+  pooja:          'Priest & Rituals',
+
+  // Gifts.
+  return_gifts:   'Gifts & Favours',
+  gifting:        'Gifts & Favours',
+
+  // Effects and one-off setups.
+  fireworks:      'Event Lighting',
+  candle_setup:   'Decoration & Floral',
+  inauguration:   'Decoration & Floral',
 }
 
 /** Dispatchable if we know which trade to ask. Nothing else qualifies. */

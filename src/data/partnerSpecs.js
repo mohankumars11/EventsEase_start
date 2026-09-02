@@ -547,6 +547,220 @@ export const SPECS_BY_TRADE = {
       ],
     },
   ],
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE TRADES ADDED WHEN THE CATALOGUE BECAME FULLY DISPATCHABLE
+     ══════════════════════════════════════════════════════════════════
+
+     Seven trades arrived at once, and a trade with no questions is a
+     partner we know nothing about beyond their pincode — which is the
+     state this whole file exists to end. So they get their questions in
+     the same change that creates them, rather than in a follow-up
+     nobody schedules. */
+
+  /* ── Bar & Beverages ─────────────────────────────────────────────
+     Licensing is the first question and the one that disqualifies. A
+     mocktail counter and a licensed bar are different bookings, and
+     sending a dry supplier a cocktail reception wastes both parties. */
+  'Bar & Beverages': [
+    {
+      id: 'licence',
+      question: 'What can you serve?',
+      type: 'one',
+      choices: [
+        { id: 'mocktails', label: 'Mocktails and soft drinks only' },
+        { id: 'byob',      label: 'We serve what the customer supplies', scan: 'They buy the alcohol' },
+        { id: 'licensed',  label: 'Licensed bar', scan: 'We supply and serve' },
+      ],
+    },
+    {
+      id: 'setup',
+      question: 'What do you bring?',
+      type: 'multi',
+      choices: [
+        { id: 'counter',   label: 'Mobile bar counter' },
+        { id: 'glassware', label: 'Glassware' },
+        { id: 'ice',       label: 'Ice and chillers' },
+        { id: 'flair',     label: 'Flair bartending', scan: 'Performance mixing' },
+      ],
+    },
+  ],
+
+  /* ── Guest Services ──────────────────────────────────────────────── */
+  'Guest Services': [
+    {
+      id: 'roles',
+      question: 'What staff can you supply?',
+      type: 'multi',
+      choices: [
+        { id: 'ushers',  label: 'Ushers and welcome hostesses' },
+        { id: 'elders',  label: 'Help for elderly guests' },
+        { id: 'nannies', label: 'Trained nannies' },
+        { id: 'servers', label: 'Table and buffet servers' },
+        { id: 'cleanup', label: 'Post-event clearing' },
+      ],
+    },
+    {
+      id: 'languages',
+      question: 'Which languages does your team speak?',
+      type: 'multi',
+      choices: [
+        { id: 'kannada', label: 'Kannada' },
+        { id: 'english', label: 'English' },
+        { id: 'hindi',   label: 'Hindi' },
+        { id: 'tamil',   label: 'Tamil' },
+        { id: 'telugu',  label: 'Telugu' },
+      ],
+    },
+  ],
+
+  /* ── Power & Cooling ─────────────────────────────────────────────
+     Capacity, because a generator too small for the load is the same as
+     no generator and it is discovered at the worst possible moment. */
+  'Power & Cooling': [
+    {
+      id: 'generators',
+      question: 'What generators do you have?',
+      type: 'multi',
+      choices: [
+        { id: '30kva',  label: 'Up to 30 kVA', scan: 'Small function' },
+        { id: '62kva',  label: '62 kVA' },
+        { id: '125kva', label: '125 kVA or more', scan: 'Full production' },
+        { id: 'silent', label: 'Silent canopy', scan: 'Quiet enough beside a mandap' },
+      ],
+    },
+    {
+      id: 'cooling',
+      question: 'What cooling or heating?',
+      type: 'multi',
+      choices: [
+        { id: 'ac',       label: 'Portable AC units' },
+        { id: 'mist',     label: 'Mist fans' },
+        { id: 'pedestal', label: 'Pedestal fans' },
+        { id: 'heaters',  label: 'Patio heaters' },
+      ],
+    },
+  ],
+
+  /* ── Safety & Facilities ─────────────────────────────────────────── */
+  'Safety & Facilities': [
+    {
+      id: 'offer',
+      question: 'What do you provide?',
+      type: 'multi',
+      choices: [
+        { id: 'washrooms', label: 'Portable washrooms' },
+        { id: 'vip_loo',   label: 'AC restroom trailer' },
+        { id: 'first_aid', label: 'First-aid attendant' },
+        { id: 'ambulance', label: 'Ambulance on standby' },
+        { id: 'fire',      label: 'Fire extinguishers' },
+      ],
+    },
+    {
+      id: 'medical_grade',
+      question: 'If you supply medical cover, what level?',
+      type: 'one',
+      choices: [
+        { id: 'none', label: 'We do not do medical' },
+        { id: 'bls',  label: 'Basic life support' },
+        { id: 'als',  label: 'Advanced cardiac support' },
+      ],
+    },
+  ],
+
+  /* ── Priest & Rituals ────────────────────────────────────────────
+     Language and tradition are not preferences here. A family looking
+     for a Kannada purohit will not accept a North Indian pandit, and
+     sending one is worse than sending nobody. */
+  'Priest & Rituals': [
+    {
+      id: 'tradition',
+      question: 'Which tradition do you perform?',
+      type: 'multi',
+      choices: [
+        { id: 'kannada',  label: 'Kannada / Karnataka' },
+        { id: 'tamil',    label: 'Tamil / Iyer' },
+        { id: 'telugu',   label: 'Telugu' },
+        { id: 'north',    label: 'North Indian' },
+        { id: 'madhwa',   label: 'Madhwa' },
+        { id: 'lingayat', label: 'Lingayat' },
+      ],
+    },
+    {
+      id: 'ceremonies',
+      question: 'What do you conduct?',
+      type: 'multi',
+      choices: [
+        { id: 'wedding',       label: 'Weddings' },
+        { id: 'griha',         label: 'Griha pravesha' },
+        { id: 'naming',        label: 'Naming and cradle' },
+        { id: 'satyanarayana', label: 'Satyanarayana pooja' },
+        { id: 'shraddha',      label: 'Shraddha and last rites' },
+      ],
+    },
+    {
+      id: 'samagri',
+      question: 'Do you bring the samagri?',
+      type: 'one',
+      choices: [
+        { id: 'yes',    label: 'Yes, everything' },
+        { id: 'list',   label: 'We send a list, the family buys it' },
+        { id: 'either', label: 'Either way' },
+      ],
+    },
+  ],
+
+  /* ── Gifts & Favours ─────────────────────────────────────────────── */
+  'Gifts & Favours': [
+    {
+      id: 'kinds',
+      question: 'What do you supply?',
+      type: 'multi',
+      choices: [
+        { id: 'return',    label: 'Return gifts' },
+        { id: 'hampers',   label: 'Premium hampers' },
+        { id: 'eco',       label: 'Eco-friendly and plants' },
+        { id: 'silver',    label: 'Silver and brass items' },
+        { id: 'sweets',    label: 'Sweet boxes' },
+        { id: 'corporate', label: 'Corporate gifting' },
+      ],
+    },
+    {
+      id: 'personalise',
+      question: 'Can you personalise them?',
+      type: 'one',
+      choices: [
+        { id: 'yes',  label: 'Yes, printing or engraving' },
+        { id: 'pack', label: 'Custom packing only' },
+        { id: 'no',   label: 'As stocked' },
+      ],
+    },
+  ],
+
+  /* ── Valet Parking ───────────────────────────────────────────────── */
+  'Valet Parking': [
+    {
+      id: 'scale',
+      question: 'How many cars can you handle?',
+      type: 'one',
+      choices: [
+        { id: '25',  label: 'Up to 25' },
+        { id: '75',  label: 'Up to 75' },
+        { id: '200', label: '200 or more' },
+      ],
+    },
+    {
+      id: 'extras',
+      question: 'What is included?',
+      type: 'multi',
+      choices: [
+        { id: 'uniform', label: 'Uniformed drivers' },
+        { id: 'tags',    label: 'Key tag system' },
+        { id: 'batons',  label: 'Traffic marshals and batons' },
+        { id: 'insured', label: 'Insured drivers' },
+      ],
+    },
+  ],
 }
 
 /** The spec groups for a trade, or an empty list. */

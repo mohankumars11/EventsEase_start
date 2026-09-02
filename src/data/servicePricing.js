@@ -179,6 +179,14 @@ export const SERVICE_GROUPS = [
         desc: 'Every item on the list, arranged before the muhurat' },
       { id: 'mehendi', name: 'Mehendi artists', emoji: '🤲', unit: 'fixed', base: 8000, scales: true,
         desc: 'Bridal and guest mehendi' },
+      /* Dispatchable since 2025 and unpriceable until now.
+         `mandap` had a trade and no rate card anywhere, so priceLine
+         returned null and api/dispatch-booking answered "cannot price
+         mandap" with a 400. Anybody who picked it lost their whole
+         booking, not just the line. Found by pricing all 62 services at
+         three headcounts, which is now scripts/check-every-price.mjs. */
+      { id: 'mandap', name: 'Mandap setup', emoji: '🛕', unit: 'fixed', base: 22000, scales: true,
+        desc: 'Pillars, canopy, floral work and the seating for the rite' },
     ],
   },
   {
@@ -242,6 +250,102 @@ export const SERVICE_GROUPS = [
         desc: 'Boxed sweets for neighbours, colleagues and the temple' },
       { id: 'candle_setup', name: 'Candle & romantic setup', emoji: '🕯️', unit: 'fixed', base: 8000, scales: false,
         desc: 'Candle pathway, floating flowers, fairy lights' },
+    ],
+  },,
+  /* ══════════════════════════════════════════════════════════════════
+     THE THINGS A FUNCTION NEEDS THAT NOBODY PUTS ON A WISH LIST
+     ══════════════════════════════════════════════════════════════════
+
+     Power, washrooms, a first-aid post, ushers who know where the
+     bathroom is. Nobody opens a planning app looking for a generator,
+     and every outdoor function in Bengaluru needs one.
+
+     They were in the catalogue with no price and no trade, which meant a
+     coordinator could talk about them and nobody could be dispatched to
+     supply them. Rates are Bengaluru day-hire, mid-2026.
+  */
+  {
+    id: 'groundwork',
+    label: 'Making the place work',
+    hint: 'The parts guests only notice when they are missing',
+    surface: 'bg-gradient-to-br from-cyan-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-cyan-400 to-teal-600',
+    tile: 'bg-cyan-50 text-cyan-700 ring-cyan-200/70',
+    ink: 'text-cyan-700',
+    services: [
+      { id: 'power', name: 'Power backup / generator', emoji: '🔌', unit: 'fixed', base: 14000, scales: true,
+        desc: 'Silent diesel generator, delivered and manned for the day' },
+      { id: 'cooling', name: 'Cooling, fans & heaters', emoji: '❄️', unit: 'fixed', base: 12000, scales: true,
+        desc: 'Portable AC, mist fans or patio heaters for an open venue' },
+      { id: 'washrooms', name: 'Portable washrooms', emoji: '🚻', unit: 'fixed', base: 15000, scales: true,
+        desc: 'Serviced cabins for a lawn or farmhouse with none' },
+      { id: 'medical', name: 'Medical & first aid', emoji: '🏥', unit: 'fixed', base: 9000, scales: false,
+        desc: 'Trained attendant on site; ambulance on standby if needed' },
+      { id: 'valet', name: 'Valet & parking', emoji: '🅿️', unit: 'fixed', base: 8000, scales: true,
+        desc: 'Uniformed drivers, key tags and traffic marshalling' },
+      { id: 'signage', name: 'Signage & seating charts', emoji: '🪧', unit: 'fixed', base: 4500, scales: true,
+        desc: 'Welcome boards, directions, table plans and name cards' },
+      { id: 'balloon_arch', name: 'Balloon arch', emoji: '🎈', unit: 'fixed', base: 4500, scales: false,
+        desc: 'One arch for the entrance or behind the cake table' },
+      /* Three more that were dispatchable with no price. Same failure as
+         `mandap` above: a 400 on the whole booking. */
+      { id: 'balloon', name: 'Balloon decoration', emoji: '🎈', unit: 'fixed', base: 7000, scales: true,
+        desc: 'Arches, clusters and foil letters across the space' },
+      { id: 'lighting', name: 'Event lighting', emoji: '💡', unit: 'fixed', base: 11000, scales: true,
+        desc: 'Ambient lights, uplighting and the stage wash' },
+    ],
+  },
+  {
+    id: 'people',
+    label: 'People who look after your guests',
+    hint: 'Hired by the day, briefed by you',
+    surface: 'bg-gradient-to-br from-violet-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-violet-400 to-purple-600',
+    tile: 'bg-violet-50 text-violet-700 ring-violet-200/70',
+    ink: 'text-violet-700',
+    services: [
+      { id: 'hospitality', name: 'Ushers & guest hospitality', emoji: '🙏', unit: 'per_unit', base: 1200,
+        unitLabel: 'person', qtyFor: g => Math.max(2, Math.round((g || 0) / 60)),
+        desc: 'Welcoming guests, directions, looking after elders' },
+      { id: 'nanny', name: 'Childcare & nannies', emoji: '🧸', unit: 'per_unit', base: 1500,
+        unitLabel: 'person', qtyFor: () => 2,
+        desc: 'Trained help so parents can attend the function' },
+      { id: 'live_counters', name: 'Live food counters', emoji: '🍳', unit: 'per_guest', base: 180,
+        desc: 'Chaat, dosa, pasta or grill, cooked in front of guests' },
+      /* Priced per guest and NOT per drink. A per-drink rate is
+         unquotable before the day and is the single most common source
+         of an argument about a bar bill afterwards. */
+      { id: 'bar', name: 'Bar & mocktail counters', emoji: '🍹', unit: 'per_guest', base: 260,
+        desc: 'Bartenders, glassware, ice and mixers. Mocktails or licensed bar' },
+      { id: 'menu', name: 'Customised menu', emoji: '📋', unit: 'per_guest', base: 480,
+        desc: 'A menu built around your family’s tastes, with a tasting first' },
+      { id: 'welcome_drinks', name: 'Welcome drinks', emoji: '🥤', unit: 'per_guest', base: 90,
+        desc: 'Something cold in everyone’s hand as they arrive' },
+    ],
+  },
+  {
+    id: 'traditions',
+    label: 'The traditional parts',
+    hint: 'Booked separately, and usually first',
+    surface: 'bg-gradient-to-br from-amber-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-amber-400 to-orange-600',
+    tile: 'bg-amber-50 text-amber-700 ring-amber-200/70',
+    ink: 'text-amber-700',
+    services: [
+      { id: 'nadaswaram', name: 'Nadaswaram / shehnai', emoji: '🎺', unit: 'fixed', base: 12000, scales: false,
+        desc: 'Traditional ensemble for the muhurta and the procession' },
+      { id: 'bhajan', name: 'Bhajan & devotional music', emoji: '🕉️', unit: 'fixed', base: 8000, scales: false,
+        desc: 'Singers and accompaniment for a pooja or satsang' },
+      { id: 'folk', name: 'Folk & cultural troupes', emoji: '🥁', unit: 'fixed', base: 15000, scales: false,
+        desc: 'Dollu Kunitha, Veeragase and other Karnataka folk forms' },
+      { id: 'baraat', name: 'Baraat & procession', emoji: '🐎', unit: 'fixed', base: 25000, scales: false,
+        desc: 'Band, lighting, horse or vintage car for the groom’s arrival' },
+      { id: 'wedding_car', name: 'Wedding & vintage cars', emoji: '🚗', unit: 'fixed', base: 18000, scales: false,
+        desc: 'Decorated car with a driver, for the couple' },
+      { id: 'livestream', name: 'Live streaming', emoji: '📡', unit: 'fixed', base: 16000, scales: false,
+        desc: 'Multi-camera stream for family who cannot travel' },
+      { id: 'drone', name: 'Drone & aerial coverage', emoji: '🚁', unit: 'fixed', base: 14000, scales: false,
+        desc: 'Aerial video of the venue, the procession and the crowd' },
     ],
   },
 ]
