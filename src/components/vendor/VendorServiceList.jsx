@@ -276,18 +276,6 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                       a caterer has four groups and thirty-odd boxes and
                       this screen is opened to check a price, not to fill
                       in a profile. */}
-                  {/* `'specs' in s` is the migration check. The hook
-                      selects '*', so the key is present exactly when 098
-                      has been applied -- and offering a Save that writes
-                      a column the database does not have would fail on
-                      the one tap that matters. Same convention as 096. */}
-                  {'specs' in s && (
-                    <ServiceSpecs
-                      trade={s.category}
-                      value={s.specs}
-                      onSave={next => onUpdate(s.id, { specs: next })}
-                    />
-                  )}
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
@@ -307,7 +295,25 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                   />
                 </div>
               </div>
-            )}
+              )}
+
+              {/* Outside the flex row, so it spans the whole card.
+                  Nested inside the text column it shared the width with
+                  the eye/pencil/bin buttons, and thirty cuisine chips in
+                  two thirds of a phone is a wall of two-word lines.
+
+                  `'specs' in s` is the migration check: the hook selects
+                  '*', so the key is present exactly when 098 has been
+                  applied. Offering a Save that writes a column the
+                  database does not have would fail on the one tap that
+                  matters. Same convention as 096. */}
+              {editing !== s.id && 'specs' in s && (
+                <ServiceSpecs
+                  trade={s.category}
+                  value={s.specs}
+                  onSave={next => onUpdate(s.id, { specs: next })}
+                />
+              )}
           </li>
         ))}
       </ul>

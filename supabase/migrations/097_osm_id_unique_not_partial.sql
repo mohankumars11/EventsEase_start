@@ -39,11 +39,20 @@
 
 BEGIN;
 
--- The index and a same-named constraint cannot coexist, and which of the
--- two exists depends on whether 094 or an earlier run of this file went
--- first. Drop both spellings before creating.
-DROP INDEX IF EXISTS public.uq_venues_osm;
+-- `uq_venues_osm` may currently be either a bare index (the original 094)
+-- or a constraint (094 as corrected, or an earlier run of this file), and
+-- THE ORDER OF THESE TWO LINES MATTERS.
+--
+-- Dropping the index first fails when a constraint owns it:
+--
+--   ERROR: 2BP01: cannot drop index uq_venues_osm because constraint
+--   uq_venues_osm on table venues requires it
+--
+-- Dropping the constraint first cannot fail either way: it takes its
+-- backing index with it, leaving DROP INDEX as a no-op, and when there is
+-- no constraint the IF EXISTS makes it a no-op instead.
 ALTER TABLE public.venues DROP CONSTRAINT IF EXISTS uq_venues_osm;
+DROP INDEX IF EXISTS public.uq_venues_osm;
 
 ALTER TABLE public.venues
   ADD CONSTRAINT uq_venues_osm UNIQUE (osm_id);

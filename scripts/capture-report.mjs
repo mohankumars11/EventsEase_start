@@ -342,6 +342,57 @@ try {
     route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json', wait: 3500,
     note: 'listing tab -- claim your venue, with OSM attribution' })
 
+  /* ── The claim search, against the real seeded table ───────────────
+
+     271 Bengaluru halls are in `venues` as unclaimed, filtered down from
+     the 402 OSM returns -- the 129 that were dropped are BBMP ward halls
+     and political party offices, which would have made this dropdown
+     read as an app that does not know what it sells.
+
+     Typing is done through the native value setter and an `input` event.
+     Setting `.value` alone does not notify React: its onChange never
+     fires, state never updates, and the search silently does nothing --
+     which would photograph as "no results" and look like the seed had
+     failed. */
+  await shot('17d-venue-search', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(() => {
+      const el = [...document.querySelectorAll('input')]
+        .find(i => (i.placeholder || '').includes('Convention'))
+      if (!el) return 'NO SEARCH BOX'
+      const set = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype, 'value').set
+      set.call(el, 'Kalyana')
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+      return 'typed'
+    })()`],
+    wait: 3000, note: 'real Bengaluru mantapas, searchable, one tap to claim' })
+
+  /* ── The spec form, opened on the richest trade ────────────────────
+
+     Catering is the one where a mismatch costs most: a pure-vegetarian
+     Brahmin kitchen and a tandoor are one row apart in vendor_services
+     and are completely different businesses. Four groups, and every
+     answer is a choice id -- nothing here can be misspelt, which is the
+     same rule AddFromCatalogue applies one level up. */
+  await shot('17e-service-specs', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(() => {
+      const b = [...document.querySelectorAll('button')]
+        .filter(x => x.textContent.includes('What you do'))
+      if (!b.length) return 'NO SPEC PANELS'
+      // Catering is the fifth service on this account; open the one whose
+      // card names it rather than counting positions.
+      const target = b.find(x => {
+        const card = x.closest('li')
+        return card && card.textContent.includes('Catering')
+      }) ?? b[0]
+      target.click()
+      target.scrollIntoView({ block: 'start' })
+      return 'opened'
+    })()`],
+    wait: 2500, note: 'cuisines, kitchen and service style -- picked, never typed' })
+
   /* ── A tab tapped before there is an account ───────────────────────
 
      The bar is on the landing now, which is only an improvement if the
