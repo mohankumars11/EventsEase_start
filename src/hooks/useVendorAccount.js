@@ -191,22 +191,66 @@ export function useVendorAccount() {
     return data
   }, [vendor])
 
-  /** Same write for a run of dates — "block this whole week" in one call. */
-  const setRangeStatus = useCallback(async (dateKeys, status) => {
+  /**
+   * Same write for a run of dates — "block this whole week" in one call.
+   *
+   * `extra` carries the same payload setDayStatus takes, because the calendar
+   * sheet offers one choice and three scopes ("just this day", "every Tuesday
+   * left this month") and the scope must not change what gets written. A
+   * range that silently dropped `slots_total` would turn "partly booked, two
+   * jobs left" into a LIMITED row with no total — which migration 060 treats
+   * as fully available, so the partner would be offered a full day's work on
+   * every date they had just limited.
+   *
+   * OPEN splits the same way setDayStatus does, and it has to: this table
+   * records EXCEPTIONS, so an OPEN row is only worth keeping when it says
+   * something the defaults do not. That is exactly two cases — a day the
+   * weekly rule would otherwise close, and a day carrying a note. Everything
+   * else is deleted, because a month of explicit OPEN rows is a month of rows
+   * that say nothing.
+   *
+   * Doing this per key rather than for the whole call is what stops the scope
+   * changing the outcome: "open every Sunday this month" on a vendor closed
+   * Sundays must keep its rows, or it silently does nothing at all.
+   */
+  const setRangeStatus = useCallback(async (dateKeys, status, extra = {}) => {
     if (!vendor || dateKeys.length === 0) return
+
     if (status === 'OPEN') {
-      const { error: err } = await supabase
-        .from('vendor_availability')
-        .delete().eq('vendor_id', vendor.id).in('slot_date', dateKeys)
-      if (err) throw err
+      const daysOff = vendor.weekly_days_off ?? []
+      const keep = extra.note
+        ? dateKeys
+        : dateKeys.filter(k => daysOff.includes(new Date(`${k}T00:00:00`).getDay()))
+      const drop = dateKeys.filter(k => !keep.includes(k))
+
+      if (drop.length) {
+        const { error: err } = await supabase
+          .from('vendor_availability')
+          .delete().eq('vendor_id', vendor.id).in('slot_date', drop)
+        if (err) throw err
+      }
+      let kept = []
+      if (keep.length) {
+        const { data, error: err } = await supabase
+          .from('vendor_availability')
+          .upsert(
+            keep.map(slot_date => ({ vendor_id: vendor.id, slot_date, status, ...extra })),
+            { onConflict: 'vendor_id,slot_date' },
+          )
+          .select()
+        if (err) throw err
+        kept = data ?? []
+      }
       setAvailability(map => {
         const next = { ...map }
-        dateKeys.forEach(k => delete next[k])
+        drop.forEach(k => delete next[k])
+        kept.forEach(r => { next[r.slot_date] = r })
         return next
       })
       return
     }
-    const rows = dateKeys.map(slot_date => ({ vendor_id: vendor.id, slot_date, status }))
+
+    const rows = dateKeys.map(slot_date => ({ vendor_id: vendor.id, slot_date, status, ...extra }))
     const { data, error: err } = await supabase
       .from('vendor_availability')
       .upsert(rows, { onConflict: 'vendor_id,slot_date' })
@@ -216,6 +260,32 @@ export function useVendorAccount() {
       ...map,
       ...Object.fromEntries((data ?? []).map(r => [r.slot_date, r])),
     }))
+  }, [vendor])
+
+  /**
+   * Delete every exception row in a run of dates.
+   *
+   * Not the same call as setRangeStatus(keys, 'OPEN'), and the difference is
+   * the whole reason this exists. "Open these days" is a statement — it must
+   * survive a standing day off, so it writes an explicit OPEN row on any date
+   * the weekly rule would close. "Undo what I marked" is the opposite: it
+   * removes what the vendor said and lets the standing rule take back over,
+   * so a Monday they had opened by hand goes back to being closed.
+   *
+   * Collapsing the two would make the calendar's clear-month button quietly
+   * open every Monday of the month.
+   */
+  const clearDays = useCallback(async dateKeys => {
+    if (!vendor || dateKeys.length === 0) return
+    const { error: err } = await supabase
+      .from('vendor_availability')
+      .delete().eq('vendor_id', vendor.id).in('slot_date', dateKeys)
+    if (err) throw err
+    setAvailability(map => {
+      const next = { ...map }
+      dateKeys.forEach(k => delete next[k])
+      return next
+    })
   }, [vendor])
 
   // ── Derived facts ────────────────────────────────────────
@@ -285,6 +355,6 @@ export function useVendorAccount() {
     vendor, services, availability, bookings, reviews,
     stats, checklist,
     updateVendor, addService, updateService, removeService,
-    setDayStatus, setRangeStatus,
+    setDayStatus, setRangeStatus, clearDays,
   }
 }

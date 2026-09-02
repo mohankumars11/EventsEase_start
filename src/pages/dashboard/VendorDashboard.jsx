@@ -80,7 +80,7 @@ export default function VendorDashboard() {
   const {
     loading, error, refresh, vendor, services, availability,
     stats, checklist, updateVendor, addService, updateService, removeService,
-    setDayStatus, setRangeStatus,
+    setDayStatus, setRangeStatus, clearDays,
   } = account
 
   // The tab lives in the URL so the checklist can link straight at the thing
@@ -417,6 +417,7 @@ export default function VendorDashboard() {
             availability={availability}
             onSetDay={setDayStatus}
             onSetRange={setRangeStatus}
+            onClearDays={clearDays}
             onUpdateVendor={updateVendor}
           />
         )}
