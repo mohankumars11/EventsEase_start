@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, Store, CalendarDays, UserCog } from 'lucide-react'
+import { Bell, IndianRupee, Store, CalendarDays, UserCog, Wallet, HelpCircle, Tag, LogIn } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -52,6 +52,31 @@ import { useAuth } from '../../context/AuthContext'
  * So the tab is named for what is behind it. "Listing" is also the word
  * this market already uses: a decorator on JustDial or WedMeGood has a
  * listing, and knows what it is without being taught. */
+/* ── Before anybody signs in ───────────────────────────────────────
+ *
+ * A partner who has just tapped a WhatsApp link gets an APP, not a
+ * marketing page they have to thumb to the bottom of. That is how every
+ * product they already use behaves: Zomato, Flipkart and Rapido all let
+ * you look around before they ask who you are, and asking first is the
+ * single most reliable way to lose somebody who was only curious.
+ *
+ * Three questions and one action, because those are the three questions
+ * a partner actually arrives with:
+ *
+ *   Earn         what do I make
+ *   How it works what do I have to do
+ *   Costs        what does it take from me
+ *   Sign in      the one thing that needs an account
+ *
+ * The same bar, in the same place, before and after signing in — so the
+ * app does not rearrange itself the moment somebody commits to it. */
+const SIGNED_OUT_TABS = [
+  { id: 'earn',  label: 'Earn',         icon: Wallet,     to: '/partner/join' },
+  { id: 'how',   label: 'How it works', icon: HelpCircle, to: '/partner/join?tab=how' },
+  { id: 'costs', label: 'Costs',        icon: Tag,        to: '/partner/join?tab=costs' },
+  { id: 'in',    label: 'Sign in',      icon: LogIn,      to: '/login' },
+]
+
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
   { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
@@ -65,16 +90,27 @@ export default function PartnerBottomNav() {
   const [params] = useSearchParams()
   const { profile } = useAuth()
 
-  // Only in the partner app, and only on the dashboard it navigates.
   if (!isPartnerSurface()) return null
-  if (!pathname.startsWith('/dashboard/vendor')) return null
 
-  /* Not before there is an account to have tabs for. A partner still
-     signing up is on a one-way flow and a tab bar there is five ways to
-     abandon it. */
-  if (!profile) return null
+  const onLanding = pathname.startsWith('/partner')
+  const onDashboard = pathname.startsWith('/dashboard/vendor')
+  if (!onLanding && !onDashboard) return null
 
-  const active = params.get('tab') ?? 'offers'
+  /* Signed out on the landing: the browse bar. Signed out anywhere else,
+     or mid-signup, nothing — a one-way flow does not want four ways out
+     of it. */
+  const signedOut = !profile
+  if (signedOut && !onLanding) return null
+  if (!signedOut && !onDashboard) return null
+
+  const items = signedOut
+    ? SIGNED_OUT_TABS
+    : TABS.map(t => ({
+        ...t,
+        to: t.id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${t.id}`,
+      }))
+
+  const active = params.get('tab') ?? (signedOut ? 'earn' : 'offers')
 
   return (
     <nav
@@ -94,12 +130,14 @@ export default function PartnerBottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <ul className="mx-auto flex max-w-2xl items-stretch">
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const on = active === id
+        {items.map(({ id, label, icon: Icon, to }) => {
+          /* Sign in is an action rather than a place, so it never wears
+             the active pill — there is no "you are on Sign in" state. */
+          const on = id !== 'in' && active === id
           return (
             <li key={id} className="flex-1">
               <Link
-                to={id === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${id}`}
+                to={to}
                 aria-current={on ? 'page' : undefined}
                 className="flex flex-col items-center gap-0.5 py-2 pt-2.5"
               >

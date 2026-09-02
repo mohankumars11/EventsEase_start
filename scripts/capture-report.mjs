@@ -413,6 +413,15 @@ try {
     route: '/dashboard/vendor', session: '.demo-partner-session.json', wait: 5000,
     note: 'yours to claim, and where it goes' })
 
+  /* The landing as an app: three panels and a bar, before sign-in. */
+  await shot('38-landing-how', {
+    route: '/partner/join?tab=how', wait: 3500,
+    note: 'how it works, reached from the bar' })
+
+  await shot('39-landing-costs', {
+    route: '/partner/join?tab=costs', wait: 3500,
+    note: 'what it costs, on its own tab' })
+
   await shot('13-account',             { route: '/account', note: 'app badge + install banner' })
 
   console.log("")

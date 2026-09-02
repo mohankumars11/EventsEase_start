@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
@@ -54,12 +54,19 @@ const POINTS = [
 ]
 
 export default function PartnerLanding() {
+  /* Which panel. In the URL rather than in state, for the same reason
+     the dashboard does it: the back button works, a WhatsApp forward can
+     point straight at what it costs, and the bar and the page cannot
+     disagree about what is open. */
+  const [params] = useSearchParams()
+  const tab = params.get('tab') ?? 'earn'
+
   const { user, profile } = useAuth()
   const signedInAsPartner = !!user && profile?.role === 'vendor'
 
   return (
     <div className="a-canvas min-h-screen pb-16">
-      <header className="mx-auto flex max-w-2xl items-center justify-between px-5 pt-6">
+      <header className="mx-auto flex max-w-2xl items-center justify-between px-5 pt-6 pb-4">
         {/* `ground` defaults to onDark — for the plum navbar. This header
             is white, so without it the wordmark is white on white and the
             page opens with an empty corner. `className` is not part of
@@ -70,7 +77,16 @@ export default function PartnerLanding() {
         </span>
       </header>
 
-      <main className="mx-auto max-w-2xl px-5">
+      {/* pb-28 clears the fixed partner bar. It briefly sat on the
+          HEADER instead, which put seven rems of nothing between the
+          logo and the first line of every tab. */}
+      <main className="mx-auto max-w-2xl px-5 pb-28">
+        {/* ── Earn: the pitch, and the only tab with a CTA ──────────
+            A signed-out partner lands here. Everything that answers
+            "what do I get out of this" is on one screen, and the two
+            things they can do about it are at the bottom of it. */}
+        {tab === 'earn' && (
+        <>
         {/* A master, drawn. The first thing on the first screen a
             partner ever sees, because "is this app for me" is answered
             by a picture faster than by a sentence — and an illustration
@@ -208,7 +224,13 @@ export default function PartnerLanding() {
           </p>
         )}
 
-        <ul className="mt-9 space-y-5">
+        </>
+        )}
+
+        {/* The four promises belong with "how it works", not above the
+            price plans. */}
+        {tab === 'how' && (
+        <ul className={tab === 'earn' ? 'mt-9 space-y-5' : 'mt-2 space-y-5'}>
           {POINTS.map(p => {
             const Icon = p.icon
             return (
@@ -224,14 +246,26 @@ export default function PartnerLanding() {
             )
           })}
         </ul>
+        )}
 
+      {/* ── What it costs, on its own tab ──────────────────────────
+          Everything below used to be one scroll: the pitch, the four
+          promises, the plans and the three steps, in a single column a
+          decorator had to thumb through to reach anything.
+
+          A partner comparing platforms wants three separate answers —
+          what do I earn, what does it cost me, how do I start — and a
+          scroll makes them hunt for each one in turn. Tabs let them ask
+          the one they came with. */}
+      {tab === 'costs' && (
+        <>
         {/* ── What it will cost ──────────────────────────────────────
             Shown even though everything is free today. A partner who
             joins on "free" and later discovers there was always a ladder
             feels sold to; one who is told the ladder exists and that they
             are on top of it for nothing can see what they are being
             given. */}
-        <section className="mt-11">
+        <section className={tab === 'earn' ? 'mt-11' : 'mt-2'}>
           <h2 className="font-serif text-[22px] font-extrabold text-ink">
             What it costs
           </h2>
@@ -264,8 +298,10 @@ export default function PartnerLanding() {
             ))}
           </div>
         </section>
-
-        <section className="mt-11">
+        </>
+      )}
+      {tab === 'how' && (
+        <section className={tab === 'earn' ? 'mt-11' : 'mt-2'}>
           <h2 className="font-serif text-[22px] font-extrabold text-ink">
             What happens after you sign up
           </h2>
@@ -287,6 +323,7 @@ export default function PartnerLanding() {
             ))}
           </ol>
         </section>
+      )}
 
         <Link
           to="/signup?role=vendor"
