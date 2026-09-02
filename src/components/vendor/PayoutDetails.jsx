@@ -43,10 +43,7 @@ import { lookupIfsc, looksLikeIfsc } from '../../lib/ifsc'
  * restarting the check, not discover it.
  */
 
-const VERIFIED = 'rounded-full bg-forest-50 px-2.5 py-1 text-[11px] font-extrabold text-forest-700'
-const PENDING = 'rounded-full bg-saffron-400/20 px-2.5 py-1 text-[11px] font-extrabold text-saffron-900'
-
-export default function PayoutDetails({ vendorId }) {
+export default function PayoutDetails({ vendorId, onSaved }) {
   const [row, setRow] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -144,26 +141,34 @@ export default function PayoutDetails({ vendorId }) {
     setSaving(false)
     if (e) { setError(e.message); return }
     setRow(data); setSaved(true); setAccNo(''); setAccNo2('')
+    /* The Account tab prints this row's summary on the collapsed fold
+       above ("UPI · name@oksbi · being checked"). Without this it would
+       still read "Not added yet" immediately after somebody added it. */
+    onSaved?.(data)
   }
 
   if (loading) {
-    return <div className="card p-5 text-[13px] text-ink-mute">Loading your payout details…</div>
+    return <div className="text-[13px] text-ink-mute">Loading your payout details…</div>
   }
 
   const verified = !!row?.verified_at
 
-  return (
-    <section className="card p-5">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-serif text-[19px] font-extrabold text-ink">How you get paid</h3>
-        {row && (
-          <span className={verified ? VERIFIED : PENDING}>
-            {verified ? 'Verified' : 'Being checked'}
-          </span>
-        )}
-      </header>
+  /* ══════════════════════════════════════════════════════════════════
+     NO CARD, NO TITLE, NO STATUS PILL
+     ══════════════════════════════════════════════════════════════════
 
-      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-mute">
+     All three used to be here and all three now belong to the Account
+     tab's "How you get paid" fold, which supplies the panel, the title,
+     and a summary line that already reads "UPI · name@oksbi · being
+     checked" while the section is still shut.
+
+     Repeating them inside would put a heading directly under an
+     identical heading and a ring 4px inside another ring — and worse,
+     two places that could disagree about whether this partner is
+     verified. One fact, one place that says it. */
+  return (
+    <section>
+      <p className="text-[13px] leading-relaxed text-ink-mute">
         {row
           ? verified
             ? 'Your earnings go here after each job is delivered.'
