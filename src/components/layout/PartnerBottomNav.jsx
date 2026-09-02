@@ -79,7 +79,16 @@ export default function PartnerBottomNav() {
   return (
     <nav
       aria-label="Partner sections"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.08] bg-white/97 backdrop-blur"
+      /* Solid white, not 97% with a blur.
+         A translucent bar looks considered on a design mock and looks
+         broken on a phone: job cards slide under it and their text
+         reads THROUGH the labels while scrolling. backdrop-blur does
+         not save it either — blurred text behind a label is still
+         movement behind a label, and the bar is the one part of the
+         screen that must never look like it is doing something.
+         Reported exactly that way: "the navigation bar is completely
+         transparent, whenever scrolling I can see the buttons". */
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.10] bg-white shadow-[0_-4px_16px_rgba(36,16,67,0.06)]"
       /* The home-indicator strip on a gesture-navigation phone sits under
          the bar; without this the last row of labels is behind it. */
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}

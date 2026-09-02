@@ -213,6 +213,23 @@ export default function VendorDashboard() {
       <PartnerResume vendorId={vendor.id} />
 
       {/* ── Header ───────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          THE HEADER IS PART OF THE JOBS TAB, NOT THE APP
+          ══════════════════════════════════════════════════════════════
+
+          Business name, trade, status pill, plan pill, Sign out — all of
+          it repeated above every tab. Open Earnings and the first third
+          of the screen is a header you already read; open Listing and
+          it is there again. On a phone that is the difference between
+          landing on your money and scrolling to it.
+
+          Reported as "the same header, events, is visible on every
+          navigation". It is a home-screen header, so it lives on the
+          home tab.
+
+          Account still shows the business, in Business details, where
+          somebody goes to change it. */}
+      {tab === 'offers' && (
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-display font-bold text-gray-900 truncate">{businessName}</h1>
@@ -236,11 +253,21 @@ export default function VendorDashboard() {
           </button>
         </div>
       </header>
+      )}
 
       {/* ── Status ───────────────────────────────────────── */}
       {/* Leads the page whenever the vendor is not live, because it is the only
           fact that changes what the rest of the page means. Once approved it
           stays but stops shouting. */}
+      {/* Once, on the home tab, and only while it still says something.
+          "You are live on Sambramo" is worth a card the first week and is
+          three lines of furniture above every screen after that — and it
+          was above EVERY tab. A partner who is live knows they are live;
+          the pill in the header says so in one word.
+
+          Not live is different: rejected or pending changes what the whole
+          app means, so that keeps its card everywhere. */}
+      {(tab === 'offers' || statusMeta.blocking) && (
       <section className={`card mt-6 p-4 sm:p-5 flex items-start gap-3 ${TONES[statusMeta.tone].card}`}>
         <CheckCircle2 size={20} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
         <div className="flex-1 min-w-0">
@@ -262,6 +289,7 @@ export default function VendorDashboard() {
           )}
         </div>
       </section>
+      )}
 
       {/* Only when the calendar really is out of date, and dismissible
           for the session. See the component for why it is not a

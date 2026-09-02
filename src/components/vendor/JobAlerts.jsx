@@ -54,6 +54,10 @@ export default function JobAlerts({ vendorId }) {
   const [tested, setTested] = useState(null)
   const [testing, setTesting] = useState(false)
   const [diag, setDiag] = useState(null)
+  /* The device stamp, one tap away rather than always on screen.
+     Separate from `diag`, which holds the result of a push scan --
+     one is "what am I running", the other is "why did a send fail". */
+  const [showDetails, setShowDetails] = useState(false)
 
   /** Is a device already registered for this master? */
   const refresh = useCallback(async () => {
@@ -226,40 +230,33 @@ export default function JobAlerts({ vendorId }) {
             </p>
           )}
 
-          {/* What KIND of device this is.
-              A token registered as 'web' from something the owner
-              believes is the Android app means the Android app is not
-              what is installed — and that difference decides whether a
-              missing notification is a bug or a build that never
-              happened. Worth two words on screen. */}
-          {/* ══════════════════════════════════════════════════════
-              What is actually running, always visible
-              ══════════════════════════════════════════════════════
+          /* ── The build stamp and the registration line are gone ────
 
-              Two apps with the same name and the same icon can sit
-              side by side on an Android home screen: the installed APK,
-              and a shortcut to the website added earlier. Tapping the
-              wrong one looks identical and behaves completely
-              differently — no bridge, no native push, and code cached
-              from whenever the shortcut was last opened.
+             They were built while chasing a push bug that is now fixed,
+             and they earned their place then. On the home screen of a
+             working app they are debug output: "● Browser / home-screen
+             shortcut  build dev" tells a decorator nothing they can act
+             on, and it sat directly above the two controls that do
+             something.
 
-              Hours were spent on "I installed it and nothing changed"
-              without either of us being able to tell which one was
-              open. This line answers it in two words, with no tapping,
-              and the build id proves whether the code is current. */}
-          <p className="mt-1.5 text-[11px] font-bold">
-            <span className={NATIVE ? 'text-forest-700' : 'text-amber-700'}>
-              {NATIVE ? '● Android app' : '● Browser / home-screen shortcut'}
-            </span>
-            <span className="ml-1.5 font-semibold text-ink-mute">build {BUILD}</span>
-          </p>
-
-          {on && registered[0]?.platform && (
-            <p className="mt-1.5 text-[11px] font-bold text-ink-mute">
-              Registered as {registered[0].platform === 'web'
-                ? 'a browser / home-screen app'
-                : `the ${registered[0].platform} app`}
-            </p>
+             The distinction still matters when push breaks -- an APK and
+             a home-screen shortcut look identical and behave completely
+             differently -- so it is kept, one tap away, under Details.
+             It is just no longer the first thing on the card. */
+          {showDetails && (
+            <div className="mt-2 rounded-xl bg-ink/[0.03] p-2.5 text-[11px] font-bold text-ink-mute">
+              <p>
+                <span className={NATIVE ? 'text-forest-700' : 'text-amber-700'}>
+                  {NATIVE ? '● Android app' : '● Browser / home-screen shortcut'}
+                </span>
+                <span className="ml-1.5 font-semibold">build {BUILD}</span>
+              </p>
+              {on && registered[0]?.platform && (
+                <p className="mt-1">
+                  Registered as {registered[0].platform === 'web' ? 'a browser' : 'the Android app'}
+                </p>
+              )}
+            </div>
           )}
 
           {on && (
@@ -278,10 +275,16 @@ export default function JobAlerts({ vendorId }) {
                   one of two problems needing opposite fixes, and which
                   one it is can only be read off the device. */}
               <button
-                onClick={() => setDiag(d => (d ? null : nativeDiagnostics()))}
+                onClick={() => {
+                  /* One toggle for both: what am I running, and why did
+                     a send fail. Two separate disclosures on one small
+                     card is two things to discover. */
+                  setShowDetails(v => !v)
+                  setDiag(d => (d ? null : nativeDiagnostics()))
+                }}
                 className="mt-2 block text-[11px] font-bold text-ink-mute underline-offset-2 hover:underline"
               >
-                {diag ? 'Hide' : 'Why does it say that?'}
+                {showDetails ? 'Hide details' : 'Details'}
               </button>
 
               {diag && (
