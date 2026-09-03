@@ -1,0 +1,595 @@
+/**
+ * Real catering menus, from a real Bengaluru caterer.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHERE THIS CAME FROM
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Transcribed from S S Caterers' plantain-leaf menu card — four options,
+ * priced per plate, minimum 100 guests. This is not invented sample data
+ * and it must not be edited casually: a partner ticking "Option 02"
+ * is agreeing to serve these dishes, and a customer reading it is being
+ * told what will be on the leaf.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY A MENU IS A LIST OF DISHES AND NOT A PRICE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * data/cateringModel.js already records the argument this exists to
+ * prevent: the most common dispute in Indian catering is a per-plate rate
+ * that hid what was in the plate. "Catering, ₹500 a head" is not a
+ * quote, it is the beginning of one — and the gap between what the
+ * customer pictured and what arrived is where the money is lost.
+ *
+ * So the unit a partner lists is A NAMED MENU WITH ITS DISHES. The price
+ * hangs off it. A customer choosing Option 03 can read all 29 lines
+ * before they pay, and neither side can later claim they meant something
+ * else.
+ *
+ * ── The "OR" matters ────────────────────────────────────────────────
+ * Half these lines read "Poori OR Chapathi". That is how the trade
+ * actually quotes: the caterer commits to a slot in the meal, and the
+ * exact dish is settled on the call. Flattening those into single dishes
+ * would misrepresent the offer and produce a spec nobody can honour.
+ * They are kept verbatim.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * PRICES ARE A FLOOR, AND THE APP MUST SAY SO
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * "450+" is what the caterer wrote, and the plus is load-bearing: the
+ * final number moves with the menu that gets curated. Every price here
+ * carries `from: true` and the UI renders it as "from ₹450" — never as
+ * "₹450", which would be a promise this data cannot keep.
+ *
+ * GST is 5% on top and is stated separately, because a partner quoting
+ * 450 means 450 before tax and a customer reading 450 assumes after.
+ */
+
+/* Vegetarian, per plate, minimum 100 guests. The caterer's own numbers. */
+export const PLANTAIN_LEAF_MENUS = [
+  {
+    id: 'pl_option_1',
+    name: 'Option 1',
+    tier: 'Everyday feast',
+    scan: 'The classic plantain-leaf meal',
+    fromPrice: 450,
+    minPax: 100,
+    diet: 'veg',
+    welcome: [],
+    items: [
+      'Paal Payasa OR Sabbakki Mango Payasa (seasonal)',
+      'Salt',
+      'Papad',
+      'Pickle',
+      'Hesarubele Kosambari OR Peanut Kosambari',
+      'Aloo Batani Palya OR Aloo Palak Chopse',
+      'Suvarnagadde Chopse OR Cabbage Channa Palya',
+      'Poori',
+      'Veg Kurma OR Channa Masala',
+      'Veg Pulao OR Menthyabath',
+      'Raitha',
+      'White Rice',
+      'Ghee',
+      'Drumstick Sambar OR Soppu Sambar',
+      'Mysore Rasam',
+      'Curd',
+      'Maddur Vada OR Onion Unde Pakoda',
+      'Sweet: Glass Sandwich',
+      'Beeda',
+      'Banana',
+      'Ice Cream',
+      'Drinking water (bottle)',
+    ],
+  },
+  {
+    id: 'pl_option_2',
+    name: 'Option 2',
+    tier: 'With a welcome drink',
+    scan: 'Biryani, paneer and two sweets',
+    fromPrice: 500,
+    minPax: 100,
+    diet: 'veg',
+    welcome: ['Welcome drink: Pulpy Grape Juice'],
+    items: [
+      'Shavige Sabbakki Banana Falooda Payasa',
+      'Salt',
+      'Pickle',
+      'Papad',
+      'Corn Dalimbe Kosambari OR Pineapple Corn Kosambari',
+      'Beans Sprouts Palya OR Babycorn Batani Palya',
+      'Tondekai Peanut Fry Palya OR Bhendi Pepper Fry',
+      'Rumali Rotti OR Soft Roti',
+      'Kadai Paneer OR Paneer Kolhapuri',
+      'Veg Mughalai Dum Biryani OR Dum Nawabi Biryani',
+      'Raitha',
+      'White Rice',
+      'Ghee',
+      'Aloo Brinjal Drumstick Sambar OR Mix Veg Kolambu',
+      'Mysore Rasam',
+      'Curd',
+      'Mirchi Bajji OR Veg Masala Vada',
+      'Sweet: Bele Holige with milk and ghee',
+      'Sweet: Kheer Kadam OR Bidar Paan',
+      'Beeda',
+      'Banana',
+      'Ice Cream',
+      'Drinking water (300 ml bottles)',
+    ],
+  },
+  {
+    id: 'pl_option_3',
+    name: 'Option 3',
+    tier: 'Welcome snacks and live dosa',
+    scan: 'Two starters, three sweets, 29 items',
+    fromPrice: 570,
+    minPax: 100,
+    diet: 'veg',
+    welcome: [
+      'Welcome drink: Pulpy Grape Juice, Watermelon Juice OR Mint Lime Cooler',
+      'Welcome snacks: Gold Coin OR Cheese Nuggets',
+    ],
+    items: [
+      'Adai Payasa OR Jackfruit Payasa (seasonal)',
+      'Salt',
+      'Pickle',
+      'Papad',
+      'Mix Fruits Kosambari OR Navilukosu Sprouts Kosambari',
+      'Congress Kosambari OR Grated Mix Veg Kosambari',
+      'Roasted Aloo with Gun Powder OR Gobi Batani Sukka',
+      'Raw Banana Pepper Dry OR Capsicum Matar Dry',
+      'Mango Gojju OR Nellikai Gojju',
+      'Neeru Dosa OR Masala Dosa',
+      'Coconut Chutney',
+      'Batoora OR Palak Rumali Roti OR Coin Parata',
+      'Channa Masala OR Paneer Butter Masala OR Kadai Veg',
+      'Pudina Pulao OR Ghee Rice OR Kotte Biryani',
+      'Raitha OR Kurma',
+      'White Rice',
+      'Ghee',
+      'Pappukoora OR Mango Dal OR Tamil Nadu style Sambar',
+      'Fried Chilly',
+      'Mysore Rasam OR Tomato Rasam',
+      'Curd',
+      'Paneer Sholey OR Paneer Malai Kebab OR Chilly Paneer',
+      'Babycorn Green Manchurian OR Veg Ball Ghee Roast OR Raw Banana Rawa Fry',
+      'Sweet: Pudi Peni with Rabadi OR Chiroti with Sweet Boondi and Badam Milk OR Special Holige with ghee',
+      'Sweet: Malpuva Roll OR Mango Malai Chap',
+      'Sweet Beeda OR Maghai Beeda',
+      'Banana',
+      'Hot Jamoon with Ice Cream',
+      'Drinking water (bottle)',
+    ],
+  },
+  {
+    id: 'pl_option_4',
+    name: 'Option 4',
+    tier: 'The full spread',
+    scan: 'Four sweets, live dosa, seasonal specials',
+    fromPrice: 620,
+    minPax: 100,
+    diet: 'veg',
+    welcome: [
+      'Welcome drink: Blueberry Milkshake OR Blue Lime Mojito OR Muskmelon Juice',
+      'Welcome snacks: Cheese Balls',
+    ],
+    items: [
+      'Shavige Litchi Payasa OR Tender Coconut Payasa',
+      'Salt',
+      'Papad',
+      'Pickle',
+      'Guava Pineapple Pomegranate Kosambari',
+      'Congress Carrot Kosambari',
+      'Arbi Chilly OR Lotus Stem Pepper Dry OR Babycorn Tilimili OR Divyalasu Tawa Fry (seasonal)',
+      'Dahi Kebab OR Babycorn Angara OR Veg Chaina Town OR Jackfruit Cutlet (seasonal)',
+      'Nellikai Gojju OR Capsicum Gojju OR Jackfruit Gojju (seasonal)',
+      'Veg Pepper Masala Dosa OR Paneer Masala Dosa',
+      'Coconut Chutney',
+      'Rawa Poori OR Triangle Parata OR White Holige',
+      'Kaju Matar Paneer OR Veg Kandahar OR Brinjal Ennegai',
+      'Mughlai Veg Kotte Biryani OR Corn Pudina Bath',
+      'Raitha',
+      'White Rice with ghee',
+      'Tomato Dal OR Arachuvitta Sambar',
+      'Fried Chilly',
+      'Mysore Rasam OR Pepper Rasam OR Madras Rasam',
+      'Curd',
+      'Sweet: Dates Holige OR Pumpkin Holige with ghee',
+      'Sweet: Dryfruit Kesar Peta Roll OR Gulkand Sandwich',
+      'Sweet: Karjoora Kali OR Coconut Kadam OR Kiwi Malai',
+      'Sweet: Pista Halwa OR Nendra Banana Jamoon',
+      'Sweet Beeda OR Magai Beeda',
+      'Banana OR Stick Fruit OR Fruit Bowl',
+      'Ice Cream (vanilla, pista or chilly guava)',
+      'Drinking water (bottle)',
+    ],
+  },
+]
+
+/**
+ * The buffet card — a different service from the plantain leaf.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THESE ARE NOT MORE OPTIONS ON THE LIST ABOVE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Plantain leaf and buffet are two different jobs. The leaf is served to
+ * seated guests in rows and the menu is a fixed sequence; a buffet is
+ * counters people walk to, and it is quoted by COURSE — soup, starter,
+ * bread, gravy, rice, sweet.
+ *
+ * A caterer often does one and not the other, and a family has usually
+ * decided which they want before they ring anybody. Merging the two
+ * lists would make a customer scroll past four menus that cannot happen
+ * at their function.
+ *
+ * ── Options 3 and 4 stay structured ─────────────────────────────────
+ * The caterer's card prints them as labelled courses rather than a
+ * numbered list, and that structure is information: "Starter" with three
+ * alternatives is a promise about how many starters arrive. Flattening
+ * it into thirty bullet points would lose that.
+ */
+export const BUFFET_MENUS = [
+  {
+    id: 'bf_option_1',
+    name: 'Buffet Option 1',
+    tier: 'Simple buffet',
+    scan: 'One gravy, one rice, two sweets',
+    fromPrice: 450,
+    minPax: 100,
+    diet: 'veg',
+    service: 'buffet',
+    welcome: [],
+    items: [
+      'Pulka OR Methi Chapathi OR Poori',
+      'Veg Kadai OR Haryali Mix Veg OR Channa Masala',
+      'Veg Pulao OR Ghee Rice',
+      'Raitha OR Dal Fry',
+      'Papad',
+      'Pickle',
+      'Green Salad',
+      'Babycorn Chilly OR Veg Ball Manchurian',
+      'Sweet: Kala Jamoon OR Malai Sandwich',
+      'Sweet: Jilebi OR Carrot Halwa',
+      'Banana',
+      'Ice Cream',
+      'Paan',
+      'Drinking water (bottle)',
+    ],
+  },
+  {
+    id: 'bf_option_2',
+    name: 'Buffet Option 2',
+    tier: 'Soup, two starters, biryani',
+    scan: 'Welcome drink and eighteen items',
+    fromPrice: 500,
+    minPax: 100,
+    diet: 'veg',
+    service: 'buffet',
+    welcome: ['Welcome drink: Fruit Punch OR Kokum Juice'],
+    items: [
+      'Soup: Manchow Soup with Fried Noodles OR Spinach Carrot Soup',
+      'Starter: Cheese Corn Balls OR French Fries',
+      'Starter: Veg Shangai Roll OR Babycorn Sathe',
+      'Batoora OR Butter Soft Roti OR Azwan Parata',
+      'Channa Masala OR Veg Jodhpuri Masala OR Kadai Paneer',
+      'Veg Kolhapuri OR Veg Kandahar OR Capsicum Matar Masala',
+      'Veg Hyderabadi Dum Biryani OR Palak Dum Veg Biryani',
+      'Raitha',
+      'Dal Fry OR Dal Makhani',
+      'Papad',
+      'Pickle',
+      'Green Salad, Russian Salad',
+      'Sweet: Glass Sandwich OR Peta Roll OR Moongdal Halwa',
+      'Sweet: Champakali OR Angoor Rasmalai OR Raj Bhogh',
+      'Banana',
+      'Ice Cream',
+      'Beeda',
+      'Drinking water (300 ml bottle)',
+    ],
+  },
+  {
+    id: 'bf_option_3',
+    name: 'Buffet Option 3',
+    tier: 'Twelve courses',
+    scan: 'Live dosa, biryani, two sweets',
+    fromPrice: 570,
+    minPax: 100,
+    diet: 'veg',
+    service: 'buffet',
+    welcome: [
+      'Welcome drink: Tatilingu Milkshake OR Litchi Milkshake OR Pudina Lime Juice',
+      'Welcome snacks: Harabara Kebab',
+    ],
+    courses: [
+      { course: 'Soup',    of: ['Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup'] },
+      { course: 'Starter', of: ['Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry',
+                                'Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka'] },
+      { course: 'Bread',   of: ['Rawa Poori OR Beetroot Poori', 'Coin Parata OR Butter Roti'] },
+      { course: 'Gravy',   of: ['Kadai Paneer', 'Channa Masala', 'Dal Thadka'] },
+      { course: 'Dosa',    of: ['Ghee Masala Dosa OR Pudi Masala Dosa', 'Coconut Chutney'] },
+      { course: 'Rice',    of: ['Veg Hyderabadi Dum Biryani OR Peas Pulao', 'Raitha', 'White Rice',
+                                'Mysore Rasam / Pepper Rasam / Chennai Rasam', 'Curd Rice'] },
+      { course: 'Salad',   of: ['Green Salad / Corn Salad / Mix Sprouts Salad', 'Papad & Pickle'] },
+      { course: 'Sweet',   of: ['Hot Jilebi with Rabdi OR Grapes Jilebi',
+                                'Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll'] },
+      { course: 'Fruit',   of: ['Banana'] },
+      { course: 'Dessert', of: ['Carrot Halwa with Ice Cream'] },
+      { course: 'Paan',    of: ['Paan'] },
+      { course: 'Drink',   of: ['Drinking water (300 ml bottle)'] },
+    ],
+  },
+  {
+    id: 'bf_option_4',
+    name: 'Buffet Option 4',
+    tier: 'The full buffet',
+    scan: 'Three starters, three gravies, four sweets',
+    fromPrice: 620,
+    minPax: 100,
+    diet: 'veg',
+    service: 'buffet',
+    welcome: [
+      'Welcome drink: Popcorn Caramel Milkshake OR Nariyal Punch OR Pineapple Shikanji OR Rose Milkshake',
+      'Welcome snacks: Veg Bullets OR Babycorn Stick, Monaco Stuffed Biscuits OR Fried Almond & Cashew',
+    ],
+    courses: [
+      { course: 'Soup',    of: ['Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup OR Almond Soup'] },
+      { course: 'Starter', of: ['Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry',
+                                'Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka OR Cheese Finger'] },
+      { course: 'Bread',   of: ['Rawa Poori OR Beetroot Poori OR Methi Chapathi',
+                                'Coin Parata OR Butter Roti OR Lacha Parata'] },
+      { course: 'Gravy',   of: ['Channa Masala OR Veg Kurma OR Veg Jaal Freez',
+                                'Paneer Tikka Masala OR Suneri Masala OR Veg Milon Hundy',
+                                'Dal Thadka OR Masoor Dal Thadka OR Palak Dal'] },
+      { course: 'Dosa',    of: ['Ghee Masala Dosa OR Pudi Masala Dosa', 'Coconut Chutney'] },
+      { course: 'Rice',    of: ['Veg Hyderabadi Dum Biryani OR Peas Pulao OR Fried Rice',
+                                'Raitha OR Hot Garlic Sauce', 'White Rice',
+                                'Mysore Rasam / Pepper Rasam / Chennai Rasam', 'Curd Rice'] },
+      { course: 'Salad',   of: ['Green Salad / Corn Salad / Mix Sprouts Salad', 'Papad & Pickle'] },
+      { course: 'Sweet',   of: ['Crispy Jilebi with Rabdi OR Grapes Jilebi with Rabdi',
+                                'Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll',
+                                'Strawberry Prem Bhog / Rose Chum Chum / Badam Bhog'] },
+      { course: 'Fruit',   of: ['Banana / Cut Fruits / Stick Fruits'] },
+      { course: 'Dessert', of: ['Carrot Halwa with Ice Cream OR Ice Cream with Chocolate Sauce'] },
+      { course: 'Paan',    of: ['Magai Paan OR Sweet Beeda'] },
+      { course: 'Drink',   of: ['Drinking water (300 ml bottle)'] },
+    ],
+  },
+]
+
+/**
+ * Beegara Oota — the in-laws' feast.
+ *
+ * ⚠ CHECK THIS NAME WITH THE CEO.
+ *
+ * Asked for as "bigger oota" in a voice note, which is almost certainly
+ * ಬೀಗರ ಊಟ — the ceremonial meal a Karnataka family serves the beegaru,
+ * the in-laws' party. It is the most watched meal of the wedding and it
+ * is judged item by item, which is exactly why it is quoted separately
+ * from the ordinary reception lunch.
+ *
+ * It is transcribed here as a distinct menu rather than folded into the
+ * options above because a caterer who does not do it should not be sent
+ * one, and a family asking for it will not accept a substitute. If the
+ * intended term was something else, the id and name change and nothing
+ * else does.
+ *
+ * The dishes are the traditional core of the meal. They are NOT from the
+ * S S Caterers card — that card has no Beegara Oota page — so this list
+ * is a starting point for a caterer to edit rather than a quotation.
+ */
+export const BEEGARA_OOTA = {
+  id: 'beegara_oota',
+  name: 'Beegara Oota',
+  tier: 'The in-laws’ feast',
+  scan: 'Traditional, served on the leaf, judged item by item',
+  fromPrice: 650,
+  minPax: 50,
+  diet: 'veg',
+  needsReview: true,
+  welcome: ['Welcome drink: Panaka OR Majjige'],
+  items: [
+    'Obbattu / Holige with ghee',
+    'Paal Payasa OR Shavige Payasa',
+    'Kosambari (hesarubele and kadlebele)',
+    'Salt, Pickle, Papad',
+    'Two Palya (seasonal vegetables)',
+    'Gojju',
+    'Chitranna OR Puliyogare',
+    'Poori OR Chapathi',
+    'Saagu OR Kurma',
+    'Bisi Bele Bath',
+    'White Rice with ghee',
+    'Tovve OR Bele Saaru',
+    'Huli (sambar)',
+    'Majjige Huli',
+    'Rasam',
+    'Curd rice',
+    'Ambode OR Bonda',
+    'Kharabath OR Uppittu',
+    'Banana',
+    'Beeda',
+    'Drinking water',
+  ],
+}
+
+/**
+ * Counters, priced per guest and added on top of a menu.
+ *
+ * Named by the CEO: cut fruit, ice cream, beeda, kids and waffles. These
+ * are the ones that actually get asked for in Bengaluru; the list is
+ * short on purpose, because a counter nobody books is a tick box between
+ * a partner and finishing this form.
+ */
+export const FOOD_COUNTERS = [
+  { id: 'cut_fruit',  name: 'Cut fruit counter',  fromPrice: 60,  scan: 'Seasonal fruit, cut to order' },
+  { id: 'ice_cream',  name: 'Ice cream counter',  fromPrice: 70,  scan: 'Scooped live, two or three flavours' },
+  { id: 'beeda',      name: 'Beeda counter',      fromPrice: 40,  scan: 'Made at the counter after the meal' },
+  { id: 'kids',       name: 'Kids counter',       fromPrice: 120, scan: 'Fries, nuggets, pasta, mocktails' },
+  { id: 'waffles',    name: 'Waffle counter',     fromPrice: 110, scan: 'Made to order, with toppings' },
+  { id: 'chaat',      name: 'Chaat counter',      fromPrice: 90,  scan: 'Pani puri, sev puri, dahi puri' },
+  { id: 'dosa',       name: 'Live dosa counter',  fromPrice: 100, scan: 'Plain, masala and set dosa' },
+]
+
+/**
+ * Non-vegetarian menus.
+ *
+ * ⚠ THESE PRICES ARE NOT FROM A CATERER'S CARD.
+ *
+ * The source document is a PURE VEG caterer — it says so on the cover —
+ * so there is no non-veg page to transcribe. These are indicative
+ * Bengaluru market rates for 2026, set at roughly 1.4× the equivalent
+ * vegetarian tier, which is the ratio the trade generally works to.
+ *
+ * They are marked `indicative: true` and the form shows a partner the
+ * "or type your own" box open by default on these, because the honest
+ * position is that we are guessing and they are not.
+ */
+export const NON_VEG_MENUS = [
+  {
+    id: 'nv_option_1',
+    name: 'Non-veg Option 1',
+    tier: 'Everyday feast',
+    scan: 'One non-veg main with the full veg spread',
+    fromPrice: 630,
+    minPax: 100,
+    diet: 'nonveg',
+    indicative: true,
+    welcome: [],
+    items: [
+      'Chicken Kabab OR Fish Fry',
+      'Chicken Curry OR Mutton Curry',
+      'Egg Masala',
+      'Everything on the vegetarian Option 1 menu',
+    ],
+  },
+  {
+    id: 'nv_option_2',
+    name: 'Non-veg Option 2',
+    tier: 'With biryani',
+    scan: 'Biryani, two starters, the veg spread',
+    fromPrice: 720,
+    minPax: 100,
+    diet: 'nonveg',
+    indicative: true,
+    welcome: ['Welcome drink: Pulpy Grape Juice'],
+    items: [
+      'Chicken 65 OR Chilly Chicken',
+      'Fish Tawa Fry OR Prawn Ghee Roast',
+      'Chicken Dum Biryani OR Mutton Biryani',
+      'Chicken Kolhapuri OR Mutton Sukka',
+      'Everything on the vegetarian Option 2 menu',
+    ],
+  },
+  {
+    id: 'nv_option_3',
+    name: 'Non-veg Option 3',
+    tier: 'The full spread',
+    scan: 'Three non-veg starters, two mains, live counter',
+    fromPrice: 850,
+    minPax: 100,
+    diet: 'nonveg',
+    indicative: true,
+    welcome: [
+      'Welcome drink: Watermelon Juice OR Mint Lime Cooler',
+      'Welcome snacks: Chicken Nuggets OR Fish Fingers',
+    ],
+    items: [
+      'Chicken Tikka OR Tandoori Chicken',
+      'Fish Amritsari OR Prawn Koliwada',
+      'Mutton Seekh Kabab',
+      'Chicken Dum Biryani OR Mutton Dum Biryani',
+      'Butter Chicken OR Chicken Chettinad',
+      'Mutton Rogan Josh OR Nati Koli Saaru',
+      'Everything on the vegetarian Option 3 menu',
+    ],
+  },
+]
+
+/* The caterer's own terms, shown wherever a price is. Reproduced rather
+   than paraphrased: "the host arranges the shamiana" is the sort of line
+   that decides an argument, and a paraphrase would not. */
+export const CATERING_NOTES = [
+  'GST 5% extra',
+  'The quoted rate includes food, service, cleaning and transportation',
+  'Serving tables, chairs, hand wash and shamiana are arranged by the host',
+  'Additional consumption of food is charged extra',
+  'Minimum 100 guests for these rates',
+]
+
+/* How a menu reaches the guest. A caterer usually does one of these
+   well and the other reluctantly, so it is asked before the menus are
+   shown -- there is no point offering four buffet cards to somebody who
+   only serves on the leaf. */
+export const SERVICE_STYLES = [
+  { id: 'leaf',   label: 'Plantain leaf', scan: 'Seated, served in rows' },
+  { id: 'buffet', label: 'Buffet',        scan: 'Counters, guests walk up' },
+]
+
+export const ALL_MENUS = [
+  ...PLANTAIN_LEAF_MENUS,
+  ...BUFFET_MENUS,
+  BEEGARA_OOTA,
+  ...NON_VEG_MENUS,
+]
+
+export const MENU_BY_ID = Object.fromEntries(ALL_MENUS.map(m => [m.id, m]))
+
+/**
+ * Which set menus to show a caterer.
+ *
+ * Filtered by BOTH the cuisines they cook and how they serve, because
+ * those are two independent facts and either one alone shows the wrong
+ * cards. A pure-veg Brahmin kitchen that only serves on the leaf should
+ * see four menus, not twelve — and the eight it does not see are eight
+ * fewer chances to tick something they cannot honour.
+ *
+ * `serves` comes straight from the "How do you serve?" answer in
+ * partnerSpecs, so nothing extra is asked to make this work.
+ */
+export function menusFor({ cuisines = [], serves = [] } = {}) {
+  const byCuisine = new Set()
+
+  for (const c of cuisines) {
+    switch (c) {
+      case 'south_brahmin':
+        /* Pure veg only. A Brahmin-style kitchen being offered a non-veg
+           menu to tick is exactly the nonsense option this rebuild
+           exists to remove. */
+        for (const m of [...PLANTAIN_LEAF_MENUS, BEEGARA_OOTA]) byCuisine.add(m)
+        break
+      case 'jain':
+        for (const m of PLANTAIN_LEAF_MENUS) byCuisine.add(m)
+        break
+      case 'south_general':
+        for (const m of [...PLANTAIN_LEAF_MENUS, ...BUFFET_MENUS, BEEGARA_OOTA, ...NON_VEG_MENUS]) byCuisine.add(m)
+        break
+      case 'north': case 'punjabi': case 'mughlai': case 'continental': case 'chinese':
+        /* The buffet card is the North Indian one -- soup, starter,
+           bread, gravy. Offering a plantain-leaf menu to a tandoor
+           kitchen would be offering them a service they do not run. */
+        for (const m of [...BUFFET_MENUS, ...NON_VEG_MENUS]) byCuisine.add(m)
+        break
+      default:
+        for (const m of ALL_MENUS) byCuisine.add(m)
+    }
+  }
+
+  let list = cuisines.length ? [...byCuisine] : [...ALL_MENUS]
+
+  /* How they serve. `banana_leaf` and `buffet` are the two that map onto
+     a menu card; `plated` and `live_counter` are add-ons to either, so
+     they narrow nothing. */
+  const wantsLeaf = serves.includes('banana_leaf')
+  const wantsBuffet = serves.includes('buffet')
+  if (wantsLeaf !== wantsBuffet) {
+    list = list.filter(m => (wantsBuffet ? m.service === 'buffet' : m.service !== 'buffet'))
+  }
+
+  return list
+}
+
+/** Kept for callers that only know the cuisine. */
+export function menusForCuisine(cuisineId) {
+  return menusFor({ cuisines: [cuisineId] })
+}

@@ -6,7 +6,7 @@ import {
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
-import AddFromCatalogue from './AddFromCatalogue'
+import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
 
@@ -154,8 +154,12 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         canClaim={services.some(s => s.category === VENUE_TRADE)}
       />
 
+      {/* The full-screen add journey. Replaces AddFromCatalogue, which
+          was a flat list of names and a price box -- it asked a caterer
+          for exactly as much as it asked a balloon supplier, and a
+          caterer's listing is not a name and a number. See AddItemFlow. */}
       {picking && (
-        <AddFromCatalogue
+        <AddItemFlow
           existing={services}
           onAdd={onAdd}
           onClose={() => setPicking(false)}

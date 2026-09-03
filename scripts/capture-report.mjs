@@ -393,6 +393,54 @@ try {
     })()`],
     wait: 2500, note: 'cuisines, kitchen and service style -- picked, never typed' })
 
+  /* ══════════════════════════════════════════════════════════════════
+     THE ADD-ITEM JOURNEY, DRIVEN THE WAY A PARTNER DRIVES IT
+     ══════════════════════════════════════════════════════════════════
+
+     Seven screens replacing a flat list of names and a price box. Each is
+     photographed because the whole point of the rebuild is how it looks
+     and how it flows, and neither is provable from a build log.
+
+     Driven by clicking real buttons found by their text, ONE ACTION PER
+     STEP. The first cut clicked an offering and then looked for Continue
+     in the same expression; React had not re-enabled it yet, so the click
+     landed on a disabled button and four captures sat one screen behind
+     while reporting success. */
+  await shot('18a-add-trade', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`], wait: 2200,
+    note: 'step 1 - 24 trades, searchable, one card each' })
+
+  await shot('18b-add-offerings', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`], wait: 2000,
+    note: 'step 2 - what inside Catering & Food' })
+
+  await shot('18c-add-cuisines', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['South Indian — everyday','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`], wait: 2200,
+    note: 'step 3 - cuisines, kitchen, how you serve, minimum order' })
+
+  /* The screen this change exists for: S S Caterers' real plantain-leaf
+     menus, opened so every dish is readable. */
+  await shot('18d-add-menus', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['South Indian — everyday','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Read all'));if(!b)return 'NO MENU CARD';b.click();return 'menu open'})()`],
+    wait: 2600, note: 'step 4 - real menus, every dish, select all' })
+
+  /* 584 dishes across 27 groups, opened on Palya -- the biggest, and the
+     one that proves the folding is doing real work. */
+  await shot('18e-add-dishes', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['South Indian — everyday','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Palya'));if(!b)return 'NO PALYA';b.click();return 'palya open'})()`],
+    wait: 2600, note: 'step 5 - the a la carte library, folded' })
+
+  /* And the end of it: what is about to be submitted, and for review. */
+  await shot('18f-add-review', {
+    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['South Indian — everyday','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`],
+    wait: 2600, note: 'step 7 - check and submit for review' })
+
   /* ── A tab tapped before there is an account ───────────────────────
 
      The bar is on the landing now, which is only an improvement if the
