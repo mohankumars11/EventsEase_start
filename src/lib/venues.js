@@ -71,22 +71,34 @@ export async function myVenues(vendorId) {
 /**
  * Type-ahead over venues nobody manages yet.
  *
- * Only `unclaimed`. A claimed venue belongs to somebody, and offering it
- * in a search box invites a second manager to try — which the partial
- * unique index would refuse, but only after they had typed their whole
- * business into a form.
+ * A claimed venue is never offered. It belongs to somebody, and putting
+ * it in a search box invites a second manager to try — which
+ * `uq_venue_one_owner` would refuse, but only after they had typed their
+ * whole business into a form.
  */
 export async function searchUnclaimed(term) {
   const q = String(term ?? '').trim()
   if (q.length < 2) return []
+  /* Unclaimed, OR a pending one nobody owns.
+   *
+   * The second case exists because of a real row: "TTD kalyana" was
+   * proposed by a partner, its venue_managers insert failed silently, and
+   * the venue became invisible to everybody -- including the person who
+   * had just added it, because this search only looked at 'unclaimed'.
+   *
+   * 100 makes that failure impossible going forward. This makes the row
+   * it already produced reachable, so whoever added it finds it by typing
+   * its name instead of adding it a second time. */
   const { data, error } = await supabase
     .from('venues')
-    .select('id, name, venue_kind, area_label, pincode')
-    .eq('status', 'unclaimed')
+    .select('id, name, venue_kind, area_label, pincode, status, managers:venue_managers(id)')
+    .in('status', ['unclaimed', 'pending_review'])
     .ilike('name', `%${q}%`)
-    .limit(12)
+    .limit(20)
   if (error) throw error
-  return data ?? []
+  return (data ?? [])
+    .filter(v => v.status === 'unclaimed' || !(v.managers ?? []).length)
+    .slice(0, 12)
 }
 
 /**
@@ -127,35 +139,38 @@ export async function claimVenue(vendorId, venueId) {
  * mess the dropdown exists to prevent.
  */
 export async function proposeVenue(vendorId, { name, venue_kind, area_label, pincode, address_line, lat, lng }) {
-  const { data, error } = await supabase
-    .from('venues')
-    .insert({
-      name: String(name).trim(),
-      venue_kind, area_label, pincode: pincode || null,
-      address_line: address_line || null,
-      /* Plain numbers; the trigger in 094 builds the geography from them.
-         A venue with no position never appears in any search, so the pin
-         is not optional decoration. */
-      lat: lat ?? null, lng: lng ?? null,
-      source: 'partner', status: 'pending_review',
-    })
-    .select('id')
-    .single()
+  /* One RPC, one transaction.
+   *
+   * This was two inserts from the browser -- the venue, then the claim --
+   * and the second one's error was never checked. It failed on a live
+   * account and the app said "Sent for checking" anyway, leaving a venue
+   * nobody owned and a manager who believed they had listed it.
+   *
+   * Checking that error would have surfaced the bug. It would not have
+   * prevented it: a phone that loses signal between two requests produces
+   * the same orphan, and no amount of client error handling makes two
+   * statements atomic. See migration 100. */
+  const { data, error } = await supabase.rpc('propose_venue', {
+    p_vendor_id: vendorId,
+    p_name: name,
+    p_venue_kind: venue_kind,
+    p_area_label: area_label || null,
+    p_pincode: pincode || null,
+    p_address_line: address_line || null,
+    p_lat: lat ?? null,
+    p_lng: lng ?? null,
+  })
 
   if (error) {
     if (error.code === '23505') {
       throw new Error('This venue is already on Sambramo. Search for it by name above.')
     }
+    if (/not your business/i.test(error.message)) {
+      throw new Error('We could not tell which business this is for. Reopen the app and try again.')
+    }
     throw error
   }
-
-  /* Proposing is claiming. The row is theirs the moment an operator
-     approves it, and making them come back to claim it afterwards is a
-     step that exists only because we built two tables. */
-  await supabase.from('venue_managers')
-    .insert({ vendor_id: vendorId, venue_id: data.id, role: 'OWNER' })
-
-  return data.id
+  return data
 }
 
 export async function saveSpace(space) {
