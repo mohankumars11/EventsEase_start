@@ -67,6 +67,22 @@ export const SPECS_BY_TRADE = {
      a per-plate rate that hid the groceries. */
   'Catering & Food': [
     {
+      id: 'diet',
+      /* Asked first, and on its own, because it decides everything
+         after it. A pure-vegetarian kitchen and a kitchen running a
+         tandoor are different businesses with different menus, and
+         asking about cuisines before this produces a caterer ticking
+         Punjabi who cannot cook a single dish on that card. */
+      question: 'Do you cook vegetarian, non-vegetarian, or both?',
+      hint: 'This decides which menus we show you next.',
+      type: 'one',
+      choices: [
+        { id: 'veg',     label: 'Vegetarian only' },
+        { id: 'nonveg',  label: 'Non-vegetarian only' },
+        { id: 'both',    label: 'Both' },
+      ],
+    },
+    {
       id: 'cuisines',
       question: 'Which cuisines can you cook?',
       hint: 'Tick everything you do well. This is what we match you on.',
@@ -106,17 +122,6 @@ export const SPECS_BY_TRADE = {
         { id: 'banana_leaf',  label: 'Sit-down banana leaf' },
         { id: 'plated',       label: 'Plated table service' },
         { id: 'live_counter', label: 'Live counters',  scan: 'Dosa, chaat, pasta' },
-      ],
-    },
-    {
-      id: 'min_plates',
-      question: 'Smallest order you will take',
-      type: 'one',
-      choices: [
-        { id: '25',  label: 'Up to 25 plates', scan: 'Small pooja, house function' },
-        { id: '50',  label: '50 plates' },
-        { id: '100', label: '100 plates' },
-        { id: '200', label: '200 plates or more', scan: 'Weddings only' },
       ],
     },
   ],

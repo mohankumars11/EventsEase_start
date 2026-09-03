@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, Check, X,
-  ChevronUp, ChevronDown, Clock, AlertCircle,
+  ChevronUp, ChevronDown, Clock, AlertCircle, Sparkles,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
@@ -9,6 +9,7 @@ import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
+import ReviewBanner, { ReviewPill } from './ReviewBanner'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
@@ -32,38 +33,12 @@ const VENUE_TRADE = TRADE_FOR_SERVICE.venue
  * against.
  */
 
-/**
- * First-item suggestions, keyed by the categories VendorOnboarding offers.
- *
- * An empty list with a lone "Add item" button is where vendor onboarding dies:
- * the vendor has to invent the shape of the answer before giving one. Three
- * real examples from their own trade turns a blank page into a pick.
- */
-const STARTERS = {
-  'Catering & Food':      [{ name: 'Veg buffet',        unit: 'per plate' }, { name: 'Non-veg buffet',    unit: 'per plate' }, { name: 'Live chaat counter', unit: 'per event' }],
-  'Photography':          [{ name: 'Half-day coverage', unit: 'per event' }, { name: 'Full-day coverage', unit: 'per event' }, { name: 'Candid add-on',      unit: 'per hour'  }],
-  'Videography':          [{ name: 'Event film',        unit: 'per event' }, { name: 'Highlight reel',    unit: 'per event' }, { name: 'Drone coverage',     unit: 'per hour'  }],
-  'Decoration & Floral':  [{ name: 'Balloon arch',      unit: 'per set'   }, { name: 'Stage backdrop',    unit: 'per event' }, { name: 'Floral centrepiece', unit: 'per piece' }],
-  'Venue':                [{ name: 'Hall booking',      unit: 'per day'   }, { name: 'Lawn booking',      unit: 'per day'   }, { name: 'Extra hours',        unit: 'per hour'  }],
-  'DJ & Music':           [{ name: 'DJ with setup',     unit: 'per event' }, { name: 'Extra hours',       unit: 'per hour'  }, { name: 'Dance floor lights', unit: 'per event' }],
-  'Cake & Desserts':      [{ name: 'Custom cake',       unit: 'per kg'    }, { name: 'Cupcakes',          unit: 'per piece' }, { name: 'Dessert table',      unit: 'per event' }],
-  'Bridal Makeup & Hair': [{ name: 'Bridal makeup',     unit: 'per event' }, { name: 'Guest makeup',      unit: 'per person'}, { name: 'Hair styling',       unit: 'per person'}],
-  'Mehendi Artist':       [{ name: 'Bridal mehendi',    unit: 'per event' }, { name: 'Guest mehendi',     unit: 'per person'}, { name: 'Simple hands',       unit: 'per person'}],
-  'Tent & Furniture':     [{ name: 'Chairs',            unit: 'per piece' }, { name: 'Round tables',      unit: 'per piece' }, { name: 'Shamiana / pandal',  unit: 'per event' }],
-}
-
-const DEFAULT_STARTERS = [
-  { name: 'Standard package', unit: 'per event' },
-  { name: 'Premium package',  unit: 'per event' },
-  { name: 'Hourly rate',      unit: 'per hour'  },
-]
-
 const BLANK = {
   name: '', category: '', description: '',
   price: '', unit: 'per event', min_quantity: 1, lead_time_days: '',
 }
 
-export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove }) {
+export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar }) {
   /* The catalogue picker replaces the free-text add. See
      AddFromCatalogue and data/partnerCatalogue for why. */
   const [picking, setPicking] = useState(false)
@@ -74,7 +49,10 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
   const [editing, setEditing] = useState(null)
   const [busyId,  setBusyId]  = useState(null)
 
-  const starters = STARTERS[vendor?.category] ?? DEFAULT_STARTERS
+  /* STARTERS and DEFAULT_STARTERS are gone with the old empty state.
+     They offered three free-text suggestions per category -- exactly the
+     typed names AddFromCatalogue was built to end, and they would have
+     produced rows dispatch could not match. */
 
   async function guard(id, fn) {
     setBusyId(id)
@@ -125,7 +103,7 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           <h2 className="text-lg font-display font-bold text-gray-900">What you offer</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {services.length === 0
-              ? 'Your list is what our coordinators quote from. Nothing here yet.'
+              ? 'What you list is what you get offered.'
               : `${activeCount} live${services.length !== activeCount ? ` · ${services.length - activeCount} hidden` : ''}`}
           </p>
         </div>
@@ -135,6 +113,17 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           </button>
         )}
       </header>
+
+      {/* ── Where a new listing actually is ───────────────────────────
+          Submitting and hearing nothing is where a partner loses
+          interest, and it is a gap we create. This says what is
+          happening and hands them the one thing worth doing meanwhile.
+          See ReviewBanner. */}
+      <ReviewBanner
+        count={services.filter(s => s.review_status === 'under_review').length}
+        rejected={services.filter(s => s.review_status === 'rejected').length}
+        onOpenCalendar={onOpenCalendar}
+      />
 
       {/* ── The venue, for the partners who are one ──────────────────
           For a decorator "your listing" is a price list. For a venue
@@ -175,23 +164,62 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         />
       )}
 
+      {/* ══════════════════════════════════════════════════════════════
+          AN EMPTY LISTING IS THE MOST IMPORTANT SCREEN IN THE APP
+          ══════════════════════════════════════════════════════════════
+
+          A partner reaches it once, in the first two minutes, having just
+          signed up on somebody's word that this is worth their time. What
+          was here was a grey clipboard and "Nothing here yet" -- true, and
+          an invitation to close the app.
+
+          So it does one job: make the next tap obvious and make it worth
+          taking. The number is real -- it is the same figure the partner
+          landing page quotes and it comes from actual accepted lines --
+          because an invented one is the fastest way to lose somebody who
+          later finds out.
+
+          Three reasons, not ten. Somebody deciding whether to spend ten
+          minutes on a form does not read ten. */}
       {services.length === 0 && !editing && (
-        <div className="card p-6 sm:p-8 text-center">
-          <div className="text-3xl mb-3">🗒️</div>
-          <h3 className="font-display font-bold text-gray-900">Start with what you sell most</h3>
-          <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-            Three or four items is plenty to begin with. You can price them now or
-            leave a price blank and quote per enquiry.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
-            {starters.map(s => (
-              <button
-                key={s.name}
-                onClick={() => setEditing({ ...BLANK, ...s, category: vendor?.category ?? '' })}
-                className="text-xs font-semibold px-3 py-2 rounded-xl border border-plum-200 text-plum-700 bg-plum-50 hover:bg-plum-100 transition-colors"
-              >
-                + {s.name}
-              </button>
+        <div className="overflow-hidden rounded-[24px] bg-plum-950 text-white">
+          <div className="p-5 sm:p-6">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-plum-950">
+              <Sparkles size={12} /> Your listing is empty
+            </span>
+
+            <h3 className="mt-3 font-display text-[24px] font-extrabold leading-tight">
+              Nobody can book what they cannot see
+            </h3>
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/70">
+              A typical job on Sambramo pays ₹6,587. Every one of them goes
+              to a partner whose listing says they can do it — and right now
+              yours says nothing at all.
+            </p>
+
+            <button
+              onClick={() => setPicking(true)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
+            >
+              <Plus size={17} /> Add what you do
+            </button>
+            <p className="mt-1.5 text-center text-[11.5px] text-white/50">
+              Ten minutes. Nothing is charged, ever.
+            </p>
+          </div>
+
+          <div className="border-t border-white/10 bg-white/[0.05] px-5 py-4 sm:px-6">
+            {[
+              ['Pick, never type', 'Everything comes from a list, so your listing cannot be missed because of a spelling.'],
+              ['Say exactly what you do', 'Cuisines, menus, dishes — the more you say, the closer the jobs match.'],
+              ['You choose every job', 'Nothing is booked over your head. Decline anything, with no penalty.'],
+            ].map(([t, d]) => (
+              <div key={t} className="flex gap-2.5 py-1.5">
+                <Check size={14} className="mt-0.5 shrink-0 text-saffron-400" />
+                <p className="text-[12.5px] leading-snug text-white/75">
+                  <span className="font-extrabold text-white">{t}. </span>{d}
+                </p>
+              </div>
             ))}
           </div>
         </div>
@@ -232,6 +260,10 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-gray-900 text-sm">{s.name}</span>
+                    {/* Which of the eleven rows can actually bring work.
+                        A partner scanning their list should see that at
+                        a glance rather than assuming everything is on. */}
+                    {'review_status' in s && <ReviewPill status={s.review_status} />}
                     {!s.is_active && (
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
                         Hidden

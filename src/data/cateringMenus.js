@@ -414,6 +414,78 @@ export const BEEGARA_OOTA = {
 }
 
 /**
+ * Beegara Oota, the non-vegetarian one.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY IT IS A SEPARATE MENU AND NOT A FLAG
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The vegetarian beegara oota above is a Brahmin-tradition meal. The
+ * non-vegetarian one is a different meal from a different set of
+ * communities — Vokkaliga and Lingayat families across Mandya, Mysuru and
+ * the old Mysore districts — and it is not "the veg menu plus chicken".
+ * The structure changes: the meal is built around ragi mudde and a meat
+ * saaru, and the payasa that opens a Brahmin oota is served at the end
+ * here, if at all.
+ *
+ * Marking one menu "non-veg: true" would have produced a card listing
+ * obbattu and holige alongside nati koli saaru, which is not a meal
+ * anybody in Mandya has ever eaten.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHERE THIS CAME FROM, AND WHAT THAT MEANS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * NOT from the S S Caterers card — that is a pure-veg house and says so
+ * on its cover. This is the traditional structure of the meal as it is
+ * served in the region, assembled from what the tradition actually is
+ * rather than from any one caterer's quotation.
+ *
+ * So it carries `needsReview` and the app shows a caterer a line saying
+ * so. The dishes are a starting point they edit into their own; the
+ * price is indicative. Presenting it as a quotation would be inventing a
+ * caterer's menu for them, which is the one thing this whole file is
+ * careful not to do.
+ */
+export const BEEGARA_OOTA_NONVEG = {
+  id: 'beegara_oota_nonveg',
+  name: 'Beegara Oota — non-veg',
+  tier: 'The in-laws\' feast, Mandya style',
+  scan: 'Ragi mudde, nati koli saaru, served on the leaf',
+  fromPrice: 850,
+  minPax: 50,
+  diet: 'nonveg',
+  needsReview: true,
+  indicative: true,
+  welcome: ['Welcome drink: Majjige OR Panaka'],
+  items: [
+    'Kosambari',
+    'Salt, Pickle, Papad',
+    'Palya (seasonal vegetable)',
+    'Ragi Mudde',
+    'Nati Koli Saaru',
+    'Nati Koli Fry OR Chicken Sukka',
+    'Kuri (mutton) Saaru',
+    'Kuri Fry OR Mutton Chops',
+    'Boti Palya',
+    'Motte Saaru (egg curry)',
+    'Akki Rotti OR Jolada Rotti',
+    'Chapathi',
+    'White Rice',
+    'Bassaru OR Kaalu Saaru',
+    'Tovve',
+    'Majjige (buttermilk)',
+    'Curd rice',
+    'Obbattu OR Holige',
+    'Payasa',
+    'Banana',
+    'Beeda',
+    'Drinking water',
+  ],
+}
+
+
+/**
  * Counters, priced per guest and added on top of a menu.
  *
  * Named by the CEO: cut fruit, ice cream, beeda, kids and waffles. These
@@ -509,6 +581,9 @@ export const NON_VEG_MENUS = [
 /* The caterer's own terms, shown wherever a price is. Reproduced rather
    than paraphrased: "the host arranges the shamiana" is the sort of line
    that decides an argument, and a paraphrase would not. */
+/* The caterer's standing terms. The minimum-order line that used to sit
+   here is gone: it is a fact about THIS caterer, asked once in their own
+   words at the end of the flow, not a rule printed on every card. */
 export const CATERING_NOTES = [
   'GST 5% extra',
   'The quoted rate includes food, service, cleaning and transportation',
@@ -547,7 +622,7 @@ export const MENU_BY_ID = Object.fromEntries(ALL_MENUS.map(m => [m.id, m]))
  * `serves` comes straight from the "How do you serve?" answer in
  * partnerSpecs, so nothing extra is asked to make this work.
  */
-export function menusFor({ cuisines = [], serves = [] } = {}) {
+export function menusFor({ cuisines = [], serves = [], diet = null } = {}) {
   const byCuisine = new Set()
 
   for (const c of cuisines) {
@@ -585,6 +660,14 @@ export function menusFor({ cuisines = [], serves = [] } = {}) {
   if (wantsLeaf !== wantsBuffet) {
     list = list.filter(m => (wantsBuffet ? m.service === 'buffet' : m.service !== 'buffet'))
   }
+
+  /* The first question on the catering form, and the one that decides
+     the most. A pure-veg kitchen must never be shown a non-veg card to
+     tick, and a non-veg-only house does not want four vegetarian menus
+     in front of it. 'both' narrows nothing, which is the right answer
+     for most caterers in this market. */
+  if (diet === 'veg')    list = list.filter(m => m.diet !== 'nonveg')
+  if (diet === 'nonveg') list = list.filter(m => m.diet === 'nonveg')
 
   return list
 }

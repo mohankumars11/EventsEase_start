@@ -353,6 +353,20 @@ export default function VendorDashboard() {
             unverified one is not in the dispatch pool (match_partners
             filters on is_verified), so an inbox for them would be a
             permanently empty box with a promise in it. */}
+        {/* Why the jobs tab is empty, when it is empty for a reason.
+            A partner whose only listings are under review sees "no jobs
+            right now" and concludes the platform has none -- rather than
+            that theirs has not been switched on yet. */}
+        {tab === 'offers' && services.length > 0
+          && services.every(s => s.review_status === 'under_review') && (
+          <div className="mb-4 rounded-[20px] bg-plum-950 p-4 text-white">
+            <p className="text-[14px] font-extrabold">Your listing is still being checked</p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/70">
+              Jobs start arriving the moment it is live. Usually the same day.
+            </p>
+          </div>
+        )}
+
         {tab === 'offers' && (
           vendor?.is_verified ? (
             <div className="space-y-5">
@@ -408,6 +422,9 @@ export default function VendorDashboard() {
             onAdd={addService}
             onUpdate={updateService}
             onRemove={removeService}
+            /* The review banner's one call to action. Jumping tabs rather
+               than linking, so the partner keeps their place. */
+            onOpenCalendar={() => setTab('availability')}
           />
         )}
 

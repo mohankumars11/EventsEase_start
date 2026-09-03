@@ -9,9 +9,11 @@ import {
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import { specsForTrade } from '../../data/partnerSpecs'
+import { specsForServices } from '../../data/partnerServiceSpecs'
 import { menusFor, FOOD_COUNTERS, CATERING_NOTES } from '../../data/cateringMenus'
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
+import MenuUpload from './MenuUpload'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -90,18 +92,32 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   const toast = useToast()
   const [step, setStep] = useState('trade')
   const [trade, setTrade] = useState(null)
-  const [picked, setPicked] = useState([])     // offering names
+  const [picked, setPicked] = useState([])     // offering serviceIds
   const [detail, setDetail] = useState({})     // spec answers
   const [menus, setMenus] = useState([])       // menu ids
   const [counters, setCounters] = useState([]) // counter ids
   const [dishes, setDishes] = useState([])     // a la carte dish names
   const [price, setPrice] = useState('')
   const [unit, setUnit] = useState('per event')
+  const [minOrder, setMinOrder] = useState('')
+  const [uploads, setUploads] = useState([])
   const [busy, setBusy] = useState(false)
   const [q, setQ] = useState('')
 
   const offerings = useMemo(() => (trade ? offeringsForTrade(trade) : []), [trade])
-  const groups = useMemo(() => (trade ? specsForTrade(trade) : []), [trade])
+  /* The questions for what they actually ticked, falling back to the
+     trade's own.
+
+     Reported exactly right: tapping "Welcome drinks" asked "Which
+     cuisines can you cook?" and "Is your kitchen pure vegetarian?". So
+     did "Sweets & mithai", and "Live food counters". Seven different
+     businesses, one questionnaire, six of them answering something with
+     nothing to do with what they sell -- which teaches a partner that
+     the app does not know what they do and that the answers do not
+     matter. Both were true. */
+  const groups = useMemo(
+    () => (trade ? specsForServices(picked, specsForTrade(trade)) : []),
+    [trade, picked])
   const isCatering = trade === CATERING
 
   /* Menus follow the answers on the detail step. */
@@ -112,10 +128,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     /* Both facts, not one. A pure-veg Brahmin kitchen that serves only on
        the leaf sees four cards; the eight it does not see are eight fewer
        chances to tick something it cannot honour. */
-    return menusFor({ cuisines, serves: detail.service ?? [] })
+    return menusFor({ cuisines, serves: detail.service ?? [], diet: detail.diet ?? null })
   }, [isCatering, detail.cuisines, detail.service])
 
   const alreadyHave = new Set(existing.map(s => s.name))
+  const nameOf = id => offerings.find(o => o.serviceId === id)?.name ?? id
 
   /* The steps that actually exist for THIS trade. Computed rather than
      hardcoded, so Back and Next cannot walk into a screen with nothing
@@ -156,15 +173,25 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       if (menus.length) specs.menus = menus
       if (counters.length) specs.counters = counters
       if (dishes.length) specs.dishes = dishes
+      if (minOrder && !/^\d+$/.test(minOrder)) specs.min_order_note = minOrder
+      if (uploads.length) specs.uploads = uploads
 
-      for (const name of picked) {
+      /* `picked` holds serviceIds; a vendor_services row stores the NAME.
+         Writing the id here would put "welcome_drinks" on a partner's
+         listing where "Welcome drinks" belongs -- and a coordinator
+         reading a price list of snake_case ids would rightly assume the
+         app was broken. */
+      for (const id of picked) {
         await onAdd({
-          name,
+          name: nameOf(id),
           category: trade,
           description: null,
           price: price === '' ? null : Number(price),
           unit,
-          min_quantity: 1,
+          /* A plain number becomes min_quantity, which coordinators and
+             the quote engine already read. Anything else is a sentence
+             and belongs with the other free text. */
+          min_quantity: /^\d+$/.test(minOrder) ? Math.max(1, Number(minOrder)) : 1,
           lead_time_days: null,
           specs,
         })
@@ -260,6 +287,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
                 menus.length === availableMenus.length ? [] : availableMenus.map(m => m.id))}
               onToggleCounter={id => setCounters(c =>
                 c.includes(id) ? c.filter(x => x !== id) : [...c, id])}
+              uploads={uploads}
+              setUploads={setUploads}
             />
           )}
 
@@ -404,14 +433,18 @@ function OfferingStep({ offerings, picked, alreadyHave, onToggle }) {
       </p>
       <div className="space-y-2">
         {offerings.map(o => {
-          const on = picked.includes(o.name)
+          /* `picked` holds serviceIds and `alreadyHave` holds names --
+             the first is what the question sets are keyed on, the second
+             is what a vendor_services row stores. Comparing the wrong one
+             here shows no tick at all when a partner taps. */
+          const on = picked.includes(o.serviceId)
           const have = alreadyHave.has(o.name)
           return (
             <button
               key={o.serviceId}
               type="button"
               disabled={have}
-              onClick={() => onToggle(o.name)}
+              onClick={() => onToggle(o.serviceId)}
               className={`flex w-full items-center gap-3 rounded-[18px] p-3.5 text-left ring-1 transition active:scale-[0.99] ${
                 have ? 'bg-ink/[0.03] ring-ink/[0.05] opacity-60'
                 : on ? 'bg-saffron-400/15 ring-2 ring-saffron-400'
@@ -458,6 +491,10 @@ function DetailStep({ groups, value, onChange }) {
     })
   }
 
+  function setOther(g, text) {
+    onChange(prev => ({ ...prev, [`${g.id}__other`]: text }))
+  }
+
   return (
     <div className="space-y-5">
       {groups.map(g => (
@@ -481,6 +518,25 @@ function DetailStep({ groups, value, onChange }) {
               )
             })}
           </div>
+
+          {/* ── Somewhere to put what our list does not have ─────────
+              A fixed list is what keeps the data clean enough to match
+              on, and it is also a list written by somebody who has never
+              run this partner's kitchen. Every caterer has a speciality
+              nobody thought to put in a dropdown, and being unable to
+              say it is how a form starts feeling like it is about us
+              rather than about them.
+
+              Deliberately SEPARATE from the ticked ids, and never mixed
+              into them: matching still runs on the choice ids, and free
+              text is read by a person. That is the whole reason the
+              dropdown exists. */}
+          <input
+            value={value[`${g.id}__other`] ?? ''}
+            onChange={e => setOther(g, e.target.value)}
+            placeholder="Something else? Type it here"
+            className="mt-2.5 w-full rounded-2xl bg-ink/[0.02] px-3.5 py-2.5 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+          />
         </div>
       ))}
     </div>
@@ -489,7 +545,7 @@ function DetailStep({ groups, value, onChange }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleCounter }) {
+function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleCounter, uploads, setUploads }) {
   const [open, setOpen] = useState(null)
 
   if (!menus.length) {
@@ -593,6 +649,14 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
             </div>
           )
         })}
+      </div>
+
+      {/* ── Or just hand us the card ──────────────────────────────
+          Sitting here, under twelve menus somebody is being asked to
+          tick, because this is the moment they realise how long that
+          will take. See MenuUpload. */}
+      <div className="mt-5">
+        <MenuUpload value={uploads} onChange={setUploads} />
       </div>
 
       {/* ── Counters ─────────────────────────────────────────────── */}
@@ -748,7 +812,7 @@ function DishStep({ chosen, onChange }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function PriceStep({ menus, price, setPrice, unit, setUnit, isCatering }) {
+function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrder, isCatering }) {
   return (
     <div className="space-y-4">
       {isCatering && menus.length > 0 && (
