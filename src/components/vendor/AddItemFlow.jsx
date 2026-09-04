@@ -15,6 +15,15 @@ import { menusFor, menuLines, menuLineCount, FOOD_COUNTERS, CATERING_NOTES } fro
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
 import MenuUpload from './MenuUpload'
+import {
+  KitchenStep, CuisineStep, CuisineDishStep, DishPickerStep,
+} from './CateringFunnel'
+import {
+  dietOf, wantsSouthIndianLibrary, southIndianLibrary,
+  wantsNonVegLibrary, nonVegLibrary,
+} from '../../data/cateringFunnel'
+import { CUISINE_BY_ID } from '../../data/cuisineMenus'
+import { OPERATION_SCREENS } from '../../data/cateringOperations'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -102,6 +111,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   const [unit, setUnit] = useState('per event')
   const [minOrder, setMinOrder] = useState('')
   const [uploads, setUploads] = useState([])
+  /* The funnel's own answers. `kitchen` is the gate every later screen
+     reads; `cuisines` is what it narrowed to. */
+  const [kitchen, setKitchen] = useState(null)
+  const [cuisines, setCuisines] = useState([])
   const [busy, setBusy] = useState(false)
   const [q, setQ] = useState('')
 
@@ -149,33 +162,86 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
    *
    * `menu` is on this list because a customised menu IS built from the
    * standard ones. The other five are not. */
-  const MENU_BEARING = ['catering', 'menu']
+  /* Which offerings are actually about MENUS.
+   *
+   * Reported: tapping "Welcome drinks", "Sweets & mithai" or "Customised
+   * menu" and pressing Continue landed on a menus screen saying "Pick
+   * your cuisines on the last screen" — a dead end, because those
+   * offerings are never asked about cuisines and never will be. A drinks
+   * counter has no plantain-leaf menu. */
+  const MENU_BEARING = ['catering', 'menu', 'cooks']
   const wantsMenus = isCatering && picked.some(id => MENU_BEARING.includes(id))
 
+  /* ══════════════════════════════════════════════════════════════════
+     THE FUNNEL, BUILT FROM THE ANSWERS SO FAR
+     ══════════════════════════════════════════════════════════════════
+
+     Every screen after the gatekeeper exists only because an earlier
+     answer put it there. A pure-veg kitchen never gets a non-veg screen;
+     a caterer who picked two cuisines gets two cuisine screens and not
+     one wall; the deep libraries appear once each, at the end, rather
+     than repeated under every cuisine.
+
+     Computed rather than hardcoded so Back and Next can never walk into
+     a screen with nothing on it. */
   const flow = useMemo(() => {
     const s = ['trade', 'offerings']
     if (groups.length) s.push('detail')
-    if (wantsMenus) s.push('menus', 'dishes')
+
+    if (wantsMenus) {
+      s.push('kitchen')
+      if (kitchen) {
+        s.push('cuisines')
+        for (const id of cuisines) s.push(`cuisine:${id}`)
+        if (wantsSouthIndianLibrary(cuisines, kitchen)) s.push('lib:south')
+        if (wantsNonVegLibrary(kitchen)) s.push('lib:nonveg')
+        s.push('menus')
+      }
+    }
+
+    if (isCatering) {
+      for (const screen of OPERATION_SCREENS) s.push(`ops:${screen.id}`)
+      s.push('upload')
+    }
+
     s.push('price', 'review')
     return s
-  }, [groups.length, wantsMenus])
+  }, [groups.length, wantsMenus, isCatering, kitchen, cuisines])
+
+  /* A title for the screens whose ids are built at runtime. */
+  const title = (
+    step.startsWith('cuisine:') ? (CUISINE_BY_ID[step.slice(8)]?.name ?? 'This cuisine')
+    : step === 'lib:south' ? 'South Indian, in depth'
+    : step === 'lib:nonveg' ? 'Non-veg, region by region'
+    : step.startsWith('ops:') ? (OPERATION_SCREENS.find(x => x.id === step.slice(4))?.title ?? 'How you work')
+    : STEP_TITLE[step] ?? 'Add what you do'
+  )
 
   const idx = flow.indexOf(step)
   const goNext = () => setStep(flow[Math.min(idx + 1, flow.length - 1)])
   const goBack = () => (idx <= 0 ? onClose() : setStep(flow[idx - 1]))
 
-  const canAdvance = {
-    trade: !!trade,
-    offerings: picked.length > 0,
-    /* Not gated. Every spec question is optional -- a partner who cannot
-       answer one today should not be blocked from listing at all, and an
-       unanswered group shows as "2 of 4" on their listing afterwards. */
-    detail: true,
-    menus: true,
-    dishes: true,
-    price: true,
-    review: true,
-  }[step]
+  /* Which screens genuinely block, and nothing else.
+   *
+   * This was a map keyed by step id. The funnel added seven new ids at
+   * runtime -- kitchen, cuisines, cuisine:<id>, lib:south, lib:nonveg,
+   * ops:<id>, upload -- and a map lookup for a key it does not have
+   * returns undefined, which is falsy, which disabled Continue on every
+   * one of them. The build was green and the crash repro found nothing,
+   * because nothing crashed: the flow simply could not advance.
+   *
+   * An expression with an explicit default cannot fail that way. Spec
+   * questions stay optional -- a partner who cannot answer one today
+   * should not be stopped from listing at all -- but the funnel cannot
+   * draw the next screen without a kitchen and a cuisine, so those two
+   * are real gates. */
+  const canAdvance = (
+    step === 'trade' ? !!trade
+    : step === 'offerings' ? picked.length > 0
+    : step === 'kitchen' ? !!kitchen
+    : step === 'cuisines' ? cuisines.length > 0
+    : true
+  )
 
   async function submit() {
     setBusy(true)
@@ -190,6 +256,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       if (dishes.length) specs.dishes = dishes
       if (minOrder && !/^\d+$/.test(minOrder)) specs.min_order_note = minOrder
       if (uploads.length) specs.uploads = uploads
+      if (kitchen) specs.kitchen_type = kitchen
+      if (cuisines.length) specs.cuisines = cuisines
 
       /* `picked` holds serviceIds; a vendor_services row stores the NAME.
          Writing the id here would put "welcome_drinks" on a partner's
@@ -247,9 +315,13 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
           </button>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-extrabold leading-tight">
-              {STEP_TITLE[step]}
+              {title}
             </span>
-            <span className="block text-[11.5px] text-white/60">
+            {/* ink-soft, not white. The header background went light in
+                an earlier pass and these two spans did not follow it, so
+                the only line telling a partner which trade they are inside
+                was white text on cream. */}
+            <span className="block text-[12px] font-bold text-plum-800">
               {trade ?? 'Add what you do'}
             </span>
           </span>
@@ -269,7 +341,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
             <span
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
-                i < idx ? 'bg-saffron-400' : i === idx ? 'bg-white' : 'bg-white/20'
+                i < idx ? 'bg-forest-600' : i === idx ? 'bg-plum-950' : 'bg-ink/[0.10]'
               }`}
             />
           ))}
@@ -316,6 +388,57 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               uploads={uploads}
               setUploads={setUploads}
             />
+          )}
+
+          {step === 'kitchen' && (
+            <KitchenStep value={kitchen} onChange={setKitchen} />
+          )}
+
+          {step === 'cuisines' && (
+            <CuisineStep kitchen={kitchen} value={cuisines} onChange={setCuisines} />
+          )}
+
+          {step.startsWith('cuisine:') && (
+            <CuisineDishStep
+              cuisineId={step.slice(8)}
+              kitchen={kitchen}
+              chosen={dishes}
+              onChange={setDishes}
+            />
+          )}
+
+          {step === 'lib:south' && (
+            <DishPickerStep
+              title="The South Indian kitchen, in depth"
+              blurb="Transcribed from a real Bengaluru caterer's card — 61 palyas, 41 sambars, 44 payasas. Tick only what you actually make."
+              emoji="🍛"
+              courses={southIndianLibrary()}
+              chosen={dishes}
+              onChange={setDishes}
+            />
+          )}
+
+          {step === 'lib:nonveg' && (
+            <DishPickerStep
+              title="Non-veg, region by region"
+              blurb="Nati, tandoor, coastal, Kodava, Bengali. Shown once — it is not tied to any one cuisine."
+              emoji="🍗"
+              courses={nonVegLibrary()}
+              chosen={dishes}
+              onChange={setDishes}
+            />
+          )}
+
+          {step.startsWith('ops:') && (
+            <OperationsStep
+              screen={OPERATION_SCREENS.find(x => x.id === step.slice(4))}
+              value={detail}
+              onChange={setDetail}
+            />
+          )}
+
+          {step === 'upload' && (
+            <MenuUpload value={uploads} onChange={setUploads} />
           )}
 
           {step === 'dishes' && (
@@ -380,6 +503,9 @@ const STEP_TITLE = {
   detail:    'Tell us more',
   menus:     'Your menus',
   dishes:    'What can you cook?',
+  kitchen:   'What kind of kitchen?',
+  cuisines:  'Which cuisines?',
+  upload:    'Your menu card',
   price:     'What do you charge?',
   review:    'Check and submit',
 }
@@ -734,6 +860,103 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
 /* ══════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════ */
+
+/**
+ * One screen of the operations catalogue.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THE OPERATIONAL HALF MATTERS AS MUCH AS THE MENU
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Two caterers can cook the identical menu and be completely different
+ * bookings. One arrives with vessels, burners, gas, twelve servers and a
+ * cleaning crew. The other arrives with two cooks and expects a kitchen,
+ * a gas connection and somebody else's staff.
+ *
+ * A lawn function at a farmhouse needs the first. Send the second and the
+ * food never gets cooked — not because the caterer was bad, but because
+ * nobody asked. Until now nothing did.
+ *
+ * Each screen carries a `why`, because a partner answering thirteen
+ * groups deserves to know what each one buys them. Screens with a
+ * question they cannot answer are still skippable: none of this gates
+ * Continue.
+ */
+function OperationsStep({ screen, value, onChange }) {
+  if (!screen) return null
+
+  function toggle(g, choiceId) {
+    /* The functional updater, not a spread of `value`. Two taps inside
+       one React batch both build on the same object otherwise, and the
+       second silently discards the first. */
+    onChange(prev => {
+      if (g.type === 'one') {
+        return { ...prev, [g.id]: prev[g.id] === choiceId ? undefined : choiceId }
+      }
+      const cur = Array.isArray(prev[g.id]) ? prev[g.id] : []
+      return {
+        ...prev,
+        [g.id]: cur.includes(choiceId) ? cur.filter(x => x !== choiceId) : [...cur, choiceId],
+      }
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      {screen.why && (
+        <p className="text-[13px] leading-relaxed text-ink-soft">{screen.why}</p>
+      )}
+
+      {screen.groups.map(g => (
+        <div key={g.id} className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <p className="text-[14px] font-extrabold leading-tight text-ink">{g.question}</p>
+          {g.hint && (
+            <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{g.hint}</p>
+          )}
+
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {g.choices.map(c => {
+              const cur = value[g.id]
+              const on = g.type === 'one' ? cur === c.id : Array.isArray(cur) && cur.includes(c.id)
+              return (
+                <button
+                  key={c.id} type="button" onClick={() => toggle(g, c.id)} aria-pressed={on}
+                  className={`rounded-full px-3.5 py-2 text-[13px] font-bold transition ${
+                    on ? 'bg-forest-600 text-white ring-2 ring-forest-600'
+                       : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
+                  }`}
+                >
+                  {c.label}
+                  {on && c.scan && <span className="ml-1.5 font-semibold opacity-70">{c.scan}</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Every question takes what our list does not have. */}
+          <div className="relative mt-2.5">
+            <input
+              value={value[`${g.id}__other`] ?? ''}
+              onChange={e => {
+                const t = e.target.value
+                onChange(prev => ({ ...prev, [`${g.id}__other`]: t }))
+              }}
+              placeholder="Something else? Type it here"
+              className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+            />
+            {(value[`${g.id}__other`] ?? '').trim().length > 0 && (
+              <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
+                <Check size={10} /> Saved
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 /**
  * The à la carte library — 479 dishes across 20 groups.

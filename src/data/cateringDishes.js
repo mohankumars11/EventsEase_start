@@ -428,47 +428,73 @@ export const NORTH_INDIAN_DISHES = [
 const seen = new Set()
 
 /**
- * Non-vegetarian, and there is a lot of it.
+ * Non-vegetarian, region by region.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THIS IS AS LONG AS THE VEGETARIAN LIST
+ * WHY IT IS THIS LONG
  * ══════════════════════════════════════════════════════════════════════
  *
- * The source card is a pure-veg house, so the first pass of this file had
- * 584 vegetarian dishes and about a dozen non-veg ones tacked onto the
- * end. A caterer running a Mandya nati koli kitchen opened the library
- * and found almost nothing of their own in it — which tells them,
- * correctly, that the app was not built with them in mind.
+ * The source card is a pure-veg house, so the first pass had 584
+ * vegetarian dishes and twelve non-veg ones tacked on the end. A caterer
+ * running a Mandya nati kitchen opened the library and found almost
+ * nothing of their own in it — which tells them, correctly, that the app
+ * was not built with them in mind.
  *
- * Karnataka non-veg is not one cuisine. It is at least four with little
- * in common: the nati koli and ragi mudde of the old Mysore districts,
- * the coconut-and-tamarind gassi of the coast, Kodagu pandi curry, and
- * the biryani houses. A partner should find their own tradition here
- * rather than a generic "chicken curry".
+ * India's non-veg cooking is not one cuisine and Karnataka's alone is
+ * four. A partner should find their own tradition here, named the way
+ * they name it, not a generic "chicken curry".
  *
- * ── No prices ───────────────────────────────────────────────────────
- * This is a capability list. What a dish COSTS is the caterer's own
- * number and it is asked once, on the price screen, in their words.
+ * ══════════════════════════════════════════════════════════════════════
+ * WHAT IS DELIBERATELY NOT HERE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Rice, rasam, papad, kosambari, palya. They are vegetarian dishes and
+ * they belong in the vegetarian groups above, which every non-veg
+ * caterer also gets. Padding this list with them is what made
+ * "Non-veg Option 1" read "Everything on the vegetarian Option 1 menu",
+ * which is not a non-veg menu — it is a veg menu with a note.
+ *
+ * The one exception is the accompaniments group at the end: ragi mudde,
+ * akki rotti, neer dosa, kadambuttu. Those are eaten WITH a meat curry
+ * and a nati kitchen would not think of them as separate — leaving them
+ * out would be the same mistake pointed the other way.
+ *
+ * ── Beef and pork ───────────────────────────────────────────────────
+ * Both are listed, because Kodava pandi curry and Malabar beef fry are
+ * real dishes real caterers in this market sell. A caterer who does not
+ * touch them says so once, on the "what you will not do" screen, and is
+ * never offered them. Deciding on their behalf by omission would make
+ * the app quietly narrower than the market it serves.
  */
 export const NON_VEG_DISHES = [
   {
-    id: 'nv_koli',
-    label: 'Chicken — Karnataka',
-    scan: 'Nati koli and the old Mysore kitchen',
+    id: 'nv_nati',
+    label: 'Nati — old Mysore & Mandya',
+    scan: 'Country chicken, ragi mudde, bassaru',
     items: [
-      'Nati Koli Saaru', 'Nati Koli Fry', 'Koli Saaru (country style)',
-      'Chicken Sukka', 'Chicken Ghee Roast', 'Kori Gassi', 'Kori Rotti',
-      'Chicken Chettinad', 'Chicken Pepper Fry', 'Chicken Kabab',
-      'Chicken 65', 'Chilly Chicken', 'Chicken Manchurian',
-      'Chicken Lollipop', 'Chicken Majestic', 'Chicken Sukka Dry',
-      'Bassaru with Chicken', 'Koli Palya', 'Chicken Pulimunchi',
-      'Chicken Kempu Saaru', 'Chicken Masala Fry', 'Chicken Tawa Fry',
-      'Nati Koli Kabab', 'Chicken Erachi Varuval',
+      'Nati Koli Saaru', 'Nati Koli Fry', 'Nati Koli Sukka', 'Nati Koli Kabab',
+      'Koli Saaru (country style)', 'Koli Palya', 'Kempu Koli Saaru',
+      'Bassaru with Chicken', 'Bassaru with Mutton', 'Kaalu Saaru with Mutton',
+      'Nati Koli Donne Biryani', 'Nati Koli Pulao', 'Koli Chops',
+      'Nati Motte Saaru', 'Nati Koli Rasam', 'Nati Koli Kaal Soup',
+      'Mandya Style Koli Saaru', 'Hittu with Koli Saaru',
     ],
   },
   {
-    id: 'nv_chicken_north',
-    label: 'Chicken — North Indian & tandoor',
+    id: 'nv_chicken',
+    label: 'Chicken — everyday & club',
+    items: [
+      'Chicken Sukka', 'Chicken Ghee Roast', 'Chicken Chettinad',
+      'Chicken Pepper Fry', 'Chicken 65', 'Chilly Chicken', 'Chicken Manchurian',
+      'Chicken Lollipop', 'Chicken Majestic', 'Chicken Masala Fry',
+      'Chicken Tawa Fry', 'Chicken Erachi Varuval', 'Pepper Chicken Dry',
+      'Garlic Chicken', 'Schezwan Chicken', 'Chicken Kothu Parotta',
+      'Chicken Pulimunchi', 'Chicken Curry (home style)',
+    ],
+  },
+  {
+    id: 'nv_tandoor',
+    label: 'Chicken — tandoor & North Indian',
     items: [
       'Butter Chicken', 'Chicken Tikka', 'Tandoori Chicken', 'Murgh Malai Tikka',
       'Chicken Seekh Kabab', 'Chicken Reshmi Kabab', 'Afghani Chicken',
@@ -476,34 +502,75 @@ export const NON_VEG_DISHES = [
       'Chicken Handi', 'Chicken Do Pyaza', 'Methi Murgh', 'Chicken Korma',
       'Chicken Angara', 'Chicken Lababdar', 'Chicken Changezi',
       'Murgh Musallam', 'Chicken Hariyali Tikka', 'Chicken Achari',
+      'Chicken Tikka Masala', 'Dhaba Chicken', 'Chicken Saagwala',
     ],
   },
   {
     id: 'nv_mutton',
-    label: 'Mutton',
-    scan: 'Kuri saaru, sukka, chops',
+    label: 'Mutton & lamb',
     items: [
       'Kuri Saaru', 'Mutton Sukka', 'Mutton Ghee Roast', 'Mutton Chops',
       'Mutton Fry', 'Mutton Pepper Fry', 'Mutton Rogan Josh', 'Mutton Korma',
       'Mutton Chettinad', 'Mutton Kolhapuri', 'Mutton Seekh Kabab',
-      'Mutton Shammi Kabab', 'Mutton Keema', 'Keema Matar', 'Mutton Do Pyaza',
-      'Mutton Handi', 'Bassaru with Mutton', 'Boti Palya', 'Boti Fry',
-      'Mutton Kaal Soup', 'Paya', 'Mutton Bone Soup', 'Kodagu Pandi Curry',
-      'Mutton Sukka Dry', 'Mutton Masala Curry',
+      'Mutton Shammi Kabab', 'Mutton Galouti Kabab', 'Mutton Keema',
+      'Keema Matar', 'Keema Pav', 'Mutton Do Pyaza', 'Mutton Handi',
+      'Mutton Sukka Dry', 'Mutton Masala Curry', 'Laal Maas',
+      'Mutton Nihari', 'Mutton Yakhni', 'Mutton Kosha', 'Mutton Varuval',
+      'Mutton Pepper Salna', 'Mutton Bhuna',
     ],
   },
   {
-    id: 'nv_fish',
-    label: 'Fish & seafood',
-    scan: 'Coastal Karnataka',
+    id: 'nv_offal',
+    label: 'Boti, liver & bone',
+    scan: 'What a nati kitchen actually sells',
+    items: [
+      'Boti Palya', 'Boti Fry', 'Boti Saaru', 'Liver Fry', 'Liver Masala',
+      'Kaleji Masala', 'Mutton Kaal Soup', 'Paya', 'Bone Marrow Soup',
+      'Talakai Palya (brain)', 'Mutton Bone Saaru', 'Gizzard Fry',
+      'Chicken Liver Pepper Fry',
+    ],
+  },
+  {
+    id: 'nv_pork_beef',
+    label: 'Pork & beef',
+    scan: 'Kodava, Malabar, Anglo-Indian',
+    items: [
+      'Kodagu Pandi Curry', 'Pandi Curry with Kadambuttu', 'Pork Sukka',
+      'Pork Bafat', 'Pork Indad', 'Pork Vindaloo', 'Pork Sorpotel',
+      'Pork Roast (Coorg)', 'Beef Fry (Malabar)', 'Beef Ularthiyathu',
+      'Beef Chilly', 'Beef Pepper Roast', 'Beef Cutlet', 'Beef Curry',
+    ],
+  },
+  {
+    id: 'nv_coastal_fish',
+    label: 'Fish — coastal Karnataka & Konkan',
     items: [
       'Anjal Tawa Fry', 'Bangude Fry', 'Bangude Pulimunchi', 'Fish Gassi',
-      'Meen Kolambu', 'Fish Curry (coastal)', 'Fish Rawa Fry', 'Fish Amritsari',
-      'Fish Tikka', 'Fish Manchurian', 'Fish Fingers', 'Prawn Ghee Roast',
-      'Prawn Sukka', 'Prawn Gassi', 'Prawn Koliwada', 'Prawn Fry',
-      'Prawn Biryani', 'Squid Fry', 'Squid Masala', 'Crab Sukka',
-      'Crab Masala', 'Clam Sukka (Marvai)', 'Marvai Gassi', 'Fish Fry Masala',
-      'Neer Dosa with Fish Curry',
+      'Meen Kolambu', 'Fish Curry (coastal)', 'Fish Rawa Fry', 'Fish Ghee Roast',
+      'Kane Fry (ladyfish)', 'Bhutai Fry', 'Surmai Fry', 'Pomfret Fry',
+      'Pomfret Recheado', 'Fish Ambot Tik', 'Fish Caldine', 'Fish Xacuti',
+      'Neer Dosa with Fish Curry', 'Mangalore Fish Curry',
+    ],
+  },
+  {
+    id: 'nv_fish_other',
+    label: 'Fish — Bengali, Malabar & North',
+    items: [
+      'Macher Jhol', 'Shorshe Ilish', 'Doi Maach', 'Chingri Malai Curry',
+      'Bhetki Paturi', 'Macher Kalia', 'Meen Pollichathu', 'Meen Moilee',
+      'Malabar Fish Biryani', 'Fish Amritsari', 'Fish Tikka', 'Fish Manchurian',
+      'Fish Fingers', 'Fish Koliwada', 'Tandoori Pomfret',
+    ],
+  },
+  {
+    id: 'nv_prawn_shell',
+    label: 'Prawn, crab & shellfish',
+    items: [
+      'Prawn Ghee Roast', 'Prawn Sukka', 'Prawn Gassi', 'Prawn Koliwada',
+      'Prawn Fry', 'Prawn Balchao', 'Prawn Biryani', 'Prawn Masala',
+      'Butter Garlic Prawn', 'Squid Fry', 'Squid Masala', 'Squid Sukka',
+      'Crab Sukka', 'Crab Masala', 'Crab Rasam', 'Clam Sukka (Marvai)',
+      'Marvai Gassi', 'Oyster Fry', 'Mussel Sukka',
     ],
   },
   {
@@ -511,41 +578,66 @@ export const NON_VEG_DISHES = [
     label: 'Egg',
     items: [
       'Motte Saaru', 'Egg Curry', 'Egg Masala', 'Egg Burji', 'Egg Roast',
-      'Egg Ghee Roast', 'Egg Manchurian', 'Egg Pepper Fry', 'Egg Biryani',
-      'Egg Chilly', 'Boiled Egg Masala', 'Egg Kolambu',
+      'Egg Ghee Roast', 'Egg Manchurian', 'Egg Pepper Fry', 'Egg Chilly',
+      'Boiled Egg Masala', 'Egg Kolambu', 'Muttai Masala', 'Egg Kejriwal',
+      'Egg Biryani', 'Nadan Mutta Roast',
     ],
   },
   {
     id: 'nv_biryani',
-    label: 'Biryani & rice',
+    label: 'Biryani & meat rice',
     items: [
       'Chicken Dum Biryani', 'Mutton Dum Biryani', 'Hyderabadi Chicken Biryani',
-      'Hyderabadi Mutton Biryani', 'Donne Biryani', 'Nati Koli Donne Biryani',
-      'Bhatkal Biryani', 'Ambur Biryani', 'Thalassery Biryani',
-      'Prawn Biryani', 'Fish Biryani', 'Keema Biryani',
-      'Chicken Pulao', 'Mutton Pulao', 'Chicken Fried Rice',
-      'Chicken Ghee Rice', 'Kaima Rice',
+      'Hyderabadi Mutton Biryani', 'Donne Biryani', 'Bhatkal Biryani',
+      'Ambur Biryani', 'Thalassery Biryani', 'Dindigul Biryani',
+      'Kolkata Biryani', 'Lucknowi Yakhni Pulao', 'Sindhi Biryani',
+      'Prawn Biryani', 'Fish Biryani', 'Keema Biryani', 'Chicken Pulao',
+      'Mutton Pulao', 'Chicken Fried Rice', 'Chicken Ghee Rice', 'Kaima Rice',
+      'Chicken Kuska', 'Mutton Kuska',
     ],
   },
   {
     id: 'nv_starter',
-    label: 'Non-veg starters',
+    label: 'Non-veg starters & snacks',
     items: [
       'Chicken Tikka Platter', 'Fish Fingers', 'Prawn Tempura',
       'Chicken Nuggets', 'Chicken Spring Roll', 'Chicken Momos',
       'Chicken Cutlet', 'Mutton Cutlet', 'Chicken Samosa', 'Chicken Puff',
       'Chicken Wings', 'Drums of Heaven', 'Chicken Satay', 'Chicken Popcorn',
-      'Fish Tikka Skewers',
+      'Fish Tikka Skewers', 'Mutton Kheema Samosa', 'Chicken Croquette',
+      'Chicken Salami Sandwich', 'Bread Omelette', 'Chicken Roll',
+    ],
+  },
+  {
+    id: 'nv_soup',
+    label: 'Non-veg soups',
+    items: [
+      'Chicken Clear Soup', 'Chicken Sweet Corn Soup', 'Chicken Manchow Soup',
+      'Chicken Hot & Sour Soup', 'Mutton Paya Soup', 'Mutton Kaal Soup',
+      'Prawn Soup', 'Fish Soup', 'Chicken Lung Fung Soup',
+    ],
+  },
+  {
+    id: 'nv_regional',
+    label: 'Regional specialities',
+    scan: 'Parsi, Anglo-Indian, North-East',
+    items: [
+      'Dhansak', 'Patra ni Machhi', 'Salli Boti', 'Sali Murgh',
+      'Railway Mutton Curry', 'Country Captain Chicken', 'Mutton Ball Curry',
+      'Chicken Jalfrezi', 'Naga Pork with Bamboo Shoot', 'Assamese Duck Curry',
+      'Smoked Pork Curry', 'Chicken Rezala', 'Kosha Mangsho',
+      'Mutton Curry (Bihari)', 'Champaran Handi Mutton', 'Chicken Chaap',
     ],
   },
   {
     id: 'nv_accompaniment',
-    label: 'With the meal',
-    scan: 'What a non-veg oota is eaten with',
+    label: 'What it is eaten with',
+    scan: 'Not vegetables — the breads a nati meal needs',
     items: [
-      'Ragi Mudde', 'Akki Rotti', 'Jolada Rotti', 'Neer Dosa',
-      'Kadambuttu', 'Bassaru', 'Kaalu Saaru', 'Majjige',
-      'Onion Raitha', 'Lemon Wedge and Onion',
+      'Ragi Mudde', 'Akki Rotti', 'Jolada Rotti', 'Neer Dosa', 'Kadambuttu',
+      'Pundi (rice dumpling)', 'Malabar Parotta', 'Kerala Appam',
+      'Ghee Rice (with meat)', 'Onion Raitha', 'Lemon Wedge and Onion',
+      'Sanna',
     ],
   },
 ]

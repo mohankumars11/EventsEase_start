@@ -83,62 +83,70 @@ await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display=
 
 const click = text => ev(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes(${JSON.stringify(text)}));if(!b)return 'NOT FOUND: ${text.replace(/'/g, '')}';b.click();return 'clicked'})()`)
 const broken = () => ev(`document.body.innerText.includes('Something went wrong') || document.body.innerText.includes('Try again')`)
-/* The MODAL's header, not the page's. The first version read
-   document.querySelector('header'), which finds the dashboard's, so
-   every step printed "What you offer" and told me nothing about
-   which screen the flow was actually on. */
-const heading = () => ev(`(() => {
-  const m = document.querySelector('.fixed.inset-0 header')
-  return ((m ?? document.querySelector('header'))?.innerText ?? '?').split('\n')[0]
-})()`)
+/* The MODAL header, first line only.
+ *
+ * The previous version split on an escaped newline inside a template
+ * literal, which became a REAL newline in the file -- so the evaluated
+ * expression held an unterminated string, threw, and returned undefined.
+ * Every progression check then compared undefined to undefined and
+ * reported "did not advance" on a flow that was advancing fine.
+ * String.fromCharCode(10) has no escape left to mangle. */
+const heading = () => ev('(function(){var m=document.querySelector(".fixed.inset-0 header")||document.querySelector("header");var t=(m&&m.innerText)||"?";return t.split(String.fromCharCode(10))[0]})()')
 
-async function step(label, text) {
+/* A step must CHANGE something.
+ *
+ * The first version only watched for the error boundary and console
+ * errors. It reported a clean run on a flow that could not advance past
+ * its second screen: nothing crashed, Continue was simply disabled, and
+ * every later click found no button and moved on quietly.
+ *
+ * So a Continue that leaves the heading unchanged is now a failure, not
+ * a shrug. A flow that silently stops is the more common bug and it was
+ * the one this could not see. */
+async function step(label, text, { expectMove = false } = {}) {
+  const before = await heading()
   const r = await click(text)
   await sleep(1100)
   const bad = await broken()
-  console.log(`  ${bad ? '✗' : '·'} ${label.padEnd(30)} ${r}   [${await heading()}]`)
-  if (bad) { console.log('    ERROR BOUNDARY'); return false }
+  const after = await heading()
+  const stuck = expectMove && before === after
+  const mark = bad || stuck ? String.fromCharCode(120) : String.fromCharCode(183)
+  console.log(`  ${mark} ${label.padEnd(26)} ${String(r).padEnd(18)} [${after}]`)
+  if (bad) { console.log('    ERROR BOUNDARY'); problems.push('BOUNDARY at ' + label); return false }
+  if (stuck) { console.log(`    DID NOT ADVANCE from "${before}"`); problems.push('STUCK at ' + label); return false }
   return true
 }
 
 console.log('')
-console.log('  The exact path reported')
+console.log('  The catering funnel, veg and non-veg')
 console.log('')
 
 async function fresh() {
-  await send('Page.navigate', { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
+  await send(`Page.navigate`, { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
   await sleep(4500)
   await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
 }
 
-{
-  console.log('  -- Catering, North Indian festive')
+for (const [label, kitchen, cuisine] of [
+  [`pure veg + Karnataka`, `Pure vegetarian kitchen`, `Karnataka Traditional`],
+  [`nati + North Indian`, `nati kitchen`, `North Indian`],
+]) {
+  console.log(`  -- ${label}`)
   await fresh()
-  await step('open', 'Add what you do')
-  await step('trade', 'Catering & Food')
-  await step('offering', 'Catering')
-  await step('continue', 'Continue')
-  await step('diet veg', 'Vegetarian only')
-  await step('cuisine', 'North Indian festive')
-  await step('continue 1', 'Continue')
-  await step('continue 2', 'Continue')
-  await step('continue 3', 'Continue')
-  console.log('')
+  await step(`open`, `Add what you do`)
+  await step(`trade`, `Catering & Food`)
+  await step(`offering`, `Cook at your place`)
+  await step(`continue`, `Continue`, { expectMove: true })
+  await step(`continue`, `Continue`, { expectMove: true })
+  await step(`kitchen`, kitchen)
+  await step(`continue`, `Continue`, { expectMove: true })
+  await step(`cuisine`, cuisine)
+  await step(`continue`, `Continue`, { expectMove: true })
+  await step(`continue`, `Continue`, { expectMove: true })
+  await step(`continue`, `Continue`, { expectMove: true })
+  console.log(``)
 }
 
-for (const off of ['Welcome drinks', 'Customised menu']) {
-  console.log(`  -- ${off}`)
-  await fresh()
-  await step('open', 'Add what you do')
-  await step('trade', 'Catering & Food')
-  await step('offering', off)
-  await step('continue 1', 'Continue')
-  await step('continue 2', 'Continue')
-  await step('continue 3', 'Continue')
-  console.log('')
-}
-
-console.log('')
 console.log('  Walking every catering offering')
 console.log('')
 

@@ -394,52 +394,43 @@ try {
     wait: 2500, note: 'cuisines, kitchen and service style -- picked, never typed' })
 
   /* ══════════════════════════════════════════════════════════════════
-     THE ADD-ITEM JOURNEY, DRIVEN THE WAY A PARTNER DRIVES IT
+     THE CATERING FUNNEL, DRIVEN THE WAY A CATERER DRIVES IT
      ══════════════════════════════════════════════════════════════════
 
-     Seven screens replacing a flat list of names and a price box. Each is
-     photographed because the whole point of the rebuild is how it looks
-     and how it flows, and neither is provable from a build log.
+     A giant checklist of every dish at once causes two failures: partners
+     tick everything and fail on event day, and a pure-veg cook scrolls
+     past Mutton Biryani looking for Bisi Bele Bath and closes the app.
 
-     Driven by clicking real buttons found by their text, ONE ACTION PER
-     STEP. The first cut clicked an offering and then looked for Continue
-     in the same expression; React had not re-enabled it yet, so the click
-     landed on a disabled button and four captures sat one screen behind
-     while reporting success. */
-  await shot('18a-add-trade', {
-    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`], wait: 2200,
-    note: 'step 1 - 24 trades, searchable, one card each' })
+     So each answer removes what cannot apply before the next screen is
+     drawn — and that is only provable by driving it and photographing
+     what a real caterer would see.
 
-  await shot('18b-add-offerings', {
+     One action per step. Clicking an offering and then looking for
+     Continue in the same expression finds a button React has not
+     re-enabled yet, which silently left four captures a screen behind. */
+  await shot('19a-kitchen-gate', {
     route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`], wait: 2000,
-    note: 'step 2 - what inside Catering & Food' })
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`],
+    wait: 2200, note: 'slide 1 - the dietary gatekeeper, three kitchens' })
 
-  await shot('18c-add-cuisines', {
+  await shot('19b-cuisines-veg', {
     route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['Karnataka Traditional','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`], wait: 2200,
-    note: 'step 3 - cuisines, kitchen, how you serve, minimum order' })
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Pure vegetarian kitchen'));if(!b)return 'NO VEG';b.click();return 'pure veg'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`],
+    wait: 2400, note: 'slide 2 - pure veg: every cuisine that fits, none that do not' })
 
-  /* The screen this change exists for: S S Caterers' real plantain-leaf
-     menus, opened so every dish is readable. */
-  await shot('18d-add-menus', {
+  await shot('19c-cuisines-nonveg', {
     route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['Karnataka Traditional','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Read all'));if(!b)return 'NO MENU CARD';b.click();return 'menu open'})()`],
-    wait: 2600, note: 'step 4 - real menus, every dish, select all' })
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('nati kitchen'));if(!b)return 'NO NONVEG';b.click();return 'nati'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`],
+    wait: 2400, note: 'slide 2 - nati kitchen: four veg-only cuisines hidden, and it says why' })
 
-  /* 584 dishes across 27 groups, opened on Palya -- the biggest, and the
-     one that proves the folding is doing real work. */
-  await shot('18e-add-dishes', {
+  /* The screen the whole funnel exists for: one cuisine, its own courses,
+     and nothing belonging to another. */
+  await shot('19d-focused-grid', {
     route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['Karnataka Traditional','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Palya'));if(!b)return 'NO PALYA';b.click();return 'palya open'})()`],
-    wait: 2600, note: 'step 5 - the a la carte library, folded' })
+    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`,
+            `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Pure vegetarian kitchen'));if(!b)return 'NO VEG';b.click();return 'pure veg'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Karnataka Traditional'));if(!b)return 'NO KARNATAKA';b.click();return 'karnataka'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>/Palya|Starters|Mains|Nati/.test(x.textContent));if(!b)return 'NO COURSE';b.click();return 'course open'})()`],
+    wait: 2600, note: 'slide 3 - Karnataka only, opened on one course' })
 
-  /* And the end of it: what is about to be submitted, and for review. */
-  await shot('18f-add-review', {
-    route: '/dashboard/vendor?tab=list', session: '.demo-partner-session.json',
-    steps: [`(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Add what you do'));if(!b)return 'NO ADD BUTTON';b.click();return 'opened'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('Catering & Food'));if(!b)return 'NO CATERING';b.click();return 'catering'})()`, `(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Cook at your place'));if(!b)return 'NO FREE OFFERING';b.click();return 'picked'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{let n=0;for(const l of ['Karnataka Traditional','Sit-down banana leaf','Pure vegetarian only']){const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim().startsWith(l));if(b){b.click();n++}}return 'answered '+n})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`, `(()=>{const n=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes('Continue'));if(!n)return 'CONTINUE DISABLED';n.click();return 'next'})()`],
-    wait: 2600, note: 'step 7 - check and submit for review' })
 
   /* ── A tab tapped before there is an account ───────────────────────
 
