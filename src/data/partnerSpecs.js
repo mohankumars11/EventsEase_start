@@ -84,21 +84,46 @@ export const SPECS_BY_TRADE = {
     },
     {
       id: 'cuisines',
+      /* ══════════════════════════════════════════════════════════════
+         THE SAME SIXTEEN THE CUSTOMER PICKS FROM
+         ══════════════════════════════════════════════════════════════
+
+         data/cuisineMenus.js already holds the catalogue a customer
+         chooses from when they plan a celebration -- sixteen cuisines in
+         six groups, from Udupi to Awadhi. The partner side had a
+         different list of nine, written separately.
+
+         Two lists meant two vocabularies for one question, and matching
+         a customer's "Kerala Sadya" against a partner's "South Indian --
+         everyday" needs a translation table nobody maintains. Bengaluru
+         has families from every one of these sixteen, and a Bengali
+         caterer had nowhere to say so.
+
+         Same ids, so a partner's capability and a customer's request are
+         the same string and can be compared directly. */
       question: 'Which cuisines can you cook?',
-      hint: 'Tick everything you do well. This is what we match you on.',
+      hint: 'Tick everything you do well. These are the exact words customers search with.',
       type: 'multi',
       choices: [
-        { id: 'south_brahmin', label: 'South Indian — Brahmin style', scan: 'No onion or garlic' },
-        { id: 'south_general', label: 'South Indian — everyday',      scan: 'Karnataka, Andhra, Tamil' },
-        { id: 'north',         label: 'North Indian festive' },
-        { id: 'punjabi',       label: 'Punjabi / tandoor' },
-        { id: 'coastal',       label: 'Coastal / Mangalorean' },
-        { id: 'chinese',       label: 'Indo-Chinese' },
-        { id: 'continental',   label: 'Continental / Italian' },
-        { id: 'mughlai',       label: 'Mughlai' },
-        { id: 'jain',          label: 'Jain',                          scan: 'No root vegetables' },
+        { id: 'karnataka',           label: 'Karnataka Traditional', scan: 'Bisi bele bath, ragi, holige' },
+        { id: 'mysuru_royal',        label: 'Royal Mysuru Feast' },
+        { id: 'udupi',               label: 'Udupi & Coastal',       scan: 'Gassi, neer dosa' },
+        { id: 'tamil',               label: 'Tamil & Chettinad' },
+        { id: 'andhra',              label: 'Andhra & Telangana' },
+        { id: 'kerala',              label: 'Kerala Sadya & Malabar' },
+        { id: 'north_indian',        label: 'North Indian' },
+        { id: 'mughlai',             label: 'Mughlai & Awadhi' },
+        { id: 'bengali',             label: 'Bengali' },
+        { id: 'gujarati_rajasthani', label: 'Gujarati & Rajasthani' },
+        { id: 'maharashtrian',       label: 'Maharashtrian' },
+        { id: 'jain_satvik',         label: 'Jain & Satvik',         scan: 'No onion, no garlic, no root' },
+        { id: 'indo_chinese',        label: 'Indo-Chinese' },
+        { id: 'continental',         label: 'Continental & Italian' },
+        { id: 'chaat_street',        label: 'Chaat & Street Food' },
+        { id: 'multi_cuisine',       label: 'Multi-Cuisine Buffet' },
       ],
     },
+
     {
       id: 'kitchen',
       question: 'Is your kitchen pure vegetarian?',

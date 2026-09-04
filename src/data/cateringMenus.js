@@ -506,23 +506,36 @@ export const FOOD_COUNTERS = [
 /**
  * Non-vegetarian menus.
  *
- * ⚠ THESE PRICES ARE NOT FROM A CATERER'S CARD.
+ * ══════════════════════════════════════════════════════════════════════
+ * WHERE THESE COME FROM, AND WHAT THAT MEANS
+ * ══════════════════════════════════════════════════════════════════════
  *
- * The source document is a PURE VEG caterer — it says so on the cover —
- * so there is no non-veg page to transcribe. These are indicative
- * Bengaluru market rates for 2026, set at roughly 1.4× the equivalent
- * vegetarian tier, which is the ratio the trade generally works to.
+ * NOT from the S S Caterers card — that is a pure-veg house and says so
+ * on its cover. There is no non-veg page to transcribe, so these are
+ * built from how the meal is actually served in this market rather than
+ * from any one caterer's quotation.
  *
- * They are marked `indicative: true` and the form shows a partner the
- * "or type your own" box open by default on these, because the honest
- * position is that we are guessing and they are not.
+ * Every one carries `indicative` and the card shows a CHECK PRICE badge.
+ * The rates are roughly 1.4× the equivalent vegetarian tier, which is
+ * the ratio the trade generally works to — a starting point a caterer
+ * edits, never a number we are quoting on their behalf.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * FIVE, NOT THREE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The first pass had three, and they were all "the veg menu, plus
+ * chicken". That is not how anyone eats here. A Mandya nati koli oota, a
+ * coastal fish meal and a biryani-house reception are three different
+ * meals, and a caterer who does one of them should not have to tick a
+ * card describing another.
  */
 export const NON_VEG_MENUS = [
   {
     id: 'nv_option_1',
     name: 'Non-veg Option 1',
     tier: 'Everyday feast',
-    scan: 'One non-veg main with the full veg spread',
+    scan: 'One chicken main with the full veg spread',
     fromPrice: 630,
     minPax: 100,
     diet: 'nonveg',
@@ -530,9 +543,21 @@ export const NON_VEG_MENUS = [
     welcome: [],
     items: [
       'Chicken Kabab OR Fish Fry',
-      'Chicken Curry OR Mutton Curry',
+      'Chicken Curry OR Chicken Sukka',
       'Egg Masala',
-      'Everything on the vegetarian Option 1 menu',
+      'Papad, Pickle, Salt',
+      'Kosambari',
+      'Palya (seasonal vegetable)',
+      'Poori OR Chapathi',
+      'Veg Kurma',
+      'White Rice',
+      'Sambar',
+      'Rasam',
+      'Curd',
+      'Sweet: Gulab Jamoon',
+      'Banana',
+      'Ice Cream',
+      'Drinking water (bottle)',
     ],
   },
   {
@@ -544,20 +569,33 @@ export const NON_VEG_MENUS = [
     minPax: 100,
     diet: 'nonveg',
     indicative: true,
-    welcome: ['Welcome drink: Pulpy Grape Juice'],
+    welcome: ['Welcome drink: Pulpy Grape Juice OR Fresh Lime'],
     items: [
       'Chicken 65 OR Chilly Chicken',
       'Fish Tawa Fry OR Prawn Ghee Roast',
       'Chicken Dum Biryani OR Mutton Biryani',
       'Chicken Kolhapuri OR Mutton Sukka',
-      'Everything on the vegetarian Option 2 menu',
+      'Raitha',
+      'Papad, Pickle',
+      'Kosambari',
+      'Palya',
+      'Rumali Rotti OR Butter Roti',
+      'Dal Fry',
+      'White Rice',
+      'Rasam',
+      'Curd',
+      'Sweet: Kala Jamoon OR Malai Sandwich',
+      'Banana',
+      'Ice Cream',
+      'Beeda',
+      'Drinking water (300 ml bottle)',
     ],
   },
   {
     id: 'nv_option_3',
     name: 'Non-veg Option 3',
     tier: 'The full spread',
-    scan: 'Three non-veg starters, two mains, live counter',
+    scan: 'Three starters, two mains, live counter',
     fromPrice: 850,
     minPax: 100,
     diet: 'nonveg',
@@ -567,16 +605,82 @@ export const NON_VEG_MENUS = [
       'Welcome snacks: Chicken Nuggets OR Fish Fingers',
     ],
     items: [
+      'Soup: Chicken Clear Soup OR Mutton Paya Soup',
       'Chicken Tikka OR Tandoori Chicken',
       'Fish Amritsari OR Prawn Koliwada',
       'Mutton Seekh Kabab',
       'Chicken Dum Biryani OR Mutton Dum Biryani',
       'Butter Chicken OR Chicken Chettinad',
       'Mutton Rogan Josh OR Nati Koli Saaru',
-      'Everything on the vegetarian Option 3 menu',
+      'Egg Masala',
+      'Batoora OR Rumali Rotti OR Naan',
+      'Dal Makhani',
+      'Raitha, Green Salad',
+      'White Rice',
+      'Rasam',
+      'Curd',
+      'Sweet: Hot Jilebi with Rabdi',
+      'Sweet: Kaju Pineapple Slice',
+      'Banana OR Cut Fruits',
+      'Ice Cream',
+      'Beeda',
+      'Drinking water (bottle)',
+    ],
+  },
+  {
+    id: 'nv_coastal',
+    name: 'Coastal non-veg',
+    tier: 'Mangalorean',
+    scan: 'Gassi, ghee roast, neer dosa',
+    fromPrice: 780,
+    minPax: 50,
+    diet: 'nonveg',
+    indicative: true,
+    welcome: ['Welcome drink: Solkadhi OR Tender Coconut'],
+    items: [
+      'Kori Gassi',
+      'Chicken Ghee Roast OR Prawn Ghee Roast',
+      'Bangude Fry OR Anjal Tawa Fry',
+      'Fish Curry (coastal)',
+      'Marvai Sukka (clams, seasonal)',
+      'Neer Dosa',
+      'Kori Rotti',
+      'Boiled Rice (kucchalakki)',
+      'Dali Thoy',
+      'Sukka (dry vegetable)',
+      'Pickle, Papad',
+      'Buttermilk',
+      'Sweet: Patholi OR Halbai',
+      'Banana',
+      'Drinking water',
+    ],
+  },
+  {
+    id: 'nv_donne',
+    name: 'Donne biryani meal',
+    tier: 'Bengaluru military hotel style',
+    scan: 'Donne biryani, nati koli, kaal soup',
+    fromPrice: 690,
+    minPax: 50,
+    diet: 'nonveg',
+    indicative: true,
+    welcome: [],
+    items: [
+      'Nati Koli Donne Biryani OR Mutton Donne Biryani',
+      'Nati Koli Saaru',
+      'Chicken Kabab OR Mutton Chops',
+      'Mutton Kaal Soup',
+      'Boiled Egg',
+      'Onion and Lemon',
+      'Raitha',
+      'Kharabath OR Akki Rotti',
+      'Curd',
+      'Beeda',
+      'Drinking water',
     ],
   },
 ]
+
 
 /* The caterer's own terms, shown wherever a price is. Reproduced rather
    than paraphrased: "the host arranges the shamiana" is the sort of line
@@ -589,7 +693,6 @@ export const CATERING_NOTES = [
   'The quoted rate includes food, service, cleaning and transportation',
   'Serving tables, chairs, hand wash and shamiana are arranged by the host',
   'Additional consumption of food is charged extra',
-  'Minimum 100 guests for these rates',
 ]
 
 /* How a menu reaches the guest. A caterer usually does one of these
@@ -605,8 +708,48 @@ export const ALL_MENUS = [
   ...PLANTAIN_LEAF_MENUS,
   ...BUFFET_MENUS,
   BEEGARA_OOTA,
+  BEEGARA_OOTA_NONVEG,
   ...NON_VEG_MENUS,
 ]
+
+/**
+ * The dish lines of a menu, whichever shape it is stored in.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS EXISTS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Plantain-leaf menus carry a flat `items` array. Buffet options 3 and 4
+ * carry `courses`, because the caterer's card prints them as labelled
+ * courses and that structure is information -- "Starter" with three
+ * alternatives is a promise about how many starters arrive.
+ *
+ * Every screen that read `menu.items.length` therefore crashed on those
+ * two cards with
+ *
+ *   TypeError: Cannot read properties of undefined (reading 'length')
+ *
+ * and because "North Indian festive" is exactly the cuisine that returns
+ * the buffet cards, picking it and pressing Continue took a partner
+ * straight to the error boundary. One shape assumed, two shapes stored.
+ *
+ * Every reader goes through here now, so a third shape breaks one
+ * function rather than four screens.
+ */
+export function menuLines(menu) {
+  if (!menu) return []
+  if (Array.isArray(menu.items)) return menu.items
+  if (Array.isArray(menu.courses)) {
+    return menu.courses.flatMap(c =>
+      (c.of ?? []).map(line => (c.course ? `${c.course}: ${line}` : line)))
+  }
+  return []
+}
+
+/** How many dishes a menu has, for a card that says so. */
+export function menuLineCount(menu) {
+  return menuLines(menu).length
+}
 
 export const MENU_BY_ID = Object.fromEntries(ALL_MENUS.map(m => [m.id, m]))
 
@@ -625,29 +768,48 @@ export const MENU_BY_ID = Object.fromEntries(ALL_MENUS.map(m => [m.id, m]))
 export function menusFor({ cuisines = [], serves = [], diet = null } = {}) {
   const byCuisine = new Set()
 
+  /* Which set menus each cuisine can actually be served as.
+   *
+   * Keyed by the ids in data/cuisineMenus.js, so a partner's answer and a
+   * customer's request are literally the same string.
+   *
+   * The mapping is about SERVICE STYLE, not about taste: a Kerala sadya
+   * and a Karnataka oota are both plantain-leaf meals and share those
+   * cards; a Mughlai kitchen serves a buffet and does not serve a sadya.
+   * Getting this wrong shows a caterer a card they cannot honour, which
+   * is the nonsense-option failure this whole rebuild exists to end. */
+  const LEAF = [...PLANTAIN_LEAF_MENUS, BEEGARA_OOTA]
+  const BUFFET = [...BUFFET_MENUS]
+  const NONVEG = [BEEGARA_OOTA_NONVEG, ...NON_VEG_MENUS]
+
+  const BY_CUISINE = {
+    /* South Indian leaf traditions. */
+    karnataka:           [...LEAF, ...BUFFET, ...NONVEG],
+    mysuru_royal:        [...LEAF, ...BUFFET],
+    udupi:               [...LEAF, ...BUFFET, ...NONVEG],
+    tamil:               [...LEAF, ...BUFFET, ...NONVEG],
+    andhra:              [...LEAF, ...BUFFET, ...NONVEG],
+    kerala:              [...LEAF, ...BUFFET, ...NONVEG],
+
+    /* Buffet traditions. A tandoor kitchen does not serve on a leaf. */
+    north_indian:        [...BUFFET, ...NONVEG],
+    mughlai:             [...BUFFET, ...NONVEG],
+    bengali:             [...BUFFET, ...NONVEG],
+    maharashtrian:       [...BUFFET, ...NONVEG],
+    indo_chinese:        [...BUFFET, ...NONVEG],
+    continental:         [...BUFFET, ...NONVEG],
+    chaat_street:        [...BUFFET],
+
+    /* Vegetarian by definition. Offering these kitchens a non-veg card
+       is the clearest nonsense option there is. */
+    gujarati_rajasthani: [...LEAF, ...BUFFET],
+    jain_satvik:         [...PLANTAIN_LEAF_MENUS],
+
+    multi_cuisine:       [...LEAF, ...BUFFET, ...NONVEG],
+  }
+
   for (const c of cuisines) {
-    switch (c) {
-      case 'south_brahmin':
-        /* Pure veg only. A Brahmin-style kitchen being offered a non-veg
-           menu to tick is exactly the nonsense option this rebuild
-           exists to remove. */
-        for (const m of [...PLANTAIN_LEAF_MENUS, BEEGARA_OOTA]) byCuisine.add(m)
-        break
-      case 'jain':
-        for (const m of PLANTAIN_LEAF_MENUS) byCuisine.add(m)
-        break
-      case 'south_general':
-        for (const m of [...PLANTAIN_LEAF_MENUS, ...BUFFET_MENUS, BEEGARA_OOTA, ...NON_VEG_MENUS]) byCuisine.add(m)
-        break
-      case 'north': case 'punjabi': case 'mughlai': case 'continental': case 'chinese':
-        /* The buffet card is the North Indian one -- soup, starter,
-           bread, gravy. Offering a plantain-leaf menu to a tandoor
-           kitchen would be offering them a service they do not run. */
-        for (const m of [...BUFFET_MENUS, ...NON_VEG_MENUS]) byCuisine.add(m)
-        break
-      default:
-        for (const m of ALL_MENUS) byCuisine.add(m)
-    }
+    for (const m of (BY_CUISINE[c] ?? ALL_MENUS)) byCuisine.add(m)
   }
 
   let list = cuisines.length ? [...byCuisine] : [...ALL_MENUS]

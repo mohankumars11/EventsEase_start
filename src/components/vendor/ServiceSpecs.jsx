@@ -137,7 +137,11 @@ export default function ServiceSpecs({ trade, value, onSave }) {
                       aria-pressed={on}
                       className={`rounded-full px-3 py-1.5 text-left text-[12.5px] font-bold transition ${
                         on
-                          ? 'bg-plum-950 text-white'
+                          /* Green means chosen, everywhere. Plum is the
+                             chrome -- header, nav, brand -- so a plum
+                             chip and a plum header are one colour doing
+                             two jobs. */
+                          ? 'bg-forest-600 text-white ring-2 ring-forest-600'
                           : 'bg-white text-ink-soft ring-1 ring-ink/[0.10]'
                       }`}
                     >

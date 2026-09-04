@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   ArrowLeft, Check, ChevronRight, Loader2, Search, Send, X,
   UtensilsCrossed, Camera, Video, Flower2, Building2, Music, Sparkles,
@@ -10,7 +11,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import { specsForTrade } from '../../data/partnerSpecs'
 import { specsForServices } from '../../data/partnerServiceSpecs'
-import { menusFor, FOOD_COUNTERS, CATERING_NOTES } from '../../data/cateringMenus'
+import { menusFor, menuLines, menuLineCount, FOOD_COUNTERS, CATERING_NOTES } from '../../data/cateringMenus'
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
 import MenuUpload from './MenuUpload'
@@ -129,7 +130,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
        the leaf sees four cards; the eight it does not see are eight fewer
        chances to tick something it cannot honour. */
     return menusFor({ cuisines, serves: detail.service ?? [], diet: detail.diet ?? null })
-  }, [isCatering, detail.cuisines, detail.service])
+  }, [isCatering, detail.cuisines, detail.service, detail.diet])
 
   const alreadyHave = new Set(existing.map(s => s.name))
   const nameOf = id => offerings.find(o => o.serviceId === id)?.name ?? id
@@ -137,13 +138,27 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   /* The steps that actually exist for THIS trade. Computed rather than
      hardcoded, so Back and Next cannot walk into a screen with nothing
      on it. */
+  /* Which offerings are actually about MENUS.
+   *
+   * Reported: tapping "Welcome drinks", "Sweets & mithai" or "Customised
+   * menu" and pressing Continue landed on a menus screen saying "Pick
+   * your cuisines on the last screen and the menus for them appear here"
+   * -- a dead end, because those offerings are never asked about
+   * cuisines and never will be. A drinks counter has no plantain-leaf
+   * menu. The screen was correct and should not have been there at all.
+   *
+   * `menu` is on this list because a customised menu IS built from the
+   * standard ones. The other five are not. */
+  const MENU_BEARING = ['catering', 'menu']
+  const wantsMenus = isCatering && picked.some(id => MENU_BEARING.includes(id))
+
   const flow = useMemo(() => {
     const s = ['trade', 'offerings']
     if (groups.length) s.push('detail')
-    if (isCatering) s.push('menus', 'dishes')
+    if (wantsMenus) s.push('menus', 'dishes')
     s.push('price', 'review')
     return s
-  }, [groups.length, isCatering])
+  }, [groups.length, wantsMenus])
 
   const idx = flow.indexOf(step)
   const goNext = () => setStep(flow[Math.min(idx + 1, flow.length - 1)])
@@ -208,14 +223,25 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     }
   }
 
-  return (
+  /* Portalled to document.body, not rendered in place.
+   *
+   * `position: fixed` resolves against the nearest ancestor with a
+   * transform, not against the viewport -- and the dashboard has an
+   * entrance animation on the way in. So a full-screen modal rendered
+   * inside it is trapped in that ancestor's box AND in its stacking
+   * context, which is why the sticky navbar (z-50) drew a navy strip
+   * across the top of a modal at z-95 and hid its subtitle.
+   *
+   * The same fix DayStatusSheet already uses, and the same trap
+   * PROJECT_SUMMARY records for the cancel sheet. */
+  return createPortal(
     <div className="fixed inset-0 z-[95] flex flex-col bg-[#faf9f7]">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <header className="shrink-0 bg-plum-950 px-4 pb-3 pt-4 text-white">
+      <header className="shrink-0 border-b border-ink/[0.07] bg-[#fdfcfa] px-4 pb-3 pt-4 text-ink">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <button
             type="button" onClick={goBack} aria-label="Back"
-            className="-ml-1 rounded-full p-1.5 text-white/80 hover:bg-white/10"
+            className="-ml-1 rounded-full p-1.5 text-ink-soft hover:bg-ink/[0.05]"
           >
             <ArrowLeft size={19} />
           </button>
@@ -229,7 +255,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
           </span>
           <button
             type="button" onClick={onClose} aria-label="Close"
-            className="rounded-full p-1.5 text-white/80 hover:bg-white/10"
+            className="rounded-full p-1.5 text-ink-soft hover:bg-ink/[0.05]"
           >
             <X size={18} />
           </button>
@@ -343,7 +369,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -395,7 +422,7 @@ function TradeStep({ q, setQ, value, onPick }) {
               type="button"
               onClick={() => onPick(t)}
               className={`flex flex-col items-start gap-2.5 rounded-[20px] p-3.5 text-left ring-1 transition active:scale-[0.98] ${
-                on ? 'bg-saffron-400/15 ring-2 ring-saffron-400' : 'bg-white ring-ink/[0.06]'
+                on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
               }`}
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-plum-950 text-white">
@@ -447,14 +474,14 @@ function OfferingStep({ offerings, picked, alreadyHave, onToggle }) {
               onClick={() => onToggle(o.serviceId)}
               className={`flex w-full items-center gap-3 rounded-[18px] p-3.5 text-left ring-1 transition active:scale-[0.99] ${
                 have ? 'bg-ink/[0.03] ring-ink/[0.05] opacity-60'
-                : on ? 'bg-saffron-400/15 ring-2 ring-saffron-400'
+                : on ? 'bg-forest-50 ring-2 ring-forest-600'
                      : 'bg-white ring-ink/[0.06]'
               }`}
             >
               <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ${
-                on ? 'bg-saffron-400 ring-saffron-400' : 'bg-white ring-ink/[0.18]'
+                on ? 'bg-forest-600 ring-forest-600' : 'bg-white ring-ink/[0.18]'
               }`}>
-                {on && <Check size={13} className="text-plum-950" />}
+                {on && <Check size={13} className="text-white" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-extrabold text-ink">{o.name}</span>
@@ -509,7 +536,7 @@ function DetailStep({ groups, value, onChange }) {
                 <button
                   key={c.id} type="button" onClick={() => toggle(g, c.id)} aria-pressed={on}
                   className={`rounded-full px-3.5 py-2 text-[13px] font-bold transition ${
-                    on ? 'bg-plum-950 text-white' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
+                    on ? 'bg-forest-600 text-white ring-2 ring-forest-600' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
                   }`}
                 >
                   {c.label}
@@ -531,12 +558,31 @@ function DetailStep({ groups, value, onChange }) {
               into them: matching still runs on the choice ids, and free
               text is read by a person. That is the whole reason the
               dropdown exists. */}
-          <input
-            value={value[`${g.id}__other`] ?? ''}
-            onChange={e => setOther(g, e.target.value)}
-            placeholder="Something else? Type it here"
-            className="mt-2.5 w-full rounded-2xl bg-ink/[0.02] px-3.5 py-2.5 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-          />
+          {/* ── The typed answer, and proof it landed ────────────────
+              Reported as "there is no option to submit". There never
+              needed to be one -- the text is kept the moment it is typed
+              and travels with Continue like every tick on this screen --
+              but nothing on the box SAID so, and an input with no button
+              beside it reads as an input that has not been submitted.
+              A partner who cannot tell whether their sentence was
+              recorded will type it again, or lose faith in the rest of
+              the form.
+
+              So the box says what it is doing. No extra button: adding
+              one would imply the ticks need submitting too. */}
+          <div className="relative mt-2.5">
+            <input
+              value={value[`${g.id}__other`] ?? ''}
+              onChange={e => setOther(g, e.target.value)}
+              placeholder="Something else? Type it here"
+              className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+            />
+            {(value[`${g.id}__other`] ?? '').trim().length > 0 && (
+              <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
+                <Check size={10} /> Saved
+              </span>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -565,7 +611,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
         </p>
         <button
           type="button" onClick={onAllMenus}
-          className="shrink-0 rounded-full bg-plum-950 px-3.5 py-1.5 text-[12px] font-extrabold text-white"
+          className="shrink-0 rounded-full bg-forest-600 px-3.5 py-1.5 text-[12px] font-extrabold text-white"
         >
           {chosen.length === menus.length ? 'Clear all' : 'Select all'}
         </button>
@@ -579,7 +625,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
             <div
               key={m.id}
               className={`overflow-hidden rounded-[20px] ring-1 transition ${
-                on ? 'bg-saffron-400/[0.10] ring-2 ring-saffron-400' : 'bg-white ring-ink/[0.06]'
+                on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
               }`}
             >
               <div className="flex items-start gap-3 p-4">
@@ -589,10 +635,10 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
                   aria-pressed={on}
                   aria-label={`${on ? 'Remove' : 'Add'} ${m.name}`}
                   className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ${
-                    on ? 'bg-saffron-400 ring-saffron-400' : 'bg-white ring-ink/[0.18]'
+                    on ? 'bg-forest-600 ring-forest-600' : 'bg-white ring-ink/[0.18]'
                   }`}
                 >
-                  {on && <Check size={13} className="text-plum-950" />}
+                  {on && <Check size={13} className="text-white" />}
                 </button>
 
                 <button
@@ -616,7 +662,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
                     </span>
                   </span>
                   <span className="mt-1 block text-[11.5px] font-bold text-plum-700">
-                    {isOpen ? 'Hide the dishes' : `Read all ${m.items.length} dishes`}
+                    {isOpen ? 'Hide the dishes' : `Read all ${menuLineCount(m)} dishes`}
                   </span>
                 </button>
               </div>
@@ -631,7 +677,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
                     </div>
                   )}
                   <ol className="space-y-1">
-                    {m.items.map((it, i) => (
+                    {menuLines(m).map((it, i) => (
                       <li key={i} className="flex gap-2 text-[12.5px] leading-snug text-ink-soft">
                         <span className="w-4 shrink-0 text-right tabular-nums text-ink-mute">{i + 1}</span>
                         <span>{it}</span>
@@ -670,7 +716,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
             <button
               key={c.id} type="button" onClick={() => onToggleCounter(c.id)} aria-pressed={on}
               className={`rounded-full px-3.5 py-2 text-left text-[12.5px] font-bold transition ${
-                on ? 'bg-plum-950 text-white' : 'bg-white text-ink-soft ring-1 ring-ink/[0.08]'
+                on ? 'bg-forest-600 text-white ring-2 ring-forest-600' : 'bg-white text-ink-soft ring-1 ring-ink/[0.08]'
               }`}
             >
               {c.name}
@@ -774,7 +820,7 @@ function DishStep({ chosen, onChange }) {
                   type="button"
                   onClick={() => toggleGroup(g)}
                   className={`shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold transition ${
-                    n === g.items.length ? 'bg-plum-950 text-white' : 'bg-ink/[0.04] text-ink-soft'
+                    n === g.items.length ? 'bg-forest-600 text-white' : 'bg-ink/[0.04] text-ink-soft'
                   }`}
                 >
                   {n === g.items.length ? 'Clear' : 'All'}
@@ -793,7 +839,7 @@ function DishStep({ chosen, onChange }) {
                       <button
                         key={i} type="button" onClick={() => toggle(i)} aria-pressed={on}
                         className={`rounded-full px-3 py-1.5 text-[12px] font-bold transition ${
-                          on ? 'bg-saffron-400 text-plum-950' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.07]'
+                          on ? 'bg-forest-600 text-white' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.07]'
                         }`}
                       >
                         {i}
@@ -867,12 +913,58 @@ function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrde
             <button
               key={u.id} type="button" onClick={() => setUnit(u.id)}
               className={`rounded-full px-3.5 py-2 text-[12.5px] font-bold transition ${
-                unit === u.id ? 'bg-plum-950 text-white' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
+                unit === u.id ? 'bg-forest-600 text-white ring-2 ring-forest-600' : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
               }`}
             >
               {u.id}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* ── The smallest order YOU will take ──────────────────────────
+          Asked once, here, next to the other numbers, in the caterer's
+          own words. It used to be printed on twelve menu cards as
+          "min 100" -- which states it as OUR rule, before the caterer
+          has been asked. Their floor is their business; a customer-side
+          minimum is a separate decision that belongs to us. */}
+      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <p className="text-[13px] font-extrabold text-ink">
+          Smallest order you will take
+        </p>
+        <p className="mb-2 mt-0.5 text-[12px] leading-snug text-ink-soft">
+          Below this it is not worth your while. Leave it blank if you have
+          no floor.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {['25', '50', '100', '200', '500'].map(n => {
+            const on = minOrder === n
+            return (
+              <button
+                key={n} type="button" onClick={() => setMinOrder(on ? '' : n)}
+                aria-pressed={on}
+                className={`rounded-full px-3.5 py-2 text-[13px] font-bold transition ${
+                  on ? 'bg-forest-600 text-white ring-2 ring-forest-600'
+                     : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.08]'
+                }`}
+              >
+                {n} plates
+              </button>
+            )
+          })}
+        </div>
+        <div className="relative mt-2.5">
+          <input
+            value={/^\d*$/.test(minOrder) ? '' : minOrder}
+            onChange={e => setMinOrder(e.target.value)}
+            placeholder="Or say it your way — “one function, any size”"
+            className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+          />
+          {minOrder && !/^\d+$/.test(minOrder) && (
+            <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
+              <Check size={10} /> Saved
+            </span>
+          )}
         </div>
       </div>
 
@@ -933,7 +1025,7 @@ function ReviewStep({ trade, picked, detail, groups, menus, counters, dishes = [
               <li key={m.id} className="flex items-baseline justify-between gap-3 text-[13px]">
                 <span className="font-semibold text-ink">{m.name}</span>
                 <span className="shrink-0 text-ink-mute tabular-nums">
-                  {m.items.length} dishes · from ₹{m.fromPrice}
+                  {menuLineCount(m)} dishes · from ₹{m.fromPrice}
                 </span>
               </li>
             ))}

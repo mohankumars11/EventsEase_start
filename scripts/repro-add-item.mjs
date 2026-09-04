@@ -83,7 +83,14 @@ await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display=
 
 const click = text => ev(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes(${JSON.stringify(text)}));if(!b)return 'NOT FOUND: ${text.replace(/'/g, '')}';b.click();return 'clicked'})()`)
 const broken = () => ev(`document.body.innerText.includes('Something went wrong') || document.body.innerText.includes('Try again')`)
-const heading = () => ev(`document.querySelector('header')?.innerText?.split('\\n')[0] ?? '?'`)
+/* The MODAL's header, not the page's. The first version read
+   document.querySelector('header'), which finds the dashboard's, so
+   every step printed "What you offer" and told me nothing about
+   which screen the flow was actually on. */
+const heading = () => ev(`(() => {
+  const m = document.querySelector('.fixed.inset-0 header')
+  return ((m ?? document.querySelector('header'))?.innerText ?? '?').split('\n')[0]
+})()`)
 
 async function step(label, text) {
   const r = await click(text)
@@ -94,7 +101,46 @@ async function step(label, text) {
   return true
 }
 
-console.log('\n  Walking every catering offering\n')
+console.log('')
+console.log('  The exact path reported')
+console.log('')
+
+async function fresh() {
+  await send('Page.navigate', { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
+  await sleep(4500)
+  await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+}
+
+{
+  console.log('  -- Catering, North Indian festive')
+  await fresh()
+  await step('open', 'Add what you do')
+  await step('trade', 'Catering & Food')
+  await step('offering', 'Catering')
+  await step('continue', 'Continue')
+  await step('diet veg', 'Vegetarian only')
+  await step('cuisine', 'North Indian festive')
+  await step('continue 1', 'Continue')
+  await step('continue 2', 'Continue')
+  await step('continue 3', 'Continue')
+  console.log('')
+}
+
+for (const off of ['Welcome drinks', 'Customised menu']) {
+  console.log(`  -- ${off}`)
+  await fresh()
+  await step('open', 'Add what you do')
+  await step('trade', 'Catering & Food')
+  await step('offering', off)
+  await step('continue 1', 'Continue')
+  await step('continue 2', 'Continue')
+  await step('continue 3', 'Continue')
+  console.log('')
+}
+
+console.log('')
+console.log('  Walking every catering offering')
+console.log('')
 
 /* Each offering, one at a time, because the report is that picking any of
    them lands on the same screen -- or on the error boundary. */

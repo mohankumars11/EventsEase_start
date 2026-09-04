@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Camera, ImagePlus, Loader2, X, FileText } from 'lucide-react'
+import { Camera, ImagePlus, Loader2, X, FileText, Upload } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { prepareImage } from '../../lib/imageUpload'
 import { useToast, friendlyError } from '../../context/ToastContext'
@@ -23,16 +23,23 @@ import { useToast, friendlyError } from '../../context/ToastContext'
  * to ask.
  *
  * ══════════════════════════════════════════════════════════════════════
- * ONE CONTROL, NOT TWO
+ * TWO CONTROLS, BECAUSE ONE WAS WRONG
  * ══════════════════════════════════════════════════════════════════════
  *
- * `capture="environment"` opens the camera directly inside the Android
- * WebView and the file picker everywhere else, so "photograph it" and
- * "choose a file" are the same button and neither needs
- * `@capacitor/camera`, a plugin, or a permission prompt.
+ * The first version used a single input with `capture="environment"`,
+ * reasoning that it opens the camera on Android and the file picker
+ * everywhere else. Reported straight back: "only camera is opening, no
+ * upload option."
  *
- * Two buttons here would be two decisions for somebody standing in a
- * kitchen.
+ * That is exactly what `capture` does. It is not a hint about a
+ * preferred source — on Android it REPLACES the chooser with the camera,
+ * so a caterer whose menu card is already a PDF in their downloads had
+ * no way to reach it. The convenience of one button cost the more common
+ * of the two paths.
+ *
+ * So: two inputs. One plain (files, PDFs, the gallery), one with
+ * `capture` for photographing a card on the counter. Still no
+ * `@capacitor/camera` and no permission prompt.
  *
  * ── Compressed before it leaves the phone ───────────────────────────
  * A 5 MB photo of a menu card over a Bengaluru mobile connection is a
@@ -46,6 +53,7 @@ export default function MenuUpload({ value = [], onChange }) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const fileRef = useRef(null)
+  const camRef = useRef(null)
 
   async function handle(e) {
     const files = [...(e.target.files ?? [])]
@@ -99,8 +107,8 @@ export default function MenuUpload({ value = [], onChange }) {
         Have your menu card already?
       </p>
       <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
-        Photograph it or upload the PDF. We will read it and fill in
-        anything you have not ticked.
+        Upload the PDF, or photograph it on the counter. We read it and
+        fill in anything you have not ticked.
       </p>
 
       {value.length > 0 && (
@@ -124,27 +132,46 @@ export default function MenuUpload({ value = [], onChange }) {
         </div>
       )}
 
+      {/* No `capture` on this one: that attribute REPLACES the chooser
+          with the camera on Android, which is why "no upload option"
+          was reported. This is the files, PDFs and gallery path. */}
       <input
         ref={fileRef}
         type="file"
         accept="image/*,application/pdf"
-        capture="environment"
         multiple
         onChange={handle}
         className="hidden"
       />
+      {/* And this one is the camera, on purpose. */}
+      <input
+        ref={camRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handle}
+        className="hidden"
+      />
 
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        disabled={busy || value.length >= MAX}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink/[0.03] py-3 text-[13.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-50"
-      >
-        {busy ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-        {busy ? 'Uploading…'
-          : value.length ? 'Add another page'
-          : 'Photograph or upload your menu'}
-      </button>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy || value.length >= MAX}
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink/[0.03] py-3 text-[13.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-50"
+        >
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+          {busy ? 'Uploading…' : 'Upload a file'}
+        </button>
+        <button
+          type="button"
+          onClick={() => camRef.current?.click()}
+          disabled={busy || value.length >= MAX}
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink/[0.03] py-3 text-[13.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-50"
+        >
+          <Camera size={15} /> Take a photo
+        </button>
+      </div>
 
       {value.length >= MAX && (
         <p className="mt-1.5 text-center text-[11.5px] text-ink-mute">
