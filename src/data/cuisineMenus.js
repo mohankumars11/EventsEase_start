@@ -40,6 +40,8 @@
 // estimates everywhere they surface and must be re-checked against real
 // vendor rate cards before anybody is held to one.
 
+import { dishIdFor } from './dishIds.generated'
+
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 /** A vegetarian dish. `delta` is the per-plate premium over the base spread. */
@@ -816,7 +818,26 @@ export const CUISINE_GROUPS = [
 /** Dishes in a course, filtered to what this order's diet allows. */
 export function dishesFor(cuisine, courseId, { vegOnly = false } = {}) {
   const items = cuisine?.courses?.[courseId] ?? []
-  return vegOnly ? items.filter(d => d.veg) : items
+  const shown = vegOnly ? items.filter(d => d.veg) : items
+
+  /* ── sbmId is what makes a menu card matchable ────────────────────
+     `d.id` is a slug of the name, unique only within its own cuisine —
+     "ghee-rice" exists under four of them and means a different line on
+     each. It was never an identity, and matching a customer's card
+     against a caterer's listing on it would quietly pair the wrong ones.
+
+     sbmId is the catalogue-wide id from dishIds.generated.js, shared
+     with dishRegistry.js wherever the same dish appears in both. It is
+     attached here rather than stored in the arrays above so the dish
+     definitions stay readable — 915 inline ids would bury the food.
+
+     Null means a dish added since the generator last ran. Callers must
+     treat that as "cannot be matched" rather than falling back to the
+     name; check-dish-registry fails the build before it can happen. */
+  return shown.map(d => ({
+    ...d,
+    sbmId: dishIdFor(cuisine?.id, courseId, d.name),
+  }))
 }
 
 /**

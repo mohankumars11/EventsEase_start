@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronRight, Search, Leaf, Drumstick, Flame } from 'lucide-react'
 import {
-  KITCHEN_TYPES, cuisinesFor, regionsFor, coursesForCuisine,
+  KITCHEN_TYPES, cuisinesFor, regionsFor, coursesForCuisine, dietOf,
 } from '../../data/cateringFunnel'
 import { CUISINES, CUISINE_BY_ID } from '../../data/cuisineMenus'
 import MenuUpload from './MenuUpload'
 import { mergeAdditions } from '../../data/catalogueAdditions'
+import { registryCourses } from '../../data/dishRegistry'
 
 /**
  * The catering funnel, on screen.
@@ -336,6 +337,21 @@ function CuisineCard({ c, on, onTap }) {
  * lives in AddItemFlow so it makes no difference which screen it is
  * given on.
  */
+/* ── A dish is either a registry row or a bare name ──────────────────
+   The registry carries an id, a description and a diet; the older
+   libraries are still arrays of strings. Both arrive here, and every
+   selection is stored by KEY — the id when there is one.
+
+   Names cannot be matched on. "Arachuvitta Sambar", "Arachuvitta
+   sambar" and "Araichuvitta Sambhar" are three caterers cooking one
+   dish, and a string comparison finds one of them without saying it
+   dropped the other two. So anything that has an id is stored by id, and
+   what a caterer ticks becomes an answer dispatch can reason about
+   rather than a label. See data/dishRegistry.js. */
+const asDish = d => (typeof d === 'string'
+  ? { key: d, name: d }
+  : { key: d.id, name: d.name, note: d.note, diet: d.diet })
+
 export function DishPickerStep({
   title, blurb, emoji, courses = [], chosen = [], onChange,
   note = '', onNote, uploads, onUploads,
@@ -343,21 +359,26 @@ export function DishPickerStep({
   const [open, setOpen] = useState(null)
   const picked = new Set(chosen)
 
-  const total = courses.reduce((n, c) => n + c.dishes.length, 0)
-  const mine = courses.reduce((n, c) => n + c.dishes.filter(d => picked.has(d)).length, 0)
+  const rows = useMemo(
+    () => courses.map(c => ({ ...c, items: c.dishes.map(asDish) })),
+    [courses])
+
+  const total = rows.reduce((n, c) => n + c.items.length, 0)
+  const mine = rows.reduce((n, c) => n + c.items.filter(d => picked.has(d.key)).length, 0)
   const everything = total > 0 && mine === total
 
-  function toggle(name) {
-    onChange(picked.has(name) ? chosen.filter(x => x !== name) : [...chosen, name])
+  function toggle(key) {
+    onChange(picked.has(key) ? chosen.filter(x => x !== key) : [...chosen, key])
   }
   function toggleCourse(c) {
-    const all = c.dishes.every(d => picked.has(d))
+    const keys = c.items.map(d => d.key)
+    const all = keys.every(k => picked.has(k))
     onChange(all
-      ? chosen.filter(x => !c.dishes.includes(x))
-      : [...new Set([...chosen, ...c.dishes])])
+      ? chosen.filter(x => !keys.includes(x))
+      : [...new Set([...chosen, ...keys])])
   }
   function toggleScreen() {
-    const here = courses.flatMap(c => c.dishes)
+    const here = rows.flatMap(c => c.items.map(d => d.key))
     onChange(everything
       ? chosen.filter(x => !here.includes(x))
       : [...new Set([...chosen, ...here])])
@@ -396,10 +417,10 @@ export function DishPickerStep({
       </div>
 
       <div className="space-y-2">
-        {courses.map(c => {
-          const n = c.dishes.filter(d => picked.has(d)).length
+        {rows.map(c => {
+          const n = c.items.filter(d => picked.has(d.key)).length
           const isOpen = open === c.id
-          const full = n === c.dishes.length
+          const full = n === c.items.length
           return (
             <div key={c.id} className="overflow-hidden rounded-[18px] bg-white ring-1 ring-ink/[0.06]">
               <div className="flex items-center gap-2 p-3.5">
@@ -421,7 +442,7 @@ export function DishPickerStep({
                   </span>
                   <span className="block text-[11.5px] text-ink-mute">
                     {c.scan ? `${c.scan} · ` : ''}
-                    {n ? `${n} of ${c.dishes.length}` : c.dishes.length}
+                    {n ? `${n} of ${c.items.length}` : c.items.length}
                   </span>
                 </button>
                 <button
@@ -440,21 +461,58 @@ export function DishPickerStep({
               </div>
 
               {isOpen && (
-                <div className="flex flex-wrap gap-1.5 border-t border-ink/[0.06] p-3.5">
-                  {c.dishes.map(d => {
-                    const on = picked.has(d)
-                    return (
-                      <button
-                        key={d} type="button" onClick={() => toggle(d)} aria-pressed={on}
-                        className={`rounded-full px-3 py-1.5 text-[12px] font-bold transition ${
-                          on ? 'bg-forest-600 text-white'
-                             : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.07]'
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    )
-                  })}
+                <div className="border-t border-ink/[0.06] p-3.5">
+                  {/* A registry dish carries a line of what it is, and a
+                      caterer deciding whether they cook "Menaskai" needs
+                      that line more than they need a tighter grid. Bare
+                      names stay as chips — there is nothing more to show. */}
+                  <div className={c.items.some(d => d.note) ? 'space-y-1.5' : 'flex flex-wrap gap-1.5'}>
+                    {c.items.map(d => {
+                      const on = picked.has(d.key)
+                      return d.note ? (
+                        <button
+                          key={d.key} type="button" onClick={() => toggle(d.key)} aria-pressed={on}
+                          className={`flex w-full items-start gap-2.5 rounded-2xl p-2.5 text-left transition ${
+                            on ? 'bg-forest-600 text-white'
+                               : 'bg-ink/[0.02] text-ink ring-1 ring-ink/[0.06]'
+                          }`}
+                        >
+                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                            on ? 'bg-white text-forest-700' : 'ring-1 ring-ink/15'
+                          }`}>
+                            {on && <Check size={11} strokeWidth={3} />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-baseline gap-x-1.5">
+                              <span className="text-[13px] font-extrabold leading-tight">{d.name}</span>
+                              {d.diet === 'nonveg' && (
+                                <span className={`rounded-full px-1.5 text-[9px] font-extrabold uppercase tracking-wide ${
+                                  on ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800'
+                                }`}>
+                                  Non-veg
+                                </span>
+                              )}
+                            </span>
+                            <span className={`mt-0.5 block text-[11px] leading-snug ${
+                              on ? 'text-white/75' : 'text-ink-mute'
+                            }`}>
+                              {d.note}
+                            </span>
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          key={d.key} type="button" onClick={() => toggle(d.key)} aria-pressed={on}
+                          className={`rounded-full px-3 py-1.5 text-[12px] font-bold transition ${
+                            on ? 'bg-forest-600 text-white'
+                               : 'bg-ink/[0.03] text-ink-soft ring-1 ring-ink/[0.07]'
+                          }`}
+                        >
+                          {d.name}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -462,7 +520,7 @@ export function DishPickerStep({
         })}
       </div>
 
-      {!courses.length && (
+      {!rows.length && (
         <p className="rounded-[20px] bg-ink/[0.02] p-6 text-center text-[13px] leading-relaxed text-ink-mute">
           We have no dishes on file for this yet. Tell us what you cook and we
           will add them.
@@ -519,9 +577,24 @@ export function CuisineDishStep({
      the fetch behind them returns [] on every failure — a caterer on a
      patchy connection gets the 840 dishes we already have rather than an
      error. See data/catalogueAdditions.js. */
+  /* ── The registry first, where it has this cuisine ─────────────────
+     Tamil, Andhra, Kerala, Karnataka and Udupi have registry entries
+     with ids, descriptions and an explicit diet, and those are the ones
+     dispatch can match a customer's menu card against.
+
+     The rest fall back to cuisineMenus, which is names only. That is a
+     real difference and it is not hidden: a cuisine on the old path
+     produces a listing that cannot be matched dish-for-dish, and the
+     fix is to give it registry entries, not to paper over it here. */
+  const fromRegistry = useMemo(
+    () => registryCourses(cuisineId, dietOf(kitchen)),
+    [cuisineId, kitchen])
+
   const courses = useMemo(
-    () => mergeAdditions(coursesForCuisine(cuisineId, kitchen), additions, cuisineId),
-    [cuisineId, kitchen, additions])
+    () => mergeAdditions(
+      fromRegistry.length ? fromRegistry : coursesForCuisine(cuisineId, kitchen),
+      additions, cuisineId),
+    [cuisineId, kitchen, additions, fromRegistry])
   return (
     <DishPickerStep
       title={cuisine?.name ?? cuisineId}

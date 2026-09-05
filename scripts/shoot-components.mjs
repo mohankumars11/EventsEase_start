@@ -187,6 +187,14 @@ if (!mounted.result?.value) {
 }
 
 /* Full page, so a card that runs past the fold is still in the photo. */
+/* Before the page is measured, not after: an --eval that opens an
+   accordion makes the page taller, and a viewport sized to the old
+   height clips the bottom of the shot to blank. */
+if (evalAfter) {
+  await send('Runtime.evaluate', { expression: evalAfter })
+  await sleep(500)
+}
+
 /* scrollHeight, not getLayoutMetrics: with a deviceScaleFactor the
    metrics come back in device pixels and the page gets photographed at
    twice its height, most of it blank. */
@@ -195,11 +203,6 @@ const h = Math.ceil((await send('Runtime.evaluate',
 await send('Emulation.setDeviceMetricsOverride',
   { width, height: h, deviceScaleFactor: 2, mobile: true })
 await sleep(250)
-
-if (evalAfter) {
-  await send('Runtime.evaluate', { expression: evalAfter })
-  await sleep(500)
-}
 
 /* Clip to the mounted root. A page-height screenshot picks up whatever
    the emulator padded the document out to, which is how the first run

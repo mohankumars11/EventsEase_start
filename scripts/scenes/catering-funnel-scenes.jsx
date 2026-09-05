@@ -28,14 +28,14 @@ function Scene({ title, note, children }) {
   )
 }
 
-function Dishes() {
+function Dishes({ cuisine = 'karnataka', kitchen = 'both', id = 'dishes' }) {
   const [d, setD] = useState([])
   const [note, setNote] = useState('')
   const [up, setUp] = useState([])
   return (
-    <div id="dishes">
+    <div id={id}>
       <CuisineDishStep
-        cuisineId="karnataka" kitchen="both"
+        cuisineId={cuisine} kitchen={kitchen}
         chosen={d} onChange={setD}
         note={note} onNote={setNote}
         uploads={up} onUploads={setUp}
@@ -89,6 +89,13 @@ export default function CateringFunnelScenes() {
         note="Tick-everything sits under the count it changes. Then the text box and the menu card."
       >
         <Dishes />
+      </Scene>
+
+      <Scene
+        title="Slide 3 · Tamil Nadu, from the registry"
+        note="Every dish carries an id, a line of what it is, and its own diet flag."
+      >
+        <Dishes cuisine="tamil" id="tamil-dishes" />
       </Scene>
     </div>
   )

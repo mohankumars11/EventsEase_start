@@ -19,6 +19,7 @@ import FunnelStepper from './FunnelStepper'
 import PriceGuidance from './PriceGuidance'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
+import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
 import {
   KitchenStep, CuisineStep, CuisineDishStep, DishPickerStep,
 } from './CateringFunnel'
@@ -369,7 +370,25 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       const specs = { ...detail }
       if (menus.length) specs.menus = menus
       if (counters.length) specs.counters = counters
-      if (dishes.length) specs.dishes = dishes
+      /* ── Ids and names are stored apart, and only ids are matched ────
+         What a caterer ticks comes back as a mix: registry dishes carry
+         an SBM- id, the older libraries are still bare names.
+
+         They must not be merged into one column. A name cannot be
+         matched — "Arachuvitta Sambar", "Arachuvitta sambar" and
+         "Araichuvitta Sambhar" are three caterers cooking one dish, and
+         a string comparison quietly finds one of them. Mixed into one
+         array, the ids would inherit that unreliability by association:
+         nothing downstream could tell which entries were safe to reason
+         about.
+
+         So specs.dish_ids is what dispatch matches a customer's menu
+         card against, and specs.dishes is what a coordinator reads.
+         See lib/menuMatch.js and data/dishRegistry.js. */
+      const dishIds = dishes.filter(d => DISH_IDS.has(d))
+      const dishNames = dishes.filter(d => !DISH_IDS.has(d))
+      if (dishIds.length) specs.dish_ids = dishIds
+      if (dishNames.length) specs.dishes = dishNames
       if (minOrder && !/^\d+$/.test(minOrder)) specs.min_order_note = minOrder
       if (uploads.length) specs.uploads = uploads
       /* Typed dishes go in flagged, not merged into the catalogue. An
@@ -1443,8 +1462,14 @@ function ReviewStep({ trade, picked, detail, groups, menus, counters, dishes = [
       {dishes.length > 0 && (
         <Card title="Dishes you make">
           <p className="text-[13px] leading-relaxed text-ink-soft">
+            {/* Dishes are STORED by id and READ by name. Printing the
+                raw entries here would show a caterer "SBM-KA-RA-131"
+                where they ticked Bisi Bele Bath — the id exists so
+                dispatch can match, and it should never surface to the
+                person who ticked it. */}
             <span className="font-extrabold text-ink">{dishes.length}</span> ticked
-            {' — '}{dishes.slice(0, 6).join(', ')}
+            {' — '}
+            {dishes.slice(0, 6).map(d => DISH_BY_ID[d]?.name ?? d).join(', ')}
             {dishes.length > 6 && ' and ' + (dishes.length - 6) + ' more'}
           </p>
         </Card>
