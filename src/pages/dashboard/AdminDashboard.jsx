@@ -41,6 +41,7 @@ const CustomersView       = lazy(() => import('../../components/admin/CustomersV
 const AdminServices       = lazy(() => import('../../components/admin/AdminServices'))
 const BrandStudio       = lazy(() => import('../../components/admin/BrandStudio'))
 const ContentStudio       = lazy(() => import('../../components/admin/ContentStudio'))
+const AddToCatalogue      = lazy(() => import('../../components/admin/AddToCatalogue'))
 const DecorPhotoStudio    = lazy(() => import('../../components/admin/DecorPhotoStudio'))
 const DateConsole         = lazy(() => import('../../components/admin/DateConsole'))
 
@@ -119,6 +120,7 @@ export default function AdminDashboard() {
 
             {/* Catalogue */}
             {activeNav === 'decorphotos' && <DecorPhotoStudio />}
+            {activeNav === 'catalogue'   && <AddToCatalogue />}
             {activeNav === 'content'     && <ContentStudio onNavigate={go} />}
             {activeNav === 'brand'       && <BrandStudio />}
 

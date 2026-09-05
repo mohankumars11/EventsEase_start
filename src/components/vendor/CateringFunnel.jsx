@@ -5,6 +5,7 @@ import {
 } from '../../data/cateringFunnel'
 import { CUISINES, CUISINE_BY_ID } from '../../data/cuisineMenus'
 import MenuUpload from './MenuUpload'
+import { mergeAdditions } from '../../data/catalogueAdditions'
 
 /**
  * The catering funnel, on screen.
@@ -510,9 +511,17 @@ export function DishPickerStep({
 /** One cuisine, its own courses, and nothing belonging to another. */
 export function CuisineDishStep({
   cuisineId, kitchen, chosen, onChange, note, onNote, uploads, onUploads,
+  additions = [],
 }) {
   const cuisine = CUISINE_BY_ID[cuisineId]
-  const courses = useMemo(() => coursesForCuisine(cuisineId, kitchen), [cuisineId, kitchen])
+  /* The code list, then whatever an operator has added since the last
+     deploy folded in. mergeAdditions is a no-op when there are none, and
+     the fetch behind them returns [] on every failure — a caterer on a
+     patchy connection gets the 840 dishes we already have rather than an
+     error. See data/catalogueAdditions.js. */
+  const courses = useMemo(
+    () => mergeAdditions(coursesForCuisine(cuisineId, kitchen), additions, cuisineId),
+    [cuisineId, kitchen, additions])
   return (
     <DishPickerStep
       title={cuisine?.name ?? cuisineId}

@@ -107,6 +107,37 @@ for (const file of walk('src')) {
     console.error(`${relative('.', file)}: <${name}> is used but never imported or declared`)
     problems++
   }
+
+  /* ── The same bug, one letter lower ─────────────────────────────────
+     A React hook is not capitalised, so the rule above cannot see it.
+     useEffect used with only { useMemo, useState } imported compiles
+     exactly as happily as an undefined component and throws the same
+     ReferenceError at render.
+
+     It happened here: adding a fetch-on-open to AddItemFlow used
+     useEffect and left the import line alone. The build was green, the
+     JSX check passed, and the whole listing flow would have thrown the
+     moment a partner opened it.
+
+     Only hooks React exports, and only when the file imports something
+     from react at all — a file with its own `useSomething` helper is
+     not this bug. */
+  const REACT_HOOKS = [
+    'useState', 'useEffect', 'useMemo', 'useRef', 'useCallback',
+    'useContext', 'useReducer', 'useLayoutEffect', 'useId',
+    'useTransition', 'useDeferredValue', 'useSyncExternalStore',
+  ]
+  const reactImport = src.match(/import\s*\{([^}]*)\}\s*from\s*['"]react['"]/)
+  if (reactImport) {
+    const imported = new Set(reactImport[1].split(',').map(t => t.trim().split(/\s+as\s+/)[0]))
+    for (const hook of REACT_HOOKS) {
+      if (imported.has(hook)) continue
+      /* A call, not a mention in a comment or a longer identifier. */
+      if (!new RegExp(`(?<![A-Za-z0-9_.])${hook}\\s*\\(`).test(src)) continue
+      console.error(`${relative('.', file)}: ${hook}() is called but not imported from react`)
+      problems++
+    }
+  }
 }
 
 if (problems) {

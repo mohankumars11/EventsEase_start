@@ -55,8 +55,17 @@ export const OPERATION_SCREENS = [
           { id: '150',  label: 'Up to 150' },
           { id: '500',  label: 'Up to 500',     scan: 'A full wedding' },
           { id: '1500', label: 'Up to 1,500' },
-          { id: '1500+',label: 'More than 1,500', scan: 'Convention scale' },
         ],
+        /* ── Bands are a guess; this is the answer ──────────────────────
+           "More than 1,500" was the top band, and it is the one number
+           dispatch most needs to be exact. A caterer who tops out at
+           2,000 and one who has cooked for 6,000 were the same answer,
+           so either the first got sent a job they cannot cook or the
+           second never got offered one they can.
+
+           The chips stay because most people are one tap; the field is
+           for everyone whose real answer is not on the list. */
+        exact: { label: 'Or the exact number', unit: 'guests', max: 99999 },
       },
       {
         id: 'events_per_day',
@@ -68,8 +77,9 @@ export const OPERATION_SCREENS = [
         choices: [
           { id: '1',  label: 'One' },
           { id: '2',  label: 'Two' },
-          { id: '3+', label: 'Three or more' },
+          { id: '3',  label: 'Three' },
         ],
+        exact: { label: 'Or the exact number', unit: 'events', max: 99 },
       },
     ],
   },
@@ -200,9 +210,12 @@ export const OPERATION_SCREENS = [
         choices: [
           { id: '2', label: '2' },
           { id: '4', label: '4' },
-          { id: '6', label: '6 or more' },
+          { id: '6', label: '6' },
           { id: 'na', label: 'We do not supply servers' },
         ],
+        /* "6 or more" covered 6 and 20 identically, which is the
+           difference between a house function and a wedding. */
+        exact: { label: 'Or the exact number', unit: 'per 100 guests', max: 999 },
       },
     ],
   },

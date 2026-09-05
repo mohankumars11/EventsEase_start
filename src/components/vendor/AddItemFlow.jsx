@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   ArrowLeft, Check, ChevronRight, Loader2, Search, Send, X,
@@ -18,6 +18,7 @@ import MenuUpload from './MenuUpload'
 import FunnelStepper from './FunnelStepper'
 import PriceGuidance from './PriceGuidance'
 import HookCard, { PromiseStrip } from './HookCard'
+import { fetchAdditions } from '../../data/catalogueAdditions'
 import {
   KitchenStep, CuisineStep, CuisineDishStep, DishPickerStep,
 } from './CateringFunnel'
@@ -123,6 +124,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
      quote either their cheapest menu or their dearest — see
      PriceGuidance for why that is worse than asking three times. */
   const [menuRates, setMenuRates] = useState({})
+  /* Fetched once when the flow opens, not per dish screen: a caterer
+     with five cuisines would otherwise make the same request five
+     times for a list that cannot change mid-form. */
+  const [additions, setAdditions] = useState([])
+  useEffect(() => { fetchAdditions().then(setAdditions) }, [])
   const noteFor = (v) => setDishNotes(m => ({ ...m, [step]: v }))
   /* The funnel's own answers. `kitchen` is the gate every later screen
      reads; `cuisines` is what it narrowed to. */
@@ -151,16 +157,28 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     [trade, picked])
   const isCatering = trade === CATERING
 
-  /* Menus follow the answers on the detail step. */
+  /* ── Menus follow the FUNNEL, not the deleted detail screen ──────────
+     This read `detail.cuisines`, and the Catering & Food block was
+     deleted from partnerSpecs when the funnel took those questions over.
+     So it read undefined, returned [] every time, and the menus screen
+     was empty for every caterer who reached it — along with the rate
+     screen, which lists the menus they ticked.
+
+     The dependency array already named the right variable. The body
+     shadowed it with a const one line in. Nothing threw and nothing
+     logged; it simply looked like a caterer who had picked no cuisines.
+
+     `serves` moved for the same reason — detail.service went with the
+     rest of that block, and the answer now lives on the serving
+     operations screen as service_style. */
   const availableMenus = useMemo(() => {
     if (!isCatering) return []
-    const cuisines = detail.cuisines ?? []
     if (!cuisines.length) return []
     /* Both facts, not one. A pure-veg Brahmin kitchen that serves only on
        the leaf sees four cards; the eight it does not see are eight fewer
        chances to tick something it cannot honour. */
-    return menusFor({ cuisines, serves: detail.service ?? [], diet: dietOf(kitchen) })
-  }, [isCatering, cuisines, detail.service, kitchen])
+    return menusFor({ cuisines, serves: detail.service_style ?? [], diet: dietOf(kitchen) })
+  }, [isCatering, cuisines, detail.service_style, kitchen])
 
   const alreadyHave = new Set(existing.map(s => s.name))
   const nameOf = id => offerings.find(o => o.serviceId === id)?.name ?? id
@@ -1063,6 +1081,37 @@ function OperationsStep({ screen, value, onChange }) {
               )
             })}
           </div>
+
+          {/* ── The exact number, sharing the chips' value ──────────────
+              One field, not two: typing 9 while "6" stayed lit would
+              leave the caterer looking at two different answers to one
+              question with no way to know which we kept.
+
+              So a chip is only a fast way to fill this in, and a typed
+              number that is not one of the chips lights none of them.
+              The bands it replaces were the reason "6 or more" covered a
+              house function and a wedding identically. */}
+          {g.exact && (
+            <label className="mt-2.5 flex items-center gap-2">
+              <span className="shrink-0 text-[12px] font-bold text-ink-mute">
+                {g.exact.label}
+              </span>
+              <input
+                value={g.choices.some(c => c.id === value[g.id]) ? '' : (value[g.id] ?? '')}
+                onChange={e => {
+                  const n = e.target.value.replace(/\D/g, '').slice(0, 6)
+                  onChange(prev => ({ ...prev, [g.id]: n || undefined }))
+                }}
+                inputMode="numeric"
+                placeholder="—"
+                aria-label={`${g.question} — exact number`}
+                className="w-20 rounded-xl bg-white px-3 py-2 text-center text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
+              />
+              {g.exact.unit && (
+                <span className="text-[12px] font-bold text-ink-mute">{g.exact.unit}</span>
+              )}
+            </label>
+          )}
 
           {/* Every question takes what our list does not have. */}
           <div className="relative mt-2.5">

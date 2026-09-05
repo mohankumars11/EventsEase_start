@@ -95,6 +95,15 @@ export const NAV = [
         description: 'Replace the stock reference images with photographs of setups we actually built.',
       },
       {
+        /* Not a tab inside Content Studio. That screen edits copy and
+           configuration; this one is opened mid-phone-call with a caterer
+           who has just named a dish we do not carry, and it has to be
+           reachable in one tap or the dish is forgotten by Thursday. */
+        id: 'catalogue', label: 'Add Dishes & Menus', emoji: '🍲',
+        title: 'Add Dishes & Menus',
+        description: 'Add anything the catalogue is missing — it reaches partners on their next load, with no deploy.',
+      },
+      {
         id: 'content', label: 'Content Studio', emoji: '🎛️',
         title: 'Content Studio',
         description: 'Decor, cuisines, tiers, festivals and offers — everything else a customer sees.',
