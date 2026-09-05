@@ -212,22 +212,39 @@ export function coursesForCuisine(cuisineId, kitchen) {
    THE SHARED LIBRARIES · SHOWN ONCE, AT THE END
    ══════════════════════════════════════════════════════════════════════ */
 
-/* The South Indian cuisines the transcribed card actually covers. */
-const CARD_CUISINES = new Set([
-  'karnataka', 'mysuru_royal', 'udupi', 'tamil', 'andhra', 'kerala',
-])
+/* ── The cuisines the transcribed card ACTUALLY covers ────────────────
+   This listed all six South Indian cuisines, and the comment above it
+   said the card covered them. It does not. Counted by name across all
+   369 vegetarian dishes on it:
+
+     Karnataka   158        Kerala        3
+     Udupi         9        Andhra        1
+                            Tamil         0
+
+   It is a Bengaluru caterer's card, so it is a Karnataka card. Offering
+   584 largely-Karnataka dishes to somebody who cooks only Kerala sadya
+   is the bombarding this redesign exists to stop, wearing a different
+   coat — and worse, it implies we think Kerala food is a subset of
+   Karnataka food.
+
+   Tamil, Andhra and Kerala each already have their own 60-dish screen
+   from cuisineMenus.js, which is what a caterer who picks them sees.
+   Those lists want deepening from their own sources, not from this one. */
+const CARD_CUISINES = new Set(['karnataka', 'mysuru_royal', 'udupi'])
 
 /** Does the transcribed vegetarian library apply to anything they picked? */
 export const wantsSouthIndianLibrary = (cuisineIds = [], kitchen) =>
   dietOf(kitchen) !== 'nonveg' && cuisineIds.some(id => CARD_CUISINES.has(id))
 
 /**
- * The transcribed vegetarian card — 584 dishes, 27 groups.
+ * The Karnataka depth card — 584 dishes, 27 groups.
  *
- * 61 palyas, 41 sambars, 45 kootus, 44 payasas, transcribed from a real
- * Bengaluru caterer. It is far deeper on South Indian than any generic
- * list, which is why it is here at all, and it is shown ONCE rather than
- * repeated under every South Indian cuisine.
+ * 61 palyas, 41 sambars, 45 kootus, 44 payasas from a real Bengaluru
+ * caterer. Far deeper on the Karnataka kitchen than any generic list,
+ * which is why it is here at all.
+ *
+ * Shown ONCE rather than repeated under every cuisine, and only to the
+ * caterers it is actually about — see CARD_CUISINES.
  */
 export function southIndianLibrary() {
   return ALL_DISH_GROUPS

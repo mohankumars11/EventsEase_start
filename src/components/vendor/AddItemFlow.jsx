@@ -246,7 +246,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   /* A title for the screens whose ids are built at runtime. */
   const title = (
     step.startsWith('cuisine:') ? (CUISINE_BY_ID[step.slice(8)]?.name ?? 'This cuisine')
-    : step === 'lib:south' ? 'South Indian, in depth'
+    : step === 'lib:south' ? 'Karnataka, in depth'
     : step === 'lib:nonveg' ? 'Non-veg, region by region'
     : step.startsWith('ops:') ? (OPERATION_SCREENS.find(x => x.id === step.slice(4))?.title ?? 'How you work')
     : STEP_TITLE[step] ?? 'Add what you do'
@@ -547,8 +547,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
 
           {step === 'lib:south' && (
             <DishPickerStep
-              title="The South Indian kitchen, in depth"
-              blurb="Transcribed from a real Bengaluru caterer's card — 61 palyas, 41 sambars, 44 payasas. Tick only what you actually make."
+              title="The Karnataka kitchen, in depth"
+              blurb="From a real Bengaluru caterer's card — 61 palyas, 41 sambars, 44 payasas. Tick only what you actually make."
               emoji="🍛"
               courses={southIndianLibrary()}
               chosen={dishes}
