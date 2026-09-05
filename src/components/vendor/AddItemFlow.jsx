@@ -1031,7 +1031,11 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
  * question they cannot answer are still skippable: none of this gates
  * Continue.
  */
-function OperationsStep({ screen, value, onChange }) {
+/* Exported so scripts/scenes can photograph it. These screens only
+   exist eight taps into a modal behind a partner session, and the
+   exact-number field beside the chips is the sort of thing that has to
+   be looked at rather than reasoned about. */
+export function OperationsStep({ screen, value, onChange }) {
   if (!screen) return null
 
   function toggle(g, choiceId) {
