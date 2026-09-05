@@ -33,13 +33,17 @@ import esbuild from 'esbuild'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const [outFile, ...rest] = process.argv.slice(2)
 if (!outFile) {
-  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms]')
+  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms] [--eval <js>]')
   process.exit(1)
 }
 const flag = (n, d) => { const i = rest.indexOf(`--${n}`); return i === -1 ? d : rest[i + 1] }
 const scenes = resolve(ROOT, flag('scenes', 'scripts/scenes/vendor-scenes.jsx'))
 const width = Number(flag('width', 430))
 const settle = Number(flag('wait', 900))
+/* Run after mount, before the shot. Some states only exist after an
+   interaction — an accordion opened, a course expanded — and those are
+   exactly the states worth photographing. */
+const evalAfter = flag('eval', null)
 
 /* ── the stylesheet, and a staleness check ───────────────────────────── */
 const distAssets = join(ROOT, 'dist', 'assets')
@@ -76,7 +80,13 @@ writeFileSync(entry, [
   `import React from 'react'`,
   `import { createRoot } from 'react-dom/client'`,
   `import Scenes from ${JSON.stringify(scenes)}`,
-  `createRoot(document.getElementById('root')).render(React.createElement(Scenes))`,
+  /* Components reach for app context — MenuUpload calls useToast and
+     throws outright without a provider, which showed up as an empty
+     page rather than an error. Providers that are pure UI go here;
+     anything that would talk to the network deliberately does not. */
+  `import { ToastProvider } from ${JSON.stringify(join(ROOT, 'src/context/ToastContext.jsx'))}`,
+  `createRoot(document.getElementById('root')).render(`,
+  `  React.createElement(ToastProvider, null, React.createElement(Scenes)))`,
   `window.__mounted = true`,
 ].join('\n'))
 
@@ -85,11 +95,24 @@ await esbuild.build({
   entryPoints: [entry],
   bundle: true,
   outfile: bundle,
-  format: 'iife',
+  /* esm, not iife: components pull in the supabase client, which reads
+     import.meta.env, and esbuild can only compile that under esm. The
+     page loads it as a module. */
+  format: 'esm',
   jsx: 'automatic',
   loader: { '.js': 'jsx', '.jsx': 'jsx' },
   resolveExtensions: ['.jsx', '.js', '.ts', '.tsx', '.json'],
-  define: { 'process.env.NODE_ENV': '"production"' },
+  define: {
+    'process.env.NODE_ENV': '"production"',
+    /* A stub, deliberately not the real project. These scenes render
+       markup; nothing here should be able to reach production, and a
+       harness that quietly could is a harness that eventually does. */
+    'import.meta.env': JSON.stringify({
+      VITE_SUPABASE_URL: 'http://127.0.0.1:9/stub',
+      VITE_SUPABASE_ANON_KEY: 'stub-anon-key',
+      VITE_SURFACE: 'partner', MODE: 'production', DEV: false, PROD: true,
+    }),
+  },
   absWorkingDir: ROOT,
   /* The entry is written to a temp dir, so esbuild would look for
      node_modules beside THAT and find nothing. Resolution follows the
@@ -104,7 +127,7 @@ const html = `<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="/app.css">
 <style>html,body{margin:0;background:#fff}</style>
-<div id="root"></div><script src="/bundle.js"></script>`
+<div id="root"></div><script type="module" src="/bundle.js"></script>`
 
 const server = createServer((req, res) => {
   const url = req.url.split('?')[0]
@@ -173,14 +196,28 @@ await send('Emulation.setDeviceMetricsOverride',
   { width, height: h, deviceScaleFactor: 2, mobile: true })
 await sleep(250)
 
+if (evalAfter) {
+  await send('Runtime.evaluate', { expression: evalAfter })
+  await sleep(500)
+}
+
 /* Clip to the mounted root. A page-height screenshot picks up whatever
    the emulator padded the document out to, which is how the first run
    of this came back two thirds empty. */
+/* --clip narrows the photo to one scene. A page of eight scenes is 4000px
+   tall and the one being judged ends up a thumbnail in the middle of it. */
+const clipSel = flag('clip', '#root')
 const box = (await send('Runtime.evaluate', { expression:
-  'JSON.stringify((r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.getElementById("root").getBoundingClientRect()))' })).result.value
+  `JSON.stringify((r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.querySelector(${JSON.stringify(clipSel)}).getBoundingClientRect()))` })).result.value
 const r = JSON.parse(box)
+if (errors.length) { console.log(); errors.slice(0,8).forEach(e=>console.log('  ERR '+String(e).split(String.fromCharCode(10))[0])) }
+console.log('  root box:', JSON.stringify(r), ' page h:', h)
 const shot = await send('Page.captureScreenshot', { format: 'png',
   clip: { x: r.x, y: r.y, width: r.w, height: r.h, scale: 2 } })
+if (!shot || !shot.data) {
+  console.error('  captureScreenshot failed:', JSON.stringify(shot))
+  ws.close(); browser.kill(); server.close(); process.exit(1)
+}
 writeFileSync(resolve(ROOT, outFile), Buffer.from(shot.data, 'base64'))
 
 console.log(`\n  ${outFile}  ${Math.round(r.w)}x${Math.round(r.h)}  @2x`)

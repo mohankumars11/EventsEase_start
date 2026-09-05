@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: c058a1a6e12a0cae
+// inputs: 4376e32f4fa48ede
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -1092,9 +1092,26 @@ var CUISINES = [
     localName: "Uta",
     emoji: "\u{1F35B}",
     region: "South Indian",
-    blurb: "The Mysuru\u2013Bengaluru home spread. Bisi bele bath, holige, and a proper leaf meal.",
+    blurb: "The Mysuru\u2013Bengaluru home spread. Bisi bele bath, holige, and a proper leaf meal \u2014 and the nati koli side of it.",
     basePlate: 420,
-    hasNonVeg: false,
+    /* ── This said false, and that was a real hole ─────────────────────
+           Karnataka is the one South Indian cuisine here whose non-veg
+           tradition is the LOUDEST — nati koli saaru, donne biryani, the
+           whole old Mysore and Mandya kitchen. cateringDishes.js carries
+           eighteen nati dishes and cateringMenus.js carries a non-veg
+           Beegara Oota.
+    
+           With hasNonVeg false, cuisinesFor('pure_nonveg') dropped Karnataka
+           entirely: a Mandya nati caterer said their kitchen is non-veg,
+           opened South Indian, and was offered Udupi, Tamil, Andhra and
+           Kerala — every state except their own. Nothing errored. The option
+           simply was not there, which reads as an app that does not know
+           what it sells.
+    
+           Royal Mysuru stays veg-only next to it, and that one is correct:
+           Arasu Uta is a banana-leaf vegetarian feast by tradition, not an
+           oversight. */
+    hasNonVeg: true,
     courses: {
       welcome: [
         v("Panaka (jaggery & lemon)"),
@@ -1114,7 +1131,13 @@ var CUISINES = [
         v("Sabudana vada"),
         v("Cut mirchi bajji"),
         v("Paneer 65"),
-        v("Gobi Manchurian")
+        v("Gobi Manchurian"),
+        n("Nati koli kabab", 90),
+        n("Koli sukka", 85),
+        n("Kane / anjal tawa fry", 120),
+        n("Mutton chops", 130),
+        n("Boti fry", 70),
+        n("Motte bonda", 25)
       ],
       mains: [
         v("Bisi bele bath"),
@@ -1129,7 +1152,11 @@ var CUISINES = [
         v("Poori"),
         v("Akki roti"),
         v("Ragi mudde"),
-        v("Jolada rotti")
+        v("Jolada rotti"),
+        n("Nati koli donne biryani", 140),
+        n("Mutton donne biryani", 190),
+        n("Koli pulao", 120),
+        n("Motte rice", 60)
       ],
       curries: [
         v("Saaru / rasam"),
@@ -1140,7 +1167,13 @@ var CUISINES = [
         v("Bassaru"),
         v("Menthya soppu palya gojju"),
         v("Paneer butter masala"),
-        v("Mixed vegetable kurma")
+        v("Mixed vegetable kurma"),
+        n("Nati koli saaru", 110),
+        n("Mutton saaru", 160),
+        n("Koli kaal soup", 80),
+        n("Motte curry", 55),
+        n("Fish curry (Mangaluru style)", 130),
+        n("Mutton bone bassaru", 150)
       ],
       accompaniments: [
         v("Beans palya"),
@@ -1153,7 +1186,8 @@ var CUISINES = [
         v("Tuppa (ghee)"),
         v("Raita"),
         v("Green salad"),
-        v("Nimbe uppinakayi")
+        v("Nimbe uppinakayi"),
+        n("Boiled motte", 20)
       ],
       sweets: [
         v("Obbattu / holige"),
@@ -1172,7 +1206,9 @@ var CUISINES = [
         v("Live obbattu counter", 70),
         v("Ice cream counter", 50),
         v("Filter coffee counter", 30),
-        v("Pani puri counter", 40)
+        v("Pani puri counter", 40),
+        n("Live nati koli fry counter", 130),
+        n("Donne biryani counter", 150)
       ]
     }
   },

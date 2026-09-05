@@ -112,6 +112,12 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   const [unit, setUnit] = useState('per event')
   const [minOrder, setMinOrder] = useState('')
   const [uploads, setUploads] = useState([])
+  /* What a caterer typed that is not in the catalogue. Kept per screen —
+     a dish they added under Kerala is a Kerala dish, and merging them all
+     into one blob would lose the only thing that makes it useful to the
+     operator who reads it. */
+  const [dishNotes, setDishNotes] = useState({})
+  const noteFor = (v) => setDishNotes(m => ({ ...m, [step]: v }))
   /* The funnel's own answers. `kitchen` is the gate every later screen
      reads; `cuisines` is what it narrowed to. */
   const [kitchen, setKitchen] = useState(null)
@@ -320,6 +326,14 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       if (dishes.length) specs.dishes = dishes
       if (minOrder && !/^\d+$/.test(minOrder)) specs.min_order_note = minOrder
       if (uploads.length) specs.uploads = uploads
+      /* Typed dishes go in flagged, not merged into the catalogue. An
+         operator decides whether one becomes a real entry — that is the
+         whole difference between a curated list and a free-text mess.
+         Saving them unflagged would be worse than not asking. */
+      const typed = Object.entries(dishNotes)
+        .filter(([, v]) => String(v).trim())
+        .map(([screen, text]) => ({ screen, text: text.trim() }))
+      if (typed.length) specs.dishes_typed = typed
       if (kitchen) specs.kitchen_type = kitchen
       if (cuisines.length) specs.cuisines = cuisines
 
@@ -466,6 +480,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               kitchen={kitchen}
               chosen={dishes}
               onChange={setDishes}
+              note={dishNotes[step] ?? ''}
+              onNote={noteFor}
+              uploads={uploads}
+              onUploads={setUploads}
             />
           )}
 
@@ -477,6 +495,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               courses={southIndianLibrary()}
               chosen={dishes}
               onChange={setDishes}
+              note={dishNotes[step] ?? ''}
+              onNote={noteFor}
+              uploads={uploads}
+              onUploads={setUploads}
             />
           )}
 
@@ -488,6 +510,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               courses={nonVegLibrary()}
               chosen={dishes}
               onChange={setDishes}
+              note={dishNotes[step] ?? ''}
+              onNote={noteFor}
+              uploads={uploads}
+              onUploads={setUploads}
             />
           )}
 
