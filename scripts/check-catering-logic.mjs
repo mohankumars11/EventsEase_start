@@ -35,6 +35,8 @@
  * Usage:  node scripts/check-catering-logic.mjs
  */
 import { build } from 'esbuild'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 
 async function load(file) {
   const out = await build({
@@ -48,11 +50,24 @@ const menus = await load('src/data/cateringMenus.js')
 const cuisineCatalogue = await load('src/data/cuisineMenus.js')
 const funnel = await load('src/data/cateringFunnel.js')
 const dishes = await load('src/data/cateringDishes.js')
+const rates = await load('src/data/marketRates.js')
 
 const fails = []
 const line = (ok, label, detail = '') => {
   console.log(`  ${ok ? '✓' : '✗'} ${label}${detail ? `  ${detail}` : ''}`)
   if (!ok) fails.push(label + (detail ? ` — ${detail}` : ''))
+}
+
+/* Every source file under a directory, for the checks that read the code
+   itself rather than the data it produces. */
+function srcFiles(dir) {
+  const out = []
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const f = join(dir, e.name)
+    if (e.isDirectory()) out.push(...srcFiles(f))
+    else if (/\.(jsx?|tsx?)$/.test(e.name)) out.push(f)
+  }
+  return out
 }
 
 console.log('\n  Catering data\n')
@@ -109,6 +124,28 @@ const nvDishes = dishes.ALL_DISH_GROUPS
   .reduce((n, g) => n + g.items.length, 0)
 line(nvMenus >= 5, `non-veg menus (${nvMenus})`)
 line(nvDishes >= 100, `non-veg dishes (${nvDishes})`)
+
+// ── 6 · rateFactor() is never asked for a component that does not exist ──
+//
+// rateFactor resolves an unknown key to 1.00 rather than throwing. That is
+// right at runtime — a stale index must never break a price — and a silent
+// trap at authoring time.
+//
+// PriceGuidance shipped asking for 'catering', which has never been a
+// component. Every market figure on the partner's rate screen was the
+// unadjusted base, it tracked nothing, and there was no sign of it: no
+// error, no warning, and a number that looked entirely plausible.
+{
+  const known = new Set(Object.keys(rates.COMPONENTS))
+  const bad = []
+  for (const f of srcFiles('src')) {
+    for (const m of readFileSync(f, 'utf8').matchAll(/rateFactor\(\s*'([^']+)'\s*\)/g)) {
+      if (!known.has(m[1])) bad.push(`${f} asks for '${m[1]}'`)
+    }
+  }
+  line(!bad.length, `every rateFactor() names a real component (${[...known].join(', ')})`,
+    bad.join('; '))
+}
 
 console.log(`\n  ${menus.ALL_MENUS.length} menus · ${dishes.TOTAL_DISHES} dishes · ${dishes.ALL_DISH_GROUPS.length} groups\n`)
 

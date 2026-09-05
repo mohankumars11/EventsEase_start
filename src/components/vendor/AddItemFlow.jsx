@@ -16,6 +16,8 @@ import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
 import MenuUpload from './MenuUpload'
 import FunnelStepper from './FunnelStepper'
+import PriceGuidance from './PriceGuidance'
+import HookCard, { PromiseStrip } from './HookCard'
 import {
   KitchenStep, CuisineStep, CuisineDishStep, DishPickerStep,
 } from './CateringFunnel'
@@ -117,6 +119,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
      into one blob would lose the only thing that makes it useful to the
      operator who reads it. */
   const [dishNotes, setDishNotes] = useState({})
+  /* A rate per menu. One number for the whole business made a caterer
+     quote either their cheapest menu or their dearest — see
+     PriceGuidance for why that is worse than asking three times. */
+  const [menuRates, setMenuRates] = useState({})
   const noteFor = (v) => setDishNotes(m => ({ ...m, [step]: v }))
   /* The funnel's own answers. `kitchen` is the gate every later screen
      reads; `cuisines` is what it narrowed to. */
@@ -258,6 +264,28 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     { id: 'submit',   label: 'Submit',      icon: SendHorizonal },
   ]
 
+  /* ── The hook for this screen ───────────────────────────────────────
+     Every screen in a twelve-step form is a place somebody can put the
+     phone down, and the middle ones are the worst: far enough in to feel
+     like work, too far from the end for finishing to be in sight.
+
+     Mapped from the screen id rather than the phase, because "what you
+     will not do" needs a different thing said on it than the six
+     operational screens around it — that saying no costs them nothing is
+     exactly the doubt on that screen and nowhere else.
+
+     Screens with no hook get none. A card on every single screen is
+     wallpaper, and wallpaper does not get read. */
+  const hookId =
+    step === 'kitchen' ? 'kitchen'
+    : step === 'cuisines' ? 'cuisines'
+    : step.startsWith('cuisine:') || step.startsWith('lib:') || step === 'dishes' ? 'dishes'
+    : step === 'ops:limits' ? 'limits'
+    : step.startsWith('ops:') ? 'ops'
+    : step === 'price' ? 'price'
+    : step === 'upload' ? 'upload'
+    : null
+
   const idx = flow.indexOf(step)
   const here = phaseOf(step)
 
@@ -334,6 +362,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
         .filter(([, v]) => String(v).trim())
         .map(([screen, text]) => ({ screen, text: text.trim() }))
       if (typed.length) specs.dishes_typed = typed
+      /* Kept per menu rather than flattened to an average. The whole
+         point of asking three times is that the three answers differ. */
+      const priced = Object.fromEntries(
+        Object.entries(menuRates).filter(([, v]) => Number(v) > 0))
+      if (Object.keys(priced).length) specs.menu_rates = priced
       if (kitchen) specs.kitchen_type = kitchen
       if (cuisines.length) specs.cuisines = cuisines
 
@@ -427,6 +460,13 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       {/* ── Body ───────────────────────────────────────────────────── */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-4 pb-32">
+
+          {/* ── Why this screen is worth the next tap ──────────────────
+              Above the screen's own content rather than below it: a
+              reason to keep going that arrives after the work is a
+              reason nobody reads. See partnerHooks.js — every number on
+              these cards is one this repo can produce. */}
+          {hookId && <HookCard id={hookId} className="mb-3.5" />}
 
           {step === 'trade' && (
             <TradeStep
@@ -539,6 +579,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               price={price} setPrice={setPrice}
               unit={unit} setUnit={setUnit}
               isCatering={isCatering}
+              menuRates={menuRates} setMenuRates={setMenuRates}
             />
           )}
 
@@ -1169,31 +1210,27 @@ function DishStep({ chosen, onChange }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrder, isCatering }) {
+function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrder, isCatering, menuRates, setMenuRates }) {
   return (
     <div className="space-y-4">
+      {/* ── A rate per menu ────────────────────────────────────────────
+          This used to be a read-only list of our own reference rates
+          above a single "your price" field. It showed a caterer three
+          menus and then asked for one number, which is a question with no
+          honest answer. Now each menu they ticked has its own field, and
+          the card above them says plainly what Sambramo does with the
+          number — because being told after the first job is how a partner
+          decides the platform was not straight with them. */}
       {isCatering && menus.length > 0 && (
-        <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <p className="text-[13px] font-extrabold text-ink">Your menus start at</p>
-          <div className="mt-2 space-y-1.5">
-            {menus.map(m => (
-              <div key={m.id} className="flex items-baseline justify-between gap-3">
-                <span className="text-[13px] text-ink-soft">{m.name}</span>
-                <span className="font-serif text-[15px] font-extrabold tracking-tight text-ink tabular-nums">
-                  from ₹{m.fromPrice}
-                </span>
-              </div>
-            ))}
-          </div>
-          {/* The honest framing, and the reason `fromPrice` is never
-              rendered as a flat number: the caterer's own card says "450+"
-              and the plus is the whole point. */}
-          <p className="mt-3 text-[11.5px] leading-relaxed text-ink-mute">
-            These are the rates we have on file as a starting point. Your own
-            price is what we quote — put it below.
-          </p>
-        </div>
+        <PriceGuidance menus={menus} rates={menuRates} onChange={setMenuRates} />
       )}
+
+      {/* ── The three objections, answered on the screen they surface ──
+          What does it cost me, can I say no, and do I actually get paid.
+          They are asked here and nowhere else in the flow — a promise
+          repeated on eleven screens is wallpaper, and wallpaper is not
+          believed. */}
+      <PromiseStrip />
 
       <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <label className="block">
