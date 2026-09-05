@@ -100,10 +100,31 @@ export function AuthProvider({ children }) {
       .single()
 
     if (!data) {
-      // New user (Google OAuth or phone OTP) — create profile safely
+      /* ══════════════════════════════════════════════════════════════
+         THIS MUST NEVER OVERWRITE A ROLE THAT ALREADY EXISTS
+         ══════════════════════════════════════════════════════════════
+
+         It used to be `.upsert({ …, role }, { onConflict: 'id' })`, and
+         an upsert OVERWRITES. The guard above is `if (!data)`, which
+         reads as "only for brand new users" — but `data` is also null
+         when the select simply fails: a dropped connection on a weak
+         mobile network, a cold start, an RLS hiccup.
+
+         When that happened to an established partner, this wrote
+         role: 'customer' straight over their 'vendor' — and
+         ProtectedRoute then bounced them out of the partner app with no
+         error at all. It is how the two APPROVED partners found in 099
+         got there, and it silently undid that migration's backfill more
+         than once while this was being built.
+
+         So: create only, never clobber. `ignoreDuplicates` makes the
+         conflict a no-op instead of an overwrite, and the row is read
+         back afterwards. A partner's role can now only be changed by
+         something that means to change it. */
       const { data: { user: authUser } } = await supabase.auth.getUser()
       const meta = authUser?.user_metadata ?? {}
-      const { data: upserted } = await supabase
+
+      await supabase
         .from('profiles')
         .upsert({
           id:         userId,
@@ -115,10 +136,14 @@ export function AuthProvider({ children }) {
           // it made the form's answer unreachable, and every partner who
           // signed up with Google got a customer account.
           role:       pendingRole() === 'vendor' ? 'vendor' : 'customer',
-        }, { onConflict: 'id' })
-        .select()
-        .single()
-      data = upserted
+        }, { onConflict: 'id', ignoreDuplicates: true })
+
+      /* Read back rather than trusting the write. If the row already
+         existed, the upsert did nothing and this returns the REAL
+         profile — role intact. */
+      const { data: after } = await supabase
+        .from('profiles').select('*').eq('id', userId).maybeSingle()
+      data = after
     }
 
     data = await applyPendingReferral(data)

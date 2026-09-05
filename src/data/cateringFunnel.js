@@ -46,8 +46,9 @@ import { ALL_DISH_GROUPS } from './cateringDishes'
  *
  *   PER CUISINE   only that cuisine's own dishes. Bengali shows Shorshe
  *                 Ilish under its own heading; Karnataka does not.
- *   SHARED        the deep libraries, once each, at the end — the S S
- *                 vegetarian card and the regional non-veg list.
+ *   SHARED        the deep libraries, once each, at the end — the
+ *                 transcribed vegetarian card and the regional non-veg
+ *                 list.
  */
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -66,18 +67,21 @@ import { ALL_DISH_GROUPS } from './cateringDishes'
 export const KITCHEN_TYPES = [
   {
     id: 'pure_veg',
-    label: 'Pure vegetarian kitchen',
-    scan: 'No meat, fish or egg is cooked here',
-  },
-  {
-    id: 'both',
-    label: 'Separate veg and non-veg kitchens',
-    scan: 'Both, cooked apart, with separate vessels',
+    label: 'Veg',
+    scan: 'Pure vegetarian kitchen. No meat, fish or egg.',
+    emoji: '🌿',
   },
   {
     id: 'pure_nonveg',
-    label: 'Non-veg specialist / nati kitchen',
-    scan: 'Country chicken, mutton, fish',
+    label: 'Non-veg',
+    scan: 'Country chicken, mutton, fish.',
+    emoji: '🍗',
+  },
+  {
+    id: 'both',
+    label: 'Both',
+    scan: 'Veg and non-veg, cooked apart with separate vessels.',
+    emoji: '🍽',
   },
 ]
 
@@ -122,6 +126,44 @@ export function cuisinesByRegion(list) {
     g.items.push(c)
   }
   return out
+}
+
+/**
+ * The regions, as their own screen.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY TWO LEVELS AND NOT ONE LONG LIST
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * "South Indian" is not one cuisine. A caterer who taps it means something
+ * specific — Karnataka, or Kerala sadya, or Chettinad — and a single flat
+ * list of sixteen makes them scan past twelve that are not theirs to find
+ * the two that are.
+ *
+ * So: pick the regions you work in, then say which kitchens inside them.
+ * A North-Indian-only caterer never sees the six South Indian ones, and a
+ * Karnataka-and-Kerala caterer says exactly that instead of ticking
+ * "South Indian" and being sent an Andhra job.
+ *
+ * Regions come from each cuisine's own `region` field, so a cuisine added
+ * tomorrow lands in the right place without touching this.
+ */
+export function regionsFor(kitchen) {
+  const list = cuisinesFor(kitchen)
+  const out = []
+  for (const c of list) {
+    let g = out.find(x => x.id === c.region)
+    if (!g) { g = { id: c.region, label: c.region, items: [] }; out.push(g) }
+    g.items.push(c)
+  }
+  return out
+}
+
+/** The kitchens inside the regions they picked, in one flat list. */
+export function cuisinesInRegions(kitchen, regionIds = []) {
+  if (!regionIds.length) return []
+  const want = new Set(regionIds)
+  return cuisinesFor(kitchen).filter(c => want.has(c.region))
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -170,17 +212,17 @@ export function coursesForCuisine(cuisineId, kitchen) {
    THE SHARED LIBRARIES · SHOWN ONCE, AT THE END
    ══════════════════════════════════════════════════════════════════════ */
 
-/* The South Indian cuisines the S S Caterers card actually covers. */
-const SS_CUISINES = new Set([
+/* The South Indian cuisines the transcribed card actually covers. */
+const CARD_CUISINES = new Set([
   'karnataka', 'mysuru_royal', 'udupi', 'tamil', 'andhra', 'kerala',
 ])
 
-/** Does the S S vegetarian library apply to anything they picked? */
+/** Does the transcribed vegetarian library apply to anything they picked? */
 export const wantsSouthIndianLibrary = (cuisineIds = [], kitchen) =>
-  dietOf(kitchen) !== 'nonveg' && cuisineIds.some(id => SS_CUISINES.has(id))
+  dietOf(kitchen) !== 'nonveg' && cuisineIds.some(id => CARD_CUISINES.has(id))
 
 /**
- * The S S Caterers vegetarian card — 584 dishes, 27 groups.
+ * The transcribed vegetarian card — 584 dishes, 27 groups.
  *
  * 61 palyas, 41 sambars, 45 kootus, 44 payasas, transcribed from a real
  * Bengaluru caterer. It is far deeper on South Indian than any generic

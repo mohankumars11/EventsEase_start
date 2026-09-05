@@ -5,7 +5,7 @@
  * WHERE THIS CAME FROM
  * ══════════════════════════════════════════════════════════════════════
  *
- * Transcribed from S S Caterers' plantain-leaf menu card — four options,
+ * Transcribed from a working Bengaluru caterer's plantain-leaf card — four options,
  * priced per plate, minimum 100 guests. This is not invented sample data
  * and it must not be edited casually: a partner ticking "Option 02"
  * is agreeing to serve these dishes, and a customer reading it is being
@@ -375,7 +375,7 @@ export const BUFFET_MENUS = [
  * else does.
  *
  * The dishes are the traditional core of the meal. They are NOT from the
- * S S Caterers card — that card has no Beegara Oota page — so this list
+ * transcribed card — it has no Beegara Oota page — so this list
  * is a starting point for a caterer to edit rather than a quotation.
  */
 export const BEEGARA_OOTA = {
@@ -436,7 +436,7 @@ export const BEEGARA_OOTA = {
  * WHERE THIS CAME FROM, AND WHAT THAT MEANS
  * ══════════════════════════════════════════════════════════════════════
  *
- * NOT from the S S Caterers card — that is a pure-veg house and says so
+ * NOT from the transcribed card — that is a pure-veg house and says so
  * on its cover. This is the traditional structure of the meal as it is
  * served in the region, assembled from what the tradition actually is
  * rather than from any one caterer's quotation.
@@ -510,7 +510,7 @@ export const FOOD_COUNTERS = [
  * WHERE THESE COME FROM, AND WHAT THAT MEANS
  * ══════════════════════════════════════════════════════════════════════
  *
- * NOT from the S S Caterers card — that is a pure-veg house and says so
+ * NOT from the transcribed card — that is a pure-veg house and says so
  * on its cover. There is no non-veg page to transcribe, so these are
  * built from how the meal is actually served in this market rather than
  * from any one caterer's quotation.

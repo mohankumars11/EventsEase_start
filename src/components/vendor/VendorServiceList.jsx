@@ -9,7 +9,8 @@ import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
-import ReviewBanner, { ReviewPill } from './ReviewBanner'
+import { ReviewPill } from './ReviewBanner'
+import ListingStatusCard from './ListingStatusCard'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
@@ -38,10 +39,14 @@ const BLANK = {
   price: '', unit: 'per event', min_quantity: 1, lead_time_days: '',
 }
 
-export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar }) {
+export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs }) {
   /* The catalogue picker replaces the free-text add. See
      AddFromCatalogue and data/partnerCatalogue for why. */
   const [picking, setPicking] = useState(false)
+  /* Set when a submission happens in this session, so the green "live"
+     card is a moment a partner sees once rather than a badge that never
+     goes away. */
+  const [justSubmitted, setJustSubmitted] = useState(false)
 
   const toast = useToast()
   // null = closed, 'new' = the add form, or an id being edited. One at a time:
@@ -113,17 +118,51 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           </button>
         )}
       </header>
-
-      {/* ── Where a new listing actually is ───────────────────────────
+      {/* ── Where a listing actually is ───────────────────────────────
           Submitting and hearing nothing is where a partner loses
-          interest, and it is a gap we create. This says what is
-          happening and hands them the one thing worth doing meanwhile.
-          See ReviewBanner. */}
-      <ReviewBanner
-        count={services.filter(s => s.review_status === 'under_review').length}
-        rejected={services.filter(s => s.review_status === 'rejected').length}
-        onOpenCalendar={onOpenCalendar}
-      />
+          interest, and it is a silence we create. This shows the whole
+          journey — submitted, under review with a real timeframe, then
+          live — and hands them the one thing worth doing meanwhile.
+          See ListingStatusCard. */}
+      {(() => {
+        const rejected = services.filter(s => s.review_status === 'rejected')
+        const pending = services.filter(s => s.review_status === 'under_review')
+        const live = services.filter(s => s.review_status === 'live')
+
+        if (rejected.length) {
+          return (
+            <ListingStatusCard
+              status="rejected"
+              count={rejected.length}
+              note={rejected[0]?.review_note}
+            />
+          )
+        }
+        if (pending.length) {
+          /* The oldest one, because that is the wait a partner is
+             actually feeling. */
+          const first = pending.reduce(
+            (x, y) => (new Date(x.created_at) < new Date(y.created_at) ? x : y),
+            pending[0])
+          return (
+            <ListingStatusCard
+              status="review"
+              count={pending.length}
+              submittedAt={first?.created_at}
+              onOpenCalendar={onOpenCalendar}
+            />
+          )
+        }
+        /* Only right after a submission. An established partner opening
+           their listing does not need a card telling them they are live —
+           that is a moment, not a permanent badge. */
+        if (live.length && justSubmitted) {
+          return (
+            <ListingStatusCard status="live" count={live.length} onOpenJobs={onOpenJobs} />
+          )
+        }
+        return null
+      })()}
 
       {/* ── The venue, for the partners who are one ──────────────────
           For a decorator "your listing" is a price list. For a venue

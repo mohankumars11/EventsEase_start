@@ -425,6 +425,7 @@ export default function VendorDashboard() {
             /* The review banner's one call to action. Jumping tabs rather
                than linking, so the partner keeps their place. */
             onOpenCalendar={() => setTab('availability')}
+            onOpenJobs={() => setTab('offers')}
           />
         )}
 

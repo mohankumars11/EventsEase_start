@@ -46,7 +46,7 @@ async function load(file) {
 
 const menus = await load('src/data/cateringMenus.js')
 const cuisineCatalogue = await load('src/data/cuisineMenus.js')
-const specs = await load('src/data/partnerSpecs.js')
+const funnel = await load('src/data/cateringFunnel.js')
 const dishes = await load('src/data/cateringDishes.js')
 
 const fails = []
@@ -58,8 +58,11 @@ const line = (ok, label, detail = '') => {
 console.log('\n  Catering data\n')
 
 // ── 1 · One vocabulary ────────────────────────────────────────────
-const partnerCuisines = specs.SPECS_BY_TRADE['Catering & Food']
-  .find(g => g.id === 'cuisines').choices.map(c => c.id)
+/* The cuisine list moved out of SPECS_BY_TRADE when the funnel took it
+   over — catering deliberately keeps no trade-level group now, so reading
+   it from there would throw on a repo that is correct. cuisinesFor('both')
+   is the partner-facing list. */
+const partnerCuisines = funnel.cuisinesFor('both').map(c => c.id)
 const customerCuisines = cuisineCatalogue.CUISINES.map(c => c.id)
 
 const missing = customerCuisines.filter(c => !partnerCuisines.includes(c))

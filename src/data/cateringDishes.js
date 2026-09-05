@@ -1,5 +1,5 @@
 /**
- * The à la carte dish library, from S S Caterers' South Indian pages.
+ * The à la carte dish library, from a working Bengaluru caterer.
  *
  * ══════════════════════════════════════════════════════════════════════
  * WHY THIS IS SEPARATE FROM cateringMenus.js

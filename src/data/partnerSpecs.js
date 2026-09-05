@@ -61,95 +61,27 @@
 
 export const SPECS_BY_TRADE = {
 
-  /* ── Catering & Food ─────────────────────────────────────────────
-     The trade where a mismatch is most expensive and most common.
-     data/cateringModel.js already records the argument this prevents:
-     a per-plate rate that hid the groceries. */
-  'Catering & Food': [
-    {
-      id: 'diet',
-      /* Asked first, and on its own, because it decides everything
-         after it. A pure-vegetarian kitchen and a kitchen running a
-         tandoor are different businesses with different menus, and
-         asking about cuisines before this produces a caterer ticking
-         Punjabi who cannot cook a single dish on that card. */
-      question: 'Do you cook vegetarian, non-vegetarian, or both?',
-      hint: 'This decides which menus we show you next.',
-      type: 'one',
-      choices: [
-        { id: 'veg',     label: 'Vegetarian only' },
-        { id: 'nonveg',  label: 'Non-vegetarian only' },
-        { id: 'both',    label: 'Both' },
-      ],
-    },
-    {
-      id: 'cuisines',
-      /* ══════════════════════════════════════════════════════════════
-         THE SAME SIXTEEN THE CUSTOMER PICKS FROM
-         ══════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════════════════
+     CATERING ASKS ITS QUESTIONS IN THE FUNNEL, NOT HERE
+     ══════════════════════════════════════════════════════════════════
 
-         data/cuisineMenus.js already holds the catalogue a customer
-         chooses from when they plan a celebration -- sixteen cuisines in
-         six groups, from Udupi to Awadhi. The partner side had a
-         different list of nine, written separately.
+     This trade used to hold four groups here: diet, cuisines, kitchen
+     and service. The funnel then arrived and asked the first three again
+     on its own screens, so a caterer answered the same things twice --
+     and the second time was all four crammed onto one page.
 
-         Two lists meant two vocabularies for one question, and matching
-         a customer's "Kerala Sadya" against a partner's "South Indian --
-         everyday" needs a translation table nobody maintains. Bengaluru
-         has families from every one of these sixteen, and a Bengali
-         caterer had nowhere to say so.
+     That page was exactly the single-screen bombarding the funnel was
+     built to end. It survived because the funnel was added ALONGSIDE it
+     rather than replacing it: shipping a better version of a screen is
+     only half the job, and until the old one goes the partner does the
+     work twice.
 
-         Same ids, so a partner's capability and a customer's request are
-         the same string and can be compared directly. */
-      question: 'Which cuisines can you cook?',
-      hint: 'Tick everything you do well. These are the exact words customers search with.',
-      type: 'multi',
-      choices: [
-        { id: 'karnataka',           label: 'Karnataka Traditional', scan: 'Bisi bele bath, ragi, holige' },
-        { id: 'mysuru_royal',        label: 'Royal Mysuru Feast' },
-        { id: 'udupi',               label: 'Udupi & Coastal',       scan: 'Gassi, neer dosa' },
-        { id: 'tamil',               label: 'Tamil & Chettinad' },
-        { id: 'andhra',              label: 'Andhra & Telangana' },
-        { id: 'kerala',              label: 'Kerala Sadya & Malabar' },
-        { id: 'north_indian',        label: 'North Indian' },
-        { id: 'mughlai',             label: 'Mughlai & Awadhi' },
-        { id: 'bengali',             label: 'Bengali' },
-        { id: 'gujarati_rajasthani', label: 'Gujarati & Rajasthani' },
-        { id: 'maharashtrian',       label: 'Maharashtrian' },
-        { id: 'jain_satvik',         label: 'Jain & Satvik',         scan: 'No onion, no garlic, no root' },
-        { id: 'indo_chinese',        label: 'Indo-Chinese' },
-        { id: 'continental',         label: 'Continental & Italian' },
-        { id: 'chaat_street',        label: 'Chaat & Street Food' },
-        { id: 'multi_cuisine',       label: 'Multi-Cuisine Buffet' },
-      ],
-    },
+     Kitchen and cuisines now live in data/cateringFunnel.js. How they
+     serve moved to data/cateringOperations.js with the rest of the
+     operational questions. Catering deliberately keeps NO trade-level
+     group, and specsForServices falls through to the per-offering sets
+     in data/partnerServiceSpecs.js. */
 
-    {
-      id: 'kitchen',
-      question: 'Is your kitchen pure vegetarian?',
-      /* Not a preference and not a tick box. A pure-veg kitchen sent a
-         non-veg booking has to refuse it, and a family who specified
-         pure-veg and got a shared kitchen has a complaint no refund
-         settles. The two answers are incompatible, so this is a radio. */
-      type: 'one',
-      choices: [
-        { id: 'pure_veg',  label: 'Pure vegetarian only' },
-        { id: 'separate',  label: 'Both, prepared separately', scan: 'Separate vessels and counters' },
-        { id: 'both',      label: 'Both, one kitchen' },
-      ],
-    },
-    {
-      id: 'service',
-      question: 'How do you serve?',
-      type: 'multi',
-      choices: [
-        { id: 'buffet',       label: 'Running buffet counters' },
-        { id: 'banana_leaf',  label: 'Sit-down banana leaf' },
-        { id: 'plated',       label: 'Plated table service' },
-        { id: 'live_counter', label: 'Live counters',  scan: 'Dosa, chaat, pasta' },
-      ],
-    },
-  ],
 
   /* ── Decoration & Floral ─────────────────────────────────────────
      Material is the biggest single cost fork inside any decor job, and

@@ -15,6 +15,7 @@ import { menusFor, menuLines, menuLineCount, FOOD_COUNTERS, CATERING_NOTES } fro
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
 import MenuUpload from './MenuUpload'
+import FunnelStepper from './FunnelStepper'
 import {
   KitchenStep, CuisineStep, CuisineDishStep, DishPickerStep,
 } from './CateringFunnel'
@@ -115,6 +116,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
      reads; `cuisines` is what it narrowed to. */
   const [kitchen, setKitchen] = useState(null)
   const [cuisines, setCuisines] = useState([])
+  /* Which screens the partner has actually reached. The stepper turns a
+     dot red only for a step they visited and left empty — never for one
+     they have not been shown. */
+  const [touched, setTouched] = useState(() => new Set(['trade']))
   const [busy, setBusy] = useState(false)
   const [q, setQ] = useState('')
 
@@ -142,8 +147,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     /* Both facts, not one. A pure-veg Brahmin kitchen that serves only on
        the leaf sees four cards; the eight it does not see are eight fewer
        chances to tick something it cannot honour. */
-    return menusFor({ cuisines, serves: detail.service ?? [], diet: detail.diet ?? null })
-  }, [isCatering, detail.cuisines, detail.service, detail.diet])
+    return menusFor({ cuisines, serves: detail.service ?? [], diet: dietOf(kitchen) })
+  }, [isCatering, cuisines, detail.service, kitchen])
 
   const alreadyHave = new Set(existing.map(s => s.name))
   const nameOf = id => offerings.find(o => o.serviceId === id)?.name ?? id
@@ -217,8 +222,67 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     : STEP_TITLE[step] ?? 'Add what you do'
   )
 
+  /* ══════════════════════════════════════════════════════════════════
+     FOURTEEN SCREENS, SEVEN PHASES
+     ══════════════════════════════════════════════════════════════════
+
+     The flow can run to fourteen screens — one per cuisine, seven
+     operational, two libraries. Fourteen dots on a phone are unreadable
+     and the current one would need scrolling to find.
+
+     So they group into phases a caterer would recognise as stages of
+     their own work, and the five cuisine screens are one dot that says
+     "3 of 5" while you are inside it. */
+  const phaseOf = id =>
+    id === 'trade' || id === 'offerings' ? 'what'
+    : id === 'kitchen' ? 'kitchen'
+    : id === 'cuisines' ? 'cuisines'
+    : id.startsWith('cuisine:') || id.startsWith('lib:') || id === 'menus' || id === 'dishes' ? 'dishes'
+    : id.startsWith('ops:') ? 'ops'
+    : id === 'upload' || id === 'price' ? 'price'
+    : 'submit'
+
+  const PHASES = [
+    { id: 'what',     label: 'What you do', icon: ListChecks },
+    { id: 'kitchen',  label: 'Kitchen',     icon: Flame },
+    { id: 'cuisines', label: 'Cuisines',    icon: Soup },
+    { id: 'dishes',   label: 'Dishes',      icon: UtensilsCrossed },
+    { id: 'ops',      label: 'How you work', icon: ClipboardList },
+    { id: 'price',    label: 'Your rate',   icon: IndianRupee },
+    { id: 'submit',   label: 'Submit',      icon: SendHorizonal },
+  ]
+
   const idx = flow.indexOf(step)
-  const goNext = () => setStep(flow[Math.min(idx + 1, flow.length - 1)])
+  const here = phaseOf(step)
+
+  /* Phases wholly behind the current screen are done. A phase is only
+     "done" when every screen in it has been passed, so the Dishes dot
+     does not go green while three cuisines are still unanswered. */
+  const donePhases = PHASES.map(p => p.id).filter(pid => {
+    const screens = flow.filter(f => phaseOf(f) === pid)
+    return screens.length > 0 && screens.every(f => flow.indexOf(f) < idx)
+  })
+
+  /* Red only on a step actually VISITED and left empty, and only on the
+     two that genuinely cannot be skipped. Marking an unvisited step red
+     would scold somebody for not doing what they have not been shown. */
+  const blockedPhases = [
+    ...(touched.has('kitchen') && !kitchen ? ['kitchen'] : []),
+    ...(touched.has('cuisines') && !cuisines.length ? ['cuisines'] : []),
+  ]
+
+  /* "3 of 5" under the Dishes dot while inside it. */
+  const inPhase = flow.filter(f => phaseOf(f) === here)
+  const subLabel = inPhase.length > 1
+    ? `${inPhase.indexOf(step) + 1} of ${inPhase.length}`
+    : null
+  const phases = PHASES.map(p => (p.id === here ? { ...p, subLabel } : p))
+
+  const goNext = () => {
+    const next = flow[Math.min(idx + 1, flow.length - 1)]
+    setTouched(t => new Set([...t, next]))
+    setStep(next)
+  }
   const goBack = () => (idx <= 0 ? onClose() : setStep(flow[idx - 1]))
 
   /* Which screens genuinely block, and nothing else.
@@ -333,18 +397,16 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
           </button>
         </div>
 
-        {/* Progress. Segments rather than a percentage: a partner should
-            be able to see how many screens are left, and a bar at 43%
-            does not answer that. */}
-        <div className="mx-auto mt-3 flex max-w-2xl gap-1">
-          {flow.map((s, i) => (
-            <span
-              key={s}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                i < idx ? 'bg-forest-600' : i === idx ? 'bg-plum-950' : 'bg-ink/[0.10]'
-              }`}
-            />
-          ))}
+        {/* The stepper. Replaced fourteen thin segments that answered
+            "roughly how far" and nothing else -- not what the steps were,
+            not which one had a problem. See FunnelStepper. */}
+        <div className="mx-auto mt-3 max-w-2xl">
+          <FunnelStepper
+            phases={phases}
+            currentId={here}
+            doneIds={donePhases}
+            blockedIds={blockedPhases}
+          />
         </div>
       </header>
 
