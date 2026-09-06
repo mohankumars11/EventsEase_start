@@ -138,6 +138,61 @@ for (const [from, col, to] of [
     bad.slice(0, 3).map(r => `${r.id}=${r.answer_type}`).join(', '))
 }
 
+/* ── every enum the schema declares, checked against the seed ──────
+   The seed wrote source = 'menu_card' for 202 dishes and the CHECK in
+   105 allowed only 'registry' and 'catalogue'. Nothing here noticed;
+   Postgres did, 832 rows into a 3738-row apply.
+
+   So this reads the constraints out of the migrations rather than
+   listing them again — a hardcoded copy is a second source of truth and
+   would go stale the same way. Both forms are picked up: the inline
+   CHECK inside CREATE TABLE, and ALTER TABLE ... ADD CONSTRAINT. Later
+   migrations win, which is how 109 widens what 105 declared. */
+{
+  const allowed = new Map()          // "table.column" -> Set of values
+  const files = readdirSync('supabase/migrations')
+    .filter(f => f.endsWith('.sql')).sort()
+
+  const values = list => new Set(
+    [...list.matchAll(/'((?:[^']|'')*)'/g)].map(m => m[1].replace(/''/g, "'")))
+
+  for (const f of files) {
+    const text = readFileSync('supabase/migrations/' + f, 'utf8')
+
+    /* CREATE TABLE public.x ( ... col ... CHECK (col IN (...)) ... ); */
+    for (const t of text.matchAll(
+      /CREATE TABLE (?:IF NOT EXISTS )?public\.(\w+)\s*\(([\s\S]*?)\n\);/g)) {
+      for (const c of t[2].matchAll(/CHECK\s*\(\s*(\w+)\s+IN\s*\(([^)]*)\)/gi)) {
+        allowed.set(`${t[1]}.${c[1]}`, values(c[2]))
+      }
+    }
+
+    /* ALTER TABLE public.x ADD CONSTRAINT y CHECK (col IN (...)) */
+    for (const a of text.matchAll(
+      /ALTER TABLE\s+public\.(\w+)\s+ADD CONSTRAINT[\s\S]{0,200}?CHECK\s*\(\s*\(?\s*(\w+)\s+IN\s*\(([^)]*)\)/gi)) {
+      allowed.set(`${a[1]}.${a[2]}`, values(a[3]))
+    }
+  }
+
+  if (!allowed.size) {
+    line(false, 'read the CHECK constraints out of the migrations',
+      'matched none — the pattern is broken, not the schema')
+  } else {
+    const bad = []
+    for (const [key, set] of allowed) {
+      const [t, col] = key.split('.')
+      for (const r of rows[t] ?? []) {
+        const v = r[col]
+        if (v === undefined || v === null || v === 'NULL') continue
+        if (!set.has(v)) bad.push(`${t}.${col} = '${v}' (${r.id}) — allowed: ${[...set].join(', ')}`)
+      }
+    }
+    line(!bad.length,
+      `every value obeys the ${allowed.size} enum CHECKs the migrations declare`,
+      bad.slice(0, 3).join('; '))
+  }
+}
+
 /* ── what a menu line resolves to ──────────────────────────────────
    These mirror the CHECK constraints in 108. Postgres would catch them
    on paste, but only after twelve other parts had already gone in. */
