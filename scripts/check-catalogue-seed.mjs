@@ -107,6 +107,9 @@ for (const [from, col, to] of [
   ['catalogue_dishes', 'cuisine_id', 'catalogue_cuisines'],
   ['catalogue_dishes', 'course_id', 'catalogue_courses'],
   ['catalogue_menu_lines', 'menu_id', 'catalogue_menus'],
+  ['catalogue_menu_lines', 'dish_id', 'catalogue_dishes'],
+  ['catalogue_menu_line_options', 'line_id', 'catalogue_menu_lines'],
+  ['catalogue_menu_line_options', 'dish_id', 'catalogue_dishes'],
   ['listing_services', 'trade_id', 'listing_trades'],
   ['listing_service_variants', 'service_id', 'listing_services'],
   ['listing_answers', 'question_id', 'listing_questions'],
@@ -133,6 +136,43 @@ for (const [from, col, to] of [
   const bad = (rows.listing_questions ?? []).filter(r => !['one', 'multi'].includes(r.answer_type))
   line(!bad.length, 'every question is one or multi',
     bad.slice(0, 3).map(r => `${r.id}=${r.answer_type}`).join(', '))
+}
+
+/* ── what a menu line resolves to ──────────────────────────────────
+   These mirror the CHECK constraints in 108. Postgres would catch them
+   on paste, but only after twelve other parts had already gone in. */
+{
+  const KIND = new Set(['dish', 'choice', 'all', 'staple', 'label', 'unresolved'])
+  const lines = rows.catalogue_menu_lines ?? []
+  const bad = lines.filter(r => !KIND.has(r.kind))
+  line(!bad.length, 'every menu line has a kind 108 allows',
+    bad.slice(0, 3).map(r => `${r.id}=${r.kind}`).join(', '))
+
+  /* kind = dish with no dish is the original bug wearing a label that
+     says it is fixed. */
+  const lie = lines.filter(r => {
+    const has = r.dish_id && r.dish_id !== 'NULL'
+    return r.kind === 'dish' ? !has : has
+  })
+  line(!lie.length, 'kind and dish_id agree on every line',
+    lie.slice(0, 3).map(r => `${r.id} ${r.kind} dish_id=${r.dish_id}`).join('; '))
+
+  const stuck = lines.filter(r => r.kind === 'unresolved')
+  line(!stuck.length, 'no menu line is unresolved',
+    stuck.slice(0, 5).map(r => r.text).join(' | '))
+
+  /* A choice or an all with no options reaches nothing, which is the
+     NULL dish_id again by another route. */
+  const withOpts = new Set((rows.catalogue_menu_line_options ?? []).map(r => r.line_id))
+  const empty = lines.filter(r => (r.kind === 'choice' || r.kind === 'all') && !withOpts.has(r.id))
+  line(!empty.length, 'every choice and every all lists its dishes',
+    empty.slice(0, 3).map(r => r.id).join(', '))
+
+  /* And the reverse: options hanging off a line that names one dish. */
+  const single = new Set(lines.filter(r => r.kind !== 'choice' && r.kind !== 'all').map(r => r.id))
+  const loose = (rows.catalogue_menu_line_options ?? []).filter(r => single.has(r.line_id))
+  line(!loose.length, 'no options hang off a line that is not a choice',
+    loose.slice(0, 3).map(r => r.id).join(', '))
 }
 
 /* ── the ids look like ids ────────────────────────────────────────── */
@@ -192,9 +232,19 @@ console.log(`  ${n('listing_trades')} trades · ${n('listing_services')} service
   + ` · ${n('listing_questions')} questions · ${n('listing_answers')} answers`)
 
 /* The bridge, stated every run so it does not quietly stay at zero. */
-const resolved = (rows.catalogue_menu_lines ?? []).filter(r => r.dish_id && r.dish_id !== 'NULL').length
-console.log(`\n  menu lines resolved to a dish: ${resolved} of ${n('catalogue_menu_lines')}`
-  + `  — the bridge menu-card matching will need\n`)
+{
+  const lines = rows.catalogue_menu_lines ?? []
+  const by = {}
+  for (const r of lines) by[r.kind] = (by[r.kind] ?? 0) + 1
+  const reach = lines.filter(r =>
+    (r.dish_id && r.dish_id !== 'NULL') || r.kind === 'choice' || r.kind === 'all').length
+  console.log(`\n  menu lines that reach a dish: ${reach} of ${lines.length}`
+    + `  (${lines.length - reach} are staples nobody is matched on)`)
+  for (const k of ['dish', 'choice', 'all', 'staple', 'label', 'unresolved']) {
+    if (by[k]) console.log(`      ${String(by[k]).padStart(4)}  ${k}`)
+  }
+  console.log(`      ${String(n('catalogue_menu_line_options')).padStart(4)}  option rows\n`)
+}
 
 if (fails.length) {
   console.error('  FAILED\n' + fails.map(f => '   · ' + f).join('\n') + '\n')

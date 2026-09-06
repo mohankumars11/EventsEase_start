@@ -10,14 +10,15 @@
 -- twice changes nothing and applying it after an edit carries the edit
 -- through.
 --
--- 3195 rows:
+-- 3703 rows:
 --
 --       9  catalogue_regions
 --       7  catalogue_courses
 --      16  catalogue_cuisines
---    1041  catalogue_dishes
+--    1243  catalogue_dishes
 --      15  catalogue_menus
 --     304  catalogue_menu_lines
+--     306  catalogue_menu_line_options
 --       7  catalogue_counters
 --      24  listing_trades
 --      62  listing_services
@@ -2189,6 +2190,410 @@ INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet
   ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
 INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MY-CO-505', 'mysuru_royal', 'counters', 'Ice cream counter', NULL, 'veg', 50, 'catalogue', TRUE)
   ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-512', 'karnataka', 'accompaniments', 'Aloo Batani Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-513', 'karnataka', 'accompaniments', 'Aloo Palak Chopse', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-514', 'karnataka', 'accompaniments', 'Babycorn Batani Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-515', 'karnataka', 'accompaniments', 'Beans Sprouts Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-516', 'karnataka', 'accompaniments', 'Boiled Egg', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-517', 'karnataka', 'accompaniments', 'Boti Palya', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-518', 'karnataka', 'accompaniments', 'Cabbage Channa Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-519', 'karnataka', 'accompaniments', 'Capsicum Matar Dry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-520', 'karnataka', 'accompaniments', 'Congress Carrot Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-521', 'karnataka', 'accompaniments', 'Congress Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-522', 'karnataka', 'accompaniments', 'Corn Dalimbe Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-523', 'karnataka', 'accompaniments', 'Corn Salad', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-524', 'karnataka', 'accompaniments', 'Gobi Batani Sukka', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-525', 'karnataka', 'accompaniments', 'Grated Mix Veg Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-526', 'karnataka', 'accompaniments', 'Guava Pineapple Pomegranate Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-527', 'karnataka', 'accompaniments', 'Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-528', 'karnataka', 'accompaniments', 'Kosambari (hesarubele and kadlebele)', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-529', 'karnataka', 'accompaniments', 'Mix Fruits Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-530', 'karnataka', 'accompaniments', 'Mix Sprouts Salad', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-531', 'karnataka', 'accompaniments', 'Navilukosu Sprouts Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-532', 'karnataka', 'accompaniments', 'Onion and Lemon', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-533', 'karnataka', 'accompaniments', 'Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-534', 'karnataka', 'accompaniments', 'Peanut Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-535', 'karnataka', 'accompaniments', 'Pineapple Corn Kosambari', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-536', 'karnataka', 'accompaniments', 'Raw Banana Pepper Dry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-537', 'karnataka', 'accompaniments', 'Roasted Aloo with Gun Powder', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-538', 'karnataka', 'accompaniments', 'Suvarnagadde Chopse', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-539', 'karnataka', 'accompaniments', 'Tondekai Peanut Fry Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-AC-540', 'karnataka', 'accompaniments', 'Two Palya', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-514', 'karnataka', 'curries', 'Aloo Brinjal Drumstick Sambar', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-515', 'karnataka', 'curries', 'Bele Saaru', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-516', 'karnataka', 'curries', 'Brinjal Ennegai', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-517', 'karnataka', 'curries', 'Capsicum Gojju', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-518', 'karnataka', 'curries', 'Chicken Curry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-519', 'karnataka', 'curries', 'Drumstick Sambar', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-520', 'karnataka', 'curries', 'Egg Masala', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-521', 'karnataka', 'curries', 'Jackfruit Gojju', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-522', 'karnataka', 'curries', 'Kaalu Saaru', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-523', 'karnataka', 'curries', 'Kuri (mutton) Saaru', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-524', 'karnataka', 'curries', 'Kurma', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-525', 'karnataka', 'curries', 'Mango Gojju', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-526', 'karnataka', 'curries', 'Motte Saaru (egg curry)', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-527', 'karnataka', 'curries', 'Mutton Kaal Soup', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-528', 'karnataka', 'curries', 'Mutton Paya Soup', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-529', 'karnataka', 'curries', 'Mysore Rasam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-530', 'karnataka', 'curries', 'Nellikai Gojju', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-531', 'karnataka', 'curries', 'Saagu', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-532', 'karnataka', 'curries', 'Soppu Sambar', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-CU-533', 'karnataka', 'curries', 'Tovve', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-515', 'karnataka', 'mains', 'Beetroot Poori', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-516', 'karnataka', 'mains', 'Corn Pudina Bath', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-517', 'karnataka', 'mains', 'Ghee Masala Dosa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-518', 'karnataka', 'mains', 'Kharabath', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-519', 'karnataka', 'mains', 'Kotte Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-520', 'karnataka', 'mains', 'Masala Dosa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-521', 'karnataka', 'mains', 'Menthyabath', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-522', 'karnataka', 'mains', 'Paneer Masala Dosa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-523', 'karnataka', 'mains', 'Pudi Masala Dosa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-524', 'karnataka', 'mains', 'Rawa Poori', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-MA-525', 'karnataka', 'mains', 'Veg Pepper Masala Dosa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-515', 'karnataka', 'starters', 'Ambode', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-516', 'karnataka', 'starters', 'Bhendi Pepper Fry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-517', 'karnataka', 'starters', 'Divyalasu Tawa Fry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-518', 'karnataka', 'starters', 'Fish Fry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-519', 'karnataka', 'starters', 'Jackfruit Cutlet', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-520', 'karnataka', 'starters', 'Kuri Fry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-521', 'karnataka', 'starters', 'Nati Koli Fry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-522', 'karnataka', 'starters', 'Onion Unde Pakoda', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-523', 'karnataka', 'starters', 'Raw Banana Rawa Fry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-524', 'karnataka', 'starters', 'Suvarnagadde Rawa Fry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-525', 'karnataka', 'starters', 'Uppittu', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-ST-526', 'karnataka', 'starters', 'Veg Masala Vada', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-509', 'karnataka', 'sweets', 'Adai Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-510', 'karnataka', 'sweets', 'Bele Holige with milk and ghee', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-511', 'karnataka', 'sweets', 'Chiroti with Sweet Boondi and Badam Milk', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-512', 'karnataka', 'sweets', 'Dates Holige', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-513', 'karnataka', 'sweets', 'Glass Sandwich', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-514', 'karnataka', 'sweets', 'Holige', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-515', 'karnataka', 'sweets', 'Holige with ghee', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-516', 'karnataka', 'sweets', 'Jackfruit Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-517', 'karnataka', 'sweets', 'Karjoora Kali', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-518', 'karnataka', 'sweets', 'Obbattu', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-519', 'karnataka', 'sweets', 'Pudi Peni with Rabadi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-520', 'karnataka', 'sweets', 'Pumpkin Holige with ghee', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-521', 'karnataka', 'sweets', 'Sabbakki Mango Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-522', 'karnataka', 'sweets', 'Shavige Litchi Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-523', 'karnataka', 'sweets', 'Shavige Sabbakki Banana Falooda Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-524', 'karnataka', 'sweets', 'Special Holige with ghee', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-525', 'karnataka', 'sweets', 'Tender Coconut Payasa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-SW-526', 'karnataka', 'sweets', 'White Holige', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KA-WE-506', 'karnataka', 'welcome', 'Majjige (buttermilk)', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-CU-511', 'udupi', 'curries', 'Fish Curry (coastal)', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-CU-512', 'udupi', 'curries', 'Kori Gassi', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-MA-511', 'udupi', 'mains', 'Boiled Rice (kucchalakki)', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-MA-512', 'udupi', 'mains', 'Kori Rotti', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-511', 'udupi', 'starters', 'Bangude Fry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-512', 'udupi', 'starters', 'Chicken Ghee Roast', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-513', 'udupi', 'starters', 'Fish Tawa Fry', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-514', 'udupi', 'starters', 'Marvai Sukka (clams, seasonal)', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-515', 'udupi', 'starters', 'Mutton Sukka', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-ST-516', 'udupi', 'starters', 'Veg Ball Ghee Roast', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-AC-508', 'udupi', 'accompaniments', 'Sukka (dry vegetable)', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-UD-SW-507', 'udupi', 'sweets', 'Halbai', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-510', 'tamil', 'curries', 'Chennai Rasam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-511', 'tamil', 'curries', 'Madras Rasam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-512', 'tamil', 'curries', 'Mix Veg Kolambu', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-513', 'tamil', 'curries', 'Pepper Rasam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-514', 'tamil', 'curries', 'Tamil Nadu style Sambar', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-TN-CU-515', 'tamil', 'curries', 'Tomato Rasam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-AP-CU-508', 'andhra', 'curries', 'Mango Dal', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-AP-CU-509', 'andhra', 'curries', 'Pappukoora', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-AP-CU-510', 'andhra', 'curries', 'Tomato Dal', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-KL-SW-504', 'kerala', 'sweets', 'Nendra Banana Jamoon', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-515', 'north_indian', 'curries', 'Capsicum Matar Masala', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-516', 'north_indian', 'curries', 'Dal Fry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-517', 'north_indian', 'curries', 'Haryali Mix Veg', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-518', 'north_indian', 'curries', 'Kadai Veg', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-519', 'north_indian', 'curries', 'Kaju Matar Paneer', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-520', 'north_indian', 'curries', 'Masoor Dal Thadka', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-521', 'north_indian', 'curries', 'Palak Dal', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-522', 'north_indian', 'curries', 'Suneri Masala', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-523', 'north_indian', 'curries', 'Tomato Basil Shorba', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-524', 'north_indian', 'curries', 'Almond Soup', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-525', 'north_indian', 'curries', 'Veg Jaal Freez', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-526', 'north_indian', 'curries', 'Veg Jodhpuri Masala', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-527', 'north_indian', 'curries', 'Veg Kadai', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-528', 'north_indian', 'curries', 'Veg Kandahar', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-CU-529', 'north_indian', 'curries', 'Veg Milon Hundy', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-512', 'north_indian', 'mains', 'Azwan Parata', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-513', 'north_indian', 'mains', 'Batoora', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-514', 'north_indian', 'mains', 'Butter Roti', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-515', 'north_indian', 'mains', 'Butter Soft Roti', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-516', 'north_indian', 'mains', 'Coin Parata', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-517', 'north_indian', 'mains', 'Methi Chapathi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-518', 'north_indian', 'mains', 'Naan', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-519', 'north_indian', 'mains', 'Palak Rumali Roti', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-520', 'north_indian', 'mains', 'Peas Pulao', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-521', 'north_indian', 'mains', 'Pudina Pulao', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-522', 'north_indian', 'mains', 'Rumali Rotti', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-523', 'north_indian', 'mains', 'Soft Roti', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-MA-524', 'north_indian', 'mains', 'Triangle Parata', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-513', 'north_indian', 'starters', 'Babycorn Angara', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-514', 'north_indian', 'starters', 'Babycorn Tilimili', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-515', 'north_indian', 'starters', 'Chicken Kabab', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-516', 'north_indian', 'starters', 'Lotus Stem Pepper Dry', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-517', 'north_indian', 'starters', 'Pahadi Paneer Tikka', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-518', 'north_indian', 'starters', 'Paneer Malai Kebab', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-ST-519', 'north_indian', 'starters', 'Paneer Sholey', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-509', 'north_indian', 'sweets', 'Angoor Rasmalai', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-510', 'north_indian', 'sweets', 'Anjoor Dryfruit Roll', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-511', 'north_indian', 'sweets', 'Badam Bhog', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-512', 'north_indian', 'sweets', 'Carrot Halwa with Ice Cream', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-513', 'north_indian', 'sweets', 'Champakali', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-514', 'north_indian', 'sweets', 'Crispy Jilebi with Rabdi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-515', 'north_indian', 'sweets', 'Dryfruit Kesar Peta Roll', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-516', 'north_indian', 'sweets', 'Grapes Jilebi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-517', 'north_indian', 'sweets', 'Grapes Jilebi with Rabdi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-518', 'north_indian', 'sweets', 'Gulkand Sandwich', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-519', 'north_indian', 'sweets', 'Hot Jamoon with Ice Cream', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-520', 'north_indian', 'sweets', 'Hot Jilebi with Rabdi', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-521', 'north_indian', 'sweets', 'Kaju Mohini', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-522', 'north_indian', 'sweets', 'Kaju Pineapple Slice', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-523', 'north_indian', 'sweets', 'Kala Jamoon', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-524', 'north_indian', 'sweets', 'Kiwi Malai', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-525', 'north_indian', 'sweets', 'Malpuva Roll', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-526', 'north_indian', 'sweets', 'Peta Roll', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-NI-SW-527', 'north_indian', 'sweets', 'Pista Halwa', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-507', 'bengali', 'sweets', 'Coconut Kadam', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-508', 'bengali', 'sweets', 'Malai Sandwich', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-509', 'bengali', 'sweets', 'Mango Malai Chap', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-510', 'bengali', 'sweets', 'Raj Bhogh', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-511', 'bengali', 'sweets', 'Rose Chum Chum', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-BN-SW-512', 'bengali', 'sweets', 'Strawberry Prem Bhog', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MH-CU-509', 'maharashtrian', 'curries', 'Paneer Kolhapuri', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MH-CU-510', 'maharashtrian', 'curries', 'Veg Kolhapuri', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-509', 'mughlai', 'mains', 'Chicken Dum Biryani', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-510', 'mughlai', 'mains', 'Dum Nawabi Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-511', 'mughlai', 'mains', 'Mughlai Veg Kotte Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-512', 'mughlai', 'mains', 'Palak Dum Veg Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-513', 'mughlai', 'mains', 'Veg Hyderabadi Dum Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-MG-MA-514', 'mughlai', 'mains', 'Veg Mughalai Dum Biryani', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-CU-508', 'indo_chinese', 'curries', 'Chicken Clear Soup', NULL, 'nonveg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-CU-509', 'indo_chinese', 'curries', 'Hot & Sour Soup', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-CU-510', 'indo_chinese', 'curries', 'Manchow Soup with Fried Noodles', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-MA-508', 'indo_chinese', 'mains', 'Fried Rice', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-AC-505', 'indo_chinese', 'accompaniments', 'Hot Garlic Sauce', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-512', 'indo_chinese', 'starters', 'Arbi Chilly', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-513', 'indo_chinese', 'starters', 'Babycorn Chilly', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-514', 'indo_chinese', 'starters', 'Babycorn Green Manchurian', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-515', 'indo_chinese', 'starters', 'Babycorn Sathe', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-516', 'indo_chinese', 'starters', 'Chilly Paneer', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-517', 'indo_chinese', 'starters', 'Paneer Sathe', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-518', 'indo_chinese', 'starters', 'Veg Ball Manchurian', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-519', 'indo_chinese', 'starters', 'Veg Chaina Town', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-IC-ST-520', 'indo_chinese', 'starters', 'Veg Shangai Roll', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-CU-506', 'continental', 'curries', 'Corn Coriander Soup', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-CU-507', 'continental', 'curries', 'Spinach Carrot Soup', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-ST-510', 'continental', 'starters', 'Cheese Corn Balls', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-ST-511', 'continental', 'starters', 'Cheese Finger', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-ST-512', 'continental', 'starters', 'French Fries', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-ST-513', 'continental', 'starters', 'Palak Veg Gold Coin', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
+INSERT INTO public.catalogue_dishes (id, cuisine_id, course_id, name, note, diet, delta, source, is_active) VALUES ('SBM-CN-SW-506', 'continental', 'sweets', 'Ice Cream with Chocolate Sauce', NULL, 'veg', 0, 'menu_card', TRUE)
+  ON CONFLICT (id) DO UPDATE SET cuisine_id = EXCLUDED.cuisine_id, course_id = EXCLUDED.course_id, name = EXCLUDED.name, note = EXCLUDED.note, diet = EXCLUDED.diet, delta = EXCLUDED.delta, source = EXCLUDED.source, is_active = EXCLUDED.is_active;
 
 -- ── set menus ─────────────────────────────────────────────────────
 INSERT INTO public.catalogue_menus (id, slug, name, tier, scan, from_price, min_pax, diet, is_active) VALUES ('SBM-MNU-001', 'pl_option_1', 'Option 1', 'Everyday feast', 'The classic plantain-leaf meal', 450, 100, 'veg', TRUE)
@@ -2223,614 +2628,1226 @@ INSERT INTO public.catalogue_menus (id, slug, name, tier, scan, from_price, min_
   ON CONFLICT (id) DO UPDATE SET slug = EXCLUDED.slug, name = EXCLUDED.name, tier = EXCLUDED.tier, scan = EXCLUDED.scan, from_price = EXCLUDED.from_price, min_pax = EXCLUDED.min_pax, diet = EXCLUDED.diet, is_active = EXCLUDED.is_active;
 
 -- ── menu lines ────────────────────────────────────────────────────
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-001', 'SBM-MNU-001', NULL, 1, 'Paal Payasa OR Sabbakki Mango Payasa (seasonal)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-002', 'SBM-MNU-001', NULL, 2, 'Salt', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-003', 'SBM-MNU-001', NULL, 3, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-004', 'SBM-MNU-001', NULL, 4, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-005', 'SBM-MNU-001', NULL, 5, 'Hesarubele Kosambari OR Peanut Kosambari', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-006', 'SBM-MNU-001', NULL, 6, 'Aloo Batani Palya OR Aloo Palak Chopse', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-007', 'SBM-MNU-001', NULL, 7, 'Suvarnagadde Chopse OR Cabbage Channa Palya', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-008', 'SBM-MNU-001', NULL, 8, 'Poori', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-009', 'SBM-MNU-001', NULL, 9, 'Veg Kurma OR Channa Masala', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-010', 'SBM-MNU-001', NULL, 10, 'Veg Pulao OR Menthyabath', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-011', 'SBM-MNU-001', NULL, 11, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-012', 'SBM-MNU-001', NULL, 12, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-013', 'SBM-MNU-001', NULL, 13, 'Ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-014', 'SBM-MNU-001', NULL, 14, 'Drumstick Sambar OR Soppu Sambar', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-015', 'SBM-MNU-001', NULL, 15, 'Mysore Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-016', 'SBM-MNU-001', NULL, 16, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-017', 'SBM-MNU-001', NULL, 17, 'Maddur Vada OR Onion Unde Pakoda', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-018', 'SBM-MNU-001', NULL, 18, 'Sweet: Glass Sandwich', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-019', 'SBM-MNU-001', NULL, 19, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-020', 'SBM-MNU-001', NULL, 20, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-021', 'SBM-MNU-001', NULL, 21, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-022', 'SBM-MNU-001', NULL, 22, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-023', 'SBM-MNU-002', NULL, 1, 'Shavige Sabbakki Banana Falooda Payasa', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-024', 'SBM-MNU-002', NULL, 2, 'Salt', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-025', 'SBM-MNU-002', NULL, 3, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-026', 'SBM-MNU-002', NULL, 4, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-027', 'SBM-MNU-002', NULL, 5, 'Corn Dalimbe Kosambari OR Pineapple Corn Kosambari', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-028', 'SBM-MNU-002', NULL, 6, 'Beans Sprouts Palya OR Babycorn Batani Palya', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-029', 'SBM-MNU-002', NULL, 7, 'Tondekai Peanut Fry Palya OR Bhendi Pepper Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-030', 'SBM-MNU-002', NULL, 8, 'Rumali Rotti OR Soft Roti', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-031', 'SBM-MNU-002', NULL, 9, 'Kadai Paneer OR Paneer Kolhapuri', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-032', 'SBM-MNU-002', NULL, 10, 'Veg Mughalai Dum Biryani OR Dum Nawabi Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-033', 'SBM-MNU-002', NULL, 11, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-034', 'SBM-MNU-002', NULL, 12, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-035', 'SBM-MNU-002', NULL, 13, 'Ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-036', 'SBM-MNU-002', NULL, 14, 'Aloo Brinjal Drumstick Sambar OR Mix Veg Kolambu', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-037', 'SBM-MNU-002', NULL, 15, 'Mysore Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-038', 'SBM-MNU-002', NULL, 16, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-039', 'SBM-MNU-002', NULL, 17, 'Mirchi Bajji OR Veg Masala Vada', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-040', 'SBM-MNU-002', NULL, 18, 'Sweet: Bele Holige with milk and ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-041', 'SBM-MNU-002', NULL, 19, 'Sweet: Kheer Kadam OR Bidar Paan', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-042', 'SBM-MNU-002', NULL, 20, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-043', 'SBM-MNU-002', NULL, 21, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-044', 'SBM-MNU-002', NULL, 22, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-045', 'SBM-MNU-002', NULL, 23, 'Drinking water (300 ml bottles)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-046', 'SBM-MNU-003', NULL, 1, 'Adai Payasa OR Jackfruit Payasa (seasonal)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-047', 'SBM-MNU-003', NULL, 2, 'Salt', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-048', 'SBM-MNU-003', NULL, 3, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-049', 'SBM-MNU-003', NULL, 4, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-050', 'SBM-MNU-003', NULL, 5, 'Mix Fruits Kosambari OR Navilukosu Sprouts Kosambari', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-051', 'SBM-MNU-003', NULL, 6, 'Congress Kosambari OR Grated Mix Veg Kosambari', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-052', 'SBM-MNU-003', NULL, 7, 'Roasted Aloo with Gun Powder OR Gobi Batani Sukka', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-053', 'SBM-MNU-003', NULL, 8, 'Raw Banana Pepper Dry OR Capsicum Matar Dry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-054', 'SBM-MNU-003', NULL, 9, 'Mango Gojju OR Nellikai Gojju', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-055', 'SBM-MNU-003', NULL, 10, 'Neeru Dosa OR Masala Dosa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-056', 'SBM-MNU-003', NULL, 11, 'Coconut Chutney', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-057', 'SBM-MNU-003', NULL, 12, 'Batoora OR Palak Rumali Roti OR Coin Parata', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-058', 'SBM-MNU-003', NULL, 13, 'Channa Masala OR Paneer Butter Masala OR Kadai Veg', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-059', 'SBM-MNU-003', NULL, 14, 'Pudina Pulao OR Ghee Rice OR Kotte Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-060', 'SBM-MNU-003', NULL, 15, 'Raitha OR Kurma', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-061', 'SBM-MNU-003', NULL, 16, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-062', 'SBM-MNU-003', NULL, 17, 'Ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-063', 'SBM-MNU-003', NULL, 18, 'Pappukoora OR Mango Dal OR Tamil Nadu style Sambar', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-064', 'SBM-MNU-003', NULL, 19, 'Fried Chilly', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-065', 'SBM-MNU-003', NULL, 20, 'Mysore Rasam OR Tomato Rasam', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-066', 'SBM-MNU-003', NULL, 21, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-067', 'SBM-MNU-003', NULL, 22, 'Paneer Sholey OR Paneer Malai Kebab OR Chilly Paneer', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-068', 'SBM-MNU-003', NULL, 23, 'Babycorn Green Manchurian OR Veg Ball Ghee Roast OR Raw Banana Rawa Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-069', 'SBM-MNU-003', NULL, 24, 'Sweet: Pudi Peni with Rabadi OR Chiroti with Sweet Boondi and Badam Milk OR Special Holige with ghee', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-070', 'SBM-MNU-003', NULL, 25, 'Sweet: Malpuva Roll OR Mango Malai Chap', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-071', 'SBM-MNU-003', NULL, 26, 'Sweet Beeda OR Maghai Beeda', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-072', 'SBM-MNU-003', NULL, 27, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-073', 'SBM-MNU-003', NULL, 28, 'Hot Jamoon with Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-074', 'SBM-MNU-003', NULL, 29, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-075', 'SBM-MNU-004', NULL, 1, 'Shavige Litchi Payasa OR Tender Coconut Payasa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-076', 'SBM-MNU-004', NULL, 2, 'Salt', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-077', 'SBM-MNU-004', NULL, 3, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-078', 'SBM-MNU-004', NULL, 4, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-079', 'SBM-MNU-004', NULL, 5, 'Guava Pineapple Pomegranate Kosambari', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-080', 'SBM-MNU-004', NULL, 6, 'Congress Carrot Kosambari', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-081', 'SBM-MNU-004', NULL, 7, 'Arbi Chilly OR Lotus Stem Pepper Dry OR Babycorn Tilimili OR Divyalasu Tawa Fry (seasonal)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-082', 'SBM-MNU-004', NULL, 8, 'Dahi Kebab OR Babycorn Angara OR Veg Chaina Town OR Jackfruit Cutlet (seasonal)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-083', 'SBM-MNU-004', NULL, 9, 'Nellikai Gojju OR Capsicum Gojju OR Jackfruit Gojju (seasonal)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-084', 'SBM-MNU-004', NULL, 10, 'Veg Pepper Masala Dosa OR Paneer Masala Dosa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-085', 'SBM-MNU-004', NULL, 11, 'Coconut Chutney', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-086', 'SBM-MNU-004', NULL, 12, 'Rawa Poori OR Triangle Parata OR White Holige', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-087', 'SBM-MNU-004', NULL, 13, 'Kaju Matar Paneer OR Veg Kandahar OR Brinjal Ennegai', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-088', 'SBM-MNU-004', NULL, 14, 'Mughlai Veg Kotte Biryani OR Corn Pudina Bath', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-089', 'SBM-MNU-004', NULL, 15, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-090', 'SBM-MNU-004', NULL, 16, 'White Rice with ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-091', 'SBM-MNU-004', NULL, 17, 'Tomato Dal OR Arachuvitta Sambar', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-092', 'SBM-MNU-004', NULL, 18, 'Fried Chilly', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-093', 'SBM-MNU-004', NULL, 19, 'Mysore Rasam OR Pepper Rasam OR Madras Rasam', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-094', 'SBM-MNU-004', NULL, 20, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-095', 'SBM-MNU-004', NULL, 21, 'Sweet: Dates Holige OR Pumpkin Holige with ghee', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-096', 'SBM-MNU-004', NULL, 22, 'Sweet: Dryfruit Kesar Peta Roll OR Gulkand Sandwich', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-097', 'SBM-MNU-004', NULL, 23, 'Sweet: Karjoora Kali OR Coconut Kadam OR Kiwi Malai', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-098', 'SBM-MNU-004', NULL, 24, 'Sweet: Pista Halwa OR Nendra Banana Jamoon', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-099', 'SBM-MNU-004', NULL, 25, 'Sweet Beeda OR Magai Beeda', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-100', 'SBM-MNU-004', NULL, 26, 'Banana OR Stick Fruit OR Fruit Bowl', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-101', 'SBM-MNU-004', NULL, 27, 'Ice Cream (vanilla, pista or chilly guava)', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-102', 'SBM-MNU-004', NULL, 28, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-103', 'SBM-MNU-005', NULL, 1, 'Pulka OR Methi Chapathi OR Poori', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-104', 'SBM-MNU-005', NULL, 2, 'Veg Kadai OR Haryali Mix Veg OR Channa Masala', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-105', 'SBM-MNU-005', NULL, 3, 'Veg Pulao OR Ghee Rice', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-106', 'SBM-MNU-005', NULL, 4, 'Raitha OR Dal Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-107', 'SBM-MNU-005', NULL, 5, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-108', 'SBM-MNU-005', NULL, 6, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-109', 'SBM-MNU-005', NULL, 7, 'Green Salad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-110', 'SBM-MNU-005', NULL, 8, 'Babycorn Chilly OR Veg Ball Manchurian', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-111', 'SBM-MNU-005', NULL, 9, 'Sweet: Kala Jamoon OR Malai Sandwich', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-112', 'SBM-MNU-005', NULL, 10, 'Sweet: Jilebi OR Carrot Halwa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-113', 'SBM-MNU-005', NULL, 11, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-114', 'SBM-MNU-005', NULL, 12, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-115', 'SBM-MNU-005', NULL, 13, 'Paan', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-116', 'SBM-MNU-005', NULL, 14, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-117', 'SBM-MNU-006', NULL, 1, 'Soup: Manchow Soup with Fried Noodles OR Spinach Carrot Soup', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-118', 'SBM-MNU-006', NULL, 2, 'Starter: Cheese Corn Balls OR French Fries', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-119', 'SBM-MNU-006', NULL, 3, 'Starter: Veg Shangai Roll OR Babycorn Sathe', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-120', 'SBM-MNU-006', NULL, 4, 'Batoora OR Butter Soft Roti OR Azwan Parata', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-121', 'SBM-MNU-006', NULL, 5, 'Channa Masala OR Veg Jodhpuri Masala OR Kadai Paneer', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-122', 'SBM-MNU-006', NULL, 6, 'Veg Kolhapuri OR Veg Kandahar OR Capsicum Matar Masala', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-123', 'SBM-MNU-006', NULL, 7, 'Veg Hyderabadi Dum Biryani OR Palak Dum Veg Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-124', 'SBM-MNU-006', NULL, 8, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-125', 'SBM-MNU-006', NULL, 9, 'Dal Fry OR Dal Makhani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-126', 'SBM-MNU-006', NULL, 10, 'Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-127', 'SBM-MNU-006', NULL, 11, 'Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-128', 'SBM-MNU-006', NULL, 12, 'Green Salad, Russian Salad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-129', 'SBM-MNU-006', NULL, 13, 'Sweet: Glass Sandwich OR Peta Roll OR Moongdal Halwa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-130', 'SBM-MNU-006', NULL, 14, 'Sweet: Champakali OR Angoor Rasmalai OR Raj Bhogh', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-131', 'SBM-MNU-006', NULL, 15, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-132', 'SBM-MNU-006', NULL, 16, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-133', 'SBM-MNU-006', NULL, 17, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-134', 'SBM-MNU-006', NULL, 18, 'Drinking water (300 ml bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-135', 'SBM-MNU-007', NULL, 1, 'Soup: Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-136', 'SBM-MNU-007', NULL, 2, 'Starter: Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-137', 'SBM-MNU-007', NULL, 3, 'Starter: Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-138', 'SBM-MNU-007', NULL, 4, 'Bread: Rawa Poori OR Beetroot Poori', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-139', 'SBM-MNU-007', NULL, 5, 'Bread: Coin Parata OR Butter Roti', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-140', 'SBM-MNU-007', NULL, 6, 'Gravy: Kadai Paneer', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-141', 'SBM-MNU-007', NULL, 7, 'Gravy: Channa Masala', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-142', 'SBM-MNU-007', NULL, 8, 'Gravy: Dal Thadka', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-143', 'SBM-MNU-007', NULL, 9, 'Dosa: Ghee Masala Dosa OR Pudi Masala Dosa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-144', 'SBM-MNU-007', NULL, 10, 'Dosa: Coconut Chutney', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-145', 'SBM-MNU-007', NULL, 11, 'Rice: Veg Hyderabadi Dum Biryani OR Peas Pulao', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-146', 'SBM-MNU-007', NULL, 12, 'Rice: Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-147', 'SBM-MNU-007', NULL, 13, 'Rice: White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-148', 'SBM-MNU-007', NULL, 14, 'Rice: Mysore Rasam / Pepper Rasam / Chennai Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-149', 'SBM-MNU-007', NULL, 15, 'Rice: Curd Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-150', 'SBM-MNU-007', NULL, 16, 'Salad: Green Salad / Corn Salad / Mix Sprouts Salad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-151', 'SBM-MNU-007', NULL, 17, 'Salad: Papad & Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-152', 'SBM-MNU-007', NULL, 18, 'Sweet: Hot Jilebi with Rabdi OR Grapes Jilebi', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-153', 'SBM-MNU-007', NULL, 19, 'Sweet: Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-154', 'SBM-MNU-007', NULL, 20, 'Fruit: Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-155', 'SBM-MNU-007', NULL, 21, 'Dessert: Carrot Halwa with Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-156', 'SBM-MNU-007', NULL, 22, 'Paan: Paan', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-157', 'SBM-MNU-007', NULL, 23, 'Drink: Drinking water (300 ml bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-158', 'SBM-MNU-008', NULL, 1, 'Soup: Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup OR Almond Soup', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-159', 'SBM-MNU-008', NULL, 2, 'Starter: Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-160', 'SBM-MNU-008', NULL, 3, 'Starter: Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka OR Cheese Finger', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-161', 'SBM-MNU-008', NULL, 4, 'Bread: Rawa Poori OR Beetroot Poori OR Methi Chapathi', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-162', 'SBM-MNU-008', NULL, 5, 'Bread: Coin Parata OR Butter Roti OR Lacha Parata', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-163', 'SBM-MNU-008', NULL, 6, 'Gravy: Channa Masala OR Veg Kurma OR Veg Jaal Freez', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-164', 'SBM-MNU-008', NULL, 7, 'Gravy: Paneer Tikka Masala OR Suneri Masala OR Veg Milon Hundy', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-165', 'SBM-MNU-008', NULL, 8, 'Gravy: Dal Thadka OR Masoor Dal Thadka OR Palak Dal', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-166', 'SBM-MNU-008', NULL, 9, 'Dosa: Ghee Masala Dosa OR Pudi Masala Dosa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-167', 'SBM-MNU-008', NULL, 10, 'Dosa: Coconut Chutney', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-168', 'SBM-MNU-008', NULL, 11, 'Rice: Veg Hyderabadi Dum Biryani OR Peas Pulao OR Fried Rice', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-169', 'SBM-MNU-008', NULL, 12, 'Rice: Raitha OR Hot Garlic Sauce', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-170', 'SBM-MNU-008', NULL, 13, 'Rice: White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-171', 'SBM-MNU-008', NULL, 14, 'Rice: Mysore Rasam / Pepper Rasam / Chennai Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-172', 'SBM-MNU-008', NULL, 15, 'Rice: Curd Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-173', 'SBM-MNU-008', NULL, 16, 'Salad: Green Salad / Corn Salad / Mix Sprouts Salad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-174', 'SBM-MNU-008', NULL, 17, 'Salad: Papad & Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-175', 'SBM-MNU-008', NULL, 18, 'Sweet: Crispy Jilebi with Rabdi OR Grapes Jilebi with Rabdi', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-176', 'SBM-MNU-008', NULL, 19, 'Sweet: Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-177', 'SBM-MNU-008', NULL, 20, 'Sweet: Strawberry Prem Bhog / Rose Chum Chum / Badam Bhog', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-178', 'SBM-MNU-008', NULL, 21, 'Fruit: Banana / Cut Fruits / Stick Fruits', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-179', 'SBM-MNU-008', NULL, 22, 'Dessert: Carrot Halwa with Ice Cream OR Ice Cream with Chocolate Sauce', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-180', 'SBM-MNU-008', NULL, 23, 'Paan: Magai Paan OR Sweet Beeda', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-181', 'SBM-MNU-008', NULL, 24, 'Drink: Drinking water (300 ml bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-182', 'SBM-MNU-009', NULL, 1, 'Obbattu / Holige with ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-183', 'SBM-MNU-009', NULL, 2, 'Paal Payasa OR Shavige Payasa', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-184', 'SBM-MNU-009', NULL, 3, 'Kosambari (hesarubele and kadlebele)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-185', 'SBM-MNU-009', NULL, 4, 'Salt, Pickle, Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-186', 'SBM-MNU-009', NULL, 5, 'Two Palya (seasonal vegetables)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-187', 'SBM-MNU-009', NULL, 6, 'Gojju', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-188', 'SBM-MNU-009', NULL, 7, 'Chitranna OR Puliyogare', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-189', 'SBM-MNU-009', NULL, 8, 'Poori OR Chapathi', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-190', 'SBM-MNU-009', NULL, 9, 'Saagu OR Kurma', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-191', 'SBM-MNU-009', NULL, 10, 'Bisi Bele Bath', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-192', 'SBM-MNU-009', NULL, 11, 'White Rice with ghee', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-193', 'SBM-MNU-009', NULL, 12, 'Tovve OR Bele Saaru', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-194', 'SBM-MNU-009', NULL, 13, 'Huli (sambar)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-195', 'SBM-MNU-009', NULL, 14, 'Majjige Huli', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-196', 'SBM-MNU-009', NULL, 15, 'Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-197', 'SBM-MNU-009', NULL, 16, 'Curd rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-198', 'SBM-MNU-009', NULL, 17, 'Ambode OR Bonda', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-199', 'SBM-MNU-009', NULL, 18, 'Kharabath OR Uppittu', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-200', 'SBM-MNU-009', NULL, 19, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-201', 'SBM-MNU-009', NULL, 20, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-202', 'SBM-MNU-009', NULL, 21, 'Drinking water', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-203', 'SBM-MNU-010', NULL, 1, 'Kosambari', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-204', 'SBM-MNU-010', NULL, 2, 'Salt, Pickle, Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-205', 'SBM-MNU-010', NULL, 3, 'Palya (seasonal vegetable)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-206', 'SBM-MNU-010', NULL, 4, 'Ragi Mudde', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-207', 'SBM-MNU-010', NULL, 5, 'Nati Koli Saaru', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-208', 'SBM-MNU-010', NULL, 6, 'Nati Koli Fry OR Chicken Sukka', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-209', 'SBM-MNU-010', NULL, 7, 'Kuri (mutton) Saaru', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-210', 'SBM-MNU-010', NULL, 8, 'Kuri Fry OR Mutton Chops', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-211', 'SBM-MNU-010', NULL, 9, 'Boti Palya', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-212', 'SBM-MNU-010', NULL, 10, 'Motte Saaru (egg curry)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-213', 'SBM-MNU-010', NULL, 11, 'Akki Rotti OR Jolada Rotti', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-214', 'SBM-MNU-010', NULL, 12, 'Chapathi', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-215', 'SBM-MNU-010', NULL, 13, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-216', 'SBM-MNU-010', NULL, 14, 'Bassaru OR Kaalu Saaru', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-217', 'SBM-MNU-010', NULL, 15, 'Tovve', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-218', 'SBM-MNU-010', NULL, 16, 'Majjige (buttermilk)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-219', 'SBM-MNU-010', NULL, 17, 'Curd rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-220', 'SBM-MNU-010', NULL, 18, 'Obbattu OR Holige', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-221', 'SBM-MNU-010', NULL, 19, 'Payasa', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-222', 'SBM-MNU-010', NULL, 20, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-223', 'SBM-MNU-010', NULL, 21, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-224', 'SBM-MNU-010', NULL, 22, 'Drinking water', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-225', 'SBM-MNU-011', NULL, 1, 'Chicken Kabab OR Fish Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-226', 'SBM-MNU-011', NULL, 2, 'Chicken Curry OR Chicken Sukka', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-227', 'SBM-MNU-011', NULL, 3, 'Egg Masala', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-228', 'SBM-MNU-011', NULL, 4, 'Papad, Pickle, Salt', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-229', 'SBM-MNU-011', NULL, 5, 'Kosambari', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-230', 'SBM-MNU-011', NULL, 6, 'Palya (seasonal vegetable)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-231', 'SBM-MNU-011', NULL, 7, 'Poori OR Chapathi', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-232', 'SBM-MNU-011', NULL, 8, 'Veg Kurma', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-233', 'SBM-MNU-011', NULL, 9, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-234', 'SBM-MNU-011', NULL, 10, 'Sambar', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-235', 'SBM-MNU-011', NULL, 11, 'Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-236', 'SBM-MNU-011', NULL, 12, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-237', 'SBM-MNU-011', NULL, 13, 'Sweet: Gulab Jamoon', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-238', 'SBM-MNU-011', NULL, 14, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-239', 'SBM-MNU-011', NULL, 15, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-240', 'SBM-MNU-011', NULL, 16, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-241', 'SBM-MNU-012', NULL, 1, 'Chicken 65 OR Chilly Chicken', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-242', 'SBM-MNU-012', NULL, 2, 'Fish Tawa Fry OR Prawn Ghee Roast', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-243', 'SBM-MNU-012', NULL, 3, 'Chicken Dum Biryani OR Mutton Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-244', 'SBM-MNU-012', NULL, 4, 'Chicken Kolhapuri OR Mutton Sukka', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-245', 'SBM-MNU-012', NULL, 5, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-246', 'SBM-MNU-012', NULL, 6, 'Papad, Pickle', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-247', 'SBM-MNU-012', NULL, 7, 'Kosambari', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-248', 'SBM-MNU-012', NULL, 8, 'Palya', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-249', 'SBM-MNU-012', NULL, 9, 'Rumali Rotti OR Butter Roti', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-250', 'SBM-MNU-012', NULL, 10, 'Dal Fry', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-251', 'SBM-MNU-012', NULL, 11, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-252', 'SBM-MNU-012', NULL, 12, 'Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-253', 'SBM-MNU-012', NULL, 13, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-254', 'SBM-MNU-012', NULL, 14, 'Sweet: Kala Jamoon OR Malai Sandwich', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-255', 'SBM-MNU-012', NULL, 15, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-256', 'SBM-MNU-012', NULL, 16, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-257', 'SBM-MNU-012', NULL, 17, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-258', 'SBM-MNU-012', NULL, 18, 'Drinking water (300 ml bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-259', 'SBM-MNU-013', NULL, 1, 'Soup: Chicken Clear Soup OR Mutton Paya Soup', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-260', 'SBM-MNU-013', NULL, 2, 'Chicken Tikka OR Tandoori Chicken', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-261', 'SBM-MNU-013', NULL, 3, 'Fish Amritsari OR Prawn Koliwada', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-262', 'SBM-MNU-013', NULL, 4, 'Mutton Seekh Kabab', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-263', 'SBM-MNU-013', NULL, 5, 'Chicken Dum Biryani OR Mutton Dum Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-264', 'SBM-MNU-013', NULL, 6, 'Butter Chicken OR Chicken Chettinad', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-265', 'SBM-MNU-013', NULL, 7, 'Mutton Rogan Josh OR Nati Koli Saaru', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-266', 'SBM-MNU-013', NULL, 8, 'Egg Masala', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-267', 'SBM-MNU-013', NULL, 9, 'Batoora OR Rumali Rotti OR Naan', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-268', 'SBM-MNU-013', NULL, 10, 'Dal Makhani', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-269', 'SBM-MNU-013', NULL, 11, 'Raitha, Green Salad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-270', 'SBM-MNU-013', NULL, 12, 'White Rice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-271', 'SBM-MNU-013', NULL, 13, 'Rasam', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-272', 'SBM-MNU-013', NULL, 14, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-273', 'SBM-MNU-013', NULL, 15, 'Sweet: Hot Jilebi with Rabdi', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-274', 'SBM-MNU-013', NULL, 16, 'Sweet: Kaju Pineapple Slice', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-275', 'SBM-MNU-013', NULL, 17, 'Banana OR Cut Fruits', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-276', 'SBM-MNU-013', NULL, 18, 'Ice Cream', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-277', 'SBM-MNU-013', NULL, 19, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-278', 'SBM-MNU-013', NULL, 20, 'Drinking water (bottle)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-279', 'SBM-MNU-014', NULL, 1, 'Kori Gassi', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-280', 'SBM-MNU-014', NULL, 2, 'Chicken Ghee Roast OR Prawn Ghee Roast', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-281', 'SBM-MNU-014', NULL, 3, 'Bangude Fry OR Anjal Tawa Fry', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-282', 'SBM-MNU-014', NULL, 4, 'Fish Curry (coastal)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-283', 'SBM-MNU-014', NULL, 5, 'Marvai Sukka (clams, seasonal)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-284', 'SBM-MNU-014', NULL, 6, 'Neer Dosa', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-285', 'SBM-MNU-014', NULL, 7, 'Kori Rotti', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-286', 'SBM-MNU-014', NULL, 8, 'Boiled Rice (kucchalakki)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-287', 'SBM-MNU-014', NULL, 9, 'Dali Thoy', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-288', 'SBM-MNU-014', NULL, 10, 'Sukka (dry vegetable)', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-289', 'SBM-MNU-014', NULL, 11, 'Pickle, Papad', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-290', 'SBM-MNU-014', NULL, 12, 'Buttermilk', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-291', 'SBM-MNU-014', NULL, 13, 'Sweet: Patholi OR Halbai', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-292', 'SBM-MNU-014', NULL, 14, 'Banana', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-293', 'SBM-MNU-014', NULL, 15, 'Drinking water', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-294', 'SBM-MNU-015', NULL, 1, 'Nati Koli Donne Biryani OR Mutton Donne Biryani', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-295', 'SBM-MNU-015', NULL, 2, 'Nati Koli Saaru', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-296', 'SBM-MNU-015', NULL, 3, 'Chicken Kabab OR Mutton Chops', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-297', 'SBM-MNU-015', NULL, 4, 'Mutton Kaal Soup', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-298', 'SBM-MNU-015', NULL, 5, 'Boiled Egg', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-299', 'SBM-MNU-015', NULL, 6, 'Onion and Lemon', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-300', 'SBM-MNU-015', NULL, 7, 'Raitha', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-301', 'SBM-MNU-015', NULL, 8, 'Kharabath OR Akki Rotti', NULL, TRUE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-302', 'SBM-MNU-015', NULL, 9, 'Curd', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-303', 'SBM-MNU-015', NULL, 10, 'Beeda', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, has_choice) VALUES ('SBM-MLN-304', 'SBM-MNU-015', NULL, 11, 'Drinking water', NULL, FALSE)
-  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-001', 'SBM-MNU-001', NULL, 1, 'Paal Payasa OR Sabbakki Mango Payasa (seasonal)', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-001', 'SBM-MLN-001', 'SBM-TN-DE-033', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-002', 'SBM-MLN-001', 'SBM-KA-SW-521', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-002', 'SBM-MNU-001', NULL, 2, 'Salt', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-003', 'SBM-MNU-001', NULL, 3, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-004', 'SBM-MNU-001', NULL, 4, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-005', 'SBM-MNU-001', NULL, 5, 'Hesarubele Kosambari OR Peanut Kosambari', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-003', 'SBM-MLN-005', 'SBM-KA-AC-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-004', 'SBM-MLN-005', 'SBM-KA-AC-534', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-006', 'SBM-MNU-001', NULL, 6, 'Aloo Batani Palya OR Aloo Palak Chopse', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-005', 'SBM-MLN-006', 'SBM-KA-AC-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-006', 'SBM-MLN-006', 'SBM-KA-AC-513', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-007', 'SBM-MNU-001', NULL, 7, 'Suvarnagadde Chopse OR Cabbage Channa Palya', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-007', 'SBM-MLN-007', 'SBM-KA-AC-538', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-008', 'SBM-MLN-007', 'SBM-KA-AC-518', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-008', 'SBM-MNU-001', NULL, 8, 'Poori', 'SBM-KA-MA-507', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-009', 'SBM-MNU-001', NULL, 9, 'Veg Kurma OR Channa Masala', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-009', 'SBM-MLN-009', 'SBM-MU-CU-504', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-010', 'SBM-MLN-009', 'SBM-NI-CU-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-010', 'SBM-MNU-001', NULL, 10, 'Veg Pulao OR Menthyabath', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-011', 'SBM-MLN-010', 'SBM-NI-MA-501', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-012', 'SBM-MLN-010', 'SBM-KA-MA-521', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-011', 'SBM-MNU-001', NULL, 11, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-012', 'SBM-MNU-001', NULL, 12, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-013', 'SBM-MNU-001', NULL, 13, 'Ghee', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-014', 'SBM-MNU-001', NULL, 14, 'Drumstick Sambar OR Soppu Sambar', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-013', 'SBM-MLN-014', 'SBM-KA-CU-519', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-014', 'SBM-MLN-014', 'SBM-KA-CU-532', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-015', 'SBM-MNU-001', NULL, 15, 'Mysore Rasam', 'SBM-KA-CU-529', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-016', 'SBM-MNU-001', NULL, 16, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-017', 'SBM-MNU-001', NULL, 17, 'Maddur Vada OR Onion Unde Pakoda', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-015', 'SBM-MLN-017', 'SBM-KA-ST-116', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-016', 'SBM-MLN-017', 'SBM-KA-ST-522', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-018', 'SBM-MNU-001', NULL, 18, 'Sweet: Glass Sandwich', 'SBM-KA-SW-513', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-019', 'SBM-MNU-001', NULL, 19, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-020', 'SBM-MNU-001', NULL, 20, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-021', 'SBM-MNU-001', NULL, 21, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-022', 'SBM-MNU-001', NULL, 22, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-023', 'SBM-MNU-002', NULL, 1, 'Shavige Sabbakki Banana Falooda Payasa', 'SBM-KA-SW-523', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-024', 'SBM-MNU-002', NULL, 2, 'Salt', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-025', 'SBM-MNU-002', NULL, 3, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-026', 'SBM-MNU-002', NULL, 4, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-027', 'SBM-MNU-002', NULL, 5, 'Corn Dalimbe Kosambari OR Pineapple Corn Kosambari', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-017', 'SBM-MLN-027', 'SBM-KA-AC-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-018', 'SBM-MLN-027', 'SBM-KA-AC-535', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-028', 'SBM-MNU-002', NULL, 6, 'Beans Sprouts Palya OR Babycorn Batani Palya', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-019', 'SBM-MLN-028', 'SBM-KA-AC-515', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-020', 'SBM-MLN-028', 'SBM-KA-AC-514', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-029', 'SBM-MNU-002', NULL, 7, 'Tondekai Peanut Fry Palya OR Bhendi Pepper Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-021', 'SBM-MLN-029', 'SBM-KA-AC-539', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-022', 'SBM-MLN-029', 'SBM-KA-ST-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-030', 'SBM-MNU-002', NULL, 8, 'Rumali Rotti OR Soft Roti', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-023', 'SBM-MLN-030', 'SBM-NI-MA-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-024', 'SBM-MLN-030', 'SBM-NI-MA-523', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-031', 'SBM-MNU-002', NULL, 9, 'Kadai Paneer OR Paneer Kolhapuri', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-025', 'SBM-MLN-031', 'SBM-NI-CU-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-026', 'SBM-MLN-031', 'SBM-MH-CU-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-032', 'SBM-MNU-002', NULL, 10, 'Veg Mughalai Dum Biryani OR Dum Nawabi Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-027', 'SBM-MLN-032', 'SBM-MG-MA-514', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-028', 'SBM-MLN-032', 'SBM-MG-MA-510', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-033', 'SBM-MNU-002', NULL, 11, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-034', 'SBM-MNU-002', NULL, 12, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-035', 'SBM-MNU-002', NULL, 13, 'Ghee', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-036', 'SBM-MNU-002', NULL, 14, 'Aloo Brinjal Drumstick Sambar OR Mix Veg Kolambu', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-029', 'SBM-MLN-036', 'SBM-KA-CU-514', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-030', 'SBM-MLN-036', 'SBM-TN-CU-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-037', 'SBM-MNU-002', NULL, 15, 'Mysore Rasam', 'SBM-KA-CU-529', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-038', 'SBM-MNU-002', NULL, 16, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-039', 'SBM-MNU-002', NULL, 17, 'Mirchi Bajji OR Veg Masala Vada', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-031', 'SBM-MLN-039', 'SBM-AP-ST-500', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-032', 'SBM-MLN-039', 'SBM-KA-ST-526', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-040', 'SBM-MNU-002', NULL, 18, 'Sweet: Bele Holige with milk and ghee', 'SBM-KA-SW-510', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-041', 'SBM-MNU-002', NULL, 19, 'Sweet: Kheer Kadam OR Bidar Paan', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-033', 'SBM-MLN-041', 'SBM-BN-SW-506', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-042', 'SBM-MNU-002', NULL, 20, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-043', 'SBM-MNU-002', NULL, 21, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-044', 'SBM-MNU-002', NULL, 22, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-045', 'SBM-MNU-002', NULL, 23, 'Drinking water (300 ml bottles)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-046', 'SBM-MNU-003', NULL, 1, 'Adai Payasa OR Jackfruit Payasa (seasonal)', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-034', 'SBM-MLN-046', 'SBM-KA-SW-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-035', 'SBM-MLN-046', 'SBM-KA-SW-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-047', 'SBM-MNU-003', NULL, 2, 'Salt', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-048', 'SBM-MNU-003', NULL, 3, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-049', 'SBM-MNU-003', NULL, 4, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-050', 'SBM-MNU-003', NULL, 5, 'Mix Fruits Kosambari OR Navilukosu Sprouts Kosambari', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-036', 'SBM-MLN-050', 'SBM-KA-AC-529', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-037', 'SBM-MLN-050', 'SBM-KA-AC-531', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-051', 'SBM-MNU-003', NULL, 6, 'Congress Kosambari OR Grated Mix Veg Kosambari', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-038', 'SBM-MLN-051', 'SBM-KA-AC-521', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-039', 'SBM-MLN-051', 'SBM-KA-AC-525', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-052', 'SBM-MNU-003', NULL, 7, 'Roasted Aloo with Gun Powder OR Gobi Batani Sukka', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-040', 'SBM-MLN-052', 'SBM-KA-AC-537', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-041', 'SBM-MLN-052', 'SBM-KA-AC-524', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-053', 'SBM-MNU-003', NULL, 8, 'Raw Banana Pepper Dry OR Capsicum Matar Dry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-042', 'SBM-MLN-053', 'SBM-KA-AC-536', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-043', 'SBM-MLN-053', 'SBM-KA-AC-519', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-054', 'SBM-MNU-003', NULL, 9, 'Mango Gojju OR Nellikai Gojju', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-044', 'SBM-MLN-054', 'SBM-KA-CU-525', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-045', 'SBM-MLN-054', 'SBM-KA-CU-530', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-055', 'SBM-MNU-003', NULL, 10, 'Neeru Dosa OR Masala Dosa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-046', 'SBM-MLN-055', 'SBM-UD-MA-500', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-047', 'SBM-MLN-055', 'SBM-KA-MA-520', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-056', 'SBM-MNU-003', NULL, 11, 'Coconut Chutney', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-057', 'SBM-MNU-003', NULL, 12, 'Batoora OR Palak Rumali Roti OR Coin Parata', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-048', 'SBM-MLN-057', 'SBM-NI-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-049', 'SBM-MLN-057', 'SBM-NI-MA-519', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-050', 'SBM-MLN-057', 'SBM-NI-MA-516', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-058', 'SBM-MNU-003', NULL, 13, 'Channa Masala OR Paneer Butter Masala OR Kadai Veg', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-051', 'SBM-MLN-058', 'SBM-NI-CU-507', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-052', 'SBM-MLN-058', 'SBM-KA-CU-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-053', 'SBM-MLN-058', 'SBM-NI-CU-518', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-059', 'SBM-MNU-003', NULL, 14, 'Pudina Pulao OR Ghee Rice OR Kotte Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-054', 'SBM-MLN-059', 'SBM-NI-MA-521', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-055', 'SBM-MLN-059', 'SBM-KA-RA-134', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-056', 'SBM-MLN-059', 'SBM-KA-MA-519', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-060', 'SBM-MNU-003', NULL, 15, 'Raitha OR Kurma', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-057', 'SBM-MLN-060', 'SBM-KA-AC-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-058', 'SBM-MLN-060', 'SBM-KA-CU-524', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-061', 'SBM-MNU-003', NULL, 16, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-062', 'SBM-MNU-003', NULL, 17, 'Ghee', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-063', 'SBM-MNU-003', NULL, 18, 'Pappukoora OR Mango Dal OR Tamil Nadu style Sambar', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-059', 'SBM-MLN-063', 'SBM-AP-CU-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-060', 'SBM-MLN-063', 'SBM-AP-CU-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-061', 'SBM-MLN-063', 'SBM-TN-CU-514', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-064', 'SBM-MNU-003', NULL, 19, 'Fried Chilly', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-065', 'SBM-MNU-003', NULL, 20, 'Mysore Rasam OR Tomato Rasam', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-062', 'SBM-MLN-065', 'SBM-KA-CU-529', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-063', 'SBM-MLN-065', 'SBM-TN-CU-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-066', 'SBM-MNU-003', NULL, 21, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-067', 'SBM-MNU-003', NULL, 22, 'Paneer Sholey OR Paneer Malai Kebab OR Chilly Paneer', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-064', 'SBM-MLN-067', 'SBM-NI-ST-519', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-065', 'SBM-MLN-067', 'SBM-NI-ST-518', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-066', 'SBM-MLN-067', 'SBM-IC-ST-516', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-068', 'SBM-MNU-003', NULL, 23, 'Babycorn Green Manchurian OR Veg Ball Ghee Roast OR Raw Banana Rawa Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-067', 'SBM-MLN-068', 'SBM-IC-ST-514', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-068', 'SBM-MLN-068', 'SBM-UD-ST-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-069', 'SBM-MLN-068', 'SBM-KA-ST-523', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-069', 'SBM-MNU-003', NULL, 24, 'Sweet: Pudi Peni with Rabadi OR Chiroti with Sweet Boondi and Badam Milk OR Special Holige with ghee', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-070', 'SBM-MLN-069', 'SBM-KA-SW-519', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-071', 'SBM-MLN-069', 'SBM-KA-SW-511', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-072', 'SBM-MLN-069', 'SBM-KA-SW-524', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-070', 'SBM-MNU-003', NULL, 25, 'Sweet: Malpuva Roll OR Mango Malai Chap', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-073', 'SBM-MLN-070', 'SBM-NI-SW-525', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-074', 'SBM-MLN-070', 'SBM-BN-SW-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-071', 'SBM-MNU-003', NULL, 26, 'Sweet Beeda OR Maghai Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-072', 'SBM-MNU-003', NULL, 27, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-073', 'SBM-MNU-003', NULL, 28, 'Hot Jamoon with Ice Cream', 'SBM-NI-SW-519', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-074', 'SBM-MNU-003', NULL, 29, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-075', 'SBM-MNU-004', NULL, 1, 'Shavige Litchi Payasa OR Tender Coconut Payasa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-075', 'SBM-MLN-075', 'SBM-KA-SW-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-076', 'SBM-MLN-075', 'SBM-KA-SW-525', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-076', 'SBM-MNU-004', NULL, 2, 'Salt', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-077', 'SBM-MNU-004', NULL, 3, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-078', 'SBM-MNU-004', NULL, 4, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-079', 'SBM-MNU-004', NULL, 5, 'Guava Pineapple Pomegranate Kosambari', 'SBM-KA-AC-526', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-080', 'SBM-MNU-004', NULL, 6, 'Congress Carrot Kosambari', 'SBM-KA-AC-520', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-081', 'SBM-MNU-004', NULL, 7, 'Arbi Chilly OR Lotus Stem Pepper Dry OR Babycorn Tilimili OR Divyalasu Tawa Fry (seasonal)', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-077', 'SBM-MLN-081', 'SBM-IC-ST-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-078', 'SBM-MLN-081', 'SBM-NI-ST-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-079', 'SBM-MLN-081', 'SBM-NI-ST-514', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-080', 'SBM-MLN-081', 'SBM-KA-ST-517', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-082', 'SBM-MNU-004', NULL, 8, 'Dahi Kebab OR Babycorn Angara OR Veg Chaina Town OR Jackfruit Cutlet (seasonal)', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-081', 'SBM-MLN-082', 'SBM-NI-ST-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-082', 'SBM-MLN-082', 'SBM-NI-ST-513', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-083', 'SBM-MLN-082', 'SBM-IC-ST-519', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-084', 'SBM-MLN-082', 'SBM-KA-ST-519', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-083', 'SBM-MNU-004', NULL, 9, 'Nellikai Gojju OR Capsicum Gojju OR Jackfruit Gojju (seasonal)', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-085', 'SBM-MLN-083', 'SBM-KA-CU-530', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-086', 'SBM-MLN-083', 'SBM-KA-CU-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-087', 'SBM-MLN-083', 'SBM-KA-CU-521', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-084', 'SBM-MNU-004', NULL, 10, 'Veg Pepper Masala Dosa OR Paneer Masala Dosa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-088', 'SBM-MLN-084', 'SBM-KA-MA-525', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-089', 'SBM-MLN-084', 'SBM-KA-MA-522', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-085', 'SBM-MNU-004', NULL, 11, 'Coconut Chutney', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-086', 'SBM-MNU-004', NULL, 12, 'Rawa Poori OR Triangle Parata OR White Holige', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-090', 'SBM-MLN-086', 'SBM-KA-MA-524', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-091', 'SBM-MLN-086', 'SBM-NI-MA-524', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-092', 'SBM-MLN-086', 'SBM-KA-SW-526', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-087', 'SBM-MNU-004', NULL, 13, 'Kaju Matar Paneer OR Veg Kandahar OR Brinjal Ennegai', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-093', 'SBM-MLN-087', 'SBM-NI-CU-519', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-094', 'SBM-MLN-087', 'SBM-NI-CU-528', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-095', 'SBM-MLN-087', 'SBM-KA-CU-516', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-088', 'SBM-MNU-004', NULL, 14, 'Mughlai Veg Kotte Biryani OR Corn Pudina Bath', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-096', 'SBM-MLN-088', 'SBM-MG-MA-511', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-097', 'SBM-MLN-088', 'SBM-KA-MA-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-089', 'SBM-MNU-004', NULL, 15, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-090', 'SBM-MNU-004', NULL, 16, 'White Rice with ghee', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-091', 'SBM-MNU-004', NULL, 17, 'Tomato Dal OR Arachuvitta Sambar', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-098', 'SBM-MLN-091', 'SBM-AP-CU-510', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-099', 'SBM-MLN-091', 'SBM-TN-MC-013', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-092', 'SBM-MNU-004', NULL, 18, 'Fried Chilly', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-093', 'SBM-MNU-004', NULL, 19, 'Mysore Rasam OR Pepper Rasam OR Madras Rasam', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-100', 'SBM-MLN-093', 'SBM-KA-CU-529', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-101', 'SBM-MLN-093', 'SBM-TN-CU-513', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-102', 'SBM-MLN-093', 'SBM-TN-CU-511', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-094', 'SBM-MNU-004', NULL, 20, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-095', 'SBM-MNU-004', NULL, 21, 'Sweet: Dates Holige OR Pumpkin Holige with ghee', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-103', 'SBM-MLN-095', 'SBM-KA-SW-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-104', 'SBM-MLN-095', 'SBM-KA-SW-520', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-096', 'SBM-MNU-004', NULL, 22, 'Sweet: Dryfruit Kesar Peta Roll OR Gulkand Sandwich', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-105', 'SBM-MLN-096', 'SBM-NI-SW-515', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-106', 'SBM-MLN-096', 'SBM-NI-SW-518', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-097', 'SBM-MNU-004', NULL, 23, 'Sweet: Karjoora Kali OR Coconut Kadam OR Kiwi Malai', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-107', 'SBM-MLN-097', 'SBM-KA-SW-517', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-108', 'SBM-MLN-097', 'SBM-BN-SW-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-109', 'SBM-MLN-097', 'SBM-NI-SW-524', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-098', 'SBM-MNU-004', NULL, 24, 'Sweet: Pista Halwa OR Nendra Banana Jamoon', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-110', 'SBM-MLN-098', 'SBM-NI-SW-527', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-111', 'SBM-MLN-098', 'SBM-KL-SW-504', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-099', 'SBM-MNU-004', NULL, 25, 'Sweet Beeda OR Magai Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-100', 'SBM-MNU-004', NULL, 26, 'Banana OR Stick Fruit OR Fruit Bowl', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-101', 'SBM-MNU-004', NULL, 27, 'Ice Cream (vanilla, pista or chilly guava)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-102', 'SBM-MNU-004', NULL, 28, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-103', 'SBM-MNU-005', NULL, 1, 'Pulka OR Methi Chapathi OR Poori', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-112', 'SBM-MLN-103', 'SBM-JS-MA-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-113', 'SBM-MLN-103', 'SBM-NI-MA-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-114', 'SBM-MLN-103', 'SBM-KA-MA-507', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-104', 'SBM-MNU-005', NULL, 2, 'Veg Kadai OR Haryali Mix Veg OR Channa Masala', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-115', 'SBM-MLN-104', 'SBM-NI-CU-527', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-116', 'SBM-MLN-104', 'SBM-NI-CU-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-117', 'SBM-MLN-104', 'SBM-NI-CU-507', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-105', 'SBM-MNU-005', NULL, 3, 'Veg Pulao OR Ghee Rice', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-118', 'SBM-MLN-105', 'SBM-NI-MA-501', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-119', 'SBM-MLN-105', 'SBM-KA-RA-134', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-106', 'SBM-MNU-005', NULL, 4, 'Raitha OR Dal Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-120', 'SBM-MLN-106', 'SBM-KA-AC-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-121', 'SBM-MLN-106', 'SBM-NI-CU-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-107', 'SBM-MNU-005', NULL, 5, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-108', 'SBM-MNU-005', NULL, 6, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-109', 'SBM-MNU-005', NULL, 7, 'Green Salad', 'SBM-KA-AC-509', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-110', 'SBM-MNU-005', NULL, 8, 'Babycorn Chilly OR Veg Ball Manchurian', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-122', 'SBM-MLN-110', 'SBM-IC-ST-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-123', 'SBM-MLN-110', 'SBM-IC-ST-518', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-111', 'SBM-MNU-005', NULL, 9, 'Sweet: Kala Jamoon OR Malai Sandwich', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-124', 'SBM-MLN-111', 'SBM-NI-SW-523', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-125', 'SBM-MLN-111', 'SBM-BN-SW-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-112', 'SBM-MNU-005', NULL, 10, 'Sweet: Jilebi OR Carrot Halwa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-126', 'SBM-MLN-112', 'SBM-GR-SW-506', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-127', 'SBM-MLN-112', 'SBM-KA-SW-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-113', 'SBM-MNU-005', NULL, 11, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-114', 'SBM-MNU-005', NULL, 12, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-115', 'SBM-MNU-005', NULL, 13, 'Paan', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-116', 'SBM-MNU-005', NULL, 14, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-117', 'SBM-MNU-006', NULL, 1, 'Soup: Manchow Soup with Fried Noodles OR Spinach Carrot Soup', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-128', 'SBM-MLN-117', 'SBM-IC-CU-510', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-129', 'SBM-MLN-117', 'SBM-CN-CU-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-118', 'SBM-MNU-006', NULL, 2, 'Starter: Cheese Corn Balls OR French Fries', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-130', 'SBM-MLN-118', 'SBM-CN-ST-510', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-131', 'SBM-MLN-118', 'SBM-CN-ST-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-119', 'SBM-MNU-006', NULL, 3, 'Starter: Veg Shangai Roll OR Babycorn Sathe', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-132', 'SBM-MLN-119', 'SBM-IC-ST-520', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-133', 'SBM-MLN-119', 'SBM-IC-ST-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-120', 'SBM-MNU-006', NULL, 4, 'Batoora OR Butter Soft Roti OR Azwan Parata', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-134', 'SBM-MLN-120', 'SBM-NI-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-135', 'SBM-MLN-120', 'SBM-NI-MA-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-136', 'SBM-MLN-120', 'SBM-NI-MA-512', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-121', 'SBM-MNU-006', NULL, 5, 'Channa Masala OR Veg Jodhpuri Masala OR Kadai Paneer', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-137', 'SBM-MLN-121', 'SBM-NI-CU-507', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-138', 'SBM-MLN-121', 'SBM-NI-CU-526', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-139', 'SBM-MLN-121', 'SBM-NI-CU-503', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-122', 'SBM-MNU-006', NULL, 6, 'Veg Kolhapuri OR Veg Kandahar OR Capsicum Matar Masala', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-140', 'SBM-MLN-122', 'SBM-MH-CU-510', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-141', 'SBM-MLN-122', 'SBM-NI-CU-528', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-142', 'SBM-MLN-122', 'SBM-NI-CU-515', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-123', 'SBM-MNU-006', NULL, 7, 'Veg Hyderabadi Dum Biryani OR Palak Dum Veg Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-143', 'SBM-MLN-123', 'SBM-MG-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-144', 'SBM-MLN-123', 'SBM-MG-MA-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-124', 'SBM-MNU-006', NULL, 8, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-125', 'SBM-MNU-006', NULL, 9, 'Dal Fry OR Dal Makhani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-145', 'SBM-MLN-125', 'SBM-NI-CU-516', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-146', 'SBM-MLN-125', 'SBM-NI-CU-500', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-126', 'SBM-MNU-006', NULL, 10, 'Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-127', 'SBM-MNU-006', NULL, 11, 'Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-128', 'SBM-MNU-006', NULL, 12, 'Green Salad, Russian Salad', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-147', 'SBM-MLN-128', 'SBM-KA-AC-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-148', 'SBM-MLN-128', 'SBM-MU-AC-502', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-129', 'SBM-MNU-006', NULL, 13, 'Sweet: Glass Sandwich OR Peta Roll OR Moongdal Halwa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-149', 'SBM-MLN-129', 'SBM-KA-SW-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-150', 'SBM-MLN-129', 'SBM-NI-SW-526', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-151', 'SBM-MLN-129', 'SBM-NI-SW-503', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-130', 'SBM-MNU-006', NULL, 14, 'Sweet: Champakali OR Angoor Rasmalai OR Raj Bhogh', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-152', 'SBM-MLN-130', 'SBM-NI-SW-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-153', 'SBM-MLN-130', 'SBM-NI-SW-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-154', 'SBM-MLN-130', 'SBM-BN-SW-510', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-131', 'SBM-MNU-006', NULL, 15, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-132', 'SBM-MNU-006', NULL, 16, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-133', 'SBM-MNU-006', NULL, 17, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-134', 'SBM-MNU-006', NULL, 18, 'Drinking water (300 ml bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-135', 'SBM-MNU-007', NULL, 1, 'Soup: Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-155', 'SBM-MLN-135', 'SBM-NI-CU-523', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-156', 'SBM-MLN-135', 'SBM-CN-CU-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-157', 'SBM-MLN-135', 'SBM-IC-CU-509', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-136', 'SBM-MNU-007', NULL, 2, 'Starter: Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-158', 'SBM-MLN-136', 'SBM-IC-ST-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-159', 'SBM-MLN-136', 'SBM-KA-ST-519', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-160', 'SBM-MLN-136', 'SBM-CN-ST-513', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-161', 'SBM-MLN-136', 'SBM-KA-ST-524', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-137', 'SBM-MNU-007', NULL, 3, 'Starter: Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-162', 'SBM-MLN-137', 'SBM-NI-ST-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-163', 'SBM-MLN-137', 'SBM-IC-ST-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-164', 'SBM-MLN-137', 'SBM-NI-ST-517', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-138', 'SBM-MNU-007', NULL, 4, 'Bread: Rawa Poori OR Beetroot Poori', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-165', 'SBM-MLN-138', 'SBM-KA-MA-524', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-166', 'SBM-MLN-138', 'SBM-KA-MA-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-139', 'SBM-MNU-007', NULL, 5, 'Bread: Coin Parata OR Butter Roti', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-167', 'SBM-MLN-139', 'SBM-NI-MA-516', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-168', 'SBM-MLN-139', 'SBM-NI-MA-514', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-140', 'SBM-MNU-007', NULL, 6, 'Gravy: Kadai Paneer', 'SBM-NI-CU-503', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-141', 'SBM-MNU-007', NULL, 7, 'Gravy: Channa Masala', 'SBM-NI-CU-507', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-142', 'SBM-MNU-007', NULL, 8, 'Gravy: Dal Thadka', 'SBM-NI-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-143', 'SBM-MNU-007', NULL, 9, 'Dosa: Ghee Masala Dosa OR Pudi Masala Dosa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-169', 'SBM-MLN-143', 'SBM-KA-MA-517', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-170', 'SBM-MLN-143', 'SBM-KA-MA-523', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-144', 'SBM-MNU-007', NULL, 10, 'Dosa: Coconut Chutney', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-145', 'SBM-MNU-007', NULL, 11, 'Rice: Veg Hyderabadi Dum Biryani OR Peas Pulao', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-171', 'SBM-MLN-145', 'SBM-MG-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-172', 'SBM-MLN-145', 'SBM-NI-MA-520', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-146', 'SBM-MNU-007', NULL, 12, 'Rice: Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-147', 'SBM-MNU-007', NULL, 13, 'Rice: White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-148', 'SBM-MNU-007', NULL, 14, 'Rice: Mysore Rasam / Pepper Rasam / Chennai Rasam', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-173', 'SBM-MLN-148', 'SBM-KA-CU-529', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-174', 'SBM-MLN-148', 'SBM-TN-CU-513', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-175', 'SBM-MLN-148', 'SBM-TN-CU-510', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-149', 'SBM-MNU-007', NULL, 15, 'Rice: Curd Rice', 'SBM-KA-MA-505', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-150', 'SBM-MNU-007', NULL, 16, 'Salad: Green Salad / Corn Salad / Mix Sprouts Salad', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-176', 'SBM-MLN-150', 'SBM-KA-AC-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-177', 'SBM-MLN-150', 'SBM-KA-AC-523', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-178', 'SBM-MLN-150', 'SBM-KA-AC-530', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-151', 'SBM-MNU-007', NULL, 17, 'Salad: Papad & Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-152', 'SBM-MNU-007', NULL, 18, 'Sweet: Hot Jilebi with Rabdi OR Grapes Jilebi', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-179', 'SBM-MLN-152', 'SBM-NI-SW-520', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-180', 'SBM-MLN-152', 'SBM-NI-SW-516', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-153', 'SBM-MNU-007', NULL, 19, 'Sweet: Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-181', 'SBM-MLN-153', 'SBM-NI-SW-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-182', 'SBM-MLN-153', 'SBM-NI-SW-521', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-183', 'SBM-MLN-153', 'SBM-NI-SW-510', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-154', 'SBM-MNU-007', NULL, 20, 'Fruit: Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-155', 'SBM-MNU-007', NULL, 21, 'Dessert: Carrot Halwa with Ice Cream', 'SBM-NI-SW-512', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-156', 'SBM-MNU-007', NULL, 22, 'Paan: Paan', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-157', 'SBM-MNU-007', NULL, 23, 'Drink: Drinking water (300 ml bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-158', 'SBM-MNU-008', NULL, 1, 'Soup: Tomato Basil Shorba OR Corn Coriander Soup OR Hot & Sour Soup OR Almond Soup', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-184', 'SBM-MLN-158', 'SBM-NI-CU-523', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-185', 'SBM-MLN-158', 'SBM-CN-CU-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-186', 'SBM-MLN-158', 'SBM-IC-CU-509', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-187', 'SBM-MLN-158', 'SBM-NI-CU-524', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-159', 'SBM-MNU-008', NULL, 2, 'Starter: Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-188', 'SBM-MLN-159', 'SBM-IC-ST-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-189', 'SBM-MLN-159', 'SBM-KA-ST-519', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-190', 'SBM-MLN-159', 'SBM-CN-ST-513', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-191', 'SBM-MLN-159', 'SBM-KA-ST-524', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-160', 'SBM-MNU-008', NULL, 3, 'Starter: Paneer Malai Kebab OR Paneer Sathe OR Pahadi Paneer Tikka OR Cheese Finger', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-192', 'SBM-MLN-160', 'SBM-NI-ST-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-193', 'SBM-MLN-160', 'SBM-IC-ST-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-194', 'SBM-MLN-160', 'SBM-NI-ST-517', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-195', 'SBM-MLN-160', 'SBM-CN-ST-511', 3)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-161', 'SBM-MNU-008', NULL, 4, 'Bread: Rawa Poori OR Beetroot Poori OR Methi Chapathi', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-196', 'SBM-MLN-161', 'SBM-KA-MA-524', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-197', 'SBM-MLN-161', 'SBM-KA-MA-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-198', 'SBM-MLN-161', 'SBM-NI-MA-517', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-162', 'SBM-MNU-008', NULL, 5, 'Bread: Coin Parata OR Butter Roti OR Lacha Parata', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-199', 'SBM-MLN-162', 'SBM-NI-MA-516', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-200', 'SBM-MLN-162', 'SBM-NI-MA-514', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-201', 'SBM-MLN-162', 'SBM-NI-MA-506', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-163', 'SBM-MNU-008', NULL, 6, 'Gravy: Channa Masala OR Veg Kurma OR Veg Jaal Freez', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-202', 'SBM-MLN-163', 'SBM-NI-CU-507', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-203', 'SBM-MLN-163', 'SBM-MU-CU-504', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-204', 'SBM-MLN-163', 'SBM-NI-CU-525', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-164', 'SBM-MNU-008', NULL, 7, 'Gravy: Paneer Tikka Masala OR Suneri Masala OR Veg Milon Hundy', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-205', 'SBM-MLN-164', 'SBM-GR-CU-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-206', 'SBM-MLN-164', 'SBM-NI-CU-522', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-207', 'SBM-MLN-164', 'SBM-NI-CU-529', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-165', 'SBM-MNU-008', NULL, 8, 'Gravy: Dal Thadka OR Masoor Dal Thadka OR Palak Dal', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-208', 'SBM-MLN-165', 'SBM-NI-CU-501', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-209', 'SBM-MLN-165', 'SBM-NI-CU-520', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-210', 'SBM-MLN-165', 'SBM-NI-CU-521', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-166', 'SBM-MNU-008', NULL, 9, 'Dosa: Ghee Masala Dosa OR Pudi Masala Dosa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-211', 'SBM-MLN-166', 'SBM-KA-MA-517', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-212', 'SBM-MLN-166', 'SBM-KA-MA-523', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-167', 'SBM-MNU-008', NULL, 10, 'Dosa: Coconut Chutney', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-168', 'SBM-MNU-008', NULL, 11, 'Rice: Veg Hyderabadi Dum Biryani OR Peas Pulao OR Fried Rice', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-213', 'SBM-MLN-168', 'SBM-MG-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-214', 'SBM-MLN-168', 'SBM-NI-MA-520', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-215', 'SBM-MLN-168', 'SBM-IC-MA-508', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-169', 'SBM-MNU-008', NULL, 12, 'Rice: Raitha OR Hot Garlic Sauce', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-216', 'SBM-MLN-169', 'SBM-KA-AC-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-217', 'SBM-MLN-169', 'SBM-IC-AC-505', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-170', 'SBM-MNU-008', NULL, 13, 'Rice: White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-171', 'SBM-MNU-008', NULL, 14, 'Rice: Mysore Rasam / Pepper Rasam / Chennai Rasam', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-218', 'SBM-MLN-171', 'SBM-KA-CU-529', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-219', 'SBM-MLN-171', 'SBM-TN-CU-513', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-220', 'SBM-MLN-171', 'SBM-TN-CU-510', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-172', 'SBM-MNU-008', NULL, 15, 'Rice: Curd Rice', 'SBM-KA-MA-505', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-173', 'SBM-MNU-008', NULL, 16, 'Salad: Green Salad / Corn Salad / Mix Sprouts Salad', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-221', 'SBM-MLN-173', 'SBM-KA-AC-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-222', 'SBM-MLN-173', 'SBM-KA-AC-523', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-223', 'SBM-MLN-173', 'SBM-KA-AC-530', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-174', 'SBM-MNU-008', NULL, 17, 'Salad: Papad & Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-175', 'SBM-MNU-008', NULL, 18, 'Sweet: Crispy Jilebi with Rabdi OR Grapes Jilebi with Rabdi', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-224', 'SBM-MLN-175', 'SBM-NI-SW-514', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-225', 'SBM-MLN-175', 'SBM-NI-SW-517', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-176', 'SBM-MNU-008', NULL, 19, 'Sweet: Kaju Pineapple Slice / Kaju Mohini / Anjoor Dryfruit Roll', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-226', 'SBM-MLN-176', 'SBM-NI-SW-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-227', 'SBM-MLN-176', 'SBM-NI-SW-521', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-228', 'SBM-MLN-176', 'SBM-NI-SW-510', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-177', 'SBM-MNU-008', NULL, 20, 'Sweet: Strawberry Prem Bhog / Rose Chum Chum / Badam Bhog', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-229', 'SBM-MLN-177', 'SBM-BN-SW-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-230', 'SBM-MLN-177', 'SBM-BN-SW-511', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-231', 'SBM-MLN-177', 'SBM-NI-SW-511', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-178', 'SBM-MNU-008', NULL, 21, 'Fruit: Banana / Cut Fruits / Stick Fruits', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-179', 'SBM-MNU-008', NULL, 22, 'Dessert: Carrot Halwa with Ice Cream OR Ice Cream with Chocolate Sauce', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-232', 'SBM-MLN-179', 'SBM-NI-SW-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-233', 'SBM-MLN-179', 'SBM-CN-SW-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-180', 'SBM-MNU-008', NULL, 23, 'Paan: Magai Paan OR Sweet Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-181', 'SBM-MNU-008', NULL, 24, 'Drink: Drinking water (300 ml bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-182', 'SBM-MNU-009', NULL, 1, 'Obbattu / Holige with ghee', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-234', 'SBM-MLN-182', 'SBM-KA-SW-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-235', 'SBM-MLN-182', 'SBM-KA-SW-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-183', 'SBM-MNU-009', NULL, 2, 'Paal Payasa OR Shavige Payasa', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-236', 'SBM-MLN-183', 'SBM-TN-DE-033', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-237', 'SBM-MLN-183', 'SBM-UD-SW-501', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-184', 'SBM-MNU-009', NULL, 3, 'Kosambari (hesarubele and kadlebele)', 'SBM-KA-AC-528', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-185', 'SBM-MNU-009', NULL, 4, 'Salt, Pickle, Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-186', 'SBM-MNU-009', NULL, 5, 'Two Palya (seasonal vegetables)', 'SBM-KA-AC-540', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-187', 'SBM-MNU-009', NULL, 6, 'Gojju', 'SBM-MY-CU-503', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-188', 'SBM-MNU-009', NULL, 7, 'Chitranna OR Puliyogare', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-238', 'SBM-MLN-188', 'SBM-MY-MA-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-239', 'SBM-MLN-188', 'SBM-KA-MA-501', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-189', 'SBM-MNU-009', NULL, 8, 'Poori OR Chapathi', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-240', 'SBM-MLN-189', 'SBM-KA-MA-507', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-241', 'SBM-MLN-189', 'SBM-KA-MA-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-190', 'SBM-MNU-009', NULL, 9, 'Saagu OR Kurma', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-242', 'SBM-MLN-190', 'SBM-KA-CU-531', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-243', 'SBM-MLN-190', 'SBM-KA-CU-524', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-191', 'SBM-MNU-009', NULL, 10, 'Bisi Bele Bath', 'SBM-KA-RA-131', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-192', 'SBM-MNU-009', NULL, 11, 'White Rice with ghee', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-193', 'SBM-MNU-009', NULL, 12, 'Tovve OR Bele Saaru', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-244', 'SBM-MLN-193', 'SBM-KA-CU-533', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-245', 'SBM-MLN-193', 'SBM-KA-CU-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-194', 'SBM-MNU-009', NULL, 13, 'Huli (sambar)', 'SBM-KA-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-195', 'SBM-MNU-009', NULL, 14, 'Majjige Huli', 'SBM-KA-MC-129', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-196', 'SBM-MNU-009', NULL, 15, 'Rasam', 'SBM-UD-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-197', 'SBM-MNU-009', NULL, 16, 'Curd rice', 'SBM-KA-MA-505', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-198', 'SBM-MNU-009', NULL, 17, 'Ambode OR Bonda', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-246', 'SBM-MLN-198', 'SBM-KA-ST-515', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-247', 'SBM-MLN-198', 'SBM-TN-ST-502', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-199', 'SBM-MNU-009', NULL, 18, 'Kharabath OR Uppittu', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-248', 'SBM-MLN-199', 'SBM-KA-MA-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-249', 'SBM-MLN-199', 'SBM-KA-ST-525', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-200', 'SBM-MNU-009', NULL, 19, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-201', 'SBM-MNU-009', NULL, 20, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-202', 'SBM-MNU-009', NULL, 21, 'Drinking water', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-203', 'SBM-MNU-010', NULL, 1, 'Kosambari', 'SBM-KA-AC-527', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-204', 'SBM-MNU-010', NULL, 2, 'Salt, Pickle, Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-205', 'SBM-MNU-010', NULL, 3, 'Palya (seasonal vegetable)', 'SBM-KA-AC-533', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-206', 'SBM-MNU-010', NULL, 4, 'Ragi Mudde', 'SBM-KA-MA-509', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-207', 'SBM-MNU-010', NULL, 5, 'Nati Koli Saaru', 'SBM-KA-CU-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-208', 'SBM-MNU-010', NULL, 6, 'Nati Koli Fry OR Chicken Sukka', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-250', 'SBM-MLN-208', 'SBM-KA-ST-521', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-251', 'SBM-MLN-208', 'SBM-UD-ST-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-209', 'SBM-MNU-010', NULL, 7, 'Kuri (mutton) Saaru', 'SBM-KA-CU-523', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-210', 'SBM-MNU-010', NULL, 8, 'Kuri Fry OR Mutton Chops', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-252', 'SBM-MLN-210', 'SBM-KA-ST-520', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-253', 'SBM-MLN-210', 'SBM-KA-ST-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-211', 'SBM-MNU-010', NULL, 9, 'Boti Palya', 'SBM-KA-AC-517', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-212', 'SBM-MNU-010', NULL, 10, 'Motte Saaru (egg curry)', 'SBM-KA-CU-526', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-213', 'SBM-MNU-010', NULL, 11, 'Akki Rotti OR Jolada Rotti', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-254', 'SBM-MLN-213', 'SBM-KA-MA-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-255', 'SBM-MLN-213', 'SBM-KA-MA-510', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-214', 'SBM-MNU-010', NULL, 12, 'Chapathi', 'SBM-KA-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-215', 'SBM-MNU-010', NULL, 13, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-216', 'SBM-MNU-010', NULL, 14, 'Bassaru OR Kaalu Saaru', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-256', 'SBM-MLN-216', 'SBM-KA-CU-504', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-257', 'SBM-MLN-216', 'SBM-KA-CU-522', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-217', 'SBM-MNU-010', NULL, 15, 'Tovve', 'SBM-KA-CU-533', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-218', 'SBM-MNU-010', NULL, 16, 'Majjige (buttermilk)', 'SBM-KA-WE-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-219', 'SBM-MNU-010', NULL, 17, 'Curd rice', 'SBM-KA-MA-505', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-220', 'SBM-MNU-010', NULL, 18, 'Obbattu OR Holige', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-258', 'SBM-MLN-220', 'SBM-KA-SW-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-259', 'SBM-MLN-220', 'SBM-KA-SW-514', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-221', 'SBM-MNU-010', NULL, 19, 'Payasa', 'SBM-MU-SW-503', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-222', 'SBM-MNU-010', NULL, 20, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-223', 'SBM-MNU-010', NULL, 21, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-224', 'SBM-MNU-010', NULL, 22, 'Drinking water', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-225', 'SBM-MNU-011', NULL, 1, 'Chicken Kabab OR Fish Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-260', 'SBM-MLN-225', 'SBM-NI-ST-515', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-261', 'SBM-MLN-225', 'SBM-KA-ST-518', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-226', 'SBM-MNU-011', NULL, 2, 'Chicken Curry OR Chicken Sukka', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-262', 'SBM-MLN-226', 'SBM-KA-CU-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-263', 'SBM-MLN-226', 'SBM-UD-ST-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-227', 'SBM-MNU-011', NULL, 3, 'Egg Masala', 'SBM-KA-CU-520', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-228', 'SBM-MNU-011', NULL, 4, 'Papad, Pickle, Salt', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-229', 'SBM-MNU-011', NULL, 5, 'Kosambari', 'SBM-KA-AC-527', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-230', 'SBM-MNU-011', NULL, 6, 'Palya (seasonal vegetable)', 'SBM-KA-AC-533', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-231', 'SBM-MNU-011', NULL, 7, 'Poori OR Chapathi', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-264', 'SBM-MLN-231', 'SBM-KA-MA-507', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-265', 'SBM-MLN-231', 'SBM-KA-MA-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-232', 'SBM-MNU-011', NULL, 8, 'Veg Kurma', 'SBM-MU-CU-504', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-233', 'SBM-MNU-011', NULL, 9, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-234', 'SBM-MNU-011', NULL, 10, 'Sambar', 'SBM-UD-CU-500', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-235', 'SBM-MNU-011', NULL, 11, 'Rasam', 'SBM-UD-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-236', 'SBM-MNU-011', NULL, 12, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-237', 'SBM-MNU-011', NULL, 13, 'Sweet: Gulab Jamoon', 'SBM-UD-SW-504', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-238', 'SBM-MNU-011', NULL, 14, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-239', 'SBM-MNU-011', NULL, 15, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-240', 'SBM-MNU-011', NULL, 16, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-241', 'SBM-MNU-012', NULL, 1, 'Chicken 65 OR Chilly Chicken', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-266', 'SBM-MLN-241', 'SBM-AP-ST-505', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-267', 'SBM-MLN-241', 'SBM-IC-ST-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-242', 'SBM-MNU-012', NULL, 2, 'Fish Tawa Fry OR Prawn Ghee Roast', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-268', 'SBM-MLN-242', 'SBM-UD-ST-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-269', 'SBM-MLN-242', 'SBM-UD-CU-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-243', 'SBM-MNU-012', NULL, 3, 'Chicken Dum Biryani OR Mutton Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-270', 'SBM-MLN-243', 'SBM-MG-MA-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-271', 'SBM-MLN-243', 'SBM-TN-MA-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-244', 'SBM-MNU-012', NULL, 4, 'Chicken Kolhapuri OR Mutton Sukka', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-272', 'SBM-MLN-244', 'SBM-MH-CU-506', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-273', 'SBM-MLN-244', 'SBM-UD-ST-515', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-245', 'SBM-MNU-012', NULL, 5, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-246', 'SBM-MNU-012', NULL, 6, 'Papad, Pickle', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-247', 'SBM-MNU-012', NULL, 7, 'Kosambari', 'SBM-KA-AC-527', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-248', 'SBM-MNU-012', NULL, 8, 'Palya', 'SBM-KA-AC-533', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-249', 'SBM-MNU-012', NULL, 9, 'Rumali Rotti OR Butter Roti', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-274', 'SBM-MLN-249', 'SBM-NI-MA-522', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-275', 'SBM-MLN-249', 'SBM-NI-MA-514', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-250', 'SBM-MNU-012', NULL, 10, 'Dal Fry', 'SBM-NI-CU-516', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-251', 'SBM-MNU-012', NULL, 11, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-252', 'SBM-MNU-012', NULL, 12, 'Rasam', 'SBM-UD-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-253', 'SBM-MNU-012', NULL, 13, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-254', 'SBM-MNU-012', NULL, 14, 'Sweet: Kala Jamoon OR Malai Sandwich', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-276', 'SBM-MLN-254', 'SBM-NI-SW-523', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-277', 'SBM-MLN-254', 'SBM-BN-SW-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-255', 'SBM-MNU-012', NULL, 15, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-256', 'SBM-MNU-012', NULL, 16, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-257', 'SBM-MNU-012', NULL, 17, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-258', 'SBM-MNU-012', NULL, 18, 'Drinking water (300 ml bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-259', 'SBM-MNU-013', NULL, 1, 'Soup: Chicken Clear Soup OR Mutton Paya Soup', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-278', 'SBM-MLN-259', 'SBM-IC-CU-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-279', 'SBM-MLN-259', 'SBM-KA-CU-528', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-260', 'SBM-MNU-013', NULL, 2, 'Chicken Tikka OR Tandoori Chicken', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-280', 'SBM-MLN-260', 'SBM-NI-ST-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-281', 'SBM-MLN-260', 'SBM-NI-ST-511', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-261', 'SBM-MNU-013', NULL, 3, 'Fish Amritsari OR Prawn Koliwada', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-282', 'SBM-MLN-261', 'SBM-NI-ST-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-283', 'SBM-MLN-261', 'SBM-UD-ST-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-262', 'SBM-MNU-013', NULL, 4, 'Mutton Seekh Kabab', 'SBM-NI-ST-510', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-263', 'SBM-MNU-013', NULL, 5, 'Chicken Dum Biryani OR Mutton Dum Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-284', 'SBM-MLN-263', 'SBM-MG-MA-509', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-285', 'SBM-MLN-263', 'SBM-AP-MA-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-264', 'SBM-MNU-013', NULL, 6, 'Butter Chicken OR Chicken Chettinad', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-286', 'SBM-MLN-264', 'SBM-NI-CU-511', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-287', 'SBM-MLN-264', 'SBM-MU-CU-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-265', 'SBM-MNU-013', NULL, 7, 'Mutton Rogan Josh OR Nati Koli Saaru', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-288', 'SBM-MLN-265', 'SBM-MG-CU-506', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-289', 'SBM-MLN-265', 'SBM-KA-CU-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-266', 'SBM-MNU-013', NULL, 8, 'Egg Masala', 'SBM-KA-CU-520', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-267', 'SBM-MNU-013', NULL, 9, 'Batoora OR Rumali Rotti OR Naan', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-290', 'SBM-MLN-267', 'SBM-NI-MA-513', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-291', 'SBM-MLN-267', 'SBM-NI-MA-522', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-292', 'SBM-MLN-267', 'SBM-NI-MA-518', 2)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-268', 'SBM-MNU-013', NULL, 10, 'Dal Makhani', 'SBM-NI-CU-500', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-269', 'SBM-MNU-013', NULL, 11, 'Raitha, Green Salad', NULL, 'all', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-293', 'SBM-MLN-269', 'SBM-KA-AC-508', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-294', 'SBM-MLN-269', 'SBM-KA-AC-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-270', 'SBM-MNU-013', NULL, 12, 'White Rice', 'SBM-TN-MA-506', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-271', 'SBM-MNU-013', NULL, 13, 'Rasam', 'SBM-UD-CU-501', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-272', 'SBM-MNU-013', NULL, 14, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-273', 'SBM-MNU-013', NULL, 15, 'Sweet: Hot Jilebi with Rabdi', 'SBM-NI-SW-520', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-274', 'SBM-MNU-013', NULL, 16, 'Sweet: Kaju Pineapple Slice', 'SBM-NI-SW-522', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-275', 'SBM-MNU-013', NULL, 17, 'Banana OR Cut Fruits', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-276', 'SBM-MNU-013', NULL, 18, 'Ice Cream', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-277', 'SBM-MNU-013', NULL, 19, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-278', 'SBM-MNU-013', NULL, 20, 'Drinking water (bottle)', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-279', 'SBM-MNU-014', NULL, 1, 'Kori Gassi', 'SBM-UD-CU-512', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-280', 'SBM-MNU-014', NULL, 2, 'Chicken Ghee Roast OR Prawn Ghee Roast', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-295', 'SBM-MLN-280', 'SBM-UD-ST-512', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-296', 'SBM-MLN-280', 'SBM-UD-CU-509', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-281', 'SBM-MNU-014', NULL, 3, 'Bangude Fry OR Anjal Tawa Fry', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-297', 'SBM-MLN-281', 'SBM-UD-ST-511', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-298', 'SBM-MLN-281', 'SBM-UD-ST-506', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-282', 'SBM-MNU-014', NULL, 4, 'Fish Curry (coastal)', 'SBM-UD-CU-511', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-283', 'SBM-MNU-014', NULL, 5, 'Marvai Sukka (clams, seasonal)', 'SBM-UD-ST-514', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-284', 'SBM-MNU-014', NULL, 6, 'Neer Dosa', 'SBM-UD-MA-500', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-285', 'SBM-MNU-014', NULL, 7, 'Kori Rotti', 'SBM-UD-MA-512', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-286', 'SBM-MNU-014', NULL, 8, 'Boiled Rice (kucchalakki)', 'SBM-UD-MA-511', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-287', 'SBM-MNU-014', NULL, 9, 'Dali Thoy', 'SBM-UD-CU-505', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-288', 'SBM-MNU-014', NULL, 10, 'Sukka (dry vegetable)', 'SBM-UD-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-289', 'SBM-MNU-014', NULL, 11, 'Pickle, Papad', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-290', 'SBM-MNU-014', NULL, 12, 'Buttermilk', 'SBM-UD-WE-503', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-291', 'SBM-MNU-014', NULL, 13, 'Sweet: Patholi OR Halbai', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-299', 'SBM-MLN-291', 'SBM-UD-SW-503', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-300', 'SBM-MLN-291', 'SBM-UD-SW-507', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-292', 'SBM-MNU-014', NULL, 14, 'Banana', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-293', 'SBM-MNU-014', NULL, 15, 'Drinking water', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-294', 'SBM-MNU-015', NULL, 1, 'Nati Koli Donne Biryani OR Mutton Donne Biryani', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-301', 'SBM-MLN-294', 'SBM-KA-MA-511', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-302', 'SBM-MLN-294', 'SBM-KA-MA-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-295', 'SBM-MNU-015', NULL, 2, 'Nati Koli Saaru', 'SBM-KA-CU-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-296', 'SBM-MNU-015', NULL, 3, 'Chicken Kabab OR Mutton Chops', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-303', 'SBM-MLN-296', 'SBM-NI-ST-515', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-304', 'SBM-MLN-296', 'SBM-KA-ST-512', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-297', 'SBM-MNU-015', NULL, 4, 'Mutton Kaal Soup', 'SBM-KA-CU-527', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-298', 'SBM-MNU-015', NULL, 5, 'Boiled Egg', 'SBM-KA-AC-516', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-299', 'SBM-MNU-015', NULL, 6, 'Onion and Lemon', 'SBM-KA-AC-532', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-300', 'SBM-MNU-015', NULL, 7, 'Raitha', 'SBM-KA-AC-508', 'dish', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-301', 'SBM-MNU-015', NULL, 8, 'Kharabath OR Akki Rotti', NULL, 'choice', TRUE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-305', 'SBM-MLN-301', 'SBM-KA-MA-518', 0)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-306', 'SBM-MLN-301', 'SBM-KA-MA-508', 1)
+  ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-302', 'SBM-MNU-015', NULL, 9, 'Curd', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-303', 'SBM-MNU-015', NULL, 10, 'Beeda', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
+INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-304', 'SBM-MNU-015', NULL, 11, 'Drinking water', NULL, 'staple', FALSE)
+  ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
 
 -- ── live counters ─────────────────────────────────────────────────
 INSERT INTO public.catalogue_counters (id, slug, name, scan, from_price, is_active) VALUES ('SBM-CTR-001', 'cut_fruit', 'Cut fruit counter', 'Seasonal fruit, cut to order', 60, TRUE)

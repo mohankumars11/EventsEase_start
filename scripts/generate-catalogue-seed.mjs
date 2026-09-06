@@ -55,6 +55,9 @@ const OPS = await load('src/data/partnerOperations.js')
 const F   = await load('src/data/cateringFunnel.js')
 const V  = await load('src/config/vendor.js')
 const IDS = await load('src/data/catalogueIds.generated.js')
+const MC  = await load('src/data/menuCardDishes.js')
+const DID = await load('src/data/dishIds.generated.js')
+const RESOLVE = await load('src/lib/menuLineResolve.js')
 
 /** A SQL literal. Never interpolate a raw string into SQL. */
 const q = v => {
@@ -133,6 +136,31 @@ for (const c of C.CUISINES) {
   }
 }
 
+/* The dishes a set menu names that the catalogue did not have.
+   Hand-classified in src/data/menuCardDishes.js — the keyword rules that
+   drafted them were wrong eight times, every one a substring matching
+   inside a word, and six sweets were marked as meat. Without these rows
+   the menu lines below cannot reach a dish, which is the whole reason
+   dish_id was NULL on all 304 of them. */
+const missingId = []
+for (const d of MC.MENU_CARD_DISHES) {
+  const id = DID.dishIdFor(d.cuisine, d.course, d.name)
+  if (!id) { missingId.push(d.name); continue }
+  if (seenDish.has(id)) continue
+  seenDish.add(id)
+  upsert('catalogue_dishes', {
+    id, cuisine_id: d.cuisine, course_id: d.course,
+    name: d.name, note: null, diet: d.diet, delta: 0,
+    source: 'menu_card', is_active: true,
+  })
+}
+if (missingId.length) {
+  console.error(`\n  x ${missingId.length} menu-card dishes have no id.`)
+  console.error('    Run node scripts/generate-dish-ids.mjs first.')
+  for (const nm of missingId.slice(0, 10)) console.error(`      · ${nm}`)
+  process.exit(1)
+}
+
 section('set menus')
 for (const m of M.ALL_MENUS) {
   const id = IDS.menuIdFor(m.id)
@@ -145,6 +173,8 @@ for (const m of M.ALL_MENUS) {
 }
 
 section('menu lines')
+const unresolved = []
+const lineKinds = {}
 for (const m of M.ALL_MENUS) {
   const menuId = IDS.menuIdFor(m.id)
   if (!menuId) continue
@@ -158,15 +188,52 @@ for (const m of M.ALL_MENUS) {
        the first for the row. */
     if (!id || emitted.has(id)) continue
     emitted.add(id)
+
+    /* The bridge. Shared with generate-catalogue-ids.mjs, which mints
+       the option ids from this same call — two copies of the decision
+       would leave the seed pointing at ids nobody minted. */
+    const r = RESOLVE.resolveMenuLine(text)
+    if (r.kind === 'unresolved') unresolved.push({ menu: m.id, text, names: r.unresolved })
+    lineKinds[r.kind] = (lineKinds[r.kind] ?? 0) + 1
+
     upsert('catalogue_menu_lines', {
       id, menu_id: menuId, course_id: null, line_no: ++n, text,
-      dish_id: null,
-      /* "Paal Payasa OR Sabbakki Mango Payasa" is two dishes and a
-         choice. Flagged so whoever resolves dish_id later knows this one
-         needs a decision rather than a lookup. */
-      has_choice: / OR /i.test(text),
+      dish_id: r.dishId,
+      kind: r.kind,
+      /* has_choice predates kind and stays honest: it means the card
+         wrote an OR. kind carries the rest. */
+      has_choice: r.kind === 'choice',
+    })
+
+    r.options.forEach((opt, i) => {
+      const optId = IDS.menuLineOptionIdFor(m.id, text, opt.name)
+      if (!optId) { unresolved.push({ menu: m.id, text, names: [`option id for ${opt.name}`] }); return }
+      upsert('catalogue_menu_line_options', {
+        id: optId, line_id: id, dish_id: opt.id, sort_order: i,
+      })
     })
   }
+}
+
+/* ── A line that reaches no dish is a defect, and it fails here ──────
+   It was NULL on all 304 rows for months precisely because nothing ever
+   said so out loud. */
+if (unresolved.length) {
+  console.error(`\n  x ${unresolved.length} menu lines reach no dish:\n`)
+  for (const u of unresolved.slice(0, 25)) {
+    console.error(`      ${u.menu} · ${u.text}`)
+    console.error(`         unplaced: ${u.names.join(', ')}`)
+  }
+  console.error('\n    Add them to src/data/menuCardDishes.js, then run')
+  console.error('    node scripts/generate-dish-ids.mjs and this again.\n')
+  process.exit(1)
+}
+
+/* What the 304 lines turned into. Printed every run, because a number
+   that quietly drifts is how dish_id stayed NULL. */
+console.log('')
+for (const k of ['dish', 'choice', 'all', 'staple', 'label', 'unresolved']) {
+  if (lineKinds[k]) console.log(`  ${String(lineKinds[k]).padStart(4)}  menu lines · ${k}`)
 }
 
 section('live counters')
