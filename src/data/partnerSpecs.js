@@ -204,6 +204,11 @@ export const SPECS_BY_TRADE = {
       type: 'one',
       choices: [
         { id: 'outside_ok',   label: 'Yes, any caterer' },
+        /* What most Bengaluru halls actually do, and neither of the other
+           two answers is it. A venue forced to pick "yes, any caterer"
+           hides a charge the family finds out about later. */
+        { id: 'outside_fee',  label: 'Yes, with a kitchen charge',
+          scan: 'Outside caterers allowed, royalty payable' },
         { id: 'panel',        label: 'From our approved list only' },
         { id: 'in_house',     label: 'We cater it ourselves' },
       ],
@@ -214,10 +219,19 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'parking',     label: 'Car parking' },
+        /* The first question anybody asks about a Bengaluru hall in
+           April, and there was no way for a venue to answer it. */
+        { id: 'ac',          label: 'Air-conditioned hall' },
+        /* And the first question the caterer asks. A hall with no
+           working kitchen means the food is cooked elsewhere and
+           arrives cold, which is a different job and a different price. */
+        { id: 'kitchen',     label: 'Kitchen the caterer can use' },
         { id: 'rooms',       label: 'Changing rooms' },
         { id: 'homa',        label: 'Homa kunda pit' },
         { id: 'generator',   label: 'Power backup' },
         { id: 'lift',        label: 'Lift' },
+        { id: 'ramp',        label: 'Step-free access',
+          scan: 'A wheelchair or a walker can get in' },
         { id: 'stay',        label: 'Rooms to stay' },
       ],
     },
@@ -293,10 +307,21 @@ export const SPECS_BY_TRADE = {
       question: 'What do you perform?',
       type: 'multi',
       choices: [
-        { id: 'nadaswaram', label: 'Nadaswaram' },
+        { id: 'nadaswaram', label: 'Nadaswaram', scan: 'With thavil, for the muhurtha' },
+        { id: 'shehnai',    label: 'Shehnai', scan: 'The north Indian counterpart' },
         { id: 'dollu',      label: 'Dollu Kunitha' },
+        /* Karnataka's own procession forms. A troupe that does veeragase
+           had to tick "Dance troupe" and hope, which is the same as not
+           being findable for the thing they are actually known for. */
+        { id: 'veeragase',  label: 'Veeragase' },
+        { id: 'kamsale',    label: 'Kamsale' },
+        { id: 'pooja_kunitha', label: 'Pooja Kunitha' },
+        { id: 'chande',     label: 'Chande' },
+        { id: 'yakshagana', label: 'Yakshagana', scan: 'Coastal Karnataka' },
         { id: 'dhol',       label: 'Dhol / band' },
+        { id: 'nasik',      label: 'Nasik dhol' },
         { id: 'classical',  label: 'Classical music' },
+        { id: 'sufi',       label: 'Sufi / qawwali' },
         { id: 'band',       label: 'Live band' },
         { id: 'dance',      label: 'Dance troupe' },
         { id: 'kids',       label: 'Kids entertainment', scan: 'Magic, puppets, games' },
@@ -359,6 +384,7 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'arabic',    label: 'Arabic' },
+        { id: 'white',     label: 'White and glitter', scan: 'Over the henna, for photos' },
         { id: 'rajasthani',label: 'Rajasthani / intricate' },
         { id: 'portrait',  label: 'Portrait and figures' },
         { id: 'minimal',   label: 'Minimal and modern' },
@@ -371,6 +397,20 @@ export const SPECS_BY_TRADE = {
       choices: [
         { id: 'bridal', label: 'Full bridal',  scan: 'Hands and feet, several hours' },
         { id: 'guests', label: 'Guest mehendi', scan: 'Quick designs, many people' },
+      ],
+    },
+    {
+      /* Black "henna" is PPD and it burns people. An artist who uses real
+         henna could not say so, and a family who has been burnt before
+         had no way to ask. The only question on this screen that is
+         about safety rather than taste. */
+      id: 'cone',
+      question: 'What do you use?',
+      type: 'one',
+      choices: [
+        { id: 'organic',   label: 'Organic henna only', scan: 'No black cone, no PPD' },
+        { id: 'both',      label: 'Organic, and black cone if asked' },
+        { id: 'as_bought', label: 'Shop-bought cones' },
       ],
     },
   ],
@@ -475,11 +515,18 @@ export const SPECS_BY_TRADE = {
       hint: 'A wedding in the wrong language is the one thing an anchor cannot recover from.',
       type: 'multi',
       choices: [
-        { id: 'kannada', label: 'Kannada' },
-        { id: 'english', label: 'English' },
-        { id: 'hindi',   label: 'Hindi' },
-        { id: 'tamil',   label: 'Tamil' },
-        { id: 'telugu',  label: 'Telugu' },
+        { id: 'kannada',   label: 'Kannada' },
+        { id: 'english',   label: 'English' },
+        { id: 'hindi',     label: 'Hindi' },
+        { id: 'tamil',     label: 'Tamil' },
+        { id: 'telugu',    label: 'Telugu' },
+        /* Bengaluru is a six-language city and the list stopped at five.
+           A Malayali family's reception has to be run in Malayalam by
+           somebody, and there was no way for that somebody to say so. */
+        { id: 'malayalam', label: 'Malayalam' },
+        { id: 'marathi',   label: 'Marathi' },
+        { id: 'urdu',      label: 'Urdu' },
+        { id: 'konkani',   label: 'Konkani' },
       ],
     },
     {
@@ -502,6 +549,10 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'print',   label: 'Printed cards' },
+        /* A Kannada or Tamil card is typeset, not translated, and a
+           printer who cannot set the script cannot take the job. */
+        { id: 'regional', label: 'Kannada and regional scripts',
+          scan: 'Typeset, not transliterated' },
         { id: 'foil',    label: 'Foil and embossed' },
         { id: 'digital', label: 'Digital e-cards' },
         { id: 'video',   label: 'Animated video invites' },
@@ -567,11 +618,18 @@ export const SPECS_BY_TRADE = {
       question: 'Which languages does your team speak?',
       type: 'multi',
       choices: [
-        { id: 'kannada', label: 'Kannada' },
-        { id: 'english', label: 'English' },
-        { id: 'hindi',   label: 'Hindi' },
-        { id: 'tamil',   label: 'Tamil' },
-        { id: 'telugu',  label: 'Telugu' },
+        { id: 'kannada',   label: 'Kannada' },
+        { id: 'english',   label: 'English' },
+        { id: 'hindi',     label: 'Hindi' },
+        { id: 'tamil',     label: 'Tamil' },
+        { id: 'telugu',    label: 'Telugu' },
+        /* Bengaluru is a six-language city and the list stopped at five.
+           A Malayali family's reception has to be run in Malayalam by
+           somebody, and there was no way for that somebody to say so. */
+        { id: 'malayalam', label: 'Malayalam' },
+        { id: 'marathi',   label: 'Marathi' },
+        { id: 'urdu',      label: 'Urdu' },
+        { id: 'konkani',   label: 'Konkani' },
       ],
     },
   ],
@@ -645,7 +703,18 @@ export const SPECS_BY_TRADE = {
         { id: 'telugu',   label: 'Telugu' },
         { id: 'north',    label: 'North Indian' },
         { id: 'madhwa',   label: 'Madhwa' },
+        /* Smartha is the other half of the Kannada brahmin question. A
+           family knows which one they are and asks for it by name;
+           offering Madhwa without it makes every Smartha purohit
+           unlistable and every Smartha family unmatched. */
+        { id: 'smartha',  label: 'Smartha' },
         { id: 'lingayat', label: 'Lingayat' },
+        { id: 'kerala',   label: 'Kerala / Namboothiri' },
+        { id: 'jain',     label: 'Jain' },
+        /* The usual choice for an inter-caste wedding in Bengaluru, and
+           the one a family searches for by name when no tradition on the
+           rest of this list is theirs. */
+        { id: 'arya',     label: 'Arya Samaj' },
       ],
     },
     {
@@ -654,8 +723,16 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'wedding',       label: 'Weddings' },
+        { id: 'nischitartha',  label: 'Engagement / nischitartha' },
+        /* The thread ceremony is one of the most-booked priest jobs in
+           Karnataka and there was no way to say you do it. */
+        { id: 'upanayana',     label: 'Upanayana / thread ceremony' },
+        { id: 'seemantha',     label: 'Seemantha / baby shower' },
         { id: 'griha',         label: 'Griha pravesha' },
+        { id: 'bhoomi',        label: 'Bhoomi pooja / vastu',
+          scan: 'Before building, not after moving in' },
         { id: 'naming',        label: 'Naming and cradle' },
+        { id: 'ayushya',       label: 'Ayushya homa / birthday homa' },
         { id: 'satyanarayana', label: 'Satyanarayana pooja' },
         { id: 'shraddha',      label: 'Shraddha and last rites' },
       ],

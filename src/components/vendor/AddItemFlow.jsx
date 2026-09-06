@@ -840,7 +840,7 @@ function OfferingStep({ offerings, picked, alreadyHave, onToggle }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function DetailStep({ groups, value, onChange }) {
+export function DetailStep({ groups, value, onChange }) {
   /* The functional updater, not a spread of `value`.
      `value` is the prop from the last render, so two taps inside one
      React batch both build on the SAME object and the second silently
