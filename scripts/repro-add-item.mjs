@@ -42,9 +42,21 @@ const browser = spawn(EDGE, ['--headless=new', `--remote-debugging-port=${CDP}`,
   '--disable-dev-shm-usage', 'about:blank'], { stdio: 'ignore' })
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
-await sleep(2500)
 
-const tabs = await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json()
+/* Waited a flat 2.5 seconds for Edge to open its debugging port. On this
+   box, right after a build, it sometimes needs longer, and the failure
+   was a bare ECONNREFUSED that reads like Edge is missing rather than
+   slow. The same fix shoot-components.mjs has. */
+let tabs = null
+for (let i = 0; i < 40 && !tabs; i++) {
+  try { tabs = await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json() }
+  catch { await sleep(500) }
+}
+if (!tabs) {
+  console.error(`\n  Edge never opened the debugging port (${CDP}) in 20s.`)
+  console.error('  Another headless run may be holding it: kill msedge and retry.\n')
+  browser.kill(); server.close(); process.exit(1)
+}
 const ws = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl)
 let id = 0
 const pending = new Map()
