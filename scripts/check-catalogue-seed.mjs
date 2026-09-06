@@ -14,7 +14,7 @@
  *
  *   node scripts/check-catalogue-seed.mjs
  */
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 
 const FILE = 'supabase/migrations/107_catalogue_seed.generated.sql'
 if (!existsSync(FILE)) {
@@ -148,6 +148,41 @@ for (const [from, col, to] of [
 /* ── the transaction is closed ────────────────────────────────────── */
 line(/^BEGIN;/m.test(sql) && /^COMMIT;/m.test(sql),
   'the file is one transaction (a failed paste rolls all the way back)')
+
+/* ── the parts a human actually pastes ──────────────────────────────
+   107 is 1.3 MB and the SQL editor refuses it, so the same statements
+   are written again to 107_parts/, in pieces small enough to paste.
+
+   A stale parts directory is worse than no parts directory: it looks
+   applied and leaves half a catalogue. So the parts are checked against
+   the file itself — same statements, same order, nothing dropped. */
+const PARTS = 'supabase/migrations/107_parts'
+if (!existsSync(PARTS)) {
+  line(false, 'the parts directory exists', 'run: node scripts/generate-catalogue-seed.mjs')
+} else {
+  const files = readdirSync(PARTS).filter(f => f.endsWith('.sql')).sort()
+  const stmt = /^INSERT INTO [\s\S]*?;$/gm
+  const whole = sql.match(stmt) ?? []
+  const text = files.map(f => readFileSync(PARTS + '/' + f, 'utf8'))
+  const joined = text.flatMap(t => t.match(stmt) ?? [])
+
+  const named = files.length > 0 && files.every(f => f.endsWith('_of_' + files.length + '.sql'))
+  line(named, files.length + ' parts, numbered _of_' + files.length,
+    named ? '' : 'left over from an older split: ' + files.join(', '))
+
+  let diff = -1
+  for (let i = 0; i < Math.max(whole.length, joined.length); i++) {
+    if (whole[i] !== joined[i]) { diff = i; break }
+  }
+  line(diff === -1, 'the parts are the file, in order (' + joined.length + ' statements)',
+    diff === -1 ? '' : 'differ at statement ' + (diff + 1) + ' of ' + whole.length + ' — regenerate')
+
+  line(text.every(t => /^BEGIN;$/m.test(t) && /^COMMIT;$/m.test(t)),
+    'each part is its own transaction')
+
+  const big = files.filter((f, i) => text[i].length > 200000)
+  line(big.length === 0, 'no part is near the size the editor refused', big.join(', '))
+}
 
 const n = t => (rows[t] ?? []).length
 const choices = (rows.catalogue_menu_lines ?? []).filter(r => r.has_choice === 'TRUE').length
