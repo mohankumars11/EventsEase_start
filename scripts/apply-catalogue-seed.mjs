@@ -156,16 +156,69 @@ for (const [i, b] of batches.entries()) {
   process.stdout.write(`\r  ${done} / ${statements.length} rows`)
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   WHAT "APPLIED" MEANS, AND WHY IT IS NOT AN EQUAL SIGN
+   ══════════════════════════════════════════════════════════════════
+
+   This used to compare row counts and fail on any difference. That is
+   the wrong test in one direction.
+
+   The seed is an UPSERT, not a mirror. Ids are append-only, so when a
+   catalogue entry is replaced — Transportation's five vehicle names
+   became twenty-four, and `tempo`, `bus` and `goods` went — the seed
+   stops emitting three rows but the DATABASE MUST KEEP THEM. A partner
+   who ticked "Goods vehicle" has SBM-SPC-118 saved in their specs, and
+   deleting the row turns their answer into an id with no label.
+
+   So the two directions are not the same failure:
+
+     a row the file has and the database does not   → the apply broke
+     a row the database has and the file does not   → retired, keep it
+
+   Retired rows are named rather than counted, because a list of three
+   ids is inspectable and "1666 ≠ 1663" is not. */
 console.log(`\n\n  ── what is actually in the database now ──`)
-let mismatch = false
+let missing = false
+const retired = {}
+
 for (const t of Object.keys(counts)) {
   const { count, error } = await db.from(t).select('*', { count: 'exact', head: true })
-  const ok = !error && count === counts[t]
-  if (!ok) mismatch = true
-  console.log(`  ${ok ? '✓' : '✗'} ${String(count ?? '—').padStart(5)}  ${t}`
-    + (ok ? '' : `   expected ${counts[t]}${error ? ' · ' + error.message : ''}`))
+  if (error) {
+    missing = true
+    console.log(`  x ${String('—').padStart(5)}  ${t}   ${error.message}`)
+    continue
+  }
+  const extra = count - counts[t]
+  if (extra < 0) missing = true
+
+  /* Name the extras. Read in pages because a table can be past the
+     PostgREST default limit and a short read would invent a mismatch. */
+  if (extra > 0) {
+    const inFile = new Set(
+      statements.filter(x => x.table === t).map(x => String(x.row.id)))
+    const rows = []
+    for (let from = 0; ; from += 1000) {
+      const page = await db.from(t).select('id').range(from, from + 999)
+      if (page.error) break
+      rows.push(...page.data)
+      if (page.data.length < 1000) break
+    }
+    retired[t] = rows.map(r => r.id).filter(id => !inFile.has(String(id)))
+  }
+
+  const mark = extra < 0 ? 'x' : String.fromCharCode(10003)
+  console.log(`  ${mark} ${String(count).padStart(5)}  ${t}`
+    + (extra < 0 ? `   ${-extra} MISSING — expected ${counts[t]}` : '')
+    + (extra > 0 ? `   ${extra} retired, kept on purpose` : ''))
 }
-console.log(mismatch
-  ? `\n  Counts do not match the file.\n`
+
+for (const [t, ids] of Object.entries(retired)) {
+  if (!ids.length) continue
+  console.log(`\n  retired in ${t}, still in the database so saved answers keep`)
+  console.log(`  their label: ${ids.join(', ')}`)
+}
+
+console.log(missing
+  ? `\n  Rows the file has are not in the database. Run this again.\n`
   : `\n  107 is applied.\n`)
-process.exit(mismatch ? 1 : 0)
+process.exit(missing ? 1 : 0)
