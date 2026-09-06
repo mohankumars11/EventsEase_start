@@ -20,6 +20,9 @@
 // Verify:      node scripts/generate-catalogue-ids.mjs --check
 
 export const CATALOGUE_ID_BY_KEY = {
+  "choice|funnel:Catering & Food|kitchen|both": "SBM-SPC-1441",
+  "choice|funnel:Catering & Food|kitchen|pure_nonveg": "SBM-SPC-1440",
+  "choice|funnel:Catering & Food|kitchen|pure_veg": "SBM-SPC-1439",
   "choice|ops:Anchor & MC:brings|languages|english": "SBM-SPC-386",
   "choice|ops:Anchor & MC:brings|languages|hindi": "SBM-SPC-387",
   "choice|ops:Anchor & MC:brings|languages|kannada": "SBM-SPC-385",
@@ -1465,6 +1468,7 @@ export const CATALOGUE_ID_BY_KEY = {
   "counter|ice_cream": "SBM-CTR-002",
   "counter|kids": "SBM-CTR-004",
   "counter|waffles": "SBM-CTR-005",
+  "group|funnel:Catering & Food|kitchen": "SBM-SPG-323",
   "group|ops:Anchor & MC:brings|languages": "SBM-SPG-086",
   "group|ops:Anchor & MC:limits|time_limits": "SBM-SPG-087",
   "group|ops:Anchor & MC:notice|lead_time": "SBM-SPG-083",

@@ -11,6 +11,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import { specsForTrade } from '../../data/partnerSpecs'
 import { specsForServices } from '../../data/partnerServiceSpecs'
+import { listingAnswerIds } from '../../lib/listingAnswerIds'
 import { menusFor, menuLines, menuLineCount, FOOD_COUNTERS, CATERING_NOTES } from '../../data/cateringMenus'
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
@@ -435,6 +436,26 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       if (Object.keys(priced).length) specs.menu_rates = priced
       if (kitchen) specs.kitchen_type = kitchen
       if (cuisines.length) specs.cuisines = cuisines
+
+      /* ── The same answers again, as ids ──────────────────────────────
+         Everything above is what a coordinator reads. None of it can be
+         queried: 'early' is unique inside its own question and nowhere
+         else, and Photography, Catering and Security each have a
+         time_limits, so a stored ['early'] cannot be read back without
+         already knowing which trade and screen produced it.
+
+         The catalogue has an id for all 309 questions and 1,368
+         answers. This attaches them — added, never substituted, exactly
+         as dish_ids sits beside dishes. Anything that cannot be resolved
+         is stored as such rather than dropped, because a listing missing
+         an answer silently is worse than one that says so. */
+      const ids = listingAnswerIds({
+        trade, groups, opsScreens, detail, menus, counters, kitchen,
+      })
+      if (ids.answers.length) specs.answers = ids.answers
+      if (ids.menu_ids.length) specs.menu_ids = ids.menu_ids
+      if (ids.counter_ids.length) specs.counter_ids = ids.counter_ids
+      if (ids.unresolved.length) specs.answers_unresolved = ids.unresolved
 
       /* `picked` holds serviceIds; a vendor_services row stores the NAME.
          Writing the id here would put "welcome_drinks" on a partner's
@@ -1086,18 +1107,26 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
 export function OperationsStep({ screen, value, onChange }) {
   if (!screen) return null
 
+  /* Where this group's answer is kept.
+     Not g.id: eight trades have an ops group whose id already exists on
+     their detail screen, and both wrote to the same key — so ticking
+     "second shooter" on Photography's ops screen erased the lighting and
+     drone ticked on the detail screen, with nothing on screen to say so.
+     See operationScreensFor in data/partnerOperations.js. */
+  const keyOf = g => g.stateKey ?? g.id
+
   function toggle(g, choiceId) {
     /* The functional updater, not a spread of `value`. Two taps inside
        one React batch both build on the same object otherwise, and the
        second silently discards the first. */
     onChange(prev => {
       if (g.type === 'one') {
-        return { ...prev, [g.id]: prev[g.id] === choiceId ? undefined : choiceId }
+        return { ...prev, [keyOf(g)]: prev[keyOf(g)] === choiceId ? undefined : choiceId }
       }
-      const cur = Array.isArray(prev[g.id]) ? prev[g.id] : []
+      const cur = Array.isArray(prev[keyOf(g)]) ? prev[keyOf(g)] : []
       return {
         ...prev,
-        [g.id]: cur.includes(choiceId) ? cur.filter(x => x !== choiceId) : [...cur, choiceId],
+        [keyOf(g)]: cur.includes(choiceId) ? cur.filter(x => x !== choiceId) : [...cur, choiceId],
       }
     })
   }
@@ -1117,7 +1146,7 @@ export function OperationsStep({ screen, value, onChange }) {
 
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {g.choices.map(c => {
-              const cur = value[g.id]
+              const cur = value[keyOf(g)]
               const on = g.type === 'one' ? cur === c.id : Array.isArray(cur) && cur.includes(c.id)
               return (
                 <button
@@ -1149,10 +1178,10 @@ export function OperationsStep({ screen, value, onChange }) {
                 {g.exact.label}
               </span>
               <input
-                value={g.choices.some(c => c.id === value[g.id]) ? '' : (value[g.id] ?? '')}
+                value={g.choices.some(c => c.id === value[keyOf(g)]) ? '' : (value[keyOf(g)] ?? '')}
                 onChange={e => {
                   const n = e.target.value.replace(/\D/g, '').slice(0, 6)
-                  onChange(prev => ({ ...prev, [g.id]: n || undefined }))
+                  onChange(prev => ({ ...prev, [keyOf(g)]: n || undefined }))
                 }}
                 inputMode="numeric"
                 placeholder="—"
@@ -1168,15 +1197,15 @@ export function OperationsStep({ screen, value, onChange }) {
           {/* Every question takes what our list does not have. */}
           <div className="relative mt-2.5">
             <input
-              value={value[`${g.id}__other`] ?? ''}
+              value={value[`${keyOf(g)}__other`] ?? ''}
               onChange={e => {
                 const t = e.target.value
-                onChange(prev => ({ ...prev, [`${g.id}__other`]: t }))
+                onChange(prev => ({ ...prev, [`${keyOf(g)}__other`]: t }))
               }}
               placeholder="Something else? Type it here"
               className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
             />
-            {(value[`${g.id}__other`] ?? '').trim().length > 0 && (
+            {(value[`${keyOf(g)}__other`] ?? '').trim().length > 0 && (
               <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
                 <Check size={10} /> Saved
               </span>

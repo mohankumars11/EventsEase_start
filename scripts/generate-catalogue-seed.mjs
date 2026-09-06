@@ -52,6 +52,7 @@ const S  = await load('src/data/partnerSpecs.js')
 const SS = await load('src/data/partnerServiceSpecs.js')
 const O  = await load('src/data/cateringOperations.js')
 const OPS = await load('src/data/partnerOperations.js')
+const F   = await load('src/data/cateringFunnel.js')
 const V  = await load('src/config/vendor.js')
 const IDS = await load('src/data/catalogueIds.generated.js')
 
@@ -237,6 +238,8 @@ function emitGroups(scope, groups) {
 
 for (const [trade, groups] of Object.entries(S.SPECS_BY_TRADE ?? {})) emitGroups(`trade:${trade}`, groups)
 for (const [sid, groups] of Object.entries(SS.SPECS_BY_SERVICE ?? {})) emitGroups(`service:${sid}`, groups)
+/* The funnel's kitchen question — the last partner input without a row. */
+emitGroups(F.FUNNEL_SCOPE, F.FUNNEL_QUESTIONS)
 
 section('operations screens')
 /* The screens themselves are shared — six in the spine plus catering's

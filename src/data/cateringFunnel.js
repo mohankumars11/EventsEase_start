@@ -85,6 +85,33 @@ export const KITCHEN_TYPES = [
   },
 ]
 
+/**
+ * The kitchen question, in the shape every other question here has.
+ *
+ * KITCHEN_TYPES on its own was an array of three options with no
+ * identity: a caterer taps "Veg", 'pure_veg' lands in specs, and there
+ * is no row anywhere that says what 'pure_veg' is. Every other thing a
+ * partner answers — 24 trades, 62 services, 308 questions, 1,365
+ * answers — carries an SBM- id, and this was the one that did not.
+ *
+ * It is a question with three answers, so it is written as one and the
+ * id generator picks it up with the rest. The scope is `funnel:` and
+ * not `trade:` because the funnel owns it now: it was deleted from
+ * SPECS_BY_TRADE precisely so a caterer stops answering it twice.
+ */
+export const FUNNEL_QUESTIONS = [
+  {
+    id: 'kitchen',
+    question: 'What kind of kitchen do you run?',
+    hint: 'The physical arrangement, not a preference — it decides what can honestly be cooked.',
+    type: 'one',
+    choices: KITCHEN_TYPES.map(k => ({ id: k.id, label: k.label, scan: k.scan })),
+  },
+]
+
+/** The scope those questions are registered under. */
+export const FUNNEL_SCOPE = 'funnel:Catering & Food'
+
 /** What this kitchen may be shown. */
 export const dietOf = kitchen =>
   kitchen === 'pure_veg' ? 'veg'

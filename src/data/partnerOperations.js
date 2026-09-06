@@ -835,8 +835,32 @@ export const TRADE_OPERATIONS = {
  * of anybody, and a trade added tomorrow is useful on the day it appears
  * instead of after somebody writes its content.
  */
+/**
+ * Where an ops answer is kept while the partner is filling the form.
+ *
+ * The flow holds every answer in ONE flat object keyed by group id, and
+ * eight trades have an ops group whose id already exists on their detail
+ * screen — Photography asks "What do you bring?" in both places under
+ * `kit`, and so do Videography and Event Lighting; Tent & Furniture has
+ * `stock` twice, Anchor & MC `languages`, Priest & Rituals `samagri`,
+ * Mehendi Artist `styles`, Transportation `fleet`.
+ *
+ * Sharing the key meant the second screen silently overwrote the first.
+ * A photographer ticked their lighting and their drone on the detail
+ * screen, reached the ops screen, ticked a second shooter, and the first
+ * answer was gone — with nothing on screen to say so.
+ *
+ * specsForServices already namespaces its groups for exactly this
+ * reason. This is the same fix: the catalogue id still comes from the
+ * bare `id`, and `stateKey` is only where the answer lives.
+ */
+const withStateKeys = screen => ({
+  ...screen,
+  groups: (screen.groups ?? []).map(g => ({ ...g, stateKey: `ops:${screen.id}:${g.id}` })),
+})
+
 export function operationScreensFor(trade) {
-  if (trade === 'Catering & Food') return CATERING_SCREENS
+  if (trade === 'Catering & Food') return CATERING_SCREENS.map(withStateKeys)
 
   const own = TRADE_OPERATIONS[trade]
   const fallback = {
@@ -852,6 +876,7 @@ export function operationScreensFor(trade) {
   return OPERATION_SPINE
     .map(s => ({ ...s, groups: content[s.id] ?? fallback[s.id] ?? [] }))
     .filter(s => s.groups.length)
+    .map(withStateKeys)
 }
 
 /** Every group across every trade, for the id generator and the seed. */

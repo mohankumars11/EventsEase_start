@@ -56,6 +56,7 @@ const P = await load('src/data/partnerCatalogue.js')
 const S = await load('src/data/partnerSpecs.js')
 const SS = await load('src/data/partnerServiceSpecs.js')
 const O = await load('src/data/cateringOperations.js')
+const F = await load('src/data/cateringFunnel.js')
 const OPS = await load('src/data/partnerOperations.js')
 const V = await load('src/config/vendor.js')
 
@@ -168,6 +169,12 @@ for (const [trade, groups] of Object.entries(S.SPECS_BY_TRADE ?? {})) {
 for (const [serviceId, groups] of Object.entries(SS.SPECS_BY_SERVICE ?? {})) {
   takeGroups(`service:${serviceId}`, groups)
 }
+
+/* The funnel's own question. KITCHEN_TYPES was three options with no
+   identity — a caterer taps "Veg", 'pure_veg' lands in specs, and no row
+   anywhere says what 'pure_veg' is. It is a question; it is registered
+   as one. */
+takeGroups(F.FUNNEL_SCOPE, F.FUNNEL_QUESTIONS)
 
 /* ── the operations screens, for EVERY trade ─────────────────────────
    Scoped by trade as well as screen. "Scale" means hours and
