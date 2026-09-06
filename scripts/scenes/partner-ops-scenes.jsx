@@ -5,7 +5,7 @@
  */
 import React, { useState } from 'react'
 import { OperationsStep } from '../../src/components/vendor/AddItemFlow'
-import { OPERATION_SCREENS } from '../../src/data/cateringOperations'
+import { operationScreensFor } from '../../src/data/partnerOperations'
 
 function Scene({ title, note, children }) {
   return (
@@ -20,9 +20,27 @@ function Scene({ title, note, children }) {
   )
 }
 
+/* Through operationScreensFor, not the raw OPERATION_SCREENS: catering
+   reaches these screens the same way every other trade does, and the raw
+   array has no stateKeys. Photographing the raw shape would prove a
+   screen the app never renders. */
+const SCREENS = operationScreensFor('Catering & Food')
+
+/* Presets name a group by its bare id, which is how a human thinks
+   about them; the screen keys answers by stateKey. Without translating,
+   every preset below photographs as untouched. */
+function keyed(screen, preset) {
+  const out = {}
+  for (const [id, v] of Object.entries(preset)) {
+    const g = (screen?.groups ?? []).find(x => x.id === id)
+    out[g?.stateKey ?? id] = v
+  }
+  return out
+}
+
 function Ops({ id, preset = {} }) {
-  const [v, setV] = useState(preset)
-  const screen = OPERATION_SCREENS.find(s => s.id === id)
+  const screen = SCREENS.find(s => s.id === id)
+  const [v, setV] = useState(() => keyed(screen, preset))
   return <OperationsStep screen={screen} value={v} onChange={setV} />
 }
 

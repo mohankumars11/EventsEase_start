@@ -8,9 +8,23 @@ import React, { useState } from 'react'
 import { OperationsStep } from '../../src/components/vendor/AddItemFlow'
 import { operationScreensFor } from '../../src/data/partnerOperations'
 
+/* Presets are written with the bare group id, which is how a human
+   thinks about them. The screen keys answers by stateKey — ops groups
+   are namespaced so they cannot collide with a same-named question on
+   the detail screen — so the preset is translated here. Without this
+   every scene photographs as untouched and stops proving anything. */
+function keyed(screen, preset) {
+  const out = {}
+  for (const [id, v] of Object.entries(preset)) {
+    const g = (screen?.groups ?? []).find(x => x.id === id)
+    out[g?.stateKey ?? id] = v
+  }
+  return out
+}
+
 function Ops({ trade, screenId, preset = {} }) {
-  const [v, setV] = useState(preset)
   const screen = operationScreensFor(trade).find(s => s.id === screenId)
+  const [v, setV] = useState(() => keyed(screen, preset))
   return (
     <section style={{ marginBottom: 26 }}>
       <p style={{ font: '700 11px/1.3 system-ui', letterSpacing: '.08em',

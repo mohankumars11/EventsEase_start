@@ -672,7 +672,8 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
 
           {step === 'review' && (
             <ReviewStep
-              trade={trade} picked={picked} detail={detail} groups={groups}
+              trade={trade} picked={picked.map(nameOf)} detail={detail} groups={groups}
+              opsScreens={opsScreens}
               menus={availableMenus.filter(m => menus.includes(m.id))}
               counters={FOOD_COUNTERS.filter(c => counters.includes(c.id))}
               dishes={dishes}
@@ -1466,13 +1467,42 @@ function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrde
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function ReviewStep({ trade, picked, detail, groups, menus, counters, dishes = [], price, unit }) {
-  const answered = groups.flatMap(g => {
-    const v = detail[g.id]
+export function ReviewStep({
+  trade, picked, detail, groups, opsScreens = [], menus, counters,
+  dishes = [], price, unit,
+}) {
+  /* ── Read the same key the screen wrote ─────────────────────────────
+     An ops group's answer lives under its stateKey, not its id: eight
+     trades have an ops group whose id also exists on their detail
+     screen, and sharing one key destroyed one of the two answers.
+
+     This screen used to walk `groups` alone, so the operations answers
+     never appeared on it at all. A partner answered up to fifteen
+     questions about how they work, reached the summary that claims to
+     show what they are listing, and none of it was there. Review is the
+     last chance to catch a wrong answer, and it was quietly showing
+     about a third of them. */
+  const labels = (g, key) => {
+    const v = detail[key]
     if (!v) return []
     const ids = Array.isArray(v) ? v : [v]
-    return ids.map(id => g.choices.find(c => c.id === id)?.label).filter(Boolean)
-  })
+    return ids
+      .map(id => (g.choices ?? []).find(c => c.id === id)?.label
+        /* A typed exact number matches no chip. Showing nothing would
+           read as "not answered" on the one screen meant to prove it
+           was. */
+        ?? (/^\d+$/.test(id) ? [id, g.exact?.unit].filter(Boolean).join(' ') : null))
+      .filter(Boolean)
+  }
+
+  const answered = groups.flatMap(g => labels(g, g.id))
+  const operations = opsScreens.map(s => ({
+    title: s.title,
+    lines: (s.groups ?? []).flatMap(g => {
+      const got = labels(g, g.stateKey ?? g.id)
+      return got.length ? [{ q: g.question, a: got.join(' · ') }] : []
+    }),
+  })).filter(s => s.lines.length)
 
   return (
     <div className="space-y-3">
@@ -1495,6 +1525,19 @@ function ReviewStep({ trade, picked, detail, groups, menus, counters, dishes = [
           <p className="text-[13px] leading-relaxed text-ink-soft">{answered.join(' · ')}</p>
         </Card>
       )}
+
+      {operations.map(s => (
+        <Card key={s.title} title={s.title}>
+          <ul className="space-y-1.5">
+            {s.lines.map(l => (
+              <li key={l.q} className="text-[13px] leading-snug">
+                <span className="text-ink-mute">{l.q}</span>
+                <span className="ml-1.5 font-semibold text-ink">{l.a}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ))}
 
       {menus.length > 0 && (
         <Card title={`Menus (${menus.length})`}>
