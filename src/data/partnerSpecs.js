@@ -94,7 +94,10 @@ export const SPECS_BY_TRADE = {
       choices: [
         { id: 'balloons',   label: 'Balloons' },
         { id: 'fresh',      label: 'Fresh flowers' },
+        { id: 'exotic',     label: 'Imported and exotic flowers',
+          scan: 'Orchids, hydrangea, tulips — cold chain' },
         { id: 'artificial', label: 'Silk / artificial florals' },
+        { id: 'truss',      label: 'Truss and structural fabrication' },
         { id: 'fabric',     label: 'Fabric draping',    scan: 'Satin, chiffon, saree panels' },
         { id: 'lights',     label: 'Decorative lighting' },
       ],
@@ -118,9 +121,40 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'traditional', label: 'Traditional',  scan: 'Marigold, jasmine, mango leaf' },
+        { id: 'temple',      label: 'South Indian temple style' },
         { id: 'kids',        label: 'Kids and cartoon' },
         { id: 'minimal',     label: 'Modern minimal' },
         { id: 'corporate',   label: 'Corporate branding' },
+      ],
+    },
+    {
+      id: 'flooring',
+      question: 'What do you lay over the stage?',
+      type: 'multi',
+      choices: [
+        { id: 'acrylic', label: 'White acrylic deck' },
+        { id: 'carpet',  label: 'Red or coloured carpet' },
+        { id: 'flex',    label: 'Printed flex on plinths' },
+        { id: 'grass',   label: 'Artificial grass' },
+        { id: 'as_is',   label: 'We use the venue floor as it is' },
+      ],
+    },
+    {
+      /* Cold pyro is indoor-safe and dry ice is not the same thing as
+         fog. A family asking for the cloud walk means dry ice, and a
+         decorator who turns up with a fog machine will disappoint them
+         in front of two hundred people. */
+      id: 'effects',
+      question: 'What effects can you run?',
+      type: 'multi',
+      choices: [
+        { id: 'cold_pyro', label: 'Cold pyro fountains', scan: 'Smoke-free, indoor safe' },
+        { id: 'dry_ice',   label: 'Dry ice low fog', scan: 'The cloud walk' },
+        { id: 'fog',       label: 'Fog and haze machines' },
+        { id: 'bubbles',   label: 'Bubble machines' },
+        { id: 'petals',    label: 'Flower petal cannons' },
+        { id: 'confetti',  label: 'Confetti blasters' },
+        { id: 'none',      label: 'No effects' },
       ],
     },
   ],
@@ -159,13 +193,53 @@ export const SPECS_BY_TRADE = {
       type: 'multi',
       choices: [
         { id: 'soft',   label: 'Edited digital photos' },
+        { id: 'raw',    label: 'The unedited files too', scan: 'On a drive or a cloud link' },
         { id: 'album',  label: 'Printed album' },
+        { id: 'frames', label: 'Framed enlargements' },
         { id: 'reels',  label: 'Short reels for social' },
+      ],
+    },
+    {
+      /* The most common argument after a wedding, and it was asked
+         nowhere. A family expecting the album in a fortnight and a studio
+         working to ninety days both think they were clear. */
+      id: 'timeline',
+      question: 'How long until they get everything?',
+      type: 'one',
+      choices: [
+        { id: '14', label: 'Within two weeks' },
+        { id: '30', label: 'About a month' },
+        { id: '60', label: 'Two months' },
+        { id: '90', label: 'Up to three months', scan: 'Full cinematic grade' },
+      ],
+    },
+    {
+      id: 'cameras',
+      question: 'What do you shoot on?',
+      hint: 'A dark mantapa is where this shows.',
+      type: 'multi',
+      choices: [
+        { id: 'dslr',       label: 'DSLR' },
+        { id: 'mirrorless', label: 'Full-frame mirrorless', scan: 'Sony A7, Canon R' },
+        { id: 'cine',       label: 'Cinema rigs', scan: 'FX3, Komodo class' },
+        { id: 'medium',     label: 'Medium format' },
+        { id: 'backup',     label: 'A second body as backup', scan: 'If one dies mid-ceremony' },
       ],
     },
   ],
 
   'Videography': [
+    {
+      id: 'timeline',
+      question: 'How long until the film is delivered?',
+      type: 'one',
+      choices: [
+        { id: '14', label: 'Within two weeks' },
+        { id: '30', label: 'About a month' },
+        { id: '60', label: 'Two months' },
+        { id: '90', label: 'Up to three months', scan: 'Full colour grade' },
+      ],
+    },
     {
       id: 'style',
       question: 'What kind of video?',
@@ -186,6 +260,11 @@ export const SPECS_BY_TRADE = {
         { id: 'multi_cam',  label: 'Multiple cameras' },
         { id: 'led_wall',   label: 'LED wall / live feed' },
         { id: 'own_light',  label: 'Own lighting' },
+        { id: 'gimbal',     label: 'Gimbal and slider' },
+        { id: 'crane',    label: 'Jimmy jib / camera crane' },
+        { id: 'rig_360',  label: '360 degree video rig' },
+        { id: 'audio',    label: 'Separate audio recording', scan: 'Lapel mics on the couple' },
+        { id: 'same_day', label: 'Same-day edit', scan: 'Played at the reception' },
       ],
     },
   ],
@@ -196,6 +275,24 @@ export const SPECS_BY_TRADE = {
      here is the handful of facts about the OPERATION rather than the
      building. */
   'Venue': [
+    {
+      /* A choultry and a rooftop lounge were the same word. They are not
+         the same booking, not the same price, and a family looking for a
+         kalyana mantapa should not be shown a farmhouse. */
+      id: 'venue_type',
+      question: 'What kind of property is it?',
+      type: 'one',
+      choices: [
+        { id: 'mantapa',    label: 'Kalyana mantapa / choultry' },
+        { id: 'banquet',    label: 'Air-conditioned banquet hall' },
+        { id: 'lawn',       label: 'Lawn, farmhouse or open ground' },
+        { id: 'convention', label: 'Convention centre' },
+        { id: 'rooftop',    label: 'Rooftop or restaurant party space' },
+        { id: 'resort',     label: 'Resort or weekend property' },
+        { id: 'clubhouse',  label: 'Clubhouse or auditorium' },
+        { id: 'temple',     label: 'Temple hall' },
+      ],
+    },
     {
       id: 'catering_rule',
       question: 'Can customers bring their own caterer?',
@@ -258,6 +355,11 @@ export const SPECS_BY_TRADE = {
         { id: 'regular', label: 'With egg' },
         { id: 'vegan',   label: 'Vegan' },
         { id: 'sugar_free', label: 'Sugar free' },
+        /* An allergy is not a preference. A nut-free claim from a kitchen
+           that also makes badam halwa is worth asking about explicitly. */
+        { id: 'nut_free',label: 'Nut free', scan: 'Made away from nuts' },
+        { id: 'gluten_free', label: 'Gluten free' },
+        { id: 'jain',    label: 'Jain', scan: 'No root vegetables, no gelatin' },
       ],
     },
     {
@@ -346,11 +448,74 @@ export const SPECS_BY_TRADE = {
       question: 'What do you offer?',
       type: 'multi',
       choices: [
-        { id: 'hd',       label: 'HD makeup' },
-        { id: 'airbrush', label: 'Airbrush' },
-        { id: 'natural',  label: 'Natural / minimal' },
-        { id: 'hair',     label: 'Hair styling' },
-        { id: 'saree',    label: 'Saree draping' },
+        { id: 'hd',        label: 'HD makeup' },
+        { id: 'airbrush',  label: 'Airbrush' },
+        { id: 'natural',   label: 'Natural / minimal' },
+        /* The finish a Karnataka bride asks for by name, and the one
+           finish that was not on the list. */
+        { id: 'matte',     label: 'South Indian bridal matte' },
+        { id: 'waterproof',label: 'Waterproof', scan: 'Outdoor and destination' },
+        { id: 'hair',      label: 'Hair styling' },
+        { id: 'saree',     label: 'Saree draping' },
+        { id: 'nails',     label: 'Nail art and extensions' },
+      ],
+    },
+    {
+      /* A freelancer with one kit and a salon that can send four artists
+         were the same row and cannot take the same job. Twelve relatives
+         before a 9am muhurta is not a solo booking. */
+      id: 'business_scale',
+      question: 'How do you work?',
+      type: 'one',
+      choices: [
+        { id: 'freelance', label: 'On my own', scan: 'I come with my kit' },
+        { id: 'assistant', label: 'Me and an assistant' },
+        { id: 'studio',    label: 'A studio team', scan: 'We can send several artists' },
+      ],
+    },
+    {
+      id: 'capacity',
+      question: 'How many people can you finish in three hours?',
+      hint: 'Bride first, then the family, and the muhurta does not move.',
+      type: 'one',
+      choices: [
+        { id: '2',    label: 'Up to 2' },
+        { id: '6',    label: '3 to 6' },
+        { id: '12',   label: '7 to 12' },
+        { id: '12up', label: 'More than 12' },
+      ],
+    },
+    {
+      id: 'products',
+      question: 'What is in your kit?',
+      hint: 'Families ask, and a reaction on a wedding morning cannot be undone.',
+      type: 'one',
+      choices: [
+        { id: 'professional', label: 'Professional brands', scan: 'MAC, Kryolan, Huda' },
+        { id: 'luxury',       label: 'Luxury brands', scan: 'Dior, Charlotte Tilbury' },
+        { id: 'organic',      label: 'Organic and hypoallergenic only' },
+      ],
+    },
+    {
+      id: 'hair',
+      question: 'What hair work do you do?',
+      type: 'multi',
+      choices: [
+        { id: 'jadai',      label: 'Bridal jadai', scan: 'Plait, with fresh flowers' },
+        { id: 'updo',       label: 'Updos and Hollywood waves' },
+        { id: 'extensions', label: 'Extensions and volume inserts' },
+        { id: 'groom',      label: 'Groom hair and beard setting' },
+        { id: 'blowdry',    label: 'Blow-dry and straightening' },
+      ],
+    },
+    {
+      id: 'trial',
+      question: 'Do you do a trial before the day?',
+      type: 'one',
+      choices: [
+        { id: 'free',  label: 'Yes, free if the booking is confirmed' },
+        { id: 'paid',  label: 'Yes, as a paid session' },
+        { id: 'none',  label: 'No trials' },
       ],
     },
     {
@@ -428,6 +593,11 @@ export const SPECS_BY_TRADE = {
         { id: 'german',    label: 'German tent / hangar' },
         { id: 'flooring',  label: 'Flooring and carpet' },
         { id: 'sofas',     label: 'Sofas and stage seating' },
+        { id: 'maharaja',  label: 'Maharaja wedding seats' },
+        { id: 'diwan',     label: 'Floor diwan and bolsters', scan: 'For the mehendi and pooja' },
+        { id: 'cocktail',  label: 'High cocktail tables' },
+        { id: 'linen',     label: 'Table linen and chair covers' },
+        { id: 'cooler',    label: 'Fans and coolers' },
         { id: 'crockery',  label: 'Crockery and cutlery' },
         { id: 'cleanup',   label: 'Cleaning crew' },
       ],
@@ -451,11 +621,29 @@ export const SPECS_BY_TRADE = {
       question: 'What do you have?',
       type: 'multi',
       choices: [
-        { id: 'pa',        label: 'PA and speakers' },
-        { id: 'mics',      label: 'Cordless mics' },
+        { id: 'pa_small',  label: 'Small PA', scan: 'Under 50 guests, a housewarming' },
+        { id: 'pa',        label: 'Party pack with bass', scan: 'Dance floors, up to 200' },
+        { id: 'line_array',label: 'Line array', scan: 'Convention halls, live orchestra' },
+        { id: 'mics',      label: 'Cordless and collar mics' },
+        { id: 'monitors',  label: 'Stage monitors' },
+        { id: 'mixer',     label: 'Mixing console and an engineer' },
         { id: 'projector', label: 'Projector and screen' },
         { id: 'led_wall',  label: 'LED video wall' },
+        { id: 'truss',     label: 'Truss and rigging' },
         { id: 'generator', label: 'Power backup' },
+      ],
+    },
+    {
+      /* Hardware and somebody to run it are two different orders. A
+         family who hired speakers and expected a DJ has an empty dance
+         floor and nobody to blame for it. */
+      id: 'operator',
+      question: 'Does somebody come with the equipment?',
+      type: 'one',
+      choices: [
+        { id: 'rental',     label: 'Rental only', scan: 'You set it up, we do not stay' },
+        { id: 'technician', label: 'A technician stays with it' },
+        { id: 'dj',         label: 'A DJ comes with it', scan: 'Kannada, Bollywood, commercial' },
       ],
     },
   ],
@@ -476,18 +664,103 @@ export const SPECS_BY_TRADE = {
     },
   ],
 
-  /* ── Transportation ──────────────────────────────────────────────── */
+  /* ── Transportation ───────────────────────────────────────────────
+     Five vehicle names covered everything from a scooter carrying a card
+     box to a 32-foot container carrying a stage, and a customer moving
+     400 chairs was matched against somebody who runs Innovas.
+
+     So this is the fleet as the trade itself names it — by wheels and by
+     payload, the way a Bengaluru transporter says it on the phone. A
+     partner ticks what they actually own; dispatch reads the payload the
+     class implies and stops offering a Tata Ace a job that needs a
+     14-footer. */
   'Transportation': [
     {
       id: 'fleet',
       question: 'What do you run?',
+      hint: 'Tick every vehicle you own or can send. Payloads are the usual rated limits.',
       type: 'multi',
       choices: [
-        { id: 'sedan',   label: 'Sedans' },
-        { id: 'suv',     label: 'SUVs / Innova' },
-        { id: 'tempo',   label: 'Tempo traveller' },
-        { id: 'bus',     label: 'Bus' },
-        { id: 'goods',   label: 'Goods vehicle', scan: 'For moving equipment' },
+        /* Two-wheeler. A card box, a garland, a forgotten pair of
+           earrings on the morning of the wedding — small and urgent is a
+           real job and nobody could take it. */
+        { id: 'bike',         label: 'Bike / scooter', scan: '2-wheeler, up to 20 kg' },
+
+        /* Three-wheeler, passenger and goods. */
+        { id: 'auto',         label: 'Auto rickshaw', scan: '3-wheeler, 3 seats' },
+        { id: 'e_auto',       label: 'Electric auto', scan: '3-wheeler, 3 seats' },
+        { id: 'cargo_auto',   label: 'Cargo auto (Ape, Jeeto)', scan: '3-wheeler, up to 500 kg' },
+
+        /* Four-wheeler goods — the spine of the trade. */
+        { id: 'tata_ace',     label: 'Tata Ace / Chhota Hathi', scan: '4-wheeler, up to 750 kg' },
+        { id: 'pickup',       label: 'Bolero pickup / Dost', scan: '4-wheeler, up to 1.5 t' },
+        { id: 'tata_407',     label: 'Tata 407 / 9 ft', scan: '4-wheeler, up to 2.5 t' },
+
+        /* Six-wheeler. Where a full tent order or a stage starts. */
+        { id: 'truck_14',     label: '14 ft truck', scan: '6-wheeler, up to 4 t' },
+        { id: 'truck_17',     label: '17 ft truck', scan: '6-wheeler, up to 5 t' },
+
+        /* Eight-wheeler and containers. */
+        { id: 'truck_19',     label: '19 ft truck', scan: '8-wheeler, up to 7 t' },
+        { id: 'container_20', label: '20 ft container', scan: '8-wheeler, closed body' },
+        { id: 'container_32', label: '32 ft container', scan: 'Multi-axle, full production' },
+
+        /* Passenger. */
+        { id: 'hatchback',    label: 'Hatchback', scan: '4 seats' },
+        { id: 'sedan',        label: 'Sedan', scan: '4 seats' },
+        { id: 'suv',          label: 'SUV / Innova / Ertiga', scan: '6 to 7 seats' },
+        { id: 'luxury',       label: 'Luxury or vintage car', scan: 'For the bride and groom' },
+        { id: 'tempo_12',     label: 'Tempo traveller, 12 seats' },
+        { id: 'tempo_17',     label: 'Tempo traveller, 17 seats' },
+        { id: 'tempo_26',     label: 'Force traveller, 26 seats' },
+        { id: 'minibus_32',   label: 'Mini bus, 32 seats' },
+        { id: 'bus_50',       label: 'Bus, 50 seats or more' },
+
+        /* Specials, each of which is a job somebody could not place. */
+        { id: 'reefer',       label: 'Refrigerated van', scan: 'Cake, flowers, cold chain' },
+        { id: 'hydra',        label: 'Hydra crane / forklift', scan: 'Truss and stage lifting' },
+        { id: 'tractor',      label: 'Tractor trailer', scan: 'Farmhouse and lawn ground access' },
+      ],
+    },
+    {
+      id: 'moves',
+      question: 'What do you move?',
+      hint: 'The crew that shifts chairs is not the crew that drives the bride.',
+      type: 'multi',
+      choices: [
+        { id: 'guests',      label: 'Guests and family' },
+        { id: 'bride_car',   label: 'The bride or groom car' },
+        { id: 'equipment',   label: 'Event equipment', scan: 'Tents, chairs, sound, lights' },
+        { id: 'food',        label: 'Cooked food and catering vessels' },
+        { id: 'flowers',     label: 'Flowers and decor', scan: 'Fragile, time-critical' },
+        { id: 'gifts',       label: 'Gifts, trousseau and cards' },
+        { id: 'house_shift', label: 'Household shifting', scan: 'Griha pravesha moves' },
+      ],
+    },
+    {
+      /* The whole reason a per-kilometre trade could not be listed
+         honestly: every unit in the app was per event, per day or per
+         person, and a transporter charges by distance. */
+      id: 'charge_metric',
+      question: 'How do you charge?',
+      type: 'one',
+      choices: [
+        { id: 'per_km',    label: 'Base fare plus per kilometre' },
+        { id: 'hourly',    label: 'Hourly blocks', scan: '4 hours / 8 hours' },
+        { id: 'zone_flat', label: 'Flat fare by zone', scan: 'One price across a part of the city' },
+        { id: 'per_trip',  label: 'Flat price per trip' },
+      ],
+    },
+    {
+      id: 'helpers',
+      question: 'Who loads and unloads?',
+      hint: 'The question every equipment move turns into an argument over.',
+      type: 'one',
+      choices: [
+        { id: 'driver_only',  label: 'Driver only', scan: 'The customer arranges labour' },
+        { id: 'driver_helps', label: 'Driver helps with light loading' },
+        { id: 'crew_1',       label: 'One helper travels with the vehicle' },
+        { id: 'crew_2',       label: 'Two helpers travel with the vehicle' },
       ],
     },
   ],
@@ -594,7 +867,13 @@ export const SPECS_BY_TRADE = {
         { id: 'counter',   label: 'Mobile bar counter' },
         { id: 'glassware', label: 'Glassware' },
         { id: 'ice',       label: 'Ice and chillers' },
+        { id: 'bartender', label: 'Trained bartenders' },
         { id: 'flair',     label: 'Flair bartending', scan: 'Performance mixing' },
+        { id: 'mocktail',  label: 'Live mocktail counter' },
+        { id: 'tender',    label: 'Tender coconut counter' },
+        { id: 'coffee',    label: 'Filter coffee and tea counter' },
+        { id: 'permit',    label: 'We arrange the one-day licence',
+          scan: 'CL-5 occasional permit, Karnataka' },
       ],
     },
   ],
@@ -776,6 +1055,145 @@ export const SPECS_BY_TRADE = {
     },
   ],
 
+  /* ── Wedding Planning ─────────────────────────────────────────────
+     A planner could register and was then asked nothing at all — no
+     detail screen existed for the trade. So every planner on the
+     platform looked identical to every other, and the one thing that
+     separates them, whether they run the whole thing or only stand on
+     the ground on the day, could not be said.
+
+     The permits question is the one nobody else can answer. A CL-5 for
+     a bar, PPL and IPRS for recorded music, a police NOC for a road
+     procession — a family finds out these exist about four days before
+     the event, and a planner who already holds the relationship is
+     worth finding. */
+  'Wedding Planning': [
+    {
+      id: 'execution_scope',
+      question: 'How much do you take on?',
+      type: 'one',
+      choices: [
+        { id: 'turnkey',      label: 'The whole event, end to end',
+          scan: 'Budget, vendors, timeline, the day itself' },
+        { id: 'day_only',     label: 'The day itself only',
+          scan: 'You execute a plan the family already made' },
+        { id: 'vendor_only',  label: 'Finding and managing vendors' },
+        { id: 'design_only',  label: 'Design and styling direction only' },
+      ],
+    },
+    {
+      id: 'events',
+      question: 'What do you plan?',
+      type: 'multi',
+      choices: [
+        { id: 'wedding',     label: 'Weddings' },
+        { id: 'reception',   label: 'Receptions' },
+        { id: 'engagement',  label: 'Engagement and nischitartha' },
+        { id: 'sangeet',     label: 'Sangeet and mehendi nights' },
+        { id: 'griha',       label: 'Griha pravesha' },
+        { id: 'naming',      label: 'Naming and cradle ceremonies' },
+        { id: 'birthday',    label: 'Birthdays and anniversaries' },
+        { id: 'corporate',   label: 'Corporate events and conferences' },
+        { id: 'destination', label: 'Destination weddings',
+          scan: 'Coorg, Mysuru, Goa, outside Karnataka' },
+      ],
+    },
+    {
+      id: 'covers',
+      question: 'What is inside your fee?',
+      hint: 'The line a family and a planner most often remember differently.',
+      type: 'multi',
+      choices: [
+        { id: 'budget',      label: 'Budget planning and tracking' },
+        { id: 'sourcing',    label: 'Sourcing and negotiating vendors' },
+        { id: 'timeline',    label: 'Running sheet and timeline' },
+        { id: 'rsvp',        label: 'Guest lists and RSVP' },
+        { id: 'travel',      label: 'Guest hotels and travel' },
+        { id: 'on_day',      label: 'Directing on the day' },
+        { id: 'settlement',  label: 'Settling vendor payments afterwards' },
+      ],
+    },
+    {
+      id: 'permits',
+      question: 'Which permissions can you get?',
+      hint: 'Nothing here counts against you. Leave it blank if you do not do permits.',
+      type: 'multi',
+      choices: [
+        { id: 'liquor_cl5', label: 'One-day liquor licence',
+          scan: 'CL-5 occasional bar permit, Karnataka' },
+        { id: 'music',      label: 'Music copyright clearance',
+          scan: 'PPL, IPRS, Novex' },
+        { id: 'police_noc', label: 'Police NOC and traffic clearance' },
+        { id: 'fire_noc',   label: 'Fire safety approval' },
+        { id: 'bbmp',       label: 'BBMP or panchayat clearance' },
+        { id: 'drone',      label: 'Drone flying permission' },
+      ],
+    },
+  ],
+
+  /* ── Trousseau & Gift Packing ─────────────────────────────────────
+     Split out of Gifts because they are not the same business. A shop
+     that sells return gifts holds stock; a packing studio holds none
+     and is paid for the hands. A family with forty sarees to wrap and
+     no gifts to buy was being sent to shops.
+
+     Turnaround is the question that decides everything here: laser-cut
+     acrylic with a printed name takes a fortnight, and the family
+     asking usually has nine days. */
+  'Trousseau & Gift Packing': [
+    {
+      id: 'packing',
+      question: 'What do you make?',
+      type: 'multi',
+      choices: [
+        { id: 'acrylic',     label: 'Laser-cut acrylic trays and hampers' },
+        { id: 'potli',       label: 'Raw silk and velvet potli boxes' },
+        { id: 'floral',      label: 'Floral basket wraps', scan: 'Fresh or artificial' },
+        { id: 'bamboo',      label: 'Wooden and bamboo eco boxes' },
+        { id: 'leatherette', label: 'Leatherette shagun boxes' },
+        { id: 'saree_fold',  label: 'Saree folding and tray setting' },
+        { id: 'ring_tray',   label: 'Ring and engagement platters' },
+        { id: 'thamboola',   label: 'Thamboola bags and haldi kumkum sets' },
+        { id: 'dry_fruit',   label: 'Dry fruit and sweet boxes' },
+      ],
+    },
+    {
+      id: 'fulfilment',
+      question: 'Where does the packing happen?',
+      type: 'one',
+      choices: [
+        { id: 'on_site',   label: 'At the family home',
+          scan: 'Your team comes with the materials' },
+        { id: 'workshop',  label: 'At your workshop',
+          scan: 'They send the things, you deliver the trays' },
+        { id: 'either',    label: 'Either way' },
+      ],
+    },
+    {
+      id: 'turnaround',
+      question: 'How long for fifty trays?',
+      hint: 'The honest answer here is what stops a rushed order going wrong.',
+      type: 'one',
+      choices: [
+        { id: '3_days',   label: 'Three days' },
+        { id: '7_10',     label: 'Seven to ten days' },
+        { id: '15_plus',  label: 'Fifteen days or more',
+          scan: 'Custom laser-cut and printed branding' },
+      ],
+    },
+    {
+      id: 'personalise',
+      question: 'Can you personalise them?',
+      type: 'multi',
+      choices: [
+        { id: 'names',    label: 'Printed names and dates' },
+        { id: 'engrave',  label: 'Engraving' },
+        { id: 'monogram', label: 'Monograms and motifs' },
+        { id: 'kannada',  label: 'Kannada or regional script' },
+      ],
+    },
+  ],
+
   /* ── Valet Parking ───────────────────────────────────────────────── */
   'Valet Parking': [
     {
@@ -797,6 +1215,11 @@ export const SPECS_BY_TRADE = {
         { id: 'tags',    label: 'Key tag system' },
         { id: 'batons',  label: 'Traffic marshals and batons' },
         { id: 'insured', label: 'Insured drivers' },
+        /* An insured driver and an insured car are not the same promise,
+           and the one the family cares about is the scratch on the
+           bumper. */
+        { id: 'garage_cover', label: 'Damage cover on the cars',
+          scan: 'A scratch is paid for, not argued about' },
       ],
     },
   ],

@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: cff476e21089d3e8
+// inputs: 7c263d67a28f7cc0
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4342,7 +4342,14 @@ var SERVICE_UNITS = [
   { id: "per day", suffix: "/day", quantityLabel: "Minimum days" },
   { id: "per piece", suffix: "/piece", quantityLabel: "Minimum pieces" },
   { id: "per kg", suffix: "/kg", quantityLabel: "Minimum kg" },
-  { id: "per set", suffix: "/set", quantityLabel: "Minimum sets" }
+  { id: "per set", suffix: "/set", quantityLabel: "Minimum sets" },
+  /* A transporter charges by distance and there was no unit for it, so
+     the whole trade had to quote per event and mean something else.
+     The rest of the rate — base fare, free kilometres, waiting — is on
+     the price screen for anyone who picks 'per km'. */
+  { id: "per km", suffix: "/km", quantityLabel: "Minimum km" },
+  { id: "per trip", suffix: "/trip", quantityLabel: "Minimum trips" },
+  { id: "per vehicle", suffix: "/vehicle", quantityLabel: "Minimum vehicles" }
 ];
 var UNIT_BY_ID = Object.fromEntries(SERVICE_UNITS.map((u) => [u.id, u]));
 var TRADE_FOR_SERVICE = {
@@ -4433,6 +4440,20 @@ var TRADE_FOR_SERVICE = {
   // Gifts.
   return_gifts: "Gifts & Favours",
   gifting: "Gifts & Favours",
+  /* Wedding Planning was in VENDOR_CATEGORIES with no service mapped
+     to it, so partnerCatalogue derived no trade for it and a planner
+     who signed up was asked nothing and offered nothing. */
+  planner: "Wedding Planning",
+  permits: "Wedding Planning",
+  /* Packing is hands, not stock. */
+  trousseau: "Trousseau & Gift Packing",
+  gift_packing: "Trousseau & Gift Packing",
+  /* Guest transport was the only thing this trade could be booked
+     for. Most of what a transporter carries at an event is not
+     guests: it is chairs, sound, flowers and cooked food, and none
+     of that was orderable. */
+  goods_move: "Transportation",
+  house_shift: "Transportation",
   // Effects and one-off setups.
   fireworks: "Event Lighting",
   candle_setup: "Decoration & Floral",

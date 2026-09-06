@@ -29,6 +29,26 @@ export default {
           900: '#4c0519',
         },
         cream: '#FFF8F0',
+        /* ── The colour the empty listing is painted ─────────────
+           The most important screen in the app was plum-950, which
+           on a phone in daylight reads as navy — the colour of a
+           bank app, and the one thing this screen must not feel
+           like. A partner reaches it once, in their first two
+           minutes, and it has to look like something is being
+           offered rather than something being administered.
+
+           Kumkuma red: the red of the thread, the invitation card
+           and the marigold border, and the only colour on that
+           card. Used nowhere else, so it never becomes decoration.
+           600 is the card; 700 is the pressed state. */
+        kumkuma: {
+          50:  '#fff1f2',
+          100: '#ffe0e3',
+          500: '#f43248',
+          600: '#ec1c38',
+          700: '#c8112a',
+          900: '#7d0a1a',
+        },
         plum: {
           50:  '#f5f0ff',
           100: '#ede0ff',

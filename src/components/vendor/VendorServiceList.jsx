@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, Check, X,
-  ChevronUp, ChevronDown, Clock, AlertCircle, Sparkles,
+  ChevronUp, ChevronDown, Clock, AlertCircle, Sparkles, ArrowRight,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
+import { TRADES } from '../../data/partnerCatalogue'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
@@ -42,6 +43,8 @@ const BLANK = {
 export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs }) {
   /* The catalogue picker replaces the free-text add. See
      AddFromCatalogue and data/partnerCatalogue for why. */
+  /* Holds `true` for the full picker, or a trade name to start the
+     flow already on that trade. See QuickStart. */
   const [picking, setPicking] = useState(false)
   /* Set when a submission happens in this session, so the green "live"
      card is a moment a partner sees once rather than a badge that never
@@ -189,6 +192,7 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
       {picking && (
         <AddItemFlow
           existing={services}
+          startTrade={typeof picking === 'string' ? picking : null}
           onAdd={onAdd}
           onClose={() => setPicking(false)}
         />
@@ -221,41 +225,44 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           Three reasons, not ten. Somebody deciding whether to spend ten
           minutes on a form does not read ten. */}
       {services.length === 0 && !editing && (
-        <div className="overflow-hidden rounded-[24px] bg-plum-950 text-white">
+        <div className="overflow-hidden rounded-[24px] bg-kumkuma-600 text-white">
           <div className="p-5 sm:p-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-plum-950">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-kumkuma-700">
               <Sparkles size={12} /> Your listing is empty
             </span>
 
-            <h3 className="mt-3 font-display text-[24px] font-extrabold leading-tight">
+            <h3 className="mt-3 font-display text-[25px] font-extrabold leading-tight text-white">
               Nobody can book what they cannot see
             </h3>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/70">
+            <p className="mt-1.5 text-[13.5px] font-semibold leading-relaxed text-white/85">
               A typical job on Sambramo pays ₹6,587. Every one of them goes
               to a partner whose listing says they can do it — and right now
               yours says nothing at all.
             </p>
 
-            <button
-              onClick={() => setPicking(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
-            >
-              <Plus size={17} /> Add what you do
-            </button>
-            <p className="mt-1.5 text-center text-[11.5px] text-white/50">
-              Ten minutes. Nothing is charged, ever.
-            </p>
+            {/* ── One tap in, already knowing who they are ──────────────
+                The button used to open a picker at the top of a list of
+                twenty-six trades, and a caterer who told us they were a
+                caterer when they signed up had to find themselves in it
+                again. Their own trade is the first chip and it starts the
+                flow already answered.
+
+                The rest are the four trades a Bengaluru partner most often
+                adds alongside, so somebody who does two things is one tap
+                from the second — and the full list is still there for
+                everybody else. */}
+            <QuickStart category={vendor?.category} onPick={setPicking} />
           </div>
 
-          <div className="border-t border-white/10 bg-white/[0.05] px-5 py-4 sm:px-6">
+          <div className="border-t border-white/20 bg-black/[0.10] px-5 py-4 sm:px-6">
             {[
               ['Pick, never type', 'Everything comes from a list, so your listing cannot be missed because of a spelling.'],
               ['Say exactly what you do', 'Cuisines, menus, dishes — the more you say, the closer the jobs match.'],
               ['You choose every job', 'Nothing is booked over your head. Decline anything, with no penalty.'],
             ].map(([t, d]) => (
               <div key={t} className="flex gap-2.5 py-1.5">
-                <Check size={14} className="mt-0.5 shrink-0 text-saffron-400" />
-                <p className="text-[12.5px] leading-snug text-white/75">
+                <Check size={14} className="mt-0.5 shrink-0 text-white" />
+                <p className="text-[12.5px] font-semibold leading-snug text-white/90">
                   <span className="font-extrabold text-white">{t}. </span>{d}
                 </p>
               </div>
@@ -609,5 +616,106 @@ function DeleteButton({ onConfirm, busy }) {
         <X size={14} />
       </IconButton>
     </span>
+  )
+}
+
+/**
+ * The way in, for somebody who has already told us what they do.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS NOT ONE BUTTON
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * "Add what you do" opened a list of twenty-six trades scrolled to the
+ * top. A caterer who wrote "Catering & Food" on the sign-up form had to
+ * find themselves in that list again, which reads as the app not having
+ * listened — on the first screen, where a partner is deciding whether
+ * this is worth ten minutes.
+ *
+ * So their own trade is a chip, and it starts the flow already on that
+ * trade. The other four are what a Bengaluru partner most often does
+ * alongside: somebody who owns a hall usually also rents chairs, and a
+ * photographer usually also shoots video. One tap for the second thing.
+ *
+ * Everything else is still one tap away, and the full list is the wide
+ * button so nobody is trapped by our guess.
+ */
+const ALSO_DOES = {
+  'Catering & Food':      ['Tent & Furniture', 'Guest Services', 'Bar & Beverages'],
+  'Photography':          ['Videography', 'Decoration & Floral', 'Anchor & MC'],
+  'Videography':          ['Photography', 'Sound & AV', 'Event Lighting'],
+  'Venue':                ['Catering & Food', 'Tent & Furniture', 'Valet Parking'],
+  'Decoration & Floral':  ['Event Lighting', 'Tent & Furniture', 'Gifts & Favours'],
+  'Tent & Furniture':     ['Power & Cooling', 'Decoration & Floral', 'Guest Services'],
+  'Transportation':       ['Valet Parking', 'Guest Services', 'Security Services'],
+  'Sound & AV':           ['DJ & Music', 'Event Lighting', 'Live Entertainment'],
+  'DJ & Music':           ['Sound & AV', 'Event Lighting', 'Anchor & MC'],
+  'Bridal Makeup & Hair': ['Mehendi Artist', 'Photography', 'Gifts & Favours'],
+  'Mehendi Artist':       ['Bridal Makeup & Hair', 'Live Entertainment'],
+  'Wedding Planning':     ['Decoration & Floral', 'Photography', 'Anchor & MC'],
+  'Priest & Rituals':     ['Live Entertainment', 'Catering & Food'],
+}
+
+/* For a partner whose trade we do not have a neighbour list for, and for
+   anyone who registered as "Other". The four most-added trades overall,
+   which is a guess we are making openly rather than a ranking. */
+const COMMON = ['Catering & Food', 'Photography', 'Decoration & Floral', 'Tent & Furniture']
+
+export function QuickStart({ category, onPick }) {
+  const mine = category && category !== 'Other' && TRADES.includes(category) ? category : null
+  const others = (mine ? (ALSO_DOES[mine] ?? COMMON) : COMMON)
+    .filter(x => x !== mine && TRADES.includes(x))
+    .slice(0, 3)
+
+  return (
+    <div className="mt-4">
+      {mine && (
+        <button
+          onClick={() => onPick(mine)}
+          className="flex w-full items-center justify-between gap-2 rounded-2xl bg-white px-4 py-3.5 text-left transition active:scale-[0.99]"
+        >
+          <span className="min-w-0">
+            <span className="block text-[15px] font-extrabold leading-tight text-kumkuma-700">
+              Start with {mine}
+            </span>
+            <span className="mt-0.5 block text-[11.5px] font-semibold text-ink-soft">
+              What you told us you do. Ten minutes.
+            </span>
+          </span>
+          <ArrowRight size={18} className="shrink-0 text-kumkuma-600" />
+        </button>
+      )}
+
+      {others.length > 0 && (
+        <>
+          <p className="mb-1.5 mt-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/70">
+            {mine ? 'Do you also do' : 'Or start with'}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {others.map(x => (
+              <button
+                key={x}
+                onClick={() => onPick(x)}
+                className="rounded-full bg-white/15 px-3.5 py-2 text-[12.5px] font-extrabold text-white ring-1 ring-white/30 transition active:scale-[0.98]"
+              >
+                {x}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <button
+        onClick={() => onPick(true)}
+        className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-extrabold transition active:scale-[0.99] ${
+          mine ? 'mt-3 bg-white/15 text-white ring-1 ring-white/30' : 'mt-3 bg-white text-kumkuma-700'
+        }`}
+      >
+        <Plus size={17} /> {mine ? 'Something else' : 'Add what you do'}
+      </button>
+      <p className="mt-1.5 text-center text-[11.5px] font-semibold text-white/70">
+        Nothing is charged, ever. You choose every job.
+      </p>
+    </div>
   )
 }

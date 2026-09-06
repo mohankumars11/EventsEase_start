@@ -53,6 +53,10 @@ export const VENDOR_CATEGORIES = [
   'Safety & Facilities',
   'Priest & Rituals',
   'Gifts & Favours',
+  /* A shop that sells return gifts holds stock; a packing studio
+     holds none and is paid for the hands. A family with forty sarees
+     to wrap and nothing to buy was being sent to shops. */
+  'Trousseau & Gift Packing',
   'Other',
 ]
 
@@ -74,6 +78,13 @@ export const SERVICE_UNITS = [
   { id: 'per piece',  suffix: '/piece',   quantityLabel: 'Minimum pieces'   },
   { id: 'per kg',     suffix: '/kg',      quantityLabel: 'Minimum kg'       },
   { id: 'per set',    suffix: '/set',     quantityLabel: 'Minimum sets'     },
+  /* A transporter charges by distance and there was no unit for it, so
+     the whole trade had to quote per event and mean something else.
+     The rest of the rate — base fare, free kilometres, waiting — is on
+     the price screen for anyone who picks 'per km'. */
+  { id: 'per km',     suffix: '/km',      quantityLabel: 'Minimum km'       },
+  { id: 'per trip',   suffix: '/trip',    quantityLabel: 'Minimum trips'    },
+  { id: 'per vehicle',suffix: '/vehicle', quantityLabel: 'Minimum vehicles' },
 ]
 
 export const UNIT_BY_ID = Object.fromEntries(SERVICE_UNITS.map(u => [u.id, u]))
@@ -409,6 +420,23 @@ export const TRADE_FOR_SERVICE = {
   // Gifts.
   return_gifts:   'Gifts & Favours',
   gifting:        'Gifts & Favours',
+
+  /* Wedding Planning was in VENDOR_CATEGORIES with no service mapped
+     to it, so partnerCatalogue derived no trade for it and a planner
+     who signed up was asked nothing and offered nothing. */
+  planner:        'Wedding Planning',
+  permits:        'Wedding Planning',
+
+  /* Packing is hands, not stock. */
+  trousseau:      'Trousseau & Gift Packing',
+  gift_packing:   'Trousseau & Gift Packing',
+
+  /* Guest transport was the only thing this trade could be booked
+     for. Most of what a transporter carries at an event is not
+     guests: it is chairs, sound, flowers and cooked food, and none
+     of that was orderable. */
+  goods_move:     'Transportation',
+  house_shift:    'Transportation',
 
   // Effects and one-off setups.
   fireworks:      'Event Lighting',

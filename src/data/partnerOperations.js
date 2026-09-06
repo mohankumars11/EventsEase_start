@@ -279,7 +279,15 @@ export const TRADE_OPERATIONS = {
   },
 
   'Venue': {
+    /* Seated and standing are different numbers and a hall is sold on
+       both. A mantapa that seats 300 for the meal holds 900 on their
+       feet for the muhurta, and quoting the seated number lost every
+       reception enquiry it should have won. */
     scale: [
+      one('floating_max', 'Most people who can stand in the hall', [
+        c('100', 'Up to 100'), c('300', 'Up to 300'), c('800', 'Up to 800'),
+        c('1500', 'Up to 1,500'), c('3000', 'More than 1,500'),
+      ], { exact: { label: 'Or exact', unit: 'people', max: 99999 } }),
       GUESTS('Most guests you can seat'),
       one('halls', 'How many halls or spaces?', [
         c('1', 'One'), c('2', 'Two'), c('3', 'Three or more'),
@@ -654,7 +662,19 @@ export const TRADE_OPERATIONS = {
     ], { exact: { label: 'Or exact seats', unit: 'seats', max: 999 } }),
     one('fleet', 'How many vehicles can you send at once?', [
       c('1', 'One'), c('3', 'Three'), c('5', 'Five'), c('10', 'Ten or more'),
-    ], { exact: { label: 'Or exact', unit: 'vehicles', max: 999 } })],
+    ], { exact: { label: 'Or exact', unit: 'vehicles', max: 999 } }),
+    /* Seats answered the passenger half and left the goods half
+       unanswerable. A customer moving 400 chairs needs a payload, not
+       a seat count, and every equipment job was being matched on the
+       wrong number. */
+    one('payload', 'Heaviest load your biggest vehicle takes', [
+      c('20', 'Up to 20 kg', 'A bike run'),
+      c('500', 'Up to 500 kg', 'Cargo auto'),
+      c('750', 'Up to 750 kg', 'Tata Ace'),
+      c('1500', 'Up to 1.5 tonnes', 'Pickup'),
+      c('4000', 'Up to 4 tonnes', '14 ft truck'),
+      c('7000', '7 tonnes or more', '19 ft and containers'),
+    ], { exact: { label: 'Or exact', unit: 'kg', max: 99999 } })],
     notice: [NOTICE],
     where: [TRAVEL],
     brings: [many('included', 'What is included', [
@@ -675,6 +695,78 @@ export const TRADE_OPERATIONS = {
       c('insurance', 'Passenger insurance'),
       c('fitness', 'Fitness certificate'),
     ])],
+  },
+
+  /* ── Wedding Planning ─────────────────────────────────────────────
+     The trade had no operations at all, so it fell to the generic
+     fallback: how many events a day, how far do you travel. True of
+     everybody and decisive for nobody. */
+  'Wedding Planning': {
+    scale: [one('events_at_once', 'How many events can you run in a week?', [
+      c('1', 'One'), c('2', 'Two'), c('4', 'Four'), c('6', 'Six or more'),
+    ], { exact: { label: 'Or exact', unit: 'events', max: 99 } }),
+    one('guest_ceiling', 'Largest guest count you have handled', [
+      c('100', 'Up to 100'), c('300', 'Up to 300'),
+      c('800', 'Up to 800'), c('2000', 'Over 1,500'),
+    ], { exact: { label: 'Or exact', unit: 'guests', max: 99999 } })],
+    notice: [one('lead_time', 'Shortest notice you can take a whole event on', [
+      c('1_week', 'A week'), c('2_weeks', 'Two weeks'),
+      c('1_month', 'A month'), c('3_months', 'Three months'),
+    ], { exact: { label: 'Or exact days', unit: 'days', max: 365 } })],
+    where: [TRAVEL, many('outstation', 'Do you travel for the whole event?', [
+      c('bengaluru_only', 'Bengaluru only'),
+      c('karnataka', 'Anywhere in Karnataka'),
+      c('south_india', 'South India'),
+      c('anywhere', 'Anywhere, including abroad'),
+    ])],
+    brings: [many('team_on_day', 'Who is on the ground on the day?', [
+      c('planner', 'You, personally'),
+      c('coordinators', 'Coordinators'),
+      c('runners', 'Runners and helpers'),
+      c('walkie', 'Radios for the crew'),
+      c('backup_kit', 'An emergency kit', 'Safety pins, glue, a steamer, paracetamol'),
+    ])],
+    limits: [TIMING_LIMITS, many('wont_do', 'What you will not take on', [
+      c('no_alcohol', 'No events serving alcohol'),
+      c('no_last_minute', 'Nothing inside two weeks'),
+      c('no_partial', 'Nothing where the family has already booked the vendors'),
+      c('none', 'Nothing off limits'),
+    ])],
+    trust: [TEAM, YEARS, many('licences', 'Papers you hold', [
+      c('gst', 'GST registration'),
+      c('firm', 'Registered firm or company'),
+      c('liability', 'Public liability insurance'),
+    ])],
+  },
+
+  /* ── Trousseau & Gift Packing ─────────────────────────────────────
+     Volume and turnaround, because that is the whole job. Fifty trays
+     in three days and fifty trays in three weeks are different
+     businesses and the family asking has a date. */
+  'Trousseau & Gift Packing': {
+    scale: [one('trays_per_order', 'Largest order you can take', [
+      c('25', 'Up to 25 trays'), c('50', 'Up to 50'),
+      c('100', 'Up to 100'), c('300', '300 or more'),
+    ], { exact: { label: 'Or exact', unit: 'trays', max: 9999 } }),
+    one('trays_per_day', 'How many can your team finish in a day?', [
+      c('10', 'Ten'), c('25', 'Twenty five'), c('50', 'Fifty'),
+    ], { exact: { label: 'Or exact', unit: 'trays', max: 999 } })],
+    notice: [NOTICE],
+    where: [TRAVEL],
+    brings: [many('supplies', 'What do you bring?', [
+      c('trays', 'Trays and boxes'),
+      c('wrap', 'Wrapping film and ribbon'),
+      c('flowers', 'Fresh or artificial flowers'),
+      c('labels', 'Printed name labels'),
+      c('team', 'A packing team to the house'),
+      c('nothing', 'Nothing — the family supplies everything'),
+    ])],
+    limits: [TIMING_LIMITS, many('wont_do', 'What you will not do', [
+      c('no_perishable', 'Nothing perishable inside a tray'),
+      c('no_valuables', 'No jewellery or cash handling'),
+      c('none', 'Nothing off limits'),
+    ])],
+    trust: [TEAM, YEARS],
   },
 
   'Valet Parking': {

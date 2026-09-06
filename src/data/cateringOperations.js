@@ -47,6 +47,30 @@ export const OPERATION_SCREENS = [
     why: 'So we never send you a job that is too small to be worth it, or too big to cook.',
     groups: [
       {
+        /* A commercial buffet caterer, a home chef cooking at your
+           place and a single live-counter vendor are three
+           businesses, and the app treated them as one. The home
+           chef was being sent 400-plate weddings and the buffet
+           company was being sent a 20-plate naming ceremony.
+
+           It is asked before the size question because it changes
+           what the size question means: a cook charges for the
+           day, a caterer for the plate. */
+        id: 'operations_tier',
+        question: 'What kind of catering do you run?',
+        type: 'one',
+        choices: [
+          { id: 'full_service', label: 'Full event caterer',
+            scan: 'We bring the buffet, the warmers and the servers' },
+          { id: 'home_chef',    label: 'Cook at your place',
+            scan: 'You supply the raw material, we cook it' },
+          { id: 'counter',      label: 'Live counter only',
+            scan: 'One stall — chaat, dosa, ice cream' },
+          { id: 'tiffin',       label: 'Bulk tiffin and box meals',
+            scan: 'Delivered packed, no service staff' },
+        ],
+      },
+      {
         id: 'guests_per_event',
         question: 'Largest event you can cook for',
         type: 'one',

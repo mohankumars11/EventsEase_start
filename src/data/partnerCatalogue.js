@@ -80,6 +80,12 @@ const FALLBACK_NAMES = {
   vehicle_decor: 'Car decoration',
   drum:        'Dhol / nadaswaram',
   lighting:    'Event lighting',
+  planner:     'Event planning and coordination',
+  permits:     'Licences and permissions',
+  trousseau:   'Trousseau packing',
+  gift_packing:'Gift and hamper packing',
+  goods_move:  'Goods and equipment moving',
+  house_shift: 'Household shifting',
 }
 
 function nameFor(serviceId) {

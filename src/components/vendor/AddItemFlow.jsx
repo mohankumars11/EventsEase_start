@@ -18,6 +18,8 @@ import { SERVICE_UNITS } from '../../config/vendor'
 import MenuUpload from './MenuUpload'
 import FunnelStepper from './FunnelStepper'
 import PriceGuidance from './PriceGuidance'
+import DistanceRates from './DistanceRates'
+import ListingSignature from './ListingSignature'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -104,10 +106,13 @@ const TRADE_ICON = {
 
 const CATERING = 'Catering & Food'
 
-export default function AddItemFlow({ existing = [], onAdd, onClose }) {
+export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade = null }) {
   const toast = useToast()
-  const [step, setStep] = useState('trade')
-  const [trade, setTrade] = useState(null)
+  /* A partner who told us their trade at sign-up should not have to
+     find it in a list of twenty-six again. QuickStart hands it in and
+     the flow opens on the next question instead of the first. */
+  const [step, setStep] = useState(startTrade ? 'offerings' : 'trade')
+  const [trade, setTrade] = useState(startTrade)
   const [picked, setPicked] = useState([])     // offering serviceIds
   const [detail, setDetail] = useState({})     // spec answers
   const [menus, setMenus] = useState([])       // menu ids
@@ -126,6 +131,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
      quote either their cheapest menu or their dearest — see
      PriceGuidance for why that is worse than asking three times. */
   const [menuRates, setMenuRates] = useState({})
+  const [distanceRates, setDistanceRates] = useState({})
+  /* Null until the partner has held the sign button. Cleared if they
+     change the name afterwards — see ListingSignature. */
+  const [signature, setSignature] = useState(null)
   /* Fetched once when the flow opens, not per dish screen: a caterer
      with five cuisines would otherwise make the same request five
      times for a list that cannot change mid-form. */
@@ -158,6 +167,14 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     () => (trade ? specsForServices(picked, specsForTrade(trade)) : []),
     [trade, picked])
   const isCatering = trade === CATERING
+
+  /* A trade whose price is a distance, read from the partner's own
+     answer rather than from the trade name — a decorator who ticks
+     'base fare plus per kilometre' means it, and hardcoding the trade
+     would be one more list to keep in step with another list. */
+  const chargesByDistance =
+    detail.charge_metric === 'per_km' || unit === 'per km'
+
 
   /* ── Menus follow the FUNNEL, not the deleted detail screen ──────────
      This read `detail.cuisines`, and the Catering & Food block was
@@ -387,8 +404,19 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     : step === 'offerings' ? picked.length > 0
     : step === 'kitchen' ? !!kitchen
     : step === 'cuisines' ? cuisines.length > 0
+    /* Review is the one screen with a real gate at the end: an unsigned
+       listing is a set of claims nobody attested to. */
+    : step === 'review' ? !!signature?.signed_at
     : true
   )
+
+  /* What the signature is a signature OF. Counted rather than described,
+     because "312 things claimed" is checkable later and "a listing" is
+     not. */
+  const claimCount =
+    picked.length + menus.length + counters.length + dishes.length
+    + Object.values(detail).filter(v =>
+        Array.isArray(v) ? v.length > 0 : String(v ?? '').trim() !== '').length
 
   async function submit() {
     setBusy(true)
@@ -434,6 +462,18 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       const priced = Object.fromEntries(
         Object.entries(menuRates).filter(([, v]) => Number(v) > 0))
       if (Object.keys(priced).length) specs.menu_rates = priced
+
+      /* Base fare, free kilometres, per kilometre, waiting. Kept as
+         four numbers because that is what the fare IS — flattening
+         them to one average is the thing that made every transport
+         job a phone call. */
+      const fare = Object.fromEntries(
+        Object.entries(distanceRates).filter(([, v]) => String(v ?? '').trim() !== ''))
+      if (Object.keys(fare).length) specs.distance_rates = fare
+      /* Who said it, when, and how much of it. An operator reviewing a
+         listing that turns out to be wrong needs all three. */
+      if (signature?.signed_at) specs.signature = signature
+
       if (kitchen) specs.kitchen_type = kitchen
       if (cuisines.length) specs.cuisines = cuisines
 
@@ -665,8 +705,16 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               menus={availableMenus.filter(m => menus.includes(m.id))}
               price={price} setPrice={setPrice}
               unit={unit} setUnit={setUnit}
+              /* minOrder and setMinOrder were declared by PriceStep and
+                 never passed. The chips lit nothing because `undefined
+                 === '100'` is false, and tapping one called undefined as
+                 a function and took the whole flow to the error boundary
+                 on the last screen before Review. */
+              minOrder={minOrder} setMinOrder={setMinOrder}
               isCatering={isCatering}
               menuRates={menuRates} setMenuRates={setMenuRates}
+              chargesByDistance={chargesByDistance}
+              distanceRates={distanceRates} setDistanceRates={setDistanceRates}
             />
           )}
 
@@ -679,6 +727,21 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
               dishes={dishes}
               price={price} unit={unit}
             />
+          )}
+
+          {/* ── The last thing before Submit ─────────────────────────
+              Everything above is a claim, and dispatch sends real jobs
+              on it. See ListingSignature for why it is a hold and not a
+              tick. */}
+          {step === 'review' && (
+            <div className="mt-4">
+              <ListingSignature
+                trade={trade}
+                claimCount={claimCount}
+                value={signature}
+                onChange={setSignature}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -704,6 +767,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
             {step === 'offerings' && !picked.length && (
               <p className="mt-1.5 text-center text-[11.5px] text-ink-mute">
                 Pick at least one to carry on.
+              </p>
+            )}
+            {step === 'review' && !signature?.signed_at && (
+              <p className="mt-1.5 text-center text-[11.5px] text-ink-mute">
+                Sign above to submit.
               </p>
             )}
           </div>
@@ -1341,7 +1409,11 @@ function DishStep({ chosen, onChange }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrder, isCatering, menuRates, setMenuRates }) {
+function PriceStep({
+  menus, price, setPrice, unit, setUnit, minOrder, setMinOrder,
+  isCatering, menuRates, setMenuRates,
+  chargesByDistance, distanceRates, setDistanceRates,
+}) {
   return (
     <div className="space-y-4">
       {/* ── A rate per menu ────────────────────────────────────────────
@@ -1354,6 +1426,12 @@ function PriceStep({ menus, price, setPrice, unit, setUnit, minOrder, setMinOrde
           decides the platform was not straight with them. */}
       {isCatering && menus.length > 0 && (
         <PriceGuidance menus={menus} rates={menuRates} onChange={setMenuRates} />
+      )}
+
+      {/* A transporter's rate is four numbers, not one. See
+          DistanceRates for why a single field could not hold it. */}
+      {chargesByDistance && (
+        <DistanceRates rates={distanceRates} onChange={setDistanceRates} />
       )}
 
       {/* ── The three objections, answered on the screen they surface ──
