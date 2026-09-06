@@ -57,6 +57,7 @@ async function load(file) {
 }
 
 const C = await load('src/data/cuisineMenus.js')
+const MC = await load('src/data/menuCardDishes.js')
 const R = await load('src/data/dishRegistry.js')
 
 /* Two-letter code per cuisine. Fixed, not derived — a derived code
@@ -137,6 +138,31 @@ for (const cuisine of C.CUISINES) {
       fresh.push(`${assigned[key]}  ${cuisine.id} · ${courseId} · ${dish.name}`)
     }
   }
+}
+
+/* ── the dishes a menu card names ──────────────────────────────────
+   catalogue_menu_lines.dish_id was NULL for all 304 lines because 203
+   of the names on those cards were not in the catalogue at all. A
+   caterer's listing holds ids from the picker, so a line can only be
+   matched if its dish is IN the picker — which means these have to be
+   real catalogue dishes with real ids, not a lookaside table.
+
+   They go through the same append-only numbering as everything else. */
+for (const d of MC.MENU_CARD_DISHES) {
+  const cu = CU[d.cuisine]
+  const co = CO[d.course]
+  if (!cu || !co) {
+    console.error(`  menu-card dish "${d.name}" has no code for ${d.cuisine}/${d.course}`)
+    process.exit(1)
+  }
+  const key = keyOf(d.cuisine, d.course, d.name)
+  seen.add(key)
+  if (assigned[key]) continue
+  const bucket = `${cu}-${co}`
+  const next = Math.max(highest[bucket] ?? 0, FLOOR - 1) + 1
+  highest[bucket] = next
+  assigned[key] = `SBM-${cu}-${co}-${String(next).padStart(3, '0')}`
+  fresh.push(`${assigned[key]}  ${d.cuisine} · ${d.course} · ${d.name}  (menu card)`)
 }
 
 const gone = Object.keys(existing).filter(k => !seen.has(k))
