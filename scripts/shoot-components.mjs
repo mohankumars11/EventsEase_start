@@ -38,6 +38,10 @@ if (!outFile) {
 }
 const flag = (n, d) => { const i = rest.indexOf(`--${n}`); return i === -1 ? d : rest[i + 1] }
 const scenes = resolve(ROOT, flag('scenes', 'scripts/scenes/vendor-scenes.jsx'))
+/* @2x is right for reading a screenshot and about four times the bytes
+   of @1x, which is the difference between a file that can be sent and
+   one that is refused. */
+const SCALE = Number(flag('scale', '2')) || 2
 const width = Number(flag('width', 430))
 const settle = Number(flag('wait', 900))
 /* Run after mount, before the shot. Some states only exist after an
@@ -188,7 +192,7 @@ const send = (method, params = {}) =>
 await send('Runtime.enable')
 await send('Page.enable')
 await send('Emulation.setDeviceMetricsOverride',
-  { width, height: 900, deviceScaleFactor: 2, mobile: true })
+  { width, height: 900, deviceScaleFactor: SCALE, mobile: true })
 await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/` })
 await sleep(settle)
 
@@ -214,7 +218,7 @@ if (evalAfter) {
 const h = Math.ceil((await send('Runtime.evaluate',
   { expression: 'document.documentElement.scrollHeight' })).result.value)
 await send('Emulation.setDeviceMetricsOverride',
-  { width, height: h, deviceScaleFactor: 2, mobile: true })
+  { width, height: h, deviceScaleFactor: SCALE, mobile: true })
 await sleep(250)
 
 /* Clip to the mounted root. A page-height screenshot picks up whatever
@@ -229,14 +233,14 @@ const r = JSON.parse(box)
 if (errors.length) { console.log(); errors.slice(0,8).forEach(e=>console.log('  ERR '+String(e).split(String.fromCharCode(10))[0])) }
 console.log('  root box:', JSON.stringify(r), ' page h:', h)
 const shot = await send('Page.captureScreenshot', { format: 'png',
-  clip: { x: r.x, y: r.y, width: r.w, height: r.h, scale: 2 } })
+  clip: { x: r.x, y: r.y, width: r.w, height: r.h, scale: SCALE } })
 if (!shot || !shot.data) {
   console.error('  captureScreenshot failed:', JSON.stringify(shot))
   ws.close(); browser.kill(); server.close(); process.exit(1)
 }
 writeFileSync(resolve(ROOT, outFile), Buffer.from(shot.data, 'base64'))
 
-console.log(`\n  ${outFile}  ${Math.round(r.w)}x${Math.round(r.h)}  @2x`)
+console.log(`\n  ${outFile}  ${Math.round(r.w)}x${Math.round(r.h)}  @${SCALE}x`)
 console.log(`  sheet: ${cssName}  (${new Date(cssAge).toLocaleTimeString()})`)
 if (errors.length) {
   console.log(`\n  ${errors.length} console error(s):`)

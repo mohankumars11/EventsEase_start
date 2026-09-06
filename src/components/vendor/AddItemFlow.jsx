@@ -6,6 +6,14 @@ import {
   Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
   Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse,
   Flame, Gift, Package,
+  /* The stepper's seven phase icons. Five of them were used in
+     ALL_PHASES and never imported, so the array threw a
+     ReferenceError while the component was still rendering — which
+     is the error boundary, on the FIRST screen of the flow, for every
+     partner and every trade. Bundlers do not catch a bare identifier:
+     esbuild treats an unknown one as a runtime global, the same as
+     `window`, so it built and shipped clean. */
+  ListChecks, Soup, ClipboardList, IndianRupee, SendHorizonal,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
@@ -541,7 +549,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
    * The same fix DayStatusSheet already uses, and the same trap
    * PROJECT_SUMMARY records for the cancel sheet. */
   return createPortal(
-    <div className="fixed inset-0 z-[95] flex flex-col bg-[#faf9f7]">
+    /* A stable hook for check-flow-renders.mjs. The flow portals to
+       document.body, so there is no container to scope a query to,
+       and matching on a Tailwind class would tie a guard to styling.
+       One attribute, no behaviour. */
+    <div data-add-item-flow className="fixed inset-0 z-[95] flex flex-col bg-[#faf9f7]">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="shrink-0 border-b border-ink/[0.07] bg-[#fdfcfa] px-4 pb-3 pt-4 text-ink">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
