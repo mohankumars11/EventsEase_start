@@ -51,6 +51,7 @@ const P  = await load('src/data/partnerCatalogue.js')
 const S  = await load('src/data/partnerSpecs.js')
 const SS = await load('src/data/partnerServiceSpecs.js')
 const O  = await load('src/data/cateringOperations.js')
+const OPS = await load('src/data/partnerOperations.js')
 const V  = await load('src/config/vendor.js')
 const IDS = await load('src/data/catalogueIds.generated.js')
 
@@ -238,13 +239,28 @@ for (const [trade, groups] of Object.entries(S.SPECS_BY_TRADE ?? {})) emitGroups
 for (const [sid, groups] of Object.entries(SS.SPECS_BY_SERVICE ?? {})) emitGroups(`service:${sid}`, groups)
 
 section('operations screens')
-;(O.OPERATION_SCREENS ?? []).forEach((s, i) => {
+/* The screens themselves are shared — six in the spine plus catering's
+   own — so they are written once and de-duplicated by id. */
+const screenSeen = new Set()
+;[...(OPS.OPERATION_SPINE ?? []), ...(O.OPERATION_SCREENS ?? [])].forEach((s, i) => {
   const id = IDS.CATALOGUE_ID_BY_KEY[`screen|${s.id}`]
-  if (id) upsert('listing_operation_screens', {
+  if (!id || screenSeen.has(id)) return
+  screenSeen.add(id)
+  upsert('listing_operation_screens', {
     id, screen_key: s.id, title: s.title ?? s.id, why: s.why ?? null, sort_order: i,
   })
-  emitGroups(`ops:${s.id}`, s.groups)
 })
+
+section('operations questions, per trade')
+/* Scoped by trade AND screen. "Scale" is hours to a photographer and
+   square feet to a tent supplier; one scope for both would make a
+   partner's answer unreadable without knowing whose it was. */
+for (const t of P.TRADES) {
+  const name = typeof t === 'string' ? t : (t.name ?? t.id)
+  for (const screen of OPS.operationScreensFor(name) ?? []) {
+    emitGroups(`ops:${name}:${screen.id}`, screen.groups)
+  }
+}
 
 section('pricing units')
 ;(V.SERVICE_UNITS ?? []).forEach((u, i) => {

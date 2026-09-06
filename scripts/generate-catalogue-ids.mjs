@@ -56,6 +56,7 @@ const P = await load('src/data/partnerCatalogue.js')
 const S = await load('src/data/partnerSpecs.js')
 const SS = await load('src/data/partnerServiceSpecs.js')
 const O = await load('src/data/cateringOperations.js')
+const OPS = await load('src/data/partnerOperations.js')
 const V = await load('src/config/vendor.js')
 
 const norm = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
@@ -168,10 +169,25 @@ for (const [serviceId, groups] of Object.entries(SS.SPECS_BY_SERVICE ?? {})) {
   takeGroups(`service:${serviceId}`, groups)
 }
 
-/* ── the operations screens ──────────────────────────────────────── */
+/* ── the operations screens, for EVERY trade ─────────────────────────
+   Scoped by trade as well as screen. "Scale" means hours and
+   deliverables to a photographer and square feet to a tent supplier —
+   the same screen, a different question, and they must never share an
+   id or a partner's answer becomes unreadable.
+
+   The screens themselves are registered once, because the six in the
+   spine are genuinely shared. Only the questions inside them differ. */
+for (const screen of OPS.OPERATION_SPINE ?? []) {
+  take('OPS', `screen|${screen.id}`, `screen · ${screen.title}`)
+}
 for (const screen of O.OPERATION_SCREENS ?? []) {
   take('OPS', `screen|${screen.id}`, `screen · ${screen.title ?? screen.id}`)
-  takeGroups(`ops:${screen.id}`, screen.groups)
+}
+for (const t of P.TRADES) {
+  const name = typeof t === 'string' ? t : (t.name ?? t.id)
+  for (const screen of OPS.operationScreensFor(name) ?? []) {
+    takeGroups(`ops:${name}:${screen.id}`, screen.groups)
+  }
 }
 
 /* ── how a thing is priced ───────────────────────────────────────── */

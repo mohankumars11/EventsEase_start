@@ -28,7 +28,7 @@ import {
   wantsNonVegLibrary, nonVegLibrary,
 } from '../../data/cateringFunnel'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
-import { OPERATION_SCREENS } from '../../data/cateringOperations'
+import { operationScreensFor } from '../../data/partnerOperations'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -208,6 +208,22 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
   const MENU_BEARING = ['catering', 'menu', 'cooks']
   const wantsMenus = isCatering && picked.some(id => MENU_BEARING.includes(id))
 
+  /* ── How this trade works, whatever the trade is ────────────────────
+     These used to be catering's alone, and the count told the story:
+     catering asked 34 questions and every other trade asked one to
+     three. A photographer was asked what they shoot and what it costs —
+     nothing about travel, notice, whether they bring lighting, or
+     whether they will work a 4am muhurta. Dispatch offered them all of
+     it and found out by failing.
+
+     Six of catering's seven screens were never about food. They are
+     about running a business that turns up somewhere, so they are the
+     spine now and each trade fills them with its own questions.
+     See data/partnerOperations.js. */
+  const opsScreens = useMemo(
+    () => (trade ? operationScreensFor(trade) : []),
+    [trade])
+
   /* ══════════════════════════════════════════════════════════════════
      THE FUNNEL, BUILT FROM THE ANSWERS SO FAR
      ══════════════════════════════════════════════════════════════════
@@ -235,21 +251,24 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
       }
     }
 
-    if (isCatering) {
-      for (const screen of OPERATION_SCREENS) s.push(`ops:${screen.id}`)
-      s.push('upload')
-    }
+    /* Every trade, not only catering. */
+    for (const screen of opsScreens) s.push(`ops:${screen.id}`)
+
+    /* The menu-card upload is catering's. Asking a valet to photograph
+       their menu is the kind of question that teaches a partner the app
+       does not know what they do. */
+    if (isCatering) s.push('upload')
 
     s.push('price', 'review')
     return s
-  }, [groups.length, wantsMenus, isCatering, kitchen, cuisines])
+  }, [groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
 
   /* A title for the screens whose ids are built at runtime. */
   const title = (
     step.startsWith('cuisine:') ? (CUISINE_BY_ID[step.slice(8)]?.name ?? 'This cuisine')
     : step === 'lib:south' ? 'Karnataka, in depth'
     : step === 'lib:nonveg' ? 'Non-veg, region by region'
-    : step.startsWith('ops:') ? (OPERATION_SCREENS.find(x => x.id === step.slice(4))?.title ?? 'How you work')
+    : step.startsWith('ops:') ? (opsScreens.find(x => x.id === step.slice(4))?.title ?? 'How you work')
     : STEP_TITLE[step] ?? 'Add what you do'
   )
 
@@ -273,7 +292,16 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     : id === 'upload' || id === 'price' ? 'price'
     : 'submit'
 
-  const PHASES = [
+  /* ── Only the phases this trade actually has ────────────────────────
+     These seven were written when catering was the only trade with a
+     journey. Now that every trade gets operations screens, a fixed list
+     would show a photographer "Kitchen · Cuisines · Dishes" — three
+     steps they will never reach, on the header of every screen, in a
+     stepper whose entire job is telling them how much is left.
+
+     Filtered against the flow, so a phase appears only when a screen in
+     it exists. A photographer sees four dots; a caterer sees seven. */
+  const ALL_PHASES = [
     { id: 'what',     label: 'What you do', icon: ListChecks },
     { id: 'kitchen',  label: 'Kitchen',     icon: Flame },
     { id: 'cuisines', label: 'Cuisines',    icon: Soup },
@@ -282,6 +310,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
     { id: 'price',    label: 'Your rate',   icon: IndianRupee },
     { id: 'submit',   label: 'Submit',      icon: SendHorizonal },
   ]
+  const PHASES = ALL_PHASES.filter(p => flow.some(f => phaseOf(f) === p.id))
 
   /* ── The hook for this screen ───────────────────────────────────────
      Every screen in a twelve-step form is a place somebody can put the
@@ -596,7 +625,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose }) {
 
           {step.startsWith('ops:') && (
             <OperationsStep
-              screen={OPERATION_SCREENS.find(x => x.id === step.slice(4))}
+              screen={opsScreens.find(x => x.id === step.slice(4))}
               value={detail}
               onChange={setDetail}
             />
