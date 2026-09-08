@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, Check, X,
-  ChevronUp, ChevronDown, Clock, AlertCircle, Sparkles, ArrowRight,
+  ChevronUp, ChevronDown, Clock, AlertCircle, Sparkles, ArrowRight, Search,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
-import { TRADES } from '../../data/partnerCatalogue'
+import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
@@ -115,7 +115,11 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
               : `${activeCount} live${services.length !== activeCount ? ` · ${services.length - activeCount} hidden` : ''}`}
           </p>
         </div>
-        {editing !== 'new' && (
+        {/* Only once there is a listing. While it is empty the red
+           card below carries the same action twice as large, and two
+           buttons for one job on the first screen a partner sees is a
+           choice they should not have to make. */}
+        {editing !== 'new' && services.length > 0 && (
           <button onClick={() => setPicking(true)} className="btn-plum text-sm">
             <Plus size={16} /> Add what you do
           </button>
@@ -620,100 +624,170 @@ function DeleteButton({ onConfirm, busy }) {
 }
 
 /**
- * The way in, for somebody who has already told us what they do.
+ * The way in, on the screen a partner reaches once.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THIS IS NOT ONE BUTTON
+ * WHY "START LISTING YOUR BUSINESS" AND NOT "START WITH PHOTOGRAPHY"
  * ══════════════════════════════════════════════════════════════════════
  *
- * "Add what you do" opened a list of twenty-six trades scrolled to the
- * top. A caterer who wrote "Catering & Food" on the sign-up form had to
- * find themselves in that list again, which reads as the app not having
- * listened — on the first screen, where a partner is deciding whether
- * this is worth ten minutes.
+ * Naming their trade back at them was meant to feel like being listened
+ * to. On the screen it reads as a narrowing — a photographer who also
+ * shoots video, or a caterer who also hires chairs, is being told what
+ * they are on the first tap. And a partner whose sign-up category was
+ * wrong or vague is offered a wrong door as the main one.
  *
- * So their own trade is a chip, and it starts the flow already on that
- * trade. The other four are what a Bengaluru partner most often does
- * alongside: somebody who owns a hall usually also rents chairs, and a
- * photographer usually also shoots video. One tap for the second thing.
+ * So the big button says what the whole screen is for, and their trade
+ * is a line under it rather than the label on it. It still lands past
+ * the trade question when we know the answer.
  *
- * Everything else is still one tap away, and the full list is the wide
- * button so nobody is trapped by our guess.
+ * ══════════════════════════════════════════════════════════════════════
+ * AND WHY A SEARCH, NOT "SOMETHING ELSE"
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * "Something else" is a dead end dressed as a button. It says nothing
+ * about what else there is, so somebody who does two things has no way
+ * to find out that the second one is listable without opening a picker
+ * and scrolling twenty-six rows.
+ *
+ * The search says it instead. Typing filters every trade AND every
+ * service inside them, so "dosa" finds Catering and "truck" finds
+ * Transportation — the words a partner would use, not the words we
+ * filed them under.
+ *
+ * ── The suggestions move on their own ────────────────────────────────
+ * With an empty box the search would be an empty box. Instead it cycles
+ * real entries out of the catalogue, a few at a time, so the breadth is
+ * visible without being scrolled: a partner sees "Goods and equipment
+ * moving" or "Licences and permissions" drift past and learns the
+ * platform takes it before they have thought to ask.
+ *
+ * Every one is a real, listable service. Nothing here is invented copy —
+ * the day one of them is a lie is the day the ₹6,587 above it stops
+ * being believed.
+ *
+ * Honoured `prefers-reduced-motion`: the cycling stops and the first few
+ * stay put. Movement that cannot be turned off is a bug for anybody who
+ * gets motion sick reading it.
  */
-const ALSO_DOES = {
-  'Catering & Food':      ['Tent & Furniture', 'Guest Services', 'Bar & Beverages'],
-  'Photography':          ['Videography', 'Decoration & Floral', 'Anchor & MC'],
-  'Videography':          ['Photography', 'Sound & AV', 'Event Lighting'],
-  'Venue':                ['Catering & Food', 'Tent & Furniture', 'Valet Parking'],
-  'Decoration & Floral':  ['Event Lighting', 'Tent & Furniture', 'Gifts & Favours'],
-  'Tent & Furniture':     ['Power & Cooling', 'Decoration & Floral', 'Guest Services'],
-  'Transportation':       ['Valet Parking', 'Guest Services', 'Security Services'],
-  'Sound & AV':           ['DJ & Music', 'Event Lighting', 'Live Entertainment'],
-  'DJ & Music':           ['Sound & AV', 'Event Lighting', 'Anchor & MC'],
-  'Bridal Makeup & Hair': ['Mehendi Artist', 'Photography', 'Gifts & Favours'],
-  'Mehendi Artist':       ['Bridal Makeup & Hair', 'Live Entertainment'],
-  'Wedding Planning':     ['Decoration & Floral', 'Photography', 'Anchor & MC'],
-  'Priest & Rituals':     ['Live Entertainment', 'Catering & Food'],
+
+/* Every trade, and every service inside it, as one searchable list.
+   Derived, never retyped — adding a service to the customer catalogue
+   makes it findable here the same day. */
+function useListable() {
+  return React.useMemo(() => {
+    const out = []
+    for (const trade of TRADES) {
+      out.push({ label: trade, trade, kind: 'trade' })
+      for (const o of offeringsForTrade(trade)) {
+        if (o.name !== trade) out.push({ label: o.name, trade, kind: 'service' })
+      }
+    }
+    return out
+  }, [])
 }
 
-/* For a partner whose trade we do not have a neighbour list for, and for
-   anyone who registered as "Other". The four most-added trades overall,
-   which is a guess we are making openly rather than a ranking. */
-const COMMON = ['Catering & Food', 'Photography', 'Decoration & Floral', 'Tent & Furniture']
+function QuickStartSearch({ onPick }) {
+  const all = useListable()
+  const [q, setQ] = React.useState('')
+  const [tick, setTick] = React.useState(0)
+
+  const still = React.useMemo(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }, [])
+
+  React.useEffect(() => {
+    if (still || q) return
+    const t = setInterval(() => setTick(n => n + 1), 2200)
+    return () => clearInterval(t)
+  }, [still, q])
+
+  const hits = React.useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    if (!needle) return []
+    return all
+      .filter(x => x.label.toLowerCase().includes(needle)
+        || x.trade.toLowerCase().includes(needle))
+      .slice(0, 8)
+  }, [q, all])
+
+  /* Three at a time, walking the list, so the same ones are not always
+     the ones on show. */
+  const drifting = React.useMemo(() => {
+    const services = all.filter(x => x.kind === 'service')
+    const at = (tick * 3) % Math.max(services.length, 1)
+    return [0, 1, 2].map(i => services[(at + i) % services.length]).filter(Boolean)
+  }, [tick, all])
+
+  return (
+    <div className="mt-3">
+      <div className="relative">
+        <Search
+          size={16}
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/60"
+        />
+        <input
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          placeholder={`Search ${all.length} things you can list`}
+          aria-label="Search everything you can list"
+          className="w-full rounded-2xl bg-white/15 py-3 pl-10 pr-3.5 text-[13.5px] font-bold text-white ring-1 ring-white/30 placeholder:font-semibold placeholder:text-white/60 focus:bg-white/20 focus:outline-none"
+        />
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {(q ? hits : drifting).map((x, i) => (
+          <button
+            key={`${x.kind}:${x.label}`}
+            onClick={() => onPick(x.trade)}
+            style={{ animationDelay: `${i * 90}ms` }}
+            className="animate-fade-up rounded-full bg-white/15 px-3 py-1.5 text-left text-[12.5px] font-extrabold text-white ring-1 ring-white/25 transition active:scale-[0.98]"
+          >
+            {x.label}
+            {x.kind === 'service' && (
+              <span className="ml-1.5 font-semibold text-white/60">{x.trade}</span>
+            )}
+          </button>
+        ))}
+        {q && !hits.length && (
+          <p className="py-1 text-[12.5px] font-semibold text-white/70">
+            Nothing matches “{q}”. Tap the button above and tell us — an
+            operator reads every one.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function QuickStart({ category, onPick }) {
   const mine = category && category !== 'Other' && TRADES.includes(category) ? category : null
-  const others = (mine ? (ALSO_DOES[mine] ?? COMMON) : COMMON)
-    .filter(x => x !== mine && TRADES.includes(x))
-    .slice(0, 3)
 
   return (
     <div className="mt-4">
-      {mine && (
-        <button
-          onClick={() => onPick(mine)}
-          className="flex w-full items-center justify-between gap-2 rounded-2xl bg-white px-4 py-3.5 text-left transition active:scale-[0.99]"
-        >
-          <span className="min-w-0">
-            <span className="block text-[15px] font-extrabold leading-tight text-kumkuma-700">
-              Start with {mine}
-            </span>
-            <span className="mt-0.5 block text-[11.5px] font-semibold text-ink-soft">
-              What you told us you do. Ten minutes.
-            </span>
-          </span>
-          <ArrowRight size={18} className="shrink-0 text-kumkuma-600" />
-        </button>
-      )}
-
-      {others.length > 0 && (
-        <>
-          <p className="mb-1.5 mt-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/70">
-            {mine ? 'Do you also do' : 'Or start with'}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {others.map(x => (
-              <button
-                key={x}
-                onClick={() => onPick(x)}
-                className="rounded-full bg-white/15 px-3.5 py-2 text-[12.5px] font-extrabold text-white ring-1 ring-white/30 transition active:scale-[0.98]"
-              >
-                {x}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
       <button
-        onClick={() => onPick(true)}
-        className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-extrabold transition active:scale-[0.99] ${
-          mine ? 'mt-3 bg-white/15 text-white ring-1 ring-white/30' : 'mt-3 bg-white text-kumkuma-700'
-        }`}
+        onClick={() => onPick(mine ?? true)}
+        className="group flex w-full items-center gap-2.5 rounded-2xl bg-white px-3.5 py-3.5 text-left shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition active:scale-[0.99]"
       >
-        <Plus size={17} /> {mine ? 'Something else' : 'Add what you do'}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-kumkuma-600 text-white">
+          <Plus size={20} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-extrabold leading-tight text-kumkuma-700">
+            Start listing your business
+          </span>
+          <span className="mt-0.5 block text-[12px] font-semibold leading-snug text-ink-soft">
+            {mine
+              ? `We will open on ${mine}, because that is what you told us. Ten minutes.`
+              : 'Ten minutes, and you pick everything from a list.'}
+          </span>
+        </span>
+        <ArrowRight size={19} className="shrink-0 text-kumkuma-600 transition group-active:translate-x-0.5" />
       </button>
-      <p className="mt-1.5 text-center text-[11.5px] font-semibold text-white/70">
+
+      <QuickStartSearch onPick={onPick} />
+
+      <p className="mt-2.5 text-center text-[11.5px] font-semibold text-white/70">
         Nothing is charged, ever. You choose every job.
       </p>
     </div>

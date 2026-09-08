@@ -28,6 +28,7 @@ import FunnelStepper from './FunnelStepper'
 import PriceGuidance from './PriceGuidance'
 import DistanceRates from './DistanceRates'
 import ListingSignature from './ListingSignature'
+import MenuDishStep from './MenuDishStep'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -126,6 +127,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
   const [menus, setMenus] = useState([])       // menu ids
   const [counters, setCounters] = useState([]) // counter ids
   const [dishes, setDishes] = useState([])     // a la carte dish names
+  /* The catalogue dish ids ticked on the menus screen. Separate from
+     `dishes`, which is the a-la-carte library and holds NAMES: this one
+     is what the menu cards are made of, and it is what coverage is
+     worked out from. See MenuDishStep. */
+  const [cardDishes, setCardDishes] = useState([])
   const [price, setPrice] = useState('')
   const [unit, setUnit] = useState('per event')
   const [minOrder, setMinOrder] = useState('')
@@ -630,18 +636,21 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
           )}
 
           {step === 'menus' && (
-            <MenuStep
+            /* The dishes, not the cards. A caterer is not choosing an
+               option — see MenuDishStep. The cards are still what
+               dispatch matches on; they are worked out from the ticks
+               and handed back through onMenusChange, so the rate screen
+               and the saved listing are unchanged. */
+            <MenuDishStep
               menus={availableMenus}
-              chosen={menus}
-              counters={counters}
-              onToggleMenu={id => setMenus(m =>
-                m.includes(id) ? m.filter(x => x !== id) : [...m, id])}
-              onAllMenus={() => setMenus(
-                menus.length === availableMenus.length ? [] : availableMenus.map(m => m.id))}
+              picked={cardDishes}
+              onChange={setCardDishes}
+              onMenusChange={setMenus}
+              linesOf={menuLines}
+              counters={FOOD_COUNTERS}
+              chosenCounters={counters}
               onToggleCounter={id => setCounters(c =>
                 c.includes(id) ? c.filter(x => x !== id) : [...c, id])}
-              uploads={uploads}
-              setUploads={setUploads}
             />
           )}
 

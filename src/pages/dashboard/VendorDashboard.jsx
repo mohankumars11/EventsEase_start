@@ -92,6 +92,12 @@ export default function VendorDashboard() {
   const firstName    = profile?.full_name?.split(' ')[0] ?? 'there'
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
   const statusMeta   = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
+
+  /* Is anything rendered above the tab content? The business-name
+     header is Home only and the status card only when it blocks, so on
+     Listing the answer is usually no — and the margin written to clear
+     them was pure white space. */
+  const aboveTabs = tab === 'offers' || statusMeta.blocking
   /* PARTNER_PLANS, not VENDOR_PLANS. The two ladders describe different
      businesses — VENDOR_PLANS still sells "priority in coordinator search"
      and "5 enquiries a month" — and this pill and the Account tab reading
@@ -182,7 +188,7 @@ export default function VendorDashboard() {
        card sits under the bar and looks cut off -- and on the customer
        surface, where that bar does not render, it is 7rem of harmless
        whitespace at the very bottom of a scrolled page. */
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28">
+    <div className="max-w-5xl mx-auto px-4 pb-28 pt-4 sm:px-6 sm:pt-5">
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
@@ -342,13 +348,19 @@ export default function VendorDashboard() {
           components/layout/PartnerBottomNav. They have been a scrolling
           strip and a card grid; both made a partner reach this page and
           scroll before they could go anywhere. A fixed bar is where the
-          thumb already is, and it survives scrolling.
+          thumb already is, and it survives scrolling. */}
 
-          Clearance so the last card is not under the bar. */}
-      <div className="h-1" />
+      {/* ── Nothing above, so nothing to clear ──────────────────────
+          The business-name header renders on Home only, and the status
+          card only when it is blocking. On Listing, for a partner in
+          good standing, BOTH are absent — and this still carried the
+          page padding, a spacer and a 24px top margin written to sit
+          below them. About 110px of white between the navbar and the
+          first heading, on the screen a partner opens most.
 
-
-      <div className="mt-6">
+          So the gap is spent only when there is something above to be
+          separated from. */}
+      <div className={aboveTabs ? 'mt-6' : ''}>
         {/* Live jobs. Rendered only for an approved partner — an
             unverified one is not in the dispatch pool (match_partners
             filters on is_verified), so an inbox for them would be a
