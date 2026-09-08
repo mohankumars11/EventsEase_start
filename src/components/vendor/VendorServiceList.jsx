@@ -12,6 +12,14 @@ import VenueManager from './VenueManager'
 import ServiceSpecs from './ServiceSpecs'
 import { ReviewPill } from './ReviewBanner'
 import ListingStatusCard from './ListingStatusCard'
+/* The three the Listing tab is now built from. All three imports were
+   lost to a patch that used replace() without asserting the anchor
+   matched: the file built clean and threw "ListingPitch is not
+   defined" at render — the same bare-identifier class as ListChecks,
+   which bundlers treat as a runtime global. */
+import TradeGrid from './TradeGrid'
+import ListingPitch from './ListingPitch'
+import ListingTracker from './ListingTracker'
 
 /* The trades `match_partners` can match on, read from the same map
    dispatch uses — so this list cannot drift from what actually works.
