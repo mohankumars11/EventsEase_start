@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  ArrowLeft, Check, ChevronRight, Loader2, Search, Send, X,
-  UtensilsCrossed, Camera, Video, Flower2, Building2, Music, Sparkles,
-  Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
-  Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse,
-  Flame, Gift, Package,
+  ArrowLeft, Check, ChevronRight, Loader2, Send, X,
+  UtensilsCrossed, Video, Flame,
   /* The stepper's seven phase icons. Five of them were used in
      ALL_PHASES and never imported, so the array threw a
      ReferenceError while the component was still rendering — which
@@ -34,6 +31,7 @@ import WorkUpload from './WorkUpload'
 import { workPromptsFor } from '../../data/workPrompts'
 import WhatHappensNext from './WhatHappensNext'
 import VenueTerms from './VenueTerms'
+import TradeGrid from './TradeGrid'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -91,32 +89,6 @@ import { operationScreensFor } from '../../data/partnerOperations'
 /* An icon per trade. Not decoration: 24 identical cards of text is a wall
    somebody has to READ, and a picture is how you find your own trade in a
    list without reading all of it. */
-const TRADE_ICON = {
-  'Anchor & MC': Mic,
-  'Bar & Beverages': Wine,
-  'Bridal Makeup & Hair': Brush,
-  'Cake & Desserts': CakeSlice,
-  'Catering & Food': UtensilsCrossed,
-  'DJ & Music': Music,
-  'Decoration & Floral': Flower2,
-  'Event Lighting': Lightbulb,
-  'Gifts & Favours': Gift,
-  'Guest Services': HandHeart,
-  'Invitation & Printing': Printer,
-  'Live Entertainment': Sparkles,
-  'Mehendi Artist': Hand,
-  'Photography': Camera,
-  'Power & Cooling': Zap,
-  'Priest & Rituals': Flame,
-  'Safety & Facilities': HeartPulse,
-  'Security Services': Shield,
-  'Sound & AV': Speaker,
-  'Tent & Furniture': Tent,
-  'Transportation': Truck,
-  'Valet Parking': ParkingSquare,
-  'Venue': Building2,
-  'Videography': Video,
-}
 
 const CATERING = 'Catering & Food'
 
@@ -125,7 +97,7 @@ export default function AddItemFlow({
 }) {
   const toast = useToast()
   /* A partner who told us their trade at sign-up should not have to
-     find it in a list of twenty-six again. QuickStart hands it in and
+     find it in a list of twenty-six again. The Listing tab hands it in
      the flow opens on the next question instead of the first. */
   const [step, setStep] = useState(startTrade ? 'offerings' : 'trade')
   const [trade, setTrade] = useState(startTrade)
@@ -886,70 +858,12 @@ const STEP_TITLE = {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-function TradeStep({ q, setQ, value, onPick }) {
-  const list = useMemo(() => {
-    const t = q.trim().toLowerCase()
-    if (!t) return TRADES
-    /* Matches the trade AND the things inside it, so typing "biryani"
-       or "generator" finds the right card without knowing our word for
-       the trade. Somebody who runs a generator business does not think
-       of themselves as "Power & Cooling". */
-    return TRADES.filter(tr =>
-      tr.toLowerCase().includes(t)
-      || offeringsForTrade(tr).some(o => o.name.toLowerCase().includes(t)))
-  }, [q])
-
-  return (
-    <>
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="Search — catering, generator, mehendi…"
-          className="w-full rounded-2xl bg-white py-3 pl-10 pr-4 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5">
-        {list.map(t => {
-          const Icon = TRADE_ICON[t] ?? Package
-          const n = offeringsForTrade(t).length
-          const on = value === t
-          return (
-            <button
-              key={t}
-              type="button"
-              onClick={() => onPick(t)}
-              className={`flex flex-col items-start gap-2.5 rounded-[20px] p-3.5 text-left ring-1 transition active:scale-[0.98] ${
-                on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
-              }`}
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-plum-950 text-white">
-                <Icon size={18} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[13.5px] font-extrabold leading-tight text-ink">{t}</span>
-                <span className="block text-[11.5px] text-ink-mute">
-                  {n} {n === 1 ? 'thing' : 'things'} you can list
-                </span>
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {!list.length && (
-        <p className="rounded-[20px] bg-ink/[0.02] p-6 text-center text-[13px] leading-relaxed text-ink-mute">
-          Nothing matches “{q}”. Try a shorter word, or tell us what you do
-          and we will add it.
-        </p>
-      )}
-    </>
-  )
+/* The grid moved to TradeGrid.jsx when the Listing tab started opening
+   on it. One implementation, so the search that understands "biryani"
+   cannot drift between the two screens that offer it. */
+function TradeStep(props) {
+  return <TradeGrid {...props} />
 }
-
-/* ══════════════════════════════════════════════════════════════════ */
 
 function OfferingStep({ offerings, picked, alreadyHave, onToggle }) {
   return (

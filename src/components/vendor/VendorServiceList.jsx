@@ -44,8 +44,9 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
   /* The catalogue picker replaces the free-text add. See
      AddFromCatalogue and data/partnerCatalogue for why. */
   /* Holds `true` for the full picker, or a trade name to start the
-     flow already on that trade. See QuickStart. */
+     flow already on that trade. See TradeGrid. */
   const [picking, setPicking] = useState(false)
+  const [q, setQ] = useState('')
   /* Set when a submission happens in this session, so the green "live"
      card is a moment a partner sees once rather than a badge that never
      goes away. */
@@ -170,113 +171,6 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         }
         return null
       })()}
-
-      {/* ── The venue, for the partners who are one ──────────────────
-          For a decorator "your listing" is a price list. For a venue
-          manager it is the building, its halls and its calendar — the
-          same question asked of a different kind of business, not a
-          separate feature, which is why it lives here rather than
-          claiming a sixth seat on a tab bar that is full at five.
-
-          Rendered above the price list because a venue's calendar is the
-          thing that earns; its per-plate extras are the footnote. */}
-      <VenueManager
-        vendorId={vendor?.id}
-        /* Read from the same map dispatch uses, not typed. The trade
-           stored on a service row is 'Venue', not 'venue', and a
-           hardcoded lowercase string here would have matched nothing --
-           silently, for every venue partner, forever. */
-        canClaim={services.some(s => s.category === VENUE_TRADE)}
-      />
-
-      {/* The full-screen add journey. Replaces AddFromCatalogue, which
-          was a flat list of names and a price box -- it asked a caterer
-          for exactly as much as it asked a balloon supplier, and a
-          caterer's listing is not a name and a number. See AddItemFlow. */}
-      {picking && (
-        <AddItemFlow
-          existing={services}
-          startTrade={typeof picking === 'string' ? picking : null}
-          /* partner_work is keyed on the vendor, not on a listing row:
-             one body of work, however many services they list. */
-          vendorId={vendor?.id}
-          onAdd={onAdd}
-          onClose={() => setPicking(false)}
-        />
-      )}
-
-      {editing === 'new' && (
-        <ServiceForm
-          initial={BLANK}
-          vendorCategory={vendor?.category}
-          onCancel={() => setEditing(null)}
-          onSave={fields => handleSave(fields, 'new')}
-        />
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════
-          AN EMPTY LISTING IS THE MOST IMPORTANT SCREEN IN THE APP
-          ══════════════════════════════════════════════════════════════
-
-          A partner reaches it once, in the first two minutes, having just
-          signed up on somebody's word that this is worth their time. What
-          was here was a grey clipboard and "Nothing here yet" -- true, and
-          an invitation to close the app.
-
-          So it does one job: make the next tap obvious and make it worth
-          taking. The number is real -- it is the same figure the partner
-          landing page quotes and it comes from actual accepted lines --
-          because an invented one is the fastest way to lose somebody who
-          later finds out.
-
-          Three reasons, not ten. Somebody deciding whether to spend ten
-          minutes on a form does not read ten. */}
-      {services.length === 0 && !editing && (
-        <div className="overflow-hidden rounded-[24px] bg-kumkuma-600 text-white">
-          <div className="p-5 sm:p-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-kumkuma-700">
-              <Sparkles size={12} /> Your listing is empty
-            </span>
-
-            <h3 className="mt-3 font-display text-[25px] font-extrabold leading-tight text-white">
-              Nobody can book what they cannot see
-            </h3>
-            <p className="mt-1.5 text-[13.5px] font-semibold leading-relaxed text-white/85">
-              A typical job on Sambramo pays ₹6,587. Every one of them goes
-              to a partner whose listing says they can do it — and right now
-              yours says nothing at all.
-            </p>
-
-            {/* ── One tap in, already knowing who they are ──────────────
-                The button used to open a picker at the top of a list of
-                twenty-six trades, and a caterer who told us they were a
-                caterer when they signed up had to find themselves in it
-                again. Their own trade is the first chip and it starts the
-                flow already answered.
-
-                The rest are the four trades a Bengaluru partner most often
-                adds alongside, so somebody who does two things is one tap
-                from the second — and the full list is still there for
-                everybody else. */}
-            <QuickStart category={vendor?.category} onPick={setPicking} />
-          </div>
-
-          <div className="border-t border-white/20 bg-black/[0.10] px-5 py-4 sm:px-6">
-            {[
-              ['Pick, never type', 'Everything comes from a list, so your listing cannot be missed because of a spelling.'],
-              ['Say exactly what you do', 'Cuisines, menus, dishes — the more you say, the closer the jobs match.'],
-              ['You choose every job', 'Nothing is booked over your head. Decline anything, with no penalty.'],
-            ].map(([t, d]) => (
-              <div key={t} className="flex gap-2.5 py-1.5">
-                <Check size={14} className="mt-0.5 shrink-0 text-white" />
-                <p className="text-[12.5px] font-semibold leading-snug text-white/90">
-                  <span className="font-extrabold text-white">{t}. </span>{d}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
@@ -406,6 +300,34 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           </li>
         ))}
       </ul>
+
+      {/* ── The tab IS the trades ─────────────────────────────────
+          This was a full-bleed red card with one button on it, and
+          the twenty-six things this platform can list were behind
+          that button. A partner opens the Listing tab to list
+          something; making them tap a marketing card first is a
+          toll gate on the one action the screen exists for.
+
+          So the grid is the screen. The marketing survives as a slim
+          banner above it that cycles — no button, because tapping any
+          trade is the way in and two ways in is a decision nobody
+          should have to make. See TradeGrid. */}
+      {!editing && (
+        <>
+          <ListingPitch empty={services.length === 0} />
+          <TradeGrid
+            q={q}
+            setQ={setQ}
+            onPick={t => setPicking(t)}
+            placeholder="Search 26 trades — catering, generator, mehendi…"
+            heading={services.length > 0 ? (
+              <p className="mb-2 mt-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-ink-mute">
+                Add something else
+              </p>
+            ) : null}
+          />
+        </>
+      )}
 
       {services.length > 0 && (
         <p className="text-xs text-gray-500">
@@ -623,176 +545,5 @@ function DeleteButton({ onConfirm, busy }) {
         <X size={14} />
       </IconButton>
     </span>
-  )
-}
-
-/**
- * The way in, on the screen a partner reaches once.
- *
- * ══════════════════════════════════════════════════════════════════════
- * WHY "START LISTING YOUR BUSINESS" AND NOT "START WITH PHOTOGRAPHY"
- * ══════════════════════════════════════════════════════════════════════
- *
- * Naming their trade back at them was meant to feel like being listened
- * to. On the screen it reads as a narrowing — a photographer who also
- * shoots video, or a caterer who also hires chairs, is being told what
- * they are on the first tap. And a partner whose sign-up category was
- * wrong or vague is offered a wrong door as the main one.
- *
- * So the big button says what the whole screen is for, and their trade
- * is a line under it rather than the label on it. It still lands past
- * the trade question when we know the answer.
- *
- * ══════════════════════════════════════════════════════════════════════
- * AND WHY A SEARCH, NOT "SOMETHING ELSE"
- * ══════════════════════════════════════════════════════════════════════
- *
- * "Something else" is a dead end dressed as a button. It says nothing
- * about what else there is, so somebody who does two things has no way
- * to find out that the second one is listable without opening a picker
- * and scrolling twenty-six rows.
- *
- * The search says it instead. Typing filters every trade AND every
- * service inside them, so "dosa" finds Catering and "truck" finds
- * Transportation — the words a partner would use, not the words we
- * filed them under.
- *
- * ── The suggestions move on their own ────────────────────────────────
- * With an empty box the search would be an empty box. Instead it cycles
- * real entries out of the catalogue, a few at a time, so the breadth is
- * visible without being scrolled: a partner sees "Goods and equipment
- * moving" or "Licences and permissions" drift past and learns the
- * platform takes it before they have thought to ask.
- *
- * Every one is a real, listable service. Nothing here is invented copy —
- * the day one of them is a lie is the day the ₹6,587 above it stops
- * being believed.
- *
- * Honoured `prefers-reduced-motion`: the cycling stops and the first few
- * stay put. Movement that cannot be turned off is a bug for anybody who
- * gets motion sick reading it.
- */
-
-/* Every trade, and every service inside it, as one searchable list.
-   Derived, never retyped — adding a service to the customer catalogue
-   makes it findable here the same day. */
-function useListable() {
-  return React.useMemo(() => {
-    const out = []
-    for (const trade of TRADES) {
-      out.push({ label: trade, trade, kind: 'trade' })
-      for (const o of offeringsForTrade(trade)) {
-        if (o.name !== trade) out.push({ label: o.name, trade, kind: 'service' })
-      }
-    }
-    return out
-  }, [])
-}
-
-function QuickStartSearch({ onPick }) {
-  const all = useListable()
-  const [q, setQ] = React.useState('')
-  const [tick, setTick] = React.useState(0)
-
-  const still = React.useMemo(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  }, [])
-
-  React.useEffect(() => {
-    if (still || q) return
-    const t = setInterval(() => setTick(n => n + 1), 2200)
-    return () => clearInterval(t)
-  }, [still, q])
-
-  const hits = React.useMemo(() => {
-    const needle = q.trim().toLowerCase()
-    if (!needle) return []
-    return all
-      .filter(x => x.label.toLowerCase().includes(needle)
-        || x.trade.toLowerCase().includes(needle))
-      .slice(0, 8)
-  }, [q, all])
-
-  /* Three at a time, walking the list, so the same ones are not always
-     the ones on show. */
-  const drifting = React.useMemo(() => {
-    const services = all.filter(x => x.kind === 'service')
-    const at = (tick * 3) % Math.max(services.length, 1)
-    return [0, 1, 2].map(i => services[(at + i) % services.length]).filter(Boolean)
-  }, [tick, all])
-
-  return (
-    <div className="mt-3">
-      <div className="relative">
-        <Search
-          size={16}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/60"
-        />
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder={`Search ${all.length} things you can list`}
-          aria-label="Search everything you can list"
-          className="w-full rounded-2xl bg-white/15 py-3 pl-10 pr-3.5 text-[13.5px] font-bold text-white ring-1 ring-white/30 placeholder:font-semibold placeholder:text-white/60 focus:bg-white/20 focus:outline-none"
-        />
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {(q ? hits : drifting).map((x, i) => (
-          <button
-            key={`${x.kind}:${x.label}`}
-            onClick={() => onPick(x.trade)}
-            style={{ animationDelay: `${i * 90}ms` }}
-            className="animate-fade-up rounded-full bg-white/15 px-3 py-1.5 text-left text-[12.5px] font-extrabold text-white ring-1 ring-white/25 transition active:scale-[0.98]"
-          >
-            {x.label}
-            {x.kind === 'service' && (
-              <span className="ml-1.5 font-semibold text-white/60">{x.trade}</span>
-            )}
-          </button>
-        ))}
-        {q && !hits.length && (
-          <p className="py-1 text-[12.5px] font-semibold text-white/70">
-            Nothing matches “{q}”. Tap the button above and tell us — an
-            operator reads every one.
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export function QuickStart({ category, onPick }) {
-  const mine = category && category !== 'Other' && TRADES.includes(category) ? category : null
-
-  return (
-    <div className="mt-4">
-      <button
-        onClick={() => onPick(mine ?? true)}
-        className="group flex w-full items-center gap-2.5 rounded-2xl bg-white px-3.5 py-3.5 text-left shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition active:scale-[0.99]"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-kumkuma-600 text-white">
-          <Plus size={20} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-extrabold leading-tight text-kumkuma-700">
-            Start listing your business
-          </span>
-          <span className="mt-0.5 block text-[12px] font-semibold leading-snug text-ink-soft">
-            {mine
-              ? `We will open on ${mine}, because that is what you told us. Ten minutes.`
-              : 'Ten minutes, and you pick everything from a list.'}
-          </span>
-        </span>
-        <ArrowRight size={19} className="shrink-0 text-kumkuma-600 transition group-active:translate-x-0.5" />
-      </button>
-
-      <QuickStartSearch onPick={onPick} />
-
-      <p className="mt-2.5 text-center text-[11.5px] font-semibold text-white/70">
-        Nothing is charged, ever. You choose every job.
-      </p>
-    </div>
   )
 }

@@ -1,7 +1,7 @@
 /**
  * "Start with Photography" took the partner to the error boundary.
  *
- * Mounts AddItemFlow exactly the way QuickStart does — a trade handed in
+ * Mounts AddItemFlow the way the Listing tab does — a trade handed in
  * and the flow opening on the second screen — so the throw is a console
  * error here instead of a screenshot of a sad face on a phone.
  */
