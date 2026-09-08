@@ -172,6 +172,17 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         return null
       })()}
 
+      {/* ── And where each ONE of them is ───────────────────────
+          The card above says one thing about the whole account — "3
+          under review" — which is right with one listing and wrong with
+          four, because the four are not in the same place. It also hides
+          the good news: a partner reads "under review" and concludes
+          nothing has happened while two of their four are already taking
+          jobs. See ListingTracker. */}
+      {services.length > 0 && (
+        <ListingTracker services={services} onOpenJobs={onOpenJobs} />
+      )}
+
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
       {editing && typeof editing === 'object' && (
