@@ -143,10 +143,14 @@ export default function MyJobs({ vendorId }) {
     return (
       <div className="rounded-[22px] bg-amber-50 p-4 ring-1 ring-amber-200">
         <p className="text-[14px] font-extrabold text-amber-900">Your jobs list is not switched on yet</p>
+        {/* "Migration 080 has not been applied to the database" was
+            shipped to partners. It is true, it is our problem, and it
+            names a thing a cook has no way to act on — which reads as the
+            app being broken in a way nobody is fixing. Same fact, said to
+            the person actually reading it. */}
         <p className="mt-1 text-[12.5px] leading-relaxed text-amber-900/80">
-          Migration 080 has not been applied to the database. Jobs you accept
-          are safe — they are recorded — but they cannot be listed here until
-          it is.
+          This is on us, not you. Jobs you accept are recorded and safe —
+          we just cannot show the list here yet. Our team is on it.
         </p>
       </div>
     )

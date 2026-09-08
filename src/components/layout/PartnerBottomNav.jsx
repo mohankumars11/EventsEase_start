@@ -126,7 +126,10 @@ export default function PartnerBottomNav() {
          the bar; without this the last row of labels is behind it. */
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <ul className="mx-auto flex max-w-2xl items-stretch">
+      {/* max-w-5xl to match the page. At max-w-2xl the active tab sat
+          under the middle of a wider screen while the content it belonged
+          to ran past both sides of it. */}
+      <ul className="mx-auto flex max-w-5xl items-stretch">
         {items.map(({ id, label, icon: Icon, to }) => {
           const on = active === id
           return (

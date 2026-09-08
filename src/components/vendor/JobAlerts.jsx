@@ -203,26 +203,46 @@ export default function JobAlerts({ vendorId }) {
     <div className={`rounded-[22px] p-4 ring-1 ${
       on ? 'bg-forest-50 ring-forest-200/70' : 'bg-white ring-ink/[0.06]'
     }`}>
-      <div className="flex items-start gap-3">
-        <span className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-          on ? 'bg-forest-600 text-white' : 'bg-saffron-400/20 text-saffron-700'
-        }`}>
-          {on ? <Bell size={17} /> : <BellOff size={17} />}
+      {/* ══════════════════════════════════════════════════════════════
+          WORKING, IT IS ONE LINE
+          ══════════════════════════════════════════════════════════════
+
+          This card sat at the very top of the Jobs tab — above the offers
+          the app exists to show — at 120-140px even when everything was
+          fine. A 40px icon badge, a heading, a sentence, three buttons of
+          equal weight, and a <pre> of diagnostics.
+
+          Everything in it except the on/off state is for us. A partner
+          whose alerts are on has nothing to do here, and the tab's whole
+          job is the offer underneath.
+
+          So: on and healthy, one row. Off, or broken, it keeps its full
+          size — those are the two states that have to earn a tap. */}
+      <div className={`flex gap-3 ${on && !problem ? 'items-center' : 'items-start'}`}>
+        <span className={`shrink-0 flex items-center justify-center rounded-full ${
+          on && !problem ? 'h-7 w-7' : 'mt-0.5 h-10 w-10'
+        } ${on ? 'bg-forest-600 text-white' : 'bg-saffron-400/20 text-saffron-700'}`}>
+          {on ? <Bell size={on && !problem ? 14 : 17} /> : <BellOff size={17} />}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-extrabold leading-tight text-ink">
+          <p className={`font-extrabold leading-tight text-ink ${
+            on && !problem ? 'text-[13px]' : 'text-[14.5px]'
+          }`}>
             {on ? 'Job alerts are on' : 'Turn on job alerts'}
           </p>
 
-          {/* On, this is a settings row and says one thing. Off, it has to
-              earn a tap, so it keeps the reason — a master who understands
-              WHY 45 seconds matters is a master who leaves alerts on. */}
-          <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-            {on
-              ? 'We will buzz your phone when a job near you comes up.'
-              : 'A job is offered to a few masters at once and the first to accept gets it. Without alerts you will only see jobs while this page is open.'}
-          </p>
+          {/* On and healthy, the sentence goes: a partner who has already
+              turned them on does not need to be told what they do. Off, it
+              has to earn a tap, so it keeps the reason — a master who
+              understands WHY 45 seconds matters leaves alerts on. */}
+          {!(on && !problem) && (
+            <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
+              {on
+                ? 'We will buzz your phone when a job near you comes up.'
+                : 'A job is offered to a few masters at once and the first to accept gets it. Without alerts you will only see jobs while this page is open.'}
+            </p>
+          )}
 
           {problem && (
             <p className="mt-2 flex items-start gap-1.5 text-[12px] font-semibold leading-snug text-amber-800">
@@ -268,45 +288,75 @@ export default function JobAlerts({ vendorId }) {
               it because "is this actually working" is the only other
               question anybody has about a notification, and the honest
               answer is a buzz in your hand rather than a status label. */}
-          <div className="mt-2.5 flex flex-wrap items-center gap-2">
-            <button
-              onClick={on ? turnOff : turnOn}
-              disabled={busy}
-              className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-[13px] font-extrabold transition active:scale-[0.98] disabled:opacity-50 ${
-                on ? 'bg-white text-ink-soft ring-1 ring-ink/[0.08]' : 'bg-saffron-400 text-plum-950'
-              }`}
-            >
-              {busy && <Loader2 size={13} className="animate-spin" />}
-              {on ? 'Turn off' : 'Turn on alerts'}
-            </button>
+          {/* ── Off, or broken: the full row ────────────────────────
+              Turning them ON is the decision worth a big button, and a
+              partner whose alerts are broken needs Test and Details right
+              there. Neither is true of somebody whose alerts are simply
+              working. */}
+          {!(on && !problem) && (
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <button
+                onClick={on ? turnOff : turnOn}
+                disabled={busy}
+                className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-[13px] font-extrabold transition active:scale-[0.98] disabled:opacity-50 ${
+                  on ? 'bg-white text-ink-soft ring-1 ring-ink/[0.08]' : 'bg-saffron-400 text-plum-950'
+                }`}
+              >
+                {busy && <Loader2 size={13} className="animate-spin" />}
+                {on ? 'Turn off' : 'Turn on alerts'}
+              </button>
 
-            {on && (
+              {on && (
+                <button
+                  onClick={sendTest}
+                  disabled={testing}
+                  className="flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2 text-[13px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
+                >
+                  {testing && <Loader2 size={13} className="animate-spin" />}
+                  Test alert
+                </button>
+              )}
+
+              {on && (
+                <button
+                  onClick={() => {
+                    setShowDetails(v => !v)
+                    setDiag(d => (d ? null : nativeDiagnostics()))
+                  }}
+                  className="ml-auto text-[11.5px] font-bold text-ink-mute underline-offset-2 hover:underline"
+                >
+                  {showDetails ? 'Hide' : 'Details'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── On and healthy: everything behind one dot ───────────────
+              Turn off, Test and the diagnostics still exist and are one
+              tap away. They are simply not three controls of equal weight
+              at the top of the screen a partner opened to see their
+              offers. */}
+
+          {on && !problem && showDetails && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={turnOff}
+                disabled={busy}
+                className="flex items-center gap-1.5 rounded-2xl bg-white px-3.5 py-1.5 text-[12.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.08] disabled:opacity-50"
+              >
+                {busy && <Loader2 size={12} className="animate-spin" />}
+                Turn off
+              </button>
               <button
                 onClick={sendTest}
                 disabled={testing}
-                className="flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2 text-[13px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-2xl bg-white px-3.5 py-1.5 text-[12.5px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-60"
               >
-                {testing && <Loader2 size={13} className="animate-spin" />}
+                {testing && <Loader2 size={12} className="animate-spin" />}
                 Test alert
               </button>
-            )}
-
-            {/* Only when the answer is surprising. An installed APK that
-                reports itself as a browser has one of two problems needing
-                opposite fixes, and which one it is can only be read off
-                the device. */}
-            {on && (
-              <button
-                onClick={() => {
-                  setShowDetails(v => !v)
-                  setDiag(d => (d ? null : nativeDiagnostics()))
-                }}
-                className="ml-auto text-[11.5px] font-bold text-ink-mute underline-offset-2 hover:underline"
-              >
-                {showDetails ? 'Hide' : 'Details'}
-              </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {diag && (
             <pre className="mt-1.5 overflow-x-auto rounded-xl bg-ink/[0.04] p-2.5 text-[10.5px] leading-relaxed text-ink-soft">
@@ -319,6 +369,19 @@ export default function JobAlerts({ vendorId }) {
             <p className="mt-2 text-[11.5px] font-semibold leading-snug text-ink-soft">{tested}</p>
           )}
         </div>
+        {on && !problem && (
+          <button
+            onClick={() => {
+              setShowDetails(v => !v)
+              setDiag(d => (d ? null : nativeDiagnostics()))
+            }}
+            aria-label={showDetails ? 'Hide alert settings' : 'Alert settings'}
+            aria-expanded={showDetails}
+            className="shrink-0 rounded-full px-2 py-1 text-[15px] font-extrabold leading-none text-ink-mute active:bg-ink/[0.05]"
+          >
+            ···
+          </button>
+        )}
       </div>
     </div>
   )

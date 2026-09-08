@@ -3,6 +3,8 @@ import { Wallet, Clock, ShieldCheck, Banknote, TriangleAlert, ArrowRight } from 
 import { supabase } from '../../lib/supabase'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import { formatINR } from '../../utils/format'
+import { partnerEarnings } from '../../lib/instantPricing'
+import ClaimPayment from './ClaimPayment'
 
 /**
  * What this partner has earned, and where each rupee currently is.
@@ -49,32 +51,58 @@ const DAY = 86400000
 export default function Earnings({ vendorId, onAddPayout }) {
   const [jobs, setJobs] = useState([])
   const [payout, setPayout] = useState(null)
+  const [claims, setClaims] = useState([])
   const [loaded, setLoaded] = useState(false)
 
   const read = useCallback(async () => {
     if (!vendorId) return
-    const [{ data: j }, { data: p }] = await Promise.all([
+    const [{ data: j }, { data: p }, { data: c }] = await Promise.all([
+      /* quoted_amount_paise and is_funded were always on this view and
+         this screen never selected either. It reconstructed "has the
+         customer paid" from `paid_at`, when `is_funded` is the real fact,
+         computed from an escrow HOLD. */
       supabase.from('partner_jobs')
-        .select('line_id, service_name, status, partner_amount_paise, paid_at, delivered_at, event_date, occasion_name, area_label')
+        .select('line_id, service_name, status, partner_amount_paise, quoted_amount_paise, is_funded, paid_at, delivered_at, event_date, occasion_name, area_label')
         .order('event_date', { ascending: false }),
       supabase.from('vendor_payout_details')
         .select('method, upi_id, account_number, verified_at').eq('vendor_id', vendorId).maybeSingle(),
+      /* Claims exist and nothing has ever read them, so a job stayed
+         "ready to claim" after the partner had claimed it. */
+      supabase.from('payout_claims')
+        .select('line_id, status, requested_at').eq('vendor_id', vendorId),
     ])
     setJobs(j ?? [])
     setPayout(p ?? null)
+    setClaims(c ?? [])
     setLoaded(true)
   }, [vendorId])
 
   useEffect(() => { read() }, [read])
   useLivePoll(read, 20_000, [read])
 
+  /* line_id -> claim. A claim is the partner having asked; `paid` is us
+     having sent it. */
+  const claimBy = useMemo(
+    () => Object.fromEntries((claims ?? []).map(c => [c.line_id, c])), [claims])
+
   const buckets = useMemo(() => {
     const now = Date.now()
-    const b = { pending: [], held: [], ready: [], paid: [] }
+    const b = { pending: [], held: [], ready: [], asked: [], paid: [] }
     for (const j of jobs) {
       if (j.status === 'cancelled' || j.status === 'expired') continue
-      if (j.status === 'settled') { b.paid.push(j); continue }
-      if (!j.paid_at) { b.pending.push(j); continue }
+
+      const claim = claimBy[j.line_id]
+      /* `status === 'settled'` was the only test for paid, and nothing in
+         this codebase ever writes that value — so the Paid tile was
+         structurally always zero. A settled CLAIM is the thing that
+         actually happens. */
+      if (claim?.status === 'paid' || j.status === 'settled') { b.paid.push(j); continue }
+      if (claim?.status === 'requested') { b.asked.push(j); continue }
+
+      /* is_funded comes from an escrow HOLD. `paid_at` was a proxy for it
+         and this view has carried the real thing all along. */
+      if (!j.is_funded && !j.paid_at) { b.pending.push(j); continue }
+
       const eventOver = j.event_date
         ? now > new Date(`${j.event_date}T00:00:00`).getTime() + DAY
         : false
@@ -82,32 +110,86 @@ export default function Earnings({ vendorId, onAddPayout }) {
       else b.held.push(j)
     }
     return b
-  }, [jobs])
+  }, [jobs, claimBy])
 
-  const sum = list => list.reduce((n, j) => n + (j.partner_amount_paise ?? 0), 0)
+  /* ══════════════════════════════════════════════════════════════
+     THE SAME NUMBER THE OFFER PROMISED
+     ══════════════════════════════════════════════════════════════
 
-  const cards = [
+     This screen printed `partner_amount_paise` — the job value less the
+     platform fee. The offer card prints `partnerEarnings().netPaise`,
+     which is that MINUS TCS and TDS, because net is what reaches the
+     account and it is what a master accepts on.
+
+     So one job read ₹10,540 here and ₹10,416 there, and the smaller one
+     was what arrived. instantPricing.js:400 names this exact mistake —
+     "a master shown ₹10,540 who receives ₹10,416 will conclude they were
+     short-changed, and they will be right to ask" — and this screen was
+     making it.
+
+     Net everywhere, computed from `quoted_amount_paise` the same way the
+     offer computes it, so the two cannot drift. */
+  const net = j => (j.quoted_amount_paise
+    ? partnerEarnings(j.quoted_amount_paise).netPaise
+    /* An older row without a quote falls back to what it has. Shown
+       rather than dropped: a job missing from a total is worse than one
+       whose deductions we cannot itemise. */
+    : (j.partner_amount_paise ?? 0))
+
+  const sum = list => list.reduce((n, j) => n + net(j), 0)
+
+  /* ══════════════════════════════════════════════════════════════
+     ONE TOTAL, THEN THE STAGES IN THE ORDER SOMEBODY ASKS THEM
+     ══════════════════════════════════════════════════════════════
+
+     Four tiles in a 2x2 grid, deliberately never summed, answered
+     "where is each part of my money" and never answered "how much have I
+     made" — which is the question. A new partner met four ₹0 tiles with
+     abstract sentences under them.
+
+     So: the total first, in one number, and then the stages as rows a
+     person reads top to bottom in the order the money actually moves.
+     Rows rather than a grid because they are a sequence, not four
+     categories, and a sequence read left-to-right-then-down is a
+     sequence nobody can see. */
+  const stages = [
     {
-      id: 'ready', icon: Banknote, tone: 'forest',
-      label: 'Ready to be paid out', value: sum(buckets.ready), n: buckets.ready.length,
-      scan: 'Delivered successfully. Yours to claim.',
+      id: 'pending', icon: Clock, tone: 'ink',
+      label: 'Waiting on the customer',
+      value: sum(buckets.pending), n: buckets.pending.length,
+      scan: 'You have the job. The customer has not paid yet.',
     },
     {
       id: 'held', icon: ShieldCheck, tone: 'saffron',
-      label: 'Held for you', value: sum(buckets.held), n: buckets.held.length,
-      scan: 'The customer has paid. Yours once the job is done.',
+      label: 'Paid, and held for you',
+      value: sum(buckets.held), n: buckets.held.length,
+      scan: 'The money exists. It is yours once the job is done.',
     },
     {
-      id: 'pending', icon: Clock, tone: 'ink',
-      label: 'Not yours yet', value: sum(buckets.pending), n: buckets.pending.length,
-      scan: 'Accepted, but the customer has not paid.',
+      id: 'ready', icon: Banknote, tone: 'forest',
+      label: 'Ready to claim',
+      value: sum(buckets.ready), n: buckets.ready.length,
+      scan: 'Done and cleared. Ask for it whenever you like.',
+    },
+    {
+      id: 'asked', icon: Clock, tone: 'saffron',
+      label: 'You have asked for it',
+      value: sum(buckets.asked), n: buckets.asked.length,
+      scan: 'We are sending it. Usually two working days.',
     },
     {
       id: 'paid', icon: Wallet, tone: 'ink',
-      label: 'Paid out', value: sum(buckets.paid), n: buckets.paid.length,
-      scan: 'Already sent to your account.',
+      label: 'In your account',
+      value: sum(buckets.paid), n: buckets.paid.length,
+      scan: 'Already sent.',
     },
   ]
+
+  /* Everything that is or will be theirs. Not "paid out" alone, which
+     reads as though the rest might never arrive, and not everything
+     including cancelled work either. */
+  const earnedPaise = sum(buckets.held) + sum(buckets.ready)
+    + sum(buckets.asked) + sum(buckets.paid)
 
   const TONE = {
     forest:  'bg-forest-50 text-forest-700 ring-forest-200',
@@ -151,18 +233,70 @@ export default function Earnings({ vendorId, onAddPayout }) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2.5">
-        {cards.map(c => {
+      {/* ── Asking for it happens HERE ────────────────────────────
+          "Ready to claim" said money was ready and offered no way to ask
+          for it: the button lived on the job card, on the Jobs tab,
+          behind a disclosure. A partner reading a screen that says money
+          is theirs should be able to ask for it on that screen. */}
+      {buckets.ready.length > 0 && (
+        <div className="rounded-[22px] bg-forest-50 p-4 ring-1 ring-forest-200">
+          <p className="text-[13.5px] font-extrabold leading-tight text-forest-900">
+            {buckets.ready.length === 1
+              ? 'One job is ready to be paid out'
+              : `${buckets.ready.length} jobs are ready to be paid out`}
+          </p>
+          <p className="mt-0.5 text-[12px] leading-snug text-forest-800">
+            {formatINR(Math.round(sum(buckets.ready) / 100))} in total. Ask for
+            it whenever you like — it does not expire.
+          </p>
+          <div className="mt-2.5 space-y-2">
+            {buckets.ready.map(j => (
+              <div key={j.line_id} className="rounded-2xl bg-white p-2.5 ring-1 ring-forest-200/70">
+                <p className="mb-1.5 truncate text-[12.5px] font-extrabold text-ink">
+                  {j.service_name}
+                  <span className="ml-1.5 font-serif text-[13px] tabular-nums text-ink-soft">
+                    {formatINR(Math.round(net(j) / 100))}
+                  </span>
+                </p>
+                <ClaimPayment lineId={j.line_id} onClaimed={read} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── What you have earned ─────────────────────────────────
+          One number, because "how much have I made" is the question this
+          screen exists to answer and four un-summed tiles never did. */}
+      <div className="overflow-hidden rounded-[22px] bg-plum-950 p-4 text-white">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/70">
+          Yours, all in
+        </p>
+        <p className="mt-1 font-serif text-[32px] font-extrabold leading-none tracking-tight tabular-nums">
+          {formatINR(Math.round(earnedPaise / 100))}
+        </p>
+        <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/75">
+          {jobs.length === 0
+            ? 'Nothing yet. It starts with your first accepted job.'
+            : 'After the platform fee and the tax deposited for you — the '
+              + 'same figure the offer showed you when you accepted.'}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {stages.filter(c => c.n > 0 || c.id === 'ready').map(c => {
           const Icon = c.icon
           return (
-            <div key={c.id} className={`rounded-[20px] p-3.5 ring-1 ${TONE[c.tone]}`}>
-              <Icon size={17} />
-              <p className="mt-2 font-serif text-[21px] font-extrabold leading-none tracking-tight text-ink tabular-nums">
+            <div key={c.id} className={`flex items-center gap-3 rounded-[20px] p-3.5 ring-1 ${TONE[c.tone]}`}>
+              <Icon size={17} className="shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-extrabold leading-snug text-ink">{c.label}</p>
+                <p className="mt-0.5 text-[11.5px] font-semibold leading-snug opacity-80">
+                  {c.n === 0 ? c.scan : `${c.n} job${c.n === 1 ? '' : 's'} · ${c.scan}`}
+                </p>
+              </div>
+              <p className="shrink-0 font-serif text-[19px] font-extrabold leading-none tracking-tight text-ink tabular-nums">
                 {formatINR(Math.round(c.value / 100))}
-              </p>
-              <p className="mt-1.5 text-[12px] font-extrabold leading-snug text-ink">{c.label}</p>
-              <p className="mt-0.5 text-[11.5px] font-semibold leading-snug opacity-80">
-                {c.n === 0 ? c.scan : `${c.n} job${c.n === 1 ? '' : 's'} · ${c.scan}`}
               </p>
             </div>
           )
@@ -207,11 +341,18 @@ export default function Earnings({ vendorId, onAddPayout }) {
           </p>
           <ul className="mt-2 divide-y divide-ink/[0.06]">
             {jobs.slice(0, 25).map(j => {
+              /* ── The same words as the rows above ────────────────
+                 The stages said "Ready to be paid out" and this line
+                 said "Delivered" for the same job, so a partner could
+                 not trace a figure back to the work in it. One
+                 vocabulary, derived from the same buckets rather than
+                 re-tested here — two ladders drift. */
               const where =
-                j.status === 'settled' ? 'Paid out'
-                : !j.paid_at ? 'Not paid yet'
-                : j.delivered_at ? 'Delivered'
-                : 'Held for you'
+                buckets.paid.includes(j) ? 'In your account'
+                : buckets.asked.includes(j) ? 'You have asked for it'
+                : buckets.ready.includes(j) ? 'Ready to claim'
+                : buckets.held.includes(j) ? 'Paid, held for you'
+                : 'Waiting on the customer'
               return (
                 <li key={j.line_id} className="flex items-center gap-3 py-2.5">
                   <span className="min-w-0 flex-1">

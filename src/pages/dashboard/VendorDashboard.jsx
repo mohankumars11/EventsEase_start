@@ -52,7 +52,11 @@ const TABS = [
   // Second only to Jobs. A partner opens this app to work and to find
   // out what they have earned, in that order.
   { id: 'earnings',     label: 'Earnings',     icon: IndianRupee     },
-  { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
+  /* Overview is NOT here on purpose. It is absent from
+     PartnerBottomNav, so listing it made a tab reachable only by
+     typing a URL — and TABS is what validates ?tab=, so a stale link
+     to it rendered a screen with no way back to the others. The
+     component stays; nothing routes to it. */
   { id: 'list',         label: 'Listing',      icon: ClipboardList   },
   { id: 'availability', label: 'Calendar',     icon: CalendarDays    },
   { id: 'account',      label: 'Account',      icon: UserCog         },
@@ -93,10 +97,16 @@ export default function VendorDashboard() {
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
   const statusMeta   = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
 
-  /* Is anything rendered above the tab content? The business-name
-     header is Home only and the status card only when it blocks, so on
+  /* Is anything rendered above the tab content? The business-name header
+     is Jobs-only and the status card only shows when it blocks, so on
      Listing the answer is usually no — and the margin written to clear
-     them was pure white space. */
+     them was pure white space.
+
+     The gap is 24px on a tab that has something above it and 0 on one
+     that does not. It used to be 24 on Jobs regardless, stacked on top of
+     CalendarNudge's own 16 — 40px of nothing before the jobs a partner
+     opened the app to see — and 48 for a blocked partner, because the
+     status card already carries its own 24. */
   const aboveTabs = tab === 'offers' || statusMeta.blocking
   /* PARTNER_PLANS, not VENDOR_PLANS. The two ladders describe different
      businesses — VENDOR_PLANS still sells "priority in coordinator search"
@@ -235,11 +245,14 @@ export default function VendorDashboard() {
           different subject sitting above the one somebody navigated to
           — and on Account it also linked back to Jobs, which is the one
           place they had just chosen to leave. */}
+      {/* space-y, because these rendered as bare siblings: the install
+          banner butted straight into the resume card and the resume card
+          into the header below it. */}
       {tab === 'offers' && (
-        <>
+        <div className="space-y-3">
           <InstallTheApp />
           <PartnerResume vendorId={vendor.id} />
-        </>
+        </div>
       )}
 
       {/* ── Header ───────────────────────────────────────── */}
@@ -302,7 +315,7 @@ export default function VendorDashboard() {
           not live will sit waiting for jobs that are never coming. That
           keeps its card, on every tab. */}
       {statusMeta.blocking && (
-      <section className={`card mt-6 p-4 sm:p-5 flex items-start gap-3 ${TONES[statusMeta.tone].card}`}>
+      <section className={`card mt-4 p-4 sm:p-5 flex items-start gap-3 ${TONES[statusMeta.tone].card}`}>
         <CheckCircle2 size={20} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
         <div className="flex-1 min-w-0">
           <h2 className="font-bold text-gray-900 text-sm">{statusMeta.headline}</h2>
