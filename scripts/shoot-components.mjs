@@ -138,7 +138,26 @@ const server = createServer((req, res) => {
   if (url === '/app.css') { res.setHeader('content-type', 'text/css'); return res.end(readFileSync(cssPath)) }
   if (url === '/bundle.js') { res.setHeader('content-type', 'text/javascript'); return res.end(readFileSync(bundle)) }
   res.setHeader('content-type', 'text/html'); res.end(html)
-}).listen(PORT)
+})
+
+/* A killed run leaves the port bound for a while, and node's default is
+   an unhandled 'error' event: a stack trace ending in
+   shoot-components.mjs:141, which reads as this file being broken. It is
+   not; it is the previous run still holding 4351. Said plainly, with the
+   fix. */
+server.on('error', err => {
+  if (err.code === 'EADDRINUSE') {
+    console.error('\n  Port ' + PORT + ' is still held by an earlier run.')
+    console.error('  Kill it and try again:')
+    console.error('    powershell "Get-NetTCPConnection -LocalPort ' + PORT
+      + ' | Select -Expand OwningProcess -Unique | Stop-Process -Force"\n')
+  } else {
+    console.error('\n  Could not start the local server: ' + err.message + '\n')
+  }
+  process.exit(1)
+})
+
+server.listen(PORT)
 
 /* ── shoot it ────────────────────────────────────────────────────────── */
 const EDGE = ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',

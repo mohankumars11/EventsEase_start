@@ -42,7 +42,7 @@ const r = spawnSync(process.execPath, [
   'shots/tabs-render.png',
   '--scenes', 'scripts/scenes/smoke-scenes.jsx',
   '--scale', '1',
-  '--wait', '9000',
+  '--wait', '13000',
 ], { cwd: ROOT, encoding: 'utf8' })
 
 const out = (r.stdout ?? '') + (r.stderr ?? '')

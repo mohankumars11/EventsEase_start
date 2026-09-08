@@ -66,7 +66,32 @@ export default function SmokeScenes() {
           if (!document.querySelector('[data-add-item-flow]')) {
             console.error('SMOKE: VendorServiceList — tapping a trade opened nothing')
           }
-          console.error('SMOKE-DONE')
+          /* Close it again so the calendar underneath is reachable. */
+          const close = document.querySelector('[data-add-item-flow] [aria-label="Close"]')
+          close?.click()
+
+          setTimeout(() => {
+            /* The Calendar tab's one action: tapping a day has to open
+               the sheet. Same reasoning as the trade tap — the grid
+               mounted fine the whole time the sheet was unreachable. */
+            const cal = document.querySelector('[data-smoke="VendorAvailability"]')
+            const day = cal
+              && [...cal.querySelectorAll('button')].find(b => /^\d+$/.test((b.textContent ?? '').trim()))
+            if (!day) {
+              console.error('SMOKE: VendorAvailability — no day cells to tap')
+              console.error('SMOKE-DONE')
+              return
+            }
+            day.click()
+            setTimeout(() => {
+              const sheet = [...document.querySelectorAll('*')]
+                .some(el => /Set this day/i.test(el.textContent ?? '') && el.children.length < 6)
+              if (!sheet) {
+                console.error('SMOKE: VendorAvailability — tapping a day opened nothing')
+              }
+              console.error('SMOKE-DONE')
+            }, 500)
+          }, 350)
         }, 500)
         return
       }
