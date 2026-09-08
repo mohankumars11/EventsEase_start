@@ -142,9 +142,13 @@ if (deadAlias.length) fail(`${deadAlias.length} aliases no card uses`, deadAlias
 else pass(`all ${Object.keys(aliases).length} aliases are used`)
 if (deadStaple.length) console.log(`  · ${deadStaple.length} staples unused, kept on purpose: ${deadStaple.join(', ')}`)
 
-/* An alias must point at something real. */
+/* An alias must point at something real — and "real" includes the
+   dishes this table adds, not only the ones that were there before.
+   "Veg Kadai" and "Kadai Veg" are the same curry and BOTH arrived
+   with this work, so the alias between them targets an added dish.
+   Checking only the pre-existing catalogue called that broken. */
 const brokenAlias = Object.entries(aliases)
-  .filter(([, target]) => !known.has(norm(target)))
+  .filter(([, target]) => !known.has(norm(target)) && !byName.has(norm(target)))
   .map(([k, t]) => `${k} -> ${t}  (not in the catalogue)`)
 if (brokenAlias.length) fail(`${brokenAlias.length} aliases point at nothing`, brokenAlias)
 else pass('every alias points at a catalogue dish')
@@ -177,7 +181,97 @@ if (dupes.length) fail(`${dupes.length} names collide`, dupes)
 else pass('no name appears twice')
 
 /* ══════════════════════════════════════════════════════════════════
-   5 · A SECOND OPINION ON DIET
+   5 · THE SAME DISH UNDER TWO NAMES
+   ══════════════════════════════════════════════════════════════════
+   The dish screen showed a Karnataka caterer "Majjige (buttermilk)"
+   directly under "Majjige / spiced buttermilk" — one drink, two rows,
+   same cuisine, same course. A caterer had to tick it twice and a card
+   asking for one would miss a kitchen that ticked the other. Eleven of
+   these went in, including three rows for obbattu, which is holige.
+
+   Found by TOKEN CONTAINMENT: are one name's words a subset of the
+   other's, ignoring brackets, slashes and filler. Deterministic, and
+   narrow enough to be trusted — unlike edit distance, which was tried
+   for the aliases and proposed "Masala Dosa" for "Masala soda".
+
+   It cannot decide on its own, because the same test finds "Rasam" and
+   "Tomato Rasam", which genuinely differ. So every overlap has to be
+   ANSWERED: aliased away, or named here with the reason it is really a
+   different dish. Silence is not an option, which is the whole point —
+   the eleven got in through silence.
+
+   Retired rows are skipped: nothing offers them, so nothing can
+   collide with them. */
+{
+  const NOISE = new Set(['and', 'with', 'or', 'the', 'a', 'of', 'in', 'style'])
+  const tokens = name => new Set(
+    name.toLowerCase().replace(/[()\/,.-]/g, ' ').split(/\s+/)
+      .filter(w => w && !NOISE.has(w)))
+  const subset = (a, b) => a.size > 0 && [...a].every(w => b.has(w))
+
+  /* Why each of these is a different dish from the one it overlaps. A
+     reason a person wrote, not a rule — the difference between an
+     ingredient and a synonym is not something a script can see. */
+  const DISTINCT_FROM = {
+    'Beetroot Poori': 'beetroot in the dough, not plain poori',
+    'Rawa Poori': 'made with rawa',
+    'Mango Gojju': 'the catalogue entry is mango OR tomato; this is the mango one',
+    'Kurma': 'a card writing "Kurma" has not said which; the other names its vegetables',
+    'Saagu': 'a card writing "Saagu" has not said which; the other is the potato one',
+    'Beans Sprouts Palya': 'sprouted, which is a different dish from beans palya',
+    'Cabbage Channa Palya': 'with channa',
+    'Palya': 'the card names no vegetable; the others do',
+    'Kosambari': 'the card names no dal; the others do',
+    'Kosambari (hesarubele and kadlebele)': 'two dals, not one',
+    'Kori Rotti': 'chicken. The other is the veg version and they are not interchangeable',
+    'Tamil Nadu style Sambar': 'a regional style, not plain sambar',
+    'Chennai Rasam': 'a named regional rasam',
+    'Madras Rasam': 'a named regional rasam',
+    'Pepper Rasam': 'pepper is the point of it',
+    'Tomato Rasam': 'tomato is the point of it',
+    'Pahadi Paneer Tikka': 'the pahadi marinade is a different dish',
+    'Naan': 'plain. The other is butter naan',
+    'Angoor Rasmalai': 'small-ball rasmalai, made and served differently',
+  }
+
+  const active = pick('catalogue_dishes')
+    .map(row => {
+      const f = row.match(/'((?:[^']|'')*)'/g)?.map(x => x.slice(1, -1).replace(/''/g, "'"))
+      if (!f || f.length < 4) return null
+      return {
+        id: f[0], cuisine: f[1], course: f[2], name: f[3],
+        card: /, 'menu_card', /.test(row),
+        live: /,\s*TRUE$/.test(row),
+      }
+    })
+    .filter(d => d && d.live)
+
+  const unanswered = []
+  for (const a of active.filter(d => d.card)) {
+    for (const b of active.filter(d => !d.card)) {
+      if (a.cuisine !== b.cuisine || a.course !== b.course) continue
+      const ta = tokens(a.name)
+      const tb = tokens(b.name)
+      if (!subset(ta, tb) && !subset(tb, ta)) continue
+      if (DISTINCT_FROM[a.name]) continue
+      unanswered.push(`${a.name} (${a.id}) overlaps ${b.name} (${b.id})`
+        + ` in ${a.cuisine}/${a.course} — alias it away, or say why it differs`)
+    }
+  }
+
+  if (!active.length) {
+    fail('read no active dishes — the pattern is broken', [])
+  } else if (unanswered.length) {
+    fail(`${unanswered.length} names overlap a dish that already existed`, unanswered)
+  } else {
+    pass(`no added dish is a second name for one that already existed`
+      + ` (${Object.keys(DISTINCT_FROM).length} overlaps explained,`
+      + ` ${(MC.MENU_CARD_RETIRED ?? []).length} retired)`)
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   6 · A SECOND OPINION ON DIET
    ══════════════════════════════════════════════════════════════════
    This does NOT decide anything — the table decides. It only asks the
    question a rule would ask, so a disagreement has to be looked at

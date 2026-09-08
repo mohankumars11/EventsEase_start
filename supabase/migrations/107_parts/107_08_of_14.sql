@@ -18,8 +18,6 @@
 -- it again.
 
 BEGIN;
-INSERT INTO public.listing_services (id, service_key, trade_id, name, sort_order, is_active) VALUES ('SBM-SVC-046', 'priest', 'SBM-TRD-016', 'Priest / purohit', 0, TRUE)
-  ON CONFLICT (id) DO UPDATE SET service_key = EXCLUDED.service_key, trade_id = EXCLUDED.trade_id, name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
 INSERT INTO public.listing_services (id, service_key, trade_id, name, sort_order, is_active) VALUES ('SBM-SVC-047', 'pooja', 'SBM-TRD-016', 'Pooja samagri & setup', 1, TRUE)
   ON CONFLICT (id) DO UPDATE SET service_key = EXCLUDED.service_key, trade_id = EXCLUDED.trade_id, name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
 INSERT INTO public.listing_services (id, service_key, trade_id, name, sort_order, is_active) VALUES ('SBM-SVC-048', 'washrooms', 'SBM-TRD-017', 'Portable washrooms', 0, TRUE)
@@ -652,5 +650,7 @@ INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, so
   ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.listing_questions (id, scope, group_key, question, hint, answer_type, takes_exact, exact_unit, sort_order) VALUES ('SBM-SPG-339', 'trade:Transportation', 'helpers', 'Who loads and unloads?', 'The question every equipment move turns into an argument over.', 'one', FALSE, NULL, 3)
   ON CONFLICT (id) DO UPDATE SET scope = EXCLUDED.scope, group_key = EXCLUDED.group_key, question = EXCLUDED.question, hint = EXCLUDED.hint, answer_type = EXCLUDED.answer_type, takes_exact = EXCLUDED.takes_exact, exact_unit = EXCLUDED.exact_unit, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-1589', 'SBM-SPG-339', 'driver_only', 'Driver only', 'The customer arranges labour', 0)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 
 COMMIT;

@@ -148,7 +148,7 @@ INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, 
   ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
 INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-031', 'SBM-MLN-039', 'SBM-AP-ST-500', 0)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-032', 'SBM-MLN-039', 'SBM-KA-ST-526', 1)
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-307', 'SBM-MLN-039', 'SBM-KA-ST-118', 1)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-040', 'SBM-MNU-002', NULL, 18, 'Sweet: Bele Holige with milk and ghee', 'SBM-KA-SW-510', 'dish', FALSE)
   ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
@@ -444,7 +444,7 @@ INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-104', 'SBM-MNU-005', NULL, 2, 'Veg Kadai OR Haryali Mix Veg OR Channa Masala', NULL, 'choice', TRUE)
   ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
-INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-115', 'SBM-MLN-104', 'SBM-NI-CU-527', 0)
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-308', 'SBM-MLN-104', 'SBM-NI-CU-518', 0)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-116', 'SBM-MLN-104', 'SBM-NI-CU-517', 1)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
@@ -590,7 +590,7 @@ INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-156', 'SBM-MLN-135', 'SBM-CN-CU-506', 1)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-157', 'SBM-MLN-135', 'SBM-IC-CU-509', 2)
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-309', 'SBM-MLN-135', 'SBM-IC-CU-504', 2)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_lines (id, menu_id, course_id, line_no, text, dish_id, kind, has_choice) VALUES ('SBM-MLN-136', 'SBM-MNU-007', NULL, 2, 'Starter: Crispy Corn OR Jackfruit Cutlet (seasonal) OR Palak Veg Gold Coin OR Suvarnagadde Rawa Fry', NULL, 'choice', TRUE)
   ON CONFLICT (id) DO UPDATE SET menu_id = EXCLUDED.menu_id, course_id = EXCLUDED.course_id, line_no = EXCLUDED.line_no, text = EXCLUDED.text, dish_id = EXCLUDED.dish_id, kind = EXCLUDED.kind, has_choice = EXCLUDED.has_choice;
@@ -694,7 +694,7 @@ INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-185', 'SBM-MLN-158', 'SBM-CN-CU-506', 1)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-186', 'SBM-MLN-158', 'SBM-IC-CU-509', 2)
+INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-310', 'SBM-MLN-158', 'SBM-IC-CU-504', 2)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.catalogue_menu_line_options (id, line_id, dish_id, sort_order) VALUES ('SBM-MLO-187', 'SBM-MLN-158', 'SBM-NI-CU-524', 3)
   ON CONFLICT (id) DO UPDATE SET line_id = EXCLUDED.line_id, dish_id = EXCLUDED.dish_id, sort_order = EXCLUDED.sort_order;

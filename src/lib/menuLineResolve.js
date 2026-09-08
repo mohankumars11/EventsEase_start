@@ -129,6 +129,19 @@ export function resolveMenuLine(text) {
     else missing.push(part)
   }
 
+  /* Two names for one dish is one dish.
+
+     "Obbattu OR Holige" is a card offering a sweet under both of its
+     names. While they were two catalogue rows it read as a real
+     choice; once they were merged it became the same id twice, which
+     minted one option id for two rows and failed the seed's uniqueness
+     check. Deduped by id, and a line left with one dish is a dish
+     rather than a choice between it and itself. */
+  const seenId = new Set()
+  const unique = hits.filter(h => !seenId.has(h.id) && seenId.add(h.id))
+  hits.length = 0
+  hits.push(...unique)
+
   if (missing.length) {
     return { kind: 'unresolved', dishId: null, options: [], unresolved: missing }
   }

@@ -154,6 +154,25 @@ for (const d of MC.MENU_CARD_DISHES) {
     source: 'menu_card', is_active: true,
   })
 }
+/* ── Retired, and still written ────────────────────────────────────
+   Nine ids were minted for dishes that turned out to be a second name
+   for something the catalogue already had. They were applied, so the
+   rows exist; dropping them from the seed would leave nine live-looking
+   dishes in the database that no screen offers and nothing can reach.
+
+   So they are written as is_active = FALSE. The id stays spent, the
+   label survives for anything that already points at it, and the
+   catalogue says out loud that it is retired. */
+for (const d of MC.MENU_CARD_RETIRED ?? []) {
+  if (seenDish.has(d.id)) continue
+  seenDish.add(d.id)
+  upsert('catalogue_dishes', {
+    id: d.id, cuisine_id: d.cuisine, course_id: d.course,
+    name: d.name, note: `Retired — use ${d.becameId}`, diet: d.diet, delta: 0,
+    source: 'menu_card', is_active: false,
+  })
+}
+
 if (missingId.length) {
   console.error(`\n  x ${missingId.length} menu-card dishes have no id.`)
   console.error('    Run node scripts/generate-dish-ids.mjs first.')

@@ -104,10 +104,8 @@ export const MENU_CARD_DISHES = [
   { name: 'Egg Masala', cuisine: 'karnataka', course: 'curries', diet: 'nonveg' },
   { name: 'Jackfruit Gojju', cuisine: 'karnataka', course: 'curries', diet: 'veg' },
   { name: 'Kaalu Saaru', cuisine: 'karnataka', course: 'curries', diet: 'veg' },
-  { name: 'Kuri (mutton) Saaru', cuisine: 'karnataka', course: 'curries', diet: 'nonveg' },
   { name: 'Kurma', cuisine: 'karnataka', course: 'curries', diet: 'veg' },
   { name: 'Mango Gojju', cuisine: 'karnataka', course: 'curries', diet: 'veg' },
-  { name: 'Motte Saaru (egg curry)', cuisine: 'karnataka', course: 'curries', diet: 'nonveg' },
   { name: 'Mutton Kaal Soup', cuisine: 'karnataka', course: 'curries', diet: 'nonveg' },
   { name: 'Mutton Paya Soup', cuisine: 'karnataka', course: 'curries', diet: 'nonveg' },
   { name: 'Mysore Rasam', cuisine: 'karnataka', course: 'curries', diet: 'veg' },
@@ -145,7 +143,6 @@ export const MENU_CARD_DISHES = [
   { name: 'Raw Banana Rawa Fry', cuisine: 'karnataka', course: 'starters', diet: 'veg' },
   { name: 'Suvarnagadde Rawa Fry', cuisine: 'karnataka', course: 'starters', diet: 'veg' },
   { name: 'Uppittu', cuisine: 'karnataka', course: 'starters', diet: 'veg' },
-  { name: 'Veg Masala Vada', cuisine: 'karnataka', course: 'starters', diet: 'veg' },
 
   /* ── Karnataka · sweets ────────────────────────────────────────────
      Holige, obbattu and payasa. Every one of these was marked NON-VEG by
@@ -155,11 +152,9 @@ export const MENU_CARD_DISHES = [
   { name: 'Chiroti with Sweet Boondi and Badam Milk', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Dates Holige', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Glass Sandwich', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
-  { name: 'Holige', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Holige with ghee', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Jackfruit Payasa', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Karjoora Kali', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
-  { name: 'Obbattu', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Pudi Peni with Rabadi', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Pumpkin Holige with ghee', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
   { name: 'Sabbakki Mango Payasa', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
@@ -170,16 +165,13 @@ export const MENU_CARD_DISHES = [
   { name: 'White Holige', cuisine: 'karnataka', course: 'sweets', diet: 'veg' },
 
   /* ── Karnataka · welcome ───────────────────────────────────────────── */
-  { name: 'Majjige (buttermilk)', cuisine: 'karnataka', course: 'welcome', diet: 'veg' },
 
   /* ── Udupi & coastal ───────────────────────────────────────────────
      Mangaluru, not Bengaluru: gassi, sukka, kori rotti, kucchalakki
      boiled rice, marvai. Halbai is a coastal rice-and-coconut sweet. */
   { name: 'Fish Curry (coastal)', cuisine: 'udupi', course: 'curries', diet: 'nonveg' },
   { name: 'Kori Gassi', cuisine: 'udupi', course: 'curries', diet: 'nonveg' },
-  { name: 'Boiled Rice (kucchalakki)', cuisine: 'udupi', course: 'mains', diet: 'veg' },
   { name: 'Kori Rotti', cuisine: 'udupi', course: 'mains', diet: 'nonveg' },
-  { name: 'Bangude Fry', cuisine: 'udupi', course: 'starters', diet: 'nonveg' },
   { name: 'Chicken Ghee Roast', cuisine: 'udupi', course: 'starters', diet: 'nonveg' },
   { name: 'Fish Tawa Fry', cuisine: 'udupi', course: 'starters', diet: 'nonveg' },
   { name: 'Marvai Sukka (clams, seasonal)', cuisine: 'udupi', course: 'starters', diet: 'nonveg' },
@@ -222,7 +214,6 @@ export const MENU_CARD_DISHES = [
   { name: 'Almond Soup', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
   { name: 'Veg Jaal Freez', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
   { name: 'Veg Jodhpuri Masala', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
-  { name: 'Veg Kadai', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
   { name: 'Veg Kandahar', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
   { name: 'Veg Milon Hundy', cuisine: 'north_indian', course: 'curries', diet: 'veg' },
   { name: 'Azwan Parata', cuisine: 'north_indian', course: 'mains', diet: 'veg' },
@@ -292,9 +283,7 @@ export const MENU_CARD_DISHES = [
      The second counter at a Bengaluru wedding. Hot garlic sauce is a
      condiment, not a rice course. */
   { name: 'Chicken Clear Soup', cuisine: 'indo_chinese', course: 'curries', diet: 'nonveg' },
-  { name: 'Hot & Sour Soup', cuisine: 'indo_chinese', course: 'curries', diet: 'veg' },
   { name: 'Manchow Soup with Fried Noodles', cuisine: 'indo_chinese', course: 'curries', diet: 'veg' },
-  { name: 'Fried Rice', cuisine: 'indo_chinese', course: 'mains', diet: 'veg' },
   { name: 'Hot Garlic Sauce', cuisine: 'indo_chinese', course: 'accompaniments', diet: 'veg' },
   { name: 'Arbi Chilly', cuisine: 'indo_chinese', course: 'starters', diet: 'veg' },
   { name: 'Babycorn Chilly', cuisine: 'indo_chinese', course: 'starters', diet: 'veg' },
@@ -328,6 +317,37 @@ export const MENU_CARD_DISHES = [
  *   Chicken Dum Biryani → Chicken biryani   dum is its own thing
  */
 export const MENU_CARD_ALIASES = {
+  /* ── Nine that were added as new dishes and should not have been ──
+     Each of these already existed in the catalogue under another name,
+     in the SAME cuisine and the SAME course, and the difference was a
+     gloss, a translation, an implied "veg", or word order. Side by side
+     on the dish screen they read as a mistake, because they were one:
+     a caterer had to tick the same drink twice and a card asking for
+     one would miss a kitchen that had ticked the other.
+
+     Found by comparing every added dish against every pre-existing one
+     by TOKEN CONTAINMENT — are one name's words a subset of the
+     other's — not by edit distance, which once proposed "Masala Dosa →
+     Masala soda". 37 pairs came back; 28 of them are a generic and a
+     specific dish that genuinely differ, and are recorded as such in
+     check-menu-card-dishes.mjs. These nine were not. */
+  vegmasalavada: 'Masala Vada',
+  majjigebuttermilk: 'Majjige / spiced buttermilk',
+  bangudefry: 'Bangude fry (mackerel)',
+  boiledricekucchalakki: 'Boiled rice',
+  hotsoursoup: 'Hot & sour veg soup',
+  friedrice: 'Veg fried rice',
+  kurimuttonsaaru: 'Mutton saaru',
+  mottesaarueggcurry: 'Motte curry',
+  vegkadai: 'Kadai Veg',
+  /* Obbattu and holige are one sweet under two names, and the
+     catalogue entry says so in its own title. Added separately they
+     made three rows for it, and a card writing one would miss a
+     kitchen that ticked the other. The fillings stay their own
+     dishes — dates, pumpkin, bele — because those genuinely differ. */
+  holige: 'Obbattu / holige',
+  obbattu: 'Obbattu / holige',
+
   paalpayasa: 'Paal Payasam',
   channamasala: 'Chana masala',
   raitha: 'Raita',
@@ -356,6 +376,35 @@ export const MENU_CARD_ALIASES = {
  * about who can cook the card, and left unclassified it would look like
  * a permanent hole in the bridge.
  */
+/**
+ * Ids that were minted, applied, and then turned out to be a second name
+ * for a dish the catalogue already had.
+ *
+ * They are NOT deleted and NOT reused. The id is spent: it was written
+ * to the database, and a freed number handed to a different dish later
+ * is the same bug with an extra step. The seed keeps writing these rows
+ * with is_active = FALSE, so anything reading the catalogue sees them as
+ * retired rather than as live dishes nobody can find.
+ *
+ * No partner had claimed any of them — checked against
+ * vendor_services.specs -> dish_ids before they were retired. If one had,
+ * the row would still be kept for exactly that reason: an id in somebody
+ * listing with no row behind it is an answer with no label.
+ */
+export const MENU_CARD_RETIRED = [
+  { id: 'SBM-KA-ST-526', name: 'Veg Masala Vada', cuisine: 'karnataka', course: 'starters', diet: 'veg', becameId: 'SBM-KA-ST-118' },
+  { id: 'SBM-KA-WE-506', name: 'Majjige (buttermilk)', cuisine: 'karnataka', course: 'welcome', diet: 'veg', becameId: 'SBM-KA-WE-501' },
+  { id: 'SBM-UD-ST-511', name: 'Bangude Fry', cuisine: 'udupi', course: 'starters', diet: 'nonveg', becameId: 'SBM-UD-ST-509' },
+  { id: 'SBM-UD-MA-511', name: 'Boiled Rice (kucchalakki)', cuisine: 'udupi', course: 'mains', diet: 'veg', becameId: 'SBM-UD-MA-502' },
+  { id: 'SBM-IC-CU-509', name: 'Hot & Sour Soup', cuisine: 'indo_chinese', course: 'curries', diet: 'veg', becameId: 'SBM-IC-CU-504' },
+  { id: 'SBM-IC-MA-508', name: 'Fried Rice', cuisine: 'indo_chinese', course: 'mains', diet: 'veg', becameId: 'SBM-IC-MA-500' },
+  { id: 'SBM-KA-CU-523', name: 'Kuri (mutton) Saaru', cuisine: 'karnataka', course: 'curries', diet: 'nonveg', becameId: 'SBM-KA-CU-509' },
+  { id: 'SBM-KA-CU-526', name: 'Motte Saaru (egg curry)', cuisine: 'karnataka', course: 'curries', diet: 'nonveg', becameId: 'SBM-KA-CU-511' },
+  { id: 'SBM-NI-CU-527', name: 'Veg Kadai', cuisine: 'north_indian', course: 'curries', diet: 'veg', becameId: 'SBM-NI-CU-518' },
+  { id: 'SBM-KA-SW-514', name: 'Holige', cuisine: 'karnataka', course: 'sweets', diet: 'veg', becameId: 'SBM-KA-SW-500' },
+  { id: 'SBM-KA-SW-518', name: 'Obbattu', cuisine: 'karnataka', course: 'sweets', diet: 'veg', becameId: 'SBM-KA-SW-500' },
+]
+
 export const MENU_CARD_STAPLES = [
   'salt', 'papad', 'pickle', 'ghee', 'curd', 'banana', 'beeda', 'paan',
   'drinkingwater', 'friedchilly', 'sweetbeeda', 'magaibeeda', 'maghaibeeda',
