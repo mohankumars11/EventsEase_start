@@ -191,6 +191,27 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         <ListingTracker services={services} onOpenJobs={onOpenJobs} />
       )}
 
+      {/* ── The flow itself ───────────────────────────────────────
+          Lost when the red card was replaced: the splice that removed
+          the empty state walked back to the preceding comment and took
+          this with it. `picking` was still set by the grid and nothing
+          read it, so tapping a trade did exactly nothing — no error, no
+          screen, no clue.
+
+          `picking` is `true` for the full picker or a trade name to open
+          on that trade. */}
+      {picking && (
+        <AddItemFlow
+          existing={services}
+          startTrade={typeof picking === 'string' ? picking : null}
+          /* partner_work is keyed on the vendor, not on a listing row:
+             one body of work, however many services they list. */
+          vendorId={vendor?.id}
+          onAdd={onAdd}
+          onClose={() => setPicking(false)}
+        />
+      )}
+
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
       {editing && typeof editing === 'object' && (

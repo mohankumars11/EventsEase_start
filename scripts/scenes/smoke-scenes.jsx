@@ -41,8 +41,37 @@ const CASES = [
 ]
 
 export default function SmokeScenes() {
+  /* ══════════════════════════════════════════════════════════════
+     MOUNTING IS NOT WORKING
+     ══════════════════════════════════════════════════════════════
+
+     VendorServiceList mounted perfectly while tapping a trade did
+     nothing: the splice that replaced the red card had also removed the
+     {picking && <AddItemFlow/>} block, so the grid set state that
+     nothing read. No error, no screen, no clue — and this guard passed,
+     because every component rendered.
+
+     So the last step is an interaction: tap a trade, and the flow has to
+     appear. It is the one thing the Listing tab exists to do. */
   React.useEffect(() => {
-    const t = setTimeout(() => console.error('SMOKE-DONE'), 1200)
+    const t = setTimeout(() => {
+      const grid = document.querySelector('[data-smoke="VendorServiceList"]')
+      const card = grid
+        && [...grid.querySelectorAll('button')].find(b => /things? you can list/.test(b.textContent ?? ''))
+      if (!card) {
+        console.error('SMOKE: VendorServiceList — no trade cards to tap')
+      } else {
+        card.click()
+        setTimeout(() => {
+          if (!document.querySelector('[data-add-item-flow]')) {
+            console.error('SMOKE: VendorServiceList — tapping a trade opened nothing')
+          }
+          console.error('SMOKE-DONE')
+        }, 500)
+        return
+      }
+      console.error('SMOKE-DONE')
+    }, 1400)
     return () => clearTimeout(t)
   }, [])
   return (
@@ -50,7 +79,7 @@ export default function SmokeScenes() {
       <ToastProvider>
         <div id="smoke" style={{ width: 390, margin: '0 auto', padding: 12, font: '12px system-ui' }}>
           {CASES.map(([name, el]) => (
-            <div key={name} style={{ marginBottom: 10 }}>
+            <div key={name} data-smoke={name} style={{ marginBottom: 10 }}>
               <b>{name}</b>
               <Catch name={name}>{el}</Catch>
             </div>

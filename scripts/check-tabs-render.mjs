@@ -22,6 +22,13 @@
  * So this mounts what each tab renders. Same shape as
  * check-flow-renders, same reason, wider net.
  *
+ * ── And mounting is not working ─────────────────────────────────────
+ * VendorServiceList then mounted perfectly while tapping a trade did
+ * nothing: the same splice had removed the {picking && <AddItemFlow/>}
+ * block, so the grid set state nothing read. Every component rendered
+ * and this guard passed. The last step taps a trade and requires the
+ * flow to appear — the one thing that screen exists to do.
+ *
  *   node scripts/check-tabs-render.mjs
  */
 import { spawnSync } from 'node:child_process'
@@ -35,7 +42,7 @@ const r = spawnSync(process.execPath, [
   'shots/tabs-render.png',
   '--scenes', 'scripts/scenes/smoke-scenes.jsx',
   '--scale', '1',
-  '--wait', '6000',
+  '--wait', '9000',
 ], { cwd: ROOT, encoding: 'utf8' })
 
 const out = (r.stdout ?? '') + (r.stderr ?? '')
