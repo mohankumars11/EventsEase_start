@@ -32,6 +32,7 @@ import { workPromptsFor } from '../../data/workPrompts'
 import WhatHappensNext from './WhatHappensNext'
 import VenueTerms from './VenueTerms'
 import TradeGrid from './TradeGrid'
+import { completenessOf, pendingScreens } from '../../lib/listingCompleteness'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -284,6 +285,20 @@ export default function AddItemFlow({
     return s
   }, [groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
 
+  /* ── Every screen that asks something, in flow order ──────────────
+     The detail screen and the six operations screens, described the
+     same way so completeness, the stepper and the review list all read
+     one structure. Menus and the libraries are not here: a caterer who
+     ticks no dishes has still said something useful, and the price is
+     deliberately optional for anybody who quotes per job. */
+  const questionScreens = useMemo(() => [
+    ...(groups.length ? [{ id: 'detail', title: STEP_TITLE.detail, groups }] : []),
+    ...opsScreens.map(sc => ({ id: `ops:${sc.id}`, title: sc.title, groups: sc.groups ?? [] })),
+  ], [groups, opsScreens])
+
+  const pending = useMemo(
+    () => pendingScreens(questionScreens, detail), [questionScreens, detail])
+
   /* A title for the screens whose ids are built at runtime. */
   const title = (
     step.startsWith('cuisine:') ? (CUISINE_BY_ID[step.slice(8)]?.name ?? 'This cuisine')
@@ -366,12 +381,18 @@ export default function AddItemFlow({
     return screens.length > 0 && screens.every(f => flow.indexOf(f) < idx)
   })
 
-  /* Red only on a step actually VISITED and left empty, and only on the
-     two that genuinely cannot be skipped. Marking an unvisited step red
-     would scold somebody for not doing what they have not been shown. */
+  /* Red only on a step actually VISITED and left empty. Marking an
+     unvisited step red would scold somebody for not doing what they have
+     not been shown yet, which is how a form starts feeling like an exam.
+
+     It used to cover only kitchen and cuisines, because they were the
+     only two that gated. Now every question screen gates, so every one
+     can go red — and the dot is the only warning a partner gets before
+     the Submit button refuses them. */
   const blockedPhases = [
     ...(touched.has('kitchen') && !kitchen ? ['kitchen'] : []),
     ...(touched.has('cuisines') && !cuisines.length ? ['cuisines'] : []),
+    ...pending.filter(x => touched.has(x.id)).map(x => phaseOf(x.id)),
   ]
 
   /* "3 of 5" under the Dishes dot while inside it. */
@@ -402,15 +423,25 @@ export default function AddItemFlow({
    * should not be stopped from listing at all -- but the funnel cannot
    * draw the next screen without a kitchen and a cuisine, so those two
    * are real gates. */
+  /* What THIS screen still wants, if it is one that asks. */
+  const hereMissing = (questionScreens.find(x => x.id === step)?.groups)
+    ? completenessOf(questionScreens.find(x => x.id === step).groups, detail).missing
+    : []
+
   const canAdvance = (
     step === 'trade' ? !!trade
     : step === 'offerings' ? picked.length > 0
     : step === 'kitchen' ? !!kitchen
     : step === 'cuisines' ? cuisines.length > 0
-    /* Review is the one screen with a real gate at the end: an unsigned
-       listing is a set of claims nobody attested to. */
-    : step === 'review' ? !!signature?.signed_at
-    : true
+    /* Review is the last gate: everything answered AND signed. An
+       unsigned listing is a set of claims nobody attested to, and an
+       unfinished one is a row dispatch cannot match. */
+    : step === 'review' ? (!!signature?.signed_at && pending.length === 0)
+    /* Every question-bearing screen. Answered means a tick, a typed
+       number, or the "Something else" box — see lib/listingCompleteness.
+       Without that third route this would trap anybody whose real answer
+       is not on our list. */
+    : hereMissing.length === 0
   )
 
   /* What the signature is a signature OF. Counted rather than described,
@@ -777,6 +808,10 @@ export default function AddItemFlow({
             />
           )}
 
+          {step === 'review' && pending.length > 0 && (
+            <PendingList pending={pending} onGo={setStep} />
+          )}
+
           {step === 'review' && (
             <ReviewStep
               trade={trade} picked={picked.map(nameOf)} detail={detail} groups={groups}
@@ -829,9 +864,28 @@ export default function AddItemFlow({
                 Pick at least one to carry on.
               </p>
             )}
-            {step === 'review' && !signature?.signed_at && (
+            {/* ── Why the button is dead ──────────────────────────
+                A disabled button with no reason beside it is the single
+                most common thing partners report as "the app is stuck".
+                It is never dead without saying so. */}
+            {step === 'review' && pending.length > 0 && (
+              <p className="mt-1.5 text-center text-[11.5px] font-semibold text-rose-700">
+                {pending.length === 1
+                  ? 'One screen still needs you.'
+                  : `${pending.length} screens still need you.`}
+                {' '}They are listed above.
+              </p>
+            )}
+            {step === 'review' && pending.length === 0 && !signature?.signed_at && (
               <p className="mt-1.5 text-center text-[11.5px] text-ink-mute">
                 Sign above to submit.
+              </p>
+            )}
+            {step !== 'review' && hereMissing.length > 0 && (
+              <p className="mt-1.5 text-center text-[11.5px] font-semibold text-rose-700">
+                {hereMissing.length === 1
+                  ? 'One question left on this screen.'
+                  : `${hereMissing.length} questions left on this screen.`}
               </p>
             )}
           </div>
@@ -939,7 +993,12 @@ export function DetailStep({ groups, value, onChange }) {
   return (
     <div className="space-y-5">
       {groups.map(g => (
-        <div key={g.id} className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        /* A stable hook for check-flow-walk: it has to answer one
+           option per QUESTION, and the first version tapped eight
+           buttons inside a single question and reported the app as
+           stuck. One attribute, no behaviour. */
+        <div key={g.id} data-question={g.stateKey ?? g.id}
+          className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <p className="text-[14px] font-extrabold leading-tight text-ink">{g.question}</p>
           {g.hint && <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{g.hint}</p>}
           <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -1210,7 +1269,12 @@ export function OperationsStep({ screen, value, onChange }) {
       )}
 
       {screen.groups.map(g => (
-        <div key={g.id} className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        /* A stable hook for check-flow-walk: it has to answer one
+           option per QUESTION, and the first version tapped eight
+           buttons inside a single question and reported the app as
+           stuck. One attribute, no behaviour. */
+        <div key={g.id} data-question={g.stateKey ?? g.id}
+          className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <p className="text-[14px] font-extrabold leading-tight text-ink">{g.question}</p>
           {g.hint && (
             <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{g.hint}</p>
@@ -1742,6 +1806,67 @@ export function ReviewStep({
           the BOTTOM — after everything, where somebody deciding whether
           to submit has already decided. It says more, and says it first,
           as WhatHappensNext at the top of this screen. */}
+    </div>
+  )
+}
+
+/**
+ * What is still missing, and one tap to each of it.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY A LIST AND NOT JUST A DEAD BUTTON
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Submit refusing to work is correct and, on its own, useless. A partner
+ * eleven screens into a form does not remember which one they pressed
+ * Continue through, and "go back and check" is a search, not an
+ * instruction.
+ *
+ * So the refusal comes with the answer: the screens that still want
+ * something, what they want, and a tap that goes there. Coming back is
+ * the flow's own Back, so nothing is lost.
+ *
+ * It sits ABOVE the summary, because a partner who scrolls a long review
+ * screen and finds the button dead at the bottom has already had the bad
+ * experience this is meant to prevent.
+ */
+function PendingList({ pending, onGo }) {
+  const total = pending.reduce((t, s) => t + s.missing.length, 0)
+  return (
+    <div className="mb-3 overflow-hidden rounded-[22px] bg-rose-50 ring-1 ring-rose-200">
+      <div className="px-4 pb-3 pt-3.5">
+        <p className="text-[14px] font-extrabold leading-tight text-rose-900">
+          {total === 1 ? 'One question left' : `${total} questions left`}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-snug text-rose-800">
+          A listing is matched on what it says. These are the screens that
+          still say nothing — tap one to finish it.
+        </p>
+      </div>
+      <ul className="border-t border-rose-200/70">
+        {pending.map(s => (
+          <li key={s.id}>
+            <button
+              type="button"
+              onClick={() => onGo(s.id)}
+              className="flex w-full items-center gap-3 border-b border-rose-200/50 px-4 py-3 text-left last:border-b-0 active:bg-rose-100/60"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-600 text-[11px] font-extrabold text-white">
+                {s.missing.length}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-extrabold leading-tight text-rose-900">
+                  {s.title}
+                </span>
+                <span className="block truncate text-[11.5px] text-rose-800/90">
+                  {s.missing.map(m => m.question).join(' · ')}
+                </span>
+              </span>
+              <ChevronRight size={16} className="shrink-0 text-rose-700" />
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

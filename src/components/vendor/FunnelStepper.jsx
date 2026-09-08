@@ -45,24 +45,33 @@ import { Check, AlertCircle } from 'lucide-react'
  * feeling like an exam.
  */
 
-/* ── SEVEN DOTS HAVE TO FIT 358px ─────────────────────────────────────
+/* ── IT HAS TO LOOK THE SAME AT FOUR DOTS AND AT SEVEN ────────────────
    A 390px phone leaves 358 inside the padding. Seven columns and six
-   connectors: 7x44 + 6x8 = 356.
+   connectors at 44px: 7x44 + 6x8 = 356, which fits.
 
-   This was 68px a column, which needs 476 — so 'Your rate' and 'Submit'
-   sat off the right edge and a partner could not see that the form ends.
-   It scrolled, so nothing looked broken; it just quietly hid the finish
-   line from somebody deciding whether to start. The whole point of a
-   stepper over a progress bar is seeing where it stops.
+   It was 68px a column, needing 476 — so 'Your rate' and 'Submit' sat off
+   the right edge and a partner could not see that the form ends. It
+   scrolled, so nothing looked broken; it just quietly hid the finish line
+   from somebody deciding whether to start.
 
-   The scroll stays for handsets narrower than 358. */
+   Fixing the width fixed seven and broke everything else. A photographer
+   sees FOUR phases, and four 44px columns in a `min-w-max` row cluster
+   hard against the left edge with half the header empty beside them —
+   reported as "for some it is spread out, for some it is tight in the
+   corner". Same component, same screen, two different-looking headers.
+
+   So the columns flex and the row fills the width: `flex-1` with a
+   `min-w-[44px]` floor, `justify-between` so the connectors take the
+   slack. Four dots space themselves across the header, seven pack to
+   their floor and still fit, and the horizontal scroll stays for handsets
+   narrower than 358 where seven genuinely cannot. */
 export default function FunnelStepper({ phases = [], currentId, doneIds = [], blockedIds = [] }) {
   const done = new Set(doneIds)
   const blocked = new Set(blockedIds)
 
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-1" aria-label="Progress">
-      <ol className="flex min-w-max items-start gap-0">
+      <ol className="flex w-full items-start justify-between gap-0">
         {phases.map((p, i) => {
           const isCurrent = p.id === currentId
           const isBlocked = blocked.has(p.id)
@@ -82,8 +91,8 @@ export default function FunnelStepper({ phases = [], currentId, doneIds = [], bl
             : 'text-ink-mute'
 
           return (
-            <li key={p.id} className="flex items-start">
-              <div className="flex w-[44px] flex-col items-center gap-1">
+            <li key={p.id} className="flex min-w-0 flex-1 items-start last:flex-none">
+              <div className="flex min-w-[44px] flex-1 flex-col items-center gap-1">
                 <span
                   className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-extrabold transition-all ${circle}`}
                   aria-current={isCurrent ? 'step' : undefined}
@@ -109,7 +118,10 @@ export default function FunnelStepper({ phases = [], currentId, doneIds = [], bl
               {i < phases.length - 1 && (
                 <span
                   aria-hidden="true"
-                  className={`mt-3.5 h-[2px] w-2 rounded-full ${
+                  /* The connector takes the slack. At four phases it
+                     stretches and the dots sit evenly across the header;
+                     at seven it shrinks to its 8px floor. */
+                  className={`mt-3.5 h-[2px] min-w-[8px] flex-1 rounded-full ${
                     done.has(p.id) ? 'bg-forest-600' : 'bg-ink/[0.10]'
                   }`}
                 />

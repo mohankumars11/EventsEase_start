@@ -96,6 +96,7 @@ async function walkOne(trade) {
   const added = []
   let err = null
   let snap = ''
+  let gateBit = false
   const seen = []
 
   /* What was on screen when it stopped. Without this a walker bug and
@@ -145,25 +146,58 @@ async function walkOne(trade) {
         break
       }
 
+      /* ── Did the gate actually bite? ────────────────────────────
+         Reaching the end proves a partner CAN finish. It says nothing
+         about whether they could have skipped everything, which is the
+         thing being fixed. So the first screen made of question cards
+         is checked: Continue must be OFF before anything is answered.
+
+         Without this the walk would pass just as happily if the gate
+         were deleted. */
+      if (!gateBit && root()?.querySelector('[data-question]')
+          && !root().querySelector('[aria-pressed="true"]')) {
+        gateBit = true
+        if (!go.disabled) {
+          capture()
+          err = `screen ${step} let Continue through with nothing answered`
+          break
+        }
+      }
+
       if (go.disabled) {
         /* The screen wants an answer, and one tap is not always enough:
            the cuisine screen opens a region before it offers the kitchens
            inside it, so the first tap reveals the choice rather than
            making it. Tapped until Continue lights or the screen runs out
            of things to tap. */
+        /* One option per QUESTION, not the first eight buttons on the
+           screen. Every question now has to be answered, and the first
+           version of this tapped eight choices inside a single question
+           and then reported the app as stuck — a walker bug that read
+           exactly like the gate being impossible to satisfy.
+
+           `data-question` is on each question's card; a card with an
+           aria-pressed button already has an answer. */
         const tapped = new Set()
         let freed = false
-        for (let t = 0; t < 8 && !freed; t++) {
-          const pick = buttons().find(b =>
-            b !== primary() && !b.disabled && text(b)
-            && !/^(Continue|Submit for review)$/.test(text(b))
-            && !['Back', 'Close'].includes(b.getAttribute('aria-label'))
-            && !tapped.has(text(b)))
+        for (let t = 0; t < 40 && !freed; t++) {
+          const card = [...(root()?.querySelectorAll('[data-question]') ?? [])]
+            .find(c => !c.querySelector('[aria-pressed="true"]')
+              && !tapped.has(c.getAttribute('data-question')))
+          const pick = card
+            ? [...card.querySelectorAll('button')].find(b => !b.disabled && text(b))
+            /* Screens that are not built from question cards — the trade
+               grid, offerings, the kitchen and cuisine funnel. */
+            : buttons().find(b =>
+                b !== primary() && !b.disabled && text(b)
+                && !/^(Continue|Submit for review)$/.test(text(b))
+                && !['Back', 'Close'].includes(b.getAttribute('aria-label'))
+                && !tapped.has(text(b)))
           if (!pick) break
-          tapped.add(text(pick))
+          tapped.add(card ? card.getAttribute('data-question') : text(pick))
           seen.push(text(pick).slice(0, 24))
           pick.click()
-          await sleep(140)
+          await sleep(90)
           freed = primary() && !primary().disabled
         }
         if (!freed) {
@@ -220,6 +254,7 @@ async function walkOne(trade) {
     else if (!specs.signature?.signed_at) err = 'the row carries no signature'
     else if (!specs.answers?.length) err = 'the row carries no answer ids'
   }
+  if (!err && !gateBit) err = 'never reached a question screen — the gate was not tested'
   return { trade, err, rows: added.length, ticked: seen.length, snap,
     answers: added[0]?.specs?.answers?.length ?? 0 }
 }
