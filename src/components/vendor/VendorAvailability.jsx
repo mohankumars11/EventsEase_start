@@ -257,12 +257,19 @@ export default function VendorAvailability({
    * leaving a stale total behind when a day flips back to OPEN would be the
    * same bug in the other direction.
    */
-  async function commitDay(date, { status, scope, slots, note }) {
+  async function commitDay(date, { status, scope, slots, note, area_label, lat, lng }) {
     const key = toDateKey(date)
     const extra = {
       slots_total:  status === 'LIMITED' ? slots : null,
       slots_booked: 0,
       note: note || null,
+      /* Where they will be that day. `location` is derived from lat/lng
+         by a trigger — PostgREST cannot write a geography, and a client
+         that set one directly would leave it NULL and the day would
+         silently never match. See migration 111. */
+      area_label: area_label || null,
+      lat: lat ?? null,
+      lng: lng ?? null,
     }
 
     let keys = [key]
@@ -427,7 +434,18 @@ export default function VendorAvailability({
       {/* ══════════════════════════════════════════════════
           3 · THE CALENDAR
           ══════════════════════════════════════════════════ */}
-      <section className="card p-3 sm:p-4">
+      {/* ── Full-bleed on a phone ─────────────────────────────────────
+          Three paddings stacked — the page's px-4, this card's p-3, and
+          the grid's gap-1 — left 40px cells on a 360px handset. That is
+          under both the 44pt iOS and 48dp Android minimum, and each cell
+          has to hold a date, a "3 left" badge and a note dot.
+
+          It does not scroll, it squeezes, so nothing looked broken; it
+          was just too small to tap accurately, on the screen a partner
+          uses most. Cancelling the page padding and dropping the card's
+          own on phones gives back 40px — about 6px a column, which is
+          the difference between a 40px and a 46px target. */}
+      <section className="-mx-4 rounded-none px-3 py-3 sm:mx-0 sm:rounded-[22px] sm:px-4 sm:py-4 card">
         <div className="mb-2 flex items-center justify-between">
           <button
             onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
@@ -459,7 +477,7 @@ export default function VendorAvailability({
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-[3px] sm:gap-1">
           {WEEKDAYS.map(d => (
             <div key={d.id} className="py-0.5 text-center text-[10px] font-extrabold uppercase tracking-wide text-gray-400">
               {d.short}
@@ -467,7 +485,7 @@ export default function VendorAvailability({
           ))}
         </div>
 
-        <div className="mt-0.5 grid grid-cols-7 gap-1">
+        <div className="mt-0.5 grid grid-cols-7 gap-[3px] sm:gap-1">
           {cells.map((date, i) => {
             if (!date) return <div key={`pad-${i}`} className="aspect-square" />
 
@@ -506,7 +524,7 @@ export default function VendorAvailability({
                 title={title}
                 aria-label={title}
                 className={[
-                  'relative flex aspect-square flex-col items-center justify-center rounded-xl border text-[12.5px] font-semibold transition-colors',
+                  'relative flex aspect-square flex-col items-center justify-center rounded-xl border text-[13.5px] font-semibold transition-colors',
                   meta.cell,
                   // A weekly closure is shown dimmer than a date the vendor
                   // blocked by hand — same outcome, different thing to change.
@@ -630,7 +648,7 @@ export default function VendorAvailability({
           open a single date in the calendar above.
         </p>
 
-        <div className="mt-2.5 grid grid-cols-7 gap-1">
+        <div className="mt-2.5 grid grid-cols-7 gap-[3px] sm:gap-1">
           {WEEKDAYS.map(d => {
             const off = daysOff.includes(d.id)
             return (
@@ -691,6 +709,9 @@ export default function VendorAvailability({
             hasRow={!!row}
             currentSlots={row?.slots_total ?? null}
             currentNote={row?.note ?? ''}
+            currentWhere={row?.area_label
+              ? { area_label: row.area_label, lat: row.lat, lng: row.lng }
+              : null}
             reason={reason}
             isDayOff={daysOff.includes(sheetDate.getDay())}
             maxPerDay={maxPerDay}

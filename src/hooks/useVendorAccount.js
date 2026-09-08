@@ -164,7 +164,13 @@ export function useVendorAccount() {
 
     const weekday   = new Date(`${dateKey}T00:00:00`).getDay()
     const isDayOff  = (vendor.weekly_days_off ?? []).includes(weekday)
+    /* An OPEN row that contradicts nothing and says nothing is deleted
+       to keep the table sparse. A location IS saying something — an
+       open day in Mysore is exactly the row worth keeping — so it
+       counts alongside the note. Without this the sheet would appear
+       to save and the row would vanish. */
     const redundant = status === 'OPEN' && !isDayOff && !extra.note
+      && !extra.area_label
 
     if (redundant) {
       const { error: err } = await supabase
@@ -218,7 +224,10 @@ export function useVendorAccount() {
 
     if (status === 'OPEN') {
       const daysOff = vendor.weekly_days_off ?? []
-      const keep = extra.note
+      /* Same rule as the single-day path: a location is a reason to
+         keep an OPEN row. "Open, and in Mysore all next weekend" is
+         one tap here and would otherwise be dropped silently. */
+      const keep = (extra.note || extra.area_label)
         ? dateKeys
         : dateKeys.filter(k => daysOff.includes(new Date(`${k}T00:00:00`).getDay()))
       const drop = dateKeys.filter(k => !keep.includes(k))

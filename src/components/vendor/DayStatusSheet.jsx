@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Loader2, Minus, Plus, RotateCcw, X } from 'lucide-react'
+import { Check, Loader2, Minus, Plus, RotateCcw, X, MapPin, Navigation } from 'lucide-react'
 import { AVAILABILITY_ORDER, AVAILABILITY_STATES, WEEKDAYS } from '../../config/vendor'
+import { currentPosition, nearestServed } from '../../lib/pincodeDirectory'
+import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
+import { useToast } from '../../context/ToastContext'
 
 /**
  * "What is happening on this day?"
@@ -47,7 +50,8 @@ import { AVAILABILITY_ORDER, AVAILABILITY_STATES, WEEKDAYS } from '../../config/
    an identity transform is enough to reparent the containing block and land
    this sheet halfway down the page instead of over it. */
 export default function DayStatusSheet({
-  date, current, hasRow, currentSlots, currentNote, reason, isDayOff, maxPerDay = 1,
+  date, current, hasRow, currentSlots, currentNote, currentWhere,
+  reason, isDayOff, maxPerDay = 1,
   onClose, onSave,
 }) {
   /* Seeded from the EFFECTIVE state, not from the row. Opening a standing
@@ -62,7 +66,39 @@ export default function DayStatusSheet({
   )
   const [scope, setScope] = useState('day')
   const [note,  setNote]  = useState(currentNote ?? '')
+  /* { area_label, lat, lng } or null. Null is the common case and means
+     the partner's usual base. */
+  const [where, setWhere] = useState(currentWhere ?? null)
+  const [locating, setLocating] = useState(false)
+
+  /* GPS, then the nearest served pincode centroid we already hold.
+     nearestServed is a local reverse-geocoder — it loops our own
+     verified centroids — so naming the place costs no external call and
+     works on a bad connection. */
+  async function locate() {
+    setLocating(true)
+    try {
+      const pos = await currentPosition({ timeout: 10000 })
+      if (pos.status !== 'ok') {
+        toast.error(pos.status === 'denied'
+          ? 'Location is off for this app. Pick the area instead.'
+          : 'Could not find you. Pick the area instead.')
+        return
+      }
+      const near = await nearestServed(pos.lat, pos.lng)
+      setWhere({
+        area_label: near?.area ?? 'Where I am now',
+        lat: pos.lat,
+        lng: pos.lng,
+      })
+    } catch {
+      toast.error('Could not find you. Pick the area instead.')
+    } finally {
+      setLocating(false)
+    }
+  }
   const [saving, setSaving] = useState(false)
+  const toast = useToast()
   const panelRef = useRef(null)
 
   const weekday = WEEKDAYS[date.getDay()]
@@ -103,7 +139,17 @@ export default function DayStatusSheet({
   async function save() {
     setSaving(true)
     try {
-      await onSave({ status, scope, slots: status === 'LIMITED' ? slots : null, note: note.trim() })
+      await onSave({
+        status, scope,
+        slots: status === 'LIMITED' ? slots : null,
+        note: note.trim(),
+        /* Three columns or three nulls — never a half-set location. A
+           row with an area name and no point would be a place dispatch
+           cannot measure from. */
+        area_label: where?.area_label ?? null,
+        lat: where?.lat ?? null,
+        lng: where?.lng ?? null,
+      })
       onClose()
     } finally {
       setSaving(false)
@@ -234,6 +280,73 @@ export default function DayStatusSheet({
             </div>
           </div>
 
+          {/* ── Where ─────────────────────────────────────────
+              A partner has had exactly one location since 057 —
+              `vendors.location`, set once — and dispatch measures every
+              job against it forever. So a decorator in Mysore for a
+              three-day wedding is still offered Bengaluru work on those
+              days, and their only outs are to block the dates and lose
+              the Mysore job, travel, or decline and look unreliable.
+
+              Blank is the answer on almost every day and means "my usual
+              base", which is why this is a quiet line rather than a
+              required field. See migration 111. */}
+          <div className="mt-4">
+            <span className="type-overline mb-1.5 block text-gray-500">
+              Where will you be? (optional)
+            </span>
+
+            {where ? (
+              <div className="flex items-center gap-2 rounded-xl bg-plum-50 px-3 py-2.5 ring-1 ring-plum-200">
+                <MapPin size={15} className="shrink-0 text-plum-700" />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-plum-900">
+                  {where.area_label}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setWhere(null)}
+                  aria-label="Clear where you will be"
+                  className="shrink-0 rounded-full p-1 text-plum-700 hover:bg-plum-100"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={locate}
+                    disabled={locating}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-[12.5px] font-bold text-gray-700 disabled:opacity-60"
+                  >
+                    {locating
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <Navigation size={14} />}
+                    {locating ? 'Finding…' : 'Where I am now'}
+                  </button>
+                  <select
+                    value=""
+                    onChange={e => {
+                      const a = BENGALURU_AREAS.find(x => x.name === e.target.value)
+                      if (a) setWhere({ area_label: a.name, lat: a.lat, lng: a.lng })
+                    }}
+                    aria-label="Pick an area"
+                    className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-[12.5px] font-bold text-gray-700"
+                  >
+                    <option value="">Pick an area…</option>
+                    {BENGALURU_AREAS.map(a => (
+                      <option key={a.name} value={a.name}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-gray-400">
+                  Leave it blank if you will be where you usually are.
+                </p>
+              </>
+            )}
+          </div>
+
           {/* ── Note ──────────────────────────────────────── */}
           {/* For the partner, not for us. "Ramesh wedding, Jayanagar" three
               months out is the difference between a calendar they trust and
@@ -264,7 +377,7 @@ export default function DayStatusSheet({
             <button
               type="button"
               disabled={saving}
-              onClick={() => { setStatus('OPEN'); setNote(''); setScope('day') }}
+              onClick={() => { setStatus('OPEN'); setNote(''); setScope('day'); setWhere(null) }}
               className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-[12.5px] font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-50"
             >
               <RotateCcw size={14} /> Reset
