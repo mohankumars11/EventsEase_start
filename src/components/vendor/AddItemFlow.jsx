@@ -33,6 +33,7 @@ import MenuDishStep from './MenuDishStep'
 import WorkUpload from './WorkUpload'
 import { workPromptsFor } from '../../data/workPrompts'
 import WhatHappensNext from './WhatHappensNext'
+import VenueTerms from './VenueTerms'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -159,6 +160,8 @@ export default function AddItemFlow({
   /* Null until the partner has held the sign button. Cleared if they
      change the name afterwards — see ListingSignature. */
   const [signature, setSignature] = useState(null)
+  /* A hall's price is seven numbers, not one. See VenueTerms. */
+  const [venueTerms, setVenueTerms] = useState({})
   /* Fetched once when the flow opens, not per dish screen: a caterer
      with five cuisines would otherwise make the same request five
      times for a list that cannot change mid-form. */
@@ -498,6 +501,13 @@ export default function AddItemFlow({
       const fare = Object.fromEntries(
         Object.entries(distanceRates).filter(([, v]) => String(v ?? '').trim() !== ''))
       if (Object.keys(fare).length) specs.distance_rates = fare
+
+      /* Everything on top of the rent, kept as the separate numbers they
+         are. Flattened into one figure they would be exactly the surprise
+         this screen exists to remove. */
+      const hall = Object.fromEntries(
+        Object.entries(venueTerms).filter(([, v]) => String(v ?? '').trim() !== ''))
+      if (Object.keys(hall).length) specs.venue_terms = hall
       /* Who said it, when, and how much of it. An operator reviewing a
          listing that turns out to be wrong needs all three. */
       if (signature?.signed_at) specs.signature = signature
@@ -790,6 +800,8 @@ export default function AddItemFlow({
               menuRates={menuRates} setMenuRates={setMenuRates}
               chargesByDistance={chargesByDistance}
               distanceRates={distanceRates} setDistanceRates={setDistanceRates}
+              isVenue={trade === 'Venue'}
+              venueTerms={venueTerms} setVenueTerms={setVenueTerms}
             />
           )}
 
@@ -1490,6 +1502,7 @@ function PriceStep({
   menus, price, setPrice, unit, setUnit, minOrder, setMinOrder,
   isCatering, menuRates, setMenuRates,
   chargesByDistance, distanceRates, setDistanceRates,
+  isVenue, venueTerms, setVenueTerms,
 }) {
   return (
     <div className="space-y-4">
@@ -1510,6 +1523,10 @@ function PriceStep({
       {chargesByDistance && (
         <DistanceRates rates={distanceRates} onChange={setDistanceRates} />
       )}
+
+      {/* A rent, a deposit, and the six lines that usually turn up after
+          the advance is paid. See VenueTerms. */}
+      {isVenue && <VenueTerms value={venueTerms} onChange={setVenueTerms} />}
 
       {/* ── The three objections, answered on the screen they surface ──
           What does it cost me, can I say no, and do I actually get paid.
