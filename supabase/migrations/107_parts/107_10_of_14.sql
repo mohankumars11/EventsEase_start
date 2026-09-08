@@ -18,20 +18,6 @@
 -- it again.
 
 BEGIN;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-372', 'SBM-SPG-083', '3_days', 'Three days', NULL, 2)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-373', 'SBM-SPG-083', '1_week', 'A week', NULL, 3)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-374', 'SBM-SPG-083', '1_month', 'A month', NULL, 4)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_questions (id, scope, group_key, question, hint, answer_type, takes_exact, exact_unit, sort_order) VALUES ('SBM-SPG-084', 'ops:Anchor & MC:where', 'travel_km', 'How far will you travel?', NULL, 'one', TRUE, 'km', 0)
-  ON CONFLICT (id) DO UPDATE SET scope = EXCLUDED.scope, group_key = EXCLUDED.group_key, question = EXCLUDED.question, hint = EXCLUDED.hint, answer_type = EXCLUDED.answer_type, takes_exact = EXCLUDED.takes_exact, exact_unit = EXCLUDED.exact_unit, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-375', 'SBM-SPG-084', '10', 'Up to 10 km', 'Your own area', 0)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-376', 'SBM-SPG-084', '25', 'Up to 25 km', 'Most of Bengaluru', 1)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
-INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-377', 'SBM-SPG-084', '50', 'Up to 50 km', 'And the outskirts', 2)
-  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-378', 'SBM-SPG-084', 'outstation', 'Outstation too', 'Mysuru, Coorg, anywhere', 3)
   ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.listing_questions (id, scope, group_key, question, hint, answer_type, takes_exact, exact_unit, sort_order) VALUES ('SBM-SPG-085', 'ops:Anchor & MC:where', 'venue_types', 'Venues you are comfortable in', NULL, 'multi', FALSE, NULL, 1)
@@ -643,6 +629,20 @@ INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, so
 INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-622', 'SBM-SPG-139', 'outdoor', 'Outdoor and farmhouse', NULL, 4)
   ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-623', 'SBM-SPG-139', 'temple', 'Temples', NULL, 5)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_questions (id, scope, group_key, question, hint, answer_type, takes_exact, exact_unit, sort_order) VALUES ('SBM-SPG-140', 'ops:DJ & Music:brings', 'gear', 'What you bring', NULL, 'multi', FALSE, NULL, 0)
+  ON CONFLICT (id) DO UPDATE SET scope = EXCLUDED.scope, group_key = EXCLUDED.group_key, question = EXCLUDED.question, hint = EXCLUDED.hint, answer_type = EXCLUDED.answer_type, takes_exact = EXCLUDED.takes_exact, exact_unit = EXCLUDED.exact_unit, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-624', 'SBM-SPG-140', 'own_console', 'Our own console', NULL, 0)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-625', 'SBM-SPG-140', 'speakers', 'Speakers', NULL, 1)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-626', 'SBM-SPG-140', 'lighting', 'Dance floor lighting', NULL, 2)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-627', 'SBM-SPG-140', 'smoke', 'Smoke or CO2', NULL, 3)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-628', 'SBM-SPG-140', 'mic', 'Mic for announcements', NULL, 4)
+  ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
+INSERT INTO public.listing_answers (id, question_id, answer_key, label, scan, sort_order) VALUES ('SBM-SPC-629', 'SBM-SPG-140', 'venue_system', 'We can use the venue system', NULL, 5)
   ON CONFLICT (id) DO UPDATE SET question_id = EXCLUDED.question_id, answer_key = EXCLUDED.answer_key, label = EXCLUDED.label, scan = EXCLUDED.scan, sort_order = EXCLUDED.sort_order;
 
 COMMIT;

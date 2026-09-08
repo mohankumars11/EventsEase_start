@@ -15,6 +15,7 @@ import {
      `window`, so it built and shipped clean. */
   ListChecks, Soup, ClipboardList, IndianRupee, SendHorizonal,
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import { specsForTrade } from '../../data/partnerSpecs'
@@ -29,6 +30,9 @@ import PriceGuidance from './PriceGuidance'
 import DistanceRates from './DistanceRates'
 import ListingSignature from './ListingSignature'
 import MenuDishStep from './MenuDishStep'
+import WorkUpload from './WorkUpload'
+import { workPromptsFor } from '../../data/workPrompts'
+import WhatHappensNext from './WhatHappensNext'
 import HookCard, { PromiseStrip } from './HookCard'
 import { fetchAdditions } from '../../data/catalogueAdditions'
 import { DISH_IDS, DISH_BY_ID } from '../../data/dishRegistry'
@@ -115,7 +119,9 @@ const TRADE_ICON = {
 
 const CATERING = 'Catering & Food'
 
-export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade = null }) {
+export default function AddItemFlow({
+  existing = [], onAdd, onClose, startTrade = null, vendorId = null,
+}) {
   const toast = useToast()
   /* A partner who told us their trade at sign-up should not have to
      find it in a list of twenty-six again. QuickStart hands it in and
@@ -132,6 +138,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
      is what the menu cards are made of, and it is what coverage is
      worked out from. See MenuDishStep. */
   const [cardDishes, setCardDishes] = useState([])
+  /* Photographs, video and testimonials. Every trade, not only catering:
+     a decorator has last Saturday's mandap and had nowhere to put it.
+     See WorkUpload and data/workPrompts.js. */
+  const [work, setWork] = useState([])
   const [price, setPrice] = useState('')
   const [unit, setUnit] = useState('per event')
   const [minOrder, setMinOrder] = useState('')
@@ -291,6 +301,10 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
        does not know what they do. */
     if (isCatering) s.push('upload')
 
+    /* Every trade. Ticks are what dispatch MATCHES on; this is what wins
+       the job once it has been matched, and only caterers could do it. */
+    s.push('work')
+
     s.push('price', 'review')
     return s
   }, [groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
@@ -321,7 +335,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
     : id === 'cuisines' ? 'cuisines'
     : id.startsWith('cuisine:') || id.startsWith('lib:') || id === 'menus' || id === 'dishes' ? 'dishes'
     : id.startsWith('ops:') ? 'ops'
-    : id === 'upload' || id === 'price' ? 'price'
+    : id === 'upload' || id === 'work' || id === 'price' ? 'price'
     : 'submit'
 
   /* ── Only the phases this trade actually has ────────────────────────
@@ -487,6 +501,41 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
       /* Who said it, when, and how much of it. An operator reviewing a
          listing that turns out to be wrong needs all three. */
       if (signature?.signed_at) specs.signature = signature
+
+      /* ── The portfolio belongs to the PARTNER, not to this row ──────
+         A photographer listing candid and pre-wedding separately has one
+         body of work; writing it into both specs would mean editing it
+         twice and showing it twice. So it goes to partner_work, keyed on
+         the vendor, and the listing rows do not carry it.
+
+         Written before the services, deliberately: if this fails the
+         partner still has an empty listing and can retry, which is a
+         better failure than services that exist while their photographs
+         silently did not. Migration 110. */
+      if (vendorId && work.length) {
+        const rows = work.map((w, i) => ({
+          vendor_id: vendorId,
+          kind: w.kind,
+          storage_path: w.path ?? null,
+          caption: w.caption?.trim() || null,
+          said_by: w.said_by?.trim() || null,
+          said_about: w.said_about?.trim() || null,
+          body: w.body?.trim() || null,
+          sort_order: i,
+        })).filter(r => r.kind !== 'testimonial' || r.body)
+
+        if (rows.length) {
+          const { error } = await supabase.from('partner_work').insert(rows)
+          /* Not fatal. A partner whose listing saved and whose photographs
+             did not should be told, not blocked — the photographs can be
+             added again from the listing tab, and losing ten minutes of
+             ticks to a storage error would be the worse outcome. */
+          if (error) {
+            toast.error('Your listing saved, but the photos did not. '
+              + 'Add them again from your listing.')
+          }
+        }
+      }
 
       if (kitchen) specs.kitchen_type = kitchen
       if (cuisines.length) specs.cuisines = cuisines
@@ -717,6 +766,11 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
             <MenuUpload value={uploads} onChange={setUploads} />
           )}
 
+          {step === 'work' && (
+            <WorkUpload value={work} onChange={setWork} trade={trade}
+              copy={workPromptsFor(trade)} />
+          )}
+
           {step === 'dishes' && (
             <DishStep chosen={dishes} onChange={setDishes} />
           )}
@@ -747,6 +801,7 @@ export default function AddItemFlow({ existing = [], onAdd, onClose, startTrade 
               counters={FOOD_COUNTERS.filter(c => counters.includes(c.id))}
               dishes={dishes}
               price={price} unit={unit}
+              work={work} cardDishes={cardDishes}
             />
           )}
 
@@ -812,6 +867,7 @@ const STEP_TITLE = {
   kitchen:   'What kind of kitchen?',
   cuisines:  'Which cuisines?',
   upload:    'Your menu card',
+  work:      'Show them your work',
   price:     'What do you charge?',
   review:    'Check and submit',
 }
@@ -1568,7 +1624,7 @@ function PriceStep({
 
 export function ReviewStep({
   trade, picked, detail, groups, opsScreens = [], menus, counters,
-  dishes = [], price, unit,
+  dishes = [], price, unit, work = [], cardDishes = [],
 }) {
   /* ── Read the same key the screen wrote ─────────────────────────────
      An ops group's answer lives under its stateKey, not its id: eight
@@ -1603,8 +1659,55 @@ export function ReviewStep({
     }),
   })).filter(s => s.lines.length)
 
+  /* Counted before it is listed. Ten minutes of ticking produces a lot
+     of small facts, and "312 things" is the sentence that tells somebody
+     the time was worth spending — the individual cards below are for
+     checking, this is for believing. */
+  const claims = picked.length + menus.length + counters.length
+    + dishes.length + cardDishes.length
+    + answered.length + operations.reduce((t, x) => t + x.lines.length, 0)
+
   return (
     <div className="space-y-3">
+      {/* ── What it adds up to ───────────────────────────────────────
+          First, because the rest of this screen is a list and a list
+          does not tell you whether it is a big one. */}
+      <div className="overflow-hidden rounded-[22px] bg-kumkuma-600 p-4 text-white">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/75">
+          Ready to submit
+        </p>
+        <p className="mt-1 font-display text-[22px] font-extrabold leading-tight">
+          {claims} {claims === 1 ? 'thing' : 'things'} you have told us
+          you can do
+        </p>
+        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-white/85">
+          Every one of them is something a job can be matched on. Check it
+          below — after this a person reads it, and anything wrong is
+          easier to fix now than after your first offer.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[
+            [picked.length, 'services'],
+            [menus.length, 'menu cards'],
+            [cardDishes.length, 'dishes'],
+            [work.filter(w => w.kind === 'photo').length, 'photos'],
+            [work.filter(w => w.kind === 'video').length, 'videos'],
+            [work.filter(w => w.kind === 'testimonial').length, 'testimonials'],
+          ].filter(([x]) => x > 0).map(([x, label]) => (
+            <span key={label} className="rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-extrabold ring-1 ring-white/25">
+              {/* "1 videos" is the kind of small wrongness that makes a
+                  screen feel unfinished, and the labels are plural
+                  because most counts are. */}
+              {x} {x === 1 ? label.replace(/s$/, '') : label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Before the detail, not after it: a partner deciding whether to
+          spend the next tap should already know what the tap does. */}
+      <WhatHappensNext at="submitted" />
+
       <Card title="Your trade">
         <p className="text-[14px] font-extrabold text-ink">{trade}</p>
       </Card>
@@ -1618,6 +1721,28 @@ export function ReviewStep({
           ))}
         </ul>
       </Card>
+
+      {work.length > 0 && (
+        <Card title={`What you are showing them (${work.length})`}>
+          <ul className="space-y-1">
+            {work.map((w, i) => (
+              <li key={w.path ?? w.key ?? i} className="flex items-start gap-2 text-[13px] text-ink-soft">
+                <Check size={13} className="mt-1 shrink-0 text-forest-600" />
+                <span>
+                  <span className="font-semibold text-ink">
+                    {w.kind === 'testimonial'
+                      ? (w.said_by ? `${w.said_by} said` : 'A testimonial')
+                      : w.kind === 'video' ? 'Video'
+                      : w.kind === 'document' ? 'Document' : 'Photo'}
+                  </span>
+                  {w.caption ? ` — ${w.caption}` : ''}
+                  {w.kind === 'testimonial' && w.body ? ` — “${w.body.slice(0, 70)}”` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {answered.length > 0 && (
         <Card title="What you do">
@@ -1682,15 +1807,10 @@ export function ReviewStep({
         </p>
       </Card>
 
-      {/* What happens next, said plainly. A partner who submits and hears
-          nothing assumes it failed and submits again. */}
-      <div className="rounded-[20px] bg-forest-50 p-4 ring-1 ring-forest-200/70">
-        <p className="text-[13px] font-extrabold text-forest-900">What happens now</p>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-forest-800">
-          Somebody at Sambramo reads this, usually the same day. You will be
-          told the moment it is live, and jobs can start arriving that week.
-        </p>
-      </div>
+      {/* What used to be a two-line "What happens now" card sat here, at
+          the BOTTOM — after everything, where somebody deciding whether
+          to submit has already decided. It says more, and says it first,
+          as WhatHappensNext at the top of this screen. */}
     </div>
   )
 }

@@ -508,16 +508,11 @@ export const SPECS_BY_TRADE = {
         { id: 'blowdry',    label: 'Blow-dry and straightening' },
       ],
     },
-    {
-      id: 'trial',
-      question: 'Do you do a trial before the day?',
-      type: 'one',
-      choices: [
-        { id: 'free',  label: 'Yes, free if the booking is confirmed' },
-        { id: 'paid',  label: 'Yes, as a paid session' },
-        { id: 'none',  label: 'No trials' },
-      ],
-    },
+    /* The trial question lives on the operations screen — it is about
+       when they work, not what they do, and it was already there under
+       "Do you offer a trial before the day?". Asked on both, a partner
+       answers the same thing twice on two screens and learns the form
+       is not paying attention. */
     {
       id: 'who',
       question: 'Who do you work with?',
@@ -1196,16 +1191,11 @@ export const SPECS_BY_TRADE = {
 
   /* ── Valet Parking ───────────────────────────────────────────────── */
   'Valet Parking': [
-    {
-      id: 'scale',
-      question: 'How many cars can you handle?',
-      type: 'one',
-      choices: [
-        { id: '25',  label: 'Up to 25' },
-        { id: '75',  label: 'Up to 75' },
-        { id: '200', label: '200 or more' },
-      ],
-    },
+    /* Car volume is on the operations screen, where it carries an exact
+       number — a crew that handles 140 can say 140 rather than picking
+       "200 or more". Two ladders for one question, with different rungs
+       (75 here, 50 and 100 there), also meant two different answers to
+       the same question depending on which screen a partner reached. */
     {
       id: 'extras',
       question: 'What is included?',

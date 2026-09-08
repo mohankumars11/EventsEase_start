@@ -197,6 +197,9 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
         <AddItemFlow
           existing={services}
           startTrade={typeof picking === 'string' ? picking : null}
+          /* partner_work is keyed on the vendor, not on a listing row:
+             one body of work, however many services they list. */
+          vendorId={vendor?.id}
           onAdd={onAdd}
           onClose={() => setPicking(false)}
         />
