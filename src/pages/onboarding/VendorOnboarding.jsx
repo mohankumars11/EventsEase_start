@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft, Loader2, Navigation, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES } from '../../config/vendor'
-import { lookupPincode } from '../../lib/pincodeDirectory'
+import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincodeDirectory'
 
 const CATEGORIES = VENDOR_CATEGORIES
 
@@ -60,9 +60,44 @@ export default function VendorOnboarding() {
     years_experience: '',
     starting_price:   '',
     service_areas:    [],
+    /* Dispatch's hardest filter, and it has never been on this form. */
+    service_radius_km: 15,
     website_url:      '',
     instagram_url:    '',
   })
+
+  /* An exact pin beats a pincode centroid by about two kilometres, and
+     the radius filter measures from it. Null until they tap. */
+  const [pinned, setPinned] = useState(null)
+  const [locating, setLocating] = useState(false)
+
+  async function useMyLocation() {
+    setLocating(true)
+    setError('')
+    try {
+      const pos = await currentPosition({ timeout: 12000 })
+      if (pos.status !== 'ok') {
+        setError(pos.status === 'denied'
+          ? 'Location is off for this app. Type your pincode instead — it works, it is just less exact.'
+          : 'Could not find you. Type your pincode instead.')
+        return
+      }
+      /* Names the place from centroids we already hold, so it costs no
+         external call and fills the pincode and area boxes for them. */
+      const near = await nearestServed(pos.lat, pos.lng)
+      setPinned({ lat: pos.lat, lng: pos.lng })
+      setForm(f => ({
+        ...f,
+        pincode: near?.pincode ?? f.pincode,
+        area: near?.area ?? f.area,
+        city: f.city || 'Bengaluru',
+      }))
+    } catch {
+      setError('Could not find you. Type your pincode instead.')
+    } finally {
+      setLocating(false)
+    }
+  }
 
   /**
    * The existing row, if there is one — and whether we've looked yet.
@@ -101,6 +136,7 @@ export default function VendorOnboarding() {
             years_experience: data.years_experience?.toString() ?? '',
             starting_price:   data.starting_price?.toString() ?? '',
             service_areas:    (data.service_areas ?? []).filter(c => CITIES.includes(c)),
+            service_radius_km: data.service_radius_km ?? 15,
             website_url:      data.website_url ?? '',
             instagram_url:    data.instagram_url ?? '',
           })
@@ -171,6 +207,11 @@ export default function VendorOnboarding() {
         years_experience: parseInt(form.years_experience, 10) || 0,
         starting_price:   parseInt(form.starting_price, 10) || 0,
         service_areas:    form.service_areas,
+        /* Written here or it is not written at all: nothing else on
+           this form touches it and the Account fold is the only other
+           place it has ever been editable. */
+        service_radius_km: Math.min(100, Math.max(1,
+          parseInt(form.service_radius_km, 10) || 15)),
         website_url:      form.website_url.trim() || null,
         instagram_url:    form.instagram_url.trim() || null,
         // Status is set on creation only. An approved partner editing their
@@ -230,11 +271,14 @@ export default function VendorOnboarding() {
           return
         }
 
+        /* The pin if they gave one, the pincode centroid otherwise. A
+           centroid is roughly 2 km out — fine for a city-wide list, and
+           wrong for the radius test match_partners actually runs. */
         const { data: located } = await supabase.rpc('set_partner_location', {
           p_vendor_id: saved.id,
           p_pincode: form.pincode,
-          p_lat: place.lat,
-          p_lng: place.lng,
+          p_lat: pinned?.lat ?? place.lat,
+          p_lng: pinned?.lng ?? place.lng,
           p_area: place.area,
         })
 
@@ -316,7 +360,48 @@ export default function VendorOnboarding() {
             {/* ── Step 2: Location ── */}
             {step === 2 && (
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Your location</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">Your location</h2>
+                <p className="mb-4 text-[12.5px] leading-snug text-gray-500">
+                  Jobs are matched by distance, so this decides what you are
+                  offered more than anything else on this form.
+                </p>
+
+                {/* ══════════════════════════════════════════════════════
+                    CAPTURED HERE, NOT ON THE SPLASH SCREEN
+                    ══════════════════════════════════════════════════════
+
+                    A location prompt on first launch is refused more than
+                    anywhere else — nothing has been explained yet — and an
+                    Android refusal is sticky: getting it back needs a trip
+                    to Settings that nobody makes. Asking once, on the
+                    screen headed "Your location", is the moment somebody
+                    has already agreed to answer it.
+
+                    A pincode centroid is roughly 2 km out. That is fine for
+                    appearing in a city-wide list and wrong for a radius
+                    filter, which is what dispatch actually runs. One tap
+                    here replaces two kilometres of error with ten metres.
+
+                    currentPosition and nearestServed already exist;
+                    nearestServed names the place by looping centroids we
+                    already hold, so it costs no external call. */}
+                <button
+                  type="button"
+                  onClick={useMyLocation}
+                  disabled={locating}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-plum-200 bg-plum-50 py-3 text-[13.5px] font-extrabold text-plum-800 disabled:opacity-60"
+                >
+                  {locating
+                    ? <Loader2 size={15} className="animate-spin" />
+                    : <Navigation size={15} />}
+                  {locating ? 'Finding you…' : 'Use my location'}
+                </button>
+                {pinned && (
+                  <p className="-mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-forest-700">
+                    <Check size={13} /> Pinned to where you are now. Exact,
+                    not a guess from the pincode.
+                  </p>
+                )}
 
                 <Field label="Primary city">
                   <select value={form.city} onChange={e => set('city', e.target.value)} className="input">
@@ -336,6 +421,35 @@ export default function VendorOnboarding() {
                       onChange={e => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
                       className="input" placeholder="560034" inputMode="numeric" />
                   </Field>
+                </div>
+
+                {/* `service_radius_km` has existed since 057 and has only
+                    ever been editable in a fold on the Account tab, which
+                    almost nobody opens. It is a hard filter in
+                    match_partners: the default 10 km silently decides that
+                    a partner never hears about a job 12 km away. Asked
+                    here, once, where it belongs. */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    How far will you travel?
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[5, 10, 15, 25, 40, 60].map(km => (
+                      <button key={km} type="button"
+                        onClick={() => set('service_radius_km', km)}
+                        className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                          Number(form.service_radius_km) === km
+                            ? 'border-plum-600 bg-plum-600 text-white'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-plum-300'
+                        }`}>
+                        {km} km
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11.5px] leading-snug text-gray-500">
+                    You will not be offered jobs further out than this. It can
+                    be changed any time.
+                  </p>
                 </div>
 
                 <div>
