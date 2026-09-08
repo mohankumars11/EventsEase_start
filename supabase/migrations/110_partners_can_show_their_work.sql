@@ -70,10 +70,6 @@ CREATE TABLE IF NOT EXISTS public.partner_work (
 
   -- Null for a testimonial, which has no file.
   storage_path TEXT,
-  CONSTRAINT partner_work_file_or_words CHECK (
-    (kind = 'testimonial' AND storage_path IS NULL AND body IS NOT NULL)
-    OR (kind <> 'testimonial' AND storage_path IS NOT NULL)
-  ),
 
   -- What it shows. "The 400-seat hall", "Mandap, Malleshwaram, Jan 2026".
   caption     TEXT,
@@ -96,7 +92,15 @@ CREATE TABLE IF NOT EXISTS public.partner_work (
   -- public listing is a claim we are making on their behalf.
   review_status TEXT NOT NULL DEFAULT 'under_review',
   CONSTRAINT partner_work_review_check
-    CHECK (review_status IN ('under_review', 'live', 'rejected'))
+    CHECK (review_status IN ('under_review', 'live', 'rejected')),
+
+  -- A file, or words. Written after every column it reads rather than
+  -- between two of them: legal either way, and one less thing for
+  -- somebody reading this at speed to have to check.
+  CONSTRAINT partner_work_file_or_words CHECK (
+    (kind = 'testimonial' AND storage_path IS NULL AND body IS NOT NULL)
+    OR (kind <> 'testimonial' AND storage_path IS NOT NULL)
+  )
 );
 
 CREATE INDEX IF NOT EXISTS partner_work_by_vendor
@@ -112,9 +116,9 @@ DROP POLICY IF EXISTS partner_work_own ON public.partner_work;
 CREATE POLICY partner_work_own ON public.partner_work
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.vendors v
-                 WHERE v.id = vendor_id AND v.user_id = auth.uid()))
+                 WHERE v.id = vendor_id AND v.profile_id = auth.uid()))
   WITH CHECK (EXISTS (SELECT 1 FROM public.vendors v
-                      WHERE v.id = vendor_id AND v.user_id = auth.uid()));
+                      WHERE v.id = vendor_id AND v.profile_id = auth.uid()));
 
 -- Everybody else reads only what has been read by us first.
 DROP POLICY IF EXISTS partner_work_public ON public.partner_work;
