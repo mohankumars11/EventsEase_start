@@ -192,7 +192,7 @@ export const DARK_PATTERNS = [
   {
     id: 'disguised_advertisement',
     risk: 'Promoted partners in match results.',
-    rule: 'If a partner ever pays for placement it must be labelled. Today match_partners() orders by rating and distance only — that is a promise.',
+    rule: 'If a partner ever pays for placement it must be labelled. Today match_partners() orders by distance and rating only — that is a promise.',
   },
   {
     id: 'nagging',

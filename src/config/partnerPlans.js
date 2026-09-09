@@ -41,9 +41,10 @@
  * ── What is deliberately NOT for sale ────────────────────────────────
  *
  *   · The customer's price. A paid tier must never make a booking dearer.
- *   · Position in the match order. `match_partners` sorts by rating then
- *     distance, and a paid master jumping a better-rated one would make
- *     the rating meaningless — which is the one signal a customer has.
+ *   · Position in the match order. `match_partners` sorts by distance
+ *     then rating, and a paid master jumping a nearer or better-rated
+ *     one would make both signals meaningless — and they are the only
+ *     two a customer has.
  *   · The commission rate. Discounting it for paying masters means the
  *     customer's money buys different things depending on who accepts.
  *
