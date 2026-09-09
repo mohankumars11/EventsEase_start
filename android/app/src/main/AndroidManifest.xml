@@ -105,4 +105,39 @@
     <!-- Lets a job alert wake the screen. A 45-second offer that arrives
          silently in a pocket is an offer that expires. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         WHY "USE MY LOCATION" COULD NEVER HAVE WORKED IN THE APK
+         ══════════════════════════════════════════════════════════════
+
+         The partner app asks for a location twice: on the onboarding
+         step headed "Your location", and on the Account tab. Both call
+         navigator.geolocation through lib/pincodeDirectory.
+
+         In a browser that prompts. Inside a Capacitor WebView it does
+         not: the system checks the app manifest first, finds no location
+         permission declared, and returns PERMISSION_DENIED immediately
+         WITHOUT showing the user anything. So the button appeared to do
+         nothing, or reported that we could not find them, on every
+         installed copy — and the partner could not fix it from Settings
+         either, because a permission the app never asked for does not
+         appear in the app's permission list.
+
+         FINE is what the radius filter needs. match_partners measures
+         from a point and compares it against service_radius_km; a coarse
+         fix is a cell-tower estimate, which in this city can be two
+         kilometres out and is no better than the pincode centroid it
+         was meant to replace.
+
+         COARSE is declared beside it because Android 12 and later let
+         the user grant "Approximate" instead of "Precise" from the
+         system dialog. An app that declares only FINE gets nothing at
+         all from that choice; declaring both means an approximate grant
+         still gives us something to work with.
+
+         Neither is required to use the app. The pincode box beside the
+         button does the same job less exactly, and every message on
+         those screens now says so. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

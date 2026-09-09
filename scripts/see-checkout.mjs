@@ -259,6 +259,13 @@ try {
   console.log("    typed a number and continued")
   await sleep(9000)
 
+  /* Razorpay raises a "Customise Your Experience" consent sheet over the
+     methods on first use. Dismissing it is not cosmetic here: the whole
+     point of this script is to see WHICH METHODS are offered, and the
+     consent sheet covers exactly that. */
+  await tap(392, 387)
+  await sleep(2500)
+
   const shot = await send('Page.captureScreenshot', { format: 'png' })
   const data = shot?.data ?? shot?.result?.data
   if (data) {

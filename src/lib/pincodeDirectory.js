@@ -412,14 +412,83 @@ export async function nearestServed(lat, lng) {
 }
 
 /**
- * Ask the browser where it is.
+ * Ask the device where it is.
  *
  * Wrapped rather than called inline because the failure modes need
- * distinct names — a customer who DENIED permission needs different
- * words from one whose phone could not get a fix, and "location
+ * distinct names — somebody who DENIED permission needs different words
+ * from somebody whose phone could not get a fix, and "location
  * unavailable" for both is how an app teaches people to ignore it.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THE APK NEEDS A DIFFERENT CALL FROM THE BROWSER
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `navigator.geolocation` inside a Capacitor WebView does not prompt.
+ * The system checks the app's manifest and its granted runtime
+ * permissions first, and if location has not been granted it returns
+ * PERMISSION_DENIED immediately — with no dialog, no explanation and
+ * nothing the person can do about it, because a permission the app has
+ * never requested does not appear in the app's Settings page either.
+ *
+ * So every installed copy of the partner app had a "Use my location"
+ * button that silently could not work, on a screen whose whole purpose
+ * was capturing the location. Two things fix it and both are needed:
+ * the manifest declares ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION
+ * (see android/app/src/main/AndroidManifest.xml), and this asks the
+ * plugin, which is what actually raises the runtime dialog.
+ *
+ * The import is dynamic so the web bundle never pulls the plugin in —
+ * a browser has `navigator.geolocation` and needs none of this.
+ *
+ * The test is `window.Capacitor`, the same one lib/api.js uses and for
+ * the same reason: `isNativePlatform()` has been unreliable during the
+ * first paint, and if the bridge object exists at all, this is the app.
  */
+const NATIVE = () => typeof window !== 'undefined' && !!window.Capacitor
+
+/** Map a plugin or browser error onto our four words. */
+function reasonFor(err) {
+  const msg = String(err?.message ?? err ?? '').toLowerCase()
+  if (err?.code === 1 || msg.includes('denied') || msg.includes('permission')) return 'denied'
+  if (err?.code === 3 || msg.includes('timeout') || msg.includes('timed out')) return 'timeout'
+  return 'unavailable'
+}
+
+async function nativePosition(timeout) {
+  const { Geolocation } = await import('@capacitor/geolocation')
+
+  /* Ask before reading. checkPermissions first so a partner who has
+     already granted it is not shown a dialog every time they open the
+     screen. */
+  let state = await Geolocation.checkPermissions()
+  if (state.location !== 'granted' && state.coarseLocation !== 'granted') {
+    state = await Geolocation.requestPermissions({ permissions: ['location'] })
+  }
+  if (state.location === 'denied' && state.coarseLocation === 'denied') {
+    return { status: 'denied' }
+  }
+
+  const pos = await Geolocation.getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout,
+    maximumAge: 120_000,
+  })
+  return {
+    status: 'ok',
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    accuracyM: Math.round(pos.coords.accuracy ?? 0),
+  }
+}
+
 export function currentPosition({ timeout = 8000 } = {}) {
+  if (NATIVE()) {
+    /* Never rejects, same contract as the browser path below — every
+       caller of this function reads `.status` and none of them has a
+       catch. */
+    return nativePosition(timeout).catch(err => ({ status: reasonFor(err) }))
+  }
+
   return new Promise(resolve => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       return resolve({ status: 'unsupported' })

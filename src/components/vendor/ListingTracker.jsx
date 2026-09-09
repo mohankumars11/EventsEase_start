@@ -41,9 +41,27 @@ import {
  * promise and the tracking are recognisably one thing.
  */
 
-const STEPS = ['submitted', 'read', 'verified', 'live']
+/* ══════════════════════════════════════════════════════════════════
+   EXPORTED, BECAUSE THE LISTING TAB NOW DRAWS ITS OWN CARDS
+   ══════════════════════════════════════════════════════════════════
 
-const STATE = {
+   A listing used to appear TWICE on the Listing tab: once as a row in
+   this tracker, and again below it as a service row carrying the
+   eye/pencil/bin buttons. Same listing, same screen, two cards, and the
+   partner had to work out that they were the same thing.
+
+   They are now one card, drawn by VendorServiceList, which needs these
+   four states, these four beads and this "how long ago" to say exactly
+   what this tracker was saying. Exported rather than copied: two
+   ladders for one set of states drift, and the drift shows up as a
+   listing described one way here and another way there.
+
+   This component survives, unchanged in behaviour, as the compact
+   read-only strip on the Jobs tab — where a partner needs to know why
+   there are no jobs and has no business editing anything. */
+export const STEPS = ['submitted', 'read', 'verified', 'live']
+
+export const STATE = {
   rejected: {
     at: 'read',
     label: 'Needs a change',
@@ -79,7 +97,7 @@ const STATE = {
 }
 
 /** How long ago, in the words somebody uses out loud. */
-function ago(iso) {
+export function ago(iso) {
   if (!iso) return null
   const ms = Date.now() - new Date(iso).getTime()
   if (!Number.isFinite(ms) || ms < 0) return null
@@ -94,13 +112,40 @@ function ago(iso) {
   return months === 1 ? 'a month ago' : `${months} months ago`
 }
 
-const stateOf = s =>
+export const stateOf = s =>
   s.review_status === 'rejected' ? 'rejected'
   : s.review_status === 'under_review' ? 'under_review'
   : s.is_active === false ? 'hidden'
   : 'live'
 
-export default function ListingTracker({ services = [], onOpenJobs }) {
+/**
+ * The four beads. Which part is happening, not how far along.
+ *
+ * A progress BAR answers "how much is left", which nobody is asking. A
+ * partner watching a listing wants to know whether it has been read
+ * yet, and a rejected one shows its bead in red at the step it stopped
+ * at rather than pretending to be three-quarters done.
+ */
+export function StatusBeads({ state, className = '' }) {
+  const here = STEPS.indexOf((STATE[state] ?? STATE.live).at)
+  return (
+    <div className={`flex items-center gap-1 ${className}`}>
+      {STEPS.map((sid, i) => (
+        <span
+          key={sid}
+          aria-hidden
+          className={`h-[3px] flex-1 rounded-full ${
+            state === 'rejected' && i === here ? 'bg-rose-500'
+            : i <= here ? 'bg-forest-600'
+            : 'bg-ink/[0.08]'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+export default function ListingTracker({ services = [], onOpenJobs, compact = false }) {
   const [open, setOpen] = useState(false)
   if (!services.length) return null
 
@@ -112,7 +157,7 @@ export default function ListingTracker({ services = [], onOpenJobs }) {
 
   /* Three or fewer is a list; more is a wall above the thing they came
      for. Anything waiting on the partner is never folded. */
-  const foldable = rest.length > 3
+  const foldable = !compact && rest.length > 3
   const shown = foldable && !open ? [] : rest
 
   const summary = [
@@ -165,7 +210,6 @@ export default function ListingTracker({ services = [], onOpenJobs }) {
 function Row({ row }) {
   const meta = STATE[row.state]
   const Icon = meta.icon
-  const here = STEPS.indexOf(meta.at)
   const when = ago(row.reviewed_at ?? row.created_at)
 
   return (
@@ -184,21 +228,8 @@ function Row({ row }) {
         </span>
       </div>
 
-      {/* Four beads, the same four steps the review screen promised. A
-          bar would say "how far"; these say which part is happening. */}
-      <div className="mt-2 flex items-center gap-1 pl-[38px]">
-        {STEPS.map((sid, i) => (
-          <span
-            key={sid}
-            aria-hidden
-            className={`h-[3px] flex-1 rounded-full ${
-              row.state === 'rejected' && i === here ? 'bg-rose-500'
-              : i <= here ? 'bg-forest-600'
-              : 'bg-ink/[0.08]'
-            }`}
-          />
-        ))}
-      </div>
+      {/* The same four steps the review screen promised. */}
+      <StatusBeads state={row.state} className="mt-2 pl-[38px]" />
 
       {/* Why it came back. A listing refused with no reason is a partner
           who submits the same thing again. */}

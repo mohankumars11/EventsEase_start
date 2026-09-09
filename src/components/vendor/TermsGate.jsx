@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import {
-  Percent, Phone, Wallet, Check, Undo2, AlertTriangle, Ban,
+  Percent, Phone, Wallet, Check, Undo2, AlertTriangle, Ban, BadgeCheck,
   ChevronDown, Loader2,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
   PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION,
 } from '../../config/partnerTerms'
+import HoldToSign from './HoldToSign'
 
 /**
- * The seven rules, and the tick that says they were read.
+ * The rules, and the signature that says they were read.
  *
  * ══════════════════════════════════════════════════════════════════════
  * WHY THIS BLOCKS THE APP
@@ -31,37 +32,63 @@ import {
  * DESIGNED FOR SOMEBODY WHO WILL NOT READ IT
  * ══════════════════════════════════════════════════════════════════════
  *
- * Seven cards, each one line, scannable in twenty seconds. The long form
+ * A card per rule, each one line, scannable in half a minute. The long form
  * is underneath, collapsed, for whoever wants it and for the record.
  *
  * The test each card had to pass: would a master be surprised by this
- * later? A wall of text produces a tap. Seven cards produce a chance of
+ * later? A wall of text produces a tap. Eight cards produce a chance of
  * understanding, which is the only thing worth having.
  */
 
 const ICONS = {
-  percent: Percent, phone: Phone, wallet: Wallet,
+  percent: Percent, phone: Phone, wallet: Wallet, badge: BadgeCheck,
   check: Check, undo: Undo2, alert: AlertTriangle, ban: Ban,
 }
 
+/* The heading counted the cards by hand and said "Seven things". Adding
+   the genuineness card made it eight and made the heading a lie the
+   reader can check in four seconds — which is a bad first impression
+   for a screen whose entire job is being believed. */
+const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six',
+  'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+const spell = n => WORDS[n] ?? String(n)
+
 export default function TermsGate({ vendorId, onAccepted }) {
-  const [agreed, setAgreed] = useState(false)
+  const [signature, setSignature] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [openLong, setOpenLong] = useState(false)
 
   async function accept() {
+    if (!signature) return
     setSaving(true); setError(null)
-    const { error: e } = await supabase
-      .from('vendors')
-      .update({
-        terms_accepted_at: new Date().toISOString(),
-        terms_version: PARTNER_TERMS_VERSION,
-      })
-      .eq('id', vendorId)
+
+    /* ══════════════════════════════════════════════════════════════════
+       THROUGH AN RPC, NOT A CLIENT UPDATE
+       ══════════════════════════════════════════════════════════════════
+
+       This was `.from('vendors').update({ terms_accepted_at: ... })` —
+       a client writing its own consent record, with the timestamp and
+       the version supplied by the same browser that is being asked to
+       consent. The record of an agreement cannot be one the agreeing
+       party composes.
+
+       sign_partner_terms (migration 112) stamps now() and auth.uid()
+       server-side and refuses a vendor the caller does not own. What the
+       client supplies is the only thing it legitimately knows: the name
+       the partner typed and the version of the words they were shown. */
+    const { data, error: e } = await supabase.rpc('sign_partner_terms', {
+      p_vendor_id: vendorId,
+      p_version: PARTNER_TERMS_VERSION,
+      p_signature: signature,
+    })
 
     setSaving(false)
     if (e) { setError(e.message); return }
+    if (!data?.ok) {
+      setError(data?.reason ?? 'We could not record your signature. Try again.')
+      return
+    }
     onAccepted?.()
   }
 
@@ -84,15 +111,16 @@ export default function TermsGate({ vendorId, onAccepted }) {
           Partners
         </p>
         <h1 className="mt-5 font-serif text-[27px] font-extrabold leading-[1.12] tracking-tight text-plum-950">
-          Seven things, then you are in
+          {spell(PARTNER_RULES.length).replace(/^./, c => c.toUpperCase())} things,
+          then you sign
         </h1>
         <p className="mt-2 max-w-md text-[14px] font-semibold leading-relaxed text-plum-950/80">
           Everything here costs you money or your standing if it takes you by
-          surprise. Twenty seconds now.
+          surprise. Twenty seconds now, and your name at the end.
         </p>
       </div>
 
-      <div className="mx-auto max-w-2xl px-4 pb-40 pt-5">
+      <div className="mx-auto max-w-2xl px-4 pb-[280px] pt-5">
         <ul className="space-y-2.5">
           {PARTNER_RULES.map((r, i) => {
             const Icon = ICONS[r.icon] ?? Check
@@ -106,7 +134,7 @@ export default function TermsGate({ vendorId, onAccepted }) {
                 </span>
                 <div className="min-w-0">
                   <p className="text-[14.5px] font-extrabold leading-snug text-ink">
-                    {/* Numbered, because seven unnumbered cards read as a
+                    {/* Numbered, because eight unnumbered cards read as a
                         list somebody can stop halfway down. */}
                     <span className="text-ink-mute">{i + 1}. </span>{r.title}
                   </p>
@@ -152,38 +180,46 @@ export default function TermsGate({ vendorId, onAccepted }) {
         )}
       </div>
 
-      {/* ── The tick and the button, pinned ───────────────────────────
+      {/* ── The signature, pinned ─────────────────────────────────────
           Pinned because the cards are longer than a phone screen and a
-          button below seven of them is a button nobody reaches. The
-          checkbox sits WITH it: separating the consent from the action
-          is how people end up agreeing to something they scrolled past. */}
+          button below eight of them is a button nobody reaches.
+
+          It was a checkbox and "Agree and start working". A tick is
+          indistinguishable from a mis-tap and carries no name, and this
+          document now contains an undertaking about genuineness that we
+          may have to act on — remove a partner, withhold a payout,
+          recover what a failed booking cost. Acting on any of that
+          against a checkbox is acting on nothing.
+
+          So: their name, and a deliberate hold. The same gesture as the
+          listing signature at the end of the add-item flow. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/[0.08] bg-white/95 px-4 py-3.5 backdrop-blur">
         <div className="mx-auto max-w-2xl">
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={e => setAgreed(e.target.checked)}
-              className="mt-0.5 h-5 w-5 shrink-0 rounded border-ink/25 text-saffron-500 focus:ring-saffron-400"
-            />
-            <span className="text-[13px] font-semibold leading-snug text-ink">
-              I have read these and I agree to work by them.
-            </span>
-          </label>
+          <p className="mb-2 text-[13px] font-semibold leading-snug text-ink">
+            I have read these and I agree to work by them. I understand that
+            everything I list must be work I have really done.
+          </p>
 
-          <button
-            type="button"
-            onClick={accept}
-            disabled={!agreed || saving}
-            /* Saffron, not the shared plum button. This is the partner
-               app and its primary action should be its own colour --
-               the same one now on the launcher icon. */
-            className="mt-3 w-full rounded-full bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
-          >
-            {saving
-              ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Saving…</span>
-              : 'Agree and start working'}
-          </button>
+          <HoldToSign
+            value={signature}
+            onChange={setSignature}
+            tone="saffron"
+            label="Sign with your full name"
+            placeholder="As it appears on your ID"
+          />
+
+          {signature && (
+            <button
+              type="button"
+              onClick={accept}
+              disabled={saving}
+              className="mt-2.5 w-full rounded-full bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
+            >
+              {saving
+                ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Saving…</span>
+                : 'Agree and start working'}
+            </button>
+          )}
         </div>
       </div>
     </div>

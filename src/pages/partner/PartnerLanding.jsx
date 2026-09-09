@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin } from 'lucide-react'
-import { useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
+import { ArrowRight, BadgeCheck, CalendarCheck, IndianRupee, MapPin, Wallet, ListChecks } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import PartnerFigure from '../../components/vendor/PartnerFigure'
-import { PARTNER_PLANS, LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
+import { LAUNCH_OFFER, LAUNCH_NOTE } from '../../config/partnerPlans'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 
 /**
@@ -25,13 +25,30 @@ import InstallTheApp from '../../components/vendor/InstallTheApp'
  * partner and claiming otherwise to the second one would be a lie they
  * could check.
  *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS PAGE IS NOW A THIRD OF ITS LENGTH
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * It ran to about 2,200px — three and a half phone screens — and the
+ * last 1,060px of that (four illustrated points, a pricing ladder, and a
+ * three-step "what happens next") sat BELOW the only sign-up button that
+ * a reader ever reached. Nobody scrolls past a decision they have
+ * already made; that material was either read before the button, in
+ * which case it should be above it, or never.
+ *
+ * All of it is still here, in one card that cycles. Six faces, four
+ * seconds each, dots to jump between them, and it occupies 180px rather
+ * than 1,060px. A partner standing in their own shop gets the whole
+ * argument without a single scroll, and one who wants the detail can
+ * sit on a face and read it.
+ *
  * ── What is deliberately not promised ────────────────────────────────
- * No volume ("get 50 bookings a month"), no earnings figure, no customer
- * count. We do not know any of them yet. Every line below is either a
- * mechanism that exists or a fee that is real.
+ * No volume ("get 50 bookings a month"), no earnings figure beyond the
+ * real median, no customer count. Every line below is either a mechanism
+ * that exists or a fee that is real.
  */
 
-const POINTS = [
+const FACES = [
   {
     icon: MapPin,
     title: 'Jobs near you, not across the city',
@@ -40,19 +57,88 @@ const POINTS = [
   {
     icon: IndianRupee,
     title: 'The price is on the job before you accept',
-    body: 'You see exactly what you earn, in rupees, before you say yes. Nothing is added afterwards and nothing is billed to you. No negotiating, no quoting, no haggling.',
+    body: 'You see exactly what you earn, in rupees, before you say yes. Nothing is added afterwards and nothing is billed to you.',
   },
   {
     icon: CalendarCheck,
     title: 'Your calendar stays yours',
-    body: 'Block the days you are busy and we will not offer you anything on them. Decline anything you do not want, with no penalty.',
+    body: 'Block the days you are busy and we will not offer you anything on them. Decline anything you do not want, no penalty.',
   },
   {
     icon: BadgeCheck,
     title: 'Paid once the event is done',
-    body: 'The customer pays up front and Sambramo holds it — so the money exists before you set out. Once the event is completed successfully and nothing is disputed, it comes to your account.',
+    body: 'The customer pays up front and Sambramo holds it, so the money exists before you set out. It reaches you once the event is completed.',
+  },
+  {
+    /* The pricing ladder was three cards and a paragraph. It is one
+       sentence, because "free, and here is what it would cost" is the
+       whole of what it said. A partner who joins on "free" and later
+       finds a ladder feels sold to; one told the ladder exists and that
+       they are on top of it for nothing can see what they are given. */
+    icon: Wallet,
+    title: 'Free to join, free to stay',
+    body: "No joining fee and no monthly charge while we build the Bengaluru network. Sambramo's share is already taken out of the earning you see — never billed to you, and set out in full in the terms you sign.",
+  },
+  {
+    icon: ListChecks,
+    title: 'Ten minutes to be listed',
+    body: 'Tell us what you do and where. Somebody at Sambramo reads every application, usually the same day, and you are told the moment you are live.',
   },
 ]
+
+const EVERY_MS = 4600
+
+function WhyCard() {
+  const [i, setI] = useState(0)
+  const [held, setHeld] = useState(false)
+
+  /* Honoured, because movement nobody can stop is a bug for anybody who
+     gets motion sick reading it — and a reader who taps a dot has said
+     which face they want, so stop moving it out from under them. */
+  const still = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false
+
+  useEffect(() => {
+    if (still || held) return
+    const t = setInterval(() => setI(n => (n + 1) % FACES.length), EVERY_MS)
+    return () => clearInterval(t)
+  }, [still, held])
+
+  const face = FACES[i]
+  const Icon = face.icon
+
+  return (
+    <div className="mt-6 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+      {/* Fixed height so the page does not jump as the text changes
+          length. 132px holds the longest body at 360px wide. */}
+      <div className="flex min-h-[122px] gap-3.5">
+        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-saffron-400/15 text-saffron-700">
+          <Icon size={18} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-extrabold leading-tight text-ink">{face.title}</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{face.body}</p>
+        </div>
+      </div>
+
+      <div className="mt-1 flex items-center justify-center gap-1.5">
+        {FACES.map((f, n) => (
+          <button
+            key={f.title}
+            type="button"
+            aria-label={f.title}
+            aria-current={n === i}
+            onClick={() => { setI(n); setHeld(true) }}
+            className={`h-1.5 rounded-full transition-all ${
+              n === i ? 'w-5 bg-saffron-500' : 'w-1.5 bg-ink/15'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function PartnerLanding() {
   const { user, profile, signInWithGoogle } = useAuth()
@@ -64,6 +150,22 @@ export default function PartnerLanding() {
   async function handleGoogle() {
     setGoogleBusy(true)
     setGoogleError(null)
+    /* ══════════════════════════════════════════════════════════════════
+       THIS LINE IS WHY GOOGLE SIGN-IN MADE CUSTOMERS
+       ══════════════════════════════════════════════════════════════════
+
+       An OAuth round trip loses everything the page knew — the redirect
+       leaves and comes back as a fresh load, so the only thing that
+       survives is what was written down first. AuthContext reads this
+       key when the session lands and defaults to 'customer' when it is
+       missing.
+
+       It was missing. A decorator who tapped Continue with Google on the
+       PARTNER landing page got a customer profile, and ProtectedRoute
+       then bounced them out of /dashboard/vendor — the one place the
+       button was meant to take them. SignupPage:92 has always written
+       it; this copy of the same button never did. */
+    try { localStorage.setItem(PENDING_ROLE, 'vendor') } catch { /* storage off */ }
     try {
       await signInWithGoogle()
       /* On the web the line above navigates away, so nothing after it
@@ -78,7 +180,9 @@ export default function PartnerLanding() {
   }
 
   return (
-    <div className="a-canvas min-h-screen pb-28">
+    /* pb-28 reserved 112px for a bottom nav that PartnerBottomNav returns
+       null for on this route — 112px of nothing under the last element. */
+    <div className="a-canvas min-h-screen pb-10">
       {/* ══════════════════════════════════════════════════════════════
           THE SAME NAVY BAR THE APP WEARS
           ══════════════════════════════════════════════════════════════
@@ -103,14 +207,14 @@ export default function PartnerLanding() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-5 pt-6">
+      <main className="mx-auto max-w-2xl px-5 pt-5">
         {/* A master, drawn. The first thing on the first screen a
             partner ever sees, because "is this app for me" is answered
             by a picture faster than by a sentence — and an illustration
             can say "somebody who does this work" without claiming to be
             a particular person. */}
-        <div className="mt-6 flex justify-center">
-          <PartnerFigure trade="Decoration & Floral" live size={148} />
+        <div className="flex justify-center">
+          <PartnerFigure trade="Decoration & Floral" live size={124} />
         </div>
 
         {/* ══════════════════════════════════════════════════════════
@@ -126,11 +230,8 @@ export default function PartnerLanding() {
             number: 6,587 is the median partner earning across the rate
             card, and 1,071–49,447 is its actual range. Not a claim about
             how many partners we have, which would be a claim about a
-            seeded network.
-
-            The sentence underneath is one line. Everything else that was
-            prose is now a card with a number on it. */}
-        <p className="mt-5 text-[11.5px] font-extrabold uppercase tracking-[0.16em] text-saffron-800">
+            seeded network. */}
+        <p className="mt-4 text-[11.5px] font-extrabold uppercase tracking-[0.16em] text-saffron-800">
           A typical job pays
         </p>
         <h1 className="mt-1 font-serif text-[44px] font-extrabold leading-[0.98] tracking-tight text-ink sm:text-[52px]">
@@ -145,7 +246,7 @@ export default function PartnerLanding() {
             Each is one number and four words. A master scanning this on
             a WhatsApp forward gets the whole offer without reading a
             paragraph, which is the only way most of them will read it. */}
-        <ul className="mt-5 grid grid-cols-3 gap-2">
+        <ul className="mt-4 grid grid-cols-3 gap-2">
           {[
             /* No commission on this page.
              *
@@ -153,11 +254,8 @@ export default function PartnerLanding() {
              * decides on before reading anything else, and it is not the
              * number that matters — what reaches them is, and that is the
              * headline above. It is set out in full in the partner terms,
-             * which must be accepted before any work is taken, so nobody
-             * finds out at their first payout.
-             *
-             * What replaces it is the thing they actually asked: is there
-             * a cost to joining, and when do I get paid. */
+             * which must be signed before any work is taken, so nobody
+             * finds out at their first payout. */
             { n: '₹0',   t: 'to join',        s: 'free, and free to stay' },
             { n: 'Paid', t: 'once it is done', s: 'no waiting on invoices' },
             { n: 'You',  t: 'pick the jobs',  s: 'decline anything' },
@@ -170,16 +268,30 @@ export default function PartnerLanding() {
           ))}
         </ul>
 
+        {/* ══════════════════════════════════════════════════════════════
+            ONE WAY IN, NOT FOUR
+            ══════════════════════════════════════════════════════════════
+
+            There were two identical /signup?role=vendor buttons on this
+            page — this one and another at the very bottom, 1,000px below
+            it — and the second had no signed-in guard, so a partner who
+            was already signed in was invited to join again underneath
+            their own dashboard link. Two routes, /partner and
+            /partner/join, render this same page, so that lower CTA could
+            also link to the page it was already on.
+
+            One primary action, Google beside it, and email sign-in for
+            somebody who already has an account. Nothing repeated. */}
         {signedInAsPartner ? (
           <Link
             to="/dashboard/vendor"
-            className="mt-6 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-4 text-[16px] font-extrabold text-plum-950 transition active:scale-[0.99]"
+            className="mt-5 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-4 text-[16px] font-extrabold text-plum-950 transition active:scale-[0.99]"
           >
             Go to your jobs
             <ArrowRight size={18} />
           </Link>
         ) : (
-          <div className="mt-6 space-y-2.5">
+          <div className="mt-5 space-y-2.5">
             {/* "Join as a partner" was accurate and asked nothing. This
                 says what happens next and how long it takes, which is
                 the actual objection. */}
@@ -234,130 +346,32 @@ export default function PartnerLanding() {
           </div>
         )}
 
+        {/* Everything that used to be 1,060px of scroll, in one card. */}
+        <WhyCard />
+
         {/* ── What is being booked right now ───────────────────────────
             The most persuasive thing on this page is that the demand is
             specific. "Photography, Videography, Cake" is a stronger
-            argument than any adjective, and it is read from what has
-            actually been dispatched. */}
-        <div className="mt-6 rounded-2xl bg-ink/[0.03] p-4 text-left">
+            argument than any adjective. */}
+        <div className="mt-3 rounded-2xl bg-ink/[0.03] p-4 text-left">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
             Most asked for in Bengaluru
           </p>
           <p className="mt-1.5 text-[13.5px] font-bold leading-snug text-ink">
             Photography · Videography · Cake · Decoration · DJ &amp; sound
           </p>
-          <p className="mt-1 text-[12px] font-semibold leading-snug text-ink-mute">
-            The more of these you list, and the more of the calendar you keep
-            open, the more often you are matched.
-          </p>
         </div>
 
-        {/* Also here, because a master who has not signed up yet is the
-            one most likely to have arrived from a WhatsApp forward and
-            never leave the browser. */}
-        <div className="mt-6"><InstallTheApp /></div>
-
-        {/* The launch offer, stated where somebody deciding will see it. */}
-        {/* Sign-up carries the role in the URL.
-
-            /partner and /partner/join both render THIS page, so the CTA
-            used to link to the page it was already on and did nothing at
-            all. The role has to travel because SignupPage opens on a
-            "who are you?" step, and a master who has just read a page
-            headed "Work that comes to you" has answered that question. */}
         {LAUNCH_OFFER && (
-          <p className="mt-4 rounded-2xl bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">
+          <p className="mt-3 rounded-2xl bg-forest-50 p-3.5 text-[12.5px] font-semibold leading-relaxed text-forest-800 ring-1 ring-forest-200/60">
             {LAUNCH_NOTE}
           </p>
         )}
 
-        <ul className="mt-9 space-y-5">
-          {POINTS.map(p => {
-            const Icon = p.icon
-            return (
-              <li key={p.title} className="flex gap-3.5">
-                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-saffron-400/15 text-saffron-700">
-                  <Icon size={18} />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-[15px] font-extrabold leading-tight text-ink">{p.title}</h2>
-                  <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{p.body}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-
-        {/* ── What it will cost ──────────────────────────────────────
-            Shown even though everything is free today. A partner who
-            joins on "free" and later discovers there was always a ladder
-            feels sold to; one who is told the ladder exists and that they
-            are on top of it for nothing can see what they are being
-            given. */}
-        <section className="mt-11">
-          <h2 className="font-serif text-[22px] font-extrabold text-ink">
-            What it costs
-          </h2>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-            Free while we build the network in Bengaluru — no joining fee and no
-            monthly charge. Sambramo's share of a booking is already taken out of
-            the earning you see, never billed to you, and it is set out in full in
-            the partner terms you accept before your first job.
-          </p>
-
-          <div className="mt-4 space-y-2.5">
-            {PARTNER_PLANS.map(plan => (
-              <div
-                key={plan.id}
-                className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-[15px] font-extrabold text-ink">{plan.label}</h3>
-                  <span className="text-[13px] font-extrabold text-ink-soft">
-                    {LAUNCH_OFFER ? (
-                      <>
-                        <span className="mr-1.5 font-bold text-ink-mute line-through">{plan.price}</span>
-                        Free
-                      </>
-                    ) : plan.price}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-[12.5px] text-ink-mute">{plan.lede}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-11">
-          <h2 className="font-serif text-[22px] font-extrabold text-ink">
-            What happens after you sign up
-          </h2>
-          <ol className="mt-3 space-y-3">
-            {[
-              ['You tell us about your business', 'What you do, where you are, how far you travel. Ten minutes.'],
-              ['We check the details', 'Somebody at Sambramo reads every application. Usually the same day.'],
-              ['Jobs start arriving', 'You will be told the moment you are live, and the first job can come the same week.'],
-            ].map(([t, b], i) => (
-              <li key={t} className="flex gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-[12px] font-extrabold text-white">
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-extrabold text-ink">{t}</p>
-                  <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">{b}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <Link
-          to="/signup?role=vendor"
-          className="mt-9 flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99]"
-        >
-          Join as a partner
-          <ArrowRight size={17} />
-        </Link>
+        {/* Also here, because a master who has not signed up yet is the
+            one most likely to have arrived from a WhatsApp forward and
+            never leave the browser. */}
+        <div className="mt-3"><InstallTheApp /></div>
       </main>
     </div>
   )

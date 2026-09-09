@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
-  ChevronDown, LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
-  TriangleAlert, Sparkles,
+   LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
+  TriangleAlert, Sparkles, Navigation,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES, VENDOR_STATUS, formatPrice } from '../../config/vendor'
 import { PARTNER_PLANS, PLAN_BY_ID, LAUNCH_OFFER, LAUNCH_NOTE, effectiveTier } from '../../config/partnerPlans'
-import { lookupPincode } from '../../lib/pincodeDirectory'
+import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincodeDirectory'
 import { DOCUMENT_KINDS, fetchDocuments } from '../../lib/partnerDocuments'
+import Fold from './Fold'
 import PayoutDetails from './PayoutDetails'
 import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
@@ -152,12 +153,25 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
 
       <AccountState vendor={vendor} onUpdateVendor={onUpdateVendor} />
 
-      {/* ── Verification ─────────────────────────────────────────────
-          Open by default while unverified, shut once the tick is
-          earned. It is the single most consequential thing on this tab
-          for somebody who is not yet receiving work — `match_partners`
-          will not offer a job to an unverified master — and the least
-          interesting thing on it for somebody who is. */}
+      {/* ══════════════════════════════════════════════════════════════
+          ONE FOLD OPENS, NOT TWO
+          ══════════════════════════════════════════════════════════════
+
+          Verification opened while unverified and How-you-get-paid
+          opened while unpaid — and a brand new partner is BOTH, so the
+          tab opened with roughly 1,300px of form stacked in front of
+          them before they had scrolled once. Two open forms read as a
+          wall, not as two things to do, and the reliable outcome of a
+          wall is neither of them getting done.
+
+          Verification wins the one slot because it is the one that
+          gates work: match_partners will not offer a job to an
+          unverified master. Payout details matter enormously and matter
+          LATER — nothing is owed until a job is delivered.
+
+          The summary line on the closed payout fold still says "Not
+          added yet — we cannot pay you without it", so nothing is
+          hidden; it is one tap away instead of open. */}
       {docs && !docs.unavailable && (
         <Fold
           icon={vendor?.is_verified ? BadgeCheck : ShieldCheck}
@@ -185,7 +199,8 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
           title="How you get paid"
           summary={payoutSummary}
           tone={payout ? (payout.verified_at ? 'good' : 'neutral') : 'nudge'}
-          defaultOpen={!payout}
+          /* Only when verification is not already claiming the slot. */
+          defaultOpen={!payout && !!vendor?.is_verified}
         >
           <PayoutDetails vendorId={vendor?.id} onSaved={setPayout} />
         </Fold>
@@ -206,9 +221,29 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
         }}
       />
 
-      <Fold icon={Star} title="Your plan" summary={`${plan.label}${LAUNCH_OFFER ? ' · free right now' : ` · ${plan.price}`}`}>
-        <YourPlan tier={tier} />
-      </Fold>
+      {/* ── Your plan ────────────────────────────────────────────────
+          The largest fold on the tab, at roughly 600px, and there is
+          nothing to DO inside it: during the launch offer every partner
+          is on the top tier for nothing, and no screen in this app sells
+          an upgrade. It was a price list for a decision that cannot be
+          made.
+
+          While the offer is running it is one line. When it ends and
+          the tiers start costing money, the fold comes back — and by
+          then it will have a purchase action in it worth opening for. */}
+      {LAUNCH_OFFER ? (
+        <div className="flex items-center gap-2.5 rounded-[18px] bg-forest-50 px-4 py-3 ring-1 ring-forest-200/60">
+          <Star size={15} className="shrink-0 text-forest-700" />
+          <p className="min-w-0 text-[12.5px] font-semibold leading-snug text-forest-900">
+            <span className="font-extrabold">{plan.label}</span>, free while we
+            build the Bengaluru network. Nothing to pay and nothing to choose.
+          </p>
+        </div>
+      ) : (
+        <Fold icon={Star} title="Your plan" summary={`${plan.label} · ${plan.price}`}>
+          <YourPlan tier={tier} />
+        </Fold>
+      )}
 
       {/* Reference rather than a setting, and it folds itself. */}
       <PartnerHandbook />
@@ -259,16 +294,35 @@ function Identity({ vendor, profile, statusMeta, plan }) {
           either absent or buried: the plan pill sat in a header that
           only rendered on Jobs, "active" was never stated anywhere at
           all, and verification had no surface in the product. */}
+      {/* ══════════════════════════════════════════════════════════════
+          "ACCOUNT ACTIVE · NOT VERIFIED" IS A CONTRADICTION
+          ══════════════════════════════════════════════════════════════
+
+          Those two chips could render side by side, and they did for
+          every partner between approval of their vendors row and the
+          verification tick. Green "Account active" beside grey "Not
+          verified" reads as a working account with a minor box left
+          unticked — when the truth is that match_partners returns
+          nothing at all for an unverified master and the account is
+          receiving no work whatsoever.
+
+          So the two are ONE statement now. Verification is not a
+          separate attribute of an active account; while it is missing,
+          it is what the account's state IS. */}
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <Chip
-          tone={vendor?.is_verified ? 'good' : 'idle'}
-          icon={vendor?.is_verified ? BadgeCheck : ShieldCheck}
-        >
-          {vendor?.is_verified ? 'Verified' : 'Not verified'}
-        </Chip>
-        <Chip tone={live ? 'good' : statusMeta.tone === 'rose' ? 'bad' : 'warn'} icon={CircleDot}>
-          {vendor?.suspended_at ? 'Suspended' : live ? 'Account active' : statusMeta.label}
-        </Chip>
+        {vendor?.suspended_at ? (
+          <Chip tone="bad" icon={CircleDot}>Suspended</Chip>
+        ) : !vendor?.is_verified ? (
+          <Chip tone="warn" icon={ShieldCheck}>
+            Not verified — no jobs are sent yet
+          </Chip>
+        ) : live ? (
+          <Chip tone="good" icon={BadgeCheck}>Verified · receiving jobs</Chip>
+        ) : (
+          <Chip tone={statusMeta.tone === 'rose' ? 'bad' : 'warn'} icon={CircleDot}>
+            {statusMeta.label}
+          </Chip>
+        )}
         <Chip tone="plum" icon={Star}>{plan.label}</Chip>
       </div>
     </section>
@@ -333,59 +387,6 @@ function AccountState({ vendor, onUpdateVendor }) {
       >
         {busy ? 'Working…' : 'Keep my account'}
       </button>
-    </section>
-  )
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   A fold
-   ══════════════════════════════════════════════════════════════════════
-
-   Icon, title, and — the part that makes this pattern work — the current
-   VALUE on the collapsed row. A settings list whose rows say only what
-   they are called forces somebody to open all nine to find the one that
-   is wrong.
-
-   `hidden` rather than unmounting on close: the sections hold forms with
-   typing in them, and a fold that discards a half-typed account number
-   because somebody collapsed it to check something else is a fold that
-   loses work. The exception is a section that is expensive to mount,
-   which is why PayoutDetails is given `defaultOpen` rather than being
-   mounted eagerly under every partner who never opens it. */
-function Fold({ icon: Icon, title, summary, tone = 'neutral', defaultOpen = false, children }) {
-  const [open, setOpen] = useState(defaultOpen)
-
-  const dot = {
-    good:   'text-forest-600',
-    nudge:  'text-saffron-600',
-    neutral:'text-ink-mute',
-  }[tone]
-
-  return (
-    <section className="overflow-hidden rounded-[20px] bg-white ring-1 ring-ink/[0.06]">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 p-4 text-left"
-      >
-        <Icon size={18} className={`shrink-0 ${dot}`} />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-extrabold leading-tight text-ink">{title}</span>
-          {summary && (
-            <span className="mt-0.5 block truncate text-[11.5px] font-semibold leading-snug text-ink-mute">
-              {summary}
-            </span>
-          )}
-        </span>
-        <ChevronDown
-          size={17}
-          className={`shrink-0 text-ink-mute transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      <div hidden={!open} className="border-t border-ink/[0.06] p-4">
-        {children}
-      </div>
     </section>
   )
 }
@@ -582,9 +583,60 @@ function ReachDetails({ vendor, onUpdateVendor }) {
 
   const f = useDirtyForm(initial)
 
+  /* ══════════════════════════════════════════════════════════════════
+     THE SAME "USE MY LOCATION" ONBOARDING HAS
+     ══════════════════════════════════════════════════════════════════
+
+     This fold had no GPS at all: a partner who moved workshop had to
+     know their new pincode by heart and type a free-text Area beside it
+     that could say Jayanagar while the pincode said Whitefield. Nothing
+     reconciled the two, and the pincode is what dispatch uses.
+
+     One tap now fills both from where they are standing, and both stay
+     editable afterwards — the pin is a starting point, not a verdict. */
+  const [pinned, setPinned] = useState(null)
+  const [locating, setLocating] = useState(false)
+
+  async function useMyLocation() {
+    setLocating(true)
+    f.setError(null)
+    try {
+      const pos = await currentPosition({ timeout: 12000 })
+      if (pos.status !== 'ok') {
+        f.setError({
+          denied: 'Location is switched off for Sambramo. Turn it on in your phone settings, or type the pincode below.',
+          timeout: 'That took too long — usually a weak signal indoors. Step outside, or type the pincode below.',
+          unavailable: 'Your phone could not get a fix. Type the pincode below instead.',
+          unsupported: 'This device cannot share a location. Type the pincode below instead.',
+        }[pos.status] ?? 'Could not find you. Type the pincode below instead.')
+        return
+      }
+      const near = await nearestServed(pos.lat, pos.lng)
+      setPinned({ lat: pos.lat, lng: pos.lng })
+      if (near?.pincode) f.set('pincode', near.pincode)
+      if (near?.area) f.set('area', near.area)
+    } catch {
+      f.setError('Could not find you. Type the pincode below instead.')
+    } finally {
+      setLocating(false)
+    }
+  }
+
   async function save() {
     const pin = f.form.pincode.trim()
-    if (!/^[1-9][0-9]{5}$/.test(pin)) { f.setError('That is not a valid six-digit pincode.'); return }
+    const pinChanged = pin !== (vendor?.pincode ?? '')
+
+    /* ── Only validated when it CHANGED ────────────────────────────
+       This refused to save anything at all unless the pincode was six
+       valid digits — so a partner widening their radius from 10 km to
+       40, on a row whose pincode had never been filled in, was blocked
+       by a field they had not touched and were not being asked about.
+       The radius is the single most important number on this form and
+       it was gated behind an unrelated one. */
+    if (pinChanged && !/^[1-9][0-9]{5}$/.test(pin)) {
+      f.setError('That is not a valid six-digit pincode.')
+      return
+    }
 
     f.setSaving(true); f.setError(null)
     try {
@@ -595,7 +647,7 @@ function ReachDetails({ vendor, onUpdateVendor }) {
          shows the new pincode. That exact mismatch made a fully
          onboarded partner invisible to dispatch twice in testing, with
          nothing anywhere reporting a problem — see 079. */
-      if (pin !== (vendor?.pincode ?? '')) {
+      if (pinChanged) {
         const place = await lookupPincode(pin)
         if (place.status !== 'served') {
           f.setError(place.status === 'unknown'
@@ -603,14 +655,39 @@ function ReachDetails({ vendor, onUpdateVendor }) {
             : `We are not matching masters in ${pin} yet. Your old area is unchanged.`)
           return
         }
-        const { data: located } = await supabase.rpc('set_partner_location', {
+        /* ══════════════════════════════════════════════════════════
+           "WE COULD NOT PLACE THAT PINCODE ON THE MAP"
+           ══════════════════════════════════════════════════════════
+
+           That one sentence was what a partner saw for FIVE different
+           failures, because `const { data: located }` threw the error
+           object away: a network drop, an RLS refusal, a missing
+           function, a PostGIS failure, and an actually-bad pincode. Four
+           of the five have nothing to do with the pincode, and the only
+           advice the message gave was to check it.
+
+           There is also no map. Nothing in this app renders one — the
+           sentence was describing a screen that does not exist. */
+        const { data: located, error: locErr } = await supabase.rpc('set_partner_location', {
           p_vendor_id: vendor.id,
           p_pincode: pin,
-          p_lat: place.lat,
-          p_lng: place.lng,
+          /* An exact pin if they tapped "Use my location", the pincode
+             centroid otherwise. A centroid is about 2 km out, and the
+             radius filter measures from this point. */
+          p_lat: pinned?.lat ?? place.lat,
+          p_lng: pinned?.lng ?? place.lng,
           p_area: f.form.area.trim() || place.area,
         })
-        if (!located?.ok) { f.setError('We could not place that pincode on the map.'); return }
+        if (locErr) {
+          f.setError(`We could not save your location: ${locErr.message}. Nothing else you changed is lost.`)
+          return
+        }
+        if (!located?.ok) {
+          f.setError(located?.reason
+            ? `We could not save your location: ${located.reason}.`
+            : `We saved ${pin} but could not turn it into a location. Tell us and we will fix it.`)
+          return
+        }
       }
 
       /* This UPDATE runs after the RPC on purpose: `updateVendor` echoes
@@ -640,6 +717,24 @@ function ReachDetails({ vendor, onUpdateVendor }) {
   return (
     <Fold icon={MapPin} title="Where you work" summary={summary}>
       <div className="space-y-3.5">
+        <button
+          type="button"
+          onClick={useMyLocation}
+          disabled={locating}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-plum-200 bg-plum-50 py-2.5 text-[13px] font-extrabold text-plum-800 disabled:opacity-60"
+        >
+          {locating
+            ? <Loader2 size={15} className="animate-spin" />
+            : <Navigation size={15} />}
+          {locating ? 'Finding you…' : 'Use my location'}
+        </button>
+        {pinned && (
+          <p className="text-[11.5px] font-semibold leading-snug text-forest-700">
+            Pinned to where you are now. The pincode and area below came from
+            it — change either if they are not right, then Save.
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Pincode" htmlFor="rd-pin">
             <input
@@ -657,17 +752,35 @@ function ReachDetails({ vendor, onUpdateVendor }) {
           </Field>
         </div>
 
+        {/* ── Chips, not a slider ──────────────────────────────────
+            A 1-to-100 range control on a 360px phone gives about three
+            and a half pixels per kilometre, which means a partner
+            aiming for 25 km lands on 23 or 27 and cannot tell. It is
+            also a DIFFERENT control from the one onboarding uses for
+            the same field, with a different default — 10 here, 15
+            there — so a partner met two answers to one question.
+
+            Six chips, the same six, in both places. */}
         <Field
-          label={`How far you will travel — ${f.form.service_radius_km} km`}
-          htmlFor="rd-radius"
+          label="How far you will travel"
           hint="We only offer you jobs inside this circle. Widen it to see more work; narrow it to stop being sent across the city."
         >
-          <input
-            id="rd-radius" type="range" min={1} max={100} step={1}
-            value={f.form.service_radius_km}
-            onChange={e => f.set('service_radius_km', e.target.value)}
-            className="w-full accent-plum-600"
-          />
+          <div className="flex flex-wrap gap-2">
+            {[5, 10, 15, 25, 40, 60].map(km => (
+              <button
+                key={km} type="button"
+                onClick={() => f.set('service_radius_km', String(km))}
+                aria-pressed={Number(f.form.service_radius_km) === km}
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                  Number(f.form.service_radius_km) === km
+                    ? 'border-plum-600 bg-plum-600 text-white'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-plum-300'
+                }`}
+              >
+                {km} km
+              </button>
+            ))}
+          </div>
         </Field>
 
         <Field

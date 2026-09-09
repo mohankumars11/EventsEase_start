@@ -11,6 +11,7 @@ import { VENDOR_STATUS } from '../../config/vendor'
 import { PARTNER_PLANS, PLAN_BY_ID, effectiveTier } from '../../config/partnerPlans'
 import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
+import ListingTracker from '../../components/vendor/ListingTracker'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
@@ -378,17 +379,37 @@ export default function VendorDashboard() {
             unverified one is not in the dispatch pool (match_partners
             filters on is_verified), so an inbox for them would be a
             permanently empty box with a promise in it. */}
-        {/* Why the jobs tab is empty, when it is empty for a reason.
-            A partner whose only listings are under review sees "no jobs
-            right now" and concludes the platform has none -- rather than
-            that theirs has not been switched on yet. */}
-        {tab === 'offers' && services.length > 0
-          && services.every(s => s.review_status === 'under_review') && (
-          <div className="mb-4 rounded-[20px] bg-plum-950 p-4 text-white">
-            <p className="text-[14px] font-extrabold">Your listing is still being checked</p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-white/70">
-              Jobs start arriving the moment it is live. Usually the same day.
-            </p>
+        {/* ══════════════════════════════════════════════════════════
+            WHY THE JOBS TAB IS EMPTY, PER LISTING
+            ══════════════════════════════════════════════════════════
+
+            A partner whose listings are under review sees "no jobs right
+            now" and concludes the platform has none — rather than that
+            theirs has not been switched on yet.
+
+            This said so, once, in a navy box, and only when EVERY
+            listing was under review. A caterer with four listings of
+            which three were live and one was not saw nothing at all, and
+            a caterer whose listing came BACK saw nothing either, because
+            'rejected' is not 'under_review'.
+
+            So it is the same tracker the Listing tab is built from, in
+            compact mode: which listing is where, in the same words, on
+            both tabs. A status a partner has to look up in two places
+            and reconcile is a status they do not trust. */}
+        {tab === 'offers' && services.some(s => s.review_status !== 'live') && (
+          <div className="mb-4">
+            <ListingTracker services={services} compact />
+            <button
+              type="button"
+              onClick={() => setTab('list')}
+              className="mt-2 w-full rounded-[16px] bg-royal-600 px-4 py-3 text-left text-[13px] font-extrabold text-white transition active:scale-[0.99]"
+            >
+              Jobs arrive the moment a listing is live — usually the same day.
+              <span className="mt-0.5 block text-[11.5px] font-semibold text-white/75">
+                Tap to open your listings
+              </span>
+            </button>
           </div>
         )}
 
@@ -451,6 +472,18 @@ export default function VendorDashboard() {
                than linking, so the partner keeps their place. */
             onOpenCalendar={() => setTab('availability')}
             onOpenJobs={() => setTab('offers')}
+            /* ── Straight into the flow they just signed up for ────
+               Onboarding ends at ?tab=list&start=<trade>, so the last
+               tap of signing up and the first tap of listing are the
+               same tap. Read once and cleared, or a partner who closes
+               the flow and comes back to this tab would have it thrown
+               at them again. */
+            startTrade={params.get('start')}
+            onStartConsumed={() => setParams(prev => {
+              const next = new URLSearchParams(prev)
+              next.delete('start')
+              return next
+            }, { replace: true })}
           />
         )}
 

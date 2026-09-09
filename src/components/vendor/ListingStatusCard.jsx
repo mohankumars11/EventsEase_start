@@ -1,23 +1,25 @@
-import { Check, Clock, Sparkles, AlertCircle, CalendarDays, ArrowRight } from 'lucide-react'
+import { Clock, Sparkles, AlertCircle, CalendarDays, ArrowRight } from 'lucide-react'
 
 /**
- * Where a submitted listing actually is, and when it moves.
+ * Where the account as a whole stands, in one strip.
  *
  * ══════════════════════════════════════════════════════════════════════
- * THE GAP THIS FILLS
+ * WHY THIS SHRANK FROM 340px TO 72
  * ══════════════════════════════════════════════════════════════════════
  *
- * A partner spends ten minutes describing their kitchen, taps Submit, and
- * then nothing happens for a day. No screen tells them what state they
- * are in, how long it takes, or what "under review" even means.
+ * It was a full-bleed card with a headline, a paragraph, a three-stage
+ * stepper with icons and timings, and a footer button — 340px, the top
+ * third of the Listing tab, above the listings it was describing.
  *
- * That silence is the single most likely moment for somebody to lose
- * interest in the whole platform, and it is a silence we create. A
- * partner who cannot see progress assumes there is none.
+ * Every one of those parts was right when a partner had ONE listing and
+ * had just submitted it. With three listings it was wrong twice over:
+ * the stepper says one thing about an account whose three listings are
+ * in three different places, and each listing now carries its own four
+ * beads on its own card, so the stepper was saying it a second time,
+ * less accurately, in ten times the space.
  *
- * So the card shows the whole journey at once — where they have been,
- * where they are, and what comes next — with a real timeframe against the
- * middle step.
+ * What survives is the part no per-listing card can say: how long the
+ * wait has been, and the one thing worth doing while it lasts.
  *
  * ══════════════════════════════════════════════════════════════════════
  * WHY "USUALLY WITHIN 24 HOURS" AND NOT A COUNTDOWN
@@ -34,34 +36,41 @@ import { Check, Clock, Sparkles, AlertCircle, CalendarDays, ArrowRight } from 'l
  * better than one shown a frozen clock.
  */
 
-const STAGES = [
-  { id: 'submitted', label: 'Submitted',      icon: Check },
-  { id: 'review',    label: 'Under review',   icon: Clock },
-  { id: 'live',      label: 'Ready for jobs', icon: Sparkles },
-]
+/* ══════════════════════════════════════════════════════════════════════
+   THE BLUE IS THE BRAND BLUE, NOT NAVY
+   ══════════════════════════════════════════════════════════════════════
 
-/* Each state paints the whole card, because the state IS the message.
-   A grey card saying "live" and a grey card saying "rejected" make a
-   partner read carefully to find out which; a green one and an amber one
-   are understood from across a kitchen. */
+   This was plum-950 (#2e1065) — a near-black indigo that reads as navy
+   on a phone and belongs to the customer app's chrome, not to the
+   partner one. royal-600 (#2546eb) is the identity colour already in
+   the palette: a real blue, bright enough that bold white on it is the
+   crispest text pairing this app has.
+
+   The white text here is font-extrabold at 14px and above for exactly
+   that reason. Thin white on a mid blue is the one combination that
+   looks fine on a designer's monitor and disappears in a decorator's
+   hand in daylight. */
 const TONE = {
   review: {
-    shell: 'bg-plum-950 text-white',
-    chip: 'bg-saffron-400 text-plum-950',
-    body: 'text-white/70',
-    rule: 'bg-white/15',
+    shell: 'bg-royal-600 text-white',
+    chip: 'bg-white/20 text-white',
+    body: 'text-white/80',
+    icon: Clock,
+    word: 'Under review',
   },
   live: {
     shell: 'bg-forest-700 text-white',
-    chip: 'bg-white text-forest-800',
-    body: 'text-white/75',
-    rule: 'bg-white/20',
+    chip: 'bg-white/20 text-white',
+    body: 'text-white/80',
+    icon: Sparkles,
+    word: 'Live',
   },
   rejected: {
     shell: 'bg-amber-50 text-ink ring-1 ring-amber-300',
     chip: 'bg-amber-500 text-white',
     body: 'text-amber-900',
-    rule: 'bg-amber-300/50',
+    icon: AlertCircle,
+    word: 'Needs a change',
   },
 }
 
@@ -85,7 +94,7 @@ export default function ListingStatusCard({
   onOpenJobs,
 }) {
   const tone = TONE[status] ?? TONE.review
-  const at = STAGES.findIndex(s => s.id === (status === 'rejected' ? 'review' : status === 'live' ? 'live' : 'review'))
+  const Icon = tone.icon
   const elapsed = since(submittedAt)
 
   /* Over a day and still unread is a real state and the card says so.
@@ -99,111 +108,49 @@ export default function ListingStatusCard({
     : status === 'rejected' ? (count === 1 ? 'One listing needs a change' : `${count} listings need a change`)
     : count === 1 ? 'We are reading your listing' : `We are reading your ${count} listings`
 
+  const line =
+    status === 'live' ? 'Jobs arrive with the price already on them. Tap yes or no.'
+    : status === 'rejected' ? (note ?? 'What to fix is on each listing below.')
+    : overdue ? 'Taking longer than usual. It is read by a person and it has not been forgotten.'
+    : `Read by hand, usually within 24 hours${elapsed ? ` · sent ${elapsed}` : ''}.`
+
   return (
-    <div className={`overflow-hidden rounded-[24px] ${tone.shell}`}>
-      <div className="p-5">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] ${tone.chip}`}>
-          {status === 'live' ? <Sparkles size={12} />
-            : status === 'rejected' ? <AlertCircle size={12} />
-            : <Clock size={12} />}
-          {status === 'live' ? 'Live' : status === 'rejected' ? 'Needs a change' : 'Under review'}
+    <div className={`overflow-hidden rounded-[18px] ${tone.shell}`}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone.chip}`}>
+          <Icon size={17} />
         </span>
-
-        <p className="mt-3 font-display text-[23px] font-extrabold leading-tight">
-          {headline}
-        </p>
-
-        <p className={`mt-1.5 text-[13px] leading-relaxed ${tone.body}`}>
-          {status === 'live'
-            ? 'Customers can see you from now. Jobs arrive with the price already on them — you tap yes or no.'
-            : status === 'rejected'
-              ? (note ?? 'We have written what to fix on each one. Change it and it goes straight back for checking.')
-              : overdue
-                ? 'This one is taking us longer than usual. It is read by a person and it has not been forgotten.'
-                : 'Somebody at Sambramo reads every one by hand — usually within 24 hours.'}
-        </p>
-
-        {/* ── The journey ──────────────────────────────────────────────
-            All three stages at once, because "under review" only means
-            something next to what came before it and what comes after. */}
-        <ol className="mt-4 flex items-start">
-          {STAGES.map((s, i) => {
-            const done = i < at || (status === 'live' && i <= at)
-            const current = i === at && status !== 'live'
-            const bad = current && status === 'rejected'
-            const Icon = s.icon
-            return (
-              <li key={s.id} className="flex flex-1 items-start">
-                <div className="flex flex-1 flex-col items-center gap-1.5">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    bad ? 'bg-amber-500 text-white'
-                    : done ? (status === 'rejected' ? 'bg-amber-400 text-white' : 'bg-white text-plum-950')
-                    : current ? `${tone.chip} animate-pulse`
-                    : status === 'rejected' ? 'bg-amber-200 text-amber-800' : 'bg-white/15'
-                  }`}>
-                    {bad ? <AlertCircle size={15} /> : done ? <Check size={15} /> : <Icon size={15} />}
-                  </span>
-                  <span className={`text-center text-[10.5px] font-extrabold leading-tight ${
-                    done || current ? '' : tone.body
-                  }`}>
-                    {s.label}
-                  </span>
-                  {/* The timing lives under the stage it belongs to. */}
-                  {s.id === 'review' && status === 'review' && (
-                    <span className={`text-center text-[9.5px] font-bold ${tone.body}`}>
-                      {elapsed ? `sent ${elapsed}` : 'usually 24 hrs'}
-                    </span>
-                  )}
-                </div>
-                {i < STAGES.length - 1 && (
-                  <span aria-hidden="true" className={`mt-4 h-[2px] w-full flex-1 ${
-                    i < at ? 'bg-white' : tone.rule
-                  }`} />
-                )}
-              </li>
-            )
-          })}
-        </ol>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14.5px] font-extrabold leading-tight">{headline}</p>
+          <p className={`mt-0.5 text-[12px] font-semibold leading-snug ${tone.body}`}>{line}</p>
+        </div>
+        {status === 'live' && onOpenJobs && (
+          <button
+            type="button"
+            onClick={onOpenJobs}
+            className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11.5px] font-extrabold text-forest-800"
+          >
+            Jobs
+          </button>
+        )}
       </div>
 
-      {/* ── The one thing worth doing next ─────────────────────────────
-          Different in each state, and never nothing. A card with no next
-          action is a card somebody reads once and never returns to. */}
-      {status === 'review' && (
+      {/* ── The one thing worth doing while they wait ─────────────────
+          A whole footer button became one row. It is still here because
+          the days a partner is busy decide which jobs they are offered
+          on day one, and nothing else on this screen asks for them. */}
+      {status === 'review' && onOpenCalendar && (
         <button
           type="button"
           onClick={onOpenCalendar}
-          className="flex w-full items-center gap-3 border-t border-white/10 bg-white/[0.06] p-4 text-left transition active:bg-white/[0.12]"
+          className="flex w-full items-center gap-2.5 border-t border-white/15 bg-white/[0.08] px-4 py-2.5 text-left transition active:bg-white/[0.16]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-saffron-400 text-plum-950">
-            <CalendarDays size={17} />
+          <CalendarDays size={15} className="shrink-0 text-white/80" />
+          <span className="min-w-0 flex-1 text-[12.5px] font-extrabold leading-snug">
+            Block the days you are busy
+            <span className="ml-1.5 font-semibold text-white/70">two minutes</span>
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold">Block the days you are busy</span>
-            <span className="block text-[12px] leading-snug text-white/65">
-              Two minutes, and it decides which jobs you are offered the day you go live.
-            </span>
-          </span>
-          <ArrowRight size={17} className="shrink-0 text-white/60" />
-        </button>
-      )}
-
-      {status === 'live' && (
-        <button
-          type="button"
-          onClick={onOpenJobs}
-          className="flex w-full items-center gap-3 border-t border-white/10 bg-white/[0.08] p-4 text-left transition active:bg-white/[0.14]"
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-forest-800">
-            <Sparkles size={17} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold">See your jobs</span>
-            <span className="block text-[12px] leading-snug text-white/70">
-              A typical job on Sambramo pays ₹6,587.
-            </span>
-          </span>
-          <ArrowRight size={17} className="shrink-0 text-white/70" />
+          <ArrowRight size={15} className="shrink-0 text-white/70" />
         </button>
       )}
     </div>

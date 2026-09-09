@@ -1,12 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft, Loader2, Navigation, Check } from 'lucide-react'
+import {
+  AlertCircle, CheckCircle2, ChevronRight, ChevronLeft, Loader2,
+  Navigation, Check, ShieldCheck, ChevronDown,
+} from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES } from '../../config/vendor'
 import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincodeDirectory'
+import HoldToSign from '../../components/vendor/HoldToSign'
+import {
+  PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION,
+} from '../../config/partnerTerms'
+import { HEARD_FROM, heardFrom } from '../../config/heardFrom'
 
 const CATEGORIES = VENDOR_CATEGORIES
 
@@ -21,7 +29,41 @@ const CATEGORIES = VENDOR_CATEGORIES
  */
 const CITIES = BRAND.pilotCities
 
-const TOTAL_STEPS = 3
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * THE WHOLE OF THE WAY IN, IN ORDER
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Email is captured by the sign-up page before this screen exists. What
+ * follows it, in this order and for these reasons:
+ *
+ *   1 · business    — who they are, and the trade, because the trade is
+ *                     what the listing hand-off at the end needs.
+ *   2 · location    — the single fact that decides what they are ever
+ *                     offered. Asked here, on a screen headed "Your
+ *                     location", rather than as an OS prompt at launch,
+ *                     which is refused more often than anywhere else and
+ *                     is sticky on Android once refused.
+ *   3 · heard       — asked once, answerable only now.
+ *   4 · agreement   — signed, before any listing is typed, because it
+ *                     contains the undertaking that everything they list
+ *                     is work they have really done.
+ *
+ * And then straight into the Listing tab. Not the dashboard.
+ *
+ * ── Why the listing hand-off matters ────────────────────────────────
+ * A partner who has just spent ten minutes describing their business is
+ * the most willing to list it that they will ever be. Landing them on an
+ * empty Jobs tab spends that: there is nothing to do there, because
+ * there are no jobs, because there are no listings. So the last button
+ * of onboarding opens the trade grid on the trade they chose in step 1.
+ */
+const STEPS = [
+  { id: 'business',  label: 'Your business' },
+  { id: 'location',  label: 'Your location' },
+  { id: 'heard',     label: 'How you found us' },
+  { id: 'agreement', label: 'The agreement' },
+]
 
 function StepIndicator({ current, total }) {
   return (
@@ -62,6 +104,9 @@ export default function VendorOnboarding() {
     service_areas:    [],
     /* Dispatch's hardest filter, and it has never been on this form. */
     service_radius_km: 15,
+    /* Asked once, answerable only now. See config/heardFrom.js. */
+    heard_from:        '',
+    heard_from_detail: '',
     website_url:      '',
     instagram_url:    '',
   })
@@ -71,15 +116,28 @@ export default function VendorOnboarding() {
   const [pinned, setPinned] = useState(null)
   const [locating, setLocating] = useState(false)
 
+  /* The agreement. Held in state until submit, then written by
+     sign_partner_terms — the server stamps the moment, not this device. */
+  const [signature, setSignature] = useState(null)
+  const [openLong, setOpenLong] = useState(false)
+
   async function useMyLocation() {
     setLocating(true)
-    setError('')
+    setError(null)
     try {
       const pos = await currentPosition({ timeout: 12000 })
       if (pos.status !== 'ok') {
-        setError(pos.status === 'denied'
-          ? 'Location is off for this app. Type your pincode instead — it works, it is just less exact.'
-          : 'Could not find you. Type your pincode instead.')
+        /* ── Every reason gets its own sentence ────────────────────────
+           These four failures are not the same problem and do not have
+           the same fix, and a partner told "could not find you" when the
+           real answer is "you turned this off in Settings" will tap the
+           button again forever. */
+        setError({
+          denied: 'Location is switched off for Sambramo. Turn it on in your phone settings, or just type your pincode below — it works, it is only less exact.',
+          timeout: 'That took too long — usually a weak signal indoors. Step outside and try again, or type your pincode below.',
+          unavailable: 'Your phone could not get a fix just now. Type your pincode below instead.',
+          unsupported: 'This device cannot share a location. Type your pincode below instead.',
+        }[pos.status] ?? 'Could not find you. Type your pincode below instead.')
         return
       }
       /* Names the place from centroids we already hold, so it costs no
@@ -92,8 +150,9 @@ export default function VendorOnboarding() {
         area: near?.area ?? f.area,
         city: f.city || 'Bengaluru',
       }))
+      setError(null)
     } catch {
-      setError('Could not find you. Type your pincode instead.')
+      setError('Could not find you. Type your pincode below instead.')
     } finally {
       setLocating(false)
     }
@@ -137,6 +196,8 @@ export default function VendorOnboarding() {
             starting_price:   data.starting_price?.toString() ?? '',
             service_areas:    (data.service_areas ?? []).filter(c => CITIES.includes(c)),
             service_radius_km: data.service_radius_km ?? 15,
+            heard_from:        data.heard_from ?? '',
+            heard_from_detail: data.heard_from_detail ?? '',
             website_url:      data.website_url ?? '',
             instagram_url:    data.instagram_url ?? '',
           })
@@ -146,6 +207,30 @@ export default function VendorOnboarding() {
 
     return () => { cancelled = true }
   }, [user?.id])
+
+  /**
+   * ══════════════════════════════════════════════════════════════════
+   * A PARTNER WHO HAS ALREADY SIGNED IS NOT ASKED AGAIN
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * This form is also the Account tab's "edit your profile", and putting
+   * a signature page in front of somebody changing their opening hours
+   * would teach them that the signature means nothing.
+   *
+   * It IS asked again when the version has moved on, which is the whole
+   * point of stamping a version: v1 said nothing about genuineness and
+   * cannot be relied on to act on it.
+   */
+  const needsAgreement = !existing?.terms_accepted_at
+    || existing?.terms_version !== PARTNER_TERMS_VERSION
+
+  const steps = useMemo(
+    () => STEPS.filter(s => s.id !== 'agreement' || needsAgreement),
+    [needsAgreement],
+  )
+  const total = steps.length
+  const stepId = steps[step - 1]?.id
+  const isLast = step === total
 
   function set(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -161,27 +246,31 @@ export default function VendorOnboarding() {
     }))
   }
 
-  function validateStep(s) {
-    if (s === 1) {
+  function validateStep(id) {
+    if (id === 'business') {
       if (!form.business_name.trim()) return 'Please enter your business name.'
       if (!form.category)             return 'Please select a service category.'
       if (!form.description.trim() || form.description.length < 30)
         return 'Please describe your business (at least 30 characters).'
+      if (!form.years_experience) return 'Please enter years of experience.'
+      if (!form.starting_price)   return 'Please enter your starting price.'
     }
-    if (s === 2) {
+    if (id === 'location') {
       if (!form.city)          return 'Please select your primary city.'
       if (!form.area.trim())   return 'Please enter your area/locality.'
       if (!/^\d{6}$/.test(form.pincode)) return 'Enter a valid 6-digit pincode.'
     }
-    if (s === 3) {
-      if (!form.years_experience) return 'Please enter years of experience.'
-      if (!form.starting_price)   return 'Please enter your starting price.'
+    if (id === 'heard') {
+      if (!form.heard_from) return 'Pick one — it takes a second, and it decides where we look for the next partner.'
+    }
+    if (id === 'agreement') {
+      if (!signature) return 'Type your name and hold the bar to sign.'
     }
     return null
   }
 
   function handleNext() {
-    const err = validateStep(step)
+    const err = validateStep(stepId)
     if (err) { setError(err); return }
     setError(null)
     setStep(s => s + 1)
@@ -189,8 +278,13 @@ export default function VendorOnboarding() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const err = validateStep(3)
-    if (err) { setError(err); return }
+    /* Every step, not only the last one. A partner who used Back to fix
+       something and then came forward again could otherwise submit a
+       form an earlier step would have refused. */
+    for (const s of steps) {
+      const err = validateStep(s.id)
+      if (err) { setError(err); setStep(steps.indexOf(s) + 1); return }
+    }
 
     setLoading(true)
     setError(null)
@@ -212,6 +306,8 @@ export default function VendorOnboarding() {
            place it has ever been editable. */
         service_radius_km: Math.min(100, Math.max(1,
           parseInt(form.service_radius_km, 10) || 15)),
+        heard_from:        form.heard_from || null,
+        heard_from_detail: form.heard_from_detail.trim() || null,
         website_url:      form.website_url.trim() || null,
         instagram_url:    form.instagram_url.trim() || null,
         // Status is set on creation only. An approved partner editing their
@@ -231,65 +327,130 @@ export default function VendorOnboarding() {
       /* ── Turn the pincode into a point, or the partner is invisible ──
        *
        * This is the step that was missing, and it fails in the worst
-       * possible way: silently. `match_partners()` requires
-       * `vendors.location`, PostgREST cannot write a geography column,
+       * possible way: silently. match_partners() requires
+       * vendors.location, PostgREST cannot write a geography column,
        * and the form only ever stored six digits of text. So a master
        * could finish signup, be approved, list their trades, and never
        * receive a single job — with every screen showing them fully
        * onboarded and nothing anywhere reporting a problem.
        *
        * It happened to the only real partner in the database, and took
-       * an hour to find. `partner_readiness()` (migration 079) now
+       * an hour to find. partner_readiness() (migration 079) now
        * reports it, and this stops it happening.
        */
       const { data: saved } = await supabase
         .from('vendors').select('id').eq('profile_id', user.id).maybeSingle()
 
-      if (saved?.id) {
-        /* Asked of the DATABASE, not of the bundle.
-         *
-         * This used to call `resolvePincode`, which reads the 88 pincodes
-         * compiled into the JavaScript. After migration 085 that is the
-         * offline fallback and not the truth — so a master in an area we
-         * activated last week would have been told we do not serve them,
-         * by a table baked into the APK they installed a month ago. The
-         * partner side has to read the same switch the customer side
-         * does. */
-        const place = await lookupPincode(form.pincode)
+      if (!saved?.id) {
+        throw new Error('We saved your details but could not read them back. Please try once more.')
+      }
 
-        if (place.status !== 'served') {
-          // Saved, but not dispatchable. Said plainly rather than
-          // letting them walk away believing they are live — and the two
-          // reasons get different words, because one of them is a typo.
-          setError(
-            place.status === 'unknown'
-              ? `We cannot find the pincode ${form.pincode}. Worth checking those six digits.`
-              : `We have your details, but we are not matching masters in ${form.pincode} yet. ` +
-                `We will be in touch when we reach your area.`,
-          )
-          setSaving(false)
-          return
-        }
+      /* Asked of the DATABASE, not of the bundle.
+       *
+       * This used to call resolvePincode, which reads the 88 pincodes
+       * compiled into the JavaScript. After migration 085 that is the
+       * offline fallback and not the truth — so a master in an area we
+       * activated last week would have been told we do not serve them,
+       * by a table baked into the APK they installed a month ago. The
+       * partner side has to read the same switch the customer side
+       * does. */
+      const place = await lookupPincode(form.pincode)
 
-        /* The pin if they gave one, the pincode centroid otherwise. A
-           centroid is roughly 2 km out — fine for a city-wide list, and
-           wrong for the radius test match_partners actually runs. */
-        const { data: located } = await supabase.rpc('set_partner_location', {
+      if (place.status !== 'served') {
+        /* Saved, but not dispatchable. Said plainly rather than letting
+           them walk away believing they are live — and the two reasons
+           get different words, because one of them is a typo.
+
+           The line that stood here was setSaving(false). There has never
+           been a setSaving on this component; the setter is setLoading.
+           The ReferenceError was caught by the handler at the bottom and
+           shown to the partner as "setSaving is not defined", in place
+           of the sentence written for this exact moment. It failed on
+           the one path nobody tests: a pincode we do not serve. */
+        setError(
+          place.status === 'unknown'
+            ? `We cannot find the pincode ${form.pincode}. Worth checking those six digits.`
+            : `We have your details, but we are not matching masters in ${form.pincode} yet. `
+              + `We will be in touch when we reach your area.`,
+        )
+        setStep(steps.findIndex(s => s.id === 'location') + 1)
+        return
+      }
+
+      /* ══════════════════════════════════════════════════════════════
+         THE ERROR THIS THREW AWAY
+         ══════════════════════════════════════════════════════════════
+
+         This was `const { data: located } = await supabase.rpc(...)`
+         and then, for anything that went wrong, "We could not place your
+         business on the map. Please check the pincode." — one sentence
+         for a network failure, an RLS refusal, a missing function, a
+         PostGIS error, and an actually-bad pincode alike. Four of those
+         five are not the pincode, and no amount of checking it would
+         have helped.
+
+         The pin if they gave one, the pincode centroid otherwise. A
+         centroid is roughly 2 km out — fine for a city-wide list, and
+         wrong for the radius test match_partners actually runs. */
+      const { data: located, error: locErr } = await supabase.rpc('set_partner_location', {
+        p_vendor_id: saved.id,
+        p_pincode: form.pincode,
+        p_lat: pinned?.lat ?? place.lat,
+        p_lng: pinned?.lng ?? place.lng,
+        p_area: place.area,
+      })
+
+      if (locErr) {
+        setError(`Your details are saved, but we could not put you on the map: ${locErr.message}. Tell us and we will fix it — nothing you typed is lost.`)
+        return
+      }
+      if (!located?.ok) {
+        setError(located?.reason
+          ? `We could not place your business: ${located.reason}.`
+          : 'We could not place your business on the map. Please check the pincode.')
+        setStep(steps.findIndex(s => s.id === 'location') + 1)
+        return
+      }
+
+      /* ── The signature ────────────────────────────────────────────
+         Last, and through an RPC. Last because it must attach to a
+         vendor row that exists; through an RPC because a consent record
+         composed by the consenting device is not a record. */
+      if (needsAgreement) {
+        const { data: signed, error: signErr } = await supabase.rpc('sign_partner_terms', {
           p_vendor_id: saved.id,
-          p_pincode: form.pincode,
-          p_lat: pinned?.lat ?? place.lat,
-          p_lng: pinned?.lng ?? place.lng,
-          p_area: place.area,
+          p_version: PARTNER_TERMS_VERSION,
+          p_signature: signature,
         })
-
-        if (!located?.ok) {
-          setError('We could not place your business on the map. Please check the pincode.')
-          setSaving(false)
+        if (signErr) { setError(`We could not record your signature: ${signErr.message}`); return }
+        if (!signed?.ok) {
+          setError(signed?.reason === 'no_name'
+            ? 'Please type your full name before signing.'
+            : 'We could not record your signature. Please try once more.')
           return
         }
       }
 
-      navigate('/dashboard/vendor', { replace: true })
+      /* ══════════════════════════════════════════════════════════════
+         INTO THE LISTING TAB, WITH THEIR TRADE ALREADY OPEN
+         ══════════════════════════════════════════════════════════════
+
+         This went to /dashboard/vendor, which opens on Jobs — so a
+         partner who had just finished describing their business met an
+         empty list. Empty because there are no jobs, because there are
+         no listings, because they have not made one yet, and nothing on
+         that screen was going to tell them so.
+
+         `start` carries the trade they chose in step 1 so the add-item
+         flow opens on it rather than on a grid of twenty-six. An
+         existing partner editing their profile goes back to Account,
+         which is where they came from. */
+      navigate(
+        existing
+          ? '/dashboard/vendor?tab=account'
+          : `/dashboard/vendor?tab=list&start=${encodeURIComponent(form.category)}`,
+        { replace: true },
+      )
     } catch (err) {
       setError(err?.message ?? 'Failed to save. Please try again.')
     } finally {
@@ -311,7 +472,7 @@ export default function VendorOnboarding() {
           <p className="text-gray-500 text-sm mt-1">
             {existing
               ? 'Change anything and save — your listing and calendar stay as they are.'
-              : 'Our team will review and approve your profile within 24–48 hours.'}
+              : `${total} short steps, then you can start listing what you do.`}
           </p>
         </div>
 
@@ -322,13 +483,13 @@ export default function VendorOnboarding() {
           </div>
         ) : (
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-          <StepIndicator current={step} total={TOTAL_STEPS} />
+          <StepIndicator current={step} total={total} />
 
           <form onSubmit={handleSubmit}>
 
-            {/* ── Step 1: Business basics ── */}
-            {step === 1 && (
-              <div className="space-y-5">
+            {/* ── Your business ── */}
+            {stepId === 'business' && (
+              <div className="space-y-5" data-step="business">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 mb-4">Your business</h2>
                 </div>
@@ -354,12 +515,29 @@ export default function VendorOnboarding() {
                     placeholder="Tell customers what makes your service special, your specialties, signature offerings…"
                   />
                 </Field>
+
+                {/* Experience and price had a step to themselves. Two
+                    number fields are not a step; they are the bottom of
+                    this one, and cutting it is one whole screen a partner
+                    no longer has to travel through. */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Years of experience">
+                    <input type="number" min={0} max={50} value={form.years_experience}
+                      onChange={e => set('years_experience', e.target.value)}
+                      className="input" placeholder="5" />
+                  </Field>
+                  <Field label="Starting price (₹)">
+                    <input type="number" min={0} value={form.starting_price}
+                      onChange={e => set('starting_price', e.target.value)}
+                      className="input" placeholder="25000" inputMode="numeric" />
+                  </Field>
+                </div>
               </div>
             )}
 
-            {/* ── Step 2: Location ── */}
-            {step === 2 && (
-              <div className="space-y-5">
+            {/* ── Your location ── */}
+            {stepId === 'location' && (
+              <div className="space-y-5" data-step="location">
                 <h2 className="text-lg font-bold text-gray-900 mb-1">Your location</h2>
                 <p className="mb-4 text-[12.5px] leading-snug text-gray-500">
                   Jobs are matched by distance, so this decides what you are
@@ -380,11 +558,7 @@ export default function VendorOnboarding() {
                     A pincode centroid is roughly 2 km out. That is fine for
                     appearing in a city-wide list and wrong for a radius
                     filter, which is what dispatch actually runs. One tap
-                    here replaces two kilometres of error with ten metres.
-
-                    currentPosition and nearestServed already exist;
-                    nearestServed names the place by looping centroids we
-                    already hold, so it costs no external call. */}
+                    here replaces two kilometres of error with ten metres. */}
                 <button
                   type="button"
                   onClick={useMyLocation}
@@ -397,9 +571,13 @@ export default function VendorOnboarding() {
                   {locating ? 'Finding you…' : 'Use my location'}
                 </button>
                 {pinned && (
-                  <p className="-mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-forest-700">
-                    <Check size={13} /> Pinned to where you are now. Exact,
-                    not a guess from the pincode.
+                  <p className="-mt-2 flex items-start gap-1.5 text-[12px] font-semibold text-forest-700">
+                    <Check size={13} className="mt-0.5 shrink-0" />
+                    <span>
+                      Pinned to where you are now. The area and pincode below
+                      were filled in from it — change either if they are not
+                      right.
+                    </span>
                   </p>
                 )}
 
@@ -423,12 +601,11 @@ export default function VendorOnboarding() {
                   </Field>
                 </div>
 
-                {/* `service_radius_km` has existed since 057 and has only
+                {/* service_radius_km has existed since 057 and has only
                     ever been editable in a fold on the Account tab, which
                     almost nobody opens. It is a hard filter in
-                    match_partners: the default 10 km silently decides that
-                    a partner never hears about a job 12 km away. Asked
-                    here, once, where it belongs. */}
+                    match_partners: the default silently decides that a
+                    partner never hears about a job 12 km away. */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     How far will you travel?
@@ -473,45 +650,122 @@ export default function VendorOnboarding() {
               </div>
             )}
 
-            {/* ── Step 3: Experience & pricing ── */}
-            {step === 3 && (
-              <div className="space-y-5">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Experience & pricing</h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Years of experience">
-                    <input type="number" min={0} max={50} value={form.years_experience}
-                      onChange={e => set('years_experience', e.target.value)}
-                      className="input" placeholder="5" />
-                  </Field>
-                  <Field label="Starting price (₹)">
-                    <input type="number" min={0} value={form.starting_price}
-                      onChange={e => set('starting_price', e.target.value)}
-                      className="input" placeholder="25000" inputMode="numeric" />
-                  </Field>
+            {/* ── How you found us ── */}
+            {stepId === 'heard' && (
+              <div className="space-y-5" data-step="heard">
+                <div>
+                  <h2 className="text-lg font-bold leading-tight text-gray-900">
+                    How did you hear about Sambramo?
+                  </h2>
+                  <p className="mt-1 text-[12.5px] leading-snug text-gray-500">
+                    One tap. It decides where we look for the next partner —
+                    and if somebody sent you, we would like to thank them.
+                  </p>
                 </div>
 
-                <Field label="Website URL" hint="optional">
-                  <input type="url" value={form.website_url}
-                    onChange={e => set('website_url', e.target.value)}
-                    className="input" placeholder="https://yoursite.com" />
-                </Field>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {HEARD_FROM.map(h => {
+                    const Icon = h.icon
+                    const on = form.heard_from === h.id
+                    return (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => set('heard_from', h.id)}
+                        aria-pressed={on}
+                        className={`flex items-center gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-[13px] font-bold transition-colors ${
+                          on
+                            ? 'border-plum-600 bg-plum-50 text-plum-900'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-plum-300'
+                        }`}
+                      >
+                        <Icon size={16} className={`shrink-0 ${on ? 'text-plum-600' : 'text-gray-400'}`} />
+                        <span className="min-w-0">{h.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
 
-                <Field label="Instagram handle" hint="optional">
-                  <input type="text" value={form.instagram_url}
-                    onChange={e => set('instagram_url', e.target.value)}
-                    className="input" placeholder="@yourbusiness" />
-                </Field>
+                {/* The follow-up is the point of the referral options: "a
+                    partner referred me" with no name is a statistic, and
+                    with a name it is somebody to ring. */}
+                {heardFrom(form.heard_from)?.detail && (
+                  <Field label={heardFrom(form.heard_from).detail} hint="optional">
+                    <input type="text" value={form.heard_from_detail}
+                      onChange={e => set('heard_from_detail', e.target.value.slice(0, 120))}
+                      className="input" placeholder="A name, a shop, an event…" autoFocus />
+                  </Field>
+                )}
+              </div>
+            )}
 
-                <div className="bg-plum-50 border border-plum-100 rounded-2xl p-4">
-                  <p className="text-sm font-semibold text-plum-800 mb-1">
-                    {existing ? 'Next: your list and your calendar' : 'What happens next?'}
+            {/* ── The agreement ── */}
+            {stepId === 'agreement' && (
+              <div className="space-y-4" data-step="agreement">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 shrink-0 rounded-xl bg-forest-50 p-2 text-forest-700">
+                    <ShieldCheck size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold leading-tight text-gray-900">
+                      What you are agreeing to
+                    </h2>
+                    <p className="mt-1 text-[12.5px] leading-snug text-gray-500">
+                      Everything here costs you money or your standing if it
+                      takes you by surprise. Read it once, then sign it.
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="space-y-2">
+                  {PARTNER_RULES.map((r, i) => (
+                    <li key={r.id} className="rounded-2xl bg-gray-50 p-3.5">
+                      <p className="text-[13.5px] font-extrabold leading-snug text-gray-900">
+                        <span className="text-gray-400">{i + 1}. </span>{r.title}
+                      </p>
+                      <p className="mt-1 text-[12.5px] leading-relaxed text-gray-600">{r.body}</p>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  onClick={() => setOpenLong(v => !v)}
+                  aria-expanded={openLong}
+                  className="flex w-full items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 text-left"
+                >
+                  <span className="text-[13px] font-extrabold text-gray-900">
+                    Read the full agreement
+                  </span>
+                  <ChevronDown size={16}
+                    className={`text-gray-400 transition-transform ${openLong ? 'rotate-180' : ''}`} />
+                </button>
+
+                {openLong && (
+                  <div className="space-y-3.5 rounded-2xl bg-gray-50/70 p-4">
+                    {PARTNER_TERMS_LONG.map(sec => (
+                      <div key={sec.heading}>
+                        <h3 className="text-[12.5px] font-extrabold text-gray-900">{sec.heading}</h3>
+                        <p className="mt-1 text-[12px] leading-relaxed text-gray-600">{sec.text}</p>
+                      </div>
+                    ))}
+                    <p className="pt-1 text-[11px] font-semibold text-gray-400">
+                      Version {PARTNER_TERMS_VERSION}
+                    </p>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-gray-200 p-4">
+                  <p className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900">
+                    I have read these and I agree to work by them. I understand
+                    that everything I list must be work I have really done.
                   </p>
-                  <p className="text-xs text-plum-600 leading-relaxed">
-                    {existing
-                      ? 'Saving these details does not change your approval status. What you offer and when you can work are set on your dashboard.'
-                      : "After you submit, our team reviews your profile within 24–48 hours. You can add what you offer and set your working days straight away — both go live the moment you're approved."}
-                  </p>
+                  <HoldToSign
+                    value={signature}
+                    onChange={setSignature}
+                    label="Sign with your full name"
+                    placeholder="As it appears on your ID"
+                  />
                 </div>
               </div>
             )}
@@ -530,7 +784,7 @@ export default function VendorOnboarding() {
                 </button>
               )}
 
-              {step < TOTAL_STEPS ? (
+              {!isLast ? (
                 <button type="button" onClick={handleNext}
                   className="flex-1 btn-plum py-3 text-sm flex items-center justify-center gap-2">
                   Continue <ChevronRight size={16} />
@@ -540,7 +794,7 @@ export default function VendorOnboarding() {
                   className="flex-1 btn-cta py-3 text-sm disabled:opacity-60 disabled:cursor-not-allowed">
                   {loading
                     ? 'Saving…'
-                    : existing ? 'Save changes' : 'Submit for review →'}
+                    : existing ? 'Save changes' : 'Sign and start listing →'}
                 </button>
               )}
             </div>

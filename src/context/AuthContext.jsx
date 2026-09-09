@@ -3,7 +3,11 @@ import { supabase } from '../lib/supabase'
 import { startGoogleSignIn } from '../lib/googleAuth'
 import { clearJourney } from '../lib/journey'
 
-const AuthContext = createContext(null)
+/* Exported so a guard can mount an auth-gated page with a stub session.
+   scripts/scenes/onboarding-walk.jsx needs `user.id` and nothing else,
+   and wrapping the real provider would make the guard a test of
+   Supabase rather than of the onboarding form. */
+export const AuthContext = createContext(null)
 
 /**
  * Which role wins when a signup form and an existing row disagree.

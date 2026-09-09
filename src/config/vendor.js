@@ -57,7 +57,18 @@ export const VENDOR_CATEGORIES = [
      holds none and is paid for the hands. A family with forty sarees
      to wrap and nothing to buy was being sent to shops. */
   'Trousseau & Gift Packing',
-  'Other',
+  /* ── 'Other' is gone, and it was a trap ─────────────────────────────
+     match_partners joins on this exact string. A partner who picked
+     'Other' — which is what somebody picks when they are not sure —
+     produced a vendor row no dispatch query can ever return, and every
+     screen showed them fully set up. It was the one option on the form
+     guaranteed to cost the partner every job, and it sat at the bottom
+     of the list where an unsure person lands.
+
+     All 26 of the others are values of TRADE_FOR_SERVICE, so every
+     remaining choice is one dispatch can match. A trade genuinely
+     missing from the list is a catalogue gap to fix in the catalogue,
+     not a bucket to drop a real business into. */
 ]
 
 /**

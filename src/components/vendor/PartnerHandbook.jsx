@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, BookOpen, FileText } from 'lucide-react'
+import Fold from './Fold'
+import { BookOpen, FileText } from 'lucide-react'
 import { PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
 /**
@@ -31,40 +32,19 @@ import { PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../
  * one somebody accepted is a fact, and it is on their vendor row.
  */
 
-function Fold({ icon: Icon, title, sub, children }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="overflow-hidden rounded-[20px] bg-white ring-1 ring-ink/[0.06]">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 p-4 text-left"
-      >
-        <Icon size={18} className="shrink-0 text-ink-mute" />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-extrabold leading-tight text-ink">{title}</span>
-          <span className="block text-[12px] leading-snug text-ink-mute">{sub}</span>
-        </span>
-        <ChevronDown
-          size={17}
-          className={`shrink-0 text-ink-mute transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && <div className="border-t border-ink/[0.06] p-4 pt-3.5">{children}</div>}
-    </div>
-  )
-}
-
 export default function PartnerHandbook() {
   return (
     <div className="space-y-2.5">
       <Fold
         icon={BookOpen}
         title="How Sambramo works"
-        sub="The seven rules, in short"
+        /* Counted, not typed. It said "seven" and there are eight
+           since the genuineness undertaking was added — a number a
+           reader can check in four seconds, on the one screen whose
+           whole job is being believed. */
+        sub={`The ${PARTNER_RULES.length} rules, in short`}
       >
-        {/* The same seven cards as the acceptance gate, and deliberately
+        {/* The same cards as the agreement they signed, and deliberately
             the same words. A partner who reads this a month later should
             recognise it as the thing they ticked, not discover a second
             summary that says it slightly differently. */}
