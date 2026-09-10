@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import {
-  Search, UtensilsCrossed, Camera, Video, Flower2, Building2, Music,
+  Search, X, UtensilsCrossed, Camera, Video, Flower2, Building2, Music,
   Sparkles, Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
   Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse, Flame,
   Gift, Package, ClipboardList, PackageOpen,
@@ -91,18 +91,58 @@ export default function TradeGrid({
     <>
       {heading}
 
-      <div className="relative mb-3">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder={placeholder}
-          aria-label="Search every trade and service"
-          className="w-full rounded-2xl bg-white py-3 pl-10 pr-4 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
-        />
+      {/* ══════════════════════════════════════════════════════════════
+          THE SEARCH DOES NOT SCROLL AWAY
+          ══════════════════════════════════════════════════════════════
+
+          Twenty-six cards is about nine screens on a 360px phone. The
+          search sat at the top of that column, so the moment a partner
+          started scrolling to look for their trade the one control that
+          would have found it in two letters was gone above the fold —
+          and scrolling back up is exactly the thing nobody does.
+
+          Sticky, so it is on screen for the whole length of the list.
+          The blur is what keeps it readable while cards pass under it;
+          a solid fill would need to know the tab's ground colour and
+          would be wrong the moment that changes. */}
+      <div className="sticky top-0 z-20 -mx-1 mb-3 bg-white/85 px-1 py-2 backdrop-blur-sm">
+        <div className="relative">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder={placeholder}
+            aria-label="Search every trade and service"
+            className="w-full rounded-2xl bg-white py-3 pl-10 pr-9 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
+          />
+          {/* Clearing a search on a phone otherwise means holding
+              backspace over a word somebody typed with one thumb. */}
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ('')}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-ink/[0.06] text-ink-mute"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+        {q && (
+          <p className="mt-1.5 pl-1 text-[11px] font-semibold text-ink-mute">
+            {list.length} {list.length === 1 ? 'trade' : 'trades'} match “{q}”
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* ── Smaller cards, so more of the list is on screen ───────────
+          A 40px icon block above two lines of text made each card about
+          110px tall. The icon is what a partner recognises fastest, so
+          it stays — beside the words rather than above them, which is
+          the whole saving. Same two columns, roughly half the height,
+          and the trade name still gets its own line at a readable
+          weight. */}
+      <div className="grid grid-cols-2 gap-2">
         {list.map(t => {
           const Icon = iconForTrade(t)
           const n = offeringsForTrade(t).length
@@ -112,17 +152,17 @@ export default function TradeGrid({
               key={t}
               type="button"
               onClick={() => onPick(t)}
-              className={`flex flex-col items-start gap-2.5 rounded-[20px] p-3.5 text-left ring-1 transition active:scale-[0.98] ${
+              className={`flex items-center gap-2.5 rounded-2xl p-2.5 text-left ring-1 transition active:scale-[0.98] ${
                 on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
               }`}
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-plum-950 text-white">
-                <Icon size={18} />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-plum-950 text-white">
+                <Icon size={15} />
               </span>
-              <span className="min-w-0">
-                <span className="block text-[13.5px] font-extrabold leading-tight text-ink">{t}</span>
-                <span className="block text-[11.5px] text-ink-mute">
-                  {n} {n === 1 ? 'thing' : 'things'} you can list
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12.5px] font-extrabold leading-tight text-ink">{t}</span>
+                <span className="block text-[10.5px] leading-tight text-ink-mute">
+                  {n} {n === 1 ? 'thing' : 'things'}
                 </span>
               </span>
             </button>

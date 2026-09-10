@@ -110,13 +110,28 @@ export function formatPrice(value) {
 
 /**
  * One list item as a coordinator reads it: "₹450/plate · min 100 plates".
- * A missing price is "Quote on request" rather than a blank or a zero —
- * both of those get read as free.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * IT IS A GUIDE PRICE, AND IT WAS CALLED THE WRONG THING
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The empty state read "Quote on request", which describes a different
+ * business to the one this is. Sambramo does not ask a partner to quote:
+ * the customer is shown a Sambramo price, `match_partners()` never reads
+ * this column at all, and what the number is actually for is telling us
+ * what the work costs so the quoted price is built on something real.
+ *
+ * "Quote on request" told a partner the opposite — that a customer would
+ * come to them for a quote — and it made a missing number look like a
+ * deliberate pricing stance rather than a blank they still have to fill.
+ *
+ * A blank or a zero would both get read as free, so the empty state
+ * stays a sentence. It is now an instruction, because that is what it is.
  */
 export function describeService({ price, unit, min_quantity }) {
   const money = formatPrice(price)
   const u     = UNIT_BY_ID[unit] ?? UNIT_BY_ID['per event']
-  const head  = money ? `${money}${u.suffix}` : 'Quote on request'
+  const head  = money ? `${money}${u.suffix}` : 'Add your guide price'
   if (!min_quantity || min_quantity <= 1) return head
   return `${head} · min ${min_quantity}${u.suffix.replace('/', ' ')}`
 }

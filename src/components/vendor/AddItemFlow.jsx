@@ -93,48 +93,127 @@ import { operationScreensFor } from '../../data/partnerOperations'
 
 const CATERING = 'Catering & Food'
 
+/* ══════════════════════════════════════════════════════════════════════
+   READING A SAVED LISTING BACK INTO THE FLOW
+   ══════════════════════════════════════════════════════════════════════
+
+   `submit()` flattens fourteen pieces of state into one `specs` blob.
+   Editing has to undo exactly that, and the only safe way to split it is
+   to name the derived keys: everything submit() PUTS there is listed
+   below, and whatever is left over is what the question screens wrote.
+
+   Getting this backwards is silent and expensive — a key mistaken for an
+   answer becomes a phantom tick on a screen that never asked it, and an
+   answer mistaken for a key vanishes the moment they save. So the list
+   is exhaustive and it is derived from submit() directly above it; if a
+   key is added there it must be added here in the same change. */
+const DERIVED_SPEC_KEYS = new Set([
+  'menus', 'counters', 'dish_ids', 'dishes', 'dishes_typed', 'min_order_note',
+  'uploads', 'menu_rates', 'distance_rates', 'venue_terms', 'signature',
+  'kitchen_type', 'cuisines', 'answers', 'menu_ids', 'counter_ids',
+  'answers_unresolved',
+])
+
+function seedFrom(row) {
+  const specs = row?.specs ?? {}
+  const detail = Object.fromEntries(
+    Object.entries(specs).filter(([k]) => !DERIVED_SPEC_KEYS.has(k)))
+
+  /* dish_ids and dishes are stored apart on purpose -- ids are what
+     dispatch matches, names are what a coordinator reads -- but the
+     picker upstream holds one list and tells them apart with DISH_IDS.
+     Rejoined in that order so the ticks land where they were made. */
+  const dishes = [...(specs.dish_ids ?? []), ...(specs.dishes ?? [])]
+
+  /* min_quantity is the number; min_order_note is the sentence somebody
+     typed instead. One box produced both and one box reads them back. */
+  const minOrder = specs.min_order_note
+    ?? (row?.min_quantity > 1 ? String(row.min_quantity) : '')
+
+  return {
+    trade: row?.category ?? null,
+    detail,
+    dishes,
+    minOrder,
+    menus: specs.menus ?? [],
+    counters: specs.counters ?? [],
+    cardDishes: specs.dish_ids ?? [],
+    dishNotes: Object.fromEntries(
+      (specs.dishes_typed ?? []).map(t => [t.screen, t.text])),
+    menuRates: specs.menu_rates ?? {},
+    distanceRates: specs.distance_rates ?? {},
+    venueTerms: specs.venue_terms ?? {},
+    kitchen: specs.kitchen_type ?? null,
+    cuisines: specs.cuisines ?? [],
+    uploads: specs.uploads ?? [],
+    signature: specs.signature ?? null,
+    price: row?.price === null || row?.price === undefined ? '' : String(row.price),
+    unit: row?.unit ?? 'per event',
+  }
+}
+
 export default function AddItemFlow({
   existing = [], onAdd, onClose, startTrade = null, vendorId = null,
+  /* ── Editing one saved listing ─────────────────────────────────────
+     The vendor_services row, or null for the add flow. When set, the
+     trade and the offering are FIXED: this edits the row that exists
+     rather than creating another, and both of those are what the row
+     is. See the note on the flow below. */
+  editing = null, onUpdate = null,
 }) {
+  const isEdit = !!editing
+  /* Read once. A re-seed on every render would throw away every change
+     the partner is in the middle of making. */
+  const [seed] = useState(() => seedFrom(editing))
   const toast = useToast()
   /* A partner who told us their trade at sign-up should not have to
      find it in a list of twenty-six again. The Listing tab hands it in
      the flow opens on the next question instead of the first. */
-  const [step, setStep] = useState(startTrade ? 'offerings' : 'trade')
-  const [trade, setTrade] = useState(startTrade)
-  const [picked, setPicked] = useState([])     // offering serviceIds
-  const [detail, setDetail] = useState({})     // spec answers
-  const [menus, setMenus] = useState([])       // menu ids
-  const [counters, setCounters] = useState([]) // counter ids
-  const [dishes, setDishes] = useState([])     // a la carte dish names
+  const [step, setStep] = useState(
+    isEdit ? 'detail' : startTrade ? 'offerings' : 'trade')
+  const [trade, setTrade] = useState(isEdit ? seed.trade : startTrade)
+  /* The offering this row IS. A vendor_services row stores the offering's
+     NAME, so the serviceId is found back through the trade's catalogue —
+     it drives which spec questions are asked, which is why an edit that
+     could not resolve it would ask the trade's generic set instead. */
+  const [picked, setPicked] = useState(() => {
+    if (!isEdit) return []
+    const hit = offeringsForTrade(seed.trade ?? '')
+      .find(o => o.name === editing.name)
+    return hit ? [hit.serviceId] : []
+  })
+  const [detail, setDetail] = useState(isEdit ? seed.detail : {})
+  const [menus, setMenus] = useState(isEdit ? seed.menus : [])
+  const [counters, setCounters] = useState(isEdit ? seed.counters : [])
+  const [dishes, setDishes] = useState(isEdit ? seed.dishes : [])
   /* The catalogue dish ids ticked on the menus screen. Separate from
      `dishes`, which is the a-la-carte library and holds NAMES: this one
      is what the menu cards are made of, and it is what coverage is
      worked out from. See MenuDishStep. */
-  const [cardDishes, setCardDishes] = useState([])
+  const [cardDishes, setCardDishes] = useState(isEdit ? seed.cardDishes : [])
   /* Photographs, video and testimonials. Every trade, not only catering:
      a decorator has last Saturday's mandap and had nowhere to put it.
      See WorkUpload and data/workPrompts.js. */
   const [work, setWork] = useState([])
-  const [price, setPrice] = useState('')
-  const [unit, setUnit] = useState('per event')
-  const [minOrder, setMinOrder] = useState('')
-  const [uploads, setUploads] = useState([])
+  const [price, setPrice] = useState(isEdit ? seed.price : '')
+  const [unit, setUnit] = useState(isEdit ? seed.unit : 'per event')
+  const [minOrder, setMinOrder] = useState(isEdit ? seed.minOrder : '')
+  const [uploads, setUploads] = useState(isEdit ? seed.uploads : [])
   /* What a caterer typed that is not in the catalogue. Kept per screen —
      a dish they added under Kerala is a Kerala dish, and merging them all
      into one blob would lose the only thing that makes it useful to the
      operator who reads it. */
-  const [dishNotes, setDishNotes] = useState({})
+  const [dishNotes, setDishNotes] = useState(isEdit ? seed.dishNotes : {})
   /* A rate per menu. One number for the whole business made a caterer
      quote either their cheapest menu or their dearest — see
      PriceGuidance for why that is worse than asking three times. */
-  const [menuRates, setMenuRates] = useState({})
-  const [distanceRates, setDistanceRates] = useState({})
+  const [menuRates, setMenuRates] = useState(isEdit ? seed.menuRates : {})
+  const [distanceRates, setDistanceRates] = useState(isEdit ? seed.distanceRates : {})
   /* Null until the partner has held the sign button. Cleared if they
      change the name afterwards — see ListingSignature. */
-  const [signature, setSignature] = useState(null)
+  const [signature, setSignature] = useState(isEdit ? seed.signature : null)
   /* A hall's price is seven numbers, not one. See VenueTerms. */
-  const [venueTerms, setVenueTerms] = useState({})
+  const [venueTerms, setVenueTerms] = useState(isEdit ? seed.venueTerms : {})
   /* Fetched once when the flow opens, not per dish screen: a caterer
      with five cuisines would otherwise make the same request five
      times for a list that cannot change mid-form. */
@@ -143,8 +222,8 @@ export default function AddItemFlow({
   const noteFor = (v) => setDishNotes(m => ({ ...m, [step]: v }))
   /* The funnel's own answers. `kitchen` is the gate every later screen
      reads; `cuisines` is what it narrowed to. */
-  const [kitchen, setKitchen] = useState(null)
-  const [cuisines, setCuisines] = useState([])
+  const [kitchen, setKitchen] = useState(isEdit ? seed.kitchen : null)
+  const [cuisines, setCuisines] = useState(isEdit ? seed.cuisines : [])
   /* Which screens the partner has actually reached. The stepper turns a
      dot red only for a step they visited and left empty — never for one
      they have not been shown. */
@@ -255,7 +334,17 @@ export default function AddItemFlow({
      Computed rather than hardcoded so Back and Next can never walk into
      a screen with nothing on it. */
   const flow = useMemo(() => {
-    const s = ['trade', 'offerings']
+    /* ── An edit has no trade step and no offerings step ─────────────
+       Both of them ARE the row being edited. `category` is what
+       match_partners joins on and the offering is the row's name, and
+       every spec answer underneath was asked because of that pair —
+       letting either move here would keep all those answers while
+       silently changing the question they answered.
+
+       So an edit opens on the partner's own trade questions, which is
+       the whole point: they came here to change a price or an answer,
+       not to be asked again what kind of work this is. */
+    const s = isEdit ? [] : ['trade', 'offerings']
     if (groups.length) s.push('detail')
 
     if (wantsMenus) {
@@ -279,11 +368,23 @@ export default function AddItemFlow({
 
     /* Every trade. Ticks are what dispatch MATCHES on; this is what wins
        the job once it has been matched, and only caterers could do it. */
-    s.push('work')
+    /* Not on an edit: partner_work is keyed on the VENDOR, not on this
+       row, and submit() INSERTS it. Offering the screen again would add
+       a second copy of the same photographs every time somebody edited
+       a price. It has its own way in from the listing tab. */
+    if (!isEdit) s.push('work')
 
     s.push('price', 'review')
     return s
-  }, [groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
+  }, [isEdit, groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
+
+  /* The opening step is guessed before `flow` exists, so on an edit with
+     no spec questions 'detail' is not in it. Snapping rather than
+     computing twice: one effect, and it self-corrects if the flow
+     changes underneath (answering the kitchen question adds screens). */
+  useEffect(() => {
+    if (flow.length && !flow.includes(step)) setStep(flow[0])
+  }, [flow, step])
 
   /* ── Every screen that asks something, in flow order ──────────────
      The detail screen and the six operations screens, described the
@@ -578,6 +679,31 @@ export default function AddItemFlow({
          listing where "Welcome drinks" belongs -- and a coordinator
          reading a price list of snake_case ids would rightly assume the
          app was broken. */
+      /* ══════════════════════════════════════════════════════════════
+         AN EDIT WRITES THE ROW THAT EXISTS
+         ══════════════════════════════════════════════════════════════
+
+         The add path below creates one row per ticked offering. An edit
+         has exactly one row and must not create a second — so it lands
+         here, before the loop, and updates in place.
+
+         `name` and `category` are deliberately NOT sent. They are what
+         the row is: the offering and the trade its every answer was
+         asked under. Everything the partner can actually change on this
+         screen — the price, the unit, the minimum, and the whole spec
+         blob rebuilt from their answers — is. */
+      if (isEdit) {
+        await onUpdate(editing.id, {
+          price: price === '' ? null : Number(price),
+          unit,
+          min_quantity: /^\d+$/.test(minOrder) ? Math.max(1, Number(minOrder)) : 1,
+          specs,
+        })
+        toast.success('Saved. Your changes are on the listing.')
+        onClose()
+        return
+      }
+
       for (const id of picked) {
         await onAdd({
           name: nameOf(id),

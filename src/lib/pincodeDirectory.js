@@ -412,6 +412,57 @@ export async function nearestServed(lat, lng) {
 }
 
 /**
+ * The name of the town somebody is standing in.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ONLY FOR THE PLACES WE DO NOT SERVE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Inside the served set `nearestServed` already answers with an area and
+ * a pincode we hold ourselves, and no external call is made or wanted.
+ *
+ * Outside it there is nothing to match against, and "you are outside the
+ * areas we cover" without naming the place reads as a bug — the phone
+ * plainly knows where it is. A partner in Mysuru should be told Mysuru,
+ * because that is the difference between "this app is broken" and "they
+ * have not opened here yet".
+ *
+ * So this fires at most once per partner, on the one screen where the
+ * answer was "not here", which is inside what Nominatim's usage policy
+ * asks for. It is the same provider `fetchPlaces` uses and moves with it
+ * when that moves.
+ *
+ * Returns null rather than throwing: a geocoder being unreachable must
+ * degrade to "we are not there yet" without the city, never to an error.
+ */
+export async function reverseCity(lat, lng) {
+  try {
+    const u = new URL('https://nominatim.openstreetmap.org/reverse')
+    u.searchParams.set('lat', String(lat))
+    u.searchParams.set('lon', String(lng))
+    u.searchParams.set('format', 'jsonv2')
+    u.searchParams.set('addressdetails', '1')
+    // Suburb level. Any finer returns a road name, which is not a city.
+    u.searchParams.set('zoom', '10')
+
+    const res = await fetch(u, { headers: { Accept: 'application/json' } })
+    if (!res.ok) return null
+    const a = (await res.json())?.address ?? {}
+
+    /* Indian addresses put the answer in a different key depending on
+       how the place is classified: a city, a town, a village, or only
+       the district. First one wins; state is the last resort so the
+       sentence still names somewhere real. */
+    const city = a.city || a.town || a.municipality || a.village
+      || a.state_district || a.county || a.district || null
+    const state = a.state || null
+    return city ? { city, state } : (state ? { city: state, state: null } : null)
+  } catch {
+    return null
+  }
+}
+
+/**
  * Ask the device where it is.
  *
  * Wrapped rather than called inline because the failure modes need

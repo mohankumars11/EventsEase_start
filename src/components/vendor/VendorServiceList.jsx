@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Check, X,
+  Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Lock,
   ChevronUp, ChevronDown, Clock, Search, AlertCircle,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
@@ -103,7 +103,7 @@ export default function VendorServiceList({
 
   async function handleSave(fields, id) {
     // Empty string is not zero and not null. An untouched price field must
-    // stay "quote on request" rather than becoming a free item.
+    // stay "no guide price yet" rather than becoming a free item.
     const payload = {
       name:        fields.name.trim(),
       // Never null: the form requires it, and a row without a trade
@@ -226,6 +226,34 @@ export default function VendorServiceList({
         />
       )}
 
+      {/* ══════════════════════════════════════════════════════════════
+          EDIT OPENS THE TRADE, NOT A NAMING FORM
+          ══════════════════════════════════════════════════════════════
+
+          Edit used to swap the card for `ServiceForm` — item name, a
+          price, and a select headed "What kind of work is this?". That
+          is the ADD form, and on a listing that already exists it is the
+          wrong three questions: the name is the offering, the trade is
+          what dispatch joins on, and everything a partner might actually
+          want to change — their cuisines, their limits, their notice,
+          what the hall costs — was not on it at all. It lived on the
+          card as a separate fold, so editing a listing and editing its
+          answers were two different places.
+
+          Now Edit reopens the flow the listing was made in, on the
+          partner's own trade, seeded with what they already answered.
+          The trade and offering steps are skipped because those are the
+          row. Saving updates that row rather than adding another. */}
+      {typeof editing === 'string' && services.some(s => s.id === editing) && (
+        <AddItemFlow
+          existing={services}
+          editing={services.find(s => s.id === editing)}
+          vendorId={vendor?.id}
+          onUpdate={onUpdate}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
       {editing && typeof editing === 'object' && (
@@ -259,31 +287,21 @@ export default function VendorServiceList({
       <ul className="space-y-2.5">
         {services.map((s, i) => (
           <li key={s.id}>
-            {editing === s.id ? (
-              <ServiceForm
-                initial={{
-                  name: s.name, category: s.category ?? '', description: s.description ?? '',
-                  price: s.price ?? '', unit: s.unit, min_quantity: s.min_quantity,
-                  lead_time_days: s.lead_time_days ?? '',
-                }}
-                vendorCategory={vendor?.category}
-                onCancel={() => setEditing(null)}
-                onSave={fields => handleSave(fields, s.id)}
-              />
-            ) : (
-              <ListingCard
-                listing={s}
-                first={i === 0}
-                last={i === services.length - 1}
-                busy={busyId === s.id}
-                dispatchable={DISPATCH_TRADES.includes(s.category)}
-                onMove={dir => move(i, dir)}
-                onEdit={() => setEditing(s.id)}
-                onToggle={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
-                onDelete={() => guard(s.id, () => onRemove(s.id))}
-                onSaveSpecs={next => onUpdate(s.id, { specs: next })}
-              />
-            )}
+            {/* Editing no longer swaps the card for a form in place —
+                it opens the trade's own flow over the top. See the
+                AddItemFlow above. */}
+            <ListingCard
+              listing={s}
+              first={i === 0}
+              last={i === services.length - 1}
+              busy={busyId === s.id}
+              dispatchable={DISPATCH_TRADES.includes(s.category)}
+              onMove={dir => move(i, dir)}
+              onEdit={() => setEditing(s.id)}
+              onToggle={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
+              onDelete={() => guard(s.id, () => onRemove(s.id))}
+              onSaveSpecs={next => onUpdate(s.id, { specs: next })}
+            />
           </li>
         ))}
       </ul>
@@ -326,7 +344,7 @@ export default function VendorServiceList({
   )
 }
 
-function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
+function ServiceForm({ initial, vendorCategory, onSave, onCancel, lockTrade = false }) {
   const [f, setF]         = useState(initial)
   const [saving, setSaving] = useState(false)
   const [err, setErr]     = useState(null)
@@ -358,12 +376,12 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label" htmlFor="svc-price">
-            Price <span className="font-normal text-gray-500">(optional)</span>
+            Guide price <span className="font-normal text-gray-500">(optional)</span>
           </label>
           <input
             id="svc-price" className="input" inputMode="numeric" value={f.price}
             onChange={e => set('price', e.target.value.replace(/[^\d.]/g, ''))}
-            placeholder="Leave blank to quote later"
+            placeholder="What it costs you"
           />
         </div>
         <div>
@@ -416,25 +434,59 @@ function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
           A required select of the trades dispatch actually knows, and
           not free text: a partner typing "Photgraphy" was writing a row
           that could never match, and nothing told them. */}
-      <div>
-        <label className="label" htmlFor="svc-trade">
-          What kind of work is this? <span className="text-red-600">*</span>
-        </label>
-        <select
-          id="svc-trade"
-          className="input"
-          value={f.category}
-          onChange={e => set('category', e.target.value)}
-          required
-        >
-          <option value="">Choose one…</option>
-          {DISPATCH_TRADES.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
-          This is how customers find you. Jobs are matched on it, so a
-          service without one is never offered to you.
-        </p>
-      </div>
+      {/* ══════════════════════════════════════════════════════════
+          ON AN EXISTING LISTING THE TRADE IS NOT A QUESTION
+          ══════════════════════════════════════════════════════════
+
+          Editing a live listing opened this select and asked "what kind
+          of work is this?" about a listing that has already been read,
+          approved, and dispatched under that exact trade. There is no
+          good answer to changing it: the offerings, the spec answers and
+          the whole catalogue underneath belong to the trade it was
+          created as, and switching the string here would keep all of
+          them while quietly moving the row into a different dispatch
+          pool. It is the one field on this form that cannot be edited
+          into a valid state.
+
+          A partner who genuinely does a second trade lists a second
+          thing -- which is one tap on the grid, and gives them a row
+          whose catalogue actually matches. */}
+      {lockTrade ? (
+        <div>
+          <span className="label">What kind of work is this?</span>
+          <div className="flex items-center gap-2 rounded-xl bg-ink/[0.03] px-3 py-2.5 ring-1 ring-ink/[0.06]">
+            <Lock size={13} className="shrink-0 text-ink-mute" />
+            <span className="min-w-0 flex-1 truncate text-[13.5px] font-extrabold text-ink">
+              {f.category || 'Not set'}
+            </span>
+          </div>
+          <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
+            Set when you created this listing and fixed after that — everything
+            you answered underneath belongs to it. Do a second trade as well?
+            List it separately and it gets its own questions.
+          </p>
+        </div>
+      ) : (
+        <div>
+          <label className="label" htmlFor="svc-trade">
+            What kind of work is this? <span className="text-red-600">*</span>
+          </label>
+          <select
+            id="svc-trade"
+            className="input"
+            value={f.category}
+            onChange={e => set('category', e.target.value)}
+            required
+          >
+            <option value="">Choose one…</option>
+            {DISPATCH_TRADES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
+            This is how customers find you. Jobs are matched on it, so a
+            service without one is never offered to you.
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="label" htmlFor="svc-desc">
@@ -579,7 +631,7 @@ function ListingCard({
         </span>
       </div>
 
-      <StatusBeads state={state} className="px-4 pt-2.5" />
+      <StatusBeads state={state} labelled className="px-4 pt-2.5" />
 
       <div className="px-4 pb-3 pt-2">
         <p className="text-[13.5px] font-extrabold text-royal-700">{describeService(s)}</p>
@@ -614,7 +666,7 @@ function ListingCard({
             )}
             {s.price === null && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                No price
+                Guide price missing
               </span>
             )}
             {s.is_active && !dispatchable && (
@@ -623,6 +675,26 @@ function ListingCard({
               </span>
             )}
           </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════
+            WHAT THE NUMBER IS, SAID ONCE, WHERE IT IS MISSING
+            ══════════════════════════════════════════════════════════
+
+            A partner who has left the price blank is usually protecting
+            it — they think naming a number publishes it, or ties their
+            hands on a job they have not seen. Both are wrong here and
+            neither was ever said on this screen.
+
+            So the sentence appears exactly where the gap is, and only
+            there: on a card that already has a price it would be noise. */}
+        {s.price === null && (
+          <p className="mt-2 rounded-xl bg-amber-50/70 px-3 py-2 text-[11.5px] leading-snug text-amber-900">
+            <span className="font-extrabold">A guide price is not a quote. </span>
+            It is what this work costs you, kept between you and us. Customers
+            never see it, and it never decides who is offered a job — it is how
+            we price a booking on something real instead of guessing.
+          </p>
         )}
 
         {/* Why it came back. A listing refused with no reason is a
@@ -646,12 +718,7 @@ function ListingCard({
         >
           <Pencil size={14} /> Edit
         </button>
-        <button
-          type="button" onClick={onToggle} disabled={busy}
-          className="flex items-center justify-center gap-1.5 border-x border-ink/[0.06] py-3 text-ink-soft transition active:bg-ink/[0.04] disabled:opacity-50"
-        >
-          {s.is_active ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}
-        </button>
+        <CardHide s={s} state={state} busy={busy} onToggle={onToggle} />
         <CardDelete busy={busy} onConfirm={onDelete} />
       </div>
 
@@ -668,6 +735,85 @@ function ListingCard({
       {'specs' in s && (
         <ServiceSpecs trade={s.category} value={s.specs} onSave={onSaveSpecs} />
       )}
+    </div>
+  )
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * HIDING IS THE QUIETEST WAY TO STOP EARNING
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Hide sat in the middle cell in the same grey as Edit, one tap, no
+ * confirmation. Delete — which is recoverable, because the partner still
+ * has the trade and can list it again in a minute — took two taps and
+ * turned the row red.
+ *
+ * The weights were backwards. `match_partners()` requires
+ * `is_active = TRUE`: the moment this is tapped on a live listing the
+ * partner leaves the dispatch pool for that trade, silently, with the
+ * card still sitting there looking much as it did. Nothing tells them
+ * later. A partner who taps it to "tidy up" their list stops being
+ * offered work and has no reason to connect the two.
+ *
+ * So it warns, and it says the consequence in the words that matter —
+ * jobs — rather than in the word the database uses. Showing again is
+ * still one tap: putting a confirmation in front of somebody turning
+ * their income back ON would be a different kind of stupid.
+ */
+function CardHide({ s, state, busy, onToggle }) {
+  const [armed, setArmed] = useState(false)
+
+  /* Coming back is safe and instant. No arming, no colour. */
+  if (!s.is_active) {
+    return (
+      <button
+        type="button" onClick={onToggle} disabled={busy}
+        className="flex items-center justify-center gap-1.5 border-x border-ink/[0.06] py-3 text-forest-700 transition active:bg-forest-50 disabled:opacity-50"
+      >
+        <Eye size={14} /> Show
+      </button>
+    )
+  }
+
+  if (!armed) {
+    return (
+      <button
+        type="button" onClick={() => setArmed(true)} disabled={busy}
+        className="flex items-center justify-center gap-1.5 border-x border-ink/[0.06] py-3 text-amber-700 transition active:bg-amber-50 disabled:opacity-50"
+      >
+        <EyeOff size={14} /> Hide
+      </button>
+    )
+  }
+
+  return (
+    <div className="col-span-3 bg-amber-50 px-4 py-3">
+      <p className="text-[12.5px] font-extrabold leading-snug text-amber-900">
+        {state === 'live'
+          ? 'This listing is live. Hiding it stops your jobs.'
+          : 'Hide this listing?'}
+      </p>
+      <p className="mt-1 text-[11.5px] leading-snug text-amber-800">
+        {state === 'live'
+          ? 'You will stop being offered work for it from the moment you tap Hide — customers looking for this today will not reach you. Nothing else changes, and Show puts it back instantly.'
+          : 'It stays on this screen for you, and it will not be offered to anybody. Show puts it back instantly.'}
+      </p>
+      <div className="mt-2.5 flex items-center justify-end gap-2">
+        <button
+          type="button" onClick={() => setArmed(false)}
+          className="rounded-full px-3 py-1.5 text-[12px] font-extrabold text-amber-900"
+        >
+          Keep it live
+        </button>
+        <button
+          type="button" disabled={busy}
+          onClick={() => { setArmed(false); onToggle() }}
+          className="rounded-full bg-amber-600 px-3 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-60"
+        >
+          Hide anyway
+        </button>
+      </div>
     </div>
   )
 }

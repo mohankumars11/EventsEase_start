@@ -126,21 +126,58 @@ export const stateOf = s =>
  * yet, and a rejected one shows its bead in red at the step it stopped
  * at rather than pretending to be three-quarters done.
  */
-export function StatusBeads({ state, className = '' }) {
+/* ══════════════════════════════════════════════════════════════════════
+   FOUR BARS THAT NEVER SAID WHAT THEY WERE
+   ══════════════════════════════════════════════════════════════════════
+
+   A listing under review fills two of four green — `at: 'read'` is index
+   1 — and that is all a partner ever saw: two green lines and two grey
+   ones, unlabelled, on the screen where they are waiting to find out
+   what is happening. It reads as a loading bar that has stalled.
+
+   The words are the same four STEPS, in the same flex-1 columns, so each
+   sits under its own bar. Four short words fit at 360px where "Submitted
+   · Being read · Verified · Live" does not, and the header directly
+   above already carries the full state in words -- this only has to say
+   which of four stages the bar is counting. */
+const STEP_WORDS = ['Sent', 'Read', 'Checked', 'Live']
+
+export function StatusBeads({ state, className = '', labelled = false }) {
   const here = STEPS.indexOf((STATE[state] ?? STATE.live).at)
+  const stuck = state === 'rejected'
+
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
-      {STEPS.map((sid, i) => (
-        <span
-          key={sid}
-          aria-hidden
-          className={`h-[3px] flex-1 rounded-full ${
-            state === 'rejected' && i === here ? 'bg-rose-500'
-            : i <= here ? 'bg-forest-600'
-            : 'bg-ink/[0.08]'
-          }`}
-        />
-      ))}
+    <div className={className}>
+      <div className="flex items-center gap-1">
+        {STEPS.map((sid, i) => (
+          <span
+            key={sid}
+            aria-hidden
+            className={`h-[3px] flex-1 rounded-full ${
+              stuck && i === here ? 'bg-rose-500'
+              : i <= here ? 'bg-forest-600'
+              : 'bg-ink/[0.08]'
+            }`}
+          />
+        ))}
+      </div>
+
+      {labelled && (
+        <div className="mt-1 flex items-center gap-1">
+          {STEP_WORDS.map((w, i) => (
+            <span
+              key={w}
+              className={`flex-1 text-center text-[9.5px] font-bold uppercase leading-none tracking-wide ${
+                stuck && i === here ? 'text-rose-600'
+                : i <= here ? 'text-forest-700'
+                : 'text-ink-mute/60'
+              }`}
+            >
+              {w}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

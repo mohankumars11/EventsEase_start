@@ -9,7 +9,10 @@ import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES } from '../../config/vendor'
-import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincodeDirectory'
+import {
+  lookupPincode, currentPosition, nearestServed, reverseCity,
+} from '../../lib/pincodeDirectory'
+import CityInterestForm from '../../components/common/CityInterestForm'
 import HoldToSign from '../../components/vendor/HoldToSign'
 import {
   PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION,
@@ -116,6 +119,17 @@ export default function VendorOnboarding() {
   const [pinned, setPinned] = useState(null)
   const [locating, setLocating] = useState(false)
 
+  /* Where they are, when it is somewhere we do not serve yet. Holds the
+     town name so the screen can say "Mysuru" rather than "not here" —
+     `{ city, state }`, or `{ city: null }` when the geocoder was
+     unreachable and we know only that it was outside. */
+  const [outside, setOutside] = useState(null)
+
+  /* The permission is asked ONCE per visit to this step. Without this
+     the effect below re-fires on every re-render the form causes, and a
+     partner typing their pincode gets the dialog again mid-keystroke. */
+  const [locationAsked, setLocationAsked] = useState(false)
+
   /* The agreement. Held in state until submit, then written by
      sign_partner_terms — the server stamps the moment, not this device. */
   const [signature, setSignature] = useState(null)
@@ -124,6 +138,7 @@ export default function VendorOnboarding() {
   async function useMyLocation() {
     setLocating(true)
     setError(null)
+    setOutside(null)
     try {
       const pos = await currentPosition({ timeout: 12000 })
       if (pos.status !== 'ok') {
@@ -143,12 +158,35 @@ export default function VendorOnboarding() {
       /* Names the place from centroids we already hold, so it costs no
          external call and fills the pincode and area boxes for them. */
       const near = await nearestServed(pos.lat, pos.lng)
+
+      /* ── Outside the served set is an ANSWER, not a failure ─────────
+         This used to fall through: `near.pincode` and `near.area` are
+         undefined on a miss, so both boxes kept their old value, and
+         `city: f.city || 'Bengaluru'` then stamped Bengaluru on a
+         partner standing in Mysuru — while the tick below told them the
+         area and pincode "were filled in from it". Nothing had been.
+         They were pinned to a city 140 km away that they never chose,
+         and the first thing the form did was lie about it.
+
+         A place we do not serve gets named and offered a way to say so.
+         Nothing is pinned and nothing is filled in, because there is
+         genuinely nothing to fill in. */
+      if (near?.status !== 'served') {
+        setPinned(null)
+        setOutside(await reverseCity(pos.lat, pos.lng) ?? { city: null, state: null })
+        return
+      }
+
+      setOutside(null)
       setPinned({ lat: pos.lat, lng: pos.lng })
       setForm(f => ({
         ...f,
-        pincode: near?.pincode ?? f.pincode,
-        area: near?.area ?? f.area,
-        city: f.city || 'Bengaluru',
+        pincode: near.pincode ?? f.pincode,
+        area: near.area ?? f.area,
+        /* Only when it is a city we actually run in -- the picker below
+           offers the pilot list, and writing anything else into it
+           selects nothing and looks broken. */
+        city: f.city || (CITIES.includes(near.district) ? near.district : f.city),
       }))
       setError(null)
     } catch {
@@ -231,6 +269,36 @@ export default function VendorOnboarding() {
   const total = steps.length
   const stepId = steps[step - 1]?.id
   const isLast = step === total
+
+  /**
+   * ══════════════════════════════════════════════════════════════════
+   * THE PERMISSION IS ASKED BY ARRIVING, NOT BY TAPPING
+   * ══════════════════════════════════════════════════════════════════
+   *
+   * The button stays -- it is how somebody retries after stepping
+   * outside, and how they correct a pin -- but nobody should have to
+   * find it. Landing on a screen headed "Your location" IS the consent
+   * moment: the reason has been given, and the OS dialog arriving right
+   * then is what a person expects. Making them hunt for a button first
+   * is the step where onboarding was being abandoned.
+   *
+   * Everything the earlier note argued for is preserved. This still does
+   * not fire on the splash screen or at first launch, where a refusal is
+   * near-certain and permanent -- only on the one screen that has
+   * already explained why it is being asked.
+   *
+   * It runs once. `nativePosition` calls checkPermissions() before
+   * requestPermissions(), so a partner who has already granted it gets a
+   * silent fix rather than a second dialog, and one who has already
+   * refused is not asked again on every keystroke.
+   */
+  useEffect(() => {
+    if (stepId !== 'location') return
+    if (locationAsked || pinned || locating) return
+    setLocationAsked(true)
+    useMyLocation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId])
 
   function set(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -568,7 +636,9 @@ export default function VendorOnboarding() {
                   {locating
                     ? <Loader2 size={15} className="animate-spin" />
                     : <Navigation size={15} />}
-                  {locating ? 'Finding you…' : 'Use my location'}
+                  {locating ? 'Finding you…'
+                    : pinned ? 'Update my location'
+                    : 'Use my location'}
                 </button>
                 {pinned && (
                   <p className="-mt-2 flex items-start gap-1.5 text-[12px] font-semibold text-forest-700">
@@ -579,6 +649,48 @@ export default function VendorOnboarding() {
                       right.
                     </span>
                   </p>
+                )}
+
+                {/* ══════════════════════════════════════════════════════
+                    SOMEWHERE WE DO NOT SERVE IS NOT AN ERROR
+                    ══════════════════════════════════════════════════════
+
+                    A caterer in Mysuru has done nothing wrong and their
+                    phone worked perfectly. Telling them "could not find
+                    you" would be false, and stamping them Bengaluru so
+                    the form can continue is worse — it puts a partner in
+                    a dispatch pool 140 km from where they cook.
+
+                    So: name the place, say plainly that we are not open
+                    there, and take their interest. That row is the only
+                    evidence that decides which city opens next. */}
+                {outside && (
+                  <div className="-mt-1 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+                    <p className="text-[13.5px] font-extrabold text-amber-900">
+                      {outside.city
+                        ? `We are not in ${outside.city} yet`
+                        : 'We are not in your area yet'}
+                    </p>
+                    <p className="mt-1 text-[12.5px] leading-snug text-amber-800">
+                      Your phone found you{outside.city ? ` in ${outside.city}` : ''} —
+                      it is just outside the areas Sambramo covers today. We are
+                      opening new cities steadily, and partners already waiting
+                      is the main thing that decides which one is next.
+                    </p>
+                    <div className="mt-3">
+                      <CityInterestForm
+                        city={outside.city ?? ''}
+                        locked={!!outside.city}
+                        source="partner_onboarding"
+                        prompt="Your city"
+                      />
+                    </div>
+                    <p className="mt-3 text-[11.5px] leading-snug text-amber-700">
+                      You can still finish this form with a pincode we do cover —
+                      only do that if you genuinely travel there for work, because
+                      it is where your jobs will come from.
+                    </p>
+                  </div>
                 )}
 
                 <Field label="Primary city">
