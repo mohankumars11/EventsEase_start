@@ -29,6 +29,7 @@ import ListingSignature from './ListingSignature'
 import MenuDishStep from './MenuDishStep'
 import WorkUpload from './WorkUpload'
 import { workPromptsFor } from '../../data/workPrompts'
+import { addWork } from '../../lib/partnerWork'
 import WhatHappensNext from './WhatHappensNext'
 import VenueTerms from './VenueTerms'
 import TradeGrid from './TradeGrid'
@@ -627,27 +628,12 @@ export default function AddItemFlow({
          better failure than services that exist while their photographs
          silently did not. Migration 110. */
       if (vendorId && work.length) {
-        const rows = work.map((w, i) => ({
-          vendor_id: vendorId,
-          kind: w.kind,
-          storage_path: w.path ?? null,
-          caption: w.caption?.trim() || null,
-          said_by: w.said_by?.trim() || null,
-          said_about: w.said_about?.trim() || null,
-          body: w.body?.trim() || null,
-          sort_order: i,
-        })).filter(r => r.kind !== 'testimonial' || r.body)
-
-        if (rows.length) {
-          const { error } = await supabase.from('partner_work').insert(rows)
-          /* Not fatal. A partner whose listing saved and whose photographs
-             did not should be told, not blocked — the photographs can be
-             added again from the listing tab, and losing ten minutes of
-             ticks to a storage error would be the worse outcome. */
-          if (error) {
-            toast.error('Your listing saved, but the photos did not. '
-              + 'Add them again from your listing.')
-          }
+        /* One definition of what a work row is, shared with the Listing
+           tab's library. See lib/partnerWork.js. */
+        const { error } = await addWork(vendorId, work)
+        if (error) {
+          toast.error('Your listing saved, but the photos did not. '
+            + 'Add them again from Your work on the Listing tab.')
         }
       }
 

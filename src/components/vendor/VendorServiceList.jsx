@@ -9,6 +9,7 @@ import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
 import ListingStatusCard from './ListingStatusCard'
+import WorkLibrary from './WorkLibrary'
 /* The three the Listing tab is now built from. All three imports were
    lost to a patch that used replace() without asserting the anchor
    matched: the file built clean and threw "ListingPitch is not
@@ -294,6 +295,10 @@ export default function VendorServiceList({
           />
         </>
       )}
+
+      {/* Between the listings and the way to add another: it is about
+          the listings, not about adding one. */}
+      {!editing && vendor?.id && <WorkLibrary vendor={vendor} />}
 
       {!editing && services.length > 0 && (
         <button

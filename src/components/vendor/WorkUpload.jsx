@@ -294,7 +294,7 @@ export default function WorkUpload({
       {/* Never a gate. A partner on a weak connection who cannot upload
           today should still be able to finish and come back. */}
       <p className="text-center text-[11.5px] leading-snug text-ink-mute">
-        All of this is optional and can be added later from your listing.
+        All of this is optional. You can add to it any time from Your work on the Listing tab.
       </p>
     </div>
   )
