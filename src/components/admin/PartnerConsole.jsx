@@ -116,7 +116,10 @@ const money = n =>
    and a review queue that makes a coordinator scroll past them is a
    queue nobody opens twice. */
 function usePartnerData() {
-  const [state, setState] = useState({ loading: true, error: null, vendors: [], services: [], docs: [], payouts: [] })
+  const [state, setState] = useState({
+    loading: true, error: null, payoutsReadable: true,
+    vendors: [], services: [], docs: [], payouts: [],
+  })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
@@ -130,6 +133,14 @@ function usePartnerData() {
       if (v.error) throw v.error
       setState({
         loading: false, error: null,
+        /* ── An absence is not the same as a refusal ──────────────────
+           vendor_payout_details was owner-only until migration 114, and
+           RLS does not fail loudly — it returns zero rows. Rendered
+           naively that reads as "this partner has no payout method",
+           which is a permission wearing data's clothes, and an operator
+           would decide on it. So the error is kept and the drawer says
+           which of the two it is. */
+        payoutsReadable: !p.error,
         vendors: v.data ?? [],
         /* Services are fetched for every vendor and filtered locally.
            Filtering server-side would need the vendor id list in the
@@ -222,6 +233,7 @@ export default function PartnerConsole() {
           services={byVendor[open.id] ?? []}
           docs={data.docs.filter(d => d.vendor_id === open.id)}
           payout={data.payouts.find(p => p.vendor_id === open.id) ?? null}
+          payoutsReadable={data.payoutsReadable}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
         />
@@ -748,7 +760,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, docs, payout, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
 
@@ -759,6 +771,9 @@ function PartnerDrawer({ vendor: v, services, docs, payout, onClose, onChanged }
     has_service:  services.some(s => s.is_active),
     listing_live: live.length > 0,
     signed_terms: !!v.terms_accepted_at,
+    /* Unknown reads as false here, which is the safe direction — but
+       the section below says which it is rather than leaving a tick
+       looking like a finding. */
     can_be_paid:  !!payout?.verified_at,
   }
   const dispatchable = readiness.approved && readiness.located && readiness.listing_live
@@ -909,7 +924,13 @@ function PartnerDrawer({ vendor: v, services, docs, payout, onClose, onChanged }
           </Section>
 
           <Section title="Getting paid">
-            {!payout ? (
+            {!payoutsReadable ? (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-snug text-amber-900">
+                <span className="font-extrabold">Cannot read payout details. </span>
+                That is a permission, not an absence — migration 114 has not been
+                applied, so this says nothing about whether they can be paid.
+              </p>
+            ) : !payout ? (
               <p className="text-[12px] italic text-ink-mute">
                 No payout method. They cannot be paid for completed work.
               </p>
