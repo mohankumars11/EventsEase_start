@@ -250,6 +250,17 @@ export default function VendorServiceList({
               onEdit={() => setEditing(s.id)}
               onToggle={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
               onDelete={() => guard(s.id, () => onRemove(s.id))}
+              /* Read the row back: freeze_review_status reverts a
+                 refused transition silently, and the update reports
+                 success either way. */
+              onResubmit={() => guard(s.id, async () => {
+                const row = await onUpdate(s.id, { review_status: 'under_review' })
+                if (row && row.review_status !== 'under_review') {
+                  toast.error('That did not go through. Talk to our team and we will look at it.')
+                } else {
+                  toast.success('Sent back to our team. We read these by hand.')
+                }
+              })}
             />
           </li>
         ))}
@@ -306,7 +317,7 @@ export default function VendorServiceList({
 
 function ListingCard({
   listing: s, first, last, busy, dispatchable,
-  onMove, onEdit, onToggle, onDelete,
+  onMove, onEdit, onToggle, onDelete, onResubmit,
 }) {
   const state = stateOf(s)
   const meta = STATE[state]
@@ -489,6 +500,31 @@ function ListingCard({
           <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[12px] leading-snug text-rose-900 ring-1 ring-rose-200">
             <span className="font-extrabold">What to change: </span>{s.review_note}
           </p>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════
+            THE WAY BACK
+            ══════════════════════════════════════════════════════════
+
+            Rejection used to be a dead end. freeze_review_status
+            reverted any change a partner made to review_status, and the
+            operator queue was built from 'under_review' only -- so a
+            partner who fixed exactly what the note asked for had no way
+            to say so and no queue to return to. The row sat at
+            'rejected' forever.
+
+            117 opens one door, rejected -> under_review, and this is
+            it. The note is cleared by the trigger, because it described
+            the version they have just changed. */}
+        {state === 'rejected' && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onResubmit}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-forest-600 py-2.5 text-[12.5px] font-extrabold text-white disabled:opacity-50"
+          >
+            <Check size={14} /> I have fixed this — read it again
+          </button>
         )}
       </div>
 

@@ -190,7 +190,10 @@ export default function PartnerConsole() {
         {TABS.map(t => {
           const Icon = t.icon
           const n =
-            t.id === 'listings' ? data.services.filter(s => s.review_status === 'under_review').length
+            t.id === 'listings' ? data.services.filter(s =>
+                s.review_status === 'under_review'
+                || (s.review_status === 'live' && s.revised_at
+                    && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))).length
             : t.id === 'closures' ? data.vendors.filter(v => v.closure_requested_at).length
             : 0
           return (
@@ -423,8 +426,25 @@ function ListingReview({ data, onOpen }) {
   /* Only listings whose partner is a real, non-synthetic business we
      actually hold. A row whose vendor was filtered out has nobody to
      approve it for. */
-  const queue = data.services
+  /* ══════════════════════════════════════════════════════════════
+     TWO THINGS NEED A HUMAN, NOT ONE
+     ══════════════════════════════════════════════════════════════
+
+     `under_review` is a listing nobody has read yet. But 117 added the
+     other half: a partner can edit a LIVE listing's price, unit,
+     minimum or specs, and until now nobody ever saw it. A listing
+     approved at one price could be dispatching at another.
+
+     The revised ones stay live and stay dispatchable while they wait --
+     taking a listing down over a price typo would cost a partner a
+     day's work and teach them never to update prices. They just need
+     looking at. */
+  const unread = data.services
     .filter(s => s.review_status === 'under_review' && vendorById[s.vendor_id])
+  const revised = data.services
+    .filter(s => s.review_status === 'live' && s.revised_at && vendorById[s.vendor_id]
+      && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))
+  const queue = [...unread, ...revised]
 
   async function decide(listing, next, reviewNote = null) {
     setBusy(listing.id + next)
@@ -447,7 +467,11 @@ function ListingReview({ data, onOpen }) {
           + 'Your profile needs the admin or coordinator role.')
         return
       }
-      toast.success(next === 'live' ? 'Live. The partner can be offered work now.' : 'Sent back with your note.')
+      toast.success(next === 'live'
+        ? (listing.review_status === 'live'
+            ? 'Read. The change is approved and it stays live.'
+            : 'Live. The partner can be offered work now.')
+        : 'Sent back with your note.')
       setSendingBack(null); setNote('')
       await data.refresh()
     } catch (err) {
@@ -463,7 +487,8 @@ function ListingReview({ data, onOpen }) {
         <Check size={26} className="mx-auto text-forest-700" />
         <p className="mt-2 text-[14px] font-extrabold text-forest-900">Nothing waiting to be read</p>
         <p className="mt-1 text-[12.5px] text-forest-800">
-          Every listing from a real partner has been decided.
+          Every listing from a real partner has been read, and nothing has changed
+          since it was approved.
         </p>
       </div>
     )
@@ -471,24 +496,40 @@ function ListingReview({ data, onOpen }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[12.5px] text-ink-mute">
-        {queue.length} listing{queue.length === 1 ? '' : 's'} waiting. Until one is
-        made live its partner is offered nothing for that trade, however approved
-        their business is.
+      <p className="text-[12.5px] leading-snug text-ink-mute">
+        {unread.length > 0 && (
+          <>
+            <span className="font-extrabold text-ink">{unread.length} never read</span>
+            {' '}— until one is made live its partner is offered nothing for that
+            trade, however approved their business is.
+          </>
+        )}
+        {unread.length > 0 && revised.length > 0 && <br />}
+        {revised.length > 0 && (
+          <>
+            <span className="font-extrabold text-ink">{revised.length} changed since approval</span>
+            {' '}— these are live and being dispatched right now on a version
+            nobody has read. Approving one records that you have.
+          </>
+        )}
       </p>
 
       {queue.map(s => {
         const v = vendorById[s.vendor_id]
         const siblings = data.services.filter(
           x => x.vendor_id === s.vendor_id && x.review_status === 'under_review')
+        const changed = s.review_status === 'live'
         return (
-          <article key={s.id} className="overflow-hidden rounded-2xl bg-white ring-1 ring-amber-200">
-            <header className="flex items-center gap-2.5 bg-amber-500 px-4 py-2.5 text-white">
+          <article key={s.id} className={`overflow-hidden rounded-2xl bg-white ring-1 ${changed ? 'ring-royal-200' : 'ring-amber-200'}`}>
+            <header className={`flex items-center gap-2.5 px-4 py-2.5 text-white ${changed ? 'bg-royal-600' : 'bg-amber-500'}`}>
               <Clock size={15} className="shrink-0" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-extrabold leading-tight">{s.name}</span>
                 <span className="block truncate text-[11.5px] font-semibold opacity-90">
-                  {s.listing_code ? `${s.listing_code} · ` : ''}{s.category} · submitted {ago(s.created_at)}
+                  {s.listing_code ? `${s.listing_code} · ` : ''}{s.category}
+                  {changed
+                    ? ` · LIVE, changed ${ago(s.revised_at)} — still being dispatched`
+                    : ` · submitted ${ago(s.created_at)}`}
                 </span>
               </span>
             </header>
