@@ -321,7 +321,9 @@ function PartnerTable({ data, byVendor, onOpen }) {
     if (status && v.verification_status !== status) return false
     if (!q.trim()) return true
     const t = q.trim().toLowerCase()
-    return [v.business_name, v.city, v.area, v.pincode, v.category]
+    /* Searching by code is the whole point of having one: a partner says
+       SBM-PTR-0007 down the phone and it must land here. */
+    return [v.partner_code, v.business_name, v.city, v.area, v.pincode, v.category]
       .some(x => String(x ?? '').toLowerCase().includes(t))
   })
 
@@ -332,7 +334,7 @@ function PartnerTable({ data, byVendor, onOpen }) {
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Business, area, pincode…"
+            placeholder="Code, business, area, pincode…"
             className="w-full rounded-xl bg-white py-2.5 pl-9 pr-3 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.08]"
           />
         </div>
@@ -365,6 +367,9 @@ function PartnerTable({ data, byVendor, onOpen }) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-extrabold text-ink">{v.business_name}</span>
                     <span className="mt-0.5 block truncate text-[11.5px] text-ink-mute">
+                      {/* The code first. Two of the first eight partners are
+                          called "jon" and "hab" -- the name is not the handle. */}
+                      {v.partner_code ? `${v.partner_code} · ` : ''}
                       {[v.area, v.city, v.pincode].filter(Boolean).join(' · ') || 'No location'}
                     </span>
                   </span>
@@ -483,7 +488,7 @@ function ListingReview({ data, onOpen }) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-extrabold leading-tight">{s.name}</span>
                 <span className="block truncate text-[11.5px] font-semibold opacity-90">
-                  {s.category} · submitted {ago(s.created_at)}
+                  {s.listing_code ? `${s.listing_code} · ` : ''}{s.category} · submitted {ago(s.created_at)}
                 </span>
               </span>
             </header>
@@ -818,6 +823,13 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
         <header className="sticky top-0 z-10 flex items-start gap-3 border-b border-ink/[0.07] bg-white px-5 py-4">
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[17px] font-extrabold text-ink">{v.business_name}</h2>
+            {v.partner_code && (
+              /* select-all so an operator can copy it into a message
+                 without catching the surrounding words. */
+              <p className="mt-0.5 select-all font-mono text-[12px] font-bold tracking-tight text-royal-700">
+                {v.partner_code}
+              </p>
+            )}
             <p className="mt-0.5 truncate text-[12px] text-ink-mute">
               {[v.area, v.city, v.pincode].filter(Boolean).join(' · ') || 'No location on file'}
             </p>
@@ -891,6 +903,8 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
                   </div>
                   <p className="mt-1.5 text-[13px] font-extrabold text-ink">{s.name}</p>
                   <p className="text-[11.5px] text-ink-mute">
+                    {s.listing_code ? <span className="select-all font-mono font-bold text-royal-700">{s.listing_code}</span> : null}
+                    {s.listing_code ? ' · ' : ''}
                     {s.category} · {s.price === null ? 'no guide price' : money(s.price)}
                   </p>
                   {s.review_status === 'rejected' && s.review_note && (

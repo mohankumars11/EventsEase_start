@@ -151,6 +151,8 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
 
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
+      <PartnerCode vendor={vendor} />
+
       <AccountState vendor={vendor} onUpdateVendor={onUpdateVendor} />
 
       {/* ══════════════════════════════════════════════════════════════
@@ -361,6 +363,46 @@ function Chip({ tone = 'idle', icon: Icon, children }) {
    today and deletes nothing, and the only screen that could possibly
    remind them it is pending is this one. Somebody who asked to leave in
    a bad week and then had a good one must not have to remember. */
+/**
+ * The partner's own id, where they can find it.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * A BUSINESS NAME IS NOT A HANDLE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Until 115 the only thing a partner could give us to identify
+ * themselves was what they called their business, and names are neither
+ * unique nor reliably spelled -- two of the first eight are "jon" and
+ * "hab". An operator searching for one of those finds nothing useful,
+ * and the partner has no way to be sure they were even found.
+ *
+ * So it is on the account screen, in a monospace face, select-all, with
+ * the one sentence that says what it is FOR. Not buried in a fold:
+ * somebody reads this out while already on the phone to us, and a code
+ * they have to go hunting for is a code they will not use.
+ *
+ * Rendered only when it exists, so the screen is correct on a database
+ * where 115 has not been applied yet.
+ */
+function PartnerCode({ vendor }) {
+  if (!vendor?.partner_code) return null
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-ink/[0.03] px-4 py-3 ring-1 ring-ink/[0.06]">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">
+          Your partner ID
+        </p>
+        <p className="mt-0.5 select-all font-mono text-[16px] font-extrabold tracking-tight text-royal-700">
+          {vendor.partner_code}
+        </p>
+      </div>
+      <p className="w-32 shrink-0 text-[10.5px] leading-snug text-ink-mute">
+        Quote this whenever you contact us — it finds you instantly.
+      </p>
+    </div>
+  )
+}
+
 function AccountState({ vendor, onUpdateVendor }) {
   const [busy, setBusy] = useState(false)
   if (!vendor?.closure_requested_at) return null
