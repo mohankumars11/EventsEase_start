@@ -970,11 +970,22 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
                 {(VENDOR_STATE[v.verification_status] ?? VENDOR_STATE.draft).label}
               </span>. Approving also makes every listing that is waiting go live.
             </p>
+            {/* Said here because it is the thing an operator most needs
+                to know before pressing it, and the least obvious. */}
+            <p className="text-[11.5px] leading-snug text-ink-mute">
+              Closing locks them out of the app immediately and stops all new
+              offers. Nothing is deleted and it is reversible — work already
+              accepted is untouched, because a family is expecting somebody.
+            </p>
             <div className="flex flex-wrap gap-2 pt-1">
               {[
                 { s: 'approved',  label: 'Approve',  cls: 'bg-forest-600 text-white' },
                 { s: 'rejected',  label: 'Reject',   cls: 'bg-white text-rose-700 ring-1 ring-rose-200' },
-                { s: 'suspended', label: 'Suspend',  cls: 'bg-white text-ink-soft ring-1 ring-ink/[0.1]' },
+                /* "Close" rather than "Suspend": it is the same act and
+                   the partner's own screen calls it closed, so an
+                   operator reading this to somebody on the phone says
+                   the same word they are seeing. */
+                { s: 'suspended', label: 'Close the account', cls: 'bg-white text-rose-700 ring-1 ring-rose-200' },
               ].map(b => (
                 <button
                   key={b.s} type="button" disabled={!!busy}

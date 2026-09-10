@@ -22,6 +22,7 @@ import CalendarNudge from '../../components/vendor/CalendarNudge'
 import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PartnerAccount from '../../components/vendor/PartnerAccount'
 import TermsGate from '../../components/vendor/TermsGate'
+import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
@@ -192,6 +193,27 @@ export default function VendorDashboard() {
      substance changes, and not for a typo -- see config/partnerTerms. */
   if (vendor.terms_version !== PARTNER_TERMS_VERSION) {
     return <TermsGate vendorId={vendor.id} onAccepted={refresh} />
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     A CLOSED ACCOUNT IS A DOOR, NOT A BANNER
+     ══════════════════════════════════════════════════════════════════
+
+     Closing a partner used to do nothing at all. The suspension banner
+     below keys on `suspended_at`, which set_vendor_verification never
+     wrote, so it did not render -- and nothing else gated anything. A
+     closed partner went on editing listings, setting their calendar and
+     changing their payout details, and the only sign was that no work
+     ever arrived.
+
+     Keyed on `verification_status`, which 078 made the source of truth,
+     rather than on `suspended_at`, which two different mechanisms wrote
+     inconsistently. 116 now sets both together so they cannot disagree,
+     but the status is the one to trust.
+
+     After the terms gate: a closed partner has nothing to agree to. */
+  if (vendor.verification_status === 'suspended') {
+    return <ClosedAccount vendor={vendor} onSignOut={handleSignOut} />
   }
 
   return (
