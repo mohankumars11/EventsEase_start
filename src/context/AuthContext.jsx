@@ -398,7 +398,11 @@ export function AuthProvider({ children }) {
       await supabase.from('vendors').upsert({
         profile_id:    data.user.id,
         business_name: fullName,
-        status:        'PENDING_REVIEW',
+        /* The source of truth, not the column derived from it. 078
+           recomputes `status` from this on every write, so writing
+           `status` here was a no-op that left the partner in 'draft'
+           and out of the review queue. */
+        verification_status: 'submitted',
       }, { onConflict: 'profile_id' })
     }
 

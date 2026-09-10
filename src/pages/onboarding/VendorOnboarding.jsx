@@ -382,12 +382,29 @@ export default function VendorOnboarding() {
         heard_from_detail: form.heard_from_detail.trim() || null,
         website_url:      form.website_url.trim() || null,
         instagram_url:    form.instagram_url.trim() || null,
-        // Status is set on creation only. An approved partner editing their
-        // area or adding an Instagram handle must not be knocked back to
-        // PENDING_REVIEW — that would take their listing off the platform as a
-        // side effect of fixing a typo, and nothing on screen would say so.
-        // Re-review after a material change is a coordinator's call to make.
-        ...(existing ? {} : { status: 'PENDING_REVIEW' }),
+        /* ══════════════════════════════════════════════════════════
+           ASKING TO BE REVIEWED, ON THE COLUMN THAT DECIDES IT
+           ══════════════════════════════════════════════════════════
+
+           This wrote `status: 'PENDING_REVIEW'`, and 078 made `status` a
+           DERIVED column: a trigger recomputes it from
+           `verification_status` on every write. So the value never
+           survived. The row was created with `verification_status` at
+           its default -- 'draft' -- the trigger rewrote `status` to
+           match, and the partner was never in anybody's queue.
+
+           078's own header names this file as one of the two callers it
+           expected to correct, and treated being overwritten as the safe
+           direction. It was not: the effect is that finishing onboarding
+           does not ask for a review. Three partners completed the form,
+           signed the agreement, listed their work, and sat in 'draft'
+           where no admin screen would ever show them.
+
+           Written on creation only. An approved partner fixing a typo in
+           their Instagram handle must not be knocked back into the queue
+           -- that would take their listings off the platform as a side
+           effect, with nothing on screen saying so. */
+        ...(existing ? {} : { verification_status: 'submitted' }),
       }
 
       const { error: vendorErr } = await supabase
