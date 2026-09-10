@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Loader2, Search, ShieldCheck, ShieldAlert, Clock, Radio, EyeOff,
+  Loader2, Search, ShieldCheck, ShieldAlert, Clock, Radio, EyeOff, Images,
   FileText, X, Check, AlertCircle, MapPin, Phone, Mail, Calendar,
   IndianRupee, Layers, RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { signedUrlFor } from '../../lib/partnerDocuments'
+import { signedUrlsFor } from '../../lib/partnerWork'
+import { specsForTrade } from '../../data/partnerSpecs'
+import { completenessOf } from '../../lib/listingCompleteness'
 
 /**
  * The partner side of the business, end to end, in one console.
@@ -69,6 +72,7 @@ const TABS = [
   { id: 'pipeline',  label: 'Pipeline',       icon: Layers },
   { id: 'partners',  label: 'Partners',       icon: ShieldCheck },
   { id: 'listings',  label: 'Listing review', icon: FileText },
+  { id: 'work',      label: 'Their work',     icon: Images },
   { id: 'closures',  label: 'Leaving',         icon: EyeOff },
 ]
 
@@ -118,17 +122,18 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], docs: [], payouts: [],
+    vendors: [], services: [], docs: [], payouts: [], work: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, d, p] = await Promise.all([
+      const [v, s, d, p, w] = await Promise.all([
         supabase.from('vendors').select('*').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('vendor_documents').select('*'),
         supabase.from('vendor_payout_details').select('*'),
+        supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
       ])
       if (v.error) throw v.error
       setState({
@@ -148,6 +153,9 @@ function usePartnerData() {
         services: s.data ?? [],
         docs: d.data ?? [],
         payouts: p.data ?? [],
+        /* Write-only since 110 shipped -- nothing has ever read this,
+           so day one of the queue is every row ever inserted. */
+        work: w.data ?? [],
       })
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err }))
@@ -194,6 +202,7 @@ export default function PartnerConsole() {
                 s.review_status === 'under_review'
                 || (s.review_status === 'live' && s.revised_at
                     && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))).length
+            : t.id === 'work' ? data.work.filter(w => w.review_status === 'under_review').length
             : t.id === 'closures' ? data.vendors.filter(v => v.closure_requested_at).length
             : 0
           return (
@@ -226,6 +235,7 @@ export default function PartnerConsole() {
           {tab === 'pipeline' && <Pipeline data={data} byVendor={byVendor} onOpen={setOpen} onGo={setTab} />}
           {tab === 'partners' && <PartnerTable data={data} byVendor={byVendor} onOpen={setOpen} />}
           {tab === 'listings' && <ListingReview data={data} onOpen={setOpen} />}
+          {tab === 'work' && <WorkQueue data={data} onOpen={setOpen} />}
           {tab === 'closures' && <ClosureQueue data={data} byVendor={byVendor} onOpen={setOpen} />}
         </>
       )}
@@ -237,6 +247,7 @@ export default function PartnerConsole() {
           docs={data.docs.filter(d => d.vendor_id === open.id)}
           payout={data.payouts.find(p => p.vendor_id === open.id) ?? null}
           payoutsReadable={data.payoutsReadable}
+          work={data.work.filter(w => w.vendor_id === open.id)}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
         />
@@ -554,6 +565,7 @@ function ListingReview({ data, onOpen }) {
               )}
 
               <SpecsReadout specs={s.specs} />
+              <Unanswered listing={s} />
             </div>
 
             {sendingBack === s.id ? (
@@ -636,6 +648,56 @@ function ListingReview({ data, onOpen }) {
    what they cannot read. The derived keys submit() writes are skipped —
    ids, resolved answers, signature — because they are machinery rather
    than claims. What is left is what the partner ticked. */
+/* ══════════════════════════════════════════════════════════════════════
+   WHAT THEY DID NOT ANSWER
+   ══════════════════════════════════════════════════════════════════════
+
+   The queue showed what a partner ticked and nothing about what they
+   left blank, so a coordinator approving a listing was reading half of
+   it and could not tell which half. A listing with two of nine
+   questions answered looks, in a list of ticks, exactly like a complete
+   one -- just shorter.
+
+   completenessOf() already computes this and AddItemFlow's own stepper
+   already uses it. Same function, so the gaps an operator sees are
+   precisely the gaps the partner was shown. Two implementations of
+   "answered" is how a coordinator ends up rejecting somebody for a
+   question their app said was optional. */
+function Unanswered({ listing }) {
+  const groups = specsForTrade(listing.category) ?? []
+  if (!groups.length) return null
+
+  const { total, answered, missing } = completenessOf(groups, listing.specs ?? {})
+  if (!missing.length) {
+    return (
+      <p className="mt-2 flex items-center gap-1.5 text-[11.5px] font-semibold text-forest-700">
+        <Check size={12} /> All {total} questions answered
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-2 rounded-xl bg-amber-50/70 px-3 py-2 ring-1 ring-amber-200/60">
+      <p className="text-[11.5px] font-extrabold text-amber-900">
+        {answered} of {total} answered — {missing.length} left blank
+      </p>
+      <ul className="mt-1 space-y-0.5">
+        {missing.map(m => (
+          <li key={m.id} className="text-[11px] leading-snug text-amber-800">· {m.question}</li>
+        ))}
+      </ul>
+      {/* Said plainly, because the instinct is to reject on it. A blank
+          answer is not a reason to refuse a real business -- it is a
+          reason to ask, and dispatch matches on the trade, not on
+          whether every optional box was filled. */}
+      <p className="mt-1.5 text-[10.5px] leading-snug text-amber-700">
+        Blanks do not stop dispatch. Approve if the business is real; send back
+        only if what is missing changes what they are claiming to do.
+      </p>
+    </div>
+  )
+}
+
 const SPEC_SKIP = new Set([
   'answers', 'answers_unresolved', 'menu_ids', 'counter_ids', 'dish_ids',
   'signature', 'uploads', 'dishes_typed',
@@ -806,7 +868,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
 
@@ -959,6 +1021,20 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
             })}
           </Section>
 
+          {/* 110's own header says the photographs are the evidence a
+              listing is reviewed AGAINST. Reviewing a claim to build
+              mandaps without looking at the mandaps they have built is
+              reviewing the sentence, not the work. */}
+          <Section title={`Their work (${work.length})`}>
+            {work.length === 0 ? (
+              <p className="text-[12px] italic text-ink-mute">
+                Nothing uploaded. There is nothing to check a claim against.
+              </p>
+            ) : (
+              <WorkStrip work={work} />
+            )}
+          </Section>
+
           <Section title={`Identity documents (${docs.length})`}>
             {docs.length === 0 ? (
               <p className="text-[12px] italic text-ink-mute">Nothing uploaded.</p>
@@ -1087,5 +1163,217 @@ function Row({ icon: Icon, label, value }) {
       <span className="w-20 shrink-0 text-ink-mute">{label}</span>
       <span className="min-w-0 flex-1 truncate font-semibold text-ink">{value}</span>
     </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEIR WORK
+   ══════════════════════════════════════════════════════════════════════
+
+   partner_work has been write-only since 110. Nothing read it, so
+   review_status never left 'under_review', so 110's public policy
+   matched zero rows for its whole existence -- and every photograph a
+   partner ever uploaded was invisible to everybody, including them.
+
+   Day one of this queue is therefore a backlog of every row ever
+   inserted, which is why the per-partner bulk approve exists. Reviewing
+   that one item at a time is not work anybody would finish.
+
+   ── What an operator is actually looking for ────────────────────────
+   Not whether the photograph is pretty. Whether it is THEIRS, and
+   whether it carries a phone number -- 068 makes contact masking a
+   property of the schema, and a caption is free text that renders on
+   the screen where a customer is deciding whether to pay. A signboard
+   in shot does the same thing. That is what the human read is for. */
+function WorkQueue({ data, onOpen }) {
+  const toast = useToast()
+  const [urls, setUrls] = useState({})
+  const [busy, setBusy] = useState(null)
+
+  const vendorById = useMemo(
+    () => Object.fromEntries(data.vendors.map(v => [v.id, v])), [data.vendors])
+
+  const queue = data.work
+    .filter(w => w.review_status === 'under_review' && vendorById[w.vendor_id])
+
+  /* One request for every thumbnail in the queue, not one per tile. */
+  useEffect(() => {
+    let alive = true
+    signedUrlsFor(queue.map(w => w.storage_path)).then(u => { if (alive) setUrls(u) })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.work])
+
+  async function decide(item, next) {
+    setBusy(item.id + next)
+    try {
+      const { data: row, error } = await supabase
+        .from('partner_work')
+        .update({ review_status: next })
+        .eq('id', item.id)
+        .select('id, review_status')
+        .single()
+      if (error) throw error
+      /* 118 attached freeze_review_status here, and it reverts a refused
+         change in silence while the update reports success. Same
+         read-back the listing queue makes, for the same reason. */
+      if (row?.review_status !== next) {
+        toast.error('That did not stick — your profile needs the admin or coordinator role.')
+        return
+      }
+      toast.success(next === 'live' ? 'Live. Customers can see it.' : 'Sent back.')
+      await data.refresh()
+    } catch (err) {
+      toast.error(friendlyError(err, 'Could not update that.'))
+    } finally { setBusy(null) }
+  }
+
+  async function approveAllFor(vendorId, items) {
+    setBusy('bulk' + vendorId)
+    try {
+      for (const w of items) {
+        await supabase.from('partner_work').update({ review_status: 'live' }).eq('id', w.id)
+      }
+      toast.success(`${items.length} approved.`)
+      await data.refresh()
+    } catch (err) {
+      toast.error(friendlyError(err, 'Could not approve those.'))
+    } finally { setBusy(null) }
+  }
+
+  if (!queue.length) {
+    return (
+      <div className="rounded-2xl bg-forest-50 p-10 text-center ring-1 ring-forest-200">
+        <Check size={26} className="mx-auto text-forest-700" />
+        <p className="mt-2 text-[14px] font-extrabold text-forest-900">Nothing waiting</p>
+        <p className="mt-1 text-[12.5px] text-forest-800">
+          Every photograph, video and quote from a real partner has been decided.
+        </p>
+      </div>
+    )
+  }
+
+  /* Grouped by partner, because that is how it is judged: six
+     photographs from one decorator are one decision about one business,
+     not six decisions about six pictures. */
+  const byVendor = {}
+  for (const w of queue) (byVendor[w.vendor_id] ??= []).push(w)
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[12.5px] leading-snug text-ink-mute">
+        <span className="font-extrabold text-ink">{queue.length} waiting</span> from{' '}
+        {Object.keys(byVendor).length} partner{Object.keys(byVendor).length === 1 ? '' : 's'}.
+        Look for two things: that the work is theirs, and that no caption or
+        signboard carries a phone number — a customer sees these before they pay.
+      </p>
+
+      {Object.entries(byVendor).map(([vid, items]) => {
+        const v = vendorById[vid]
+        return (
+          <section key={vid} className="rounded-2xl bg-white p-4 ring-1 ring-ink/[0.07]">
+            <header className="flex items-center gap-2">
+              <button
+                type="button" onClick={() => onOpen(v)}
+                className="text-[14px] font-extrabold text-ink underline"
+              >
+                {v.business_name}
+              </button>
+              {v.partner_code && (
+                <span className="select-all font-mono text-[11px] font-bold text-royal-700">
+                  {v.partner_code}
+                </span>
+              )}
+              <span className="ml-auto text-[11.5px] text-ink-mute">{items.length} waiting</span>
+            </header>
+
+            <ul className="mt-3 grid grid-cols-3 gap-2">
+              {items.map(w => (
+                <li key={w.id} className="overflow-hidden rounded-xl bg-ink/[0.03] ring-1 ring-ink/[0.06]">
+                  <div className="aspect-square">
+                    {w.kind === 'testimonial' ? (
+                      <p className="line-clamp-5 p-2 text-[10.5px] leading-snug text-ink">{w.body}</p>
+                    ) : urls[w.storage_path] ? (
+                      w.kind === 'video'
+                        ? <video src={urls[w.storage_path]} controls className="h-full w-full object-cover" />
+                        : <img src={urls[w.storage_path]} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-[10px] text-ink-mute">
+                        no preview
+                      </span>
+                    )}
+                  </div>
+                  {w.caption && (
+                    <p className="px-2 py-1 text-[10.5px] leading-snug text-ink-mute">{w.caption}</p>
+                  )}
+                  <div className="grid grid-cols-2 border-t border-ink/[0.06] text-[11px] font-extrabold">
+                    <button
+                      type="button" disabled={!!busy}
+                      onClick={() => decide(w, 'rejected')}
+                      className="border-r border-ink/[0.06] py-2 text-rose-700 disabled:opacity-50"
+                    >
+                      No
+                    </button>
+                    <button
+                      type="button" disabled={!!busy}
+                      onClick={() => decide(w, 'live')}
+                      className="py-2 text-forest-700 disabled:opacity-50"
+                    >
+                      Live
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {items.length > 1 && (
+              <button
+                type="button" disabled={!!busy}
+                onClick={() => approveAllFor(vid, items)}
+                className="mt-3 w-full rounded-xl bg-forest-50 py-2.5 text-[12px] font-extrabold text-forest-800 ring-1 ring-forest-200 disabled:opacity-50"
+              >
+                {busy === 'bulk' + vid
+                  ? 'Approving…'
+                  : `Approve all ${items.length} from ${v.business_name}`}
+              </button>
+            )}
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+/* A partner's work, at a glance, inside the drawer. Read-only — the
+   decisions live in the queue, and two places to approve the same thing
+   is two places for them to disagree. */
+function WorkStrip({ work }) {
+  const [urls, setUrls] = useState({})
+  useEffect(() => {
+    let alive = true
+    signedUrlsFor(work.map(w => w.storage_path)).then(u => { if (alive) setUrls(u) })
+    return () => { alive = false }
+  }, [work])
+
+  return (
+    <ul className="grid grid-cols-4 gap-1.5">
+      {work.map(w => (
+        <li key={w.id} className="relative aspect-square overflow-hidden rounded-lg bg-ink/[0.04]">
+          {w.kind === 'testimonial' ? (
+            <p className="line-clamp-4 p-1.5 text-[9px] leading-snug text-ink">{w.body}</p>
+          ) : urls[w.storage_path] ? (
+            <img src={urls[w.storage_path]} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full items-center justify-center text-[9px] text-ink-mute">—</span>
+          )}
+          <span className={`absolute bottom-0 left-0 right-0 py-0.5 text-center text-[8.5px] font-extrabold text-white ${
+            w.review_status === 'live' ? 'bg-forest-600/90'
+            : w.review_status === 'rejected' ? 'bg-rose-600/90' : 'bg-amber-500/90'
+          }`}>
+            {w.review_status === 'live' ? 'Live' : w.review_status === 'rejected' ? 'No' : 'Reading'}
+          </span>
+        </li>
+      ))}
+    </ul>
   )
 }
