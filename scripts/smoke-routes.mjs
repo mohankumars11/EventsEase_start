@@ -222,16 +222,51 @@ try {
 
   console.log(`\n  Opening ${ROUTES.length} routes against dist/\n`)
 
+  /* ══════════════════════════════════════════════════════════════════
+     WAIT FOR THE APP, NOT FOR A NUMBER
+     ══════════════════════════════════════════════════════════════════
+
+     This slept 1400ms for the first paint and 1800ms after the route
+     change, and on a shared CI runner that is a coin toss. It failed
+     twice on identical code -- once on the partner flavour, once on the
+     customer one, both at commits whose neighbours passed -- and each
+     failure blocked the release job, so no APK was published for a
+     build that was completely fine.
+
+     A guard that fails on timing teaches everyone to re-run it, which
+     is exactly how a real failure gets waved through.
+
+     So: poll for the thing we are actually waiting for -- text in the
+     body -- and stop the moment it is there. Faster in the normal case
+     and correct in the slow one. Same lesson the onboarding walk
+     already learned about --eval firing before React mounts. */
+  const settled = async (budgetMs = 8000) => {
+    const until = Date.now() + budgetMs
+    while (Date.now() < until) {
+      const r = await send('Runtime.evaluate', {
+        expression: `(document.body && document.body.innerText || '').trim().length`,
+        returnByValue: true,
+      })
+      if ((r.result?.value ?? 0) > 0) return true
+      await sleep(120)
+    }
+    return false
+  }
+
   for (const route of ROUTES) {
     caught = []
     // Root first, then route client-side — the app's own path.
     await send('Page.navigate', { url: `http://localhost:${PORT}/` })
-    await sleep(1400)
+    await settled()
     await send('Runtime.evaluate', {
       expression: `history.pushState({}, '', ${JSON.stringify(route)});`
         + `window.dispatchEvent(new PopStateEvent('popstate'))`,
     })
-    await sleep(1800)
+    /* A route change swaps the tree; give React a beat to commit before
+       polling, or the poll sees the OLD screen's text and returns at
+       once. The budget below is what absorbs a slow runner. */
+    await sleep(250)
+    await settled()
 
     const seen = await send('Runtime.evaluate', {
       expression: `document.body.innerText.slice(0, 120)`,
