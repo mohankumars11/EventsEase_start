@@ -151,6 +151,12 @@ export default function TradeGrid({
             <button
               key={t}
               type="button"
+              /* A stable hook for the guards. smoke-scenes.jsx used to
+                 find a trade card by matching the words "things you can
+                 list", so shortening that label to fit a compact card
+                 silently broke the one check that proves tapping a trade
+                 opens the flow. Copy is not an API; this is. */
+              data-trade={t}
               onClick={() => onPick(t)}
               className={`flex items-center gap-2.5 rounded-2xl p-2.5 text-left ring-1 transition active:scale-[0.98] ${
                 on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'

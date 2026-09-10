@@ -57,7 +57,11 @@ export default function SmokeScenes() {
     const t = setTimeout(() => {
       const grid = document.querySelector('[data-smoke="VendorServiceList"]')
       const card = grid
-        && [...grid.querySelectorAll('button')].find(b => /things? you can list/.test(b.textContent ?? ''))
+        /* Matched on a data attribute, not on the label. This looked for
+           the words "things you can list" and broke the day that label was
+           shortened to fit a smaller card — a guard that fails because the
+           copy changed teaches everyone to ignore it. */
+        && grid.querySelector('button[data-trade]')
       if (!card) {
         console.error('SMOKE: VendorServiceList — no trade cards to tap')
       } else {
