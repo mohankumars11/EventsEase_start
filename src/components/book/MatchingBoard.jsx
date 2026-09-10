@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiUrl } from '../../lib/api'
 import { Check, Loader2, MapPinned, Search, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import MasterWork from './MasterWork'
 import { formatINR } from '../../utils/format'
 import { MATCHING, PARTIAL, ACCEPTED_ROW, PAID, isGone } from '../../config/instantBooking'
 import { openRazorpay } from '../../lib/razorpayCheckout'
@@ -221,13 +222,20 @@ function LineRow({ line, offers, onCancel }) {
  * That is also the honest reason to pay promptly, which is why it is the
  * sentence rather than a nag.
  */
-function AwaitingPayment({ line, master, onPay, onCancel, paying }) {
+function AwaitingPayment({ line, master, masterId, onPay, onCancel, paying }) {
   return (
     <li className="border-b border-ink/[0.06] pb-3.5 last:border-0">
       <div className="rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200/70">
         <p className="text-[12.5px] font-semibold leading-relaxed text-forest-900">
           {ACCEPTED_ROW.waiting(master)}
         </p>
+
+        {/* Between the name and the Pay button, which is where the
+            question "who is this" actually gets asked. Renders nothing
+            at all when the master has no approved work, so the button
+            does not move down a blank frame. */}
+        <MasterWork vendorId={masterId} />
+
         <button
           onClick={onPay}
           disabled={paying}
@@ -330,7 +338,9 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         // says 'someone has accepted' is weaker than one that says
         // 'Ramesh Decorators has accepted', and the name is public
         // information about a business, not about a person.
-        .select('id, line_id, status, distance_m, vendors(business_name)')
+        /* The id as well as the name: the name is what the row SAYS,
+           the id is what their work is fetched by. See MasterWork. */
+        .select('id, line_id, status, distance_m, vendors(id, business_name)')
         .in('line_id', ids)
       if (!dead) setOffers(o ?? [])
     }
@@ -806,6 +816,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
               key={l.id + '-pay'}
               line={l}
               master={won?.vendors?.business_name ?? null}
+              masterId={won?.vendors?.id ?? null}
               paying={paying}
               onPay={() => pay([l])}
               onCancel={() => setCancelling(l)}

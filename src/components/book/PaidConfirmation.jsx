@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CalendarDays, MapPin, Loader2, ShieldCheck, Phone, Search } from 'lucide-react'
+import MasterWork from './MasterWork'
 import { formatINR } from '../../utils/format'
 import { PAID } from '../../config/instantBooking'
 import TradeSprite from './TradeSprite'
@@ -122,7 +123,8 @@ export default function PaidConfirmation({ paidLines, offers, eventDate, area, s
           const won = offers.find(o => o.line_id === l.id && o.status === 'ACCEPTED')
           const done = l.status !== 'accepted'
           return (
-            <li key={l.id} className="flex items-center gap-3 border-b border-ink/[0.05] py-3.5 last:border-0">
+            <li key={l.id} className="border-b border-ink/[0.05] py-3.5 last:border-0">
+              <div className="flex items-center gap-3">
               <TradeSprite trade={l.trade} serviceId={l.service_id} active={false} size={34} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] font-extrabold leading-tight text-ink">
@@ -141,6 +143,14 @@ export default function PaidConfirmation({ paidLines, offers, eventDate, area, s
                   {done ? 'Confirmed' : 'Confirming…'}
                 </p>
               </div>
+              </div>
+
+              {/* The second and last place a partner has a name. Lower
+                  stakes than the payment screen -- the money has gone --
+                  but this is the screen a customer reopens before the
+                  day, and seeing whose work is coming is the whole
+                  reassurance it exists to give. */}
+              <MasterWork vendorId={won?.vendors?.id ?? null} className="pl-[46px]" />
             </li>
           )
         })}
