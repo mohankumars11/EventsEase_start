@@ -519,17 +519,52 @@ async function nativePosition(timeout) {
     return { status: 'denied' }
   }
 
-  const pos = await Geolocation.getCurrentPosition({
+  const read = p => ({
+    status: 'ok',
+    lat: p.coords.latitude,
+    lng: p.coords.longitude,
+    accuracyM: Math.round(p.coords.accuracy ?? 0),
+  })
+
+  /* ══════════════════════════════════════════════════════════════════
+     COARSE FIRST, AND IT IS NOT A COMPROMISE
+     ══════════════════════════════════════════════════════════════════
+
+     This asked for `enableHighAccuracy: true` and nothing else, which
+     tells Android to wait for a GPS SATELLITE FIX. Indoors — in a shop,
+     which is where a decorator signs up — that takes minutes or never
+     arrives at all, and the reported experience was exactly that: two to
+     three minutes staring at "Finding you…" before being told we do not
+     serve their city.
+
+     Wifi and cell towers answer in under a second and land within a few
+     hundred metres. Every question this app asks of a position is
+     comfortably inside that error:
+
+       which pincode is nearest      centroids are ~2 km apart
+       are we inside the served set  guarded at 25 km
+       which city is this            a town, not a street
+
+     `maximumAge: 300_000` lets a fix the phone already has come back
+     instantly, which is the difference between a screen that responds
+     and one that spins.
+
+     High accuracy is still tried, but only as the FALLBACK — if coarse
+     fails there is nothing to lose by waiting, and a partner who really
+     is outdoors gets the better pin. The order was simply backwards. */
+  try {
+    return read(await Geolocation.getCurrentPosition({
+      enableHighAccuracy: false,
+      timeout: Math.min(timeout, 6000),
+      maximumAge: 300_000,
+    }))
+  } catch { /* no coarse fix — fall through and wait for the satellites */ }
+
+  return read(await Geolocation.getCurrentPosition({
     enableHighAccuracy: true,
     timeout,
     maximumAge: 120_000,
-  })
-  return {
-    status: 'ok',
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude,
-    accuracyM: Math.round(pos.coords.accuracy ?? 0),
-  }
+  }))
 }
 
 export function currentPosition({ timeout = 8000 } = {}) {

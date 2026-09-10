@@ -69,6 +69,32 @@ export default function PartnerEntry() {
   const [googleBusy, setGoogleBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [showTerms, setShowTerms] = useState(false)
+
+  /* ══════════════════════════════════════════════════════════════════
+     NEW OR RETURNING, ASKED OUTRIGHT
+     ══════════════════════════════════════════════════════════════════
+
+     One "Continue" served both, which is tidy and is not what somebody
+     standing in their shop is looking for. A person opening this the
+     first time is looking for the word "sign up"; a person who has been
+     here before is looking for "log in". Not finding either reads as
+     the wrong screen, and the commonest thing they do next is close it.
+
+     It is also not only wording. `shouldCreateUser` changes with it:
+
+       new        create the account if the address is unknown
+       returning  do NOT create one -- so a typo in a known address
+                  says "we do not have that" instead of silently
+                  starting a second, empty partner account beside the
+                  real one, which is the failure that is expensive
+                  later and invisible now.
+
+     Consent is only asked of somebody signing up. Making a returning
+     partner re-tick the terms every time they log in would teach them
+     the tick means nothing -- they signed it once, and that signature
+     is stamped with its version. */
+  const [mode, setMode] = useState('new')   // 'new' | 'returning'
+  const isNew = mode === 'new'
   const codeRef = useRef(null)
 
   /* Already in? Do not make somebody who is signed in look at a sign-in
@@ -98,16 +124,29 @@ export default function PartnerEntry() {
     try { localStorage.setItem(PENDING_ROLE, 'vendor') } catch { /* storage off */ }
   }
 
+  /* Consent gates signing up only. A returning partner signed it once,
+     and that signature is stamped with the version they signed. */
+  const canContinue = emailOk && (isNew ? agreed : true)
+
   async function requestCode() {
-    if (!emailOk || !agreed || busy) return
+    if (!canContinue || busy) return
     setBusy(true); setError(null)
     parkRole()
     try {
-      await sendEmailOtp(email.trim().toLowerCase())
+      await sendEmailOtp(email.trim().toLowerCase(), { shouldCreateUser: isNew })
       setStage('code')
       setResendIn(30)
     } catch (err) {
-      setError(err?.message ?? 'Could not send the code. Check the address and try again.')
+      /* Supabase says "Signups not allowed for otp" when
+         shouldCreateUser is false and the address is unknown. That is
+         not an error the partner can act on as written -- it is us
+         telling them, in our words, that they have not signed up yet. */
+      const raw = String(err?.message ?? '')
+      const unknown = /signup|not allowed|user not found/i.test(raw)
+      setError(
+        !isNew && unknown
+          ? 'We do not have that email yet. Tap "I am new here" above to sign up.'
+          : raw || 'Could not send the code. Check the address and try again.')
     } finally {
       setBusy(false)
     }
@@ -171,11 +210,32 @@ export default function PartnerEntry() {
       <main className="flex-1 rounded-t-[30px] bg-white px-6 pb-10 pt-7">
         {stage === 'email' ? (
           <>
-            <h1 className="text-[19px] font-extrabold leading-tight text-ink">
-              Sign in or join
+            {/* Two words, decided before anything is typed. */}
+            <div className="flex rounded-2xl bg-ink/[0.05] p-1">
+              {[
+                { id: 'new',       label: 'I am new here' },
+                { id: 'returning', label: 'I have an account' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => { setMode(t.id); setError(null) }}
+                  className={`flex-1 rounded-[13px] py-2.5 text-[12.5px] font-extrabold transition ${
+                    mode === t.id ? 'bg-white text-ink shadow-sm' : 'text-ink-mute'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <h1 className="mt-5 text-[19px] font-extrabold leading-tight text-ink">
+              {isNew ? 'Join as a partner' : 'Welcome back'}
             </h1>
             <p className="mt-1 text-[13px] leading-snug text-ink-mute">
-              One address. We send a six-digit code — no password to invent.
+              {isNew
+                ? 'One address, a six-digit code, and you are in. No password to invent.'
+                : 'The email you signed up with. We send a six-digit code.'}
             </p>
 
             <label className="mt-6 block">
@@ -199,7 +259,8 @@ export default function PartnerEntry() {
               </div>
             </label>
 
-            {/* Not pre-ticked. See the header. */}
+            {/* Not pre-ticked, and only asked of somebody signing up. */}
+            {isNew && (<>
             <button
               type="button"
               onClick={() => { setAgreed(a => !a); setError(null) }}
@@ -257,21 +318,22 @@ export default function PartnerEntry() {
                 </p>
               </div>
             )}
+            </>)}
 
             <button
               type="button"
               onClick={requestCode}
-              disabled={!emailOk || !agreed || busy}
+              disabled={!canContinue || busy}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-4 text-[15.5px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : null}
-              {busy ? 'Sending…' : 'Continue'}
+              {busy ? 'Sending…' : isNew ? 'Sign up' : 'Log in'}
               {!busy && <ArrowRight size={17} />}
             </button>
 
             {/* Why the button is dead, said once it can actually be the
                 reason — never before they have typed anything. */}
-            {emailOk && !agreed && (
+            {isNew && emailOk && !agreed && (
               <p className="mt-2 text-center text-[11.5px] font-semibold text-amber-700">
                 Tick the box above to continue.
               </p>

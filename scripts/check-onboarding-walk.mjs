@@ -97,4 +97,4 @@ if (others.length || failures.length) {
   process.exit(1)
 }
 
-console.log(`  ${tick} business, location, attribution, agreement, signature — all reached\n`)
+console.log(`  ${tick} location, business, attribution, agreement, signature — all reached\n`)

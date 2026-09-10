@@ -61,7 +61,7 @@ export default function OnboardingWalk() {
     let tries = 0
     const tick = setInterval(() => {
       if (++tries > 80) { fail('the form never appeared'); clearInterval(tick); end(); return }
-      if (!$('[data-step="business"]')) return
+      if (!$('[data-step="location"]')) return
       clearInterval(tick)
       try { step1(end) } catch (e) { fail(String(e?.message ?? e)); end() }
     }, 100)
@@ -79,24 +79,25 @@ export default function OnboardingWalk() {
 }
 
 function step1(end) {
-  const name = $('input[placeholder*="Royal Caterers"]')
-  if (!name) { fail('step 1: no business name field'); return end() }
-  setInput(name, 'Walk Test Decorators')
+  /* Location is step 1 now: it is the only step that can end the
+     conversation, and a partner outside the served set must hear so
+     before typing a business name for a city we cannot serve. */
+  const city = $('select')
+  const bengaluru = [...(city?.options ?? [])].find(o => o.value === 'Bengaluru')
+  if (!bengaluru) { fail('step 1: Bengaluru is not in the city list'); return end() }
+  setSelect(city, 'Bengaluru')
 
-  const cat = $('select')
-  if (!cat) { fail('step 1: no category select'); return end() }
-  const opt = [...cat.options].find(o => o.value === 'Decoration & Floral')
-  if (!opt) { fail('step 1: Decoration & Floral is not offered'); return end() }
-  setSelect(cat, opt.value)
+  const area = $('input[placeholder="Koramangala"]')
+  const pin = $('input[placeholder="560034"]')
+  if (!area || !pin) { fail('step 1: area or pincode field missing'); return end() }
+  setInput(area, 'Jayanagar')
+  setInput(pin, '560041')
 
-  const desc = $('textarea')
-  if (!desc) { fail('step 1: no description field'); return end() }
-  setInput(desc, 'We decorate weddings, receptions and naming ceremonies across south Bengaluru.')
-
-  const nums = $$('input[type="number"]')
-  if (nums.length < 2) { fail('step 1: experience and price are not both here'); return end() }
-  setInput(nums[0], '7')
-  setInput(nums[1], '20000')
+  /* The radius chips. They must exist here AND on the Account tab, and
+     this is the field dispatch cares about most. */
+  const km = $$('button').filter(b => /^\d+ km$/.test((b.textContent ?? '').trim()))
+  if (km.length !== 6) { fail(`step 1: expected 6 radius chips, found ${km.length}`); return end() }
+  click(km[3])
 
   setTimeout(() => {
     click(nextButton())
@@ -105,25 +106,39 @@ function step1(end) {
 }
 
 function step2(end) {
-  if (!$('[data-step="location"]')) {
-    fail('Continue on step 1 did not reach the location step'); return end()
+  if (!$('[data-step="business"]')) {
+    fail('Continue on step 1 did not reach the business step'); return end()
   }
-  const city = $('select')
-  const bengaluru = [...(city?.options ?? [])].find(o => o.value === 'Bengaluru')
-  if (!bengaluru) { fail('step 2: Bengaluru is not in the city list'); return end() }
-  setSelect(city, 'Bengaluru')
+  const name = $('input[placeholder*="Royal Caterers"]')
+  if (!name) { fail('step 2: no business name field'); return end() }
+  setInput(name, 'Walk Test Decorators')
 
-  const area = $('input[placeholder="Koramangala"]')
-  const pin = $('input[placeholder="560034"]')
-  if (!area || !pin) { fail('step 2: area or pincode field missing'); return end() }
-  setInput(area, 'Jayanagar')
-  setInput(pin, '560041')
+  /* ══════════════════════════════════════════════════════════════
+     THE CATEGORY SELECT MUST STAY GONE
+     ══════════════════════════════════════════════════════════════
 
-  /* The radius chips. They must exist here AND on the Account tab, and
-     this is the field dispatch cares about most. */
-  const km = $$('button').filter(b => /^\d+ km$/.test((b.textContent ?? '').trim()))
-  if (km.length !== 6) { fail(`step 2: expected 6 radius chips, found ${km.length}`); return end() }
-  click(km[3])
+     It asked a partner to pick one of twenty-six trades from a
+     dropdown before seeing what any of them contained, and then the
+     last button of onboarding opened the listing flow ALREADY on that
+     answer -- so somebody who picked Photography because it was near
+     the top of the list landed in the photo-booth questions.
+
+     Asserting an absence, deliberately. A field that was removed for a
+     reason comes back by accident, and nothing else on this walk would
+     notice: the form would still submit and the partner would still be
+     dropped on the wrong trade. */
+  if ($('[data-step="business"] select')) {
+    fail('step 2: the category select is back -- it forces a wrong trade'); return end()
+  }
+
+  const desc = $('textarea')
+  if (!desc) { fail('step 2: no description field'); return end() }
+  setInput(desc, 'We decorate weddings, receptions and naming ceremonies across south Bengaluru.')
+
+  const nums = $$('input[type="number"]')
+  if (nums.length < 2) { fail('step 2: experience and price are not both here'); return end() }
+  setInput(nums[0], '7')
+  setInput(nums[1], '20000')
 
   setTimeout(() => {
     click(nextButton())

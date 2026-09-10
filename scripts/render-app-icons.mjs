@@ -63,6 +63,17 @@ import { ROOT } from './lib/loadSrc.mjs'
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
+/* ══════════════════════════════════════════════════════════════════════
+   THE PARTNER COLOUR
+   ══════════════════════════════════════════════════════════════════════
+
+   One constant, because it has to be identical in four places — the
+   launcher tile, the round tile, the adaptive layer and the splash — and
+   a colour that is nearly right in one of them reads as two apps.
+
+   Set it here and re-run; nothing else needs touching. */
+const PARTNER_COLOUR = '#F31D8B'
+
 /* ── The two apps ─────────────────────────────────────────────────── */
 const APPS = {
   customer: {
@@ -80,97 +91,26 @@ const APPS = {
   },
   partner: {
     dir: 'partner',
-    /* ── Saffron, and loudly ──────────────────────────────────────────
-       This was the customer's aqua, distinguished only by the word
-       PARTNERS underneath. On a home screen full of icons that is not a
-       distinction: two Sambramo tiles in the same teal, and a master
-       hunting for the one that pays them.
+    /* ── Flat colour, white word, nothing else ────────────────────────
+       Porter's tile is one flat blue with PORTER in white, set heavy and
+       hard against the edge. No gradient, no glyph, no illustration.
+       That is not minimalism for its own sake — a flat field is the only
+       treatment that survives being 48 real pixels under a launcher's
+       drop shadow. A gradient at that size is a smudge, and the earlier
+       saffron ramp went muddy exactly where the letters sat.
 
-       Rapido is yellow. Porter is yellow and blue. Swiggy's delivery app
-       is orange where the customer app is orange-red. Every one of them
-       makes the earning app the loud one, because it is opened in a
-       hurry, often outdoors, often one-handed, and it has to be found in
-       under a second.
-
-       This is the saffron already in tailwind.config.js — the colour of
-       every CTA in the product — not a new one invented for the icon. It
-       is the app's own "act now" colour, which is exactly what the
-       partner app is for. Against the customer's teal it is unmistakable
-       at 48px.
-
-       Plum, not white, for the mark: white on saffron fails contrast at
-       icon sizes and goes muddy under a launcher's shadow. Plum-950 on
-       saffron is the same pairing the pay button already uses. */
-    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(255,214,120,.65) 0%, rgba(245,158,11,0) 62%), linear-gradient(135deg, #B45309 0%, #D97706 30%, #F59E0B 66%, #FBBF24 100%)',
-    solid: '#D97706',
-    fg: '#2E1065',
-    /* What tells them apart, now that neither has a symbol. A word is a
-       better separator than a shape: it is unambiguous the moment the
-       tile is any bigger than a launcher, and it says what the app IS
-       rather than merely that it is different. */
-    second: 'PARTNERS',
-    splashSub: 'Work that comes to you',
-    /* ══════════════════════════════════════════════════════════════════
-       A MARK ON THE PARTNER TILE, AND WHY THIS ONE
-       ══════════════════════════════════════════════════════════════════
-
-       The header above argues that a glyph is worthless on a brand
-       nobody recognises. That holds for the CUSTOMER tile, where the job
-       is to teach a name. The partner app is a different job: it is
-       opened in a hurry, one-handed, often outdoors, by somebody who
-       already knows exactly what it is and only has to FIND it. Every
-       earning app in this market is a picture for that reason — Blinkit
-       ships a rider, Swiggy a delivery bag, Rapido a helmet.
-
-       ── Why a figure with a tray, of twenty-six possible pictures ─────
-       The obvious move is to draw the trade. There are twenty-six, and
-       any one of them tells the other twenty-five this app is not for
-       them: a camera says photographers, a garland says decorators. A
-       PERSON carrying something to a celebration is what all twenty-six
-       have in common — it is the job, not the trade.
-
-       ── Drawn for 48 real pixels ─────────────────────────────────────
-       One closed silhouette, no strokes, no interior detail, nothing
-       thinner than about 3% of the tile. Solid plum on saffron, the same
-       pairing as the pay button. At mdpi it is a shape; at 432px on the
-       adaptive layer it is plainly a person holding a tray up. Both are
-       the correct reading. */
-    mark: (c) => `
-<svg viewBox="0 0 100 100" width="100%" height="100%" fill="${c}"
-     xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
-  <!-- ── Composition ────────────────────────────────────────────────
-       The first cut stacked head, arm and tray on one vertical axis and
-       read as a table lamp: a stem with a shade on it. Nothing about a
-       centred stack says "person".
-
-       A carried tray is off to one side and the arm is diagonal — that
-       asymmetry is the whole tell. Figure low-left, tray high-right,
-       one slanted arm joining them. -->
-
-  <!-- Sparks over the tray. Celebration, and they break the top edge. -->
-  <circle cx="72" cy="9"  r="4.2"/>
-  <circle cx="54" cy="16" r="2.8"/>
-  <circle cx="89" cy="16" r="2.8"/>
-
-  <!-- Dome and plate, as one silhouette. The plate runs off the right
-       edge on purpose: a tray that fits inside the frame looks held out
-       for inspection, one that leaves it looks carried. -->
-  <path d="M52 37a20 20 0 0 1 40 0z"/>
-  <rect x="44" y="37" width="56" height="7.5" rx="3.75"/>
-
-  <!-- The arm. A stroke, not a box, so it can be diagonal and still end
-       in round caps. 10% of the tile wide -- well over the 3% floor, so
-       it survives the downsample to 48px intact. -->
-  <path d="M43 74 L67 46" stroke="${c}" stroke-width="10"
-        stroke-linecap="round" fill="none"/>
-
-  <!-- Head. -->
-  <circle cx="28" cy="52" r="12"/>
-
-  <!-- Torso, running off the bottom edge so the figure reads as close
-       to the viewer rather than floating in the middle of the tile. -->
-  <path d="M5 100c0-15 10-26 23-26s23 11 23 26z"/>
-</svg>`,
+       So: one colour, white extrabold, and the word does the work. */
+    bg: PARTNER_COLOUR,
+    solid: PARTNER_COLOUR,
+    /* White, and it is the reason the colour has to be a strong mid
+       tone rather than a pastel: white on anything lighter than roughly
+       #7A7A7A stops being readable the moment Android darkens the tile
+       under its shadow. Both candidates clear that comfortably. */
+    fg: '#FFFFFF',
+    /* PARTNER, singular. It is what one person is, and the tile is read
+       by one person looking for their own app. */
+    second: 'PARTNER',
+    splashSub: 'Where celebrations find you',
   },
 }
 
@@ -248,7 +188,17 @@ function iconPage({ size, app, shape, safeRatio }) {
      keeps the word the same visual weight at 48px and at 432. */
   const fs = Math.round(w / 4.15)
 
-  const secondFs = Math.round(fs * 0.40)
+  /* ── PARTNER is set as large as SAMBRAMO, not as a caption ────────
+     It was 40% of the name with letter-spacing on top, which at 48px is
+     four grey pixels — the word was there and could not be seen, so the
+     tile read as the customer app in a different colour.
+
+     Both lines are now the same weight and the same size, and both are
+     FITTED to the same target width by __fit below. Seven characters
+     across the width eight occupy makes PARTNER very slightly the wider
+     letterform, which is what a stacked wordmark wants: two solid bars
+     of equal length instead of a title and a footnote. */
+  const secondFs = fs
 
   return `<!doctype html><meta charset="utf-8">
 <style>
@@ -292,21 +242,23 @@ function iconPage({ size, app, shape, safeRatio }) {
   .second {
     margin-top:${Math.round(size * 0.03)}px;
     font-family: 'Arial Narrow', 'Helvetica Neue', Arial, system-ui, sans-serif;
-    font-weight:700;
+    font-weight:900;
+    font-stretch: condensed;
     font-size:${secondFs}px;
-    letter-spacing:${(secondFs * 0.18).toFixed(2)}px;
+    line-height:1;
+    letter-spacing:${(-secondFs * 0.012).toFixed(2)}px;
+    text-shadow: 0 ${Math.max(1, Math.round(size * 0.008))}px ${Math.round(size * 0.02)}px rgba(0,0,0,.22);
     /* The tracking is what makes a small word read as a label rather
        than a smudge. It also stops PARTNERS competing with the name
        above it, which is the thing being promoted. */
     color:${a.fg};
-    opacity:.86;
     white-space:nowrap;
   }` : ''}
 </style>
 <div class="tile">
   ${hasMark ? `<span class="mark">${a.mark(a.fg)}</span>` : ''}
   <span class="word" id="w">SAMBRAMO</span>
-  ${a.second ? `<span class="second">${a.second}</span>` : ''}
+  ${a.second ? `<span class="second" id="s">${a.second}</span>` : ''}
 </div>
 <script>
   /* Measure, then fit. Called over CDP before the capture.
@@ -314,13 +266,21 @@ function iconPage({ size, app, shape, safeRatio }) {
      the target is the exact horizontal scale, and transform-origin
      centre keeps it centred while it shrinks. */
   window.__fit = function () {
-    var el = document.getElementById('w')
-    var natural = el.scrollWidth
     var target = ${w}
-    var k = target / natural
-    el.style.transformOrigin = 'center center'
-    el.style.transform = 'scaleX(' + k.toFixed(4) + ')'
-    return { natural: natural, target: target, scale: k }
+    var out = []
+    /* Both lines, to the SAME width. Measuring each rather than scaling
+       one to the other: the two words have different character counts,
+       so a shared scale factor would leave one of them short. */
+    ;['w', 's'].forEach(function (id) {
+      var el = document.getElementById(id)
+      if (!el) return
+      var natural = el.scrollWidth
+      var k = target / natural
+      el.style.transformOrigin = 'center center'
+      el.style.transform = 'scaleX(' + k.toFixed(4) + ')'
+      out.push({ id: id, natural: natural, scale: k })
+    })
+    return { target: target, lines: out }
   }
 </script>`
 }

@@ -8,7 +8,6 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
-import { VENDOR_CATEGORIES } from '../../config/vendor'
 import {
   lookupPincode, currentPosition, nearestServed, reverseCity,
 } from '../../lib/pincodeDirectory'
@@ -18,8 +17,6 @@ import {
   PARTNER_RULES, PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION,
 } from '../../config/partnerTerms'
 import { HEARD_FROM, heardFrom } from '../../config/heardFrom'
-
-const CATEGORIES = VENDOR_CATEGORIES
 
 /**
  * Only the cities Sambramo actually operates in.
@@ -32,38 +29,39 @@ const CATEGORIES = VENDOR_CATEGORIES
  */
 const CITIES = BRAND.pilotCities
 
-/**
- * ══════════════════════════════════════════════════════════════════════
- * THE WHOLE OF THE WAY IN, IN ORDER
- * ══════════════════════════════════════════════════════════════════════
- *
- * Email is captured by the sign-up page before this screen exists. What
- * follows it, in this order and for these reasons:
- *
- *   1 · business    — who they are, and the trade, because the trade is
- *                     what the listing hand-off at the end needs.
- *   2 · location    — the single fact that decides what they are ever
- *                     offered. Asked here, on a screen headed "Your
- *                     location", rather than as an OS prompt at launch,
- *                     which is refused more often than anywhere else and
- *                     is sticky on Android once refused.
- *   3 · heard       — asked once, answerable only now.
- *   4 · agreement   — signed, before any listing is typed, because it
- *                     contains the undertaking that everything they list
- *                     is work they have really done.
- *
- * And then straight into the Listing tab. Not the dashboard.
- *
- * ── Why the listing hand-off matters ────────────────────────────────
- * A partner who has just spent ten minutes describing their business is
- * the most willing to list it that they will ever be. Landing them on an
- * empty Jobs tab spends that: there is nothing to do there, because
- * there are no jobs, because there are no listings. So the last button
- * of onboarding opens the trade grid on the trade they chose in step 1.
- */
+/* ══════════════════════════════════════════════════════════════════════
+   LOCATION FIRST, AND THE TRADE IS NOT ASKED HERE AT ALL
+   ══════════════════════════════════════════════════════════════════════
+
+   Two changes, and they are the same change.
+
+   ── Why location moved to the front ─────────────────────────────────
+   It is the only step with a permission dialog in it, and the only one
+   that can end the conversation: a partner outside the served set needs
+   to be told so BEFORE they type a business name, a description and a
+   category for a city we cannot send them work in. Asking three
+   questions and then saying "we are not in Mysuru yet" wastes their
+   time and reads as a bait.
+
+   It is also the answer everything else depends on — dispatch is
+   distance first — so it should be the thing we are surest of.
+
+   ── Why the category select is gone ─────────────────────────────────
+   It asked a partner to pick one trade from twenty-six, in a dropdown,
+   before they had seen what any of them contain. Then the last button
+   of onboarding used that answer to open the listing flow ALREADY ON
+   that trade — so somebody who picked Photography because it was
+   nearest the top landed in the photo-booth questions and had to work
+   out how to get back.
+
+   `vendors.category` was never load-bearing: match_partners joins on
+   `vendor_services.category`, which is set by the listing flow itself.
+   The column was display only, and asking for it here bought a wrong
+   default and nothing else. Now the trade grid opens on all twenty-six
+   and the partner chooses having seen them. */
 const STEPS = [
-  { id: 'business',  label: 'Your business' },
   { id: 'location',  label: 'Your location' },
+  { id: 'business',  label: 'Your business' },
   { id: 'heard',     label: 'How you found us' },
   { id: 'agreement', label: 'The agreement' },
 ]
@@ -173,7 +171,14 @@ export default function VendorOnboarding() {
          genuinely nothing to fill in. */
       if (near?.status !== 'served') {
         setPinned(null)
-        setOutside(await reverseCity(pos.lat, pos.lng) ?? { city: null, state: null })
+        /* Answered at once, named a moment later. `nearestServed` is
+           local — the served set is already in memory — so we know we
+           are outside before any network call. Awaiting the geocoder
+           here made the screen sit on "Finding you…" for the round trip
+           as well, to deliver a word. Say the thing that matters now;
+           the town name fills in when it arrives. */
+        setOutside({ city: null, state: null })
+        reverseCity(pos.lat, pos.lng).then(w => { if (w) setOutside(w) })
         return
       }
 
@@ -317,7 +322,6 @@ export default function VendorOnboarding() {
   function validateStep(id) {
     if (id === 'business') {
       if (!form.business_name.trim()) return 'Please enter your business name.'
-      if (!form.category)             return 'Please select a service category.'
       if (!form.description.trim() || form.description.length < 30)
         return 'Please describe your business (at least 30 characters).'
       if (!form.years_experience) return 'Please enter years of experience.'
@@ -509,14 +513,18 @@ export default function VendorOnboarding() {
          no listings, because they have not made one yet, and nothing on
          that screen was going to tell them so.
 
-         `start` carries the trade they chose in step 1 so the add-item
-         flow opens on it rather than on a grid of twenty-six. An
-         existing partner editing their profile goes back to Account,
-         which is where they came from. */
+         It used to carry `start=<category>`, opening the add-item flow
+         already on whichever trade they picked from a dropdown before
+         seeing what any of them contained -- so a partner who chose
+         Photography because it was near the top of an alphabetical list
+         arrived in the photo-booth questions. The grid of twenty-six is
+         the right screen: it is the one place that shows what this
+         platform can actually list. An existing partner editing their
+         profile goes back to Account, which is where they came from. */
       navigate(
         existing
           ? '/dashboard/vendor?tab=account'
-          : `/dashboard/vendor?tab=list&start=${encodeURIComponent(form.category)}`,
+          : '/dashboard/vendor?tab=list',
         { replace: true },
       )
     } catch (err) {
@@ -566,13 +574,6 @@ export default function VendorOnboarding() {
                   <input type="text" value={form.business_name}
                     onChange={e => set('business_name', e.target.value)}
                     className="input" placeholder="e.g. Royal Caterers" autoFocus />
-                </Field>
-
-                <Field label="Service category">
-                  <select value={form.category} onChange={e => set('category', e.target.value)} className="input">
-                    <option value="">Select a category</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
                 </Field>
 
                 <Field label="Describe your business" hint={`${form.description.length}/300`}>
