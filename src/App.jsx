@@ -65,7 +65,6 @@ const PartnerEntry     = lazy(() => import('./pages/partner/PartnerEntry'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
-const AdminEventDetail = lazy(() => import('./pages/admin/AdminEventDetail'))
 
 function PageLoader() {
   return (
@@ -574,11 +573,6 @@ function AppRoutes() {
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <DashboardShell><AdminDashboard /></DashboardShell>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/admin/events/:eventId" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <DashboardShell><AdminEventDetail /></DashboardShell>
         </ProtectedRoute>
       } />
 

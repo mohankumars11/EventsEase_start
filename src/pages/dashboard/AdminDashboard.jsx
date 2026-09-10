@@ -1,81 +1,72 @@
-import { useState, useMemo, lazy, Suspense } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
+import { supabase } from '../../lib/supabase'
 import { resolveNav } from '../../config/adminNav'
-import useAdminData from '../../hooks/useAdminData'
-import useNotifications from '../../hooks/useNotifications'
 import AdminShell from '../../components/admin/AdminShell'
-import CommandCenter from '../../components/admin/CommandCenter'
-import NotificationCenter, { NotificationInbox } from '../../components/admin/NotificationCenter'
-import {
-  VendorsContent, ReviewsContent,
-  ComplaintsView, EnquiriesView,
-} from '../../components/admin/OperationsViews'
+import PartnerConsole from '../../components/admin/PartnerConsole'
 
 /**
- * The admin console: one data load, and a router over the screens.
+ * The admin console: a frame and one screen.
  *
- * ── What this file is now ────────────────────────────────────────────────
- * A router and nothing else. The frame moved to `components/admin/AdminShell`,
- * the information architecture to `config/adminNav`, and every screen lives
- * beside them. What is left here is the part that genuinely belongs to a page
- * component: load the data once, work out the badges, and choose what to show.
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS FILE IS NINETY LINES INSTEAD OF A HUNDRED AND FIFTY
+ * ══════════════════════════════════════════════════════════════════════
  *
- * ── Why the navigation is data ───────────────────────────────────────────
- * The sidebar, the command palette and the page header all read the same
- * registry, so a screen's name, description and badge are declared once. Three
- * hand-maintained copies of the same list is exactly how PROJECT_SUMMARY
- * describes the brand strings ending up with four contradicting versions.
+ * It used to lazy-import nine screens and switch between fourteen nav
+ * ids. All of them are gone — deleted, not hidden — because the console
+ * covered five subjects adequately and the one subject with a live
+ * defect had nowhere to fix it. See the note in config/adminNav.
  *
- * ── Code splitting ───────────────────────────────────────────────────────
- * The analytics views pull `recharts` (~376 KB) behind a lazy ChartKit, and
- * the catalogue editors pull the image compression and upload path. None of
- * that belongs in the chunk somebody downloads to glance at today's requests.
+ * What is left is what genuinely belongs to a page component: work out
+ * the badge, remember which screen is showing, and render the shell.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE TEN-TABLE LOAD IS GONE TOO
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `useAdminData` fetched events, proposals, payments, profiles, vendors,
+ * enquiries, reviews, complaints, interest and services on every mount,
+ * to feed screens that no longer exist. It has been deleted, and with it
+ * a real bug: its cleanup called `clearInterval(floor)` where `floor`
+ * was never declared, so every unmount threw a ReferenceError BEFORE
+ * `supabase.removeChannel()` ran and the realtime channel leaked.
+ *
+ * PartnerConsole loads exactly what it needs, itself. The only thing
+ * this page still reads is the count for the rail badge — one head
+ * query, no rows — because a queue should announce itself before it is
+ * opened.
  */
-
-const EventRequests       = lazy(() => import('../../components/admin/EventRequests'))
-const AreaDemand          = lazy(() => import('../../components/admin/AreaDemand'))
-const CustomersView       = lazy(() => import('../../components/admin/CustomersView'))
-const AdminServices       = lazy(() => import('../../components/admin/AdminServices'))
-const BrandStudio       = lazy(() => import('../../components/admin/BrandStudio'))
-const ContentStudio       = lazy(() => import('../../components/admin/ContentStudio'))
-const AddToCatalogue      = lazy(() => import('../../components/admin/AddToCatalogue'))
-const DecorPhotoStudio    = lazy(() => import('../../components/admin/DecorPhotoStudio'))
-const DateConsole         = lazy(() => import('../../components/admin/DateConsole'))
-
 export default function AdminDashboard() {
   const { profile } = useAuth()
-  const navigate    = useNavigate()
-  const toast       = useToast()
-  const data        = useAdminData()
+  const [activeNav, setActiveNav] = useState('partners')
+  const [waiting, setWaiting] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const [activeNav, setActiveNav] = useState('overview')
+  /* Two counts, no rows: businesses waiting to be approved, and listings
+     waiting to be read. They are summed because the rail has one badge
+     and both mean the same thing to the person looking at it — there is
+     something here for you. */
+  const loadBadge = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      const [v, s] = await Promise.all([
+        supabase.from('vendors').select('id', { count: 'exact', head: true })
+          .eq('verification_status', 'submitted').eq('is_synthetic', false),
+        supabase.from('vendor_services').select('id', { count: 'exact', head: true })
+          .eq('review_status', 'under_review'),
+      ])
+      setWaiting((v.count ?? 0) + (s.count ?? 0))
+    } catch {
+      /* A badge is an ornament. It must never be the reason the console
+         fails to open. */
+      setWaiting(0)
+    } finally {
+      setRefreshing(false)
+    }
+  }, [])
 
-  const notifications = useNotifications(data, {
-    onToast: item => toast.info(`${item.emoji} ${item.title}`),
-  })
+  useEffect(() => { loadBadge() }, [loadBadge])
 
-  const {
-    events = [], vendors = [], complaints = [],
-    enquiries = [], loading, refreshing, error, refresh,
-  } = data
-
-  /** Counts on the rail, so a queue announces itself before it is opened. */
-  const badges = useMemo(() => ({
-    unread:     notifications.unread,
-    new:        events.filter(e => e.status === 'REQUEST_RECEIVED').length,
-    enquiries:  enquiries.filter(e => e.status === 'open').length,
-    complaints: complaints.filter(c => c.status === 'open').length,
-    vendors:    vendors.filter(v => v.status === 'PENDING_REVIEW').length,
-  }), [notifications.unread, events, enquiries, complaints, vendors])
-
-  /**
-   * `resolveNav` maps retired ids onto their new home rather than dropping
-   * them: six status views collapsed into Event Requests, and every
-   * notification kind still carries the old `nav` value it was written with.
-   */
   function go(id) {
     setActiveNav(resolveNav(id))
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -85,66 +76,12 @@ export default function AdminDashboard() {
     <AdminShell
       activeNav={activeNav}
       onNavigate={go}
-      badges={badges}
+      badges={{ vendors: waiting }}
       profile={profile}
-      onRefresh={refresh}
+      onRefresh={loadBadge}
       refreshing={refreshing}
-      notifications={<NotificationCenter {...notifications} onNavigate={go} />}
     >
-      {loading ? (
-        <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
-          <Loader2 className="animate-spin text-plum-600" size={32} />
-          <span className="text-sm">Loading the business…</span>
-        </div>
-      ) : error ? (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
-          <AlertCircle size={18} className="shrink-0" />
-          <span className="flex-1">{error}</span>
-          <button onClick={refresh} className="font-semibold hover:underline">Retry</button>
-        </div>
-      ) : (
-        /* Held at reduced opacity on refetch rather than replaced by a
-           skeleton — no layout jump, and the numbers stay readable while the
-           new ones arrive. */
-        <div className={refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-          <Suspense fallback={<ViewSkeleton />}>
-            {/* Overview */}
-            {activeNav === 'overview'  && <CommandCenter data={data} onNavigate={go} />}
-            {activeNav === 'inbox'     && <NotificationInbox {...notifications} onNavigate={go} />}
-
-            {/* Events */}
-            {activeNav === 'requests'  && <EventRequests data={data} navigate={navigate} />}
-            {activeNav === 'enquiries' && <EnquiriesView data={data} />}
-            {activeNav === 'services'  && <AdminServices data={data} />}
-            {activeNav === 'dates'     && <DateConsole />}
-
-            {/* Catalogue */}
-            {activeNav === 'decorphotos' && <DecorPhotoStudio />}
-            {activeNav === 'catalogue'   && <AddToCatalogue />}
-            {activeNav === 'content'     && <ContentStudio onNavigate={go} />}
-            {activeNav === 'brand'       && <BrandStudio />}
-
-            {/* People */}
-            {activeNav === 'customers'  && <CustomersView data={data} />}
-            {activeNav === 'complaints' && <ComplaintsView data={data} />}
-            {activeNav === 'reviews'    && <ReviewsContent data={data} />}
-            {activeNav === 'vendors'    && <VendorsContent data={data} />}
-
-            {/* Insight */}
-            {activeNav === 'geography' && <AreaDemand data={data} />}
-          </Suspense>
-        </div>
-      )}
-
+      <PartnerConsole />
     </AdminShell>
-  )
-}
-
-function ViewSkeleton() {
-  return (
-    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
-      <Loader2 className="animate-spin text-plum-600" size={28} />
-      <span className="text-sm">Opening…</span>
-    </div>
   )
 }

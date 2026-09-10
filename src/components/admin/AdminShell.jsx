@@ -49,7 +49,7 @@ export default function AdminShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
 
-  const active = NAV_BY_ID[activeNav] ?? NAV_BY_ID.overview
+  const active = NAV_BY_ID[activeNav] ?? NAV_BY_ID.partners
 
   useEffect(() => {
     const onKey = e => {
