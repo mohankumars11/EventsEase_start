@@ -110,6 +110,67 @@ const APPS = {
        rather than merely that it is different. */
     second: 'PARTNERS',
     splashSub: 'Work that comes to you',
+    /* ══════════════════════════════════════════════════════════════════
+       A MARK ON THE PARTNER TILE, AND WHY THIS ONE
+       ══════════════════════════════════════════════════════════════════
+
+       The header above argues that a glyph is worthless on a brand
+       nobody recognises. That holds for the CUSTOMER tile, where the job
+       is to teach a name. The partner app is a different job: it is
+       opened in a hurry, one-handed, often outdoors, by somebody who
+       already knows exactly what it is and only has to FIND it. Every
+       earning app in this market is a picture for that reason — Blinkit
+       ships a rider, Swiggy a delivery bag, Rapido a helmet.
+
+       ── Why a figure with a tray, of twenty-six possible pictures ─────
+       The obvious move is to draw the trade. There are twenty-six, and
+       any one of them tells the other twenty-five this app is not for
+       them: a camera says photographers, a garland says decorators. A
+       PERSON carrying something to a celebration is what all twenty-six
+       have in common — it is the job, not the trade.
+
+       ── Drawn for 48 real pixels ─────────────────────────────────────
+       One closed silhouette, no strokes, no interior detail, nothing
+       thinner than about 3% of the tile. Solid plum on saffron, the same
+       pairing as the pay button. At mdpi it is a shape; at 432px on the
+       adaptive layer it is plainly a person holding a tray up. Both are
+       the correct reading. */
+    mark: (c) => `
+<svg viewBox="0 0 100 100" width="100%" height="100%" fill="${c}"
+     xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
+  <!-- ── Composition ────────────────────────────────────────────────
+       The first cut stacked head, arm and tray on one vertical axis and
+       read as a table lamp: a stem with a shade on it. Nothing about a
+       centred stack says "person".
+
+       A carried tray is off to one side and the arm is diagonal — that
+       asymmetry is the whole tell. Figure low-left, tray high-right,
+       one slanted arm joining them. -->
+
+  <!-- Sparks over the tray. Celebration, and they break the top edge. -->
+  <circle cx="72" cy="9"  r="4.2"/>
+  <circle cx="54" cy="16" r="2.8"/>
+  <circle cx="89" cy="16" r="2.8"/>
+
+  <!-- Dome and plate, as one silhouette. The plate runs off the right
+       edge on purpose: a tray that fits inside the frame looks held out
+       for inspection, one that leaves it looks carried. -->
+  <path d="M52 37a20 20 0 0 1 40 0z"/>
+  <rect x="44" y="37" width="56" height="7.5" rx="3.75"/>
+
+  <!-- The arm. A stroke, not a box, so it can be diagonal and still end
+       in round caps. 10% of the tile wide -- well over the 3% floor, so
+       it survives the downsample to 48px intact. -->
+  <path d="M43 74 L67 46" stroke="${c}" stroke-width="10"
+        stroke-linecap="round" fill="none"/>
+
+  <!-- Head. -->
+  <circle cx="28" cy="52" r="12"/>
+
+  <!-- Torso, running off the bottom edge so the figure reads as close
+       to the viewer rather than floating in the middle of the tile. -->
+  <path d="M5 100c0-15 10-26 23-26s23 11 23 26z"/>
+</svg>`,
   },
 }
 
@@ -158,7 +219,28 @@ function iconPage({ size, app, shape, safeRatio }) {
      word's own width is the diameter it has to live inside. 0.56 on the
      adaptive layer, which the OS crops to the middle 72 of 108dp — the
      tightest mask of the three and the one that must never clip. */
-  const w = Math.round(size * safeRatio)
+  /* ══════════════════════════════════════════════════════════════════
+     WHICH ONE WINS AT 48 PIXELS
+     ══════════════════════════════════════════════════════════════════
+
+     First attempt gave the mark 34% and kept the word at four fifths of
+     its old width. Rendered at mdpi that is a 16px figure under a word
+     doing all the work — the illustration was decoration nobody would
+     ever see, which is the worst of both.
+
+     A tile cannot carry two things at 48px. On the partner app the
+     PICTURE is the thing being found, so it takes nearly half the tile
+     and the word drops to a caption underneath. That is the same
+     hierarchy every earning app on this market's phones already uses,
+     and it is the opposite of the customer tile, which has no mark and
+     gives the whole tile to the name.
+
+     The customer tile is untouched: no mark, so both numbers below are
+     inert for it. */
+  const hasMark = typeof a.mark === 'function'
+  const markPx = Math.round(size * (shape === 'adaptive' ? 0.40 : 0.46))
+
+  const w = Math.round(size * safeRatio * (hasMark ? 0.62 : 1))
 
   /* Sized from the WIDTH, not chosen. A condensed heavy sans sets
      "SAMBRAMO" at roughly 0.52 x its font-size per character, so eight
@@ -178,6 +260,16 @@ function iconPage({ size, app, shape, safeRatio }) {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     position:relative; overflow:hidden;
   }
+  ${hasMark ? `
+  .mark {
+    display:block;
+    width:${markPx}px; height:${markPx}px;
+    margin-bottom:${Math.round(size * 0.025)}px;
+    /* The same drop the word carries, so the figure and the name sit on
+       one light source rather than looking pasted together. */
+    filter: drop-shadow(0 ${Math.max(1, Math.round(size * 0.006))}px ${Math.round(size * 0.016)}px rgba(0,0,0,.20));
+  }
+  .mark svg { display:block; }` : ''}
   .word {
     font-family: 'Arial Narrow', 'Helvetica Neue', Arial, system-ui, sans-serif;
     font-weight: 900;
@@ -212,6 +304,7 @@ function iconPage({ size, app, shape, safeRatio }) {
   }` : ''}
 </style>
 <div class="tile">
+  ${hasMark ? `<span class="mark">${a.mark(a.fg)}</span>` : ''}
   <span class="word" id="w">SAMBRAMO</span>
   ${a.second ? `<span class="second">${a.second}</span>` : ''}
 </div>

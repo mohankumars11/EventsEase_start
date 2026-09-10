@@ -295,8 +295,12 @@ export default function PartnerLanding() {
             {/* "Join as a partner" was accurate and asked nothing. This
                 says what happens next and how long it takes, which is
                 the actual objection. */}
+            {/* /partner/join, not /signup?role=vendor. The partner door
+                is its own screen now and it parks the vendor role itself
+                — routing through the shared customer signup was how the
+                role got lost in the first place. */}
             <Link
-              to="/signup?role=vendor"
+              to="/partner/join"
               className="flex items-center justify-between rounded-2xl bg-saffron-400 px-5 py-4 text-[16px] font-extrabold text-plum-950 transition active:scale-[0.99]"
             >
               <span>

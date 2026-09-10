@@ -61,6 +61,7 @@ const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'
 
 // Vendor & Admin
 const PartnerLanding   = lazy(() => import('./pages/partner/PartnerLanding'))
+const PartnerEntry     = lazy(() => import('./pages/partner/PartnerEntry'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -546,8 +547,14 @@ function AppRoutes() {
           session and needs no chrome -- see the page header. */}
       <Route path="/pay" element={<BareShell><PayBridge /></BareShell>} />
 
+      {/* /partner is the pitch — where a WhatsApp forward lands and
+          where somebody who has not decided yet needs convincing.
+          /partner/join is the door, and it is where homeFor() sends a
+          signed-out partner, so it is the APK's first screen. They were
+          the same page, which meant the first thing a partner saw after
+          installing was an argument for installing. */}
       <Route path="/partner"      element={<BareShell><PartnerLanding /></BareShell>} />
-      <Route path="/partner/join" element={<BareShell><PartnerLanding /></BareShell>} />
+      <Route path="/partner/join" element={<BareShell><PartnerEntry /></BareShell>} />
 
       {/* ── Vendor onboarding ──────────────────────── */}
       <Route path="/onboarding/vendor" element={
