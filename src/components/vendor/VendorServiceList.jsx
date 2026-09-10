@@ -8,7 +8,6 @@ import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
 import VenueManager from './VenueManager'
-import ServiceSpecs from './ServiceSpecs'
 import ListingStatusCard from './ListingStatusCard'
 /* The three the Listing tab is now built from. All three imports were
    lost to a patch that used replace() without asserting the anchor
@@ -46,10 +45,6 @@ const VENUE_TRADE = TRADE_FOR_SERVICE.venue
  * against.
  */
 
-const BLANK = {
-  name: '', category: '', description: '',
-  price: '', unit: 'per event', min_quantity: 1, lead_time_days: '',
-}
 
 export default function VendorServiceList({
   vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs,
@@ -61,10 +56,6 @@ export default function VendorServiceList({
      flow already on that trade. See TradeGrid. */
   const [picking, setPicking] = useState(false)
   const [q, setQ] = useState('')
-  /* Set when a submission happens in this session, so the green "live"
-     card is a moment a partner sees once rather than a badge that never
-     goes away. */
-  const [justSubmitted, setJustSubmitted] = useState(false)
 
   /* ══════════════════════════════════════════════════════════════════
      THE HAND-OFF FROM ONBOARDING
@@ -101,25 +92,6 @@ export default function VendorServiceList({
     try { await fn() } catch (err) { toast.error(friendlyError(err)) } finally { setBusyId(null) }
   }
 
-  async function handleSave(fields, id) {
-    // Empty string is not zero and not null. An untouched price field must
-    // stay "no guide price yet" rather than becoming a free item.
-    const payload = {
-      name:        fields.name.trim(),
-      // Never null: the form requires it, and a row without a trade
-      // is a row dispatch cannot see.
-      category:    fields.category.trim(),
-      description: fields.description.trim() || null,
-      price:        fields.price === '' ? null : Number(fields.price),
-      unit:         fields.unit,
-      min_quantity: Math.max(1, Number(fields.min_quantity) || 1),
-      lead_time_days: fields.lead_time_days === '' ? null : Number(fields.lead_time_days),
-    }
-    if (id === 'new') await onAdd(payload)
-    else              await onUpdate(id, payload)
-    setEditing(null)
-    toast.success(id === 'new' ? 'Added to your list.' : 'Saved.')
-  }
 
   /**
    * Swap sort_order with the neighbour. Two writes, and a partial failure is
@@ -149,15 +121,6 @@ export default function VendorServiceList({
               : `${activeCount} live${services.length !== activeCount ? ` · ${services.length - activeCount} hidden` : ''}`}
           </p>
         </div>
-        {/* Only once there is a listing. While it is empty the red
-           card below carries the same action twice as large, and two
-           buttons for one job on the first screen a partner sees is a
-           choice they should not have to make. */}
-        {editing !== 'new' && services.length > 0 && (
-          <button onClick={() => setPicking(true)} className="btn-plum text-sm">
-            <Plus size={16} /> Add what you do
-          </button>
-        )}
       </header>
       {/* ── Where a listing actually is ───────────────────────────────
           Submitting and hearing nothing is where a partner loses
@@ -197,11 +160,6 @@ export default function VendorServiceList({
         /* Only right after a submission. An established partner opening
            their listing does not need a card telling them they are live —
            that is a moment, not a permanent badge. */
-        if (live.length && justSubmitted) {
-          return (
-            <ListingStatusCard status="live" count={live.length} onOpenJobs={onOpenJobs} />
-          )
-        }
         return null
       })()}
 
@@ -256,14 +214,6 @@ export default function VendorServiceList({
 
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
-      {editing && typeof editing === 'object' && (
-        <ServiceForm
-          initial={editing}
-          vendorCategory={vendor?.category}
-          onCancel={() => setEditing(null)}
-          onSave={fields => handleSave(fields, 'new')}
-        />
-      )}
 
       {/* ══════════════════════════════════════════════════════════════
           ONE CARD PER LISTING, AND EVERYTHING ABOUT IT IS ON IT
@@ -300,38 +250,48 @@ export default function VendorServiceList({
               onEdit={() => setEditing(s.id)}
               onToggle={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
               onDelete={() => guard(s.id, () => onRemove(s.id))}
-              onSaveSpecs={next => onUpdate(s.id, { specs: next })}
             />
           </li>
         ))}
       </ul>
 
-      {/* ── The tab IS the trades ─────────────────────────────────
-          This was a full-bleed red card with one button on it, and
-          the twenty-six things this platform can list were behind
-          that button. A partner opens the Listing tab to list
-          something; making them tap a marketing card first is a
-          toll gate on the one action the screen exists for.
+      {/* ── The grid is the screen, but only when it needs to be ───
+          The argument below is true, and it is true about a partner
+          with NOTHING listed. For them the grid IS the screen and a
+          button in front of it is a toll gate on the one action the
+          screen exists for.
 
-          So the grid is the screen. The marketing survives as a slim
-          banner above it that cycles — no button, because tapping any
-          trade is the way in and two ways in is a decision nobody
-          should have to make. See TradeGrid. */}
-      {!editing && (
+          For everybody else it was 870px -- 66% of the whole tab --
+          permanently expanded under their listings, thirteen rows of
+          trades they have already chosen from. They have been through
+          the flow; they know what the button does; the toll-gate
+          argument does not survive the second visit.
+
+          So: zero listings keeps it inline and unchanged. One or more
+          gets a button that opens the SAME grid full-screen, because
+          AddItemFlow already renders TradeGrid on its first step. No
+          second component, no second search, no second copy of the
+          thing TradeGrid's own header argues should exist once. */}
+      {!editing && services.length === 0 && (
         <>
-          <ListingPitch empty={services.length === 0} />
+          <ListingPitch empty />
           <TradeGrid
             q={q}
             setQ={setQ}
             onPick={t => setPicking(t)}
             placeholder="Search 26 trades — catering, generator, mehendi…"
-            heading={services.length > 0 ? (
-              <p className="mb-2 mt-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-ink-mute">
-                Add something else
-              </p>
-            ) : null}
           />
         </>
+      )}
+
+      {!editing && services.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-[14px] font-extrabold text-royal-700 ring-1 ring-royal-200 transition active:scale-[0.99]"
+        >
+          <Plus size={16} /> Add something else you do
+        </button>
       )}
 
       {services.length > 0 && (
@@ -344,243 +304,45 @@ export default function VendorServiceList({
   )
 }
 
-function ServiceForm({ initial, vendorCategory, onSave, onCancel, lockTrade = false }) {
-  const [f, setF]         = useState(initial)
-  const [saving, setSaving] = useState(false)
-  const [err, setErr]     = useState(null)
-
-  const unit = UNIT_BY_ID[f.unit] ?? UNIT_BY_ID['per event']
-  const set  = (k, v) => { setF(prev => ({ ...prev, [k]: v })); setErr(null) }
-
-  async function submit(e) {
-    e.preventDefault()
-    if (!f.name.trim())              return setErr('Give this item a name your customer would recognise.')
-    if (f.price !== '' && Number(f.price) < 0) return setErr('A price cannot be negative.')
-    setSaving(true)
-    try { await onSave(f) } catch (e2) { setErr(friendlyError(e2)) } finally { setSaving(false) }
-  }
-
-  return (
-    <form onSubmit={submit} className="card p-4 sm:p-5 border-plum-200 ring-1 ring-plum-100 space-y-4">
-      <div>
-        <label className="label" htmlFor="svc-name">Item name</label>
-        <input
-          id="svc-name" className="input" value={f.name} autoFocus
-          onChange={e => set('name', e.target.value.slice(0, 80))}
-          placeholder="e.g. Veg buffet"
-        />
-      </div>
-
-      {/* Price and unit are one decision, so they sit on one row — the number
-          is meaningless without the thing it is per. */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="svc-price">
-            Guide price <span className="font-normal text-gray-500">(optional)</span>
-          </label>
-          <input
-            id="svc-price" className="input" inputMode="numeric" value={f.price}
-            onChange={e => set('price', e.target.value.replace(/[^\d.]/g, ''))}
-            placeholder="What it costs you"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="svc-unit">Per</label>
-          <select id="svc-unit" className="input" value={f.unit} onChange={e => set('unit', e.target.value)}>
-            {SERVICE_UNITS.map(u => (
-              <option key={u.id} value={u.id}>{u.id.replace('per ', '')}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="svc-min">{unit.quantityLabel}</label>
-          <input
-            id="svc-min" className="input" inputMode="numeric" value={f.min_quantity}
-            onChange={e => set('min_quantity', e.target.value.replace(/\D/g, ''))}
-            placeholder="1"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="svc-lead">
-            Notice needed <span className="font-normal text-gray-500">(days)</span>
-          </label>
-          <input
-            id="svc-lead" className="input" inputMode="numeric" value={f.lead_time_days}
-            onChange={e => set('lead_time_days', e.target.value.replace(/\D/g, ''))}
-            placeholder="Same as your profile"
-          />
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════
-          The field that decides whether this partner gets any work
-          ══════════════════════════════════════════════════════════
-
-          `vendor_services.category` is what `match_partners` joins on.
-          A row whose category is blank matches NOTHING — the partner is
-          invisible to dispatch for that service, permanently, with no
-          error anywhere.
-
-          It used to be a small optional "Tag as …" link beside the save
-          button, carrying `hidden sm:inline-flex` — so on a phone it did
-          not exist. Every service added from a phone had a null
-          category. Measured across the three real partners: five of
-          seventeen rows were unmatched, including BOTH rows of the
-          newest partner, who therefore never received one offer.
-
-          A required select of the trades dispatch actually knows, and
-          not free text: a partner typing "Photgraphy" was writing a row
-          that could never match, and nothing told them. */}
-      {/* ══════════════════════════════════════════════════════════
-          ON AN EXISTING LISTING THE TRADE IS NOT A QUESTION
-          ══════════════════════════════════════════════════════════
-
-          Editing a live listing opened this select and asked "what kind
-          of work is this?" about a listing that has already been read,
-          approved, and dispatched under that exact trade. There is no
-          good answer to changing it: the offerings, the spec answers and
-          the whole catalogue underneath belong to the trade it was
-          created as, and switching the string here would keep all of
-          them while quietly moving the row into a different dispatch
-          pool. It is the one field on this form that cannot be edited
-          into a valid state.
-
-          A partner who genuinely does a second trade lists a second
-          thing -- which is one tap on the grid, and gives them a row
-          whose catalogue actually matches. */}
-      {lockTrade ? (
-        <div>
-          <span className="label">What kind of work is this?</span>
-          <div className="flex items-center gap-2 rounded-xl bg-ink/[0.03] px-3 py-2.5 ring-1 ring-ink/[0.06]">
-            <Lock size={13} className="shrink-0 text-ink-mute" />
-            <span className="min-w-0 flex-1 truncate text-[13.5px] font-extrabold text-ink">
-              {f.category || 'Not set'}
-            </span>
-          </div>
-          <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
-            Set when you created this listing and fixed after that — everything
-            you answered underneath belongs to it. Do a second trade as well?
-            List it separately and it gets its own questions.
-          </p>
-        </div>
-      ) : (
-        <div>
-          <label className="label" htmlFor="svc-trade">
-            What kind of work is this? <span className="text-red-600">*</span>
-          </label>
-          <select
-            id="svc-trade"
-            className="input"
-            value={f.category}
-            onChange={e => set('category', e.target.value)}
-            required
-          >
-            <option value="">Choose one…</option>
-            {DISPATCH_TRADES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <p className="mt-1 text-[11.5px] leading-snug text-gray-500">
-            This is how customers find you. Jobs are matched on it, so a
-            service without one is never offered to you.
-          </p>
-        </div>
-      )}
-
-      <div>
-        <label className="label" htmlFor="svc-desc">
-          What's included <span className="font-normal text-gray-500">(optional)</span>
-        </label>
-        <textarea
-          id="svc-desc" className="input resize-none h-20" value={f.description}
-          onChange={e => set('description', e.target.value.slice(0, 300))}
-          placeholder="Starters, two mains, dessert, staff and serving equipment…"
-        />
-      </div>
-
-      {/* The line a coordinator will actually read, shown while it is being
-          typed. It is the only way for the vendor to tell that "400" and
-          "per plate" combine into something sane. */}
-      <div className="rounded-xl bg-white border border-orange-100 px-3 py-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-0.5">
-          How this reads to us
-        </div>
-        <div className="text-sm text-gray-800">
-          <span className="font-semibold">{f.name.trim() || 'Untitled item'}</span>
-          {' — '}
-          <span className="text-plum-700 font-semibold">
-            {describeService({ price: f.price === '' ? null : f.price, unit: f.unit, min_quantity: Number(f.min_quantity) || 1 })}
-          </span>
-        </div>
-      </div>
-
-      {err && (
-        <p className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
-          <AlertCircle size={15} className="mt-0.5 shrink-0" />{err}
-        </p>
-      )}
-
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="btn-plum text-sm flex-1 sm:flex-none">
-          <Check size={16} /> {saving ? 'Saving…' : 'Save item'}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-secondary text-sm">
-          <X size={16} /> Cancel
-        </button>
-        {vendorCategory && !f.category && (
-          <button
-            type="button"
-            onClick={() => set('category', vendorCategory)}
-            className="hidden sm:inline-flex text-xs text-gray-500 hover:text-plum-600 px-2"
-          >
-            Tag as {vendorCategory}
-          </button>
-        )}
-      </div>
-    </form>
-  )
-}
-
-
-/**
- * ══════════════════════════════════════════════════════════════════════
- * ONE LISTING, ONE CARD
- * ══════════════════════════════════════════════════════════════════════
- *
- * Everything about a listing, in the order somebody asks it:
- *
- *   what is it        the name, and the trade it is dispatched under
- *   where is it       the status word and the four beads
- *   what does it cost the price line
- *   what is wrong     no price, wrong trade, hidden, or the reviewer's
- *                     note on a listing that came back
- *   what can I do     edit · hide · delete, ON THE CARD
- *
- * ── Why the actions are on the card ─────────────────────────────────
- * They were a column of three round icon buttons at the right-hand edge
- * of a row, sharing 44px with a two-line price. On a 360px phone that is
- * three 32px targets stacked against the screen edge with 6px between
- * them, and the middle one is Edit while the bottom one is Delete.
- *
- * As a labelled row across the bottom of the card each has a word next
- * to it, they are 44px tall, and Delete is at the far end from Edit
- * rather than 6px below it.
- *
- * ── The colour ──────────────────────────────────────────────────────
- * A live listing carries a royal-600 header — the brand blue, not the
- * plum-950 that reads as navy — with bold white text on it. The state
- * paints the card, because the state IS the message: a partner should
- * know from across a kitchen which of their six listings came back.
- */
 function ListingCard({
   listing: s, first, last, busy, dispatchable,
-  onMove, onEdit, onToggle, onDelete, onSaveSpecs,
+  onMove, onEdit, onToggle, onDelete,
 }) {
   const state = stateOf(s)
   const meta = STATE[state]
   const Icon = meta.icon
   const when = ago(s.reviewed_at ?? s.created_at)
+
+  /* ══════════════════════════════════════════════════════════════════
+     COLLAPSED BY DEFAULT, EXCEPT WHEN IT IS WAITING ON THEM
+     ══════════════════════════════════════════════════════════════════
+
+     This card was 205-360px and six of them made the tab four screens
+     of scrolling to reach a button. Almost all of that is reference: a
+     partner opens the Listing tab to check one thing, not to read six
+     listings end to end.
+
+     What stays open is exactly what ListingTracker already decided --
+     "anything waiting on the partner is never folded". Three things
+     qualify, and all three mean the partner is silently earning
+     nothing:
+
+       rejected        a review_note is the one sentence on this tab
+                       waiting on THEM rather than on us
+       no guide price  a blank nobody has told them about
+       never offered   a trade string dispatch cannot match
+
+     A rejected listing has no chevron at all. Folding away the note
+     that says what to change would be hiding the only actionable thing
+     on the screen. */
+  const needsThem =
+    state === 'rejected' || s.price === null || (s.is_active && !dispatchable)
+  const [open, setOpen] = useState(needsThem)
+  const locked = state === 'rejected'
+
+  /* Just the money, without the "· min 100 plates" tail -- on a
+     collapsed row that tail is what forces the name to truncate. */
+  const headline = describeService({ price: s.price, unit: s.unit, min_quantity: 1 })
 
   /* Bold white on the brand blue for a live listing; amber and rose
      carry white too, and nothing here is white on a pale ground. */
@@ -591,8 +353,21 @@ function ListingCard({
 
   return (
     <div className={`overflow-hidden rounded-[20px] bg-white ring-1 ${meta.ring} ${s.is_active ? '' : 'opacity-75'}`}>
-      {/* ── What it is, and where it is ───────────────────────────── */}
-      <div className={`flex items-center gap-2.5 px-4 py-2.5 ${head}`}>
+      {/* ── The whole card, collapsed ──────────────────────────────
+          A button, not a div with an onClick: this is the primary
+          control of the card and it has to be reachable by keyboard and
+          announce its state. The arrows moved into the action row
+          below -- a chevron, two 14px arrows and a truncating title
+          fighting over one gutter at 390px is three targets in the
+          space for one, and nesting buttons inside a button is invalid
+          besides. */}
+      <button
+        type="button"
+        onClick={() => { if (!locked) setOpen(o => !o) }}
+        aria-expanded={open}
+        disabled={locked}
+        className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left ${head}`}
+      >
         <Icon size={15} className="shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14.5px] font-extrabold leading-tight">
@@ -602,39 +377,69 @@ function ListingCard({
             {meta.label}{when ? ` · ${when}` : ''}
           </span>
         </span>
-        {/* ── The arrows ────────────────────────────────────────────
-            Here rather than in a column of their own — reordering is
-            rare and should not cost the card a gutter.
-
-            They do NOT use IconButton. That component paints
-            `text-gray-500`, which is designed for a white row and is
-            very nearly invisible on the royal, amber and rose headers
-            these now sit on — the same trap `ink` tokens set on every
-            dark card in this app. `currentColor` at 80% inherits
-            whatever the header is using, so they are legible on all
-            four states without a per-state palette. */}
-        <span className="flex shrink-0 flex-col">
-          <button
-            type="button" aria-label="Move up" title="Move up"
-            disabled={first} onClick={() => onMove(-1)}
-            className="rounded p-0.5 opacity-80 transition hover:opacity-100 disabled:opacity-25"
-          >
-            <ChevronUp size={14} />
-          </button>
-          <button
-            type="button" aria-label="Move down" title="Move down"
-            disabled={last} onClick={() => onMove(1)}
-            className="rounded p-0.5 opacity-80 transition hover:opacity-100 disabled:opacity-25"
-          >
-            <ChevronDown size={14} />
-          </button>
+        {/* currentColor, never royal-700 -- a fixed dark token is
+            invisible on the royal band and a fixed light one disappears
+            on the pale hidden state. The same trap the arrows note
+            below already documents. */}
+        <span className="shrink-0 text-[12.5px] font-extrabold opacity-90">
+          {s.price === null ? 'No price' : headline}
         </span>
-      </div>
+        {!locked && (
+          <ChevronDown
+            size={16}
+            className={`shrink-0 opacity-80 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+        )}
+      </button>
 
-      <StatusBeads state={state} labelled className="px-4 pt-2.5" />
+      {/* ── The alarm strip survives the fold ───────────────────────
+          These three are the only things on this card that mean the
+          partner is earning nothing and does not know it. Hiding them
+          behind a tap would make the collapse a way to not find out. */}
+      {(s.price === null || (s.is_active && !dispatchable) || !s.is_active) && (
+        <div className="flex flex-wrap gap-1.5 px-4 pt-2">
+          {!s.is_active && (
+            <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-bold text-ink-mute">
+              Hidden by you
+            </span>
+          )}
+          {s.price === null && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+              Guide price missing
+            </span>
+          )}
+          {s.is_active && !dispatchable && (
+            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+              Never offered — fix the work type
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* `hidden`, never `{open && …}`. Unmounting would throw away a
+          half-typed edit inside anything the body grows later -- the
+          lesson Fold.jsx already records. */}
+      {/* Everything below the coloured row folds away together: the
+          beads, the detail, the reorder arrows and the actions. A
+          collapsed card is the row and the alarm strip, nothing else.
+
+          No display utility on this element -- see the note further
+          down on why a `flex` class here silently defeats `hidden`. */}
+      <div hidden={!open}>
+      <StatusBeads state={state} className="px-4 pt-2.5" />
 
       <div className="px-4 pb-3 pt-2">
         <p className="text-[13.5px] font-extrabold text-royal-700">{describeService(s)}</p>
+
+        {/* The handle a partner had no way to quote. Reading a UUID down
+            a phone is not a thing anybody does, so until 115 the only
+            way to say WHICH listing was to describe it. select-all so it
+            can be copied into a WhatsApp message in one gesture. */}
+        {s.listing_code && (
+          <p className="mt-0.5 select-all font-mono text-[11px] font-bold text-ink-mute">
+            {s.listing_code}
+          </p>
+        )}
 
         {s.description && (
           <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-ink-mute">{s.description}</p>
@@ -657,25 +462,6 @@ function ListingCard({
             reading "videpgraphy" that has never once been dispatched,
             and from this screen it looked identical to the row beside
             it that works. */}
-        {(s.price === null || (s.is_active && !dispatchable) || !s.is_active) && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {!s.is_active && (
-              <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-bold text-ink-mute">
-                Hidden by you
-              </span>
-            )}
-            {s.price === null && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                Guide price missing
-              </span>
-            )}
-            {s.is_active && !dispatchable && (
-              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700">
-                Never offered — fix the work type
-              </span>
-            )}
-          </div>
-        )}
 
         {/* ══════════════════════════════════════════════════════════
             WHAT THE NUMBER IS, SAID ONCE, WHERE IT IS MISSING
@@ -706,11 +492,47 @@ function ListingCard({
         )}
       </div>
 
+
       {/* ── What they can do to it ──────────────────────────────────
           Labelled, 44px tall, and Delete at the far end from Edit. It
           was three round icon buttons stacked against the right edge of
           the row, 32px each with 6px between them, the middle one Edit
           and the bottom one Delete. */}
+      {/* ── Reordering, out of the header ──────────────────────────
+          The arrows lived in the coloured band and cost it a gutter,
+          next to a title that truncates. Reordering is rare; it belongs
+          beside the other rare actions, not competing with the name.
+
+          They still do NOT use IconButton -- that paints text-gray-500,
+          designed for a white row, and this row is white so it would be
+          fine here; but keeping them on currentColor means the block
+          survives being moved back onto a coloured ground. */}
+      {/* No display class on the element carrying `hidden`. The
+          attribute sets display:none from the UA sheet and ANY utility
+          that sets display -- flex, grid, block -- outranks it, so the
+          row stays visible and the collapse silently does nothing.
+          Fold.jsx works because its hidden div carries no such class.
+          The flex lives on the inner div instead. */}
+      <div className="border-t border-ink/[0.06]">
+      <div className="flex items-center justify-end gap-1 px-3 py-1.5">
+        <span className="mr-auto text-[11px] text-ink-mute">Order</span>
+        <button
+          type="button" aria-label="Move up" title="Move up"
+          disabled={first} onClick={() => onMove(-1)}
+          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-ink/[0.05] disabled:opacity-25"
+        >
+          <ChevronUp size={15} />
+        </button>
+        <button
+          type="button" aria-label="Move down" title="Move down"
+          disabled={last} onClick={() => onMove(1)}
+          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-ink/[0.05] disabled:opacity-25"
+        >
+          <ChevronDown size={15} />
+        </button>
+      </div>
+      </div>
+
       <div className="grid grid-cols-3 border-t border-ink/[0.06] text-[12px] font-extrabold">
         <button
           type="button" onClick={onEdit}
@@ -722,19 +544,7 @@ function ListingCard({
         <CardDelete busy={busy} onConfirm={onDelete} />
       </div>
 
-      {/* ── What they actually do ───────────────────────────────────
-          Keyed by TRADE, so a caterer answers their cuisines once
-          rather than once per row. Folded shut, because a caterer has
-          four groups and thirty-odd boxes and this screen is opened to
-          check a price, not to fill in a profile.
-
-          `'specs' in s` is the migration check: the hook selects '*', so
-          the key is present exactly when 098 has been applied. Offering
-          a Save that writes a column the database does not have would
-          fail on the one tap that matters. */}
-      {'specs' in s && (
-        <ServiceSpecs trade={s.category} value={s.specs} onSave={onSaveSpecs} />
-      )}
+      </div>
     </div>
   )
 }
