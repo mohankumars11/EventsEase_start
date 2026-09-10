@@ -1,5 +1,28 @@
 import { supabase } from './supabase'
-import { isNativeApp } from './nativePush'
+/* ══════════════════════════════════════════════════════════════════════
+   THE TEST THIS FILE'S OWN HEADER ASKED FOR
+   ══════════════════════════════════════════════════════════════════════
+
+   This imported `isNativeApp()` from nativePush, which is
+   `!!window.Capacitor?.isNativePlatform?.()` — the exact test the note
+   below calls unreliable during the first paint, and the note was right.
+
+   What it cost: when `isNativePlatform()` answered false inside the
+   partner APK, the WEB branch ran. That asks Supabase to come back to
+   `https://sambramo-partners.vercel.app/dashboard`, which is not on the
+   project's redirect list, so Supabase substituted the Site URL and
+   dropped the partner on the CUSTOMER app — on a different origin,
+   where `ee_pending_role` does not exist, so the profile was written as
+   a customer. A decorator tapped Continue with Google in the partner app
+   and landed in a shop.
+
+   `window.Capacitor` existing at all means this is the app. It is the
+   same test lib/api.js and lib/pincodeDirectory.js already use, and the
+   safe direction to be wrong in: taking the native path in a browser
+   would fail loudly and immediately, where taking the web path in the
+   app fails silently and hands somebody the wrong account. */
+const isNativeApp = () =>
+  typeof window !== 'undefined' && !!window.Capacitor
 
 /**
  * "Continue with Google", in a WebView Google refuses to sign anyone into.

@@ -338,8 +338,30 @@ export default function PartnerEntry() {
               {resendIn > 0 ? `Send a new code in ${resendIn}s` : 'Send a new code'}
             </button>
 
+            {/* ══════════════════════════════════════════════════════════
+                TYPE THE CODE — DO NOT TAP THE LINK
+                ══════════════════════════════════════════════════════════
+
+                The mail carries both a six-digit token and a link, and
+                they take completely different routes home.
+
+                The CODE is verified by verifyOtp() straight from this
+                origin: no redirect, nothing to allow-list, and the
+                parked vendor role is still in this origin's localStorage
+                when the profile row is written. It cannot be misrouted.
+
+                The LINK goes out to Supabase and comes back to
+                emailRedirectTo, which must be on the project's redirect
+                list or it silently lands on the Site URL instead — a
+                different origin, where the parked role does not exist
+                and the partner is quietly made a customer.
+
+                Saying which one to use costs a sentence and removes the
+                whole dependency. It is not a substitute for putting the
+                host on the list, which is still the right fix. */}
             <p className="mt-5 text-center text-[11.5px] leading-snug text-ink-mute">
-              The mail can take a minute, and it sometimes lands in spam.
+              Type the six digits from the mail — that is the quickest way
+              back. It can take a minute, and it sometimes lands in spam.
             </p>
           </>
         )}
