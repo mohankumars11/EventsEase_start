@@ -199,8 +199,17 @@ export default function PartnerEntry() {
         <p className="mt-2 text-[12px] font-extrabold uppercase tracking-[0.34em] text-saffron-400">
           Partners
         </p>
-        <p className="mx-auto mt-4 max-w-[16rem] text-[13.5px] font-semibold leading-snug text-white/60">
-          Work that comes to you. You pick what you take.
+        {/* The one line the app gets to explain itself, and it has to do
+            it to somebody who has just installed it and is deciding
+            whether to type an email.
+
+            "Work that comes to you" described the mechanism. This
+            describes the outcome, and inverts the thing a supplier
+            spends their life doing — chasing enquiries. They stop
+            looking; the celebrations arrive. Same promise, and it is
+            the sentence a decorator would repeat to another decorator. */}
+        <p className="mx-auto mt-4 max-w-[17rem] text-[14px] font-semibold leading-snug text-white/65">
+          Where the city’s celebrations find you.
         </p>
       </header>
 

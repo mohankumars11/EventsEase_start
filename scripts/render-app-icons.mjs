@@ -110,7 +110,7 @@ const APPS = {
     /* PARTNER, singular. It is what one person is, and the tile is read
        by one person looking for their own app. */
     second: 'PARTNER',
-    splashSub: 'Where celebrations find you',
+    splashSub: 'Where the city’s celebrations find you',
   },
 }
 
