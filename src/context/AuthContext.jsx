@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { startGoogleSignIn } from '../lib/googleAuth'
 import { clearJourney } from '../lib/journey'
+import { isPartnerSurface } from '../config/surface'
 
 /* Exported so a guard can mount an auth-gated page with a stub session.
    scripts/scenes/onboarding-walk.jsx needs `user.id` and nothing else,
@@ -60,6 +61,46 @@ export const PENDING_ROLE = 'ee_pending_role'
 
 function pendingRole() {
   try { return localStorage.getItem(PENDING_ROLE) } catch { return null }
+}
+
+/**
+ * What role this sign-in is FOR.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE APP SOMEBODY OPENED IS THE ANSWER, NOT A LOCALSTORAGE KEY
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `ee_pending_role` was the whole mechanism, and it has exactly one
+ * weakness: it is per-origin. Every failure this has caused came from an
+ * auth round trip that came back somewhere else — a redirect that was
+ * not on the allow list lands on the Site URL, which is the customer
+ * host, where the key does not exist and the profile is written as a
+ * customer. The person then has to be repaired by hand, one email at a
+ * time, which is not a fix, it is a chore that recurs.
+ *
+ * The surface does not have that weakness. Somebody who installed
+ * Sambramo Partners and signed in is a master. That is not an inference
+ * from a token that might have gone missing; it is what the app they
+ * are holding IS. It is true on the APK, on the partner host, and after
+ * any redirect, because the partner app only ever loads the partner
+ * host.
+ *
+ * ── Why this is not the boundary App.jsx warns about ────────────────
+ * RootScreen's note says a surface is not a security boundary and a
+ * hostname must not decide access. That still holds and nothing here
+ * changes it. This decides a DEFAULT at row creation, not permission:
+ * every table is still governed by RLS, and a vendor still receives no
+ * work until an operator sets is_verified. The cost of being wrong is
+ * that somebody who deliberately opened the partner app is offered the
+ * partner app.
+ *
+ * The parked key stays as the second answer, for the customer host —
+ * "Join as a partner" on the marketing site is still a real intent and
+ * still has to survive its own redirect.
+ */
+function intendedRole() {
+  if (isPartnerSurface()) return 'vendor'
+  return pendingRole()
 }
 
 export function AuthProvider({ children }) {
@@ -139,7 +180,7 @@ export function AuthProvider({ children }) {
           // session appears — before any signup form runs — so hardcoding
           // it made the form's answer unreachable, and every partner who
           // signed up with Google got a customer account.
-          role:       pendingRole() === 'vendor' ? 'vendor' : 'customer',
+          role:       intendedRole() === 'vendor' ? 'vendor' : 'customer',
         }, { onConflict: 'id', ignoreDuplicates: true })
 
       /* Read back rather than trusting the write. If the row already
@@ -148,6 +189,44 @@ export function AuthProvider({ children }) {
       const { data: after } = await supabase
         .from('profiles').select('*').eq('id', userId).maybeSingle()
       data = after
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       AN ACCOUNT ALREADY WRITTEN WRONG REPAIRS ITSELF HERE
+       ══════════════════════════════════════════════════════════════════
+
+       The role is only ever set when the ROW IS CREATED. So every
+       partner whose sign-in was misrouted before the fix above is
+       stranded: their row says 'customer', nothing rewrites it, and
+       ProtectedRoute bounces them out of /dashboard/vendor every time
+       they open the app they installed. Repairing those by hand, one
+       address at a time, is not a fix — it is a queue that refills.
+
+       Somebody signing in on the partner app whose row says 'customer'
+       is, by definition, one of them. Promote on sight.
+
+       ── Only ever upward ────────────────────────────────────────────
+       mergeRole ranks customer < vendor < admin and returns the higher,
+       and the guard below only fires on 'customer' — so an admin who
+       opens the partner app is untouched, and nothing here can take a
+       role away from anybody. That direction is the one that has caused
+       real damage twice already; see the note on mergeRole.
+
+       A genuine customer who deliberately opens the partner app and
+       signs in does become a master. That is the intended reading of
+       the act, it grants no access to anyone else's data, and they
+       still receive no work until an operator approves them. */
+    if (data?.role === 'customer' && isPartnerSurface()) {
+      const { data: promoted } = await supabase
+        .from('profiles')
+        .update({ role: mergeRole(data.role, 'vendor') })
+        .eq('id', userId)
+        .select()
+        .single()
+      /* If RLS refuses this, `promoted` is null and the existing row
+         stands. A failed repair must not blank the profile and sign
+         somebody out of an app that was otherwise working. */
+      if (promoted) data = promoted
     }
 
     data = await applyPendingReferral(data)
@@ -268,7 +347,13 @@ export function AuthProvider({ children }) {
         full_name: fullName,
         // An account that is already a vendor or an admin stays one. A
         // role only arrives from this form for an account that has none.
-        role:      mergeRole(existing?.role, role),
+        //
+        // `role` is undefined when the caller does not ask for one — the
+        // partner entry screen has no role picker, because the app it is
+        // running in already answered the question. intendedRole() is
+        // that answer, and without this fallback mergeRole would be
+        // handed undefined and default the partner to a customer.
+        role:      mergeRole(existing?.role, role ?? intendedRole()),
         city:      city  ?? existing?.city  ?? null,
         phone:     phone ?? existing?.phone ?? authUser.phone ?? null,
         email:     authUser.email ?? null,
