@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { isPartnerSurface, homeFor, SURFACE } from './config/surface'
+import { isPartnerSurface, isAdminSurface, homeFor, SURFACE } from './config/surface'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
@@ -145,6 +145,14 @@ function RootScreen() {
    * yet. */
   if (profile?.role === 'vendor') return <Navigate to="/dashboard/vendor" replace />
   if (profile?.role === 'admin')  return <Navigate to="/dashboard/admin"  replace />
+
+  /* The console host never renders the storefront. Somebody arriving
+     here signed out gets the sign-in, not festivals and occasion tiles
+     — and if they turn out not to be an operator, ProtectedRoute
+     refuses them at /dashboard/admin exactly as it always did. */
+  if (isAdminSurface()) {
+    return <Navigate to={homeFor(SURFACE.admin, { signedIn: !!profile, role: profile?.role ?? null })} replace />
+  }
 
   if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
 
@@ -575,6 +583,14 @@ function AppRoutes() {
           <DashboardShell><AdminDashboard /></DashboardShell>
         </ProtectedRoute>
       } />
+
+      {/* ── A short endpoint a person can type ────────────────────────
+          /dashboard/admin is where the console lives and is not a thing
+          anybody remembers. This is the address that goes in a bookmark
+          and gets read out over a phone. It is an alias, not a second
+          console: the route below still guards on role, and RLS still
+          decides what any of it returns. */}
+      <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
 
       <Route path="/dashboard" element={<DashboardRedirect />} />
       <Route path="*"          element={<Navigate to="/" replace />} />

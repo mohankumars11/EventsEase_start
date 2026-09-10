@@ -55,7 +55,52 @@ const PARTNER_HOST_PATTERNS = [
   /^sambramoh-git-partner/,
 ]
 
-export const SURFACE = { customer: 'customer', partner: 'partner' }
+/**
+ * Hostnames that mean "this is the operations console".
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY ADMIN GETS ITS OWN HOST RATHER THAN A ROUTE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * It has been reachable at sambramoh.vercel.app/dashboard/admin — a path
+ * inside the app every customer loads. Every consumer marketplace of any
+ * size separates this: Zomato, Swiggy and Porter all run their internal
+ * consoles on their own hostname, never as a path on the storefront.
+ *
+ * Three reasons, and the third is the one that matters here:
+ *
+ *   IT IS A DIFFERENT PRODUCT. The console is a desk tool for four
+ *     people. The storefront is for everybody. One address that means
+ *     both is a bookmark nobody can share and a landing page that has to
+ *     apologise for itself.
+ *
+ *   IT IS NOT ADVERTISED. A path on the public site is a thing a curious
+ *     customer finds. It is still refused — ProtectedRoute and RLS do
+ *     that — but an operator console should not be a URL people stumble
+ *     into and try.
+ *
+ *   IT CAN BE FENCED LATER. A hostname is where an IP allowlist, an SSO
+ *     rule or a Vercel deployment protection goes. A path cannot carry
+ *     any of those without also carrying them for the shop.
+ *
+ * ── And what it deliberately does NOT do ────────────────────────────
+ * It grants nothing. `ProtectedRoute allowedRoles={['admin']}` and RLS
+ * decide who gets in, exactly as before, and they would refuse a
+ * customer on this host just as they refuse one on the old path. The
+ * note above about a surface never being an authorisation check applies
+ * here with more force, not less.
+ */
+const ADMIN_HOSTS = [
+  'sambramo-admin.vercel.app',
+  'admin.sambramo.com',
+]
+
+const ADMIN_HOST_PATTERNS = [
+  /^sambramo-admin[-.]/,
+  /^sambramoh-git-admin/,
+]
+
+export const SURFACE = { customer: 'customer', partner: 'partner', admin: 'admin' }
 
 /**
  * Which surface is being served.
@@ -85,6 +130,7 @@ export function currentSurface() {
    * hostname rules below apply exactly as before. */
   const stamped = import.meta.env?.VITE_SURFACE
   if (stamped === 'partner')  return SURFACE.partner
+  if (stamped === 'admin')    return SURFACE.admin
   if (stamped === 'customer') return SURFACE.customer
 
   if (typeof window === 'undefined') return SURFACE.customer
@@ -96,6 +142,7 @@ export function currentSurface() {
   if (import.meta.env?.DEV) {
     const forced = new URLSearchParams(window.location.search).get('surface')
     if (forced === 'partner') return SURFACE.partner
+    if (forced === 'admin')   return SURFACE.admin
     if (forced === 'customer') return SURFACE.customer
     try {
       const saved = sessionStorage.getItem('sambramo_surface')
@@ -104,12 +151,15 @@ export function currentSurface() {
   }
 
   const host = window.location.hostname.toLowerCase()
+  if (ADMIN_HOSTS.includes(host)) return SURFACE.admin
+  if (ADMIN_HOST_PATTERNS.some(re => re.test(host))) return SURFACE.admin
   if (PARTNER_HOSTS.includes(host)) return SURFACE.partner
   if (PARTNER_HOST_PATTERNS.some(re => re.test(host))) return SURFACE.partner
   return SURFACE.customer
 }
 
 export const isPartnerSurface = () => currentSurface() === SURFACE.partner
+export const isAdminSurface   = () => currentSurface() === SURFACE.admin
 
 /**
  * Where `/` goes on each surface.
@@ -120,12 +170,20 @@ export const isPartnerSurface = () => currentSurface() === SURFACE.partner
  * occasion tiles, the shop — is landing them in the wrong product.
  */
 export function homeFor(surface = currentSurface(), { signedIn = false, role = null } = {}) {
+  /* The console host has no home page and should never render one. An
+     operator opening it wants the queue; anybody else gets the sign-in,
+     and then ProtectedRoute refuses them on role. There is deliberately
+     no marketing, no shop and no partner pitch on this hostname. */
+  if (surface === SURFACE.admin) {
+    if (!signedIn) return '/login'
+    return role === 'admin' ? '/dashboard/admin' : '/'
+  }
   if (surface !== SURFACE.partner) return '/'
   if (!signedIn) return '/partner/join'
   return role === 'vendor' ? '/dashboard/vendor' : '/partner/join'
 }
 
-/** Brand wording that differs between the two. */
+/** Brand wording that differs between the three. */
 export const SURFACE_COPY = {
   [SURFACE.customer]: {
     name: 'Sambramo',
@@ -133,6 +191,10 @@ export const SURFACE_COPY = {
   },
   [SURFACE.partner]: {
     name: 'Sambramo Partners',
-    tagline: 'Work that comes to you.',
+    tagline: 'Where the city’s celebrations find you.',
+  },
+  [SURFACE.admin]: {
+    name: 'Sambramo Operations',
+    tagline: 'The business, in one place.',
   },
 }
