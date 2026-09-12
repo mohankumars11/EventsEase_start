@@ -103,7 +103,7 @@ const evalJs = expr => send('Runtime.evaluate', { expression: expr, returnByValu
    broken harness, which is the worst possible thing to be looking at
    while deciding whether to ship.
    Setting a style touches nothing React tracks. */
-const KILL_SPLASH = `document.querySelectorAll('.brand-aqua').forEach(e => { e.style.display = 'none' })`
+const KILL_SPLASH = `document.querySelectorAll('[data-splash]').forEach(e => { e.style.display = 'none' })`
 
 /* A real session, injected into localStorage before the app boots.
  *

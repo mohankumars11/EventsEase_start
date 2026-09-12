@@ -8,16 +8,29 @@
     <!-- The Android status bar and the task-switcher card.
          White was right when the brand ground was navy and only the splash
          used it; now the launch screen, the app icon and the tab chip are
-         all Comfortable Aqua, and a white status bar above an aqua splash
-         is a seam across the top of the first screen anybody sees.
-         #1B5C73 is aqua-800 — the deep corner of the ramp, which is what
-         the top of the screen actually shows. -->
-    <meta name="theme-color" content="#1B5C73" />
+         all amethyst, and a white status bar above a purple splash is a
+         seam across the top of the first screen anybody sees.
+         #25034B is the launch artwork's own top edge, which is what the
+         top of the screen actually shows. See the note in
+         android/app/src/main/res/values/colors.xml for the whole chain. -->
+    <meta name="theme-color" content="#25034B" />
     <!-- These two strings are the one place the brand lines can't be read from
          src/config/sambramo.js — this file is static and ships before any JS.
          They are copied from BRAND.tagline and BRAND.descriptor verbatim; if
          you change either there, change it here too. -->
     <meta name="description" content="Sambramo — Celebrations, arranged. Nothing left to chance. India's human-assisted concierge celebration service: tell us what you're celebrating and a real coordinator sources every vendor, negotiates, and brings back one clear price." />
+    <!-- The launch screen font, fetched before the CSS that asks for it.
+
+         This is the one face the app does NOT take from the CDN below. In
+         the packaged Android build the HTML, CSS and JS are all local, so a
+         CDN font is a network round trip on every cold start: the splash
+         would paint the wordmark in a fallback and swap to the real cut
+         mid animation. See the @font-face at the top of src/index.css. -->
+    <link rel="preload" href="/fonts/ArchivoBlack-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- The launch artwork. It is the entire first screen, so it is
+         fetched ahead of the bundle that renders it; 98KB of WebP, written
+         by scripts/render-splash-art.mjs from brand/splash-source.png. -->
+    <link rel="preload" href="/splash/splash-720.webp" as="image" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- The ital axis matters: the hero's lead line is set in Playfair

@@ -72,19 +72,25 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
    a colour that is nearly right in one of them reads as two apps.
 
    Set it here and re-run; nothing else needs touching. */
-const PARTNER_COLOUR = '#F31D8B'
+const PARTNER_COLOUR = '#2A085C'
 
 /* ── The two apps ─────────────────────────────────────────────────── */
 const APPS = {
   customer: {
     dir: 'customer',
-    /* The brand ground, lifted verbatim from `.brand-aqua` in
-       index.css. Not a new palette invented for the icon: the tile, the
-       splash and the app's own auth screens are then the same surface,
-       and a phone showing the icon next to the splash shows one colour
-       rather than two that nearly match. */
-    bg: 'radial-gradient(120% 100% at 88% 92%, rgba(140,224,214,.55) 0%, rgba(85,178,175,0) 62%), linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%)',
-    solid: '#1B5C73',
+    /* Amethyst, flat, and the SAME value the partner tile uses.
+
+       This was the aqua gradient from `.brand-aqua`. Two things changed
+       it. The brand ground is amethyst now, and the two apps no longer
+       differ by hue -- a master with both installed told them apart by
+       colour, and tells them apart by the word on the tile instead.
+
+       Flat rather than a ramp because that is what the launch artwork
+       and ic_launcher_background.xml are, and a tile that is nearly the
+       colour of the screen it opens into is worse than one that is
+       plainly a different shape. */
+    bg: '#2A085C',
+    solid: '#2A085C',
     fg: '#FFFFFF',
     second: null,
     splashSub: 'Celebrations, arranged',

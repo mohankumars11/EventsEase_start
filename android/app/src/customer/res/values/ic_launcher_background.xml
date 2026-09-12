@@ -12,5 +12,5 @@
   invisible even where a launcher masks tighter than the foreground art.
 -->
 <resources>
-    <color name="ic_launcher_background">#2E1065</color>
+    <color name="ic_launcher_background">#2A085C</color>
 </resources>

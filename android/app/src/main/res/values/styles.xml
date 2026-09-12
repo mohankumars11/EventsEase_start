@@ -9,14 +9,61 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!--
+      The theme the activity runs in AFTER the splash hands over.
+
+      android:windowBackground is the line that matters, and it was not
+      here. The android:background below it is a VIEW attribute; on a theme
+      it does nothing to the window, so the window background fell through
+      to Theme.AppCompat.DayNight's ?android:colorBackground, which is white
+      in light mode.
+
+      That was invisible until now only because the launch theme never
+      handed over: with no postSplashScreenTheme the activity kept the
+      launch theme and its drawable for the whole session. Adding the
+      handoff below is what opens the white frame this line closes.
+    -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 
 
+    <!--
+      ══════════════════════════════════════════════════════════════════
+      THE LAUNCH THEME
+      ══════════════════════════════════════════════════════════════════
+
+      What was here was one line, android:background="@drawable/splash",
+      and on Android 12 and later the platform ignores it completely. Since
+      Android 12 the system draws the splash itself from windowSplashScreen
+      attributes, and an app that sets none of them gets the default: the
+      launcher icon on ?android:colorBackground. So this app's launch screen
+      was a tile on white for every phone shipped since 2021, and the ten
+      densities of splash.png that render-app-icons.mjs writes per flavour
+      were never once drawn.
+
+      These are the COMPAT attribute names, without the android: prefix.
+      androidx.core:core-splashscreen reads them itself on API 24 to 30 and
+      maps them onto the platform attributes on 31 and up. values-v31 sets
+      the platform ones explicitly on top; see the note in that file.
+
+      postSplashScreenTheme is not optional and is the one people omit. It
+      is what installSplashScreen() applies when the splash leaves. Without
+      it the activity keeps THIS theme, and the splash stays behind the
+      WebView for the life of the process.
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_anim</item>
+        <!--
+          Capped at 1000 by the platform; anything larger is silently
+          clamped rather than honoured. 900 is the drawable's real length,
+          declared honestly so the system does not tear it off mid stroke.
+        -->
+        <item name="windowSplashScreenAnimationDuration">900</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

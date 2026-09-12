@@ -87,6 +87,27 @@ export const BRAND = {
      did. And it takes the tagline's own `<noun>, <qualifier>` comma, so the
      two lines read as one voice. */
   categoryLine: 'Event booking, end to end',
+
+  /* The partner launch screen's line, and only that.
+   *
+   * Deliberately NOT an override of categoryLine above. That line is set on
+   * the customer home, and the paragraph above it is the argument for its
+   * exact wording; a conditional inside it would make one surface copy a
+   * side effect of another.
+   *
+   * A master is not booking an event, they are delivering one, and the
+   * launch screen is the one place the app says which of the two it is
+   * before anything else has loaded.
+   *
+   * An earlier draft read "India's first event delivery app". The
+   * superlative is gone: it is unverifiable, and an unsubstantiated
+   * "first" is what the ASCI code and the Consumer Protection Act 2019
+   * treat as a misleading claim. The category alone was doing the work.
+   *
+   * Sentence case here, uppercased by CSS, so the string stays readable
+   * anywhere else it is used and a screen reader does not spell it out.
+   */
+  partnerCategoryLine: 'Event delivery app',
   // The hero and both auth panels set the second sentence in saffron on its
   // own line, so every one of them had this string typed out by hand and split
   // around markup — three copies of the brand's most repeated line, each free

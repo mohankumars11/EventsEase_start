@@ -67,7 +67,7 @@ export default function SambramoWordmark({
   /** Hides the ® — it belongs on a splash, not in 20px of chrome. */
   registered = false,
 }) {
-  const ink = onLight ? 'brand-aqua-text' : 'text-white'
+  const ink = onLight ? 'brand-amethyst-text' : 'text-white'
 
   return (
     <span
@@ -75,12 +75,26 @@ export default function SambramoWordmark({
       aria-label="Sambramo"
     >
       <span
-        /* Tracking is NOT set here when `fit` is on: display sizes want a
-           tighter fit than chrome sizes, and `.brand-wordmark-fit` tightens
-           it as the type grows. A utility class here would win the cascade
-           over the component class and quietly undo that. */
-        className={`font-display font-bold leading-none ${ink} ${
-          fit ? 'brand-wordmark-fit text-center' : 'tracking-[-0.022em]'
+        /* ── One face, everywhere the name appears ──────────────────
+           Archivo Black, in capitals, matching the launch screen exactly.
+
+           This was Playfair Display in mixed case, which meant the first
+           thing anyone saw of the brand and every subsequent sighting of
+           it were two different objects. The launch artwork sets the name
+           in heavy sans capitals, so that is what the name is now: the tab
+           chip, both app bars, the auth panels and the celebration cards
+           all draw the same letterforms.
+
+           `uppercase` rather than a literal SAMBRAMO in the markup below:
+           the DOM text stays "Sambramo", so copy, tests and screen readers
+           get a word rather than eight capitals spelled out.
+
+           Tracking is NOT set here when `fit` is on. Display sizes want a
+           different fit from chrome sizes, and `.brand-wordmark-fit-caps`
+           handles it as the type grows; a utility class here would win the
+           cascade over the component class and quietly undo that. */
+        className={`brand-wordmark-sans uppercase leading-none ${ink} ${
+          fit ? 'brand-wordmark-fit-caps text-center' : 'tracking-[-0.005em]'
         }`}
         style={fit ? undefined : { fontSize: size }}
       >

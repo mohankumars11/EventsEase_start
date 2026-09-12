@@ -1,5 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Pinyon+Script&display=swap');
 
+/* ── The splash's own face ─────────────────────────────────────────────
+   Archivo Black, served from inside the apk rather than from a CDN.
+
+   The @import above fetches Manrope and Playfair from Google Fonts, and
+   that is correct on the website and wrong in a bundled Android build: the
+   HTML, the CSS and the JS are all local, and the FONT is a network round
+   trip that happens on every cold start. With display=swap the launch
+   screen paints the name in a fallback and swaps to the real face somewhere
+   in the middle of a 1500ms animation -- a reflow of the one word the whole
+   screen exists to show.
+
+   A private family name rather than declaring 'Archivo Black': two
+   @font-face sources for one family is how a browser ends up picking the
+   wrong one for a weight nobody checked. This face is used by exactly one
+   class, so it gets a name that says so.
+
+   font-display:block is safe here and would not be on a CDN copy. There is
+   no network involved, so "block" means one or two frames rather than three
+   seconds of invisible text -- and invisible is the right behaviour for a
+   wordmark, which is meaningless in a fallback face.
+
+   Latin subset only, 18KB. SIL Open Font Licence 1.1, so bundling it in the
+   apk is expressly permitted. */
+@font-face {
+  font-family: 'Sambramo Display';
+  src: url('/fonts/ArchivoBlack-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1523,6 +1554,233 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════
+     AMETHYST — the launch ground
+     ══════════════════════════════════════════════════════════════════
+
+     #2A085C. Flat, and flat on purpose.
+
+     `.brand-aqua` below is two gradients, and the paragraph there explains
+     why a brand ground wants depth. That reasoning does not survive here,
+     because this ground has to match FOUR other surfaces exactly: the
+     Android 12 splash window, the window behind the WebView, the Capacitor
+     background and the adaptive icon's back layer. Every one of those is a
+     single colour by construction -- an Android @color cannot hold a
+     gradient. A gradient here would mean the WebView fading in over a flat
+     native splash of a visibly different shade, which is a seam on every
+     cold start, bought in exchange for depth the wordmark's own bevel is
+     already providing.
+
+     Written out rather than referencing the palette, for the same reason
+     `.brand-aqua` is: scripts/render-app-icons.mjs reproduces this value
+     outside the build and cannot resolve a Tailwind class. */
+  .brand-amethyst {
+    background-color: #2A085C;
+  }
+
+  /* The wordmark on a LIGHT ground.
+
+     The launch screen sets the name in white on amethyst. Everywhere else
+     in the app it sits on white, and it was inked with `.brand-aqua-text`,
+     a teal gradient -- so the first thing anyone saw of the brand and the
+     next thing were two different colours.
+
+     Same ramp the launch artwork uses, clipped to the type. The fallback
+     `color` underneath is not decoration: if background-clip:text is
+     unsupported or the gradient fails to paint, a transparent fill is an
+     invisible logo. #2A085C clears 4.5:1 on white on its own, so the
+     fallback is legible rather than merely present. */
+  .brand-amethyst-text {
+    color: #2A085C;
+    background-image: linear-gradient(118deg, #1B0240 0%, #2A085C 34%, #4A1A8F 72%, #5B21A8 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* The splash face. See the @font-face at the top of this file for why it
+     is not simply `font-sans`. */
+  .brand-wordmark-sans {
+    font-family: 'Sambramo Display', 'Arial Black', system-ui, sans-serif;
+    font-weight: 400;
+  }
+
+  /* ── The wordmark, fitted to the handset ───────────────────────────
+     SAMBRAMO in Archivo Black, at letter-spacing -0.005em, has an advance
+     width of 5.795em. Measured, not estimated. So the font-size that makes
+     the word occupy 86% of any viewport is:
+
+         0.86 x 100vw / 5.795  =  14.84vw
+
+     which is why that number is here and why this needs no JavaScript. An
+     earlier draft measured the text at runtime and set a font-size from it;
+     that is a layout read on the first frame of the one screen that must
+     not stutter, to arrive at a constant that can be worked out once.
+
+     The clamp bounds are for the two ends nobody tests on. The floor stops
+     it collapsing on a 320px device; the ceiling stops it becoming a
+     billboard on a tablet, and is set so the word still fits inside
+     `max-w-md` minus the container's padding.
+
+     Tracking is POSITIVE and small. Heavy caps want air between them;
+     `.brand-wordmark-fit` above uses -0.028em because that was measured on
+     Playfair in mixed case, and applying it here closes the letters into a
+     slab. */
+  .brand-wordmark-fit-caps {
+    font-size: clamp(2rem, 14.84vw, 4.3rem);
+    letter-spacing: -0.005em;
+    line-height: 0.92;
+  }
+
+  /* ── The gloss ─────────────────────────────────────────────────────
+     Three layers, and the order is the design:
+
+       ::before   a blurred dark copy, 2px down -- the drop shadow
+       the span   a vertical bevel gradient clipped to the type
+       ::after    a narrow white band sweeping across, clipped to the type
+
+     ── Why the shadow is a pseudo-element ────────────────────────────
+     Two reasons, and both are traps that cost an afternoon each.
+
+     text-shadow does not work at all: with -webkit-text-fill-color set to
+     transparent the shadow paints inside the glyph's own box and is no
+     longer covered by the fill, so it shows THROUGH the letters as a grey
+     haze rather than behind them.
+
+     filter: drop-shadow() on this element does work, and costs too much:
+     ::after animates background-position, which is a repaint rather than a
+     composite, so a filter on the shared parent would re-blur the whole
+     word on every frame of the sweep. As a separate static pseudo-element
+     the blur is painted once and never touched again.
+
+     ── Why the base is not flat white ────────────────────────────────
+     A specular highlight has to be brighter than what it crosses, and
+     nothing is brighter than #FFF. So the letters are white at the top
+     face, lavender where the bevel turns, white again on the return and
+     deeper lavender at the bottom edge. The sweep then reads as light
+     moving over a solid object rather than as a white shape passing over a
+     white shape.
+
+     `color` underneath is not decoration: if background-clip:text is
+     unsupported, a transparent fill is an invisible logo. Same guard
+     `.brand-aqua-text` documents. */
+  .brand-amethyst-gloss {
+    position: relative;
+    z-index: 0;
+    color: #FFFFFF;
+    background-image: linear-gradient(
+      180deg,
+      #FFFFFF 0%,
+      #FFFFFF 40%,
+      #E4D8FA 54%,
+      #FFFFFF 70%,
+      #C4AFEE 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .brand-amethyst-gloss::before,
+  .brand-amethyst-gloss::after {
+    content: attr(data-word);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: inherit;
+    pointer-events: none;
+  }
+
+  .brand-amethyst-gloss::before {
+    z-index: -1;
+    color: rgba(10, 2, 30, 0.55);
+    -webkit-text-fill-color: rgba(10, 2, 30, 0.55);
+    transform: translateY(2px);
+    filter: blur(3px);
+  }
+
+  .brand-amethyst-gloss::after {
+    background-image: linear-gradient(
+      104deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.92) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    background-size: 260% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    will-change: background-position;
+    animation: gloss-sweep 620ms cubic-bezier(0.32, 0, 0.26, 1) 300ms both;
+  }
+
+  @keyframes gloss-sweep {
+    from { background-position: 195% 0; }
+    to   { background-position: -70% 0; }
+  }
+
+  /* ── The caps rise ─────────────────────────────────────────────────
+     `.ink-rise` settles to -0.015em, which is right for Playfair at display
+     size and wrong for heavy caps. This is the same gesture with the
+     tracking running the other way, and 100ms shorter: the partner splash
+     has 1500ms to spend where the customer's has 2000.
+
+     The `to` value matches `.brand-wordmark-fit-caps` exactly, so the
+     animation's `both` fill and the static rule agree and there is no step
+     when one hands over to the other. */
+  .ink-rise-caps {
+    animation: ink-rise-caps 520ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+  }
+  @keyframes ink-rise-caps {
+    from { opacity: 0; transform: translateY(9px); letter-spacing: 0.075em; }
+    to   { opacity: 1; transform: translateY(0);   letter-spacing: -0.005em; }
+  }
+
+  /* ── The tagline, justified to the wordmark ────────────────────────
+     EVENT DELIVERY APP set so its first and last letters line up with the
+     S and the O above it. That alignment is the lockup: two lines of very
+     different length reading as one object.
+
+     It is done with flex and space-between over one span per character,
+     not with letter-spacing. Letter-spacing would need a different value
+     at every screen width and would still be wrong, because CSS adds the
+     space AFTER the final letter too -- so a letter-spaced line is always
+     narrower than its box by one space, and never quite lines up.
+
+     The word gaps are `.sp` spans rather than real spaces: space-between
+     distributes between FLEX ITEMS, and a text space inside a flex
+     container collapses to nothing. */
+  .brand-tagline-justify {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    line-height: 1;
+  }
+  .brand-tagline-justify > span { font-style: normal; }
+  .brand-tagline-justify > .sp  { width: 0.5em; flex: none; }
+
+  /* The partner timings for the two elements that already exist. Applied
+     alongside .ink-rise-late and .ink-rule, later in the cascade, so only
+     the delay and duration move. */
+  .ink-rise-late-swift { animation-delay: 520ms; animation-duration: 460ms; }
+  .ink-rule-swift      { animation-delay: 420ms; animation-duration: 480ms; }
+
+  /* The corner spark. Arrives last and quietly, after the lockup has
+     settled -- it is a signature on a finished thing, not part of the
+     composition, so it must not compete with the sweep. */
+  .spark-in {
+    animation: spark-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 820ms both;
+  }
+  @keyframes spark-in {
+    from { opacity: 0; transform: scale(0.6) rotate(-25deg); }
+    to   { opacity: 0.92; transform: scale(1) rotate(0deg); }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
      COMFORTABLE AQUA — the brand ground
      ══════════════════════════════════════════════════════════════════
 
@@ -1760,6 +2018,31 @@
       opacity: 1 !important;
       transform: none !important;
       letter-spacing: -0.015em !important;
+    }
+    /* The caps variant needs its own entry rather than joining the selector
+       above, because that rule forces letter-spacing to -0.015em: Playfair's
+       resting value, which on heavy caps closes the letters into a slab.
+
+       Like the rule above it, this restores an END state rather than merely
+       cancelling. `both` fill means cancelling alone leaves opacity 0. */
+    .ink-rise-caps {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      letter-spacing: -0.005em !important;
+    }
+    .spark-in {
+      animation: none !important;
+      opacity: 0.92 !important;
+      transform: none !important;
+    }
+    /* The sweep, removed outright. The bevel and the shadow stay: they are
+       static gradients rather than motion, and stripping them would leave
+       the one screen that is entirely a logo with a flat logo on it. What
+       reduced motion asks us to remove is the thing that moves. */
+    .brand-amethyst-gloss::after {
+      animation: none !important;
+      display: none !important;
     }
   }
 }

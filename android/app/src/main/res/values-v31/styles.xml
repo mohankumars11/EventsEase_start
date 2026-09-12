@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      ══════════════════════════════════════════════════════════════════
+      THE SAME LAUNCH THEME, IN THE PLATFORM'S OWN ATTRIBUTES
+      ══════════════════════════════════════════════════════════════════
+
+      core-splashscreen 1.2.0 already bridges the compat attributes in
+      values/styles.xml onto these on API 31 and up, so strictly this file
+      is belt and braces. It is here anyway, for three reasons:
+
+        IT IS UNAMBIGUOUS. The bridging lives inside a library's own
+          values-v31, which nobody reading this project can see. A reader
+          asking "what does Android 12 actually draw" gets an answer from
+          a file in this repository.
+
+        IT SURVIVES A LIBRARY BUMP. The mapping is an implementation
+          detail of core-splashscreen 1.x. This file is the platform
+          contract, and it does not move when the library does.
+
+        IT IS WHERE API 33+ ATTRIBUTES WILL GO. windowSplashScreenBehavior
+          has no compat equivalent and can only be set here.
+
+      Everything a flavour could change is behind an @color, so this file
+      is identical for both apps and lives in main.
+    -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_anim</item>
+        <item name="android:windowSplashScreenAnimationDuration">900</item>
+        <!--
+          No windowSplashScreenIconBackgroundColor. The glyph sits directly
+          on the ground; a filled circle behind it would be a second shape
+          that the brand does not have anywhere else.
+        -->
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+</resources>

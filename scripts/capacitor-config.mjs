@@ -138,10 +138,15 @@ const config = {
 
   ios: {
     // The WebView's own background, visible for the moment before the
-    // page paints. Matched to the splash so a cold start does not flash
-    // white then aqua — the same reasoning vite.config.js gives for
-    // `background_color` in the PWA manifest.
-    backgroundColor: '#1B5C73',
+    // page paints. Matched to the launch artwork's top edge so a cold
+    // start does not flash white — the same reasoning vite.config.js
+    // gives for `background_color` in the PWA manifest.
+    //
+    // #25034B rather than the brand's #2A085C: this is one link in the
+    // chain that ends at brand/splash-source.png, and every link matches
+    // the artwork rather than the nominal hex. See the long note in
+    // android/app/src/main/res/values/colors.xml.
+    backgroundColor: '#25034B',
     contentInset: 'always',
     // A pull-to-refresh gesture inside a WebView reloads the whole app
     // mid-booking, which loses the matching screen a customer is
@@ -151,7 +156,9 @@ const config = {
   },
 
   android: {
-    backgroundColor: '#1B5C73',
+    // Same value as the iOS block above, and as splash_background in
+    // android/app/src/main/res/values/colors.xml.
+    backgroundColor: '#25034B',
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false,

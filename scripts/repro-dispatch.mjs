@@ -167,7 +167,7 @@ try {
 
   await send('Page.navigate', { url: `http://localhost:${PORT}/book/instant?occasion=birthday` })
   await sleep(4500)
-  await evalJs(`document.querySelectorAll('.brand-aqua').forEach(e => { e.style.display = 'none' })`)
+  await evalJs(`document.querySelectorAll('[data-splash]').forEach(e => { e.style.display = 'none' })`)
 
   const before = (await evalJs('document.body.innerText.slice(0,160)')).result?.value ?? ''
   console.log(`\n  Signed in as ${EMAIL}\n`)

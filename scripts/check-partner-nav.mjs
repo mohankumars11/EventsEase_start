@@ -93,7 +93,7 @@ await send('Page.enable')
  * the files this check otherwise covers. */
 await send('Page.navigate', { url: `http://localhost:${PORT}/` })
 await sleep(5000)
-await evalJs(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+await evalJs(`document.querySelectorAll('[data-splash]').forEach(e => e.style.display='none')`)
 
 const landedOn = await evalJs('location.pathname')
 

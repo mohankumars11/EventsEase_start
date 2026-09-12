@@ -139,8 +139,8 @@ export default defineConfig({
            frame. White there meant a white flash, then an aqua splash —
            a visible blink on every single cold start. Matching it to the
            splash's own deep corner makes the launch look continuous. */
-        theme_color: '#1B5C73',
-        background_color: '#1B5C73',
+        theme_color: '#25034B',
+        background_color: '#25034B',
         display: 'standalone',
         start_url: '/',
         /* ── PNG, not SVG, and why ────────────────────────────────────

@@ -91,7 +91,7 @@ await sleep(1200)
 await ev(`localStorage.setItem('sb-${ref}-auth-token', ${JSON.stringify(JSON.stringify(sess))})`)
 await send('Page.navigate', { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
 await sleep(6000)
-await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+await ev(`document.querySelectorAll('[data-splash]').forEach(e => e.style.display='none')`)
 
 const click = text => ev(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>!x.disabled&&x.textContent.includes(${JSON.stringify(text)}));if(!b)return 'NOT FOUND: ${text.replace(/'/g, '')}';b.click();return 'clicked'})()`)
 const broken = () => ev(`document.body.innerText.includes('Something went wrong') || document.body.innerText.includes('Try again')`)
@@ -136,7 +136,7 @@ console.log('')
 async function fresh() {
   await send(`Page.navigate`, { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
   await sleep(4500)
-  await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+  await ev(`document.querySelectorAll('[data-splash]').forEach(e => e.style.display='none')`)
 }
 
 for (const [label, kitchen, cuisine] of [
@@ -171,7 +171,7 @@ for (const off of OFFERINGS) {
   console.log(`  ── ${off}`)
   await send('Page.navigate', { url: `http://localhost:${PORT}/dashboard/vendor?tab=list` })
   await sleep(4500)
-  await ev(`document.querySelectorAll('.brand-aqua').forEach(e => e.style.display='none')`)
+  await ev(`document.querySelectorAll('[data-splash]').forEach(e => e.style.display='none')`)
   if (!await step('open', 'Add what you do')) break
   if (!await step('trade', 'Catering & Food')) break
   if (!await step('offering', off)) break
