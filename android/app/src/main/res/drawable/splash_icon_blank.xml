@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Deliberately empty.
+
+  ══════════════════════════════════════════════════════════════════════
+  WHY A BLANK ICON RATHER THAN NO ICON
+  ══════════════════════════════════════════════════════════════════════
+
+  Android 12 and later ALWAYS draws a system splash window. There is no
+  attribute, manifest flag or library call that turns it off; the platform
+  owns that window and the app only gets to say what is in it. An app that
+  sets no windowSplashScreenAnimatedIcon gets the launcher icon by default,
+  which is the tile appearing before the real launch screen.
+
+  So the icon slot is filled with nothing. A vector with a single fully
+  transparent path is valid, costs one drawable, and paints no pixels, so
+  the system splash is windowSplashScreenBackground and nothing else: a
+  flat amethyst screen that hands over to SplashScreen.jsx on the same
+  colour. The join is invisible because both sides are the same flat fill.
+
+  The four point spark that used to be here is still drawn everywhere else
+  the brand uses it (BrandSeal, the tab bar, both app bars); it is only
+  absent from this one window, because the owner wants the launch artwork
+  to be the first thing anybody sees.
+
+  ── The PWA is a different story ────────────────────────────────────
+  None of this reaches an installed PWA. Chrome generates that launch
+  screen from the web manifest's background_color, name and 512px icon,
+  and there is no way to suppress it either. Matching the colours is the
+  whole of the available fix there. See vite.config.js.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <path
+        android:pathData="M0,0h288v288h-288z"
+        android:fillColor="#00000000" />
+</vector>

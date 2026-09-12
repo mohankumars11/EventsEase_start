@@ -35,7 +35,7 @@ import { ROOT } from './lib/loadSrc.mjs'
 
 /* The manifest, plus every other hand-written XML under android/.
  *
- * The splash work added four files, and they are the same risk profile
+ * The splash work added five files, and they are the same risk profile
  * that made this script worth writing: heavily commented prose XML, built
  * only by a four-minute gradle run. Generated XML is deliberately absent
  * from this list — ic_launcher_background.xml and the Capacitor defaults
@@ -46,6 +46,7 @@ const FILES = [
   'android/app/src/main/res/values/colors.xml',
   'android/app/src/main/res/values-v31/styles.xml',
   'android/app/src/main/res/drawable/splash_icon_anim.xml',
+  'android/app/src/main/res/drawable/splash_icon_blank.xml',
 ]
 
 let bad = 0

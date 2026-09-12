@@ -1577,6 +1577,244 @@
     background-color: #2A085C;
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     THE LAUNCH SCREEN
+     ══════════════════════════════════════════════════════════════════
+
+     Every line of type here is LIVE, and that is the point of the whole
+     block. The artwork it sits on top of, brand/splash-source.png, has the
+     wordmark, the category line and both promise lines baked into it. Baked
+     text cannot animate, cannot resize itself for a 320px handset, and
+     cannot be corrected without re-rendering the picture -- and a launch
+     screen that is one flat photograph reads exactly like what it is,
+     which is somebody's export pasted over the app.
+
+     So scripts/render-splash-art.mjs crops the source to the illustration
+     alone (measured rows: the art runs y494-1376 of 1774) and the four
+     lines are set here, in the app's own face, at the app's own sizes, and
+     animated in. */
+
+  /* ── The room the screen sits in ───────────────────────────────────
+     A flat fill and an illustration pasted on it reads as two objects. A
+     ground with a light source in it reads as one: the artwork's own glow
+     comes from the centre, so the screen is lit from the same place.
+
+     Three layers, cheapest first, all static gradients rather than
+     anything animated, so this costs one paint and nothing per frame:
+
+       a broad warm bloom behind the illustration, picking up the gold
+       a tighter cool highlight behind the lockup, lifting the wordmark
+       a vignette pulling the corners down so the middle reads as nearer
+
+     `background-attachment` is deliberately absent: fixed backgrounds
+     inside a position:fixed element are a known compositing trap on
+     Android WebView and would cost a full-screen repaint per frame. */
+  .splash-ground {
+    background-color: #25034B;
+    background-image:
+      radial-gradient(120% 52% at 50% 78%, rgba(245, 194, 76, 0.16) 0%, rgba(245, 194, 76, 0) 60%),
+      radial-gradient(80% 34% at 50% 20%, rgba(183, 154, 232, 0.26) 0%, rgba(183, 154, 232, 0) 70%),
+      radial-gradient(140% 100% at 50% 50%, rgba(0, 0, 0, 0) 42%, rgba(8, 0, 22, 0.55) 100%),
+      linear-gradient(180deg, #340C6A 0%, #25034B 48%, #140134 100%);
+  }
+
+  /* ── The glass the wordmark is cut from ────────────────────────────
+     A specular highlight has to be brighter than what it crosses, and
+     nothing is brighter than #FFF -- so the letters are not flat white.
+     White on the top face, lavender where the bevel turns, white again on
+     the return, deeper lavender at the bottom edge. That is what gives the
+     caps a top and a bottom rather than a silhouette.
+
+     The fallback `color` is not decoration: if background-clip:text is
+     unsupported, a transparent fill is an invisible logo. */
+  .splash-mark > span {
+    color: #FFFFFF;
+    background-image: linear-gradient(
+      178deg,
+      #FFFFFF 0%, #FFFFFF 38%, #E9DEFB 52%,
+      #FFFFFF 66%, #CDB8F2 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* The gold line gets the same treatment, warm instead of cool, plus a
+     bloom so it reads as emitting rather than merely being yellow. */
+  .splash-promise-2 {
+    text-shadow: 0 0 18px rgba(245, 194, 76, 0.38);
+  }
+
+  /* ── The wordmark, one span per letter ─────────────────────────────
+     Per letter because the stagger IS the animation: eight letters rising
+     45ms apart reads as a word being set, where the same word fading in as
+     one block reads as an image loading.
+
+     The container keeps `display:inline-block` so its width is the word's
+     own width -- that is what the category line below justifies itself
+     against, and it only works if the letters are laid out normally rather
+     than positioned. */
+  /* The lockup wrapper. THIS is the inline-block whose width the category
+     line justifies against; the wordmark and the line are siblings inside
+     it, never parent and child.
+
+     They were nested once, and the bug is worth recording: `.splash-mark >
+     span` styles the letters, and the category line was also a span and
+     also a direct child, so it inherited display:inline-block at a higher
+     specificity than its own class could undo. It laid out beside the
+     wordmark instead of under it, its word gaps collapsed, and the lockup
+     ran off both edges of the screen. */
+  .splash-lockup {
+    display: inline-block;
+    text-align: center;
+    /* The size lives HERE, not on the wordmark, because the category line
+       is sized in em and has to derive from the same number.
+
+       SAMBRAMO in Archivo Black at -0.005em advances 6.515em. So the size
+       that makes the word span 82% of any viewport is
+
+           0.82 x 100vw / 6.515  =  12.6vw
+
+       and the category line, being width:100% of this box, follows without
+       a second calculation.
+
+       ── The first version of this number was wrong, and how ──────────
+       It said 14.84vw, from a measured advance of 5.795em. That probe ran
+       before the webfont had actually loaded: document.fonts.ready
+       resolves whether or not an @font-face succeeded, so the figure came
+       from a fallback face that is 12% narrower than Archivo Black. The
+       wordmark then rendered at 97% of the screen and ran into both edges.
+       Any re-measurement has to assert the face is really active first.
+
+       82% rather than 86%: the screen carries px-5 either side, so 86%
+       left eleven pixels of slack on a 360px handset, and a wordmark that
+       nearly touches its own padding reads as cropped. */
+    font-size: clamp(1.8rem, 12.6vw, 3.9rem);
+  }
+
+  .splash-mark {
+    display: block;
+    white-space: nowrap;
+    font-family: 'Sambramo Display', 'Arial Black', system-ui, sans-serif;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 0.92;
+    letter-spacing: -0.005em;
+    /* Size comes from `.splash-lockup` above, so the category line can be
+       set in em against the same value. */
+    font-size: 1em;
+    filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.45));
+  }
+  .splash-mark > span {
+    display: inline-block;
+    animation: splash-letter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes splash-letter {
+    from { opacity: 0; transform: translateY(0.34em) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── The category line, justified to the wordmark ──────────────────
+     EVENT DELIVERY APP set so its E and its final P line up with the S and
+     the O above. That alignment is what makes two lines of very different
+     length read as one object, and it is how the source artwork sets it.
+
+     flex + space-between over one span per character, NOT letter-spacing.
+     Letter-spacing would need a different value at every screen width and
+     would still be wrong, because CSS adds the space after the final letter
+     too -- so a letter-spaced line is always narrower than its box by one
+     space and never quite lines up.
+
+     The word gaps are `.sp` spans rather than real spaces: space-between
+     distributes between FLEX ITEMS, and a text space inside a flex
+     container collapses to nothing. */
+  .splash-tagline {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 0.30em;
+    font-family: Manrope, system-ui, sans-serif;
+    font-weight: 800;
+    color: #B79AE8;
+    line-height: 1;
+    font-size: 0.163em;
+    animation: splash-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 600ms both;
+  }
+  .splash-tagline > span { font-style: normal; }
+  .splash-tagline > .sp  { width: 0.5em; flex: none; }
+
+  /* ── The illustration ──────────────────────────────────────────────
+     Rises and settles rather than cutting in. The scale is small on
+     purpose: 0.965 to 1 is enough to read as arriving, and anything more
+     on a picture this busy reads as a zoom. */
+  .splash-art {
+    display: block;
+    /* Full viewport width, deliberately wider than the padded column it
+       sits in. The crop carries the source's own purple, which is close to
+       this screen's ground but not identical, so any visible left or right
+       edge reads as a pasted rectangle. Bleeding it past both edges means
+       there are no side edges to see.
+
+       Top and bottom still meet the ground, so those two are feathered.
+       One mask layer in one direction, rather than two composited:
+       mask-composite support is uneven and a mask that fails closed would
+       hide the illustration entirely. */
+    width: 100vw;
+    max-width: none;
+    height: auto;
+    -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 7%, #000 93%, transparent 100%);
+            mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 7%, #000 93%, transparent 100%);
+    animation: splash-art-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
+  }
+  @keyframes splash-art-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.965); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── The promise, two lines ────────────────────────────────────────
+     The second line is the one that carries the offer, so it arrives
+     after the first and in the artwork's own gold rather than white. */
+  .splash-promise-1,
+  .splash-promise-2,
+  .splash-rule {
+    animation: splash-fade-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .splash-promise-1 { animation-delay: 1500ms; }
+  .splash-promise-2 { animation-delay: 1700ms; }
+  .splash-rule      { animation-delay: 1950ms; }
+
+  @keyframes splash-fade-up {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── The shine ─────────────────────────────────────────────────────
+     One pass across the finished wordmark, late, once. It is an overlay
+     rather than a gradient clipped INTO the type: a clipped gradient
+     replaces the fill, so mid sweep the letters go grey instead of white,
+     and under reduced motion they freeze that way.
+
+     mix-blend-mode:overlay on a white band means the letters can only get
+     brighter and the purple ground beneath is barely touched. */
+  .splash-shine {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    background: linear-gradient(104deg,
+      rgba(255,255,255,0) 42%, rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0) 58%);
+    background-size: 240% 100%;
+    background-repeat: no-repeat;
+    animation: splash-shine 820ms cubic-bezier(0.36, 0, 0.28, 1) 2400ms both;
+  }
+  @keyframes splash-shine {
+    from { background-position: 190% 0; }
+    to   { background-position: -70% 0; }
+  }
+
   /* The wordmark on a LIGHT ground.
 
      The launch screen sets the name in white on amethyst. Everywhere else
@@ -2041,6 +2279,25 @@
        the one screen that is entirely a logo with a flat logo on it. What
        reduced motion asks us to remove is the thing that moves. */
     .brand-amethyst-gloss::after {
+      animation: none !important;
+      display: none !important;
+    }
+    /* The launch screen. Every one of these starts from opacity 0 under
+       `both`, so cancelling the animation without restoring the end state
+       leaves a purple rectangle with nothing on it. */
+    .splash-mark > span,
+    .splash-tagline,
+    .splash-art,
+    .splash-promise-1,
+    .splash-promise-2,
+    .splash-rule {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    /* The shine is the only thing here that is purely motion, so it is the
+       only thing removed outright rather than settled. */
+    .splash-shine {
       animation: none !important;
       display: none !important;
     }

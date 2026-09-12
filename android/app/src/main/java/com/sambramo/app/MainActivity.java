@@ -1,7 +1,6 @@
 package com.sambramo.app;
 
 import android.os.Bundle;
-import android.os.SystemClock;
 
 import androidx.core.splashscreen.SplashScreen;
 
@@ -34,43 +33,6 @@ import com.razorpay.PaymentResultWithDataListener;
  */
 public class MainActivity extends BridgeActivity implements PaymentResultWithDataListener {
 
-  /**
-   * The longest the native splash may be held open past the point Android
-   * is ready to draw the activity.
-   *
-   * ══════════════════════════════════════════════════════════════════════
-   * WHY THIS IS A DEADLINE AND NOT A CONDITION
-   * ══════════════════════════════════════════════════════════════════════
-   *
-   * The usual shape of setKeepOnScreenCondition is "hold until the content
-   * is ready" — a flag the WebView flips once it has painted. That is the
-   * documented pattern and it is the wrong one here.
-   *
-   * Capacitor owns the WebViewClient. Reading "has the WebView painted"
-   * means replacing or wrapping it, and a wrapper that misses a callback —
-   * a load that errors, a redirect, an OAuth return through the intent
-   * filter — leaves the flag false forever. The condition then never goes
-   * false, the splash never leaves, and the app is a purple rectangle that
-   * cannot be tapped, backed out of, or usefully reported. On a phone held
-   * by a master with a job waiting, that is the worst failure this file
-   * could contain.
-   *
-   * A monotonic deadline cannot do that. SystemClock.uptimeMillis() always
-   * advances, so the condition always goes false, and the worst case is
-   * 700ms of brand rather than an app that will not open.
-   *
-   * ── And it is not needed for continuity ─────────────────────────────
-   * The reason people wait for the WebView is to avoid a flash between the
-   * native splash and the web content. There is nothing to avoid: the
-   * splash window, the post-splash window background, the Capacitor WebView
-   * background and the React overlay are all #2A085C. Any gap is a purple
-   * rectangle followed by a purple rectangle.
-   *
-   * So this buys exactly one thing — the 900ms animated icon getting to
-   * finish rather than being cut short on a warm start — and it buys it
-   * with no way to hang.
-   */
-  private static final long SPLASH_CEILING_MS = 700L;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -78,16 +40,23 @@ public class MainActivity extends BridgeActivity implements PaymentResultWithDat
     // calls setTheme(postSplashScreenTheme), and a theme swapped after
     // BridgeActivity has inflated its content view is a theme applied to
     // nothing.
-    SplashScreen splash = SplashScreen.installSplashScreen(this);
-    final long deadline = SystemClock.uptimeMillis() + SPLASH_CEILING_MS;
-    splash.setKeepOnScreenCondition(() -> SystemClock.uptimeMillis() < deadline);
+    SplashScreen.installSplashScreen(this);
 
-    // Deliberately no setOnExitAnimationListener. That callback is handed a
-    // SplashScreenViewProvider and the splash stays on screen until
-    // provider.remove() is called — so any throw before that line freezes
-    // the app behind a splash with no timer to recover it. The crossfade it
-    // would buy is already free from the React overlay's opacity
-    // transition, over a ground that is the same colour either way.
+    /* Installed, and then left alone. No setKeepOnScreenCondition.
+     *
+     * Holding the system splash open only earns something when there is
+     * something on it to look at, and there is not: the icon slot is filled
+     * with splash_icon_blank, so this window is a flat amethyst rectangle
+     * and nothing else. Every millisecond it is held is a millisecond the
+     * real launch screen is not showing, which is the opposite of what was
+     * asked for. Unheld, it lasts exactly as long as the cold start needs.
+     *
+     * Also deliberately no setOnExitAnimationListener. That callback is
+     * handed a SplashScreenViewProvider and the splash stays up until
+     * provider.remove() is called, so any throw before that line freezes
+     * the app behind a splash with nothing to recover it. The crossfade it
+     * would buy is free anyway from the React overlay opacity transition,
+     * over a ground that is the same colour either way. */
 
     // Registered BEFORE super.onCreate: Capacitor builds the bridge
     // there, and a plugin registered afterwards is not in it.

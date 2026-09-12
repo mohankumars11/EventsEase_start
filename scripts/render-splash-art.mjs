@@ -46,8 +46,17 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = join(ROOT, 'brand', 'splash-source.png')
 const OUT = join(ROOT, 'public', 'splash')
-const WIDTHS = [720, 1080]
-const QUALITY = 0.82
+const WIDTHS = [720, 1080, 1440]
+/* [top, height] in SOURCE pixels: the illustration, without any baked text. */
+const CROP = [450, 950]
+/* 0.94, not the 0.82 this started at.
+ *
+ * The artwork is mostly large, smooth purple gradient, which is the worst
+ * case for a lossy codec: flat areas with a slow ramp are where WebP spends
+ * the fewest bits and where banding and blocking show first. At 0.82 the
+ * ground behind the wheel visibly stepped. The extra weight buys a launch
+ * screen with no visible noise in the one area that covers most of it. */
+const QUALITY = 0.94
 
 if (!existsSync(SRC)) {
   console.error(`\n  Missing ${SRC}\n`)
@@ -127,17 +136,37 @@ const result = await evalJs(`(async () => {
   }
   out.size = img.naturalWidth + 'x' + img.naturalHeight
 
+  // ── The illustration on its own ────────────────────────────────
+  // The source has the wordmark, the category line and the two promise
+  // lines baked into it. Baked text cannot animate, cannot resize per
+  // handset and cannot be corrected without re-rendering the artwork,
+  // so the launch screen sets all four live and uses only the picture.
+  //
+  // The crop rows are measured, not guessed: a row scan of the source
+  // found the wordmark at y246-326, the category line at y362-384, the
+  // illustration at y494-1376 and the promise lines at y1482-1562.
+  // 450 and 1400 sit inside the quiet gaps either side of the art, so
+  // the crop takes the glow with it and no descender of any letter.
   out.files = {}
-  for (const w of ${JSON.stringify(WIDTHS)}) {
-    const h = Math.round(img.naturalHeight * (w / img.naturalWidth))
-    const c = document.createElement('canvas')
-    c.width = w; c.height = h
-    const cx = c.getContext('2d')
-    cx.imageSmoothingEnabled = true
-    cx.imageSmoothingQuality = 'high'
-    cx.drawImage(img, 0, 0, w, h)
-    out.files[w] = { h, data: c.toDataURL('image/webp', ${QUALITY}) }
+  {
+    const [cy, ch] = ${JSON.stringify(CROP)}
+    for (const w of ${JSON.stringify(WIDTHS)}) {
+      const scale = w / img.naturalWidth
+      const h = Math.round(ch * scale)
+      const c = document.createElement('canvas')
+      c.width = w; c.height = h
+      const cx = c.getContext('2d')
+      cx.imageSmoothingEnabled = true
+      cx.imageSmoothingQuality = 'high'
+      cx.drawImage(img, 0, cy, img.naturalWidth, ch, 0, 0, w, h)
+      out.files['art-' + w] = { h, data: c.toDataURL('image/webp', ${QUALITY}) }
+    }
   }
+  /* The uncropped poster is deliberately NOT emitted any more.
+     Nothing renders it: SplashScreen.jsx sets all four lines of type
+     itself and uses the crop. Shipping it anyway put close to a megabyte
+     of never-requested WebP into dist, all of which vite-plugin-pwa
+     precaches on first load. */
   return out
 })()`)
 
@@ -145,16 +174,18 @@ if (!result) { console.error('\n  The browser returned nothing.\n'); browser.kil
 
 console.log(`\n  Launch artwork  (source ${result.size})\n`)
 
-for (const [w, { h, data }] of Object.entries(result.files)) {
+for (const [key, { h, data }] of Object.entries(result.files)) {
+  const w = String(key).replace('art-', '')
+  const name = String(key).startsWith('art-') ? `splash-art-${w}` : `splash-${w}`
   if (!data.startsWith('data:image/webp')) {
-    console.error(`    FAIL ${w}px came back as ${data.slice(5, 20)} — this build of the`)
+    console.error(`    FAIL ${name} came back as ${data.slice(5, 20)} — this build of the`)
     console.error('         browser has no WebP encoder. Nothing written.')
     browser.kill(); process.exit(1)
   }
   const buf = Buffer.from(data.split(',')[1], 'base64')
-  const file = join(OUT, `splash-${w}.webp`)
+  const file = join(OUT, `${name}.webp`)
   writeFileSync(file, buf)
-  console.log(`    ok   public/splash/splash-${w}.webp  ${w}x${h}  ${(buf.length / 1024).toFixed(0)}KB`)
+  console.log(`    ok   public/splash/${name}.webp  ${w}x${h}  ${(buf.length / 1024).toFixed(0)}KB`)
 }
 
 const src = readFileSync(SRC)

@@ -57,13 +57,14 @@
     -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_anim</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_blank</item>
         <!--
-          Capped at 1000 by the platform; anything larger is silently
-          clamped rather than honoured. 900 is the drawable's real length,
-          declared honestly so the system does not tear it off mid stroke.
+          Zero, because splash_icon_blank has nothing to animate. The
+          platform caps this at 1000 and any value here only delays the
+          handoff to the real launch screen, which is what the app is
+          trying to show as early as possible.
         -->
-        <item name="windowSplashScreenAnimationDuration">900</item>
+        <item name="windowSplashScreenAnimationDuration">0</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

@@ -46,9 +46,16 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'public')
 
-/* The ground. Same stops as `.brand-aqua` / `.brand-aqua-chip`. */
-const SHEEN = 'radial-gradient(120% 100% at 88% 92%, rgba(140,224,214,0.55) 0%, rgba(85,178,175,0) 62%)'
-const RAMP = 'linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%)'
+/* The ground. Flat amethyst, matching `.brand-amethyst` and the launch
+   artwork rather than the retired aqua ramp.
+
+   This icon is what Chrome draws on the PWA launch screen, at the size of
+   a large squircle in the middle of the manifest's background_color. When
+   it was aqua with a Playfair wordmark on it and the launch screen behind
+   was purple with an Archivo Black one, a cold start showed the brand
+   twice, in two liveries, one after the other. */
+const SHEEN = 'none'
+const RAMP = 'linear-gradient(180deg, #2A085C 0%, #2A085C 100%)'
 
 /**
  * The wordmark's face, fetched once and inlined into the page.
@@ -62,13 +69,14 @@ const RAMP = 'linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FB
  * is either in the page before it renders, or the script has already failed
  * out here with a message that says so.
  *
- * Playfair Display, because that is what `font-display` resolves to in
+ * Archivo Black, because that is what the launch screen and the in-app
+ * wordmark are both set in. It used to be Playfair Display, matching
  * tailwind.config.js and therefore what SambramoWordmark actually draws. An
  * icon set in a different face from the in-app wordmark is two logos.
  */
 async function inlineFace() {
   const css = await fetch(
-    'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&display=swap',
+    'https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap',
         /* A FULL Chrome UA, not a short one.
        Google Fonts sniffs this and serves woff2 only to browsers it
        recognises; an abbreviated string gets the legacy TTF stylesheet, the
@@ -80,9 +88,9 @@ async function inlineFace() {
   // The latin subset is the last @font-face block Google emits and the only
   // one this wordmark needs.
   const urls = [...css.matchAll(/url\((https:[^)]+\.woff2)\)/g)].map(m => m[1])
-  if (!urls.length) throw new Error('Google Fonts returned no woff2 for Playfair Display')
+  if (!urls.length) throw new Error('Google Fonts returned no woff2 for Archivo Black')
   const buf = Buffer.from(await fetch(urls[urls.length - 1]).then(r => r.arrayBuffer()))
-  return `@font-face{font-family:'Playfair Display';font-style:normal;font-weight:800;`
+  return `@font-face{font-family:'Archivo Black';font-style:normal;font-weight:400;`
     + `src:url(data:font/woff2;base64,${buf.toString('base64')}) format('woff2');}`
 }
 
@@ -101,7 +109,10 @@ if (!BROWSER) {
 /**
  * The icon, as a page.
  *
- * `widthRatio` is how much of the tile the word may span. `radius` is 0 for
+ * `widthRatio` is how much of the tile the word may span. It dropped from
+ * 0.92/0.76 when the face became Archivo Black: a heavy grotesque in caps
+ * reads as touching the edges at a ratio where Playfair still looked inset,
+ * and an icon whose word runs into the corners looks cropped. `radius` is 0 for
  * the maskable tile (it bleeds) and 22.5% for the `any` tile, which is the
  * corner radius Android and iOS both approximate.
  */
@@ -112,7 +123,7 @@ ${face}
   html,body { margin:0; padding:0; background:transparent; }
   #tile {
     width:${size}px; height:${size}px; border-radius:${radius}px;
-    background-color:#1B5C73;
+    background-color:#2A085C;
     background-image:${SHEEN}, ${RAMP};
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
@@ -124,8 +135,8 @@ ${face}
      want tighter fit anyway; this is the same adjustment a type designer
      makes by hand, done for the one size the icon is ever drawn at. */
   #word {
-    font-family:'Playfair Display', Georgia, serif; font-weight:800; color:#fff;
-    letter-spacing:-0.045em; line-height:1; white-space:nowrap;
+    font-family:'Archivo Black', 'Arial Black', sans-serif; font-weight:400; color:#fff;
+    letter-spacing:-0.005em; line-height:1; white-space:nowrap; text-transform:uppercase;
     /* Set by the fitter below once the face has actually loaded. */
     font-size:100px;
   }
@@ -141,11 +152,11 @@ ${face}
        the fallback face after 6s produces a wrong-looking icon, which is a
        problem somebody can SEE; hanging produces nothing at all. */
     const settled = Promise.all([
-      document.fonts.load('800 100px "Playfair Display"'),
+      document.fonts.load('400 100px "Archivo Black"'),
       document.fonts.ready,
     ])
     await Promise.race([settled, new Promise(r => setTimeout(r, 4000))])
-    window.__faceOk = document.fonts.check('800 100px "Playfair Display"')
+    window.__faceOk = document.fonts.check('400 100px "Archivo Black"')
     const el = document.getElementById('word')
     const target = ${size} * ${widthRatio}
     // Two passes: measure at a known size, scale, then correct for the
@@ -157,17 +168,17 @@ ${face}
     el.style.fontSize = (parseFloat(el.style.fontSize) * target / w) + 'px'
     /* Cap height, measured off the real ink rather than derived from the
        font size. getBoundingClientRect().height on a line box reports
-       leading as well, which for Playfair is about a third more than the
+       leading as well, which for a heavy display face is well over the
        letters actually occupy — and sizing decisions made against that
        number are why the word looked smaller than its metrics claimed. */
     const probe = document.createElement('canvas').getContext('2d')
     /* Read the weight off the COMPUTED style. el.style.fontWeight is the
        inline one, which is empty here because the weight comes from the
-       stylesheet — canvas would then be handed (space)82px Playfair Display,
+       stylesheet — canvas would then be handed (space)82px Archivo Black,
        fail to parse it, and silently keep its default 10px sans font. The
        cap height reported would be of the wrong face at the wrong size. */
     const cs = getComputedStyle(el)
-    probe.font = cs.fontWeight + ' ' + el.style.fontSize + ' "Playfair Display"'
+    probe.font = cs.fontWeight + ' ' + el.style.fontSize + ' "Archivo Black"'
     const m = probe.measureText('Sambramo')
     const cap = (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0)
     return { fontSize: el.style.fontSize, width: el.getBoundingClientRect().width, cap, target, faceOk: window.__faceOk }
@@ -232,7 +243,7 @@ try {
   await send('Page.enable')
   step('CDP ready')
 
-  process.stdout.write('  fetching Playfair Display… ')
+  process.stdout.write('  fetching Archivo Black… ')
   const face = await inlineFace()
   console.log(`${Math.round(face.length / 1024)} KB inlined`)
 
@@ -271,8 +282,8 @@ try {
      teardrop mask actually needs. Going to 0.78 here would put the S and
      the o under the crop on some launchers. */
   const JOBS = [
-    { file: 'icon-512.png',          size: 512, widthRatio: 0.92, radius: 115, label: 'any (rounded square)' },
-    { file: 'icon-maskable-512.png', size: 512, widthRatio: 0.76, radius: 0,   label: 'maskable (full bleed, 80% safe zone)' },
+    { file: 'icon-512.png',          size: 512, widthRatio: 0.82, radius: 115, label: 'any (rounded square)' },
+    { file: 'icon-maskable-512.png', size: 512, widthRatio: 0.66, radius: 0,   label: 'maskable (full bleed, 80% safe zone)' },
   ]
 
   for (const job of JOBS) {
@@ -311,7 +322,7 @@ try {
       }
     }
     if (!fit.faceOk) {
-      console.warn('      WARNING: Playfair Display did not load — icon set in a fallback face.')
+      console.warn('      WARNING: Archivo Black did not load — icon set in a fallback face.')
       process.exitCode = 1
     }
   }
