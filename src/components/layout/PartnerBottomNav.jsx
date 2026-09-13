@@ -89,7 +89,22 @@ export default function PartnerBottomNav() {
      ask for an account at the point you need one. */
   if (!isPartnerSurface()) return null
 
-  const onLanding   = pathname.startsWith('/partner')
+  /* -- Not on the way in --------------------------------------------
+     /partner/join is the sign-in screen, and on the APK it is the first
+     thing a partner sees. A tab bar there is wrong twice over: it sits
+     on top of the login the screen exists for, and every tab on it leads
+     back to the same sign-in they are already looking at.
+
+     Excluded rather than the whole of /partner, because /partner is the
+     pitch a WhatsApp forward lands on -- and the argument in the note
+     above, that the bar is how somebody learns what the app contains
+     before committing, is exactly right THERE. It is only on the door
+     itself that it has nothing to offer.
+
+     /onboarding/vendor needs no exclusion: it matches neither test and
+     has always returned null. */
+  const onJoin      = pathname.startsWith('/partner/join')
+  const onLanding   = pathname.startsWith('/partner') && !onJoin
   const onDashboard = pathname.startsWith('/dashboard/vendor')
   if (!onLanding && !onDashboard) return null
 
