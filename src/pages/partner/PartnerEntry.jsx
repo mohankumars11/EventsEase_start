@@ -4,8 +4,6 @@ import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
-import PartnerCarousel from '../../components/partner/PartnerCarousel'
-import PartnerLocationGate from '../../components/partner/PartnerLocationGate'
 
 /**
  * The first screen of the partner app.
@@ -186,34 +184,12 @@ export default function PartnerEntry() {
 
   return (
     <div className="flex min-h-screen flex-col bg-plum-950">
-      {/* Location, asked once, straight after the launch screen.
 
-          It renders over this page rather than being a route of its own,
-          which matters: the login is already mounted behind it, so a
-          partner who taps Allow lands on the field with nothing to load.
-          It removes itself when the question is settled -- granted,
-          refused, or already answered on a previous launch -- and it
-          never blocks anybody. See PartnerLocationGate. */}
-      <PartnerLocationGate />
-      {/* ==============================================================
-          THE CARDS ARE THE HEADER
-          ==============================================================
-
-          There was a dark panel here: the wordmark, PARTNERS, and the line
-          "Where the city's celebrations find you." It said what the first
-          card says, in less detail, directly above it -- so the brand was
-          read twice before anything could be acted on, and the login was
-          pushed off the bottom of the screen.
-
-          The cards carry it now. Each is a full composition with the
-          wordmark already in it, so nothing is lost by removing the panel,
-          and about 290px of the first screen goes back to the thing that
-          actually explains the app.
-
-          Full bleed, outside the padded sheet below: a hero with margins
-          reads as an advertisement pasted into a page rather than as the
-          top of the app. */}
-      <PartnerCarousel />
+      {/* The cards used to be the hero of this screen and the location
+          gate used to sit over it. Both are their own routes now --
+          /partner/onboarding and /partner/location-permission -- and a
+          partner arrives here having already seen them. Keeping copies
+          here would have shown the same three cards twice in one flow. */}
 
       {/* The sheet. Rounded off the dark ground rather than a card
           floating on white — it reads as the app opening rather than as

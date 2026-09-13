@@ -179,7 +179,12 @@ export function homeFor(surface = currentSurface(), { signedIn = false, role = n
     return role === 'admin' ? '/dashboard/admin' : '/'
   }
   if (surface !== SURFACE.partner) return '/'
-  if (!signedIn) return '/partner/join'
+  /* The cards first, then location, then the login they lead to.
+     /partner/join still resolves -- it is the same screen as
+     /partner/login and four existing call sites point at it -- but the
+     APK's cold open now starts at the beginning of the flow rather than
+     dropping somebody straight onto an email field. */
+  if (!signedIn) return '/partner/onboarding'
   return role === 'vendor' ? '/dashboard/vendor' : '/partner/join'
 }
 

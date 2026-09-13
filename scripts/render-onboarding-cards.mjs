@@ -33,13 +33,20 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'public', 'onboarding')
-const WIDTHS = [720, 1080]
+const WIDTHS = [720, 853]
 const QUALITY = 0.92
 
+/* Named for what each one SAYS, not for the order they arrived in.
+ *
+ * The first set had card 2 as the earnings poster and card 3 as a refer
+ * and earn one. The final set replaced both: card 2 is the service
+ * categories and card 3 is bookings and earnings. Keeping the old names
+ * would have left every reference in the app pointing at a file whose
+ * content no longer matched its name. */
 const CARDS = [
   { src: 'partner-card-1-grow.png',     out: 'card-1-grow' },
-  { src: 'partner-card-2-earnings.png', out: 'card-2-earnings' },
-  { src: 'partner-card-3-refer.png',    out: 'card-3-refer' },
+  { src: 'partner-card-2-services.png', out: 'card-2-services' },
+  { src: 'partner-card-3-earnings.png', out: 'card-3-earnings' },
 ]
 
 for (const c of CARDS) {

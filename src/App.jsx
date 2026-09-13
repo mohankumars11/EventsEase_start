@@ -62,6 +62,13 @@ const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'
 // Vendor & Admin
 const PartnerLanding   = lazy(() => import('./pages/partner/PartnerLanding'))
 const PartnerEntry     = lazy(() => import('./pages/partner/PartnerEntry'))
+/* The partner entry flow. Lazy like the rest: a customer never loads any
+   of it, and on the partner APK it is the first thing fetched anyway. */
+const PartnerOnboarding    = lazy(() => import('./pages/partner/PartnerOnboarding'))
+const LocationPermission   = lazy(() => import('./pages/partner/LocationPermission'))
+const LocationCapture      = lazy(() => import('./pages/partner/LocationCapture'))
+const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'))
+const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -562,6 +569,38 @@ function AppRoutes() {
           installing was an argument for installing. */}
       <Route path="/partner"      element={<BareShell><PartnerLanding /></BareShell>} />
       <Route path="/partner/join" element={<BareShell><PartnerEntry /></BareShell>} />
+
+      {/* ── The partner entry flow ──────────────────────────────
+
+          Nine screens between the splash and the dashboard, each its own
+          route so the Android back button walks them in order rather than
+          leaving the app.
+
+          They are NOT wrapped in BareShell. That wrapper exists to stop a
+          page shell stacking a second logo and a footer around an auth
+          screen -- but it also sets min-h-screen, which is `100vh`, and
+          `100vh` on Android Chrome is measured with the URL bar hidden.
+          Every one of these screens puts a CTA at the bottom, and under a
+          min-h-screen parent that CTA sits below the fold until you
+          scroll. `.native-screen` uses `100dvh` instead, and each screen
+          already draws its own full-bleed ground, so there is nothing for
+          a shell to add. */}
+      <Route path="/partner/onboarding"            element={<PageBoundary><PartnerOnboarding /></PageBoundary>} />
+      <Route path="/partner/location-permission"   element={<PageBoundary><LocationPermission /></PageBoundary>} />
+      <Route path="/partner/location"              element={<PageBoundary><LocationCapture /></PageBoundary>} />
+      <Route path="/partner/location-confirmation" element={<PageBoundary><LocationConfirm /></PageBoundary>} />
+
+      {/* /partner/login is the name the flow uses; /partner/join is what
+          homeFor() and four existing call sites already point at. Same
+          screen, rather than a redirect, so neither has to be chased
+          down and changed. */}
+      <Route path="/partner/login" element={<BareShell><PartnerEntry /></BareShell>} />
+
+      <Route path="/partner/setup" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><PartnerSetupIntro /></PageBoundary>
+        </ProtectedRoute>
+      } />
 
       {/* ── Vendor onboarding ──────────────────────── */}
       <Route path="/onboarding/vendor" element={

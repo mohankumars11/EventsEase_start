@@ -1573,6 +1573,86 @@
      Written out rather than referencing the palette, for the same reason
      `.brand-aqua` is: scripts/render-app-icons.mjs reproduces this value
      outside the build and cannot resolve a Tailwind class. */
+  /* ══════════════════════════════════════════════════════════════════
+     THE NATIVE SHELL
+     ══════════════════════════════════════════════════════════════════
+
+     The partner entry flow is a sequence of full-screen states, not a
+     document. These four classes are what make it stop behaving like a
+     web page, and each fixes something specific:
+
+     `100dvh`, not `100vh`. On Android Chrome `vh` is locked to the
+     viewport with the URL bar HIDDEN, so a `100vh` screen is taller than
+     the visible area on first paint and the bottom of it -- which is
+     where every CTA in this flow lives -- sits under the browser chrome
+     until you scroll. `dvh` tracks the bar as it collapses. The `vh`
+     fallback above it is for WebViews old enough not to know `dvh`.
+
+     `overscroll-behavior: none` kills the rubber-band. Without it a
+     vertical drag on a screen with nothing to scroll still bounces, and
+     a bounce is the single clearest tell that something is a web page.
+
+     Safe areas are padding, not margin, so the ground still paints edge
+     to edge behind the status bar and the gesture pill while the content
+     stays clear of both. */
+  .native-screen {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* A CTA sitting directly on the Android gesture bar is a CTA that
+     dismisses the app half the time it is tapped. 14px clear of it. */
+  .safe-cta {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  }
+
+  /* ── The onboarding rail ───────────────────────────────────────────
+     One slide visible, never a sliver of the next. `snap-stop: always`
+     is the part people leave out: without it a fast flick travels two or
+     three slides and the partner never sees the middle one.
+
+     The scrollbar is hidden rather than styled. It is a horizontal rail
+     of three full-screen panels; a scrollbar across the bottom of it
+     would read as a document. */
+  .native-rail {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .native-rail::-webkit-scrollbar { display: none; }
+
+  .native-slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    overflow: hidden;
+  }
+
+  /* The pulse under a location marker while a fix is being taken. Two
+     rings offset by half the cycle so there is always one travelling --
+     a single ring reads as a stutter every time it restarts. */
+  @keyframes loc-pulse {
+    from { transform: scale(0.35); opacity: 0.55; }
+    to   { transform: scale(1);    opacity: 0; }
+  }
+  .loc-pulse       { animation: loc-pulse 2s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+  .loc-pulse-late  { animation-delay: 1s; }
+
   .brand-amethyst {
     background-color: #2A085C;
   }

@@ -103,8 +103,26 @@ export default function PartnerBottomNav() {
 
      /onboarding/vendor needs no exclusion: it matches neither test and
      has always returned null. */
-  const onJoin      = pathname.startsWith('/partner/join')
-  const onLanding   = pathname.startsWith('/partner') && !onJoin
+  /* Nothing on the way in. /partner/onboarding, the three location
+     screens, the login and the setup introduction are all pre-account
+     states: a tab bar on any of them sits on top of the one thing the
+     screen is for, and every tab leads back to the sign-in already in
+     front of them.
+
+     Listed by prefix rather than turning the bar off for all of
+     /partner, because /partner itself is the pitch a forwarded link
+     lands on -- and the note above, that the bar is how somebody learns
+     what the app contains before committing, is right there. */
+  const PRE_ACCOUNT = [
+    '/partner/onboarding',
+    '/partner/location',
+    '/partner/login',
+    '/partner/join',
+    '/partner/verify',
+    '/partner/setup',
+  ]
+  const preAccount  = PRE_ACCOUNT.some(r => pathname.startsWith(r))
+  const onLanding   = pathname.startsWith('/partner') && !preAccount
   const onDashboard = pathname.startsWith('/dashboard/vendor')
   if (!onLanding && !onDashboard) return null
 

@@ -176,3 +176,83 @@ export async function captureLocation() {
     )
   })
 }
+
+/**
+ * The fix as an address a person would recognise.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY NOT reverseCity()
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * pincodeDirectory already reverse-geocodes, and this deliberately does
+ * not replace it. That one answers "which city is this" at zoom 10 for
+ * the serviceability message, and its own note explains why it stops
+ * there: any finer and it starts returning road names instead of cities.
+ *
+ * A confirmation screen needs the opposite. "Bengaluru" under a marker is
+ * not a confirmation of anything -- it is true of half the state. The
+ * partner has to recognise their own neighbourhood to know the app got it
+ * right, so this asks at zoom 18 and assembles locality, city, state and
+ * postcode.
+ *
+ * Same provider, same usage terms, fired once per partner at the same
+ * point in the flow.
+ *
+ * ── It is allowed to fail ──────────────────────────────────────────
+ * Returns null rather than throwing. A geocoder being unreachable must
+ * not cost somebody their sign-up: the coordinates are already saved and
+ * the confirmation screen says it has the location without naming it.
+ */
+export async function reverseAddress(lat, lng) {
+  try {
+    const u = new URL('https://nominatim.openstreetmap.org/reverse')
+    u.searchParams.set('lat', String(lat))
+    u.searchParams.set('lon', String(lng))
+    u.searchParams.set('format', 'jsonv2')
+    u.searchParams.set('addressdetails', '1')
+    u.searchParams.set('zoom', '18')
+
+    const res = await fetch(u, { headers: { Accept: 'application/json' } })
+    if (!res.ok) return null
+    const a = (await res.json())?.address ?? {}
+
+    /* Indian addresses land in different keys depending on how OSM has
+       classified the place. Take the first that exists at each level
+       rather than assuming a shape. */
+    const locality = a.neighbourhood || a.suburb || a.village
+      || a.town || a.city_district || a.residential || null
+    const city = a.city || a.town || a.municipality || a.village
+      || a.state_district || a.county || null
+    const state = a.state || null
+    const postcode = a.postcode || null
+
+    /* Never print the same name twice: a partner in a place OSM knows
+       only as one name gets "Mysuru", not "Mysuru, Mysuru". */
+    const parts = []
+    if (locality) parts.push(locality)
+    if (city && city !== locality) parts.push(city)
+
+    const tail = [state, postcode].filter(Boolean).join(' ')
+    if (tail) parts.push(tail)
+
+    return parts.length ? { line: parts.join(', '), locality, city, state, postcode } : null
+  } catch {
+    return null
+  }
+}
+
+const ADDR_KEY = 'sb_partner_addr_v1'
+
+/** Remember the readable line, so the confirmation screen survives a reload. */
+export function saveAddress(addr) {
+  try { localStorage.setItem(ADDR_KEY, JSON.stringify(addr)) } catch { /* private mode */ }
+}
+
+export function readSavedAddress() {
+  try {
+    const raw = localStorage.getItem(ADDR_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
