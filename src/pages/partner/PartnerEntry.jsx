@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
+import PartnerCarousel from '../../components/partner/PartnerCarousel'
+import PartnerLocationGate from '../../components/partner/PartnerLocationGate'
 
 /**
  * The first screen of the partner app.
@@ -69,6 +71,8 @@ export default function PartnerEntry() {
   const [googleBusy, setGoogleBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [showTerms, setShowTerms] = useState(false)
+  /* Email is the fallback route now, folded away until asked for. */
+  const [emailOpen, setEmailOpen] = useState(false)
 
   /* ══════════════════════════════════════════════════════════════════
      NEW OR RETURNING, ASKED OUTRIGHT
@@ -182,44 +186,55 @@ export default function PartnerEntry() {
 
   return (
     <div className="flex min-h-screen flex-col bg-plum-950">
-      {/* ══════════════════════════════════════════════════════════════
-          THE NAME, WITH ROOM AROUND IT
-          ══════════════════════════════════════════════════════════════
+      {/* Location, asked once, straight after the launch screen.
 
-          Deliberately not a white page with a logo at the top. Two apps
-          ship from this one bundle and a partner has both on their phone
-          more often than not; the moment the partner app opens it should
-          not be mistakable for the customer one. A dark ground and the
-          serif wordmark does that in the half second before anything is
-          read. */}
-      <header className="px-7 pb-9 pt-14 text-center">
-        <p className="font-serif text-[34px] font-extrabold leading-none tracking-tight text-white">
-          Sambramo
-        </p>
-        <p className="mt-2 text-[12px] font-extrabold uppercase tracking-[0.34em] text-saffron-400">
-          Partners
-        </p>
-        {/* The one line the app gets to explain itself, and it has to do
-            it to somebody who has just installed it and is deciding
-            whether to type an email.
+          It renders over this page rather than being a route of its own,
+          which matters: the login is already mounted behind it, so a
+          partner who taps Allow lands on the field with nothing to load.
+          It removes itself when the question is settled -- granted,
+          refused, or already answered on a previous launch -- and it
+          never blocks anybody. See PartnerLocationGate. */}
+      <PartnerLocationGate />
+      {/* ==============================================================
+          THE CARDS ARE THE HEADER
+          ==============================================================
 
-            "Work that comes to you" described the mechanism. This
-            describes the outcome, and inverts the thing a supplier
-            spends their life doing — chasing enquiries. They stop
-            looking; the celebrations arrive. Same promise, and it is
-            the sentence a decorator would repeat to another decorator. */}
-        <p className="mx-auto mt-4 max-w-[17rem] text-[14px] font-semibold leading-snug text-white/65">
-          Where the city’s celebrations find you.
-        </p>
-      </header>
+          There was a dark panel here: the wordmark, PARTNERS, and the line
+          "Where the city's celebrations find you." It said what the first
+          card says, in less detail, directly above it -- so the brand was
+          read twice before anything could be acted on, and the login was
+          pushed off the bottom of the screen.
+
+          The cards carry it now. Each is a full composition with the
+          wordmark already in it, so nothing is lost by removing the panel,
+          and about 290px of the first screen goes back to the thing that
+          actually explains the app.
+
+          Full bleed, outside the padded sheet below: a hero with margins
+          reads as an advertisement pasted into a page rather than as the
+          top of the app. */}
+      <PartnerCarousel />
 
       {/* The sheet. Rounded off the dark ground rather than a card
           floating on white — it reads as the app opening rather than as
           a form dropped onto a page. */}
-      <main className="flex-1 rounded-t-[30px] bg-white px-6 pb-10 pt-7">
+      {/* Flush under the hero, and flat.
+
+          It pulled up 20px over the artwork so its rounded corners read
+          as the app rising over the card. That overlap clipped the bottom
+          of every poster, which is the one thing these cards must not
+          have done to them -- each is a finished composition and the
+          brief was to show it whole.
+
+          So no overlap, and no top radius either: the hero already curves
+          at its bottom edge, and two opposing curves meeting would pinch.
+          One rounded edge, one flat, which is how the reference does it. */}
+      <main className="relative z-10 flex-1 bg-white px-6 pb-10 pt-6">
         {stage === 'email' ? (
           <>
-            {/* Two words, decided before anything is typed. */}
+            {/* Two words, decided before anything is typed. Kept because
+                the terms only apply to somebody signing UP, and a
+                returning partner has to be able to say so. */}
             <div className="flex rounded-2xl bg-ink/[0.05] p-1">
               {[
                 { id: 'new',       label: 'I am new here' },
@@ -238,83 +253,68 @@ export default function PartnerEntry() {
               ))}
             </div>
 
-            <h1 className="mt-5 text-[19px] font-extrabold leading-tight text-ink">
-              {isNew ? 'Join as a partner' : 'Welcome back'}
-            </h1>
-            <p className="mt-1 text-[13px] leading-snug text-ink-mute">
-              {isNew
-                ? 'One address, a six-digit code, and you are in. No password to invent.'
-                : 'The email you signed up with. We send a six-digit code.'}
-            </p>
+            {/* ══════════════════════════════════════════════════════════
+                CONSENT FIRST, THEN THE BUTTON IT GATES
+                ══════════════════════════════════════════════════════════
 
-            <label className="mt-6 block">
-              <span className="text-[12px] font-extrabold uppercase tracking-wide text-ink-mute">
-                Your email
-              </span>
-              <div className="relative mt-1.5">
-                <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); setError(null) }}
-                  onKeyDown={e => e.key === 'Enter' && requestCode()}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  inputMode="email"
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  className="w-full rounded-2xl bg-ink/[0.03] py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
-                />
-              </div>
-            </label>
+                It used to sit under the email field, which put it below
+                one sign-in route and above the other -- so somebody
+                continuing with Google passed the agreement on their way
+                past rather than on their way through.
 
-            {/* Not pre-ticked, and only asked of somebody signing up. */}
+                Above both buttons now, gating both. Still not pre-ticked:
+                a pre-ticked consent is a record that the screen rendered,
+                not a record that anybody agreed, and this agreement has
+                undertakings we may have to act on. */}
             {isNew && (<>
-            <button
-              type="button"
+            {/* The row toggles the box; the link inside it does not.
+
+                This was one <button> wrapping both the box and the text,
+                which is why "Partner Terms" could not be a link -- a
+                button inside a button is invalid HTML and React will not
+                render it. So the row is a div with a handler, the box is
+                the real control (role=checkbox, so a screen reader
+                announces its state), and the link stops the click from
+                reaching the row. Tapping anywhere else still ticks it. */}
+            <div
               onClick={() => { setAgreed(a => !a); setError(null) }}
-              className="mt-5 flex w-full items-start gap-3 text-left"
+              className="mt-5 flex w-full cursor-pointer items-start gap-3 text-left"
             >
-              <span
-                aria-hidden
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={agreed}
+                aria-label="I have read and agree to the Partner Terms"
+                onClick={e => { e.stopPropagation(); setAgreed(a => !a); setError(null) }}
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] ring-1 transition ${
                   agreed ? 'bg-forest-600 ring-forest-600' : 'bg-white ring-ink/20'
                 }`}
               >
                 {agreed && <Check size={13} className="text-white" strokeWidth={3.5} />}
-              </span>
+              </button>
               <span className="text-[12.5px] leading-snug text-ink-soft">
-                I have read and agree to the Partner Terms.
+                I have read and agree to the{' '}
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setShowTerms(true) }}
+                  className="font-extrabold text-sky-600 underline underline-offset-2"
+                >
+                  Partner Terms
+                </button>
+                .
               </span>
-            </button>
+            </div>
 
-            {/* ══════════════════════════════════════════════════════════
-                THE TERMS ARE ON THIS SCREEN, NOT BEHIND A LINK
-                ══════════════════════════════════════════════════════════
-
-                There is no public terms route — PARTNER_TERMS_LONG has
-                only ever rendered inside the signed-in account page and
-                the onboarding gate. Linking to one would have been a
-                dead link under a box somebody is being asked to tick,
-                which is the worst version of this pattern.
-
-                Inline and expanding, rather than a fixed overlay: an
-                ancestor with a transform breaks `position: fixed`, and
-                this screen has active:scale on its buttons. A
-                disclosure cannot be trapped that way.
-
-                It is also simply better. Nobody who leaves a sign-up to
-                read terms comes back to finish it. */}
             <button
               type="button"
               onClick={() => setShowTerms(s => !s)}
-              className="mt-2 pl-8 text-[11.5px] font-extrabold text-royal-700 underline"
+              className="mt-2 pl-8 text-[11.5px] font-extrabold text-sky-600 underline underline-offset-2"
             >
               {showTerms ? 'Hide the terms' : 'Read them first'}
             </button>
 
             {showTerms && (
-              <div className="mt-2 max-h-64 overflow-y-auto rounded-2xl bg-ink/[0.02] p-3.5 ring-1 ring-ink/[0.07]">
+              <div className="mt-2 max-h-56 overflow-y-auto rounded-2xl bg-ink/[0.02] p-3.5 ring-1 ring-ink/[0.07]">
                 {PARTNER_TERMS_LONG.map(s => (
                   <div key={s.heading} className="mb-3 last:mb-0">
                     <p className="text-[11.5px] font-extrabold leading-snug text-ink">{s.heading}</p>
@@ -329,37 +329,96 @@ export default function PartnerEntry() {
             )}
             </>)}
 
-            <button
-              type="button"
-              onClick={requestCode}
-              disabled={!canContinue || busy}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-4 text-[15.5px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
-            >
-              {busy ? <Loader2 size={17} className="animate-spin" /> : null}
-              {busy ? 'Sending…' : isNew ? 'Sign up' : 'Log in'}
-              {!busy && <ArrowRight size={17} />}
-            </button>
+            {/* ══════════════════════════════════════════════════════════
+                GOOGLE IS THE BUTTON NOW
+                ══════════════════════════════════════════════════════════
 
-            {/* Why the button is dead, said once it can actually be the
-                reason — never before they have typed anything. */}
-            {isNew && emailOk && !agreed && (
+                It was below an email field and an "or" rule, which made
+                typing an address the default and tapping a name the
+                afterthought. For a decorator on a phone that is backwards:
+                Google is one tap with no address to spell, no inbox to
+                switch to and no six digits to copy back.
+
+                Email has not gone anywhere -- it is the fallback below,
+                one tap away, and it is still the only route that works for
+                somebody whose phone has no Google account on it. It just
+                is not the thing being offered first. */}
+            <div className="mt-6">
+              <GoogleSignInButton
+                onClick={handleGoogle}
+                loading={googleBusy}
+                disabled={isNew && !agreed}
+                fullWidth
+                label="Continue with Google"
+              />
+            </div>
+
+            {/* Said once it can actually be the reason. */}
+            {isNew && !agreed && (
               <p className="mt-2 text-center text-[11.5px] font-semibold text-amber-700">
                 Tick the box above to continue.
               </p>
             )}
 
-            <div className="my-6 flex items-center gap-3">
+            <div className="my-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-ink/[0.08]" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute">or</span>
               <span className="h-px flex-1 bg-ink/[0.08]" />
             </div>
 
-            <GoogleSignInButton
-              onClick={handleGoogle}
-              loading={googleBusy}
-              fullWidth
-              label="Continue with Google"
-            />
+            {!emailOpen ? (
+              <button
+                type="button"
+                onClick={() => setEmailOpen(true)}
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl
+                           bg-ink/[0.04] text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08]
+                           transition active:scale-[0.99]"
+              >
+                <Mail size={16} />
+                Continue with email
+              </button>
+            ) : (
+              <>
+                <p className="text-[13px] leading-snug text-ink-mute">
+                  {isNew
+                    ? 'One address, a six-digit code, and you are in. No password to invent.'
+                    : 'The email you signed up with. We send a six-digit code.'}
+                </p>
+
+                <label className="mt-4 block">
+                  <span className="text-[12px] font-extrabold uppercase tracking-wide text-ink-mute">
+                    Your email
+                  </span>
+                  <div className="relative mt-1.5">
+                    <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError(null) }}
+                      onKeyDown={e => e.key === 'Enter' && requestCode()}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      inputMode="email"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      autoFocus
+                      className="w-full rounded-2xl bg-ink/[0.03] py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
+                    />
+                  </div>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={requestCode}
+                  disabled={!canContinue || busy}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-4 text-[15.5px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
+                >
+                  {busy ? <Loader2 size={17} className="animate-spin" /> : null}
+                  {busy ? 'Sending…' : isNew ? 'Sign up' : 'Log in'}
+                  {!busy && <ArrowRight size={17} />}
+                </button>
+              </>
+            )}
           </>
         ) : (
           <>
@@ -399,6 +458,29 @@ export default function PartnerEntry() {
               {busy ? <Loader2 size={17} className="animate-spin" /> : null}
               {busy ? 'Checking…' : 'Verify and continue'}
             </button>
+
+            {/* The consent, restated at the moment it takes effect.
+
+                The box was ticked on the previous screen, which for a
+                new partner was possibly a minute and one app-switch to
+                their mail ago. Saying it again here is not paperwork:
+                verifying is the act that creates the account, and the
+                agreement should be in front of somebody at the instant
+                they are bound by it rather than only at the instant they
+                ticked a box. */}
+            {isNew && (
+              <p className="mt-3 text-center text-[11px] leading-snug text-ink-mute">
+                By verifying you confirm you agree to the{' '}
+                <button
+                  type="button"
+                  onClick={() => { setStage('email'); setShowTerms(true) }}
+                  className="font-extrabold text-sky-600 underline underline-offset-2"
+                >
+                  Partner Terms
+                </button>
+                {' '}({PARTNER_TERMS_VERSION}).
+              </p>
+            )}
 
             <button
               type="button"
@@ -455,13 +537,6 @@ export default function PartnerEntry() {
             and you can decline any job without a penalty.
           </p>
         </div>
-
-        <p className="mt-4 text-center text-[11px] text-ink-mute">
-          Not a partner yet?{' '}
-          <Link to="/partner" className="font-extrabold text-royal-700 underline">
-            See what Sambramo pays
-          </Link>
-        </p>
 
         {/* Stamped so a signature written later can be compared against
             what was actually on screen at this moment. */}
