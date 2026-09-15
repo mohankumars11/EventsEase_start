@@ -1,29 +1,30 @@
 import { Bell, ChevronRight } from 'lucide-react'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
+import OnlineToggle from './OnlineToggle'
 
 /**
  * The strip at the top of the operations home.
  *
  * ══════════════════════════════════════════════════════════════════════
- * THE STATUS IS THE PARTNER'S REAL ONE
+ * TWO DIFFERENT FACTS, AND THEY ARE BOTH HERE
  * ══════════════════════════════════════════════════════════════════════
  *
- * Not an online/offline toggle. This platform has no "go online"
- * concept — dispatch matches on verification, location, a live listing
- * and the calendar, and there is no column anywhere that means "taking
- * jobs right now". Rendering a toggle would invent a control that
- * changes nothing, which is worse than not having one.
+ * The switch is whether this partner is taking work at all right now —
+ * `vendors.accepting_jobs`, which migration 126 added and which
+ * `match_partners` reads. It answers "am I getting jobs today", and the
+ * partner controls it.
  *
- * So the pill shows the state that genuinely decides whether work
- * arrives, in the partner's own terms:
+ * The pill is the state that decides whether work COULD arrive, which
+ * the partner mostly does not control:
  *
  *   Live            approved, and a listing is live
  *   Under review    everything submitted, waiting on us
  *   Action needed   something was sent back
  *   Setting up      onboarding is not finished
  *
- * When a real availability switch exists, this is the one place that
- * changes.
+ * Both are needed, and neither answers for the other. A partner who is
+ * Online but not yet verified is getting no jobs, and a switch on its
+ * own would leave them with no way to find out why.
  */
 const STATE = {
   [LIFECYCLE.LIVE]: {
@@ -48,7 +49,7 @@ const STATE = {
   },
 }
 
-export default function JobsHeader({ lifecycle, businessName, onOpenProfile, onOpenAlerts }) {
+export default function JobsHeader({ lifecycle, businessName, vendorId, acceptingJobs, onAcceptingChange, onOpenProfile, onOpenAlerts }) {
   const s = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
 
   return (
@@ -61,6 +62,16 @@ export default function JobsHeader({ lifecycle, businessName, onOpenProfile, onO
           <h1 className="mt-1 truncate text-[19px] font-extrabold leading-tight">
             {businessName ?? 'Your business'}
           </h1>
+          {/* Under the name, not beside the bell: it is a statement
+              about the business, and it is the control a partner reaches
+              for in a hurry. */}
+          <div className="mt-2">
+            <OnlineToggle
+              vendorId={vendorId}
+              initial={acceptingJobs}
+              onChange={onAcceptingChange}
+            />
+          </div>
         </div>
 
         <button

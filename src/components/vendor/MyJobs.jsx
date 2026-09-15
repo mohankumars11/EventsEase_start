@@ -9,6 +9,7 @@ import PartnerFigure from './PartnerFigure'
 import { formatINR } from '../../utils/format'
 import JobLifecycle from './JobLifecycle'
 import ClaimPayment from './ClaimPayment'
+import LiveTracking from '../partner/LiveTracking'
 
 /**
  * Everything that happens after a master taps Accept.
@@ -210,6 +211,15 @@ function JobCard({ job, onChange }) {
   const paid = ['paid', 'in_progress', 'delivered', 'settled'].includes(job.status)
   const step = Math.max(0, STEPS.indexOf(job.status))
   const eventDay = new Date(job.event_date + 'T00:00:00')
+  /* From midnight the day before to the end of the event day. A caterer
+     loading a van at 5am for a 7am start is inside it; a job next month
+     is not. */
+  const travelDay = (() => {
+    const now = Date.now()
+    const start = eventDay.getTime() - 24 * 3600 * 1000
+    const end = eventDay.getTime() + 36 * 3600 * 1000
+    return now >= start && now <= end
+  })()
   const isToday = new Date().toDateString() === eventDay.toDateString()
 
   async function revealContact() {
@@ -379,6 +389,21 @@ function JobCard({ job, onChange }) {
           <Lock size={13} />
           Their name and number unlock the moment payment is through.
         </p>
+      )}
+
+      {/* ── Getting there ────────────────────────────────────────────
+          Only from the day before. A Start-trip button on a job three
+          weeks out is a button that will be tapped by accident, and a
+          tracking session opened three weeks early is a phone being
+          followed for no reason — which is the exact thing this feature
+          promises never to do.
+
+          Renders nothing at all when migration 127 has not been applied,
+          so the rest of the card is unaffected on a database without it. */}
+      {['accepted', 'paid', 'in_progress'].includes(job.status) && travelDay && (
+        <div className="mt-3">
+          <LiveTracking job={job} onDone={onChange} />
+        </div>
       )}
 
       {/* ── The one transition a master can make ─────────────────────── */}

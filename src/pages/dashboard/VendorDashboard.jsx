@@ -315,6 +315,9 @@ export default function VendorDashboard() {
           <JobsHeader
             lifecycle={lifecycle}
             businessName={businessName}
+            vendorId={vendor?.id}
+            acceptingJobs={vendor?.accepting_jobs}
+            onAcceptingChange={() => refresh()}
             onOpenProfile={() => setTab('account')}
             onOpenAlerts={() => setTab('account')}
           />
