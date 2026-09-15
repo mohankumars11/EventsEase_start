@@ -26,6 +26,7 @@ import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
 import JobsHeader from '../../components/partner/JobsHeader'
 import AttentionSummary from '../../components/partner/AttentionSummary'
+import AgendaView from '../../components/partner/AgendaView'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
@@ -579,6 +580,20 @@ export default function VendorDashboard() {
               return next
             }, { replace: true })}
           />
+        )}
+
+        {/* ── What is actually booked, above the grid that says which
+               days are free ──────────────────────────────────────────
+            The availability calendar reads vendor_availability; the work
+            lives in partner_jobs. A partner asking "what am I doing next
+            week" had to hold both in their head. The agenda answers it,
+            and carries the travel-conflict warnings a month grid cannot
+            show. See components/partner/AgendaView. */}
+        {tab === 'availability' && (
+          <div className="mb-6">
+            <h2 className="mb-3 text-[15px] font-extrabold text-ink">Your schedule</h2>
+            <AgendaView vendorId={vendor?.id} />
+          </div>
         )}
 
         {tab === 'availability' && (
