@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
+  Bell, MessageSquare, BellRing,
    LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
   TriangleAlert, Sparkles, Navigation,
 } from 'lucide-react'
@@ -20,6 +21,10 @@ import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
 import PartnerReviews from './PartnerReviews'
 import PartnerHelp from './PartnerHelp'
+import PartnerInbox from './PartnerInbox'
+import PartnerMessages from './PartnerMessages'
+import NotificationPrefs from './NotificationPrefs'
+import { fetchNotifications, fetchMessages, fetchPrefs } from '../../lib/partnerInbox'
 
 /**
  * The partner's account, end to end.
@@ -141,6 +146,57 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
     return () => { dead = true }
   }, [vendor?.id])
 
+  /* ══════════════════════════════════════════════════════════════════
+     THE INBOX IS READ HERE, AND THE ROWS ARE NOT OFFERED UNTIL IT IS
+     ══════════════════════════════════════════════════════════════════
+
+     Same reasoning as the documents above, and the same failure it
+     avoids: migration 125 is applied BY HAND, so on a database where it
+     has not been pasted there is no feed, no thread and no preference
+     to set. Read up here and the rows are simply not shown; read inside
+     the section and each one renders an expanded, empty fold with a
+     heading and nothing under it.
+
+     One state object for all three because they land together — 125
+     creates all of them or none of them, so three separate "is it
+     there" flags could only ever disagree by accident. */
+  const [inbox, setInbox] = useState(null)
+  const readInbox = useCallback(async () => {
+    if (!vendor?.id) return
+    const [feed, thread, prefs] = await Promise.all([
+      fetchNotifications(vendor.id),
+      fetchMessages(vendor.id),
+      fetchPrefs(vendor.id),
+    ])
+    setInbox({
+      unavailable: feed.unavailable || thread.unavailable || prefs.unavailable,
+      rows: feed.rows,
+      unread: feed.unread,
+      messages: thread.rows,
+      prefs: prefs.prefs,
+    })
+  }, [vendor?.id])
+  useEffect(() => { readInbox() }, [readInbox])
+
+  const inboxReady = !!inbox && !inbox.unavailable
+
+  const inboxSummary = !inbox ? '' : inbox.unread
+    ? `${inbox.unread} you have not read`
+    : inbox.rows.length
+      ? 'Everything you have been sent'
+      : 'Nothing yet'
+
+  /* What WE last said, not what they did. A partner opening More after
+     being messaged should see that from the closed row; their own last
+     message is something they already know about. */
+  const lastFromUs = !inbox ? null
+    : [...inbox.messages].reverse().find(m => m.sender === 'operator')
+  const messageSummary = !inbox ? '' : !inbox.messages.length
+    ? 'Tell us about a job, or ask us something'
+    : lastFromUs && !lastFromUs.read_at
+      ? 'We have replied'
+      : `${inbox.messages.length} message${inbox.messages.length === 1 ? '' : 's'}`
+
   const [docs, setDocs] = useState(null)
   const readDocs = useCallback(async () => {
     if (!vendor?.id) return
@@ -207,6 +263,36 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
           onOpenTrade={onOpenTrade}
         />
       </Fold>
+
+      {/* ── What happened, and anything we said ───────────────────────
+          Above verification and payouts because this is the tab a
+          partner opens when they suspect they missed something, and
+          below My services because a notification about a service is
+          not much use next to a service you cannot see. */}
+      {inboxReady && (
+        <Fold
+          icon={inbox.unread ? BellRing : Bell}
+          title="Notifications"
+          summary={inboxSummary}
+          tone={inbox.unread ? 'nudge' : 'neutral'}
+        >
+          <PartnerInbox
+            rows={inbox.rows}
+            onRead={() => setInbox(s => (s ? { ...s, unread: 0 } : s))}
+          />
+        </Fold>
+      )}
+
+      {inboxReady && (
+        <Fold
+          icon={MessageSquare}
+          title="Messages"
+          summary={messageSummary}
+          tone={lastFromUs && !lastFromUs.read_at ? 'nudge' : 'neutral'}
+        >
+          <PartnerMessages vendorId={vendor?.id} initialRows={inbox.messages} />
+        </Fold>
+      )}
 
       {/* ── What customers said ──────────────────────────────────────
           Below the services it is about, and closed: a partner opens
@@ -322,6 +408,20 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
 
       {/* Reference rather than a setting, and it folds itself. */}
       <PartnerHandbook />
+
+      {/* ── What we may interrupt you for ───────────────────────────
+          Down here with the other settings rather than up with the
+          feed: reading notifications and deciding which ones reach the
+          phone are different errands, and the second one is rare. */}
+      {inboxReady && (
+        <Fold
+          icon={BellRing}
+          title="What we notify you about"
+          summary="New jobs always come through"
+        >
+          <NotificationPrefs vendorId={vendor?.id} initial={inbox.prefs} />
+        </Fold>
+      )}
 
       <PartnerHelp vendor={vendor} />
 
