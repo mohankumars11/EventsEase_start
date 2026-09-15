@@ -13,7 +13,9 @@ import { AuthContext } from '../../src/context/AuthContext'
 import { ToastProvider } from '../../src/context/ToastContext'
 
 import StepShell from '../../src/components/onboarding/StepShell'
-import ComplianceStep from '../../src/pages/partner/steps/ComplianceStep'
+import PartnerDetailsStep from '../../src/pages/partner/steps/PartnerDetailsStep'
+import ServiceAreaStep from '../../src/pages/partner/steps/ServiceAreaStep'
+import BankPaymentsStep from '../../src/pages/partner/steps/BankPaymentsStep'
 import { requirementsFor } from '../../src/data/compliance'
 import { iconForTrade } from '../../src/components/vendor/TradeGrid'
 import { Plus, ChevronRight, Check, Lock, Upload, ShieldCheck, Info, Pencil, MapPin } from 'lucide-react'
@@ -209,11 +211,22 @@ function ReviewShot() {
    without five files needing the same edit.
 
    Each is boxed at phone width so the clip is the screen, not the page. */
+/* ── 02, 03 and 05 are the REAL components ──────────────────────────
+   Not presentational copies. The harness stubs supabase to 127.0.0.1:9,
+   so the hook's reads fail,  settles false and each screen
+   renders its genuine empty state — which is exactly what a partner
+   sees on first arrival. A redrawn copy would photograph well and drift
+   from the shipped screen the first time either changed. */
+const PROFILE = { full_name: 'Ramesh Kumar', email: 'ramesh@example.com' }
+
 const SHOTS = [
   ['shot01', <HubShot />],
   ['shot04a', <ComplianceShot trades={['Catering & Food']} />],
   ['shot04b', <ComplianceShot trades={['Photography']} />],
   ['shot04c', <ComplianceShot trades={['Transportation']} />],
+  ['shot02', <PartnerDetailsStep />, PROFILE],
+  ['shot03', <ServiceAreaStep />, PROFILE],
+  ['shot05', <BankPaymentsStep />, PROFILE],
   ['shot06', <ReviewShot />],
 ]
 
@@ -225,12 +238,12 @@ export default function JourneyShots() {
           class like w-[390px] used only here is never generated and the
           box silently has no size. That is what made the first run
           capture a 4532px page instead of one phone screen. */}
-      {SHOTS.map(([id, el]) => (
+      {SHOTS.map(([id, el, profile]) => (
         <div key={id} id={id} data-shot={id}
              style={{ width: 390, height: 780, overflow: 'hidden',
                       borderRadius: 28, background: '#fff',
                       boxShadow: '0 10px 40px rgba(0,0,0,0.12)' }}>
-          {wrap(el)}
+          {wrap(el, profile ?? null)}
         </div>
       ))}
     </div>
