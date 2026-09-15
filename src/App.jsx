@@ -72,6 +72,15 @@ const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'
 const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
 const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
 const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
+/* The six onboarding steps. Each is gated by StepGate, so a typed URL
+   cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
+const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
+const BusinessServicesStep = lazy(() => import('./pages/partner/steps/BusinessServicesStep'))
+const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
+const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAreaStep'))
+const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
+const BankPaymentsStep     = lazy(() => import('./pages/partner/steps/BankPaymentsStep'))
+const ReviewPublishStep    = lazy(() => import('./pages/partner/steps/ReviewPublishStep'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -645,9 +654,38 @@ function AppRoutes() {
           <PageBoundary><WhatYouOffer /></PageBoundary>
         </ProtectedRoute>
       } />
+{/* ── The six steps ────────────────────────────────────────────
+          Each wrapped in StepGate, which sends a partner back to the
+          home if the step ahead of them is still locked. The disabled
+          buttons on the home are a courtesy; this is the rule. */}
       <Route path="/partner/setup/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <PageBoundary><WhatYouOffer /></PageBoundary>
+          <PageBoundary><StepGate stepId="business"><BusinessServicesStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/details" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="details"><PartnerDetailsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/area" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="area"><ServiceAreaStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/compliance" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="compliance"><ComplianceStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/bank" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="bank"><BankPaymentsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/review" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="review"><ReviewPublishStep /></StepGate></PageBoundary>
         </ProtectedRoute>
       } />
 

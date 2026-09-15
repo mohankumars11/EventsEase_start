@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Lock,
   ChevronUp, ChevronDown, Clock, Search, AlertCircle,
@@ -50,7 +51,11 @@ const VENUE_TRADE = TRADE_FOR_SERVICE.venue
 export default function VendorServiceList({
   vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs,
   startTrade = null, onStartConsumed,
+  /* Where to send the partner when the add flow closes. Set only when
+     they arrived from step 1 of onboarding — see VendorDashboard. */
+  returnTo = null,
 }) {
+  const navigate = useNavigate()
   /* The catalogue picker replaces the free-text add. See
      AddFromCatalogue and data/partnerCatalogue for why. */
   /* Holds `true` for the full picker, or a trade name to start the
@@ -189,7 +194,15 @@ export default function VendorServiceList({
              to Add Service — and a partner who wants to stop can still
              close it, because every queued trade already exists as a
              listing they can come back to. */
-          onClose={next => setPicking(typeof next === 'string' ? next : false)}
+          onClose={next => {
+            /* Another queued trade? Open it. Otherwise, if we came from
+               step 1, hand the partner back to the hub rather than
+               leaving them on the dashboard — the whole point of the
+               six-step redesign. */
+            if (typeof next === 'string') { setPicking(next); return }
+            setPicking(false)
+            if (returnTo) navigate(returnTo)
+          }}
         />
       )}
 

@@ -448,12 +448,42 @@ export default function VendorDashboard() {
               <OfferHistory vendorId={vendor.id} />
             </div>
           ) : (
+            /* ── Two different waits, and they are not the same news ───
+               A partner who has submitted everything and one who has not
+               started both saw "finish your list". The first has nothing
+               left to do and was being told to do more; the second needs
+               to know exactly what is outstanding.
+
+               §29: submitted is not live, and the screen has to say which
+               of the two it is without ever implying approval. */
             <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
-              <p className="text-[14px] font-extrabold text-ink">Jobs start once you are approved</p>
-              <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
-                We check every master before sending them work. Finish your
-                list and your calendar, and we will take it from there.
-              </p>
+              {vendor?.verification_status === 'submitted' ? (
+                <>
+                  <p className="text-[14px] font-extrabold text-ink">Your profile is under review</p>
+                  <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
+                    Setup complete. A person at Sambramo is reading it now — we will
+                    tell you the moment it is done, and jobs open then.
+                  </p>
+                  <p className="mt-3 inline-block rounded-full bg-amber-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-amber-800">
+                    Under review
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[14px] font-extrabold text-ink">Jobs open once you are approved</p>
+                  <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
+                    We check every master before sending them work. Finish the six
+                    setup steps and we will take it from there.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/partner/setup')}
+                    className="mt-4 min-h-[44px] rounded-full bg-gradient-to-r from-plum-700 to-plum-500 px-5 text-[13px] font-extrabold text-white"
+                  >
+                    Continue setup
+                  </button>
+                </>
+              )}
             </div>
           )
         )}
@@ -487,6 +517,12 @@ export default function VendorDashboard() {
                the flow and comes back to this tab would have it thrown
                at them again. */
             startTrade={params.get('start')}
+            /* Step 1's sub-flow hands back here. When the partner came
+               from onboarding the questionnaire must return them to the
+               Business and Services hub rather than leaving them on the
+               dashboard — which is the single change that stops a saved
+               trade reading as a finished sign-up. */
+            returnTo={params.get('return') === 'setup' ? '/partner/setup/services' : null}
             onStartConsumed={() => setParams(prev => {
               const next = new URLSearchParams(prev)
               next.delete('start')

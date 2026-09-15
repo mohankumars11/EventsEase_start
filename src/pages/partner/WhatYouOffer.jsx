@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import TradeGrid from '../../components/vendor/TradeGrid'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
@@ -39,6 +39,10 @@ import { queueTrades } from '../../lib/tradeQueue'
  */
 export default function WhatYouOffer() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  /* Same component, two doors: /partner/setup/services is step 1,
+     /partner/services is Add Service from More. */
+  const inSetup = pathname.startsWith('/partner/setup')
   const { account } = usePartnerStage()
   const vendorId = account?.vendor?.id ?? null
 
@@ -93,7 +97,15 @@ export default function WhatYouOffer() {
          against a partner who does not exist yet. */
       if (!vendorId) { navigate('/onboarding/vendor'); return }
 
-      navigate(`/dashboard/vendor?tab=list&start=${encodeURIComponent(queue[0])}`)
+      /* ── Where the trade flow hands back ────────────────────────────
+         During onboarding this screen is step 1s sub-flow, so the
+         questionnaire must return to the Business and Services hub —
+         not to the dashboard, which is what taught partners that
+         finishing one trade finished everything. The marker rides in
+         the URL so the dashboard tab that hosts the flow knows where
+         to send them back to. */
+      const back = inSetup ? '&return=setup' : ''
+      navigate(`/dashboard/vendor?tab=list&start=${encodeURIComponent(queue[0])}${back}`)
     } finally {
       setBusy(false)
     }
