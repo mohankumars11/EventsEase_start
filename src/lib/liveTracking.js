@@ -95,8 +95,18 @@ export async function fetchSession(lineId) {
     .limit(1)
     .maybeSingle()
 
-  if (error) return { session: null, unavailable: isMissingTable(error) }
-  return { session: data ?? null, unavailable: false }
+  /* `failed` is not the same as "there is no session". A dropped
+     connection on a poll must not be read as "the trip ended" — the
+     caller keeps what it had rather than clearing a live journey off
+     the screen because one request timed out in a lift. */
+  if (error) {
+    return {
+      session: null,
+      unavailable: isMissingTable(error),
+      failed: !isMissingTable(error),
+    }
+  }
+  return { session: data ?? null, unavailable: false, failed: false }
 }
 
 /**

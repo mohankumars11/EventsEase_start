@@ -39,8 +39,11 @@ import TrackingMap from './TrackingMap'
  * written by a GPS fix is one somebody will eventually have to argue
  * with.
  */
-export default function LiveTracking({ job, onDone }) {
-  const [session, setSession] = useState(null)
+export default function LiveTracking({ job, onDone, initialSession = null }) {
+  /* A caller that already holds the row can pass it, which saves a query
+     per job card on a list — and is how the screenshot harness mounts
+     this component in each of its states without a database. */
+  const [session, setSession] = useState(initialSession)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [live, setLive] = useState(null)      // last answer from push_locations
@@ -53,9 +56,10 @@ export default function LiveTracking({ job, onDone }) {
      puts the partner back where they were rather than offering to start
      a second trip. */
   const read = useCallback(async () => {
-    const { session: s, unavailable: u } = await fetchSession(lineId)
+    const { session: s, unavailable: u, failed } = await fetchSession(lineId)
     setUnavailable(u)
-    setSession(s)
+    /* A failed read leaves what was there. See fetchSession. */
+    if (!failed) setSession(s)
   }, [lineId])
 
   useEffect(() => { read() }, [read])
