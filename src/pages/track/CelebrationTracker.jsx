@@ -15,6 +15,7 @@ import ServiceLedger from '../../components/track/ServiceLedger'
 import PaymentReceipt from '../../components/track/PaymentReceipt'
 import CelebrationReviews from '../../components/track/CelebrationReviews'
 import TrackerHeader from '../../components/track/TrackerHeader'
+import PartnerOnTheWay from '../../components/track/PartnerOnTheWay'
 
 /**
  * One celebration, tracked end to end.
@@ -222,6 +223,13 @@ export default function CelebrationTracker() {
       <TrackerHeader title={item.title} />
 
       <div className="mx-auto max-w-2xl space-y-4 px-4 pb-10 pt-4">
+        {/* ── Above everything, and only while it is true ──────────────
+            A partner actually on the road right now outranks every
+            other thing on this page. Renders nothing when nobody is
+            travelling, which is almost always -- so it costs the rest
+            of the page nothing. */}
+        <PartnerOnTheWay />
+
         {/* ── The one sentence ─────────────────────────────────────── */}
         <div className={`rounded-2xl px-4 py-3.5 ring-1 ${
           journey.nextAction.urgency === 'you'

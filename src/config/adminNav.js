@@ -53,6 +53,18 @@ export const NAV = [
   },
 
   {
+    id: 'operations',
+    label: 'Operations',
+    hint: 'What is happening right now',
+    items: [
+      {
+        id: 'live-ops', label: 'Live trips', emoji: '🚚',
+        description: 'Every partner on the road, sorted by trouble rather than by time — the late one and the silent one first.',
+      },
+    ],
+  },
+
+  {
     id: 'markets',
     label: 'Markets',
     hint: 'Where we are, and where we are wanted',

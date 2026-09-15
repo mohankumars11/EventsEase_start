@@ -5,6 +5,7 @@ import { resolveNav } from '../../config/adminNav'
 import AdminShell from '../../components/admin/AdminShell'
 import PartnerConsole from '../../components/admin/PartnerConsole'
 import MarketInterest from '../../components/admin/MarketInterest'
+import LiveOperations from '../../components/admin/LiveOperations'
 
 /**
  * The admin console: a frame and one screen.
@@ -85,7 +86,12 @@ export default function AdminDashboard() {
       {/* Two screens now, and the registry in config/adminNav decides
           which. The console is still the default and still the one with
           a badge — a queue announces itself; a map does not. */}
-      {activeNav === 'city-interest' ? <MarketInterest /> : <PartnerConsole />}
+      {/* Three screens now, so this is a switch rather than a
+          ternary -- a second nested ternary is where the wrong screen
+          starts rendering for the wrong nav id. */}
+      {activeNav === 'city-interest' ? <MarketInterest />
+        : activeNav === 'live-ops' ? <LiveOperations />
+        : <PartnerConsole />}
     </AdminShell>
   )
 }
