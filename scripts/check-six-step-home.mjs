@@ -7,7 +7,7 @@
  * here, it is on the one path no partner can avoid, and its six steps
  * are a promise about the rest of setup.
  *
- *   node scripts/check-setup-intro.mjs
+ *   node scripts/check-six-step-home.mjs
  */
 import { spawnSync } from 'node:child_process'
 import { resolve, dirname, join } from 'node:path'
@@ -17,8 +17,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 const r = spawnSync(process.execPath, [
   join(ROOT, 'scripts/shoot-components.mjs'),
-  'shots/setup-intro.png',
-  '--scenes', 'scripts/scenes/setup-intro.jsx',
+  'shots/six-step-home.png',
+  '--scenes', 'scripts/scenes/six-step-home.jsx',
   '--scale', '1',
   '--wait', '20000',
 ], { cwd: ROOT, encoding: 'utf8' })
@@ -27,7 +27,7 @@ const out = (r.stdout ?? '') + (r.stderr ?? '')
 const tick = String.fromCharCode(10003)
 const lines = out.split('\n')
 
-console.log("\n  The screen a partner sees one tap after OTP\n")
+console.log("\n  The master onboarding home — six steps, five of them locked\n")
 
 if (r.status !== 0) {
   console.log('  x the harness did not finish\n')
@@ -36,9 +36,9 @@ if (r.status !== 0) {
 }
 
 const failures = [...new Set(
-  lines.filter(l => l.includes('INTRO: ')).map(l => l.replace(/^.*INTRO: /, '').trim()))]
+  lines.filter(l => l.includes('HOME: ')).map(l => l.replace(/^.*HOME: /, '').trim()))]
 
-if (!out.includes('INTRO-DONE')) {
+if (!out.includes('HOME-DONE')) {
   console.log('  x the scene never finished — the screen probably threw\n')
   console.log(lines.filter(l => /ERR |Error|not defined|not a function/.test(l)).slice(0, 8).join('\n'))
   process.exit(1)
@@ -51,5 +51,5 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`  ${tick} heading, both paragraphs, six steps in order, both buttons`)
-console.log(`  ${tick} shots/setup-intro.png\n`)
+console.log(`  ${tick} six steps in order, only step 1 open, no Complete Later, progress shown`)
+console.log(`  ${tick} shots/six-step-home.png\n`)

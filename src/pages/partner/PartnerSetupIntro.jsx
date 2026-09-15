@@ -1,133 +1,186 @@
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, User, MapPin, ShieldCheck, Landmark, Send, Loader2 } from 'lucide-react'
-import { usePartnerStage } from '../../hooks/usePartnerStage'
-import { deferSetup, readLocalDeferral } from '../../lib/partnerStage'
+import {
+  Briefcase, User, MapPin, ShieldCheck, Landmark, Send,
+  Check, Lock, Loader2, TriangleAlert, ArrowRight,
+} from 'lucide-react'
+import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
 
 /**
- * What setup is going to ask for, before it starts asking.
+ * The master onboarding home — "Great! Let's get started".
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY A SCREEN THAT COLLECTS NOTHING
+ * WHY THIS SCREEN IS NOW THE SPINE AND NOT A PREFACE
  * ══════════════════════════════════════════════════════════════════════
  *
- * A partner who has just verified an email is one tap from a form, and a
- * form of unknown length is the point most people put the phone down.
- * Six named steps with an end in sight is a different proposition from
- * an open-ended questionnaire, and it costs one screen.
+ * It used to be a poster: six nice rows, one button, and everything
+ * after it was the trade questionnaire. Saving a trade ended at the
+ * dashboard, so a partner who answered forty questions about their
+ * kitchen was shown the working app and concluded they were live. They
+ * had no service area, no documents, no bank account and no operator
+ * had read a word of it.
  *
- * ── It was unreachable ─────────────────────────────────────────────
- * Until the stage gate went in, nothing in the app navigated here.
- * `homeFor()`, `RootScreen` and the sign-in screen all sent a signed-in
- * vendor to `/dashboard/vendor`, and the dashboard drew its own smaller
- * copy of this screen for a partner with no vendors row. So the real
- * one was reachable only by typing the URL. See lib/partnerStage.js.
+ * So this is the controller now. It owns where a partner is, what is
+ * open to them, and what happens next; every step screen returns HERE
+ * rather than deciding for itself that onboarding is over. The trade
+ * questionnaire is untouched and is step 1's sub-flow.
  *
- * ── The steps are described, not implemented, here ─────────────────
- * The flow behind "Start Setup" is VendorOnboarding, and the steps after
- * it are the listing flow, the service area, verification and payout
- * details the partner reaches in order. This screen is the map, and a
- * map that does not match the road is worse than no map: if those steps
- * change, this list changes with them.
+ * ── Nothing here is skippable ──────────────────────────────────────
+ * "Complete Later" is gone. It was the politest way to tell somebody
+ * they were finished when they were not, and the partner who took it
+ * ended up in exactly the state this redesign exists to prevent.
+ *
+ * ── Status is derived, never stored ────────────────────────────────
+ * Each row's state comes from lib/partnerOnboarding.js reading the real
+ * rows. A screen cannot mark itself done.
  */
 
-const STEPS = [
-  { icon: Briefcase,   title: 'Business & Services',      note: 'What you do, and the events you cover.' },
-  { icon: User,        title: 'Partner Details',          note: 'Your name, contact and experience.' },
-  { icon: MapPin,      title: 'Service Area & Availability', note: 'Where you work, how far you travel, and when.' },
-  { icon: ShieldCheck, title: 'Verification & Compliance', note: 'So customers know you are the real thing.' },
-  { icon: Landmark,    title: 'Bank & Payments',          note: 'Where your earnings are paid.' },
-  { icon: Send,        title: 'Review & Publish',         note: 'We read it, then your listing goes live.' },
-]
+const ICON = {
+  business: Briefcase,
+  details: User,
+  area: MapPin,
+  compliance: ShieldCheck,
+  bank: Landmark,
+  review: Send,
+}
+
+const ROUTE = {
+  business: '/partner/setup/services',
+  details: '/partner/setup/details',
+  area: '/partner/setup/area',
+  compliance: '/partner/setup/compliance',
+  bank: '/partner/setup/bank',
+  review: '/partner/setup/review',
+}
+
+/* Royal amethyst for the step in hand, green for done, grey for locked,
+   amber for something sent back. One tone each, so the list is read at
+   a glance rather than decoded. */
+const TONE = {
+  COMPLETE:        { ring: 'ring-forest-200', chip: 'bg-forest-50 text-forest-700', icon: 'bg-forest-600 text-white' },
+  IN_PROGRESS:     { ring: 'ring-plum-300',   chip: 'bg-plum-50 text-plum-700',     icon: 'bg-plum-600 text-white' },
+  AVAILABLE:       { ring: 'ring-plum-200',   chip: 'bg-plum-50 text-plum-700',     icon: 'bg-plum-600 text-white' },
+  REQUIRES_ACTION: { ring: 'ring-amber-300',  chip: 'bg-amber-50 text-amber-800',   icon: 'bg-amber-500 text-white' },
+  LOCKED:          { ring: 'ring-ink/[0.07]', chip: 'bg-ink/[0.05] text-ink-mute',  icon: 'bg-ink/[0.06] text-ink-mute' },
+}
+
+const LABEL = {
+  COMPLETE: 'Done',
+  IN_PROGRESS: 'In progress',
+  AVAILABLE: 'Start',
+  REQUIRES_ACTION: 'Action needed',
+  LOCKED: 'Locked',
+}
 
 export default function PartnerSetupIntro() {
   const navigate = useNavigate()
-  const { account, loading } = usePartnerStage()
+  const { loading, steps, current, done, profile } = usePartnerOnboarding()
 
-  /* Returning, not new. A partner who tapped Complete Later — or who
-     closed the app on this screen — is met by name for what they did,
-     not by a greeting that pretends this is the first time. */
-  const returning = !!account?.vendor || readLocalDeferral()
+  const returning = done > 0
+  const firstName = profile?.full_name?.split(' ')[0]
 
-  async function completeLater() {
-    /* Written down before leaving. Without this the next sign-in has no
-       way to tell "started and stepped away" from "never arrived", and
-       the partner is asked to start over — which is the thing they
-       declined to do. Best-effort: a partner who taps Complete Later
-       with no signal still gets to leave. */
-    await deferSetup(account?.vendor?.id)
-    /* /partner, not /dashboard/vendor. A partner with no vendors row has
-       no dashboard — the dashboard sends them straight back here, and
-       "Complete Later" that returns you to the screen you left is a
-       button that does nothing. The partner landing is the one
-       signed-in-safe screen behind this point. */
-    navigate('/partner', { replace: true })
+  if (loading) {
+    return (
+      <div className="native-screen flex items-center justify-center bg-white">
+        <Loader2 size={26} className="animate-spin text-plum-600" />
+      </div>
+    )
   }
 
   return (
     <div className="native-screen flex flex-col bg-white">
-      <div className="safe-top min-h-0 flex-1 overflow-y-auto px-7 pt-9">
-        <h1 className="text-[clamp(1.45rem,6.6vw,1.85rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-          {returning ? 'Welcome back' : 'Great!'}
-          <br />
-          {returning ? "Let's finish setting up" : "Let's get started"}
+      <div className="safe-top min-h-0 flex-1 overflow-y-auto px-6 pt-8">
+
+        <h1 className="text-[clamp(1.5rem,7vw,2rem)] font-extrabold leading-[1.05] tracking-tight text-plum-950">
+          {returning ? <>Welcome back{firstName ? `, ${firstName}` : ''}<br />Let&apos;s finish setting up</>
+                     : <>Great!<br />Let&apos;s get started</>}
         </h1>
-        <p className="mt-2.5 text-[14px] leading-relaxed text-ink/70">
+
+        <p className="mt-3 text-[14px] leading-relaxed text-ink/70">
           Your Sambramo partner profile is almost ready.
         </p>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink/60">
+        <p className="mt-2 text-[13px] leading-relaxed text-ink/55">
           Tell us about your business and the services you provide. We&apos;ll use this
           information to match you with the right customers and event opportunities.
         </p>
 
-        <ol className="relative mt-7 pb-4">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon
-            const last = i === STEPS.length - 1
+        {/* ── How much is left, said once ───────────────────────────
+            A partner on step 4 of 6 is most of the way there, and a
+            number is the cheapest way to say so. */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/[0.07]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500 transition-all"
+              style={{ width: `${(done / steps.length) * 100}%` }}
+            />
+          </div>
+          <span className="shrink-0 text-[12px] font-extrabold tabular-nums text-ink-soft">
+            {done} of {steps.length}
+          </span>
+        </div>
+
+        <ol className="mt-6 flex flex-col gap-2.5 pb-4">
+          {steps.map(step => {
+            const Icon = ICON[step.id]
+            const tone = TONE[step.status] ?? TONE.LOCKED
+            const locked = step.status === 'LOCKED'
+            const isCurrent = step.id === current.id
+
             return (
-              <li key={s.title} className="relative flex gap-4 pb-6 last:pb-0">
-                {/* The spine. Drawn behind each row rather than as one
-                    element, so it stops at the last step instead of
-                    running past it into the button. */}
-                {!last && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-[19px] top-10 h-[calc(100%-1.5rem)] w-px bg-plum-200"
-                  />
-                )}
-                <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center
-                                 rounded-full bg-plum-50 ring-1 ring-plum-200">
-                  <Icon size={17} className="text-plum-600" strokeWidth={2.2} />
-                </span>
-                <div className="pt-0.5">
-                  <p className="text-[14px] font-extrabold leading-tight text-plum-950">
-                    <span className="text-plum-500">{i + 1}. </span>{s.title}
-                  </p>
-                  <p className="mt-1 text-[12.5px] leading-snug text-ink-mute">{s.note}</p>
-                </div>
+              <li key={step.id}>
+                <button
+                  type="button"
+                  data-step={step.id}
+                  data-status={step.status}
+                  disabled={locked}
+                  onClick={() => navigate(ROUTE[step.id])}
+                  className={`flex w-full items-start gap-3.5 rounded-[20px] bg-white p-4 text-left
+                              ring-1 transition active:scale-[0.99] disabled:active:scale-100
+                              ${tone.ring} ${isCurrent ? 'ring-2' : ''} ${locked ? 'opacity-60' : ''}`}
+                >
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${tone.icon}`}>
+                    {step.status === 'COMPLETE' ? <Check size={19} strokeWidth={3} />
+                      : locked ? <Lock size={16} />
+                      : step.status === 'REQUIRES_ACTION' ? <TriangleAlert size={18} />
+                      : <Icon size={18} />}
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline gap-2">
+                      <span className="font-mono text-[11px] font-bold text-ink-mute">{step.n}</span>
+                      <span className="text-[14.5px] font-extrabold leading-tight text-plum-950">
+                        {step.title}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-[12.5px] leading-snug text-ink-mute">
+                      {step.detail ?? step.blurb}
+                    </span>
+                  </span>
+
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-extrabold uppercase tracking-wide ${tone.chip}`}>
+                    {LABEL[step.status]}
+                  </span>
+                </button>
               </li>
             )
           })}
         </ol>
       </div>
 
-      <div className="safe-cta px-7 pt-2">
-        {/* Into the flow that already exists, not a new one. */}
+      {/* ── One way forward, and no way around ────────────────────────
+          There is deliberately no "Complete Later" here. Every step is
+          mandatory, so the only button is the one that opens whichever
+          step is next. */}
+      <div className="safe-cta px-6 pt-2">
         <button
           type="button"
-          onClick={() => navigate('/partner/services')}
-          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
-                     bg-gradient-to-r from-plum-700 to-plum-500
-                     text-[15.5px] font-extrabold text-white transition active:scale-[0.99]"
+          data-cta="continue"
+          onClick={() => navigate(ROUTE[current.id])}
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full
+                     bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold
+                     text-white transition active:scale-[0.99]"
         >
-          {loading && <Loader2 size={16} className="animate-spin" />}
-          {returning ? 'Continue Setup' : 'Start Setup'} &rarr;
-        </button>
-        <button
-          type="button"
-          onClick={completeLater}
-          className="mt-2 min-h-[46px] w-full text-[13.5px] font-bold text-ink/55"
-        >
-          Complete Later
+          {returning ? `Continue — ${current.title}` : 'Start setup'}
+          <ArrowRight size={17} />
         </button>
       </div>
     </div>

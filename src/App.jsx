@@ -633,11 +633,19 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      {/* What you offer. Its own route rather than a step inside setup,
-          because it is also the way in from More → My Services → Add
-          Service — the same twenty-six trades, the same duplicate rule,
-          one screen. */}
+      {/* ── Step 1's sub-flow, and the Add Service door ──────────────
+          `/partner/setup/services` is step 1 of the six.
+          `/partner/services` is the same screen reached later from
+          More → My Services → Add Service. One component, so the
+          twenty-six trades and the duplicate rule cannot drift between
+          the two ways in — WhatYouOffer reads which one it is from the
+          path and sends the partner back to the right place. */}
       <Route path="/partner/services" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><WhatYouOffer /></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
           <PageBoundary><WhatYouOffer /></PageBoundary>
         </ProtectedRoute>

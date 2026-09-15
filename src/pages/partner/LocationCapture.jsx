@@ -77,12 +77,25 @@ export default function LocationCapture() {
   const [steps, setSteps] = useState(null)
   const started = useRef(false)
 
+  /* ── Typing an address is a last resort, not an alternative ────────
+     The manual box used to appear on the first failure, beside "Try
+     again", which made it the quicker of the two and therefore the one
+     people took. A typed city is not the same fact as a fix: dispatch
+     measures distance from a point, and the market gate is only
+     meaningful against a real one.
+
+     So it stays hidden until the device has genuinely been given a
+     couple of chances. §6: a fallback, clearly labelled, never the
+     preferred path. */
+  const [attempts, setAttempts] = useState(0)
+  const exhausted = attempts >= 2
+
   const run = async () => {
     setState('working')
     setSteps(null)
 
     const { state: result, fix } = await diagnoseLocation()
-    if (!fix) { setState(result); return }
+    if (!fix) { setState(result); setAttempts(n => n + 1); return }
 
     /* The address is a nicety, not a gate. If the geocoder is slow or
        unreachable the coordinates are already saved and the next screen
@@ -191,14 +204,17 @@ export default function LocationCapture() {
                 <Crosshair size={15} /> Try again
               </button>
             )}
+            {exhausted && (
             <button
               type="button"
+              data-fallback="manual"
               onClick={() => navigate('/partner/market')}
               className="mt-1 flex min-h-[46px] w-full items-center justify-center gap-1.5
                          text-[13.5px] font-bold text-ink/55"
             >
-              <Pencil size={14} /> Enter location manually
+              <Pencil size={14} /> Unable to detect location?
             </button>
+            )}
           </div>
         </>
       )}

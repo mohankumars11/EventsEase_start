@@ -78,15 +78,20 @@ export default function LocationPermission() {
         >
           Allow Location Access
         </button>
-        {/* Not a dead end. A partner who defers still reaches the login,
-            and the service area is asked for again during setup. */}
-        <button
-          type="button"
-          onClick={() => navigate('/partner/login')}
-          className="mt-2 min-h-[46px] w-full text-[13.5px] font-bold text-ink/55"
-        >
-          Maybe Later
-        </button>
+        {/* ── There is deliberately no "Maybe Later" here ─────────────
+            There was one, and it read as the reasonable choice: it went
+            straight to the login, so the fastest way past this screen
+            was to decline it. A partner who took it arrived with no
+            location, which is the one fact everything downstream is
+            built on — the market gate cannot run, dispatch has nothing
+            to measure from, and the service area later defaults to a
+            city nobody confirmed.
+
+            Location is not a preference, it is the question this
+            product is organised around, so the screen asks it and
+            nothing else. Every refusal path the OS can produce is
+            handled on the next screen, with its own words and its own
+            way back — see LocationCapture. */}
       </div>
     </div>
   )
