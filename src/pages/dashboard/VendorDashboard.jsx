@@ -24,6 +24,9 @@ import PartnerAccount from '../../components/vendor/PartnerAccount'
 import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
+import JobsHeader from '../../components/partner/JobsHeader'
+import AttentionSummary from '../../components/partner/AttentionSummary'
+import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
 /**
@@ -116,6 +119,25 @@ export default function VendorDashboard() {
      same app. `effectiveTier` also honours the launch offer, which is the
      reason a partner on `free` correctly reads Pro here. */
   const plan         = PLAN_BY_ID[effectiveTier(vendor?.subscription_plan)] ?? PARTNER_PLANS[0]
+
+  /* ── The status the header shows ────────────────────────────────────
+     Derived here from the vendors row rather than through
+     partnerLifecycle(), which wants the full onboarding account shape —
+     listings, documents, payout. This tab already holds the one row
+     that settles it, and passing `services` in where `listings` is
+     expected would type-check and answer wrongly.
+
+     Order matters: approved wins over everything, and "sent back"
+     outranks "waiting", because it is the one the partner must act on. */
+  const lifecycle =
+    !vendor ? 'ONBOARDING'
+    : vendor.verification_status === 'rejected' ? 'REQUIRES_ACTION'
+    : (vendor.is_verified && vendor.status === 'APPROVED') ? 'LIVE'
+    : vendor.verification_status === 'submitted' ? 'UNDER_REVIEW'
+    : 'ONBOARDING'
+
+  /* Counts only — the sections below fetch their own rows. */
+  const attention = usePartnerAttention(vendor?.id)
 
   async function handleSignOut() {
     await signOut()
@@ -281,6 +303,34 @@ export default function VendorDashboard() {
 
           Account still shows the business, in Business details, where
           somebody goes to change it. */}
+      {/* ── The operations header ─────────────────────────────────
+          Replaces the old business-name block on this tab. It carries
+          the one status that actually decides whether work arrives —
+          derived from the partner's real lifecycle, not an invented
+          online/offline toggle this platform has no column for. See
+          components/partner/JobsHeader. */}
+      {tab === 'offers' && (
+        <div className="-mx-4 -mt-4 mb-4 sm:-mx-6">
+          <JobsHeader
+            lifecycle={lifecycle}
+            businessName={businessName}
+            onOpenProfile={() => setTab('account')}
+            onOpenAlerts={() => setTab('account')}
+          />
+        </div>
+      )}
+
+      {/* What needs doing, and nothing at all when nothing does. */}
+      {tab === 'offers' && (
+        <AttentionSummary
+          counts={{ ...attention, requiresAction: vendor?.verification_status === 'rejected' ? 1 : 0 }}
+          onOpen={key => {
+            if (key === 'claimable' || key === 'awaitingPayment') setTab('earnings')
+            else if (key === 'requiresAction') setTab('account')
+          }}
+        />
+      )}
+
       {tab === 'offers' && (
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
