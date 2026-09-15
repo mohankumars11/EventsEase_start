@@ -127,7 +127,7 @@ export default function ServiceArea({ vendor, onSave, onOpenLocation }) {
         <div className="relative mt-3 flex h-36 items-center justify-center overflow-hidden rounded-[16px] bg-plum-950">
           <span
             className="absolute rounded-full bg-plum-400/20 ring-1 ring-plum-300/40 transition-all duration-500"
-            style={{ width: `${ringPct(km)}%`, aspectRatio: '1' }}
+            style={{ width: ringPx(km), height: ringPx(km) }}
           />
           <span className="relative flex flex-col items-center gap-1">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-saffron-400 text-plum-950">
@@ -208,11 +208,16 @@ export default function ServiceArea({ vendor, onSave, onOpenLocation }) {
   )
 }
 
-/* The drawn ring maxes out well before the slider does, so 100 km does
-   not render as a circle larger than the box. Square-rooted because area
-   reads as size to the eye, not radius. */
-function ringPct(km) {
-  return Math.min(96, 24 + Math.sqrt(Math.min(km, 100)) * 7.5)
+/* ── Sized in pixels off the box's HEIGHT, not a width percentage ────
+   The container is 144px tall and much wider. A circle sized as a
+   percentage of width is taller than the box well before the slider
+   reaches the end, so it gets clipped top and bottom and renders as a
+   barrel — which reads as a rendering fault rather than as a radius.
+
+   Square-rooted because the eye reads AREA as size, so a linear mapping
+   makes 100 km look four times 50 rather than twice. */
+function ringPx(km) {
+  return Math.round(Math.min(128, 34 + Math.sqrt(Math.min(km, 100)) * 9.6))
 }
 
 /* PostgREST returns a geography column as GeoJSON. Anything else — a
