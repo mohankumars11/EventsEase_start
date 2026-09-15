@@ -30,21 +30,42 @@ import { iconForTrade } from './TradeGrid'
  * exist yet, and "why am I getting no enquiries" is exactly the question
  * this screen is opened to answer.
  */
-export default function PublicProfilePreview({ vendor, reviews }) {
-  const [rows, setRows] = useState(null)
+export default function PublicProfilePreview({ vendor, reviews, services = null }) {
+  /* A caller that already holds the public rows can pass them. */
+  const [rows, setRows] = useState(services)
   const [unavailable, setUnavailable] = useState(false)
 
   const read = useCallback(async () => {
-    if (!vendor?.id) return
-    const { data, error } = await supabase
-      .from('public_vendor_services')
-      .select('*')
-      .eq('vendor_id', vendor.id)
-    if (error) { setUnavailable(true); setRows([]); return }
-    setRows(data ?? [])
+    if (services) { setRows(services); return }
+    if (!vendor?.id) { setRows([]); return }
+    /* ── Every path has to end in a state ──────────────────────────
+       supabase-js RESOLVES with { error } for a refused query and
+       REJECTS for a dead connection, and only the first was handled —
+       so a partner on a bad train line got a spinner that never
+       stopped. A screen that cannot answer must say so; one that keeps
+       spinning tells them nothing and gives them nothing to do. */
+    try {
+      /* ── Bounded, because "no answer" is a real outcome ───────────
+         A refused query RESOLVES with { error }; a dead connection
+         REJECTS; and a request that simply hangs — a captive portal, a
+         train tunnel, a stalled TCP connect — does NEITHER. Only the
+         first was handled, so the third left a spinner turning forever
+         on a screen a partner opened to ask a question. Ten seconds,
+         then say so. */
+      const { data, error } = await Promise.race([
+        supabase.from('public_vendor_services').select('*').eq('vendor_id', vendor.id),
+        new Promise(res => setTimeout(() => res({ data: null, error: new Error('timeout') }), 10000)),
+      ])
+      if (error) { setUnavailable(true); setRows([]); return }
+      setRows(data ?? [])
+    } catch {
+      setUnavailable(true)
+      setRows([])
+    }
   }, [vendor?.id])
 
   useEffect(() => { read() }, [read])
+  useEffect(() => { if (services) setRows(services) }, [services])
 
   const live = vendor?.status === 'APPROVED' && (rows?.length ?? 0) > 0
   const count = reviews?.length ?? 0
