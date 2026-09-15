@@ -21,6 +21,7 @@ import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
 import PartnerReviews from './PartnerReviews'
 import PublicProfilePreview from './PublicProfilePreview'
+import PartnerAvatar from './PartnerAvatar'
 import PartnerHelp from './PartnerHelp'
 import PartnerInbox from './PartnerInbox'
 import PartnerMessages from './PartnerMessages'
@@ -243,6 +244,22 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
 
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
+      {/* ── The photograph ──────────────────────────────────────────
+          Directly under the identity strip it changes, so the effect of
+          the tap is visible in the same glance. Not inside a fold: it is
+          one control, and a row that has to be opened to reveal a single
+          button is a row that costs more than it saves. */}
+      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <PartnerAvatar
+          vendorId={vendor?.id}
+          url={vendor?.avatar_url}
+          name={vendor?.business_name ?? profile?.full_name}
+          size={56}
+          editable
+          onChange={url => onUpdateVendor?.({ avatar_url: url })}
+        />
+      </div>
+
       <PartnerCode vendor={vendor} />
 
       {/* ── What a stranger sees ─────────────────────────────────────
@@ -458,20 +475,21 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
 function Identity({ vendor, profile, statusMeta, plan }) {
   const name = vendor?.business_name ?? profile?.full_name ?? 'Your business'
 
-  /* Initials, not a photo. There is no avatar column and inventing an
-     upload for one here would be a fifth thing to maintain for a decoration.
-     Two letters on the brand's own saffron reads as deliberate. */
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
-    .map(w => w[0]?.toUpperCase() ?? '').join('') || 'S'
+  /* There IS an avatar column now — migration 129 — and PartnerAvatar
+     owns both the picture and the initials fallback, so the header and
+     this strip cannot compute different letters for the same partner.
+
+     The fallback is not a placeholder for a missing feature. No partner
+     is ever blocked on a photograph: a camera between a decorator and
+     their first job would be a worse app, and two letters on the
+     brand's own saffron reads as deliberate rather than as absent. */
 
   const live = vendor?.status === 'APPROVED' && !vendor?.suspended_at
 
   return (
     <section className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
       <div className="flex items-center gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-saffron-400 font-serif text-[18px] font-extrabold text-plum-950">
-          {initials}
-        </span>
+        <PartnerAvatar url={vendor?.avatar_url} name={name} size={48} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-serif text-[18px] font-extrabold leading-tight text-ink">{name}</h2>
           <p className="truncate text-[12px] font-semibold leading-snug text-ink-mute">

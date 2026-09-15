@@ -26,6 +26,7 @@ import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
 import JobsHeader from '../../components/partner/JobsHeader'
 import JobsStats from '../../components/partner/JobsStats'
+import { fetchNotifications } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
 import AgendaView from '../../components/partner/AgendaView'
@@ -87,6 +88,10 @@ export default function VendorDashboard() {
   const [params, setParams] = useSearchParams()
 
   const [calendarDismissed, setCalendarDismissed] = useState(false)
+  /* The bell's count. Lives here rather than inside JobsHeader so the
+     header stays a presentational strip, and so the same number can
+     later drive a tab badge without a second query. */
+  const [unreadAlerts, setUnreadAlerts] = useState(0)
 
   const account = useVendorAccount()
   const {
@@ -141,6 +146,18 @@ export default function VendorDashboard() {
 
   /* Counts only — the sections below fetch their own rows. */
   const attention = usePartnerAttention(vendor?.id)
+
+  /* Unread notifications, for the bell. Absent until 125 is applied,
+     which is why a failure leaves the count at zero rather than
+     blanking the header. */
+  useEffect(() => {
+    let alive = true
+    if (!vendor?.id) return undefined
+    fetchNotifications(vendor.id, 1).then(({ unread, unavailable }) => {
+      if (alive && !unavailable) setUnreadAlerts(unread)
+    })
+    return () => { alive = false }
+  }, [vendor?.id, tab])
 
   async function handleSignOut() {
     await signOut()
@@ -318,6 +335,8 @@ export default function VendorDashboard() {
             lifecycle={lifecycle}
             businessName={businessName}
             vendorId={vendor?.id}
+            avatarUrl={vendor?.avatar_url}
+            unreadAlerts={unreadAlerts}
             acceptingJobs={vendor?.accepting_jobs}
             onAcceptingChange={() => refresh()}
             onOpenProfile={() => setTab('account')}

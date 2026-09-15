@@ -1,6 +1,7 @@
 import { Bell, ChevronRight } from 'lucide-react'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
 import OnlineToggle from './OnlineToggle'
+import PartnerAvatar from '../vendor/PartnerAvatar'
 
 /**
  * The strip at the top of the operations home.
@@ -49,7 +50,7 @@ const STATE = {
   },
 }
 
-export default function JobsHeader({ lifecycle, businessName, vendorId, acceptingJobs, onAcceptingChange, onOpenProfile, onOpenAlerts }) {
+export default function JobsHeader({ lifecycle, businessName, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0, onAcceptingChange, onOpenProfile, onOpenAlerts }) {
   const s = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
 
   return (
@@ -74,14 +75,40 @@ export default function JobsHeader({ lifecycle, businessName, vendorId, acceptin
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenAlerts}
-          aria-label="Alerts and updates"
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10"
-        >
-          <Bell size={17} />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenAlerts}
+            aria-label={unreadAlerts
+              ? `Alerts and updates, ${unreadAlerts} unread`
+              : 'Alerts and updates'}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/10"
+          >
+            <Bell size={17} />
+            {/* The count, not a bare dot. "3" tells a partner whether
+                this is worth opening now; a dot only says "something". */}
+            {unreadAlerts > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9.5px] font-extrabold tabular-nums text-white ring-2 ring-plum-950">
+                {unreadAlerts > 9 ? '9+' : unreadAlerts}
+              </span>
+            )}
+          </button>
+
+          {/* ── The face, top right ──────────────────────────────────
+              Where the reference design puts it, and it goes to the
+              account rather than opening a menu: there is one place to
+              change anything about yourself and this is the shortest
+              route to it. Falls back to initials, which is what every
+              partner sees until they add a photograph. */}
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            aria-label="Your account"
+            className="rounded-full ring-2 ring-white/25"
+          >
+            <PartnerAvatar url={avatarUrl} name={businessName} size={40} />
+          </button>
+        </div>
       </div>
 
       <button

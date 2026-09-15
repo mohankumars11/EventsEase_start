@@ -77,7 +77,10 @@ export default function LiveTracking({ job, onDone, initialSession = null }) {
         if (res?.reason === 'denied') {
           setError('Location permission is off, so we cannot show where you are. '
                  + 'Turn it on in your phone settings and start the trip again.')
-        } else if (res?.reason === 'not_active') {
+        } else if (res?.reason === 'not_active' || res?.reason === 'expired') {
+          /* The server closed the session. Re-read so the screen stops
+             claiming to be sharing a location it is no longer sending. */
+          if (res?.says) setError(res.says)
           read()
         }
       },
