@@ -4,7 +4,7 @@ import { Camera, Check, Clock, MapPin, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { OFFER_CARD } from '../../config/instantBooking'
-import { partnerEarnings } from '../../lib/instantPricing'
+import { partnerDeductions } from '../../lib/instantPricing'
 import { setupSpec } from '../../data/instantSetups'
 
 /**
@@ -69,12 +69,24 @@ function useSeconds(iso) {
 }
 const left = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000))
 
-function Breakdown({ gross }) {
-  // PAN status is per-partner; until the payout account is filled in,
-  // assume no PAN, which is the conservative direction — it shows a
-  // LOWER net than the master will actually receive, so the surprise is
-  // in their favour.
-  const e = partnerEarnings(gross, { hasPan: false })
+function Breakdown({ share, hasPan }) {
+  /* ── The share, not the quote ──────────────────────────────────────
+     `dispatch_offers.partner_amount_paise` is what migration 084 copied
+     off `booking_lines` — the customer's price with the platform fee
+     ALREADY removed. This card put it through `partnerEarnings`, which
+     takes a gross, so the fee came off twice and the top line called the
+     result "Job value". `partnerDeductions` takes a share and only
+     applies the two statutory slices, which is what is left to apply. */
+  const d = partnerDeductions(share, { hasPan })
+  const e = {
+    lines: [
+      { id: 'share', label: 'Your share of the job', paise: d.sharePaise, sign: '+' },
+      { id: 'tcs',   label: 'TCS (GST)', paise: -d.tcsPaise, sign: '-', note: 'deposited for you' },
+      { id: 'tds',   label: 'TDS',       paise: -d.tdsPaise, sign: '-',
+        note: d.tdsApplies ? 'deposited for you' : 'waived — PAN on file' },
+      { id: 'net',   label: 'To your account', paise: d.netPaise, sign: '=' },
+    ],
+  }
   return (
     <dl className="mt-3 space-y-1.5 rounded-[16px] bg-surface-sunk/[0.05] p-3 text-[12px]">
       {e.lines.map(l => (
@@ -92,11 +104,11 @@ function Breakdown({ gross }) {
   )
 }
 
-function OfferCard({ offer, onAnswer, busy }) {
+function OfferCard({ offer, onAnswer, busy, hasPan }) {
   const secs = useSeconds(offer.expires_at)
   const [open, setOpen] = useState(false)
   const spec = offer.service_id ? setupSpec('decor', 'standard') : null
-  const net = partnerEarnings(offer.partner_amount_paise, { hasPan: false }).netPaise
+  const net = partnerDeductions(offer.partner_amount_paise, { hasPan }).netPaise
 
   const urgent = secs <= 15
 
@@ -176,7 +188,7 @@ function OfferCard({ offer, onAnswer, busy }) {
         </button>
       </div>
 
-      {open && <Breakdown gross={offer.partner_amount_paise} />}
+      {open && <Breakdown share={offer.partner_amount_paise} hasPan={hasPan} />}
 
       <p className="mt-2 text-[11px] font-semibold text-ink-mute">
         {OFFER_CARD.provisional}
@@ -206,6 +218,14 @@ function OfferCard({ offer, onAnswer, busy }) {
 
 export default function OfferInbox({ vendorId }) {
   const [offers, setOffers] = useState([])
+  /* ── Whether TDS applies to this partner ───────────────────────────
+     s.194-O waives it for a below-threshold individual with a PAN on
+     file, and that is most of this supply base. Read from
+     `partner_readiness`, which is security_invoker and exposes only the
+     boolean — the PAN itself never comes to the client. Defaults to
+     false, so a partner whose payout account is not filled in yet sees
+     the lower figure and is surprised in their own favour. */
+  const [hasPan, setHasPan] = useState(false)
   const [busy, setBusy] = useState(false)
   const [flash, setFlash] = useState(null)
   const poll = useRef(null)
@@ -220,6 +240,15 @@ export default function OfferInbox({ vendorId }) {
       .gt('expires_at', new Date().toISOString())
       .order('expires_at')
     setOffers(data ?? [])
+  }, [vendorId])
+
+  useEffect(() => {
+    let alive = true
+    if (!vendorId) return
+    supabase.from('partner_readiness')
+      .select('pan_added').eq('vendor_id', vendorId).maybeSingle()
+      .then(({ data }) => { if (alive) setHasPan(!!data?.pan_added) })
+    return () => { alive = false }
   }, [vendorId])
 
   useEffect(() => {
@@ -310,7 +339,7 @@ export default function OfferInbox({ vendorId }) {
       ) : (
         <ul className="space-y-3">
           {offers.map(o => (
-            <OfferCard key={o.offer_id} offer={o} onAnswer={answer} busy={busy} />
+            <OfferCard key={o.offer_id} offer={o} onAnswer={answer} busy={busy} hasPan={hasPan} />
           ))}
         </ul>
       )}

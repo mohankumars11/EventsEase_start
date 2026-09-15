@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Banknote, Check, Loader2, Lock, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
+import { partnerDeductions } from '../../lib/instantPricing'
 
 /**
  * The partner asks for their money.
@@ -36,7 +37,7 @@ import { formatINR } from '../../utils/format'
  * bothered — that is their money depending on another person's
  * inaction. The ask sits next to the claim and changes nothing about it.
  */
-export default function ClaimPayment({ lineId, onClaimed }) {
+export default function ClaimPayment({ lineId, onClaimed, hasPan = false, annualGrossInr = 0 }) {
   const [state, setState] = useState(null)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(null)
@@ -92,6 +93,32 @@ export default function ClaimPayment({ lineId, onClaimed }) {
         <p className="mt-1 font-serif text-[28px] font-extrabold leading-none tracking-tight text-ink">
           {formatINR(Math.round((state.amount_paise ?? 0) / 100))}
         </p>
+
+        {/* ── Why this is bigger than the figure above it ─────────────
+            `claim_payment` answers with `booking_lines.partner_amount_paise`
+            — the share, before TCS and TDS. The earnings screen this card
+            sits inside shows net everywhere else, so without this line the
+            same job carries two figures a few pixels apart and the partner
+            is left to guess which one arrives.
+
+            Both are stated, in order, and the deductions are named as
+            deposited rather than deducted, because that is what happens to
+            them and it is what the partner claims credit for. */}
+        {(() => {
+          const d = partnerDeductions(state.amount_paise ?? 0, { hasPan, annualGrossInr })
+          const taken = d.tcsPaise + d.tdsPaise
+          if (!taken) return null
+          return (
+            <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-saffron-900/85">
+              {formatINR(Math.round(taken / 100))} of this is TCS and TDS, deposited
+              with the authorities for you.{' '}
+              <strong className="font-extrabold">
+                {formatINR(Math.round(d.netPaise / 100))}
+              </strong>{' '}
+              reaches your account.
+            </p>
+          )
+        })()}
 
         {/* Where it goes, stated before the tap rather than after. The
             partner chose this account in Account; showing it here means

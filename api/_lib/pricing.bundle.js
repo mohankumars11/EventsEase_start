@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 717bd4cce8168aa6
+// inputs: 4cc8ec64cd2a8251
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4286,6 +4286,23 @@ function priceBasis(component, index = marketIndex(), factor = 1) {
     detail: `${meta.label} moves with the market and is about 58% of what a plate costs. Priced against ${meta.source}, read ${index.asOf}. Currently ${direction} against our baseline \u2014 if rates fall, you pay less.`
   };
 }
+function partnerDeductions(sharePaise, {
+  hasPan = false,
+  annualGrossInr = 0
+} = {}) {
+  const share = Math.max(0, Math.round(sharePaise));
+  const tcs = Math.round(share * TAX.tcsRate);
+  const tdsApplies = !(hasPan && annualGrossInr < TAX.tdsExemptionThresholdInr);
+  const tds = tdsApplies ? Math.round(share * TAX.tdsRate) : 0;
+  return {
+    sharePaise: share,
+    tcsPaise: tcs,
+    tdsPaise: tds,
+    tdsWaived: !tdsApplies,
+    netPaise: share - tcs - tds,
+    tdsApplies
+  };
+}
 function partnerEarnings(quotedPaise, {
   hasPan = false,
   annualGrossInr = 0,
@@ -4294,10 +4311,7 @@ function partnerEarnings(quotedPaise, {
   const gross = Math.max(0, Math.round(quotedPaise));
   const fee = Math.round(gross * feeRate);
   const afterFee = gross - fee;
-  const tcs = Math.round(afterFee * TAX.tcsRate);
-  const tdsApplies = !(hasPan && annualGrossInr < TAX.tdsExemptionThresholdInr);
-  const tds = tdsApplies ? Math.round(afterFee * TAX.tdsRate) : 0;
-  const net = afterFee - tcs - tds;
+  const { tcsPaise: tcs, tdsPaise: tds, tdsApplies, netPaise: net } = partnerDeductions(afterFee, { hasPan, annualGrossInr });
   return {
     grossPaise: gross,
     feePaise: fee,

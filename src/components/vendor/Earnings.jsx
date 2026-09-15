@@ -3,8 +3,11 @@ import { Wallet, Clock, ShieldCheck, Banknote, TriangleAlert, ArrowRight } from 
 import { supabase } from '../../lib/supabase'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import { formatINR } from '../../utils/format'
-import { partnerEarnings } from '../../lib/instantPricing'
+import { jobMoney, statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
 import ClaimPayment from './ClaimPayment'
+import JobMoneyRow from './JobMoneyRow'
+import PayoutHistory from './PayoutHistory'
+import EarningsStatement from './EarningsStatement'
 
 /**
  * What this partner has earned, and where each rupee currently is.
@@ -64,12 +67,20 @@ export default function Earnings({ vendorId, onAddPayout }) {
       supabase.from('partner_jobs')
         .select('line_id, service_name, status, partner_amount_paise, quoted_amount_paise, is_funded, paid_at, delivered_at, event_date, occasion_name, area_label')
         .order('event_date', { ascending: false }),
+      /* `pan` joins the select because s.194-O waives TDS for a
+         below-threshold individual who has furnished one, and a screen
+         that ignores that shows a net lower than what arrives. Own row
+         only — the RLS policy on this table is vendor-scoped. */
       supabase.from('vendor_payout_details')
-        .select('method, upi_id, account_number, verified_at').eq('vendor_id', vendorId).maybeSingle(),
+        .select('method, upi_id, account_number, verified_at, pan').eq('vendor_id', vendorId).maybeSingle(),
       /* Claims exist and nothing has ever read them, so a job stayed
          "ready to claim" after the partner had claimed it. */
+      /* The whole row, not three columns of it: the amount, where it
+         went, when it settled and the bank reference are what a partner
+         needs when they are reconciling against a statement. */
       supabase.from('payout_claims')
-        .select('line_id, status, requested_at').eq('vendor_id', vendorId),
+        .select('id, line_id, status, amount_paise, method, destination, requested_at, settled_at, reference, note')
+        .eq('vendor_id', vendorId),
     ])
     setJobs(j ?? [])
     setPayout(p ?? null)
@@ -113,30 +124,47 @@ export default function Earnings({ vendorId, onAddPayout }) {
   }, [jobs, claimBy])
 
   /* ══════════════════════════════════════════════════════════════
-     THE SAME NUMBER THE OFFER PROMISED
+     ONE JOB, ONE NET, COMPUTED IN ONE PLACE
      ══════════════════════════════════════════════════════════════
 
      This screen printed `partner_amount_paise` — the job value less the
-     platform fee. The offer card prints `partnerEarnings().netPaise`,
-     which is that MINUS TCS and TDS, because net is what reaches the
-     account and it is what a master accepts on.
+     platform fee. The offer card prints the net, which is that MINUS TCS
+     and TDS, because net is what reaches the account and it is what a
+     master accepts on.
 
-     So one job read ₹10,540 here and ₹10,416 there, and the smaller one
-     was what arrived. instantPricing.js:400 names this exact mistake —
-     "a master shown ₹10,540 who receives ₹10,416 will conclude they were
-     short-changed, and they will be right to ask" — and this screen was
-     making it.
+     So one job read Rs 10,540 here and Rs 10,416 there, and the smaller
+     one was what arrived. instantPricing.js names this exact mistake —
+     "a master shown Rs 10,540 who receives Rs 10,416 will conclude they
+     were short-changed, and they will be right to ask" — and this screen
+     was making it.
 
-     Net everywhere, computed from `quoted_amount_paise` the same way the
-     offer computes it, so the two cannot drift. */
-  const net = j => (j.quoted_amount_paise
-    ? partnerEarnings(j.quoted_amount_paise).netPaise
-    /* An older row without a quote falls back to what it has. Shown
-       rather than dropped: a job missing from a total is worse than one
-       whose deductions we cannot itemise. */
-    : (j.partner_amount_paise ?? 0))
+     Net everywhere, from `jobMoney`, which is also what the per-job
+     breakdown rows below render from. The totals and the rows cannot
+     disagree because they are the same call.
+
+     ── The PAN changes the answer ────────────────────────────────────
+     s.194-O waives TDS for a below-threshold individual with a PAN on
+     file, which is most of this supply base. The threshold is measured
+     on the financial year's own jobs, on the CUSTOMER price rather than
+     the share — the conservative direction, so the figure shown is the
+     lower of the two possible answers. */
+  const fy = useMemo(() => financialYear(), [])
+  const hasPan = !!payout?.pan
+  const annualInr = useMemo(() => annualGrossInr(jobs, fy), [jobs, fy])
+  const money = useCallback(
+    j => jobMoney(j, { hasPan, annualGrossInr: annualInr }),
+    [hasPan, annualInr])
+
+  const net = j => money(j).netPaise
 
   const sum = list => list.reduce((n, j) => n + net(j), 0)
+
+  /* The year's totals, added from the same jobMoney() call each row below
+     renders — so the statement and the list it sits above can never
+     print different arithmetic for the same job. */
+  const fyStatement = useMemo(
+    () => statement(jobs, { fy, hasPan, annualGrossInr: annualInr }),
+    [jobs, fy, hasPan, annualInr])
 
   /* ══════════════════════════════════════════════════════════════
      ONE TOTAL, THEN THE STAGES IN THE ORDER SOMEBODY ASKS THEM
@@ -258,7 +286,8 @@ export default function Earnings({ vendorId, onAddPayout }) {
                     {formatINR(Math.round(net(j) / 100))}
                   </span>
                 </p>
-                <ClaimPayment lineId={j.line_id} onClaimed={read} />
+                <ClaimPayment lineId={j.line_id} onClaimed={read}
+                              hasPan={hasPan} annualGrossInr={annualInr} />
               </div>
             ))}
           </div>
@@ -327,6 +356,15 @@ export default function Earnings({ vendorId, onAddPayout }) {
         </div>
       )}
 
+      {/* ── The year, for whoever is filing ───────────────────────
+          Below the buckets, because "where is my money now" is the
+          daily question and "what did the year come to" is the
+          quarterly one — and this screen is opened daily. */}
+      {jobs.length > 0 && <EarningsStatement statement={fyStatement} />}
+
+      {/* ── What we have actually sent ────────────────────────────── */}
+      <PayoutHistory claims={claims} />
+
       {/* ── Job by job, so a number can be traced ─────────────────── */}
       {jobs.length > 0 && (
         <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
@@ -337,7 +375,7 @@ export default function Earnings({ vendorId, onAddPayout }) {
             Your work
           </p>
           <p className="mt-0.5 text-[12px] font-semibold text-ink-mute">
-            Every job you have taken, and what it paid.
+            Every job you have taken. Tap one to see where each rupee went.
           </p>
           <ul className="mt-2 divide-y divide-ink/[0.06]">
             {jobs.slice(0, 25).map(j => {
@@ -354,25 +392,21 @@ export default function Earnings({ vendorId, onAddPayout }) {
                 : buckets.held.includes(j) ? 'Paid, held for you'
                 : 'Waiting on the customer'
               return (
-                <li key={j.line_id} className="flex items-center gap-3 py-2.5">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-extrabold text-ink">
-                      {j.service_name}
-                    </span>
-                    <span className="block text-[11.5px] font-semibold text-ink-mute">
-                      {j.event_date
-                        ? new Date(`${j.event_date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-                        : '—'}
-                      {j.area_label ? ` · ${j.area_label}` : ''} · {where}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-[13.5px] font-extrabold tabular-nums text-ink">
-                    {formatINR(Math.round((j.partner_amount_paise ?? 0) / 100))}
-                  </span>
-                </li>
+                <JobMoneyRow
+                  key={j.line_id}
+                  job={j}
+                  where={where}
+                  hasPan={hasPan}
+                  annualGrossInr={annualInr}
+                />
               )
             })}
           </ul>
+          {jobs.length > 25 && (
+            <p className="mt-2 text-[11.5px] font-semibold text-ink-mute">
+              Showing your 25 most recent jobs.
+            </p>
+          )}
         </div>
       )}
     </div>

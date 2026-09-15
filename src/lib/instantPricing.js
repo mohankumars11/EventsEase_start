@@ -390,6 +390,51 @@ export function priceBasis(component, index = marketIndex(), factor = 1) {
 }
 
 /**
+ * The two statutory slices, taken off a share that has ALREADY had the
+ * platform fee removed.
+ *
+ * ── Why this is its own entry point ──────────────────────────────────
+ * `dispatch_offers.partner_amount_paise` and
+ * `booking_lines.partner_amount_paise` are the partner's share — gross
+ * LESS the platform fee (see `lineSplit`, and the CHECK constraint in
+ * migration 059 that makes the two halves close). Anything holding one
+ * of those columns already has the fee out of it, and putting it through
+ * `partnerEarnings` charges the fee a second time.
+ *
+ * That is not hypothetical: the offer card did exactly that, so a master
+ * was shown a net roughly a fee-on-the-fee below what the earnings
+ * screen computed for the same job, under a line labelled "Job value"
+ * that was not the job's value. Two screens disagreeing about one job is
+ * the specific failure the module header warns about.
+ *
+ * So: one function for a GROSS quote, one for a SHARE, and the first is
+ * written in terms of the second.
+ */
+export function partnerDeductions(sharePaise, {
+  hasPan = false,
+  annualGrossInr = 0,
+} = {}) {
+  const share = Math.max(0, Math.round(sharePaise))
+
+  // TCS is on the net taxable value of the supply, and applies
+  // regardless of PAN or threshold.
+  const tcs = Math.round(share * TAX.tcsRate)
+
+  // TDS is waived for a below-threshold individual with a PAN on file.
+  const tdsApplies = !(hasPan && annualGrossInr < TAX.tdsExemptionThresholdInr)
+  const tds = tdsApplies ? Math.round(share * TAX.tdsRate) : 0
+
+  return {
+    sharePaise: share,
+    tcsPaise: tcs,
+    tdsPaise: tds,
+    tdsWaived: !tdsApplies,
+    netPaise: share - tcs - tds,
+    tdsApplies,
+  }
+}
+
+/**
  * What the master actually receives.
  *
  * ── Why the statutory deductions are a THIRD slice ───────────────────
@@ -421,15 +466,11 @@ export function partnerEarnings(quotedPaise, {
   const fee = Math.round(gross * feeRate)
   const afterFee = gross - fee
 
-  // TCS is on the net taxable value of the supply, and applies regardless
-  // of PAN or threshold.
-  const tcs = Math.round(afterFee * TAX.tcsRate)
-
-  // TDS is waived for a below-threshold individual with a PAN on file.
-  const tdsApplies = !(hasPan && annualGrossInr < TAX.tdsExemptionThresholdInr)
-  const tds = tdsApplies ? Math.round(afterFee * TAX.tdsRate) : 0
-
-  const net = afterFee - tcs - tds
+  /* The statutory slices come off the SHARE, not off the quote, and they
+     are computed by `partnerDeductions` so a screen holding only the
+     share cannot arrive at a different net for the same job. */
+  const { tcsPaise: tcs, tdsPaise: tds, tdsApplies, netPaise: net } =
+    partnerDeductions(afterFee, { hasPan, annualGrossInr })
 
   return {
     grossPaise: gross,
