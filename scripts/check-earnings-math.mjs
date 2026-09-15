@@ -125,9 +125,25 @@ ok('last year is not this year', st.customerPaise === 2000000, String(st.custome
 ok('the un-itemised row is counted and named', st.unitemised === 1)
 ok('tax deposited is kept apart from commission',
    st.taxDepositedPaise === st.tcsPaise + st.tdsPaise && st.taxDepositedPaise !== st.commissionPaise)
-ok('the statement closes',
-   st.customerPaise + 300000 === st.commissionPaise + st.taxDepositedPaise + st.netPaise,
-   `${st.customerPaise}+300000 vs ${st.commissionPaise}+${st.taxDepositedPaise}+${st.netPaise}`)
+/* ── The four figures must add up ON SCREEN ──────────────────────
+   The screen prints billed, commission, tax and a total. A reader
+   subtracting the middle two from the first must land exactly on the
+   last, or the statement is worse than one showing less. An older row
+   carries a share and no customer price, so its share is its own line
+   and is counted here the same way the screen counts it. */
+ok('un-itemised share is carried, not dropped',
+   st.unitemisedSharePaise === 300000, String(st.unitemisedSharePaise))
+ok('the statement closes exactly as printed',
+   st.customerPaise - st.commissionPaise - st.taxDepositedPaise + st.unitemisedSharePaise === st.netPaise,
+   `${st.customerPaise}-${st.commissionPaise}-${st.taxDepositedPaise}+${st.unitemisedSharePaise} vs ${st.netPaise}`)
+
+/* And with nothing un-itemised, the extra line is absent and the three
+   figures close on their own. */
+const clean = statement([job({ line_id: 'x', quoted_amount_paise: 1200000 })], { fy })
+ok('with no older rows there is no extra line', clean.unitemisedSharePaise === 0)
+ok('and it still closes',
+   clean.customerPaise - clean.commissionPaise - clean.taxDepositedPaise === clean.netPaise,
+   `${clean.customerPaise}-${clean.commissionPaise}-${clean.taxDepositedPaise} vs ${clean.netPaise}`)
 
 console.log('\nTHE THRESHOLD IS MEASURED ON THE YEAR, NOT THE JOB\n')
 

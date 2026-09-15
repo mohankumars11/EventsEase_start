@@ -149,11 +149,20 @@ export function statement(jobs, { fy = financialYear(), ...opts } = {}) {
     /** Jobs whose commission could not be itemised, so the customer
         total is a floor rather than a total. Named, not hidden. */
     unitemised: 0,
+    /** Their share, which IS known. Carried separately so the four
+        figures on screen still close: without it, a reader adding up
+        billed minus commission minus tax gets a smaller number than the
+        total beside it, and an earnings statement that visibly does not
+        add up is worse than one that shows less. */
+    unitemisedSharePaise: 0,
   }
 
   for (const j of rows) {
     const m = jobMoney(j, opts)
-    if (!m.itemised) t.unitemised += 1
+    if (!m.itemised) {
+      t.unitemised += 1
+      t.unitemisedSharePaise += m.sharePaise
+    }
     t.customerPaise += m.customerPaise ?? 0
     t.commissionPaise += m.commissionPaise ?? 0
     t.tcsPaise += m.tcsPaise

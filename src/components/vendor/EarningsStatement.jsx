@@ -36,6 +36,21 @@ export default function EarningsStatement({ statement: s }) {
     ['Tax deposited for you', `− ${r(s.taxDepositedPaise)}`, 'TCS and TDS, paid to the authorities'],
   ]
 
+  /* ── Why this row exists ────────────────────────────────────────────
+     A job from before the itemised record has a share but no customer
+     price and no commission, so its money is in the total below and in
+     none of the three lines above it. Without this row a reader doing
+     the arithmetic gets a smaller number than the total printed beside
+     it, and a statement that visibly does not add up is worse than one
+     that shows less. With it, the column closes exactly. */
+  if (s.unitemisedSharePaise > 0) {
+    rows.push([
+      'Older jobs, your share',
+      `+ ${r(s.unitemisedSharePaise)}`,
+      `${s.unitemised === 1 ? 'One job predates' : `${s.unitemised} jobs predate`} the itemised record`,
+    ])
+  }
+
   return (
     <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
       <div className="flex items-baseline justify-between gap-3">
@@ -68,14 +83,17 @@ export default function EarningsStatement({ statement: s }) {
         </div>
       </dl>
 
-      {/* A total that is short by an unknown amount must say so. An
-          asterisk on a tax figure is a small embarrassment; a silently
-          wrong one is a real problem for whoever files against it. */}
+      {/* The column closes now, but a reader still needs to know WHY
+          one line is shaped differently from the others. An asterisk on
+          a tax figure is a small embarrassment; a silently wrong one is
+          a real problem for whoever files against it. */}
       {s.unitemised > 0 && (
         <p className="mt-2.5 rounded-[14px] bg-ink/[0.03] px-3 py-2 text-[11.5px] leading-snug text-ink-mute">
-          {s.unitemised === 1 ? 'One job in this year predates' : `${s.unitemised} jobs in this year predate`}
-          {' '}the itemised record, so the billed and commission figures above do not
-          include {s.unitemised === 1 ? 'it' : 'them'}. Your own total does.
+          We cannot show what the customer paid for
+          {s.unitemised === 1 ? ' that older job' : ' those older jobs'}, so the
+          billed and commission figures cover the rest. Your own share of
+          {s.unitemised === 1 ? ' it' : ' them'} is on its own line and is in
+          the total.
         </p>
       )}
     </div>
