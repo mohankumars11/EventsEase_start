@@ -363,7 +363,15 @@ export default function Earnings({ vendorId, onAddPayout }) {
       {jobs.length > 0 && <EarningsStatement statement={fyStatement} />}
 
       {/* ── What we have actually sent ────────────────────────────── */}
-      <PayoutHistory claims={claims} />
+      <PayoutHistory
+        claims={claims}
+        /* So a receipt can show what the customer paid, not just what
+           was claimed. Built from the jobs already in memory rather
+           than re-queried per receipt. */
+        jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))}
+        hasPan={hasPan}
+        annualGrossInr={annualInr}
+      />
 
       {/* ── Job by job, so a number can be traced ─────────────────── */}
       {jobs.length > 0 && (

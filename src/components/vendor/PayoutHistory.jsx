@@ -1,4 +1,7 @@
+import { useState } from 'react'
+import { ChevronRight, ArrowLeft } from 'lucide-react'
 import { formatINR } from '../../utils/format'
+import PayoutReceipt from './PayoutReceipt'
 
 /**
  * Every payout this partner has asked for, and what happened to it.
@@ -52,11 +55,35 @@ const when = iso => iso
   ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
   : null
 
-export default function PayoutHistory({ claims }) {
+export default function PayoutHistory({ claims, jobsByLine, hasPan, annualGrossInr }) {
+  /* One open receipt at a time, in place of the list. A payout is read
+     on its own — with a bank statement in the other hand — and a list
+     that expands five receipts inline is a list nobody can scan. */
+  const [open, setOpen] = useState(null)
   const rows = [...(claims ?? [])].sort(
     (a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime())
 
   if (!rows.length) return null
+
+  if (open) {
+    const claim = rows.find(c => (c.id ?? c.line_id) === open)
+    return (
+      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <button
+          type="button" onClick={() => setOpen(null)}
+          className="mb-3 flex items-center gap-1.5 text-[12.5px] font-extrabold text-ink-mute"
+        >
+          <ArrowLeft size={14} /> All payouts
+        </button>
+        <PayoutReceipt
+          claim={claim}
+          job={jobsByLine?.[claim?.line_id] ?? null}
+          hasPan={hasPan}
+          annualGrossInr={annualGrossInr}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
@@ -69,7 +96,12 @@ export default function PayoutHistory({ claims }) {
       </p>
       <ul className="mt-2 divide-y divide-ink/[0.06]">
         {rows.map(c => (
-          <li key={c.id ?? c.line_id} className="flex items-start gap-3 py-2.5">
+          <li key={c.id ?? c.line_id}>
+           <button
+             type="button"
+             onClick={() => setOpen(c.id ?? c.line_id)}
+             className="flex w-full items-start gap-3 py-2.5 text-left"
+           >
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[13.5px] font-extrabold tabular-nums text-ink">
@@ -98,6 +130,8 @@ export default function PayoutHistory({ claims }) {
                 </span>
               )}
             </span>
+            <ChevronRight size={15} className="mt-1 shrink-0 text-ink-mute" />
+           </button>
           </li>
         ))}
       </ul>

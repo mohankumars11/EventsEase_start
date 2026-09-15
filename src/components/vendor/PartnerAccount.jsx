@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
-  Bell, MessageSquare, BellRing,
+  Bell, MessageSquare, BellRing, Eye,
    LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
   TriangleAlert, Sparkles, Navigation,
 } from 'lucide-react'
@@ -20,6 +20,7 @@ import PayoutDetails from './PayoutDetails'
 import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
 import PartnerReviews from './PartnerReviews'
+import PublicProfilePreview from './PublicProfilePreview'
 import PartnerHelp from './PartnerHelp'
 import PartnerInbox from './PartnerInbox'
 import PartnerMessages from './PartnerMessages'
@@ -243,6 +244,20 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
       <PartnerCode vendor={vendor} />
+
+      {/* ── What a stranger sees ─────────────────────────────────────
+          Closed, because it is a check rather than a task — but high,
+          because "why am I getting no enquiries" is answered here more
+          often than anywhere else on the tab. */}
+      <Fold
+        icon={Eye}
+        title="Your public profile"
+        summary={vendor?.status === 'APPROVED'
+          ? 'How customers see you'
+          : 'How you will look once approved'}
+      >
+        <PublicProfilePreview vendor={vendor} reviews={reviewRows} />
+      </Fold>
 
       {/* ── My Services, first and open ──────────────────────────────
           The Listing tab is gone from the bottom bar (§40): an
