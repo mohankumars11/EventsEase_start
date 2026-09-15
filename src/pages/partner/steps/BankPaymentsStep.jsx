@@ -48,11 +48,21 @@ export default function BankPaymentsStep() {
     if (!v?.id || busy) return
     setBusy(true); setError(null)
     try {
+      /* ── The column is `account_name` ────────────────────────────
+         Not `account_holder`, which is what this wrote and what the
+         label above the field says. PostgREST answered "Could not find
+         the 'account_holder' column ... in the schema cache" and the
+         partner saw it on the screen, which is how it was found —
+         migration 090 has named it `account_name` since the table was
+         created, and PayoutDetails on the More tab had it right all
+         along. Two forms writing one table, and only one of them was
+         checked against the schema. */
       const row = method === 'upi'
-        ? { vendor_id: v.id, method: 'upi', upi_id: upi.trim(), account_number: null, ifsc: null, account_holder: null }
+        ? { vendor_id: v.id, method: 'upi', upi_id: upi.trim(),
+            account_name: null, account_number: null, ifsc: null }
         : {
             vendor_id: v.id, method: 'bank', upi_id: null,
-            account_holder: holder.trim(),
+            account_name: holder.trim(),
             account_number: number.trim(),
             ifsc: ifsc.trim().toUpperCase(),
           }

@@ -266,7 +266,20 @@ export function CartProvider({ children }) {
           package_name: action.pkg.name,
           price_min:    action.pkg.price_min ?? null,
           price_max:    action.pkg.price_max ?? null,
-          complimentary: !!action.complimentary,
+          /* ── `complimentary` is NOT sent ─────────────────────────────
+             `cart_packages` has no such column and never did, so this
+             upsert was failing in full — not dropping one field, failing
+             — and it is fired with a bare .then() and no error handler,
+             so every ADD_PACKAGE silently did not persist. Found by
+             scripts/check-column-names.mjs.
+
+             It is removed rather than added as a column because the
+             feature behind it is already gone: see the note in
+             EventServices.jsx, where the complimentary-hamper
+             auto-attach was deleted with the hampers themselves.
+             Nothing sets it true any more. The read below keeps its
+             `?? false` default, so a row without it behaves exactly as
+             an un-complimentary one. */
           booking_date: action.details?.date ?? null,
           booking_time: action.details?.time || null,
           guest_count:  action.details?.guestCount ?? null,
