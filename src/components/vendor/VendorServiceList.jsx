@@ -181,7 +181,15 @@ export default function VendorServiceList({
              one body of work, however many services they list. */
           vendorId={vendor?.id}
           onAdd={onAdd}
-          onClose={() => setPicking(false)}
+          /* ── Straight on to the next trade they picked ─────────────
+             The flow hands back a trade name when the partner queued
+             several and this was not the last. Reopening on that trade
+             rather than closing is what makes "I do photography, video
+             and decoration" four taps instead of three separate visits
+             to Add Service — and a partner who wants to stop can still
+             close it, because every queued trade already exists as a
+             listing they can come back to. */
+          onClose={next => setPicking(typeof next === 'string' ? next : false)}
         />
       )}
 

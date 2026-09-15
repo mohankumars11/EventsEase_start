@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { isPartnerSurface, isAdminSurface, homeFor, SURFACE } from './config/surface'
+import { usePartnerStage } from './hooks/usePartnerStage'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
@@ -69,6 +70,8 @@ const LocationPermission   = lazy(() => import('./pages/partner/LocationPermissi
 const LocationCapture      = lazy(() => import('./pages/partner/LocationCapture'))
 const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'))
 const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
+const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
+const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -128,6 +131,25 @@ function DashboardRedirect() {
  * how you end up with an app whose access control can be changed by
  * typing a different URL.
  */
+/**
+ * A vendor's landing, decided by how far through setup they actually are.
+ *
+ * This used to be one line in RootScreen sending every vendor to
+ * `/dashboard/vendor`, which is why a partner who had just verified an
+ * email — no vendors row, no trade, nothing — landed on the working
+ * dashboard and never saw "Great! Let's get started". The rule now lives
+ * in lib/partnerStage.js and every entry point asks it.
+ *
+ * Its own component because a hook cannot be called after the early
+ * returns in RootScreen, and RootScreen must not pay for this query on
+ * the customer home.
+ */
+function VendorLanding() {
+  const { route, loading } = usePartnerStage()
+  if (loading) return null
+  return <Navigate to={route} replace />
+}
+
 function RootScreen() {
   const { profile, loading } = useAuth()
 
@@ -150,7 +172,9 @@ function RootScreen() {
    * So the role is checked first and the surface is the fallback, for
    * the one case the role cannot answer: a visitor who is not signed in
    * yet. */
-  if (profile?.role === 'vendor') return <Navigate to="/dashboard/vendor" replace />
+  /* Not a fixed destination: a partner mid-setup is sent back to where
+     they stopped, not to a dashboard that has nothing to show them. */
+  if (profile?.role === 'vendor') return <VendorLanding />
   if (profile?.role === 'admin')  return <Navigate to="/dashboard/admin"  replace />
 
   /* The console host never renders the storefront. Somebody arriving
@@ -589,6 +613,13 @@ function AppRoutes() {
       <Route path="/partner/location-permission"   element={<PageBoundary><LocationPermission /></PageBoundary>} />
       <Route path="/partner/location"              element={<PageBoundary><LocationCapture /></PageBoundary>} />
       <Route path="/partner/location-confirmation" element={<PageBoundary><LocationConfirm /></PageBoundary>} />
+      {/* Is the city we just detected one we recruit in? Its own route
+          rather than a branch inside the onboarding form, where a
+          decorator in Mysuru used to find out three steps after typing
+          a business name. Signed out: it runs BEFORE the login, which
+          is the point — nobody should make an account to be told we
+          are not there yet. */}
+      <Route path="/partner/market" element={<PageBoundary><MarketCheck /></PageBoundary>} />
 
       {/* /partner/login is the name the flow uses; /partner/join is what
           homeFor() and four existing call sites already point at. Same
@@ -599,6 +630,16 @@ function AppRoutes() {
       <Route path="/partner/setup" element={
         <ProtectedRoute allowedRoles={['vendor']}>
           <PageBoundary><PartnerSetupIntro /></PageBoundary>
+        </ProtectedRoute>
+      } />
+
+      {/* What you offer. Its own route rather than a step inside setup,
+          because it is also the way in from More → My Services → Add
+          Service — the same twenty-six trades, the same duplicate rule,
+          one screen. */}
+      <Route path="/partner/services" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><WhatYouOffer /></PageBoundary>
         </ProtectedRoute>
       } />
 

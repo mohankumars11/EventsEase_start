@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
+import { usePartnerStage } from '../../hooks/usePartnerStage'
 
 /**
  * The first screen of the partner app.
@@ -59,6 +60,10 @@ import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerT
 export default function PartnerEntry() {
   const navigate = useNavigate()
   const { user, profile, sendEmailOtp, verifyEmailOtp, signInWithGoogle } = useAuth()
+  /* Renamed on the way in: `stage` is already this screen's own
+     email-or-code state, and two things called stage in one component is
+     how the wrong one gets read six months from now. */
+  const { route: stageRoute, loading: stageLoading } = usePartnerStage()
 
   const [stage, setStage]   = useState('email')   // 'email' | 'code'
   const [email, setEmail]   = useState('')
@@ -100,10 +105,18 @@ export default function PartnerEntry() {
   const codeRef = useRef(null)
 
   /* Already in? Do not make somebody who is signed in look at a sign-in
-     screen — the APK reopens on this route every cold start. */
+     screen — the APK reopens on this route every cold start.
+
+     Where they go is the stage, not the dashboard. This line sent a
+     partner who had verified their email one screen ago straight past
+     "Great! Let's get started" and into a dashboard with no listing,
+     no trade and nothing to do — the reported jump-ahead. `stageLoading`
+     holds the redirect for the one query it takes to know. */
   useEffect(() => {
-    if (user && profile?.role === 'vendor') navigate('/dashboard/vendor', { replace: true })
-  }, [user, profile, navigate])
+    if (user && profile?.role === 'vendor' && !stageLoading) {
+      navigate(stageRoute, { replace: true })
+    }
+  }, [user, profile, stageLoading, stageRoute, navigate])
 
   /* A resend that is available instantly invites a second tap before the
      first mail has landed, and two codes in an inbox is how somebody

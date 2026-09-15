@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, Store, CalendarDays, UserCog } from 'lucide-react'
+import { Bell, IndianRupee, CalendarDays, Menu } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -7,10 +7,10 @@ import { useAuth } from '../../context/AuthContext'
  * The partner app's tab bar.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THE BOTTOM, AND WHY FIVE
+ * WHY THE BOTTOM, AND WHY FOUR
  * ══════════════════════════════════════════════════════════════════════
  *
- * These five destinations have now been a horizontal strip that scrolled
+ * These destinations have now been a horizontal strip that scrolled
  * off the edge, and a grid of cards halfway down the page. Both were
  * wrong in the same way: a partner had to reach the dashboard, scroll,
  * and read before they could go anywhere.
@@ -21,9 +21,9 @@ import { useAuth } from '../../context/AuthContext'
  * survives scrolling, and it means the answer to "where is Earnings" is
  * never "scroll up".
  *
- * Five is the ceiling. A sixth makes each target under 60px on a 360px
- * phone, which is below the size a thumb reliably hits, and the whole
- * point of this bar is that it is hit without looking.
+ * Five was the ceiling and four is the number: see the note on TABS for
+ * why Listing is not one of them, and what it costs a marketplace when
+ * an add-anything button sits one tap from every screen.
  *
  * ── It drives the URL, not local state ──────────────────────────────
  * Each tab writes `?tab=`, which the dashboard already reads. So the
@@ -32,32 +32,31 @@ import { useAuth } from '../../context/AuthContext'
  * and it is the address bar.
  */
 
-/* ── The five, and why they sit in this order ──────────────────────
+/* ── Four, and Listing is deliberately not one of them ──────────────
  *
- *   Jobs      what is live right now. The default, and why the app opens.
- *   Earnings  what the work was worth — and the history of every job,
- *             which is what "my work" actually means once a job is over.
- *   Listing   the business itself: what you offer and what it costs.
- *             Set up once, revisited when the business changes.
- *   Calendar  the days you cannot work. Costs money when it is ignored,
- *             because dispatch offers jobs on days nobody blocked.
- *   Account   you, and where your money goes. Opened least, so last.
+ * It was five, with "Listing" third. That tab was an unrestricted way
+ * into the add flow from anywhere in the app, one tap from every screen
+ * — and the add flow's first screen is twenty-six trades with nothing
+ * saying which of them the partner already has. That is how a partner
+ * ends up with four Photographys and a marketplace ends up with four
+ * rows nobody can tell apart.
  *
- * "My work" was the label here and it was doing two jobs at once: it
- * pointed at the SERVICE LIST, while the thing a partner means by "my
- * work" is the jobs they have done — and those already live under
- * Earnings, next to what each one paid. One name for two ideas is how a
- * tab bar stops being scannable.
+ * Listing is not deleted; it has a front door instead. More → My
+ * Services shows the trades they actually have, with the status of
+ * each, and Add Service goes to the same twenty-six with the ones they
+ * own already marked. The rule and the screen now arrive together.
  *
- * So the tab is named for what is behind it. "Listing" is also the word
- * this market already uses: a decorator on JustDial or WedMeGood has a
- * listing, and knows what it is without being taught. */
+ * Four also buys every target ~90px on a 360px phone, which is the size
+ * a thumb hits without looking — the thing this bar exists for.
+ */
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
-  { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
-  { id: 'list',         label: 'Listing',  icon: Store },
   { id: 'availability', label: 'Calendar', icon: CalendarDays },
-  { id: 'account',      label: 'Account',  icon: UserCog },
+  { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
+  /* Still `account` underneath. The id is in every ?tab= link, in the
+     dashboard's validation list and in four call sites; renaming it to
+     `more` would break all of them to change one word on screen. */
+  { id: 'account',      label: 'More',     icon: Menu },
 ]
 
 export default function PartnerBottomNav() {
@@ -80,7 +79,7 @@ export default function PartnerBottomNav() {
      is no navigation bar on the very first page itself, customer needs to
      log in to see the navigation bar."
 
-     So it is the SAME five tabs, in the same order, in the same place,
+     So it is the SAME four tabs, in the same order, in the same place,
      signed in or not. What changes is only where they lead: signed out,
      every tab except Jobs goes to sign-in and comes back to the tab that
      was tapped. Nothing is hidden and nothing is renamed, because the bar
@@ -120,6 +119,10 @@ export default function PartnerBottomNav() {
     '/partner/join',
     '/partner/verify',
     '/partner/setup',
+    /* What you offer. Its own sticky Continue sits exactly where the bar
+       would be, and a partner mid-setup has one thing to do. */
+    '/partner/services',
+    '/partner/market',
   ]
   const preAccount  = PRE_ACCOUNT.some(r => pathname.startsWith(r))
   const onLanding   = pathname.startsWith('/partner') && !preAccount
@@ -127,7 +130,7 @@ export default function PartnerBottomNav() {
   if (!onLanding && !onDashboard) return null
 
   /* Signed out anywhere but the landing means mid sign-up, and a one-way
-     flow does not want five ways out of it. */
+     flow does not want four ways out of it. */
   const signedOut = !profile
   if (signedOut && !onLanding) return null
 

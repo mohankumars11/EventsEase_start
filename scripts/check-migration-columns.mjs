@@ -101,9 +101,28 @@ for (const f of files) {
   }
   if (!bound.size) continue
 
+  /* ── Columns the file adds to itself ──────────────────────────────
+     A migration that does `ALTER TABLE vendor_services ADD COLUMN
+     listing_id` and then reads `s.listing_id` twenty lines later is
+     CORRECT — the whole file is one transaction and the column exists
+     by the time the SELECT runs. Without this, every such migration is
+     reported as broken until the day it is applied, which is precisely
+     when this guard is meant to be useful.
+
+     The same reasoning the skip list below already applies to whole
+     tables, applied to columns. */
+  const added = new Map()
+  for (const m of sql.matchAll(
+    /ALTER\s+TABLE\s+(?:public\.)?(\w+)[\s\S]{0,80}?ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi)) {
+    const t = m[1].toLowerCase()
+    if (!added.has(t)) added.set(t, new Set())
+    added.get(t).add(m[2])
+  }
+
   for (const [alias, table] of bound) {
-    const cols = await columnsOf(table)
-    if (!cols) { skipped.push(`${f}: public.${table} does not exist yet`); continue }
+    const live = await columnsOf(table)
+    if (!live) { skipped.push(`${f}: public.${table} does not exist yet`); continue }
+    const cols = new Set([...live, ...(added.get(table.toLowerCase()) ?? [])])
     checked++
 
     const used = new Set(

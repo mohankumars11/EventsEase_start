@@ -51,6 +51,18 @@ export const NAV = [
       },
     ],
   },
+
+  {
+    id: 'markets',
+    label: 'Markets',
+    hint: 'Where we are, and where we are wanted',
+    items: [
+      {
+        id: 'city-interest', label: 'City interest', emoji: '🗺️',
+        description: 'Partners waiting in cities we have not opened, and which trades they are — the figure a launch decision is made on.',
+      },
+    ],
+  },
 ]
 
 export const NAV_ITEMS = NAV.flatMap(g => g.items.map(i => ({ ...i, group: g.id, groupLabel: g.label })))

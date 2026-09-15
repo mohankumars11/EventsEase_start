@@ -3,8 +3,9 @@ import {
   BadgeCheck, Upload, Eye, Trash2, Loader2, FileText, Check, TriangleAlert,
 } from 'lucide-react'
 import {
-  DOCUMENT_KINDS, uploadDocument, removeDocument, signedUrlFor,
+  KIND_BY_ID, uploadDocument, removeDocument, signedUrlFor,
 } from '../../lib/partnerDocuments'
+import { requirementsFor } from '../../data/compliance'
 
 /**
  * "Get yourself verified."
@@ -54,7 +55,7 @@ const TONE = {
   idle:    'bg-ink/[0.04] text-ink-mute ring-ink/[0.06]',
 }
 
-export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChanged }) {
+export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChanged, trades = [] }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -62,6 +63,11 @@ export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChan
   const verified = !!vendor?.is_verified
   const status   = vendor?.verification_status ?? 'draft'
   const uploaded = Object.keys(byKind).length
+
+  /* What THIS partner is asked for, from the trades they listed. A
+     partner with no listings yet gets the base set, which is correct:
+     identity does not depend on what you do. */
+  const requirements = requirementsFor(trades)
 
   /* draft (or rejected) → submitted is the ONE verification transition a
      partner owns; 067's guard trigger allows exactly that and silently
@@ -97,12 +103,37 @@ export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChan
         </p>
       )}
 
+      {/* ══════════════════════════════════════════════════════════════
+          ASKED FOR WHAT THEIR TRADE ACTUALLY NEEDS
+          ══════════════════════════════════════════════════════════════
+
+          This was DOCUMENT_KINDS — the same four rows for all twenty-six
+          trades. A caterer was never asked about food and a mehendi
+          artist was asked for a GST certificate, which is two failures
+          in one list: the document that matters most was missing, and
+          three of the four on screen were rows to scroll past.
+
+          data/compliance.js decides, from the trades they actually
+          listed. Each requirement names the upload slot it uses, so a
+          caterer sees "Food business registration or licence" over the
+          same control a decorator sees as "Proof of business". */}
       <ul className="divide-y divide-ink/[0.06]">
-        {DOCUMENT_KINDS.map(kind => (
+        {requirements.map(req => (
           <DocumentRow
-            key={kind.id}
-            kind={kind}
-            row={byKind[kind.id]}
+            key={req.id}
+            /* The requirement supplies the WORDS; the kind supplies the
+               `id`, which is the storage bucket key and what `byKind` is
+               keyed on. Spreading the requirement wholesale would have
+               overwritten `kind.id` with VER-TRADE-FOOD — every upload
+               filed under a kind nothing reads back, with no error
+               anywhere. Named fields, on purpose. */
+            kind={{
+              ...KIND_BY_ID[req.documentKind],
+              label: req.label,
+              hint:  req.hint,
+              recommended: req.required,
+            }}
+            row={byKind[req.documentKind]}
             vendorId={vendorId}
             onChanged={onChanged}
           />

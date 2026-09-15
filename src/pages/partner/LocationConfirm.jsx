@@ -76,10 +76,23 @@ export default function LocationConfirm() {
               {addr?.line ?? 'We have your location'}
             </p>
             {approximate && (
+              <>
               <p className="mt-2 max-w-[18rem] text-[12px] leading-snug text-ink-mute">
-                Your device shared an approximate position. You can set an exact
-                service area during setup.
+                Your device is sharing an approximate location. A precise one helps
+                us match you to events closer to where you actually work.
               </p>
+              {/* Offered, never demanded. Approximate is a choice the
+                  partner made in their own settings and everything
+                  downstream works at that precision — so this improves
+                  the match, it does not gate the sign-up. */}
+              <button
+                type="button"
+                onClick={() => navigate('/partner/location')}
+                className="mt-3 min-h-[40px] rounded-full bg-plum-50 px-4 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
+              >
+                Improve location accuracy
+              </button>
+              </>
             )}
           </>
         ) : (
@@ -97,7 +110,7 @@ export default function LocationConfirm() {
       <div className="safe-cta px-7">
         <button
           type="button"
-          onClick={() => navigate('/partner/login')}
+          onClick={() => navigate('/partner/market')}
           className="min-h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500
                      text-[15.5px] font-extrabold text-white transition active:scale-[0.99]"
         >

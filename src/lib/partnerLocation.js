@@ -256,3 +256,106 @@ export function readSavedAddress() {
     return null
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TELLING THE FIVE FAILURES APART
+   ══════════════════════════════════════════════════════════════════════
+
+   "We couldn't find you" covers five different problems with five
+   different fixes, and a partner given the wrong one taps the same dead
+   button forever:
+
+     services_off        the phone's location is off, for everything
+     denied              they said no to us, and can be asked again
+     permanently_denied  they said no twice, or ticked "don't ask again".
+                         Android will not show the dialog any more; only
+                         Settings can undo it.
+     timeout             no fix yet. Indoors, usually. Retrying works.
+     unavailable         the device tried and could not
+
+   ── What can and cannot be known ────────────────────────────────────
+   Neither Android nor the web tells an app "this is permanent". What
+   CAN be observed is: the permission state was already `denied` before
+   we asked, and asking produced no dialog and an immediate refusal.
+   That is what `permanently_denied` means here — not a claim from the
+   OS, an inference, and the screen it drives offers Settings AND a
+   retry so being wrong costs nothing. */
+export async function diagnoseLocation() {
+  const before = await locationPermissionState()
+
+  const res = await captureLocation()
+  if (res.ok) {
+    /* Coarse is not a failure — it is a legitimate answer a partner
+       chose, and everything this app asks of a position works at a few
+       hundred metres. It gets its own state so the screen can OFFER
+       precision rather than demand it. */
+    const approximate = typeof res.fix.accuracy === 'number' && res.fix.accuracy > 100
+    return { state: approximate ? 'approximate' : 'ok', fix: res.fix }
+  }
+
+  if (res.reason === 'denied') {
+    return { state: before === 'denied' ? 'permanently_denied' : 'denied', fix: null }
+  }
+  if (res.reason === 'timeout') return { state: 'timeout', fix: null }
+  if (res.reason === 'unsupported') return { state: 'unsupported', fix: null }
+
+  /* 'unavailable' from the plugin is the phone saying it could not get a
+     position. On Android the commonest cause by far is that location
+     services are off device-wide — the permission is granted, and there
+     is nothing to grant it to. */
+  return { state: NATIVE ? 'services_off' : 'unavailable', fix: null }
+}
+
+/**
+ * Take the partner to the setting they need to change.
+ *
+ * Returns false when this device cannot be sent there, and the caller
+ * must then SHOW THE STEPS instead. A button labelled "Open Settings"
+ * that does nothing is worse than a sentence telling somebody where to
+ * tap, because they will press it three times before they read anything.
+ *
+ * ── Why this is mostly false today ──────────────────────────────────
+ * Opening the OS settings page needs a native plugin
+ * (@capacitor/app-launcher, or a small custom one for Android's
+ * ACTION_APPLICATION_DETAILS_SETTINGS intent). Neither is installed, and
+ * adding one means a native rebuild of the APK — so this is written to
+ * USE one the moment it exists and to be honest until then, rather than
+ * shipping a control that pretends.
+ */
+/* ── The specifier is a variable, and that is load-bearing ───────────
+ *
+ * Written first as a plain `await import('@capacitor/app-launcher')`
+ * with a .catch, on the assumption that an unresolvable optional import
+ * simply rejects at runtime. It does not get that far: Rollup resolves
+ * dynamic imports at BUILD time, found no such package, and failed the
+ * production build outright —
+ *
+ *   [vite]: Rollup failed to resolve import "@capacitor/app-launcher"
+ *
+ * Nothing caught it before the build, because the dev server and
+ * esbuild's parse check both tolerate it. Holding the name in a
+ * variable behind `@vite-ignore` is the documented way to say "this may
+ * not exist; leave it to the runtime", which is exactly the contract
+ * this function advertises. */
+const APP_LAUNCHER = '@capacitor/app-launcher'
+
+export async function openDeviceSettings(which = 'app') {
+  if (!NATIVE) return false
+  try {
+    const mod = await import(/* @vite-ignore */ APP_LAUNCHER).catch(() => null)
+    if (!mod?.AppLauncher) return false
+    const url = which === 'location'
+      ? 'android.settings.LOCATION_SOURCE_SETTINGS'
+      : 'android.settings.APPLICATION_DETAILS_SETTINGS'
+    await mod.AppLauncher.openUrl({ url })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** The steps, for when the button above cannot be offered. */
+export const SETTINGS_STEPS = {
+  app: ['Open your phone Settings', 'Apps', 'Sambramo', 'Permissions', 'Location', 'Allow'],
+  location: ['Open your phone Settings', 'Location', 'Turn it on'],
+}

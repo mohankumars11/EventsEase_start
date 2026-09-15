@@ -88,7 +88,18 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
  * on for everybody, which is the shape of the bug PROJECT_SUMMARY records
  * about `testPaymentProvider` and free merchandise.
  */
-const IS_PROD = process.env.NODE_ENV === 'production'
+/* ── Anything that is not explicitly a dev box IS production ─────────
+ *
+ * This was `NODE_ENV === 'production'`, which makes the safe answer
+ * depend on a variable being PRESENT. A runtime that does not set
+ * NODE_ENV — a misconfigured deploy, a new host, a container built from
+ * a different base image — reads as "not production", and the global
+ * synthetic flag comes back to life in front of real customers.
+ *
+ * Inverted so the default falls the safe way: only the two values that
+ * definitely mean a developer's machine unlock it, and everything else,
+ * including undefined, is treated as production. */
+const IS_PROD = !['development', 'test'].includes(process.env.NODE_ENV ?? '')
 /* A comma-separated list, not one id.
  *
  * Testing this needs more than one account -- a customer, a second

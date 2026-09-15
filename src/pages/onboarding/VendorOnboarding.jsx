@@ -5,6 +5,10 @@ import {
   Navigation, Check, ShieldCheck, ChevronDown,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { clearDeferral } from '../../lib/partnerStage'
+import { ensureListing } from '../../lib/partnerListings'
+import { pendingTrades } from '../../lib/tradeQueue'
+import { servesCity } from '../../lib/partnerMarket'
 import { useAuth } from '../../context/AuthContext'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { BRAND } from '../../config/sambramo'
@@ -111,6 +115,20 @@ export default function VendorOnboarding() {
     website_url:      '',
     instagram_url:    '',
   })
+
+  /* ── "I am in Mysuru and I work in Bengaluru" ──────────────────────
+     The market screen asked before they got here, and the answer is the
+     SERVICE city — which is what dispatch reads and what this form is
+     collecting. Seeding it means a partner who already answered that
+     question is not asked it again three screens later, in a different
+     control, with their own city pre-selected as the wrong default.
+
+     Seeded, not locked: they can still change it here, because this is
+     the screen where the service area is actually decided. */
+  useEffect(() => {
+    const serves = servesCity()
+    if (serves) setForm(f => (f.city ? f : { ...f, city: serves }))
+  }, [])
 
   /* An exact pin beats a pincode centroid by about two kilometres, and
      the radius filter measures from it. Null until they tap. */
@@ -538,6 +556,28 @@ export default function VendorOnboarding() {
          the right screen: it is the one place that shows what this
          platform can actually list. An existing partner editing their
          profile goes back to Account, which is where they came from. */
+      /* They finished. Whatever "Complete Later" wrote is stale from
+         here on, and leaving it would greet a set-up partner with
+         "Let's finish setting up" on their next cold start. */
+      clearDeferral()
+
+      /* ── Straight into the trade they already chose ────────────────
+         "What you offer" runs BEFORE this form (§59) and leaves its
+         picks in the queue, because a container needs the vendors row
+         this submit has only just written. Now that it exists, the
+         containers can be made and the first trade's questions opened —
+         so the partner is not shown the twenty-six again and asked to
+         pick what they picked four screens ago. */
+      const queued = pendingTrades()
+      if (!existing && queued.length && saved?.id) {
+        for (const trade of queued) await ensureListing(saved.id, trade)
+        navigate(
+          `/dashboard/vendor?tab=list&start=${encodeURIComponent(queued[0])}`,
+          { replace: true },
+        )
+        return
+      }
+
       navigate(
         existing
           ? '/dashboard/vendor?tab=account'

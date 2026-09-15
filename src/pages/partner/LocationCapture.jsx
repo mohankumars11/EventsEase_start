@@ -1,52 +1,99 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Loader2, RefreshCw, Settings } from 'lucide-react'
+import { MapPin, Loader2, RefreshCw, Settings, Crosshair, Pencil } from 'lucide-react'
 import {
-  captureLocation, reverseAddress, saveAddress,
+  diagnoseLocation, reverseAddress, saveAddress,
+  openDeviceSettings, SETTINGS_STEPS,
 } from '../../lib/partnerLocation'
 
 /**
- * Getting the fix.
+ * Getting the fix, and saying the right thing when there isn't one.
  *
- * This screen does the work the previous one asked permission for: it
- * requests the position, reverse-geocodes it, stores both, and moves on.
- * It is a route of its own rather than a spinner on the permission screen
- * because it has three outcomes a partner may have to act on -- refused,
- * unavailable, timed out -- and each needs its own words and its own way
- * forward. A spinner that turns into an error is a dead end.
+ * ══════════════════════════════════════════════════════════════════════
+ * FIVE FAILURES, NOT ONE
+ * ══════════════════════════════════════════════════════════════════════
  *
- * ── No typing here ─────────────────────────────────────────────────
- * The brief is explicit that the partner should not be made to type an
- * address at this point, and they are not. Every failure path offers a
- * retry or a way onward, never a text field.
+ * This screen used to have three states: working, denied, and "we
+ * couldn't detect your location" for everything else. The last one
+ * covered a phone with location switched off device-wide, a permission
+ * refused permanently, and a GPS cold start indoors — three problems
+ * whose fixes are in three different places, described by one sentence
+ * that points at none of them.
  *
- * ── Honest about precision ─────────────────────────────────────────
- * The copy says "Detecting your location", not "Detecting precise
- * location", until a fix is actually in hand. Android may hand back a
- * coarse cell-tower fix when the partner chose approximate, and claiming
- * precision we were not given is the one thing the brief rules out
- * outright. The accuracy that comes back is what decides the wording on
- * the next screen.
+ * A partner told "try again" when the real answer is "you turned this
+ * off in Settings" taps Try Again until they close the app. So the
+ * diagnosis is made in lib/partnerLocation.js and each state gets its
+ * own sentence and its own way out.
+ *
+ * ── The Settings button is real or it is absent ────────────────────
+ * Opening the OS settings page needs a native plugin that is not
+ * installed. Rather than render a button that does nothing, the screen
+ * TRIES to open settings and, when it cannot, shows the exact taps. See
+ * openDeviceSettings().
  */
+
+const COPY = {
+  services_off: {
+    title: 'Location services are off',
+    body: 'Location is switched off on your device, so no app can find you. Turn it on and we will try again.',
+    cta: 'Open location settings',
+    target: 'location',
+  },
+  denied: {
+    title: 'Location permission is needed',
+    body: 'Sambramo uses your location to find event opportunities near you. Nothing is shared with customers.',
+    cta: 'Allow location',
+    target: null,
+  },
+  permanently_denied: {
+    title: 'Location is blocked for Sambramo',
+    body: 'Location access has been turned off for Sambramo in your device settings, so we cannot ask again from here.',
+    cta: 'Open app settings',
+    target: 'app',
+  },
+  timeout: {
+    title: 'We could not detect your location',
+    body: 'That took longer than it should — usually a weak signal indoors. Step outside and try again.',
+    cta: 'Try again',
+    target: null,
+  },
+  unavailable: {
+    title: 'Your phone could not get a fix',
+    body: 'The device tried and could not find a position just now.',
+    cta: 'Try again',
+    target: null,
+  },
+  unsupported: {
+    title: 'This device cannot share a location',
+    body: 'You can still set your service area during setup.',
+    cta: 'Continue anyway',
+    target: null,
+  },
+}
+
 export default function LocationCapture() {
   const navigate = useNavigate()
-  const [state, setState] = useState('working')   // working | denied | unavailable
+  const [state, setState] = useState('working')
+  const [steps, setSteps] = useState(null)
   const started = useRef(false)
 
   const run = async () => {
     setState('working')
-    const res = await captureLocation()
+    setSteps(null)
 
-    if (!res.ok) {
-      setState(res.reason === 'denied' ? 'denied' : 'unavailable')
-      return
-    }
+    const { state: result, fix } = await diagnoseLocation()
+    if (!fix) { setState(result); return }
 
     /* The address is a nicety, not a gate. If the geocoder is slow or
-       unreachable the coordinates are already saved and the confirmation
-       screen simply has no line to print. */
-    const addr = await reverseAddress(res.fix.lat, res.fix.lng)
-    if (addr) saveAddress({ ...addr, accuracy: res.fix.accuracy ?? null })
+       unreachable the coordinates are already saved and the next screen
+       simply has no line to print. */
+    const addr = await reverseAddress(fix.lat, fix.lng)
+    if (addr) saveAddress({ ...addr, accuracy: fix.accuracy ?? null })
+
+    /* Approximate goes onward too. It is a legitimate answer a partner
+       chose, everything downstream works at that precision, and the
+       confirmation screen offers to improve it. Blocking here would be
+       demanding a precision Android does not require us to have. */
     navigate('/partner/location-confirmation', { replace: true })
   }
 
@@ -59,6 +106,16 @@ export default function LocationCapture() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  async function act(copy) {
+    if (!copy.target) { run(); return }
+    const opened = await openDeviceSettings(copy.target)
+    /* Could not send them. Show the taps rather than leave them looking
+       at a button that did nothing. */
+    if (!opened) setSteps(SETTINGS_STEPS[copy.target])
+  }
+
+  const copy = COPY[state] ?? COPY.unavailable
+
   return (
     <div className="native-screen flex flex-col items-center justify-center bg-white px-8">
       <div className="relative mb-10 h-40 w-40">
@@ -69,10 +126,10 @@ export default function LocationCapture() {
         </span>
       </div>
 
-      {state === 'working' && (
+      {state === 'working' ? (
         <>
           <h1 className="text-center text-[20px] font-extrabold text-plum-950">
-            Getting your location…
+            Getting your location&hellip;
           </h1>
           <p className="mt-2 max-w-[17rem] text-center text-[13.5px] leading-relaxed text-ink/65">
             Please wait while we find your current location
@@ -87,41 +144,60 @@ export default function LocationCapture() {
             </p>
           </div>
         </>
-      )}
-
-      {state !== 'working' && (
+      ) : (
         <>
-          <h1 className="text-center text-[20px] font-extrabold text-plum-950">
-            {state === 'denied'
-              ? 'Location access is needed'
-              : "We couldn't detect your location"}
+          <h1 data-loc-state={state} className="text-center text-[20px] font-extrabold text-plum-950">
+            {copy.title}
           </h1>
           <p className="mt-2 max-w-[18rem] text-center text-[13.5px] leading-relaxed text-ink/65">
-            {state === 'denied'
-              ? 'Sambramo uses it to find event opportunities near you. You can allow it in your device settings.'
-              : 'Your device could not get a fix. Check that location services are on, then try again.'}
+            {copy.body}
           </p>
+
+          {/* The taps, when we could not make them for them. */}
+          {steps && (
+            <ol className="mt-5 w-full max-w-xs rounded-2xl bg-ink/[0.03] p-4 text-[12.5px] text-ink-soft ring-1 ring-ink/[0.07]">
+              {steps.map((s, i) => (
+                <li key={s} className="flex gap-2 py-0.5">
+                  <span className="font-extrabold text-plum-600">{i + 1}.</span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ol>
+          )}
 
           <div className="mt-8 w-full max-w-xs">
             <button
               type="button"
-              onClick={run}
+              onClick={() => act(copy)}
+              data-loc-cta={state}
               className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
                          bg-gradient-to-r from-plum-700 to-plum-500 text-[15px] font-extrabold text-white
                          transition active:scale-[0.99]"
             >
-              {state === 'denied' ? <Settings size={17} /> : <RefreshCw size={17} />}
-              {state === 'denied' ? 'Turn on Location Services' : 'Try Again'}
+              {copy.target ? <Settings size={17} /> : <RefreshCw size={17} />}
+              {copy.cta}
             </button>
-            {/* Always a way onward. A partner who cannot give a location
-                still has an app to sign into, and setup asks for a
-                service area anyway. */}
+
+            {/* A second way forward on every failure. A partner who
+                cannot give us a location still has an app to sign into,
+                and setup asks for a service area regardless. */}
+            {copy.target && (
+              <button
+                type="button"
+                onClick={run}
+                className="mt-2 flex min-h-[46px] w-full items-center justify-center gap-1.5
+                           text-[13.5px] font-bold text-plum-600"
+              >
+                <Crosshair size={15} /> Try again
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => navigate('/partner/login')}
-              className="mt-2 min-h-[46px] w-full text-[13.5px] font-bold text-ink/55"
+              onClick={() => navigate('/partner/market')}
+              className="mt-1 flex min-h-[46px] w-full items-center justify-center gap-1.5
+                         text-[13.5px] font-bold text-ink/55"
             >
-              Continue without location
+              <Pencil size={14} /> Enter location manually
             </button>
           </div>
         </>

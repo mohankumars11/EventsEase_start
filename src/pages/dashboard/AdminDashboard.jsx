@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { resolveNav } from '../../config/adminNav'
 import AdminShell from '../../components/admin/AdminShell'
 import PartnerConsole from '../../components/admin/PartnerConsole'
+import MarketInterest from '../../components/admin/MarketInterest'
 
 /**
  * The admin console: a frame and one screen.
@@ -81,7 +82,10 @@ export default function AdminDashboard() {
       onRefresh={loadBadge}
       refreshing={refreshing}
     >
-      <PartnerConsole />
+      {/* Two screens now, and the registry in config/adminNav decides
+          which. The console is still the default and still the one with
+          a badge — a queue announces itself; a map does not. */}
+      {activeNav === 'city-interest' ? <MarketInterest /> : <PartnerConsole />}
     </AdminShell>
   )
 }

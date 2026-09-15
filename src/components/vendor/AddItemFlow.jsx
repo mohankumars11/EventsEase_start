@@ -29,6 +29,7 @@ import ListingSignature from './ListingSignature'
 import MenuDishStep from './MenuDishStep'
 import WorkUpload from './WorkUpload'
 import { workPromptsFor } from '../../data/workPrompts'
+import { completeTrade } from '../../lib/tradeQueue'
 import { addWork } from '../../lib/partnerWork'
 import WhatHappensNext from './WhatHappensNext'
 import VenueTerms from './VenueTerms'
@@ -705,10 +706,24 @@ export default function AddItemFlow({
           specs,
         })
       }
+      /* ── The trade is finished; is there another one waiting? ──────
+         "What you offer" takes several trades at once and this flow
+         takes one, so the picks were left in a queue. Striking this
+         trade off and naming the next is the difference between a
+         partner who set up four trades and a partner who set up one and
+         forgot what else they ticked.
+
+         Local and disposable: every queued trade already has a
+         container row, so losing the queue costs the running order and
+         nothing else. */
+      const nextTrade = completeTrade(trade)
+
       toast.success(
         picked.length === 1
           ? 'Added. Our team checks it and turns it on.'
           : `${picked.length} added. Our team checks them and turns them on.`)
+
+      if (nextTrade) { onClose(nextTrade); return }
       onClose()
     } catch (e) {
       toast.error(friendlyError(e))

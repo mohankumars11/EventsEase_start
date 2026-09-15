@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   CheckCircle2, Circle, ChevronRight, LogOut, Loader2, AlertCircle,
@@ -95,7 +95,6 @@ export default function VendorDashboard() {
   const tab = TABS.some(t => t.id === params.get('tab')) ? params.get('tab') : 'offers'
   const setTab = id => setParams(id === 'offers' ? {} : { tab: id }, { replace: true })
 
-  const firstName    = profile?.full_name?.split(' ')[0] ?? 'there'
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
   const statusMeta   = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
 
@@ -149,32 +148,19 @@ export default function VendorDashboard() {
     )
   }
 
-  // A vendor account with no vendors row: they signed up and never finished
-  // onboarding, or onboarding failed. Before migration 021 it always failed,
-  // so this is the state most existing partners are actually in — it gets a
-  // real door rather than an empty dashboard.
-  if (!vendor) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-        <div className="card p-6 sm:p-10 text-center">
-          <div className="text-4xl mb-4">🏪</div>
-          <h1 className="text-2xl font-display font-bold text-gray-900">
-            Welcome to Sambramo, {firstName}
-          </h1>
-          <p className="text-gray-500 mt-2 max-w-md mx-auto">
-            One short form and you're set up — your business, where you work, and
-            what you charge. It takes about three minutes.
-          </p>
-          <Link to="/onboarding/vendor" className="btn-cta mt-7">
-            Set up my profile <ArrowRight size={18} />
-          </Link>
-          <button onClick={handleSignOut} className="block mx-auto mt-5 text-xs text-gray-500 hover:text-gray-600">
-            Sign out
-          </button>
-        </div>
-      </div>
-    )
-  }
+  /* A vendor account with no vendors row: they signed up and never
+     finished onboarding, or onboarding failed.
+
+     This used to be a second, quieter version of "Great! Let's get
+     started" — a card inside the dashboard shell, on a grey ground, with
+     a different heading and a different list of steps. A partner who
+     reached it had been sent PAST the real intro screen to a smaller
+     copy of it, which is the jump-ahead as it was actually experienced.
+
+     One screen owns this state now, and it is /partner/setup. The
+     redirect is `replace` so the back button does not bounce them into
+     the dashboard they cannot use. */
+  if (!vendor) return <Navigate to="/partner/setup" replace />
 
   /* ══════════════════════════════════════════════════════════════════
      NOTHING LOADS UNTIL THE TERMS ARE ANSWERED
@@ -533,6 +519,11 @@ export default function VendorDashboard() {
             profile={profile}
             onUpdateVendor={updateVendor}
             onSignOut={handleSignOut}
+            /* More → My Services → a trade opens that trade's own
+               listing, on the tab that already renders it. Switching the
+               tab rather than routing keeps the partner inside the
+               dashboard and keeps one implementation of the flow. */
+            onOpenTrade={trade => setParams({ tab: 'list', start: trade })}
           />
         )}
       </div>

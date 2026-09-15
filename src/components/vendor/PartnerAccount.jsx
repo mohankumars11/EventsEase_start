@@ -10,8 +10,11 @@ import { BRAND } from '../../config/sambramo'
 import { VENDOR_CATEGORIES, VENDOR_STATUS, formatPrice } from '../../config/vendor'
 import { PARTNER_PLANS, PLAN_BY_ID, LAUNCH_OFFER, LAUNCH_NOTE, effectiveTier } from '../../config/partnerPlans'
 import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincodeDirectory'
-import { DOCUMENT_KINDS, fetchDocuments } from '../../lib/partnerDocuments'
+import { fetchDocuments } from '../../lib/partnerDocuments'
+import { requirementsFor } from '../../data/compliance'
 import Fold from './Fold'
+import MyServices from './MyServices'
+import { fetchListings } from '../../lib/partnerListings'
 import PayoutDetails from './PayoutDetails'
 import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
@@ -73,7 +76,7 @@ import PartnerHandbook from './PartnerHandbook'
  *             it would be a button that appears to work and does not.
  */
 
-export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSignOut }) {
+export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSignOut, onOpenTrade }) {
   const { user, fetchProfile } = useAuth()
 
   const statusMeta = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
@@ -124,6 +127,18 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
      "Verification" — a heading with nothing under it and no way to tell
      whether that was a bug or an answer. Knowing up here means the row
      is simply not offered until the feature exists. */
+  /* Which trades they actually listed. Read here because two things
+     need it — the document checklist below, which is trade-aware, and
+     nothing else on this tab. One query, not one per section. */
+  const [listings, setListings] = useState(null)
+  const listedTrades = (listings ?? []).map(r => r.trade)
+  useEffect(() => {
+    if (!vendor?.id) return
+    let dead = false
+    fetchListings(vendor.id).then(rows => { if (!dead) setListings(rows) })
+    return () => { dead = true }
+  }, [vendor?.id])
+
   const [docs, setDocs] = useState(null)
   const readDocs = useCallback(async () => {
     if (!vendor?.id) return
@@ -136,8 +151,12 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
     ? 'Verified master'
     : vendor?.verification_status === 'submitted'
       ? `With our team · ${docCount} document${docCount === 1 ? '' : 's'} sent`
+      /* Out of what THEY are asked for, not out of a fixed four. A
+         caterer and a mehendi artist are asked for different numbers of
+         documents, and "2 of 4" under a list of three is the kind of
+         small wrongness that makes somebody distrust the rest. */
       : docCount
-        ? `${docCount} of ${DOCUMENT_KINDS.length} added — send them for checking`
+        ? `${docCount} of ${requirementsFor(listedTrades).length} added — send them for checking`
         : 'Not verified yet — add a document'
 
   const payoutSummary = !payout
@@ -152,6 +171,26 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
       <PartnerCode vendor={vendor} />
+
+      {/* ── My Services, first and open ──────────────────────────────
+          The Listing tab is gone from the bottom bar (§40): an
+          add-anything button one tap from every screen is how a partner
+          ends up with four Photographys. This is what it became — and
+          it is not behind a fold, because a partner opening More to
+          check whether their Catering went live should not have to find
+          a row and tap it first. */}
+      <Fold
+        icon={Store}
+        title="My services"
+        summary="What you offer, and where each one stands"
+        defaultOpen
+      >
+        <MyServices
+          vendorId={vendor?.id}
+          initialRows={listings}
+          onOpenTrade={onOpenTrade}
+        />
+      </Fold>
 
       <AccountState vendor={vendor} onUpdateVendor={onUpdateVendor} />
 
@@ -187,6 +226,10 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
             byKind={docs.byKind}
             onUpdateVendor={onUpdateVendor}
             onChanged={readDocs}
+            /* Which documents are asked for depends on what they do —
+               a caterer is asked about food and a mehendi artist is
+               not. See data/compliance.js. */
+            trades={listedTrades}
           />
         </Fold>
       )}
@@ -739,7 +782,7 @@ function ReachDetails({ vendor, onUpdateVendor }) {
          every fold on the tab for one changed field. */
       await onUpdateVendor({
         area:              f.form.area.trim() || null,
-        service_radius_km: Math.min(100, Math.max(1, Number(f.form.service_radius_km) || 10)),
+        service_radius_km: Math.min(200, Math.max(1, Number(f.form.service_radius_km) || 10)),
         daily_capacity:    Math.min(50, Math.max(1, Number(f.form.daily_capacity) || 1)),
       })
       f.setSaved(true)
@@ -802,13 +845,20 @@ function ReachDetails({ vendor, onUpdateVendor }) {
             the same field, with a different default — 10 here, 15
             there — so a partner met two answers to one question.
 
-            Six chips, the same six, in both places. */}
+            Six chips, the same six, in both places.
+
+            ── Why it now goes past 60 ──────────────────────────────
+            A partner in Mysuru who serves Bengaluru is a Bengaluru
+            partner (§23), and the distance between them is about 150
+            km. Capping the honest answer at 60 would have made that
+            partner either lie or be undispatchable, which is the same
+            outcome by two routes. */}
         <Field
           label="How far you will travel"
           hint="We only offer you jobs inside this circle. Widen it to see more work; narrow it to stop being sent across the city."
         >
           <div className="flex flex-wrap gap-2">
-            {[5, 10, 15, 25, 40, 60].map(km => (
+            {[5, 10, 15, 25, 40, 60, 100, 150].map(km => (
               <button
                 key={km} type="button"
                 onClick={() => f.set('service_radius_km', String(km))}
