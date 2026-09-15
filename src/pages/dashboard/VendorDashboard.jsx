@@ -29,7 +29,7 @@ import JobsStats from '../../components/partner/JobsStats'
 import { fetchNotifications } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
-import AgendaView from '../../components/partner/AgendaView'
+import CalendarMonth from '../../components/partner/CalendarMonth'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
@@ -637,7 +637,11 @@ export default function VendorDashboard() {
         {tab === 'availability' && (
           <div className="mb-6">
             <h2 className="mb-3 text-[15px] font-extrabold text-ink">Your schedule</h2>
-            <AgendaView vendorId={vendor?.id} />
+            {/* The month, then the day. CalendarMonth owns both and
+                feeds the grid from the same conflict engine the agenda
+                rows use, so a dot and the warning under it cannot
+                disagree about the same day. */}
+            <CalendarMonth vendorId={vendor?.id} availability={availability} />
           </div>
         )}
 

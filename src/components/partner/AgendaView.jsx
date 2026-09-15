@@ -25,15 +25,21 @@ import { conflictsFor, spanOf, clock, mins, SEVERITY } from '../../lib/calendarC
  * Reads partner_jobs, which is the partner's own accepted work. Nothing
  * here is illustrative; an empty agenda says so plainly.
  */
-export default function AgendaView({ vendorId, days = 30 }) {
+export default function AgendaView({ vendorId, days = 30, onlyDate = null }) {
   const [state, setState] = useState({ loading: true, jobs: [], error: null })
 
   useEffect(() => {
     let alive = true
     if (!vendorId) { setState({ loading: false, jobs: [], error: null }); return }
 
-    const from = new Date().toISOString().slice(0, 10)
-    const to = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10)
+    /* `onlyDate` narrows the window to one day, for the month grid's
+       selected date. Narrowing the QUERY rather than filtering the
+       result matters: the conflict grouping below runs on what came
+       back, and a filtered-after-the-fact list would hide the other job
+       on that day and with it the reason the day is tight. Which is why
+       both ends move to the same date rather than one. */
+    const from = onlyDate ?? new Date().toISOString().slice(0, 10)
+    const to = onlyDate ?? new Date(Date.now() + days * 86400000).toISOString().slice(0, 10)
 
     supabase.from('partner_jobs')
       .select('line_id, occasion_name, service_name, trade, event_date, time_note, guest_count, area_label, city, distance_m, partner_amount_paise, status, is_funded')
@@ -45,7 +51,7 @@ export default function AgendaView({ vendorId, days = 30 }) {
         setState({ loading: false, jobs: data ?? [], error })
       })
     return () => { alive = false }
-  }, [vendorId, days])
+  }, [vendorId, days, onlyDate])
 
   /* Grouped by day, because a conflict is a property of a day rather
      than of the list. */
