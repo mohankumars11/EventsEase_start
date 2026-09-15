@@ -22,6 +22,7 @@ import PartnerHandbook from './PartnerHandbook'
 import PartnerReviews from './PartnerReviews'
 import PublicProfilePreview from './PublicProfilePreview'
 import PartnerAvatar from './PartnerAvatar'
+import ServiceArea from '../partner/ServiceArea'
 import PartnerHelp from './PartnerHelp'
 import PartnerInbox from './PartnerInbox'
 import PartnerMessages from './PartnerMessages'
@@ -400,6 +401,21 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
       )}
 
       <BusinessDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
+
+      {/* ── Where you work ───────────────────────────────────────────
+          The radius is a dispatch rule, not a preference: match_partners
+          measures against it, so a nudge here silently removes the
+          partner from a ring of bookings. Its own fold, above the
+          address form it used to be buried inside. */}
+      <Fold
+        icon={Navigation}
+        title="Service area"
+        summary={vendor?.service_radius_km
+          ? `Within ${vendor.service_radius_km} km of ${vendor.area ?? vendor.city ?? 'you'}`
+          : 'How far you will travel'}
+      >
+        <ServiceArea vendor={vendor} onSave={onUpdateVendor} />
+      </Fold>
 
       <ReachDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
 

@@ -641,7 +641,8 @@ export default function VendorDashboard() {
                 feeds the grid from the same conflict engine the agenda
                 rows use, so a dot and the warning under it cannot
                 disagree about the same day. */}
-            <CalendarMonth vendorId={vendor?.id} availability={availability} />
+            <CalendarMonth vendorId={vendor?.id} availability={availability}
+                           onSetDay={setDayStatus} onSetRange={setRangeStatus} />
           </div>
         )}
 

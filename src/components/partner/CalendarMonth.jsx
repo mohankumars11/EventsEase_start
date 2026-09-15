@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarX2 } from 'lucide-react'
+import { CalendarX2, CalendarCog } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
 import MonthGrid from './MonthGrid'
+import SetAvailability from './SetAvailability'
 import AgendaView from './AgendaView'
 
 /**
@@ -27,9 +28,10 @@ import AgendaView from './AgendaView'
  * and carry on scanning the month — not to land somewhere and have to
  * come back. Tapping the same date again clears it.
  */
-export default function CalendarMonth({ vendorId, availability }) {
+export default function CalendarMonth({ vendorId, availability, onSetDay, onSetRange }) {
   const [jobs, setJobs] = useState([])
   const [selected, setSelected] = useState(null)
+  const [editing, setEditing] = useState(false)
 
   const read = useCallback(async () => {
     if (!vendorId) return
@@ -69,15 +71,37 @@ export default function CalendarMonth({ vendorId, availability }) {
         availability={availability}
         conflicts={conflicts}
         selected={selected}
-        onSelect={iso => setSelected(s => (s === iso ? null : iso))}
+        onSelect={iso => { setEditing(false); setSelected(s => (s === iso ? null : iso)) }}
       />
 
-      {selected ? (
+      {/* The sheet, in place of the day's list while it is open. Not a
+          modal: a partner setting a date wants the month still visible
+          above it, and a sheet that covers the calendar is one they
+          have to close to check what they just did. */}
+      {selected && editing && (
+        <div className="rounded-[22px] bg-surface-sunk p-3.5 ring-1 ring-ink/[0.07]">
+          <SetAvailability
+            date={selected}
+            availability={availability}
+            onSetDay={onSetDay}
+            onSetRange={onSetRange}
+            onDone={() => setEditing(false)}
+          />
+        </div>
+      )}
+
+      {selected && !editing ? (
         <div>
           <p className="mb-2 text-[13px] font-extrabold text-ink">
             {new Date(`${selected}T00:00:00`).toLocaleDateString('en-IN',
               { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
+          <button
+            type="button" onClick={() => setEditing(true)}
+            className="mb-2 flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-white text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
+          >
+            <CalendarCog size={14} /> Set availability for this day
+          </button>
           {onDay.length === 0 ? (
             <p className="flex items-center gap-2 rounded-[18px] bg-ink/[0.03] px-4 py-3.5 text-[12.5px] text-ink-mute">
               <CalendarX2 size={14} className="shrink-0" />
