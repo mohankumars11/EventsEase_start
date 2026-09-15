@@ -88,7 +88,7 @@ export default function VendorDashboard() {
 
   const account = useVendorAccount()
   const {
-    loading, error, refresh, vendor, services, availability,
+    loading, error, refresh, vendor, services, availability, reviews,
     stats, checklist, updateVendor, addService, updateService, removeService,
     setDayStatus, setRangeStatus, clearDays,
   } = account
@@ -618,6 +618,7 @@ export default function VendorDashboard() {
           <PartnerAccount
             vendor={vendor}
             profile={profile}
+            reviews={reviews}
             onUpdateVendor={updateVendor}
             onSignOut={handleSignOut}
             /* More → My Services → a trade opens that trade's own

@@ -18,6 +18,8 @@ import { fetchListings } from '../../lib/partnerListings'
 import PayoutDetails from './PayoutDetails'
 import VendorDocuments from './VendorDocuments'
 import PartnerHandbook from './PartnerHandbook'
+import PartnerReviews from './PartnerReviews'
+import PartnerHelp from './PartnerHelp'
 
 /**
  * The partner's account, end to end.
@@ -76,7 +78,7 @@ import PartnerHandbook from './PartnerHandbook'
  *             it would be a button that appears to work and does not.
  */
 
-export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSignOut, onOpenTrade }) {
+export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendor, onSignOut, onOpenTrade }) {
   const { user, fetchProfile } = useAuth()
 
   const statusMeta = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
@@ -159,6 +161,20 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
         ? `${docCount} of ${requirementsFor(listedTrades).length} added — send them for checking`
         : 'Not verified yet — add a document'
 
+  /* The fold has to say what is in it while it is shut, and for reviews
+     that means the average and the count — a row reading "Reviews" with
+     nothing after it tells a partner nothing about whether opening it is
+     worth the tap. Averaged from the rows rather than read off
+     `vendors.rating_avg`, so the summary and the bars inside cannot
+     disagree on a database where the 002 trigger has not fired. */
+  const reviewRows = reviews ?? []
+  const reviewAvg = reviewRows.length
+    ? reviewRows.reduce((n, r) => n + r.rating, 0) / reviewRows.length
+    : 0
+  const reviewSummary = reviewRows.length
+    ? `${reviewAvg.toFixed(1)} from ${reviewRows.length} review${reviewRows.length === 1 ? '' : 's'}`
+    : 'No reviews yet'
+
   const payoutSummary = !payout
     ? 'Not added yet — we cannot pay you without it'
     : payout.method === 'upi'
@@ -190,6 +206,20 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
           initialRows={listings}
           onOpenTrade={onOpenTrade}
         />
+      </Fold>
+
+      {/* ── What customers said ──────────────────────────────────────
+          Below the services it is about, and closed: a partner opens
+          More to change something, and reviews are the one thing on
+          this tab they cannot change. Read when they want to read
+          them. */}
+      <Fold
+        icon={Star}
+        title="Reviews"
+        summary={reviewSummary}
+        tone={reviewRows.length && reviewAvg >= 4.5 ? 'good' : 'neutral'}
+      >
+        <PartnerReviews reviews={reviewRows} />
       </Fold>
 
       <AccountState vendor={vendor} onUpdateVendor={onUpdateVendor} />
@@ -292,6 +322,8 @@ export default function PartnerAccount({ vendor, profile, onUpdateVendor, onSign
 
       {/* Reference rather than a setting, and it folds itself. */}
       <PartnerHandbook />
+
+      <PartnerHelp vendor={vendor} />
 
       <DangerZone vendor={vendor} onUpdateVendor={onUpdateVendor} onSignOut={onSignOut} />
     </div>
