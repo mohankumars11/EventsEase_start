@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import {
   CalendarDays, MapPin, Phone, User, IndianRupee, Loader2, Check,
@@ -194,6 +195,7 @@ export default function MyJobs({ vendorId }) {
 }
 
 function JobCard({ job, onChange }) {
+  const navigate = useNavigate()
   const meta = STATE[job.status] ?? STATE.accepted
   const tone = TONE[meta.tone]
   const Icon = meta.icon
@@ -303,9 +305,21 @@ function JobCard({ job, onChange }) {
 
       <div className="mt-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-[15.5px] font-extrabold leading-tight text-ink">
-            {job.service_name}
-          </h3>
+          {/* The title opens the job's own screen. The card keeps the
+              controls a partner uses from the list — mark done, start
+              trip, claim — and hands off the reading matter: the
+              requirements, the money breakdown and the timeline, which
+              are too tall to expand inside a scrolling list. */}
+          <button
+            type="button"
+            onClick={() => navigate(`/partner/jobs/${job.line_id}`)}
+            className="flex w-full items-center gap-1 text-left"
+          >
+            <h3 className="truncate text-[15.5px] font-extrabold leading-tight text-ink">
+              {job.occasion_name ?? job.service_name}
+            </h3>
+            <ChevronRight size={15} className="shrink-0 text-ink-mute" />
+          </button>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-semibold text-ink-soft">
             <span className="inline-flex items-center gap-1">
               <CalendarDays size={12.5} className="text-ink-mute" />

@@ -72,6 +72,9 @@ const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'
 const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
 const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
 const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
+/* One job, in full. A route rather than a taller card so a notification
+   can point AT a booking instead of dropping somebody on a list. */
+const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
 /* The six onboarding steps. Each is gated by StepGate, so a typed URL
    cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
 const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
@@ -629,6 +632,7 @@ function AppRoutes() {
           is the point — nobody should make an account to be told we
           are not there yet. */}
       <Route path="/partner/market" element={<PageBoundary><MarketCheck /></PageBoundary>} />
+      <Route path="/partner/jobs/:lineId" element={<PageBoundary><JobDetails /></PageBoundary>} />
 
       {/* /partner/login is the name the flow uses; /partner/join is what
           homeFor() and four existing call sites already point at. Same

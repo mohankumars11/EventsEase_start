@@ -25,6 +25,8 @@ import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
 import JobsHeader from '../../components/partner/JobsHeader'
+import JobsStats from '../../components/partner/JobsStats'
+import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
 import AgendaView from '../../components/partner/AgendaView'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
@@ -324,6 +326,21 @@ export default function VendorDashboard() {
         </div>
       )}
 
+      {/* ── The scoreboard ───────────────────────────────────────────
+          Four counts, each traceable to rows, riding up over the
+          header's bottom edge the way the reference design has them. */}
+      {tab === 'offers' && (
+        <div className="mb-4">
+          <JobsStats
+            vendorId={vendor?.id}
+            onOpen={key => {
+              if (key === 'messages') setTab('account')
+              else if (key === 'confirmed' || key === 'accepted') setTab('availability')
+            }}
+          />
+        </div>
+      )}
+
       {/* What needs doing, and nothing at all when nothing does. */}
       {tab === 'offers' && (
         <AttentionSummary
@@ -485,6 +502,12 @@ export default function VendorDashboard() {
 
               {/* New offers, which expire in 45 seconds. */}
               <OfferInbox vendorId={vendor.id} />
+
+              {/* Seven days, three rows. Between the expiring offers and
+                  the full job list because it answers the morning
+                  question -- what have I got on -- which sits between
+                  "is there new work" and "show me everything". */}
+              <UpcomingWeek onSeeAll={() => setTab('availability')} />
 
               {/* And everything already accepted.
                   Below the inbox because an expiring offer is urgent and a
