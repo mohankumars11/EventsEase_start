@@ -571,8 +571,11 @@ export default function VendorOnboarding() {
       const queued = pendingTrades()
       if (!existing && queued.length && saved?.id) {
         for (const trade of queued) await ensureListing(saved.id, trade)
+        /* &return=setup, or a brand-new partner finishes their first
+           trade and lands on the dashboard instead of back in step 1 —
+           the same hole the pathname test left, by a different road. */
         navigate(
-          `/dashboard/vendor?tab=list&start=${encodeURIComponent(queued[0])}`,
+          `/dashboard/vendor?tab=list&start=${encodeURIComponent(queued[0])}&return=setup`,
           { replace: true },
         )
         return

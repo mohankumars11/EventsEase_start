@@ -81,7 +81,14 @@ export default function BusinessServicesStep() {
                     type="button"
                     data-service={l.trade}
                     data-configured={done ? 'yes' : 'no'}
-                    onClick={() => navigate(`/partner/services?start=${encodeURIComponent(l.trade)}`)}
+                    /* Straight into THIS trade's questionnaire, carrying
+                       the marker that brings them back here afterwards.
+                       It used to go to /partner/services?start=…, which
+                       reads no search params — so tapping a draft trade
+                       showed the 26-trade grid again, and finishing it
+                       landed the partner on the dashboard. */
+                    onClick={() => navigate(
+                      `/dashboard/vendor?tab=list&start=${encodeURIComponent(l.trade)}&return=setup`)}
                     className={`flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 text-left
                                 ring-1 transition active:scale-[0.99]
                                 ${done ? 'ring-forest-200' : 'ring-amber-200'}`}
@@ -114,7 +121,11 @@ export default function BusinessServicesStep() {
       <button
         type="button"
         data-add-service
-        onClick={() => navigate('/partner/services')}
+        /* ?from=setup is what makes the trade flow hand the partner
+           back to this hub. WhatYouOffer used to infer it from the
+           pathname, which stopped being possible when step 1 became its
+           own component — see the note there. */
+        onClick={() => navigate('/partner/services?from=setup')}
         className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl
                    bg-plum-50 text-[13.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
       >

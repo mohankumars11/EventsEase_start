@@ -109,7 +109,20 @@ export default function VendorDashboard() {
   // it is asking for, and so a vendor who reloads mid-edit lands back where
   // they were rather than on Overview.
   const tab = TABS.some(t => t.id === params.get('tab')) ? params.get('tab') : 'offers'
-  const setTab = id => setParams(id === 'offers' ? {} : { tab: id }, { replace: true })
+  /* ── Switching tabs must not drop `return` ────────────────────────
+     Both of these replaced the ENTIRE query string, so a partner who
+     was mid-trade-flow (?tab=list&start=X&return=setup) and touched any
+     tab silently stopped being an onboarding partner: `returnTo` went
+     null and finishing the trade left them on the dashboard. Carried
+     through explicitly. */
+  const keepReturn = next => {
+    const out = new URLSearchParams(next)
+    const r = params.get('return')
+    if (r) out.set('return', r)
+    return out
+  }
+  const setTab = id =>
+    setParams(keepReturn(id === 'offers' ? {} : { tab: id }), { replace: true })
 
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
   const statusMeta   = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
@@ -655,7 +668,7 @@ export default function VendorDashboard() {
                listing, on the tab that already renders it. Switching the
                tab rather than routing keeps the partner inside the
                dashboard and keeps one implementation of the flow. */
-            onOpenTrade={trade => setParams({ tab: 'list', start: trade })}
+            onOpenTrade={trade => setParams(keepReturn({ tab: 'list', start: trade }))}
           />
         )}
       </div>

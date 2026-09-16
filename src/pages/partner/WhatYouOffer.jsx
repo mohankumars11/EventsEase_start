@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import TradeGrid from '../../components/vendor/TradeGrid'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
@@ -39,10 +39,31 @@ import { queueTrades } from '../../lib/tradeQueue'
  */
 export default function WhatYouOffer() {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
-  /* Same component, two doors: /partner/setup/services is step 1,
-     /partner/services is Add Service from More. */
-  const inSetup = pathname.startsWith('/partner/setup')
+  /* ══════════════════════════════════════════════════════════════════
+     AM I INSIDE ONBOARDING? ASK THE URL, NOT THE PATHNAME
+     ══════════════════════════════════════════════════════════════════
+
+     This used to read:
+
+         const inSetup = pathname.startsWith('/partner/setup')
+
+     which could never be true. `/partner/setup/services` routes to
+     StepGate -> BusinessServicesStep; this component is mounted only at
+     `/partner/services`. The comment above it described a "same
+     component, two doors" arrangement that stopped existing the day
+     step 1 became its own hub.
+
+     The consequence was the whole onboarding loop: `inSetup` false ->
+     no `&return=setup` -> `returnTo` null in VendorServiceList -> the
+     questionnaire closed and left the partner standing on the dashboard
+     that had been hosting it, with step 1 silently complete behind
+     them. Exactly the failure the six-step redesign existed to prevent.
+
+     An explicit parameter instead. It survives the hop, it is visible in
+     the URL when something goes wrong, and it cannot quietly become
+     false the next time routing moves. */
+  const [params] = useSearchParams()
+  const inSetup = params.get('from') === 'setup'
   const { account } = usePartnerStage()
   const vendorId = account?.vendor?.id ?? null
 

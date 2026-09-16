@@ -8,6 +8,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
+import { clearQueue } from '../../lib/tradeQueue'
 import VenueManager from './VenueManager'
 import ListingStatusCard from './ListingStatusCard'
 import WorkLibrary from './WorkLibrary'
@@ -200,6 +201,14 @@ export default function VendorServiceList({
                leaving them on the dashboard — the whole point of the
                six-step redesign. */
             if (typeof next === 'string') { setPicking(next); return }
+            /* ── The walk is over, either way ────────────────────────
+               Drained or abandoned, the queue must not survive: it
+               lives in localStorage and `clearQueue` was exported and
+               never called once, so a partner who backed out of a
+               three-trade walk had those trades still queued weeks
+               later — and the next single trade they added would chain
+               into one of them without explanation. */
+            clearQueue()
             setPicking(false)
             if (returnTo) navigate(returnTo)
           }}
@@ -230,7 +239,13 @@ export default function VendorServiceList({
           editing={services.find(s => s.id === editing)}
           vendorId={vendor?.id}
           onUpdate={onUpdate}
-          onClose={() => setEditing(null)}
+          /* Honours returnTo like the add flow above. Editing a listing
+             from step 1 has to come back to step 1; this instance used
+             to swallow it and strand the partner on the dashboard. */
+          onClose={() => {
+            setEditing(null)
+            if (returnTo) navigate(returnTo)
+          }}
         />
       )}
 
