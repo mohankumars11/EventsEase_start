@@ -3,6 +3,7 @@ import {
   CalendarDays, MapPin, TriangleAlert, Loader2, Clock, IndianRupee,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import ScreenState from '../ui/ScreenState'
 import { conflictsFor, spanOf, clock, mins, SEVERITY } from '../../lib/calendarConflicts'
 
 /**
@@ -27,6 +28,11 @@ import { conflictsFor, spanOf, clock, mins, SEVERITY } from '../../lib/calendarC
  */
 export default function AgendaView({ vendorId, days = 30, onlyDate = null }) {
   const [state, setState] = useState({ loading: true, jobs: [], error: null })
+  /* Retry has to make the effect run again. Setting loading:true alone
+     would spin forever, because the effect depends on vendorId/days/
+     onlyDate and none of them changed — a retry button that does
+     nothing is worse than no retry button. */
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -51,7 +57,7 @@ export default function AgendaView({ vendorId, days = 30, onlyDate = null }) {
         setState({ loading: false, jobs: data ?? [], error })
       })
     return () => { alive = false }
-  }, [vendorId, days, onlyDate])
+  }, [vendorId, days, onlyDate, attempt])
 
   /* Grouped by day, because a conflict is a property of a day rather
      than of the list. */
@@ -65,19 +71,19 @@ export default function AgendaView({ vendorId, days = 30, onlyDate = null }) {
   }, [state.jobs])
 
   if (state.loading) {
-    return (
-      <div className="flex items-center gap-2 rounded-2xl bg-ink/[0.02] p-5 text-[13px] text-ink-mute">
-        <Loader2 size={14} className="animate-spin" /> Loading your schedule…
-      </div>
-    )
+    return <ScreenState loading rows={2} what="your schedule" />
   }
 
   if (state.error) {
+    /* Retry is the addition. The old card said the right thing and then
+       offered nothing to do about it, so the only way out was to leave
+       the tab and come back. */
     return (
-      <div className="rounded-2xl bg-rose-50 p-4 text-[13px] text-rose-800 ring-1 ring-rose-200">
-        We couldn&apos;t load your schedule. Your bookings are safe — this is a
-        connection problem on our side.
-      </div>
+      <ScreenState error what="your schedule"
+                   onRetry={() => {
+                     setState(s => ({ ...s, loading: true, error: null }))
+                     setAttempt(n => n + 1)
+                   }} />
     )
   }
 

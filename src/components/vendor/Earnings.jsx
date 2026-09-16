@@ -5,6 +5,7 @@ import { useLivePoll } from '../../hooks/useLivePoll'
 import { formatINR } from '../../utils/format'
 import { jobMoney, statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
 import ClaimPayment from './ClaimPayment'
+import ScreenState from '../ui/ScreenState'
 import JobMoneyRow from './JobMoneyRow'
 import PayoutHistory from './PayoutHistory'
 import EarningsStatement from './EarningsStatement'
@@ -226,7 +227,7 @@ export default function Earnings({ vendorId, onAddPayout }) {
   }
 
   if (!loaded) {
-    return <div className="card p-5 text-[13px] text-ink-mute">Working out your earnings…</div>
+    return <ScreenState loading rows={3} what="your earnings" />
   }
 
   const nothingYet = jobs.length === 0

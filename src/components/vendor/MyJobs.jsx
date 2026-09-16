@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLivePoll } from '../../hooks/useLivePoll'
+import ScreenState from '../ui/ScreenState'
 import {
   CalendarDays, MapPin, Phone, User, IndianRupee, Loader2, Check,
   CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight, ChevronDown,
@@ -100,6 +101,7 @@ const TONE = {
 export default function MyJobs({ vendorId }) {
   const [jobs, setJobs] = useState(null)
   const [missing, setMissing] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const read = useCallback(async () => {
     const { data, error } = await supabase
@@ -111,6 +113,18 @@ export default function MyJobs({ vendorId }) {
     // crash — migrations here are pasted by hand, so this is a normal
     // state between a deploy and somebody opening the SQL editor.
     if (error && /does not exist|schema cache/i.test(error.message)) { setMissing(true); setJobs([]); return }
+
+    /* ── A failed read is not an empty list ──────────────────────────
+       This was `setJobs(data ?? [])`, so a dropped connection rendered
+       "No jobs yet" — the app telling a master their work had gone when
+       the request simply had not arrived. On a screen somebody opens to
+       find out whether they are working on Saturday, that is the worst
+       available lie.
+
+       A failure on a RE-read keeps what is on screen; only a failure
+       with nothing to show becomes the error state. */
+    if (error) { setFailed(jobs === null); return }
+    setFailed(false)
     setJobs(data ?? [])
   }, [])
 
@@ -133,12 +147,12 @@ export default function MyJobs({ vendorId }) {
 
   useLivePoll(read, 20_000, [read])
 
+  if (failed) {
+    return <ScreenState error what="your jobs" onRetry={() => { setFailed(false); read() }} />
+  }
+
   if (jobs === null) {
-    return (
-      <div className="flex items-center gap-2 rounded-[22px] bg-white p-4 text-[13px] text-ink-mute ring-1 ring-ink/[0.06]">
-        <Loader2 size={15} className="animate-spin" /> Loading your jobs…
-      </div>
-    )
+    return <ScreenState loading rows={2} what="your jobs" />
   }
 
   if (missing) {

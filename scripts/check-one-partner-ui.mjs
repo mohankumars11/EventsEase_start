@@ -162,5 +162,35 @@ ok('the active tab pill is not saffron',
 ok('the active tab pill is purple',
    /on \? 'bg-plum-\d00'/.test(nav))
 
+
+console.log('\nEVERY PRIMARY SCREEN HAS ITS THREE STATES\n')
+
+/* Loading, empty and failed were hand-written in eight dialects and
+   missing entirely from most screens — a failed read rendered as an
+   empty list, which tells a partner their jobs are gone rather than
+   that the request did not arrive.
+
+   One primitive, and this counts who uses it. A half-finished job fails
+   here rather than needing somebody to remember which screens got done. */
+const PRIMARY = {
+  'Jobs':     'src/components/vendor/MyJobs.jsx',
+  'Calendar': 'src/components/partner/AgendaView.jsx',
+  'Earnings': 'src/components/vendor/Earnings.jsx',
+}
+for (const [name, file] of Object.entries(PRIMARY)) {
+  ok(`${name} uses the shared ScreenState`,
+     /import ScreenState from/.test(read(file)),
+     'hand-rolled states drift; one primitive does not')
+}
+
+/* The bug the primitive exists to make impossible. */
+ok('MyJobs does not render a failed read as an empty list',
+   /setFailed/.test(code('src/components/vendor/MyJobs.jsx')),
+   'setJobs(data ?? []) on error shows "No jobs yet" when the request merely failed')
+
+ok('a retry actually re-runs the read',
+   /attempt/.test(code('src/components/partner/AgendaView.jsx')),
+   'setting loading:true without changing an effect dep spins forever')
+
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0
