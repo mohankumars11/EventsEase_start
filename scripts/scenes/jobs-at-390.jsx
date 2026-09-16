@@ -9,6 +9,7 @@
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthContext } from '../../src/context/AuthContext'
+import PartnerAppShell from '../../src/components/layout/PartnerAppShell'
 import JobsHeader from '../../src/components/partner/JobsHeader'
 import JobsStats from '../../src/components/partner/JobsStats'
 import AttentionSummary from '../../src/components/partner/AttentionSummary'
@@ -20,9 +21,9 @@ export default function JobsAt390() {
     <MemoryRouter initialEntries={['/dashboard/vendor']}>
       <AuthContext.Provider value={{ user: { id: 'shot' }, profile: { id: 'shot', role: 'vendor' } }}>
       <div style={{ width: 390, height: 844, position: 'relative',
-                    overflow: 'hidden', background: '#f4f4f6',
+                    overflow: 'hidden',
                     boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-        <div style={{ height: '100%', overflowY: 'auto', paddingBottom: 76 }}>
+        <div style={{ height: '100%', overflowY: 'auto' }}><PartnerAppShell>
           <JobsHeader
             lifecycle={LIFECYCLE.LIVE}
             businessName="Annapurna Catering Services"
@@ -58,7 +59,7 @@ export default function JobsAt390() {
               <p className="text-[13px] text-ink-mute">Nothing booked yet.</p>
             </div>
           </div>
-        </div>
+        </PartnerAppShell></div>
 
         {/* The one navigation surface. */}
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>

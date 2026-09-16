@@ -43,7 +43,7 @@
  */
 export default function PartnerAppShell({ children }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-surface-sunk">
+    <div className="flex min-h-[100dvh] flex-col bg-page">
       <main
         className="flex-1"
         style={{

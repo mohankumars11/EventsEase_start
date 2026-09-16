@@ -45,8 +45,18 @@ export default function ClosedAccount({ vendor, onSignOut }) {
     + `. I would like to talk about it.`
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-plum-950 px-6 py-12">
-      <div className="w-full max-w-sm rounded-[26px] bg-white p-6 text-center shadow-2xl">
+    /* ── Light ground, and the card grows an edge ────────────────────
+       A white card on plum-950 read as a card because the ground did the
+       work. On the light ground it would have no edge at all, so the
+       shadow-2xl becomes a hairline ring plus a softer shadow — the
+       same card-on-canvas treatment every other screen uses.
+
+       The dark was arguably right here, on a terminal state nobody
+       should see twice. It goes anyway: one app, one ground, and a
+       partner who has just had their account closed should not also be
+       shown a screen that looks like a different product. */
+    <div className="flex min-h-screen flex-col items-center justify-center bg-page px-6 py-12">
+      <div className="w-full max-w-sm rounded-[26px] bg-white p-6 text-center shadow-[0_8px_32px_-12px_rgba(31,16,51,0.18)] ring-1 ring-ink/[0.08]">
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ink/[0.06]">
           <Lock size={20} className="text-ink-soft" />
         </span>

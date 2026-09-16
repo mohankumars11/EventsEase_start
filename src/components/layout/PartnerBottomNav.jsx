@@ -198,13 +198,23 @@ export default function PartnerBottomNav() {
                 {/* The active pill sits behind the icon rather than
                     colouring the whole cell: a full-width fill at this
                     size reads as a pressed state that never released. */}
+                {/* ── Purple, not saffron ──────────────────────────
+                    The active pill was bg-saffron-400 with a plum glyph.
+                    Saffron is this app's ATTENTION colour — it marks a
+                    payment ready to claim, a document sent back, a day
+                    that is too tight. Spending it on "which tab am I
+                    on", which is answered anyway by the bold label
+                    underneath, left nothing louder for the things that
+                    genuinely need somebody.
+
+                    Sambramo is purple. The selected tab is purple. */}
                 <span className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                  on ? 'bg-saffron-400' : 'bg-transparent'
+                  on ? 'bg-plum-600' : 'bg-transparent'
                 }`}>
-                  <Icon size={17} className={on ? 'text-plum-950' : 'text-ink-mute'} />
+                  <Icon size={17} className={on ? 'text-white' : 'text-ink-mute'} />
                 </span>
                 <span className={`text-[10.5px] leading-none ${
-                  on ? 'font-extrabold text-ink' : 'font-bold text-ink-mute'
+                  on ? 'font-extrabold text-plum-700' : 'font-bold text-ink-mute'
                 }`}>
                   {label}
                 </span>

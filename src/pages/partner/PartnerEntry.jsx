@@ -196,7 +196,24 @@ export default function PartnerEntry() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-plum-950">
+    /* ── White, not plum-950 ──────────────────────────────────────────
+       This wrapper was dark because a full-bleed hero used to sit above
+       the sheet and the dark framed it. Those cards became their own
+       routes (/partner/onboarding, /partner/location-permission) and the
+       artwork went with them — leaving `<main className="flex-1
+       bg-white">` covering almost the whole screen and the dark showing
+       only as a strip behind the status bar.
+
+       Worse, nothing inside was ever rewritten for a dark ground: the
+       sign-in button is `text-ink` (#1F1033) on `bg-ink/[0.04]`, the
+       email field is `text-ink` with an `ink-mute` placeholder, and
+       there is exactly ONE `text-white` in the file — a tick inside a
+       checkbox. Anywhere the dark did show through, near-black text sat
+       on dark purple.
+
+       So this is a leftover being removed rather than a design being
+       overridden, and the content needs no changes to follow it. */
+    <div className="flex min-h-screen flex-col bg-page">
 
       {/* The cards used to be the hero of this screen and the location
           gate used to sit over it. Both are their own routes now --

@@ -79,7 +79,7 @@ export default function CalendarMonth({ vendorId, availability, onSetDay, onSetR
           above it, and a sheet that covers the calendar is one they
           have to close to check what they just did. */}
       {selected && editing && (
-        <div className="rounded-[22px] bg-surface-sunk p-3.5 ring-1 ring-ink/[0.07]">
+        <div className="rounded-[22px] bg-page-sunk p-3.5 ring-1 ring-ink/[0.07]">
           <SetAvailability
             date={selected}
             availability={availability}

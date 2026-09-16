@@ -79,6 +79,21 @@
        why every "sunk" surface in the app read faintly lavender rather than
        recessed. A recess is not a colour. */
     --surface-sunk: 17 15 25;      /* used at low alpha: bg-surface-sunk/5 */
+
+    /* ── The partner app's ground, and its recesses ──────────────────
+       `--surface-sunk` above is a NEAR-BLACK meant only for low-alpha
+       tints, and it was used bare as the partner app's page background:
+       `bg-surface-sunk` on PartnerAppShell painted #110F19 behind every
+       tab. Every white card floated on black and every section heading
+       that used an ink token vanished into it.
+
+       These two exist so nobody has to reach for an alpha modifier to
+       get a page colour. `--page` is the canvas; `--page-sunk` is the
+       very light lavender for a recessed panel — a tint of the brand
+       purple rather than a grey, so a recess still belongs to Sambramo.
+       Both are opaque and safe to use bare, which is the whole point. */
+    --page:        255 255 255;    /* #FFFFFF */
+    --page-sunk:   247 245 252;    /* #F7F5FC */
     --hairline:     31 16 51;      /* used at low alpha: ring-hairline/10 */
     --accent:      124 58 237;     /* plum-600 */
 

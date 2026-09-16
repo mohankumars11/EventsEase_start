@@ -134,5 +134,33 @@ ok('and ?tab=list lights the More tab',
    /UNDER\s*=\s*\{[^}]*list:\s*'account'/.test(nav),
    'otherwise the bar goes blank on My Services')
 
+
+console.log('\nONE GROUND\n')
+
+/* `--surface-sunk` is #110F19 and index.css says it is for low alpha
+   only. Used bare it painted the whole partner app near-black, which is
+   how the app ended up looking like two products. */
+const partnerFiles = walk('src').filter(f =>
+  /components[\/](partner|vendor|layout)[\/]|pages[\/](partner|dashboard)[\/]/.test(f))
+const sunk = partnerFiles.filter(f => /className="[^"]*\bbg-surface-sunk(?![/\w])/.test(read(f)))
+ok('no partner screen paints a bare bg-surface-sunk',
+   sunk.length === 0,
+   sunk.map(f => f.replace(/^src[\/]/, '')).join(', ') + ' — use bg-page or bg-page-sunk')
+
+ok('the page tokens exist',
+   /--page:\s/.test(read('src/index.css')) && /--page-sunk:/.test(read('src/index.css')),
+   'bg-page / bg-page-sunk must be real, opaque tokens')
+
+ok('the app shell uses the page token',
+   /bg-page\b/.test(code('src/components/layout/PartnerAppShell.jsx')))
+
+console.log('\nSAFFRON MEANS ATTENTION, NOT SELECTION\n')
+
+ok('the active tab pill is not saffron',
+   !/on \? 'bg-saffron/.test(nav),
+   'saffron is the attention colour; selection is purple')
+ok('the active tab pill is purple',
+   /on \? 'bg-plum-\d00'/.test(nav))
+
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0

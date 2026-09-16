@@ -153,6 +153,10 @@ export default {
         'ink-faint':    'rgb(var(--ink-faint) / <alpha-value>)',
         surface:        'rgb(var(--surface) / <alpha-value>)',
         'surface-sunk': 'rgb(var(--surface-sunk) / <alpha-value>)',
+        /* Opaque page colours. Unlike surface-sunk these are safe to
+           use bare -- see the note beside them in index.css. */
+        page:           'rgb(var(--page) / <alpha-value>)',
+        'page-sunk':    'rgb(var(--page-sunk) / <alpha-value>)',
         hairline:       'rgb(var(--hairline) / <alpha-value>)',
         accent:         'rgb(var(--accent) / <alpha-value>)',
 
