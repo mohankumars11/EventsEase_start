@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
-  CheckCircle2, Loader2, AlertCircle,
+  TriangleAlert, Loader2, AlertCircle,
   MessageCircle, Bell, IndianRupee,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -68,11 +68,19 @@ const TABS = [
   { id: 'account',      label: 'Account',      icon: UserCog         },
 ]
 
+/* ── ring-, not border- ────────────────────────────────────────────
+   These read `border-amber-200` and relied on the `card` class to
+   supply the border WIDTH. The status card no longer uses `card` — it
+   uses the rounded-ring shape every other card on the new screens uses
+   — and `border-amber-200` with no width draws nothing, so the card
+   would have taken the default ring colour and lost its tone entirely.
+   A colour class without its width class is invisible, which is the
+   kind of thing that survives a review and shows up in a photograph. */
 const TONES = {
-  amber: { card: 'border-amber-200 bg-amber-50/70',   pill: 'bg-amber-100 text-amber-800',    icon: 'text-amber-600'   },
-  green: { card: 'border-emerald-200 bg-emerald-50/60', pill: 'bg-emerald-100 text-emerald-800', icon: 'text-emerald-600' },
-  rose:  { card: 'border-rose-200 bg-rose-50/70',     pill: 'bg-rose-100 text-rose-800',      icon: 'text-rose-600'    },
-  gray:  { card: 'border-gray-200 bg-gray-50',        pill: 'bg-gray-200 text-gray-700',      icon: 'text-gray-500'    },
+  amber: { card: 'ring-amber-200 bg-amber-50/70',     pill: 'bg-amber-100 text-amber-800',     icon: 'text-amber-700'   },
+  green: { card: 'ring-emerald-200 bg-emerald-50/60', pill: 'bg-emerald-100 text-emerald-800', icon: 'text-emerald-700' },
+  rose:  { card: 'ring-rose-200 bg-rose-50/70',       pill: 'bg-rose-100 text-rose-800',       icon: 'text-rose-700'    },
+  gray:  { card: 'ring-ink/[0.08] bg-ink/[0.03]',     pill: 'bg-ink/[0.06] text-ink-soft',     icon: 'text-ink-mute'    },
 }
 
 function whatsappHref(message) {
@@ -400,22 +408,30 @@ export default function VendorDashboard() {
           screen on the app means, and a partner who does not know they are
           not live will sit waiting for jobs that are never coming. That
           keeps its card, on every tab. */}
+      {/* ── Restyled onto the new token system ──────────────────────
+          This card is right to keep — a partner who does not know they
+          are not live will wait for jobs that are never coming — but it
+          was the last thing on Jobs still wearing the old one:
+          `card`, `text-gray-900`, `text-gray-600`, `sm:` breakpoints
+          from a desktop layout. Everything around it speaks in ink,
+          plum and a single mobile scale, and one card in a different
+          vocabulary is exactly the seam §29 is about. */}
       {statusMeta.blocking && (
-      <section className={`card mt-4 p-4 sm:p-5 flex items-start gap-3 ${TONES[statusMeta.tone].card}`}>
-        <CheckCircle2 size={20} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
-        <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-gray-900 text-sm">{statusMeta.headline}</h2>
-          <p className="text-sm text-gray-600 mt-1 leading-relaxed">{statusMeta.detail}</p>
+      <section className={`mt-3 flex items-start gap-3 rounded-[22px] p-4 ring-1 ${TONES[statusMeta.tone].card}`}>
+        <TriangleAlert size={18} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[14px] font-extrabold leading-tight text-ink">{statusMeta.headline}</h2>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">{statusMeta.detail}</p>
           {vendor.status === 'REJECTED' && vendor.rejection_reason && (
-            <p className="text-sm text-rose-800 bg-white/70 border border-rose-200 rounded-xl px-3 py-2 mt-3">
-              <span className="font-semibold">What we noted:</span> {vendor.rejection_reason}
+            <p className="mt-2.5 rounded-[14px] bg-white/70 px-3 py-2 text-[12px] leading-snug text-rose-800 ring-1 ring-rose-200">
+              <span className="font-extrabold">What we noted:</span> {vendor.rejection_reason}
             </p>
           )}
           {statusMeta.blocking && (
             <a
               href={whatsappHref(`Hi Sambramo — this is ${businessName}. I'd like an update on my partner profile (${vendor.status}).`)}
               target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-plum-700 hover:text-plum-900 mt-3"
+              className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 text-[12.5px] font-extrabold text-plum-700"
             >
               <MessageCircle size={14} /> Talk to our team
             </a>
