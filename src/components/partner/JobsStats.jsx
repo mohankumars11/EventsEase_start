@@ -87,7 +87,12 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    <div className="-mt-6 grid grid-cols-4 gap-2 rounded-[22px] bg-white p-3 shadow-[0_6px_24px_rgba(0,0,0,0.07)]">
+    /* ── Two by two on a narrow phone ─────────────────────────────────
+       Four across fits at 390 and is cramped at 360 — the labels
+       ("Confirmed", "Messages") end up nearly touching, and a row of
+       four tiny unreadable tiles is worse than two readable rows.
+       grid-cols-2 below the `xs` breakpoint, four above it. */
+    <div className="-mt-6 grid grid-cols-2 gap-2 rounded-[22px] bg-white p-3 shadow-[0_6px_24px_rgba(0,0,0,0.07)] xs:grid-cols-4">
       {tiles.map(t => {
         const Icon = t.icon
         return (

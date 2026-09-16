@@ -3,6 +3,12 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
+      /* Tailwind's smallest default breakpoint is sm:640px, which is
+         useless on phones -- every handset this app runs on is below
+         it, so a layout that needs to differ between a 360px Redmi and
+         a 430px iPhone had no way to say so. 380 is the line where four
+         stat tiles stop fitting comfortably across. */
+      screens: { xs: '380px' },
       colors: {
         marigold: {
           50:  '#fffbeb',

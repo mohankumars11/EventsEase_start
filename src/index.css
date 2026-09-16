@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Pinyon+Script&display=swap');
+/* The Google Fonts request lives in index.html, with the preconnects
+   and before the CSS is parsed. It used to be duplicated here as an
+   @import — a second serial round trip for very nearly the same URL,
+   asking for a different set of Playfair weights. */
 
 /* ── The splash's own face ─────────────────────────────────────────────
    Archivo Black, served from inside the apk rather than from a CDN.
