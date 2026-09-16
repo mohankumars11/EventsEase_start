@@ -18,6 +18,7 @@ import SplashScreen from './components/ui/SplashScreen'
 import UpdateAvailable from './components/common/UpdateAvailable'
 import PushRouter from './components/common/PushRouter'
 import PartnerBottomNav from './components/layout/PartnerBottomNav'
+import PartnerAppShell from './components/layout/PartnerAppShell'
 import { isPartnerSurface as _isPartner } from './config/surface'
 
 // The landing page is the entry point for essentially all first-time
@@ -701,9 +702,14 @@ function AppRoutes() {
       } />
 
       {/* ── Vendor ─────────────────────────────────── */}
+      {/* PartnerAppShell, not DashboardShell. DashboardShell renders the
+          customer app's Navbar — logo, desktop links, city picker and a
+          hamburger drawer — above the partner's own header and bottom
+          bar, which is three navigation systems on one screen and two of
+          them duplicates. See components/layout/PartnerAppShell. */}
       <Route path="/dashboard/vendor" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <DashboardShell><VendorDashboard /></DashboardShell>
+          <PartnerAppShell><PageBoundary><VendorDashboard /></PageBoundary></PartnerAppShell>
         </ProtectedRoute>
       } />
 

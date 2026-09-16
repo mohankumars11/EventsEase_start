@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, CalendarDays, Menu } from 'lucide-react'
+import { Bell, IndianRupee, CalendarDays, LayoutGrid } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -56,7 +56,15 @@ const TABS = [
   /* Still `account` underneath. The id is in every ?tab= link, in the
      dashboard's validation list and in four call sites; renaming it to
      `more` would break all of them to change one word on screen. */
-  { id: 'account',      label: 'More',     icon: Menu },
+  /* ── LayoutGrid, deliberately not Menu ────────────────────────────
+     `Menu` is the three horizontal lines, and three horizontal lines
+     mean one thing to everybody who has used a phone: a drawer slides
+     out from the side. Nothing slides. This opens a tab, in a bar, like
+     the three beside it — and an icon that promises a drawer next to a
+     tab bar is the duplicate-navigation signal this app spent a
+     consolidation removing. The grid says "the rest of it", which is
+     what More is, and it matches the reference design. */
+  { id: 'account',      label: 'More',     icon: LayoutGrid },
 ]
 
 export default function PartnerBottomNav() {
@@ -143,7 +151,19 @@ export default function PartnerBottomNav() {
   }))
 
   /* On the landing, Jobs is where you are. */
-  const active = signedOut ? 'offers' : (params.get('tab') ?? 'offers')
+  /* ── Screens that are not tabs still light a tab ───────────────────
+     `?tab=list` is My Services and the trade questionnaire — a real
+     screen, reached from More, and deliberately not a tab of its own.
+     Without this map it matched nothing and the bar went blank: four
+     grey icons and no answer to "where am I", on the screen a partner
+     reaches by tapping More and then a trade.
+
+     Same for a job's own page, which has no ?tab= at all and belongs to
+     Jobs. Anything unrecognised falls to Jobs rather than to nothing,
+     because a bar with nothing lit reads as broken. */
+  const UNDER = { list: 'account', overview: 'offers' }
+  const raw_ = signedOut ? 'offers' : (params.get('tab') ?? 'offers')
+  const active = UNDER[raw_] ?? raw_
 
   return (
     <nav

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
-  CheckCircle2, Circle, ChevronRight, LogOut, Loader2, AlertCircle,
-  MessageCircle, Star, TrendingUp, ArrowRight, Bell, IndianRupee,
+  CheckCircle2, Loader2, AlertCircle,
+  MessageCircle, Bell, IndianRupee,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -11,15 +11,12 @@ import { VENDOR_STATUS } from '../../config/vendor'
 import { PARTNER_PLANS, PLAN_BY_ID, effectiveTier } from '../../config/partnerPlans'
 import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
-import ListingTracker from '../../components/vendor/ListingTracker'
 import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
 import OfferHistory from '../../components/vendor/OfferHistory'
-import PartnerResume from '../../components/vendor/PartnerResume'
 import CalendarNudge from '../../components/vendor/CalendarNudge'
-import InstallTheApp from '../../components/vendor/InstallTheApp'
 import PartnerAccount from '../../components/vendor/PartnerAccount'
 import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
@@ -299,13 +296,6 @@ export default function VendorDashboard() {
       {/* space-y, because these rendered as bare siblings: the install
           banner butted straight into the resume card and the resume card
           into the header below it. */}
-      {tab === 'offers' && (
-        <div className="space-y-3">
-          <InstallTheApp />
-          <PartnerResume vendorId={vendor.id} />
-        </div>
-      )}
-
       {/* ── Header ───────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════
           THE HEADER IS PART OF THE JOBS TAB, NOT THE APP
@@ -371,31 +361,28 @@ export default function VendorDashboard() {
         />
       )}
 
-      {tab === 'offers' && (
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-display font-bold text-gray-900 truncate">{businessName}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {vendor.category ? `${vendor.category} · ` : ''}
-            {vendor.area ? `${vendor.area}, ` : ''}{vendor.city ?? BRAND.primaryCity}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${TONES[statusMeta.tone].pill}`}>
-            {statusMeta.label}
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-plum-100 text-plum-700 rounded-full text-xs font-semibold">
-            {plan.label} plan
-          </span>
-          <button
-            onClick={handleSignOut}
-            className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full text-xs font-semibold transition-colors"
-          >
-            <LogOut size={13} /> Sign out
-          </button>
-        </div>
-      </header>
-      )}
+      {/* ══════════════════════════════════════════════════════════════
+          THE OLD HEADER IS GONE
+          ══════════════════════════════════════════════════════════════
+
+          A second header used to render here, under JobsHeader: the
+          business name at 2xl in a different font, the category and
+          area, a status pill, a plan pill and a Sign out button. Two
+          headers on one screen, in two type scales, saying the same
+          thing twice — which is exactly the "new header + old profile"
+          stack this consolidation exists to remove.
+
+          Everything it carried still exists, in one place each:
+
+            business name, area, status   JobsHeader, compactly
+            plan                          More, where it can be changed
+            sign out                      More, at the bottom, behind
+                                          the confirm it always had
+
+          A partner's own details do not belong at the top of the
+          operational screen. They belong under More, which is where
+          somebody goes to change them. */}
+
 
       {/* ── Status ───────────────────────────────────────── */}
       {/* Leads the page whenever the vendor is not live, because it is the only
@@ -495,22 +482,6 @@ export default function VendorDashboard() {
             compact mode: which listing is where, in the same words, on
             both tabs. A status a partner has to look up in two places
             and reconcile is a status they do not trust. */}
-        {tab === 'offers' && services.some(s => s.review_status !== 'live') && (
-          <div className="mb-4">
-            <ListingTracker services={services} compact />
-            <button
-              type="button"
-              onClick={() => setTab('list')}
-              className="mt-2 w-full rounded-[16px] bg-royal-600 px-4 py-3 text-left text-[13px] font-extrabold text-white transition active:scale-[0.99]"
-            >
-              Jobs arrive the moment a listing is live — usually the same day.
-              <span className="mt-0.5 block text-[11.5px] font-semibold text-white/75">
-                Tap to open your listings
-              </span>
-            </button>
-          </div>
-        )}
-
         {tab === 'offers' && (
           vendor?.is_verified ? (
             <div className="space-y-5">
@@ -586,13 +557,6 @@ export default function VendorDashboard() {
 
         {tab === 'earnings' && (
           <Earnings vendorId={vendor?.id} onAddPayout={() => setTab('account')} />
-        )}
-
-        {tab === 'overview' && (
-          <Overview
-            vendor={vendor} stats={stats} checklist={checklist}
-            businessName={businessName} onGo={setTab}
-          />
         )}
 
         {tab === 'list' && (
@@ -685,165 +649,22 @@ export default function VendorDashboard() {
 
 /* ══════════════════════════════════════════════════════════ */
 
-function Overview({ vendor, stats, checklist, businessName, onGo }) {
-  const done      = checklist.filter(s => s.done).length
-  const remaining = checklist.filter(s => !s.done)
-  const complete  = remaining.length === 0
+/* ══════════════════════════════════════════════════════════════════════
+   Overview is gone.
 
-  // Only the numbers that come from a row. The old page's "Profile views" tile
-  // read "—" because nothing measures it; a tile that can never hold a value is
-  // a promise the product hasn't made.
-  const tiles = useMemo(() => [
-    { label: 'Live items',       value: stats.activeServices,   hint: stats.totalServices > stats.activeServices ? `${stats.totalServices - stats.activeServices} hidden` : 'in your list' },
-    { label: 'Upcoming',         value: stats.upcomingBookings, hint: 'confirmed bookings' },
-    { label: 'Days marked busy', value: stats.busyDays,         hint: 'from today on' },
-    {
-      label: 'Rating',
-      value: stats.rating ? stats.rating.toFixed(1) : '—',
-      hint: stats.reviewCount ? `${stats.reviewCount} review${stats.reviewCount === 1 ? '' : 's'}` : 'no reviews yet',
-    },
-  ], [stats])
+   It was the old partner dashboard: a 7-step setup checklist, four stat
+   tiles, two big navigation cards and a WhatsApp promo section. Nothing
+   routed to it — `overview` was deliberately left out of TABS, and TABS
+   is what validates ?tab=, so the only way to reach it was a URL that
+   no longer resolved. A hundred and sixty lines of screen that could
+   render and never did.
 
-  return (
-    <div className="space-y-8">
+   Its three jobs are done elsewhere now, each by one thing:
 
-      {/* Setup — hidden entirely once finished, rather than sitting at 7/7
-          forever taking the best real estate on the page. */}
-      {!complete && (
-        <section className="card p-5 sm:p-6 border-saffron-200 bg-saffron-50/40">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="font-display font-bold text-gray-900">Finish setting up</h2>
-            <span className="text-xs font-bold text-saffron-700 shrink-0">
-              {done}/{checklist.length}
-            </span>
-          </div>
+     what needs doing      AttentionSummary, on Jobs
+     the numbers           JobsStats, on Jobs
+     where to go next      the bottom navigation
 
-          <div className="w-full bg-saffron-100 rounded-full h-2 mb-5" role="progressbar"
-               aria-valuenow={done} aria-valuemin={0} aria-valuemax={checklist.length}>
-            <div
-              className="bg-saffron-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(done / checklist.length) * 100}%` }}
-            />
-          </div>
-
-          <ul className="space-y-1">
-            {checklist.map(step => {
-              const Row = (
-                <>
-                  {step.done
-                    ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                    : <Circle       size={16} className="text-saffron-400 shrink-0" />}
-                  <span className={step.done ? 'line-through text-gray-500' : 'text-gray-800'}>
-                    {step.label}
-                  </span>
-                  {!step.done && (step.tab || step.to) && (
-                    <ChevronRight size={15} className="ml-auto text-saffron-500 shrink-0" />
-                  )}
-                </>
-              )
-
-              // Every unfinished step that has somewhere to go, goes there. The
-              // version this replaces put a "Coming soon" pill on all of them.
-              if (!step.done && step.tab) {
-                return (
-                  <li key={step.key}>
-                    <button onClick={() => onGo(step.tab)}
-                            className="w-full flex items-center gap-3 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-saffron-100/60 transition-colors text-left">
-                      {Row}
-                    </button>
-                  </li>
-                )
-              }
-              if (!step.done && step.to) {
-                return (
-                  <li key={step.key}>
-                    <Link to={step.to}
-                          className="w-full flex items-center gap-3 text-sm py-2 px-2 -mx-2 rounded-lg hover:bg-saffron-100/60 transition-colors">
-                      {Row}
-                    </Link>
-                  </li>
-                )
-              }
-              return (
-                <li key={step.key} className="flex items-center gap-3 text-sm py-2 px-2 -mx-2">
-                  {Row}
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      )}
-
-      {/* Stats */}
-      <section>
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your numbers</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {tiles.map(({ label, value, hint }) => (
-            <div key={label} className="card p-4">
-              <div className="text-2xl font-display font-bold text-gray-900">{value}</div>
-              <div className="text-xs font-semibold text-gray-600 mt-1">{label}</div>
-              <div className="text-[11px] text-gray-500">{hint}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* The two shortcuts that matter, sized like the actions they are. */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button onClick={() => onGo('list')} className="card p-5 text-left hover:border-plum-200 hover:shadow-md transition-all group">
-          <ClipboardList size={20} className="text-plum-600" />
-          <div className="font-semibold text-gray-900 text-sm mt-3">Update your list</div>
-          <p className="text-xs text-gray-500 mt-1">
-            {stats.activeServices === 0
-              ? 'Nothing listed yet — coordinators have nothing to quote.'
-              : `${stats.activeServices} item${stats.activeServices === 1 ? '' : 's'} live${stats.pricedServices < stats.activeServices ? `, ${stats.activeServices - stats.pricedServices} without a price` : ''}.`}
-          </p>
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-plum-600 mt-3 group-hover:gap-2 transition-all">
-            Open <ChevronRight size={13} />
-          </span>
-        </button>
-
-        <button onClick={() => onGo('availability')} className="card p-5 text-left hover:border-plum-200 hover:shadow-md transition-all group">
-          <CalendarDays size={20} className="text-plum-600" />
-          <div className="font-semibold text-gray-900 text-sm mt-3">Update your calendar</div>
-          <p className="text-xs text-gray-500 mt-1">
-            {vendor.accepting_bookings === false
-              ? 'Bookings are paused — you are not being offered to customers.'
-              : `Open every day except what you've marked. ${vendor.lead_time_days ?? 2} day${(vendor.lead_time_days ?? 2) === 1 ? '' : 's'} notice.`}
-          </p>
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-plum-600 mt-3 group-hover:gap-2 transition-all">
-            Open <ChevronRight size={13} />
-          </span>
-        </button>
-      </section>
-
-      {/* Where a coordinator is genuinely the answer. One block, honestly
-          labelled, instead of four cards pretending to be features. */}
-      <section className="card p-5 bg-plum-50/50 border-plum-100">
-        <h2 className="font-semibold text-gray-900 text-sm">Anything else, ask us</h2>
-        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-          Enquiries, quotes and payments are handled by your Sambramo
-          coordinator — that part is deliberately human while we're this size.
-          Photos and profile edits go through us too, for now.
-        </p>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {[
-            { label: 'Customer enquiries', icon: MessageCircle, msg: `Hi Sambramo — this is ${businessName}. Are there any customer enquiries waiting for me?` },
-            { label: 'My reviews',         icon: Star,          msg: `Hi Sambramo — this is ${businessName}. Could you share my recent customer feedback?` },
-            { label: 'Add photos',         icon: TrendingUp,    msg: `Hi Sambramo — this is ${businessName}. I have portfolio photos to add to my profile.` },
-          ].map(({ label, icon: Icon, msg }) => (
-            <a
-              key={label}
-              href={whatsappHref(msg)}
-              target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-white border border-plum-200 text-plum-700 hover:bg-plum-100 transition-colors"
-            >
-              <Icon size={14} /> {label}
-            </a>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
-}
-
+   Deleted rather than commented out. A screen kept "in case" is a
+   screen somebody eventually routes to again.
+   ══════════════════════════════════════════════════════════════════════ */
