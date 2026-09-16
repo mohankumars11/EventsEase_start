@@ -1,13 +1,13 @@
 # Sambramo Partner — debug APK
 
-One consolidated partner experience: the old post-onboarding UI, the
-customer Navbar and its hamburger drawer are removed.
+One consolidated partner app: white ground, purple selection, grouped
+More, and the onboarding loop fixed (finishing a trade returns to Step 1).
 
 | | |
 |---|---|
-| Built from | `feature/partner-six-step-onboarding` @ `8f46142` |
-| Built | 2026-09-16 02:45 UTC |
+| Built from | `feature/partner-six-step-onboarding` @ `a672841` |
+| Built | 2026-09-16 10:23 UTC |
 | Package | `com.sambramo.partner` |
-| SHA-256 | `bd93e2cc9b75f1eede01cdf03cb58cc044168ef3260d16f65d6619ec1e29c40e` |
+| SHA-256 | `d7bf9c4bbe0701f1aa9604baab00a16ab43a9a5051b89be0f1a6a6752f8bcd33` |
 
 Debug certificate — Android will warn on install.
