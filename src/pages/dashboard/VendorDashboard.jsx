@@ -662,6 +662,14 @@ export default function VendorDashboard() {
             vendor={vendor}
             profile={profile}
             reviews={reviews}
+            /* ── The open destination lives in the URL ──────────────
+               More is a list of rows that each open one screen. Holding
+               that in component state would make Android's back button
+               leave the whole tab instead of closing the screen, and
+               would make a notification unable to point at one. */
+            screen={params.get('screen')}
+            onOpenScreen={next => setParams(keepReturn(
+              next ? { tab: 'account', screen: next } : { tab: 'account' }))}
             onUpdateVendor={updateVendor}
             onSignOut={handleSignOut}
             /* More → My Services → a trade opens that trade's own

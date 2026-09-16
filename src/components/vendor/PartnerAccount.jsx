@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
-  Bell, MessageSquare, BellRing, Eye,
-   LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
+  Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
+  LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
   TriangleAlert, Sparkles, Navigation,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -14,6 +14,7 @@ import { lookupPincode, currentPosition, nearestServed } from '../../lib/pincode
 import { fetchDocuments } from '../../lib/partnerDocuments'
 import { requirementsFor } from '../../data/compliance'
 import Fold from './Fold'
+import { Group, Row } from '../ui/SettingsList'
 import MyServices from './MyServices'
 import { fetchListings } from '../../lib/partnerListings'
 import PayoutDetails from './PayoutDetails'
@@ -86,7 +87,10 @@ import { fetchNotifications, fetchMessages, fetchPrefs } from '../../lib/partner
  *             it would be a button that appears to work and does not.
  */
 
-export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendor, onSignOut, onOpenTrade }) {
+export default function PartnerAccount({
+  vendor, profile, reviews, screen, onOpenScreen,
+  onUpdateVendor, onSignOut, onOpenTrade,
+}) {
   const { user, fetchProfile } = useAuth()
 
   const statusMeta = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
@@ -240,241 +244,203 @@ export default function PartnerAccount({ vendor, profile, reviews, onUpdateVendo
       ? `UPI · ${payout.upi_id}${payout.verified_at ? '' : ' · being checked'}`
       : `Bank · ends ${String(payout.account_number ?? '').slice(-4)}${payout.verified_at ? '' : ' · being checked'}`
 
+  /* ══════════════════════════════════════════════════════════════════
+     SEVENTEEN ACCORDIONS BECAME FIVE GROUPS AND A DESTINATION
+     ══════════════════════════════════════════════════════════════════
+
+     This tab was seventeen `Fold`s stacked vertically — settings a
+     partner changes interleaved with legal reading matter, each one
+     tall, each one expanding in place. Scrolling it to find "Bank &
+     payments" meant passing the partner terms and a price list.
+
+     Now: five labelled groups of identical rows, and tapping a row
+     opens ONE screen. The components inside are unchanged — this is a
+     new shell around the same `VendorDocuments`, `PayoutDetails`,
+     `MyServices` and the rest.
+
+     ── Why a URL parameter and not useState ─────────────────────────
+     `?screen=` rather than local state, so Android's back button leaves
+     the destination and returns to the list rather than leaving the tab
+     entirely, and so a notification can point at one. VendorDashboard
+     owns the URL and passes the pair down.
+
+     ── Why rows carry almost nothing ────────────────────────────────
+     The `Fold` this replaces argued, correctly, that a closed row
+     saying only what it is CALLED forces somebody to open all nine. The
+     answer here is not to put a value on every row — twelve values
+     compete and none of them is read — but to put a BADGE on the few
+     where being wrong costs the partner something: documents missing,
+     bank details unverified, a service still in draft, unread messages.
+     A quiet list, and a badge that means something when it appears. */
+  const SCREENS = {
+    profile:      { title: 'Partner profile',        render: () => (
+      <div className="space-y-3">
+        <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <PartnerAvatar
+            vendorId={vendor?.id}
+            url={vendor?.avatar_url}
+            name={vendor?.business_name ?? profile?.full_name}
+            size={56}
+            editable
+            onChange={url => onUpdateVendor?.({ avatar_url: url })}
+          />
+        </div>
+        <PartnerCode vendor={vendor} />
+        <OwnerDetails
+          profile={profile}
+          onSaved={async patch => {
+            const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
+            if (error) throw new Error(error.message)
+            await fetchProfile(user.id)
+          }}
+        />
+        <ContactDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
+      </div>
+    ) },
+    services:     { title: 'My services',            render: () => (
+      <MyServices vendorId={vendor?.id} initialRows={listings} onOpenTrade={onOpenTrade} />
+    ) },
+    business:     { title: 'Business profile',       render: () => (
+      <div className="space-y-3">
+        <BusinessDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
+        <PublicProfilePreview vendor={vendor} reviews={reviewRows} />
+      </div>
+    ) },
+    area:         { title: 'Availability & service area', render: () => (
+      <div className="space-y-3">
+        <ServiceArea vendor={vendor} onSave={onUpdateVendor} />
+        <ReachDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
+      </div>
+    ) },
+    verification: { title: 'Verification & documents', render: () => (
+      docs && !docs.unavailable
+        ? <VendorDocuments vendor={vendor} byKind={docs.byKind}
+                           onUpdateVendor={onUpdateVendor} onChanged={readDocs}
+                           trades={listedTrades} />
+        : <Absent what="Verification" />
+    ) },
+    bank:         { title: 'Bank & payments',        render: () => (
+      <PayoutDetails vendorId={vendor?.id} onSaved={setPayout} />
+    ) },
+    notifications:{ title: 'Notifications',          render: () => (
+      inboxReady
+        ? <div className="space-y-3">
+            <PartnerInbox rows={inbox.rows}
+                          onRead={() => setInbox(s => (s ? { ...s, unread: 0 } : s))} />
+            <NotificationPrefs vendorId={vendor?.id} initial={inbox.prefs} />
+          </div>
+        : <Absent what="Notifications" />
+    ) },
+    messages:     { title: 'Messages',               render: () => (
+      inboxReady
+        ? <PartnerMessages vendorId={vendor?.id} initialRows={inbox.messages} />
+        : <Absent what="Messages" />
+    ) },
+    reviews:      { title: 'Reviews',                render: () => (
+      <PartnerReviews reviews={reviewRows} />
+    ) },
+    help:         { title: 'Help & support',         render: () => (
+      <div className="space-y-2.5">
+        <PartnerHelp vendor={vendor} />
+        <PartnerHandbook />
+        {!LAUNCH_OFFER && <YourPlan tier={tier} />}
+      </div>
+    ) },
+    settings:     { title: 'Settings',               render: () => (
+      <DangerZone vendor={vendor} onUpdateVendor={onUpdateVendor} onSignOut={onSignOut} />
+    ) },
+  }
+
+  const open = screen && SCREENS[screen] ? SCREENS[screen] : null
+
+  if (open) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => onOpenScreen?.(null)}
+          className="mb-3 flex min-h-[40px] items-center gap-1.5 text-[13px] font-extrabold text-ink-soft"
+        >
+          <ArrowLeft size={16} /> More
+        </button>
+        <h1 className="mb-3 text-[20px] font-extrabold leading-tight text-ink">{open.title}</h1>
+        {open.render()}
+      </div>
+    )
+  }
+
+  /* Badges only where being wrong costs the partner something. */
+  const docsMissing = docs && !docs.unavailable && !vendor?.is_verified
+    ? Math.max(0, requirementsFor(listedTrades).length - (docs ? Object.keys(docs.byKind).length : 0))
+    : 0
+  const drafts = (listings ?? []).filter(l => (l.offerings?.length ?? 0) === 0).length
+  const bankBadge = !payoutLoaded ? null
+    : !payout ? 'Not added'
+    : !payout.verified_at ? 'Checking'
+    : null
+
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-4">
 
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
-      {/* ── The photograph ──────────────────────────────────────────
-          Directly under the identity strip it changes, so the effect of
-          the tap is visible in the same glance. Not inside a fold: it is
-          one control, and a row that has to be opened to reveal a single
-          button is a row that costs more than it saves. */}
-      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
-        <PartnerAvatar
-          vendorId={vendor?.id}
-          url={vendor?.avatar_url}
-          name={vendor?.business_name ?? profile?.full_name}
-          size={56}
-          editable
-          onChange={url => onUpdateVendor?.({ avatar_url: url })}
-        />
-      </div>
-
-      <PartnerCode vendor={vendor} />
-
-      {/* ── What a stranger sees ─────────────────────────────────────
-          Closed, because it is a check rather than a task — but high,
-          because "why am I getting no enquiries" is answered here more
-          often than anywhere else on the tab. */}
-      <Fold
-        icon={Eye}
-        title="Your public profile"
-        summary={vendor?.status === 'APPROVED'
-          ? 'How customers see you'
-          : 'How you will look once approved'}
-      >
-        <PublicProfilePreview vendor={vendor} reviews={reviewRows} />
-      </Fold>
-
-      {/* ── My Services, first and open ──────────────────────────────
-          The Listing tab is gone from the bottom bar (§40): an
-          add-anything button one tap from every screen is how a partner
-          ends up with four Photographys. This is what it became — and
-          it is not behind a fold, because a partner opening More to
-          check whether their Catering went live should not have to find
-          a row and tap it first. */}
-      <Fold
-        icon={Store}
-        title="My services"
-        summary="What you offer, and where each one stands"
-        defaultOpen
-      >
-        <MyServices
-          vendorId={vendor?.id}
-          initialRows={listings}
-          onOpenTrade={onOpenTrade}
-        />
-      </Fold>
-
-      {/* ── What happened, and anything we said ───────────────────────
-          Above verification and payouts because this is the tab a
-          partner opens when they suspect they missed something, and
-          below My services because a notification about a service is
-          not much use next to a service you cannot see. */}
-      {inboxReady && (
-        <Fold
-          icon={inbox.unread ? BellRing : Bell}
-          title="Notifications"
-          summary={inboxSummary}
-          tone={inbox.unread ? 'nudge' : 'neutral'}
-        >
-          <PartnerInbox
-            rows={inbox.rows}
-            onRead={() => setInbox(s => (s ? { ...s, unread: 0 } : s))}
-          />
-        </Fold>
-      )}
-
-      {inboxReady && (
-        <Fold
-          icon={MessageSquare}
-          title="Messages"
-          summary={messageSummary}
-          tone={lastFromUs && !lastFromUs.read_at ? 'nudge' : 'neutral'}
-        >
-          <PartnerMessages vendorId={vendor?.id} initialRows={inbox.messages} />
-        </Fold>
-      )}
-
-      {/* ── What customers said ──────────────────────────────────────
-          Below the services it is about, and closed: a partner opens
-          More to change something, and reviews are the one thing on
-          this tab they cannot change. Read when they want to read
-          them. */}
-      <Fold
-        icon={Star}
-        title="Reviews"
-        summary={reviewSummary}
-        tone={reviewRows.length && reviewAvg >= 4.5 ? 'good' : 'neutral'}
-      >
-        <PartnerReviews reviews={reviewRows} />
-      </Fold>
-
+      {/* Only when something has actually happened to the account. */}
       <AccountState vendor={vendor} onUpdateVendor={onUpdateVendor} />
 
-      {/* ══════════════════════════════════════════════════════════════
-          ONE FOLD OPENS, NOT TWO
-          ══════════════════════════════════════════════════════════════
+      <Group title="Partner">
+        <Row icon={UserRound} label="Partner profile"  onClick={() => onOpenScreen('profile')} />
+        <Row icon={Store}     label="My services"      onClick={() => onOpenScreen('services')}
+             badge={drafts ? `${drafts} draft${drafts === 1 ? '' : 's'}` : null} tone="attention" />
+        <Row icon={Sparkles}  label="Business profile" onClick={() => onOpenScreen('business')} />
+      </Group>
 
-          Verification opened while unverified and How-you-get-paid
-          opened while unpaid — and a brand new partner is BOTH, so the
-          tab opened with roughly 1,300px of form stacked in front of
-          them before they had scrolled once. Two open forms read as a
-          wall, not as two things to do, and the reliable outcome of a
-          wall is neither of them getting done.
+      <Group title="Operations">
+        <Row icon={Navigation}  label="Availability & service area" onClick={() => onOpenScreen('area')} />
+        <Row icon={vendor?.is_verified ? BadgeCheck : ShieldCheck}
+             label="Verification & documents" onClick={() => onOpenScreen('verification')}
+             badge={vendor?.is_verified ? 'Verified' : (docsMissing ? `${docsMissing} missing` : null)}
+             tone={vendor?.is_verified ? 'good' : 'attention'} />
+        <Row icon={Landmark}    label="Bank & payments" onClick={() => onOpenScreen('bank')}
+             badge={bankBadge} tone="attention" />
+      </Group>
 
-          Verification wins the one slot because it is the one that
-          gates work: match_partners will not offer a job to an
-          unverified master. Payout details matter enormously and matter
-          LATER — nothing is owed until a job is delivered.
+      <Group title="Communication">
+        <Row icon={Bell}          label="Notifications" onClick={() => onOpenScreen('notifications')}
+             badge={inbox?.unread || null} tone="attention" />
+        <Row icon={MessageSquare} label="Messages"      onClick={() => onOpenScreen('messages')}
+             badge={lastFromUs && !lastFromUs.read_at ? 'New' : null} tone="attention" />
+        <Row icon={Star}          label="Reviews"       onClick={() => onOpenScreen('reviews')}
+             badge={reviewRows.length ? reviewAvg.toFixed(1) : null} tone="count" />
+      </Group>
 
-          The summary line on the closed payout fold still says "Not
-          added yet — we cannot pay you without it", so nothing is
-          hidden; it is one tap away instead of open. */}
-      {docs && !docs.unavailable && (
-        <Fold
-          icon={vendor?.is_verified ? BadgeCheck : ShieldCheck}
-          title="Verification"
-          summary={verificationSummary}
-          tone={vendor?.is_verified ? 'good' : 'nudge'}
-          defaultOpen={!vendor?.is_verified}
-        >
-          <VendorDocuments
-            vendor={vendor}
-            byKind={docs.byKind}
-            onUpdateVendor={onUpdateVendor}
-            onChanged={readDocs}
-            /* Which documents are asked for depends on what they do —
-               a caterer is asked about food and a mehendi artist is
-               not. See data/compliance.js. */
-            trades={listedTrades}
-          />
-        </Fold>
+      <Group title="Support">
+        <Row icon={LifeBuoy} label="Help & support" onClick={() => onOpenScreen('help')} />
+      </Group>
+
+      <Group title="Account">
+        <Row icon={Settings} label="Settings" onClick={() => onOpenScreen('settings')} />
+        <Row icon={LogOut}   label="Sign out" danger onClick={onSignOut} />
+      </Group>
+
+      {/* One line, where a 600px price-list fold used to be. */}
+      {LAUNCH_OFFER && (
+        <p className="px-1 text-[11.5px] leading-snug text-ink-mute">
+          <span className="font-extrabold text-ink-soft">{plan.label}</span>, free while we
+          build the Bengaluru network. Nothing to pay and nothing to choose.
+        </p>
       )}
-
-      {/* ── Money ────────────────────────────────────────────────────
-          Second, and above the business details on purpose: a partner
-          opening this tab is far more likely to be here about where
-          their money goes than about their Instagram handle. */}
-      {payoutLoaded && (
-        <Fold
-          icon={Landmark}
-          title="How you get paid"
-          summary={payoutSummary}
-          tone={payout ? (payout.verified_at ? 'good' : 'neutral') : 'nudge'}
-          /* Only when verification is not already claiming the slot. */
-          defaultOpen={!payout && !!vendor?.is_verified}
-        >
-          <PayoutDetails vendorId={vendor?.id} onSaved={setPayout} />
-        </Fold>
-      )}
-
-      <BusinessDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
-
-      {/* ── Where you work ───────────────────────────────────────────
-          The radius is a dispatch rule, not a preference: match_partners
-          measures against it, so a nudge here silently removes the
-          partner from a ring of bookings. Its own fold, above the
-          address form it used to be buried inside. */}
-      <Fold
-        icon={Navigation}
-        title="Service area"
-        summary={vendor?.service_radius_km
-          ? `Within ${vendor.service_radius_km} km of ${vendor.area ?? vendor.city ?? 'you'}`
-          : 'How far you will travel'}
-      >
-        <ServiceArea vendor={vendor} onSave={onUpdateVendor} />
-      </Fold>
-
-      <ReachDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
-
-      <ContactDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
-
-      <OwnerDetails
-        profile={profile}
-        onSaved={async patch => {
-          const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
-          if (error) throw new Error(error.message)
-          await fetchProfile(user.id)
-        }}
-      />
-
-      {/* ── Your plan ────────────────────────────────────────────────
-          The largest fold on the tab, at roughly 600px, and there is
-          nothing to DO inside it: during the launch offer every partner
-          is on the top tier for nothing, and no screen in this app sells
-          an upgrade. It was a price list for a decision that cannot be
-          made.
-
-          While the offer is running it is one line. When it ends and
-          the tiers start costing money, the fold comes back — and by
-          then it will have a purchase action in it worth opening for. */}
-      {LAUNCH_OFFER ? (
-        <div className="flex items-center gap-2.5 rounded-[18px] bg-forest-50 px-4 py-3 ring-1 ring-forest-200/60">
-          <Star size={15} className="shrink-0 text-forest-700" />
-          <p className="min-w-0 text-[12.5px] font-semibold leading-snug text-forest-900">
-            <span className="font-extrabold">{plan.label}</span>, free while we
-            build the Bengaluru network. Nothing to pay and nothing to choose.
-          </p>
-        </div>
-      ) : (
-        <Fold icon={Star} title="Your plan" summary={`${plan.label} · ${plan.price}`}>
-          <YourPlan tier={tier} />
-        </Fold>
-      )}
-
-      {/* Reference rather than a setting, and it folds itself. */}
-      <PartnerHandbook />
-
-      {/* ── What we may interrupt you for ───────────────────────────
-          Down here with the other settings rather than up with the
-          feed: reading notifications and deciding which ones reach the
-          phone are different errands, and the second one is rare. */}
-      {inboxReady && (
-        <Fold
-          icon={BellRing}
-          title="What we notify you about"
-          summary="New jobs always come through"
-        >
-          <NotificationPrefs vendorId={vendor?.id} initial={inbox.prefs} />
-        </Fold>
-      )}
-
-      <PartnerHelp vendor={vendor} />
-
-      <DangerZone vendor={vendor} onUpdateVendor={onUpdateVendor} onSignOut={onSignOut} />
     </div>
+  )
+}
+
+/* A section whose table has not been created on this database yet. The
+   row is still shown — hiding it would make the app look different on
+   two databases — and the screen says why rather than being blank. */
+function Absent({ what }) {
+  return (
+    <p className="rounded-[16px] bg-ink/[0.03] p-4 text-[12.5px] leading-relaxed text-ink-mute">
+      {what} is not switched on for this account yet.
+    </p>
   )
 }
 
