@@ -1,4 +1,5 @@
-import { ArrowRight, Check, ChevronRight, Clock3, MapPin, PackageCheck, Sparkles, Users, Truck, ShieldCheck } from 'lucide-react'
+import { useEffect } from 'react'
+import { ArrowRight, Check, Clock3, MapPin, PackageCheck, Sparkles, Users, Truck, ShieldCheck } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 
 const SERVICES = [
@@ -33,10 +34,10 @@ function Brand() {
 function PublicNav() {
   const { pathname } = useLocation()
   const links = [
-    ['/services', 'Services'],
-    ['/how-it-works', 'How it works'],
-    ['/about', 'About'],
-    ['/partners', 'Partners'],
+    ['/#services', 'Services'],
+    ['/#how-it-works', 'How it works'],
+    ['/#about', 'About'],
+    ['/#partners', 'Partners'],
   ]
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#190537]/90 backdrop-blur-xl">
@@ -236,9 +237,9 @@ function PartnerSection() {
           <Link to="/onboarding/vendor" className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-extrabold text-[#26063f]">Partner with Sambramo <ArrowRight size={16} /></Link>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {['Receive relevant requests', 'Manage event work', 'Prepare & dispatch', 'Track execution'].map((x, i) => (
+          {[['Receive relevant requests', Users], ['Manage event work', PackageCheck], ['Prepare & dispatch', Truck], ['Track execution', Check]].map(([x, Icon]) => (
             <div key={x} className="rounded-3xl border border-white/10 bg-white/[.06] p-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-[#d9b8ff]">{[Users, PackageCheck, Truck, Check][i]({size:17})}</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-[#d9b8ff]"><Icon size={17} /></div>
               <p className="mt-4 text-sm font-extrabold">{x}</p>
             </div>
           ))}
@@ -272,10 +273,10 @@ function Footer() {
           <p className="mt-4 max-w-md text-xs leading-6 text-white/45">You Pick the Occasion. We Deliver the Celebration.</p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/50">
-          <Link to="/services" className="hover:text-white">Services</Link>
-          <Link to="/how-it-works" className="hover:text-white">How it works</Link>
-          <Link to="/about" className="hover:text-white">About</Link>
-          <Link to="/partners" className="hover:text-white">Partners</Link>
+          <Link to="/#services" className="hover:text-white">Services</Link>
+          <Link to="/#how-it-works" className="hover:text-white">How it works</Link>
+          <Link to="/#about" className="hover:text-white">About</Link>
+          <Link to="/#partners" className="hover:text-white">Partners</Link>
           <Link to="/app" className="hover:text-white">Platform</Link>
         </div>
       </div>
@@ -308,8 +309,9 @@ export default function PublicSite() {
 function ScrollToSection({ id }) {
   // Route-specific landing pages retain crawlable URLs while still presenting
   // one coherent public site. Scrolling is delayed until the section exists.
-  if (typeof window !== 'undefined') {
-    window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-  }
+  useEffect(() => {
+    const timer = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+    return () => window.clearTimeout(timer)
+  }, [id])
   return null
 }
