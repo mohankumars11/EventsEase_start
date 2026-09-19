@@ -70,8 +70,12 @@ export const U = {
      so the destination moves in one place when the apps get their own
      subdomains. Everything on the site links to these, never to a
      vercel.app hostname. */
-  customerApp:    '/app',
-  partnerApp:     '/partner-app',
+  /* Trailing slash on both, because vercel.json sets trailingSlash: true
+     and that normalisation runs BEFORE the redirect matches. Linking to
+     /app costs a 308 to /app/ and only then the hop to the application —
+     two redirects on the primary call to action of every page. */
+  customerApp:    '/app/',
+  partnerApp:     '/partner-app/',
 }
 
 /**
