@@ -164,12 +164,12 @@ function FloatingMarketingCard({ icon: Icon, title, subtitle, action, className 
 
 function Hero() {
   return (
-    <section id="top" className="relative isolate overflow-hidden bg-[#18042f] text-white">
+    <section id="top" className="sambramo-hero relative isolate overflow-hidden bg-[#18042f] text-white">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2200&q=90')] bg-cover bg-[center_35%]"/>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_35%,rgba(147,76,192,.28),transparent_28%),linear-gradient(90deg,#18042f_0%,rgba(24,4,47,.98)_30%,rgba(24,4,47,.78)_58%,rgba(24,4,47,.25)_100%)]"/>
       <div className="absolute inset-0 bg-gradient-to-t from-[#18042f] via-transparent to-[#18042f]/20"/>
-      <div className="relative z-10 mx-auto flex min-h-[650px] max-w-[1480px] items-center px-5 py-20 sm:min-h-[690px] sm:px-10 lg:min-h-[730px] lg:px-14">
-        <div className="max-w-3xl">
+      <div className="sambramo-hero-inner relative z-10 mx-auto flex min-h-[650px] max-w-[1480px] items-center px-5 py-20 sm:min-h-[690px] sm:px-10 lg:min-h-[730px] lg:px-14">
+        <div className="sambramo-hero-copy max-w-3xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#18042f]/60 px-3.5 py-2 text-[9px] font-black uppercase tracking-[.2em] text-[#F4C85D] backdrop-blur-md sm:text-[10px]">
             <i className="h-1.5 w-1.5 rounded-full bg-[#F4C85D]"/>
             YOUR EVENT. OUR DELIVERY.
@@ -185,7 +185,7 @@ function Hero() {
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#F4C85D]/30 bg-[#2A085C]/75 px-3.5 py-2 text-[10px] font-black uppercase tracking-[.15em] text-[#F4C85D] backdrop-blur-md">
             <MapPin size={14}/> Live in Bengaluru soon
           </div>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <div className="sambramo-hero-actions mt-7 flex flex-col gap-3 sm:flex-row">
             <LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 py-3.5 text-sm font-black text-[#1c0b2d] shadow-[0_12px_30px_rgba(244,200,93,.2)] transition hover:-translate-y-0.5 active:scale-[.98]">
               Explore Sambramo <ArrowRight size={17}/>
             </LaunchButton>
@@ -212,8 +212,8 @@ function FeatureStrip() {
     [Heart,'For every occasion','Personal or professional'],
   ]
   return (
-    <section className="border-b border-[#e9e0ef] bg-white">
-      <div className="mx-auto grid max-w-[1480px] grid-cols-2 lg:grid-cols-4">
+    <section className="sambramo-feature-strip border-b border-[#e9e0ef] bg-white">
+      <div className="sambramo-feature-grid mx-auto grid max-w-[1480px] grid-cols-2 lg:grid-cols-4">
         {items.map(([Icon,title,sub]) => (
           <div key={title} className="flex items-center gap-3 border-b border-r border-[#ece4f0] px-4 py-5 sm:px-6 lg:border-b-0 lg:px-8 lg:py-6">
             <Icon size={25} strokeWidth={1.7} className="shrink-0 text-[#2A085C]"/>
@@ -234,7 +234,7 @@ function SearchExperience() {
     return () => window.clearInterval(timer)
   }, [])
   return (
-    <section className="bg-[#fbf8fd] px-5 py-12 sm:px-8 lg:py-16">
+    <section className="sambramo-search bg-[#fbf8fd] px-5 py-12 sm:px-8 lg:py-16">
       <div className="mx-auto max-w-4xl text-center">
         <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">Quick discovery</p>
         <h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">What do you need today?</h2>
@@ -259,13 +259,13 @@ function Services() {
   const filters = ['All','Creative','Food','Logistics','Spaces','Specialists']
   const shown = useMemo(() => filter==='All' ? services : services.filter((x) => x[2]===filter), [filter])
   return (
-    <section id="services" className="bg-white px-5 py-14 sm:px-8 lg:py-20">
+    <section id="services" className="sambramo-services bg-white px-5 py-14 sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px]">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">Service discovery</p><h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">Everything around the occasion.</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#6d6173]">Move through the categories you need without losing the bigger event picture.</p></div>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1"><SlidersHorizontal size={14} className="mr-1 shrink-0 text-[#8050a8]"/>{filters.map((f) => <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap rounded-full px-3.5 py-2 text-[10px] font-black transition ${filter===f ? 'bg-[#2A085C] text-white' : 'bg-[#f4eff7] text-[#5f4d68] hover:bg-[#e9def0]'}`}>{f}</button>)}</div>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+        <div className="sambramo-services-grid mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {shown.map(([title,sub,tag,img,Icon]) => (
             <a href="#partners" key={title} className="group overflow-hidden rounded-[20px] border border-[#ebe3ef] bg-white shadow-[0_8px_28px_rgba(42,8,92,.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(42,8,92,.12)]">
               <div className="relative aspect-[1.15] overflow-hidden">
@@ -286,7 +286,7 @@ function Services() {
 
 function Ecosystem() {
   return (
-    <section className="overflow-hidden bg-[#18042f] px-5 py-14 text-white sm:px-8 lg:py-20">
+    <section className="sambramo-ecosystem overflow-hidden bg-[#18042f] px-5 py-14 text-white sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px]">
         <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
           <div>
@@ -297,7 +297,7 @@ function Ecosystem() {
               {trades.slice(0,18).map((x,i) => <div key={x} className="rounded-xl border border-white/10 bg-white/[.045] px-3 py-2.5 text-[9px] font-bold text-white/70 transition hover:bg-white/[.08]"><span className="mr-1 text-[#F4C85D]">{String(i+1).padStart(2,'0')}</span>{x}</div>)}
             </div>
           </div>
-          <div className="relative min-h-[360px] overflow-hidden rounded-[30px] border border-white/10 bg-[#2A085C] p-6 sm:p-10">
+          <div className="sambramo-ecosystem-visual relative min-h-[360px] overflow-hidden rounded-[30px] border border-white/10 bg-[#2A085C] p-6 sm:p-10">
             <div className="absolute left-1/2 top-1/2 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#F4C85D]/40 bg-[#F4C85D] text-center text-[#2A085C] shadow-[0_0_80px_rgba(244,200,93,.18)]"><div><p className="text-[10px] font-black tracking-[.15em]">SAMBRAMO</p><p className="mt-1 text-[8px] font-bold">ONE PLACE</p></div></div>
             <div className="grid h-full grid-cols-2 gap-4 sm:grid-cols-3">
               {[
@@ -324,7 +324,7 @@ function ProductJourney() {
   }, [])
   const [n,title,body,Icon] = journey[active]
   return (
-    <section id="journey" className="bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20">
+    <section id="journey" className="sambramo-journey bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px]">
         <div className="grid gap-9 lg:grid-cols-[.72fr_1.28fr] lg:items-center">
           <div>
@@ -361,7 +361,7 @@ function ProductJourney() {
 
 function PartnerSection() {
   return (
-    <section id="partners" className="bg-[#210747] px-5 py-14 text-white sm:px-8 lg:py-20">
+    <section id="partners" className="sambramo-partners bg-[#210747] px-5 py-14 text-white sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px]">
         <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
           <div>
@@ -404,7 +404,7 @@ function Bengaluru() {
 function Occasions() {
   const [index,setIndex] = useState(0)
   return (
-    <section className="bg-white px-5 py-14 sm:px-8 lg:py-20">
+    <section className="sambramo-occasions bg-white px-5 py-14 sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px]">
         <div className="flex items-end justify-between gap-5">
           <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">Occasions</p><h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">Made for the moment.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-[#74677b]">Weddings, birthdays, corporate events, cultural programs and social gatherings.</p></div>
@@ -419,7 +419,7 @@ function Occasions() {
 function About() {
   const items = [[Users,'Wide range','event services'],[ShieldCheck,'Partner-led','service discovery'],[PackageCheck,'Connected','event operations'],[MapPin,'Local focus','Bengaluru first'],[Sparkles,'Designed for','every celebration']]
   return (
-    <section id="about" className="bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20">
+    <section id="about" className="sambramo-about bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20">
       <div className="mx-auto max-w-[1480px] text-center">
         <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">The Sambramo idea</p>
         <h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">Built around the way events actually happen.</h2>
@@ -436,7 +436,7 @@ function Contact() {
   const [email,setEmail] = useState('')
   const [sent,setSent] = useState(false)
   return (
-    <section id="contact" className="bg-white px-5 py-12 sm:px-8 lg:py-16">
+    <section id="contact" className="sambramo-contact bg-white px-5 py-12 sm:px-8 lg:py-16">
       <div className="relative mx-auto max-w-[1480px] overflow-hidden rounded-[30px] bg-[#2A085C] p-7 text-white sm:p-10 lg:p-12">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8c4dca]/25 blur-3xl"/>
         <div className="relative grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
@@ -465,7 +465,7 @@ function FAQ() {
   ]
   const [active,setActive] = useState(0)
   return (
-    <section className="bg-[#fffdfd] px-5 py-14 sm:px-8 lg:py-20">
+    <section className="sambramo-faq bg-[#fffdfd] px-5 py-14 sm:px-8 lg:py-20">
       <div className="mx-auto max-w-3xl">
         <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">Questions</p><h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">A few things people ask.</h2></div>
         <div className="mt-8 space-y-2">{questions.map(([q,answer],i) => <div key={q} className="overflow-hidden rounded-2xl border border-[#e8deed] bg-white"><button onClick={() => setActive(active===i ? -1 : i)} aria-expanded={active===i} className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-4 text-left"><span className="text-sm font-black">{q}</span><ChevronDown size={17} className={active===i ? 'rotate-180 text-[#2A085C]' : 'text-[#2A085C]'}/></button>{active===i && <p className="px-5 pb-5 text-sm leading-6 text-[#75697b]">{answer}</p>}</div>)}</div>
@@ -491,7 +491,7 @@ function Footer() {
 
 export default function PublicSite() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white text-[#211329] selection:bg-[#F4C85D] selection:text-[#1d0b30]">
+    <div className="sambramo-site min-h-screen overflow-x-clip bg-white text-[#211329] selection:bg-[#F4C85D] selection:text-[#1d0b30]">
       <Nav/>
       <main>
         <Hero/>
@@ -508,7 +508,7 @@ export default function PublicSite() {
         <FAQ/>
       </main>
       <Footer/>
-      <div className="fixed bottom-3 left-3 right-3 z-40 sm:hidden">
+      <div className="sambramo-mobile-cta fixed bottom-3 left-3 right-3 z-40 sm:hidden">
         <div className="flex gap-2 rounded-2xl border border-[#e6d9eb] bg-white/95 p-2 shadow-[0_14px_35px_rgba(42,8,92,.18)] backdrop-blur-xl">
           <LaunchButton className="flex-1 rounded-xl bg-[#2A085C] py-3 text-xs font-black text-white">Launching Soon</LaunchButton>
           <a href="#partners" className="flex-1 rounded-xl bg-[#F4C85D] py-3 text-center text-xs font-black text-[#1d0b30]">For Partners</a>
