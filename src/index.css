@@ -1569,3 +1569,77 @@
     transform: none;
   }
 }
+
+
+.sambramo-scene-card {
+  z-index: 2;
+  animation: sambramo-scene-in .85s cubic-bezier(.22,1,.36,1) both;
+}
+
+.sambramo-scene-card img {
+  animation: sambramo-scene-image 5.2s ease-out both;
+}
+
+@keyframes sambramo-scene-in {
+  from {
+    opacity: 0;
+    transform: translate3d(38px,0,0) scale(1.025);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0,0,0) scale(1);
+  }
+}
+
+@keyframes sambramo-scene-image {
+  from { transform: scale(1.08); }
+  to { transform: scale(1.015); }
+}
+
+.sambramo-scene-card .backdrop-blur-xl {
+  animation: sambramo-scene-copy .9s .12s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes sambramo-scene-copy {
+  from {
+    opacity: 0;
+    transform: translate3d(22px,10px,0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0,0,0);
+  }
+}
+
+@media (max-width: 767px) {
+  .sambramo-scene-card {
+    animation-name: sambramo-scene-in-mobile;
+  }
+
+  @keyframes sambramo-scene-in-mobile {
+    from {
+      opacity: 0;
+      transform: translate3d(0,18px,0) scale(1.02);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .sambramo-scene-card .backdrop-blur-xl {
+    max-width: calc(100% - 8px);
+  }
+
+  .sambramo-scene-card .backdrop-blur-xl h2 {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sambramo-scene-card,
+  .sambramo-scene-card img,
+  .sambramo-scene-card .backdrop-blur-xl {
+    animation: none !important;
+  }
+}
