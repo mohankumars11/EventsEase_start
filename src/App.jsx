@@ -18,6 +18,7 @@ import ResumePrompt from './components/common/ResumePrompt'
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
 import HomeScreen from './pages/HomeScreen'
+import PublicSite from './pages/PublicSite'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -241,7 +242,12 @@ function AppRoutes() {
           the wild in the tab bar, in post-login redirects, in the profile menu
           and in anything a customer has bookmarked. It keeps its guard, so the
           signed-out variant is only ever reachable at `/`. */}
-      <Route path="/"       element={<ScreenShell><HomeScreen /></ScreenShell>} />
+      <Route path="/" element={<PublicSite />} />
+      <Route path="/about" element={<PublicSite />} />
+      <Route path="/how-it-works" element={<PublicSite />} />
+      <Route path="/partners" element={<PublicSite />} />
+      <Route path="/contact" element={<PublicSite />} />
+      <Route path="/app" element={<ScreenShell><HomeScreen /></ScreenShell>} />
       <Route path="/signup"         element={<BareShell><SignupPage /></BareShell>} />
       <Route path="/login"          element={<BareShell><LoginPage /></BareShell>} />
       <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
