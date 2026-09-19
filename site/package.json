@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "The Sambramo marketing site. Static HTML, no framework, no runtime JS.",
   "scripts": {
     "content": "node scripts/pull-content.mjs",
