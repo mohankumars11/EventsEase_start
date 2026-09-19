@@ -743,6 +743,7 @@ function PublicSite() {
         </div>
       </div>
       <EarlyAccess open={earlyOpen} onClose={() => setEarlyOpen(false)} />
-    </div>
+      </div>
+    </>
   )
 }
