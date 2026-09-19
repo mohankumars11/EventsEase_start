@@ -11,6 +11,11 @@
  * that drifts.
  */
 export const FOCUSED_ROUTES = [
+  '/',
+  '/about',
+  '/how-it-works',
+  '/partners',
+  '/contact',
   '/plan/custom',
   '/plan/confirmation',
   '/login',
