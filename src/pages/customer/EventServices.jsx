@@ -620,8 +620,10 @@ export default function EventServices() {
       <div
         ref={contentRef}
         className="sticky z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
-        style={{ top: 'var(--event-appbar-h, 3.5rem)' }}
-        style={{ scrollMarginTop: '56px' }}
+        style={{
+          top: 'var(--event-appbar-h, 3.5rem)',
+          scrollMarginTop: '56px',
+        }}
       >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">
           <TabButton
