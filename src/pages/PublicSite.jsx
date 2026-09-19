@@ -209,6 +209,8 @@ function Nav() {
 
 function Hero() {
   const [hook, setHook] = useState(0)
+  const [scene, setScene] = useState(0)
+
   const hooks = [
     'From the first requirement to the final celebration.',
     'Event Supply Chain. Connected.',
@@ -216,17 +218,55 @@ function Hero() {
     'Your event. Our delivery.',
   ]
 
+  const scenes = [
+    {
+      label: '01 · DISCOVER',
+      title: 'Start with the occasion.',
+      body: 'Venue, catering, decor, photography, entertainment and more — brought into one event view.',
+      image: IMG.venue,
+      accent: 'What does your event need?',
+    },
+    {
+      label: '02 · CONNECT',
+      title: 'Bring the right people together.',
+      body: 'Services and event partners become part of one connected event journey.',
+      image: IMG.food,
+      accent: 'People + services + materials',
+    },
+    {
+      label: '03 · BOOK',
+      title: 'Move selected work forward.',
+      body: 'Choose the services you need and move each requirement toward booking and payment.',
+      image: IMG.decor,
+      accent: 'Selected · Ready to move',
+    },
+    {
+      label: '04 · DELIVER',
+      title: 'Move the work to the celebration.',
+      body: 'People, supplies, equipment and transport come together around event day.',
+      image: IMG.transport,
+      accent: 'On the way → Event ready',
+    },
+    {
+      label: '05 · CELEBRATE',
+      title: 'Everything leads to the moment.',
+      body: 'The complexity behind the occasion fades into the background — the celebration takes over.',
+      image: IMG.hero,
+      accent: 'Your event. Our delivery.',
+    },
+  ]
+
   useEffect(() => {
     const timer = window.setInterval(() => setHook((value) => (value + 1) % hooks.length), 3600)
     return () => window.clearInterval(timer)
   }, [])
 
-  const filmSteps = [
-    { label: 'VENUE', note: 'Space ready', image: IMG.venue, icon: Building2 },
-    { label: 'FOOD', note: 'Kitchen moving', image: IMG.food, icon: UtensilsCrossed },
-    { label: 'DECOR', note: 'Setup in motion', image: IMG.decor, icon: Flower2 },
-    { label: 'MOVE', note: 'On the way', image: IMG.transport, icon: Truck },
-  ]
+  useEffect(() => {
+    const timer = window.setInterval(() => setScene((value) => (value + 1) % scenes.length), 5200)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const currentScene = scenes[scene]
 
   return (
     <section id="top" className="sambramo-hero relative isolate overflow-hidden bg-[#160329] text-white">
@@ -290,70 +330,57 @@ function Hero() {
 
           <div className="sambramo-film relative min-w-0 overflow-hidden rounded-[28px] border border-white/18 bg-[#0d021a] shadow-[0_40px_120px_rgba(0,0,0,.42)] sm:rounded-[34px]">
             <div className="sambramo-film-stage relative min-h-[455px] sm:min-h-[570px] lg:min-h-[650px]">
-              <img
-                src={IMG.hero}
-                alt="People celebrating together at an event"
-                fetchPriority="high"
-                decoding="async"
-                className="sambramo-film-main absolute inset-0 h-full w-full object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/18 to-[#10021d]/10" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/65 via-transparent to-transparent" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(244,200,93,.18),transparent_30%)]" />
 
-              <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
-                <div className="rounded-full border border-white/22 bg-[#10021d]/55 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em] text-white backdrop-blur-md">
-                  Bengaluru · launch market
+              <div key={currentScene.label} className="sambramo-scene-card absolute inset-0">
+                <img
+                  src={currentScene.image}
+                  alt={currentScene.title}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="sambramo-film-main absolute inset-0 h-full w-full object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/30 to-[#10021d]/5" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/72 via-[#10021d]/18 to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(244,200,93,.16),transparent_30%)]" />
+
+                <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
+                  <div className="rounded-full border border-white/25 bg-[#10021d]/60 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em] text-white backdrop-blur-md">
+                    Bengaluru · launch market
+                  </div>
+                  <div className="rounded-full border border-[#F4C85D]/45 bg-[#10021d]/60 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur-md">
+                    {currentScene.label}
+                  </div>
                 </div>
-                <div className="hidden rounded-full border border-[#F4C85D]/45 bg-[#10021d]/55 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur-md sm:block">
-                  EVENT SUPPLY CHAIN
-                </div>
-              </div>
 
-              <div className="sambramo-film-route absolute left-5 right-5 top-[31%] hidden h-[2px] bg-white/20 sm:block">
-                <span className="sambramo-film-route-light" />
-              </div>
-
-              <div className="sambramo-film-cards absolute inset-x-4 top-[25%] grid grid-cols-2 gap-2 sm:left-6 sm:right-6 sm:grid-cols-4 sm:gap-3">
-                {filmSteps.map(({ label, note, image, icon: Icon }, index) => (
-                  <div
-                    key={label}
-                    className="sambramo-film-card group overflow-hidden rounded-2xl border border-white/18 bg-[#12031f]/65 p-1.5 shadow-[0_16px_45px_rgba(0,0,0,.24)] backdrop-blur-md"
-                    style={{ '--film-delay': `${index * 180}ms` }}
-                  >
-                    <div className="relative aspect-[1.35] overflow-hidden rounded-xl">
-                      <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#12031f]/80 via-transparent to-transparent" />
-                      <span className="absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-[#F4C85D] text-[#2A085C]"><Icon size={12} /></span>
-                    </div>
-                    <div className="px-1 pb-1 pt-2">
-                      <p className="text-[8px] font-black tracking-[.12em] text-[#F4C85D]">{label}</p>
-                      <p className="mt-0.5 text-[8px] font-semibold text-white/82">{note}</p>
+                <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 sm:left-6 sm:right-6">
+                  <div className="max-w-[520px] rounded-[24px] border border-white/20 bg-[#12031f]/68 p-4 shadow-[0_25px_70px_rgba(0,0,0,.28)] backdrop-blur-xl sm:p-5">
+                    <p className="text-[9px] font-black uppercase tracking-[.20em] text-[#F4C85D]">{currentScene.label}</p>
+                    <h2 className="mt-2 font-serif text-[clamp(1.65rem,3.8vw,3rem)] font-bold leading-[1.02] text-white">{currentScene.title}</h2>
+                    <p className="mt-3 max-w-lg text-[11px] leading-5 text-white/88 sm:text-xs sm:leading-6">{currentScene.body}</p>
+                    <div className="mt-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-white">
+                      {currentScene.accent}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="sambramo-film-center absolute left-1/2 top-[51%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-[#F4C85D]/55 bg-[#2A085C]/88 px-4 py-3 shadow-[0_0_45px_rgba(244,200,93,.16)] backdrop-blur-xl">
-                <span className="h-2 w-2 rounded-full bg-[#F4C85D] shadow-[0_0_14px_rgba(244,200,93,.95)]" />
-                <span className="text-[9px] font-black uppercase tracking-[.18em] text-white">SAMBRAMO · CONNECTED</span>
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-8">
-                <div className="max-w-2xl">
-                  <p className="text-[9px] font-black uppercase tracking-[.22em] text-[#F4C85D]">FROM SUPPLY CHAIN TO CELEBRATION</p>
-                  <h2 className="mt-2 font-serif text-[clamp(1.75rem,3.8vw,3.2rem)] font-bold leading-[1.02] text-white">
-                    Every moving part leads to one moment.
-                  </h2>
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-[8px] font-black uppercase tracking-[.15em] text-white/82">
-                    <span>People</span><span className="text-[#F4C85D]">→</span>
-                    <span>Services</span><span className="text-[#F4C85D]">→</span>
-                    <span>Materials</span><span className="text-[#F4C85D]">→</span>
-                    <span>Logistics</span><span className="text-[#F4C85D]">→</span>
-                    <span>Celebration</span>
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    {scenes.map((item, index) => (
+                      <button
+                        key={item.label}
+                        onClick={() => setScene(index)}
+                        className={`h-1.5 min-w-12 flex-1 rounded-full transition-all duration-500 ${index === scene ? 'bg-[#F4C85D]' : 'bg-white/35 hover:bg-white/60'}`}
+                        aria-label={`Show scene ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-3 text-[8px] font-black uppercase tracking-[.16em] text-white/82">
+                    <span>People → Services → Materials → Logistics → Celebration</span>
+                    <span className="hidden sm:inline">SAMBRAMO</span>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
 
