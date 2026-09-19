@@ -182,7 +182,7 @@ ${waitlistCta({ brand, heading: 'Sambramo opens in Bengaluru soon',
       S.itemList(U.home, [
         { url: U.occasions, name: 'Occasions' }, { url: U.services, name: 'Services' },
         { url: U.sizes, name: 'Celebration sizes' }, { url: U.festivals, name: 'Festivals' },
-        { url: U.cities, name: 'Coverage' }, { url: U.trades, name: 'Partner trades' },
+        { url: U.city('bengaluru'), name: 'Bengaluru' }, { url: U.trades, name: 'Partner trades' },
       ]),
       S.faqPage(U.home, qs),
     ]),

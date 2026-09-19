@@ -411,10 +411,10 @@ ${waitlistCta({ brand, preset: c.slug,
 
   return {
     title, description, body, navCurrent: null,
-    crumbs: crumb({ name: 'Cities', url: U.cities }, { name: c.name }),
+    crumbs: crumb({ name: c.name }),
     schema: S.graph([
       S.webPage({ url: U.city(c.slug), title, description, lastmod: ctx.lastmod }),
-      S.breadcrumbList(U.city(c.slug), crumb({ name: 'Cities', url: U.cities }, { name: c.name })),
+      S.breadcrumbList(U.city(c.slug), crumb({ name: c.name })),
       S.professionalService(brand, c, legal),
       S.itemList(U.city(c.slug), occasions.map(o => ({ url: U.occasion(o.slug), name: o.name }))),
       S.faqPage(U.city(c.slug), qs),

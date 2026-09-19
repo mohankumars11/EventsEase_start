@@ -129,7 +129,6 @@ function renderRoute(r) {
     case 'index-services':  return H.servicesHub(ctx)
     case 'index-sizes':     return H.sizesHub(ctx)
     case 'index-festivals': return H.festivalsHub(ctx)
-    case 'index-cities':    return H.citiesHub(ctx)
     case 'index-trades':    return H.tradesHub(ctx)
     case 'faq':             return faqPage(ctx)
     case 'notfound':        return H.notFoundPage(ctx)

@@ -186,40 +186,6 @@ ${waitlistCta({ brand, heading: 'Planning a festival celebration?',
   })
 }
 
-/* ── Cities ────────────────────────────────────────────────────────────── */
-
-export function citiesHub(ctx) {
-  const { cities, brand, lastmod } = ctx
-  const c = cities[0]
-  return hub({
-    url: U.cities, nav: null, lastmod,
-    crumbs: crumb({ name: 'Cities' }),
-    title: fitTitle('Where Sambramo Operates', brand.name),
-    description: clamp(`Sambramo arranges celebrations in Bengaluru and nowhere else yet. City-wide coverage, one coordinator, one itemised price. If you are elsewhere you will be told plainly.`),
-    eyebrow: 'Coverage',
-    h1: 'Where Sambramo operates',
-    lede: `Bengaluru, and nowhere else yet. That is a deliberate choice rather than a limitation we are hiding.`,
-    items: cities.map(x => ({ url: U.city(x.slug), name: x.name })),
-    body: `
-<div class="wrap section prose">
-  <p><strong>Sambramo operates in Bengaluru, Karnataka, and in no other city.</strong> A coordinator who
-  knows which halls have a sound cut-off and which caterers actually turn up is worth more than a
-  directory covering thirty cities badly. When a second city opens, it will be listed here and not
-  before.</p>
-</div>
-<div class="wrap section">
-  <div class="grid grid--2">
-    <a class="card" href="${U.city(c.slug)}">
-      <span class="card-title">${esc(c.name)}, ${esc(c.state)}</span>
-      <p class="card-note">${esc(c.coverage)}</p>
-      <p class="card-price">${esc(list(c.knownAreas.slice(0, 4)))} and city-wide</p></a>
-  </div>
-</div>
-${waitlistCta({ brand, heading: 'Somewhere else?',
-  blurb: 'Leave your city. You will get a straight answer that we are not there yet, and a message the day that changes — rather than a form that pretends otherwise.' })}`,
-  })
-}
-
 /* ── Trades ────────────────────────────────────────────────────────────── */
 
 export function tradesHub(ctx) {

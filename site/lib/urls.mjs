@@ -45,14 +45,19 @@ export const U = {
   festivals:      '/festivals/',
   festival:       id => dir('festivals', id),
 
-  cities:         '/cities/',
-  city:           slug => dir('cities', slug),
+  /* The city page sits at the root: /bengaluru/, not /cities/bengaluru/.
+     With one city a /cities/ hub is a thin duplicate of the only page under
+     it — two URLs competing for one intent, which is the doorway pattern in
+     miniature. The short URL is also the one somebody would guess and the
+     one that reads well in a search result. A second city gets /mysuru/ at
+     the same level; a hub only earns its place at four or five. */
+  city:           slug => dir(slug),
 
-  partners:       '/for-partners/',
-  partnerJoin:    '/for-partners/join/',
-  bandhu:         '/for-partners/bandhu/',
-  trades:         '/for-partners/trades/',
-  trade:          slug => dir('for-partners/trades', slug),
+  partners:       '/partners/',
+  partnerJoin:    '/partners/join/',
+  bandhu:         '/partners/bandhu/',
+  trades:         '/partners/trades/',
+  trade:          slug => dir('partners/trades', slug),
 
   terms:          '/legal/terms/',
   privacy:        '/legal/privacy/',
@@ -122,7 +127,6 @@ export function routes(content) {
   add(U.services,  'index-services',  null, M.occ)
   add(U.sizes,     'index-sizes',     null, M.tier)
   add(U.festivals, 'index-festivals', null, M.fest)
-  add(U.cities,    'index-cities',    null, M.city)
   add(U.trades,    'index-trades',    null, M.trade)
 
   // ── generated ─────────────────────────────────────────────────────────
