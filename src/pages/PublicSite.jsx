@@ -186,7 +186,7 @@ function Nav() {
   const [open, setOpen] = useState(false)
   const links = [['#services', 'Services'], ['#supply-chain', 'Supply Chain'], ['#logistics', 'Logistics'], ['#journey', 'How It Works'], ['#partners', 'Partners']]
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#160329]/92 text-white shadow-[0_8px_32px_rgba(16,2,31,.24)] backdrop-blur-xl">
+    <header className="sambramo-nav sticky top-0 z-50 border-b text-white shadow-[0_8px_32px_rgba(16,2,31,.24)]">
       <div className="mx-auto flex min-h-[64px] max-w-[1480px] items-center justify-between gap-4 px-4 sm:min-h-[70px] sm:px-8 lg:px-10">
         <Brand />
         <nav className="hidden items-center gap-5 lg:flex">
