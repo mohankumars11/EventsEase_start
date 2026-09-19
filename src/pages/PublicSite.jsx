@@ -44,7 +44,7 @@ function LaunchSoon({partner=false,onClose}) {
         <p className="relative mt-3 text-sm leading-6 text-white/70">{partner ? 'The Sambramo partner experience is being prepared for event professionals across Bengaluru.' : 'The Sambramo customer experience is being prepared for Bengaluru. Access will open when the launch is ready.'}</p>
       </div>
       <div className="p-6">
-        <div className="flex gap-3 rounded-2xl border border-[#eadff1] bg-[#fbf8fd] p-4"><MapPin size={18} className="mt-0.5 text-[#2A085C]"/><div><p className="text-sm font-black">Starting with Bengaluru</p><p className="mt-1 text-xs text-[#776b7d]">Events • Partners • Services • Logistics</p></div></div>
+        <div className="flex gap-3 rounded-2xl border border-[#eadff1] bg-[#fbf8fd] p-4"><MapPin size={18} className="mt-0.5 text-[#2A085C]"/><div><p className="text-sm font-black">Live in Bengaluru soon</p><p className="mt-1 text-xs text-[#776b7d]">Events • Partners • Services • Logistics</p></div></div>
         <button onClick={onClose} className="mt-4 w-full rounded-2xl bg-[#2A085C] py-3.5 text-sm font-black text-white">Continue exploring</button>
       </div>
     </div>
@@ -59,7 +59,7 @@ function Brand(){return <a href="#top" className="shrink-0"><span className="blo
 function Nav(){
   const [open,setOpen]=useState(false)
   const links=[['#services','Services'],['#how-it-works','How It Works'],['#about','About'],['#partners','Partners'],['#bengaluru','Bengaluru'],['#contact','Contact']]
-  return <header className="sticky top-0 z-50 border-b border-white/10 bg-[#210747]/92 shadow-lg backdrop-blur-2xl">
+  return <header className="sticky top-0 z-50 border-b border-white/10 !bg-[#210747] shadow-lg backdrop-blur-2xl">
     <div className="mx-auto flex h-[66px] max-w-[1480px] items-center justify-between px-4 sm:h-[74px] sm:px-8">
       <Brand/><nav className="hidden items-center gap-6 xl:flex">{links.map(([h,l],i)=><a key={h} href={h} className={`text-[12px] font-black transition ${i===0?'text-[#F4C85D]':'text-white/75 hover:text-white'}`}>{l}</a>)}</nav>
       <div className="flex items-center gap-2"><LaunchButton className="hidden rounded-xl bg-[#F4C85D] px-5 py-2.5 text-[12px] font-black text-[#1d0b30] sm:block">Launching Soon</LaunchButton><button onClick={()=>setOpen(!open)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white xl:hidden">{open?<X size={19}/>:<Menu size={19}/>}</button></div>
@@ -69,22 +69,61 @@ function Nav(){
 }
 
 function Hero(){
-  return <section id="top" className="relative isolate min-h-[600px] overflow-hidden bg-[#18042f] text-white sm:min-h-[660px] lg:min-h-[700px]">
-    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2200&q=90')] bg-cover bg-center"/>
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(120,60,170,.3),transparent_32%),linear-gradient(90deg,#18042f_0%,rgba(24,4,47,.98)_30%,rgba(24,4,47,.75)_55%,rgba(24,4,47,.2)_100%)]"/>
-    <div className="absolute inset-0 bg-gradient-to-t from-[#18042f]/75 via-transparent to-[#18042f]/20"/>
-    <div className="relative mx-auto flex min-h-[600px] max-w-[1480px] items-end px-5 pb-14 pt-28 sm:min-h-[660px] sm:px-10 sm:pb-20 lg:min-h-[700px] lg:px-14">
-      <div className="max-w-2xl">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1.5 text-[10px] font-black uppercase tracking-[.2em] text-[#F4C85D]"><i className="h-1.5 w-1.5 rounded-full bg-[#F4C85D]"/>YOUR EVENT. OUR DELIVERY.</span>
-        <h1 className="mt-5 font-serif text-[43px] font-bold leading-[.94] tracking-[-.035em] sm:text-[62px] lg:text-[76px]">Everything your event needs.<span className="block">Connected in one place.</span></h1>
-        <p className="mt-6 max-w-xl text-[15px] leading-7 text-white/75 sm:text-[17px]">Sambramo brings event services, partners and logistics together so you can focus on the occasion—not the coordination.</p>
-        <div className="mt-6 flex items-center gap-2 text-sm font-bold"><MapPin size={17} className="text-[#F4C85D]"/>Bengaluru, Karnataka</div>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row"><LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 py-3.5 text-sm font-black text-[#1c0b2d] shadow-xl">Customer Experience <ArrowRight size={17}/></LaunchButton><a href="#partners" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/[.06] px-6 py-3.5 text-sm font-black text-white backdrop-blur-md">Partner With Sambramo <ArrowUpRight size={16}/></a></div>
-        <p className="mt-4 text-[11px] font-semibold text-white/40">The platform is launching soon in Bengaluru.</p>
+  return (
+    <section id="top" className="relative isolate min-h-[590px] overflow-hidden bg-[#18042f] text-white sm:min-h-[640px] lg:min-h-[680px]">
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2200&q=90')] bg-cover bg-center" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(120,60,170,.3),transparent_32%),linear-gradient(90deg,#18042f_0%,rgba(24,4,47,.98)_30%,rgba(24,4,47,.75)_55%,rgba(24,4,47,.2)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#18042f]/80 via-[#18042f]/10 to-[#18042f]/20" />
+
+      <div className="relative z-10 mx-auto flex min-h-[590px] max-w-[1480px] items-center px-5 py-24 sm:min-h-[640px] sm:px-10 sm:py-28 lg:min-h-[680px] lg:px-14">
+        <div className="max-w-2xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#18042f]/55 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.2em] text-[#F4C85D] backdrop-blur-md">
+            <i className="h-1.5 w-1.5 rounded-full bg-[#F4C85D]" />
+            YOUR EVENT. OUR DELIVERY.
+          </span>
+
+          <h1 className="mt-5 font-serif text-[42px] font-bold leading-[.98] tracking-[-.035em] text-white sm:text-[58px] lg:text-[72px]">
+            Everything your event needs.
+            <span className="block">Connected in one place.</span>
+          </h1>
+
+          <p className="mt-6 max-w-xl text-[15px] leading-7 text-white/80 sm:text-[17px]">
+            Sambramo brings event services, partners and logistics together so you can focus on the occasion—not the coordination.
+          </p>
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#F4C85D]/30 bg-[#2A085C]/70 px-3.5 py-2 text-[10px] font-black uppercase tracking-[.16em] text-[#F4C85D] backdrop-blur-md">
+            <MapPin size={14} />
+            Live in Bengaluru soon
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 py-3.5 text-sm font-black text-[#1c0b2d] shadow-xl transition hover:-translate-y-0.5">
+              Explore Sambramo <ArrowRight size={17} />
+            </LaunchButton>
+            <a href="#partners" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/[.07] px-6 py-3.5 text-sm font-black text-white backdrop-blur-md transition hover:bg-white/[.12]">
+              Partner With Sambramo <ArrowUpRight size={16} />
+            </a>
+          </div>
+
+          <p className="mt-4 text-[11px] font-semibold text-white/50">
+            Discover · Connect · Book · Done.
+          </p>
+        </div>
       </div>
-    </div>
-    <div className="absolute bottom-8 right-8 hidden w-[290px] rounded-2xl border border-white/15 bg-[#18042f]/55 p-4 backdrop-blur-xl lg:block"><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/55">One connected experience</p><div className="mt-3 grid grid-cols-3 gap-2">{['Services','Partners','Logistics'].map((x,i)=><div key={x} className="rounded-xl bg-white/[.07] p-3"><p className="text-[10px] font-black">{x}</p><p className="mt-1 text-[9px] text-white/45">{['Explore','Connect','Deliver'][i]}</p></div>)}</div></div>
-  </section>
+
+      <div className="absolute bottom-8 right-8 z-10 hidden w-[290px] rounded-2xl border border-white/15 bg-[#18042f]/65 p-4 backdrop-blur-xl lg:block">
+        <p className="text-[9px] font-black uppercase tracking-[.18em] text-white/60">One connected experience</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {['Services','Partners','Logistics'].map((x,i)=>(
+            <div key={x} className="rounded-xl bg-white/[.08] p-3">
+              <p className="text-[10px] font-black">{x}</p>
+              <p className="mt-1 text-[9px] text-white/50">{['Explore','Connect','Deliver'][i]}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function FeatureStrip(){
@@ -190,7 +229,7 @@ function PartnerSection(){
 }
 
 function Bengaluru(){
-  return <section id="bengaluru" className="relative overflow-hidden bg-[#2A085C] px-5 py-14 text-white sm:px-8 lg:py-16"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1595658658481-d53d3f999875?auto=format&fit=crop&w=2000&q=88')] bg-cover bg-center opacity-30"/><div className="absolute inset-0 bg-gradient-to-r from-[#2A085C] via-[#2A085C]/88 to-[#2A085C]/45"/><div className="relative mx-auto max-w-[1480px]"><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#F4C85D]">Local by design</p><h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">Built for Bengaluru.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">Starting in Bengaluru, with event services, partners and logistics designed around the city.</p><div className="mt-7 flex flex-wrap gap-2">{['South Bengaluru','Central Bengaluru','East Bengaluru','West Bengaluru','More areas'].map(x=><span key={x} className="rounded-xl border border-white/20 bg-white/[.06] px-3.5 py-2 text-[10px] font-bold">{x}</span>)}</div></div></section>
+  return <section id="bengaluru" className="relative overflow-hidden bg-[#2A085C] px-5 py-14 text-white sm:px-8 lg:py-16"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1595658658481-d53d3f999875?auto=format&fit=crop&w=2000&q=88')] bg-cover bg-center opacity-30"/><div className="absolute inset-0 bg-gradient-to-r from-[#2A085C] via-[#2A085C]/88 to-[#2A085C]/45"/><div className="relative mx-auto max-w-[1480px]"><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#F4C85D]">Local by design</p><h2 className="mt-2 font-serif text-3xl font-bold sm:text-4xl">Live in Bengaluru soon.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">Sambramo is preparing to launch its connected event experience in Bengaluru.</p><div className="mt-7 flex flex-wrap gap-2">{['South Bengaluru','Central Bengaluru','East Bengaluru','West Bengaluru','More areas'].map(x=><span key={x} className="rounded-xl border border-white/20 bg-white/[.06] px-3.5 py-2 text-[10px] font-bold">{x}</span>)}</div></div></section>
 }
 
 function Occasions(){
@@ -205,7 +244,7 @@ function About(){
 
 function Contact(){
   const [email,setEmail]=useState(''); const [sent,setSent]=useState(false)
-  return <section id="contact" className="bg-white px-5 py-12 sm:px-8 lg:py-16"><div className="relative mx-auto max-w-[1480px] overflow-hidden rounded-[30px] bg-[#2A085C] p-7 text-white sm:p-10 lg:p-12"><div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8c4dca]/25 blur-3xl"/><div className="relative grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-center"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#F4C85D]">Stay updated</p><h2 className="mt-2 max-w-xl font-serif text-3xl font-bold sm:text-4xl">Be among the first to know when Sambramo launches.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-white/68">Leave your email for launch updates, new features and Bengaluru availability announcements.</p>{sent?<div className="mt-6 flex items-center gap-3 rounded-2xl bg-white/10 p-4 text-sm font-bold"><Check className="text-[#F4C85D]"/>You’re on the launch list.</div>:<form onSubmit={e=>{e.preventDefault();if(email.trim())setSent(true)}} className="mt-6 flex max-w-xl flex-col gap-2 sm:flex-row"><input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email address" className="min-h-12 flex-1 rounded-xl border border-white/10 bg-white px-4 text-sm text-[#211329] outline-none"/><button className="min-h-12 rounded-xl bg-[#F4C85D] px-5 text-sm font-black text-[#1d0b30]">Notify Me <ArrowRight size={15} className="ml-1 inline"/></button></form>}</div><div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4C85D] text-[#2A085C]"><Bell size={20}/></div><div><p className="text-sm font-black">Bengaluru launch</p><p className="mt-1 text-[10px] text-white/55">Customer + partner experiences</p></div></div><div className="mt-5 grid grid-cols-2 gap-2">{['Services','Partners','Logistics','Events'].map(x=><div key={x} className="rounded-xl bg-black/10 p-3 text-[9px] font-black text-white/70">{x}</div>)}</div></div></div></div></section>
+  return <section id="contact" className="bg-white px-5 py-12 sm:px-8 lg:py-16"><div className="relative mx-auto max-w-[1480px] overflow-hidden rounded-[30px] bg-[#2A085C] p-7 text-white sm:p-10 lg:p-12"><div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8c4dca]/25 blur-3xl"/><div className="relative grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-center"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#F4C85D]">Stay updated</p><h2 className="mt-2 max-w-xl font-serif text-3xl font-bold sm:text-4xl">Be among the first to know when Sambramo launches.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-white/68">Leave your email for launch updates, new features and Bengaluru availability announcements.</p>{sent?<div className="mt-6 flex items-center gap-3 rounded-2xl bg-white/10 p-4 text-sm font-bold"><Check className="text-[#F4C85D]"/>You’re on the launch list.</div>:<form onSubmit={e=>{e.preventDefault();if(email.trim())setSent(true)}} className="mt-6 flex max-w-xl flex-col gap-2 sm:flex-row"><input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email address" className="min-h-12 flex-1 rounded-xl border border-white/10 bg-white px-4 text-sm text-[#211329] outline-none"/><button className="min-h-12 rounded-xl bg-[#F4C85D] px-5 text-sm font-black text-[#1d0b30]">Notify Me <ArrowRight size={15} className="ml-1 inline"/></button></form>}</div><div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4C85D] text-[#2A085C]"><Bell size={20}/></div><div><p className="text-sm font-black">Live in Bengaluru soon</p><p className="mt-1 text-[10px] text-white/55">Customer + partner experiences</p></div></div><div className="mt-5 grid grid-cols-2 gap-2">{['Services','Partners','Logistics','Events'].map(x=><div key={x} className="rounded-xl bg-black/10 p-3 text-[9px] font-black text-white/70">{x}</div>)}</div></div></div></div></section>
 }
 
 function FAQ(){
