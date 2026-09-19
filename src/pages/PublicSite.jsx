@@ -90,8 +90,7 @@ function Reveal({ children, className = '', delay = 0 }) {
   return (
     <div ref={ref} className={`sambramo-reveal ${visible ? 'is-visible' : ''} ${className}`} style={{ '--reveal-delay': `${delay}ms` }}>
       {children}
-      </div>
-    </>
+    </div>
   )
 }
 
@@ -210,119 +209,157 @@ function Nav() {
 
 function Hero() {
   const [hook, setHook] = useState(0)
-  const hooks = ['The event ecosystem is about to connect.', 'Event Supply Chain. Simplified.', 'Logistics. Connected.', 'Discover. Connect. Book. Done.']
+  const hooks = [
+    'From the first requirement to the final celebration.',
+    'Event Supply Chain. Connected.',
+    'Logistics that moves with the occasion.',
+    'Your event. Our delivery.',
+  ]
+
   useEffect(() => {
-    const timer = window.setInterval(() => setHook((value) => (value + 1) % hooks.length), 3200)
+    const timer = window.setInterval(() => setHook((value) => (value + 1) % hooks.length), 3600)
     return () => window.clearInterval(timer)
   }, [])
 
+  const filmSteps = [
+    { label: 'VENUE', note: 'Space ready', image: IMG.venue, icon: Building2 },
+    { label: 'FOOD', note: 'Kitchen moving', image: IMG.food, icon: UtensilsCrossed },
+    { label: 'DECOR', note: 'Setup in motion', image: IMG.decor, icon: Flower2 },
+    { label: 'MOVE', note: 'On the way', image: IMG.transport, icon: Truck },
+  ]
+
   return (
     <section id="top" className="sambramo-hero relative isolate overflow-hidden bg-[#160329] text-white">
-      <div className="sambramo-hero-glow absolute inset-0 pointer-events-none" />
-      <div className="relative mx-auto max-w-[1480px] px-4 pb-8 pt-5 sm:px-8 sm:pb-10 sm:pt-7 lg:px-10 lg:pb-12">
-        <div className="sambramo-hero-grid grid gap-5 lg:grid-cols-[.88fr_1.12fr] lg:items-stretch lg:gap-7">
+      <div className="sambramo-hero-glow pointer-events-none absolute inset-0" />
+
+      <div className="relative mx-auto max-w-[1480px] px-4 pb-7 pt-4 sm:px-8 sm:pb-10 sm:pt-6 lg:px-10 lg:pb-12 lg:pt-8">
+        <div className="sambramo-hero-grid grid gap-5 lg:grid-cols-[.82fr_1.18fr] lg:items-center lg:gap-8">
+
           <div className="sambramo-hero-copy flex min-w-0 flex-col justify-center py-2 sm:py-5 lg:py-8">
-            <div className="sambramo-enter inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/[.05] px-3.5 py-2 text-[9px] font-black uppercase tracking-[.20em] text-[#F4C85D] backdrop-blur-md sm:text-[10px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#F4C85D] shadow-[0_0_14px_rgba(244,200,93,.75)]" />
+            <div className="sambramo-enter inline-flex w-fit items-center gap-2 rounded-full border border-[#F4C85D]/30 bg-[#F4C85D]/[.08] px-3.5 py-2 text-[9px] font-black uppercase tracking-[.20em] text-[#F4C85D] sm:text-[10px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#F4C85D] shadow-[0_0_14px_rgba(244,200,93,.85)]" />
               YOUR EVENT. OUR DELIVERY.
             </div>
 
-            <p className="sambramo-enter mt-5 text-[9px] font-black uppercase tracking-[.24em] text-white/52 sm:mt-6 sm:text-[10px]">THE FUTURE OF EVENTS IS CONNECTED.</p>
+            <p className="sambramo-enter mt-5 text-[9px] font-black uppercase tracking-[.24em] text-white/72 sm:mt-6 sm:text-[10px]">
+              EVENT SUPPLY CHAIN &amp; LOGISTICS
+            </p>
 
-            <h1 className="sambramo-enter mt-3 max-w-2xl font-serif text-[clamp(2.55rem,7vw,5.2rem)] font-bold leading-[.94] tracking-[-.045em] [animation-delay:120ms]">
-              One event.
-              <span className="block text-white/88">One connected</span>
-              <span className="block text-[#F4C85D]">experience.</span>
+            <h1 className="sambramo-enter mt-3 max-w-2xl font-serif text-[clamp(2.6rem,6.8vw,5.4rem)] font-bold leading-[.94] tracking-[-.045em] [animation-delay:120ms]">
+              Your event.
+              <span className="block text-white">Our delivery.</span>
             </h1>
 
-            <div className="relative mt-5 min-h-[44px] max-w-xl overflow-hidden sm:min-h-[50px]">
+            <div className="relative mt-5 min-h-[52px] max-w-xl overflow-hidden sm:min-h-[58px]">
               {hooks.map((item, index) => (
-                <p key={item} className={`absolute inset-x-0 top-0 font-serif text-[clamp(1.12rem,3vw,1.65rem)] font-bold leading-tight transition-all duration-700 ${index === hook ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-4 opacity-0 blur-sm'}`}>
+                <p
+                  key={item}
+                  className={`absolute inset-x-0 top-0 font-serif text-[clamp(1.15rem,2.8vw,1.65rem)] font-bold leading-tight text-white transition-all duration-700 ${index === hook ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-5 opacity-0 blur-sm'}`}
+                >
                   {item}
                 </p>
               ))}
             </div>
 
-            <p className="sambramo-enter mt-2 max-w-xl text-[12px] leading-6 text-white/62 sm:text-[14px] sm:leading-7 [animation-delay:220ms]">
-              Vendors, services, materials, movement and event-day execution — connected into one clearer journey.
+            <p className="sambramo-enter mt-2 max-w-xl text-[12px] leading-6 text-white/78 sm:text-[14px] sm:leading-7 [animation-delay:220ms]">
+              We connect venues, people, services, materials and movement around one occasion — so the work behind the celebration feels like one connected journey.
             </p>
 
-            <div className="sambramo-hero-lines mt-6 grid max-w-xl grid-cols-2 border-y border-white/12 sm:grid-cols-4">
+            <div className="sambramo-hero-lines mt-6 grid max-w-xl grid-cols-2 border-y border-white/20 sm:grid-cols-4">
               {['DISCOVER', 'CONNECT', 'BOOK', 'DELIVER'].map((item, index) => (
-                <div key={item} className="border-r border-white/10 px-3 py-3 first:pl-0 last:border-r-0 sm:px-4">
+                <div key={item} className="border-r border-white/15 px-3 py-3 first:pl-0 last:border-r-0 sm:px-4">
                   <span className="text-[8px] font-black tracking-[.16em] text-[#F4C85D]">0{index + 1}</span>
-                  <p className="mt-1 text-[9px] font-black tracking-[.08em] text-white/72">{item}</p>
+                  <p className="mt-1 text-[9px] font-black tracking-[.08em] text-white/88">{item}</p>
                 </div>
               ))}
             </div>
 
             <div className="sambramo-hero-actions mt-6 flex flex-col gap-2.5 sm:flex-row">
-              <LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 text-sm font-black text-[#1d0b30] shadow-[0_14px_35px_rgba(244,200,93,.18)] transition hover:-translate-y-0.5 active:scale-[.98]">
+              <LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 text-sm font-black text-[#1d0b30] shadow-[0_14px_35px_rgba(244,200,93,.20)] transition hover:-translate-y-0.5 active:scale-[.98]">
                 Get Early Access <ArrowRight size={17} />
               </LaunchButton>
-              <a href="#supply-chain" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/[.05] px-6 text-sm font-black text-white backdrop-blur-md transition hover:bg-white/[.10]">
-                See how it connects <ArrowDownRight size={16} />
+              <a href="#supply-chain" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/[.06] px-6 text-sm font-black text-white backdrop-blur-md transition hover:bg-white/[.11]">
+                See the connected flow <ArrowDownRight size={16} />
               </a>
             </div>
 
-            <div className="mt-4 flex items-center gap-2 text-[9px] font-black uppercase tracking-[.17em] text-white/38">
+            <div className="mt-4 flex items-center gap-2 text-[9px] font-black uppercase tracking-[.17em] text-white/68">
               <MapPin size={12} className="text-[#F4C85D]" /> Bengaluru launch
             </div>
           </div>
 
-          <div className="sambramo-hero-visual relative min-w-0 overflow-hidden rounded-[26px] border border-white/12 bg-white/[.04] shadow-[0_30px_100px_rgba(0,0,0,.30)] sm:rounded-[32px]">
-            <div className="relative min-h-[360px] sm:min-h-[470px] lg:min-h-[590px]">
+          <div className="sambramo-film relative min-w-0 overflow-hidden rounded-[28px] border border-white/18 bg-[#0d021a] shadow-[0_40px_120px_rgba(0,0,0,.42)] sm:rounded-[34px]">
+            <div className="sambramo-film-stage relative min-h-[455px] sm:min-h-[570px] lg:min-h-[650px]">
               <img
                 src={IMG.hero}
                 alt="People celebrating together at an event"
                 fetchPriority="high"
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover object-center"
+                className="sambramo-film-main absolute inset-0 h-full w-full object-cover object-center"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#160329]/95 via-[#160329]/10 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#160329]/20 via-transparent to-[#160329]/10" />
-              <div className="absolute left-4 right-4 top-4 flex items-start justify-between sm:left-6 sm:right-6 sm:top-6">
-                <span className="rounded-full border border-white/20 bg-black/20 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em] text-white/80 backdrop-blur-md">Bengaluru · launch market</span>
-                <span className="rounded-full border border-[#F4C85D]/45 bg-[#F4C85D]/12 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur-md">Real moments. Connected work.</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/18 to-[#10021d]/10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/65 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(244,200,93,.18),transparent_30%)]" />
+
+              <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
+                <div className="rounded-full border border-white/22 bg-[#10021d]/55 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em] text-white backdrop-blur-md">
+                  Bengaluru · launch market
+                </div>
+                <div className="hidden rounded-full border border-[#F4C85D]/45 bg-[#10021d]/55 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur-md sm:block">
+                  EVENT SUPPLY CHAIN
+                </div>
               </div>
+
+              <div className="sambramo-film-route absolute left-5 right-5 top-[31%] hidden h-[2px] bg-white/20 sm:block">
+                <span className="sambramo-film-route-light" />
+              </div>
+
+              <div className="sambramo-film-cards absolute inset-x-4 top-[25%] grid grid-cols-2 gap-2 sm:left-6 sm:right-6 sm:grid-cols-4 sm:gap-3">
+                {filmSteps.map(({ label, note, image, icon: Icon }, index) => (
+                  <div
+                    key={label}
+                    className="sambramo-film-card group overflow-hidden rounded-2xl border border-white/18 bg-[#12031f]/65 p-1.5 shadow-[0_16px_45px_rgba(0,0,0,.24)] backdrop-blur-md"
+                    style={{ '--film-delay': `${index * 180}ms` }}
+                  >
+                    <div className="relative aspect-[1.35] overflow-hidden rounded-xl">
+                      <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#12031f]/80 via-transparent to-transparent" />
+                      <span className="absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-[#F4C85D] text-[#2A085C]"><Icon size={12} /></span>
+                    </div>
+                    <div className="px-1 pb-1 pt-2">
+                      <p className="text-[8px] font-black tracking-[.12em] text-[#F4C85D]">{label}</p>
+                      <p className="mt-0.5 text-[8px] font-semibold text-white/82">{note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="sambramo-film-center absolute left-1/2 top-[51%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-[#F4C85D]/55 bg-[#2A085C]/88 px-4 py-3 shadow-[0_0_45px_rgba(244,200,93,.16)] backdrop-blur-xl">
+                <span className="h-2 w-2 rounded-full bg-[#F4C85D] shadow-[0_0_14px_rgba(244,200,93,.95)]" />
+                <span className="text-[9px] font-black uppercase tracking-[.18em] text-white">SAMBRAMO · CONNECTED</span>
+              </div>
+
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-8">
-                <p className="text-[9px] font-black uppercase tracking-[.22em] text-[#F4C85D]">THE HUMAN SIDE OF THE SUPPLY CHAIN</p>
-                <h2 className="mt-2 max-w-xl font-serif text-[clamp(1.8rem,4vw,3.25rem)] font-bold leading-[1.02]">Every delivery ends with a moment like this.</h2>
-                <p className="mt-3 max-w-lg text-[11px] leading-5 text-white/70 sm:text-xs sm:leading-6">Real people, real services, real movement — brought together around the occasion.</p>
+                <div className="max-w-2xl">
+                  <p className="text-[9px] font-black uppercase tracking-[.22em] text-[#F4C85D]">FROM SUPPLY CHAIN TO CELEBRATION</p>
+                  <h2 className="mt-2 font-serif text-[clamp(1.75rem,3.8vw,3.2rem)] font-bold leading-[1.02] text-white">
+                    Every moving part leads to one moment.
+                  </h2>
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-[8px] font-black uppercase tracking-[.15em] text-white/82">
+                    <span>People</span><span className="text-[#F4C85D]">→</span>
+                    <span>Services</span><span className="text-[#F4C85D]">→</span>
+                    <span>Materials</span><span className="text-[#F4C85D]">→</span>
+                    <span>Logistics</span><span className="text-[#F4C85D]">→</span>
+                    <span>Celebration</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </section>
-  )
-}
-
-function HeroProductMap() {
-  const cards = [
-    { icon: Boxes, title: 'SUPPLY CHAIN', text: 'Supplier → material → venue', pos: 'right-3 top-[12%]' },
-    { icon: Truck, title: 'LOGISTICS', text: 'Pickup → move → deliver', pos: 'right-[18%] top-[40%]' },
-    { icon: CalendarDays, title: 'BOOKING', text: 'Select → schedule → confirm', pos: 'right-8 bottom-[15%]' },
-  ]
-  return (
-    <div className="relative h-[560px] w-full max-w-[560px]">
-      <div className="absolute inset-8 rounded-full border border-white/10" />
-      <div className="absolute inset-20 rounded-full border border-[#F4C85D]/15" />
-      <div className="absolute left-1/2 top-1/2 flex h-44 w-44 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#F4C85D]/40 bg-[#F4C85D] text-center text-[#2A085C] shadow-[0_0_100px_rgba(244,200,93,.18)]">
-        <Sparkles size={22} />
-        <p className="mt-2 text-[11px] font-black tracking-[.17em]">SAMBRAMO</p>
-        <p className="mt-1 text-[8px] font-bold uppercase tracking-[.13em]">One connected place</p>
-      </div>
-      {cards.map(({ icon: Icon, title, text, pos }, index) => (
-        <div key={title} className={`absolute ${pos} w-[210px] rounded-2xl border border-white/12 bg-[#160329]/72 p-4 shadow-[0_24px_70px_rgba(0,0,0,.28)] backdrop-blur-xl`} style={{ animation: `sambramo-float 6s ease-in-out ${index * .9}s infinite` }}>
-          <div className="flex gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#F4C85D]"><Icon size={17} /></div><div><p className="text-[9px] font-black tracking-[.14em] text-[#F4C85D]">{title}</p><p className="mt-1 text-[10px] leading-4 text-white/55">{text}</p></div></div>
-        </div>
-      ))}
-      <div className="absolute bottom-[16%] left-[5%] rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 backdrop-blur-md">
-        <p className="text-[8px] font-black uppercase tracking-[.16em] text-white/42">LAUNCH STATUS</p>
-        <div className="mt-1.5 flex items-center gap-2 text-xs font-black"><span className="h-2 w-2 rounded-full bg-[#F4C85D] shadow-[0_0_12px_rgba(244,200,93,.7)]" />Coming soon</div>
-      </div>
-    </div>
   )
 }
 
