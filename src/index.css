@@ -1394,3 +1394,178 @@
     min-height: 590px;
   }
 }
+
+
+/* -------------------------------------------------------------------------
+   SAMBRAMO CINEMATIC HERO + TEXT CONTRAST
+   Keep the public site readable even when utility opacity classes are rendered
+   differently across Tailwind builds. The public experience intentionally uses
+   strong contrast: important copy never disappears into the photography.
+   ------------------------------------------------------------------------- */
+
+.sambramo-site [class~="text-white/38"],
+.sambramo-site [class~="text-white/42"],
+.sambramo-site [class~="text-white/48"],
+.sambramo-site [class~="text-white/52"],
+.sambramo-site [class~="text-white/55"],
+.sambramo-site [class~="text-white/58"],
+.sambramo-site [class~="text-white/60"],
+.sambramo-site [class~="text-white/62"],
+.sambramo-site [class~="text-white/65"],
+.sambramo-site [class~="text-white/68"],
+.sambramo-site [class~="text-white/70"],
+.sambramo-site [class~="text-white/72"] {
+  color: rgba(255,255,255,.82) !important;
+}
+
+.sambramo-site [class~="text-white/80"],
+.sambramo-site [class~="text-white/82"],
+.sambramo-site [class~="text-white/88"] {
+  color: rgba(255,255,255,.92) !important;
+}
+
+.sambramo-site .sambramo-hero h1,
+.sambramo-site .sambramo-hero h2,
+.sambramo-site .sambramo-hero p,
+.sambramo-site .sambramo-hero span,
+.sambramo-site .sambramo-hero a {
+  text-shadow: 0 1px 18px rgba(0,0,0,.18);
+}
+
+.sambramo-film {
+  isolation: isolate;
+}
+
+.sambramo-film-stage {
+  isolation: isolate;
+  min-height: 455px;
+}
+
+.sambramo-film-main {
+  transform: scale(1.035);
+  animation: sambramo-film-push 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes sambramo-film-push {
+  from { transform: scale(1.035) translate3d(0,0,0); }
+  to   { transform: scale(1.11) translate3d(-1.2%,-.8%,0); }
+}
+
+.sambramo-film-card {
+  opacity: 0;
+  transform: translate3d(0,18px,0) scale(.97);
+  animation: sambramo-film-card-in .8s cubic-bezier(.22,1,.36,1) forwards;
+  animation-delay: var(--film-delay, 0ms);
+}
+
+@keyframes sambramo-film-card-in {
+  to {
+    opacity: 1;
+    transform: translate3d(0,0,0) scale(1);
+  }
+}
+
+.sambramo-film-route {
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.sambramo-film-route-light {
+  position: absolute;
+  top: -3px;
+  left: -12%;
+  width: 18%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #F4C85D, transparent);
+  box-shadow: 0 0 18px rgba(244,200,93,.75);
+  animation: sambramo-route-flow 3.2s linear infinite;
+}
+
+@keyframes sambramo-route-flow {
+  from { transform: translateX(0); }
+  to { transform: translateX(640%); }
+}
+
+.sambramo-film-center {
+  animation: sambramo-center-pulse 3.2s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes sambramo-center-pulse {
+  0%,100% { box-shadow: 0 0 28px rgba(244,200,93,.10); }
+  50% { box-shadow: 0 0 55px rgba(244,200,93,.28); }
+}
+
+.sambramo-film::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), inset 0 -100px 140px rgba(8,0,15,.16);
+}
+
+@media (max-width: 767px) {
+  .sambramo-film-stage {
+    min-height: 500px;
+  }
+
+  .sambramo-film-cards {
+    top: 27% !important;
+    gap: 8px !important;
+  }
+
+  .sambramo-film-card {
+    padding: 5px !important;
+  }
+
+  .sambramo-film-card .aspect-\[1\.35\] {
+    min-height: 74px;
+  }
+
+  .sambramo-film-center {
+    top: 57% !important;
+    max-width: calc(100% - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sambramo-film-stage > div:last-child {
+    padding: 20px !important;
+  }
+
+  .sambramo-hero h1 {
+    font-size: clamp(2.55rem, 13vw, 4.2rem);
+    line-height: .94;
+  }
+
+  .sambramo-hero-copy {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .sambramo-hero-copy > p {
+    max-width: 100%;
+  }
+
+  .sambramo-hero-lines {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sambramo-film-main,
+  .sambramo-film-card,
+  .sambramo-film-route-light,
+  .sambramo-film-center {
+    animation: none !important;
+  }
+
+  .sambramo-film-card {
+    opacity: 1;
+    transform: none;
+  }
+}
