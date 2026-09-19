@@ -34,6 +34,16 @@
       "permanent": false
     },
     {
+      "source": "/partner-app",
+      "destination": "https://sambramo-partners.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/partner-app/:path*",
+      "destination": "https://sambramo-partners.vercel.app/:path*",
+      "permanent": false
+    },
+    {
       "source": "/cities",
       "destination": "/bengaluru/",
       "permanent": true
@@ -82,6 +92,26 @@
       "source": "/join",
       "destination": "/partners/join/",
       "permanent": true
+    },
+    {
+      "source": "/app/",
+      "destination": "https://sambramoh.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/partner-app/",
+      "destination": "https://sambramo-partners.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/login/",
+      "destination": "https://sambramoh.vercel.app/login",
+      "permanent": false
+    },
+    {
+      "source": "/signup/",
+      "destination": "https://sambramoh.vercel.app/signup",
+      "permanent": false
     }
   ],
   "headers": [

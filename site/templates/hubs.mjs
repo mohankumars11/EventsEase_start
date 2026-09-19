@@ -91,15 +91,15 @@ ${cats.map(cat => {
   <div class="grid grid--3">
     ${items.map(s => `<a class="card" href="${U.service(s.slug)}">
       <span class="card-title">${esc(s.name)}</span>
-      <p class="card-note">${esc(s.desc)}</p>
-      ${band(s) ? `<p class="card-price">${esc(band(s))}</p>` : ''}</a>`).join('')}
+      <p class="card-note">${esc(s.desc)}</p></a>`).join('')}
   </div>
 </div>`
 }).join('')}
 <div class="wrap section">
-  <p class="note"><strong>Prices are indicative.</strong> They are real Bengaluru market ranges, and some
-  are per plate or per seat rather than per event. None of them is a quote — your figure is priced for
-  your date, venue and guest count, and asking costs nothing.</p>
+  <p class="note"><strong>Pricing.</strong> Every service is priced against your date, your venue and
+  your guest count, so there is no rate card to print. Sambramo charges one coordination fee and
+  itemises every vendor cost separately — <a href="${U.whatItCosts}">how that works</a>. The app
+  returns a real figure, and asking costs nothing.</p>
 </div>
 ${waitlistCta({ brand, heading: 'Need one of these in Bengaluru?',
   blurb: 'Sambramo is opening soon. Tell us what you need and when, and you will be among the first we call.' })}`,

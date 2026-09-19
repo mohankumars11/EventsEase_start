@@ -64,6 +64,14 @@ export const U = {
   refunds:        '/legal/cancellation-and-refunds/',
   grievance:      '/legal/grievance-redressal/',
   entity:         '/legal/entity-disclosure/',
+  cookies:        '/legal/cookies/',
+
+  /* The two doors into the product. Both are 308s defined in vercel.json,
+     so the destination moves in one place when the apps get their own
+     subdomains. Everything on the site links to these, never to a
+     vercel.app hostname. */
+  customerApp:    '/app',
+  partnerApp:     '/partner-app',
 }
 
 /**
@@ -114,6 +122,7 @@ export function routes(content) {
   add(U.terms,    'page', 'legal/terms', M.legal)
   add(U.privacy,  'page', 'legal/privacy', M.legal)
   add(U.refunds,  'page', 'legal/cancellation-and-refunds', M.legal)
+  add(U.cookies,  'page', 'legal/cookies', M.legal)
   // These two make statutory disclosures the company cannot yet make. They
   // are published (saying plainly what is coming is better than a 404 for
   // someone looking for a grievance route) but kept out of the index until

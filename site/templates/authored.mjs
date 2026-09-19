@@ -24,7 +24,7 @@ import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
 import { inr, guests, clamp, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta, photo } from '../lib/page.mjs'
+import { waitlistCta, twoDoors, photo } from '../lib/page.mjs'
 
 const crumb = (...t) => [{ name: 'Home', url: U.home }, ...t]
 
@@ -77,26 +77,31 @@ export function homePage(ctx) {
   <div class="wrap hero-split">
     <div>
       <p class="eyebrow">${esc(brand.categoryLine)} · Bengaluru</p>
-      <h1>${esc(brand.taglineParts[0])}.<br>${esc(brand.taglineParts[1])}.</h1>
-      <p class="lede" style="margin-top:1rem">${esc(brand.descriptor)}
-      One coordinator sources every vendor, negotiates, and brings back one clear price.</p>
+      <h1>${esc(brand.headline[0])}<br>${esc(brand.headline[1])}</h1>
+      <p class="lede" style="margin-top:1rem">${esc(brand.lede)}</p>
       <div class="btn-row">
-        <a class="btn btn--primary" href="${U.waitlist}">Put me on the list</a>
-        <a class="btn btn--ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgb(255 255 255/.28)" href="${U.howItWorks}">How it works</a>
+        <a class="btn btn--primary" href="${U.customerApp}">Open Customer App</a>
+        <a class="btn btn--ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgb(255 255 255/.28)" href="${U.partners}">Partner With Sambramo</a>
       </div>
+      <p style="margin-top:1rem;font-size:.875rem;color:rgb(255 255 255/.6)">
+        <a style="color:rgb(255 255 255/.75)" href="${U.howItWorks}">See how it works</a> first, if you would rather.</p>
     </div>
     ${photo('hero', { alt: 'A marigold-decorated Indian wedding celebration', priority: true })}
   </div>
 </section>
 
 <div class="wrap section prose">
-  <h2 style="margin-top:0">What is Sambramo?</h2>
+  <h2 style="margin-top:0">An event has many moving parts. Sambramo brings them together.</h2>
   <p class="lede">${esc(brand.descriptor)}</p>
+  <p>Planning an event normally means running several negotiations at once. The venue, the caterer,
+  the decorator, the photographer and the priest are five different businesses with five different
+  calendars, and getting them to agree about one morning is the actual work. Sambramo is built to be
+  the layer that does it: services, partners and logistics in one place, coordinated rather than
+  merely listed.</p>
   <p>Every other service books you one vendor. Sambramo books the day. You describe the occasion —
-  the date, roughly how many people, what matters to you — and a real coordinator sources the venue,
-  the caterer, the decorator, the photographer and the priest, negotiates each one, and comes back with
-  a single proposal where every line is priced. You change what you want. Then, and only then,
-  anything is booked.</p>
+  the date, roughly how many people, what matters to you — and a coordinator sources each part,
+  negotiates it, and comes back with a single proposal where every line is priced. You change what
+  you want. Then, and only then, anything is booked.</p>
   <p><strong>Sambramo is pre-launch.</strong> The supplier network in Bengaluru is being built now.
   There are no reviews, no vendor counts and no years-in-business on this site, because none of those
   numbers exist yet and inventing them is how a new company loses the only thing it has.</p>
@@ -116,6 +121,28 @@ export function homePage(ctx) {
     <a class="btn btn--ghost" href="${U.occasions}">All ${esc(occasions.length)} occasions</a>
     <a class="btn btn--ghost" href="${U.services}">All ${esc(live.length)} services</a>
   </div>
+</div>
+
+<div class="wrap section">
+  <h2>One event. Many services. One platform.</h2>
+  <p class="lede">A birthday is not one booking. It is seven, and they all have to agree with each other.</p>
+  <div class="assembly">
+    <div class="assembly-one">
+      <p class="eyebrow">One occasion</p>
+      <strong>Birthday celebration</strong>
+      <p style="font-size:.875rem;color:rgb(255 255 255/.7);margin-top:.5rem">120 guests, a Saturday evening</p>
+    </div>
+    <div class="assembly-parts">
+      ${[['Venue', 'hall, access, timings'], ['Decoration', 'stage, florals, lighting'],
+         ['Catering', 'menu, counters, service'], ['Photography', 'candid and video'],
+         ['Music', 'DJ, sound, a run-through'], ['Transport', 'guests and equipment'],
+         ['Supplies', 'cake, favours, printing']]
+        .map(([t, d]) => `<div class="assembly-part">${esc(t)}<span>${esc(d)}</span></div>`).join('')}
+    </div>
+  </div>
+  <p class="note" style="margin-top:1.4rem"><strong>Seven suppliers, one date, one budget.</strong>
+  Booked separately, every handover between them is yours to manage. Through Sambramo they are one
+  proposal with one coordinator and one number to call.</p>
 </div>
 
 <div class="section section--sunk">
@@ -160,8 +187,8 @@ export function homePage(ctx) {
   <p style="margin-top:1.2rem"><a href="${U.faq}">All questions →</a></p>
 </div>
 
-${waitlistCta({ brand, heading: 'Sambramo opens in Bengaluru soon',
-  blurb: `Tell us what you are planning and roughly when. You will be among the first we call — with a real price, not a brochure. ${inr(lock)} will hold a date and a price once we are live, and it is refundable.` })}
+${twoDoors({ brand, heading: 'Your event starts with one decision.',
+  blurb: 'When you are ready to plan, open the app. If you supply events for a living, there is a door for you too.' })}
 
 <div class="wrap section">
   <h2>Festival guides</h2>

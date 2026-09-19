@@ -11,9 +11,39 @@
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { DIST, htmlFiles, pathOf, fail, report } from './_lib.mjs'
+import { DIST, SITE, htmlFiles, pathOf, fail, report } from './_lib.mjs'
 
 const ORIGIN = 'https://sambramo.com'
+
+/* Paths that vercel.json redirects.
+ *
+ * /app and /partner-app are the two doors into the product. They are not
+ * pages in dist/ — they are 308s to the application's own origin — so
+ * without this the checker reports every link to them as a 404 and as a
+ * missing trailing slash, which is 448 failures and no signal.
+ *
+ * Reading the real config rather than hardcoding a list means deleting a
+ * redirect starts failing the links that depended on it, which is the
+ * behaviour you actually want from a link checker. */
+const redirectSources = (() => {
+  try {
+    const cfg = JSON.parse(readFileSync(join(SITE, 'vercel.json'), 'utf8'))
+    return (cfg.redirects ?? []).map(r => {
+      // Vercel's :param and :path* segments, as a matcher. Split on the
+      // params first and escape only the literal parts, so escaping cannot
+      // mangle the very syntax the next step is looking for.
+      const re = String(r.source)
+        .split(/(:[a-zA-Z]+\*?)/)
+        .map(part => part.startsWith(':')
+          ? (part.endsWith('*') ? '.*' : '[^/]+')
+          : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('')
+      return new RegExp(`^${re}$`)
+    })
+  } catch { return [] }
+})()
+
+const isRedirected = p => redirectSources.some(re => re.test(p))
 const files = htmlFiles()
 const pages = new Set(files.map(pathOf))
 const inbound = new Map([...pages].map(p => [p, 0]))
@@ -42,6 +72,8 @@ for (const f of files) {
     if (!clean) continue
 
     if (!clean.startsWith('/')) { fail(`${from} — relative href "${href}"; every internal link is absolute-from-root`); continue }
+    // A redirect source is a real destination, just not a file in dist/.
+    if (isRedirected(clean)) continue
     if (!clean.endsWith('/') && !/\.[a-z0-9]{2,5}$/i.test(clean)) {
       fail(`${from} — "${clean}" has no trailing slash; it would 308 and waste the hop`)
       continue

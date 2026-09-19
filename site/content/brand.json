@@ -1,18 +1,23 @@
 {
   "name": "Sambramo",
-  "tagline": "Celebrations, arranged. Nothing left to chance.",
+  "tagline": "Your Event. Our Delivery.",
   "taglineParts": [
-    "Celebrations, arranged",
-    "Nothing left to chance"
+    "Your Event",
+    "Our Delivery"
   ],
-  "signature": "Your Moment. Our Magic.",
+  "signature": "Your Event. Our Delivery.",
   "signatureParts": [
-    "Your Moment.",
-    "Our Magic."
+    "Your Event",
+    "Our Delivery"
   ],
-  "categoryLine": "Event booking, end to end",
+  "categoryLine": "Event Supply Chain & Logistics",
+  "headline": [
+    "Everything your event needs.",
+    "Connected in one place."
+  ],
+  "lede": "Sambramo brings event services, partners and logistics together so you can focus on the occasion — not the coordination.",
   "emotion": "Every emotion, valued",
-  "descriptor": "Sambramo is a human-assisted concierge celebration service in Bengaluru. Event booking, end to end.",
+  "descriptor": "Sambramo brings event services, partners and logistics together in one platform, in Bengaluru.",
   "supportPhone": "+91 97392 76592",
   "supportPhoneDial": "+919739276592",
   "whatsapp": "919739276592",

@@ -34,7 +34,7 @@
  * is what the ASCI code and the Consumer Protection Act 2019 treat as
  * misleading. The ban was never applied to `descriptor`. A site engineered to
  * be quoted by AI assistants is the worst possible place to publish a claim
- * you cannot stand behind, so the site uses SITE_DESCRIPTOR below instead.
+ * you cannot stand behind, so the site uses SITE_BRAND below instead.
  *
  * Tailwind class strings (gradient, bgColor, textColor…) — they are tuned for
  * a 430px app shell and mean nothing here.
@@ -64,9 +64,36 @@ const OUT = join(SITE, 'content')
  */
 const SITE_CITIES = ['bengaluru']
 
-/** The one-sentence definition. Every noun in it is provable. */
-const SITE_DESCRIPTOR =
-  'Sambramo is a human-assisted concierge celebration service in Bengaluru. Event booking, end to end.'
+/* ── The brand, as this site states it ───────────────────────────────────
+ *
+ * Deliberately NOT taken from BRAND.tagline / BRAND.categoryLine.
+ *
+ * src/config/sambramo.js is the app's source of truth and argues at length
+ * for "Celebrations, arranged. Nothing left to chance." over four earlier
+ * drafts. The website has been repositioned since — from a concierge that
+ * arranges celebrations to the supply chain that delivers them — and the
+ * two surfaces are allowed to differ while the app catches up.
+ *
+ * Everything the site says about itself is in this one block, so reverting
+ * to the app's wording is editing four strings and rebuilding, not hunting
+ * through 152 pages.
+ *
+ * What is still forbidden, and enforced by check-claims.mjs: any national
+ * claim, any superlative, any count the company does not have. The
+ * positioning changed; the honesty rules did not. */
+const SITE_BRAND = {
+  categoryLine: 'Event Supply Chain & Logistics',
+  tagline:      'Your Event. Our Delivery.',
+  taglineParts: ['Your Event', 'Our Delivery'],
+  // The headline. Names the problem (many moving parts) and the promise
+  // (one place) without claiming a size or a first.
+  headline:     ['Everything your event needs.', 'Connected in one place.'],
+  // The one-sentence definition, for the meta description, llms.txt and
+  // the Organization schema. Every noun in it is provable.
+  descriptor:   'Sambramo brings event services, partners and logistics together in one platform, in Bengaluru.',
+  // The longer lede, under the headline.
+  lede:         'Sambramo brings event services, partners and logistics together so you can focus on the occasion — not the coordination.',
+}
 
 /* URL slugs are hyphenated, ids are not.
  *
@@ -170,14 +197,16 @@ if (!B?.name) die('BRAND did not load')
 
 write('brand.json', {
   name: B.name,
-  tagline: B.tagline,
-  taglineParts: B.taglineParts,
-  signature: B.signature,
-  signatureParts: B.signatureParts,
-  categoryLine: B.categoryLine,
+  tagline: SITE_BRAND.tagline,
+  taglineParts: SITE_BRAND.taglineParts,
+  signature: SITE_BRAND.tagline,
+  signatureParts: SITE_BRAND.taglineParts,
+  categoryLine: SITE_BRAND.categoryLine,
+  headline: SITE_BRAND.headline,
+  lede: SITE_BRAND.lede,
   emotion: B.emotion,
   // The site's own one-liner. NOT BRAND.descriptor — see the header.
-  descriptor: SITE_DESCRIPTOR,
+  descriptor: SITE_BRAND.descriptor,
   supportPhone: B.supportPhone,
   // Display and dial forms held separately so no template ever reformats the
   // number by hand. NAP consistency is byte-level or it is nothing.

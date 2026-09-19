@@ -85,9 +85,18 @@
              0 2px 6px -2px rgb(var(--hairline) / 0.06);
 
   /* ── Type ────────────────────────────────────────────────────────────
-     Playfair for headings and money, Manrope for everything else, Archivo
-     Black (self-hosted, already in the repo) for the wordmark only. */
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+     A geometric sans system, no serif anywhere.
+
+     Playfair was here and matched the app, but a serif headline reads as
+     hospitality — a hotel, a wedding planner, a restaurant. The brand is
+     positioned as event supply chain and logistics, and the type has to
+     agree with the positioning or the page argues with itself.
+
+     Outfit for display: geometric, high-contrast at weight 800, and its
+     round bowls sit naturally beside Manrope's. Manrope for body, kept
+     from before, because it is already a semi-geometric sans and the two
+     share a skeleton. Archivo Black for the wordmark only. */
+  --font-display: 'Outfit', 'Manrope', system-ui, -apple-system, sans-serif;
   --font-body:    'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mark:    'Sambramo Display', 'Arial Black', system-ui, sans-serif;
 

@@ -64,7 +64,7 @@ function faqs(o, svc, tiers, lock, brand, N) {
 
   q.push({
     q: `How much does ${N.one} cost in Bengaluru?`,
-    a: `It depends almost entirely on how many people are coming. Sambramo's coordination fee runs from ${inr(cheapest.coordinationFee)} for ${guests(cheapest.guests)} up to ${inr(tiers[tiers.length - 1].coordinationFee)} at the largest size on the ladder. Vendor costs — venue, food, decor, photography — are quoted separately and itemised in full before you approve anything, so the number you approve is the number you pay.`,
+    a: `It depends almost entirely on how many people are coming and what you want on the day. Sambramo charges one coordination fee and every vendor cost — venue, food, decor, photography — is quoted separately and itemised in full before you approve anything, so the number you approve is the number you pay. The app returns a real figure for your date, and asking costs nothing.`,
   })
 
   q.push({
@@ -85,7 +85,7 @@ function faqs(o, svc, tiers, lock, brand, N) {
   if (mid && mid.includedServices?.length) {
     q.push({
       q: `What is included at ${mid.name} size?`,
-      a: `${mid.name}${mid.localName ? ` (${mid.localName})` : ''} is built for ${guests(mid.guests)} and includes ${list(mid.includedServices.map(id => (svc.find(s => s.id === id)?.name ?? id).toLowerCase()))} in the coordination fee of ${inr(mid.coordinationFee)}. ${mid.coordination}.`,
+      a: `${mid.name}${mid.localName ? ` (${mid.localName})` : ''} is built for ${guests(mid.guests)} and includes ${list(mid.includedServices.map(id => (svc.find(s => s.id === id)?.name ?? id).toLowerCase()))}. ${mid.coordination}.`,
     })
   }
 
@@ -150,8 +150,7 @@ export function occasionPage(o, ctx) {
   ${photo(pictureFor(o), { alt: `${N.full} in Bengaluru, arranged end to end`, className: 'band' })}
   <h2 id="what">What does Sambramo arrange for ${esc(N.one)}?</h2>
   <p class="lede">${esc(svc.length)} services, across ${esc(groups.length)} categories — and you can take
-  all of them or just one. Every price below is indicative; your quote is priced for your date and
-  your guest count.</p>
+  all of them or just one.</p>
 
   ${groups.map(([cat, items]) => `
   <h3>${esc(cat)}</h3>
@@ -160,7 +159,6 @@ export function occasionPage(o, ctx) {
       ? `<a class="card" href="${U.service(s.slug)}">
            <span class="card-title">${esc(s.name)}</span>
            <p class="card-note">${esc(s.desc)}</p>
-           ${band(s) ? `<p class="card-price">${esc(band(s))}</p>` : ''}
          </a>`
       : `<div class="card">
            <span class="card-title">${esc(s.name)}</span>
@@ -168,35 +166,23 @@ export function occasionPage(o, ctx) {
          </div>`).join('')}
   </div>`).join('')}
 
-  <p class="note" style="margin-top:1.5rem"><strong>About these numbers.</strong> They are indicative
-  Bengaluru market ranges, not quotes, and several are per plate or per seat rather than per event.
-  A real figure for your ${esc(N.bare)} comes back priced for your date, your venue and
-  your guest count. <a href="${U.whatItCosts}">How Sambramo prices a celebration</a>.</p>
+  <p class="note" style="margin-top:1.5rem"><strong>Take all of it, or one piece.</strong>
+  Booking only the photographer, or only the caterer, is a normal thing to do here.
+  <a href="${U.customerApp}">Explore these in the Sambramo app</a>.</p>
 </div>
 
 <div class="wrap section">
   <h2 id="cost">How much does ${esc(N.one)} cost in Bengaluru?</h2>
-  <p class="lede">Almost entirely a question of how many people are coming. Sambramo's coordination
-  fee runs ${esc(inr(low.coordinationFee))} to ${esc(inr(high.coordinationFee))} across the ladder below;
-  vendor costs are quoted on top and itemised in full before you approve anything.</p>
-  <div class="table-scroll">
-    <table>
-      <caption class="muted" style="text-align:left;padding:.5rem 0;font-size:.8125rem">
-        Sambramo coordination fee by celebration size. Vendor costs are separate and itemised.
-      </caption>
-      <thead><tr><th scope="col">Size</th><th scope="col">Guests</th><th scope="col" class="num">Coordination fee</th></tr></thead>
-      <tbody>
-      ${tiers.map(t => `<tr>
-        <th scope="row" style="font-weight:700;text-transform:none;font-size:.9375rem;letter-spacing:0;color:var(--ink)">
-          <a href="${U.size(t.slug)}">${esc(t.name)}</a>${t.localName ? ` <span class="muted">· ${esc(t.localName)}</span>` : ''}
-        </th>
-        <td>${esc(guests(t.guests))}</td>
-        <td class="num money">${esc(inr(t.coordinationFee))}</td>
-      </tr>`).join('')}
-      </tbody>
-    </table>
+  <p class="lede">It depends almost entirely on how many people are coming. Sambramo charges one
+  coordination fee, and every vendor cost is quoted separately and itemised before you approve it.</p>
+  <p>There is no single figure worth printing here — a ${esc(N.bare)} for twenty and one for three
+  hundred are different jobs. <a href="${U.whatItCosts}">How a Sambramo price is built</a> sets out
+  the model, and the app returns a real number for your date and your guest count. Nothing is charged
+  to ask for it.</p>
+  <div class="btn-row">
+    <a class="btn btn--primary" href="${U.customerApp}">Get a price in the app</a>
+    <a class="btn btn--ghost" href="${U.whatItCosts}">How pricing works</a>
   </div>
-  <p><a href="${U.sizes}">Compare all ${esc(tiers.length)} celebration sizes →</a></p>
 </div>
 
 <div class="wrap section">
@@ -244,7 +230,6 @@ ${waitlistCta({
       name: `${o.name} planning in Bengaluru`,
       description: o.description,
       serviceType: `${o.name} planning`,
-      offers: S.tierCatalog(tiers, o.name),
     }),
     S.faqPage(U.occasion(o.slug), qs),
   ])

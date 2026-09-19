@@ -393,7 +393,8 @@ export function legalPage(which, ctx) {
   acknowledged within ${esc(gr.acknowledgeWithinHours ?? 48)} hours.</p>
 
   <h2>Cookies</h2>
-  <p>This website sets no cookies. There is no consent banner because there is nothing to consent to.</p>
+  <p>This website sets no cookies. There is no consent banner because there is nothing to consent to.
+  The <a href="${U.cookies}">cookie policy</a> sets out how to verify that yourself.</p>
 
   <h2>Who to contact</h2>
   <p><a href="mailto:${esc(brand.emailGrievance)}">${esc(brand.emailGrievance)}</a> ·
@@ -460,6 +461,41 @@ export function legalPage(which, ctx) {
   <h2>If you are not satisfied</h2>
   <p>You may escalate to the National Consumer Helpline (1915) or file with the appropriate Consumer
   Disputes Redressal Commission. Nothing on this page limits any statutory right you have.</p>` },
+
+    'cookies': {
+      url: U.cookies, h1: 'Cookie policy', eyebrow: 'Legal',
+      lede: 'There are none. Here is what that means and how to check it.',
+      title: fitTitle('Cookie Policy', brand.name),
+      description: 'sambramo.com sets no cookies and runs no analytics, advertising pixels or third-party trackers. How to verify that for yourself, and what the app does differently.',
+      noindex: false,
+      body: `
+<div class="wrap section prose">
+  <h2>Does sambramo.com use cookies?</h2>
+  <p class="lede"><strong>No.</strong> This website sets no cookies, runs no JavaScript, and loads
+  nothing from a third-party domain — no analytics, no advertising pixels, no session tracking, no
+  fonts fetched from Google.</p>
+  <p>That is why there is no consent banner. A banner asking permission for nothing would be theatre,
+  and under the DPDP Act 2023 and the GDPR alike, consent is only meaningful where there is something
+  to consent to.</p>
+
+  <h2>How can I check that?</h2>
+  <p class="lede">Open your browser's developer tools on any page of this site, look at Application →
+  Cookies and at the Network tab, and you will find an empty list and no external requests.</p>
+  <p>Everything this site serves — the pages, the stylesheet, the fonts, the photographs — comes from
+  sambramo.com itself. The Content-Security-Policy header on every response says so explicitly:
+  <code>default-src 'self'; script-src 'none'; connect-src 'none'</code>.</p>
+
+  <h2>What about the Sambramo app?</h2>
+  <p class="lede">The application is a different matter, and its own privacy notice covers it.</p>
+  <p>Once you open the customer or partner app you are signing in, so it keeps a session — that is what
+  a login is. Nothing on this website carries any identifier across to it.</p>
+
+  <h2>What happens when I use the form?</h2>
+  <p class="lede">The waiting-list form posts what you typed and nothing else. No cookie is set before,
+  during or after.</p>
+  <p>What it collects and how long it is kept is set out in the <a href="${U.privacy}">privacy
+  notice</a>.</p>
+</div>` },
 
     'entity': {
       url: U.entity, h1: 'Entity disclosure', eyebrow: 'Legal · Pending incorporation',

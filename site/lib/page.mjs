@@ -45,7 +45,7 @@ ${noindex
 
 <link rel="preload" as="font" type="font/woff2" href="/fonts/manrope-400.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="/fonts/manrope-800.woff2" crossorigin>
-<link rel="preload" as="font" type="font/woff2" href="/fonts/playfair-800.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-800.woff2" crossorigin>
 
 <meta property="og:type" content="${esc(ogType)}">
 <meta property="og:site_name" content="${esc(brand.name)}">
@@ -70,6 +70,7 @@ ${crumbs ? breadcrumbs(crumbs) : ''}
 <main id="main">
 ${body}
 </main>
+${stickyBar()}
 ${footer(brand, lastmod)}
 </body>
 </html>
@@ -97,6 +98,7 @@ function masthead(brand, current) {
     <nav class="nav" aria-label="Main">
       <ul>${NAV.map(([k, href, label]) =>
         `<li><a href="${href}"${k === current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`).join('')}</ul>
+      <a class="nav-cta" href="${U.customerApp}">Open App</a>
     </nav>
   </div>
   <div class="hero-aurora" role="presentation"></div>
@@ -140,7 +142,8 @@ function footer(brand, lastmod) {
       <p>© ${new Date().getFullYear()} ${esc(brand.name)}. ${esc(brand.tagline)}</p>
       <p>Prices shown on this site are indicative, not quotes. Sambramo arranges celebrations in Bengaluru only.
       <a href="${U.entity}">Entity disclosure</a> · <a href="${U.terms}">Terms</a> ·
-      <a href="${U.privacy}">Privacy</a> · <a href="${U.refunds}">Cancellation &amp; refunds</a> ·
+      <a href="${U.privacy}">Privacy</a> · <a href="${U.cookies}">Cookies</a> ·
+      <a href="${U.refunds}">Cancellation &amp; refunds</a> ·
       <a href="${U.grievance}">Grievance redressal</a></p>
       ${lastmod ? `<p>This page last updated <time datetime="${esc(isoDay(lastmod))}">${esc(longDate(lastmod))}</time>.</p>` : ''}
     </div>
@@ -162,22 +165,66 @@ function footer(brand, lastmod) {
  * the 25 occasions and 26 trades actually pull demand before you build for
  * them.
  */
-export function waitlistCta({ brand, heading, blurb, preset = null, audience = 'customer' }) {
-  const label = audience === 'partner' ? 'Get listed before we open' : 'Put me on the list'
-  return `<section class="section section--sunk" id="waitlist">
+/**
+ * The two doors.
+ *
+ * Every page ends here, and it is the one component that decides what this
+ * website is FOR. The website explains Sambramo; the app is Sambramo. So
+ * the job of the last thing on every page is to hand the reader to
+ * whichever product is theirs, and there are exactly two:
+ *
+ *   customer → /app          the booking experience
+ *   partner  → /partners/    the supplier side, which explains before it
+ *                            asks, because a supplier is being recruited
+ *                            rather than served
+ *
+ * `preset` carries which page the reader came from into the waitlist,
+ * which is how you learn which of the 25 occasions and 26 trades pull
+ * demand. It rides on the secondary CTA, not the primary one — the app
+ * has its own analytics and does not need a query string from us.
+ */
+export function twoDoors({ brand, heading, blurb, preset = null, lean = 'customer' }) {
+  const wl = U.waitlist + (preset ? `?for=${encodeURIComponent(preset)}` : '')
+  const customerFirst = lean !== 'partner'
+  const customer = `<a class="btn btn--primary" href="${U.customerApp}">Open Customer App</a>`
+  const partner = `<a class="btn btn--dark" href="${U.partners}">Partner With Sambramo</a>`
+  return `<section class="section section--sunk" id="get-started">
   <div class="wrap">
-    <div class="card" style="max-width:44rem;margin-inline:auto">
-      <p class="eyebrow">${audience === 'partner' ? 'For suppliers' : 'Opening soon in Bengaluru'}</p>
+    <div class="doors">
+      <p class="eyebrow">Bengaluru</p>
       <h2 style="margin-top:.4rem">${esc(heading)}</h2>
-      <p class="soft">${esc(blurb)}</p>
+      <p class="lede">${esc(blurb)}</p>
       <div class="btn-row">
-        <a class="btn btn--primary" href="${audience === 'partner' ? U.partnerJoin : U.waitlist}${preset ? `?for=${encodeURIComponent(preset)}` : ''}">${esc(label)}</a>
-        <a class="btn btn--ghost" href="https://wa.me/${esc(brand.whatsapp)}">Ask on WhatsApp</a>
+        ${customerFirst ? customer + partner : partner + customer}
       </div>
-      <p class="muted" style="font-size:.8125rem;margin-top:1rem">No payment, no card, no account. We will tell you when we open, and that is all.</p>
+      <p class="doors-alt">
+        Not ready yet? <a href="${wl}">Tell us what you are planning</a>
+        and a coordinator will call you — or
+        <a href="https://wa.me/${esc(brand.whatsapp)}">ask on WhatsApp</a>.
+      </p>
     </div>
   </div>
 </section>`
+}
+
+/* The old name, kept so the 150 call sites did not all have to change in
+   one commit. Same two doors underneath. */
+export const waitlistCta = ({ brand, heading, blurb, preset = null, audience = 'customer' }) =>
+  twoDoors({ brand, heading, blurb, preset, lean: audience })
+
+/**
+ * Sticky call to action, phones only.
+ *
+ * A reader on a phone is three screens deep in an occasion page with the
+ * nav long gone. CSS-only: position:fixed and a media query, no scroll
+ * listener, so it costs nothing and survives `script-src 'none'`.
+ * Hidden above 820px, where the masthead is still in view.
+ */
+export function stickyBar() {
+  return `<div class="sticky-cta" role="complementary" aria-label="Get started">
+  <a class="btn btn--primary" href="${U.customerApp}">Open App</a>
+  <a class="btn btn--ghost" href="${U.partners}">For partners</a>
+</div>`
 }
 
 export { ORIGIN }

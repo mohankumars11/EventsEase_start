@@ -33,13 +33,18 @@
   font-weight: 800; font-style: normal; font-display: swap;
 }
 @font-face {
-  font-family: 'Playfair Display';
-  src: url('/fonts/playfair-600.woff2') format('woff2');
-  font-weight: 600; font-style: normal; font-display: swap;
+  font-family: 'Outfit';
+  src: url('/fonts/outfit-500.woff2') format('woff2');
+  font-weight: 500; font-style: normal; font-display: swap;
 }
 @font-face {
-  font-family: 'Playfair Display';
-  src: url('/fonts/playfair-800.woff2') format('woff2');
+  font-family: 'Outfit';
+  src: url('/fonts/outfit-700.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Outfit';
+  src: url('/fonts/outfit-800.woff2') format('woff2');
   font-weight: 800; font-style: normal; font-display: swap;
 }
 
@@ -53,9 +58,9 @@
   ascent-override: 103%; descent-override: 28%; line-gap-override: 0%; size-adjust: 102%;
 }
 @font-face {
-  font-family: 'Playfair Fallback';
-  src: local('Georgia');
-  ascent-override: 102%; descent-override: 23%; line-gap-override: 0%; size-adjust: 106%;
+  font-family: 'Outfit Fallback';
+  src: local('Arial');
+  ascent-override: 100%; descent-override: 25%; line-gap-override: 0%; size-adjust: 97%;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
@@ -95,10 +100,12 @@ button { cursor: pointer; }
 /* ── Type ──────────────────────────────────────────────────────────────── */
 
 h1, h2, h3, h4 {
-  font-family: var(--font-display), 'Playfair Fallback', serif;
+  font-family: var(--font-display), 'Outfit Fallback', sans-serif;
   font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.015em;
+  line-height: 1.1;
+  /* Geometric sans at display size needs more negative tracking than a
+     serif did — the round bowls leave visible gaps otherwise. */
+  letter-spacing: -0.028em;
   text-wrap: balance;
 }
 h1 { font-size: clamp(2rem, 1.35rem + 2.8vw, 3.25rem); }
@@ -134,7 +141,7 @@ blockquote {
 }
 .muted { color: var(--ink-mute); }
 .soft  { color: var(--ink-soft); }
-.money { font-family: var(--font-display), serif; font-weight: 800; font-variant-numeric: tabular-nums; }
+.money { font-family: var(--font-display), sans-serif; font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* ── Layout ────────────────────────────────────────────────────────────── */
 
@@ -176,7 +183,7 @@ a.card:hover { box-shadow: var(--ring), var(--lift); }
 a.card h3, a.card .card-title { color: var(--ink); }
 a.card:hover .card-title { color: var(--plum-700); }
 
-.card-title { font-family: var(--font-display), serif; font-weight: 800; font-size: 1.125rem; line-height: 1.2; }
+.card-title { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 1.125rem; line-height: 1.2; }
 .card-note  { color: var(--ink-mute); font-size: 0.875rem; margin-top: 0.3rem; }
 .card-price { margin-top: 0.7rem; font-size: 0.875rem; font-weight: 700; color: var(--ink-soft); }
 
@@ -231,6 +238,9 @@ a.chip:hover { background: var(--plum-100); color: var(--plum-900); }
 }
 .wordmark small { display: block; color: rgb(255 255 255 / 0.62); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-family: var(--font-body), sans-serif; margin-top: 0.25rem; }
 
+/* The nav is a row: links, then the app door. Without this the <ul> is a
+   block and the CTA drops to a second line under it. */
+.nav { display: flex; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
 .nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; list-style: none; padding: 0; margin: 0; }
 .nav li { margin: 0; }
 .nav a { font-size: 0.9375rem; font-weight: 600; text-decoration: none; color: rgb(255 255 255 / 0.85); padding-block: 0.3rem; }
@@ -369,3 +379,77 @@ figcaption { font-size: 0.75rem; color: var(--ink-mute); margin-top: 0.4rem; }
    first screen. */
 .band { margin-block: 1.5rem; }
 .band img { border-radius: var(--r-panel); width: 100%; max-height: 22rem; object-fit: cover; }
+
+/* ── The two doors ───────────────────────────────────────────────────────
+   Every page ends with these. Centred and narrow so the choice is the only
+   thing on screen at that point. */
+.doors { max-width: 46rem; margin-inline: auto; text-align: center; }
+.doors h2 { margin-top: .4rem; }
+.doors .btn-row { justify-content: center; margin-top: 1.6rem; }
+.doors-alt { margin-top: 1.4rem; font-size: .9375rem; color: var(--ink-mute); }
+
+/* ── Masthead app link ───────────────────────────────────────────────── */
+.nav-cta {
+  display: inline-block; white-space: nowrap;
+  padding: .45rem 1rem; border-radius: var(--r-chip);
+  background: var(--saffron-400); color: var(--plum-950) !important;
+  font-size: .875rem; font-weight: 800; text-decoration: none;
+}
+.nav-cta:hover { filter: brightness(1.06); text-decoration: none !important; }
+
+/* ── Sticky CTA, phones only ─────────────────────────────────────────────
+   CSS only — no scroll listener, nothing to execute, so it survives
+   script-src 'none'. Above 820px the masthead is still reachable and this
+   would just be clutter. */
+.sticky-cta { display: none; }
+@media (max-width: 820px) {
+  .sticky-cta {
+    display: flex; gap: .6rem;
+    position: fixed; inset: auto 0 0 0; z-index: 40;
+    padding: .7rem 1rem calc(.7rem + env(safe-area-inset-bottom));
+    background: rgb(255 255 255 / 0.92);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -8px 32px -12px rgb(var(--hairline) / 0.18);
+  }
+  .sticky-cta .btn { flex: 1; min-height: 2.75rem; padding-inline: .9rem; font-size: .9375rem; }
+  /* Clear the bar so it never covers the last line of the footer. */
+  .footer { padding-bottom: 6rem; }
+}
+
+/* ── One event, many services ────────────────────────────────────────────
+   The homepage section that makes the supply-chain argument visually: one
+   occasion, the seven things it actually needs, one platform. */
+.assembly { display: grid; gap: 1rem; align-items: center; }
+@media (min-width: 900px) { .assembly { grid-template-columns: 1fr 1.4fr; gap: 2.5rem; } }
+.assembly-one {
+  border-radius: var(--r-panel); background: var(--amethyst); color: #fff;
+  padding: 1.75rem; text-align: center;
+}
+.assembly-one .eyebrow { color: var(--saffron-300); }
+.assembly-one strong { display: block; font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin-top: .4rem; }
+.assembly-parts { display: flex; flex-wrap: wrap; gap: .6rem; }
+.assembly-part {
+  flex: 1 1 8.5rem; padding: .85rem 1rem;
+  border-radius: var(--r-card); background: var(--surface);
+  box-shadow: var(--ring), var(--contact);
+  font-weight: 700; font-size: .9375rem;
+}
+.assembly-part span { display: block; font-weight: 400; font-size: .8125rem; color: var(--ink-mute); margin-top: .15rem; }
+
+/* ── Process ladder ──────────────────────────────────────────────────── */
+.ladder { display: grid; gap: .7rem; list-style: none; padding: 0; counter-reset: rung; }
+@media (min-width: 760px) { .ladder { grid-template-columns: repeat(3, 1fr); } }
+.ladder > li {
+  counter-increment: rung; margin: 0; padding: 1.1rem 1.2rem;
+  border-radius: var(--r-card); background: var(--surface);
+  box-shadow: var(--ring), var(--contact);
+}
+.ladder > li::before {
+  content: "0" counter(rung);
+  display: block; font-family: var(--font-display), sans-serif;
+  font-size: .8125rem; font-weight: 800; letter-spacing: .1em;
+  color: var(--plum-600); margin-bottom: .35rem;
+}
+.ladder h3 { margin: 0; font-size: 1.0625rem; font-family: var(--font-body), sans-serif; font-weight: 800; letter-spacing: 0; }
+.ladder p { margin-top: .25rem; font-size: .9375rem; color: var(--ink-soft); }

@@ -147,6 +147,7 @@ function renderRoute(r) {
         case 'legal/terms':                      return legalPage('terms', ctx)
         case 'legal/privacy':                    return legalPage('privacy', ctx)
         case 'legal/cancellation-and-refunds':   return legalPage('refunds', ctx)
+        case 'legal/cookies':                    return legalPage('cookies', ctx)
         case 'legal/grievance-redressal':        return legalPage('grievance', ctx)
         case 'legal/entity-disclosure':          return legalPage('entity', ctx)
       }

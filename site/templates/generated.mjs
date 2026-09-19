@@ -8,7 +8,7 @@
  */
 import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
-import { inr, band, guests, siblings, clamp, fitTitle, article, short } from '../lib/fmt.mjs'
+import { inr, guests, siblings, clamp, fitTitle, article, short } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
 import { waitlistCta, photo } from '../lib/page.mjs'
 
@@ -41,8 +41,6 @@ export function servicePage(s, ctx) {
   const { brand, occasions, services, lock } = ctx
   const occ = s.occasions.map(id => occasions.find(o => o.id === id)).filter(Boolean)
   const kin = services.filter(x => x.hasPage && x.category === s.category && x.id !== s.id).slice(0, 6)
-  const priced = band(s)
-  const perUnit = /\/(plate|seat|head|person|unit|kg|hour|day)/i.test(s.priceHint ?? '')
 
   const title = fitTitle(`${s.name} in Bengaluru`, brand.name)
   const description = clamp(`${s.name} for celebrations in Bengaluru. ${s.desc}. Sambramo sources it, negotiates the price and coordinates it on the day — as part of a full celebration or on its own.`)
@@ -51,9 +49,7 @@ export function servicePage(s, ctx) {
     { q: `Can I book ${s.name.toLowerCase()} on its own?`,
       a: `Yes. Sambramo arranges ${s.name.toLowerCase()} in Bengaluru as a standalone booking — you do not have to hand over the whole celebration to get it. Booking only the piece you are short of is a normal thing to do here.` },
     { q: `How much does ${s.name.toLowerCase()} cost in Bengaluru?`,
-      a: priced
-        ? `Indicatively ${priced}${perUnit ? '' : ' for the job'}. That is a real Bengaluru market range rather than a teaser, but it is not a quote — the figure you get back is priced for your date, your venue and your guest count, and it is itemised before you approve anything.`
-        : `It depends on the scale of the event. Sambramo prices ${s.name.toLowerCase()} against your date, venue and guest count and itemises it in the proposal, with nothing charged to ask.` },
+      a: `It depends on the scale of the event. Sambramo prices ${s.name.toLowerCase()} against your date, your venue and your guest count, and itemises it in the proposal before you approve anything. Asking costs nothing. The real figure comes back through the app.` },
     { q: `Which occasions include ${s.name.toLowerCase()}?`,
       a: `${occ.length} of the 25 occasions Sambramo arranges include ${s.name.toLowerCase()}${occ.length ? `, among them ${list(occ.slice(0, 5).map(o => short(o.name).toLowerCase()))}` : ''}. It can be added to any of them.` },
     { q: `Who actually does the work?`,
@@ -75,10 +71,13 @@ export function servicePage(s, ctx) {
   behalf, and itemised in one proposal alongside anything else you need. You can take it on its own
   or as part of a whole celebration.</p>
 
-  ${priced ? `<p class="note"><strong>Indicative price: ${esc(priced)}.</strong>
-  ${perUnit ? 'That is a per-unit rate, so the total depends on numbers.' : 'That is a Bengaluru market range for the job.'}
-  It is not a quote. Your figure is priced for your date, venue and guest count, and nothing is
-  charged to ask for it.</p>` : ''}
+  <p class="note"><strong>What does it cost?</strong> ${esc(s.name)} is priced against your date, your
+  venue and your guest count, so there is no rate card to print here. Sambramo charges one coordination
+  fee and itemises every vendor cost separately — <a href="${U.whatItCosts}">how that works</a>. The app
+  returns a real figure, and asking costs nothing.</p>
+  <div class="btn-row">
+    <a class="btn btn--primary" href="${U.customerApp}">Explore in the Sambramo app</a>
+  </div>
 </div>
 
 <div class="wrap section">
@@ -169,17 +168,6 @@ ${inc.length ? `<div class="wrap section">
       ? `<a class="card" href="${U.service(s.slug)}"><span class="card-title">${esc(s.name)}</span><p class="card-note">${esc(s.desc)}</p></a>`
       : `<div class="card"><span class="card-title">${esc(s.name)}</span><p class="card-note">${esc(s.desc)}</p></div>`).join('')}
   </div>
-</div>` : ''}
-
-${m ? `<div class="wrap section">
-  <h2>How big is the menu at ${esc(t.name)}?</h2>
-  <p class="lede">The menu allowance at this size is set out below, and it is a floor rather than a
-  cap — you can add to it, and the added lines are priced where you can see them.</p>
-  <div class="table-scroll"><table>
-    <thead><tr><th scope="col">Course</th><th scope="col" class="num">Choices</th></tr></thead>
-    <tbody>${Object.entries(m).map(([k, v]) =>
-      `<tr><th scope="row" style="text-transform:capitalize;color:var(--ink);font-size:.9375rem;letter-spacing:0">${esc(k)}</th><td class="num">${esc(v)}</td></tr>`).join('')}</tbody>
-  </table></div>
 </div>` : ''}
 
 ${t.highlights?.length ? `<div class="wrap section">
@@ -389,15 +377,11 @@ export function cityPage(c, ctx) {
 
 <div class="wrap section">
   <h2>What does a celebration in ${esc(c.name)} cost?</h2>
-  <p class="lede">Sambramo's coordination fee runs ${esc(inr(low.coordinationFee))} to ${esc(inr(high.coordinationFee))}
-  depending on size. Vendor costs are quoted on top, itemised, and approved by you before anything is booked.</p>
-  <div class="table-scroll"><table>
-    <thead><tr><th scope="col">Size</th><th scope="col">Guests</th><th scope="col" class="num">Coordination fee</th></tr></thead>
-    <tbody>${tiers.map(t => `<tr>
-      <th scope="row" style="color:var(--ink);font-size:.9375rem;letter-spacing:0;text-transform:none"><a href="${U.size(t.slug)}">${esc(t.name)}</a></th>
-      <td>${esc(guests(t.guests))}</td><td class="num money">${esc(inr(t.coordinationFee))}</td></tr>`).join('')}</tbody>
-  </table></div>
-  <p><a href="${U.whatItCosts}">How Sambramo prices a celebration →</a></p>
+  <p class="lede">It depends almost entirely on how many people are coming, and Sambramo charges one
+  coordination fee with every vendor cost itemised separately on top.</p>
+  <p>There is no single figure to print, because a hundred-guest wedding and a twenty-guest naming
+  ceremony are not the same job. <a href="${U.whatItCosts}">How Sambramo prices a celebration</a>
+  explains the model in full, and the app returns a real number for your date.</p>
 </div>
 
 <div class="wrap section">
@@ -476,7 +460,7 @@ ${own.length ? `<div class="wrap section">
   <p class="lede">${esc(own.length)} catalogue lines sit under this trade. These are exactly what dispatch will match you to.</p>
   <div class="grid grid--3">
     ${own.map(s => s.hasPage
-      ? `<a class="card" href="${U.service(s.slug)}"><span class="card-title">${esc(s.name)}</span><p class="card-note">${esc(s.desc)}</p>${band(s) ? `<p class="card-price">${esc(band(s))}</p>` : ''}</a>`
+      ? `<a class="card" href="${U.service(s.slug)}"><span class="card-title">${esc(s.name)}</span><p class="card-note">${esc(s.desc)}</p></a>`
       : `<div class="card"><span class="card-title">${esc(s.name)}</span><p class="card-note">${esc(s.desc)}</p></div>`).join('')}
   </div>
 </div>` : `<div class="wrap section">
