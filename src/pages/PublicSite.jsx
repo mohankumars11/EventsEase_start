@@ -686,7 +686,7 @@ function Footer() {
 
 export default function PublicSiteSEO() {
   useEffect(() => {
-    const path = window.location.pathname.replace(/\\/+$/, '') || '/'
+    const path = window.location.pathname.replace(/\/+$/, '') || '/'
     const pages = {
       '/': {
         title: 'SAMBRAMO — Event Supply Chain & Logistics | Bengaluru',
