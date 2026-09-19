@@ -537,19 +537,28 @@ function AppRoutes() {
   )
 }
 
-export default function App() {
+const PUBLIC_SITE_PATHS = new Set(['/', '/about', '/how-it-works', '/partners', '/contact'])
+
+function AppWithRouter() {
+  const { pathname } = useLocation()
+
+  // Keep the public marketing site completely outside the authenticated app
+  // provider tree. This prevents a missing/expired app configuration, auth
+  // session, or service dependency from blanking the public launch site.
+  if (PUBLIC_SITE_PATHS.has(pathname)) {
+    return <PublicSite />
+  }
+
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        {/* City wraps the cart, not the other way round: what is deliverable,
-            what it costs and who fulfils it are all functions of the city, so
-            the cart may need to read it. Nothing in CityProvider reads the
-            cart. */}
-        <CityProvider>
-          <CartProvider>
-            <ToastProvider>
-              <ChatProvider>
-              <ScrollRestoration />
+    <AuthProvider>
+      {/* City wraps the cart, not the other way round: what is deliverable,
+          what it costs and who fulfils it are all functions of the city, so
+          the cart may need to read it. Nothing in CityProvider reads the cart. */}
+      <CityProvider>
+        <CartProvider>
+          <ToastProvider>
+            <ChatProvider>
+            <ScrollRestoration />
               {/* Records every navigation, so the app can answer "was this
                   customer in the middle of something?" — see lib/journey. It
                   renders nothing and writes to sessionStorage only. */}
@@ -579,7 +588,7 @@ export default function App() {
             </ToastProvider>
           </CartProvider>
         </CityProvider>
-      </AuthProvider>
+      </AppWithRouter>
     </BrowserRouter>
   )
 }
