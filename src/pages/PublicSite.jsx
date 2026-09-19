@@ -113,11 +113,71 @@ function Services(){
 function HowItWorks(){
   const [active,setActive]=useState(2)
   const [n,title,body,I]=flow[active]
-  return <section id="how-it-works" className="bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20"><div className="mx-auto max-w-[1480px]">
-    <div className="grid gap-9 lg:grid-cols-[.7fr_1.3fr] lg:items-center"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">How it works</p><h2 className="mt-2 font-serif text-3xl font-bold leading-tight sm:text-4xl">A journey designed to feel simpler.</h2><p className="mt-4 max-w-md text-sm leading-7 text-[#6d6173]">The public experience is shaped around the same connected model as the partner side: services, jobs, schedules, earnings and event-day movement.</p><div className="mt-7 flex flex-wrap gap-2">{flow.map(([id,t])=><button key={id} onClick={()=>setActive(Number(id)-1)} className={`rounded-xl border px-3 py-2 text-[10px] font-black ${active===Number(id)-1?'border-[#2A085C] bg-[#2A085C] text-white':'border-[#ded2e5] bg-white text-[#624f6d]'}`}>{id} · {t}</button>)}</div></div>
-      <div className="relative overflow-hidden rounded-[30px] bg-[#2A085C] p-6 text-white shadow-[0_25px_80px_rgba(42,8,92,.18)] sm:p-10"><div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#8c4dca]/30 blur-3xl"/><div className="relative grid gap-8 md:grid-cols-[1fr_.8fr] md:items-center"><div><span className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[9px] font-black uppercase tracking-[.18em] text-[#F4C85D]">Step {n}</span><h3 className="mt-5 font-serif text-3xl font-bold sm:text-4xl">{title}</h3><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">{body}</p><div className="mt-7 flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4C85D] text-[#2A085C]"><I size={20}/></div><span className="text-xs font-black text-white/70">One connected event journey</span></div></div><div className="rounded-[28px] border border-white/15 bg-white/[.07] p-3 backdrop-blur-xl"><div className="rounded-[22px] bg-[#fbf7fd] p-4 text-[#211329]"><p className="text-[9px] font-black uppercase tracking-[.15em] text-[#8a7693]">Event workspace</p><p className="mt-1 text-sm font-black">Bengaluru celebration</p><div className="mt-5 space-y-2">{['Services selected','Partner coordination','Event-day logistics'].map((x,i)=><div key={x} className="flex items-center gap-2 rounded-xl border border-[#eee5f2] bg-white p-3"><span className={`h-2 w-2 rounded-full ${i<=active/2?'bg-emerald-500':'bg-[#c9bdcf]'}`}/><span className="text-[10px] font-bold">{x}</span></div>)}</div></div></div></div></div>
-    </div></div>
-  </div></section>
+
+  return (
+    <section id="how-it-works" className="bg-[#f7f3fa] px-5 py-14 sm:px-8 lg:py-20">
+      <div className="mx-auto max-w-[1480px]">
+        <div className="grid gap-9 lg:grid-cols-[.7fr_1.3fr] lg:items-center">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#8050a8]">How it works</p>
+            <h2 className="mt-2 font-serif text-3xl font-bold leading-tight sm:text-4xl">A journey designed to feel simpler.</h2>
+            <p className="mt-4 max-w-md text-sm leading-7 text-[#6d6173]">
+              The public experience is shaped around the same connected model as the partner side: services, jobs, schedules, earnings and event-day movement.
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-2">
+              {flow.map(([id,t]) => (
+                <button
+                  key={id}
+                  onClick={() => setActive(Number(id)-1)}
+                  className={`rounded-xl border px-3 py-2 text-[10px] font-black ${active===Number(id)-1 ? 'border-[#2A085C] bg-[#2A085C] text-white' : 'border-[#ded2e5] bg-white text-[#624f6d]'}`}
+                >
+                  {id} · {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[30px] bg-[#2A085C] p-6 text-white shadow-[0_25px_80px_rgba(42,8,92,.18)] sm:p-10">
+            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#8c4dca]/30 blur-3xl" />
+
+            <div className="relative grid gap-8 md:grid-cols-[1fr_.8fr] md:items-center">
+              <div>
+                <span className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[9px] font-black uppercase tracking-[.18em] text-[#F4C85D]">
+                  Step {n}
+                </span>
+                <h3 className="mt-5 font-serif text-3xl font-bold sm:text-4xl">{title}</h3>
+                <p className="mt-4 max-w-lg text-sm leading-7 text-white/70">{body}</p>
+
+                <div className="mt-7 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4C85D] text-[#2A085C]">
+                    <I size={20} />
+                  </div>
+                  <span className="text-xs font-black text-white/70">One connected event journey</span>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/15 bg-white/[.07] p-3 backdrop-blur-xl">
+                <div className="rounded-[22px] bg-[#fbf7fd] p-4 text-[#211329]">
+                  <p className="text-[9px] font-black uppercase tracking-[.15em] text-[#8a7693]">Event workspace</p>
+                  <p className="mt-1 text-sm font-black">Bengaluru celebration</p>
+
+                  <div className="mt-5 space-y-2">
+                    {['Services selected','Partner coordination','Event-day logistics'].map((x,i) => (
+                      <div key={x} className="flex items-center gap-2 rounded-xl border border-[#eee5f2] bg-white p-3">
+                        <span className={`h-2 w-2 rounded-full ${i <= active/2 ? 'bg-emerald-500' : 'bg-[#c9bdcf]'}`} />
+                        <span className="text-[10px] font-bold">{x}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function PartnerSection(){
