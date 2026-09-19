@@ -23,7 +23,7 @@ import { h, esc, raw, list } from '../lib/html.mjs'
 import { U, abs } from '../lib/urls.mjs'
 import { inr, band, guests, siblings, clamp, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta } from '../lib/page.mjs'
+import { waitlistCta, photo } from '../lib/page.mjs'
 
 /** Services grouped by their catalogue category, in catalogue order. */
 function grouped(ids, byId) {
@@ -92,6 +92,25 @@ function faqs(o, svc, tiers, lock, brand) {
   return q
 }
 
+/* Which photograph an occasion page gets.
+ *
+ * Chosen from the occasion's own service list rather than assigned by hand,
+ * so a page about a thread ceremony shows a ritual and a page about a
+ * reception shows a hall — and adding a 26th occasion does not mean
+ * remembering to add a 26th line to a lookup table. First match wins, and
+ * the order is deliberate: a ritual is more distinctive than catering, and
+ * catering is more distinctive than a venue. */
+const PICTURE_FOR = [
+  ['rituals', ['pandit', 'priest', 'pooja']],
+  ['mehendi', ['mehendi']],
+  ['music', ['drum', 'live_music', 'folk', 'baraat']],
+  ['photography', ['photography', 'videography', 'drone']],
+  ['decor', ['mandap', 'floral', 'stage']],
+  ['catering', ['catering', 'cooks', 'live_counters']],
+  ['venue', ['venue']],
+]
+const pictureFor = o => (PICTURE_FOR.find(([, ids]) => ids.some(id => o.services.includes(id))) ?? ['decor'])[0]
+
 export function occasionPage(o, ctx) {
   const { brand, services, tiers, lock, occasions, cities } = ctx
   const byId = new Map(services.map(s => [s.id, s]))
@@ -121,6 +140,7 @@ export function occasionPage(o, ctx) {
 </div>
 
 <div class="wrap section">
+  ${photo(pictureFor(o), { alt: `A ${o.name.toLowerCase()} in Bengaluru, arranged end to end`, className: 'band' })}
   <h2 id="what">What does Sambramo arrange for a ${esc(o.name.toLowerCase())}?</h2>
   <p class="lede">${esc(svc.length)} services, across ${esc(groups.length)} categories — and you can take
   all of them or just one. Every price below is indicative; your quote is priced for your date and

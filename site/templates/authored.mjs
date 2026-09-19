@@ -24,7 +24,7 @@ import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
 import { inr, guests, clamp, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta } from '../lib/page.mjs'
+import { waitlistCta, photo } from '../lib/page.mjs'
 
 const crumb = (...t) => [{ name: 'Home', url: U.home }, ...t]
 
@@ -74,15 +74,18 @@ export function homePage(ctx) {
 
   const body = `
 <section class="hero">
-  <div class="wrap">
-    <p class="eyebrow">${esc(brand.categoryLine)} · Bengaluru</p>
-    <h1>${esc(brand.taglineParts[0])}.<br>${esc(brand.taglineParts[1])}.</h1>
-    <p class="lede" style="max-width:36rem;margin-top:1rem">${esc(brand.descriptor)}
-    One coordinator sources every vendor, negotiates, and brings back one clear price.</p>
-    <div class="btn-row">
-      <a class="btn btn--primary" href="${U.waitlist}">Put me on the list</a>
-      <a class="btn btn--ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgb(255 255 255/.28)" href="${U.howItWorks}">How it works</a>
+  <div class="wrap hero-split">
+    <div>
+      <p class="eyebrow">${esc(brand.categoryLine)} · Bengaluru</p>
+      <h1>${esc(brand.taglineParts[0])}.<br>${esc(brand.taglineParts[1])}.</h1>
+      <p class="lede" style="margin-top:1rem">${esc(brand.descriptor)}
+      One coordinator sources every vendor, negotiates, and brings back one clear price.</p>
+      <div class="btn-row">
+        <a class="btn btn--primary" href="${U.waitlist}">Put me on the list</a>
+        <a class="btn btn--ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgb(255 255 255/.28)" href="${U.howItWorks}">How it works</a>
+      </div>
     </div>
+    ${photo('hero', { alt: 'A marigold-decorated Indian wedding celebration', priority: true })}
   </div>
 </section>
 
@@ -103,6 +106,7 @@ export function homePage(ctx) {
   <h2>What does Sambramo arrange?</h2>
   <p class="lede">${esc(occasions.length)} occasions and ${esc(live.length)} services, across
   ${esc(trades.length)} supplier trades. Take the whole celebration or one piece of it.</p>
+  ${photo('occasions', { alt: 'A decorated Indian birthday celebration', className: 'band' })}
   <div class="grid grid--4">
     ${occasions.slice(0, 12).map(o => `<a class="card" href="${U.occasion(o.slug)}">
       <span class="card-title">${esc(o.name)}</span>

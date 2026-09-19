@@ -5,7 +5,7 @@ import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
 import { inr, clamp, longDate, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta } from '../lib/page.mjs'
+import { waitlistCta, photo } from '../lib/page.mjs'
 
 const crumb = (...t) => [{ name: 'Home', url: U.home }, ...t]
 
@@ -70,6 +70,7 @@ export function partnersPage(ctx) {
 </div>
 
 <div class="wrap section">
+  ${photo('partners', { alt: 'An event supplier at work in Bengaluru', className: 'band' })}
   <h2>Why work through Sambramo?</h2>
   <p class="lede">Six things, and all six are how the system actually works rather than what it intends.</p>
   <div class="grid grid--2">

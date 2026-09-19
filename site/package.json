@@ -8,7 +8,10 @@
     "content": "node scripts/pull-content.mjs",
     "build": "node build.mjs",
     "serve": "node scripts/serve.mjs",
-    "check": "node scripts/check-drift.mjs && node build.mjs && node scripts/check-html.mjs && node scripts/check-jsonld.mjs && node scripts/check-links.mjs && node scripts/check-claims.mjs"
+    "check": "node scripts/check-drift.mjs && node build.mjs && node scripts/check-html.mjs && node scripts/check-jsonld.mjs && node scripts/check-links.mjs && node scripts/check-claims.mjs",
+    "images": "node scripts/pull-images.mjs",
+    "og": "node scripts/make-og.mjs",
+    "shot": "node scripts/shoot-page.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.21.5"

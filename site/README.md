@@ -9,6 +9,10 @@ npm run content      # ../src/**  ->  content/*.json      (local / CI only)
 npm run build        # content/*.json  ->  dist/          (this is what Vercel runs)
 npm run serve        # http://localhost:4321
 npm run check        # drift + build + html + jsonld + links + claims
+
+npm run images       # fetch + self-host the photography (needs the app's .env keys)
+npm run og           # redraw the Open Graph cards through headless Edge
+npm run shot -- / shots/home.png --desktop
 ```
 
 ---
@@ -126,6 +130,12 @@ app's source compiling.
   pages. The tier already carried that Kannada name; nothing was invented.
 - **No link to `sambramoh.vercel.app`.** Neither app has shipped. Every call
   to action is a waitlist.
+- **Every photograph says it is stock.** Sambramo has run no events, so there
+  is nothing of its own to show. Each `<figure>` carries "Representative
+  image, not a Sambramo event" plus the source and photographer — the same
+  convention migration 048 established for shop tiles. Provenance for all
+  twelve is in `content/credits.json`; swapping in a paid library later is a
+  matter of replacing files and re-running `npm run images`.
 
 ---
 
@@ -191,9 +201,10 @@ npm run serve
 # The test that decides the whole project: content present without JS.
 curl -s -A "…GPTBot/1.1…" https://sambramo.com/occasions/wedding/ | grep -c Sambramo
 
-node scripts/shoot-page.mjs / shots/home.png --desktop
-node scripts/shoot-page.mjs /occasions/wedding/ shots/w-nojs.png --no-js
-# The site ships no JS, so the --no-js shot must be identical. That is the proof.
+node scripts/shoot-page.mjs /occasions/wedding/ shots/js.png   --desktop
+node scripts/shoot-page.mjs /occasions/wedding/ shots/nojs.png --desktop --no-js
+# The site ships no JS, so the two PNGs must be byte-identical. That is the
+# proof, and it currently holds: both hash to fe67770ad2655ebb.
 ```
 
 One browser launch per route, sequential. This is a 3.9 GB box and the app's

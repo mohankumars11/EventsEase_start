@@ -353,3 +353,19 @@ figcaption { font-size: 0.75rem; color: var(--ink-mute); margin-top: 0.4rem; }
   body { font-size: 11pt; }
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; }
 }
+
+/* ── Hero with a photograph ──────────────────────────────────────────────
+   Two columns above 900px, stacked below. The text column comes first in
+   source order on every width, so the h1 is still the first thing a reader
+   — or an extractor — meets. */
+.hero-split { display: grid; gap: 2rem; align-items: center; }
+@media (min-width: 900px) { .hero-split { grid-template-columns: 1.05fr 0.95fr; gap: 3rem; } }
+.hero-split figure { margin: 0; }
+.hero-split img { border-radius: var(--r-hero); box-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.6); }
+.hero-split figcaption { color: rgb(255 255 255 / 0.5); font-size: .6875rem; margin-top: .55rem; }
+
+/* A photograph running the width of a section, used once per page at most.
+   Capped in height so a portrait crop cannot push the next heading off the
+   first screen. */
+.band { margin-block: 1.5rem; }
+.band img { border-radius: var(--r-panel); width: 100%; max-height: 22rem; object-fit: cover; }

@@ -10,9 +10,30 @@ import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
 import { inr, band, guests, siblings, clamp, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta } from '../lib/page.mjs'
+import { waitlistCta, photo } from '../lib/page.mjs'
 
 const crumb = (...t) => [{ name: 'Home', url: U.home }, ...t]
+
+/* A picture per service category.
+ *
+ * Twenty-three categories share twelve photographs, which is deliberate: a
+ * distinct image for every one of the 60 services would mean 48 more stock
+ * downloads chosen badly, and a caterer's page and a live-counter page
+ * showing the same feast is honest in a way that two different feasts
+ * pretending to be ours is not. Anything unmapped falls through to the decor
+ * shot rather than rendering an empty figure. */
+const SERVICE_PICTURE = {
+  Venue: 'venue', Decor: 'decor', Lighting: 'decor', Effects: 'decor',
+  Catering: 'catering', Bakery: 'catering', 'F&B': 'catering',
+  Furniture: 'venue', Infrastructure: 'venue', Cleanup: 'venue',
+  Photography: 'photography', Video: 'photography',
+  Entertainment: 'music',
+  Ritual: 'rituals',
+  Beauty: 'mehendi',
+  Hospitality: 'partners', Safety: 'partners', Security: 'partners',
+  Logistics: 'city', Vehicle: 'city',
+  Corporate: 'venue', Gifts: 'decor', Stationery: 'decor',
+}
 
 /* ══ Service ═══════════════════════════════════════════════════════════ */
 
@@ -61,6 +82,7 @@ export function servicePage(s, ctx) {
 </div>
 
 <div class="wrap section">
+  ${photo(SERVICE_PICTURE[s.category] ?? 'decor', { alt: `${s.name} for a celebration in Bengaluru`, className: 'band' })}
   <h2>Which celebrations include ${esc(s.name.toLowerCase())}?</h2>
   <p class="lede">${esc(occ.length)} of the 25 occasions Sambramo arranges include ${esc(s.name.toLowerCase())}.
   It can be added to any of the others too.</p>
@@ -227,6 +249,10 @@ export function festivalPage(f, ctx) {
   <p class="muted" style="font-size:.875rem">Celebrated: ${esc(f.region)} · Falls in ${esc(f.month)} · Lasts ${esc(f.duration)}</p>
 </div>
 
+<div class="wrap section">
+  ${photo('festival', { alt: `${f.name} celebrated with lamps and decoration`, className: 'band' })}
+</div>
+
 ${f.rituals?.length ? `<div class="wrap section">
   <h2>What are the rituals of ${esc(f.name)}?</h2>
   <p class="lede">${esc(f.name)} is marked by ${esc(f.rituals.length)} main observances, set out below.</p>
@@ -344,6 +370,7 @@ export function cityPage(c, ctx) {
 </div>
 
 <div class="wrap section">
+  ${photo('city', { alt: `${c.name}, the city Sambramo operates in`, className: 'band' })}
   <h2>Which areas of ${esc(c.name)} does Sambramo cover?</h2>
   <p class="lede">The whole city. ${esc(c.coverage)}</p>
   <p>The neighbourhoods people ask about most are ${esc(list(c.knownAreas))} — that is orientation, not
@@ -427,6 +454,10 @@ export function tradePage(t, ctx) {
   <p class="eyebrow">For suppliers · Bengaluru</p>
   <h1>${esc(t.name)} work in Bengaluru</h1>
   <p class="lede">Jobs near you, with the price on them before you accept.</p>
+</div>
+
+<div class="wrap section">
+  ${photo('partners', { alt: 'An event supplier at work in Bengaluru', className: 'band' })}
 </div>
 
 <div class="wrap section prose">

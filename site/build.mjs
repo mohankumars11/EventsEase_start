@@ -13,7 +13,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { shell, setFooterLinks } from './lib/page.mjs'
+import { shell, setFooterLinks, setCredits } from './lib/page.mjs'
 import { U, ORIGIN, abs, routes } from './lib/urls.mjs'
 import { esc } from './lib/html.mjs'
 import { occasionPage } from './templates/occasion.mjs'
@@ -41,6 +41,8 @@ const legal = read('legal.json')
 const membership = read('membership.json')
 const trades = read('trades.json')
 const stamp = read('_stamp.json')
+const credits = existsSync(join(SITE, 'content', 'credits.json')) ? read('credits.json') : {}
+setCredits(credits)
 
 const content = { occasions, services, tiers: tiersDoc, festivals: festDoc, cities, trades, legal, stamp }
 

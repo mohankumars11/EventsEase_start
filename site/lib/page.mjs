@@ -181,3 +181,34 @@ export function waitlistCta({ brand, heading, blurb, preset = null, audience = '
 }
 
 export { ORIGIN }
+
+/* ── Photography ─────────────────────────────────────────────────────────
+ *
+ * Every photograph on this site is licensed stock, and every one says so.
+ *
+ * Sambramo is pre-launch and has run no events, so there is nothing of its
+ * own to show. The product already settled how to handle that: migration 048
+ * makes every shop tile read "Representative image" until somebody uploads a
+ * photograph of the actual piece. A caption naming the source is the
+ * difference between illustrating a page and implying you did the work in
+ * the picture — and on a site with no reviews, that distinction is most of
+ * what the visitor has to go on.
+ *
+ * width and height are mandatory and come from the file's own JPEG header
+ * (see scripts/pull-images.mjs), so the page never reflows when the image
+ * lands. check-html.mjs fails the build on an <img> without them.
+ */
+let CREDITS = {}
+export const setCredits = c => { CREDITS = c }
+
+export function photo(id, { alt, caption = null, priority = false, className = '' } = {}) {
+  const c = CREDITS[id]
+  if (!c) return ''
+  const by = c.author ? `${c.source} · ${c.author}` : c.source
+  return `<figure${className ? ` class="${esc(className)}"` : ''}>
+  <img src="/img/${esc(id)}.jpg" alt="${esc(alt)}"
+       width="${esc(c.width)}" height="${esc(c.height)}"
+       ${priority ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+  <figcaption>${caption ? `${esc(caption)} · ` : ''}Representative image, not a Sambramo event. ${esc(by)}.</figcaption>
+</figure>`
+}

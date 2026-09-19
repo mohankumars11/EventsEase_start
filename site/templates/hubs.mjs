@@ -10,7 +10,7 @@ import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
 import { inr, band, guests, clamp, fitTitle } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
-import { waitlistCta } from '../lib/page.mjs'
+import { waitlistCta, photo } from '../lib/page.mjs'
 
 const crumb = (...t) => [{ name: 'Home', url: U.home }, ...t]
 
@@ -46,6 +46,7 @@ export function occasionsHub(ctx) {
     items: occasions.map(o => ({ url: U.occasion(o.slug), name: o.name })),
     body: `
 <div class="wrap section">
+  ${photo('decor', { alt: 'Marigold and flower decoration for an Indian celebration', className: 'band' })}
   <div class="grid grid--3">
     ${occasions.map(o => `<a class="card" href="${U.occasion(o.slug)}">
       <span class="card-title">${esc(o.name)}</span>
@@ -74,6 +75,9 @@ export function servicesHub(ctx) {
     lede: `${live.length} services across ${cats.length} categories. You can hand over the whole day or book only the one thing you are short of.`,
     items: live.map(s => ({ url: U.service(s.slug), name: s.name })),
     body: `
+<div class="wrap section">
+  ${photo('catering', { alt: 'A South Indian feast served on a banana leaf', className: 'band' })}
+</div>
 <div class="wrap section prose">
   <p><strong>Sambramo sources ${esc(live.length)} distinct services for celebrations in Bengaluru.</strong>
   Each one is sourced from a checked supplier, negotiated on your behalf and itemised in the proposal —
@@ -164,6 +168,7 @@ export function festivalsHub(ctx) {
     items: festivals.map(f => ({ url: U.festival(f.slug), name: f.name })),
     body: `
 <div class="wrap section">
+  ${photo('festival', { alt: 'Diwali lamps and rangoli', className: 'band' })}
   <div class="grid grid--2">
     ${festivals.map(f => `<a class="card" href="${U.festival(f.slug)}">
       <span class="card-title">${esc(f.name)}</span>
