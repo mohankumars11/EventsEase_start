@@ -1294,3 +1294,103 @@
   }
   .sambramo-site .sambramo-reveal { opacity: 1; transform: none; }
 }
+
+/* -------------------------------------------------------------------------
+   SAMBRAMO PUBLIC POLISH
+   ------------------------------------------------------------------------- */
+.sambramo-nav {
+  background: rgba(22, 3, 41, 0.96);
+  border-color: rgba(255,255,255,0.10);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+.sambramo-nav > div:first-child {
+  min-height: 62px;
+}
+.sambramo-hero {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(155,89,201,.18), transparent 28%),
+    #160329;
+}
+.sambramo-hero-glow {
+  background:
+    radial-gradient(circle at 68% 52%, rgba(244,200,93,.08), transparent 24%),
+    linear-gradient(180deg, rgba(22,3,41,.10), rgba(22,3,41,.45));
+}
+.sambramo-hero-visual {
+  min-height: 360px;
+}
+.sambramo-hero-visual img {
+  transition: transform 1.2s cubic-bezier(.22,1,.36,1);
+}
+.sambramo-hero-visual:hover img {
+  transform: scale(1.025);
+}
+.sambramo-hero-lines > div:last-child {
+  border-right: 0;
+}
+.sambramo-early-access {
+  overscroll-behavior: contain;
+}
+.sambramo-early-access > div:last-child {
+  max-height: min(760px, calc(100dvh - 24px));
+}
+@media (max-width: 767px) {
+  .sambramo-nav > div:first-child {
+    min-height: 58px;
+  }
+  .sambramo-hero {
+    padding-bottom: 0;
+  }
+  .sambramo-hero > div {
+    padding-top: 12px;
+    padding-bottom: 18px;
+  }
+  .sambramo-hero-grid {
+    gap: 14px;
+  }
+  .sambramo-hero-copy {
+    padding-top: 4px;
+    padding-bottom: 2px;
+  }
+  .sambramo-hero-visual {
+    order: -1;
+    min-height: 310px;
+    border-radius: 22px;
+  }
+  .sambramo-hero-visual > div {
+    min-height: 310px !important;
+  }
+  .sambramo-hero-visual img {
+    object-position: center 42%;
+  }
+  .sambramo-hero-lines {
+    margin-top: 18px;
+  }
+  .sambramo-hero-lines > div {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .sambramo-hero-actions {
+    margin-top: 18px;
+  }
+  .sambramo-early-access {
+    padding: 10px;
+  }
+  .sambramo-early-access > div:last-child {
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100dvh - 20px);
+    border-radius: 24px;
+  }
+}
+@media (min-width: 768px) {
+  .sambramo-hero-visual {
+    min-height: 500px;
+  }
+}
+@media (min-width: 1024px) {
+  .sambramo-hero-visual {
+    min-height: 590px;
+  }
+}
