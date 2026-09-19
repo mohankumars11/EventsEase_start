@@ -21,7 +21,7 @@
  */
 import { h, esc, raw, list } from '../lib/html.mjs'
 import { U, abs } from '../lib/urls.mjs'
-import { inr, band, guests, siblings, clamp, fitTitle } from '../lib/fmt.mjs'
+import { inr, band, guests, siblings, clamp, fitTitle, article, plural, short } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
 import { waitlistCta, photo } from '../lib/page.mjs'
 
@@ -46,30 +46,30 @@ function grouped(ids, byId) {
  * own commitments. If a question could only be answered by making something
  * up, it is not asked.
  */
-function faqs(o, svc, tiers, lock, brand) {
+function faqs(o, svc, tiers, lock, brand, N) {
   const cheapest = tiers[0]
   const mid = tiers.find(t => t.popular) ?? tiers[2] ?? tiers[0]
   const names = svc.slice(0, 6).map(s => s.name.toLowerCase())
   const q = []
 
   q.push({
-    q: `Who arranges a ${o.name.toLowerCase()} in Bengaluru?`,
-    a: `Sambramo arranges ${o.name.toLowerCase()} celebrations in Bengaluru end to end. One coordinator sources every vendor you need — ${list(names.slice(0, 4))} — negotiates each price, and brings the whole thing back to you as one itemised proposal. You are not handed a directory and left to make the calls yourself.`,
+    q: `Who arranges ${N.one} in Bengaluru?`,
+    a: `Sambramo arranges ${N.bare} celebrations in Bengaluru end to end. One coordinator sources every vendor you need — ${list(names.slice(0, 4))} — negotiates each price, and brings the whole thing back to you as one itemised proposal. You are not handed a directory and left to make the calls yourself.`,
   })
 
   q.push({
-    q: `What does Sambramo arrange for a ${o.name.toLowerCase()}?`,
-    a: `${svc.length} services, and you can take all of them or one. For a ${o.name.toLowerCase()} in Bengaluru that covers ${list(names)}, among others. Booking only the photographer, or only the caterer, is a normal thing to do — Sambramo sources each one separately and quotes it at what it actually costs.`,
+    q: `What does Sambramo arrange for ${N.one}?`,
+    a: `${svc.length} services, and you can take all of them or one. For ${N.one} in Bengaluru that covers ${list(names)}, among others. Booking only the photographer, or only the caterer, is a normal thing to do — Sambramo sources each one separately and quotes it at what it actually costs.`,
   })
 
   q.push({
-    q: `How much does a ${o.name.toLowerCase()} cost in Bengaluru?`,
+    q: `How much does ${N.one} cost in Bengaluru?`,
     a: `It depends almost entirely on how many people are coming. Sambramo's coordination fee runs from ${inr(cheapest.coordinationFee)} for ${guests(cheapest.guests)} up to ${inr(tiers[tiers.length - 1].coordinationFee)} at the largest size on the ladder. Vendor costs — venue, food, decor, photography — are quoted separately and itemised in full before you approve anything, so the number you approve is the number you pay.`,
   })
 
   q.push({
-    q: `Do I have to pay anything to get a ${o.name.toLowerCase()} quote?`,
-    a: `No. Asking Sambramo to price a ${o.name.toLowerCase()} costs nothing and needs no card and no account. If you want to hold your date and your price while you decide, that is ${inr(lock)}, it comes off the final bill, and it comes back if you walk away.`,
+    q: `Do I have to pay anything to get ${N.one} quote?`,
+    a: `No. Asking Sambramo to price ${N.one} costs nothing and needs no card and no account. If you want to hold your date and your price while you decide, that is ${inr(lock)}, it comes off the final bill, and it comes back if you walk away.`,
   })
 
   q.push({
@@ -79,7 +79,7 @@ function faqs(o, svc, tiers, lock, brand) {
 
   q.push({
     q: `Who do I call if something goes wrong on the day?`,
-    a: `Sambramo. One coordinator handles your ${o.name.toLowerCase()} from the first call to the last guest, and whoever was booked, chasing them is Sambramo's job rather than your family's. The number is ${brand.supportPhone}, ${brand.hours.toLowerCase()}.`,
+    a: `Sambramo. One coordinator handles your ${N.bare} from the first call to the last guest, and whoever was booked, chasing them is Sambramo's job rather than your family's. The number is ${brand.supportPhone}, ${brand.hours.toLowerCase()}.`,
   })
 
   if (mid && mid.includedServices?.length) {
@@ -117,13 +117,20 @@ export function occasionPage(o, ctx) {
   const svc = o.services.map(id => byId.get(id)).filter(Boolean)
   const groups = grouped(o.services, byId)
   const city = cities[0]
-  const qs = faqs(o, svc, tiers, lock, brand)
+  /* The occasion name three ways. `full` is the label, for the h1 and the
+     title, where both halves of "Aksharabhyasa / Vidyarambham" belong
+     because somebody searches for either. `one` and `many` are the prose
+     forms — a slash inside a sentence reads as a typo, and "a" before a
+     vowel or a bare +s plural is what shipped the first time round. */
+  const nm = short(o.name).toLowerCase()
+  const N = { full: o.name, one: `${article(nm)} ${nm}`, bare: nm, many: plural(nm).toLowerCase() }
+  const qs = faqs(o, svc, tiers, lock, brand, N)
   const also = siblings(occasions, o.id, 6)
   const low = tiers[0], high = tiers[tiers.length - 1]
 
   const title = fitTitle(`${o.name} Planning in Bengaluru`, brand.name)
   const description = clamp(
-    `${o.name.toLowerCase()} celebrations in Bengaluru, arranged end to end. One coordinator sources ${svc.length} services, negotiates every price, and brings back one itemised quote. Nothing booked until you approve it.`)
+    `${N.full} celebrations in Bengaluru, arranged end to end. One coordinator sources ${svc.length} services, negotiates every price, and brings back one itemised quote. Nothing booked until you approve it.`)
 
   const body = `
 <div class="wrap pagehead">
@@ -133,15 +140,15 @@ export function occasionPage(o, ctx) {
 </div>
 
 <div class="wrap section prose">
-  <p><strong>Sambramo arranges ${esc(o.name.toLowerCase())} celebrations in Bengaluru, end to end.</strong>
+  <p><strong>Sambramo arranges ${esc(N.bare)} celebrations in Bengaluru, end to end.</strong>
   ${esc(o.description)} You describe what you are planning; one coordinator sources every vendor,
   negotiates each price and brings the whole thing back as a single itemised proposal. Nothing is
   booked and nothing is charged until you approve it.</p>
 </div>
 
 <div class="wrap section">
-  ${photo(pictureFor(o), { alt: `A ${o.name.toLowerCase()} in Bengaluru, arranged end to end`, className: 'band' })}
-  <h2 id="what">What does Sambramo arrange for a ${esc(o.name.toLowerCase())}?</h2>
+  ${photo(pictureFor(o), { alt: `${N.full} in Bengaluru, arranged end to end`, className: 'band' })}
+  <h2 id="what">What does Sambramo arrange for ${esc(N.one)}?</h2>
   <p class="lede">${esc(svc.length)} services, across ${esc(groups.length)} categories — and you can take
   all of them or just one. Every price below is indicative; your quote is priced for your date and
   your guest count.</p>
@@ -163,12 +170,12 @@ export function occasionPage(o, ctx) {
 
   <p class="note" style="margin-top:1.5rem"><strong>About these numbers.</strong> They are indicative
   Bengaluru market ranges, not quotes, and several are per plate or per seat rather than per event.
-  A real figure for your ${esc(o.name.toLowerCase())} comes back priced for your date, your venue and
+  A real figure for your ${esc(N.bare)} comes back priced for your date, your venue and
   your guest count. <a href="${U.whatItCosts}">How Sambramo prices a celebration</a>.</p>
 </div>
 
 <div class="wrap section">
-  <h2 id="cost">How much does a ${esc(o.name.toLowerCase())} cost in Bengaluru?</h2>
+  <h2 id="cost">How much does ${esc(N.one)} cost in Bengaluru?</h2>
   <p class="lede">Almost entirely a question of how many people are coming. Sambramo's coordination
   fee runs ${esc(inr(low.coordinationFee))} to ${esc(inr(high.coordinationFee))} across the ladder below;
   vendor costs are quoted on top and itemised in full before you approve anything.</p>
@@ -193,7 +200,7 @@ export function occasionPage(o, ctx) {
 </div>
 
 <div class="wrap section">
-  <h2 id="where">Where in Bengaluru does Sambramo run ${esc(o.name.toLowerCase())}s?</h2>
+  <h2 id="where">Where in Bengaluru does Sambramo run ${esc(N.many)}?</h2>
   <p class="lede">Across the whole city. ${esc(city.coverage)}</p>
   <p>The areas people ask about most are ${esc(list(city.knownAreas))} — but coverage is city-wide,
   and those are orientation rather than a whitelist. Bengaluru is the only city Sambramo serves today.
@@ -202,7 +209,7 @@ export function occasionPage(o, ctx) {
 </div>
 
 <div class="wrap section">
-  <h2 id="faq">Questions people ask about ${esc(o.name.toLowerCase())}s</h2>
+  <h2 id="faq">Questions people ask about ${esc(N.many)}</h2>
   <div class="qa">
     ${qs.map(x => `<div><h3>${esc(x.q)}</h3><p>${esc(x.a)}</p></div>`).join('')}
   </div>
@@ -210,7 +217,7 @@ export function occasionPage(o, ctx) {
 
 ${waitlistCta({
   brand,
-  heading: `Planning a ${o.name.toLowerCase()} in Bengaluru?`,
+  heading: `Planning ${N.one} in Bengaluru?`,
   blurb: `Sambramo is opening soon. Tell us the date and roughly how many people, and you will be among the first we call — with a real price, not a brochure.`,
   preset: o.id,
 })}

@@ -8,7 +8,7 @@
  */
 import { esc, list } from '../lib/html.mjs'
 import { U } from '../lib/urls.mjs'
-import { inr, band, guests, siblings, clamp, fitTitle } from '../lib/fmt.mjs'
+import { inr, band, guests, siblings, clamp, fitTitle, article, short } from '../lib/fmt.mjs'
 import * as S from '../lib/schema.mjs'
 import { waitlistCta, photo } from '../lib/page.mjs'
 
@@ -55,7 +55,7 @@ export function servicePage(s, ctx) {
         ? `Indicatively ${priced}${perUnit ? '' : ' for the job'}. That is a real Bengaluru market range rather than a teaser, but it is not a quote — the figure you get back is priced for your date, your venue and your guest count, and it is itemised before you approve anything.`
         : `It depends on the scale of the event. Sambramo prices ${s.name.toLowerCase()} against your date, venue and guest count and itemises it in the proposal, with nothing charged to ask.` },
     { q: `Which occasions include ${s.name.toLowerCase()}?`,
-      a: `${occ.length} of the 25 occasions Sambramo arranges include ${s.name.toLowerCase()}${occ.length ? `, among them ${list(occ.slice(0, 5).map(o => o.name.toLowerCase()))}` : ''}. It can be added to any of them.` },
+      a: `${occ.length} of the 25 occasions Sambramo arranges include ${s.name.toLowerCase()}${occ.length ? `, among them ${list(occ.slice(0, 5).map(o => short(o.name).toLowerCase()))}` : ''}. It can be added to any of them.` },
     { q: `Who actually does the work?`,
       a: `A Bengaluru supplier Sambramo has sourced and checked for your date, not a subcontractor you have never heard of. You get one coordinator and one number for the whole celebration; chasing the supplier is Sambramo's job rather than yours.` },
     { q: `Do I pay before ${s.name.toLowerCase()} is confirmed?`,
@@ -227,12 +227,12 @@ export function festivalPage(f, ctx) {
   const also = siblings(festivals, f.id, 4)
 
   const title = fitTitle(`${f.name} in Bengaluru`, brand.name)
-  const description = clamp(`${f.name}: ${f.tagline}. What it is, when it falls, the rituals and the food — and how Sambramo arranges a ${f.name} celebration in Bengaluru, end to end.`)
+  const description = clamp(`${f.name}: ${f.tagline}. What it is, when it falls, the rituals and the food — and how Sambramo arranges ${article(f.name)} ${f.name} celebration in Bengaluru, end to end.`)
 
   const qs = [
     { q: `When is ${f.name} celebrated?`, a: `${f.name} falls in ${f.month} and runs ${f.duration}. ${f.emotionalHook}` },
     { q: `What happens at ${f.name}?`, a: `${f.description}` },
-    { q: `Can Sambramo arrange a ${f.name} celebration in Bengaluru?`,
+    { q: `Can Sambramo arrange ${article(f.name)} ${f.name} celebration in Bengaluru?`,
       a: `Yes. Sambramo arranges ${f.name} celebrations in Bengaluru end to end — one coordinator sources the catering, the decor, the priest and anything else the day needs, negotiates each price, and brings it back as one itemised proposal. Nothing is booked until you approve it.` },
   ]
 
@@ -266,7 +266,7 @@ ${f.rituals?.length ? `<div class="wrap section">
 
 ${f.foods?.length ? `<div class="wrap section">
   <h2>What food is made at ${esc(f.name)}?</h2>
-  <p class="lede">${esc(list(f.foods.slice(0, 5).map(x => x.name)))}${f.foods.length > 5 ? ', among others' : ''} — the dishes a ${esc(f.name)} table is expected to carry.</p>
+  <p class="lede">${esc(list(f.foods.slice(0, 5).map(x => x.name)))}${f.foods.length > 5 ? ', among others' : ''} — the dishes ${esc(article(f.name))} ${esc(f.name)} table is expected to carry.</p>
   <div class="grid grid--3">
     ${f.foods.map(x => `<div class="card">
       <span class="card-title">${esc(x.name)}</span>
@@ -290,7 +290,7 @@ ${f.menuPackages?.length ? `<div class="wrap section">
 
 ${f.services?.length ? `<div class="wrap section">
   <h2>What does Sambramo arrange for ${esc(f.name)}?</h2>
-  <p class="lede">For a ${esc(f.name)} celebration in Bengaluru, Sambramo sources and coordinates the following.</p>
+  <p class="lede">For ${esc(article(f.name))} ${esc(f.name)} celebration in Bengaluru, Sambramo sources and coordinates the following.</p>
   <ul class="chips">${f.services.map(x => `<li><span class="chip">${esc(x)}</span></li>`).join('')}</ul>
 </div>` : ''}
 
@@ -440,7 +440,7 @@ export function tradePage(t, ctx) {
     own.length ? { q: `What ${t.name.toLowerCase()} services does Sambramo book?`,
       a: `${own.length} in this trade: ${list(own.map(s => s.name.toLowerCase()))}. Those are the catalogue lines dispatch will match you to, so listing accurately is what decides which jobs reach you.` } : null,
     occ.length ? { q: `Which celebrations would I get work from?`,
-      a: `${occ.length} of the 25 occasions Sambramo arranges need a ${t.name.toLowerCase()} — among them ${list(occ.slice(0, 5).map(o => o.name.toLowerCase()))}.` } : null,
+      a: `${occ.length} of the 25 occasions Sambramo arranges need ${article(t.name)} ${t.name.toLowerCase()} — among them ${list(occ.slice(0, 5).map(o => short(o.name).toLowerCase()))}.` } : null,
     { q: `What does it cost to join?`,
       a: `Nothing to join and nothing monthly while the Bengaluru network is being built. Sambramo's share is already taken out of the earning shown on the job — never billed to you, and set out in full in the terms you sign.` },
     { q: `Do I have to accept every job?`,

@@ -105,3 +105,62 @@ export function fitTitle(main, brand = 'Sambramo', max = 60) {
   const sp = cut.lastIndexOf(' ')
   return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,–—-]+$/, '')
 }
+
+/* ── English, for names that come out of a data file ─────────────────────
+ *
+ * The occasion and festival names are product data, not copy, and the
+ * templates wrap them in sentences. "a aksharabhyasa", "a Onam" and
+ * "anniversarys" all shipped because the templates assumed every name
+ * starts with a consonant and pluralises with an s. Eighty of them.
+ *
+ * These are small and deliberately not a library: the input is a known,
+ * finite list of 25 occasions and 8 festivals, so the rules only have to
+ * be right for those rather than for English in general.
+ */
+
+/** "a" or "an", by how the word is SAID rather than spelled. */
+export function article(word) {
+  const w = String(word ?? '').trim().toLowerCase()
+  if (!w) return 'a'
+  // Vowel letter, consonant sound: a university, a one-day, a European.
+  if (/^(uni|use|user|usual|euro|ewe|one\b|once\b)/.test(w)) return 'a'
+  // Consonant letter, vowel sound: an hour, an honest, an MBA, an RSVP.
+  if (/^(hour|honest|honour|honor|heir)/.test(w)) return 'an'
+  if (/^[aeiou]/.test(w)) return 'an'
+  return 'a'
+}
+
+/** `${a(name)} ${name}` without having to write it twice. */
+export const withArticle = word => `${article(word)} ${word}`
+
+/**
+ * Plural of a noun phrase.
+ *
+ * Handles the two cases the catalogue actually contains: a final
+ * consonant+y ("anniversary" → "anniversaries", not "anniversarys") and a
+ * sibilant ending ("half-saree ceremony" → "ceremonies"). Only the last
+ * word changes, which is what makes "Birthday Party" → "Birthday Parties"
+ * rather than "Birthdays Party".
+ */
+export function plural(phrase) {
+  const s = String(phrase ?? '').trim()
+  if (!s) return s
+  const i = s.lastIndexOf(' ')
+  const head = i === -1 ? '' : s.slice(0, i + 1)
+  const last = i === -1 ? s : s.slice(i + 1)
+  if (/[^aeiou]y$/i.test(last)) return head + last.slice(0, -1) + 'ies'
+  if (/(s|sh|ch|x|z)$/i.test(last)) return head + last + 'es'
+  if (/s$/i.test(last)) return head + last
+  return head + last + 's'
+}
+
+/**
+ * The first name of a double-barrelled one.
+ *
+ * Eight occasions and two festivals carry a slash — "Aksharabhyasa /
+ * Vidyarambham", "Pongal / Makar Sankranti". Both names belong in the h1
+ * and the description, because somebody searches for either. Inside a
+ * sentence, and especially pluralised, the slash reads as a typo. So the
+ * full name is used where it is a label and this is used where it is prose.
+ */
+export const short = name => String(name ?? '').split(/\s*[/(]\s*/)[0].trim()
