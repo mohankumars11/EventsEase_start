@@ -542,53 +542,35 @@ const PUBLIC_SITE_PATHS = new Set(['/', '/about', '/how-it-works', '/partners', 
 function AppWithRouter() {
   const { pathname } = useLocation()
 
-  // Keep the public marketing site completely outside the authenticated app
-  // provider tree. This prevents a missing/expired app configuration, auth
-  // session, or service dependency from blanking the public launch site.
   if (PUBLIC_SITE_PATHS.has(pathname)) {
     return <PublicSite />
   }
 
   return (
     <AuthProvider>
-      {/* City wraps the cart, not the other way round: what is deliverable,
-          what it costs and who fulfils it are all functions of the city, so
-          the cart may need to read it. Nothing in CityProvider reads the cart. */}
       <CityProvider>
         <CartProvider>
           <ToastProvider>
             <ChatProvider>
-            <ScrollRestoration />
-              {/* Records every navigation, so the app can answer "was this
-                  customer in the middle of something?" — see lib/journey. It
-                  renders nothing and writes to sessionStorage only. */}
+              <ScrollRestoration />
               <JourneyTracker />
               <AppRoutes />
               <BottomNav />
-              {/* The offer to go back to unfinished work. It shows itself only
-                  on home, which is where an interrupted customer lands, and
-                  only when there is genuinely something to return to. Mounted
-                  here rather than inside HomeScreen because `/` and
-                  /dashboard/customer are two routes onto one screen and the
-                  card belongs to neither of them in particular. */}
               <ResumePrompt />
-              {/* One assistant for the whole app, opened by the Help tab in
-                  BottomNav. It used to be mounted inside three separate
-                  shells, which is why it floated over the page: a component
-                  living inside the layout it must not disturb has nowhere to
-                  go but on top of it. */}
               <ChatWidget />
-              {/* One sheet for the whole app, mounted above the routes. Any
-                  surface raises it through `openCityPicker()` — the two app
-                  bars, the storefront's serviceability strip, the plan hub —
-                  so the control is identical everywhere and no page has to
-                  own a copy of it. */}
               <CitySheet />
-              </ChatProvider>
-            </ToastProvider>
-          </CartProvider>
-        </CityProvider>
-      </AppWithRouter>
+            </ChatProvider>
+          </ToastProvider>
+        </CartProvider>
+      </CityProvider>
+    </AuthProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppWithRouter />
     </BrowserRouter>
   )
 }
