@@ -90,7 +90,8 @@ function Reveal({ children, className = '', delay = 0 }) {
   return (
     <div ref={ref} className={`sambramo-reveal ${visible ? 'is-visible' : ''} ${className}`} style={{ '--reveal-delay': `${delay}ms` }}>
       {children}
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -619,10 +620,105 @@ function Footer() {
   )
 }
 
-export default function PublicSite() {
+export default function PublicSiteSEO() {
+  useEffect(() => {
+    const path = window.location.pathname.replace(/\\/+$/, '') || '/'
+    const pages = {
+      '/': {
+        title: 'SAMBRAMO — Event Supply Chain & Logistics | Bengaluru',
+        description: 'SAMBRAMO connects event services, vendors, supply chain and logistics for celebrations in Bengaluru. Discover, connect, book and move the work toward event day.',
+      },
+      '/about': {
+        title: 'About SAMBRAMO | Event Supply Chain & Logistics in Bengaluru',
+        description: 'Learn about SAMBRAMO and its Bengaluru-first approach to connecting event services, vendors, supply chain and logistics around real celebrations.',
+      },
+      '/how-it-works': {
+        title: 'How SAMBRAMO Works | Event Services & Logistics in Bengaluru',
+        description: 'See how SAMBRAMO is designed to connect event discovery, partners, booking, payment, supply movement and event-day logistics in Bengaluru.',
+      },
+      '/partners': {
+        title: 'SAMBRAMO Partners | Event Vendors & Logistics in Bengaluru',
+        description: 'Event vendors and service partners in Bengaluru can explore the SAMBRAMO partner ecosystem for catering, decor, photography, venues, entertainment, transport and logistics.',
+      },
+      '/contact': {
+        title: 'Contact SAMBRAMO | Bengaluru Event Supply Chain & Logistics',
+        description: 'Contact SAMBRAMO about customer early access, event services, partner opportunities and the Bengaluru launch.',
+      },
+    }
+    const page = pages[path] || pages['/']
+    document.title = page.title
+
+    const setMeta = (selector, attribute, value) => {
+      let node = document.head.querySelector(selector)
+      if (!node) {
+        node = document.createElement('meta')
+        node.setAttribute(attribute, selector.match(/content="([^"]+)"/)?.[1] || '')
+        document.head.appendChild(node)
+      }
+      node.setAttribute('content', value)
+    }
+    setMeta('meta[name="description"]', 'name', page.description)
+    setMeta('meta[property="og:title"]', 'property', page.title)
+    setMeta('meta[property="og:description"]', 'property', page.description)
+    setMeta('meta[name="twitter:title"]', 'name', page.title)
+    setMeta('meta[name="twitter:description"]', 'name', page.description)
+
+    const canonicalUrl = `https://sambramo.com${path === '/' ? '/' : path}`
+    let canonical = document.head.querySelector('link[rel="canonical"]')
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+    canonical.href = canonicalUrl
+
+    const existing = document.getElementById('sambramo-seo-jsonld')
+    if (existing) existing.remove()
+    const script = document.createElement('script')
+    script.id = 'sambramo-seo-jsonld'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': 'https://sambramo.com/#organization',
+          name: 'SAMBRAMO',
+          alternateName: 'SAMBRAMO Event Supply Chain & Logistics',
+          url: 'https://sambramo.com/',
+          description: 'Event Supply Chain & Logistics in Bengaluru.',
+        },
+        {
+          '@type': 'WebSite',
+          '@id': 'https://sambramo.com/#website',
+          name: 'SAMBRAMO',
+          url: 'https://sambramo.com/',
+          inLanguage: 'en-IN',
+          publisher: { '@id': 'https://sambramo.com/#organization' },
+        },
+        {
+          '@type': 'WebPage',
+          '@id': `${canonicalUrl}#webpage`,
+          url: canonicalUrl,
+          name: page.title,
+          description: page.description,
+          isPartOf: { '@id': 'https://sambramo.com/#website' },
+        },
+      ],
+    })
+    document.head.appendChild(script)
+    return () => script.remove()
+  }, [])
+
+  return null
+}
+
+function PublicSite() {
   const [earlyOpen, setEarlyOpen] = useState(false)
   return (
-    <div className="sambramo-site min-h-screen overflow-x-clip bg-white text-[#211329] selection:bg-[#F4C85D] selection:text-[#1d0b30]">
+    <>
+      <PublicSiteSEO />
+      <div className="sambramo-site min-h-screen overflow-x-clip bg-white text-[#211329] selection:bg-[#F4C85D] selection:text-[#1d0b30]">
       <Nav />
       <main>
         <Hero />
