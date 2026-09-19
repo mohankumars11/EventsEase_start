@@ -1198,792 +1198,96 @@
     0%, 100% { transform: scale(1, 1)       translateX(0); }
     25%      { transform: scale(0.94, 1.06) translateX(0.5px); }
     50%      { transform: scale(1.05, 0.97) translateX(-0.4px); }
-    75%      { transform: scale(0.97, 1.03) translateX(0.3px); }
-  }
-  .film-flame {
-    animation: film-flame-in 0.55s ease-out 0.45s both,
-               film-flicker 1.1s ease-in-out 1s infinite;
-  }
 
-  @keyframes film-twinkle {
-    0%   { opacity: 0;    transform: scale(0.2) rotate(-45deg); }
-    40%  { opacity: 1;    transform: scale(1.18) rotate(0deg); }
-    100% { opacity: 0.55; transform: scale(0.85) rotate(16deg); }
-  }
-  .film-twinkle { animation: film-twinkle 0.9s ease-out both; }
-
-  /* The other celebrations, each on its own period so the group
-     never pulses as one block. */
-  @keyframes film-orbit {
-    0%   { opacity: 0; transform: translateY(14px) scale(0.85); }
-    45%  { opacity: 1; transform: translateY(0)    scale(1); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-orbit-1, .film-orbit-2, .film-orbit-3 { transform-box: fill-box; transform-origin: center; }
-  .film-orbit-1 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both, film-float 3.8s ease-in-out 1.05s infinite; }
-  .film-orbit-2 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both, film-float 4.6s ease-in-out 1.25s infinite; }
-  .film-orbit-3 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.65s both, film-float 4.1s ease-in-out 1.45s infinite; }
-
-  /* ── Beat 2: the picking ───────────────────────────── */
-  /* Five things arrive one after another, then drift. The stagger
-     is the point: a hamper assembled all at once is a graphic, a
-     hamper assembled item by item is somebody choosing. */
-  @keyframes film-item-in {
-    0%   { opacity: 0; transform: translateY(-34px) rotate(-6deg) scale(0.9); }
-    65%  { opacity: 1; transform: translateY(3px)   rotate(1deg)  scale(1.02); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-item { transform-box: fill-box; transform-origin: center bottom; }
-  .film-item-1 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.12s both, film-float 3.6s ease-in-out 1.3s infinite; }
-  .film-item-2 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.32s both, film-float 4.2s ease-in-out 1.5s infinite; }
-  .film-item-3 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.52s both, film-float 3.9s ease-in-out 1.7s infinite; }
-  .film-item-4 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.72s both, film-float 4.5s ease-in-out 1.9s infinite; }
-  .film-item-5 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.92s both, film-float 4.0s ease-in-out 2.1s infinite; }
-
-  /* ── The makers beat ───────────────────────────────── */
-  /* The doll arrives, overshoots, settles, then sways on a long ease. The
-     sway is the point: a turned wooden object photographed on a turntable
-     never sits perfectly still, and 2.5 degrees is enough to read as an
-     object under a light rather than a sticker on a background. Anything
-     more and it looks like it is falling over. */
-  @keyframes film-turn-in {
-    0%   { opacity: 0; transform: translateY(26px) rotate(-7deg) scale(0.9); }
-    60%  { opacity: 1; transform: translateY(-3px) rotate(2deg)  scale(1.02); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes film-turn-sway {
-    0%, 100% { transform: rotate(-2.5deg); }
-    50%      { transform: rotate(2.5deg); }
-  }
-  .film-turn {
-    animation: film-turn-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both,
-               film-turn-sway 4.2s ease-in-out 0.9s infinite;
-  }
-
-  /* The light pass. soft-light rather than screen, so it tints the surface
-     it crosses instead of washing it out — foil goes warmer, shell goes
-     cooler, cream stays cream. On a dark ground this would be invisible;
-     on the lit grounds it is exactly the sweep you get moving a lamp across
-     lacquer. */
-  @keyframes film-iridescent {
-    0%   { opacity: 0;    transform: translateX(-70%) skewX(-14deg); }
-    22%  { opacity: 0.55; }
-    72%  { opacity: 0.55; }
-    100% { opacity: 0;    transform: translateX(280%) skewX(-14deg); }
-  }
-  .film-iridescent {
-    position: absolute;
-    top: -10%;
-    bottom: -10%;
-    left: 0;
-    width: 34%;
-    pointer-events: none;
-    mix-blend-mode: soft-light;
-    background: linear-gradient(
-      100deg,
-      transparent 0%,
-      rgba(255, 214, 170, 0.55) 28%,
-      rgba(196, 224, 255, 0.5) 52%,
-      rgba(255, 192, 232, 0.45) 74%,
-      transparent 100%
-    );
-    animation: film-iridescent 7.5s ease-in-out infinite;
-  }
-
-  /* ── Beat 3: the packing ───────────────────────────── */
-  @keyframes film-lid {
-    0%   { opacity: 0; transform: translateY(-30px); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-lid { transform-box: fill-box; animation: film-lid 0.45s cubic-bezier(0.34, 1.2, 0.6, 1) 0.22s both; }
-
-  /* pathLength="100" puts the dash maths in percent, so the draw
-     stays correct if the geometry is ever redrawn. */
-  @keyframes film-ribbon {
-    0%   { stroke-dashoffset: 100; }
-    100% { stroke-dashoffset: 0; }
-  }
-  .film-ribbon   { stroke-dasharray: 100; animation: film-ribbon 0.4s ease-out 0.72s both; }
-  .film-ribbon-2 { animation-delay: 0.92s; }
-
-  /* The specular band travelling down the satin for the rest of
-     the beat. This is what stops gold reading as yellow plastic. */
-  @keyframes film-sheen-band {
-    0%   { stroke-dashoffset: 70;  opacity: 0; }
-    18%  { opacity: 0.6; }
-    82%  { opacity: 0.6; }
-    100% { stroke-dashoffset: -70; opacity: 0; }
-  }
-  .film-sheen-band {
-    stroke-dasharray: 16 200;
-    animation: film-sheen-band 1.5s ease-in-out 1.15s infinite;
-  }
-
-  @keyframes film-bow {
-    0%   { opacity: 0; transform: scale(0.25) rotate(-22deg); }
-    55%  { opacity: 1; transform: scale(1.1)  rotate(3deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-bow {
-    animation: film-bow 0.42s cubic-bezier(0.34, 1.5, 0.6, 1) 1.18s both,
-               film-breathe 3s ease-in-out 1.7s infinite;
-  }
-
-  /* The foil wordmark catches light a beat after the lid lands. */
-  @keyframes film-foil {
-    0%   { opacity: 0; }
-    100% { opacity: 1; }
-  }
-  .film-foil { animation: film-foil 0.5s ease-out 0.66s both; }
-
-  @keyframes film-tag {
-    0%   { opacity: 0; transform: translate(-10px, 5px) rotate(-10deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-tag {
-    transform-box: fill-box;
-    animation: film-tag 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.42s both,
-               film-float 3.2s ease-in-out 1.95s infinite;
-  }
-
-  /* ── Beat 4: the handover ──────────────────────────── */
-  @keyframes film-route {
-    0%   { stroke-dashoffset: 100; opacity: 0; }
-    15%  { opacity: 0.85; }
-    100% { stroke-dashoffset: 0;   opacity: 0.85; }
-  }
-  .film-route { animation: film-route 0.75s linear both; }
-
-  @keyframes film-hand-give {
-    0%   { opacity: 0; transform: translateX(-46px); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes film-hand-take {
-    0%   { opacity: 0; transform: translateX(46px); }
-    100% { opacity: 1; transform: none; }
-  }
-  /* The giving hand leads, the receiving hand answers it. */
-  .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.12s both; }
-  .film-hand-take { transform-box: fill-box; animation: film-hand-take 0.8s cubic-bezier(0.16,1,0.3,1) 0.38s both; }
-
-  /* The box crosses the gap and then hangs, held between them. */
-  @keyframes film-pass {
-    0%   { opacity: 0; transform: translate(-34px, 6px) rotate(-7deg); }
-    60%  { opacity: 1; transform: translate(2px, -3px)  rotate(1.5deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  /* Starts almost with the giving hand, not 400ms after it. At the old delay
-     the hands had both landed and the caption had fully resolved while the
-     box was still at zero opacity — so for about half a second the frame was
-     two people reaching at nothing, which is the one thing this beat must
-     never show. The box now travels as the hands arrive to meet it. */
-  .film-pass {
-    transform-box: fill-box;
-    animation: film-pass 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both,
-               film-float 2.8s ease-in-out 1.25s infinite;
-  }
-
-  /* ── Beat 5: the opening ───────────────────────────── */
-  @keyframes film-lid-off {
-    0%   { opacity: 1; transform: translateY(0)     rotate(0deg)   scale(1); }
-    50%  { opacity: 1; transform: translateY(-38px) rotate(-12deg) scale(1.02); }
-    100% { opacity: 0; transform: translateY(-62px) rotate(-21deg) scale(1.05); }
-  }
-  .film-lid-off { animation: film-lid-off 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both; }
-
-  @keyframes film-burst {
-    0%   { opacity: 0;   transform: scale(0.35); }
-    35%  { opacity: 1;   transform: scale(1.1); }
-    100% { opacity: 0.8; transform: scale(1.02); }
-  }
-  .film-burst {
-    transform-box: fill-box; transform-origin: center;
-    animation: film-burst 0.85s ease-out 0.28s both,
-               film-breathe 2.6s ease-in-out 1.15s infinite;
-  }
-
-  @keyframes film-rays {
-    0%   { opacity: 0;    transform: scale(0.4)  rotate(-10deg); }
-    40%  { opacity: 0.55; transform: scale(1.03) rotate(0deg); }
-    100% { opacity: 0.34; transform: scale(1)    rotate(9deg); }
-  }
-  .film-rays { animation: film-rays 2.2s ease-out 0.2s both; }
-
-  /* Hearts leave the box and keep going. Staggered inline so four
-     read as four reactions rather than one volley. */
-  @keyframes film-lift {
-    0%   { opacity: 0; transform: translateY(16px)  scale(0.4); }
-    22%  { opacity: 1; transform: translateY(0)     scale(1.06); }
-    100% { opacity: 0; transform: translateY(-52px) scale(0.82); }
-  }
-  .film-lift { transform-box: fill-box; transform-origin: center bottom; animation: film-lift 1.1s cubic-bezier(0.3, 0.8, 0.4, 1) both; }
-}
-
-/* ── Reduced motion ────────────────────────────────────
-   The landing page runs several always-on animations (blobs,
-   floats, tickers). Honour the OS-level preference instead of
-   forcing them on everyone. */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .marquee-track,
-  .float,
-  .blob,
-  .shimmer-text,
-  .shimmer-saffron,
-  .animate-spin-slow,
-  .animate-sheen,
-  .animate-pulse-ring,
-  /* The brand banner keeps its gradient and loses the drift — the panel is a
-     finished surface standing still, which is more than can be said for most
-     things that animate. */
-  .brand-banner,
-  .ken-burns {
-    animation: none !important;
-  }
-  /* The occasion page's own motion. The halo becomes a still coloured edge
-     (the selection is still obvious), the sheen never fires, and the card
-     entrance resolves immediately rather than being suppressed — a card that
-     never animates in must still be visible, and `.rise-in` starts at
-     opacity 0. */
-  .event-halo::after,
-  .sheen-on-hover::after,
-  /* The mosaic's hero sweep. Hidden rather than merely paused: frozen at 0% it
-     is a bright diagonal band parked over a hero tile's left edge, which reads
-     as a rendering fault rather than as a still design. */
-  .mosaic-sweep {
-    animation: none !important;
-  }
-  .mosaic-sweep { display: none !important; }
-  .rise-in {
-    animation: none !important;
-    opacity: 1;
-  }
-  /* The rotator stops advancing under this preference (see
-     useReducedMotion in DetailRotator) and renders every line at
-     once instead, so nothing is lost — this only kills the entrance
-     for the first paint. */
-  .fact-swap { animation: none !important; }
-  /* Overlays and toasts still need to arrive — suppressing the
-     animation outright would make them blink into place. Cut the
-     movement, keep an almost-instant fade. */
-  .animate-pop-in {
-    animation-duration: 0.01ms !important;
-  }
-  /* BrandFilm switches to its storyboard under this preference (see
-     the component), so what is left to do here is make the five still
-     drawings render at their resting state rather than at frame zero
-     — most of them start at opacity 0 or scale 0.2, which would leave
-     a storyboard of empty panels. Every animated class in the film is
-     listed; the ones whose resting state is mid-flight (the departing
-     lid, the box crossing between two hands) are pinned by the block
-     below instead, to where the eye expects them. */
-  .film-mote, .film-line, .film-iridescent,
-  .film-bloom, .film-land, .film-flame, .film-twinkle,
-  .film-orbit-1, .film-orbit-2, .film-orbit-3,
-  .film-item-1, .film-item-2, .film-item-3, .film-item-4, .film-item-5,
-  .film-turn,
-  .film-lid, .film-ribbon, .film-bow, .film-tag, .film-foil, .film-sheen-band,
-  .film-route, .film-hand-give, .film-hand-take, .film-pass,
-  .film-lid-off, .film-burst, .film-rays, .film-lift {
-    animation: none !important;
-    opacity: 1;
-    transform: none;
-  }
-  /* Drawn strokes have to be completed, not left at their start offset. */
-  .film-ribbon,
-  .film-route { stroke-dashoffset: 0; }
-  /* Both light passes are highlights over surfaces that already read —
-     frozen in place the satin band is a scratch and the prismatic sweep is
-     a smear across a third of the card, so neither shows. */
-  .film-sheen-band,
-  .film-iridescent { opacity: 0; }
-  /* Grain is texture, not motion, and the vignette is a gradient — both
-     stay. Removing them would leave the storyboard flatter than the film
-     it stands in for, which is the opposite of the point. */
-
-  /* The deck does not auto-advance under this preference, so the
-     tick has nothing to count down. Show it filled rather than
-     animating to nowhere. */
-  .deck-tick {
-    animation: none !important;
-    width: 100% !important;
-  }
-  .reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-  /* Product photos: keep the fade (it prevents a flash of empty
-     tile) but drop every zoom. `.product-photo` still needs its
-     opacity transition, so this cannot be `transition: none`. */
-  .product-photo {
-    transform: none !important;
-    transition-property: opacity !important;
-  }
-}
-
-/* ── The photo deck ──────────────────────────────────────────────────
-   A celebration tile holds several real photographs and deals them, one
-   at a time, like a small stack of prints.
-
-   Why a deal and not a crossfade. A crossfade between two photographs of
-   the same subject is nearly invisible — the eye reads it as the image
-   sharpening rather than as a change — so the tile spends its motion
-   budget and tells you nothing. A card leaving the top of a stack is a
-   physical event: something moved, something was underneath it, and there
-   is more here than one picture. That is the whole message the motion has
-   to carry.
-
-   Two layers only are ever mounted (outgoing and incoming); the rest of
-   the deck is a pair of static offset edges behind them, so a grid of
-   fifteen tiles animates four elements each rather than sixty.
-
-   The deal moves the OUTER layer and the drift scales the INNER image, so
-   the two never fight over one transform. */
-@layer utilities {
-  @keyframes deck-deal-in {
-    0%   { opacity: 0; transform: translate3d(7%, 9%, 0) rotate(4deg)  scale(0.90); }
-    60%  { opacity: 1; }
-    100% { opacity: 1; transform: translate3d(0, 0, 0)   rotate(0deg)  scale(1); }
-  }
-  @keyframes deck-deal-out {
-    0%   { opacity: 1; transform: translate3d(0, 0, 0)     rotate(0deg)    scale(1); }
-    100% { opacity: 0; transform: translate3d(-10%, -8%, 0) rotate(-5deg)  scale(1.08); }
-  }
-  /* Slow push-in while a card rests, so the tile is never completely
-     still between deals. */
-  @keyframes deck-drift {
-    from { transform: scale(1.02); }
-    to   { transform: scale(1.13); }
-  }
-
-  .deck-layer {
-    position: absolute;
-    inset: 0;
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-  }
-  .deck-in  { animation: deck-deal-in  0.72s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .deck-out { animation: deck-deal-out 0.72s cubic-bezier(0.55, 0, 0.55, 1) both; }
-  .deck-drift {
-    animation: deck-drift 6s ease-out both;
-    transform-origin: 55% 45%;
-  }
-
-  /* The edges of the cards still in the stack. Static — they are scenery,
-     and animating them would turn one moving object into three. */
-  .deck-edge {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .deck-in, .deck-out, .deck-drift { animation: none !important; }
-    .deck-out { opacity: 0 !important; }
-    .deck-in  { opacity: 1 !important; transform: none !important; }
-  }
-}
-
-/* Sambramo public-site motion: restrained, premium, and disabled for reduced-motion users. */
-@keyframes sambramo-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -8px, 0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SAMBRAMO PUBLIC SITE — MOBILE FIT
-   The public landing page is mobile-first. These rules deliberately
-   tighten the composition below 768px instead of shrinking desktop
-   components until they become cramped.
-   ───────────────────────────────────────────────────────────── */
+/* -------------------------------------------------------------------------
+   SAMBRAMO PUBLIC EXPERIENCE
+   Responsive-first rules for the public launch surface. These are scoped so
+   the existing customer app is not affected.
+   ------------------------------------------------------------------------- */
 .sambramo-site {
+  --sam-bg: #160329;
+  --sam-purple: #2A085C;
+  --sam-amethyst: #9b59c9;
+  --sam-lavender: #d8b9ee;
+  --sam-gold: #F4C85D;
+  --sam-ink: #211329;
+  --sam-muted: #71647a;
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  background: #fff;
 }
-
 .sambramo-site *,
 .sambramo-site *::before,
-.sambramo-site *::after {
-  box-sizing: border-box;
+.sambramo-site *::after { box-sizing: border-box; }
+.sambramo-site img { max-width: 100%; }
+.sambramo-site button,
+.sambramo-site a { -webkit-tap-highlight-color: transparent; }
+.sambramo-site :where(a, button, input):focus-visible {
+  outline: 3px solid rgba(244,200,93,.9);
+  outline-offset: 3px;
 }
+.sambramo-site input,
+.sambramo-site button { font: inherit; }
 
-.sambramo-site img {
-  max-width: 100%;
+.sambramo-reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity .65s cubic-bezier(.22,1,.36,1),
+              transform .65s cubic-bezier(.22,1,.36,1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.sambramo-reveal.is-visible { opacity: 1; transform: none; }
+
+@keyframes sambramo-enter {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); filter: blur(7px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+.sambramo-enter { animation: sambramo-enter .8s cubic-bezier(.22,1,.36,1) both; }
+
+@keyframes sambramo-float {
+  0%,100% { transform: translate3d(0,0,0); }
+  50% { transform: translate3d(0,-9px,0); }
 }
 
 @media (max-width: 767px) {
-  .sambramo-site {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .sambramo-hero {
-    min-height: 0 !important;
-  }
-
-  .sambramo-hero-inner {
-    min-height: 0 !important;
-    padding: 56px 16px 48px !important;
-    align-items: flex-start !important;
-  }
-
-  .sambramo-hero-copy {
-    width: 100%;
-    max-width: 100%;
-    padding-top: 4px;
-  }
-
-  .sambramo-hero h1 {
-    max-width: 100%;
-    font-size: clamp(36px, 10.5vw, 48px) !important;
-    line-height: .99 !important;
-    letter-spacing: -.045em !important;
-    text-wrap: balance;
-  }
-
-  .sambramo-hero h1 span {
-    display: block;
-  }
-
-  .sambramo-hero .sambramo-hero-copy > .mt-5 {
-    margin-top: 18px !important;
-  }
-
-  .sambramo-hero-copy p {
-    max-width: 100%;
-  }
-
-  .sambramo-hero-actions {
-    width: 100%;
-    margin-top: 22px !important;
-  }
-
-  .sambramo-hero-actions > * {
-    width: 100%;
-    min-height: 50px;
-  }
-
-  .sambramo-feature-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .sambramo-feature-grid > div {
-    min-width: 0;
-    min-height: 82px;
-    padding: 14px 12px !important;
-    gap: 9px;
-  }
-
-  .sambramo-feature-grid svg {
-    width: 21px;
-    height: 21px;
-  }
-
-  .sambramo-feature-grid p {
-    overflow-wrap: anywhere;
-  }
-
-  .sambramo-search {
-    padding: 42px 16px !important;
-  }
-
-  .sambramo-search > div {
-    max-width: 100%;
-  }
-
-  .sambramo-search input {
-    font-size: 14px;
-  }
-
-  .sambramo-services {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-services > div {
-    min-width: 0;
-  }
-
-  .sambramo-services-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px !important;
-  }
-
-  .sambramo-services-grid > a {
-    min-width: 0;
-    border-radius: 17px;
-  }
-
-  .sambramo-services-grid > a > div:last-child {
-    min-height: 76px;
-    padding: 12px !important;
-  }
-
-  .sambramo-services-grid h3 {
-    font-size: 11px !important;
-    line-height: 1.35 !important;
-    overflow-wrap: anywhere;
-  }
-
-  .sambramo-services-grid p {
-    font-size: 9px !important;
-    line-height: 1.45 !important;
-  }
-
-  .sambramo-ecosystem {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-ecosystem > div {
-    min-width: 0;
-  }
-
-  .sambramo-ecosystem-visual {
-    min-height: 430px !important;
-    padding: 18px !important;
-  }
-
-  .sambramo-ecosystem-visual > .absolute {
-    width: 104px !important;
-    height: 104px !important;
-    font-size: 10px;
-  }
-
-  .sambramo-ecosystem-visual .grid {
-    position: relative;
-    z-index: 2;
-    height: auto !important;
-    min-height: 100% !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px !important;
-    padding-top: 145px;
-  }
-
-  .sambramo-ecosystem-visual .grid > .absolute {
-    position: static !important;
-    inset: auto !important;
-    transform: none !important;
-    width: auto !important;
-    min-width: 0;
-    padding: 10px 9px !important;
-    border-radius: 14px;
-  }
-
-  .sambramo-ecosystem-visual .grid > .absolute p:first-child {
-    font-size: 9px;
-  }
-
-  .sambramo-ecosystem-visual .grid > .absolute p:last-child {
-    font-size: 7px;
-    line-height: 1.35;
-  }
-
-  .sambramo-journey {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-journey > div {
-    min-width: 0;
-  }
-
-  .sambramo-journey .grid {
-    min-width: 0;
-  }
-
-  .sambramo-journey button {
-    min-width: 0;
-  }
-
-  .sambramo-journey button span:last-child {
-    overflow-wrap: anywhere;
-  }
-
-  .sambramo-journey .rounded-[30px] {
-    padding: 22px !important;
-    border-radius: 22px !important;
-  }
-
-  .sambramo-journey .rounded-[26px] {
-    padding: 10px !important;
-    border-radius: 20px !important;
-  }
-
-  .sambramo-partners {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-partners > div {
-    min-width: 0;
-  }
-
-  .sambramo-partners .rounded-[32px] {
-    border-radius: 22px !important;
-  }
-
-  .sambramo-partners .rounded-[26px] {
-    padding: 14px !important;
-    border-radius: 19px !important;
-  }
-
-  .sambramo-partners .grid {
-    min-width: 0;
-  }
-
-  .sambramo-partners h2,
-  .sambramo-ecosystem h2,
-  .sambramo-journey h2 {
-    text-wrap: balance;
-  }
-
-  .sambramo-occasions {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-occasions > div {
-    min-width: 0;
-  }
-
-  .sambramo-occasions .flex.snap-x > div {
-    min-width: min(78vw, 285px);
-  }
-
-  .sambramo-about {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-about > div {
-    min-width: 0;
-  }
-
-  .sambramo-about .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .sambramo-about .grid > div {
-    min-width: 0;
-    padding: 22px 12px !important;
-  }
-
-  .sambramo-contact {
-    padding: 38px 16px !important;
-  }
-
-  .sambramo-contact > div {
-    border-radius: 22px !important;
-    padding: 22px !important;
-  }
-
-  .sambramo-contact form {
-    width: 100%;
-  }
-
-  .sambramo-contact input,
-  .sambramo-contact button {
-    width: 100%;
-  }
-
-  .sambramo-faq {
-    padding: 46px 16px !important;
-  }
-
-  .sambramo-faq > div {
-    min-width: 0;
-  }
-
-  .sambramo-faq button {
-    min-height: 58px;
-    padding: 14px 15px !important;
-  }
-
-  .sambramo-faq button span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .sambramo-mobile-cta {
-    bottom: max(10px, env(safe-area-inset-bottom)) !important;
-    left: 10px !important;
-    right: 10px !important;
-  }
-
-  .sambramo-mobile-cta > div {
-    padding: 6px !important;
-  }
-
-  .sambramo-mobile-cta a,
-  .sambramo-mobile-cta button {
-    min-height: 46px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* No decorative brand/logo image is used on the public site. */
-  .sambramo-site .sambramo-brand-image,
-  .sambramo-site .sambramo-logo {
-    display: none !important;
-  }
+  .sambramo-site { width: 100vw; max-width: 100vw; overflow-x: clip; }
+  .sambramo-site main,
+  .sambramo-site footer,
+  .sambramo-site section { max-width: 100%; }
+  .sambramo-site h1,
+  .sambramo-site h2,
+  .sambramo-site h3,
+  .sambramo-site p { overflow-wrap: anywhere; }
+  .sambramo-site .sambramo-reveal { transform: translate3d(0,16px,0); }
+  .sambramo-site .sambramo-reveal.is-visible { transform: none; }
+  .sambramo-site [class*="min-h-[calc"] { min-height: auto !important; }
+  .sambramo-site .snap-x {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .sambramo-site .snap-x::-webkit-scrollbar { display: none; }
+  .sambramo-site section[id] { scroll-margin-top: 76px; }
 }
 
-@media (max-width: 380px) {
-  .sambramo-hero-inner {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-    padding-top: 48px !important;
-  }
+@media (max-width: 430px) {
+  .sambramo-site .sambramo-enter { animation-duration: .65s; }
+  .sambramo-site input { font-size: 16px; } /* prevents iOS zoom */
+}
 
-  .sambramo-hero h1 {
-    font-size: 35px !important;
-  }
+@media (max-width: 360px) {
+  .sambramo-site .grid-cols-2 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .sambramo-site .sambramo-site-tight { padding-left: 14px; padding-right: 14px; }
+}
 
-  .sambramo-hero-copy .font-serif {
-    font-size: 20px !important;
+@media (prefers-reduced-motion: reduce) {
+  .sambramo-site *,
+  .sambramo-site *::before,
+  .sambramo-site *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
   }
-
-  .sambramo-feature-grid > div {
-    padding-left: 9px !important;
-    padding-right: 9px !important;
-  }
-
-  .sambramo-feature-grid p:first-child {
-    font-size: 10px !important;
-  }
-
-  .sambramo-feature-grid p:last-child {
-    font-size: 8px !important;
-  }
-
-  .sambramo-services-grid {
-    gap: 8px !important;
-  }
-
-  .sambramo-services-grid > a > div:last-child {
-    padding: 10px !important;
-  }
-
-  .sambramo-ecosystem-visual {
-    min-height: 405px !important;
-  }
-
-  .sambramo-ecosystem-visual > .absolute {
-    width: 92px !important;
-    height: 92px !important;
-  }
-
-  .sambramo-ecosystem-visual .grid {
-    padding-top: 126px;
-  }
-
-  .sambramo-ecosystem-visual .grid > .absolute {
-    padding: 8px !important;
-  }
+  .sambramo-site .sambramo-reveal { opacity: 1; transform: none; }
 }
