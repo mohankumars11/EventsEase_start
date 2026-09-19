@@ -1,0 +1,165 @@
+{
+  "name": "Sambramo",
+  "tagline": "Celebrations, arranged. Nothing left to chance.",
+  "taglineParts": [
+    "Celebrations, arranged",
+    "Nothing left to chance"
+  ],
+  "signature": "Your Moment. Our Magic.",
+  "signatureParts": [
+    "Your Moment.",
+    "Our Magic."
+  ],
+  "categoryLine": "Event booking, end to end",
+  "emotion": "Every emotion, valued",
+  "descriptor": "Sambramo is a human-assisted concierge celebration service in Bengaluru. Event booking, end to end.",
+  "supportPhone": "+91 97392 76592",
+  "supportPhoneDial": "+919739276592",
+  "whatsapp": "919739276592",
+  "email": "hello@sambramo.com",
+  "emailSupport": "support@sambramo.com",
+  "emailPartners": "partners@sambramo.com",
+  "emailGrievance": "grievance@sambramo.com",
+  "hours": "Monday to Saturday, 9am to 8pm",
+  "cta": {
+    "planAction": "Plan My Celebration ✨",
+    "planNav": "Plan a celebration",
+    "catalog": "Browse services & packages",
+    "catalogNav": "Services & packages"
+  },
+  "serviceCategories": [
+    {
+      "category": "Venue",
+      "emoji": "🏛️",
+      "services": [
+        "Venue",
+        "Party hall",
+        "Marriage hall",
+        "Restaurant",
+        "Resort",
+        "Home setup"
+      ]
+    },
+    {
+      "category": "Decoration",
+      "emoji": "🎨",
+      "services": [
+        "Birthday decoration",
+        "Baby shower decoration",
+        "Balloon decoration",
+        "Floral decoration",
+        "Stage",
+        "Backdrop",
+        "Theme decoration"
+      ]
+    },
+    {
+      "category": "Food",
+      "emoji": "🍽️",
+      "services": [
+        "Catering",
+        "Buffet",
+        "Snacks",
+        "Traditional food",
+        "Live counters",
+        "Cake",
+        "Sweets"
+      ]
+    },
+    {
+      "category": "Entertainment",
+      "emoji": "🎵",
+      "services": [
+        "DJ",
+        "Music",
+        "Anchor",
+        "Games",
+        "Magic show",
+        "Kids entertainment",
+        "Live music"
+      ]
+    },
+    {
+      "category": "Photography",
+      "emoji": "📸",
+      "services": [
+        "Photography",
+        "Videography",
+        "Pre-event shoot",
+        "Drone"
+      ]
+    },
+    {
+      "category": "Personal",
+      "emoji": "💄",
+      "services": [
+        "Makeup",
+        "Mehendi",
+        "Hair styling",
+        "Priest",
+        "Ritual services"
+      ]
+    },
+    {
+      "category": "Rentals",
+      "emoji": "🪑",
+      "services": [
+        "Chairs",
+        "Tables",
+        "Lighting",
+        "Sound",
+        "Pandal",
+        "Crockery"
+      ]
+    },
+    {
+      "category": "Other",
+      "emoji": "🎁",
+      "services": [
+        "Invitations",
+        "Return gifts",
+        "Transportation",
+        "Cleaning",
+        "Security",
+        "Custom requirement"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "key": "submitted",
+      "label": "You told us your dream",
+      "icon": "✨"
+    },
+    {
+      "key": "reviewing",
+      "label": "Sambramo is reviewing",
+      "icon": "🔍"
+    },
+    {
+      "key": "sourcing",
+      "label": "Finding the right people",
+      "icon": "🤝"
+    },
+    {
+      "key": "proposal",
+      "label": "Your plan is being prepared",
+      "icon": "📋"
+    },
+    {
+      "key": "approved",
+      "label": "Celebration confirmed",
+      "icon": "✅"
+    },
+    {
+      "key": "event_day",
+      "label": "Event day",
+      "icon": "🎉"
+    },
+    {
+      "key": "memories",
+      "label": "Memories made",
+      "icon": "💫"
+    }
+  ]
+}

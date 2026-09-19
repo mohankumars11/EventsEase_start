@@ -1,0 +1,701 @@
+[
+  {
+    "slug": "catering-and-food",
+    "name": "Catering & Food",
+    "services": [
+      "catering",
+      "cooks",
+      "welcome_drinks",
+      "ice_cream",
+      "sweets",
+      "live_counters",
+      "menu"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 50,
+    "priceMax": 15000
+  },
+  {
+    "slug": "photography",
+    "name": "Photography",
+    "services": [
+      "photography",
+      "photobooth"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 4000,
+    "priceMax": 150000
+  },
+  {
+    "slug": "videography",
+    "name": "Videography",
+    "services": [
+      "videography",
+      "livestream",
+      "drone"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 9000,
+    "priceMax": 200000
+  },
+  {
+    "slug": "decoration-and-floral",
+    "name": "Decoration & Floral",
+    "services": [
+      "decor",
+      "floral",
+      "stage",
+      "mandap",
+      "vehicle_decor",
+      "memory_wall",
+      "balloon_arch",
+      "candle_setup",
+      "inauguration"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell",
+      "vehicle_pooja"
+    ],
+    "priceMin": 1200,
+    "priceMax": 300000
+  },
+  {
+    "slug": "venue",
+    "name": "Venue",
+    "services": [
+      "venue"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 5000,
+    "priceMax": 200000
+  },
+  {
+    "slug": "dj-and-music",
+    "name": "DJ & Music",
+    "services": [
+      "dj"
+    ],
+    "occasions": [
+      "birthday",
+      "anniversary",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "graduation",
+      "corporate_event",
+      "reception",
+      "shop_opening",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 8000,
+    "priceMax": 100000
+  },
+  {
+    "slug": "live-entertainment",
+    "name": "Live Entertainment",
+    "services": [
+      "live_music",
+      "drum",
+      "entertainment",
+      "choreography",
+      "kids_play",
+      "folk",
+      "nadaswaram",
+      "bhajan",
+      "baraat"
+    ],
+    "occasions": [
+      "naming_ceremony",
+      "anniversary",
+      "get_together",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "haldi",
+      "farewell",
+      "housewarming",
+      "vehicle_pooja",
+      "shop_opening",
+      "bhoomi_pooja",
+      "birthday",
+      "first_birthday",
+      "mundan",
+      "annaprashana",
+      "aksharabhyasa"
+    ],
+    "priceMin": 3000,
+    "priceMax": 150000
+  },
+  {
+    "slug": "bridal-makeup-and-hair",
+    "name": "Bridal Makeup & Hair",
+    "services": [
+      "makeup",
+      "bridal_wear"
+    ],
+    "occasions": [
+      "anniversary",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "half_saree",
+      "reception",
+      "haldi"
+    ],
+    "priceMin": 3000,
+    "priceMax": 80000
+  },
+  {
+    "slug": "wedding-planning",
+    "name": "Wedding Planning",
+    "services": [],
+    "occasions": [],
+    "priceMin": 0,
+    "priceMax": 0
+  },
+  {
+    "slug": "tent-and-furniture",
+    "name": "Tent & Furniture",
+    "services": [
+      "dining",
+      "tent",
+      "cleanup"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell",
+      "shop_opening",
+      "vehicle_pooja"
+    ],
+    "priceMin": 50,
+    "priceMax": 100000
+  },
+  {
+    "slug": "invitation-and-printing",
+    "name": "Invitation & Printing",
+    "services": [
+      "invitations",
+      "signage"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "housewarming",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell",
+      "anniversary",
+      "sangeet"
+    ],
+    "priceMin": 500,
+    "priceMax": 9500
+  },
+  {
+    "slug": "transportation",
+    "name": "Transportation",
+    "services": [
+      "transport",
+      "wedding_car",
+      "vehicle_care"
+    ],
+    "occasions": [
+      "anniversary",
+      "wedding",
+      "corporate_event",
+      "mundan",
+      "reception",
+      "bhoomi_pooja",
+      "farewell",
+      "vehicle_pooja"
+    ],
+    "priceMin": 2500,
+    "priceMax": 35000
+  },
+  {
+    "slug": "event-lighting",
+    "name": "Event Lighting",
+    "services": [
+      "lighting",
+      "fireworks"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "shop_opening",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 5000,
+    "priceMax": 120000
+  },
+  {
+    "slug": "cake-and-desserts",
+    "name": "Cake & Desserts",
+    "services": [
+      "cake"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "seemantham",
+      "retirement",
+      "graduation",
+      "vehicle_pooja",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "aksharabhyasa",
+      "farewell"
+    ],
+    "priceMin": 800,
+    "priceMax": 15000
+  },
+  {
+    "slug": "mehendi-artist",
+    "name": "Mehendi Artist",
+    "services": [
+      "mehendi"
+    ],
+    "occasions": [
+      "baby_shower",
+      "wedding",
+      "sangeet",
+      "seemantham",
+      "half_saree",
+      "haldi"
+    ],
+    "priceMin": 2000,
+    "priceMax": 20000
+  },
+  {
+    "slug": "anchor-and-mc",
+    "name": "Anchor & MC",
+    "services": [
+      "emcee"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "anniversary",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "shop_opening",
+      "farewell"
+    ],
+    "priceMin": 5000,
+    "priceMax": 30000
+  },
+  {
+    "slug": "sound-and-av",
+    "name": "Sound & AV",
+    "services": [
+      "av_setup"
+    ],
+    "occasions": [
+      "retirement",
+      "corporate_event",
+      "shop_opening",
+      "farewell"
+    ],
+    "priceMin": 5000,
+    "priceMax": 40000
+  },
+  {
+    "slug": "valet-parking",
+    "name": "Valet Parking",
+    "services": [
+      "valet"
+    ],
+    "occasions": [
+      "anniversary",
+      "get_together",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "retirement",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 1800,
+    "priceMax": 25000
+  },
+  {
+    "slug": "security-services",
+    "name": "Security Services",
+    "services": [
+      "bouncers"
+    ],
+    "occasions": [
+      "birthday",
+      "get_together",
+      "wedding",
+      "corporate_event",
+      "reception",
+      "shop_opening"
+    ],
+    "priceMin": 1500,
+    "priceMax": 3000
+  },
+  {
+    "slug": "bar-and-beverages",
+    "name": "Bar & Beverages",
+    "services": [
+      "bar"
+    ],
+    "occasions": [
+      "birthday",
+      "anniversary",
+      "get_together",
+      "wedding",
+      "engagement",
+      "sangeet",
+      "retirement",
+      "graduation",
+      "corporate_event",
+      "reception",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 220,
+    "priceMax": 28000
+  },
+  {
+    "slug": "guest-services",
+    "name": "Guest Services",
+    "services": [
+      "hospitality",
+      "nanny"
+    ],
+    "occasions": [
+      "baby_shower",
+      "naming_ceremony",
+      "housewarming",
+      "wedding",
+      "engagement",
+      "thread_ceremony",
+      "seemantham",
+      "retirement",
+      "corporate_event",
+      "half_saree",
+      "mundan",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "haldi",
+      "farewell",
+      "birthday",
+      "first_birthday",
+      "annaprashana"
+    ],
+    "priceMin": 2200,
+    "priceMax": 18000
+  },
+  {
+    "slug": "power-and-cooling",
+    "name": "Power & Cooling",
+    "services": [
+      "power",
+      "cooling"
+    ],
+    "occasions": [
+      "birthday",
+      "naming_ceremony",
+      "anniversary",
+      "housewarming",
+      "get_together",
+      "first_birthday",
+      "wedding",
+      "sangeet",
+      "thread_ceremony",
+      "corporate_event",
+      "half_saree",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "haldi",
+      "farewell"
+    ],
+    "priceMin": 900,
+    "priceMax": 25000
+  },
+  {
+    "slug": "safety-and-facilities",
+    "name": "Safety & Facilities",
+    "services": [
+      "washrooms",
+      "medical"
+    ],
+    "occasions": [
+      "wedding",
+      "corporate_event",
+      "reception",
+      "bhoomi_pooja",
+      "haldi"
+    ],
+    "priceMin": 4500,
+    "priceMax": 35000
+  },
+  {
+    "slug": "priest-and-rituals",
+    "name": "Priest & Rituals",
+    "services": [
+      "priest",
+      "pooja"
+    ],
+    "occasions": [
+      "naming_ceremony",
+      "housewarming",
+      "wedding",
+      "thread_ceremony",
+      "seemantham",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa"
+    ],
+    "priceMin": 2500,
+    "priceMax": 15000
+  },
+  {
+    "slug": "gifts-and-favours",
+    "name": "Gifts & Favours",
+    "services": [
+      "return_gifts",
+      "gifting"
+    ],
+    "occasions": [
+      "birthday",
+      "baby_shower",
+      "naming_ceremony",
+      "housewarming",
+      "first_birthday",
+      "wedding",
+      "engagement",
+      "thread_ceremony",
+      "seemantham",
+      "graduation",
+      "vehicle_pooja",
+      "half_saree",
+      "mundan",
+      "annaprashana",
+      "reception",
+      "shop_opening",
+      "bhoomi_pooja",
+      "aksharabhyasa",
+      "haldi",
+      "farewell",
+      "retirement",
+      "corporate_event"
+    ],
+    "priceMin": 50,
+    "priceMax": 3000
+  },
+  {
+    "slug": "trousseau-and-gift-packing",
+    "name": "Trousseau & Gift Packing",
+    "services": [],
+    "occasions": [],
+    "priceMin": 0,
+    "priceMax": 0
+  }
+]

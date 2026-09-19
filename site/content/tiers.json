@@ -1,0 +1,405 @@
+{
+  "lockAmount": 1000,
+  "platformFeeRate": 0.02,
+  "bundleDiscountRate": 0.1,
+  "tiers": [
+    {
+      "id": "close_circle",
+      "name": "Close Circle",
+      "localName": "Aptaru",
+      "emoji": "🤍",
+      "tagline": "The people who would have come anyway",
+      "description": "Home, terrace or a small hall. Everything cooked fresh, set up before your guests arrive, cleared after they leave.",
+      "guests": {
+        "min": 10,
+        "max": 30,
+        "typical": 25
+      },
+      "coordinationFee": 1500,
+      "defaultDecor": "home_touch",
+      "includedServices": [
+        "dining",
+        "cleanup"
+      ],
+      "coordination": "A coordinator on WhatsApp, from booking to the day itself",
+      "onSiteManager": false,
+      "menuAllowance": {
+        "welcome": 1,
+        "starters": 2,
+        "mains": 2,
+        "curries": 2,
+        "accompaniments": 3,
+        "sweets": 1,
+        "counters": 0
+      },
+      "highlights": [
+        "Cooked and served at your home or hall",
+        "Simple, well-finished decor at the entrance and the main table",
+        "One coordinator you can message any time"
+      ],
+      "accent": "border-emerald-200 bg-emerald-50",
+      "badge": "bg-emerald-100 text-emerald-700",
+      "surface": "bg-gradient-to-br from-emerald-50 via-white to-white border-emerald-200/80",
+      "spine": "bg-gradient-to-b from-emerald-400 to-teal-500",
+      "ink": "text-emerald-700",
+      "slug": "close-circle"
+    },
+    {
+      "id": "house_full",
+      "name": "House Full",
+      "localName": "Manetumba",
+      "emoji": "💛",
+      "tagline": "Everyone who matters, and the house is full",
+      "description": "The clubhouse or a small hall, a proper buffet, and a setup that photographs well without taking over the room.",
+      "guests": {
+        "min": 30,
+        "max": 75,
+        "typical": 60
+      },
+      "coordinationFee": 3500,
+      "defaultDecor": "classic",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake"
+      ],
+      "coordination": "A coordinator on WhatsApp, plus a call the evening before",
+      "onSiteManager": false,
+      "menuAllowance": {
+        "welcome": 1,
+        "starters": 3,
+        "mains": 3,
+        "curries": 3,
+        "accompaniments": 4,
+        "sweets": 2,
+        "counters": 0
+      },
+      "highlights": [
+        "Buffet counters with serving staff",
+        "Entrance, stage backdrop and table styling",
+        "Crockery, seating and clearing included"
+      ],
+      "accent": "border-amber-200 bg-amber-50",
+      "badge": "bg-amber-100 text-amber-700",
+      "surface": "bg-gradient-to-br from-amber-50 via-white to-white border-amber-200/80",
+      "spine": "bg-gradient-to-b from-amber-400 to-orange-500",
+      "ink": "text-amber-700",
+      "slug": "house-full"
+    },
+    {
+      "id": "full_celebration",
+      "name": "The Full Celebration",
+      "localName": "Sambrama",
+      "emoji": "🧡",
+      "tagline": "The one most families book",
+      "description": "A hall, a real stage, a menu with choices on it, and photographs you will actually print. The middle of the ladder, and the middle for a reason.",
+      "guests": {
+        "min": 75,
+        "max": 150,
+        "typical": 120
+      },
+      "coordinationFee": 7500,
+      "defaultDecor": "signature",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "dj"
+      ],
+      "popular": true,
+      "coordination": "A named coordinator, venue visit included, reachable on call",
+      "onSiteManager": false,
+      "menuAllowance": {
+        "welcome": 2,
+        "starters": 4,
+        "mains": 3,
+        "curries": 4,
+        "accompaniments": 5,
+        "sweets": 2,
+        "counters": 1
+      },
+      "highlights": [
+        "Styled stage, entrance arch and guest tables",
+        "Live counter of your choice",
+        "Photography through the main hours",
+        "Venue visit before the day"
+      ],
+      "accent": "border-saffron-300 bg-saffron-50 ring-2 ring-saffron-200",
+      "badge": "bg-saffron-500 text-white",
+      "surface": "bg-gradient-to-br from-saffron-100 via-amber-50 to-white border-saffron-300",
+      "spine": "bg-gradient-to-b from-saffron-500 to-amber-600",
+      "ink": "text-amber-700",
+      "slug": "full-celebration"
+    },
+    {
+      "id": "special_day",
+      "name": "Special Day",
+      "localName": "Vishesha",
+      "emoji": "❤️",
+      "tagline": "A day the whole family travels for",
+      "description": "Full hall, full menu, someone from Sambramo standing in the room all day so that nobody in your family has to be the one chasing the decorator.",
+      "guests": {
+        "min": 150,
+        "max": 300,
+        "typical": 220
+      },
+      "coordinationFee": 15000,
+      "defaultDecor": "signature",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "videography",
+        "dj"
+      ],
+      "coordination": "A named coordinator plus an on-site manager for the full day",
+      "onSiteManager": true,
+      "menuAllowance": {
+        "welcome": 2,
+        "starters": 5,
+        "mains": 4,
+        "curries": 5,
+        "accompaniments": 6,
+        "sweets": 3,
+        "counters": 2
+      },
+      "highlights": [
+        "On-site manager from setup to clearing",
+        "Two live counters",
+        "Photography and video coverage",
+        "Guest seating, lighting and sound"
+      ],
+      "accent": "border-rose-200 bg-rose-50",
+      "badge": "bg-rose-100 text-rose-700",
+      "surface": "bg-gradient-to-br from-rose-50 via-white to-white border-rose-200/80",
+      "spine": "bg-gradient-to-b from-rose-400 to-pink-500",
+      "ink": "text-rose-700",
+      "slug": "special-day"
+    },
+    {
+      "id": "grand",
+      "name": "Grand",
+      "localName": "Vaibhava",
+      "emoji": "💜",
+      "tagline": "The one people talk about afterwards",
+      "description": "A production. Staged lighting, a designed backdrop, multiple counters, and a crew that arrives the night before.",
+      "guests": {
+        "min": 300,
+        "max": 600,
+        "typical": 450
+      },
+      "coordinationFee": 30000,
+      "defaultDecor": "grand_stage",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "videography",
+        "dj",
+        "emcee",
+        "transport",
+        "bouncers"
+      ],
+      "coordination": "A coordinator, an on-site manager and a setup crew from the night before",
+      "onSiteManager": true,
+      "menuAllowance": {
+        "welcome": 3,
+        "starters": 6,
+        "mains": 5,
+        "curries": 6,
+        "accompaniments": 8,
+        "sweets": 4,
+        "counters": 3
+      },
+      "highlights": [
+        "Designed stage with lighting and truss",
+        "Three live counters and a dessert station",
+        "Full photo and cinematic video team",
+        "Guest transport and parking coordination"
+      ],
+      "accent": "border-purple-200 bg-purple-50",
+      "badge": "bg-purple-100 text-purple-700",
+      "surface": "bg-gradient-to-br from-plum-50 via-white to-white border-plum-200/80",
+      "spine": "bg-gradient-to-b from-plum-500 to-berry-500",
+      "ink": "text-plum-700",
+      "slug": "grand"
+    },
+    {
+      "id": "royal_mysuru",
+      "name": "Arasu Vaibhava",
+      "localName": null,
+      "emoji": "👑",
+      "tagline": "Palace scale, done properly",
+      "description": "The full traditional spread on banana leaf, a marquee, and a team large enough that six hundred guests are seated and served without a queue forming.",
+      "guests": {
+        "min": 600,
+        "max": 1200,
+        "typical": 800
+      },
+      "coordinationFee": 60000,
+      "defaultDecor": "royal_marquee",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "videography",
+        "dj",
+        "emcee",
+        "transport",
+        "bouncers",
+        "live_music",
+        "makeup"
+      ],
+      "coordination": "A dedicated team: lead coordinator, floor managers, and a crew on site for three days",
+      "onSiteManager": true,
+      "menuAllowance": {
+        "welcome": 4,
+        "starters": 8,
+        "mains": 6,
+        "curries": 8,
+        "accompaniments": 10,
+        "sweets": 5,
+        "counters": 4
+      },
+      "highlights": [
+        "Marquee, stage and full floral installation",
+        "Banana-leaf service with a serving team per section",
+        "Four or more live counters",
+        "Multi-camera video, drone and same-day edit",
+        "Guest hospitality desk and transport"
+      ],
+      "accent": "border-red-200 bg-gradient-to-br from-red-50 to-amber-50",
+      "badge": "bg-gradient-to-r from-red-500 to-amber-500 text-white",
+      "surface": "bg-gradient-to-br from-red-50 via-amber-50/60 to-white border-red-200/80",
+      "spine": "bg-gradient-to-b from-red-500 to-amber-500",
+      "ink": "text-red-700",
+      "slug": "royal-scale"
+    },
+    {
+      "id": "maha_samavesha",
+      "name": "The Grand Assembly",
+      "localName": "Maha Samavesha",
+      "emoji": "🎪",
+      "tagline": "A whole community, seated and served",
+      "description": "Convention scale. Multiple serving lines running at once, a marquee big enough that nobody eats standing, and a crew sized so two thousand people are through dinner without a queue forming.",
+      "guests": {
+        "min": 1200,
+        "max": 2000,
+        "typical": 1600
+      },
+      "coordinationFee": 100000,
+      "defaultDecor": "royal_marquee",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "videography",
+        "dj",
+        "emcee",
+        "transport",
+        "bouncers",
+        "live_music",
+        "makeup"
+      ],
+      "coordination": "A lead coordinator, section managers and a standing crew on site for the full setup, event and teardown",
+      "onSiteManager": true,
+      "menuAllowance": {
+        "welcome": 5,
+        "starters": 9,
+        "mains": 7,
+        "curries": 9,
+        "accompaniments": 12,
+        "sweets": 6,
+        "counters": 5
+      },
+      "highlights": [
+        "Multiple parallel serving lines, so no queue forms",
+        "Marquee, stage and full floral installation",
+        "Five or more live counters",
+        "Crowd flow, parking and guest hospitality planned in advance",
+        "Multi-camera video with a same-day edit"
+      ],
+      "accent": "border-indigo-200 bg-gradient-to-br from-indigo-50 to-sky-50",
+      "badge": "bg-gradient-to-r from-indigo-500 to-sky-500 text-white",
+      "surface": "bg-gradient-to-br from-indigo-50 via-sky-50/60 to-white border-indigo-200/80",
+      "spine": "bg-gradient-to-b from-indigo-500 to-sky-500",
+      "ink": "text-indigo-700",
+      "slug": "maha-samavesha"
+    },
+    {
+      "id": "jana_sagara",
+      "name": "Sea of People",
+      "localName": "Jana Sagara",
+      "emoji": "🌊",
+      "tagline": "The scale where logistics is the event",
+      "description": "Past a certain size the food is the easy part. This is a planned operation: staggered seating, its own water and power, a medical point, and a control desk that knows where every one of your guests is meant to be.",
+      "guests": {
+        "min": 2000,
+        "max": 3500,
+        "typical": 2600
+      },
+      "coordinationFee": 160000,
+      "defaultDecor": "royal_marquee",
+      "includedServices": [
+        "dining",
+        "cleanup",
+        "cake",
+        "photography",
+        "videography",
+        "dj",
+        "emcee",
+        "transport",
+        "bouncers",
+        "live_music",
+        "makeup"
+      ],
+      "coordination": "A full operations team: event director, section leads, a control desk and crew across every shift",
+      "onSiteManager": true,
+      "menuAllowance": {
+        "welcome": 6,
+        "starters": 10,
+        "mains": 8,
+        "curries": 10,
+        "accompaniments": 14,
+        "sweets": 7,
+        "counters": 6
+      },
+      "highlights": [
+        "Staggered seating in batches, so nobody waits standing",
+        "Independent water, power backup and a medical point",
+        "Six or more live counters with dedicated replenishment",
+        "Parking, crowd marshals and a control desk on site",
+        "Full photo and video crew with drone coverage"
+      ],
+      "accent": "border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-50",
+      "badge": "bg-gradient-to-r from-teal-500 to-emerald-500 text-white",
+      "surface": "bg-gradient-to-br from-teal-50 via-cyan-50/60 to-white border-teal-200/80",
+      "spine": "bg-gradient-to-b from-teal-500 to-cyan-600",
+      "ink": "text-teal-700",
+      "slug": "jana-sagara"
+    }
+  ],
+  "bespoke": {
+    "id": "bespoke",
+    "name": "Beyond This",
+    "localName": "Nimma Kanasu",
+    "emoji": "✨",
+    "tagline": "More than 3,500 guests, or nothing on this page fits",
+    "description": "Multi-day weddings, corporate flagships, anything with its own logistics. We will not put an automatic number on this — a coordinator builds it with you and you see every line before you agree to any of it.",
+    "guests": {
+      "min": 3500,
+      "max": null
+    },
+    "accent": "border-plum-200 bg-plum-50",
+    "badge": "bg-plum-100 text-plum-700",
+    "surface": "bg-gradient-to-br from-plum-50 via-white to-white border-plum-200/80",
+    "spine": "bg-gradient-to-b from-plum-600 to-berry-600",
+    "ink": "text-plum-700",
+    "slug": "bespoke"
+  }
+}

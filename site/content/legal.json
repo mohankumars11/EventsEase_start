@@ -1,0 +1,115 @@
+{
+  "entity": {
+    "legalName": null,
+    "brandName": "Sambramo",
+    "cin": null,
+    "gstin": null,
+    "registeredAddress": null,
+    "customerCareEmail": null,
+    "customerCarePhone": null
+  },
+  "grievance": {
+    "officerName": null,
+    "email": null,
+    "phone": null,
+    "address": null,
+    "acknowledgeWithinHours": 48,
+    "resolveWithinDays": 30
+  },
+  "bookingTerms": {
+    "version": "2026-08-27",
+    "heading": "Before you pay",
+    "points": [
+      "Sambramo connects you with independent masters. They perform the service; we arrange it, hold the payment and stand behind it.",
+      "Your money is held until 24 hours after your event. The master is paid once it is done and you have had a chance to raise anything.",
+      "The price shown is what is charged. No fee, tax or charge is added later.",
+      "Where the setup is agreed on a call, the price covers the standard setup described. Anything beyond it is agreed with you before work starts.",
+      "Cancel before a master accepts and you get everything back. After that, part goes to the master — not to us — because they cleared their day.",
+      "Something wrong? Raise it within 24 hours and the payment stays held until it is settled."
+    ],
+    "confirm": "I have read and agree to the booking terms."
+  },
+  "tax": {
+    "tcsRate": 0.01,
+    "tdsRate": 0.01,
+    "tdsExemptionThresholdInr": 500000,
+    "gstOnCommissionRate": 0.18,
+    "note": "TCS and TDS are collected on the partner’s behalf and deposited with the authorities. They are not Sambramo’s income and are shown as separate lines on every earnings statement."
+  },
+  "darkPatterns": [
+    {
+      "id": "false_urgency",
+      "risk": "The 45-second offer countdown, and any \"3 masters left\" copy on the matching screen.",
+      "rule": "The countdown must be the real dispatch_offers.expires_at. A scarcity count must be a real COUNT(*), never a decorative number."
+    },
+    {
+      "id": "basket_sneaking",
+      "risk": "Adding a service the customer did not tap.",
+      "rule": "Nothing enters booking_lines without an explicit tap. No pre-ticked extras."
+    },
+    {
+      "id": "confirm_shaming",
+      "risk": "The cancellation sheet.",
+      "rule": "State the deduction and the reason. Never \"are you sure you want to disappoint them?\""
+    },
+    {
+      "id": "forced_action",
+      "risk": "Requiring signup to see a price.",
+      "rule": "The quote is visible before auth. Sign-in is asked at payment, as the shop already does."
+    },
+    {
+      "id": "subscription_trap",
+      "risk": "Partner subscription plans (vendor_subscriptions).",
+      "rule": "Cancelling must be as easy as signing up: in-app, no phone call."
+    },
+    {
+      "id": "interface_interference",
+      "risk": "Making \"Pay for 3 now\" visually dominant over \"keep looking\".",
+      "rule": "Equal visual weight. Partial fill is not a failure state and must not be styled as one."
+    },
+    {
+      "id": "bait_and_switch",
+      "risk": "The `discuss` services — advertising a price for \"standard setup\" and delivering less.",
+      "rule": "The standard setup must be specified concretely enough to be checked against. This is the highest-risk pattern in this product."
+    },
+    {
+      "id": "drip_pricing",
+      "risk": "Revealing the platform fee, GST or any charge only at checkout.",
+      "rule": "The number on the matching screen is the number charged. No line appears later."
+    },
+    {
+      "id": "disguised_advertisement",
+      "risk": "Promoted partners in match results.",
+      "rule": "If a partner ever pays for placement it must be labelled. Today match_partners() orders by distance and rating only — that is a promise."
+    },
+    {
+      "id": "nagging",
+      "risk": "Repeat push to finish a booking.",
+      "rule": "At most one reminder per abandoned basket."
+    },
+    {
+      "id": "trick_wording",
+      "risk": "Wording the cancellation deduction as a \"service adjustment\".",
+      "rule": "Call it what it is: money that goes to your master."
+    },
+    {
+      "id": "saas_billing",
+      "risk": "Not applicable — no recurring consumer billing.",
+      "rule": "Re-audit if a customer membership ships."
+    },
+    {
+      "id": "rogue_malware",
+      "risk": "Not applicable.",
+      "rule": "—"
+    }
+  ],
+  "complianceGaps": [
+    "Terms have not been reviewed by counsel",
+    "Registered legal name not set",
+    "GSTIN not set — required before collecting TCS",
+    "Registered address not published",
+    "No named Grievance Officer (CP e-Comm Rules r.4(5))",
+    "No grievance contact published"
+  ],
+  "launchReady": false
+}

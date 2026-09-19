@@ -1,0 +1,96 @@
+/* Design tokens, transcribed from the app so the two cannot look like
+   different companies.
+
+   Sources: tailwind.config.js (the colour ramps and their documented jobs)
+   and src/index.css (the :root ink ramp and shadow scale). Both files are
+   hashed by scripts/check-drift.mjs, so if the app's palette moves, the
+   build fails here rather than the site silently going off-brand.
+
+   The Tailwind *config* is not reused, only its values. That config is
+   tuned for a 430px app shell and carries six ramps this site never draws
+   (forest, kumkuma, aqua, royal, gold, berry). A marketing site is a wide
+   document with long prose, tables and a large footer; it needs different
+   utilities and the same colours. */
+
+:root {
+  /* ── Identity ────────────────────────────────────────────────────────
+     Amethyst is who Sambramo IS: the wordmark, the footer ground, the
+     hero. Plum is what you TAP: links, buttons, focus rings. They are
+     never swapped. tailwind.config.js puts the reason plainly — "the
+     moment a brand colour also means 'tap this', every logo on the page
+     starts looking like a button". */
+  --amethyst:      #2A085C;   /* clears 4.5:1 on white unaided */
+  --amethyst-deep: #1B0240;
+  --splash:        #25034B;   /* matches the app's theme-color and splash */
+
+  /* ── Interaction ─────────────────────────────────────────────────── */
+  --plum-50:  #f5f0ff;
+  --plum-100: #ede0ff;
+  --plum-200: #dbc4ff;
+  --plum-400: #a56eff;
+  --plum-600: #7C3AED;        /* primary brand / interaction */
+  --plum-700: #6d28d9;
+  --plum-900: #4c1d95;
+  --plum-950: #2e1065;
+
+  /* ── CTA ─────────────────────────────────────────────────────────────
+     saffron-400 on plum-950 is the one primary-button treatment in the
+     product, and it is the one used here. */
+  --saffron-100: #fef3c7;
+  --saffron-300: #fcd34d;
+  --saffron-400: #FBBF24;
+  --saffron-700: #b45309;
+  --saffron-900: #78350f;
+
+  --berry-400: #e879f9;
+
+  /* chilli-600 (#C62828) is the savings colour and is deliberately absent.
+     tailwind.config.js: "Never used for anything that isn't money off or
+     genuinely urgent — the moment it decorates a heading it stops meaning
+     'offer'." This site has no discounts, so it has no chilli. */
+
+  /* ── Ink ─────────────────────────────────────────────────────────────
+     Contrast ratios on white, measured, from src/index.css. --ink-faint
+     (#7A6B94) is 4.4:1 and fails AA on the page ground, so it is not
+     defined here at all rather than defined and misused. */
+  --ink:      #1F1033;   /* 16.1:1 */
+  --ink-soft: #4A3A63;   /*  9.2:1 */
+  --ink-mute: #6B5B85;   /*  5.5:1 — the floor for any text on any ground */
+
+  /* ── Ground ──────────────────────────────────────────────────────────
+     Pure white. Not cream, not a tint. */
+  --page:      #FFFFFF;
+  --page-sunk: #F7F5FC;
+  --surface:   #FFFFFF;
+  --hairline:  17 15 25;      /* used at 8–12% alpha, never solid */
+
+  --aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
+
+  /* ── Shape ───────────────────────────────────────────────────────────
+     Large radii. tailwind.config.js: "at phone scale a 28px card reads as
+     an object you could pick up, where a 12px one reads as a div." */
+  --r-chip:   999px;
+  --r-card:   22px;
+  --r-panel:  28px;
+  --r-hero:   32px;
+
+  /* ── Separation ──────────────────────────────────────────────────────
+     A hairline ring plus a tight negative-spread contact shadow. Never a
+     heavy drop shadow — that is the single most reliable way to make a
+     page look like a 2014 template. */
+  --ring:    0 0 0 1px rgb(var(--hairline) / 0.09);
+  --contact: 0 1px 2px -1px rgb(var(--hairline) / 0.10),
+             0 4px 12px -6px rgb(var(--hairline) / 0.08);
+  --lift:    0 8px 24px -8px rgb(var(--hairline) / 0.12),
+             0 2px 6px -2px rgb(var(--hairline) / 0.06);
+
+  /* ── Type ────────────────────────────────────────────────────────────
+     Playfair for headings and money, Manrope for everything else, Archivo
+     Black (self-hosted, already in the repo) for the wordmark only. */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body:    'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mark:    'Sambramo Display', 'Arial Black', system-ui, sans-serif;
+
+  --measure: 68ch;      /* reading width for long prose */
+  --wide:    1180px;    /* page container */
+}

@@ -1,0 +1,16 @@
+{
+  "name": "sambramo-www",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The Sambramo marketing site. Static HTML, no framework, no runtime JS.",
+  "scripts": {
+    "content": "node scripts/pull-content.mjs",
+    "build": "node build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "check": "node scripts/check-drift.mjs && node build.mjs && node scripts/check-html.mjs && node scripts/check-jsonld.mjs && node scripts/check-links.mjs && node scripts/check-claims.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  }
+}

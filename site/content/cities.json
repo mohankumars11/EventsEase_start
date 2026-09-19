@@ -1,0 +1,25 @@
+[
+  {
+    "slug": "bengaluru",
+    "name": "Bengaluru",
+    "aliases": [
+      "Bangalore",
+      "Bengaluru",
+      "BLR"
+    ],
+    "state": "Karnataka",
+    "coords": {
+      "lat": 12.9716,
+      "lon": 77.5946
+    },
+    "coverage": "Full city — concierge celebrations and shop delivery.",
+    "knownAreas": [
+      "Indiranagar",
+      "Koramangala",
+      "Whitefield",
+      "Jayanagar",
+      "HSR Layout",
+      "Hebbal"
+    ]
+  }
+]
