@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, Bell, CalendarDays, Check,
   ChevronDown, ChevronLeft, ChevronRight, CircleCheck, Clock3, Flower2, MapPin,
-  Menu, PackageCheck, Search, ShieldCheck, Sparkles, Truck, Users, X, Camera,
+  Menu, Search, Sparkles, Truck, Users, X, Camera,
   CarFront, UtensilsCrossed, Music2, Building2, Gem, SlidersHorizontal, WalletCards,
   Route, Boxes, PartyPopper
 } from 'lucide-react'
