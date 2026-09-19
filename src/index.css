@@ -1599,3 +1599,391 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   SAMBRAMO PUBLIC SITE — MOBILE FIT
+   The public landing page is mobile-first. These rules deliberately
+   tighten the composition below 768px instead of shrinking desktop
+   components until they become cramped.
+   ───────────────────────────────────────────────────────────── */
+.sambramo-site {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.sambramo-site *,
+.sambramo-site *::before,
+.sambramo-site *::after {
+  box-sizing: border-box;
+}
+
+.sambramo-site img {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .sambramo-site {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .sambramo-hero {
+    min-height: 0 !important;
+  }
+
+  .sambramo-hero-inner {
+    min-height: 0 !important;
+    padding: 56px 16px 48px !important;
+    align-items: flex-start !important;
+  }
+
+  .sambramo-hero-copy {
+    width: 100%;
+    max-width: 100%;
+    padding-top: 4px;
+  }
+
+  .sambramo-hero h1 {
+    max-width: 100%;
+    font-size: clamp(36px, 10.5vw, 48px) !important;
+    line-height: .99 !important;
+    letter-spacing: -.045em !important;
+    text-wrap: balance;
+  }
+
+  .sambramo-hero h1 span {
+    display: block;
+  }
+
+  .sambramo-hero .sambramo-hero-copy > .mt-5 {
+    margin-top: 18px !important;
+  }
+
+  .sambramo-hero-copy p {
+    max-width: 100%;
+  }
+
+  .sambramo-hero-actions {
+    width: 100%;
+    margin-top: 22px !important;
+  }
+
+  .sambramo-hero-actions > * {
+    width: 100%;
+    min-height: 50px;
+  }
+
+  .sambramo-feature-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sambramo-feature-grid > div {
+    min-width: 0;
+    min-height: 82px;
+    padding: 14px 12px !important;
+    gap: 9px;
+  }
+
+  .sambramo-feature-grid svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .sambramo-feature-grid p {
+    overflow-wrap: anywhere;
+  }
+
+  .sambramo-search {
+    padding: 42px 16px !important;
+  }
+
+  .sambramo-search > div {
+    max-width: 100%;
+  }
+
+  .sambramo-search input {
+    font-size: 14px;
+  }
+
+  .sambramo-services {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-services > div {
+    min-width: 0;
+  }
+
+  .sambramo-services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px !important;
+  }
+
+  .sambramo-services-grid > a {
+    min-width: 0;
+    border-radius: 17px;
+  }
+
+  .sambramo-services-grid > a > div:last-child {
+    min-height: 76px;
+    padding: 12px !important;
+  }
+
+  .sambramo-services-grid h3 {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .sambramo-services-grid p {
+    font-size: 9px !important;
+    line-height: 1.45 !important;
+  }
+
+  .sambramo-ecosystem {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-ecosystem > div {
+    min-width: 0;
+  }
+
+  .sambramo-ecosystem-visual {
+    min-height: 430px !important;
+    padding: 18px !important;
+  }
+
+  .sambramo-ecosystem-visual > .absolute {
+    width: 104px !important;
+    height: 104px !important;
+    font-size: 10px;
+  }
+
+  .sambramo-ecosystem-visual .grid {
+    position: relative;
+    z-index: 2;
+    height: auto !important;
+    min-height: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+    padding-top: 145px;
+  }
+
+  .sambramo-ecosystem-visual .grid > .absolute {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 0;
+    padding: 10px 9px !important;
+    border-radius: 14px;
+  }
+
+  .sambramo-ecosystem-visual .grid > .absolute p:first-child {
+    font-size: 9px;
+  }
+
+  .sambramo-ecosystem-visual .grid > .absolute p:last-child {
+    font-size: 7px;
+    line-height: 1.35;
+  }
+
+  .sambramo-journey {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-journey > div {
+    min-width: 0;
+  }
+
+  .sambramo-journey .grid {
+    min-width: 0;
+  }
+
+  .sambramo-journey button {
+    min-width: 0;
+  }
+
+  .sambramo-journey button span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  .sambramo-journey .rounded-[30px] {
+    padding: 22px !important;
+    border-radius: 22px !important;
+  }
+
+  .sambramo-journey .rounded-[26px] {
+    padding: 10px !important;
+    border-radius: 20px !important;
+  }
+
+  .sambramo-partners {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-partners > div {
+    min-width: 0;
+  }
+
+  .sambramo-partners .rounded-[32px] {
+    border-radius: 22px !important;
+  }
+
+  .sambramo-partners .rounded-[26px] {
+    padding: 14px !important;
+    border-radius: 19px !important;
+  }
+
+  .sambramo-partners .grid {
+    min-width: 0;
+  }
+
+  .sambramo-partners h2,
+  .sambramo-ecosystem h2,
+  .sambramo-journey h2 {
+    text-wrap: balance;
+  }
+
+  .sambramo-occasions {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-occasions > div {
+    min-width: 0;
+  }
+
+  .sambramo-occasions .flex.snap-x > div {
+    min-width: min(78vw, 285px);
+  }
+
+  .sambramo-about {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-about > div {
+    min-width: 0;
+  }
+
+  .sambramo-about .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sambramo-about .grid > div {
+    min-width: 0;
+    padding: 22px 12px !important;
+  }
+
+  .sambramo-contact {
+    padding: 38px 16px !important;
+  }
+
+  .sambramo-contact > div {
+    border-radius: 22px !important;
+    padding: 22px !important;
+  }
+
+  .sambramo-contact form {
+    width: 100%;
+  }
+
+  .sambramo-contact input,
+  .sambramo-contact button {
+    width: 100%;
+  }
+
+  .sambramo-faq {
+    padding: 46px 16px !important;
+  }
+
+  .sambramo-faq > div {
+    min-width: 0;
+  }
+
+  .sambramo-faq button {
+    min-height: 58px;
+    padding: 14px 15px !important;
+  }
+
+  .sambramo-faq button span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .sambramo-mobile-cta {
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    left: 10px !important;
+    right: 10px !important;
+  }
+
+  .sambramo-mobile-cta > div {
+    padding: 6px !important;
+  }
+
+  .sambramo-mobile-cta a,
+  .sambramo-mobile-cta button {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* No decorative brand/logo image is used on the public site. */
+  .sambramo-site .sambramo-brand-image,
+  .sambramo-site .sambramo-logo {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .sambramo-hero-inner {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-top: 48px !important;
+  }
+
+  .sambramo-hero h1 {
+    font-size: 35px !important;
+  }
+
+  .sambramo-hero-copy .font-serif {
+    font-size: 20px !important;
+  }
+
+  .sambramo-feature-grid > div {
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+
+  .sambramo-feature-grid p:first-child {
+    font-size: 10px !important;
+  }
+
+  .sambramo-feature-grid p:last-child {
+    font-size: 8px !important;
+  }
+
+  .sambramo-services-grid {
+    gap: 8px !important;
+  }
+
+  .sambramo-services-grid > a > div:last-child {
+    padding: 10px !important;
+  }
+
+  .sambramo-ecosystem-visual {
+    min-height: 405px !important;
+  }
+
+  .sambramo-ecosystem-visual > .absolute {
+    width: 92px !important;
+    height: 92px !important;
+  }
+
+  .sambramo-ecosystem-visual .grid {
+    padding-top: 126px;
+  }
+
+  .sambramo-ecosystem-visual .grid > .absolute {
+    padding: 8px !important;
+  }
+}
