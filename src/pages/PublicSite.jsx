@@ -1,26 +1,41 @@
 
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleCheck, Menu, ShieldCheck, Truck, Users, X } from 'lucide-react'
-import '../sam-launch.css'
+import { useEffect, useState } from 'react'
+import { ArrowRight, Check, ChevronDown, CircleCheck, Menu, ShieldCheck, Users, Truck, X } from 'lucide-react'
+import './sam-launch-v2.css'
 
 const slides = [
-  { kicker: 'CUSTOMER EXPERIENCE', title: 'Find what your event needs.', text: 'Start with an occasion. Discover relevant services and move forward without managing disconnected vendors.', image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=86', label: 'Discover' },
-  { kicker: 'CONNECTED BRIEF', title: 'Keep the whole event in view.', text: 'Your services, timing, people and movement stay connected to the same event context.', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=86', label: 'Connect' },
-  { kicker: 'PARTNER EXPERIENCE', title: 'Give partners the right context.', text: 'Event partners see the demand, scope and timing they need to respond and deliver.', image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=86', label: 'Coordinate' },
-  { kicker: 'MOVEMENT', title: 'Keep delivery tied to event day.', text: 'People, goods and last-mile movement are part of the same journey — not an afterthought.', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=86', label: 'Move' },
+  {
+    eyebrow: 'CUSTOMER APP',
+    title: 'One place to discover the event services you need.',
+    text: 'Start with the occasion. Find the right services. Keep the event context together.',
+    image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=85',
+  },
+  {
+    eyebrow: 'PARTNER APP',
+    title: 'Work with event demand, not disconnected requests.',
+    text: 'Partners can see relevant opportunities, context and movement around the work.',
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=85',
+  },
+  {
+    eyebrow: 'CONNECTED MOVEMENT',
+    title: 'Services and logistics move with the event.',
+    text: 'People, goods and last-mile coordination are part of the same journey.',
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=85',
+  },
 ]
 
-const trades = ['Venues', 'Catering', 'Decor', 'Photography', 'Music', 'Artists', 'Beauty', 'Transport', 'Logistics', 'Furniture', 'Gifting', 'Staffing', 'Flowers', 'Invites', 'Mehendi', 'Packaging']
+const trades = [
+  'Venues', 'Catering', 'Decor', 'Photography', 'Music', 'Artists',
+  'Beauty', 'Transport', 'Logistics', 'Furniture', 'Flowers', 'Gifting',
+  'Invites', 'Mehendi', 'Staffing', 'Packaging',
+]
 
-function Brand({ light = false }) {
+function Brand() {
   return (
-    <a href="/" className="sam-brand">
-      <span className="sam-brand-mark">S</span>
-      <span>
-        <span className="sam-brand-name" style={light ? { color: '#fff' } : undefined}>SAMBRAMO</span>
-        <span className="sam-brand-sub" style={light ? { color: 'rgba(255,255,255,.45)' } : undefined}>EVENT SUPPLY CHAIN &amp; LOGISTICS</span>
-      </span>
+    <a href="/" className="sv2-brand" aria-label="Sambramo home">
+      <span className="sv2-brand-name">SAMBRAMO</span>
+      <span className="sv2-brand-sub">EVENT SUPPLY CHAIN &amp; LOGISTICS</span>
     </a>
   )
 }
@@ -50,36 +65,36 @@ function InterestModal({ role, onClose }) {
       if (!response.ok) throw new Error('interest')
       setDone(true)
     } catch {
-      setError('Could not save your interest right now. Please try again.')
+      setError('We could not save your interest right now. Please try again.')
     } finally {
       setBusy(false)
     }
   }
 
   return createPortal(
-    <div className="sam-modal-back" role="dialog" aria-modal="true" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="sam-modal">
-        <div className="sam-modal-head">
-          <button onClick={onClose} aria-label="Close"><X size={16} /></button>
-          <span className="sam-eyebrow">{role === 'partner' ? 'PARTNER APP' : 'CUSTOMER APP'} · COMING SOON</span>
-          <h3>{role === 'partner' ? 'Join the Sambramo partner launch.' : 'Join the Sambramo customer launch.'}</h3>
-          <p>We are preparing the first Sambramo launch in Bengaluru.</p>
+    <div className="sv2-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="sv2-modal">
+        <div className="sv2-modal-head">
+          <button type="button" onClick={onClose} aria-label="Close"><X size={16} /></button>
+          <span className="sv2-overline">{role === 'partner' ? 'PARTNER APP' : 'CUSTOMER APP'} · COMING SOON</span>
+          <h2>{role === 'partner' ? 'Partner App is opening soon.' : 'Customer App is opening soon.'}</h2>
+          <p>Sambramo is launching in Bengaluru first. Capture your interest and we’ll notify you when the app experience opens.</p>
         </div>
         {done ? (
-          <div className="sam-modal-success">
-            <div className="sam-success-icon"><CircleCheck size={20} /></div>
-            <h4>Interest captured.</h4>
-            <p>We’ll contact you when the relevant Sambramo app experience is ready.</p>
-            <button className="sam-btn sam-btn-purple" onClick={onClose}>Done</button>
+          <div className="sv2-modal-body">
+            <div className="sv2-success-icon"><CircleCheck size={21} /></div>
+            <h3>Interest captured.</h3>
+            <p>We’ll use your details only for the Sambramo launch communication.</p>
+            <button className="sv2-btn sv2-btn-purple" type="button" onClick={onClose}>Done <ArrowRight size={14} /></button>
           </div>
         ) : (
-          <form className="sam-modal-form" onSubmit={submit}>
-            <div className="sam-role"><span>JOINING AS</span><b>{role === 'partner' ? 'PARTNER' : 'CUSTOMER'}</b></div>
+          <form className="sv2-modal-body" onSubmit={submit}>
+            <div className="sv2-role"><span>JOINING AS</span><b>{role === 'partner' ? 'PARTNER' : 'CUSTOMER'}</b></div>
             <label>Email<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
-            <label>Mobile <span style={{ color: '#A298AA', fontWeight: 600 }}>optional</span><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91" /></label>
-            {error && <div style={{ marginTop: 9, borderRadius: 9, padding: 9, background: '#FFF1F1', color: '#9B3A40', fontSize: 8, fontWeight: 800 }}>{error}</div>}
-            <button disabled={busy} className="sam-btn sam-btn-purple" style={{ width: '100%', marginTop: 14 }}>{busy ? 'Saving…' : 'Capture my interest'} <ArrowRight size={14} /></button>
-            <div className="sam-modal-note"><ShieldCheck size={11} /> Used only for Sambramo launch communication.</div>
+            <label>Mobile <em>optional</em><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91" /></label>
+            {error && <div className="sv2-error">{error}</div>}
+            <button className="sv2-btn sv2-btn-purple sv2-full" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Capture my interest'} <ArrowRight size={14} /></button>
+            <div className="sv2-form-note"><ShieldCheck size={11} /> Launch updates only.</div>
           </form>
         )}
       </div>
@@ -88,7 +103,7 @@ function InterestModal({ role, onClose }) {
   )
 }
 
-function LaunchButton({ role = 'customer', children, className = '' }) {
+function AppEntry({ role, children, className = '' }) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -99,80 +114,65 @@ function LaunchButton({ role = 'customer', children, className = '' }) {
 }
 
 function Header() {
-  const [mobile, setMobile] = useState(false)
+  const [open, setOpen] = useState(false)
   return (
     <>
-      <div className="sam-topbar"><div className="sam-wrap sam-topbar-inner">Soon on <b>Google Play</b> &amp; <b>iOS</b> for the best Sambramo experience.</div></div>
-      <header className="sam-header">
-        <div className="sam-wrap sam-header-inner">
-          <Brand />
-          <nav className="sam-head-actions">
-            <a href="/login" className="sam-btn sam-btn-outline sam-desktop">Partner App</a>
-            <a href="/app" className="sam-btn sam-btn-gold sam-desktop">Customer App <ArrowRight size={12} /></a>
-            <LaunchButton className="sam-btn sam-capture sam-desktop">Capture Interest</LaunchButton>
-            <button className="sam-menu" onClick={() => setMobile((v) => !v)} aria-label="Menu">{mobile ? <X size={17} /> : <Menu size={17} />}</button>
-          </nav>
+      <div className="sv2-storebar">
+        <div className="sv2-wrap sv2-storebar-inner">
+          <span>Launching soon in <b>Bengaluru</b></span>
+          <span className="sv2-store-links">
+            <a href="https://play.google.com/store/" target="_blank" rel="noreferrer">Google Play</a>
+            <a href="https://apps.apple.com/in/" target="_blank" rel="noreferrer">App Store</a>
+          </span>
         </div>
-        {mobile && <div className="sam-wrap sam-mobile">
-          <a href="/app" className="sam-btn sam-btn-gold">Customer App <ArrowRight size={12} /></a>
-          <a href="/login" className="sam-btn sam-btn-outline">Partner App</a>
-          <LaunchButton className="sam-btn sam-capture">Capture Interest</LaunchButton>
-        </div>}
+      </div>
+      <header className="sv2-header">
+        <div className="sv2-wrap sv2-header-inner">
+          <Brand />
+          <div className="sv2-header-actions">
+            <AppEntry role="partner" className="sv2-btn sv2-btn-outline sv2-desktop">Partner App</AppEntry>
+            <AppEntry role="customer" className="sv2-btn sv2-btn-gold sv2-desktop">Customer App <ArrowRight size={12} /></AppEntry>
+            <button className="sv2-menu" type="button" onClick={() => setOpen((v) => !v)} aria-label="Open menu">{open ? <X size={17} /> : <Menu size={17} />}</button>
+          </div>
+        </div>
+        {open && (
+          <div className="sv2-wrap sv2-mobile-menu">
+            <AppEntry role="customer" className="sv2-btn sv2-btn-gold sv2-full">Customer App <ArrowRight size={12} /></AppEntry>
+            <AppEntry role="partner" className="sv2-btn sv2-btn-outline sv2-full">Partner App</AppEntry>
+          </div>
+        )}
       </header>
     </>
   )
 }
 
-function Hero() {
-  return (
-    <section className="sam-hero">
-      <div className="sam-wrap sam-hero-inner">
-        <div>
-          <span className="sam-eyebrow">WHAT IS SAMBRAMO?</span>
-          <h1>Everything behind a celebration, <em>connected.</em></h1>
-          <p className="sam-hero-copy">Sambramo is building one connected experience for event services, partners and logistics — so people can spend more time on the occasion and less time coordinating everything behind it.</p>
-          <div className="sam-hero-actions">
-            <a href="/app" className="sam-btn sam-btn-gold">Open Customer App <ArrowRight size={14} /></a>
-            <a href="/login" className="sam-btn" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.16)' }}>Open Partner App</a>
-            <LaunchButton className="sam-btn" style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,.16)' }}>Capture Interest</LaunchButton>
-          </div>
-          <div className="sam-hero-facts">
-            <span><Check size={11} /> Built for the event supply chain</span>
-            <span><Check size={11} /> Launching in Bengaluru</span>
-            <span><Check size={11} /> Customer + partner apps</span>
-          </div>
-        </div>
-        <ProductCarousel />
-      </div>
-    </section>
-  )
-}
-
-function ProductCarousel() {
+function ProductPreview() {
   const [index, setIndex] = useState(0)
   const slide = slides[index]
 
   useEffect(() => {
-    const timer = setInterval(() => setIndex((v) => (v + 1) % slides.length), 4200)
-    return () => clearInterval(timer)
+    const t = window.setInterval(() => setIndex((v) => (v + 1) % slides.length), 4200)
+    return () => window.clearInterval(t)
   }, [])
 
-  function move(next) { setIndex((index + next + slides.length) % slides.length) }
+  const move = (direction) => setIndex((v) => (v + direction + slides.length) % slides.length)
 
   return (
-    <div className="sam-phone-stage">
-      <div className="sam-phone">
-        <div className="sam-phone-notch" />
-        <div className="sam-phone-screen">
-          <div className="sam-phone-visual"><img src={slide.image} alt="" /><div className="sam-phone-caption"><span>{slide.kicker}</span><strong>{slide.title}</strong></div></div>
-          <div className="sam-phone-body">
-            <div className="sam-phone-top"><div><span>SAMBRAMO</span><b>{slide.label}</b></div><span className="sam-avatar">S</span></div>
-            <div className="sam-phone-card"><small>PRODUCT EXPERIENCE</small><strong>{slide.label} the journey</strong><p style={{ margin: 0, color: '#776D83', fontSize: 8, lineHeight: 1.5 }}>{slide.text}</p></div>
-            <div className="sam-phone-list">
-              <div className="sam-phone-row"><span><Users size={11} /> People &amp; services</span><small>Connected</small></div>
-              <div className="sam-phone-row"><span><Truck size={11} /> Movement &amp; logistics</span><small>In context</small></div>
-            </div>
-            <div className="sam-phone-footer"><button onClick={() => move(-1)} aria-label="Previous"><ArrowLeft size={11} /></button><span>{index + 1} / {slides.length}</span><button onClick={() => move(1)} aria-label="Next"><ArrowRight size={11} /></button></div>
+    <div className="sv2-product">
+      <div className="sv2-product-frame">
+        <div className="sv2-product-image"><img src={slide.image} alt="" /><div className="sv2-product-image-shade" /></div>
+        <div className="sv2-product-info">
+          <span className="sv2-overline">{slide.eyebrow}</span>
+          <h3>{slide.title}</h3>
+          <p>{slide.text}</p>
+          <div className="sv2-product-signals">
+            <span><Users size={11} /> Services connected</span>
+            <span><Truck size={11} /> Movement connected</span>
+          </div>
+          <div className="sv2-product-nav">
+            <button type="button" onClick={() => move(-1)} aria-label="Previous slide">←</button>
+            <span>{index + 1} / {slides.length}</span>
+            <button type="button" onClick={() => move(1)} aria-label="Next slide">→</button>
           </div>
         </div>
       </div>
@@ -180,62 +180,91 @@ function ProductCarousel() {
   )
 }
 
-function CompactBody() {
+function Hero() {
   return (
-    <>
-      <section className="sam-section compact">
-        <div className="sam-wrap">
-          <div className="sam-section-head"><div><span className="sam-eyebrow">THE PROBLEM → THE SOLUTION</span><h2>Too many moving pieces.<br />One connected place.</h2></div><p>Finding services, coordinating partners, managing movement and keeping the event on track can become fragmented. Sambramo is designed to connect those pieces.</p></div>
-          <div className="sam-problem-grid">
-            <div className="sam-problem"><b>Finding services</b><p>Discover the right event services without starting every task from zero.</p></div>
-            <div className="sam-problem"><b>Coordinating people</b><p>Keep customer, partner and event context together instead of across scattered conversations.</p></div>
-            <div className="sam-problem solution"><b>Sambramo connects the journey</b><p>One experience across discovery, partner coordination and movement toward event day.</p></div>
+    <section className="sv2-hero">
+      <div className="sv2-wrap sv2-hero-inner">
+        <div className="sv2-hero-copy">
+          <span className="sv2-overline sv2-overline-light">SAMBRAMO</span>
+          <h1>Everything behind your event.<br /><em>Connected.</em></h1>
+          <p>Sambramo connects event services, partners and logistics into one simple experience — launching in Bengaluru.</p>
+          <div className="sv2-hero-actions">
+            <AppEntry role="customer" className="sv2-btn sv2-btn-gold">Customer App <ArrowRight size={14} /></AppEntry>
+            <AppEntry role="partner" className="sv2-btn sv2-btn-ghost-light">Partner App</AppEntry>
           </div>
+          <div className="sv2-trust"><span><Check size={11} /> Built around the event</span><span><Check size={11} /> Customer + partner journeys</span></div>
         </div>
-      </section>
-
-      <section className="sam-highlight sam-section compact">
-        <div className="sam-wrap">
-          <div className="sam-section-head"><div><span className="sam-eyebrow">THE TRADES WE COVER</span><h2>Built across the event supply chain.</h2></div><p>Start with the services that matter to your occasion. More categories can plug into the same network.</p></div>
-          <div className="sam-service-chips">{trades.map((trade) => <span className="sam-service-chip" key={trade}>{trade}</span>)}</div>
-        </div>
-      </section>
-
-      <section className="sam-section compact">
-        <div className="sam-wrap">
-          <div className="sam-section-head"><div><span className="sam-eyebrow">WHY IT EXISTS</span><h2>Simple on the outside.<br />Connected underneath.</h2></div><p>That is the Sambramo idea: make the customer journey feel simple while the event supply chain works behind it.</p></div>
-          <div className="sam-journey">
-            <div className="sam-step"><i>01</i><h4>Discover</h4><p>See the services and partners relevant to your event.</p></div>
-            <div className="sam-step"><i>02</i><h4>Connect</h4><p>Keep the people and requirements tied to one event context.</p></div>
-            <div className="sam-step"><i>03</i><h4>Move</h4><p>Bring transport, delivery and logistics into the same journey.</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="sam-section compact">
-        <div className="sam-wrap">
-          <div className="sam-section-head"><div><span className="sam-eyebrow">FAQ</span><h2>Before you enter Sambramo.</h2></div></div>
-          <div className="sam-faq">
-            <details><summary>What is Sambramo? <ChevronDown size={12} /></summary><p>Sambramo is a connected event services, partner and logistics experience designed around the journey of an event.</p></details>
-            <details><summary>When is Sambramo launching? <ChevronDown size={12} /></summary><p>The first launch is planned for Bengaluru, with the customer and partner app experiences coming soon on Google Play and iOS.</p></details>
-            <details><summary>Who is the Customer App for? <ChevronDown size={12} /></summary><p>For people planning celebrations and events who want a simpler way to discover services and move through the event journey.</p></details>
-            <details><summary>Who is the Partner App for? <ChevronDown size={12} /></summary><p>For event service providers and logistics partners participating in the Sambramo network.</p></details>
-          </div>
-        </div>
-      </section>
-    </>
+        <ProductPreview />
+      </div>
+    </section>
   )
 }
 
-function LaunchCTA() {
+function LaunchExplainer() {
   return (
-    <section className="sam-bottom">
-      <div className="sam-wrap sam-bottom-inner">
-        <div><span className="sam-eyebrow" style={{ color: '#D7C5E5' }}>SAMBRAMO · BENGALURU</span><h2>Be there when the journey opens.</h2><p>Choose the app you are waiting for, or leave your details and we’ll capture your interest for launch.</p></div>
-        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-          <a href="/app" className="sam-btn sam-btn-gold">Customer App <ArrowRight size={13} /></a>
-          <a href="/login" className="sam-btn" style={{ background:'rgba(255,255,255,.1)',color:'#fff',border:'1px solid rgba(255,255,255,.16)' }}>Partner App</a>
-          <LaunchButton className="sam-btn" style={{ background:'transparent',color:'#fff',border:'1px solid rgba(255,255,255,.2)' }}>Capture Interest</LaunchButton>
+    <section className="sv2-section sv2-compact">
+      <div className="sv2-wrap">
+        <div className="sv2-section-title">
+          <div><span className="sv2-overline">WHAT SAMBRAMO SOLVES</span><h2>Too many moving pieces.<br />One simpler journey.</h2></div>
+          <p>Finding services, coordinating partners and managing event movement can feel fragmented. Sambramo is being built to connect the journey underneath one experience.</p>
+        </div>
+        <div className="sv2-solution-grid">
+          <article><span>01</span><h3>Discover</h3><p>Find the event services that fit your occasion.</p></article>
+          <article><span>02</span><h3>Connect</h3><p>Bring customer, partner and event context together.</p></article>
+          <article><span>03</span><h3>Move</h3><p>Keep people, goods and logistics tied to event day.</p></article>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Trades() {
+  return (
+    <section className="sv2-section sv2-trades-section">
+      <div className="sv2-wrap">
+        <div className="sv2-section-title sv2-section-title-tight">
+          <div><span className="sv2-overline">THE EVENT SUPPLY CHAIN</span><h2>From the first requirement<br />to the final movement.</h2></div>
+          <p>Core event trades can plug into the same Sambramo journey.</p>
+        </div>
+        <div className="sv2-trade-list">{trades.map((trade) => <span key={trade}>{trade}</span>)}</div>
+      </div>
+    </section>
+  )
+}
+
+function FAQ() {
+  const items = [
+    ['What is Sambramo?', 'A connected event services, partner and logistics experience designed around the journey of an event.'],
+    ['Where is Sambramo launching?', 'Sambramo is launching in Bengaluru first.'],
+    ['When will the apps be available?', 'The customer and partner app experiences are coming soon on Google Play and the App Store.'],
+    ['Who can use Sambramo?', 'Customers planning events and the event-service and logistics partners who support them.'],
+  ]
+  return (
+    <section className="sv2-section sv2-faq-section">
+      <div className="sv2-wrap">
+        <div className="sv2-section-title sv2-section-title-tight"><div><span className="sv2-overline">FAQ</span><h2>Sambramo, simply explained.</h2></div></div>
+        <div className="sv2-faq">
+          {items.map(([question, answer]) => (
+            <details key={question}><summary>{question}<ChevronDown size={13} /></summary><p>{answer}</p></details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FinalCTA() {
+  return (
+    <section className="sv2-final">
+      <div className="sv2-wrap sv2-final-inner">
+        <div>
+          <span className="sv2-overline sv2-overline-light">SAMBRAMO · BENGALURU</span>
+          <h2>Stay tuned.<br />The experience is coming.</h2>
+          <p>Customer App and Partner App are being prepared for launch.</p>
+        </div>
+        <div className="sv2-final-actions">
+          <AppEntry role="customer" className="sv2-btn sv2-btn-gold">Customer App <ArrowRight size={13} /></AppEntry>
+          <AppEntry role="partner" className="sv2-btn sv2-btn-ghost-light">Partner App</AppEntry>
         </div>
       </div>
     </section>
@@ -243,9 +272,45 @@ function LaunchCTA() {
 }
 
 function Footer() {
-  return <footer className="sam-footer"><div className="sam-wrap sam-footer-inner"><Brand light /><span>© {new Date().getFullYear()} Sambramo · <b>Launching soon in Bengaluru</b></span></div></footer>
+  return (
+    <footer className="sv2-footer">
+      <div className="sv2-wrap sv2-footer-grid">
+        <div>
+          <Brand />
+          <p>Sambramo connects event services, partners and logistics into one experience.</p>
+        </div>
+        <div>
+          <span className="sv2-footer-title">Explore</span>
+          <a href="#top">What is Sambramo</a>
+          <a href="#solutions">How it works</a>
+          <a href="#faq">FAQs</a>
+        </div>
+        <div>
+          <span className="sv2-footer-title">Contact</span>
+          <a href="mailto:hello@sambramo.com">hello@sambramo.com</a>
+          <span className="sv2-footer-muted">Bengaluru, India</span>
+        </div>
+      </div>
+      <div className="sv2-wrap sv2-footer-bottom">
+        <span>© {new Date().getFullYear()} Sambramo. All rights reserved.</span>
+        <span>Google Play &amp; App Store — coming soon</span>
+      </div>
+    </footer>
+  )
 }
 
 export default function PublicSite() {
-  return <div className="sam-launch"><Header /><main><Hero /><div className="sam-rail"><div className="sam-wrap sam-rail-inner"><strong>Sambramo</strong><span>Discover · connect · coordinate · move</span></div></div><CompactBody /><LaunchCTA /></main><Footer /></div>
+  return (
+    <div className="sv2-site">
+      <Header />
+      <main>
+        <Hero />
+        <LaunchExplainer />
+        <Trades />
+        <FAQ />
+        <FinalCTA />
+      </main>
+      <Footer />
+    </div>
+  )
 }
