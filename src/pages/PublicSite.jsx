@@ -208,182 +208,221 @@ function Nav() {
 }
 
 function Hero() {
-  const [hook, setHook] = useState(0)
   const [scene, setScene] = useState(0)
-
-  const hooks = [
-    'From the first requirement to the final celebration.',
-    'Event Supply Chain. Connected.',
-    'Logistics that moves with the occasion.',
-    'Your event. Our delivery.',
-  ]
 
   const scenes = [
     {
       label: '01 · DISCOVER',
       title: 'Start with the occasion.',
-      body: 'Venue, catering, decor, photography, entertainment and more — brought into one event view.',
-      image: IMG.venue,
-      accent: 'What does your event need?',
-    },
-    {
-      label: '02 · CONNECT',
-      title: 'Bring the right people together.',
-      body: 'Services and event partners become part of one connected event journey.',
-      image: IMG.food,
-      accent: 'People + services + materials',
-    },
-    {
-      label: '03 · BOOK',
-      title: 'Move selected work forward.',
-      body: 'Choose the services you need and move each requirement toward booking and payment.',
-      image: IMG.decor,
-      accent: 'Selected · Ready to move',
-    },
-    {
-      label: '04 · DELIVER',
-      title: 'Move the work to the celebration.',
-      body: 'People, supplies, equipment and transport come together around event day.',
-      image: IMG.transport,
-      accent: 'On the way → Event ready',
-    },
-    {
-      label: '05 · CELEBRATE',
-      title: 'Everything leads to the moment.',
-      body: 'The complexity behind the occasion fades into the background — the celebration takes over.',
       image: IMG.hero,
-      accent: 'Your event. Our delivery.',
+      accent: 'Customer app · Bengaluru',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-phone">
+          <div className="sambramo-ui-top"><span>SAMBRAMO</span><span>11:42</span></div>
+          <div className="sambramo-ui-card">
+            <span className="sambramo-ui-kicker">Create your occasion</span>
+            <strong>Birthday celebration</strong>
+            <div className="sambramo-ui-row"><span>Guests</span><b>500</b></div>
+            <div className="sambramo-ui-row"><span>City</span><b>Bengaluru</b></div>
+            <div className="sambramo-ui-row"><span>Needs</span><b>Venue · Food · Decor</b></div>
+            <div className="sambramo-ui-button">Get recommendations <ArrowRight size={13}/></div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      label: '02 · RECOMMEND',
+      title: 'The event brief becomes a connected plan.',
+      image: IMG.venue,
+      accent: 'Recommendations · Matched to the brief',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-recommend">
+          <div className="sambramo-ui-window"><span>EVENT BLUEPRINT</span><b>500 guests · Birthday</b></div>
+          <div className="sambramo-ui-reco-grid">
+            {[
+              ['Venue', '12 matches', Building2],
+              ['Catering', '18 matches', UtensilsCrossed],
+              ['Decor', '24 matches', Flower2],
+            ].map(([name, count, Icon]) => (
+              <div key={name} className="sambramo-ui-reco"><Icon size={15}/><span>{name}</span><small>{count}</small><i><Check size={9}/></i></div>
+            ))}
+          </div>
+          <div className="sambramo-ui-match"><BadgeCheck size={15}/><span>Recommended around your guest count, date and preferences</span></div>
+        </div>
+      ),
+    },
+    {
+      label: '03 · CONNECT',
+      title: 'Find the right partner. See the work before you book.',
+      image: IMG.photo,
+      accent: 'Partner catalogue · Service detail',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-catalog">
+          <div className="sambramo-ui-profile">
+            <div className="sambramo-ui-avatar">P</div>
+            <div><b>Partner catalogue</b><span>Photography · Bengaluru</span></div>
+            <BadgeCheck size={16} className="ml-auto text-[#F4C85D]"/>
+          </div>
+          <div className="sambramo-ui-products">
+            <div><img src={IMG.photo} alt="" /><span>Full-day coverage</span><b>View catalogue</b></div>
+            <div><img src={IMG.hero} alt="" /><span>Wedding stories</span><b>View catalogue</b></div>
+          </div>
+          <div className="sambramo-ui-button">Select partner <ArrowRight size={13}/></div>
+        </div>
+      ),
+    },
+    {
+      label: '04 · BOOK + PAY',
+      title: 'Confirm the service and move into secure payment.',
+      image: IMG.decor,
+      accent: 'Booking checkout · Razorpay',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-payment">
+          <div className="sambramo-ui-payment-head"><span>BOOKING SUMMARY</span><b>Decor package</b></div>
+          <div className="sambramo-ui-price"><span>Event requirement</span><strong>500 guests</strong></div>
+          <div className="sambramo-ui-price"><span>Booking</span><strong>Confirmed after payment</strong></div>
+          <div className="sambramo-ui-pay"><div><WalletCards size={17}/><span>Razorpay secure checkout</span></div><ArrowRight size={15}/></div>
+          <small className="sambramo-ui-secure"><BadgeCheck size={11}/> Secure payment flow · UPI · Cards · Netbanking</small>
+        </div>
+      ),
+    },
+    {
+      label: '05 · PREPARE',
+      title: 'The partner gets the work and prepares for event day.',
+      image: IMG.food,
+      accent: 'Partner workspace · Preparing',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-partner">
+          <div className="sambramo-ui-window"><span>PARTNER WORKSPACE</span><b>New confirmed event</b></div>
+          <div className="sambramo-ui-status"><span className="sambramo-live-dot"/> PREPARING <b>500 guests</b></div>
+          <div className="sambramo-ui-checks">
+            {['Confirm team', 'Prepare materials', 'Pack equipment', 'Ready for pickup'].map((item, i) => <div key={item}><span>{i < 3 ? <Check size={10}/> : <span className="sambramo-ui-number">04</span>}</span>{item}</div>)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      label: '06 · DELIVER',
+      title: 'People and supplies move to the celebration with live progress.',
+      image: IMG.transport,
+      accent: 'Live movement · Bengaluru',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-map">
+          <div className="sambramo-map-grid"/>
+          <div className="sambramo-map-route"><span/><span/><span/><span/></div>
+          <div className="sambramo-map-pulse"><Truck size={16}/></div>
+          <div className="sambramo-map-card"><div><span className="sambramo-live-dot"/> LIVE</div><b>Event supplies on the way</b><small>Partner → Venue · Bengaluru</small><strong>Arriving at venue</strong></div>
+          <div className="sambramo-map-pin sambramo-map-pin-a"><MapPin size={13}/></div>
+          <div className="sambramo-map-pin sambramo-map-pin-b"><PartyPopper size={13}/></div>
+        </div>
+      ),
+    },
+    {
+      label: '07 · CELEBRATE',
+      title: 'Everything behind the moment fades into the background.',
+      image: IMG.hero,
+      accent: 'Event ready · Celebration',
+      ui: (
+        <div className="sambramo-scene-ui sambramo-ui-celebrate">
+          <div className="sambramo-ui-celebrate-badge"><Check size={16}/> EVENT READY</div>
+          <div className="sambramo-ui-celebrate-copy"><span>All connected</span><b>Your event is ready.</b><small>People · Services · Materials · Logistics</small></div>
+        </div>
+      ),
     },
   ]
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setHook((value) => (value + 1) % hooks.length), 3600)
-    return () => window.clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     const timer = window.setInterval(() => setScene((value) => (value + 1) % scenes.length), 5200)
     return () => window.clearInterval(timer)
   }, [])
 
-  const currentScene = scenes[scene]
+  const current = scenes[scene]
 
   return (
-    <section id="top" className="sambramo-hero relative isolate overflow-hidden bg-[#160329] text-white">
-      <div className="sambramo-hero-glow pointer-events-none absolute inset-0" />
-
-      <div className="relative mx-auto max-w-[1480px] px-4 pb-7 pt-4 sm:px-8 sm:pb-10 sm:pt-6 lg:px-10 lg:pb-12 lg:pt-8">
-        <div className="sambramo-hero-grid grid gap-5 lg:grid-cols-[.82fr_1.18fr] lg:items-center lg:gap-8">
-
-          <div className="sambramo-hero-copy flex min-w-0 flex-col justify-center py-2 sm:py-5 lg:py-8">
-            <div className="sambramo-enter inline-flex w-fit items-center gap-2 rounded-full border border-[#F4C85D]/30 bg-[#F4C85D]/[.08] px-3.5 py-2 text-[9px] font-black uppercase tracking-[.20em] text-[#F4C85D] sm:text-[10px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#F4C85D] shadow-[0_0_14px_rgba(244,200,93,.85)]" />
-              YOUR EVENT. OUR DELIVERY.
+    <section id="top" className="sambramo-hero-v2 bg-[#160329] text-white">
+      <div className="mx-auto max-w-[1480px] px-4 pb-8 pt-4 sm:px-7 sm:pb-10 sm:pt-5 lg:px-10 lg:pb-12">
+        <div className="sambramo-hero-scene relative overflow-hidden rounded-[24px] border border-white/15 bg-[#0d021a] shadow-[0_35px_100px_rgba(0,0,0,.38)] sm:rounded-[30px]">
+          <img src={current.image} alt={current.title} fetchPriority="high" className="sambramo-hero-scene-image absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/20 to-transparent"/>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/45 via-transparent to-[#10021d]/10"/>
+          <div className="sambramo-hero-scene-content absolute inset-0">
+            <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-2 sm:left-6 sm:right-6 sm:top-6">
+              <span className="rounded-full border border-white/20 bg-[#10021d]/65 px-3 py-2 text-[8px] font-black uppercase tracking-[.15em] text-white backdrop-blur">Bengaluru · launch market</span>
+              <span className="rounded-full border border-[#F4C85D]/40 bg-[#10021d]/65 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur">{current.label}</span>
             </div>
-
-            <p className="sambramo-enter mt-5 text-[9px] font-black uppercase tracking-[.24em] text-white/72 sm:mt-6 sm:text-[10px]">
-              EVENT SUPPLY CHAIN &amp; LOGISTICS
-            </p>
-
-            <h1 className="sambramo-enter mt-3 max-w-2xl font-serif text-[clamp(2.6rem,6.8vw,5.4rem)] font-bold leading-[.94] tracking-[-.045em] [animation-delay:120ms]">
-              Your event.
-              <span className="block text-white">Our delivery.</span>
-            </h1>
-
-            <div className="relative mt-5 min-h-[52px] max-w-xl overflow-hidden sm:min-h-[58px]">
-              {hooks.map((item, index) => (
-                <p
-                  key={item}
-                  className={`absolute inset-x-0 top-0 font-serif text-[clamp(1.15rem,2.8vw,1.65rem)] font-bold leading-tight text-white transition-all duration-700 ${index === hook ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-5 opacity-0 blur-sm'}`}
-                >
-                  {item}
-                </p>
-              ))}
-            </div>
-
-            <p className="sambramo-enter mt-2 max-w-xl text-[12px] leading-6 text-white/78 sm:text-[14px] sm:leading-7 [animation-delay:220ms]">
-              We connect venues, people, services, materials and movement around one occasion — so the work behind the celebration feels like one connected journey.
-            </p>
-
-            <div className="sambramo-hero-lines mt-6 grid max-w-xl grid-cols-2 border-y border-white/20 sm:grid-cols-4">
-              {['DISCOVER', 'CONNECT', 'BOOK', 'DELIVER'].map((item, index) => (
-                <div key={item} className="border-r border-white/15 px-3 py-3 first:pl-0 last:border-r-0 sm:px-4">
-                  <span className="text-[8px] font-black tracking-[.16em] text-[#F4C85D]">0{index + 1}</span>
-                  <p className="mt-1 text-[9px] font-black tracking-[.08em] text-white/88">{item}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="sambramo-hero-actions mt-6 flex flex-col gap-2.5 sm:flex-row">
-              <LaunchButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 text-sm font-black text-[#1d0b30] shadow-[0_14px_35px_rgba(244,200,93,.20)] transition hover:-translate-y-0.5 active:scale-[.98]">
-                Get Early Access <ArrowRight size={17} />
-              </LaunchButton>
-              <a href="#supply-chain" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/[.06] px-6 text-sm font-black text-white backdrop-blur-md transition hover:bg-white/[.11]">
-                See the connected flow <ArrowDownRight size={16} />
-              </a>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 text-[9px] font-black uppercase tracking-[.17em] text-white/68">
-              <MapPin size={12} className="text-[#F4C85D]" /> Bengaluru launch
-            </div>
-          </div>
-
-          <div className="sambramo-film relative min-w-0 overflow-hidden rounded-[28px] border border-white/18 bg-[#0d021a] shadow-[0_40px_120px_rgba(0,0,0,.42)] sm:rounded-[34px]">
-            <div className="sambramo-film-stage relative min-h-[455px] sm:min-h-[570px] lg:min-h-[650px]">
-
-              <div key={currentScene.label} className="sambramo-scene-card absolute inset-0">
-                <img
-                  src={currentScene.image}
-                  alt={currentScene.title}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="sambramo-film-main absolute inset-0 h-full w-full object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/30 to-[#10021d]/5" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/72 via-[#10021d]/18 to-transparent" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(244,200,93,.16),transparent_30%)]" />
-
-                <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
-                  <div className="rounded-full border border-white/25 bg-[#10021d]/60 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em] text-white backdrop-blur-md">
-                    Bengaluru · launch market
-                  </div>
-                  <div className="rounded-full border border-[#F4C85D]/45 bg-[#10021d]/60 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-[#F4C85D] backdrop-blur-md">
-                    {currentScene.label}
-                  </div>
-                </div>
-
-                <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 sm:left-6 sm:right-6">
-                  <div className="max-w-[520px] rounded-[24px] border border-white/20 bg-[#12031f]/68 p-4 shadow-[0_25px_70px_rgba(0,0,0,.28)] backdrop-blur-xl sm:p-5">
-                    <p className="text-[9px] font-black uppercase tracking-[.20em] text-[#F4C85D]">{currentScene.label}</p>
-                    <h2 className="mt-2 font-serif text-[clamp(1.65rem,3.8vw,3rem)] font-bold leading-[1.02] text-white">{currentScene.title}</h2>
-                    <p className="mt-3 max-w-lg text-[11px] leading-5 text-white/88 sm:text-xs sm:leading-6">{currentScene.body}</p>
-                    <div className="mt-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[8px] font-black uppercase tracking-[.14em] text-white">
-                      {currentScene.accent}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                  <div className="flex items-center gap-2 overflow-x-auto">
-                    {scenes.map((item, index) => (
-                      <button
-                        key={item.label}
-                        onClick={() => setScene(index)}
-                        className={`h-1.5 min-w-12 flex-1 rounded-full transition-all duration-500 ${index === scene ? 'bg-[#F4C85D]' : 'bg-white/35 hover:bg-white/60'}`}
-                        aria-label={`Show scene ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-[8px] font-black uppercase tracking-[.16em] text-white/82">
-                    <span>People → Services → Materials → Logistics → Celebration</span>
-                    <span className="hidden sm:inline">SAMBRAMO</span>
-                  </div>
-                </div>
+            {current.ui}
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6">
+              <div className="flex gap-1.5">
+                {scenes.map((item, index) => <button key={item.label} onClick={() => setScene(index)} aria-label={item.label} className={index === scene ? 'h-1.5 flex-1 rounded-full bg-[#F4C85D]' : 'h-1.5 flex-1 rounded-full bg-white/35 hover:bg-white/60'}/>)}
               </div>
-
             </div>
           </div>
+        </div>
 
+        <div className="sambramo-hero-copy-v2 mx-auto max-w-5xl text-center">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[9px] font-black uppercase tracking-[.2em] text-[#F4C85D]">
+            <span className="rounded-full border border-[#F4C85D]/30 bg-[#F4C85D]/[.07] px-3 py-2">YOUR EVENT. OUR DELIVERY.</span>
+            <span className="text-white/45">EVENT SUPPLY CHAIN &amp; LOGISTICS</span>
+          </div>
+          <h1 className="mt-3 font-serif text-[clamp(2.8rem,7vw,6.4rem)] font-bold leading-[.9] tracking-[-.05em]">Your event. <span className="text-[#F4C85D]">Our delivery.</span></h1>
+          <p className="mx-auto mt-4 max-w-3xl text-[13px] leading-6 text-white/72 sm:text-[15px] sm:leading-7">{current.title} {current.accent}. Sambramo connects the customer, event partners, booking, payment and movement around one celebration.</p>
+          <div className="mt-5 flex flex-col justify-center gap-2.5 sm:flex-row">
+            <LaunchButton className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#F4C85D] px-6 text-sm font-black text-[#1d0b30] shadow-[0_12px_30px_rgba(244,200,93,.18)]">Get Early Access <ArrowRight size={16}/></LaunchButton>
+            <a href="#sambramo-flow" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/[.05] px-6 text-sm font-black text-white">See how Sambramo works <ArrowDownRight size={16}/></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CinematicFlow() {
+  const [active, setActive] = useState(0)
+  const steps = [
+    { id: '01', title: 'Tell us the event', sub: 'Customer enters the occasion, date, guest count and preferences.', image: IMG.hero, kicker: 'CUSTOMER APP', ui: 'event' },
+    { id: '02', title: 'Get recommendations', sub: 'The event brief turns into relevant categories, options and partner matches.', image: IMG.venue, kicker: 'SMART MATCH', ui: 'recommend' },
+    { id: '03', title: 'Choose the right partner', sub: 'Open a partner catalogue, compare the service and select the fit.', image: IMG.photo, kicker: 'PARTNER CATALOGUE', ui: 'catalog' },
+    { id: '04', title: 'Book and pay securely', sub: 'Confirm the requirement and move through the planned Razorpay checkout.', image: IMG.decor, kicker: 'SECURE CHECKOUT', ui: 'payment' },
+    { id: '05', title: 'Partner prepares', sub: 'The confirmed work appears in the partner workspace for preparation and scheduling.', image: IMG.food, kicker: 'PARTNER WORKSPACE', ui: 'prepare' },
+    { id: '06', title: 'Track the movement', sub: 'A live map-style journey shows the movement from pickup toward the venue.', image: IMG.transport, kicker: 'LIVE MOVEMENT', ui: 'tracking' },
+    { id: '07', title: 'Arrive. Set up. Celebrate.', sub: 'The connected work reaches the venue and the customer gets back to the moment.', image: IMG.hero, kicker: 'EVENT READY', ui: 'celebrate' },
+  ]
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setActive((value) => (value + 1) % steps.length), 4600)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const step = steps[active]
+
+  return (
+    <section id="sambramo-flow" className="sambramo-flow bg-[#f7f3fa] px-4 py-10 sm:px-7 sm:py-12 lg:px-10 lg:py-14">
+      <div className="mx-auto max-w-[1280px]">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-[#8050a8]">THE SAMBRAMO JOURNEY</p><h2 className="mt-1 font-serif text-[clamp(2rem,4.8vw,3.7rem)] font-bold leading-none">From one tap to event day.</h2></div>
+          <p className="max-w-md text-xs leading-5 text-[#75697b]">A cinematic product story of the customer, partner and logistics layers working together.</p>
+        </div>
+
+        <div className="sambramo-flow-scene relative overflow-hidden rounded-[24px] border border-[#dfd3e6] bg-[#17032f] shadow-[0_25px_80px_rgba(42,8,92,.16)]">
+          <img src={step.image} alt="" className="sambramo-flow-image absolute inset-0 h-full w-full object-cover"/>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#10021d] via-[#10021d]/25 to-[#10021d]/5"/>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#10021d]/50 via-transparent to-transparent"/>
+          <div className="absolute left-4 right-4 top-4 flex items-center justify-between sm:left-6 sm:right-6 sm:top-6"><span className="rounded-full border border-white/20 bg-black/25 px-3 py-2 text-[8px] font-black tracking-[.15em] text-white backdrop-blur">{step.kicker}</span><span className="rounded-full bg-[#F4C85D] px-3 py-2 text-[8px] font-black tracking-[.15em] text-[#211329]">{step.id} / 07</span></div>
+
+          <div className={step.ui === 'tracking' ? 'sambramo-flow-mock sambramo-flow-mock-tracking' : 'sambramo-flow-mock sambramo-flow-mock-panel'}>
+            {step.ui === 'event' && <><div className="sambramo-phone-top">SAMBRAMO <span>11:42</span></div><div className="sambramo-flow-panel"><small>CREATE EVENT</small><b>Birthday celebration</b><div><span>Guests</span><strong>500</strong></div><div><span>Date</span><strong>18 OCT</strong></div><div><span>City</span><strong>Bengaluru</strong></div><button>Continue <ArrowRight size={12}/></button></div></>}
+            {step.ui === 'recommend' && <div className="sambramo-flow-panel sambramo-recommend-panel"><small>RECOMMENDED FOR YOU</small><b>500 guest birthday</b>{[['Venue','12 matches'],['Catering','18 matches'],['Decor','24 matches']].map(([a,b])=><div key={a}><span><Check size={11}/> {a}</span><strong>{b}</strong></div>)}<em><BadgeCheck size={12}/> Based on your event details</em></div>}
+            {step.ui === 'catalog' && <div className="sambramo-flow-panel sambramo-catalog-panel"><small>PARTNER CATALOGUE</small><b>Photography partner</b><div className="sambramo-catalog-row"><img src={IMG.photo} alt=""/><span><strong>Full-day coverage</strong><small>Portfolio · Packages · Availability</small></span></div><div className="sambramo-catalog-row"><img src={IMG.hero} alt=""/><span><strong>Wedding stories</strong><small>Portfolio · Packages · Availability</small></span></div><button>View &amp; select <ArrowRight size={12}/></button></div>}
+            {step.ui === 'payment' && <div className="sambramo-flow-panel sambramo-payment-panel"><small>SECURE CHECKOUT</small><b>Decor package</b><div><span>Event</span><strong>500 guests</strong></div><div><span>Status</span><strong>Ready to pay</strong></div><button><WalletCards size={13}/> Razorpay secure payment <ArrowRight size={12}/></button><em><BadgeCheck size={11}/> UPI · Cards · Netbanking</em></div>}
+            {step.ui === 'prepare' && <div className="sambramo-flow-panel sambramo-prepare-panel"><small>PARTNER WORKSPACE</small><b>Confirmed event</b><div className="sambramo-progress"><span style={{width:'74%'}}/></div><div><span><Check size={11}/> Team confirmed</span><strong>DONE</strong></div><div><span><Check size={11}/> Materials packed</span><strong>DONE</strong></div><div><span>Pickup ready</span><strong>09:30</strong></div><em><span className="sambramo-live-dot"/> Preparing for event day</em></div>}
+            {step.ui === 'tracking' && <div className="sambramo-gps"><div className="sambramo-gps-roads"/><div className="sambramo-gps-route"><span/><span/><span/></div><div className="sambramo-gps-origin"><Boxes size={13}/></div><div className="sambramo-gps-destination"><PartyPopper size={13}/></div><div className="sambramo-gps-vehicle"><Truck size={15}/></div><div className="sambramo-gps-info"><div><span className="sambramo-live-dot"/> LIVE</div><b>Event supplies on the way</b><small>Pickup → Venue · Bengaluru</small><strong>Arriving at venue</strong></div></div>}
+            {step.ui === 'celebrate' && <div className="sambramo-celebrate-card"><div><Check size={18}/></div><small>EVENT READY</small><b>Your event is ready.</b><span>People · Services · Materials · Logistics</span></div>}
+          </div>
+        </div>
+
+        <div className="sambramo-flow-copy mt-4 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#8050a8]">{step.id} · {step.kicker}</p><h3 className="mt-1 font-serif text-[clamp(1.7rem,3.5vw,2.7rem)] font-bold leading-[1.02] text-[#211329]">{step.title}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-[#75697b]">{step.sub}</p></div>
+          <div className="flex gap-1.5 sm:w-[330px]">{steps.map((item, index) => <button key={item.id} onClick={() => setActive(index)} aria-label={item.title} className={index === active ? 'h-2 flex-1 rounded-full bg-[#2A085C]' : 'h-2 flex-1 rounded-full bg-[#d8ccdf]'}/>)}</div>
         </div>
       </div>
     </section>
@@ -786,6 +825,7 @@ export default function PublicSite() {
       <Nav />
       <main>
         <Hero />
+        <CinematicFlow />
         <Pillars />
         <SearchExperience onOpen={() => setEarlyOpen(true)} />
         <Services />
