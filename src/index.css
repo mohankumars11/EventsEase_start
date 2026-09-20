@@ -1643,3 +1643,403 @@
     animation: none !important;
   }
 }
+
+/* -------------------------------------------------------------------------
+   SAMBRAMO V2 — cinematic product storytelling
+   Scene first, explanation below. Compact spacing. Mobile/desktop safe.
+   ------------------------------------------------------------------------- */
+.sambramo-hero-v2 {
+  overflow: hidden;
+}
+.sambramo-hero-scene {
+  height: clamp(430px, 62vw, 700px);
+  min-height: 430px;
+  isolation: isolate;
+}
+.sambramo-hero-scene-image,
+.sambramo-flow-image {
+  transform: scale(1.035);
+  filter: saturate(.92) contrast(1.03);
+  animation: sambramo-cinematic-push 8s ease-out both;
+}
+.sambramo-hero-scene-content {
+  z-index: 2;
+}
+@keyframes sambramo-cinematic-push {
+  from { opacity: .72; transform: scale(1.08); }
+  to { opacity: 1; transform: scale(1.035); }
+}
+.sambramo-hero-copy-v2 {
+  position: relative;
+}
+.sambramo-hero-copy-v2 h1 {
+  text-shadow: 0 8px 40px rgba(0,0,0,.28);
+}
+.sambramo-scene-ui {
+  position: absolute;
+  z-index: 4;
+  left: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(430px, 38%);
+  animation: sambramo-ui-in .8s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes sambramo-ui-in {
+  from { opacity: 0; transform: translate3d(30px,-46%,0) scale(.96); }
+  to { opacity: 1; transform: translate3d(0,-50%,0) scale(1); }
+}
+.sambramo-ui-top {
+  display:flex;
+  justify-content:space-between;
+  padding: 0 12px 8px;
+  color: rgba(255,255,255,.72);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+.sambramo-ui-card,
+.sambramo-ui-window,
+.sambramo-ui-profile,
+.sambramo-ui-payment,
+.sambramo-ui-partner,
+.sambramo-ui-catalog,
+.sambramo-ui-recommend {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 22px;
+  background: rgba(15,3,29,.78);
+  box-shadow: 0 28px 70px rgba(0,0,0,.32);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.sambramo-ui-card {
+  padding: 20px;
+}
+.sambramo-ui-kicker,
+.sambramo-ui-window span,
+.sambramo-ui-payment-head span,
+.sambramo-ui-profile span {
+  display:block;
+  color:#F4C85D;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.sambramo-ui-card > strong {
+  display:block;
+  margin-top:8px;
+  font-family: Georgia, serif;
+  font-size:28px;
+  line-height:1;
+}
+.sambramo-ui-row,
+.sambramo-ui-price {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.10);
+  font-size:10px;
+}
+.sambramo-ui-row span,
+.sambramo-ui-price span { color:rgba(255,255,255,.55); }
+.sambramo-ui-row b,
+.sambramo-ui-price strong { color:#fff; text-align:right; }
+.sambramo-ui-button,
+.sambramo-ui-pay {
+  margin-top:14px;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:12px;
+  background:#F4C85D;
+  color:#1d0b30;
+  font-size:9px;
+  font-weight:900;
+}
+.sambramo-ui-window {
+  padding:14px 16px;
+}
+.sambramo-ui-window b {
+  display:block;
+  margin-top:5px;
+  font-size:12px;
+}
+.sambramo-ui-reco-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:8px;
+}
+.sambramo-ui-reco {
+  position:relative;
+  min-height:90px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+}
+.sambramo-ui-reco > svg { color:#F4C85D; }
+.sambramo-ui-reco span { display:block; margin-top:8px; font-size:9px; font-weight:900; }
+.sambramo-ui-reco small { display:block; margin-top:3px; color:rgba(255,255,255,.48); font-size:7px; }
+.sambramo-ui-reco i {
+  position:absolute; right:7px; top:7px; width:18px; height:18px; display:grid; place-items:center;
+  border-radius:50%; background:#F4C85D; color:#2A085C;
+}
+.sambramo-ui-match {
+  margin-top:8px;
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px; border-radius:12px; background:rgba(244,200,93,.10);
+  color:rgba(255,255,255,.72); font-size:8px; line-height:1.4;
+}
+.sambramo-ui-profile {
+  display:flex; align-items:center; gap:10px; padding:12px;
+}
+.sambramo-ui-profile b { display:block; font-size:10px; }
+.sambramo-ui-profile span { margin-top:3px; color:rgba(255,255,255,.48); letter-spacing:.04em; text-transform:none; }
+.sambramo-ui-avatar {
+  width:38px; height:38px; display:grid; place-items:center; border-radius:12px;
+  background:linear-gradient(135deg,#F4C85D,#8d54b6); color:#211329; font-weight:900;
+}
+.sambramo-ui-products {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;
+}
+.sambramo-ui-products div { overflow:hidden; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.07); }
+.sambramo-ui-products img { display:block; width:100%; height:100px; object-fit:cover; }
+.sambramo-ui-products span,
+.sambramo-ui-products b { display:block; padding:7px 9px 0; font-size:8px; }
+.sambramo-ui-products b { padding-top:2px; padding-bottom:9px; color:#F4C85D; font-size:7px; }
+.sambramo-ui-catalog .sambramo-ui-button { margin-top:8px; }
+.sambramo-ui-payment { padding:18px; }
+.sambramo-ui-payment-head b { display:block; margin-top:5px; font-size:15px; }
+.sambramo-ui-pay { justify-content:space-between; padding:0 12px; }
+.sambramo-ui-pay div { display:flex; align-items:center; gap:8px; }
+.sambramo-ui-secure { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:9px; color:rgba(255,255,255,.55); font-size:7px; }
+.sambramo-ui-status {
+  margin-top:8px; display:flex; align-items:center; gap:7px; padding:10px 12px;
+  border-radius:12px; background:rgba(244,200,93,.10); color:#F4C85D; font-size:8px; font-weight:900;
+}
+.sambramo-ui-status b { margin-left:auto; color:white; }
+.sambramo-ui-checks { margin-top:7px; }
+.sambramo-ui-checks div {
+  display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.72); font-size:8px;
+}
+.sambramo-ui-checks div > span {
+  width:20px; height:20px; display:grid; place-items:center; border-radius:7px; background:rgba(244,200,93,.13); color:#F4C85D;
+}
+.sambramo-ui-number { font-size:7px; font-weight:900; }
+.sambramo-ui-celebrate { left:auto; right:7%; width:min(430px,38%); }
+.sambramo-ui-celebrate-badge {
+  display:inline-flex; align-items:center; gap:6px; padding:8px 11px; border-radius:999px;
+  background:#F4C85D; color:#211329; font-size:8px; font-weight:900; letter-spacing:.13em;
+}
+.sambramo-ui-celebrate-copy {
+  margin-top:10px; padding:22px; border-radius:22px; border:1px solid rgba(255,255,255,.17);
+  background:rgba(15,3,29,.70); backdrop-filter:blur(18px);
+}
+.sambramo-ui-celebrate-copy span { display:block; color:#F4C85D; font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
+.sambramo-ui-celebrate-copy b { display:block; margin-top:7px; font-family:Georgia,serif; font-size:28px; line-height:1; }
+.sambramo-ui-celebrate-copy small { display:block; margin-top:12px; color:rgba(255,255,255,.58); font-size:8px; }
+
+.sambramo-flow-scene {
+  height: clamp(440px, 48vw, 620px);
+  min-height:440px;
+}
+.sambramo-flow-scene:after {
+  content:'';
+  position:absolute; inset:0; pointer-events:none; z-index:3;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04), inset 0 -110px 130px rgba(8,0,15,.20);
+}
+.sambramo-flow-image { animation-duration: 6s; }
+.sambramo-flow-mock {
+  position:absolute; z-index:5; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(430px,42%); animation:sambramo-flow-panel-in .75s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes sambramo-flow-panel-in {
+  from { opacity:0; transform:translate(-50%,-46%) scale(.95); }
+  to { opacity:1; transform:translate(-50%,-50%) scale(1); }
+}
+.sambramo-flow-panel {
+  padding:20px; border:1px solid rgba(255,255,255,.18); border-radius:22px;
+  background:rgba(15,3,29,.82); box-shadow:0 28px 80px rgba(0,0,0,.36);
+  backdrop-filter:blur(20px); color:white;
+}
+.sambramo-flow-panel small {
+  display:block; color:#F4C85D; font-size:8px; font-weight:900; letter-spacing:.17em;
+}
+.sambramo-flow-panel > b {
+  display:block; margin:7px 0 13px; font-family:Georgia,serif; font-size:27px; line-height:1;
+}
+.sambramo-flow-panel > div {
+  display:flex; justify-content:space-between; gap:12px; padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.09); font-size:9px;
+}
+.sambramo-flow-panel > div span { color:rgba(255,255,255,.53); }
+.sambramo-flow-panel button {
+  width:100%; min-height:39px; margin-top:13px; border:0; border-radius:11px;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  background:#F4C85D; color:#211329; font-size:9px; font-weight:900;
+}
+.sambramo-phone-top { display:flex; justify-content:space-between; padding:0 12px 8px; color:white; font-size:8px; font-weight:900; letter-spacing:.13em; }
+.sambramo-recommend-panel em,
+.sambramo-payment-panel em,
+.sambramo-prepare-panel em {
+  display:flex; align-items:center; gap:6px; margin-top:10px; color:rgba(255,255,255,.55); font-size:7px; font-style:normal;
+}
+.sambramo-catalog-row {
+  display:flex; gap:9px; align-items:center; margin-top:7px; padding:7px;
+  border-radius:12px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.08);
+}
+.sambramo-catalog-row img { width:48px; height:48px; object-fit:cover; border-radius:9px; }
+.sambramo-catalog-row span { min-width:0; }
+.sambramo-catalog-row strong,
+.sambramo-catalog-row small { display:block; }
+.sambramo-catalog-row strong { font-size:8px; }
+.sambramo-catalog-row small { margin-top:3px; color:rgba(255,255,255,.45); font-size:7px; }
+.sambramo-progress { height:5px; margin:5px 0 8px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.10); }
+.sambramo-progress span { display:block; height:100%; border-radius:inherit; background:#F4C85D; animation:sambramo-progress 4.5s ease-in-out infinite alternate; }
+@keyframes sambramo-progress { from { width:18% !important; } to { width:82% !important; } }
+
+.sambramo-gps {
+  position:relative; height:330px; overflow:hidden; border-radius:24px;
+  border:1px solid rgba(255,255,255,.16); background:#191b29;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+.sambramo-gps-roads {
+  position:absolute; inset:-20%;
+  opacity:.8;
+  background:
+    linear-gradient(34deg, transparent 42%, rgba(255,255,255,.10) 42.4%, rgba(255,255,255,.10) 43%, transparent 43.4%),
+    linear-gradient(142deg, transparent 48%, rgba(255,255,255,.08) 48.4%, rgba(255,255,255,.08) 49%, transparent 49.4%),
+    linear-gradient(76deg, transparent 57%, rgba(255,255,255,.07) 57.4%, rgba(255,255,255,.07) 58%, transparent 58.4%);
+}
+.sambramo-gps-route {
+  position:absolute; left:12%; right:13%; top:46%; height:4px; transform:rotate(-8deg);
+  border-radius:99px; background:linear-gradient(90deg,#F4C85D 0 72%,rgba(255,255,255,.18) 72%);
+  box-shadow:0 0 20px rgba(244,200,93,.25);
+}
+.sambramo-gps-route:after {
+  content:''; position:absolute; inset:-6px 0; border:1px dashed rgba(255,255,255,.25); border-left:0; border-right:0; border-radius:99px;
+}
+.sambramo-gps-route span { position:absolute; width:9px; height:9px; border-radius:50%; background:#F4C85D; top:-3px; }
+.sambramo-gps-route span:nth-child(1){left:22%}.sambramo-gps-route span:nth-child(2){left:48%}.sambramo-gps-route span:nth-child(3){left:70%}
+.sambramo-gps-origin,.sambramo-gps-destination,.sambramo-gps-vehicle {
+  position:absolute; display:grid; place-items:center; border-radius:50%;
+}
+.sambramo-gps-origin,.sambramo-gps-destination { width:34px; height:34px; background:#fff; color:#2A085C; box-shadow:0 8px 25px rgba(0,0,0,.25); }
+.sambramo-gps-origin { left:9%; top:54%; }
+.sambramo-gps-destination { right:8%; top:35%; }
+.sambramo-gps-vehicle {
+  left:63%; top:39%; width:44px; height:44px; background:#F4C85D; color:#211329;
+  box-shadow:0 0 0 10px rgba(244,200,93,.14), 0 0 35px rgba(244,200,93,.38);
+  animation:sambramo-gps-move 4.6s ease-in-out infinite alternate;
+}
+@keyframes sambramo-gps-move {
+  from { transform:translate3d(-55px,28px,0) rotate(-4deg); }
+  to { transform:translate3d(36px,-12px,0) rotate(4deg); }
+}
+.sambramo-gps-info {
+  position:absolute; left:18px; right:18px; bottom:18px; padding:13px 15px;
+  border:1px solid rgba(255,255,255,.16); border-radius:16px; background:rgba(15,3,29,.80);
+  backdrop-filter:blur(18px); color:white;
+}
+.sambramo-gps-info div { color:#F4C85D; font-size:7px; font-weight:900; letter-spacing:.13em; }
+.sambramo-gps-info b { display:block; margin-top:5px; font-size:11px; }
+.sambramo-gps-info small,.sambramo-gps-info strong { display:block; margin-top:3px; font-size:7px; color:rgba(255,255,255,.52); }
+.sambramo-gps-info strong { color:#F4C85D; }
+.sambramo-live-dot { display:inline-block; width:6px; height:6px; margin-right:4px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 4px rgba(74,222,128,.12); animation:sambramo-live 1.4s ease-in-out infinite; }
+@keyframes sambramo-live { 50% { opacity:.35; transform:scale(.75); } }
+.sambramo-celebrate-card {
+  display:flex; flex-direction:column; align-items:flex-start; width:min(390px,100%); padding:24px;
+  border:1px solid rgba(255,255,255,.18); border-radius:24px; background:rgba(15,3,29,.72);
+  backdrop-filter:blur(18px); box-shadow:0 28px 80px rgba(0,0,0,.35);
+}
+.sambramo-celebrate-card > div { width:42px; height:42px; display:grid; place-items:center; border-radius:14px; background:#F4C85D; color:#211329; }
+.sambramo-celebrate-card small { margin-top:18px; color:#F4C85D; font-size:8px; font-weight:900; letter-spacing:.16em; }
+.sambramo-celebrate-card b { margin-top:7px; font-family:Georgia,serif; font-size:31px; line-height:1; }
+.sambramo-celebrate-card span { margin-top:12px; color:rgba(255,255,255,.55); font-size:8px; }
+
+.sambramo-flow-copy {
+  min-height:92px;
+}
+.sambramo-flow-copy h3 { letter-spacing:-.025em; }
+
+/* Compact rhythm across the public website. */
+.sambramo-site section {
+  scroll-margin-top:70px;
+}
+.sambramo-site > main > section {
+  padding-top:52px;
+  padding-bottom:52px;
+}
+.sambramo-site > main > section:first-child {
+  padding-top:0;
+  padding-bottom:0;
+}
+.sambramo-site .sambramo-flow {
+  padding-top:44px;
+  padding-bottom:44px;
+}
+.sambramo-site .sambramo-site-tight { gap:14px !important; }
+.sambramo-site .sambramo-reveal { transition-duration:.55s; }
+.sambramo-site .sambramo-hero-v2 .sambramo-hero-scene + .sambramo-hero-copy-v2 { margin-bottom:0; }
+
+@media (max-width: 767px) {
+  .sambramo-hero-scene {
+    height: min(72vh, 610px);
+    min-height: 455px;
+    border-radius:20px;
+  }
+  .sambramo-scene-ui,
+  .sambramo-ui-celebrate {
+    left:5%;
+    right:5%;
+    top:auto;
+    bottom:13%;
+    width:auto;
+    transform:none;
+  }
+  .sambramo-ui-celebrate { right:5%; }
+  @keyframes sambramo-ui-in-mobile {
+    from { opacity:0; transform:translate3d(0,18px,0) scale(.97); }
+    to { opacity:1; transform:none; }
+  }
+  .sambramo-scene-ui { animation-name:sambramo-ui-in-mobile; }
+  .sambramo-ui-card { padding:15px; }
+  .sambramo-ui-card > strong { font-size:22px; }
+  .sambramo-ui-reco-grid { gap:5px; }
+  .sambramo-ui-reco { min-height:75px; padding:9px; }
+  .sambramo-ui-products img { height:78px; }
+  .sambramo-hero-copy-v2 h1 { font-size:clamp(2.7rem,15vw,4.5rem); }
+  .sambramo-flow-scene { height:500px; min-height:500px; border-radius:20px; }
+  .sambramo-flow-mock { width:min(390px,88%); }
+  .sambramo-gps { height:300px; }
+  .sambramo-flow-copy { min-height:0; }
+  .sambramo-flow-copy > div:last-child { width:100%; }
+  .sambramo-site > main > section { padding-top:40px; padding-bottom:40px; }
+  .sambramo-site .sambramo-flow { padding-top:36px; padding-bottom:36px; }
+  .sambramo-site .sambramo-hero-v2 { padding-bottom:0; }
+}
+@media (max-width: 390px) {
+  .sambramo-hero-scene { min-height:430px; height:76vh; }
+  .sambramo-ui-card > strong { font-size:20px; }
+  .sambramo-ui-row { padding:8px 0; }
+  .sambramo-ui-reco-grid { display:block; }
+  .sambramo-ui-reco { min-height:0; margin-top:5px; display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:6px; }
+  .sambramo-ui-reco span { margin-top:0; }
+  .sambramo-ui-reco small { margin-top:0; }
+  .sambramo-flow-scene { height:475px; min-height:475px; }
+  .sambramo-flow-panel > b { font-size:23px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sambramo-hero-scene-image,
+  .sambramo-flow-image,
+  .sambramo-scene-ui,
+  .sambramo-flow-mock,
+  .sambramo-gps-vehicle,
+  .sambramo-progress span,
+  .sambramo-live-dot { animation:none !important; }
+}
