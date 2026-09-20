@@ -6,6 +6,7 @@ import {
   Truck, Users, UtensilsCrossed, X, Building2, Gem
 } from 'lucide-react'
 import '../public-site.css'
+import '../public-site-v3.css'
 
 const IMG = {
   hero: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=86',
@@ -107,14 +108,14 @@ function AppCTA({ role = 'customer', children, className = '', style }) {
 
 function Nav() {
   const [open, setOpen] = useState(false)
-  const links = [['#services', 'Services'], ['#planner', 'Plan'], ['#how-it-works', 'How it works'], ['#partners', 'Partners']]
+  const links = [['#product', 'Product'], ['#services', 'Services'], ['#planner', 'Try it'], ['#partners', 'Partners']]
   return (<header className="sam27-nav">
     <div className="sam27-shell sam27-nav-inner">
       <Brand />
       <nav className="sam27-navlinks">{links.map(([href, label]) => <a key={href} href={href}>{label}</a>)}</nav>
       <div className="sam27-nav-actions">
-        <AppCTA role="partner" className="sam27-btn sam27-btn-ghost sam27-hide-mobile">For partners</AppCTA>
-        <AppCTA className="sam27-btn sam27-btn-primary sam27-hide-mobile">Join launch <ArrowRight size={13} /></AppCTA>
+        <AppCTA role="partner" className="sam27-btn sam27-btn-ghost sam27-hide-mobile">Partner App</AppCTA>
+        <AppCTA className="sam27-btn sam27-btn-primary sam27-hide-mobile">Customer App <ArrowRight size={13} /></AppCTA>
         <button className="sam27-menu" onClick={() => setOpen((value) => !value)} aria-label="Menu">{open ? <X size={18} /> : <Menu size={18} />}</button>
       </div>
     </div>
@@ -128,7 +129,7 @@ function Hero() {
       <span className="sam27-eyebrow">BENGALURU · LAUNCHING SOON</span>
       <h1>Plan the <em>celebration.</em><br />Not the chaos.</h1>
       <p className="sam27-hero-copy">Sambramo connects the people, services and movement behind an event in one experience — from your first idea to the final delivery.</p>
-      <div className="sam27-hero-actions"><a href="#planner" className="sam27-btn sam27-btn-primary">Build your event <ArrowRight size={16} /></a><AppCTA role="partner" className="sam27-btn" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.16)' }}>Join as a partner</AppCTA></div>
+      <div className="sam27-hero-actions"><a href="#planner" className="sam27-btn sam27-btn-primary">Open Customer App <ArrowRight size={16} /></a><AppCTA role="partner" className="sam27-btn" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.16)' }}>Open Partner App</AppCTA></div>
       <div className="sam27-proof"><span><Check size={12} /> Bengaluru first</span><span><Check size={12} /> 26+ service categories</span><span><Check size={12} /> Event supply chain + logistics</span></div>
     </div>
     <div className="sam27-hero-visual">
@@ -140,6 +141,76 @@ function Hero() {
 }
 
 function TrustStrip() { return <div className="sam27-strip"><div className="sam27-shell sam27-strip-inner"><strong>One event. One connected flow.</strong><span>Discover · compare · book · move · deliver</span></div></div> }
+
+
+function ProductEntry() {
+  const [role, setRole] = useState('customer')
+  const customerSteps = [
+    ['01', 'Create your occasion', 'Tell Sambramo what you are celebrating and what matters to you.'],
+    ['02', 'Discover the right partners', 'Compare relevant services around one connected event brief.'],
+    ['03', 'Book & confirm', 'Move from discovery toward confirmed services without losing the event context.'],
+    ['04', 'Track the movement', 'Keep people, goods and delivery work tied to the event timeline.'],
+  ]
+  const partnerSteps = [
+    ['01', 'Receive the right demand', 'See opportunities matched to your service and event context.'],
+    ['02', 'Review & respond', 'Understand scope, date, location and requirements before responding.'],
+    ['03', 'Manage the work', 'Keep availability, status and customer context together.'],
+    ['04', 'Deliver on event day', 'Stay connected from acceptance through completion and handover.'],
+  ]
+  const steps = role === 'customer' ? customerSteps : partnerSteps
+  return (
+    <section id="product" className="sam27-section sam27-product">
+      <div className="sam27-shell">
+        <div className="sam27-product-head">
+          <div>
+            <span className="sam27-eyebrow">ENTER SAMBRAMO</span>
+            <h2>This is a product.<br />Not another brochure.</h2>
+          </div>
+          <p className="sam27-product-copy">Choose the journey you care about. Every section below is designed to move you toward the actual Sambramo experience.</p>
+        </div>
+        <div className="sam27-journey-tabs">
+          <button className={role === 'customer' ? 'sam27-journey-tab active' : 'sam27-journey-tab'} onClick={() => setRole('customer')}>Customer App</button>
+          <button className={role === 'partner' ? 'sam27-journey-tab active' : 'sam27-journey-tab'} onClick={() => setRole('partner')}>Partner App</button>
+        </div>
+        <div className="sam27-product-shell">
+          <div className="sam27-product-stage">
+            <div className="sam27-stage-top">
+              <span>{role === 'customer' ? 'CUSTOMER APP' : 'PARTNER APP'}</span>
+              <b>COMING SOON</b>
+            </div>
+            <div className="sam27-app-screen">
+              <div className="sam27-app-screen-top">
+                <div><span>{role === 'customer' ? 'GOOD AFTERNOON' : 'TODAY'}</span><strong>{role === 'customer' ? 'What are you planning?' : 'Your event work'}</strong></div>
+                <span className="sam27-app-avatar">{role === 'customer' ? 'M' : 'P'}</span>
+              </div>
+              <div className="sam27-app-action">
+                <div><span>{role === 'customer' ? 'START WITH AN OCCASION' : 'NEW OPPORTUNITY'}</span><strong>{role === 'customer' ? 'Birthday · 250 guests' : 'Wedding · 400 guests'}</strong></div>
+                <button>{role === 'customer' ? 'Start' : 'Review'}</button>
+              </div>
+              <div className="sam27-app-list">
+                {steps.slice(0,3).map(([num,title]) => (
+                  <div className="sam27-app-row" key={num}><span><b style={{ color:'#2A085C',fontSize:9 }}>{num}</b>{title}</span><small>{role === 'customer' ? 'Explore' : 'Open'}</small></div>
+                ))}
+              </div>
+              <div className="sam27-app-footer"><span><span style={{color:'#2A085C'}}>●</span> Connected journey</span><strong>{role === 'customer' ? 'Event 01 → 05' : 'Work 01 → 04'}</strong></div>
+            </div>
+          </div>
+          <div className="sam27-product-features">
+            {steps.map(([num,title,body]) => (
+              <button className="sam27-product-feature" key={num} onClick={() => document.getElementById('planner')?.scrollIntoView({behavior:'smooth'})}>
+                <i>{num}</i><div><h4>{title}</h4><p>{body}</p></div><span><ArrowRight size={14}/></span>
+              </button>
+            ))}
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:3}}>
+              <AppCTA className="sam27-btn sam27-btn-primary">{role === 'customer' ? 'Customer App' : 'Join launch'} <ArrowRight size={14}/></AppCTA>
+              <AppCTA role={role === 'customer' ? 'partner' : 'customer'} className="sam27-btn sam27-btn-ghost">{role === 'customer' ? 'Partner App' : 'Customer App'}</AppCTA>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 function Services() {
   const extra = ['Invites', 'Mehendi', 'Entertainment', 'Furniture', 'Lighting', 'Flowers', 'Staffing', 'Gifting', 'Packaging', 'Last-mile']
@@ -229,5 +300,5 @@ function Footer() {
 }
 
 export default function PublicSite() {
-  return (<div className="sam27-site"><Nav /><main><Hero /><TrustStrip /><Services /><Planner /><HowItWorks /><Movement /><Partners /><FinalCTA /></main><Footer /></div>)
+  return (<div className="sam27-site"><Nav /><main><Hero /><TrustStrip /><ProductEntry /><Services /><Planner /><HowItWorks /><Movement /><Partners /><FinalCTA /></main><Footer /></div>)
 }
