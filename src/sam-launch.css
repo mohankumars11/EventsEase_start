@@ -97,3 +97,7 @@ html,body,#root{margin:0;padding:0;width:100%;min-width:0;overflow-x:hidden}
  .sam-topbar-inner{padding:7px 0;font-size:8px;text-align:center}
 }
 @media(max-width:390px){.sam-brand-sub{font-size:6px}.sam-hero h1{font-size:37px}.sam-phone{width:100%}.sam-carousel-card{grid-template-columns:72px 1fr}.sam-carousel-card img{width:72px;height:92px}.sam-carousel-card h3{font-size:15px}}
+
+.sam-phone-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;color:#8E8398;font-size:8px}.sam-phone-footer button{width:25px;height:25px;border:1px solid #E9E1F0;border-radius:8px;background:#fff;color:#2A085C;display:grid;place-items:center;cursor:pointer}.sam-phone-footer span{font-weight:800}
+.sam-head-actions .sam-capture{white-space:nowrap}
+@media(max-width:640px){.sam-head-actions .sam-capture{display:inline-flex}.sam-brand-name{font-size:15px}.sam-brand-sub{max-width:190px;overflow:hidden;text-overflow:ellipsis}}
