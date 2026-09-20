@@ -684,7 +684,7 @@ function Footer() {
   )
 }
 
-export default function PublicSiteSEO() {
+function PublicSiteSEO() {
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, '') || '/'
     const pages = {
@@ -777,7 +777,7 @@ export default function PublicSiteSEO() {
   return null
 }
 
-function PublicSite() {
+export default function PublicSite() {
   const [earlyOpen, setEarlyOpen] = useState(false)
   return (
     <>
