@@ -42,6 +42,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM } from './_lib/pricing.bundle.js'
+import { sweepCalendarCoverage } from './_lib/calendarSweep.js'
+import { notifyPartners } from './_lib/fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -170,6 +172,20 @@ export default async function handler(req, res) {
       line: line.line_id, trade: line.trade,
       outcome: `wave ${wave.wave} · ${radiusM / 1000}km · ${matches.length} notified`,
     })
+  }
+
+  /* ── The calendar sweep ─────────────────────────────────────────
+     Last, and deliberately so. Everything above is a customer waiting
+     on a spinner; this is a partner being reminded about next month.
+     If it throws, the dispatch work above has already been committed
+     and the response should still describe it.
+
+     It gets its own cron slot the day this project is not on Hobby;
+     until then see api/_lib/calendarSweep.js and CRON_NOTE.md. */
+  try {
+    result.calendar = await sweepCalendarCoverage(db, notifyPartners)
+  } catch (err) {
+    result.calendar = { error: String(err?.message ?? err) }
   }
 
   return res.status(200).json(result)

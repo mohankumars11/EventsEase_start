@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote,
-  MapPin, IndianRupee, Check, Loader2, AlertTriangle,
+  MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange,
 } from 'lucide-react'
 import {
   STATUS, dayStatus, hoursFor, hoursLabel, clockLabel, reasonLabel,
 } from '../../lib/availability'
 import { istTodayISO } from '../../lib/istTime'
+import { INTEREST_FLOOR } from '../../lib/demand'
 
 /**
  * One day, in full, and the only place a day is edited.
@@ -84,6 +85,8 @@ export default function DayDetailSheet({
   pendingOnDay = [],
   onSetDay,
   onClearDay,
+  onApplyToRange,
+  interestOnDay = null,
   onClose,
 }) {
   const row = availability[date] ?? null
@@ -134,6 +137,11 @@ export default function DayDetailSheet({
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
   })
   const blockingBookedDay = status === 'BLOCKED' && jobsOnDay.length > 0
+
+  /* A count of real enquiries, or nothing. INTEREST_FLOOR exists because
+     "1 enquiry" printed on a date reads as "nobody wants this" — the
+     same reasoning that governs the customer-facing badge. */
+  const asking = (interestOnDay?.total ?? 0) >= INTEREST_FLOOR ? interestOnDay.total : 0
 
   async function save() {
     if (busy) return
@@ -399,10 +407,47 @@ export default function DayDetailSheet({
                 </p>
               )}
 
+              {/* Only when blocking, and only when the number is real.
+                  A demand count shown while the partner is marking
+                  themselves AVAILABLE is encouragement; shown while they
+                  are blocking, it is the one fact that might change
+                  their mind. */}
+              {status === 'BLOCKED' && asking > 0 && (
+                <p data-signal="demand"
+                   className="flex items-start gap-2 rounded-[16px] bg-rose-50 px-3.5 py-3 text-[12px] leading-snug text-rose-900 ring-1 ring-rose-200">
+                  <AlertTriangle size={15} className="mt-px shrink-0" />
+                  <span>
+                    <strong>{asking} {asking === 1 ? 'family has' : 'families have'} asked about this date.</strong>{' '}
+                    Block it and none of those enquiries can reach you.
+                  </span>
+                </p>
+              )}
+
               {error && (
                 <p className="rounded-[16px] bg-rose-50 px-3.5 py-3 text-[12px] font-bold leading-snug text-rose-800 ring-1 ring-rose-200">
                   {error}
                 </p>
+              )}
+
+              {/* Tapping one date and meaning "and the week after it" is
+                  the commonest next thought. Carries the current choice
+                  across so the range sheet opens on the same answer. */}
+              {onApplyToRange && (
+                <button
+                  type="button"
+                  onClick={() => onApplyToRange(status)}
+                  className="flex w-full items-center justify-between gap-2 rounded-[16px] bg-plum-50 px-3.5 py-3 text-left ring-1 ring-plum-100"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[12.5px] font-extrabold text-plum-900">
+                      Apply to a range of dates
+                    </span>
+                    <span className="mt-0.5 block text-[11.5px] leading-snug text-plum-700/80">
+                      Say the same thing about every day from here onwards.
+                    </span>
+                  </span>
+                  <CalendarRange size={16} className="shrink-0 text-plum-700" />
+                </button>
               )}
 
               <div className="flex gap-2 pt-0.5">

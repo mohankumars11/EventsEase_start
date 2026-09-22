@@ -75,6 +75,7 @@ export { POLICY_VERSION, instantCancellationRung, CANCELLATION_LADDER } from ${J
 export { specModeFor, DISCUSS_SERVICES, QUOTE_ONLY_SERVICES, setupSpec } from ${JSON.stringify(join(ROOT, 'src/data/instantSetups.js'))}
 export { TAX } from ${JSON.stringify(join(ROOT, 'src/config/legal.js'))}
 export { optionMultiplier, optionSummary, defaultOptions, optionsFor } from ${JSON.stringify(join(ROOT, 'src/data/instantOptions.js'))}
+export { coverageOf, LEVEL as ALERT_LEVEL } from ${JSON.stringify(join(ROOT, 'src/lib/calendarAlerts.js'))}
 `
 
 /**

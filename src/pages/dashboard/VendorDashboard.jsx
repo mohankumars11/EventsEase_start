@@ -76,6 +76,10 @@ export default function VendorDashboard() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
 
+  /* Session-scoped, and deliberately kept alongside the durable one.
+     Pressing "I am open until then" writes a date to the vendor row; this
+     only stops the card flickering back in the moment between the press
+     and the refetch. */
   const [calendarDismissed, setCalendarDismissed] = useState(false)
   /* The bell's count. Lives here rather than inside JobsHeader so the
      header stays a presentational strip, and so the same number can
@@ -468,8 +472,17 @@ export default function VendorDashboard() {
       {tab === 'offers' && !calendarDismissed && (
         <CalendarNudge
           availability={availability}
+          weeklyRules={weeklyRules}
+          vendor={vendor}
           onOpen={() => { setTab('availability'); setCalendarDismissed(true) }}
-          onDismiss={() => setCalendarDismissed(true)}
+          /* Recorded, not just dismissed. `calendar_reviewed_through` has
+             been on the vendors table since 096 with nothing writing to
+             it; a failed write costs the partner nothing worse than the
+             card returning, so it is not worth an error state. */
+          onDismiss={through => {
+            setCalendarDismissed(true)
+            updateVendor({ calendar_reviewed_through: through }).catch(() => {})
+          }}
         />
       )}
 

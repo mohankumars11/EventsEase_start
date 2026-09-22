@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
-import { CalendarDays, ArrowRight } from 'lucide-react'
+import { CalendarDays, ArrowRight, Check } from 'lucide-react'
+import { istTodayISO } from '../../lib/istTime'
+import { coverageOf, LEVEL } from '../../lib/calendarAlerts'
 
 /**
- * "Tell us when you cannot work."
+ * "Your calendar is set through 30 October."
  *
  * ══════════════════════════════════════════════════════════════════════
  * WHY THIS IS NOT A NAG
@@ -21,43 +23,56 @@ import { CalendarDays, ArrowRight } from 'lucide-react'
  * they are already booked, accepts one by reflex, cancels, and collects
  * a strike for it.
  *
- * That is the sentence on the card, because it is the actual cost.
- *
  * ══════════════════════════════════════════════════════════════════════
- * WHAT COUNTS AS OUT OF DATE
+ * WHAT CHANGED: A DISTANCE, NOT A YES OR NO
  * ══════════════════════════════════════════════════════════════════════
  *
- * Nothing marked in the next 30 days. Not "never touched" — a partner
- * who genuinely has an open month is right to have an empty calendar and
- * should not be told off for it, which is why this can be dismissed for
- * the session and why it never appears twice in one sitting.
+ * This used to ask one question — is there anything at all marked in the
+ * next thirty days — and it had two failures at the same time.
  *
- * The threshold is deliberately generous. A card that fires on a
- * partner who blocked one day last week would be wrong more often than
- * right, and being wrong is what teaches people to ignore it.
+ * It fired at a partner who had set a standing week. Somebody who told
+ * us once that they never work Sundays has told us about every Sunday
+ * there will ever be, and asking them to repeat it monthly is asking for
+ * our convenience, not theirs.
+ *
+ * And it went quiet the moment a single date was marked. A partner who
+ * blocked one day in October was treated as fully up to date, for the
+ * rest of the year, on the strength of one tap.
+ *
+ * `coverageOf` in lib/calendarAlerts.js answers the better question:
+ * how far ahead does this calendar actually say anything? Weddings are
+ * booked months out, so a calendar that stops in nine days is losing the
+ * partner work whatever is written in those nine days.
+ *
+ * ── Dismissal is remembered now ─────────────────────────────────────
+ * It used to be `useState(false)` in the dashboard, so "My month is
+ * open" lasted until the next reload and the card came straight back.
+ * `vendors.calendar_reviewed_through` has existed since migration 096
+ * and nothing has written to it since the old calendar tab was retired;
+ * pressing the button now records the date they confirmed through, which
+ * is a fact worth keeping rather than a flag worth forgetting.
  */
+export default function CalendarNudge({
+  availability, weeklyRules = [], vendor = null, onOpen, onDismiss,
+}) {
+  const todayISO = istTodayISO()
 
-const DAY = 86400000
-const WINDOW_DAYS = 30
+  const coverage = useMemo(
+    () => coverageOf({ availability, weeklyRules, todayISO }),
+    [availability, weeklyRules, todayISO])
 
-export default function CalendarNudge({ availability, onOpen, onDismiss }) {
-  const stale = useMemo(() => {
-    const rows = Object.values(availability ?? {})
-    if (!rows.length) return true
+  /* What the partner last confirmed. A confirmation that has since been
+     overtaken by the calendar is no longer a reason to stay quiet. */
+  const confirmedThrough = vendor?.calendar_reviewed_through ?? null
+  const confirmedAhead = confirmedThrough && confirmedThrough > todayISO
+    ? Math.round((new Date(`${confirmedThrough}T00:00:00Z`) - new Date(`${todayISO}T00:00:00Z`)) / 86400000)
+    : 0
 
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const horizon = today.getTime() + WINDOW_DAYS * DAY
-
-    // Anything said about a day inside the window counts as up to date,
-    // blocked or limited alike — the point is that they told us.
-    return !rows.some(a => {
-      if (!a?.slot_date) return false
-      const t = new Date(`${a.slot_date}T00:00:00`).getTime()
-      return t >= today.getTime() && t <= horizon
-    })
-  }, [availability])
-
-  if (!stale) return null
+  /* Only the warn level earns a card. The informational level of
+     `coverageOf` is for the calendar screen itself, where the partner
+     came to think about dates anyway. */
+  if (coverage.level !== LEVEL.WARN) return null
+  if (confirmedAhead >= 30) return null
 
   return (
     <div className="mb-4 rounded-[22px] bg-plum-600 p-4 text-white">
@@ -67,7 +82,9 @@ export default function CalendarNudge({ availability, onOpen, onDismiss }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[14.5px] font-extrabold leading-snug">
-            Block the days you are already busy
+            {coverage.throughISO
+              ? `Your calendar stops at ${pretty(coverage.throughISO)}`
+              : 'Your calendar is empty'}
           </p>
           {/* The cost, not the instruction. "Please update your calendar"
               says nothing a partner can weigh; this says what happens if
@@ -75,7 +92,8 @@ export default function CalendarNudge({ availability, onOpen, onDismiss }) {
           <p className="mt-1 text-[12.5px] leading-relaxed text-white/85">
             We will keep offering you jobs on days you cannot work. Accepting
             one and cancelling later costs you a strike — three in 90 days and
-            the account is suspended.
+            the account is suspended. Most celebrations are booked weeks
+            ahead, so the further out you go, the more you are offered.
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -84,18 +102,30 @@ export default function CalendarNudge({ availability, onOpen, onDismiss }) {
               onClick={onOpen}
               className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-4 py-2 text-[13px] font-extrabold text-plum-950 transition active:scale-[0.98]"
             >
-              Open my calendar <ArrowRight size={14} />
+              Set my dates <ArrowRight size={14} />
             </button>
+            {/* Records a date rather than setting a flag: "I am open for
+                the next sixty days" is a real statement about the
+                calendar, and it is worth keeping. */}
             <button
               type="button"
-              onClick={onDismiss}
-              className="rounded-full px-3 py-2 text-[12.5px] font-bold text-white/70"
+              onClick={() => onDismiss?.(addDays(todayISO, 60))}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-bold text-white/70"
             >
-              My month is open
+              <Check size={13} /> I am open until then
             </button>
           </div>
         </div>
       </div>
     </div>
   )
+}
+
+const pretty = iso => new Date(`${iso}T00:00:00Z`)
+  .toLocaleDateString('en-IN', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+
+const addDays = (iso, n) => {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
 }

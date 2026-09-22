@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin,
-  CalendarDays, RotateCw,
+  CalendarDays, RotateCw, CalendarCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
 import { useAsyncData } from '../../hooks/useAsyncData'
 import { istTodayISO } from '../../lib/istTime'
 import { STATUS, dayStatus } from '../../lib/availability'
+import { indexInterestRows } from '../../lib/demand'
 import ScreenState from '../ui/ScreenState'
 import MonthGrid, { CalendarLegend } from './MonthGrid'
 import DayDetailSheet from './DayDetailSheet'
-import BlockDatesSheet from './BlockDatesSheet'
+import AvailabilityRangeSheet from './AvailabilityRangeSheet'
 import RecurringAvailability from './RecurringAvailability'
 import AgendaView from './AgendaView'
 
@@ -62,7 +63,10 @@ export default function CalendarMonth({
   const todayISO = istTodayISO()
   const [view, setView] = useState('month')
   const [selected, setSelected] = useState(null)
-  const [blocking, setBlocking] = useState(false)
+  /* null when closed; otherwise { from, mode } — so the same sheet serves
+     the header button, the tools list, and "apply to a range" inside a
+     day. */
+  const [range, setRange] = useState(null)
   const [recurring, setRecurring] = useState(false)
   const [cursor, setCursor] = useState(() => {
     const d = new Date(`${todayISO}T00:00:00Z`)
@@ -75,7 +79,13 @@ export default function CalendarMonth({
     from.setUTCDate(from.getUTCDate() - 120)
     const fromISO = from.toISOString().slice(0, 10)
 
-    const [jobsRes, offersRes] = await Promise.all([
+    /* How far ahead the demand read goes. Matches the 90-day cap on a
+       range, so every date the partner can reach in one save has an
+       answer. */
+    const horizon = new Date(`${todayISO}T00:00:00Z`)
+    horizon.setUTCDate(horizon.getUTCDate() + 120)
+
+    const [jobsRes, offersRes, demandRes] = await Promise.all([
       supabase.from('partner_jobs')
         .select('line_id, service_name, occasion_name, trade, status, event_date, time_note, area_label, city, distance_m, partner_amount_paise, is_funded')
         .eq('vendor_id', vendorId)
@@ -86,6 +96,14 @@ export default function CalendarMonth({
         .eq('vendor_id', vendorId)
         .eq('status', 'OFFERED')
         .gt('expires_at', new Date().toISOString()),
+      /* What customers have actually asked about, so a block warning can
+         name a number instead of guessing. Granted to `authenticated` in
+         036; the customer surface reads the same function. */
+      supabase.rpc('date_demand', {
+        p_from: todayISO,
+        p_to: horizon.toISOString().slice(0, 10),
+        p_city: null,
+      }),
     ])
     /* Thrown, not swallowed — useAsyncData turns it into an error state
        and keeps whatever was already on screen. */
@@ -96,12 +114,19 @@ export default function CalendarMonth({
          "pending" count, the month keeps its bookings. The inbox is
          where offers are answered anyway. */
       pending: offersRes.error ? [] : (offersRes.data ?? []),
+      /* Survivable too, and more so: without it the block warning simply
+         loses its demand line. A calendar that refused to open because
+         an analytics function was missing would be a worse trade than
+         one warning fewer. */
+      interest: demandRes?.error ? [] : (demandRes?.data ?? []),
     }
   }, [vendorId, todayISO])
 
   const { data, loading, error, retry } = useAsyncData(read, [vendorId, todayISO])
   const jobs = data?.jobs ?? []
   const pending = data?.pending ?? []
+  const interestByDate = useMemo(
+    () => indexInterestRows(data?.interest ?? []), [data?.interest])
 
   const byDay = useMemo(() => {
     const m = {}
@@ -140,11 +165,13 @@ export default function CalendarMonth({
             Manage your availability, block dates and stay in control of your bookings.
           </p>
         </div>
+        {/* Was "Block dates", and that was the whole bias: the only bulk
+            action the calendar offered was the one that stops work. */}
         <button
-          type="button" onClick={() => setBlocking(true)}
+          type="button" onClick={() => setRange({ from: null, mode: 'OPEN' })}
           className="flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-plum-700 px-4 text-[12.5px] font-extrabold text-white"
         >
-          <CalendarPlus size={14} /> Block dates
+          <CalendarPlus size={14} /> Set dates
         </button>
       </header>
 
@@ -235,8 +262,12 @@ export default function CalendarMonth({
           Availability tools
         </p>
         <div className="overflow-hidden rounded-[22px] bg-white ring-1 ring-ink/[0.06]">
-          <Tool icon={CalendarRange} title="Block multiple dates"
-                hint="Select a date range" onClick={() => setBlocking(true)} />
+          <Tool icon={CalendarCheck} title="Mark a range available"
+                hint="E.g. 25 Sep to 31 Oct"
+                onClick={() => setRange({ from: null, mode: 'OPEN' })} />
+          <Tool icon={CalendarRange} title="Block a range of dates"
+                hint="Away, or committed elsewhere"
+                onClick={() => setRange({ from: null, mode: 'BLOCKED' })} />
           <Tool icon={Repeat} title="Set your usual week"
                 hint="E.g. never on Sundays" onClick={() => setRecurring(true)} />
           {/* Honest rather than aspirational: there is no Google
@@ -312,15 +343,27 @@ export default function CalendarMonth({
           pendingOnDay={pendingByDay[selected] ?? []}
           onSetDay={onSetDay}
           onClearDay={iso => onClearDays([iso])}
+          interestOnDay={interestByDate.get(selected) ?? null}
+          /* Tapping a date and wanting "and the six days after it" is the
+             commonest thing a partner does next. The day sheet closes and
+             hands its date over as the start of the range. */
+          onApplyToRange={mode => { setRange({ from: selected, mode }); setSelected(null) }}
           onClose={() => setSelected(null)}
         />
       )}
 
-      {blocking && (
-        <BlockDatesSheet
+      {range && (
+        <AvailabilityRangeSheet
           jobs={jobs}
+          availability={availability}
+          weeklyRules={weeklyRules}
+          interestByDate={interestByDate}
+          maxPerDay={maxPerDay}
+          initialFrom={range.from}
+          initialMode={range.mode}
           onSetRange={onSetRange}
-          onClose={() => setBlocking(false)}
+          onClearDays={onClearDays}
+          onClose={() => setRange(null)}
         />
       )}
 

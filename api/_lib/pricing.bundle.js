@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: c27b0c8657a11cc7
+// inputs: 85ef412d1cedd5f5
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4763,7 +4763,42 @@ function defaultOptions(serviceId) {
   }
   return out;
 }
+
+// src/lib/istTime.js
+var LEAD_MS = 24 * 3600 * 1e3;
+var TRAIL_MS = 36 * 3600 * 1e3;
+
+// src/lib/calendarAlerts.js
+var LEVEL = { INFO: "info", WARN: "warn", RED: "red" };
+var RANK = { [LEVEL.INFO]: 0, [LEVEL.WARN]: 1, [LEVEL.RED]: 2 };
+var parse = (s) => /* @__PURE__ */ new Date(`${s}T00:00:00Z`);
+var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
+var pretty = (s) => parse(s).toLocaleDateString(
+  "en-IN",
+  { day: "numeric", month: "short", timeZone: "UTC" }
+);
+function coverageOf({ availability = {}, weeklyRules = [], todayISO, horizonDays = 180 }) {
+  const stated = Object.keys(availability ?? {}).filter((d) => d >= todayISO).sort();
+  const throughISO = stated.length ? stated[stated.length - 1] : null;
+  const days = throughISO ? Math.round((parse(throughISO) - parse(todayISO)) / 864e5) : 0;
+  const hasStandingWeek = (weeklyRules?.length ?? 0) > 0;
+  const fraction = Math.min(1, days / horizonDays);
+  let level = LEVEL.INFO;
+  let says = null;
+  if (!stated.length && !hasStandingWeek) {
+    level = LEVEL.WARN;
+    says = "Your calendar says nothing about any date. Customers are matched by the day they are celebrating, so the more of the year you state, the more you are offered.";
+  } else if (days < 14 && !hasStandingWeek) {
+    level = LEVEL.WARN;
+    says = throughISO ? `Your calendar stops at ${pretty(throughISO)}. Most celebrations are booked weeks ahead of the day.` : "Your calendar stops at today.";
+  } else if (days < 60) {
+    level = LEVEL.INFO;
+    says = throughISO ? `Your calendar is set through ${pretty(throughISO)} \u2014 ${plural(days, "day", "days")} ahead. Weddings are usually booked further out than that.` : null;
+  }
+  return { throughISO, days, fraction, hasStandingWeek, level, says, stale: level === LEVEL.WARN };
+}
 export {
+  LEVEL as ALERT_LEVEL,
   CANCELLATION_LADDER,
   DEFAULT_RADIUS_KM,
   DISCUSS_SERVICES,
@@ -4776,6 +4811,7 @@ export {
   TAX,
   TRADE_FOR_SERVICE,
   WAVES,
+  coverageOf,
   defaultOptions,
   instantCancellationRung,
   lineSplit,
