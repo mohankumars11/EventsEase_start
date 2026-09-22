@@ -98,14 +98,32 @@ export const KIND_BY_ID = Object.fromEntries(DOCUMENT_KINDS.map(k => [k.id, k]))
 ═══════════════════════════════════════════════════════════ */
 
 /**
- * Every document this partner has uploaded, keyed by kind.
+ * Every document this partner has uploaded.
  *
- * Returns `{ byKind, unavailable }`. `unavailable` means 093 has not been
- * applied to this database yet — a state the caller renders as "not here"
- * rather than as an error.
+ * ══════════════════════════════════════════════════════════════════════
+ * KEYED BY REQUIREMENT, NOT BY KIND
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `byKind` was the original index and it was wrong in a way that showed
+ * as a tick rather than as a gap. Five trade requirements share the kind
+ * 'shop_licence' -- a food licence, a venue lease, vehicle papers, agency
+ * credentials, service credentials -- so a partner listing Catering AND
+ * Venue had ONE slot for two unrelated documents, and `complianceDone`
+ * counted both as satisfied off a single upload.
+ *
+ * Migration 143 re-keys the table on `requirement_id` and drops
+ * UNIQUE (vendor_id, kind). `byRequirement` is the index that matches it.
+ *
+ * `byKind` is still returned for callers not yet moved across, and it is
+ * lossy ON PURPOSE where two requirements share a kind -- last row wins.
+ * Do not add a new caller to it.
+ *
+ * Returns `{ byRequirement, byKind, rows, unavailable }`. `unavailable`
+ * means 093 has not been applied to this database -- a state the caller
+ * renders as "not here" rather than as an error.
  */
 export async function fetchDocuments(vendorId) {
-  if (!vendorId) return { byKind: {}, unavailable: false }
+  if (!vendorId) return { byRequirement: {}, byKind: {}, rows: [], unavailable: false }
 
   const { data, error } = await supabase
     .from('vendor_documents')
@@ -113,11 +131,24 @@ export async function fetchDocuments(vendorId) {
     .eq('vendor_id', vendorId)
 
   if (error) {
-    return { byKind: {}, unavailable: isMissingTable(error) }
+    return { byRequirement: {}, byKind: {}, rows: [], unavailable: isMissingTable(error) }
+  }
+
+  const rows = data ?? []
+
+  /* A row written before 143 has no requirement_id. It is indexed under
+     its kind so nothing a partner already uploaded vanishes from the
+     screen -- 143 backfills the column, but a device can read before
+     that paste has happened. */
+  const byRequirement = {}
+  for (const r of rows) {
+    byRequirement[r.requirement_id ?? `legacy:${r.kind}`] = r
   }
 
   return {
-    byKind: Object.fromEntries((data ?? []).map(r => [r.kind, r])),
+    byRequirement,
+    byKind: Object.fromEntries(rows.map(r => [r.kind, r])),
+    rows,
     unavailable: false,
   }
 }
@@ -165,9 +196,13 @@ const MAX_BYTES = 10 * 1024 * 1024
  * order can instead leave an orphaned FILE if the row insert fails,
  * which costs storage and confuses nobody.
  */
-export async function uploadDocument({ vendorId, kind, file, last4 }) {
+export async function uploadDocument({
+  vendorId, requirementId, kind, file, side = 'front',
+  number, holderName, issuingAuthority, issueDate, expiryDate,
+  checksumOk, checksumRule, listingId, trade, existing,
+}) {
   if (!vendorId) throw new Error('No partner profile yet.')
-  if (!KIND_BY_ID[kind]) throw new Error('Unknown document type.')
+  if (!requirementId) throw new Error('Which requirement is this for?')
   if (!file) throw new Error('Choose a file first.')
 
   const isPdf = file.type === 'application/pdf'
@@ -182,7 +217,11 @@ export async function uploadDocument({ vendorId, kind, file, last4 }) {
   }
 
   const ext = isPdf ? 'pdf' : (body.type === 'image/webp' ? 'webp' : 'jpg')
-  const path = `${vendorId}/${kind}-${Date.now()}.${ext}`
+  /* The requirement is in the path, not just the kind. Two documents
+     that share a kind -- a food licence and a venue lease are both
+     'shop_licence' -- would otherwise be told apart only by a
+     timestamp, which is not something a reviewer can read. */
+  const path = `${vendorId}/${requirementId}-${side}-${Date.now()}.${ext}`
 
   const { error: upErr } = await supabase.storage
     .from(BUCKET)
@@ -195,30 +234,123 @@ export async function uploadDocument({ vendorId, kind, file, last4 }) {
     throw new Error(upErr.message)
   }
 
+  /* ── One row per requirement, two sides on it ──────────────────────
+     A second row for the back would put the uniqueness rule back where
+     143 took it from. The side decides which column the path lands in,
+     and an existing row's other side is carried across so uploading a
+     back does not erase the front. */
   const row = {
     vendor_id: vendorId,
+    requirement_id: requirementId,
     kind,
-    storage_path: path,
+    listing_id: listingId ?? null,
+    trade: trade ?? null,
     file_name: file.name ?? null,
     mime_type: body.type ?? null,
     byte_size: body.size ?? null,
-    number_last4: last4 ? String(last4).toUpperCase().slice(-4) : null,
+  }
+
+  if (side === 'back') {
+    row.back_path = path
+    row.storage_path = existing?.storage_path ?? path
+  } else {
+    row.storage_path = path
+    if (existing?.back_path) row.back_path = existing.back_path
+  }
+
+  /* Only ever the last four. The full number is not stored, and for
+     Aadhaar that is not a preference -- the Act restricts it. */
+  if (number != null && String(number).trim() !== '') {
+    row.number_last4 = String(number).replace(/s/g, '').toUpperCase().slice(-4)
+  }
+  if (holderName) row.holder_name = String(holderName).trim()
+  if (issuingAuthority) row.issuing_authority = String(issuingAuthority).trim()
+  if (issueDate) row.issue_date = issueDate
+  if (expiryDate) row.expires_on = expiryDate
+
+  /* checksum_ok is write-once (142's guard raises on a later change), so
+     it is sent only when this upload actually computed one. */
+  if (typeof checksumOk === 'boolean' && existing?.checksum_ok == null) {
+    row.checksum_ok = checksumOk
+    row.checksum_rule = checksumRule ?? null
+    row.checked_at = new Date().toISOString()
   }
 
   const { data, error } = await supabase
     .from('vendor_documents')
-    .upsert(row, { onConflict: 'vendor_id,kind' })
+    .upsert(row, { onConflict: 'vendor_id,requirement_id' })
     .select()
     .maybeSingle()
 
   if (error) {
     /* The row did not land, so nothing will ever point at the file we
        just uploaded. Take it back out rather than paying for it forever
-       — the same reasoning contentStudio.js gives for its own cleanup. */
+       -- the same reasoning contentStudio.js gives for its own cleanup. */
     await supabase.storage.from(BUCKET).remove([path]).catch(() => {})
     throw new Error(error.message)
   }
 
+  return data
+}
+
+/**
+ * The fields, without a new file.
+ *
+ * A number, a holder name, an expiry date -- everything the requirement
+ * declares besides the images. Separate from `uploadDocument` because
+ * that one demands a file and should keep demanding one: a call that
+ * silently accepts `file: null` is a call that silently uploads
+ * nothing.
+ *
+ * Upserts on (vendor_id, requirement_id), so this creates the row when
+ * a partner fills the details in before photographing anything.
+ */
+export async function saveDocumentDetails({
+  vendorId, requirementId, kind, listingId, trade, existing,
+  number, holderName, issuingAuthority, issueDate, expiryDate,
+  checksumOk, checksumRule,
+}) {
+  if (!vendorId) throw new Error('No partner profile yet.')
+  if (!requirementId) throw new Error('Which requirement is this for?')
+
+  const row = {
+    vendor_id: vendorId,
+    requirement_id: requirementId,
+    kind,
+    listing_id: listingId ?? null,
+    trade: trade ?? null,
+  }
+
+  /* storage_path is NOT NULL on vendor_documents (093), so a
+     details-first save needs a placeholder until an image lands. The
+     empty string is used rather than a fake path: nothing will try to
+     sign it, and `evaluateRequirement` already treats a falsy
+     storage_path as a missing front. */
+  if (!existing?.storage_path) row.storage_path = ''
+
+  if (number != null && String(number).trim() !== '') {
+    row.number_last4 = String(number).replace(/s/g, '').toUpperCase().slice(-4)
+  }
+  if (holderName != null) row.holder_name = String(holderName).trim() || null
+  if (issuingAuthority != null) row.issuing_authority = String(issuingAuthority).trim() || null
+  if (issueDate != null) row.issue_date = issueDate || null
+  if (expiryDate != null) row.expires_on = expiryDate || null
+
+  /* Write-once: 142's guard raises if checksum_ok is changed after the
+     fact, so it is sent only when this save actually computed one. */
+  if (typeof checksumOk === 'boolean' && existing?.checksum_ok == null) {
+    row.checksum_ok = checksumOk
+    row.checksum_rule = checksumRule ?? null
+    row.checked_at = new Date().toISOString()
+  }
+
+  const { data, error } = await supabase
+    .from('vendor_documents')
+    .upsert(row, { onConflict: 'vendor_id,requirement_id' })
+    .select()
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
   return data
 }
 

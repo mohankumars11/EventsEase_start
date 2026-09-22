@@ -50,7 +50,12 @@ export function usePartnerOnboarding() {
         ])
         if (run !== runId.current) return
         listings = ls ?? []
-        documents = docs?.byKind ?? {}
+        /* The whole shape, not just byKind. Everything downstream now
+           keys on requirement_id — five trade requirements share the
+           kind 'shop_licence', so byKind cannot tell a food licence
+           from a venue lease. byKind rides along for the screens not
+           yet moved across. */
+        documents = docs ?? {}
         payout = pay?.data ?? null
       }
       setAccount({ vendor: vendor ?? null, listings, documents, payout })

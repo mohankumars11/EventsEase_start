@@ -4,6 +4,8 @@ import { Loader2, Check, Upload, ShieldCheck, Info, TriangleAlert } from 'lucide
 import StepShell from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { requirementsFor, MANDATORY_FROM } from '../../../data/compliance'
+import { evaluateAll } from '../../../lib/verification/satisfaction'
+import DocumentCapture from '../../../components/partner/DocumentCapture'
 import { KIND_BY_ID } from '../../../lib/partnerDocuments'
 
 /**
@@ -38,12 +40,13 @@ import { KIND_BY_ID } from '../../../lib/partnerDocuments'
  * never read it.
  */
 const STATUS_TONE = {
-  verified: 'bg-forest-50 text-forest-700 ring-forest-200',
-  checked:  'bg-plum-50 text-plum-700 ring-plum-200',
-  uploaded: 'bg-amber-50 text-amber-800 ring-amber-200',
-  rejected: 'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
-  expired:  'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
-  none:     'bg-ink/[0.04] text-ink-mute ring-ink/[0.08]',
+  verified:   'bg-forest-50 text-forest-700 ring-forest-200',
+  checked:    'bg-plum-50 text-plum-700 ring-plum-200',
+  pending:    'bg-amber-50 text-amber-800 ring-amber-200',
+  incomplete: 'bg-amber-50 text-amber-800 ring-amber-200',
+  rejected:   'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
+  expired:    'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
+  none:       'bg-ink/[0.04] text-ink-mute ring-ink/[0.08]',
 }
 
 /**
@@ -65,31 +68,44 @@ const STATUS_TONE = {
  * telling a customer that somebody was verified when a checksum passed.
  * The captions below say which one happened.
  */
-function stateOf(doc) {
-  if (!doc) return 'none'
-  if (doc.status === 'rejected') return 'rejected'
-  if (doc.expires_on && doc.expires_on < new Date().toISOString().slice(0, 10)) return 'expired'
-  if (doc.status === 'accepted' || doc.provider_status === 'verified') return 'verified'
-  if (doc.checksum_ok) return 'checked'
-  return 'uploaded'
+function rowState(verdict, doc) {
+  if (!verdict) return doc ? 'pending' : 'none'
+  /* evaluateAll already decided none / incomplete / expired / rejected /
+     pending / verified. The only refinement here is cosmetic: a pending
+     document whose NUMBER checked out gets its own word, because
+     "checks out" and "verified" are different claims and the partner
+     should be able to see which one they have. */
+  if (verdict.state === 'pending' && doc?.checksum_ok) return 'checked'
+  return verdict.state
 }
 
 const STATE_CAPTION = {
-  verified: 'Verified',
-  checked:  'Number checks out — document still being read',
-  uploaded: 'Sent — being checked',
-  rejected: 'Sent back — please upload it again',
-  expired:  'Expired — upload a current one',
+  verified:   'Verified',
+  checked:    'Number checks out — document still being read',
+  pending:    'Sent — being checked',
+  rejected:   'Sent back — please upload it again',
+  expired:    'Expired — upload a current one',
 }
 
 export default function ComplianceStep() {
   const navigate = useNavigate()
-  const { loading, account, markStepComplete } = usePartnerOnboarding()
+  const { loading, account, markStepComplete, refresh } = usePartnerOnboarding()
   const [busy, setBusy] = useState(false)
+  /* One open at a time. A screen with nine expanded upload forms is a
+     screen nobody finishes; a requirement opens when it is tapped. */
+  const [openId, setOpenId] = useState(null)
 
   const trades = useMemo(() => (account.listings ?? []).map(l => l.trade), [account.listings])
   const reqs = useMemo(() => requirementsFor(trades), [trades])
-  const docs = account.documents ?? {}
+  /* Keyed by requirement, not by kind. `evaluateAll` decides whether
+     each one is actually satisfied — two sides where declared, a
+     number, a holder name, an expiry that has not passed — rather than
+     the old test of "is there a row under this kind", which let one
+     food licence satisfy a venue authorisation. */
+  const byRequirement = account.documents?.byRequirement ?? {}
+  const evaluated = useMemo(
+    () => evaluateAll(reqs, byRequirement), [reqs, byRequirement])
+  const docs = evaluated.results
 
   /* Three short sections rather than one long list: who you are, your
      business, and the trade-specific ones that are the whole reason
@@ -122,9 +138,17 @@ export default function ComplianceStep() {
     )
   }
 
-  const requiredCount = reqs.filter(r => r.required).length
-  const satisfied = reqs.filter(r => r.required && docs[r.documentKind]).length
+  const requiredCount = evaluated.requiredTotal
+  const satisfied = evaluated.requiredSatisfied
   const tradeNames = [...new Set(groups.trade.map(r => r.trade))].join(' and ')
+
+  const shared = {
+    docs,
+    openId,
+    onOpen: id => setOpenId(cur => (cur === id ? null : id)),
+    vendorId: account.vendor?.id,
+    onUploaded: refresh,
+  }
 
   return (
     <StepShell
@@ -161,16 +185,16 @@ export default function ComplianceStep() {
         </p>
       )}
 
-      <Section title="Identity" items={groups.identity} docs={docs} />
-      <Section title="Your business" items={groups.business} docs={docs} />
+      <Section title="Identity" items={groups.identity} {...shared} />
+      <Section title="Your business" items={groups.business} {...shared} />
       {!!groups.trade.length && (
-        <Section title={`For ${tradeNames}`} items={groups.trade} docs={docs} />
+        <Section title={`For ${tradeNames}`} items={groups.trade} {...shared} />
       )}
     </StepShell>
   )
 }
 
-function Section({ title, items, docs }) {
+function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded }) {
   if (!items.length) return null
   return (
     <div className="mb-5">
@@ -179,7 +203,8 @@ function Section({ title, items, docs }) {
       </p>
       <ul className="flex flex-col gap-2">
         {items.map(r => {
-          const have = docs[r.documentKind]
+          const verdict = docs[r.id]
+          const have = verdict?.row ?? null
           /* ── `verified_at` does not exist on vendor_documents ───────
              This read was `have?.verified_at`, a column 093 never
              created and 142 never added. It was always undefined, so
@@ -191,8 +216,9 @@ function Section({ title, items, docs }) {
              rejected, written by an operator) and `provider_status`
              (142: not_checked | pending | verified | …, written by a
              verification provider). Both are consulted, and they are
-             NOT the same claim — see `stateOf`. */
-          const state = stateOf(have)
+             NOT the same claim — see `rowState`. */
+          const state = rowState(verdict, have)
+          const open = openId === r.id
           return (
             <li
               key={r.id}
@@ -204,7 +230,7 @@ function Section({ title, items, docs }) {
                 <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ${STATUS_TONE[state]}`}>
                   {state === 'verified' ? <Check size={15} strokeWidth={3} />
                     : state === 'rejected' || state === 'expired' ? <TriangleAlert size={15} />
-                    : state === 'checked' || state === 'uploaded' ? <ShieldCheck size={15} />
+                    : state === 'checked' || state === 'pending' ? <ShieldCheck size={15} />
                     : <Upload size={14} />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -224,8 +250,41 @@ function Section({ title, items, docs }) {
                     {STATE_CAPTION[state]
                       ?? `Not started · ${KIND_BY_ID[r.documentKind]?.label ?? 'document'}`}
                   </p>
+                  {/* An unfinished document is not a failed one, and the
+                      difference is whether the partner is told what is
+                      still missing. "Still needs the back, the expiry
+                      date" is a task; a red cross is a dead end. */}
+                  {verdict?.says && (
+                    <p className="mt-1 text-[11.5px] leading-snug text-saffron-800">
+                      {verdict.says}
+                    </p>
+                  )}
+
+                  {/* The control this screen never had. Until now it
+                      rendered state only, and the upload lived on a
+                      different screen entirely -- so a partner read
+                      "Not started" with nothing to tap. */}
+                  <button
+                    type="button"
+                    onClick={() => onOpen?.(r.id)}
+                    className="mt-2 inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-ink/[0.05] px-3 text-[12px] font-extrabold text-ink-soft"
+                  >
+                    {open ? 'Close' : state === 'none' ? 'Add it' : 'Update'}
+                  </button>
                 </div>
               </div>
+
+              {open && (
+                <div className="mt-3">
+                  <DocumentCapture
+                    requirement={r}
+                    verdict={verdict}
+                    vendorId={vendorId}
+                    onUploaded={onUploaded}
+                    onClose={() => onOpen?.(r.id)}
+                  />
+                </div>
+              )}
             </li>
           )
         })}

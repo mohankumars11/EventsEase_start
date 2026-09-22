@@ -1,4 +1,5 @@
 import { requirementsFor } from '../data/compliance'
+import { evaluateAll } from './verification/satisfaction'
 
 /**
  * The six steps, and who is allowed to say a partner has finished them.
@@ -168,32 +169,44 @@ function areaDone({ vendor }) {
 function complianceDone({ listings = [], documents = {}, vendor }) {
   const trades = listings.map(l => l.trade)
   const reqs = requirementsFor(trades)
-  const required = reqs.filter(r => r.required)
-  const satisfied = required.filter(r => documents[r.documentKind])
-  const anyUploaded = reqs.some(r => documents[r.documentKind])
 
-  /* ── Why this one needs an acknowledgement and the others do not ──
+  /* ── Counted by requirement, never by kind ────────────────────────
+     This used to be `documents[r.documentKind]` — truthy if any row
+     existed under that kind. Five trade requirements share the kind
+     'shop_licence', so a partner listing Catering AND Venue uploaded
+     one food licence and BOTH read as satisfied. It showed as a tick,
+     which is worse than showing as a gap.
+
+     `evaluateAll` asks each requirement what it declares — two sides,
+     a number, a holder name, an expiry — and checks the row has it,
+     and that it has not expired. A photograph on its own is no longer
+     a satisfied requirement. */
+  const byRequirement = documents.byRequirement ?? documents
+  const evaluated = evaluateAll(reqs, byRequirement)
+
+  /* ── Why this step needs an acknowledgement and the others do not ──
      Every other step is proved by its own data: a phone number is
      there or it is not. This step can be satisfied by an empty list —
      `MANDATORY_FROM` is unset, so nothing is required of anybody yet,
      and "zero of zero required documents are missing" is true for a
      partner who has never seen the screen.
 
-     Auto-completing on that would skip the step entirely, which is
-     exactly what §23 forbids: the individual requirements are dynamic,
-     the STEP is mandatory. So the partner has to have been here and
-     said so, and that act is recorded in `completed_steps` (119) —
-     which is what a persisted marker is legitimately for, as opposed
-     to recording something the data already knows. */
+     Auto-completing on that would skip the step entirely: the
+     individual requirements are dynamic, the STEP is mandatory. So the
+     partner has to have been here and said so, and that act is
+     recorded in `completed_steps` (119) — which is what a persisted
+     marker is legitimately for, as opposed to recording something the
+     data already knows. */
   const acknowledged = (vendor?.completed_steps ?? []).includes('compliance')
 
   return {
-    done: required.length === satisfied.length && acknowledged,
-    partial: anyUploaded || acknowledged,
-    detail: required.length
-      ? `${satisfied.length} of ${required.length} required`
-      : `${reqs.length} applicable to your services`,
+    done: evaluated.canSubmit && acknowledged,
+    partial: evaluated.satisfied > 0 || acknowledged,
+    detail: evaluated.requiredTotal
+      ? `${evaluated.requiredSatisfied} of ${evaluated.requiredTotal} required`
+      : `${evaluated.satisfied} of ${reqs.length} added`,
   }
+
 }
 
 /** Step 5 · somewhere to pay them. */
