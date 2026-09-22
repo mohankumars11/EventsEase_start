@@ -480,23 +480,7 @@ export default function DocumentCapture({
           the question the partner just asked by pressing the button.
           Green when the document was read and is what it should be;
           grey when nothing could be told, which is not a failure. */}
-      {reading?.judged?.says && (
-        <p
-          data-reading={reading.judged.ok ? (reading.judged.uncertain ? 'uncertain' : 'read') : 'wrong'}
-          className={`mb-3 flex items-start gap-1.5 rounded-[12px] px-3 py-2 text-[11.5px] leading-snug ${
-            !reading.judged.ok
-              ? 'bg-saffron-400/15 text-saffron-900'
-              : reading.judged.uncertain
-                ? 'bg-ink/[0.04] text-ink-soft'
-                : 'bg-forest-50 text-forest-800'
-          }`}
-        >
-          {reading.judged.ok && !reading.judged.uncertain
-            ? <Check size={12} className="mt-0.5 shrink-0" strokeWidth={3} />
-            : <TriangleAlert size={12} className="mt-0.5 shrink-0" />}
-          {reading.judged.says}
-        </p>
-      )}
+      <ReadingVerdict judged={reading?.judged} />
 
       {/* ── Offered, never applied ─────────────────────────────────
           A form that fills itself in from a misread digit is worse than
@@ -674,4 +658,35 @@ function blobBase64(blob) {
     }
     reader.readAsDataURL(blob)
   })
+}
+
+/**
+ * What the classifier concluded, in one line.
+ *
+ * Its own component so a scene can photograph all three states without
+ * driving a file picker -- and because the three tones carry the whole
+ * message. Green means read and correct. Amber means refused, and the
+ * text names what was seen instead. Grey means nothing could be told,
+ * which is not a failure and must not look like one.
+ */
+export function ReadingVerdict({ judged }) {
+  if (!judged?.says) return null
+  const state = !judged.ok ? 'wrong' : judged.uncertain ? 'uncertain' : 'read'
+  return (
+    <p
+      data-reading={state}
+      className={`mb-3 flex items-start gap-1.5 rounded-[12px] px-3 py-2 text-[11.5px] leading-snug ${
+        state === 'wrong'
+          ? 'bg-saffron-400/15 text-saffron-900'
+          : state === 'uncertain'
+            ? 'bg-ink/[0.04] text-ink-soft'
+            : 'bg-forest-50 text-forest-800'
+      }`}
+    >
+      {state === 'read'
+        ? <Check size={12} className="mt-0.5 shrink-0" strokeWidth={3} />
+        : <TriangleAlert size={12} className="mt-0.5 shrink-0" />}
+      {judged.says}
+    </p>
+  )
 }

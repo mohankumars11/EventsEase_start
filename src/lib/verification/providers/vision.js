@@ -159,7 +159,24 @@ export const CONFIDENT_ENOUGH = 0.55
  */
 export function judgeReading(reading, requirement) {
   const expected = requirement?.detectAs ?? null
-  const label = requirement?.label ?? 'this document'
+
+  /* ── The expected document is named the way a person would ────
+     This used to lowercase the requirement's own label, which produced
+     "not aadhaar" and "not fssai licence" — no article, wrong casing,
+     and reading like a machine complaining rather than a person
+     helping.
+
+     A screenshot caught it and the guard did not, because the guard
+     matched on the DETECTED name and never read the expected one. The
+     refusal is the sentence that decides whether somebody understands
+     what to do next; it is worth the lookup.
+
+     FRIENDLY already names the detected side, so the expected side goes
+     through the same table — falling back to the requirement's own
+     wording for the eight types that declare no detectAs. */
+  const label = expected?.length
+    ? friendly(expected[0])
+    : (requirement?.label ?? 'the right document')
 
   if (!reading || reading.providerStatus !== 'checked') {
     return { ok: true, fatal: false, says: reading?.says ?? null, uncertain: true }
@@ -172,7 +189,7 @@ export function judgeReading(reading, requirement) {
     return {
       ok: false,
       fatal: true,
-      says: `${saw}, not ${label.toLowerCase()}. Please photograph the document itself.`,
+      says: `${saw}, not ${label}. Please photograph the document itself.`,
     }
   }
 
@@ -180,7 +197,7 @@ export function judgeReading(reading, requirement) {
     return {
       ok: false,
       fatal: true,
-      says: `We could not read ${label.toLowerCase()} in that photo. Try again in better light, with the whole document in frame.`,
+      says: `We could not read ${label} in that photo. Try again in better light, with the whole document in frame.`,
     }
   }
 
@@ -192,7 +209,7 @@ export function judgeReading(reading, requirement) {
   if ((reading.confidence ?? 0) < CONFIDENT_ENOUGH) {
     return {
       ok: true, fatal: false, uncertain: true,
-      says: `We could not tell for certain that this is ${label.toLowerCase()}. A person will check it.`,
+      says: `We could not tell for certain that this is ${label}. A person will check it.`,
     }
   }
 
@@ -201,11 +218,11 @@ export function judgeReading(reading, requirement) {
     return {
       ok: false,
       fatal: true,
-      says: `That looks like ${friendly(reading.documentType)}, not ${label.toLowerCase()}. Upload it under the right heading, or photograph the right document.`,
+      says: `That looks like ${friendly(reading.documentType)}, not ${label}. Upload it under the right heading, or photograph the right document.`,
     }
   }
 
-  return { ok: true, fatal: false, says: `That is ${label.toLowerCase()} — read successfully.` }
+  return { ok: true, fatal: false, says: `That is ${label} — read successfully.` }
 }
 
 const FRIENDLY = {

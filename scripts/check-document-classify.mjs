@@ -88,6 +88,32 @@ ok('and it asks for better light rather than blaming the document',
 const right = judgeReading(reading({ documentType: 'aadhaar' }), AADHAAR)
 ok('the right document passes', right.ok === true && right.fatal === false)
 
+/* ---- The EXPECTED document is named properly too ------------------
+   A screenshot caught "not aadhaar" and "not fssai licence": the code
+   was lowercasing the requirement's label, so every refusal read like a
+   machine complaining. The guard had not noticed because it only ever
+   matched on the DETECTED name. These check the other half. */
+const wrongWay = judgeReading(reading({ documentType: 'pan' }), AADHAAR)
+ok('the expected document gets an article',
+   /not an Aadhaar card/.test(wrongWay.says), wrongWay.says)
+ok('and it is not lowercased',
+   !/ aadhaar|fssai licence|pan card,/.test(wrongWay.says), wrongWay.says)
+ok('the success line reads as a sentence',
+   /That is an Aadhaar card/.test(right.says), right.says)
+ok('so does the illegible one',
+   /read an Aadhaar card in that photo/.test(unreadable.says), unreadable.says)
+
+/* Every sentence any requirement can produce, swept for the same
+   fault. A bare lowercase document word is the tell. */
+const SWEEP = ['aadhaar', 'pan', 'gst_certificate', 'fssai_licence', 'driving_licence', 'vehicle_rc']
+for (const want of SWEEP) {
+  const req = { id: 'X', label: want, detectAs: [want] }
+  const out = judgeReading(reading({ documentType: 'not_a_document', isDocument: false, whatYouSee: 'a wall' }), req)
+  ok(`"${want}" is named in words, not as an id`,
+     !out.says.includes(want) || want === 'pan',
+     out.says)
+}
+
 const fssai = judgeReading(reading({ documentType: 'fssai_licence' }), FSSAI)
 ok('an FSSAI licence passes as an FSSAI licence', fssai.ok === true)
 ok('an Aadhaar filed as FSSAI is refused',
