@@ -192,10 +192,33 @@ const BY_TIER = {
 export const MANDATORY_FROM = null
 
 /**
+ * Is this requirement mandatory, according to the policy table?
+ *
+ * ---- The fallback, and why it is silence ---------------------------
+ * `policy` is the live contents of `verification_policy` (migration
+ * 146), fetched by lib/verificationPolicy.js. When it is absent -- the
+ * migration is not applied, the read failed, the device is offline --
+ * this falls back to `mandatoryFrom`, which is null, which means
+ * nothing is mandatory.
+ *
+ * That direction is deliberate. The alternative failure, treating an
+ * unreadable policy as "everything is required", would lock every
+ * partner out of their own account the first time a SELECT timed out.
+ * A partner wrongly allowed to submit is reviewed by a human, who is
+ * the actual gate; a partner wrongly locked out is just locked out.
+ */
+function requiredBy(policy, requirementId, trade, mandatoryFrom, enforceable) {
+  if (!enforceable) return false
+  if (!policy) return !!mandatoryFrom
+  return policy.isMandatory(requirementId, trade)
+}
+
+/**
  * @param input {
  *   trades: string[],            from partner_listings / vendor_services.category
  *   answers?: object,            conditional flags — gst_registered, serves_alcohol, …
  *   mandatoryFrom?: Date|null,   injected so tests can turn enforcement on
+ *   policy?: object|null,        verification_policy, when it has been read
  * }
  * @returns requirement objects, deduped, ordered, each carrying its
  *          document type's full capture rules.
@@ -204,7 +227,7 @@ export function requirementsFor(input = {}) {
   /* Tolerates a bare array, because that is how compliance.js's caller
      has always invoked it and both shapes now flow through here. */
   const opts = Array.isArray(input) ? { trades: input } : input
-  const { trades = [], answers = {}, mandatoryFrom = MANDATORY_FROM } = opts
+  const { trades = [], answers = {}, mandatoryFrom = MANDATORY_FROM, policy = null } = opts
 
   const seen = new Set()
   const out = []
@@ -231,7 +254,7 @@ export function requirementsFor(input = {}) {
       id: r.id,
       documentType: r.documentType,
       trade: trade ?? r.trade,
-      required: !!mandatoryFrom && r.enforceable,
+      required: requiredBy(policy, r.id, trade ?? r.trade, mandatoryFrom, r.enforceable),
       tierWhy: TIER_WHY[r.tier],
       why: r.why ?? type?.hint ?? null,
     })

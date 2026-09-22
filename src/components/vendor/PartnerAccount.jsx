@@ -212,7 +212,7 @@ export default function PartnerAccount({
   }, [vendor?.id])
   useEffect(() => { readDocs() }, [readDocs])
 
-  const docCount = docs ? Object.keys(docs.byKind).length : 0
+  const docCount = docs ? Object.keys(docs.byRequirement ?? docs.byKind).length : 0
   const verificationSummary = vendor?.is_verified
     ? 'Verified master'
     : vendor?.verification_status === 'submitted'
@@ -319,7 +319,7 @@ export default function PartnerAccount({
     ) },
     verification: { title: 'Verification & documents', render: () => (
       docs && !docs.unavailable
-        ? <VendorDocuments vendor={vendor} byKind={docs.byKind}
+        ? <VendorDocuments vendor={vendor} byKind={docs.byKind} byRequirement={docs.byRequirement}
                            onUpdateVendor={onUpdateVendor} onChanged={readDocs}
                            trades={listedTrades} />
         : <Absent what="Verification" />
@@ -376,7 +376,7 @@ export default function PartnerAccount({
 
   /* Badges only where being wrong costs the partner something. */
   const docsMissing = docs && !docs.unavailable && !vendor?.is_verified
-    ? Math.max(0, requirementsFor(listedTrades).length - (docs ? Object.keys(docs.byKind).length : 0))
+    ? Math.max(0, requirementsFor(listedTrades).length - (docs ? Object.keys(docs.byRequirement ?? {}).length : 0))
     : 0
   const drafts = (listings ?? []).filter(l => (l.offerings?.length ?? 0) === 0).length
   const bankBadge = !payoutLoaded ? null

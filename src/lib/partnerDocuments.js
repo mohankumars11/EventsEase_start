@@ -261,7 +261,12 @@ export async function uploadDocument({
   /* Only ever the last four. The full number is not stored, and for
      Aadhaar that is not a preference -- the Act restricts it. */
   if (number != null && String(number).trim() !== '') {
-    row.number_last4 = String(number).replace(/s/g, '').toUpperCase().slice(-4)
+    /* Was `/s/g`, which is not the same thing as `/\s/g` and behaved
+       nothing like it: it stripped every lowercase LETTER S and left
+       whitespace untouched. A number typed with spaces kept them, and
+       the CHECK at 093:153 (`^[A-Z0-9]{4}$`) then rejected the row with
+       a raw Postgres constraint error in front of the partner. */
+    row.number_last4 = String(number).replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-4)
   }
   if (holderName) row.holder_name = String(holderName).trim()
   if (issuingAuthority) row.issuing_authority = String(issuingAuthority).trim()
@@ -308,7 +313,7 @@ export async function uploadDocument({
 export async function saveDocumentDetails({
   vendorId, requirementId, kind, listingId, trade, existing,
   number, holderName, issuingAuthority, issueDate, expiryDate,
-  checksumOk, checksumRule,
+  checksumOk, checksumRule, classification,
 }) {
   if (!vendorId) throw new Error('No partner profile yet.')
   if (!requirementId) throw new Error('Which requirement is this for?')
@@ -329,7 +334,7 @@ export async function saveDocumentDetails({
   if (!existing?.storage_path) row.storage_path = ''
 
   if (number != null && String(number).trim() !== '') {
-    row.number_last4 = String(number).replace(/s/g, '').toUpperCase().slice(-4)
+    row.number_last4 = String(number).replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-4)
   }
   if (holderName != null) row.holder_name = String(holderName).trim() || null
   if (issuingAuthority != null) row.issuing_authority = String(issuingAuthority).trim() || null

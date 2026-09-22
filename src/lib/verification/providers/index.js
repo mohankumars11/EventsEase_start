@@ -1,4 +1,5 @@
 import { MockProvider } from './mock'
+import { VisionProvider } from './vision'
 
 /**
  * The seam a licensed verification provider plugs into.
@@ -99,6 +100,11 @@ export const NullProvider = {
 const REGISTRY = {
   mock: () => MockProvider,
   none: () => NullProvider,
+  /* Reads a photograph and says what it is. Extraction only -- it
+     implements readDocument and nothing else, so verifyIdentity and the
+     rest still fall through to NullProvider's honest not_checked. See
+     the header of ./vision.js for why that matters. */
+  vision: () => VisionProvider,
 }
 
 export function resolveProvider(name) {

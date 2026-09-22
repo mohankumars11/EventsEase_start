@@ -1,11 +1,8 @@
-import { useRef, useState } from 'react'
-import {
-  BadgeCheck, Upload, Eye, Trash2, Loader2, FileText, Check, TriangleAlert,
-} from 'lucide-react'
-import {
-  KIND_BY_ID, uploadDocument, removeDocument, signedUrlFor,
-} from '../../lib/partnerDocuments'
+import { useMemo, useState } from 'react'
+import { BadgeCheck } from 'lucide-react'
 import { requirementsFor } from '../../data/compliance'
+import { evaluateAll } from '../../lib/verification/satisfaction'
+import DocumentCapture from '../partner/DocumentCapture'
 
 /**
  * "Get yourself verified."
@@ -48,26 +45,58 @@ import { requirementsFor } from '../../data/compliance'
  * question, and they would disagree the moment one of them refreshed.
  */
 
+/* Keyed on satisfaction.js's DOC_STATE, so there is one vocabulary for
+   a document's standing rather than one per screen. */
 const TONE = {
-  good:    'bg-forest-50 text-forest-800 ring-forest-200',
-  pending: 'bg-saffron-400/15 text-saffron-900 ring-saffron-300/60',
-  bad:     'bg-rose-50 text-rose-800 ring-rose-200',
-  idle:    'bg-ink/[0.04] text-ink-mute ring-ink/[0.06]',
+  verified:   'bg-forest-50 text-forest-800 ring-forest-200',
+  pending:    'bg-saffron-400/15 text-saffron-900 ring-saffron-300/60',
+  incomplete: 'bg-saffron-400/15 text-saffron-900 ring-saffron-300/60',
+  rejected:   'bg-rose-50 text-rose-800 ring-rose-200',
+  expired:    'bg-rose-50 text-rose-800 ring-rose-200',
+  none:       'bg-ink/[0.04] text-ink-mute ring-ink/[0.06]',
 }
 
-export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChanged, trades = [] }) {
+const LABEL = {
+  verified: 'Checked', pending: 'Being checked', incomplete: 'Unfinished',
+  rejected: 'Sent back', expired: 'Expired', none: 'Not started',
+}
+
+/* Never "Verified". A human at Sambramo accepting a document means a
+   human looked at it, which is a different and smaller claim than a
+   government database confirming it exists. documentTypes.js
+   verificationLabel() holds the same line. */
+const CAPTION = {
+  verified:   'A person at Sambramo has accepted this.',
+  pending:    'Sent. Waiting for a person to look at it.',
+  incomplete: 'Started, but something is still missing.',
+  rejected:   'Sent back. Please upload it again.',
+  expired:    'Out of date. Upload a current one.',
+}
+
+export default function VendorDocuments({
+  vendor, byKind = {}, byRequirement = null, onUpdateVendor, onChanged, trades = [],
+}) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [openId, setOpenId] = useState(null)
 
   const vendorId = vendor?.id
   const verified = !!vendor?.is_verified
   const status   = vendor?.verification_status ?? 'draft'
-  const uploaded = Object.keys(byKind).length
+  const uploaded = Object.keys(byRequirement ?? byKind).length
 
   /* What THIS partner is asked for, from the trades they listed. A
      partner with no listings yet gets the base set, which is correct:
      identity does not depend on what you do. */
   const requirements = requirementsFor(trades)
+
+  /* The same verdicts the onboarding step computes, from the same
+     function. Two screens that decided independently whether a document
+     was complete would eventually disagree, and the partner would be
+     told different things in two places about one file. */
+  const { results } = useMemo(
+    () => evaluateAll(requirements, byRequirement ?? {}),
+    [requirements, byRequirement])
 
   /* draft (or rejected) → submitted is the ONE verification transition a
      partner owns; 067's guard trigger allows exactly that and silently
@@ -117,26 +146,40 @@ export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChan
           listed. Each requirement names the upload slot it uses, so a
           caterer sees "Food business registration or licence" over the
           same control a decorator sees as "Proof of business". */}
-      <ul className="divide-y divide-ink/[0.06]">
-        {requirements.map(req => (
-          <DocumentRow
-            key={req.id}
-            /* The requirement supplies the WORDS; the kind supplies the
-               `id`, which is the storage bucket key and what `byKind` is
-               keyed on. Spreading the requirement wholesale would have
-               overwritten `kind.id` with VER-TRADE-FOOD — every upload
-               filed under a kind nothing reads back, with no error
-               anywhere. Named fields, on purpose. */
-            kind={{
-              ...KIND_BY_ID[req.documentKind],
-              label: req.label,
-              hint:  req.hint,
-              recommended: req.required,
-            }}
-            row={byKind[req.documentKind]}
-            vendorId={vendorId}
-            onChanged={onChanged}
-          />
+      <ul className="space-y-2">
+        {results.map(({ requirement, verdict, state }) => (
+          <li key={requirement.id} data-requirement={requirement.id} data-state={state}>
+            <button
+              type="button"
+              onClick={() => setOpenId(openId === requirement.id ? null : requirement.id)}
+              className="flex w-full items-center gap-3 rounded-[16px] bg-white px-3 py-3 text-left ring-1 ring-ink/[0.06]"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-extrabold text-ink">
+                  {requirement.label}
+                </span>
+                <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
+                  {CAPTION[state] ?? requirement.hint}
+                </span>
+              </span>
+              <span className={`shrink-0 rounded-full px-2 py-1 text-[10.5px] font-extrabold ring-1 ${TONE[state] ?? TONE.none}`}>
+                {LABEL[state] ?? 'Not started'}
+              </span>
+            </button>
+
+            {openId === requirement.id && (
+              <div className="mt-2">
+                <DocumentCapture
+                  requirement={requirement}
+                  verdict={verdict}
+                  vendorId={vendorId}
+                  listingId={requirement.listingId ?? null}
+                  onUploaded={onChanged}
+                  onClose={() => setOpenId(null)}
+                />
+              </div>
+            )}
+          </li>
         ))}
       </ul>
 
@@ -175,175 +218,5 @@ export default function VendorDocuments({ vendor, byKind, onUpdateVendor, onChan
         </p>
       )}
     </div>
-  )
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   One document
-   ══════════════════════════════════════════════════════════════════════
-
-   A row, not a card. Four cards of an identical shape is 500px of a
-   phone screen spent on four file pickers, and the thing a partner is
-   scanning for is which ones are still empty — which a list answers in
-   one glance and a stack of cards does not.
-
-   The file input is hidden and driven by the row itself, because a bare
-   <input type="file"> renders as an OS control that ignores every token
-   in this design system and looks like a 1998 web form on a phone. */
-function DocumentRow({ kind, row, vendorId, onChanged }) {
-  const fileRef = useRef(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
-  const [last4, setLast4] = useState('')
-  const [asking, setAsking] = useState(false)
-
-  const badLast4 = !!last4 && !!kind.last4Pattern && !kind.last4Pattern.test(last4)
-
-  const have = !!row
-  const meta = have
-    ? (row.status === 'accepted'
-        ? { label: 'Accepted', tone: 'good', icon: Check }
-        : row.status === 'rejected'
-          ? { label: 'Not accepted', tone: 'bad', icon: TriangleAlert }
-          : { label: 'Being checked', tone: 'pending', icon: Loader2 })
-    : null
-
-  async function pick(file) {
-    if (!file) return
-    setBusy(true); setError(null)
-    try {
-      await uploadDocument({ vendorId, kind: kind.id, file, last4: last4.trim() || null })
-      setLast4(''); setAsking(false)
-      await onChanged()
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setBusy(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
-  }
-
-  async function view() {
-    const url = await signedUrlFor(row.storage_path)
-    if (url) window.open(url, '_blank', 'noopener,noreferrer')
-    else setError('Could not open that file just now.')
-  }
-
-  async function remove() {
-    setBusy(true); setError(null)
-    try {
-      await removeDocument(row)
-      await onChanged()
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <li className="py-2.5">
-      <div className="flex items-center gap-3">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ring-1 ${
-          have ? TONE[meta.tone] : TONE.idle
-        }`}>
-          {have ? <FileText size={15} /> : <Upload size={15} />}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-extrabold leading-tight text-ink">
-            {kind.label}
-            {kind.recommended && !have && (
-              <span className="ml-1.5 align-middle text-[10px] font-extrabold uppercase tracking-wider text-saffron-700">
-                worth adding
-              </span>
-            )}
-          </p>
-          <p className="truncate text-[11.5px] font-semibold leading-snug text-ink-mute">
-            {have
-              ? `${meta.label}${row.number_last4 ? ` · ends ${row.number_last4}` : ''}`
-              : kind.hint}
-          </p>
-        </div>
-
-        {/* Actions, sized for a thumb and not for a mouse. */}
-        <div className="flex shrink-0 items-center gap-1">
-          {busy ? (
-            <Loader2 size={16} className="animate-spin text-ink-mute" />
-          ) : have ? (
-            <>
-              <button
-                type="button" onClick={view} aria-label={`View your ${kind.label}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mute active:bg-ink/[0.06]"
-              >
-                <Eye size={16} />
-              </button>
-              <button
-                type="button" onClick={remove} aria-label={`Remove your ${kind.label}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mute active:bg-rose-50 active:text-rose-600"
-              >
-                <Trash2 size={16} />
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => (kind.last4Label ? setAsking(v => !v) : fileRef.current?.click())}
-              className="rounded-full bg-ink/[0.05] px-3 py-1.5 text-[12px] font-extrabold text-ink active:bg-ink/[0.09]"
-            >
-              Add
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* The last-four box only appears once somebody has decided to add
-          this document. Four permanently-visible text inputs above four
-          permanently-visible file pickers is the version of this screen
-          that nobody finishes. */}
-      {asking && !have && (
-        <div className="mt-2.5 rounded-[14px] bg-ink/[0.03] p-3">
-          <label className="label text-[12px]" htmlFor={`doc-${kind.id}`}>
-            {kind.last4Label} <span className="font-semibold text-ink-mute">(optional)</span>
-          </label>
-          <input
-            id={`doc-${kind.id}`}
-            className="input uppercase"
-            maxLength={4}
-            autoCapitalize="characters"
-            value={last4}
-            onChange={e => setLast4(e.target.value.toUpperCase())}
-          />
-          {/* Shaped, not required. A PAN ending in a letter and an Aadhaar
-              ending in a letter are different mistakes, and the reviewer
-              matching four characters against a card is the person who
-              pays for a typo here — so it is worth catching. Leaving the
-              box empty stays perfectly fine. */}
-          <p className={`mt-1 text-[11px] font-semibold ${badLast4 ? 'text-rose-700' : 'text-ink-mute'}`}>
-            {badLast4 ? `That is not the right shape. ${kind.last4Hint}` : kind.last4Hint}
-          </p>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={badLast4}
-            className="btn-primary mt-2.5 w-full disabled:opacity-45"
-          >
-            <Upload size={15} /> Choose a photo or PDF
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <p className="mt-1.5 text-[11.5px] font-bold text-rose-700">{error}</p>
-      )}
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*,application/pdf"
-        className="hidden"
-        onChange={e => pick(e.target.files?.[0])}
-      />
-    </li>
   )
 }

@@ -40,10 +40,37 @@ const MAX_BYTES = 10 * 1024 * 1024
 const IMAGE = ['image/jpeg', 'image/png', 'image/webp']
 const IMAGE_OR_PDF = [...IMAGE, 'application/pdf']
 
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * `detectAs` — WHAT THE CLASSIFIER SHOULD SEE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The values api/verify-document.js is allowed to answer with, for a
+ * photograph filed under this requirement. A reading outside the list
+ * is refused, and the refusal NAMES what was seen instead.
+ *
+ * ── Absent on purpose, in eight places ──────────────────────────────
+ * A type with no `detectAs` is never refused on content. A liquor
+ * permit, a PUC certificate, a transport permit, an electrical licence,
+ * a property document, an occupancy certificate, a fire NOC and a work
+ * portfolio have no consistent national format -- they are state forms,
+ * municipal letters and PDFs, and they look different in every district.
+ *
+ * Asserting "that is not a fire NOC" about a document we cannot reliably
+ * recognise would refuse real documents from real partners, which is a
+ * far worse failure than letting one through to a human. Silence is the
+ * honest answer where there is no reliable one.
+ *
+ * ── shop_licence takes three ────────────────────────────────────────
+ * "Proof you are a registered business" is satisfied by a trade licence,
+ * an Udyam certificate or a GST certificate, and a partner who uploads
+ * whichever one they actually hold is not making a mistake.
+ */
 export const DOCUMENT_TYPES = {
   /* ── Identity ──────────────────────────────────────────────────── */
   aadhaar: {
     kind: 'aadhaar',
+    detectAs: ['aadhaar'],
     label: 'Aadhaar',
     hint: 'The whole card, both sides, with the number readable.',
     frontRequired: true,
@@ -67,6 +94,7 @@ export const DOCUMENT_TYPES = {
 
   pan: {
     kind: 'pan',
+    detectAs: ['pan'],
     label: 'PAN',
     hint: 'The card itself, not a photocopy of a photocopy.',
     frontRequired: true,
@@ -87,6 +115,7 @@ export const DOCUMENT_TYPES = {
 
   selfie: {
     kind: 'selfie',
+    detectAs: ['selfie'],
     label: 'A photo of you',
     hint: 'Face the camera in good light. This is matched against your ID.',
     frontRequired: true,
@@ -108,6 +137,7 @@ export const DOCUMENT_TYPES = {
   /* ── Business ──────────────────────────────────────────────────── */
   gst: {
     kind: 'gst',
+    detectAs: ['gst_certificate'],
     label: 'GST registration',
     hint: 'Only if you are registered. Most partners under the turnover threshold are not.',
     frontRequired: true,
@@ -128,6 +158,7 @@ export const DOCUMENT_TYPES = {
 
   udyam: {
     kind: 'udyam',
+    detectAs: ['udyam'],
     label: 'Udyam registration',
     hint: 'The MSME certificate, if you have one.',
     frontRequired: true, backRequired: false,
@@ -143,6 +174,7 @@ export const DOCUMENT_TYPES = {
 
   shop_licence: {
     kind: 'shop_licence',
+    detectAs: ['shop_licence', 'udyam', 'gst_certificate'],
     label: 'Proof of business',
     hint: 'A municipal licence, a registration certificate, or anything official in your business name.',
     frontRequired: true, backRequired: false,
@@ -159,6 +191,7 @@ export const DOCUMENT_TYPES = {
   /* ── Food ──────────────────────────────────────────────────────── */
   fssai: {
     kind: 'fssai',
+    detectAs: ['fssai_licence'],
     label: 'FSSAI licence',
     hint: 'The 14-digit registration or licence. Legally required to serve food.',
     frontRequired: true, backRequired: false,
@@ -190,6 +223,7 @@ export const DOCUMENT_TYPES = {
   /* ── Driving ───────────────────────────────────────────────────── */
   dl: {
     kind: 'dl',
+    detectAs: ['driving_licence'],
     label: 'Driving licence',
     hint: 'Both sides, with the validity dates readable.',
     frontRequired: true, backRequired: true,
@@ -205,6 +239,7 @@ export const DOCUMENT_TYPES = {
 
   rc: {
     kind: 'rc',
+    detectAs: ['vehicle_rc'],
     label: 'Vehicle registration (RC)',
     hint: 'The RC book or card for the vehicle you will use.',
     frontRequired: true, backRequired: true,
@@ -220,6 +255,7 @@ export const DOCUMENT_TYPES = {
 
   insurance: {
     kind: 'insurance',
+    detectAs: ['insurance_policy'],
     label: 'Vehicle insurance',
     hint: 'Current policy. An expired one cannot be accepted.',
     frontRequired: true, backRequired: false,
@@ -263,6 +299,7 @@ export const DOCUMENT_TYPES = {
   /* ── Public safety ─────────────────────────────────────────────── */
   psara: {
     kind: 'other',
+    detectAs: ['psara_licence'],
     label: 'PSARA licence',
     hint: 'Statutory for a private security agency under the PSARA Act 2005.',
     frontRequired: true, backRequired: false,
@@ -291,6 +328,7 @@ export const DOCUMENT_TYPES = {
 
   liability_insurance: {
     kind: 'insurance',
+    detectAs: ['insurance_policy'],
     label: 'Public liability insurance',
     hint: 'Cover for injury or damage at an event you are working.',
     frontRequired: true, backRequired: false,
@@ -305,6 +343,7 @@ export const DOCUMENT_TYPES = {
 
   police_clearance: {
     kind: 'police_clearance',
+    detectAs: ['police_clearance'],
     label: 'Police clearance certificate',
     hint: 'From your local police station or a Passport Seva Kendra.',
     frontRequired: true, backRequired: false,

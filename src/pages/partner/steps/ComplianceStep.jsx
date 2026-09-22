@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Check, Upload, ShieldCheck, Info, TriangleAlert } from 'lucide-react'
 import StepShell from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
-import { requirementsFor, MANDATORY_FROM } from '../../../data/compliance'
+import { requirementsFor } from '../../../data/compliance'
 import { evaluateAll } from '../../../lib/verification/satisfaction'
+import { fetchVerificationPolicy } from '../../../lib/verificationPolicy'
 import DocumentCapture from '../../../components/partner/DocumentCapture'
 import { KIND_BY_ID } from '../../../lib/partnerDocuments'
 
@@ -95,8 +96,21 @@ export default function ComplianceStep() {
      screen nobody finishes; a requirement opens when it is tapped. */
   const [openId, setOpenId] = useState(null)
 
+  /* The rulebook, read once. Null until it arrives and null for ever if
+     146 was never pasted -- which the engine reads as "nothing is
+     mandatory", i.e. exactly today's behaviour. See the header of
+     lib/verificationPolicy.js for why that is the safe direction. */
+  const [policy, setPolicy] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    fetchVerificationPolicy()
+      .then(r => { if (!cancelled) setPolicy(r.policy) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   const trades = useMemo(() => (account.listings ?? []).map(l => l.trade), [account.listings])
-  const reqs = useMemo(() => requirementsFor(trades), [trades])
+  const reqs = useMemo(() => requirementsFor({ trades, policy }), [trades, policy])
   /* Keyed by requirement, not by kind. `evaluateAll` decides whether
      each one is actually satisfied — two sides where declared, a
      number, a holder name, an expiry that has not passed — rather than
@@ -148,6 +162,12 @@ export default function ComplianceStep() {
     onOpen: id => setOpenId(cur => (cur === id ? null : id)),
     vendorId: account.vendor?.id,
     onUploaded: refresh,
+    /* 143 added `listing_id` and nothing has ever populated it, so every
+       document filed from this screen was unattributable to the trade it
+       was uploaded for. The requirement already knows its trade; this
+       maps it back to the listing row. */
+    listingFor: trade =>
+      (account.listings ?? []).find(l => l.trade === trade)?.id ?? null,
   }
 
   return (
@@ -167,16 +187,27 @@ export default function ComplianceStep() {
         of every partner.
       </p>
 
-      {!MANDATORY_FROM && (
-        <p className="mb-5 flex items-start gap-2 rounded-2xl bg-plum-50 px-3.5 py-3 text-[12.5px] leading-snug text-plum-900 ring-1 ring-plum-200">
-          <Info size={14} className="mt-0.5 shrink-0" />
+      {/* What is true right now, rather than what a constant says.
+          `requiredCount` counts the requirements the policy table
+          actually marks mandatory for THESE trades, so the banner
+          changes on the day a rule comes into force without anybody
+          editing this file. */}
+      <p className="mb-5 flex items-start gap-2 rounded-2xl bg-plum-50 px-3.5 py-3 text-[12.5px] leading-snug text-plum-900 ring-1 ring-plum-200">
+        <Info size={14} className="mt-0.5 shrink-0" />
+        {requiredCount === 0 ? (
           <span>
-            Uploading is not being enforced yet, so you can continue without it.
-            Anything marked <strong>Required</strong> will be needed before you can
-            take jobs — adding it now means you are checked sooner.
+            Nothing here is being enforced yet, so you can continue without it.
+            Adding what you have now means you are checked sooner — and some of
+            these become necessary before you can take jobs.
           </span>
-        </p>
-      )}
+        ) : (
+          <span>
+            {requiredCount === 1 ? 'One of these is' : `${requiredCount} of these are`}{' '}
+            <strong>needed before you can take jobs</strong>. The rest help us check
+            you sooner. You can come back to any of them.
+          </span>
+        )}
+      </p>
 
       {!trades.length && (
         <p className="rounded-2xl bg-amber-50 px-3.5 py-3 text-[12.5px] font-semibold leading-snug text-amber-900">
@@ -194,7 +225,7 @@ export default function ComplianceStep() {
   )
 }
 
-function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded }) {
+function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, listingFor }) {
   if (!items.length) return null
   return (
     <div className="mb-5">
@@ -280,6 +311,7 @@ function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded }) {
                     requirement={r}
                     verdict={verdict}
                     vendorId={vendorId}
+                    listingId={listingFor?.(r.trade) ?? null}
                     onUploaded={onUploaded}
                     onClose={() => onOpen?.(r.id)}
                   />
