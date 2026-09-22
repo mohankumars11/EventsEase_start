@@ -33,8 +33,24 @@ import { Loader2, CalendarCheck, CalendarX2, CalendarClock } from 'lucide-react'
  * offers stop.
  */
 
+/* ── `id` is the DATABASE value, `label` is the partner's word ───────
+   These are not the same string and must not be assumed to be.
+   `vendor_availability.status` is CHECK (status IN ('BLOCKED','LIMITED',
+   'OPEN')) -- migration 021 -- so the open state is stored as OPEN.
+
+   This read `id: 'AVAILABLE'`, which is not in that list. Every save of
+   an open day, including the default for a date with no row yet, was
+   rejected by Postgres with
+
+     new row for relation "vendor_availability" violates check
+     constraint "vendor_availability_status_check"
+
+   printed raw above the Save button. Marking a day Limited or Blocked
+   worked, which is why it survived: the one state that fails is the one
+   the sheet opens on. AVAILABILITY_ORDER in config/vendor.js has had
+   'OPEN' all along -- this component is the only place that disagreed. */
 const STATES = [
-  { id: 'AVAILABLE', label: 'Available', icon: CalendarCheck,
+  { id: 'OPEN', label: 'Available', icon: CalendarCheck,
     hint: 'Open to offers', tone: 'bg-forest-600 text-white' },
   { id: 'LIMITED', label: 'Limited', icon: CalendarClock,
     hint: 'Cap how many jobs', tone: 'bg-saffron-400 text-plum-950' },
@@ -55,7 +71,7 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
   const [mode, setMode] = useState('single')
   const [from, setFrom] = useState(date ?? todayKey)
   const [to, setTo] = useState(date ?? todayKey)
-  const [status, setStatus] = useState(existing?.status ?? 'AVAILABLE')
+  const [status, setStatus] = useState(existing?.status ?? 'OPEN')
   const [slots, setSlots] = useState(existing?.slots_total ?? 2)
   const [note, setNote] = useState(existing?.note ?? '')
   const [busy, setBusy] = useState(false)

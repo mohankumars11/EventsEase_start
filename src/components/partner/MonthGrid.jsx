@@ -1,161 +1,223 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { STATUS, dayStatus } from '../../lib/availability'
+import { istTodayISO } from '../../lib/istTime'
 
 /**
- * The month, as dots.
+ * The month, where every square says what it is.
  *
  * ══════════════════════════════════════════════════════════════════════
- * FOUR THINGS CAN BE TRUE OF A DAY, AND THEY ARE NOT EXCLUSIVE
+ * A BLANK CELL IS AN ANSWER THE PARTNER CANNOT READ
  * ══════════════════════════════════════════════════════════════════════
  *
- *   Job        a booking is on it
- *   Blocked    the partner marked it unavailable
- *   Limited    they have capped how many jobs they will take
- *   Conflict   two jobs that cannot both be done — see calendarConflicts
+ * This grid used to carry availability as dots — a 1.5px speck under a
+ * number. A partner who tapped a date, chose Blocked and saved had to
+ * hunt for the difference. Worse, a date nobody had touched looked
+ * identical to a date marked Available, so the commonest action in the
+ * app produced no visible result at all.
  *
- * A day can carry a job AND be limited. So the cell shows up to three
- * dots rather than picking one colour and losing the rest, and the
- * legend names every colour used. Colour alone never carries meaning
- * here: tapping a day opens the list underneath, which says it in words.
+ * So the cell IS the state: its fill, its ring and a word. Every date in
+ * the month carries one, including the ones nobody has configured —
+ * "Not set" is a state, and a partner who cannot tell it from "Available"
+ * cannot tell what they have promised.
  *
  * ══════════════════════════════════════════════════════════════════════
- * THE CONFLICT DOT IS THE POINT OF THIS GRID
+ * THE VERDICT IS NOT COMPUTED HERE
  * ══════════════════════════════════════════════════════════════════════
  *
- * A month view that only shows where the work is tells a partner what
- * they already know. The reason to draw it is the day that looks fine
- * and is not — a Whitefield finish at 4pm and a Mysuru start at 5pm sit
- * in the same cell as any other two jobs. Those get a rose dot, and it
- * is the only one that is also given a ring, because it is the only one
- * that needs doing something about.
+ * `dayStatus` in lib/availability decides, and the customer surface and
+ * the accept path apply the same ordering. This component only draws the
+ * answer. Anything resembling a rule in this file — "LIMITED with
+ * nothing left is really BOOKED", "a row beats the standing week" — is a
+ * bug, because it would be the second copy.
+ *
+ * ── The conflict ring is still the point ────────────────────────────
+ * A month that only shows where the work is tells a partner what they
+ * already know. The reason to draw it is the day that looks fine and is
+ * not — a Whitefield finish at 4pm and a Mysuru start at 5pm sit in the
+ * same square as any other two jobs. That gets a rose ring, on top of
+ * whatever the day's status is, because it is the only mark that needs
+ * doing something about.
  */
-const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-const TONE = {
-  job:      'bg-plum-600',
-  blocked:  'bg-ink/40',
-  limited:  'bg-saffron-500',
-  conflict: 'bg-rose-500',
+/* Colour is never the only carrier: every cell also has a word, and the
+   legend names each one. Blocked is the only filled-dark cell, so its
+   text is white — an `ink` token dropped in here would be invisible. */
+const SKIN = {
+  [STATUS.OPEN]:    'bg-forest-50 text-forest-800 ring-forest-300',
+  [STATUS.LIMITED]: 'bg-saffron-100 text-saffron-800 ring-saffron-400',
+  [STATUS.BOOKED]:  'bg-plum-100 text-plum-800 ring-plum-300',
+  [STATUS.BLOCKED]: 'bg-ink text-white ring-ink',
+  [STATUS.UNSET]:   'bg-white text-ink-mute ring-ink/[0.10]',
 }
 
-const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+/* Short enough for a 46px column on a 360px phone. The day sheet says
+   it in full; this has to fit. */
+function chipFor(v) {
+  switch (v.status) {
+    case STATUS.BLOCKED: return v.source === 'weekly' ? 'Off' : 'Blocked'
+    case STATUS.BOOKED:  return v.booked > 1 ? `${v.booked} jobs` : '1 job'
+    case STATUS.LIMITED: return `${v.remaining} left`
+    case STATUS.OPEN:    return 'Open'
+    default:             return 'Not set'
+  }
+}
 
-export default function MonthGrid({ jobs, availability, conflicts, selected, onSelect }) {
-  const [cursor, setCursor] = useState(() => {
-    const d = selected ? new Date(`${selected}T00:00:00`) : new Date()
-    return new Date(d.getFullYear(), d.getMonth(), 1)
-  })
+const key = d =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-  const marks = useMemo(() => {
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December']
+
+export default function MonthGrid({
+  jobs = [],
+  availability = {},
+  weeklyRules = [],
+  conflicts = {},
+  maxPerDay = 1,
+  selected,
+  onSelect,
+  cursor,
+  onCursor,
+}) {
+  const todayISO = istTodayISO()
+
+  /* Jobs bucketed once, rather than filtered per cell — a month of 31
+     cells against a year of jobs is 31 scans of the same array. */
+  const jobsByDay = useMemo(() => {
     const m = {}
-    const add = (iso, kind) => {
-      if (!iso) return
-      m[iso] = m[iso] ?? new Set()
-      m[iso].add(kind)
-    }
-    for (const j of jobs ?? []) {
-      if (['cancelled', 'expired'].includes(j.status)) continue
-      add(j.event_date, 'job')
-    }
-    for (const [iso, row] of Object.entries(availability ?? {})) {
-      if (row?.status === 'BLOCKED') add(iso, 'blocked')
-      else if (row?.status === 'LIMITED') add(iso, 'limited')
-    }
-    /* conflictsFor keys by day already; anything it flags above OK is a
-       day worth a dot. */
-    for (const [iso, severity] of Object.entries(conflicts ?? {})) {
-      if (severity && severity !== 'OK') add(iso, 'conflict')
+    for (const j of jobs) {
+      if (!j.event_date || ['cancelled', 'expired'].includes(j.status)) continue
+      ;(m[j.event_date] ??= []).push(j)
     }
     return m
-  }, [jobs, availability, conflicts])
+  }, [jobs])
 
   const cells = useMemo(() => {
-    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
-    const days = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()
+    const y = cursor.getFullYear()
+    const mo = cursor.getMonth()
+    const days = new Date(y, mo + 1, 0).getDate()
     /* Leading blanks so the 1st lands under its real weekday. Without
-       them every date in the month sits one column out, which is the
-       kind of wrong nobody notices until they miss a Saturday. */
+       them every date sits one column out, which is the kind of wrong
+       nobody notices until they miss a Saturday. */
     return [
-      ...Array(first.getDay()).fill(null),
-      ...Array.from({ length: days }, (_, i) =>
-        new Date(cursor.getFullYear(), cursor.getMonth(), i + 1)),
+      ...Array(new Date(y, mo, 1).getDay()).fill(null),
+      ...Array.from({ length: days }, (_, i) => new Date(y, mo, i + 1)),
     ]
   }, [cursor])
 
-  const today = key(new Date())
-  const used = new Set(Object.values(marks).flatMap(s => [...s]))
-
-  const shift = n => setCursor(c => new Date(c.getFullYear(), c.getMonth() + n, 1))
+  const shift = n =>
+    onCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1))
 
   return (
-    <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <div className="rounded-[22px] bg-white p-3 ring-1 ring-ink/[0.06] xs:p-4">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" onClick={() => shift(-1)} aria-label="Previous month"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-soft">
+        <button
+          type="button" onClick={() => shift(-1)} aria-label="Previous month"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-soft hover:bg-ink/[0.04]"
+        >
           <ChevronLeft size={18} />
         </button>
         <p className="text-[14.5px] font-extrabold text-ink">
-          {cursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+          {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
         </p>
-        <button type="button" onClick={() => shift(1)} aria-label="Next month"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-soft">
+        <button
+          type="button" onClick={() => shift(1)} aria-label="Next month"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-soft hover:bg-ink/[0.04]"
+        >
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-y-1">
-        {DOW.map(d => (
-          <span key={d} className="pb-1 text-center text-[10px] font-bold uppercase tracking-wide text-ink-mute">
-            {d}
-          </span>
+      <div className="mt-2 grid grid-cols-7 gap-1">
+        {DOW.map((d, i) => (
+          <div key={i} className="pb-1 text-center text-[10px] font-extrabold uppercase tracking-wide text-ink-faint">
+            <span aria-hidden="true">{d}</span>
+            <span className="sr-only">{DOW_FULL[i]}</span>
+          </div>
         ))}
 
         {cells.map((d, i) => {
-          if (!d) return <span key={`b${i}`} />
+          if (!d) return <div key={`blank-${i}`} aria-hidden="true" />
+
           const iso = key(d)
-          const kinds = [...(marks[iso] ?? [])]
-          const isToday = iso === today
-          const isSel = iso === selected
+          const verdict = dayStatus({
+            dateISO: iso,
+            row: availability[iso] ?? null,
+            weeklyRules,
+            jobsOnDay: jobsByDay[iso] ?? null,
+            maxPerDay,
+            todayISO,
+          })
+          const clash = conflicts[iso] && conflicts[iso] !== 'OK'
+          const isSelected = selected === iso
+
+          /* Past days are shown, never hidden — a partner looking back at
+             what they did last month is a real use — but they are dimmed
+             and inert, so a stray tap cannot rewrite history. */
           return (
             <button
               key={iso}
               type="button"
-              onClick={() => onSelect?.(iso)}
-              aria-label={`${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}${kinds.length ? `, ${kinds.join(', ')}` : ''}`}
-              aria-pressed={isSel}
-              className="flex flex-col items-center gap-0.5 py-1"
+              disabled={verdict.past}
+              onClick={() => onSelect(iso)}
+              aria-pressed={isSelected}
+              aria-label={`${d.getDate()} ${MONTHS[d.getMonth()]}, ${chipFor(verdict)}${verdict.today ? ', today' : ''}${clash ? ', has a timing clash' : ''}`}
+              className={[
+                'flex min-h-[54px] flex-col items-center justify-start gap-0.5 rounded-xl px-0.5 py-1.5 ring-1 transition',
+                SKIN[verdict.status],
+                verdict.past && 'opacity-40',
+                !verdict.past && 'hover:brightness-[0.97]',
+                isSelected && 'outline outline-2 outline-offset-1 outline-plum-600',
+                clash && !isSelected && 'outline outline-2 outline-offset-1 outline-rose-400',
+              ].filter(Boolean).join(' ')}
             >
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[12.5px] font-bold tabular-nums ${
-                isSel ? 'bg-plum-950 text-white'
-                : isToday ? 'text-plum-800 ring-1 ring-plum-300'
-                : 'text-ink-soft'}`}>
+              <span className={[
+                'text-[13px] font-extrabold leading-none',
+                verdict.today && 'flex h-[18px] w-[18px] items-center justify-center rounded-full bg-plum-600 text-white',
+              ].filter(Boolean).join(' ')}>
                 {d.getDate()}
               </span>
-              <span className="flex h-1.5 items-center gap-0.5">
-                {kinds.slice(0, 3).map(k => (
-                  <span key={k}
-                        className={`h-1.5 w-1.5 rounded-full ${TONE[k]} ${
-                          k === 'conflict' ? 'ring-1 ring-rose-300' : ''}`} />
-                ))}
+              <span className="w-full truncate text-center text-[8.5px] font-bold leading-tight xs:text-[9.5px]">
+                {chipFor(verdict)}
               </span>
             </button>
           )
         })}
       </div>
+    </div>
+  )
+}
 
-      {/* Only the colours actually on this month. A legend listing four
-          keys when the month uses one teaches a partner to ignore it. */}
-      {used.size > 0 && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-ink/[0.06] pt-2.5">
-          {[['job', 'Jobs'], ['conflict', 'Too tight'], ['limited', 'Limited'], ['blocked', 'Blocked']]
-            .filter(([k]) => used.has(k))
-            .map(([k, label]) => (
-              <span key={k} className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-mute">
-                <span className={`h-1.5 w-1.5 rounded-full ${TONE[k]}`} /> {label}
-              </span>
-            ))}
-        </div>
-      )}
+/**
+ * The legend, exported beside the grid it explains.
+ *
+ * Kept in this file because it names the same five states the SKIN map
+ * draws, and a legend that drifts from its grid is worse than none.
+ */
+export function CalendarLegend() {
+  const rows = [
+    [STATUS.OPEN,    'Available', 'Open for bookings'],
+    [STATUS.LIMITED, 'Limited',   'Few slots left'],
+    [STATUS.BOOKED,  'Booked',    'Confirmed work'],
+    [STATUS.BLOCKED, 'Blocked',   'Not available'],
+    [STATUS.UNSET,   'Not set',   'No preference yet'],
+  ]
+  return (
+    <div className="rounded-[22px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 xs:grid-cols-3">
+        {rows.map(([status, label, hint]) => (
+          <div key={status} className="flex items-start gap-2">
+            <span className={`mt-[3px] h-3 w-3 shrink-0 rounded-full ring-1 ${SKIN[status]}`} />
+            <span className="min-w-0">
+              <span className="block text-[12px] font-extrabold leading-tight text-ink">{label}</span>
+              <span className="block text-[10.5px] leading-tight text-ink-mute">{hint}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -33,13 +33,19 @@ export default function UpcomingWeek({ onSeeAll }) {
     const end = new Date(today.getTime() + 7 * 86400000)
     const key = d => d.toISOString().slice(0, 10)
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('partner_jobs')
       .select('line_id, service_name, occasion_name, trade, status, event_date, time_note, area_label, guest_count, is_funded')
       .gte('event_date', key(today))
       .lte('event_date', key(end))
       .order('event_date', { ascending: true })
 
+    /* A failed read leaves whatever was already on screen. This used to
+       discard `error` and write `data ?? []`, so a request that did not
+       get through emptied the strip — and because the strip renders
+       nothing when empty, a partner's week of work silently disappeared
+       off the Jobs tab with no way to tell that from a quiet week. */
+    if (error) return
     setJobs((data ?? []).filter(j => !['cancelled', 'expired'].includes(j.status)))
   }, [])
 
