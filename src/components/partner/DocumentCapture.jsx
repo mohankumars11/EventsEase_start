@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Camera, Check, Loader2, TriangleAlert } from 'lucide-react'
 import { uploadDocument, saveDocumentDetails } from '../../lib/partnerDocuments'
 import { checkIdentity } from '../../lib/validation/identity'
+import { assessFile } from '../../lib/verification/imageQuality'
 
 /**
  * One requirement, and everything it says it needs.
@@ -121,9 +122,26 @@ export default function DocumentCapture({
     : null
   const numberSettled = number.trim().length >= 4
 
+  const [quality, setQuality] = useState(null)
+
   async function send(file, side) {
-    setBusySide(side); setError(null)
+    setBusySide(side); setError(null); setQuality(null)
     try {
+      /* ── Judged before it is uploaded ───────────────────────────────
+         A blurred or dark photograph is caught here, on the device,
+         while the card is still in the partner's hand. The alternative
+         is catching it two days later in a review queue and asking them
+         to find the card again.
+
+         Warnings do NOT stop the upload -- edge detection is a
+         heuristic and refusing a real document on a guess is worse than
+         accepting a slightly cropped one. */
+      const verdict = await assessFile(file, { requirement })
+      setQuality(verdict)
+      if (!verdict.ok) {
+        setError(verdict.failures[0]?.says ?? 'That photo could not be used.')
+        return
+      }
       const saved = await uploadDocument({
         vendorId,
         requirementId: requirement.id,
@@ -300,6 +318,14 @@ export default function DocumentCapture({
           )}
         </div>
       </div>
+
+      {/* Accepted, but worth a second look. Never blocks. */}
+      {quality?.ok && quality.warnings?.length > 0 && (
+        <p className="mt-2.5 flex items-start gap-1.5 text-[11.5px] leading-snug text-ink-mute">
+          <TriangleAlert size={12} className="mt-0.5 shrink-0" />
+          {quality.warnings[0].says}
+        </p>
+      )}
 
       {error && (
         <p className="mt-2.5 flex items-start gap-1.5 text-[11.5px] leading-snug text-saffron-800">
