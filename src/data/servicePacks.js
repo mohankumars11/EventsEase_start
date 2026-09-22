@@ -817,7 +817,23 @@ export const SERVICE_PACKS = {
         price: 3500, unit: 'unit', unitLabel: 'minder', defaultQty: 2,
         tint: ['#f472b6', '#fce7f3'],
         popular: true,
-        includes: ['Police-verified, first-aid trained', '6 hours per minder', 'Quiet nap and feeding corner', 'Parent handover log'],
+        /* ── "Police-verified" was here, and nothing backed it ────────
+           This line was sold to parents about the people who would be
+           alone with their children. There is no background check in
+           this product: `vendor_documents` accepts a 'police_clearance'
+           kind (migration 142) and no partner has ever uploaded one.
+
+           It is not replaced with "ID checked" either, which would be
+           the same mistake one notch quieter: `MANDATORY_FROM` is null
+           in data/compliance.js, so no document is required of anybody
+           and a partner can go live having uploaded none.
+
+           So the line is simply gone. Every other entry here describes
+           what the booking INCLUDES; a claim about Sambramo's screening
+           belongs on this card only once the screening exists. See the
+           verification engine plan — when a tier-1 background check is
+           real and enforced, this is the first place it goes back. */
+        includes: ['First-aid trained minder', '6 hours per minder', 'Quiet nap and feeding corner', 'Parent handover log'],
       },
       {
         id: 'nanny_creche',

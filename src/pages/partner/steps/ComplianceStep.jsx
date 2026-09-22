@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Check, Upload, ShieldCheck, Info } from 'lucide-react'
+import { Loader2, Check, Upload, ShieldCheck, Info, TriangleAlert } from 'lucide-react'
 import StepShell from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { requirementsFor, MANDATORY_FROM } from '../../../data/compliance'
@@ -39,8 +39,47 @@ import { KIND_BY_ID } from '../../../lib/partnerDocuments'
  */
 const STATUS_TONE = {
   verified: 'bg-forest-50 text-forest-700 ring-forest-200',
+  checked:  'bg-plum-50 text-plum-700 ring-plum-200',
   uploaded: 'bg-amber-50 text-amber-800 ring-amber-200',
-  none: 'bg-ink/[0.04] text-ink-mute ring-ink/[0.08]',
+  rejected: 'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
+  expired:  'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
+  none:     'bg-ink/[0.04] text-ink-mute ring-ink/[0.08]',
+}
+
+/**
+ * What a document row is actually saying, from the columns that exist.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THREE DIFFERENT CLAIMS, AND THEY ARE NOT INTERCHANGEABLE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ *   checked    the NUMBER's own check digit agrees with the rest of it
+ *              (`checksum_ok`, migration 142). Offline arithmetic. It
+ *              catches typos and invented numbers and proves nothing
+ *              about a person.
+ *   verified   an operator accepted the document (`status`, 093), or a
+ *              licensed provider confirmed it (`provider_status`, 142).
+ *   uploaded   it is sitting in the queue.
+ *
+ * Collapsing these into one green tick is how a marketplace ends up
+ * telling a customer that somebody was verified when a checksum passed.
+ * The captions below say which one happened.
+ */
+function stateOf(doc) {
+  if (!doc) return 'none'
+  if (doc.status === 'rejected') return 'rejected'
+  if (doc.expires_on && doc.expires_on < new Date().toISOString().slice(0, 10)) return 'expired'
+  if (doc.status === 'accepted' || doc.provider_status === 'verified') return 'verified'
+  if (doc.checksum_ok) return 'checked'
+  return 'uploaded'
+}
+
+const STATE_CAPTION = {
+  verified: 'Verified',
+  checked:  'Number checks out — document still being read',
+  uploaded: 'Sent — being checked',
+  rejected: 'Sent back — please upload it again',
+  expired:  'Expired — upload a current one',
 }
 
 export default function ComplianceStep() {
@@ -141,7 +180,19 @@ function Section({ title, items, docs }) {
       <ul className="flex flex-col gap-2">
         {items.map(r => {
           const have = docs[r.documentKind]
-          const state = have?.verified_at ? 'verified' : have ? 'uploaded' : 'none'
+          /* ── `verified_at` does not exist on vendor_documents ───────
+             This read was `have?.verified_at`, a column 093 never
+             created and 142 never added. It was always undefined, so
+             the 'verified' branch below — its tick, its tone and its
+             caption — was unreachable, and a document an operator had
+             accepted months ago still read "Sent — being checked".
+
+             The real columns are `status` (093: pending | accepted |
+             rejected, written by an operator) and `provider_status`
+             (142: not_checked | pending | verified | …, written by a
+             verification provider). Both are consulted, and they are
+             NOT the same claim — see `stateOf`. */
+          const state = stateOf(have)
           return (
             <li
               key={r.id}
@@ -152,7 +203,8 @@ function Section({ title, items, docs }) {
               <div className="flex items-start gap-3">
                 <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ${STATUS_TONE[state]}`}>
                   {state === 'verified' ? <Check size={15} strokeWidth={3} />
-                    : state === 'uploaded' ? <ShieldCheck size={15} />
+                    : state === 'rejected' || state === 'expired' ? <TriangleAlert size={15} />
+                    : state === 'checked' || state === 'uploaded' ? <ShieldCheck size={15} />
                     : <Upload size={14} />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -169,9 +221,8 @@ function Section({ title, items, docs }) {
                     <p className="mt-1 text-[11.5px] italic leading-snug text-ink-mute">{r.why}</p>
                   )}
                   <p className="mt-1.5 text-[11px] font-bold uppercase tracking-wide text-ink-mute">
-                    {state === 'verified' ? 'Verified'
-                      : state === 'uploaded' ? 'Sent — being checked'
-                      : `Not started · ${KIND_BY_ID[r.documentKind]?.label ?? 'document'}`}
+                    {STATE_CAPTION[state]
+                      ?? `Not started · ${KIND_BY_ID[r.documentKind]?.label ?? 'document'}`}
                   </p>
                 </div>
               </div>

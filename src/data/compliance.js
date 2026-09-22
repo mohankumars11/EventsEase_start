@@ -1,207 +1,88 @@
+import {
+  requirementsFor as engineRequirementsFor,
+  ALL_REQUIREMENT_IDS as ENGINE_IDS,
+  MANDATORY_FROM as ENGINE_MANDATORY_FROM,
+  TRADE_TIERS, TIER, TIER_WHY, tiersFor, scopeFor,
+} from '../lib/verification/requirements'
+
 /**
  * What a partner has to show us, and which partners have to show it.
  *
  * ══════════════════════════════════════════════════════════════════════
- * ONE CHECKLIST FOR TWENTY-SIX TRADES WAS THE PROBLEM
+ * THIS FILE IS NOW A SHIM. THE ENGINE MOVED.
  * ══════════════════════════════════════════════════════════════════════
  *
- * Every partner saw the same four rows: Aadhaar, PAN, GST, shop licence.
- * A caterer was never asked about food safety. A tempo-traveller operator
- * was never asked for an insurance or a permit. A venue was never asked
- * whether they are the ones entitled to let it.
+ * The rules live in `src/lib/verification/requirements.js` and the
+ * document capture rules in `src/lib/verification/documentTypes.js`.
+ * This module re-exports them so the existing callers —
+ * `ComplianceStep.jsx`, `partnerOnboarding.js:169` and
+ * `check-compliance-engine.mjs` — keep working unchanged.
  *
- * That is backwards twice over: the documents that actually matter are
- * the trade-specific ones, and asking a mehendi artist for a GST
- * certificate is a row she scrolls past on the way to giving up.
+ * ── Why it moved ────────────────────────────────────────────────────
+ * The old model was eight hand-written per-trade blocks with no shared
+ * notion of WHY a document was being asked for, and five of them
+ * collided on `documentKind: 'shop_licence'`. Because
+ * `vendor_documents` had `UNIQUE (vendor_id, kind)` (093:169), a
+ * partner listing Catering AND Venue could store only one of the two
+ * documents — and `complianceDone` then reported BOTH as satisfied. A
+ * tick where there should have been a gap.
+ *
+ * The engine replaces the blocks with risk TIERS, and migration 143
+ * re-keys documents on `requirement_id` so two different documents can
+ * coexist. See the plan for the rest.
  *
  * ══════════════════════════════════════════════════════════════════════
  * REQUIREMENTS ARE DATA, WITH STABLE IDS
  * ══════════════════════════════════════════════════════════════════════
  *
- * Each requirement has an id that never changes — VER-TRADE-FOOD stays
- * VER-TRADE-FOOD when its label is reworded — because a partner's
- * compliance row points at it, and a label is not a key. The same rule
- * the listing questions already follow.
+ * Each requirement has an id that never changes — a partner's document
+ * row points at it, and a label is not a key.
+ *
+ * Two ids were renamed when the engine landed, because their meaning
+ * narrowed from "some paper about this trade" to a named document:
+ *
+ *   VER-TRADE-FOOD       ->  VER-TRADE-FSSAI
+ *   VER-TRADE-VENUE      ->  VER-TRADE-PROPERTY
+ *   VER-TRADE-TRANSPORT  ->  VER-TRADE-DL / -RC / -INSURANCE / -PUC
+ *   VER-TRADE-SECURITY   ->  VER-TRADE-PSARA
+ *
+ * Migration 143 backfills existing rows to `VER-BUSINESS-PROOF` rather
+ * than guessing which of the five a `shop_licence` upload satisfied —
+ * re-asking is the safe direction.
  *
  * ══════════════════════════════════════════════════════════════════════
  * EVERYTHING IS OPTIONAL RIGHT NOW, AND THAT IS A SETTING
  * ══════════════════════════════════════════════════════════════════════
  *
- * `MANDATORY_FROM` is null, so nothing blocks a partner today (§31).
- * When it is set to a date, requirements whose `enforceable` is true
- * begin to gate submission — and the screens already read `required`
- * from here, so that switch is one line rather than a UI change.
- *
- * What this file deliberately does NOT do is state the law. It names the
- * document a partner is asked for and leaves the legal question to the
- * people who decide it: "food business registration or licence, as
- * applicable" is honest; naming an act and a section from memory would
- * be this file's first lie.
+ * `MANDATORY_FROM` is null, so nothing blocks a partner today. When it
+ * is set to a date, requirements whose `enforceable` is true begin to
+ * gate submission — the screens already read `required`, so that switch
+ * is one line rather than a UI change.
  */
 
-export const MANDATORY_FROM = null
-
-/* Asked of everybody, whatever they do. Two documents, not four: the
-   ones that establish a person is who they say and can be paid. */
-const BASE = [
-  {
-    id: 'VER-ID-IDENTITY',
-    documentKind: 'aadhaar',
-    label: 'Proof of identity',
-    hint: 'Aadhaar, or any government photo ID.',
-    enforceable: true,
-  },
-  {
-    id: 'VER-TAX-PAN',
-    documentKind: 'pan',
-    label: 'PAN',
-    hint: 'Needed once your earnings pass the annual threshold. Adding it now saves a chase later.',
-    enforceable: false,
-  },
-]
-
-/* Asked of a business rather than a person — a shop, a registered name,
-   a GST number. Not everybody has one and that is fine. */
-const BUSINESS = [
-  {
-    id: 'VER-BUSINESS-PROOF',
-    documentKind: 'shop_licence',
-    label: 'Proof of business',
-    hint: 'A municipal licence, a Udyam certificate, or anything official carrying your business name.',
-    enforceable: false,
-  },
-]
+export const MANDATORY_FROM = ENGINE_MANDATORY_FROM
+export const ALL_REQUIREMENT_IDS = ENGINE_IDS
+export { TRADE_TIERS, TIER, TIER_WHY, tiersFor, scopeFor }
 
 /**
- * The extra ones, by trade.
+ * Everything this partner is asked for, given the trades they have.
  *
- * Keyed on the trade NAME, the same string vendor_services.category
- * holds and match_partners joins on — so there is no third vocabulary
- * to keep in step. A trade absent from this map asks for BASE only,
- * which is the right default: we ask for the minimum until somebody has
- * thought about that trade specifically.
- */
-export const TRADE_REQUIREMENTS = {
-  'Catering & Food': [
-    {
-      id: 'VER-TRADE-FOOD',
-      documentKind: 'shop_licence',
-      label: 'Food business registration or licence',
-      hint: 'Whatever applies to your kitchen — a registration certificate or a licence. Photograph the certificate.',
-      enforceable: true,
-      why: 'Food is the one trade where what goes wrong makes people ill, and a customer asks for this by name.',
-    },
-  ],
-  'Bar & Beverages': [
-    {
-      id: 'VER-TRADE-LIQUOR',
-      documentKind: 'shop_licence',
-      label: 'Permission to serve, where it applies',
-      hint: 'Only if you serve alcohol. A bartending service pouring what the host supplies usually needs nothing.',
-      enforceable: false,
-      why: 'Serving without the permission the venue assumed you had ends the event, not the booking.',
-    },
-  ],
-  Transportation: [
-    {
-      id: 'VER-TRADE-TRANSPORT',
-      documentKind: 'shop_licence',
-      label: 'Vehicle papers',
-      hint: 'Registration, insurance and fitness for the vehicles you will send. Permit too, where the service needs one.',
-      enforceable: true,
-      why: 'A vehicle carrying a wedding party is carrying passengers, and the papers are what makes that lawful.',
-    },
-  ],
-  Venue: [
-    {
-      id: 'VER-TRADE-VENUE',
-      documentKind: 'shop_licence',
-      label: 'Proof you can let this venue',
-      hint: 'Ownership, a lease, or a letter from the owner authorising you to take bookings.',
-      enforceable: true,
-      why: 'Double-letting a hall is the single most expensive failure on this platform, and it starts with nobody checking who may let it.',
-    },
-  ],
-  'Security Services': [
-    {
-      id: 'VER-TRADE-SECURITY',
-      documentKind: 'shop_licence',
-      label: 'Security agency credentials',
-      hint: 'Your agency registration or licence, as applicable, plus ID for the staff you send.',
-      enforceable: true,
-      why: 'A guard at a family function is a stranger given authority; who they work for should be checked once, by us.',
-    },
-  ],
-  'Safety & Facilities': [
-    {
-      id: 'VER-TRADE-SAFETY',
-      documentKind: 'shop_licence',
-      label: 'Credentials for the service you provide',
-      hint: 'Medical, fire or sanitation credentials — whichever applies to what you offer.',
-      enforceable: true,
-    },
-  ],
-  'Live Entertainment': [
-    {
-      id: 'VER-TRADE-PYRO',
-      documentKind: 'shop_licence',
-      label: 'Permission for fireworks, if you do them',
-      hint: 'Only if fireworks or pyrotechnics are one of your offerings.',
-      enforceable: false,
-    },
-  ],
-  'Power & Cooling': [
-    {
-      id: 'VER-TRADE-POWER',
-      documentKind: 'shop_licence',
-      label: 'Generator and electrical credentials',
-      hint: 'Whatever you hold for running generators and temporary electrical work.',
-      enforceable: false,
-    },
-  ],
-}
-
-/**
- * Everything this partner is asked for, given the trades they actually
- * listed. One entry per requirement id — a partner who lists Catering
- * and Venue is asked for each trade's own document, and for the base
- * set once rather than twice.
+ * @param trades  trade names, or the engine's richer
+ *                `{ trades, answers, mandatoryFrom }`
+ * @returns [{ id, documentKind, documentType, label, hint, required,
+ *             enforceable, declinable, tier, trade, why, ...capture }]
  *
- * @param trades  trade names from the partner's listings
- * @returns [{ id, label, hint, documentKind, required, enforceable, why?, trade? }]
+ * `documentKind` is kept alongside `documentType` for the screens that
+ * still key uploads by kind. They are not the same thing: `documentType`
+ * is the requirement's document ('liquor_permit'), `documentKind` is the
+ * storable enum `vendor_documents.kind` accepts ('other'). Several
+ * types share one kind, which is exactly why 143 re-keys on the
+ * requirement id — a screen keying on `documentKind` will still confuse
+ * two documents until it is moved over.
  */
 export function requirementsFor(trades = []) {
-  const seen = new Set()
-  const out = []
-
-  const push = (req, trade = null) => {
-    if (seen.has(req.id)) return
-    seen.add(req.id)
-    out.push({
-      ...req,
-      trade,
-      /* The switch §31 asks for. Until MANDATORY_FROM is set, nothing
-         here is required of anybody — and the screen reads this field
-         rather than deciding for itself, so turning enforcement on is
-         one line in this file. */
-      required: !!MANDATORY_FROM && req.enforceable,
-    })
-  }
-
-  BASE.forEach(r => push(r))
-  for (const trade of trades) {
-    (TRADE_REQUIREMENTS[trade] ?? []).forEach(r => push(r, trade))
-  }
-  /* Asked last, because it is the one most partners do not have and a
-     row somebody cannot satisfy reads better at the bottom than in the
-     middle of ones they can. */
-  BUSINESS.forEach(r => push(r))
-
-  return out
+  return engineRequirementsFor(trades).map(r => ({
+    ...r,
+    documentKind: r.kind,
+  }))
 }
-
-/** Every requirement id that exists, for the audit guard. */
-export const ALL_REQUIREMENT_IDS = [
-  ...BASE, ...BUSINESS,
-  ...Object.values(TRADE_REQUIREMENTS).flat(),
-].map(r => r.id)

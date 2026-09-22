@@ -788,6 +788,17 @@ export const TRADE_OPERATIONS = {
       c('no_two_wheeler', 'No two-wheelers'),
       c('none', 'Nothing off limits'),
     ])],
+    /* ── These are CLAIMS, and nothing has checked them ──────────────
+       "Papers you hold" is the honest framing and the group keeps it:
+       the partner is telling us what they have, not proving it. As of
+       today nothing renders these anywhere — a grep across every .jsx
+       finds no reader — so no customer has been shown one as a fact.
+
+       That is the line to hold. Do not put `police_verified` on a
+       customer-facing card until the verification engine requires a
+       `police_clearance` document behind it (migration 142 already
+       accepts the kind). A ticked box is a claim; a reviewed document
+       is evidence, and only the second one may be shown as a badge. */
     trust: [YEARS, many('licences', 'Papers you hold', [
       c('insurance', 'Liability insurance'), c('police_verified', 'Police-verified staff'),
     ])],
