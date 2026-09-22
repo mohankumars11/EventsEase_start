@@ -148,10 +148,18 @@ export const DEFAULT_RADIUS_KM = 60
 /**
  * The platform's cut.
  *
- * 15% is mid-market for Indian services marketplaces and is the number
- * the partner sees stated on every offer, as an amount rather than a
- * percentage — "You earn ₹10,540" is read; "15% commission" is computed,
- * and a partner doing arithmetic on a lock screen declines.
+ * 8%, and the partner sees it stated on every offer as an amount rather
+ * than a percentage — "You earn ₹10,540" is read; "8% commission" is
+ * computed, and a partner doing arithmetic on a lock screen declines.
+ *
+ * ── The comment used to say 15% ──────────────────────────────────────
+ * It said so for long enough that `booking_lines.platform_fee_rate`
+ * still DEFAULTs to 0.15 in migration 059. That default is only reached
+ * by a line inserted without a rate, and `api/dispatch-booking.js`
+ * always passes one — but any row that ever did take it carries a rate
+ * this constant disagrees with, which is why the earnings screen reads
+ * the rate off the ROW and falls back to this only when the row has
+ * none. Prose drifts; a stored rate does not.
  */
 export const PLATFORM_FEE_RATE = 0.08
 

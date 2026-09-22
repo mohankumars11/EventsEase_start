@@ -87,13 +87,33 @@ export function annualGrossInr(jobs, fy = financialYear()) {
  *
  * `opts.hasPan` and `opts.annualGrossInr` decide only whether TDS
  * applies; they never change the commission or the customer price.
+ *
+ * ── The rate comes off the ROW, not off the constant ─────────────────
+ * `booking_lines.platform_fee_rate` is written at dispatch and stored.
+ * PLATFORM_FEE_RATE is 0.08 today and was documented as 0.15 for a long
+ * time; migration 059 still DEFAULTs the column to 0.15. Recomputing an
+ * old line's commission from today's constant states a fee that was
+ * never taken — on a screen, and worse, on a payment slip.
+ *
+ * So: the row's rate wins, an explicit `opts.feeRate` wins over that
+ * (the caller knows something we do not), and the constant is the last
+ * resort for a row that carries no rate at all.
  */
 export function jobMoney(job, opts = {}) {
   const quoted = job?.quoted_amount_paise ?? null
   const share = job?.partner_amount_paise ?? null
 
+  /* Number() because PostgREST hands NUMERIC back as a string. `?? null`
+     first, so a legitimate 0 rate — a waived commission — is not read as
+     absent and silently replaced by 8%. */
+  const stored = job?.platform_fee_rate ?? null
+  const rate = opts.feeRate ?? (stored === null ? undefined : Number(stored))
+  const withRate = rate === undefined || Number.isNaN(rate)
+    ? opts
+    : { ...opts, feeRate: rate }
+
   if (quoted) {
-    const e = partnerEarnings(quoted, opts)
+    const e = partnerEarnings(quoted, withRate)
     return {
       itemised: true,
       customerPaise: e.grossPaise,
@@ -110,12 +130,12 @@ export function jobMoney(job, opts = {}) {
   /* No quote on the row. The share is still a fact, and the statutory
      slices still come off it, so three of the four parts are knowable.
      The commission is not, and is returned as null. */
-  const d = partnerDeductions(share ?? 0, opts)
+  const d = partnerDeductions(share ?? 0, withRate)
   return {
     itemised: false,
     customerPaise: null,
     commissionPaise: null,
-    commissionRate: PLATFORM_FEE_RATE,
+    commissionRate: withRate.feeRate ?? PLATFORM_FEE_RATE,
     sharePaise: d.sharePaise,
     tcsPaise: d.tcsPaise,
     tdsPaise: d.tdsPaise,

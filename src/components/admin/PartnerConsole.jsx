@@ -10,6 +10,7 @@ import { signedUrlFor } from '../../lib/partnerDocuments'
 import { signedUrlsFor } from '../../lib/partnerWork'
 import { specsForTrade } from '../../data/partnerSpecs'
 import { completenessOf } from '../../lib/listingCompleteness'
+import { destinationShort } from '../../lib/documents/mask'
 
 /**
  * The partner side of the business, end to end, in one console.
@@ -1069,7 +1070,7 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
               <>
                 <Row icon={IndianRupee} label="Method"
                      value={payout.method === 'upi' ? `UPI · ${payout.upi_id ?? '—'}`
-                            : `Bank · ${payout.account_number ? '…' + String(payout.account_number).slice(-4) : '—'}`} />
+                            : `Bank · ${destinationShort(payout)}`} />
                 <Row icon={ShieldCheck} label="Verified"
                      value={payout.verified_at ? payout.verified_at.slice(0, 10) : 'Not verified'} />
               </>

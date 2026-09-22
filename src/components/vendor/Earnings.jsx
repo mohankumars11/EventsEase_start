@@ -1,421 +1,269 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Wallet, Clock, ShieldCheck, Banknote, TriangleAlert, ArrowRight } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-import { useLivePoll } from '../../hooks/useLivePoll'
-import { formatINR } from '../../utils/format'
-import { jobMoney, statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
-import ClaimPayment from './ClaimPayment'
+import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { CloudOff } from 'lucide-react'
+import { useEarnings } from '../../hooks/useEarnings'
+import { statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
+import { buildRange, hasPriorData } from '../../lib/earningsRange'
+import { earningsSeries } from '../../lib/earningsSeries'
+import { OWED_STATES } from '../../lib/payoutState'
 import ScreenState from '../ui/ScreenState'
-import JobMoneyRow from './JobMoneyRow'
 import PayoutHistory from './PayoutHistory'
 import EarningsStatement from './EarningsStatement'
+import EarningsHero from './earnings/EarningsHero'
+import RangeFilter from './earnings/RangeFilter'
+import KpiCards from './earnings/KpiCards'
+import EarningsChart from './earnings/EarningsChart'
+import Donut from './earnings/Donut'
+import BankPanel from './earnings/BankPanel'
+import DocumentsSection from './earnings/DocumentsSection'
+import AdjustmentsPanel from './earnings/AdjustmentsPanel'
+import TransactionDetail from './earnings/TransactionDetail'
+import {
+  TransactionList, TransactionTable, TransactionFilters, filterRows,
+} from './earnings/Transactions'
 
 /**
- * What this partner has earned, and where each rupee currently is.
+ * What this partner has earned, where each rupee is, and the proof.
  *
  * ══════════════════════════════════════════════════════════════════════
- * FOUR BUCKETS, BECAUSE MONEY IS IN ONE OF FOUR PLACES
+ * THIS FILE ORCHESTRATES. IT DOES NOT DO ARITHMETIC.
  * ══════════════════════════════════════════════════════════════════════
  *
- *   Not yours yet    accepted, customer has not paid. Zero risk to them
- *                    and zero claim for you — shown so nobody counts it.
- *   Held for you     paid and held by Sambramo until the job is done.
- *                    This is the number that makes the model trustworthy:
- *                    the money already exists before you set out.
- *   Ready            delivered, past the 24-hour window, nobody objected.
- *                    Owed to you now.
- *   Paid out         gone to your account.
+ * It used to derive five buckets inline, re-implement the claim window
+ * in JS, and sum three different ways in three places — which is how the
+ * screen came to show a total that its own rows did not add up to, and
+ * how one job read "Ready to claim" here and "Delivered" on the Jobs
+ * tab.
  *
- * A single "total earnings" figure would be a lie by aggregation: it
- * would add money a customer has not paid to money already in somebody's
- * bank, and a partner planning their week needs those apart.
+ * Now: one read (`useEarnings`), one ladder (`payoutState`), one pass
+ * (`earningsSeries`), one money function (`jobMoney`, called once per
+ * job inside that pass). Every figure below is a property of that
+ * result. If the headline and the list ever disagree again, the bug is
+ * in `earningsSeries.js` and nowhere else — and
+ * `check-earnings-period.mjs` asserts they cannot.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHERE EACH NUMBER COMES FROM
+ * FILTERS RUN OVER FETCHED ROWS, NOT OVER THE NETWORK
  * ══════════════════════════════════════════════════════════════════════
  *
- * `partner_jobs.partner_amount_paise` — what the master earns, already
- * net of the platform fee. Not the customer price. A partner who sees
- * the gross and works out the fee themselves feels something was hidden.
+ * A partner has tens of jobs a year, not thousands. Round-tripping on
+ * every chip tap would make the filter feel broken on 3G, and the
+ * period-over-period comparison needs the PREVIOUS window resident
+ * anyway — so a server-side range query would be two queries per tap to
+ * produce something already in memory.
  *
- * Bucketed on `paid_at`, `delivered_at` and `status`, which are the same
- * columns the job timeline ticks from. The two screens cannot disagree,
- * because they read the same row.
+ * ── The trap, written down because it has teeth ─────────────────────
+ * `annualGrossInr` is computed over the WHOLE row set, never the
+ * filtered range, and threaded down. It drives the s.194-O TDS waiver:
+ * computed over "Today" it falls under the threshold, TDS vanishes, and
+ * every net on screen jumps when somebody taps a chip — the same job
+ * worth two different amounts depending on a filter.
  *
- * ── Ready is computed, not stored ───────────────────────────────────
- * `settled_at` exists and nothing writes it: payouts are run by hand
- * against the ledger. So "ready" means delivered and more than 24 hours
- * past the event, which is the rule the terms state — and it is labelled
- * as owed rather than as sent, because nothing here can prove it was
- * sent.
+ * ══════════════════════════════════════════════════════════════════════
+ * THE FIRST lg: BREAKPOINTS IN src/components/vendor
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Deliberate, and the only screen in the partner app that has them. The
+ * phone is the unprefixed layout — it is what the Capacitor APK ships
+ * and how partners actually work — and `lg:` adds a second column for a
+ * laptop. The bottom tab bar stays put at every width: moving navigation
+ * at 1024px would give the partner app two navigation models, which is
+ * the duplicate-navigation defect `check-one-partner-ui` exists to stop.
  */
+export default function Earnings({ vendorId, vendor, onAddPayout }) {
+  const { jobs, payout, claims, adjustments, loading, error, retry, stale } = useEarnings(vendorId)
 
-const DAY = 86400000
+  /* Sub-state on the same route, so back works, a deep link survives and
+     a partner can be sent to one job. `?tab=` is untouched — the tab bar
+     reads only that, and a second URL for this screen would be the
+     duplicate-navigation defect above. */
+  const [params, setParams] = useSearchParams()
+  const rangeId = params.get('range') ?? 'month'
+  const openId = params.get('txn')
+  const [filters, setFilters] = useState({ q: '', state: null })
 
-export default function Earnings({ vendorId, onAddPayout }) {
-  const [jobs, setJobs] = useState([])
-  const [payout, setPayout] = useState(null)
-  const [claims, setClaims] = useState([])
-  const [loaded, setLoaded] = useState(false)
-
-  const read = useCallback(async () => {
-    if (!vendorId) return
-    const [{ data: j }, { data: p }, { data: c }] = await Promise.all([
-      /* quoted_amount_paise and is_funded were always on this view and
-         this screen never selected either. It reconstructed "has the
-         customer paid" from `paid_at`, when `is_funded` is the real fact,
-         computed from an escrow HOLD. */
-      supabase.from('partner_jobs')
-        .select('line_id, service_name, status, partner_amount_paise, quoted_amount_paise, is_funded, paid_at, delivered_at, event_date, occasion_name, area_label')
-        .order('event_date', { ascending: false }),
-      /* `pan` joins the select because s.194-O waives TDS for a
-         below-threshold individual who has furnished one, and a screen
-         that ignores that shows a net lower than what arrives. Own row
-         only — the RLS policy on this table is vendor-scoped. */
-      supabase.from('vendor_payout_details')
-        .select('method, upi_id, account_number, verified_at, pan').eq('vendor_id', vendorId).maybeSingle(),
-      /* Claims exist and nothing has ever read them, so a job stayed
-         "ready to claim" after the partner had claimed it. */
-      /* The whole row, not three columns of it: the amount, where it
-         went, when it settled and the bank reference are what a partner
-         needs when they are reconciling against a statement. */
-      supabase.from('payout_claims')
-        .select('id, line_id, status, amount_paise, method, destination, requested_at, settled_at, reference, note')
-        .eq('vendor_id', vendorId),
-    ])
-    setJobs(j ?? [])
-    setPayout(p ?? null)
-    setClaims(c ?? [])
-    setLoaded(true)
-  }, [vendorId])
-
-  useEffect(() => { read() }, [read])
-  useLivePoll(read, 20_000, [read])
+  const setParam = useCallback((key, value) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value == null) next.delete(key)
+      else next.set(key, value)
+      return next
+    }, { replace: true })
+  }, [setParams])
 
   /* line_id -> claim. A claim is the partner having asked; `paid` is us
      having sent it. */
   const claimBy = useMemo(
     () => Object.fromEntries((claims ?? []).map(c => [c.line_id, c])), [claims])
 
-  const buckets = useMemo(() => {
-    const now = Date.now()
-    const b = { pending: [], held: [], ready: [], asked: [], paid: [] }
-    for (const j of jobs) {
-      if (j.status === 'cancelled' || j.status === 'expired') continue
-
-      const claim = claimBy[j.line_id]
-      /* `status === 'settled'` was the only test for paid, and nothing in
-         this codebase ever writes that value — so the Paid tile was
-         structurally always zero. A settled CLAIM is the thing that
-         actually happens. */
-      if (claim?.status === 'paid' || j.status === 'settled') { b.paid.push(j); continue }
-      if (claim?.status === 'requested') { b.asked.push(j); continue }
-
-      /* is_funded comes from an escrow HOLD. `paid_at` was a proxy for it
-         and this view has carried the real thing all along. */
-      if (!j.is_funded && !j.paid_at) { b.pending.push(j); continue }
-
-      const eventOver = j.event_date
-        ? now > new Date(`${j.event_date}T00:00:00`).getTime() + DAY
-        : false
-      if (j.delivered_at && eventOver) b.ready.push(j)
-      else b.held.push(j)
-    }
-    return b
-  }, [jobs, claimBy])
-
-  /* ══════════════════════════════════════════════════════════════
-     ONE JOB, ONE NET, COMPUTED IN ONE PLACE
-     ══════════════════════════════════════════════════════════════
-
-     This screen printed `partner_amount_paise` — the job value less the
-     platform fee. The offer card prints the net, which is that MINUS TCS
-     and TDS, because net is what reaches the account and it is what a
-     master accepts on.
-
-     So one job read Rs 10,540 here and Rs 10,416 there, and the smaller
-     one was what arrived. instantPricing.js names this exact mistake —
-     "a master shown Rs 10,540 who receives Rs 10,416 will conclude they
-     were short-changed, and they will be right to ask" — and this screen
-     was making it.
-
-     Net everywhere, from `jobMoney`, which is also what the per-job
-     breakdown rows below render from. The totals and the rows cannot
-     disagree because they are the same call.
-
-     ── The PAN changes the answer ────────────────────────────────────
-     s.194-O waives TDS for a below-threshold individual with a PAN on
-     file, which is most of this supply base. The threshold is measured
-     on the financial year's own jobs, on the CUSTOMER price rather than
-     the share — the conservative direction, so the figure shown is the
-     lower of the two possible answers. */
   const fy = useMemo(() => financialYear(), [])
   const hasPan = !!payout?.pan
+  /* Over every row, never over the range. See the trap above. */
   const annualInr = useMemo(() => annualGrossInr(jobs, fy), [jobs, fy])
-  const money = useCallback(
-    j => jobMoney(j, { hasPan, annualGrossInr: annualInr }),
-    [hasPan, annualInr])
 
-  const net = j => money(j).netPaise
+  const range = useMemo(() => buildRange(rangeId), [rangeId])
+  const hasPrev = useMemo(() => hasPriorData(jobs, range), [jobs, range])
 
-  const sum = list => list.reduce((n, j) => n + net(j), 0)
+  const series = useMemo(
+    () => earningsSeries(jobs, range, { hasPan, annualGrossInr: annualInr, claimBy, hasPrev }),
+    [jobs, range, hasPan, annualInr, claimBy, hasPrev])
 
-  /* The year's totals, added from the same jobMoney() call each row below
-     renders — so the statement and the list it sits above can never
-     print different arithmetic for the same job. */
   const fyStatement = useMemo(
     () => statement(jobs, { fy, hasPan, annualGrossInr: annualInr }),
     [jobs, fy, hasPan, annualInr])
 
-  /* ══════════════════════════════════════════════════════════════
-     ONE TOTAL, THEN THE STAGES IN THE ORDER SOMEBODY ASKS THEM
-     ══════════════════════════════════════════════════════════════
+  const ready = series.byState.ready ?? { net: 0, count: 0 }
+  const owedJobs = OWED_STATES.reduce((n, s) => n + (series.byState[s]?.count ?? 0), 0)
 
-     Four tiles in a 2x2 grid, deliberately never summed, answered
-     "where is each part of my money" and never answered "how much have I
-     made" — which is the question. A new partner met four ₹0 tiles with
-     abstract sentences under them.
+  const visible = useMemo(() => {
+    /* Sorted newest first, which is the order the underlying read
+       already asks for; re-stated here because filtering does not
+       promise to preserve it. */
+    return filterRows(series.rows, filters)
+      .filter(e => e.state !== 'cancelled')
+      .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
+  }, [series.rows, filters])
 
-     So: the total first, in one number, and then the stages as rows a
-     person reads top to bottom in the order the money actually moves.
-     Rows rather than a grid because they are a sequence, not four
-     categories, and a sequence read left-to-right-then-down is a
-     sequence nobody can see. */
-  const stages = [
-    {
-      id: 'pending', icon: Clock, tone: 'ink',
-      label: 'Waiting on the customer',
-      value: sum(buckets.pending), n: buckets.pending.length,
-      scan: 'You have the job. The customer has not paid yet.',
-    },
-    {
-      id: 'held', icon: ShieldCheck, tone: 'saffron',
-      label: 'Paid, and held for you',
-      value: sum(buckets.held), n: buckets.held.length,
-      scan: 'The money exists. It is yours once the job is done.',
-    },
-    {
-      id: 'ready', icon: Banknote, tone: 'forest',
-      label: 'Ready to claim',
-      value: sum(buckets.ready), n: buckets.ready.length,
-      scan: 'Done and cleared. Ask for it whenever you like.',
-    },
-    {
-      id: 'asked', icon: Clock, tone: 'saffron',
-      label: 'You have asked for it',
-      value: sum(buckets.asked), n: buckets.asked.length,
-      scan: 'We are sending it. Usually two working days.',
-    },
-    {
-      id: 'paid', icon: Wallet, tone: 'ink',
-      label: 'In your account',
-      value: sum(buckets.paid), n: buckets.paid.length,
-      scan: 'Already sent.',
-    },
-  ]
+  const open = useMemo(
+    () => series.rows.find(e => e.row.line_id === openId) ?? null,
+    [series.rows, openId])
 
-  /* Everything that is or will be theirs. Not "paid out" alone, which
-     reads as though the rest might never arrive, and not everything
-     including cancelled work either. */
-  const earnedPaise = sum(buckets.held) + sum(buckets.ready)
-    + sum(buckets.asked) + sum(buckets.paid)
-
-  const TONE = {
-    forest:  'bg-forest-50 text-forest-700 ring-forest-200',
-    saffron: 'bg-saffron-400/15 text-saffron-800 ring-saffron-300/60',
-    ink:     'bg-ink/[0.03] text-ink-mute ring-ink/[0.07]',
+  /* ── The three states, in the order they can occur ────────────────
+     `loading` is true only on the first read, so the screen does not
+     flash a skeleton every twenty seconds. The error branch fires only
+     when there is nothing to show: a failed poll with figures already up
+     leaves them there and marks them stale, because replacing a
+     partner's earnings with an error card is worse than saying "these
+     are from a minute ago". */
+  if (loading) return <ScreenState loading rows={4} what="your earnings" />
+  if (error && jobs.length === 0) {
+    return <ScreenState error what="your earnings" onRetry={retry} />
   }
 
-  if (!loaded) {
-    return <ScreenState loading rows={3} what="your earnings" />
-  }
-
-  const nothingYet = jobs.length === 0
+  /* Adjustments attached to THIS job go on its slip, below the net.
+     Account-level ones (line_id null) belong to the panel instead —
+     putting them on one job's slip would say a booking earned money it
+     had nothing to do with. */
+  const detail = open && (
+    <TransactionDetail
+      entry={open}
+      claim={claimBy[open.row.line_id] ?? null}
+      payout={payout}
+      partner={vendor ?? {}}
+      hasPan={hasPan}
+      annualGrossInr={annualInr}
+      adjustments={(adjustments ?? []).filter(a => a.line_id === open.row.line_id)}
+      onClaimed={retry}
+      onClose={() => setParam('txn', null)}
+    />
+  )
 
   return (
-    <div className="space-y-3.5">
-      {/* ── The one that needs an answer ──────────────────────────────
-          A partner with money ready and nowhere to send it is the worst
-          state this screen can show, so it is the first thing on it. */}
-      {!payout && (
-        <button
-          type="button"
-          onClick={onAddPayout}
-          className="flex w-full items-center gap-3 rounded-[22px] bg-saffron-400/15 p-4 text-left ring-1 ring-saffron-300/70"
-        >
-          <TriangleAlert size={19} className="shrink-0 text-saffron-800" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold text-ink">
-              We cannot pay you yet
-            </span>
-            <span className="block text-[12.5px] leading-snug text-ink-soft">
-              Add where your money should go. It takes a minute.
-            </span>
-          </span>
-          <ArrowRight size={17} className="shrink-0 text-saffron-800" />
-        </button>
-      )}
-
-      {payout && !payout.verified_at && (
-        <p className="rounded-[18px] bg-ink/[0.03] px-4 py-3 text-[12.5px] font-semibold text-ink-soft">
-          We are checking your payout details. Jobs carry on as normal meanwhile.
-        </p>
-      )}
-
-      {/* ── Asking for it happens HERE ────────────────────────────
-          "Ready to claim" said money was ready and offered no way to ask
-          for it: the button lived on the job card, on the Jobs tab,
-          behind a disclosure. A partner reading a screen that says money
-          is theirs should be able to ask for it on that screen. */}
-      {buckets.ready.length > 0 && (
-        <div className="rounded-[22px] bg-forest-50 p-4 ring-1 ring-forest-200">
-          <p className="text-[13.5px] font-extrabold leading-tight text-forest-900">
-            {buckets.ready.length === 1
-              ? 'One job is ready to be paid out'
-              : `${buckets.ready.length} jobs are ready to be paid out`}
-          </p>
-          <p className="mt-0.5 text-[12px] leading-snug text-forest-800">
-            {formatINR(Math.round(sum(buckets.ready) / 100))} in total. Ask for
-            it whenever you like — it does not expire.
-          </p>
-          <div className="mt-2.5 space-y-2">
-            {buckets.ready.map(j => (
-              <div key={j.line_id} className="rounded-2xl bg-white p-2.5 ring-1 ring-forest-200/70">
-                <p className="mb-1.5 truncate text-[12.5px] font-extrabold text-ink">
-                  {j.service_name}
-                  <span className="ml-1.5 font-serif text-[13px] tabular-nums text-ink-soft">
-                    {formatINR(Math.round(net(j) / 100))}
-                  </span>
-                </p>
-                <ClaimPayment lineId={j.line_id} onClaimed={read}
-                              hasPan={hasPan} annualGrossInr={annualInr} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── What you have earned ─────────────────────────────────
-          One number, because "how much have I made" is the question this
-          screen exists to answer and four un-summed tiles never did. */}
-      <div className="overflow-hidden rounded-[22px] bg-plum-950 p-4 text-white">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/70">
-          Yours, all in
-        </p>
-        <p className="mt-1 font-serif text-[32px] font-extrabold leading-none tracking-tight tabular-nums">
-          {formatINR(Math.round(earnedPaise / 100))}
-        </p>
-        <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/75">
-          {jobs.length === 0
-            ? 'Nothing yet. It starts with your first accepted job.'
-            : 'After the platform fee and the tax deposited for you — the '
-              + 'same figure the offer showed you when you accepted.'}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        {stages.filter(c => c.n > 0 || c.id === 'ready').map(c => {
-          const Icon = c.icon
-          return (
-            <div key={c.id} className={`flex items-center gap-3 rounded-[20px] p-3.5 ring-1 ${TONE[c.tone]}`}>
-              <Icon size={17} className="shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-extrabold leading-snug text-ink">{c.label}</p>
-                <p className="mt-0.5 text-[11.5px] font-semibold leading-snug opacity-80">
-                  {c.n === 0 ? c.scan : `${c.n} job${c.n === 1 ? '' : 's'} · ${c.scan}`}
-                </p>
-              </div>
-              <p className="shrink-0 font-serif text-[19px] font-extrabold leading-none tracking-tight text-ink tabular-nums">
-                {formatINR(Math.round(c.value / 100))}
-              </p>
-            </div>
-          )
-        })}
-      </div>
-
-      {nothingYet && (
-        <p className="rounded-[20px] bg-ink/[0.02] p-5 text-center text-[13px] leading-relaxed text-ink-mute">
-          No earnings yet. Keep your list and your calendar current — that is
-          what decides how often you are matched.
-        </p>
-      )}
-
-      {/* ── Where it goes ─────────────────────────────────────────── */}
-      {payout && (
-        <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <p className="text-[12px] font-extrabold uppercase tracking-wider text-ink-mute">
-            Paid into
-          </p>
-          <p className="mt-1 text-[14px] font-extrabold text-ink">
-            {payout.method === 'upi'
-              ? payout.upi_id
-              : `Account ending ${String(payout.account_number ?? '').slice(-4)}`}
-          </p>
-          <p className="mt-0.5 text-[12px] font-semibold text-ink-mute">
-            {payout.verified_at ? 'Verified' : 'Being checked'}
+    <div className="space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0">
+      {stale && (
+        <div className="flex items-start gap-2 rounded-[16px] bg-saffron-400/10 px-3.5 py-2.5 ring-1 ring-saffron-300/50 lg:col-span-12">
+          <CloudOff size={14} className="mt-0.5 shrink-0 text-saffron-800" />
+          <p className="text-[12px] font-semibold leading-snug text-saffron-800">
+            Showing your last known figures. We could not refresh just now.{' '}
+            <button type="button" onClick={retry} className="underline underline-offset-2">
+              Try again
+            </button>
           </p>
         </div>
       )}
 
-      {/* ── The year, for whoever is filing ───────────────────────
-          Below the buckets, because "where is my money now" is the
-          daily question and "what did the year come to" is the
-          quarterly one — and this screen is opened daily. */}
-      {jobs.length > 0 && <EarningsStatement statement={fyStatement} />}
+      {/* ── Left: the analysis ────────────────────────────────────── */}
+      <div className="space-y-3.5 lg:col-span-8">
+        {/* On a phone the hero leads, because "what is mine now" is the
+            question. On a desktop it moves to the rail and the analysis
+            leads, because there is room for both and the eye starts left. */}
+        <div className="lg:hidden">
+          <EarningsHero
+            readyPaise={ready.net} readyCount={ready.count}
+            payout={payout} onAddPayout={onAddPayout}
+          />
+        </div>
 
-      {/* ── What we have actually sent ────────────────────────────── */}
-      <PayoutHistory
-        claims={claims}
-        /* So a receipt can show what the customer paid, not just what
-           was claimed. Built from the jobs already in memory rather
-           than re-queried per receipt. */
-        jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))}
-        hasPan={hasPan}
-        annualGrossInr={annualInr}
-      />
+        <RangeFilter range={range} onChange={id => setParam('range', id)} />
 
-      {/* ── Job by job, so a number can be traced ─────────────────── */}
-      {jobs.length > 0 && (
-        <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          {/* Named "your work", not "every job". This list IS the work
-              history a partner goes looking for, and the bar no longer
-              has a tab called My work pointing somewhere else. */}
-          <p className="text-[12px] font-extrabold uppercase tracking-wider text-ink-mute">
-            Your work
-          </p>
-          <p className="mt-0.5 text-[12px] font-semibold text-ink-mute">
-            Every job you have taken. Tap one to see where each rupee went.
-          </p>
-          <ul className="mt-2 divide-y divide-ink/[0.06]">
-            {jobs.slice(0, 25).map(j => {
-              /* ── The same words as the rows above ────────────────
-                 The stages said "Ready to be paid out" and this line
-                 said "Delivered" for the same job, so a partner could
-                 not trace a figure back to the work in it. One
-                 vocabulary, derived from the same buckets rather than
-                 re-tested here — two ladders drift. */
-              const where =
-                buckets.paid.includes(j) ? 'In your account'
-                : buckets.asked.includes(j) ? 'You have asked for it'
-                : buckets.ready.includes(j) ? 'Ready to claim'
-                : buckets.held.includes(j) ? 'Paid, held for you'
-                : 'Waiting on the customer'
-              return (
-                <JobMoneyRow
-                  key={j.line_id}
-                  job={j}
-                  where={where}
-                  hasPan={hasPan}
-                  annualGrossInr={annualInr}
-                />
-              )
-            })}
-          </ul>
-          {jobs.length > 25 && (
-            <p className="mt-2 text-[11.5px] font-semibold text-ink-mute">
-              Showing your 25 most recent jobs.
+        <KpiCards kpis={series.kpis} range={range} owedJobs={owedJobs} />
+
+        <EarningsChart series={series.series} range={range} />
+
+        <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <h2 className="text-[13.5px] font-extrabold text-ink">Earnings by service</h2>
+          <p className="mb-3 text-[11px] text-ink-mute">{range.label}</p>
+          <Donut
+            slices={series.byTrade}
+            total={series.kpis.earned.value}
+            centreLabel={range.label}
+          />
+        </section>
+
+        <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <div className="mb-2.5 flex items-baseline justify-between gap-2">
+            <h2 className="text-[13.5px] font-extrabold text-ink">Your work</h2>
+            <p className="text-[11px] text-ink-mute">
+              {visible.length} {visible.length === 1 ? 'job' : 'jobs'}
             </p>
-          )}
+          </div>
+
+          <TransactionFilters rows={series.rows} value={filters} onChange={setFilters} />
+
+          <div className="mt-3 lg:hidden">
+            <TransactionList rows={visible} onOpen={id => setParam('txn', id)} />
+          </div>
+          <div className="mt-3 hidden lg:block">
+            <TransactionTable rows={visible} onOpen={id => setParam('txn', id)} />
+          </div>
+        </section>
+
+        <div className="lg:hidden">
+          <PayoutHistory
+            claims={claims} jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))}
+            hasPan={hasPan} annualGrossInr={annualInr}
+          />
+        </div>
+
+        <EarningsStatement statement={fyStatement} />
+      </div>
+
+      {/* ── Right: what is mine, and where it goes ────────────────── */}
+      <div className="space-y-3.5 lg:col-span-4 lg:sticky lg:top-4">
+        <div className="hidden lg:block">
+          <EarningsHero
+            readyPaise={ready.net} readyCount={ready.count}
+            payout={payout} onAddPayout={onAddPayout}
+          />
+        </div>
+
+        {/* The detail replaces the rail's contents at lg, and is a sheet
+            over the screen below it. One component, two placements. */}
+        {detail}
+
+        {!open && (
+          <>
+            <div className="hidden lg:block">
+              <PayoutHistory
+                claims={claims} jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))}
+                hasPan={hasPan} annualGrossInr={annualInr}
+              />
+            </div>
+            <AdjustmentsPanel
+              adjustments={(adjustments ?? []).filter(a => !a.line_id)} />
+            <BankPanel payout={payout} onAddPayout={onAddPayout} />
+            <DocumentsSection statement={fyStatement} fy={fy} partner={vendor ?? {}} />
+          </>
+        )}
+      </div>
+
+      {jobs.length === 0 && (
+        <div className="lg:col-span-12">
+          <ScreenState
+            empty
+            title="No earnings yet"
+            message="Keep your list and your calendar current — that is what decides how often you are matched."
+          />
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { Landmark, Smartphone, Check, Loader2, ShieldCheck, AlertTriangle } from
 import { supabase } from '../../lib/supabase'
 import { BANKS, bankForCode, codeForBank } from '../../data/indianBanks'
 import { lookupIfsc, looksLikeIfsc } from '../../lib/ifsc'
+import { last4 } from '../../lib/documents/mask'
 
 /**
  * Where this partner gets paid.
@@ -289,7 +290,7 @@ export default function PayoutDetails({ vendorId, onSaved }) {
             />
             {row?.account_number && !accNo && (
               <p className="mt-1 text-[11.5px] font-semibold text-ink-mute">
-                Currently ending {String(row.account_number).slice(-4)}.
+                Currently ending {last4(row.account_number)}.
               </p>
             )}
           </div>

@@ -29,6 +29,7 @@ import PartnerInbox from './PartnerInbox'
 import PartnerMessages from './PartnerMessages'
 import NotificationPrefs from './NotificationPrefs'
 import { fetchNotifications, fetchMessages, fetchPrefs } from '../../lib/partnerInbox'
+import { destinationShort } from '../../lib/documents/mask'
 
 /**
  * The partner's account, end to end.
@@ -242,7 +243,11 @@ export default function PartnerAccount({
     ? 'Not added yet — we cannot pay you without it'
     : payout.method === 'upi'
       ? `UPI · ${payout.upi_id}${payout.verified_at ? '' : ' · being checked'}`
-      : `Bank · ends ${String(payout.account_number ?? '').slice(-4)}${payout.verified_at ? '' : ' · being checked'}`
+      /* One spelling of a masked account, from lib/documents/mask.js.
+         Four components each rolled their own last-four slice and
+         produced four: "…4417", "ends 4417", "ending 4417" and
+         "•••• 4417" — one account reading four ways across one app. */
+      : `Bank · ${destinationShort(payout)}${payout.verified_at ? '' : ' · being checked'}`
 
   /* ══════════════════════════════════════════════════════════════════
      SEVENTEEN ACCORDIONS BECAME FIVE GROUPS AND A DESTINATION

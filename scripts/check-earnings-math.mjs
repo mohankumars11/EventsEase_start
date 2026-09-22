@@ -26,6 +26,10 @@ writeFileSync(ENTRY, [
   `export { partnerEarnings, partnerDeductions, lineSplit } from ${JSON.stringify(join(ROOT, 'src/lib/instantPricing.js'))}`,
   `export { PLATFORM_FEE_RATE } from ${JSON.stringify(join(ROOT, 'src/config/instantBooking.js'))}`,
   `export { TAX } from ${JSON.stringify(join(ROOT, 'src/config/legal.js'))}`,
+  /* The document models. A payment slip is a thing a partner can hold,
+     forward and argue from, so its arithmetic belongs in the file that
+     asserts the four numbers close — not in a component nobody tests. */
+  `export { slipModel, statementModel, documentNo } from ${JSON.stringify(join(ROOT, 'src/lib/documents/slipModel.js'))}`,
 ].join('\n'))
 
 const b = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [
@@ -34,7 +38,7 @@ const b = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [
 if (b.status !== 0) { console.error(b.stderr ?? b.stdout); process.exit(1) }
 
 const M = await import(pathToFileURL(OUT).href)
-const { jobMoney, statement, financialYear, inFY, annualGrossInr,
+const { jobMoney, statement, financialYear, inFY, annualGrossInr, slipModel, statementModel, documentNo,
         partnerEarnings, partnerDeductions, lineSplit, PLATFORM_FEE_RATE, TAX } = M
 
 const tick = String.fromCharCode(10003)
@@ -161,6 +165,83 @@ for (const q of [1, 99, 100, 333, 7777, 123457, 999999, 10000001]) {
   if (e.grossPaise !== back) leaked = `${q}: ${e.grossPaise} vs ${back}`
 }
 ok('every awkward amount closes to the paise', leaked === null, leaked ?? '')
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE SLIP CANNOT DISAGREE WITH THE SCREEN
+   ══════════════════════════════════════════════════════════════════════
+
+   A payment slip is a file. It gets forwarded, printed, and handed to an
+   accountant, and it outlives the screen it was made from — so a slip
+   whose lines do not add up to its own total, or whose total is not the
+   net the partner was shown, is the most expensive bug in this module.
+
+   `slipModel()` and the screen both call `jobMoney()`; these assertions
+   are what stop a future edit deriving one of them twice. */
+console.log('\nTHE SLIP ADDS UP, AND MATCHES THE SCREEN\n')
+
+const slipJob = job({ quoted_amount_paise: 2500000 })
+const slipOpts = { hasPan: true, annualGrossInr: 120000 }
+const slip = slipModel(slipJob, null, slipOpts)
+const screenMoney = jobMoney(slipJob, slipOpts)
+
+const sumLines = ls => ls
+  /* A subtotal restates what is above it; adding it would double-count.
+     The waived-TDS line is a zero with an explanation, not an amount. */
+  .filter(l => !l.subtotal)
+  .reduce((n, l) => n + l.paise, 0)
+
+ok('the slip lines sum to its own total',
+   sumLines(slip.lines) === slip.total,
+   `${sumLines(slip.lines)} vs ${slip.total}`)
+ok('and that total is the net the screen shows',
+   slip.total === screenMoney.netPaise,
+   `${slip.total} vs ${screenMoney.netPaise}`)
+ok('the slip names the rate that was actually taken',
+   slip.lines.some(l => /8%/.test(l.note ?? '')),
+   JSON.stringify(slip.lines.map(l => l.note)))
+ok('a waived TDS is explained, not printed as a deduction',
+   slip.lines.some(l => l.paise === 0 && /[Ww]aived/.test(l.note ?? '')))
+ok('it calls itself a payment slip and not an invoice',
+   slip.footnotes.some(f => /not a tax invoice/i.test(f)) &&
+   !/invoice/i.test(slip.title))
+
+/* An older row: the customer price and fee are unknowable, and the slip
+   must say so rather than print a number nobody can check. */
+const legacySlip = slipModel(
+  job({ quoted_amount_paise: null, partner_amount_paise: 1054000 }), null, slipOpts)
+ok('an un-itemised slip still closes',
+   sumLines(legacySlip.lines) === legacySlip.total,
+   `${sumLines(legacySlip.lines)} vs ${legacySlip.total}`)
+ok('and states why the fee is absent rather than guessing it',
+   legacySlip.lines.every(l => !/fee/i.test(l.label)) &&
+   legacySlip.lines.some(l => /predates itemised/i.test(l.note ?? '')))
+
+/* An adjustment is its own line BELOW the net, never folded into the
+   four-part split — folding it would break "customer = commission +
+   share", which is the first assertion in this file. */
+const adjusted = slipModel(slipJob, null, {
+  ...slipOpts,
+  adjustments: [{ kind: 'bonus', amount_paise: 50000, reason: 'Festival bonus' }],
+})
+ok('an adjustment moves the total by exactly its own amount',
+   adjusted.total === slip.total + 50000, `${adjusted.total} vs ${slip.total + 50000}`)
+ok('and it still closes with the adjustment on it',
+   sumLines(adjusted.lines) === adjusted.total)
+ok('a recovery reduces the total', slipModel(slipJob, null, {
+  ...slipOpts, adjustments: [{ kind: 'recovery', amount_paise: -25000, reason: 'Overpaid last week' }],
+}).total === slip.total - 25000)
+
+const stmtModel = statementModel(st, { fy })
+ok('the statement model carries the un-itemised line',
+   stmtModel.lines.some(l => /Older jobs/i.test(l.label)))
+ok('and closes on the same net the screen prints',
+   sumLines(stmtModel.lines) === stmtModel.total && stmtModel.total === st.netPaise,
+   `${sumLines(stmtModel.lines)} vs ${stmtModel.total} vs ${st.netPaise}`)
+
+ok('a document number is stable and names its financial year',
+   documentNo('PS', 'abcdef01-2345-6789-abcd-ef0123456789', new Date('2026-06-01'))
+     === 'SB/PS/FY2627/ABCDEF01',
+   documentNo('PS', 'abcdef01-2345-6789-abcd-ef0123456789', new Date('2026-06-01')))
 
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exit(bad ? 1 : 0)
