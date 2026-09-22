@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
+import ValidatedField from '../../../components/partner/ValidatedField'
+import { validateStep, normalise } from '../../../lib/validation/fieldRules'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 
@@ -54,20 +56,27 @@ export default function PartnerDetailsStep() {
   }, [v, profile])
 
   const set = (k, val) => setForm(f => ({ ...f, [k]: val }))
-  const ready = ['business_name', 'contact_phone', 'description', 'years_active']
-    .every(k => String(form[k] ?? '').trim() !== '')
+  /* Continue asks the rule engine, not a list of non-empty strings.
+     The old test passed for a business_name of "1" and a phone of
+     "hello" -- present is not the same as correct. */
+  const check = validateStep('details', form)
+  const ready = check.canContinue
+  const [showAll, setShowAll] = useState(false)
 
   async function save() {
     if (!v?.id || busy) return
+    /* Continue is disabled when this is false, but a form can also be
+       submitted by a keyboard. The gate belongs here too. */
+    if (!validateStep('details', form).canContinue) { setShowAll(true); return }
     setBusy(true); setError(null)
     try {
       const { error: err } = await supabase.from('vendors').update({
-        business_name: form.business_name.trim(),
-        contact_phone: form.contact_phone.trim(),
-        description: form.description.trim(),
+        business_name: normalise('business_name', form.business_name),
+        contact_phone: normalise('contact_phone', form.contact_phone),
+        description: normalise('description', form.description),
         years_active: Number(form.years_active) || 0,
         website_url: form.website_url.trim() || null,
-        instagram_url: form.instagram_url.trim() || null,
+        instagram_url: normalise('instagram_url', form.instagram_url) || null,
       }).eq('id', v.id)
       if (err) throw err
       await refresh()
@@ -88,7 +97,8 @@ export default function PartnerDetailsStep() {
   }
 
   return (
-    <StepShell stepId="details" canContinue={ready} busy={busy} onContinue={save}>
+    <StepShell stepId="details" canContinue={ready} busy={busy}
+      onContinue={() => { setShowAll(true); save() }}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
         Partner details
       </h1>
@@ -105,31 +115,35 @@ export default function PartnerDetailsStep() {
         </div>
       )}
 
-      <Field label="Business name" hint="What customers will see.">
-        <input className={inputClass} value={form.business_name}
-          onChange={e => set('business_name', e.target.value)} placeholder="Anna Ruchi Caterers" />
-      </Field>
+      <ValidatedField
+        field="business_name" value={form.business_name} showAll={showAll}
+        onChange={val => set('business_name', val)}
+        hint="What customers will see on your offer."
+        placeholder="Anna Ruchi Caterers" autoComplete="organization" />
 
-      <Field label="Contact number" hint="The number we ring on the day of an event.">
-        <input className={inputClass} inputMode="tel" value={form.contact_phone}
-          onChange={e => set('contact_phone', e.target.value)} placeholder="98450 00000" />
-      </Field>
+      <ValidatedField
+        field="contact_phone" value={form.contact_phone} showAll={showAll}
+        onChange={val => set('contact_phone', val)}
+        label="Contact number" inputMode="tel" autoComplete="tel"
+        hint="The number we ring on the day of an event."
+        placeholder="98450 00000" />
 
-      <Field label="Years doing this">
-        <input className={inputClass} inputMode="numeric" value={form.years_active}
-          onChange={e => set('years_active', e.target.value.replace(/\D/g, ''))} placeholder="12" />
-      </Field>
+      <ValidatedField
+        field="years_active" value={form.years_active} showAll={showAll}
+        onChange={val => set('years_active', val)}
+        inputMode="numeric" placeholder="12" />
 
-      <Field label="About your business" hint="A few lines in your own words.">
-        <textarea className={`${inputClass} min-h-[96px]`} value={form.description}
-          onChange={e => set('description', e.target.value)}
-          placeholder="Pure vegetarian catering for weddings and house functions since 2011." />
-      </Field>
+      <ValidatedField
+        field="description" value={form.description} showAll={showAll}
+        onChange={val => set('description', val)}
+        label="About your business" multiline
+        hint="A few lines in your own words. Contact details are shared once a job is confirmed, so they do not go here."
+        placeholder="Pure vegetarian catering for weddings and house functions since 2011." />
 
-      <Field label="Website or Instagram" hint="Optional — leave blank if you have none.">
-        <input className={inputClass} value={form.instagram_url}
-          onChange={e => set('instagram_url', e.target.value)} placeholder="instagram.com/yourwork" />
-      </Field>
+      <ValidatedField
+        field="instagram_url" value={form.instagram_url} showAll={showAll}
+        onChange={val => set('instagram_url', val)}
+        label="Instagram" placeholder="instagram.com/yourwork" />
 
       {error && (
         <p className="rounded-2xl bg-rose-50 px-3 py-2 text-[12.5px] font-bold text-rose-700">{error}</p>

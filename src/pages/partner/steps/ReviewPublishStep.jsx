@@ -45,9 +45,30 @@ export default function ReviewPublishStep() {
     if (!v?.id || busy) return
     setBusy(true); setError(null)
     try {
-      const { error: err } = await supabase.from('vendors')
-        .update({ verification_status: 'submitted' }).eq('id', v.id)
-      if (err) throw err
+      /* ── submit_for_review(), not a raw UPDATE ──────────────────────
+         The update wrote `verification_status` and nothing else, so
+         there was no deadline anywhere and "under review" had no end to
+         it. The RPC (migration 142) stamps `review_due_at` 24 hours out
+         in the same statement, which is what the countdown on the Jobs
+         tab reads.
+
+         It also refuses to restart a clock that is already running —
+         re-submitting is a replay, not a fresh 24 hours — and that rule
+         belongs in the database rather than in whichever screen happens
+         to call it. */
+      const { data, error: err } = await supabase.rpc('submit_for_review')
+      if (err) {
+        /* 142 not pasted yet. Fall back to what the screen did before,
+           so a device ahead of the database still works — it simply has
+           no countdown until the migration lands. */
+        const missing = err.code === 'PGRST202' || /Could not find the function/i.test(err.message ?? '')
+        if (!missing) throw err
+        const { error: e2 } = await supabase.from('vendors')
+          .update({ verification_status: 'submitted' }).eq('id', v.id)
+        if (e2) throw e2
+      } else if (data && data.ok === false) {
+        throw new Error(data.says ?? 'We could not send this for review just now.')
+      }
       await refresh()
       navigate('/dashboard/vendor')
     } catch (e) {
@@ -132,13 +153,19 @@ export default function ReviewPublishStep() {
         </div>
       </div>
 
+      {/* White, not forest-50. The partner app has one ground colour
+          (#FFFFFF, index.css) and a tinted panel here was a plane
+          against it. The ring carries the boundary instead.
+
+          The wording no longer says "Your profile is with our team" --
+          that sentence was removed everywhere it appeared. */}
       {already ? (
-        <p className="flex items-start gap-2 rounded-2xl bg-forest-50 px-3.5 py-3 text-[12.5px] leading-snug text-forest-900 ring-1 ring-forest-200">
-          <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+        <p className="flex items-start gap-2 rounded-2xl bg-white px-3.5 py-3 text-[12.5px] leading-snug text-ink ring-1 ring-ink/[0.08]">
+          <ShieldCheck size={14} className="mt-0.5 shrink-0 text-forest-600" />
           <span>
             {v.verification_status === 'approved'
               ? 'Your profile has been approved. You are live.'
-              : 'Your profile is with our team. We will let you know as soon as it is checked.'}
+              : 'Submitted. We will let you know as soon as it is checked.'}
           </span>
         </p>
       ) : (

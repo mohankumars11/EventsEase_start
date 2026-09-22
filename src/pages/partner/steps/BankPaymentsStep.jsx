@@ -4,6 +4,7 @@ import { Loader2, Lock, Check } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
+import { destinationShort } from '../../../lib/documents/mask'
 
 /**
  * Step 5 · where the money goes.
@@ -91,7 +92,7 @@ export default function BankPaymentsStep() {
   if (existing) {
     const masked = existing.method === 'upi'
       ? existing.upi_id
-      : `•••• ${String(existing.account_number ?? '').slice(-4)}`
+      : destinationShort(existing)
     return (
       <StepShell stepId="bank" cta="Continue to review" onContinue={() => navigate('/partner/setup/review')}>
         <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
