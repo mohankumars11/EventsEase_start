@@ -109,7 +109,12 @@ const nav = await evalJs(`(() => {
   }
 })()`)
 
-const EXPECT = ['Jobs', 'Earnings', 'Listing', 'Calendar', 'Account']
+/* Four, not the five this asserted until now. The bar was consolidated
+   to Jobs / Calendar / Earnings / More — Listing moved under More, and
+   Account was renamed to More in the same pass — and this array was not
+   updated with it, so the guard has been failing on the correct bar.
+   A guard that cries wolf is a guard nobody reads; see the header. */
+const EXPECT = ['Jobs', 'Calendar', 'Earnings', 'More']
 const fails = []
 
 /* Rule 0: the splash hands off to the landing, not to a dead root. */

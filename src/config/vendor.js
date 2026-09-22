@@ -148,8 +148,11 @@ export const VENDOR_STATUS = {
     label: 'Under review',
     tone:  'amber',
     blocking: true,
-    headline: 'Your profile is with our team',
-    detail:   'We review every partner by hand, usually within 24–48 hours. You can build your list and set your availability now — both go live the moment you are approved.',
+    /* `headline` and `detail` are deliberately absent. They read "Your
+       profile is with our team" / "usually within 24-48 hours" and fed
+       the status card the partner dashboard used to show on every tab.
+       Both the card and the wording were removed. Only `label` and
+       `tone` are read now, by PartnerAccount's status chip. */
   },
   APPROVED: {
     label: 'Live',

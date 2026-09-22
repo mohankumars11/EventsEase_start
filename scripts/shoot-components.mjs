@@ -33,7 +33,7 @@ import esbuild from 'esbuild'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const [outFile, ...rest] = process.argv.slice(2)
 if (!outFile) {
-  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms] [--eval <js>]')
+  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms] [--eval <js>] [--desktop]')
   process.exit(1)
 }
 const flag = (n, d) => { const i = rest.indexOf(`--${n}`); return i === -1 ? d : rest[i + 1] }
@@ -48,6 +48,15 @@ const settle = Number(flag('wait', 900))
    interaction — an accordion opened, a course expanded — and those are
    exactly the states worth photographing. */
 const evalAfter = flag('eval', null)
+/* ── --desktop ─────────────────────────────────────────────────────────
+   `mobile: true` tells the emulator this is a phone, and a phone is what
+   almost every scene here is. But a screen with `lg:` breakpoints has a
+   second layout that no amount of --width will reveal while the
+   emulator is still claiming to be a handset: Chrome keeps the mobile
+   viewport meta behaviour and the media queries resolve against it.
+   Shipping a two-column desktop dashboard that nobody has looked at is
+   not shipping it, so this flag exists to photograph the other half. */
+const desktop = rest.includes('--desktop')
 
 /* ── the stylesheet, and a staleness check ───────────────────────────── */
 const distAssets = join(ROOT, 'dist', 'assets')
@@ -211,7 +220,7 @@ const send = (method, params = {}) =>
 await send('Runtime.enable')
 await send('Page.enable')
 await send('Emulation.setDeviceMetricsOverride',
-  { width, height: 900, deviceScaleFactor: SCALE, mobile: true })
+  { width, height: 900, deviceScaleFactor: SCALE, mobile: !desktop })
 await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/` })
 await sleep(settle)
 
@@ -237,7 +246,7 @@ if (evalAfter) {
 const h = Math.ceil((await send('Runtime.evaluate',
   { expression: 'document.documentElement.scrollHeight' })).result.value)
 await send('Emulation.setDeviceMetricsOverride',
-  { width, height: h, deviceScaleFactor: SCALE, mobile: true })
+  { width, height: h, deviceScaleFactor: SCALE, mobile: !desktop })
 await sleep(250)
 
 /* Clip to the mounted root. A page-height screenshot picks up whatever

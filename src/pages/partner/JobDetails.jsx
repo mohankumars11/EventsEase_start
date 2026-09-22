@@ -11,6 +11,7 @@ import { requirementsFor, moneyFor, contactReleased } from '../../lib/jobDetail'
 import { iconForTrade } from '../../components/vendor/TradeGrid'
 import JobTimeline from '../../components/partner/JobTimeline'
 import LiveTracking from '../../components/partner/LiveTracking'
+import { travelWindow, travelOpensWording } from '../../lib/istTime'
 
 /**
  * One job, in full.
@@ -97,6 +98,8 @@ export default function JobDetails() {
     : null
   const reqs = requirementsFor(job, spec)
   const money = moneyFor(job, { hasPan: !!payout?.pan })
+  /* Same window MyJobs uses, from the one place it is defined. */
+  const travel = travelWindow(job.event_date)
   const released = contactReleased(job)
   const r = p => formatINR(Math.round(p / 100))
 
@@ -134,10 +137,32 @@ export default function JobDetails() {
           </dl>
         </section>
 
-        {/* Renders nothing unless 127 is applied and the job is close
-            enough for travelling to it to mean anything. */}
+        {/* ── The travel window, which this screen never enforced ──────
+            The comment here used to claim the job had to be "close
+            enough for travelling to it to mean anything". It was not
+            checked. MyJobs computed that rule in a local variable and
+            this screen, rendering the same panel, had no gate at all --
+            so opening any accepted job from the list showed Start trip,
+            weeks early. Tapping it opens a real tracking session and
+            starts following a partner's phone for a job that is not
+            happening, which is the one thing this feature promises never
+            to do.
+
+            Same rule, now shared and IST-anchored: lib/istTime. */}
         {['accepted', 'paid', 'in_progress'].includes(job.status) && (
-          <LiveTracking job={job} onDone={read} />
+          travel.open ? (
+            <LiveTracking job={job} onDone={read} />
+          ) : travel.opensIn > 0 ? (
+            <section className="flex items-start gap-2.5 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+              <Clock size={15} className="mt-0.5 shrink-0 text-ink-mute" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-extrabold text-ink">Trip not open yet</p>
+                <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
+                  {travelOpensWording(job.event_date)}
+                </p>
+              </div>
+            </section>
+          ) : null
         )}
 
         <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">

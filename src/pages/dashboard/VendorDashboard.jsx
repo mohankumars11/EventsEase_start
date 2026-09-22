@@ -2,16 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
-  TriangleAlert, Loader2, AlertCircle,
-  MessageCircle, Bell, IndianRupee,
+  Loader2, AlertCircle,
+  Bell, IndianRupee,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
-import { VENDOR_STATUS } from '../../config/vendor'
 import { PARTNER_PLANS, PLAN_BY_ID, effectiveTier } from '../../config/partnerPlans'
 import { useVendorAccount } from '../../hooks/useVendorAccount'
 import VendorServiceList from '../../components/vendor/VendorServiceList'
-import VendorAvailability from '../../components/vendor/VendorAvailability'
 import OfferInbox from '../../components/vendor/OfferInbox'
 import JobAlerts from '../../components/vendor/JobAlerts'
 import MyJobs from '../../components/vendor/MyJobs'
@@ -22,6 +20,7 @@ import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
 import JobsHeader from '../../components/partner/JobsHeader'
+import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
 import { fetchNotifications } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
@@ -68,24 +67,9 @@ const TABS = [
   { id: 'account',      label: 'Account',      icon: UserCog         },
 ]
 
-/* ── ring-, not border- ────────────────────────────────────────────
-   These read `border-amber-200` and relied on the `card` class to
-   supply the border WIDTH. The status card no longer uses `card` — it
-   uses the rounded-ring shape every other card on the new screens uses
-   — and `border-amber-200` with no width draws nothing, so the card
-   would have taken the default ring colour and lost its tone entirely.
-   A colour class without its width class is invisible, which is the
-   kind of thing that survives a review and shows up in a photograph. */
-const TONES = {
-  amber: { card: 'ring-amber-200 bg-amber-50/70',     pill: 'bg-amber-100 text-amber-800',     icon: 'text-amber-700'   },
-  green: { card: 'ring-emerald-200 bg-emerald-50/60', pill: 'bg-emerald-100 text-emerald-800', icon: 'text-emerald-700' },
-  rose:  { card: 'ring-rose-200 bg-rose-50/70',       pill: 'bg-rose-100 text-rose-800',       icon: 'text-rose-700'    },
-  gray:  { card: 'ring-ink/[0.08] bg-ink/[0.03]',     pill: 'bg-ink/[0.06] text-ink-soft',     icon: 'text-ink-mute'    },
-}
-
-function whatsappHref(message) {
-  return `https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(message)}`
-}
+/* TONES and whatsappHref lived here for the blocking status card that
+   this screen used to render. Both went with it -- the card was their
+   only caller. If the card comes back, so do they. */
 
 export default function VendorDashboard() {
   const { profile, signOut } = useAuth()
@@ -101,8 +85,9 @@ export default function VendorDashboard() {
   const account = useVendorAccount()
   const {
     loading, error, refresh, vendor, services, availability, reviews,
+    weeklyRules, availabilityError,
     stats, checklist, updateVendor, addService, updateService, removeService,
-    setDayStatus, setRangeStatus, clearDays,
+    setDayStatus, setRangeStatus, clearDays, saveWeeklyRules,
   } = account
 
   // The tab lives in the URL so the checklist can link straight at the thing
@@ -125,7 +110,6 @@ export default function VendorDashboard() {
     setParams(keepReturn(id === 'offers' ? {} : { tab: id }), { replace: true })
 
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
-  const statusMeta   = VENDOR_STATUS[vendor?.status] ?? VENDOR_STATUS.PENDING_REVIEW
 
   /* Is anything rendered above the tab content? The business-name header
      is Jobs-only and the status card only shows when it blocks, so on
@@ -137,7 +121,11 @@ export default function VendorDashboard() {
      CalendarNudge's own 16 — 40px of nothing before the jobs a partner
      opened the app to see — and 48 for a blocked partner, because the
      status card already carries its own 24. */
-  const aboveTabs = tab === 'offers' || statusMeta.blocking
+  /* Was `tab === 'offers' || statusMeta.blocking`. The status card is
+     gone, so `blocking` can no longer put anything above the tabs --
+     keeping it left 24px of white space on Calendar, Earnings and More
+     clearing a card that is not rendered. */
+  const aboveTabs = tab === 'offers'
   /* PARTNER_PLANS, not VENDOR_PLANS. The two ladders describe different
      businesses — VENDOR_PLANS still sells "priority in coordinator search"
      and "5 enquiries a month" — and this pill and the Account tab reading
@@ -263,11 +251,25 @@ export default function VendorDashboard() {
   }
 
   return (
-    /* pb-28 clears the fixed partner tab bar. Without it the last job
-       card sits under the bar and looks cut off -- and on the customer
-       surface, where that bar does not render, it is 7rem of harmless
-       whitespace at the very bottom of a scrolled page. */
-    <div className="max-w-5xl mx-auto px-4 pb-28 pt-4 sm:px-6 sm:pt-5">
+    /* ── Clear the tab bar, and only the tab bar ──────────────────────
+       This was `pb-28` -- 112px, a round number picked by eye. The bar
+       actually measures ~63px (py-2 + pt-2.5 around a 28px icon and its
+       label) plus whatever the gesture bar needs, which it adds to
+       itself as `env(safe-area-inset-bottom)`.
+
+       So 112px was ~36px of dead space under every tab, on all four of
+       them, and it did not track the gesture bar: on a phone without one
+       it was too much, and the constant would have had to change to stay
+       right on one with a taller inset.
+
+       68px + 8px of breathing room, plus the same inset the bar uses, is
+       the height of the thing being cleared rather than a guess at it.
+
+       ── And one width, only on Earnings ───────────────────────────────
+       Earnings is the only tab with a desktop layout: a two-column
+       dashboard needs more than 1024px to be worth having, and every
+       other tab is a phone column by design. */
+    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pt-5`}>
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
@@ -340,6 +342,21 @@ export default function VendorDashboard() {
           derived from the partner's real lifecycle, not an invented
           online/offline toggle this platform has no column for. See
           components/partner/JobsHeader. */}
+      {/* ── The review clock ─────────────────────────────────────────
+          A partner who has submitted and is waiting sees the deadline
+          here, on the tab they actually open, rather than having to go
+          back into setup to find out whether anything is happening.
+          Renders nothing at all unless there is something to say. */}
+      {tab === 'offers' && (
+        <ReviewCountdown
+          status={vendor?.verification_status}
+          dueAt={vendor?.review_due_at}
+          submittedAt={vendor?.submitted_at}
+          extended={vendor?.review_extended ?? 0}
+          note={vendor?.review_note}
+        />
+      )}
+
       {tab === 'offers' && (
         <div className="-mx-4 -mt-4 mb-4 sm:-mx-6">
           <JobsHeader
@@ -421,37 +438,21 @@ export default function VendorDashboard() {
           screen on the app means, and a partner who does not know they are
           not live will sit waiting for jobs that are never coming. That
           keeps its card, on every tab. */}
-      {/* ── Restyled onto the new token system ──────────────────────
-          This card is right to keep — a partner who does not know they
-          are not live will wait for jobs that are never coming — but it
-          was the last thing on Jobs still wearing the old one:
-          `card`, `text-gray-900`, `text-gray-600`, `sm:` breakpoints
-          from a desktop layout. Everything around it speaks in ink,
-          plum and a single mobile scale, and one card in a different
-          vocabulary is exactly the seam §29 is about. */}
-      {statusMeta.blocking && (
-      <section className={`mt-3 flex items-start gap-3 rounded-[22px] p-4 ring-1 ${TONES[statusMeta.tone].card}`}>
-        <TriangleAlert size={18} className={`mt-0.5 shrink-0 ${TONES[statusMeta.tone].icon}`} />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[14px] font-extrabold leading-tight text-ink">{statusMeta.headline}</h2>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">{statusMeta.detail}</p>
-          {vendor.status === 'REJECTED' && vendor.rejection_reason && (
-            <p className="mt-2.5 rounded-[14px] bg-white/70 px-3 py-2 text-[12px] leading-snug text-rose-800 ring-1 ring-rose-200">
-              <span className="font-extrabold">What we noted:</span> {vendor.rejection_reason}
-            </p>
-          )}
-          {statusMeta.blocking && (
-            <a
-              href={whatsappHref(`Hi Sambramo — this is ${businessName}. I'd like an update on my partner profile (${vendor.status}).`)}
-              target="_blank" rel="noopener noreferrer"
-              className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 text-[12.5px] font-extrabold text-plum-700"
-            >
-              <MessageCircle size={14} /> Talk to our team
-            </a>
-          )}
-        </div>
-      </section>
-      )}
+      {/* ── The blocking status card used to render here ────────────
+          Removed. It said the same thing as the status pill in
+          JobsHeader ("Your profile is with our team" against "Under
+          review / We are checking your profile"), and unlike the pill it
+          rendered on every tab -- so a partner under review read it on
+          Jobs, Calendar, Earnings and More.
+
+          It was also the only cream surface left on the partner app.
+          The body is #FFFFFF app-wide (index.css), and an amber-tinted
+          card on white was the one plane breaking that.
+
+          The pill stays and is now the single place this is said. What
+          went with the card, if it turns out to be wanted: the 24-48
+          hour wording, the rejection reason for a REJECTED partner, and
+          the "Talk to our team" WhatsApp link. */}
 
       {/* Only when the calendar really is out of date, and dismissible
           for the session. See the component for why it is not a
@@ -585,7 +586,10 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'earnings' && (
-          <Earnings vendorId={vendor?.id} onAddPayout={() => setTab('account')} />
+          /* `vendor` joins vendorId because a payment slip carries the
+             business name, and the slip must not re-query for something
+             this screen already holds. */
+          <Earnings vendorId={vendor?.id} vendor={vendor} onAddPayout={() => setTab('account')} />
         )}
 
         {tab === 'list' && (
@@ -629,26 +633,45 @@ export default function VendorDashboard() {
             show. See components/partner/AgendaView. */}
         {tab === 'availability' && (
           <div className="mb-6">
-            <h2 className="mb-3 text-[15px] font-extrabold text-ink">Your schedule</h2>
-            {/* The month, then the day. CalendarMonth owns both and
-                feeds the grid from the same conflict engine the agenda
-                rows use, so a dot and the warning under it cannot
-                disagree about the same day. */}
-            <CalendarMonth vendorId={vendor?.id} availability={availability}
-                           onSetDay={setDayStatus} onSetRange={setRangeStatus} />
+            {/* CalendarMonth owns the whole tab now, including its own
+                heading — the screen has a header, a view switcher and a
+                Today button that belong together, and assembling them
+                from out here put the ordering argument in the wrong
+                file. It feeds the grid from the same conflict engine the
+                agenda rows use, so a cell and the warning under it
+                cannot disagree about the same day.
+
+                The standing week comes from vendor_weekly_rules (131),
+                not vendors.weekly_days_off, which is superseded and was
+                being drawn a day out — see the header of
+                RecurringAvailability. */}
+            <CalendarMonth
+              vendorId={vendor?.id}
+              vendor={vendor}
+              availability={availability}
+              weeklyRules={weeklyRules}
+              availabilityError={availabilityError}
+              onSetDay={setDayStatus}
+              onSetRange={setRangeStatus}
+              onClearDays={clearDays}
+              onSaveWeeklyRules={saveWeeklyRules}
+            />
           </div>
         )}
 
-        {tab === 'availability' && (
-          <VendorAvailability
-            vendor={vendor}
-            availability={availability}
-            onSetDay={setDayStatus}
-            onSetRange={setRangeStatus}
-            onClearDays={clearDays}
-            onUpdateVendor={updateVendor}
-          />
-        )}
+        {/* ── The old availability block used to render here ──────────
+            Removed. It sat under CalendarMonth and was a second, older
+            calendar on the same tab: its own month grid, its own
+            "One tap, many days" row, plus "Days you never work",
+            "Shortest notice" and "Jobs per day". Two calendars on one
+            screen, and the lower one in the old gray vocabulary.
+
+            Nothing is orphaned -- every control it owned exists
+            elsewhere:
+              accepting_jobs                OnlineToggle, Jobs tab header
+              weekly_days_off, lead_time     ServiceAreaStep, setup step 3
+              daily_capacity, radius         PartnerAccount, More > Account
+            CalendarMonth keeps per-day marking and the range actions. */}
 
         {/* The whole tab, in one component. It used to be three siblings
             assembled here — a payout card, a read-only <dl> with a link

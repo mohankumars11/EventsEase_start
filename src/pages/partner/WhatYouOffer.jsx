@@ -116,7 +116,7 @@ export default function WhatYouOffer() {
          queue is for — and the details form runs next, ending at the
          first trade's questions. Nothing is lost and nothing is written
          against a partner who does not exist yet. */
-      if (!vendorId) { navigate('/onboarding/vendor'); return }
+      if (!vendorId) { navigate('/partner/setup'); return }
 
       /* ── Where the trade flow hands back ────────────────────────────
          During onboarding this screen is step 1s sub-flow, so the

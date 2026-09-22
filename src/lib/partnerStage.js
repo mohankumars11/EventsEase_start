@@ -93,7 +93,12 @@ export function partnerStage({ vendor, services = [] } = {}) {
 export function routeForStage(stage) {
   switch (stage) {
     case STAGE.NEW:           return '/partner/setup'
-    case STAGE.ONBOARDING:    return '/onboarding/vendor'
+    /* Was '/onboarding/vendor'. That wizard is deleted, so this lands on
+       the setup door like NEW does. partnerStage() has never actually
+       returned ONBOARDING -- no branch in it produces the value -- so
+       this arm is unreachable today and kept only so an external caller
+       passing the constant gets a real route rather than a 404. */
+    case STAGE.ONBOARDING:    return '/partner/setup'
     case STAGE.CHOOSE_TRADES: return '/dashboard/vendor?tab=list'
     default:                  return '/dashboard/vendor'
   }

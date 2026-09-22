@@ -12,6 +12,7 @@ import { formatINR } from '../../utils/format'
 import JobLifecycle from './JobLifecycle'
 import ClaimPayment from './ClaimPayment'
 import LiveTracking from '../partner/LiveTracking'
+import { travelWindow, isIstToday } from '../../lib/istTime'
 
 /**
  * Everything that happens after a master taps Accept.
@@ -229,14 +230,18 @@ function JobCard({ job, onChange }) {
   const eventDay = new Date(job.event_date + 'T00:00:00')
   /* From midnight the day before to the end of the event day. A caterer
      loading a van at 5am for a 7am start is inside it; a job next month
-     is not. */
-  const travelDay = (() => {
-    const now = Date.now()
-    const start = eventDay.getTime() - 24 * 3600 * 1000
-    const end = eventDay.getTime() + 36 * 3600 * 1000
-    return now >= start && now <= end
-  })()
-  const isToday = new Date().toDateString() === eventDay.toDateString()
+     is not.
+
+     The rule is unchanged; where it lives has. It used to be computed
+     here and nowhere else, so JobDetails -- which renders the same
+     LiveTracking panel -- had no gate at all and showed Start trip on a
+     job weeks out. It is also now anchored to IST rather than to the
+     device clock: event_date means a calendar day in India, and reading
+     it as local midnight is 5.5 hours out on any device not set to IST.
+     See lib/istTime. */
+  const travel  = travelWindow(job.event_date)
+  const travelDay = travel.open
+  const isToday = isIstToday(job.event_date)
 
   async function revealContact() {
     setLoadingContact(true); setProblem(null)

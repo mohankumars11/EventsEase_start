@@ -19,7 +19,7 @@
 --   supabase.from('partner_work').update({ review_status: 'live' })
 --
 -- and publish whatever they liked. That has been true since 110 shipped.
--- It has never been exploited for the reason none of this was: nothing
+-- It has never been exploited for the reason n ``  q1          one of this was: nothing
 -- read the table, so 'live' meant nothing to anybody.
 --
 -- The moment an operator queue exists and a customer surface reads it,

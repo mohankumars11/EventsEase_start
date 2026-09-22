@@ -212,7 +212,7 @@ export default function SignupPage() {
         : null
       await completeProfile({ fullName, role, phone: phoneFormatted, user: verified?.user ?? verified?.data?.user })
       // Explicit redirect — don't wait for useEffect
-      const target = role === 'vendor' ? '/onboarding/vendor'
+      const target = role === 'vendor' ? '/partner/setup'
                    : role === 'admin'  ? '/dashboard/admin'
                    : from              ? from.pathname + (from.search ?? '')
                    :                     '/dashboard/customer'

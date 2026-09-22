@@ -85,7 +85,6 @@ const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAre
 const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
 const BankPaymentsStep     = lazy(() => import('./pages/partner/steps/BankPaymentsStep'))
 const ReviewPublishStep    = lazy(() => import('./pages/partner/steps/ReviewPublishStep'))
-const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
 
@@ -694,12 +693,19 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      {/* ── Vendor onboarding ──────────────────────── */}
-      <Route path="/onboarding/vendor" element={
-        <ProtectedRoute allowedRoles={['vendor']}>
-          <BareShell><VendorOnboarding /></BareShell>
-        </ProtectedRoute>
-      } />
+      {/* ── Vendor onboarding ───────────────────────
+          REMOVED. The four-step /onboarding/vendor wizard is gone; every
+          entry point now lands on /partner/setup instead.
+
+          Known gap, accepted deliberately when this was removed: that
+          wizard was the only thing that created the `vendors` row, set
+          verification_status = 'submitted', and called
+          set_partner_location to write the geography point
+          match_partners() matches on. Until that work moves into the
+          setup steps, a brand-new partner reaches /partner/setup with no
+          vendors row, every step's .update() no-ops, and ServiceAreaStep
+          cannot be completed because its Continue is gated on a location
+          nothing sets any more. */}
 
       {/* ── Vendor ─────────────────────────────────── */}
       {/* PartnerAppShell, not DashboardShell. DashboardShell renders the

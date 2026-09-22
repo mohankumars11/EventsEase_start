@@ -1,9 +1,11 @@
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Briefcase, User, MapPin, ShieldCheck, Landmark, Send,
   Check, Lock, Loader2, TriangleAlert, ArrowRight,
 } from 'lucide-react'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
+import { ensureVendorRow } from '../../lib/ensureVendor'
 
 /**
  * The master onboarding home — "Great! Let's get started".
@@ -73,7 +75,22 @@ const LABEL = {
 
 export default function PartnerSetupIntro() {
   const navigate = useNavigate()
-  const { loading, steps, current, done, profile } = usePartnerOnboarding()
+  const { loading, steps, current, done, profile, account, refresh } = usePartnerOnboarding()
+
+  /* ── The row every step after this one writes to ──────────────────
+     Steps 2-6 all call `.update()` on `vendors`, so without a row they
+     save nothing and say nothing. The deleted onboarding wizard used to
+     create it; this door does now. Idempotent, and it only fires when
+     there genuinely is no row, so returning partners pay one cached
+     read. See lib/ensureVendor. */
+  const ensuring = useRef(false)
+  useEffect(() => {
+    if (loading || ensuring.current || account?.vendor?.id) return
+    ensuring.current = true
+    ensureVendorRow({ profile })
+      .then(r => { if (r.created) refresh() })
+      .finally(() => { ensuring.current = false })
+  }, [loading, account?.vendor?.id, profile, refresh])
 
   const returning = done > 0
   const firstName = profile?.full_name?.split(' ')[0]

@@ -108,8 +108,9 @@ export default function PartnerBottomNav() {
      before committing, is exactly right THERE. It is only on the door
      itself that it has nothing to offer.
 
-     /onboarding/vendor needs no exclusion: it matches neither test and
-     has always returned null. */
+     /onboarding/vendor is gone -- the four-step wizard was removed and
+     every entry point now lands on /partner/setup, which is already
+     excluded below. */
   /* Nothing on the way in. /partner/onboarding, the three location
      screens, the login and the setup introduction are all pre-account
      states: a tab bar on any of them sits on top of the one thing the

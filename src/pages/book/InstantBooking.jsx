@@ -16,6 +16,7 @@ import OfferUnlocked from '../../components/offers/OfferUnlocked'
 import { SERVICE_BY_ID } from '../../data/servicePricing'
 import { specModeFor, INSTANT_DURATIONS, defaultDurationFor } from '../../data/instantSetups'
 import { tradeFor } from '../../config/vendor'
+import useDateCover, { COVER } from '../../hooks/useDateCover'
 import { DISCUSS_CARD, DEFAULT_RADIUS_KM } from '../../config/instantBooking'
 import { formatINR } from '../../utils/format'
 import { EVENT_DATA } from '../../data/eventServicesData'
@@ -71,6 +72,12 @@ function nextDays(n = 14) {
     return d
   })
 }
+
+/* The calendar day a Date falls on locally, as the database spells it.
+   `toISOString().slice(0,10)` would hand back the UTC day, which is
+   yesterday for anything before 5:30am in India. */
+const iso = d =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 const dayLabel = (d, i) =>
   i === 0 ? 'Today' : i === 1 ? 'Tomorrow'
@@ -355,6 +362,27 @@ export default function InstantBooking() {
   // request then refuses.
   const whereReady = useMemo(() => whereIsReady(where), [where])
 
+  /* ── Does anybody in these trades have these days free? ───────────
+     Asked only once BOTH answers exist — the trades come from what the
+     customer picked, the point from where the work will happen. Before
+     that the question is unanswerable, and the grid draws nothing
+     rather than guessing. On a first run that means the badges appear
+     when the customer comes back to change the date, which is the only
+     honest ordering available: there is nothing to ask about on a blank
+     form. Never a gate — see hooks/useDateCover. */
+  const coverDates = useMemo(
+    () => nextDays().map(d => iso(d)), [])
+  const coverTrades = useMemo(
+    () => [...new Set(picked.map(id => tradeFor(id)).filter(Boolean))], [picked])
+  const dateCover = useDateCover({
+    trades: coverTrades,
+    lat: whereReady.ok ? whereReady.point.lat : null,
+    lng: whereReady.ok ? whereReady.point.lng : null,
+    radiusKm: DEFAULT_RADIUS_KM,
+    dates: coverDates,
+    enabled: coverTrades.length > 0 && whereReady.ok,
+  })
+
   // TODO: read from customer_addresses once the customer has one saved.
   // Until then every first booking types six digits, which is the case
   // WhereStep is built around.
@@ -622,31 +650,52 @@ export default function InstantBooking() {
         why: 'Anything in the next month, we can book you a master directly. Further out and a coordinator plans it with you.',
       },
       body: (
-        <div className="grid grid-cols-4 gap-2">
-          {nextDays().map((d, i) => {
-            const on = date && d.toDateString() === date.toDateString()
-            const weekend = d.getDay() === 0 || d.getDay() === 6
-            return (
-              <button
-                key={i}
-                onClick={() => setDate(d)}
-                className={`rounded-2xl px-2 py-3 text-center transition ${
-                  on ? 'bg-saffron-400 text-plum-950' : 'bg-white ring-1 ring-ink/[0.08] text-ink'
-                }`}
-              >
-                <span className="block text-[10.5px] font-extrabold uppercase tracking-wide opacity-70">
-                  {dayLabel(d, i)}
-                </span>
-                <span className="mt-0.5 block text-[17px] font-extrabold tabular-nums">
-                  {d.getDate()}
-                </span>
-                <span className="block text-[9.5px] font-bold opacity-60">
-                  {d.toLocaleDateString('en-IN', { month: 'short' })}
-                  {weekend && ' ·'}
-                </span>
-              </button>
-            )
-          })}
+        <div>
+          <div className="grid grid-cols-4 gap-2">
+            {nextDays().map((d, i) => {
+              const on = date && d.toDateString() === date.toDateString()
+              const weekend = d.getDay() === 0 || d.getDay() === 6
+              /* Undefined when we could not ask — no services picked
+                 yet, no address yet, or the lookup failed. Nothing is
+                 drawn in that case, and no date is ever disabled: the
+                 count is a hint, and the server decides. See
+                 hooks/useDateCover. */
+              const cover = dateCover?.[iso(d)]
+              return (
+                <button
+                  key={i}
+                  onClick={() => setDate(d)}
+                  className={`rounded-2xl px-2 py-3 text-center transition ${
+                    on ? 'bg-saffron-400 text-plum-950' : 'bg-white ring-1 ring-ink/[0.08] text-ink'
+                  }`}
+                >
+                  <span className="block text-[10.5px] font-extrabold uppercase tracking-wide opacity-70">
+                    {dayLabel(d, i)}
+                  </span>
+                  <span className="mt-0.5 block text-[17px] font-extrabold tabular-nums">
+                    {d.getDate()}
+                  </span>
+                  <span className="block text-[9.5px] font-bold opacity-60">
+                    {d.toLocaleDateString('en-IN', { month: 'short' })}
+                    {weekend && ' ·'}
+                  </span>
+                  {(cover === COVER.NONE || cover === COVER.THIN) && (
+                    <span className={`mt-1 block text-[8.5px] font-extrabold leading-none ${
+                      on ? 'text-plum-900' : cover === COVER.NONE ? 'text-rose-600' : 'text-saffron-700'}`}>
+                      {cover === COVER.NONE ? 'none free' : 'few free'}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {dateCover && Object.values(dateCover).some(c => c === COVER.NONE) && (
+            <p className="mt-2.5 text-[11.5px] leading-snug text-ink-mute">
+              Days marked <span className="font-extrabold text-rose-600">none free</span> have
+              no master available near you right now. You can still pick one — we will widen
+              the search — but it may take longer to find somebody.
+            </p>
+          )}
         </div>
       ),
       ready: !!date,
