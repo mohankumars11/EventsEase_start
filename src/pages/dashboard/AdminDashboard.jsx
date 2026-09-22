@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { resolveNav } from '../../config/adminNav'
 import AdminShell from '../../components/admin/AdminShell'
 import PartnerConsole from '../../components/admin/PartnerConsole'
+import VerificationQueue from '../../components/admin/VerificationQueue'
 import MarketInterest from '../../components/admin/MarketInterest'
 import LiveOperations from '../../components/admin/LiveOperations'
 
@@ -91,6 +92,7 @@ export default function AdminDashboard() {
           starts rendering for the wrong nav id. */}
       {activeNav === 'city-interest' ? <MarketInterest />
         : activeNav === 'live-ops' ? <LiveOperations />
+        : activeNav === 'verification' ? <VerificationQueue />
         : <PartnerConsole />}
     </AdminShell>
   )

@@ -49,6 +49,10 @@ export const NAV = [
         badge: 'vendors',
         description: 'Every partner, their listings, their documents and what they can be offered.',
       },
+      {
+        id: 'verification', label: 'Verification queue', emoji: '🪪',
+        description: 'Applications waiting on a decision, oldest deadline first, with what was entered beside what was read off the document.',
+      },
     ],
   },
 
