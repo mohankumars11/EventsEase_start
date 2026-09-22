@@ -168,6 +168,11 @@ export default function ComplianceStep() {
        maps it back to the listing row. */
     listingFor: trade =>
       (account.listings ?? []).find(l => l.trade === trade)?.id ?? null,
+    /* The identity document the selfie is compared against. Null until
+       one has been uploaded, which is the correct order: there is
+       nothing to compare a face to before the ID exists, and the selfie
+       requirement says so rather than failing silently. */
+    identityDoc: byRequirement['VER-ID-IDENTITY'] ?? null,
   }
 
   return (
@@ -225,7 +230,7 @@ export default function ComplianceStep() {
   )
 }
 
-function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, listingFor }) {
+function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, listingFor, identityDoc }) {
   if (!items.length) return null
   return (
     <div className="mb-5">
@@ -312,6 +317,7 @@ function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, lis
                     verdict={verdict}
                     vendorId={vendorId}
                     listingId={listingFor?.(r.trade) ?? null}
+                    compareWith={r.needsConsent ? identityDoc : null}
                     onUploaded={onUploaded}
                     onClose={() => onOpen?.(r.id)}
                   />

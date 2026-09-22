@@ -137,7 +137,16 @@ export default async function handler(req, res) {
   if (whoErr || !who?.user) return fail(res, 401, 'unavailable', 'Please sign in again.')
 
   const { imageBase64, mimeType, requirementId, expectedType, vendorId,
-          documentId, stampToken, nameMatch } = req.body ?? {}
+          documentId, stampToken, nameMatch,
+          compareFaces: wantsFaceCompare, selfieBase64, idBase64 } = req.body ?? {}
+
+  /* ── Face comparison ────────────────────────────────────────────
+     Its own path because it takes two images and answers a different
+     question. Consent is re-checked server-side inside it: the panel in
+     the app is where it is ASKED, this is where it is enforced. */
+  if (wantsFaceCompare) {
+    return compareFaces(res, { asCaller, documentId, selfieBase64, idBase64, mimeType })
+  }
 
   /* ── Phase two: stamp the row with the verdict WE reached ────────
      The partner's device never writes detected_type. If it could, a
@@ -410,4 +419,158 @@ async function stampDocument(res, { asCaller, documentId, stampToken, nameMatch 
      -- the document is uploaded and a human can still review it. */
   if (error) return res.status(200).json({ stamped: false, hint: 'apply migration 148' })
   return res.status(200).json({ stamped: true })
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+
+const FACE_PROMPT = `You are comparing two photographs of faces.
+
+The first is a photograph a person has just taken of themselves.
+The second is the photograph printed on an identity document.
+
+Answer ONLY with JSON:
+{
+  "sameRegion": "match" | "partial_match" | "mismatch" | "not_available",
+  "confidence": 0.0 to 1.0,
+  "why": one short plain sentence
+}
+
+Rules:
+- "match" only when you are confident they are the same person.
+- "partial_match" when they could be, but the photographs are too
+  different in age, lighting, angle or quality to be sure. Printed ID
+  photographs are often a decade old, low resolution, and photographed
+  through lamination — that is normal, not suspicious.
+- "mismatch" only when they are clearly different people.
+- "not_available" when a face cannot be found in one or both images.
+- Prefer "partial_match" to guessing. A person will read this.
+- Return the JSON and nothing else.`
+
+/**
+ * Do these two photographs look like the same person?
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE ANSWER IS ADVISORY, ALWAYS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The strongest thing this can produce is a row in the review queue
+ * saying two photographs do not appear to match, which a human then
+ * looks at. It cannot reject, suspend or ban, and there is deliberately
+ * no code path by which it could.
+ *
+ * That is not caution for its own sake. An ID photograph is often ten
+ * years old, taken at a government counter, printed small and
+ * photographed through lamination and glare. "Different person" and
+ * "same person, terrible photograph" look very alike, and a system that
+ * acted on the difference would be acting against real partners
+ * regularly.
+ *
+ * Neither image is stored. Both are dropped when this returns.
+ */
+async function compareFaces(res, { asCaller, documentId, selfieBase64, idBase64, mimeType }) {
+  if (!documentId || !selfieBase64 || !idBase64) {
+    return res.status(400).json({ compared: false, error: 'two images are needed' })
+  }
+
+  /* Owned by the caller, proved by RLS rather than by this line. */
+  const { data: doc } = await asCaller
+    .from('vendor_documents').select('id, vendor_id').eq('id', documentId).maybeSingle()
+  if (!doc) return res.status(403).json({ compared: false, error: 'not_yours' })
+
+  /* Consent, re-checked on the server. The panel in the app is where it
+     is ASKED; this is where it is enforced. A client that skipped the
+     panel, or a partner who withdrew between uploading and this call,
+     must not have their face processed. */
+  const { data: consented } = await asCaller
+    .rpc('has_consent', { p_vendor: doc.vendor_id, p_purpose: 'face_match' })
+  if (consented !== true) {
+    return res.status(200).json({ compared: false, reason: 'no_consent' })
+  }
+
+  const picked = resolveProvider(process.env)
+  if (picked.error || !picked.provider?.images) {
+    return res.status(200).json({ compared: false, reason: 'unavailable' })
+  }
+
+  let parsed = null
+  try {
+    const raw = await askModelTwoImages(picked, selfieBase64, idBase64, mimeType)
+    parsed = extractJson(raw)
+  } catch {
+    return res.status(200).json({ compared: false, reason: 'unavailable' })
+  }
+
+  const VALUES = ['match', 'partial_match', 'mismatch', 'not_available']
+  const result = VALUES.includes(parsed?.sameRegion) ? parsed.sameRegion : 'not_available'
+
+  if (!serviceKey) return res.status(200).json({ compared: true, result })
+
+  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+
+  /* The verdict on the row, written by the server. Best-effort: 150 may
+     not be applied, and an unstamped selfie is one a reviewer compares
+     by eye, which is where it was going anyway. */
+  await db.from('vendor_documents')
+    .update({ face_match: result, classified_at: new Date().toISOString() })
+    .eq('id', documentId)
+
+  /* And the reasoning, where only an operator can read it. The images
+     are NOT written -- only what was concluded about them. */
+  await db.from('verification_events').insert({
+    vendor_id: doc.vendor_id,
+    direction: 'response',
+    provider: picked.id,
+    payload: {
+      kind: 'face_match',
+      document_id: documentId,
+      result,
+      confidence: parsed?.confidence ?? null,
+      why: String(parsed?.why ?? '').slice(0, 300),
+    },
+  }).then(() => {}, () => {})
+
+  return res.status(200).json({ compared: true, result })
+}
+
+async function askModelTwoImages(picked, aBase64, bBase64, mimeType) {
+  const { provider, key, model } = picked
+  const type = /^image\/(jpeg|png|webp)$/.test(mimeType ?? '') ? mimeType : 'image/jpeg'
+
+  const body = provider.native === 'anthropic'
+    ? {
+        model, max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: type, data: aBase64 } },
+            { type: 'image', source: { type: 'base64', media_type: type, data: bBase64 } },
+            { type: 'text', text: FACE_PROMPT },
+          ],
+        }],
+      }
+    : {
+        model, max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${type};base64,${aBase64}` } },
+            { type: 'image_url', image_url: { url: `data:${type};base64,${bBase64}` } },
+            { type: 'text', text: FACE_PROMPT },
+          ],
+        }],
+      }
+
+  const headers = provider.native === 'anthropic'
+    ? { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' }
+    : { 'content-type': 'application/json', authorization: `Bearer ${key}` }
+
+  const r = await fetch(provider.url, {
+    method: 'POST', headers, body: JSON.stringify(body),
+    signal: AbortSignal.timeout(25_000),
+  })
+  if (!r.ok) throw new Error(`provider returned ${r.status}`)
+  const json = await r.json()
+  return provider.native === 'anthropic'
+    ? json?.content?.[0]?.text ?? ''
+    : json?.choices?.[0]?.message?.content ?? ''
 }

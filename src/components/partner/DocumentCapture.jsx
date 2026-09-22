@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, Loader2, TriangleAlert } from 'lucide-react'
-import { uploadDocument, saveDocumentDetails } from '../../lib/partnerDocuments'
+import { uploadDocument, saveDocumentDetails, signedUrlFor } from '../../lib/partnerDocuments'
 import { checkIdentity } from '../../lib/validation/identity'
 import { assessFile } from '../../lib/verification/imageQuality'
 import { verification } from '../../lib/verification/providers'
 import { judgeReading } from '../../lib/verification/providers/vision'
 import { compareNames, MATCH } from '../../lib/verification/matching'
+import BiometricConsent from './BiometricConsent'
+import { CONSENT, fetchConsents, hasConsent } from '../../lib/partnerConsent'
 import { supabase } from '../../lib/supabase'
 
 /**
@@ -82,7 +84,7 @@ const inputCls =
   'ring-1 ring-ink/[0.10] placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-plum-500'
 
 /** One side of the document: a thumbnail, or a button to add one. */
-function Side({ label, path, busy, stage, rejected, onPick, disabled }) {
+function Side({ label, path, busy, stage, rejected, accept, facing, onPick, disabled }) {
   const input = useRef(null)
   const [preview, setPreview] = useState(null)
 
@@ -145,9 +147,14 @@ function Side({ label, path, busy, stage, rejected, onPick, disabled }) {
             </span>
           )}
       </button>
+      {/* Both attributes come from the requirement now. `accept` was
+          "image/*,application/pdf" for everything, which offered a PDF
+          picker for a selfie; `capture` was "environment", which opened
+          the rear camera when asking somebody to photograph their own
+          face. */}
       <input
         ref={input} type="file" className="hidden"
-        accept="image/*,application/pdf" capture="environment"
+        accept={accept} capture={facing}
         onChange={pick}
       />
     </div>
@@ -155,7 +162,7 @@ function Side({ label, path, busy, stage, rejected, onPick, disabled }) {
 }
 
 export default function DocumentCapture({
-  requirement, verdict, vendorId, listingId, onUploaded, onClose,
+  requirement, verdict, vendorId, listingId, compareWith = null, onUploaded, onClose,
 }) {
   const row = verdict?.row ?? null
   const [busySide, setBusySide] = useState(null)
@@ -184,6 +191,31 @@ export default function DocumentCapture({
   const [reading, setReading] = useState(null)
   const [stage, setStage] = useState(null)
   const [suggested, setSuggested] = useState(null)
+
+  /* Only requirements that declare `needsConsent` ask. Everything else
+     never reads the table, so a missing migration 150 costs nothing. */
+  const [consented, setConsented] = useState(null)
+  useEffect(() => {
+    if (!requirement.needsConsent || !vendorId) return
+    let cancelled = false
+    fetchConsents(vendorId)
+      .then(({ consents }) => {
+        if (!cancelled) setConsented(hasConsent(consents, CONSENT.FACE_MATCH))
+      })
+      .catch(() => { if (!cancelled) setConsented(false) })
+    return () => { cancelled = true }
+  }, [requirement.needsConsent, vendorId])
+
+  /* What the file picker offers, from the requirement rather than from
+     this component. A selfie takes a photograph, not a PDF. */
+  const accept = (requirement.allowedFileTypes ?? ['image/*', 'application/pdf']).join(',')
+  const facing = requirement.captureFacing ?? 'environment'
+
+  /* The camera stays shut until the question has been ANSWERED -- either
+     way. A partner who said no still uploads the photo; it is compared
+     by a person instead. What must not happen is the comparison
+     happening before they were asked. */
+  const awaitingConsent = !!requirement.needsConsent && consented === null
 
   /**
    * Quality, then content, then upload, then the server's own stamp.
@@ -272,6 +304,15 @@ export default function DocumentCapture({
          in with a misread digit is worse than an empty one. */
       if (read?.extracted) suggestFrom(read.extracted)
 
+      /* ── The face comparison, if it was agreed to ─────────────────
+         Only when the partner said yes, and only ever advisory. A
+         mismatch routes to the review queue; it never rejects anybody,
+         because the cost of being wrong is somebody losing their
+         livelihood over a bad photograph in bad light. */
+      if (requirement.needsConsent && consented === true && saved?.id) {
+        matchFace(file, saved.id).catch(() => {})
+      }
+
       onUploaded?.(saved)
     } catch (e) {
       setError(e?.message ?? 'That did not upload. Try once more.')
@@ -284,6 +325,44 @@ export default function DocumentCapture({
   async function tokenNow() {
     const { data } = await supabase.auth.getSession()
     return data?.session?.access_token ?? null
+  }
+
+  /**
+   * Compare the selfie with the photograph on the ID.
+   *
+   * Both images go up together and neither is stored by the endpoint.
+   * The ID photograph is fetched back through a short-lived signed URL
+   * -- the bucket is private and stays private.
+   *
+   * Nothing here can reject anybody. The strongest outcome is a row in
+   * the review queue saying two photographs do not appear to be the
+   * same person, which a reviewer then looks at. Bad light, a decade
+   * between the two photographs, and a laminated card photographed
+   * through glare are all ordinary, and a system that suspended people
+   * over them would be suspending real partners weekly.
+   */
+  async function matchFace(selfie, documentId) {
+    if (!compareWith?.storage_path) return
+    const url = await signedUrlFor(compareWith.storage_path)
+    if (!url) return
+
+    const idBlob = await fetch(url).then(r => (r.ok ? r.blob() : null))
+    if (!idBlob) return
+
+    await fetch('/api/verify-document', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${await tokenNow()}`,
+      },
+      body: JSON.stringify({
+        documentId,
+        compareFaces: true,
+        selfieBase64: await blobBase64(selfie),
+        idBase64: await blobBase64(idBlob),
+        mimeType: selfie.type,
+      }),
+    })
   }
 
   /** Ask the server to write what the server decided. */
@@ -449,17 +528,27 @@ export default function DocumentCapture({
         </div>
       )}
 
+      {requirement.needsConsent && (
+        <BiometricConsent
+          vendorId={vendorId}
+          granted={consented === true}
+          onChanged={setConsented}
+        />
+      )}
+
       <div className="mb-3 flex gap-2.5">
         <Side
           label={requirement.backRequired ? 'Front' : 'The document'}
           path={row?.storage_path} busy={busySide === 'front'} stage={stage}
           rejected={!!error && busySide === null && !row?.storage_path}
+          accept={accept} facing={facing} disabled={awaitingConsent}
           onPick={f => send(f, 'front')}
         />
         {requirement.backRequired && (
           <Side
             label="Back" path={row?.back_path} busy={busySide === 'back'} stage={stage}
             rejected={!!error && busySide === null && !row?.back_path}
+            accept={accept} facing={facing} disabled={awaitingConsent}
             onPick={f => send(f, 'back')}
           />
         )}
@@ -571,4 +660,18 @@ function Suggestion({ label, onUse }) {
       {label}
     </button>
   )
+}
+
+/** A Blob or File to base64, without the data: prefix. */
+function blobBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Could not read that image.'))
+    reader.onload = () => {
+      const out = String(reader.result ?? '')
+      const comma = out.indexOf(',')
+      resolve(comma >= 0 ? out.slice(comma + 1) : out)
+    }
+    reader.readAsDataURL(blob)
+  })
 }

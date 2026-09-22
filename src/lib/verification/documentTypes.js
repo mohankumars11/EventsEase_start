@@ -132,6 +132,14 @@ export const DOCUMENT_TYPES = {
     maximumFileSize: MAX_BYTES,
     /* A screenshot of a photo defeats the whole point. */
     rejectScreenshots: true,
+    /* The FRONT camera. `capture="environment"` was hardcoded on the
+       input, so asking a partner for a photo of themselves opened the
+       rear camera and they photographed the ceiling. */
+    captureFacing: 'user',
+    /* Comparing a face with a government ID photo is biometric
+       processing. BiometricConsent has to be answered before the camera
+       opens, and answering no is free -- see migration 150. */
+    needsConsent: 'face_match',
   },
 
   /* ── Business ──────────────────────────────────────────────────── */
