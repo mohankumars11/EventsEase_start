@@ -101,13 +101,28 @@ export default function LocationCapture() {
        unreachable the coordinates are already saved and the next screen
        simply has no line to print. */
     const addr = await reverseAddress(fix.lat, fix.lng)
-    if (addr) saveAddress({ ...addr, accuracy: fix.accuracy ?? null })
+    const stamped = addr ? { ...addr, accuracy: fix.accuracy ?? null } : null
+    if (stamped) saveAddress(stamped)
 
     /* Approximate goes onward too. It is a legitimate answer a partner
        chose, everything downstream works at that precision, and the
        confirmation screen offers to improve it. Blocking here would be
        demanding a precision Android does not require us to have. */
-    navigate('/partner/location-confirmation', { replace: true })
+    /* ── The fix travels with the navigation, not only through storage ──
+       `partnerLocation.save()` deliberately swallows a failed
+       localStorage write, and the confirmation screen decides what to
+       show by READING that storage back. On a device where the write
+       cannot land — blocked DOM storage, a full quota — the two screens
+       bounce off each other for ever: confirm says "we don't have your
+       location", its Try Again returns here, the fix is found again,
+       and confirm still reads nothing.
+
+       Passing it in route state costs one object and breaks the loop
+       even when nothing persisted. */
+    navigate('/partner/location-confirmation', {
+      replace: true,
+      state: { fix, addr: stamped },
+    })
   }
 
   useEffect(() => {

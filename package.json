@@ -8,8 +8,9 @@
     "build": "node scripts/build-api-bundle.mjs --check && vite build && node scripts/write-version.mjs",
     "preview": "vite preview",
     "build:api": "node scripts/build-api-bundle.mjs",
-    "app:customer": "node scripts/capacitor-config.mjs customer && npm run build && npx cap sync",
-    "app:partner": "node scripts/capacitor-config.mjs partner && npm run build && npx cap sync"
+    "app:customer": "node scripts/build-native.mjs customer",
+    "app:partner": "node scripts/build-native.mjs partner",
+    "check:native": "node scripts/check-native-build.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

@@ -183,8 +183,19 @@ export function CartProvider({ children }) {
     }
   })
 
+  /* Wrapped, like the reader above it.
+     This provider mounts on every launch and sits OUTSIDE every per-route
+     boundary, so a throw here takes down the whole app rather than one
+     page — and it throws for real reasons: blocked DOM storage, a
+     private window, a full quota. Losing a saved basket is a bad
+     afternoon; losing the app on launch is the app not working. */
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+    } catch {
+      /* The cart still works for this session; it just will not survive
+         a restart. Nothing downstream reads the write back. */
+    }
   }, [cart])
 
   // Load the customer's saved cart from Supabase once they're known.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { readSavedAddress, readSavedLocation } from '../../lib/partnerLocation'
 
@@ -34,13 +34,20 @@ import { readSavedAddress, readSavedLocation } from '../../lib/partnerLocation'
  */
 export default function LocationConfirm() {
   const navigate = useNavigate()
+  const { state: handed } = useLocation()
   const [addr, setAddr] = useState(null)
   const [fix, setFix] = useState(null)
 
+  /* What the capture screen just handed us outranks storage.
+     Storage is the durable copy and is right almost always, but its
+     write is allowed to fail silently, and when it does, reading it back
+     here is how this screen and the capture screen ended up sending the
+     partner between them with no way out. See the note in
+     LocationCapture's run(). */
   useEffect(() => {
-    setAddr(readSavedAddress())
-    setFix(readSavedLocation())
-  }, [])
+    setAddr(handed?.addr ?? readSavedAddress())
+    setFix(handed?.fix ?? readSavedLocation())
+  }, [handed])
 
   const approximate = typeof addr?.accuracy === 'number' && addr.accuracy > 100
   const haveSomething = !!fix
