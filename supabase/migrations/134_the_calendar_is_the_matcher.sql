@@ -6,6 +6,28 @@
 -- and 132.
 --
 -- ══════════════════════════════════════════════════════════════════════
+-- SUPERSEDED BY 147. DO NOT PASTE THIS AFTER 147.
+-- ══════════════════════════════════════════════════════════════════════
+--
+-- 147 rebuilds `match_partners` from THIS body plus one extra clause
+-- (a paused, suspended or hidden listing stops offers for that trade).
+-- Both files declare the same signature, so whichever is pasted LAST
+-- wins, silently, with no error and no visible difference.
+--
+-- That has already happened once, on 2026-09-23: 134 was pasted after
+-- 147 and dispatch went back to ignoring paused trades. Nothing
+-- complained. `why_not_dispatched` still reported "listing_stopped:
+-- paused" correctly, because 147 created that function and 134 does not
+-- touch it — so the diagnostic said one thing and the matcher did
+-- another, which is the worst shape this kind of drift can take.
+--
+-- If you are pasting a batch: 134 first, then 147. If 147 is already
+-- applied, skip this file entirely.
+--
+-- `scripts/check-dispatch-end-to-end.mjs` catches it either way: it
+-- pauses a synthetic partner's listing and checks they stop matching.
+--
+-- ══════════════════════════════════════════════════════════════════════
 -- TWO THINGS MATCHING HAS NEVER KNOWN
 -- ══════════════════════════════════════════════════════════════════════
 --
