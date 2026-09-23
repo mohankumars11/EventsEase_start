@@ -58,8 +58,21 @@ if (!['partner', 'customer'].includes(target)) {
   process.exit(1)
 }
 
-/* Inherited by every child below. This is the entire point of the file. */
-const env = { ...process.env, CAPACITOR_BUILD: 'true' }
+/* Inherited by every child below.
+   CAPACITOR_BUILD turns the service worker off — the reason this file
+   exists. VITE_SURFACE decides which app the bundle IS, and it is here
+   for exactly the same reason: it was only ever set by the GitHub
+   workflow, so a locally built "partner" apk compiled `currentSurface()`
+   down to `customer` and behaved like the customer app inside a
+   partner-branded shell.
+
+   Both are folded into the bundle as constants at build time, so they
+   have to be set for the BUILD and not merely for `cap sync`. */
+const env = {
+  ...process.env,
+  CAPACITOR_BUILD: 'true',
+  VITE_SURFACE: target,
+}
 
 const run = (label, cmd, args) => {
   console.log(`\n── ${label}\n`)
@@ -77,18 +90,35 @@ run('capacitor config', 'node', ['scripts/capacitor-config.mjs', target, ...pass
    a stale bundle reaches a deploy. */
 run('web build', 'npm', ['run', 'build'])
 
-/* ── The gate ───────────────────────────────────────────────────────
-   Proving the variable did its job, rather than trusting that it did.
-   A build that still contains a worker must not reach `cap sync`,
-   because once it is in the apk it is on somebody's phone for as long
-   as they keep the app installed. */
+/* ── The gates, both before `cap sync` ──────────────────────────────
+   Nothing wrong may reach the native project, because once it is in the
+   apk it is on somebody's phone for as long as they keep the app
+   installed — that asymmetry is the whole lesson of the service worker.
+
+   1 · no service worker in the build
+   2 · the build really is the app that was asked for */
 run('native build check', 'node', ['scripts/check-native-build.mjs'])
+
+const versionFile = join(ROOT, 'dist/version.json')
+if (existsSync(versionFile)) {
+  const v = JSON.parse(readFileSync(versionFile, 'utf8'))
+  if (v.surface !== target) {
+    console.error(`\n  Built as "${v.surface}" but "${target}" was asked for. Not syncing.\n`)
+    process.exit(1)
+  }
+}
 
 run('cap sync', 'npx', ['cap', 'sync'])
 
 const html = join(ROOT, 'dist/index.html')
 if (existsSync(html)) {
   const entry = readFileSync(html, 'utf8').match(/assets\/(index-[A-Za-z0-9_-]+\.js)/)?.[1]
-  console.log(`\n✓ ${target} web assets built without a service worker`)
-  if (entry) console.log(`  entry bundle: ${entry}\n`)
+  console.log(`\n✓ ${target} web assets built, no service worker`)
+  if (entry) console.log(`  entry bundle: ${entry}`)
+  if (existsSync(versionFile)) {
+    const v = JSON.parse(readFileSync(versionFile, 'utf8'))
+    console.log(`  surface:      ${v.surface}`)
+    console.log(`  built at:     ${v.builtAt ?? 'unknown'}`)
+  }
+  console.log('')
 }

@@ -1,4 +1,5 @@
 import { PROVIDER_STATUS, notChecked } from './index'
+import { apiUrl } from '../../api'
 
 /**
  * The provider that looks at the photograph.
@@ -35,6 +36,13 @@ import { PROVIDER_STATUS, notChecked } from './index'
  * document being wrong.
  */
 
+/* Through apiUrl, not as a bare relative path.
+   Inside the bundled apk there is no server: Capacitor serves the
+   assets from https://localhost, whose local server answers every
+   unknown path with index.html. A relative fetch therefore "succeeds"
+   with 200 and a body of HTML, and the partner is told something
+   unexpected came back. See the header of src/lib/api.js -- this is
+   the same line that broke dispatch, push and payments. */
 const ENDPOINT = '/api/verify-document'
 
 /* Long enough for a slow model on a slow connection; short enough that
@@ -79,7 +87,7 @@ export const VisionProvider = {
 
     const imageBase64 = await toBase64(file)
 
-    const r = await fetch(ENDPOINT, {
+    const r = await fetch(apiUrl(ENDPOINT), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',

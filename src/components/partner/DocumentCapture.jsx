@@ -9,6 +9,7 @@ import { compareNames, MATCH } from '../../lib/verification/matching'
 import BiometricConsent from './BiometricConsent'
 import { CONSENT, fetchConsents, hasConsent } from '../../lib/partnerConsent'
 import { supabase } from '../../lib/supabase'
+import { apiUrl } from '../../lib/api'
 
 /**
  * One requirement, and everything it says it needs.
@@ -349,7 +350,7 @@ export default function DocumentCapture({
     const idBlob = await fetch(url).then(r => (r.ok ? r.blob() : null))
     if (!idBlob) return
 
-    await fetch('/api/verify-document', {
+    await fetch(apiUrl('/api/verify-document'), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -367,7 +368,7 @@ export default function DocumentCapture({
 
   /** Ask the server to write what the server decided. */
   async function stamp(documentId, stampToken, nameMatch) {
-    await fetch('/api/verify-document', {
+    await fetch(apiUrl('/api/verify-document'), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',

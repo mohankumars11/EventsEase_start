@@ -201,6 +201,27 @@ ok('and refuses a token belonging to another vendor',
    /event\.vendor_id !== doc\.vendor_id/.test(strip(endpoint)))
 
 /* ══════════════════════════════════════════════════════════════════ */
+console.log('\nTHE CALL REACHES THE SERVER AT ALL\n')
+
+/* The failure this catches is silent and total. Inside the bundled apk
+   there is no server: Capacitor answers every unknown path with
+   index.html, so a relative fetch returns 200 and a page of HTML, and
+   the classifier reads that as a malformed response for ever. The same
+   line has already broken dispatch, push and payments in this codebase.
+
+   src/lib/api.js:5 tells the whole story; this makes sure the newest
+   caller did not repeat it. */
+const visionSrc = strip(read('src/lib/verification/providers/vision.js'))
+const captureSrc = strip(read('src/components/partner/DocumentCapture.jsx'))
+
+for (const [name, srcText] of [['vision.js', visionSrc], ['DocumentCapture.jsx', captureSrc]]) {
+  ok(`${name} has no bare relative /api fetch`,
+     !/fetch\(\s*['"`]\/api\//.test(srcText),
+     'a relative path returns index.html inside the apk, with status 200')
+  ok(`${name} routes through apiUrl`, /apiUrl\(/.test(srcText))
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
 console.log('\nTHE IMAGE AND THE NUMBER DO NOT LINGER\n')
 
 ok('the endpoint requires the caller to be signed in',
