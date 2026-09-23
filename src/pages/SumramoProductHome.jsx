@@ -292,28 +292,32 @@ export default function SumramoProductHome() {
 
       <AppHandoff open={handoff} onClose={() => setHandoff(false)} />
       <style>{`
-        html { scroll-behavior: smooth; }
+        :root { color-scheme: dark; }
+        html { scroll-behavior: smooth; scroll-padding-top: 120px; }
         *, *::before, *::after { box-sizing: border-box; }
+        html, body, #root { width: 100%; max-width: 100%; min-height: 100%; margin: 0; }
         body { overflow-x: hidden; }
-        button, a, input { -webkit-tap-highlight-color: transparent; }
+        button, a, input, summary { -webkit-tap-highlight-color: transparent; }
+        input { font-size: 16px; }
+        img, picture, video, canvas, iframe { display: block; max-width: 100%; }
+        svg { max-width: 100%; }
         .sambramo-header { padding-top: env(safe-area-inset-top); }
         .sambramo-menu-button { flex: 0 0 44px; }
         .sambramo-promo { min-width: 0; }
-        .sambramo-promo-track {
-          display: flex; min-width: max-content; gap: 1.1rem; white-space: nowrap;
-          animation: sambramo-promo 18s linear infinite;
-        }
+        .sambramo-promo-track { display: flex; min-width: max-content; gap: 1.1rem; white-space: nowrap; animation: sambramo-promo 18s linear infinite; }
         .sambramo-promo-track span { display: inline-flex; align-items: center; }
         @keyframes sambramo-promo { from { transform: translateX(0); } to { transform: translateX(-38%); } }
-        @media (prefers-reduced-motion: reduce) { .sambramo-promo-track { animation: none; } }
-        @media (max-width: 639px) {
-          main, section, footer { max-width: 100%; }
-          img, picture, video, svg { max-width: 100%; }
-          h1, h2, h3, p { overflow-wrap: anywhere; }
-          input { font-size: 16px !important; }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
         }
-        @media (max-width: 380px) {
-          .sambramo-promo-track { gap: .8rem; }
+        @media (max-width: 639px) {
+          html, body, #root { width: 100%; min-width: 0; overflow-x: hidden; }
+          main, section, footer, header, nav, article, form, div { min-width: 0; }
+          h1, h2, h3, p, span, button, a, summary { overflow-wrap: anywhere; }
+          .sambramo-promo-track { max-width: none; }
+        }
+        @media (max-width: 389px) {
+          .sambramo-promo-track { animation-duration: 13s; gap: .8rem; }
         }
       `}</style>
     </div>
