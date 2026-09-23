@@ -277,7 +277,7 @@ export default function SumramoProductHome() {
               <div className="max-w-4xl">
                 <div className="border-l-2 border-violet-300 pl-4 sm:pl-5">
                   <p className="text-[clamp(2.3rem,9vw,5.4rem)] font-black leading-[.9] tracking-[-.055em] text-white">SAMBRAMO</p>
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-[.2em] text-violet-200 sm:text-xs">Events • Event Supply Chain • Logistics</p>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[.2em] text-violet-200 sm:text-xs">Event Supply Chain and Logistics</p>
                 </div>
 
                 <h1 className="mt-7 max-w-4xl text-[clamp(2.45rem,9vw,6.2rem)] font-black leading-[.94] tracking-[-.055em]">
