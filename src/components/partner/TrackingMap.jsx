@@ -29,11 +29,19 @@ import { supabase } from '../../lib/supabase'
  * back. Only the partner and operators can read that table, which is why
  * this component is on the partner's screen and never on the customer's.
  */
-export default function TrackingMap({ session, live, className = '' }) {
-  const [trail, setTrail] = useState([])
+export default function TrackingMap({ session, live, className = '', initialTrail = null }) {
+  /* `initialTrail` is the same affordance LiveTracking's `initialSession`
+     is: a caller that already holds the points can hand them over, which
+     is how the screenshot harness photographs a real journey line
+     without a database and a signed-in partner behind it.
+     `tracking_location_events` is readable only by the partner who laid
+     the trail and by operators, so there is no other way to see this
+     component in the state that matters. */
+  const [trail, setTrail] = useState(initialTrail ?? [])
 
   useEffect(() => {
     let alive = true
+    if (initialTrail) return undefined
     if (!session?.id) return undefined
     /* Re-read when a batch lands rather than on a timer: the trail only
        changes when `live` changes. */
@@ -48,7 +56,7 @@ export default function TrackingMap({ session, live, className = '' }) {
         setTrail((data ?? []).map(r => readPoint(r.location)).filter(Boolean))
       })
     return () => { alive = false }
-  }, [session?.id, live?.stored])
+  }, [session?.id, live?.stored, initialTrail])
 
   const done = progressOf(session, live)
   const dest = readPoint(session?.destination)
@@ -102,10 +110,22 @@ function Trail({ points }) {
   const spanX = (maxX - minX) || 1e-6
   const spanY = (maxY - minY) || 1e-6
 
+  /* ---- The band the line is allowed to occupy ---------------------
+     Was 18..82, which ran the trail straight through the caption
+     underneath ("18 points along your route so far").
+
+     Bounded HERE rather than by shrinking the svg. Shrinking it was the
+     first attempt and it was worse: `vectorEffect="non-scaling-stroke"`
+     keeps the stroke 1.2px however the viewBox is squeezed, so a
+     compressed drawing pushed the stroke outside the element and the
+     line appeared below the panel entirely. The element stays inset-0,
+     which is what the rounded overflow-hidden parent clips against. */
+  const TOP = 12, BOTTOM = 58
+
   const d = points.map((p, i) => {
     const x = 6 + ((xs[i] - minX) / spanX) * 88
     // SVG y grows downward; north should be up.
-    const y = 82 - ((ys[i] - minY) / spanY) * 64
+    const y = BOTTOM - ((ys[i] - minY) / spanY) * (BOTTOM - TOP)
     return `${i ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)}`
   }).join(' ')
 

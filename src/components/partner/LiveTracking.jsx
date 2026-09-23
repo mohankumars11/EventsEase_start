@@ -39,7 +39,7 @@ import TrackingMap from './TrackingMap'
  * written by a GPS fix is one somebody will eventually have to argue
  * with.
  */
-export default function LiveTracking({ job, onDone, initialSession = null }) {
+export default function LiveTracking({ job, onDone, initialSession = null, initialTrail = null }) {
   /* A caller that already holds the row can pass it, which saves a query
      per job card on a list — and is how the screenshot harness mounts
      this component in each of its states without a database. */
@@ -156,7 +156,7 @@ export default function LiveTracking({ job, onDone, initialSession = null }) {
 
       {shouldBeWatching(session) && (
         <>
-          <TrackingMap session={session} live={live} className="mt-3" />
+          <TrackingMap session={session} live={live} className="mt-3" initialTrail={initialTrail} />
 
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Stat icon={Navigation} label="Distance left" value={distance ?? 'Working it out'} />
