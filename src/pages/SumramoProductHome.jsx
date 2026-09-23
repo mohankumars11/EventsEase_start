@@ -149,6 +149,74 @@ function LogisticsStory() {
   )
 }
 
+function LiveConnectionPanel() {
+  const [active, setActive] = useState(1)
+
+  useEffect(() => {
+    const timer = setInterval(() => setActive(value => (value + 1) % 4), 2200)
+    return () => clearInterval(timer)
+  }, [])
+
+  const nodes = [
+    ['Customer', 'Needs decor', 'Search'],
+    ['Provider', 'Confirms service', 'Connect'],
+    ['Supplier', 'Prepares supply', 'Ready'],
+    ['Logistics', 'Moves it', 'Arriving'],
+  ]
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-[28px] border border-white/15 bg-white/[.07] p-2.5 shadow-2xl backdrop-blur-xl sm:rounded-[34px] sm:p-3">
+      <div className="relative overflow-hidden rounded-[22px] bg-slate-950 p-4 sm:rounded-[28px] sm:p-5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,.3),transparent_35%),radial-gradient(circle_at_15%_85%,rgba(168,85,247,.2),transparent_32%)]" />
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">Connected event view</p>
+              <p className="mt-1 text-sm font-black text-white sm:text-base">One event. Four moving parts.</p>
+            </div>
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[9px] font-black text-emerald-300">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" /> LIVE VIEW
+            </span>
+          </div>
+
+          <div className="relative mt-5">
+            <div className="absolute left-[12.5%] right-[12.5%] top-7 hidden h-px bg-gradient-to-r from-violet-400/20 via-violet-300/80 to-violet-400/20 sm:block" />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-1">
+              {nodes.map(([title, detail, status], index) => (
+                <div key={title} className={'relative min-w-0 rounded-2xl border p-3 transition-all duration-500 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-2 ' + (active === index ? 'border-violet-300/40 bg-violet-500/15 sm:scale-105' : 'border-white/10 bg-white/[.035]')}>
+                  <div className="relative z-10 mx-auto flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-slate-900 text-violet-200 shadow-lg">
+                    {index === 0 ? <Users size={17} /> : index === 1 ? <Sparkles size={17} /> : index === 2 ? <PackageCheck size={17} /> : <Truck size={17} />}
+                  </div>
+                  <p className="mt-2 truncate text-center text-[10px] font-black text-white">{title}</p>
+                  <p className="mt-0.5 truncate text-center text-[9px] text-slate-400">{detail}</p>
+                  <div className="mx-auto mt-2 flex w-fit items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-300"><span className="h-1.5 w-1.5 rounded-full bg-violet-300" />{status}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[.05] p-3">
+              <p className="text-[8px] font-black uppercase tracking-wider text-slate-500">Problem</p>
+              <p className="mt-1 text-[10px] font-bold text-white">Too many calls</p>
+            </div>
+            <div className="rounded-2xl border border-violet-300/15 bg-violet-400/10 p-3">
+              <p className="text-[8px] font-black uppercase tracking-wider text-violet-300">SAMBRAMO</p>
+              <p className="mt-1 text-[10px] font-bold text-white">One connected flow</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[.05] p-3">
+              <p className="text-[8px] font-black uppercase tracking-wider text-slate-500">Result</p>
+              <p className="mt-1 text-[10px] font-bold text-white">Clear status</p>
+            </div>
+          </div>
+
+          <p className="mt-3 text-center text-[9px] leading-4 text-slate-500">Animated product visualization — live operational data will be connected inside the SAMBRAMO apps.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SumramoProductHome() {
   const [query, setQuery] = useState('')
   const [menu, setMenu] = useState(false)
@@ -202,55 +270,94 @@ export default function SumramoProductHome() {
       </header>
 
       <main id="top">
-        <section className="relative overflow-hidden px-4 pb-14 pt-10 sm:px-6 sm:pb-24 sm:pt-24">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(168,85,247,.32),transparent_34%),radial-gradient(circle_at_20%_60%,rgba(124,58,237,.2),transparent_32%)]" />
-          <div className="relative mx-auto grid w-full max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr] lg:gap-10">
+        <section className="relative overflow-hidden border-b border-white/10 px-4 pb-12 pt-9 sm:px-6 sm:pb-20 sm:pt-16">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_16%,rgba(168,85,247,.34),transparent_32%),radial-gradient(circle_at_12%_70%,rgba(124,58,237,.22),transparent_34%)]" />
+          <div className="relative mx-auto w-full max-w-7xl">
             <Reveal>
-              <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-violet-200"><Sparkles size={13}/> The connected event ecosystem</div>
-                <h1 className="mt-5 max-w-[11ch] text-[clamp(2.7rem,12vw,6.6rem)] font-black leading-[.93] tracking-[-.055em] sm:mt-6 sm:max-w-none sm:text-[clamp(3.4rem,7vw,6.6rem)]">Your event.<br/><span className="text-violet-300">Everything connected.</span></h1>
-                <p className="mt-6 max-w-2xl text-base leading-7 text-violet-100/75 sm:text-lg">Discover event services, connect the supply chain, coordinate logistics and move into the SAMBRAMO app when you are ready.</p>
-                <div className="relative mt-7 max-w-2xl">
-                  <div className="flex items-center gap-3 rounded-2xl bg-white p-2 shadow-2xl">
-                    <Search className="ml-2 shrink-0 text-slate-400" size={20}/>
-                    <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search weddings, catering, decor, logistics…" className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400" aria-label="Search SAMBRAMO"/>
-                    <button onClick={() => setHandoff(true)} className="hidden shrink-0 rounded-xl bg-violet-700 px-4 py-3 text-xs font-extrabold text-white sm:block">Explore app</button>
-                  </div>
-                  {recommendations.length > 0 && <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-2xl">{recommendations.map(x => <button key={x.title} onClick={() => {setQuery(x.title);scrollTo('events')}} className="flex w-full items-center gap-3 rounded-xl p-3 text-left hover:bg-slate-50"><span className="text-lg">{x.icon}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{x.title}</span><span className="block truncate text-[11px] text-slate-500">{x.description}</span></span><ChevronRight size={15}/></button>)}</div>}
+              <div className="max-w-4xl">
+                <div className="border-l-2 border-violet-300 pl-4 sm:pl-5">
+                  <p className="text-[clamp(2.3rem,9vw,5.4rem)] font-black leading-[.9] tracking-[-.055em] text-white">SAMBRAMO</p>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[.2em] text-violet-200 sm:text-xs">Events • Event Supply Chain • Logistics</p>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-semibold text-violet-100/65 sm:text-[11px]"><span>Weddings</span><span>•</span><span>Food</span><span>•</span><span>Decor</span><span>•</span><span>Photography</span><span>•</span><span>Logistics</span></div>
+
+                <h1 className="mt-7 max-w-4xl text-[clamp(2.45rem,9vw,6.2rem)] font-black leading-[.94] tracking-[-.055em]">
+                  Events should feel <span className="text-violet-300">connected.</span>
+                </h1>
+                <p className="mt-4 max-w-2xl text-[15px] leading-6 text-violet-100/75 sm:text-lg sm:leading-7">
+                  One connected layer for people, services, supplies and movement — so families spend less time coordinating and more time celebrating.
+                </p>
+
+                <div className="mt-6 grid max-w-3xl grid-cols-1 gap-2.5 min-[420px]:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[.055] p-3 backdrop-blur"><p className="text-[9px] font-black uppercase tracking-wider text-violet-300">Problem</p><p className="mt-1 text-xs font-bold text-white">Scattered vendors</p></div>
+                  <div className="rounded-2xl border border-violet-300/20 bg-violet-500/10 p-3 backdrop-blur"><p className="text-[9px] font-black uppercase tracking-wider text-violet-300">Connection</p><p className="mt-1 text-xs font-bold text-white">One event flow</p></div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[.055] p-3 backdrop-blur"><p className="text-[9px] font-black uppercase tracking-wider text-violet-300">Outcome</p><p className="mt-1 text-xs font-bold text-white">Clearer execution</p></div>
+                </div>
+
+                <div className="relative mt-5 max-w-2xl">
+                  <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-white p-2 shadow-2xl">
+                    <Search className="ml-2 shrink-0 text-slate-400" size={19} />
+                    <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search weddings, catering, decor, logistics…" className="min-w-0 flex-1 bg-transparent px-1 py-3 text-[14px] text-slate-900 outline-none placeholder:text-slate-400" aria-label="Search SAMBRAMO" />
+                    <button onClick={() => setHandoff(true)} className="hidden shrink-0 rounded-xl bg-violet-700 px-4 py-3 text-xs font-black text-white sm:block">Explore</button>
+                  </div>
+                  {recommendations.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-2xl">
+                      {recommendations.map(item => (
+                        <button key={item.title} onClick={() => { setQuery(item.title); scrollTo('events') }} className="flex w-full min-w-0 items-center gap-3 rounded-xl p-3 text-left hover:bg-slate-50">
+                          <span className="shrink-0 text-lg">{item.icon}</span>
+                          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{item.title}</span><span className="block truncate text-[11px] text-slate-500">{item.description}</span></span>
+                          <ChevronRight size={15} className="shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </Reveal>
-            <Reveal>
-              <div className="relative mx-auto w-full max-w-[540px] lg:mt-2">
-                <div className="rounded-[26px] border border-white/15 bg-white/[.07] p-2.5 shadow-2xl backdrop-blur-md sm:rounded-[32px] sm:p-3">
-                  <div className="rounded-[21px] bg-white p-4 text-slate-950 sm:rounded-[25px] sm:p-5">
-                    <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-600">Event command view</p><p className="mt-1 text-xl font-black">Wedding • 21 June</p></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">On track</span></div>
-                    <div className="mt-5 grid grid-cols-3 gap-2">{[['Supply','Ready'],['Logistics','Moving'],['Venue','Next']].map(([a,b],i)=><div key={a} className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold text-slate-400">{a}</p><p className="mt-1 text-xs font-extrabold">{b}</p><div className={`mt-2 h-1 rounded-full ${i===1?'bg-violet-500':'bg-slate-200'}`} /></div>)}</div>
-                    <div className="mt-3 rounded-2xl bg-violet-50 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-700 text-white"><Truck size={18}/></div><div className="flex-1"><p className="text-xs font-extrabold">Supplier → Venue</p><p className="mt-0.5 text-[10px] text-slate-500">Route active · event-day delivery</p></div><Route size={17} className="text-violet-700"/></div></div>
-                    <div className="mt-3 flex items-center justify-between rounded-2xl border border-slate-100 p-3"><div className="flex items-center gap-2"><ShieldCheck size={17} className="text-emerald-600"/><span className="text-[11px] font-bold">Secure payments</span></div><span className="text-[10px] font-semibold text-slate-400">Razorpay</span></div>
-                  </div>
-                </div>
-                <div className="absolute -bottom-4 -left-2 hidden rounded-2xl bg-white px-4 py-3 text-slate-950 shadow-2xl sm:block"><p className="text-[10px] font-bold text-slate-400">CONNECTED</p><p className="text-sm font-black">Supply · Service · Movement</p></div>
-              </div>
-            </Reveal>
+
+            <div className="mt-7 grid gap-3 lg:absolute lg:right-0 lg:top-4 lg:mt-0 lg:w-[44%]">
+              <Reveal><LiveConnectionPanel /></Reveal>
+            </div>
           </div>
         </section>
 
-        <section id="how-it-works" className="bg-white py-16 text-slate-950 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <Reveal><div className="max-w-2xl"><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">How it works</span><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">One ecosystem. One simple journey.</h2><p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">The website introduces the experience. Your SAMBRAMO app handles the real customer, provider and partner workflows.</p></div></Reveal>
-            <div className="mt-10 grid gap-3 md:grid-cols-4">{[
-              ['01','Discover','Search the service, occasion or capability you need.','Search'],
-              ['02','Connect','Bring the right event providers and suppliers into the flow.','Users'],
-              ['03','Coordinate','Track supply, logistics and event-day movement together.','Route'],
-              ['04','Complete','Move into the relevant SAMBRAMO app for the actual transaction.','CheckCircle2'],
-            ].map(([n,t,d,icon]) => {const Icon=icon==='Search'?Search:icon==='Users'?Users:icon==='Route'?Route:CheckCircle2; return <div key={n} className="rounded-[26px] border border-slate-200 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-black text-violet-600">{n}</span><div className="mt-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-700"><Icon size={19}/></div><h3 className="mt-4 font-black">{t}</h3><p className="mt-2 text-xs leading-5 text-slate-500">{d}</p></div>})}</div>
+        <section id="how-it-works" className="bg-white py-14 text-slate-950 sm:py-20">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+            <Reveal>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[.2em] text-violet-700">The problem → the connection</span>
+                  <h2 className="mt-2 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">Stop coordinating an event across ten different conversations.</h2>
+                </div>
+                <p className="max-w-md text-sm leading-6 text-slate-500">SAMBRAMO connects the people, service, supply and movement that normally sit in separate silos.</p>
+              </div>
+            </Reveal>
+
+            <div className="relative mt-8">
+              <div className="pointer-events-none absolute left-[12%] right-[12%] top-1/2 hidden h-px bg-gradient-to-r from-slate-200 via-violet-300 to-slate-200 lg:block" />
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  ['01','DISCOVER','Find a service','Search by event, need or category.',Search],
+                  ['02','CONNECT','Match the right people','Bring providers and suppliers into one event.',Users],
+                  ['03','MOVE','Track what is happening','Coordinate supply, logistics and venue entry.',Truck],
+                  ['04','COMPLETE','Finish in the app','Book, pay and manage the actual workflow.',CheckCircle2],
+                ].map(([number,label,title,description,Icon], index) => (
+                  <Reveal key={number}>
+                    <article className="relative z-10 h-full rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                      <div className="flex items-center justify-between"><span className="text-[10px] font-black text-violet-600">{number}</span><span className="h-2 w-2 rounded-full bg-violet-500 shadow-[0_0_0_5px_rgba(139,92,246,.1)]" /></div>
+                      <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><Icon size={18} /></div>
+                      <p className="mt-4 text-[9px] font-black uppercase tracking-[.18em] text-slate-400">{label}</p>
+                      <h3 className="mt-1 text-sm font-black">{title}</h3>
+                      <p className="mt-1.5 text-[11px] leading-5 text-slate-500">{description}</p>
+                    </article>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
         <section id="services" className="bg-[#f7f5fb] py-16 text-slate-950 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6"><Reveal><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">Services</span><h2 className="mt-3 text-3xl font-black sm:text-5xl">Everything your event needs.</h2></div><p className="max-w-md text-sm leading-6 text-slate-500">A connected service layer across venues, people, experiences, essentials and event operations.</p></div></Reveal><div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">{SERVICES.map(([title,desc,icon])=><Reveal key={title}><article className="h-full rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-1 hover:shadow-xl sm:p-5"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-xl">{icon}</div><h3 className="mt-4 text-sm font-black sm:text-base">{title}</h3><p className="mt-2 text-[11px] leading-5 text-slate-500 sm:text-xs">{desc}</p><button onClick={() => setHandoff(true)} className="mt-4 inline-flex items-center gap-1 text-[11px] font-extrabold text-violet-700">Explore <ArrowRight size={13}/></button></article></Reveal>)}</div></div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6"><Reveal><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">Services</span><h2 className="mt-3 text-3xl font-black sm:text-5xl">Everything your event needs.</h2></div><p className="max-w-md text-sm leading-6 text-slate-500">A connected service layer across venues, people, experiences, essentials and event operations.</p></div></Reveal><div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">{SERVICES.map(([title,desc,icon])=><Reveal key={title}><article className="h-full rounded-[20px] bg-white p-3.5 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-1 hover:shadow-xl sm:rounded-[24px] sm:p-5"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-xl">{icon}</div><h3 className="mt-4 text-[13px] font-black leading-tight sm:text-base">{title}</h3><p className="mt-2 text-[10px] leading-4 text-slate-500 sm:text-xs">{desc}</p><button onClick={() => setHandoff(true)} className="mt-4 inline-flex items-center gap-1 text-[11px] font-extrabold text-violet-700">Explore <ArrowRight size={13}/></button></article></Reveal>)}</div></div>
         </section>
 
         <section id="supply-chain" className="bg-white py-16 text-slate-950 sm:py-24">
@@ -259,8 +366,24 @@ export default function SumramoProductHome() {
 
         <LogisticsStory />
 
-        <section id="events" className="bg-[#f7f5fb] py-16 text-slate-950 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6"><Reveal><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">Events / Offerings</span><h2 className="mt-3 text-3xl font-black sm:text-5xl">Every kind of celebration. One connected platform.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">Explore the event types SAMBRAMO is designed to support. Actual availability and booking move into the relevant app.</p></Reveal><div className="mt-9 flex snap-x gap-3 overflow-x-auto pb-3 [scrollbar-width:none]">{EVENT_TYPES.map(([title,desc,icon])=><button key={title} onClick={() => setHandoff(true)} className="min-w-[220px] snap-start rounded-[26px] bg-white p-5 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-xl sm:min-w-[260px]"><span className="text-3xl">{icon}</span><h3 className="mt-5 font-black">{title}</h3><p className="mt-2 text-xs leading-5 text-slate-500">{desc}</p><span className="mt-5 inline-flex items-center gap-1 text-xs font-extrabold text-violet-700">Explore <ChevronRight size={14}/></span></button>)}</div></div>
+        <section id="events" className="bg-[#f7f5fb] py-14 text-slate-950 sm:py-20">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+            <Reveal>
+              <span className="text-[10px] font-black uppercase tracking-[.2em] text-violet-700">Events / Offerings</span>
+              <h2 className="mt-2 text-3xl font-black sm:text-5xl">Whatever the occasion, the connection stays the same.</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Choose the occasion. SAMBRAMO connects the service layer around it.</p>
+            </Reveal>
+            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+              {EVENT_TYPES.map(([title, description, icon], index) => (
+                <button key={title} onClick={() => setHandoff(true)} className="group rounded-[20px] border border-slate-200 bg-white p-3.5 text-left shadow-sm transition hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl sm:rounded-[22px] sm:p-4">
+                  <div className="flex items-start justify-between gap-2"><span className="text-2xl">{icon}</span><span className="text-[9px] font-black text-slate-300">0{index + 1}</span></div>
+                  <h3 className="mt-3 text-[13px] font-black leading-tight sm:text-sm">{title}</h3>
+                  <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-slate-500">{description}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-black text-violet-700">Explore <ChevronRight size={12} className="transition group-hover:translate-x-0.5" /></span>
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section id="about" className="bg-white py-16 text-slate-950 sm:py-24">
