@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight, ChevronRight, CheckCircle2, Truck, MapPin, Search,
   CalendarDays, Sparkles, ShieldCheck, Smartphone, X, Play, Menu,
@@ -37,18 +37,20 @@ const SEARCH_ITEMS = [...EVENT_TYPES, ...SERVICES].map(([title, description, ico
 
 function Reveal({ children, className = '' }) {
   const [show, setShow] = useState(false)
+  const ref = useRef(null)
   useEffect(() => {
+    const node = ref.current
+    if (!node) return
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         setShow(true)
         observer.disconnect()
       }
     }, { threshold: 0.12 })
-    const node = document.querySelectorAll('[data-reveal]').item(document.querySelectorAll('[data-reveal]').length - 1)
-    if (node) observer.observe(node)
+    observer.observe(node)
     return () => observer.disconnect()
   }, [])
-  return <div data-reveal className={`transition-all duration-700 ${show ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'} ${className}`}>{children}</div>
+  return <div ref={ref} className={`transition-all duration-700 ${show ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'} ${className}`}>{children}</div>
 }
 
 function AppHandoff({ open, onClose }) {
