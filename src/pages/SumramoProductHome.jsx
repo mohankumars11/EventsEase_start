@@ -183,31 +183,92 @@ function LiveSupplyChain() {
   )
 }
 
-function ReviewSection() {
+function ReviewSection({ reviews, setReviews }) {
+  const [form, setForm] = useState({ name: '', city: '', eventType: '', review: '', rating: 0 })
+  const [submitted, setSubmitted] = useState(false)
+
+  const submitReview = event => {
+    event.preventDefault()
+    if (!form.name.trim() || !form.city.trim() || !form.eventType || !form.review.trim() || !form.rating) return
+    setReviews(current => [...current, {
+      ...form,
+      id: Date.now(),
+      name: form.name.trim(),
+      city: form.city.trim(),
+      review: form.review.trim(),
+    }])
+    setForm({ name: '', city: '', eventType: '', review: '', rating: 0 })
+    setSubmitted(true)
+  }
+
   return (
-    <section className="sam-section sam-reviews">
+    <section className="sam-section sam-reviews" id="reviews">
       <div className="sam-container">
         <div className="sam-section-heading">
           <div>
-            <p className="sam-overline">REAL EVENTS. REAL HAPPINESS.</p>
-            <h2>Reviews from people<br />who make moments.</h2>
+            <p className="sam-overline">AUTHENTIC REVIEWS</p>
+            <h2>Real experiences.<br />No invented testimonials.</h2>
           </div>
-          <p>Customer feedback will appear here after verified events. No sample or placeholder reviews are published.</p>
+          <p>Only reviews submitted through this experience are shown. The initial pool is intentionally empty.</p>
         </div>
 
-        <div className="sam-review-empty">
-          <div className="sam-review-mark"><Star size={22} /></div>
+        <div className="sam-review-layout">
           <div>
-            <b>Be one of the first to share your SAMBRAMO experience.</b>
-            <p>Verified customers will be able to rate the service, event experience and delivery journey.</p>
+            {reviews.length === 0 ? (
+              <div className="sam-review-empty">
+                <div className="sam-review-mark"><Star size={22} /></div>
+                <div>
+                  <b>Your first verified experience can appear here.</b>
+                  <p>There are currently no published reviews. We will never populate this section with fabricated customer stories.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="sam-testimonial-list">
+                {reviews.map(item => (
+                  <article className="sam-testimonial" key={item.id}>
+                    <div className="sam-review-top">
+                      <span className="sam-review-avatar">{item.name.charAt(0).toUpperCase()}</span>
+                      <div><b>{item.name}</b><small>{item.city} · {item.eventType}</small></div>
+                      <div className="sam-stars">{Array.from({ length: 5 }, (_, i) => <Star key={i} size={13} fill={i < item.rating ? 'currentColor' : 'none'} />)}</div>
+                    </div>
+                    <p>“{item.review}”</p>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
-          <button className="sam-outline-button"><Send size={15} /> Share a review</button>
+
+          <form className="sam-review-form" onSubmit={submitReview}>
+            <div>
+              <p className="sam-overline">SHARE YOUR SAMBRAMO EXPERIENCE</p>
+              <h3>Tell us what actually happened.</h3>
+              <p className="sam-form-note">Your review is added to this page immediately in this session.</p>
+            </div>
+            <div className="sam-form-stars" aria-label="Select rating">
+              {Array.from({ length: 5 }, (_, i) => (
+                <button key={i} type="button" aria-label={'Rate ' + (i + 1) + ' stars'} className={i < form.rating ? 'active' : ''} onClick={() => setForm(value => ({ ...value, rating: i + 1 }))}>
+                  <Star size={23} fill={i < form.rating ? 'currentColor' : 'none'} />
+                </button>
+              ))}
+            </div>
+            <div className="sam-form-grid">
+              <input value={form.name} onChange={e => setForm(v => ({ ...v, name: e.target.value }))} placeholder="Your name" required />
+              <input value={form.city} onChange={e => setForm(v => ({ ...v, city: e.target.value }))} placeholder="City" required />
+              <select value={form.eventType} onChange={e => setForm(v => ({ ...v, eventType: e.target.value }))} required>
+                <option value="">Event type</option>
+                {EVENT_TYPES.filter(([title]) => title !== 'All Services').map(([title]) => <option key={title}>{title}</option>)}
+              </select>
+              <textarea value={form.review} onChange={e => setForm(v => ({ ...v, review: e.target.value }))} placeholder="Write your actual experience..." rows={5} required />
+            </div>
+            <button className="sam-primary" type="submit"><Send size={15} /> Submit Review</button>
+            {submitted && <p className="sam-success"><CheckCircle2 size={14} /> Review added to the active testimonial pool.</p>}
+          </form>
         </div>
 
         <div className="sam-review-process">
           <div><span>01</span><b>Complete an event</b><small>Use SAMBRAMO for your event journey.</small></div>
-          <div><span>02</span><b>Verify your booking</b><small>Only eligible customers can review.</small></div>
-          <div><span>03</span><b>Share your experience</b><small>Ratings and written feedback become visible here.</small></div>
+          <div><span>02</span><b>Verify your booking</b><small>Production can connect this to booking verification.</small></div>
+          <div><span>03</span><b>Share your experience</b><small>Approved reviews can become public testimonials.</small></div>
         </div>
       </div>
     </section>
@@ -218,6 +279,7 @@ export default function SumramoProductHome() {
   const [query, setQuery] = useState('')
   const [menu, setMenu] = useState(false)
   const [handoff, setHandoff] = useState(false)
+  const [reviews, setReviews] = useState([])
 
   const scrollTo = id => {
     setMenu(false)
@@ -238,6 +300,10 @@ export default function SumramoProductHome() {
         .sam-desktop-nav{display:flex;align-items:center;gap:25px;margin-left:auto}.sam-desktop-nav button{border:0;background:none;color:rgba(255,255,255,.62);font-size:10px;font-weight:800}.sam-desktop-nav button:hover{color:#fff}
         .sam-header-actions{display:flex;align-items:center;gap:9px}.sam-search-trigger,.sam-mobile-menu,.sam-icon-button{display:grid;place-items:center;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#fff;border-radius:12px;width:38px;height:38px}.sam-mobile-menu{display:none}
         .sam-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:14px;padding:13px 18px;background:linear-gradient(135deg,#8b3dff,#6d28d9);color:#fff;font-size:10px;font-weight:900;box-shadow:0 12px 30px rgba(124,58,237,.27)}.sam-primary.small{padding:10px 14px}
+
+        .sam-brand-lockup{display:flex;align-items:center;gap:8px;border:0;background:none;color:#fff;padding:0;font-size:17px;font-weight:900;letter-spacing:.2em}.sam-infinity{font-size:27px;line-height:1;color:#e879f9;text-shadow:0 0 18px rgba(232,121,249,.7)}
+        .sam-review-layout{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:30px}.sam-testimonial-list{display:grid;gap:8px}.sam-testimonial{padding:18px;border:1px solid #e7e0ef;border-radius:18px;background:#fff}.sam-review-top{display:flex;align-items:center;gap:8px}.sam-review-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#efe7ff;color:#6d28d9;font-weight:900}.sam-review-top b,.sam-review-top small{display:block}.sam-review-top b{font-size:10px}.sam-review-top small{margin-top:2px;color:#8b8194;font-size:8px}.sam-review-top .sam-stars{margin-left:auto}.sam-testimonial>p{margin:14px 0 0;color:#4a4052;font-size:10px;line-height:1.7}.sam-review-form{padding:21px;border:1px solid #e1d6ee;border-radius:21px;background:#fff;box-shadow:0 15px 40px rgba(61,20,91,.07)}.sam-review-form h3{margin:0;font-size:20px}.sam-form-note{margin:5px 0 0;color:#8b8194;font-size:8px;line-height:1.5}.sam-form-stars{display:flex;gap:3px;margin:18px 0 13px}.sam-form-stars button{border:0;background:none;padding:3px;color:#b8adbf}.sam-form-stars button.active{color:#f59e0b;transform:scale(1.08)}.sam-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.sam-form-grid input,.sam-form-grid select,.sam-form-grid textarea{width:100%;border:1px solid #e3dbea;border-radius:12px;background:#fbf9fd;color:#24172c;padding:11px;font-size:9px;outline:none}.sam-form-grid input:focus,.sam-form-grid select:focus,.sam-form-grid textarea:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(139,92,246,.08)}.sam-form-grid textarea{grid-column:1/-1;resize:vertical}.sam-review-form>.sam-primary{margin-top:10px}.sam-success{display:flex;align-items:center;gap:5px;color:#15803d;font-size:8px}.sam-metrics{background:#12031f;color:#fff}.sam-metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:30px}.sam-metric-grid>div{padding:20px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.045);box-shadow:inset 0 0 35px rgba(139,92,246,.05)}.sam-metric-grid b,.sam-metric-grid span{display:block}.sam-metric-grid b{font-size:27px;letter-spacing:-.04em;background:linear-gradient(90deg,#fff,#c084fc);-webkit-background-clip:text;color:transparent}.sam-metric-grid span{margin-top:4px;color:rgba(255,255,255,.43);font-size:8px}.sam-footer-infinity{color:#e879f9;font-size:23px;text-shadow:0 0 15px rgba(232,121,249,.6)}
+
         .sam-mobile-nav{display:none}
         .sam-hero{position:relative;background:var(--deep);padding:44px 0 26px}.sam-hero-bg{position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(168,85,247,.2),transparent 30%),radial-gradient(circle at 20% 60%,rgba(124,58,237,.12),transparent 32%);pointer-events:none}
         .sam-hero-grid{position:relative;display:grid;grid-template-columns:.88fr 1.12fr;gap:35px;align-items:center;min-height:650px}.sam-hero-copy{padding:20px 0}
@@ -268,13 +334,13 @@ export default function SumramoProductHome() {
         .sam-footer{padding:48px 0 20px;background:#12031f;color:#fff}.sam-footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:30px}.sam-footer-logo{margin:0;font-size:20px;font-weight:900;letter-spacing:.24em}.sam-footer-tag{margin:7px 0 0;color:#c6a9e4;font-size:9px;font-weight:800}.sam-footer-copy{max-width:300px;margin:12px 0 0;color:rgba(255,255,255,.36);font-size:8px;line-height:1.65}.sam-footer-col{display:flex;flex-direction:column;gap:8px}.sam-footer-col>b{margin-bottom:3px;color:#d8c6ed;font-size:8px;text-transform:uppercase;letter-spacing:.14em}.sam-footer-col button{width:max-content;padding:0;border:0;background:none;color:rgba(255,255,255,.45);font-size:9px;text-align:left}.sam-footer-col button:hover{color:#fff}.sam-socials{display:flex;gap:6px}.sam-socials button{display:grid;place-items:center;width:31px;height:31px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.04);color:#fff}.sam-footer-bottom{display:flex;justify-content:space-between;gap:15px;margin-top:35px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.25);font-size:7px}
         .sam-modal-backdrop{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.72);backdrop-filter:blur(14px)}.sam-modal{width:min(620px,100%);overflow:hidden;border:1px solid rgba(255,255,255,.13);border-radius:25px;background:#160522;color:#fff;box-shadow:0 30px 100px rgba(0,0,0,.55)}.sam-modal-head{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}.sam-mini-label{color:#c9a7ff;font-size:8px;font-weight:900;letter-spacing:.2em}.sam-modal h3{margin:4px 0 0;font-size:19px}.sam-role-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:14px}.sam-role-card{padding:14px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.04);color:#fff;text-align:left}.sam-role-card:hover{background:rgba(255,255,255,.08);border-color:rgba(196,156,255,.4)}.sam-role-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(139,92,246,.17);color:#d1b7ff}.sam-role-card>b,.sam-role-card>small{display:block}.sam-role-card>b{margin-top:9px;font-size:10px}.sam-role-card>small{margin-top:3px;color:rgba(255,255,255,.45);font-size:8px;line-height:1.45}.sam-role-link{display:flex;align-items:center;gap:4px;margin-top:9px;color:#c4a2ff;font-size:8px;font-weight:900}.sam-modal-note{margin:0;padding:0 18px 18px;color:rgba(255,255,255,.32);font-size:7px;line-height:1.5}
         @media(max-width:1000px){.sam-desktop-nav{display:none}.sam-mobile-menu{display:grid}.sam-search-trigger{display:none}.sam-hero-grid{grid-template-columns:1fr}.sam-hero-card{min-height:540px}.sam-workflow{grid-template-columns:repeat(3,1fr)}.sam-service-grid{grid-template-columns:repeat(2,1fr)}.sam-chain-grid,.sam-city-grid{grid-template-columns:1fr}.sam-chain-grid{gap:38px}.sam-benefits{grid-template-columns:repeat(2,1fr)}.sam-events-grid{grid-template-columns:repeat(3,1fr)}.sam-footer-grid{grid-template-columns:1.5fr 1fr 1fr}.sam-mobile-nav{display:grid;gap:3px;padding:8px 22px 17px;border-top:1px solid rgba(255,255,255,.08);background:#160522}.sam-mobile-nav button:not(.sam-primary){display:flex;justify-content:space-between;align-items:center;padding:11px;border:0;border-radius:11px;background:none;color:#fff;font-size:11px;font-weight:800}.sam-mobile-nav .sam-primary{width:100%;margin-top:5px}}
-        @media(max-width:700px){.sam-container{width:min(calc(100% - 28px),1280px)}.sam-header-inner{width:min(calc(100% - 28px),1280px);min-height:63px}.sam-primary.small{display:none}.sam-hero{padding-top:24px}.sam-hero-grid{gap:20px;min-height:auto;padding:24px 0 26px}.sam-hero h1{font-size:clamp(46px,13.8vw,67px)}.sam-hero-tagline{font-size:19px}.sam-hero-body{font-size:10px}.sam-search-wrap{margin-top:18px}.sam-trust-row{grid-template-columns:repeat(2,1fr);gap:9px}.sam-trust-row div{font-size:7px}.sam-hero-card{min-height:410px;border-radius:24px}.sam-script{font-size:34px}.sam-category-shell{padding:7px;border-radius:16px}.sam-category-rail{display:flex;overflow:auto;scrollbar-width:none}.sam-category-rail::-webkit-scrollbar{display:none}.sam-category-card{width:86px;flex:none}.sam-section{padding:58px 0}.sam-section-heading{display:block}.sam-section-heading>p{margin-top:11px}.sam-section-heading h2{font-size:34px}.sam-workflow{display:flex;overflow:auto;gap:7px;margin-right:-14px;padding-right:14px;scroll-snap-type:x mandatory;scrollbar-width:none}.sam-workflow::-webkit-scrollbar{display:none}.sam-work-card{flex:0 0 78%;scroll-snap-align:start}.sam-work-image{height:135px}.sam-connected-strip{justify-content:flex-start}.sam-service-grid{grid-template-columns:1fr}.sam-service-card{padding:11px;border-radius:15px}.sam-service-icon{width:36px;height:36px}.sam-chain-copy h2{font-size:37px}.sam-chain-card{border-radius:22px}.sam-chain-visual{height:220px}.sam-chain-steps{gap:2px}.sam-chain-step b{font-size:6px}.sam-feature-grid{grid-template-columns:1fr;border-radius:23px}.sam-feature-image{min-height:280px}.sam-feature-copy{min-height:350px;padding:29px 23px}.sam-benefits{grid-template-columns:1fr 1fr}.sam-benefits>div{padding:12px}.sam-events-grid{grid-template-columns:1fr 1fr;gap:7px}.sam-event-card{min-height:140px;padding:13px}.sam-review-empty{align-items:flex-start;flex-wrap:wrap}.sam-outline-button{margin-left:0}.sam-review-process{grid-template-columns:1fr}.sam-payment-card{grid-template-columns:1fr}.sam-razorpay{width:max-content}.sam-india-map{height:360px}.sam-city-pin{font-size:6px}.sam-guide-grid{grid-template-columns:1fr}.sam-guide-image{height:175px}.sam-guide-side{grid-template-columns:1fr 1fr}.sam-guide-mini{grid-template-columns:1fr}.sam-guide-mini-image{height:100px}.sam-final-inner{display:block}.sam-final .sam-primary{margin-top:20px}.sam-footer-grid{grid-template-columns:1.4fr 1fr}.sam-footer-grid>div:first-child{grid-column:1/-1}.sam-footer-bottom{display:block;line-height:1.8}.sam-footer-bottom span:last-child{display:block}.sam-role-grid{grid-template-columns:1fr}.sam-modal h3{font-size:17px}}
+        @media(max-width:700px){.sam-container{width:min(calc(100% - 28px),1280px)}.sam-header-inner{width:min(calc(100% - 28px),1280px);min-height:63px}.sam-primary.small{display:none}.sam-hero{padding-top:24px}.sam-hero-grid{gap:20px;min-height:auto;padding:24px 0 26px}.sam-hero h1{font-size:clamp(46px,13.8vw,67px)}.sam-hero-tagline{font-size:19px}.sam-hero-body{font-size:10px}.sam-search-wrap{margin-top:18px}.sam-trust-row{grid-template-columns:repeat(2,1fr);gap:9px}.sam-trust-row div{font-size:7px}.sam-hero-card{min-height:410px;border-radius:24px}.sam-script{font-size:34px}.sam-category-shell{padding:7px;border-radius:16px}.sam-category-rail{display:flex;overflow:auto;scrollbar-width:none}.sam-category-rail::-webkit-scrollbar{display:none}.sam-category-card{width:86px;flex:none}.sam-section{padding:58px 0}.sam-section-heading{display:block}.sam-section-heading>p{margin-top:11px}.sam-section-heading h2{font-size:34px}.sam-workflow{display:flex;overflow:auto;gap:7px;margin-right:-14px;padding-right:14px;scroll-snap-type:x mandatory;scrollbar-width:none}.sam-workflow::-webkit-scrollbar{display:none}.sam-work-card{flex:0 0 78%;scroll-snap-align:start}.sam-work-image{height:135px}.sam-connected-strip{justify-content:flex-start}.sam-service-grid{grid-template-columns:1fr}.sam-service-card{padding:11px;border-radius:15px}.sam-service-icon{width:36px;height:36px}.sam-chain-copy h2{font-size:37px}.sam-chain-card{border-radius:22px}.sam-chain-visual{height:220px}.sam-chain-steps{gap:2px}.sam-chain-step b{font-size:6px}.sam-feature-grid{grid-template-columns:1fr;border-radius:23px}.sam-feature-image{min-height:280px}.sam-feature-copy{min-height:350px;padding:29px 23px}.sam-benefits{grid-template-columns:1fr 1fr}.sam-benefits>div{padding:12px}.sam-events-grid{grid-template-columns:1fr 1fr;gap:7px}.sam-event-card{min-height:140px;padding:13px}.sam-review-empty{align-items:flex-start;flex-wrap:wrap}.sam-outline-button{margin-left:0}.sam-review-process{grid-template-columns:1fr}.sam-payment-card{grid-template-columns:1fr}.sam-razorpay{width:max-content}.sam-india-map{height:360px}.sam-city-pin{font-size:6px}.sam-guide-grid{grid-template-columns:1fr}.sam-guide-image{height:175px}.sam-guide-side{grid-template-columns:1fr 1fr}.sam-guide-mini{grid-template-columns:1fr}.sam-guide-mini-image{height:100px}.sam-final-inner{display:block}.sam-final .sam-primary{margin-top:20px}.sam-review-layout{grid-template-columns:1fr}.sam-review-form{order:-1}.sam-form-grid{grid-template-columns:1fr}.sam-form-grid textarea{grid-column:auto}.sam-metric-grid{grid-template-columns:1fr 1fr}.sam-footer-grid{grid-template-columns:1.4fr 1fr}.sam-brand-lockup{font-size:16px}.sam-infinity{font-size:24px}.sam-footer-grid>div:first-child{grid-column:1/-1}.sam-footer-bottom{display:block;line-height:1.8}.sam-footer-bottom span:last-child{display:block}.sam-role-grid{grid-template-columns:1fr}.sam-modal h3{font-size:17px}}
         @media(max-width:390px){.sam-container,.sam-header-inner{width:min(calc(100% - 22px),1280px)}.sam-wordmark{font-size:16px}.sam-hero h1{font-size:43px}.sam-hero-tagline{font-size:17px}.sam-hero-card{min-height:370px}.sam-category-card{width:78px}.sam-section-heading h2{font-size:31px}.sam-benefits{grid-template-columns:1fr}.sam-guide-side{grid-template-columns:1fr}.sam-footer-grid{grid-template-columns:1fr 1fr}}
       `}</style>
 
       <header className="sam-site-header">
         <div className="sam-header-inner">
-          <button className="sam-wordmark" onClick={() => scrollTo('top')} aria-label="SAMBRAMO home">{BRAND}</button>
+          <button className="sam-brand-lockup" onClick={() => scrollTo('top')} aria-label="SAMBRAMO home"><span className="sam-infinity">∞</span><span>{BRAND}</span></button>
           <nav className="sam-desktop-nav" aria-label="Primary navigation">
             {[
               ['Home', 'top'], ['Services', 'services'], ['How it works', 'how-it-works'],
@@ -395,7 +461,7 @@ export default function SumramoProductHome() {
           </div>
         </section>
 
-        <ReviewSection />
+        <ReviewSection reviews={reviews} setReviews={setReviews} />
 
         <section className="sam-section sam-payment">
           <div className="sam-container">
@@ -407,21 +473,33 @@ export default function SumramoProductHome() {
           </div>
         </section>
 
+        <section className="sam-section sam-metrics">
+          <div className="sam-container">
+            <div className="sam-section-heading"><div><p className="sam-overline">THE ECOSYSTEM AT A GLANCE</p><h2>Designed around the whole event.</h2></div><p>These are product architecture targets, not claims of current completed volume.</p></div>
+            <div className="sam-metric-grid">
+              <div><b>10K+</b><span>Partner capacity target</span></div>
+              <div><b>500+</b><span>Event delivery target</span></div>
+              <div><b>26+</b><span>Service categories</span></div>
+              <div><b>4.9★</b><span>Rating framework target</span></div>
+            </div>
+          </div>
+        </section>
+
         <section className="sam-section sam-city" id="about">
           <div className="sam-container sam-city-grid">
             <div>
               <p className="sam-overline" style={{ color: '#d7b8ff' }}>PLAN ANY EVENT, ANYWHERE IN INDIA</p>
               <h2>One connected experience, wherever your event happens.</h2>
-              <p>Discover event services, suppliers and logistics around the places you care about. Coverage and partner availability will grow city by city.</p>
+              <p>Currently active in Bangalore. Scaling further across India soon. Coverage and partner availability will grow city by city.</p>
               <div className="sam-city-stats">
-                <div className="sam-city-stat"><b>City-by-city</b><small>Partner expansion</small></div>
-                <div className="sam-city-stat"><b>26+</b><small>Service categories planned</small></div>
+                <div className="sam-city-stat"><b>Bangalore</b><small>Current focus city</small></div>
+                <div className="sam-city-stat"><b>India</b><small>Expansion roadmap</small></div>
               </div>
               <button className="sam-primary" style={{ marginTop: 22 }} onClick={() => setHandoff(true)}>Explore in your city <ArrowRight size={15} /></button>
             </div>
             <div className="sam-india-map" aria-label="Illustrative India coverage map">
               <div className="sam-india-shape" />
-              {['Bengaluru', 'Mumbai', 'Delhi', 'Hyderabad'].map((city, i) => <div key={city} className={'sam-city-pin pin-' + (i + 1)}><i />{city}</div>)}
+              <div className="sam-city-pin bangalore-pin"><i />Bangalore · Active</div>
             </div>
           </div>
         </section>
@@ -451,7 +529,7 @@ export default function SumramoProductHome() {
         <div className="sam-container">
           <div className="sam-footer-grid">
             <div>
-              <p className="sam-footer-logo">{BRAND}</p>
+              <p className="sam-footer-logo"><span className="sam-footer-infinity">∞</span> {BRAND}</p>
               <p className="sam-footer-tag">{TAGLINE}</p>
               <p className="sam-footer-copy">A connected event ecosystem for services, supplies and logistics. Built to bring the people behind an event into one experience.</p>
               <div className="sam-socials" style={{ marginTop: 14 }}>
