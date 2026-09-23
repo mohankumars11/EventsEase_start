@@ -19,6 +19,7 @@ import ResumePrompt from './components/common/ResumePrompt'
 // add a round-trip before anything renders.
 import HomeScreen from './pages/HomeScreen'
 import PublicSite from './pages/PublicSite'
+import SambramoWebsite from './pages/SambramoWebsite'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -543,7 +544,7 @@ function AppWithRouter() {
   const { pathname } = useLocation()
 
   if (PUBLIC_SITE_PATHS.has(pathname)) {
-    return <PublicSite />
+    return <SambramoWebsite />
   }
 
   return (
