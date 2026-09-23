@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, ChevronRight } from 'lucide-react'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
+import { useReviewClock } from './ReviewCountdown'
 import OnlineToggle from './OnlineToggle'
 import PartnerAvatar from '../vendor/PartnerAvatar'
 
@@ -109,12 +110,32 @@ function useWish() {
   return wish
 }
 
-export default function JobsHeader({ lifecycle, businessName, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0, onAcceptingChange, onOpenProfile, onOpenAlerts }) {
+export default function JobsHeader({
+  lifecycle, businessName, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
+  reviewDueAt = null, reviewSubmittedAt = null,
+  onAcceptingChange, onOpenProfile, onOpenAlerts,
+}) {
   const s = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
   const wish = useWish()
 
+  /* The same clock the detail card below uses, from the same hook, so
+     the two can never disagree by a minute. */
+  const { left, words, fraction } = useReviewClock({
+    dueAt: lifecycle === LIFECYCLE.UNDER_REVIEW ? reviewDueAt : null,
+    submittedAt: reviewSubmittedAt,
+  })
+
+  /* ── px-4, matching the page column exactly ──────────────
+     VendorDashboard lays its content out in `px-4 sm:px-6` and pulls
+     this header out of it with `-mx-4 sm:-mx-6`. The header then applied
+     its OWN px-5, so every line inside it started 4px further right than
+     every card below it — a stagger down the whole left edge of the Jobs
+     tab, small enough to read as sloppiness rather than as a bug.
+
+     These two paddings have to stay equal to the page's. If the column
+     ever changes, this changes with it. */
   return (
-    <header className="safe-top bg-plum-950 px-5 pb-5 pt-3 text-white">
+    <header className="bg-plum-950 px-4 pb-5 text-white sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-plum-300">
@@ -174,17 +195,62 @@ export default function JobsHeader({ lifecycle, businessName, vendorId, avatarUr
         </div>
       </div>
 
+      {/* ── The status, and the clock when there is one ──────────────
+          ════════════════════════════════════════════════════════════
+          ONE STATUS ELEMENT, NOT TWO
+          ════════════════════════════════════════════════════════════
+
+          The review countdown used to be its own card rendered ABOVE
+          this header in VendorDashboard. Because the header is pulled up
+          by `-mt-4` to sit flush with the top of the screen, the card
+          was dragged with it and ended up half off the top edge, its
+          corners cut by the header behind it — visible in a partner's
+          screenshot as a dark slab floating above everything.
+
+          It was also saying the same thing twice. This pill already
+          reads "Under review · We are checking your profile"; the card
+          above it read "With our team · 23 hours left". Two elements,
+          one subject, fighting for the same corner of the screen.
+
+          So the clock lives HERE, where the status already is, and the
+          detail card moved down into the content where there is room
+          for it. The bar underneath fills as the promised window
+          elapses, which is the thing that makes a wait feel finite. */}
       <button
         type="button"
         onClick={onOpenProfile}
         data-partner-state={lifecycle}
-        className={`mt-3 flex w-full items-center gap-2 rounded-full px-3 py-2 text-left ring-1 ${s.pill}`}
+        className={`mt-3 w-full rounded-[18px] px-3.5 py-2.5 text-left ring-1 ${s.pill}`}
       >
-        {/* Never colour alone — the dot has a word beside it. §59. */}
-        <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} aria-hidden="true" />
-        <span className="text-[12.5px] font-extrabold">{s.label}</span>
-        <span className="min-w-0 flex-1 truncate text-[11.5px] opacity-70">{s.sub}</span>
-        <ChevronRight size={14} className="shrink-0 opacity-60" />
+        <span className="flex items-center gap-2">
+          {/* Never colour alone — the dot has a word beside it. §59. */}
+          <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} aria-hidden="true" />
+          <span className="text-[12.5px] font-extrabold">{s.label}</span>
+          {/* The subtitle gives way to the clock rather than competing
+              with it. "We are checking your pro..." next to "23 min 58s
+              left" is two truncated half-sentences in one row, and the
+              clock is the more useful of the two by a distance --
+              "Under review" already says what the subtitle was for. */}
+          {words ? (
+            <span className={`min-w-0 flex-1 text-right text-[11.5px] font-extrabold tabular-nums ${
+              left?.over ? 'text-saffron-200' : ''
+            }`}>
+              {words}
+            </span>
+          ) : (
+            <span className="min-w-0 flex-1 truncate text-[11.5px] opacity-70">{s.sub}</span>
+          )}
+          <ChevronRight size={14} className="shrink-0 opacity-60" />
+        </span>
+
+        {fraction !== null && !left?.over && (
+          <span className="mt-2 block h-1 w-full overflow-hidden rounded-full bg-white/15">
+            <span
+              className="block h-full rounded-full bg-amber-300 transition-[width] duration-700 ease-out"
+              style={{ width: `${Math.round(fraction * 100)}%` }}
+            />
+          </span>
+        )}
       </button>
     </header>
   )

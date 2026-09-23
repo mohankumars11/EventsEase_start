@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Camera, Loader2, Trash2 } from 'lucide-react'
 import { uploadAvatar, removeAvatar, initialsFor } from '../../lib/partnerAvatar'
+import ImageCropper from '../partner/ImageCropper'
 
 /**
  * The photograph, and the control for changing it.
@@ -34,14 +35,29 @@ export default function PartnerAvatar({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [hidden, setHidden] = useState(false)
+  /* The file the partner just chose, waiting to be positioned. Picking
+     one no longer uploads it. */
+  const [cropping, setCropping] = useState(null)
 
   const initials = initialsFor(name)
   const px = `${size}px`
 
-  async function pick(e) {
+  /* ── Chosen, then positioned, then uploaded ─────────────────────
+     This used to upload the file the instant it was picked. A phone
+     photograph is 4:3 and the avatar is a circle, so the app
+     centre-cropped on the partner's behalf and their face came out
+     half outside the ring, with no way back except taking another
+     photograph. The cropper is where that decision moves to them. */
+  function pick(e) {
     const file = e.target.files?.[0]
     e.target.value = ''            // so the same file can be picked twice
     if (!file) return
+    setError(null)
+    setCropping(file)
+  }
+
+  async function upload(file) {
+    setCropping(null)
     setBusy(true); setError(null)
     const res = await uploadAvatar(vendorId, file)
     setBusy(false)
@@ -132,6 +148,14 @@ export default function PartnerAvatar({
         onChange={pick}
         className="hidden"
       />
+
+      {cropping && (
+        <ImageCropper
+          file={cropping}
+          onCancel={() => setCropping(null)}
+          onDone={upload}
+        />
+      )}
     </div>
   )
 }

@@ -346,21 +346,13 @@ export default function VendorDashboard() {
           derived from the partner's real lifecycle, not an invented
           online/offline toggle this platform has no column for. See
           components/partner/JobsHeader. */}
-      {/* ── The review clock ─────────────────────────────────────────
-          A partner who has submitted and is waiting sees the deadline
-          here, on the tab they actually open, rather than having to go
-          back into setup to find out whether anything is happening.
-          Renders nothing at all unless there is something to say. */}
-      {tab === 'offers' && (
-        <ReviewCountdown
-          status={vendor?.verification_status}
-          dueAt={vendor?.review_due_at}
-          submittedAt={vendor?.submitted_at}
-          extended={vendor?.review_extended ?? 0}
-          note={vendor?.review_note}
-        />
-      )}
-
+      {/* ── The header, flush with the top of the screen ─────────────
+          The negative margins are what make the plum block reach the
+          status bar. Nothing may be rendered ABOVE this on the Jobs tab:
+          `-mt-4` pulls the header up over whatever precedes it, so a
+          sibling above gets dragged half off the top edge with its
+          corners clipped. The review countdown was doing exactly that.
+          Its clock now lives inside the header's own status pill. */}
       {tab === 'offers' && (
         <div className="-mx-4 -mt-4 mb-4 sm:-mx-6">
           <JobsHeader
@@ -370,6 +362,8 @@ export default function VendorDashboard() {
             avatarUrl={vendor?.avatar_url}
             unreadAlerts={unreadAlerts}
             acceptingJobs={vendor?.accepting_jobs}
+            reviewDueAt={vendor?.review_due_at}
+            reviewSubmittedAt={vendor?.submitted_at}
             onAcceptingChange={() => refresh()}
             onOpenProfile={() => setTab('account')}
             onOpenAlerts={() => setTab('account')}
@@ -390,6 +384,24 @@ export default function VendorDashboard() {
             }}
           />
         </div>
+      )}
+
+      {/* ── The review clock, in full ─────────────────────────────────
+          Below the scoreboard, in the content column, where it is one
+          card among cards and aligned with every other. The header
+          carries the glanceable version; this is where the detail
+          lives — when it was sent, whether it has been extended, and
+          what was said if something needs changing.
+
+          Renders nothing at all unless there is something to say. */}
+      {tab === 'offers' && (
+        <ReviewCountdown
+          status={vendor?.verification_status}
+          dueAt={vendor?.review_due_at}
+          submittedAt={vendor?.submitted_at}
+          extended={vendor?.review_extended ?? 0}
+          note={vendor?.review_note}
+        />
       )}
 
       {/* What needs doing, and nothing at all when nothing does. */}

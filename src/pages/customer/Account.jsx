@@ -238,7 +238,7 @@ export default function Account() {
 
         <BrandFoot />
       </div>
-    
+
       {/* Which app this is, and how current. See components/common/AppBadge.
           On the customer side this was missing entirely, so there was no
           way to tell an installed app from a Chrome shortcut with the

@@ -153,13 +153,13 @@ function iconPage({ size, app, shape, safeRatio }) {
 
   /* The word spans `safeRatio` of the tile, and every number here came
      down after seeing it on a phone.
-     
+
      0.93 / 0.72 / 0.74 were the ceilings the geometry allows, and a
      ceiling is the wrong place to sit: a launcher that rounds a corner
      slightly harder, or an OEM skin that insets the tile, eats the S
      and the O — and the report was exactly that, "not visible at
      either end".
-     
+
      0.80 on the square leaves a tenth of the tile clear on each side.
      0.62 on the round one, where the corners are gone entirely and the
      word's own width is the diameter it has to live inside. 0.56 on the

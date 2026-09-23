@@ -63,20 +63,51 @@ export function reviewWording(left) {
   return `${left.seconds}s left`
 }
 
-export default function ReviewCountdown({
-  status, dueAt, submittedAt, extended = 0, note, compact = false,
-}) {
+/**
+ * One clock, shared.
+ *
+ * The header's status pill and the card below it both show this
+ * deadline. Two components each running their own interval would drift
+ * apart by up to a minute -- the pill saying "3 hours left" above a card
+ * saying "2 hours left" is the kind of thing that makes a partner stop
+ * believing either of them.
+ *
+ * Returns `{ left, words, fraction }`. `fraction` is how much of the
+ * promised window has elapsed, for the progress bar; it needs
+ * `submittedAt` and is null without it rather than guessed.
+ */
+export function useReviewClock({ dueAt, submittedAt }) {
   const [now, setNow] = useState(() => Date.now())
   const left = dueAt ? remaining(dueAt, now) : null
 
   useEffect(() => {
     if (!dueAt) return undefined
     if (left?.over) return undefined
-    /* Per second inside the last hour, per minute before that. */
+    /* Per second inside the last hour, per minute before that. A
+       24-hour countdown re-rendering every second for a day is a
+       battery leak nobody attributes to the right screen. */
     const step = (left?.ms ?? 0) < 3_600_000 ? 1000 : 60_000
     const id = setInterval(() => setNow(Date.now()), step)
     return () => clearInterval(id)
   }, [dueAt, left?.over, left?.ms === null, (left?.ms ?? 0) < 3_600_000])
+
+  let fraction = null
+  if (dueAt && submittedAt) {
+    const start = new Date(submittedAt).getTime()
+    const end = new Date(dueAt).getTime()
+    const span = end - start
+    if (Number.isFinite(span) && span > 0) {
+      fraction = Math.min(1, Math.max(0, (now - start) / span))
+    }
+  }
+
+  return { left, words: reviewWording(left), fraction }
+}
+
+export default function ReviewCountdown({
+  status, dueAt, submittedAt, extended = 0, note, compact = false,
+}) {
+  const { left } = useReviewClock({ dueAt, submittedAt })
 
   if (status === 'approved') {
     return (
