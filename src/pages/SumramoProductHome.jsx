@@ -5,8 +5,8 @@ import {
   PackageCheck, Route, Users, CreditCard, Clock3
 } from 'lucide-react'
 
-const BRAND = 'Sumramo'
-const TAGLINE = 'From Supply to Celebration.'
+const BRAND = 'SAMBRAMO'
+const TAGLINE = 'Events • Supply Chain • Logistics'
 
 const EVENT_TYPES = [
   ['Weddings','Everything coordinated around your day.','💍'],
@@ -67,7 +67,7 @@ function AppHandoff({ open, onClose }) {
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Coming soon</p>
-            <h3 className="mt-1 text-xl font-black text-slate-950">Choose your Sumramo app</h3>
+            <h3 className="mt-1 text-xl font-black text-slate-950">Choose your SAMBRAMO app</h3>
           </div>
           <button onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Close"><X size={20}/></button>
         </div>
@@ -162,11 +162,11 @@ export default function SumramoProductHome() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#210638] text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#210638]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-6">
-          <button onClick={() => scrollTo('top')} className="min-w-0 text-left" aria-label="Sumramo home">
-            <span className="block font-display text-2xl font-black tracking-[-.04em] sm:text-3xl">Sumramo</span>
-            <span className="hidden text-[9px] font-bold uppercase tracking-[.18em] text-violet-200 min-[390px]:block">{TAGLINE}</span>
+      <header className="sambramo-header sticky top-0 z-50 border-b border-white/10 bg-[#210638]/95 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-[68px] w-full max-w-7xl items-center justify-between gap-3 px-4 sm:min-h-[76px] sm:px-6">
+          <button onClick={() => scrollTo('top')} className="min-w-0 shrink-0 text-left" aria-label="SAMBRAMO home">
+            <span className="block font-display text-[21px] font-black leading-none tracking-[-.035em] sm:text-3xl">SAMBRAMO</span>
+            <span className="mt-1 hidden text-[8px] font-bold uppercase tracking-[.16em] text-violet-200/80 min-[390px]:block">{TAGLINE}</span>
           </button>
           <nav className="hidden items-center gap-1 lg:flex">
             {[
@@ -174,13 +174,24 @@ export default function SumramoProductHome() {
               ['Logistics','logistics'],['Events / Offerings','events'],['About','about'],['FAQ','faq']
             ].map(([label,id]) => <button key={id} onClick={() => scrollTo(id)} className="rounded-xl px-3 py-2 text-sm font-semibold text-violet-100/80 transition hover:bg-white/10 hover:text-white">{label}</button>)}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button onClick={() => setHandoff(true)} className="hidden rounded-xl bg-white px-4 py-2.5 text-xs font-extrabold text-violet-950 shadow-lg sm:inline-flex">Get the app</button>
-            <button onClick={() => setMenu(!menu)} className="rounded-xl p-2.5 hover:bg-white/10 lg:hidden" aria-label="Menu">{menu ? <X size={21}/> : <Menu size={21}/>}</button>
+            <button onClick={() => setMenu(!menu)} className="sambramo-menu-button inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[.05] text-white hover:bg-white/10 lg:hidden" aria-label={menu ? 'Close menu' : 'Open menu'}>
+              {menu ? <X size={21}/> : <Menu size={21}/>}
+            </button>
           </div>
         </div>
-        {menu && <div className="border-t border-white/10 px-4 py-3 lg:hidden">
-          <div className="grid grid-cols-2 gap-1 pb-2">
+        <div className="sambramo-promo border-t border-white/10 bg-gradient-to-r from-violet-500/10 via-fuchsia-400/10 to-violet-500/10">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 overflow-hidden px-4 py-2 sm:px-6">
+            <span className="shrink-0 text-[9px] font-black uppercase tracking-[.18em] text-violet-200">SAMBRAMO</span>
+            <span className="shrink-0 text-violet-300">•</span>
+            <div className="sambramo-promo-track min-w-0 text-[9px] font-bold uppercase tracking-[.14em] text-white/75">
+              <span>EVENTS</span><span>SUPPLY CHAIN</span><span>LOGISTICS</span><span>DISCOVER • CONNECT • BOOK • PAY • DONE</span>
+            </div>
+          </div>
+        </div>
+        {menu && <div className="border-t border-white/10 bg-[#210638] px-4 py-3 lg:hidden">
+          <div className="grid grid-cols-1 gap-1 pb-2 sm:grid-cols-2">
             {[
               ['How It Works','how-it-works'],['Services','services'],['Supply Chain','supply-chain'],
               ['Logistics','logistics'],['Events / Offerings','events'],['About','about'],['FAQ','faq']
@@ -191,14 +202,14 @@ export default function SumramoProductHome() {
       </header>
 
       <main id="top">
-        <section className="relative overflow-hidden px-4 pb-16 pt-14 sm:pb-24 sm:pt-24">
+        <section className="relative overflow-hidden px-4 pb-14 pt-10 sm:px-6 sm:pb-24 sm:pt-24">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(168,85,247,.32),transparent_34%),radial-gradient(circle_at_20%_60%,rgba(124,58,237,.2),transparent_32%)]" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="relative mx-auto grid w-full max-w-7xl items-center gap-8 lg:grid-cols-[1.05fr_.95fr] lg:gap-10">
             <Reveal>
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-violet-200"><Sparkles size={13}/> The connected event ecosystem</div>
-                <h1 className="mt-6 text-[clamp(2.7rem,9vw,6.6rem)] font-black leading-[.94] tracking-[-.055em]">Your event.<br/><span className="text-violet-300">Everything connected.</span></h1>
-                <p className="mt-6 max-w-2xl text-base leading-7 text-violet-100/75 sm:text-lg">Discover event services, connect the supply chain, coordinate logistics and hand everything off to the Sumramo app when you are ready.</p>
+                <h1 className="mt-5 max-w-[11ch] text-[clamp(2.7rem,12vw,6.6rem)] font-black leading-[.93] tracking-[-.055em] sm:mt-6 sm:max-w-none sm:text-[clamp(3.4rem,7vw,6.6rem)]">Your event.<br/><span className="text-violet-300">Everything connected.</span></h1>
+                <p className="mt-6 max-w-2xl text-base leading-7 text-violet-100/75 sm:text-lg">Discover event services, connect the supply chain, coordinate logistics and move into the SAMBRAMO app when you are ready.</p>
                 <div className="relative mt-7 max-w-2xl">
                   <div className="flex items-center gap-3 rounded-2xl bg-white p-2 shadow-2xl">
                     <Search className="ml-2 shrink-0 text-slate-400" size={20}/>
@@ -207,13 +218,13 @@ export default function SumramoProductHome() {
                   </div>
                   {recommendations.length > 0 && <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-2xl">{recommendations.map(x => <button key={x.title} onClick={() => {setQuery(x.title);scrollTo('events')}} className="flex w-full items-center gap-3 rounded-xl p-3 text-left hover:bg-slate-50"><span className="text-lg">{x.icon}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{x.title}</span><span className="block truncate text-[11px] text-slate-500">{x.description}</span></span><ChevronRight size={15}/></button>)}</div>}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2 text-[11px] font-semibold text-violet-100/65"><span>Weddings</span><span>•</span><span>Food</span><span>•</span><span>Decor</span><span>•</span><span>Photography</span><span>•</span><span>Logistics</span></div>
+                <div className="mt-4 flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-semibold text-violet-100/65 sm:text-[11px]"><span>Weddings</span><span>•</span><span>Food</span><span>•</span><span>Decor</span><span>•</span><span>Photography</span><span>•</span><span>Logistics</span></div>
               </div>
             </Reveal>
             <Reveal>
-              <div className="relative mx-auto w-full max-w-[540px]">
-                <div className="rounded-[32px] border border-white/15 bg-white/[.07] p-3 shadow-2xl backdrop-blur-md">
-                  <div className="rounded-[25px] bg-white p-4 text-slate-950 sm:p-5">
+              <div className="relative mx-auto w-full max-w-[540px] lg:mt-2">
+                <div className="rounded-[26px] border border-white/15 bg-white/[.07] p-2.5 shadow-2xl backdrop-blur-md sm:rounded-[32px] sm:p-3">
+                  <div className="rounded-[21px] bg-white p-4 text-slate-950 sm:rounded-[25px] sm:p-5">
                     <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-600">Event command view</p><p className="mt-1 text-xl font-black">Wedding • 21 June</p></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">On track</span></div>
                     <div className="mt-5 grid grid-cols-3 gap-2">{[['Supply','Ready'],['Logistics','Moving'],['Venue','Next']].map(([a,b],i)=><div key={a} className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] font-bold text-slate-400">{a}</p><p className="mt-1 text-xs font-extrabold">{b}</p><div className={`mt-2 h-1 rounded-full ${i===1?'bg-violet-500':'bg-slate-200'}`} /></div>)}</div>
                     <div className="mt-3 rounded-2xl bg-violet-50 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-700 text-white"><Truck size={18}/></div><div className="flex-1"><p className="text-xs font-extrabold">Supplier → Venue</p><p className="mt-0.5 text-[10px] text-slate-500">Route active · event-day delivery</p></div><Route size={17} className="text-violet-700"/></div></div>
@@ -228,12 +239,12 @@ export default function SumramoProductHome() {
 
         <section id="how-it-works" className="bg-white py-16 text-slate-950 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <Reveal><div className="max-w-2xl"><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">How it works</span><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">One ecosystem. One simple journey.</h2><p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">The website introduces the experience. Your Sumramo app handles the real customer, provider and partner workflows.</p></div></Reveal>
+            <Reveal><div className="max-w-2xl"><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">How it works</span><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">One ecosystem. One simple journey.</h2><p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">The website introduces the experience. Your SAMBRAMO app handles the real customer, provider and partner workflows.</p></div></Reveal>
             <div className="mt-10 grid gap-3 md:grid-cols-4">{[
               ['01','Discover','Search the service, occasion or capability you need.','Search'],
               ['02','Connect','Bring the right event providers and suppliers into the flow.','Users'],
               ['03','Coordinate','Track supply, logistics and event-day movement together.','Route'],
-              ['04','Complete','Move into the relevant Sumramo app for the actual transaction.','CheckCircle2'],
+              ['04','Complete','Move into the relevant SAMBRAMO app for the actual transaction.','CheckCircle2'],
             ].map(([n,t,d,icon]) => {const Icon=icon==='Search'?Search:icon==='Users'?Users:icon==='Route'?Route:CheckCircle2; return <div key={n} className="rounded-[26px] border border-slate-200 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-black text-violet-600">{n}</span><div className="mt-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-700"><Icon size={19}/></div><h3 className="mt-4 font-black">{t}</h3><p className="mt-2 text-xs leading-5 text-slate-500">{d}</p></div>})}</div>
           </div>
         </section>
@@ -259,27 +270,52 @@ export default function SumramoProductHome() {
         <section id="faq" className="bg-[#f7f5fb] py-16 text-slate-950 sm:py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6"><Reveal><span className="text-xs font-bold uppercase tracking-[.2em] text-violet-700">FAQ</span><h2 className="mt-3 text-3xl font-black sm:text-5xl">Questions, answered.</h2><div className="mt-8 space-y-3">{[
             ['What is Sumramo?','A connected event ecosystem designed to bring event services, supply chain and logistics into one experience.'],
-            ['Can I book directly on this website?','No. This website is the product experience and discovery layer. Actual booking, payment and operational workflows are handled in the relevant Sumramo app.'],
+            ['Can I book directly on this website?','No. This website is the product experience and discovery layer. Actual booking, payment and operational workflows are handled in the relevant SAMBRAMO app.'],
             ['Will payments use Razorpay?','Razorpay is part of the planned secure payment experience for supported app transactions. The website does not process bookings.'],
             ['Is the logistics map live?','The cinematic map is a product visualization on the website. Live GPS, route and venue-entry status will come from partner operations inside the app.'],
             ['When are the apps launching?','The role-based apps are coming soon. Use the Get the app / Early access CTA to register interest once the launch links are available.'],
           ].map(([q,a])=><details key={q} className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><summary className="cursor-pointer list-none font-extrabold marker:hidden">{q}<ChevronRight className="float-right transition group-open:rotate-90" size={18}/></summary><p className="mt-3 pr-6 text-sm leading-6 text-slate-500">{a}</p></details>)}</div></Reveal></div>
         </section>
 
-        <section className="bg-[#210638] px-4 py-16 text-center text-white sm:py-24"><Reveal><div className="mx-auto max-w-3xl"><span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-violet-300"><Clock3 size={14}/> Coming soon</span><h2 className="mt-4 text-4xl font-black sm:text-6xl">Your next event starts here.</h2><p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-violet-100/70 sm:text-base">Get early access when the Sumramo apps open for customers, event providers, logistics partners and suppliers.</p><button onClick={() => setHandoff(true)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-4 text-sm font-black text-violet-950 shadow-2xl transition hover:-translate-y-0.5">Get early access <ArrowRight size={17}/></button></div></Reveal></section>
+        <section className="bg-[#210638] px-4 py-16 text-center text-white sm:py-24"><Reveal><div className="mx-auto max-w-3xl"><span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-violet-300"><Clock3 size={14}/> Coming soon</span><h2 className="mt-4 text-4xl font-black sm:text-6xl">Your next event starts here.</h2><p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-violet-100/70 sm:text-base">Get early access when the SAMBRAMO apps open for customers, event providers, logistics partners and suppliers.</p><button onClick={() => setHandoff(true)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-4 text-sm font-black text-violet-950 shadow-2xl transition hover:-translate-y-0.5">Get early access <ArrowRight size={17}/></button></div></Reveal></section>
       </main>
 
-      <footer className="border-t border-white/10 bg-[#160325] px-4 py-10 text-white sm:px-6">
-        <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
-          <div><p className="font-display text-2xl font-black">Sumramo</p><p className="mt-2 text-sm text-violet-100/55">{TAGLINE}</p><p className="mt-4 max-w-sm text-xs leading-5 text-violet-100/45">The connected event ecosystem — discovery, services, supply chain and logistics.</p></div>
+      <footer className="border-t border-white/10 bg-[#160325] px-4 py-9 pb-[calc(2.25rem+env(safe-area-inset-bottom))] text-white sm:px-6 sm:py-10">
+        <div className="mx-auto grid max-w-7xl gap-7 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          <div><p className="font-display text-2xl font-black">SAMBRAMO</p><p className="mt-2 text-sm text-violet-100/55">{TAGLINE}</p><p className="mt-4 max-w-sm text-xs leading-5 text-violet-100/45">The connected event ecosystem — discovery, services, supply chain and logistics.</p></div>
           <div><p className="text-xs font-bold uppercase tracking-widest text-violet-200">Explore</p><div className="mt-3 space-y-2 text-sm text-violet-100/60">{['how-it-works','services','supply-chain','logistics'].map(id=><button key={id} onClick={() => scrollTo(id)} className="block hover:text-white">{id.replaceAll('-',' ')}</button>)}</div></div>
           <div><p className="text-xs font-bold uppercase tracking-widest text-violet-200">Events</p><div className="mt-3 space-y-2 text-sm text-violet-100/60">{EVENT_TYPES.slice(0,4).map(x=><button key={x[0]} onClick={() => scrollTo('events')} className="block hover:text-white">{x[0]}</button>)}</div></div>
           <div><p className="text-xs font-bold uppercase tracking-widest text-violet-200">Connect</p><div className="mt-3 space-y-2 text-sm text-violet-100/60"><span className="block">Instagram · Coming soon</span><span className="block">WhatsApp · Coming soon</span><span className="block">LinkedIn · Coming soon</span><span className="block">Facebook · Coming soon</span></div></div>
         </div>
-        <div className="mx-auto mt-8 max-w-7xl border-t border-white/10 pt-5 text-[11px] text-violet-100/35">© {new Date().getFullYear()} Sumramo. Product preview.</div>
+        <div className="mx-auto mt-8 max-w-7xl border-t border-white/10 pt-5 text-[11px] text-violet-100/35">© {new Date().getFullYear()} SAMBRAMO. Product preview.</div>
       </footer>
 
       <AppHandoff open={handoff} onClose={() => setHandoff(false)} />
+      <style>{`
+        html { scroll-behavior: smooth; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { overflow-x: hidden; }
+        button, a, input { -webkit-tap-highlight-color: transparent; }
+        .sambramo-header { padding-top: env(safe-area-inset-top); }
+        .sambramo-menu-button { flex: 0 0 44px; }
+        .sambramo-promo { min-width: 0; }
+        .sambramo-promo-track {
+          display: flex; min-width: max-content; gap: 1.1rem; white-space: nowrap;
+          animation: sambramo-promo 18s linear infinite;
+        }
+        .sambramo-promo-track span { display: inline-flex; align-items: center; }
+        @keyframes sambramo-promo { from { transform: translateX(0); } to { transform: translateX(-38%); } }
+        @media (prefers-reduced-motion: reduce) { .sambramo-promo-track { animation: none; } }
+        @media (max-width: 639px) {
+          main, section, footer { max-width: 100%; }
+          img, picture, video, svg { max-width: 100%; }
+          h1, h2, h3, p { overflow-wrap: anywhere; }
+          input { font-size: 16px !important; }
+        }
+        @media (max-width: 380px) {
+          .sambramo-promo-track { gap: .8rem; }
+        }
+      `}</style>
     </div>
   )
 }
