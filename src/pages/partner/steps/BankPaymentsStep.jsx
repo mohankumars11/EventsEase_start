@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import ValidatedField from '../../../components/partner/ValidatedField'
+import { validateField } from '../../../lib/validation/fieldRules'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Lock, Check } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
@@ -41,12 +43,29 @@ export default function BankPaymentsStep() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
+  /* Errors stay quiet until the partner has tried to move on. Shouting
+     at somebody halfway through typing an account number is how a form
+     that is technically correct comes to feel hostile. Same behaviour
+     as PartnerDetailsStep. */
+  const [showAll, setShowAll] = useState(false)
+
+  /* ---- One definition of "valid", not two ------------------------
+     These were three regexes written inline, a second opinion sitting
+     beside FIELD_RULES and free to disagree with it: the inline IFSC
+     test accepted any eleven characters with a zero fifth, while the
+     rule also knows a real code's bank prefix cannot be digits. A form
+     whose button disagrees with its own error messages is a form that
+     blocks somebody who has fixed everything it complained about. */
   const ready = method === 'upi'
-    ? /^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upi.trim())
-    : holder.trim().length > 2 && /^\d{6,18}$/.test(number.trim()) && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc.trim().toUpperCase())
+    ? validateField('upi_id', upi).ok
+    : ['account_name', 'account_number', 'ifsc'].every((f, i) =>
+        validateField(f, [holder, number, ifsc][i]).ok)
 
   async function save() {
     if (!v?.id || busy) return
+    /* Everything it has been holding back, said at once, rather than a
+       button that will not move and no explanation of why. */
+    if (!ready) { setShowAll(true); return }
     setBusy(true); setError(null)
     try {
       /* ── The column is `account_name` ────────────────────────────
@@ -119,7 +138,7 @@ export default function BankPaymentsStep() {
   }
 
   return (
-    <StepShell stepId="bank" canContinue={ready} busy={busy} onContinue={save}>
+    <StepShell stepId="bank" canContinue busy={busy} onContinue={save}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
         Bank &amp; payments
       </h1>
@@ -142,24 +161,38 @@ export default function BankPaymentsStep() {
         ))}
       </div>
 
+      {/* ---- Every box here is checked as it is typed ----------------
+           These four were plain <input>s while FIELD_RULES already held
+           a rule for each of them -- upi_id, account_name,
+           account_number and ifsc, all written and all unreachable.
+           The money fields were the last place in the six steps where a
+           wrong value was accepted in silence, which is also the worst
+           place for it: a mistyped IFSC is a payout that bounces a
+           fortnight later.
+
+           `ifsc` knows the fifth character of a real code is a zero.
+           `account_number` knows the length banks actually issue. The
+           rules are in src/lib/validation/fieldRules.js and are what
+           check-partner-input-rules' 162 assertions cover. */}
       {method === 'upi' ? (
-        <Field label="UPI ID" hint="The one you already receive money on.">
-          <input className={inputClass} value={upi} onChange={e => setUpi(e.target.value)}
-            placeholder="yourname@okhdfcbank" autoCapitalize="none" />
-        </Field>
+        <ValidatedField
+          field="upi_id" value={upi} onChange={setUpi} showAll={showAll}
+          label="UPI ID" hint="The one you already receive money on."
+          placeholder="yourname@okhdfcbank" autoComplete="off" />
       ) : (
         <>
-          <Field label="Account holder name" hint="Exactly as the bank has it.">
-            <input className={inputClass} value={holder} onChange={e => setHolder(e.target.value)} />
-          </Field>
-          <Field label="Account number">
-            <input className={inputClass} inputMode="numeric" value={number}
-              onChange={e => setNumber(e.target.value.replace(/\D/g, ''))} />
-          </Field>
-          <Field label="IFSC">
-            <input className={`${inputClass} uppercase`} value={ifsc}
-              onChange={e => setIfsc(e.target.value.toUpperCase())} placeholder="HDFC0001234" />
-          </Field>
+          <ValidatedField
+            field="account_name" value={holder} onChange={setHolder} showAll={showAll}
+            label="Account holder name" hint="Exactly as the bank has it."
+            autoComplete="name" />
+          <ValidatedField
+            field="account_number" value={number} onChange={setNumber} showAll={showAll}
+            label="Account number" inputMode="numeric" autoComplete="off" />
+          <ValidatedField
+            field="ifsc" value={ifsc} onChange={v => setIfsc(String(v).toUpperCase())}
+            showAll={showAll} label="IFSC"
+            hint="Eleven characters, and the fifth is always a zero."
+            placeholder="HDFC0001234" autoComplete="off" />
         </>
       )}
 

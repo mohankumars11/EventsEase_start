@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import BuildStamp from '../partner/BuildStamp'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
   Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
@@ -426,6 +427,11 @@ export default function PartnerAccount({
         <Row icon={Settings} label="Settings" onClick={() => onOpenScreen('settings')} />
         <Row icon={LogOut}   label="Sign out" danger onClick={onSignOut} />
       </Group>
+
+      {/* Which build this actually is. "The apk is old" and "that screen
+          needs a condition you have not hit" look identical from the
+          outside; this is what tells them apart. */}
+      <BuildStamp />
 
       {/* One line, where a 600px price-list fold used to be. */}
       {LAUNCH_OFFER && (

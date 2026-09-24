@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import ErrorBoundary from './components/layout/ErrorBoundary'
-import { evictServiceWorkers, handleChunkFailures, clearReloadFlag } from './lib/nativeBoot'
+import { evictAndRefresh, handleChunkFailures, clearReloadFlag } from './lib/nativeBoot'
 import './index.css'
 
 /* A missing code chunk becomes one reload rather than the error screen.
@@ -14,7 +14,11 @@ handleChunkFailures()
    over the old one. Evicting it is the only thing that rescues a phone
    that already ran one of those builds. Native only, and a no-op on the
    web where the worker is wanted. */
-evictServiceWorkers().catch(() => {})
+/* ...and RELOADS if it found one. Unregistering a worker does not
+   un-serve the page it already served: without the reload the partner
+   spends the whole session looking at the previous build while the new
+   one sits in the apk, unused. */
+evictAndRefresh().catch(() => {})
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -111,6 +111,43 @@ export async function evictServiceWorkers() {
   return removed
 }
 
+/** Guards the one reload below, so an eviction cannot become a loop. */
+const EVICTED = 'sb_sw_evicted_v1'
+
+/**
+ * Evict, and then RELOAD if anything was there.
+ *
+ * ---- Why the reload is the whole point --------------------------
+ * Unregistering a service worker does not un-serve the page it already
+ * served. On a phone upgrading from one of the old apks, the stale
+ * worker answers the launch navigation from its precache, THEN this
+ * runs and removes it -- and the partner spends that entire session
+ * looking at the previous build. Every new screen is in the apk and
+ * none of it is on screen.
+ *
+ * That is exactly what "the apk is completely old, nothing is visible"
+ * looks like from the outside, and the first version of this file
+ * returned `removed` with a comment saying the caller should decide to
+ * reload, and then main.jsx threw the answer away.
+ *
+ * So the decision lives here, where the fact is. One reload, flagged in
+ * sessionStorage: the flag survives the reload and is gone on the next
+ * cold start, so a device that somehow always has something to evict
+ * reloads once per launch rather than for ever.
+ */
+export async function evictAndRefresh() {
+  let alreadyTried = false
+  try { alreadyTried = sessionStorage.getItem(EVICTED) === '1' } catch { /* private mode */ }
+
+  const removed = await evictServiceWorkers()
+  if (!removed || alreadyTried) return removed
+
+  try { sessionStorage.setItem(EVICTED, '1') } catch { /* private mode */ }
+  console.warn('[Sambramo] A stale worker was serving this page. Reloading into the installed build.')
+  window.location.reload()
+  return removed
+}
+
 /**
  * Turn a failed chunk fetch into one reload.
  *

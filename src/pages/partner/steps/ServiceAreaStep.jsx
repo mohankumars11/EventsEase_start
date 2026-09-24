@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ValidatedField from '../../../components/partner/ValidatedField'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, MapPin } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
@@ -215,10 +216,15 @@ export default function ServiceAreaStep() {
         </div>
       </Field>
 
-      <Field label="Notice you need" hint="The shortest warning you can take a job on, in days.">
-        <input className={inputClass} inputMode="numeric" value={lead}
-          onChange={e => setLead(e.target.value.replace(/\D/g, ''))} placeholder="2" />
-      </Field>
+      {/* `lead_time_days` has had a rule since the validation engine was
+          written and this was still a bare input stripping non-digits.
+          The rule knows the column's CHECK is 0-365, so a partner who
+          types 400 is told why here rather than by Postgres later. */}
+      <ValidatedField
+        field="lead_time_days" value={lead} onChange={setLead}
+        label="Notice you need" inputMode="numeric"
+        hint="The shortest warning you can take a job on, in days."
+        placeholder="2" />
 
       {!located && (
         <p className="rounded-2xl bg-amber-50 px-3 py-2.5 text-[12.5px] font-semibold leading-snug text-amber-900">
