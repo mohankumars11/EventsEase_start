@@ -3,6 +3,7 @@ import { BadgeCheck } from 'lucide-react'
 import { requirementsFor } from '../../data/compliance'
 import { evaluateAll } from '../../lib/verification/satisfaction'
 import DocumentCapture from '../partner/DocumentCapture'
+import IdentityChoice from '../partner/IdentityChoice'
 
 /**
  * "Get yourself verified."
@@ -88,7 +89,18 @@ export default function VendorDocuments({
   /* What THIS partner is asked for, from the trades they listed. A
      partner with no listings yet gets the base set, which is correct:
      identity does not depend on what you do. */
-  const requirements = requirementsFor(trades)
+  /* `answers` carries the partner's identity-document choice through, so
+     this screen and the onboarding step ask for the SAME document. Without
+     it a partner who chose a passport in step 4 is asked for an Aadhaar
+     card here -- two screens disagreeing about one requirement, which is
+     the exact failure `evaluateAll` is shared to avoid. */
+  const identityChoice = vendor?.identity_document ?? null
+  const requirements = useMemo(
+    () => requirementsFor({ trades, answers: { identity_document: identityChoice } }),
+    [trades, identityChoice])
+
+  const identityReq = requirements.find(r => r.id === 'VER-ID-IDENTITY') ?? null
+  const identityUploaded = !!(byRequirement ?? {})['VER-ID-IDENTITY']
 
   /* The same verdicts the onboarding step computes, from the same
      function. Two screens that decided independently whether a document
@@ -146,6 +158,24 @@ export default function VendorDocuments({
           listed. Each requirement names the upload slot it uses, so a
           caterer sees "Food business registration or licence" over the
           same control a decorator sees as "Proof of business". */}
+      {/* Offered here as well as in onboarding, because this is where a
+          partner comes back months later -- a driving licence that has
+          since expired, or an Aadhaar they would now rather not use.
+          Locked once something is filed: swapping the type under a stored
+          row would leave a photograph of a passport filed as an Aadhaar
+          card. */}
+      {!verified && (
+        <IdentityChoice
+          value={identityChoice}
+          options={identityReq?.acceptsTypes ?? []}
+          locked={identityUploaded}
+          onChange={async kind => {
+            await onUpdateVendor?.({ identity_document: kind })
+            await onChanged?.()
+          }}
+        />
+      )}
+
       <ul className="space-y-2">
         {results.map(({ requirement, verdict, state }) => (
           <li key={requirement.id} data-requirement={requirement.id} data-state={state}>

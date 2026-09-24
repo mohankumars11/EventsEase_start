@@ -65,6 +65,7 @@ const TONE = {
 
 export default function IdentityChoice({ value, options = [], onChange, locked = false, lockedReason = null }) {
   const [saving, setSaving] = useState(null)
+  const [failed, setFailed] = useState(false)
   const current = value ?? options[0]?.kind ?? null
 
   if (options.length < 2) return null
@@ -72,8 +73,16 @@ export default function IdentityChoice({ value, options = [], onChange, locked =
   async function pick(kind) {
     if (locked || kind === current || saving) return
     setSaving(kind)
+    setFailed(false)
     try {
       await onChange?.(kind)
+    } catch {
+      /* Two callers, two behaviours: the onboarding hook swallows a
+         failed write, the dashboard's updateVendor throws it. Caught
+         here so neither can take the screen down, and so an unapplied
+         152 reads as "we could not save that" rather than as a dead
+         button or a blank page. */
+      setFailed(true)
     } finally {
       setSaving(null)
     }
@@ -142,6 +151,13 @@ export default function IdentityChoice({ value, options = [], onChange, locked =
           Aadhaar card. Locking is the honest response; the way out is
           to remove what was uploaded, which the row below already
           offers. */}
+      {failed && (
+        <p className="mt-2.5 text-[11.5px] font-semibold leading-snug text-saffron-800">
+          We could not save that choice just now. Upload the ID you want to use
+          and we will go by what you send.
+        </p>
+      )}
+
       {locked && (
         <p className="mt-2.5 flex items-start gap-1.5 text-[11.5px] leading-snug text-ink/60">
           <ShieldCheck size={12} className="mt-0.5 shrink-0" />
