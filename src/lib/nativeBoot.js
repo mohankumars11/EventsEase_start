@@ -70,20 +70,50 @@ export const clearReloadFlag = () => {
  * decide to reload -- a page already being served BY the worker it just
  * unregistered is still running the stale shell until it does.
  */
+/**
+ * The one worker that is registered ON PURPOSE.
+ *
+ * push.js registers it for FCM. It has no fetch handler, precaches
+ * nothing, and cannot serve a stale shell -- so it is spared while
+ * everything else goes.
+ */
+const KEEP = /firebase-messaging-sw/
+
 export async function evictServiceWorkers() {
-  if (!isNative()) return false
+  /* ---- NOT gated on isNative() any more, and that was the bug -----
+     This read `if (!isNative()) return false`, and isNative() is
+     `!!window.Capacitor`.
+
+     capacitor-config.mjs in this repo documents, at length, that the
+     bridge is injected by WebViewCompat.addDocumentStartJavaScript with
+     a fallback that rewrites LOCAL assets only -- and that when the
+     fallback fails "there is no error: the page loads perfectly and
+     window.Capacitor is simply undefined."
+
+     main.jsx evaluates early. On a WebView where the bridge is not up
+     yet, or not up at all, isNative() was false, the eviction returned
+     immediately, and the stale precaching worker went on serving the
+     previous build for ever -- through uninstalls of the apk, through
+     every new version, invisibly.
+
+     There is nothing native-specific about removing a precaching
+     worker. It is safe on the web too, because the only worker this
+     app wants is spared by name. */
   let removed = false
 
   try {
     if ('serviceWorker' in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations()
       for (const reg of regs) {
+        const url = reg.active?.scriptURL ?? reg.installing?.scriptURL
+                 ?? reg.waiting?.scriptURL ?? ''
+        if (KEEP.test(url)) continue
         /* eslint-disable-next-line no-await-in-loop -- there is at most one */
         const gone = await reg.unregister()
-        removed = removed || gone
-      }
-      if (regs.length) {
-        console.warn(`[Sambramo] Removed ${regs.length} service worker(s) left by an older apk.`)
+        if (gone) {
+          removed = true
+          console.warn(`[Sambramo] Removed a service worker left by an older build: ${url || '(unknown)'}`)
+        }
       }
     }
   } catch (err) {
@@ -107,6 +137,14 @@ export async function evictServiceWorkers() {
   } catch (err) {
     console.warn('[Sambramo] Could not clear caches:', err?.message ?? err)
   }
+
+  /* Recorded so the More tab can say whether this ever happened. A
+     partner reporting "still the old screens" and a build stamp saying
+     "a stale worker was cleared" together identify this instantly,
+     which took two days without it. */
+  try {
+    if (removed) localStorage.setItem('sb_evicted_at', new Date().toISOString())
+  } catch { /* blocked storage */ }
 
   return removed
 }
