@@ -321,5 +321,58 @@ export function coverageOf({ availability = {}, weeklyRules = [], todayISO, hori
       : null
   }
 
-  return { throughISO, days, fraction, hasStandingWeek, level, says, stale: level === LEVEL.WARN }
+  /* ---- Month by month, for the next six ---------------------------
+     A single "38 days ahead" number tells a partner they are behind and
+     not what to do about it. Six labelled months, each with the count of
+     days actually stated in it, turns the same fact into a list of
+     blanks to fill -- and makes "December is empty" a thing somebody can
+     see rather than work out.
+
+     Six because CALENDAR_HORIZON_MONTHS is six, and because weddings are
+     booked that far out: a calendar that stops in three weeks is not
+     late for next week, it is invisible for the season. */
+  const months = []
+  const cursor = parse(todayISO)
+  cursor.setUTCDate(1)
+
+  for (let i = 0; i < 6; i++) {
+    const y = cursor.getUTCFullYear()
+    const m = cursor.getUTCMonth()
+    const first = new Date(Date.UTC(y, m, 1))
+    const last = new Date(Date.UTC(y, m + 1, 0))
+    const total = last.getUTCDate()
+
+    /* Only days from today onwards count. Half of this month is behind
+       us and stating it would be no use to anybody. */
+    let open = 0, stated_ = 0
+    for (let d = 1; d <= total; d++) {
+      const iso_ = iso(new Date(Date.UTC(y, m, d)))
+      if (iso_ < todayISO) continue
+      open++
+      if (availability?.[iso_]) stated_++
+    }
+
+    months.push({
+      key: `${y}-${String(m + 1).padStart(2, '0')}`,
+      label: first.toLocaleDateString('en-IN', { month: 'short', timeZone: 'UTC' }),
+      year: y,
+      openDays: open,
+      statedDays: stated_,
+      /* A standing week answers for every day it covers, so a month with
+         one is never "blank" -- it is described by a rule instead of by
+         rows. */
+      covered: open === 0 ? 1 : (hasStandingWeek ? 1 : stated_ / open),
+    })
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1)
+  }
+
+  /* The first month from now that nothing has been said about. This is
+     what the nudge points at: one place to go, not six. */
+  const firstBlank = months.find(mo => mo.openDays > 0 && mo.covered === 0) ?? null
+
+  return {
+    throughISO, days, fraction, hasStandingWeek, level, says,
+    months, firstBlank,
+    stale: level === LEVEL.WARN,
+  }
 }

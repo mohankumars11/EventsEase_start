@@ -113,6 +113,21 @@ const BASELINE = [
   req('VER-ID-IDENTITY', 'aadhaar', {
     enforceable: true,
     why: 'A customer is letting you into their home or their function.',
+    /* ── One of four, not Aadhaar or nothing ───────────────────────
+       Aadhaar is the default because it is the one almost everybody
+       has to hand, not because it is the only one allowed. The UIDAI's
+       own position is that Aadhaar may not be demanded as the sole
+       proof of identity, and a partner who would rather not hand over
+       an Aadhaar number is not a partner with something to hide.
+
+       The order is by how well each can actually be checked here:
+       Aadhaar and the driving licence both have a real checksum and a
+       named provider seam; voter ID and passport establish shape only,
+       and say so. `accepts[0]` is what a partner who never touches the
+       chooser gets. */
+    accepts: ['aadhaar', 'dl', 'voter_id', 'passport'],
+    chooseWith: 'identity_document',
+    chooseLabel: 'Which ID would you like to use?',
   }),
   req('VER-ID-SELFIE', 'selfie', {
     enforceable: false,
@@ -244,7 +259,20 @@ export function requirementsFor(input = {}) {
     if (r.conditional && !answers[r.conditional]) return
 
     seen.add(r.id)
-    const type = DOCUMENT_TYPES[r.documentType]
+
+    /* ── A requirement that accepts more than one document ─────────
+       The partner's choice lives in `answers` under `chooseWith`, and
+       it is validated against `accepts` rather than trusted: an answer
+       naming a type that is not on the list resolves to the default,
+       so a stale or hand-edited value cannot smuggle in a document
+       type this requirement never offered. */
+    let documentType = r.documentType
+    if (Array.isArray(r.accepts) && r.accepts.length) {
+      const picked = answers?.[r.chooseWith]
+      documentType = r.accepts.includes(picked) ? picked : r.accepts[0]
+    }
+
+    const type = DOCUMENT_TYPES[documentType]
     out.push({
       ...r,
       ...type,
@@ -252,7 +280,12 @@ export function requirementsFor(input = {}) {
          which also carries a `label`. The requirement's own wording
          wins where it has one. */
       id: r.id,
-      documentType: r.documentType,
+      documentType,
+      /* What the chooser renders, resolved to real types so a caller
+         never has to reach back into DOCUMENT_TYPES itself. */
+      acceptsTypes: Array.isArray(r.accepts)
+        ? r.accepts.map(k => ({ kind: k, label: DOCUMENT_TYPES[k]?.label ?? k, hint: DOCUMENT_TYPES[k]?.hint ?? null }))
+        : null,
       trade: trade ?? r.trade,
       required: requiredBy(policy, r.id, trade ?? r.trade, mandatoryFrom, r.enforceable),
       tierWhy: TIER_WHY[r.tier],

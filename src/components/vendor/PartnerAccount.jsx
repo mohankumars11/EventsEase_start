@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import ValidatedField from '../partner/ValidatedField'
 import BuildStamp from '../partner/BuildStamp'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
@@ -756,12 +757,16 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
   return (
     <Fold icon={Store} title="Business details" summary={summary}>
       <div className="space-y-3.5">
-        <Field label="Business name" htmlFor="ba-name">
-          <input
-            id="ba-name" className="input" value={f.form.business_name}
-            onChange={e => f.set('business_name', e.target.value)}
-          />
-        </Field>
+        {/* ---- The same rules the six steps use --------------------
+             These were bare <input>s while FIELD_RULES already carried a
+             rule for each. A partner correcting their phone number from
+             the More tab got no check at all, while the identical field
+             during onboarding did -- two forms writing one column, one
+             of them silent. */}
+        <ValidatedField
+          field="business_name" value={f.form.business_name}
+          onChange={v => f.set('business_name', v)}
+          label="Business name" />
 
         <Field label="Your trade" htmlFor="ba-cat" hint="This decides which jobs we send you.">
           <select id="ba-cat" className="input" value={f.form.category} onChange={e => f.set('category', e.target.value)}>
@@ -775,21 +780,18 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
           htmlFor="ba-desc"
           hint={`${f.form.description.length}/300 · this is what a customer reads before they book you.`}
         >
-          <textarea
-            id="ba-desc" rows={4} maxLength={300} className="input resize-none"
-            value={f.form.description}
-            onChange={e => f.set('description', e.target.value)}
-          />
+          <ValidatedField
+            field="description" value={f.form.description} multiline rows={4}
+            onChange={v => f.set('description', v)} label=" " />
         </Field>
 
         {/* Two short numbers side by side. Stacked they are two full rows
             of a phone screen for six characters of input. */}
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Years in the trade" htmlFor="ba-yrs">
-            <input
-              id="ba-yrs" className="input" inputMode="numeric" value={f.form.years_experience}
-              onChange={e => f.set('years_experience', e.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
+            <ValidatedField
+              field="years_active" value={f.form.years_experience} inputMode="numeric"
+              onChange={v => f.set('years_experience', v)} label=" " />
           </Field>
           <Field label="Starting price ₹" htmlFor="ba-price">
             <input
@@ -979,13 +981,9 @@ function ReachDetails({ vendor, onUpdateVendor }) {
         )}
 
         <div className="grid grid-cols-2 gap-2.5">
-          <Field label="Pincode" htmlFor="rd-pin">
-            <input
-              id="rd-pin" className="input" inputMode="numeric" maxLength={6}
-              value={f.form.pincode}
-              onChange={e => f.set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
-            />
-          </Field>
+          <ValidatedField
+            field="pincode" value={f.form.pincode} inputMode="numeric"
+            onChange={v => f.set('pincode', v)} label="Pincode" />
           <Field label="Area" htmlFor="rd-area">
             <input
               id="rd-area" className="input" placeholder="Jayanagar"
@@ -1103,16 +1101,17 @@ function ContactDetails({ vendor, onUpdateVendor }) {
           htmlFor="cd-phone"
           hint="What a customer rings on the day. Leave it empty and we use your sign-in number."
         >
-          <input
-            id="cd-phone" className="input" inputMode="tel" value={f.form.contact_phone}
-            onChange={e => f.set('contact_phone', e.target.value)}
-          />
+          <ValidatedField
+            field="contact_phone" value={f.form.contact_phone} inputMode="tel"
+            onChange={v => f.set('contact_phone', v)} label=" " />
         </Field>
         <Field label="WhatsApp number" htmlFor="cd-wa" hint="Only if it is different from the number above.">
-          <input
-            id="cd-wa" className="input" inputMode="tel" value={f.form.whatsapp_phone}
-            onChange={e => f.set('whatsapp_phone', e.target.value)}
-          />
+          {/* Same rule as the number above it: a WhatsApp number is a
+              phone number, and a partner who mistypes one here is
+              unreachable in exactly the same way. */}
+          <ValidatedField
+            field="contact_phone" value={f.form.whatsapp_phone} inputMode="tel"
+            onChange={v => f.set('whatsapp_phone', v)} label=" " />
         </Field>
         <Field label="Website" htmlFor="cd-web">
           <input
@@ -1121,10 +1120,10 @@ function ContactDetails({ vendor, onUpdateVendor }) {
           />
         </Field>
         <Field label="Instagram" htmlFor="cd-ig" hint="Your work is your sales pitch. A live page is worth more than a description.">
-          <input
-            id="cd-ig" className="input" inputMode="url" placeholder="https://instagram.com/…"
-            value={f.form.instagram_url} onChange={e => f.set('instagram_url', e.target.value)}
-          />
+          <ValidatedField
+            field="instagram_url" value={f.form.instagram_url} inputMode="url"
+            onChange={v => f.set('instagram_url', v)} label=" "
+            placeholder="https://instagram.com/…" />
         </Field>
 
         <SaveBar {...f} onSave={save} />
@@ -1160,18 +1159,14 @@ function OwnerDetails({ profile, onSaved }) {
   return (
     <Fold icon={UserRound} title="Your details" summary={profile?.full_name ?? profile?.email ?? 'Signed in'}>
       <div className="space-y-3.5">
-        <Field label="Your name" htmlFor="od-name">
-          <input
-            id="od-name" className="input" value={f.form.full_name}
-            onChange={e => f.set('full_name', e.target.value)}
-          />
-        </Field>
-        <Field label="Your phone" htmlFor="od-phone">
-          <input
-            id="od-phone" className="input" inputMode="tel" value={f.form.phone}
-            onChange={e => f.set('phone', e.target.value)}
-          />
-        </Field>
+        <ValidatedField
+          field="account_name" value={f.form.full_name}
+          onChange={v => f.set('full_name', v)}
+          label="Your name" autoComplete="name" />
+        <ValidatedField
+          field="contact_phone" value={f.form.phone} inputMode="tel"
+          onChange={v => f.set('phone', v)}
+          label="Your phone" autoComplete="tel" />
 
         {/* Read-only, and it says why rather than being mysteriously
             greyed out. Changing a login email is an auth flow with a

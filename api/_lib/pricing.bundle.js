@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 85ef412d1cedd5f5
+// inputs: f907ce2ce49feb37
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -733,9 +733,9 @@ var COMPONENTS = {
   }
 };
 var clamp = (n2) => Math.min(1 + CLAMP, Math.max(1 - CLAMP, n2));
-function ageInDays(iso) {
-  if (!iso) return Infinity;
-  const then = Date.parse(iso);
+function ageInDays(iso2) {
+  if (!iso2) return Infinity;
+  const then = Date.parse(iso2);
   if (Number.isNaN(then)) return Infinity;
   return (Date.now() - then) / 864e5;
 }
@@ -4771,6 +4771,7 @@ var TRAIL_MS = 36 * 3600 * 1e3;
 // src/lib/calendarAlerts.js
 var LEVEL = { INFO: "info", WARN: "warn", RED: "red" };
 var RANK = { [LEVEL.INFO]: 0, [LEVEL.WARN]: 1, [LEVEL.RED]: 2 };
+var iso = (d) => d.toISOString().slice(0, 10);
 var parse = (s) => /* @__PURE__ */ new Date(`${s}T00:00:00Z`);
 var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
 var pretty = (s) => parse(s).toLocaleDateString(
@@ -4795,7 +4796,47 @@ function coverageOf({ availability = {}, weeklyRules = [], todayISO, horizonDays
     level = LEVEL.INFO;
     says = throughISO ? `Your calendar is set through ${pretty(throughISO)} \u2014 ${plural(days, "day", "days")} ahead. Weddings are usually booked further out than that.` : null;
   }
-  return { throughISO, days, fraction, hasStandingWeek, level, says, stale: level === LEVEL.WARN };
+  const months = [];
+  const cursor = parse(todayISO);
+  cursor.setUTCDate(1);
+  for (let i = 0; i < 6; i++) {
+    const y = cursor.getUTCFullYear();
+    const m = cursor.getUTCMonth();
+    const first = new Date(Date.UTC(y, m, 1));
+    const last = new Date(Date.UTC(y, m + 1, 0));
+    const total = last.getUTCDate();
+    let open = 0, stated_ = 0;
+    for (let d = 1; d <= total; d++) {
+      const iso_ = iso(new Date(Date.UTC(y, m, d)));
+      if (iso_ < todayISO) continue;
+      open++;
+      if (availability?.[iso_]) stated_++;
+    }
+    months.push({
+      key: `${y}-${String(m + 1).padStart(2, "0")}`,
+      label: first.toLocaleDateString("en-IN", { month: "short", timeZone: "UTC" }),
+      year: y,
+      openDays: open,
+      statedDays: stated_,
+      /* A standing week answers for every day it covers, so a month with
+         one is never "blank" -- it is described by a rule instead of by
+         rows. */
+      covered: open === 0 ? 1 : hasStandingWeek ? 1 : stated_ / open
+    });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  const firstBlank = months.find((mo) => mo.openDays > 0 && mo.covered === 0) ?? null;
+  return {
+    throughISO,
+    days,
+    fraction,
+    hasStandingWeek,
+    level,
+    says,
+    months,
+    firstBlank,
+    stale: level === LEVEL.WARN
+  };
 }
 export {
   LEVEL as ALERT_LEVEL,

@@ -333,6 +333,58 @@ export function checkUdyam(input) {
   return { ok: true, reason: null, last4: s.slice(-4), says: 'Checks out.' }
 }
 
+/**
+ * Voter ID (EPIC) - ABC1234567
+ *
+ * Three letters of the Functional Constituency code, then seven digits.
+ * There is no check digit and no public algorithm: the ECI validates
+ * against its electoral roll, not against arithmetic. So this
+ * establishes SHAPE and nothing more, and the `says` line is
+ * deliberately weaker than Aadhaar's -- "looks right" is the honest
+ * ceiling for a number nothing here can actually verify.
+ *
+ * Cards issued before the EPIC format was standardised carry a slashed
+ * serial (WB/01/002/123456) and are still valid today. Refusing those
+ * would refuse a real voter holding a real card, so the slashed form is
+ * accepted and routed to a human rather than rejected.
+ */
+export function checkVoterId(input) {
+  const s = String(input ?? '').toUpperCase().replace(/[\s-]/g, '')
+  if (!s) return fail('empty', 'Enter the number printed on the front of the card.')
+
+  if (s.includes('/')) {
+    if (!/^[A-Z]{2}\/[0-9]{2}\/[0-9]{2,3}\/[0-9]{4,7}$/.test(s)) {
+      return fail('shape', 'That does not look like a voter ID number. A newer card reads like ABC1234567.')
+    }
+    return { ok: true, reason: null, last4: s.slice(-4), says: 'An older format -- a person will check it.' }
+  }
+
+  if (!/^[A-Z]{3}[0-9]{7}$/.test(s)) {
+    return fail('shape', 'A voter ID number is three letters then seven digits, like ABC1234567.')
+  }
+  return { ok: true, reason: null, last4: s.slice(-4), says: 'Looks right.' }
+}
+
+/**
+ * Passport - A1234567
+ *
+ * One letter then seven digits. The MEA does not issue the letters Q, X
+ * or Z. There is no check digit on the number itself; the check digits
+ * live in the machine-readable zone across the bottom of the page,
+ * which is a different string this field does not hold.
+ */
+export function checkPassport(input) {
+  const s = String(input ?? '').toUpperCase().replace(/[\s-]/g, '')
+  if (!s) return fail('empty', 'Enter the passport number from the first page.')
+  if (!/^[A-Z][0-9]{7}$/.test(s)) {
+    return fail('shape', 'An Indian passport number is one letter then seven digits, like A1234567.')
+  }
+  if ('QXZ'.includes(s[0])) {
+    return fail('letter', `Passport numbers are not issued starting with ${s[0]}. Please check the first character.`)
+  }
+  return { ok: true, reason: null, last4: s.slice(-4), says: 'Looks right.' }
+}
+
 function fail(reason, says) {
   return { ok: false, reason, says, last4: null }
 }
@@ -350,6 +402,8 @@ export const ID_CHECKS = {
   dl:       { label: 'Driving licence',       check: checkDrivingLicence, mask: 'KA0520110012345' },
   rc:       { label: 'Vehicle registration',  check: checkVehicleRc,      mask: 'KA01AB1234' },
   udyam:    { label: 'Udyam registration',    check: checkUdyam,          mask: 'UDYAM-KR-03-0000000' },
+  voter_id: { label: 'Voter ID (EPIC)',       check: checkVoterId,        mask: 'ABC1234567' },
+  passport: { label: 'Passport number',       check: checkPassport,       mask: 'A1234567' },
 }
 
 /** One entry point, so a caller never has to know which function. */

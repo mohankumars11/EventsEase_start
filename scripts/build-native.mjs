@@ -79,7 +79,12 @@ const run = (label, cmd, args) => {
   const r = spawnSync(cmd, args, { cwd: ROOT, env, stdio: 'inherit', shell: process.platform === 'win32' })
   if (r.status !== 0) {
     console.error(`\n  ${label} failed. Nothing was synced to the native project.\n`)
-    process.exit(r.status ?? 1)
+    /* `?? 1` was wrong. A failed `npm run build` exited 0 here, so the
+       driver printed "failed. Nothing was synced" and then exited
+       SUCCESSFULLY -- anything reading the code (CI, a shell chain, the
+       APK job) would carry straight on as if the build had worked.
+       `|| 1` makes a failure non-zero whatever the child reported. */
+    process.exit(r.status || 1)
   }
 }
 

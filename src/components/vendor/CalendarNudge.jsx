@@ -89,12 +89,32 @@ export default function CalendarNudge({
           {/* The cost, not the instruction. "Please update your calendar"
               says nothing a partner can weigh; this says what happens if
               they do not. */}
+          {/* The cost first, in one breath. The strike rule is the part
+              a partner has not usually worked out for themselves. */}
           <p className="mt-1 text-[12.5px] leading-relaxed text-white/85">
-            We will keep offering you jobs on days you cannot work. Accepting
-            one and cancelling later costs you a strike — three in 90 days and
-            the account is suspended. Most celebrations are booked weeks
-            ahead, so the further out you go, the more you are offered.
+            Jobs reach you from the days you have spoken for. Where your
+            calendar says nothing, we offer you work you may already be
+            booked for — and cancelling costs a strike. Three in 90 days
+            suspends the account.
           </p>
+
+          {/* ── Six months, one row ────────────────────────────────────
+              "38 days ahead" is a number a partner has to convert into
+              months before it means anything. Six labelled bars do the
+              conversion for them, and turn the whole thing from a
+              scolding into a list of blanks to fill.
+
+              Six because weddings are booked that far out. A calendar
+              that stops in three weeks is not late for next week — it
+              is invisible for the whole season. */}
+          <MonthStrip months={coverage.months} />
+
+          {coverage.firstBlank && (
+            <p className="mt-2 text-[12px] font-bold leading-snug text-saffron-200">
+              Nothing said about {coverage.firstBlank.label} yet — that is{' '}
+              {coverage.firstBlank.openDays} days we cannot offer you.
+            </p>
+          )}
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
@@ -102,7 +122,9 @@ export default function CalendarNudge({
               onClick={onOpen}
               className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-4 py-2 text-[13px] font-extrabold text-plum-950 transition active:scale-[0.98]"
             >
-              Set my dates <ArrowRight size={14} />
+              {coverage.firstBlank
+                ? `Open up ${coverage.firstBlank.label}`
+                : 'Set my dates'} <ArrowRight size={14} />
             </button>
             {/* Records a date rather than setting a flag: "I am open for
                 the next sixty days" is a real statement about the
@@ -118,6 +140,46 @@ export default function CalendarNudge({
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Six months as six bars, filled by how much of each has been spoken for.
+ *
+ * Deliberately not a percentage and not a chart. A partner reads this
+ * from across a room in the half second before they tap something else,
+ * so the only thing it has to carry is WHICH months are blank -- the
+ * exact fill is decoration on top of that.
+ *
+ * The current month is short by definition (its early days are behind
+ * us) and its bar is measured against the days that are left, not
+ * against thirty. A month that is over cannot be "uncovered".
+ */
+function MonthStrip({ months = [] }) {
+  if (!months.length) return null
+  return (
+    <ul className="mt-3 flex items-end gap-1.5" aria-hidden="true">
+      {months.map(m => {
+        const pct = Math.round((m.covered ?? 0) * 100)
+        return (
+          <li key={m.key} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+            <span className="flex h-9 w-full items-end overflow-hidden rounded-[6px] bg-white/15">
+              <span
+                data-month={m.key}
+                data-covered={pct}
+                className={`w-full rounded-[6px] ${pct === 0 ? '' : 'bg-saffron-400'}`}
+                style={{ height: `${Math.max(pct === 0 ? 0 : 12, pct)}%` }}
+              />
+            </span>
+            <span className={`truncate text-[9.5px] font-bold uppercase tracking-wide ${
+              pct === 0 ? 'text-white/45' : 'text-white/85'
+            }`}>
+              {m.label}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

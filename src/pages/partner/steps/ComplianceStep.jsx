@@ -7,6 +7,7 @@ import { requirementsFor } from '../../../data/compliance'
 import { evaluateAll } from '../../../lib/verification/satisfaction'
 import { fetchVerificationPolicy } from '../../../lib/verificationPolicy'
 import DocumentCapture from '../../../components/partner/DocumentCapture'
+import IdentityChoice from '../../../components/partner/IdentityChoice'
 import { KIND_BY_ID } from '../../../lib/partnerDocuments'
 
 /**
@@ -90,7 +91,7 @@ const STATE_CAPTION = {
 
 export default function ComplianceStep() {
   const navigate = useNavigate()
-  const { loading, account, markStepComplete, refresh } = usePartnerOnboarding()
+  const { loading, account, markStepComplete, updateVendor, refresh } = usePartnerOnboarding()
   const [busy, setBusy] = useState(false)
   /* One open at a time. A screen with nine expanded upload forms is a
      screen nobody finishes; a requirement opens when it is tapped. */
@@ -110,7 +111,16 @@ export default function ComplianceStep() {
   }, [])
 
   const trades = useMemo(() => (account.listings ?? []).map(l => l.trade), [account.listings])
-  const reqs = useMemo(() => requirementsFor({ trades, policy }), [trades, policy])
+  /* ── Which ID this partner chose ───────────────────────────────────
+     Persisted on the vendor row (152) rather than held in state: the
+     chooser has to survive a reload, a second device and the operator
+     queue, or a partner who uploaded a passport is asked for an Aadhaar
+     card again on their next sign-in. NULL means the default. */
+  const identityChoice = account.vendor?.identity_document ?? null
+  const answers = useMemo(
+    () => ({ identity_document: identityChoice }), [identityChoice])
+  const reqs = useMemo(
+    () => requirementsFor({ trades, policy, answers }), [trades, policy, answers])
   /* Keyed by requirement, not by kind. `evaluateAll` decides whether
      each one is actually satisfied — two sides where declared, a
      number, a holder name, an expiry that has not passed — rather than
@@ -151,6 +161,12 @@ export default function ComplianceStep() {
       </div>
     )
   }
+
+  /* The requirement that carries the chooser, and whether anything has
+     been filed under it yet. A stored row pins the type: swapping it
+     would leave a photograph of a passport filed as an Aadhaar card. */
+  const identityReq = reqs.find(r => r.id === 'VER-ID-IDENTITY') ?? null
+  const identityUploaded = !!byRequirement['VER-ID-IDENTITY']
 
   const requiredCount = evaluated.requiredTotal
   const satisfied = evaluated.requiredSatisfied
@@ -220,6 +236,20 @@ export default function ComplianceStep() {
           you do.
         </p>
       )}
+
+      {/* Above the Identity section rather than inside it: the choice
+          decides WHICH row is rendered below, so a partner meeting it
+          after the Aadhaar row has already appeared has been asked for
+          the wrong document first. */}
+      <IdentityChoice
+        value={identityChoice}
+        options={identityReq?.acceptsTypes ?? []}
+        locked={!!identityUploaded}
+        onChange={async kind => {
+          await updateVendor({ identity_document: kind })
+          await refresh()
+        }}
+      />
 
       <Section title="Identity" items={groups.identity} {...shared} />
       <Section title="Your business" items={groups.business} {...shared} />

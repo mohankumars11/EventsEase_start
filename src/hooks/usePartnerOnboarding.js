@@ -91,6 +91,48 @@ export function usePartnerOnboarding() {
     await load()
   }, [account.vendor, load])
 
+  /**
+   * Patch the vendor row and reload.
+   *
+   * Narrow on purpose: `ALLOWED` is an allow-list rather than a
+   * pass-through, because this hook is reachable from every onboarding
+   * screen and a patch object built from form state should never be
+   * able to reach `is_verified`, `status` or anything else the partner
+   * does not own. RLS would refuse most of it anyway; refusing it here
+   * means the partner sees nothing rather than a Postgres error.
+   */
+  const updateVendor = useCallback(async (patch = {}) => {
+    const id = account.vendor?.id
+    if (!id) return
+    const ALLOWED = new Set(['identity_document'])
+    const safe = Object.fromEntries(
+      Object.entries(patch).filter(([k]) => ALLOWED.has(k)))
+    if (!Object.keys(safe).length) return
+    /* ── Held locally as well, so an unapplied migration is not a
+       dead button ──────────────────────────────────────────────────
+       Migrations here are pasted by hand, so there is always a window
+       where the column does not exist yet. Without this, the write
+       fails, `load()` re-reads a row that has no such field, and the
+       chooser silently snaps back to the default -- which reads as a
+       broken control rather than a missing column.
+
+       The patch is merged into the account optimistically and survives
+       the reload. It does not survive a sign-out, which is correct: it
+       was never stored, and pretending otherwise would be the same
+       dishonesty in the other direction. */
+    let stored = true
+    try {
+      const { error } = await supabase.from('vendors').update(safe).eq('id', id)
+      if (error) stored = false
+    } catch { stored = false }
+
+    await load()
+    if (!stored) {
+      setAccount(a => ({ ...a, vendor: a.vendor ? { ...a.vendor, ...safe } : a.vendor }))
+    }
+    return stored
+  }, [account.vendor?.id, load])
+
   return {
     loading,
     account,
@@ -104,6 +146,7 @@ export function usePartnerOnboarding() {
     lifecycle: partnerLifecycle(account),
     canOpen: id => canOpen(id, account),
     markStepComplete,
+    updateVendor,
     refresh: load,
     profile,
   }

@@ -113,6 +113,65 @@ export const DOCUMENT_TYPES = {
     storeNumber: 'last4',
   },
 
+  /* ── The two alternatives to Aadhaar ───────────────────────────────
+     Nobody is obliged to hand over an Aadhaar number. The UIDAI's own
+     position is that Aadhaar is one of several acceptable proofs of
+     identity and may not be demanded as the only one, and a partner who
+     declines it is not a partner with something to hide.
+
+     So VER-ID-IDENTITY accepts any one of four: Aadhaar, voter ID,
+     passport or driving licence. Each is a full document type in its
+     own right with its own checksum and its own storage rule, rather
+     than an "other ID" free-for-all that a classifier cannot judge and
+     an operator cannot compare against anything. */
+  voter_id: {
+    kind: 'voter_id',
+    detectAs: ['voter_id'],
+    label: 'Voter ID',
+    hint: 'Both sides. The photo and the number must be readable.',
+    frontRequired: true,
+    backRequired: true,
+    numberRequired: true,
+    checksumKind: 'voter_id',
+    expiryRequired: false,
+    holderNameRequired: true,
+    issuingAuthorityRequired: false,
+    /* Nothing here verifies a voter ID against the electoral roll, and
+       no consumer API does either. `null` is what keeps the badge
+       honest: the label logic reads this, and a type with no provider
+       can never render as government verified. */
+    verificationProvider: null,
+    faceMatchRequired: true,
+    businessMatchRequired: false,
+    manualReviewAllowed: true,
+    allowedFileTypes: IMAGE,
+    maximumFileSize: MAX_BYTES,
+    storeNumber: 'last4',
+  },
+
+  passport: {
+    kind: 'passport',
+    detectAs: ['passport'],
+    label: 'Passport',
+    hint: 'The first page, with your photo, name and the number.',
+    frontRequired: true,
+    backRequired: false,
+    numberRequired: true,
+    checksumKind: 'passport',
+    /* The one identity document here that genuinely expires, so the
+       expiry ladder in satisfaction.js has something to act on. */
+    expiryRequired: true,
+    holderNameRequired: true,
+    issuingAuthorityRequired: false,
+    verificationProvider: null,
+    faceMatchRequired: true,
+    businessMatchRequired: false,
+    manualReviewAllowed: true,
+    allowedFileTypes: IMAGE,
+    maximumFileSize: MAX_BYTES,
+    storeNumber: 'last4',
+  },
+
   selfie: {
     kind: 'selfie',
     detectAs: ['selfie'],
