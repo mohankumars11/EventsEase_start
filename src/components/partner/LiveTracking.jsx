@@ -10,6 +10,7 @@ import {
 } from '../../lib/trackingDisplay'
 import RouteMap from './RouteMap'
 import LocationGate from './LocationGate'
+import JobChat from './JobChat'
 import { supabase } from '../../lib/supabase'
 
 /**
@@ -203,6 +204,12 @@ export default function LiveTracking({ job, onDone, initialSession = null, initi
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Stat icon={Navigation} label="Distance left" value={distance ?? 'Working it out'} />
             <Stat icon={Clock} label="Arriving around" value={eta ?? 'Working it out'} />
+          </div>
+
+          {/* Within reach on the way, which is when "which gate?" gets
+              asked. Renders nothing at all until 151 is applied. */}
+          <div className="mt-3">
+            <JobChat lineId={lineId} />
           </div>
 
           <p className="mt-3 flex items-start gap-2 rounded-[14px] bg-forest-50 px-3 py-2.5 text-[11.5px] leading-snug text-forest-900 ring-1 ring-forest-200">
