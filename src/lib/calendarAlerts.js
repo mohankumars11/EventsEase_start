@@ -151,6 +151,25 @@ function openDaysAfter({ dates, status, availability, byDay, weeklyRules, maxPer
  * `status` is 'OPEN' | 'LIMITED' | 'BLOCKED', or null for a clear (which
  * deletes the rows and hands the days back to the standing week).
  */
+/** "12 October", for one date named in a sentence. */
+const prettyDay = iso => new Date(`${iso}T00:00:00Z`)
+  .toLocaleDateString('en-IN', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+
+/**
+ * " from 12 to 31 October" for a run of dates, or "" when they are
+ * scattered. Scattered dates get no span rather than a wrong one: "from
+ * 3 to 28 November" would be a lie about two Tuesdays.
+ */
+function dateSpan(dates) {
+  if (dates.length < 2) return ''
+  const sorted = [...dates].sort()
+  const first = parse(sorted[0])
+  const last = parse(sorted[sorted.length - 1])
+  const span = Math.round((last - first) / 86400000) + 1
+  if (span !== dates.length) return ''
+  return `, ${prettyDay(sorted[0])} to ${prettyDay(sorted[sorted.length - 1])}`
+}
+
 export function assessChange({
   dates = [],
   status,
@@ -190,6 +209,27 @@ export function assessChange({
         dates: clashDates,
       })
     }
+
+    /* ── What blocking DOES, said every single time ────────────────
+       This is not an alert and must not be read as one. The three red
+       signals stay rare on purpose -- the header of this file argues
+       that an alert which fires on every block trains people to press
+       through the one that mattered -- but "you will get no offers on
+       these days" is not a warning about a risk. It is a plain
+       description of what the button does, and a partner is entitled to
+       read it before pressing, every time, in the same quiet grey.
+
+       It was missing entirely: blocking two Tuesdays in November
+       produced no signals at all, so the sheet said nothing about the
+       one consequence the partner actually cares about. */
+    signals.push({
+      id: 'blocked',
+      level: LEVEL.INFO,
+      says: dates.length === 1
+        ? `No offers will reach you on ${prettyDay(dates[0])}. Work already agreed for that day is not cancelled.`
+        : `No offers will reach you on ${dates.length} days${dateSpan(dates)}. Work already agreed on them is not cancelled.`,
+      dates: [...dates],
+    })
 
     const open = openDaysAfter({ dates, status, availability, byDay, weeklyRules, maxPerDay, todayISO })
     if (open === 0) {

@@ -172,8 +172,34 @@ ok('and closes the day sheet behind it',
 ok('the header button no longer says Block',
    !/Block dates/.test(month),
    'the only bulk action being a closing one is the bias itself')
-ok('the tools list offers both directions',
-   /Mark a range available/.test(monthSrc) && /Block a range of dates/.test(monthSrc))
+/* ── This used to assert the duplicate ─────────────────────────────
+   The old test was that BOTH "Mark a range available" and "Block a
+   range of dates" appeared in the tools list. That was written to prove
+   the list was not blocking-only -- a real bias worth catching -- but
+   it locked in the wrong fix: two rows opening the SAME sheet, which
+   carries a four-way picker across the top. Whichever row you pressed,
+   the first thing you saw was the choice you had supposedly just made,
+   and the two modes NOT named by either row (Limited, and clearing days
+   back to the standing week) were hidden behind labels mentioning
+   neither.
+
+   So the assertion is now the fix rather than the symptom: one row, and
+   a sheet that genuinely offers every direction. */
+ok('the tools list has ONE range row, not one per direction',
+   /Set a range of dates/.test(monthSrc)
+   && !/Mark a range available/.test(monthSrc)
+   && !/Block a range of dates/.test(monthSrc),
+   'two rows opening one sheet is one tool listed twice, each time under half its name')
+
+ok('and that row names what the sheet can actually do',
+   /Available, limited or blocked/.test(monthSrc))
+
+ok('the sheet still offers all four directions',
+   ['OPEN', 'LIMITED', 'BLOCKED', 'CLEAR'].every(id => new RegExp(`id: '${id}'`).test(sheetSrc)))
+
+ok('and it opens on Available, not Blocked',
+   /MODES\.find\(m => m\.id === modeId\) \?\? MODES\[0\]/.test(sheetSrc),
+   'the row no longer preselects a mode, so the fallback is what arms by default')
 
 /* ══════════════════════════════════════════════════════════════════ */
 console.log('\nTHE DEMAND NUMBER IS READ, NOT INVENTED\n')

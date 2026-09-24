@@ -614,7 +614,16 @@ export default function VendorDashboard() {
           /* `vendor` joins vendorId because a payment slip carries the
              business name, and the slip must not re-query for something
              this screen already holds. */
-          <Earnings vendorId={vendor?.id} vendor={vendor} onAddPayout={() => setTab('account')} />
+          <Earnings
+            vendorId={vendor?.id} vendor={vendor}
+            /* ── Straight to the bank screen, not to the tab ─────────
+               This was `setTab('account')`, which landed the partner on
+               a list of eight folded rows with no indication which one
+               they had asked for. The Account tab already keeps its open
+               screen in `?screen=`, so naming it costs nothing and turns
+               "Change" into one press instead of three. */
+            onAddPayout={() => setParams(keepReturn({ tab: 'account', screen: 'bank' }))}
+          />
         )}
 
         {tab === 'list' && (

@@ -127,7 +127,11 @@ export default function AvailabilityRangeSheet({
   const [saved, setSaved] = useState(false)
   const [confirm, setConfirm] = useState(false)
 
-  const mode = MODES.find(m => m.id === modeId) ?? MODES[2]
+  /* MODES[0] is Available, not MODES[2] which is Blocked. The tools row
+     now opens this sheet with no mode preselected -- one row for one
+     sheet -- and falling back to Blocked would mean pressing "Set a
+     range of dates" arms the destructive choice by default. */
+  const mode = MODES.find(m => m.id === modeId) ?? MODES[0]
 
   const { days, truncated } = useMemo(
     () => expandRange(from, to, MAX_DAYS), [from, to])

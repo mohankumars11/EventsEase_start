@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin,
-  CalendarDays, RotateCw, CalendarCheck,
+  CalendarDays, RotateCw,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
@@ -262,12 +262,22 @@ export default function CalendarMonth({
           Availability tools
         </p>
         <div className="overflow-hidden rounded-[22px] bg-white ring-1 ring-ink/[0.06]">
-          <Tool icon={CalendarCheck} title="Mark a range available"
-                hint="E.g. 25 Sep to 31 Oct"
-                onClick={() => setRange({ from: null, mode: 'OPEN' })} />
-          <Tool icon={CalendarRange} title="Block a range of dates"
-                hint="Away, or committed elsewhere"
-                onClick={() => setRange({ from: null, mode: 'BLOCKED' })} />
+          {/* ── One door, not two ─────────────────────────────────────
+              There were two rows here, one naming the opening direction
+              and one naming the closing one. Both opened the SAME sheet
+              and differed only in which mode it started on -- and that
+              sheet carries a four-way picker across the top, so
+              whichever row you pressed, the first thing you saw was the
+              choice you had supposedly just made.
+
+              They were not two tools. They were one tool listed twice,
+              each time under half its name -- which also hid the two
+              modes NEITHER row mentioned (capping a day, and clearing
+              days back to the standing week) behind labels that gave no
+              hint they existed. */}
+          <Tool icon={CalendarRange} title="Set a range of dates"
+                hint="Available, limited or blocked — e.g. 25 Sep to 31 Oct"
+                onClick={() => setRange({ from: null, mode: null })} />
           <Tool icon={Repeat} title="Set your usual week"
                 hint="E.g. never on Sundays" onClick={() => setRecurring(true)} />
           {/* Honest rather than aspirational: there is no Google

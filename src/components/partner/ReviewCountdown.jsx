@@ -54,12 +54,26 @@ function remaining(due, now) {
   }
 }
 
+/**
+ * ── Why the minutes are always shown ─────────────────────────────────
+ * This used to read "23 hours left" above two hours, and the clock
+ * behind it ticks once a minute. So the words changed once an HOUR: a
+ * partner who watched it, waiting, saw a number that never moved and
+ * reasonably concluded it was a static label somebody had typed.
+ *
+ * The countdown was real the whole time. It just had nothing visible to
+ * show for a 59-minute stretch. Showing the minutes makes every tick of
+ * the clock land somewhere a person can see, which is the entire point
+ * of putting a countdown on the screen instead of a date.
+ *
+ * `23h 47m`, not `23 hours 47 minutes left`: it sits inside a status
+ * pill a few characters wide, and the long form wrapped.
+ */
 export function reviewWording(left) {
   if (!left) return null
   if (left.over) return 'Taking a little longer'
-  if (left.hours >= 2) return `${left.hours} hours left`
-  if (left.hours === 1) return `1 hour ${left.minutes} min left`
-  if (left.minutes >= 1) return `${left.minutes} min ${String(left.seconds).padStart(2, '0')}s left`
+  if (left.hours >= 1) return `${left.hours}h ${String(left.minutes).padStart(2, '0')}m left`
+  if (left.minutes >= 1) return `${left.minutes}m ${String(left.seconds).padStart(2, '0')}s left`
   return `${left.seconds}s left`
 }
 
@@ -86,6 +100,9 @@ export function useReviewClock({ dueAt, submittedAt }) {
     /* Per second inside the last hour, per minute before that. A
        24-hour countdown re-rendering every second for a day is a
        battery leak nobody attributes to the right screen. */
+    /* Per second inside the last hour, per minute before it. Now that
+       the wording carries minutes, the per-minute tick is visible --
+       which it was not when the text said only "23 hours left". */
     const step = (left?.ms ?? 0) < 3_600_000 ? 1000 : 60_000
     const id = setInterval(() => setNow(Date.now()), step)
     return () => clearInterval(id)

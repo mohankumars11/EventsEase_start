@@ -793,12 +793,10 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
               field="years_active" value={f.form.years_experience} inputMode="numeric"
               onChange={v => f.set('years_experience', v)} label=" " />
           </Field>
-          <Field label="Starting price ₹" htmlFor="ba-price">
-            <input
-              id="ba-price" className="input" inputMode="numeric" value={f.form.starting_price}
-              onChange={e => f.set('starting_price', e.target.value.replace(/\D/g, '').slice(0, 7))}
-            />
-          </Field>
+          <ValidatedField
+            field="starting_price" value={f.form.starting_price} inputMode="numeric"
+            onChange={v => f.set('starting_price', String(v).replace(/\D/g, '').slice(0, 7))}
+            label="Starting price ₹" />
         </div>
 
         <SaveBar {...f} onSave={save} />
@@ -984,13 +982,10 @@ function ReachDetails({ vendor, onUpdateVendor }) {
           <ValidatedField
             field="pincode" value={f.form.pincode} inputMode="numeric"
             onChange={v => f.set('pincode', v)} label="Pincode" />
-          <Field label="Area" htmlFor="rd-area">
-            <input
-              id="rd-area" className="input" placeholder="Jayanagar"
-              value={f.form.area}
-              onChange={e => f.set('area', e.target.value)}
-            />
-          </Field>
+          <ValidatedField
+            field="area" value={f.form.area} placeholder="Jayanagar"
+            onChange={v => f.set('area', v)}
+            label="Area" />
         </div>
 
         {/* ── Chips, not a slider ──────────────────────────────────
@@ -1031,17 +1026,11 @@ function ReachDetails({ vendor, onUpdateVendor }) {
           </div>
         </Field>
 
-        <Field
+        <ValidatedField
+          field="daily_capacity" value={f.form.daily_capacity} inputMode="numeric"
+          onChange={v => f.set('daily_capacity', String(v).replace(/\D/g, '').slice(0, 2))}
           label="Jobs you can take in one day"
-          htmlFor="rd-cap"
-          hint="One decorator with one van is not two decorators. We will not offer you more than this on any one date."
-        >
-          <input
-            id="rd-cap" className="input" inputMode="numeric" maxLength={2}
-            value={f.form.daily_capacity}
-            onChange={e => f.set('daily_capacity', e.target.value.replace(/\D/g, '').slice(0, 2))}
-          />
-        </Field>
+          hint="One decorator with one van is not two decorators. We will not offer you more than this on any one date." />
 
         <SaveBar {...f} onSave={save} />
       </div>
@@ -1113,12 +1102,10 @@ function ContactDetails({ vendor, onUpdateVendor }) {
             field="contact_phone" value={f.form.whatsapp_phone} inputMode="tel"
             onChange={v => f.set('whatsapp_phone', v)} label=" " />
         </Field>
-        <Field label="Website" htmlFor="cd-web">
-          <input
-            id="cd-web" className="input" inputMode="url" placeholder="https://"
-            value={f.form.website_url} onChange={e => f.set('website_url', e.target.value)}
-          />
-        </Field>
+        <ValidatedField
+          field="website_url" value={f.form.website_url} inputMode="url"
+          placeholder="https://" onChange={v => f.set('website_url', v)}
+          label="Website" />
         <Field label="Instagram" htmlFor="cd-ig" hint="Your work is your sales pitch. A live page is worth more than a description.">
           <ValidatedField
             field="instagram_url" value={f.form.instagram_url} inputMode="url"

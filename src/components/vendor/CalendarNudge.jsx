@@ -68,11 +68,30 @@ export default function CalendarNudge({
     ? Math.round((new Date(`${confirmedThrough}T00:00:00Z`) - new Date(`${todayISO}T00:00:00Z`)) / 86400000)
     : 0
 
-  /* Only the warn level earns a card. The informational level of
-     `coverageOf` is for the calendar screen itself, where the partner
-     came to think about dates anyway. */
-  if (coverage.level !== LEVEL.WARN) return null
+  /* ── Why this is no longer gated on WARN ───────────────────────────
+     It was, and so almost nobody ever saw it. WARN needs an empty
+     calendar or one that stops inside a fortnight AND no standing week
+     -- and a partner who has said "never on Sundays" has a standing
+     week, so the card was silently switched off for exactly the people
+     whose Decembers were blank.
+
+     The real question is coverage, and a standing week does not answer
+     it: "never on Sundays" says nothing about whether you are free on
+     12 December. So the card appears whenever the calendar is short of
+     the six months `CALENDAR_HORIZON_MONTHS` sets, which is a fact
+     about the data rather than a judgement about the partner.
+
+     It does not become a nag, because "I am open until then" records a
+     real date on the vendor row and buys 60 days of silence. */
+  const shortOfHorizon = coverage.fraction < 1
+  if (coverage.level !== LEVEL.WARN && !shortOfHorizon) return null
   if (confirmedAhead >= 30) return null
+
+  /* Empty and merely short are different situations and get different
+     headlines. Telling somebody with four months stated that their
+     "calendar is empty" is the kind of wrong that makes the next card
+     ignorable. */
+  const empty = !coverage.throughISO
 
   return (
     <div className="mb-4 rounded-[22px] bg-plum-600 p-4 text-white">
@@ -82,9 +101,9 @@ export default function CalendarNudge({
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[14.5px] font-extrabold leading-snug">
-            {coverage.throughISO
-              ? `Your calendar stops at ${pretty(coverage.throughISO)}`
-              : 'Your calendar is empty'}
+            {empty
+              ? 'Your calendar is empty'
+              : `Your calendar stops at ${pretty(coverage.throughISO)}`}
           </p>
           {/* The cost, not the instruction. "Please update your calendar"
               says nothing a partner can weigh; this says what happens if

@@ -379,6 +379,115 @@ export const FIELD_RULES = {
     },
   },
 
+  /**
+   * The lowest a partner will turn out for, in rupees.
+   *
+   * Not validated before, and the two ends are both real. Nothing
+   * stopped `50`, which is below the cost of getting to the job and
+   * reads to a customer as a mistake or a scam. Nothing stopped
+   * `2500000` either -- a partner typing paise, or adding a zero --
+   * which silently removes them from every search a real customer runs.
+   *
+   * Warned, not refused, at both ends. A premium decorator really may
+   * start at two lakh, and this field is theirs to set.
+   */
+  starting_price: {
+    step: 'details',
+    label: 'Starting price',
+    required: false,
+    normalise: v => String(v ?? '').replace(/[,\s₹]/g, '').trim(),
+    validate(v) {
+      if (!v) return ok()
+      if (!/^\d+(\.\d{1,2})?$/.test(v)) return err('shape', 'Enter an amount in rupees, like 5000.')
+      const n = Number(v)
+      if (n === 0) return err('zero', 'A starting price of zero reads as a mistake. Leave it blank if you would rather not say.')
+      if (n < 500) return warn('low', `₹${n} is below what most partners charge to turn up at all. Is that the whole job?`)
+      if (n > 500000) return warn('high', `₹${n.toLocaleString('en-IN')} is a very high starting price. Check you have not added a zero.`)
+      return ok()
+    },
+  },
+
+  /**
+   * The neighbourhood a partner works out of.
+   *
+   * Free text on purpose -- Bengaluru's areas are not a closed list and
+   * a dropdown would be wrong within a month. What this catches is the
+   * thing people actually type here: a full postal address, which
+   * belongs in the pincode and address fields and which this one
+   * publishes to customers.
+   */
+  area: {
+    step: 'details',
+    label: 'Area',
+    required: false,
+    normalise: v => String(v ?? '').trim().replace(/\s+/g, ' '),
+    validate(v) {
+      if (!v) return ok()
+      if (v.length < 3) return err('short', 'That is too short to be an area name.')
+      if (v.length > 60) return err('long', 'Just the area — Jayanagar, Indiranagar, Whitefield.')
+      if (/^\d+$/.test(v)) return err('digits', 'That is a number. Which area is it — Jayanagar, Koramangala?')
+      if (/\d{6}/.test(v)) return warn('pincode', 'That looks like a pincode. There is a separate box for it below.')
+      if (v.split(',').length > 2) return warn('address', 'This is just the area, not the full address. Customers see it before they see anything else.')
+      return ok()
+    },
+  },
+
+  /**
+   * How many jobs this partner can genuinely do on one date.
+   *
+   * The hint on the field already says it: "one decorator with one van
+   * is not two decorators". Nothing enforced it, and this number goes
+   * straight into dispatch -- a partner who types 10 because it sounds
+   * ambitious is offered ten jobs on one Saturday, accepts them, and
+   * collects strikes for the ones they cannot reach.
+   */
+  daily_capacity: {
+    step: 'details',
+    label: 'Jobs a day',
+    required: false,
+    normalise: v => String(v ?? '').trim(),
+    validate(v) {
+      if (!v) return ok()
+      if (!/^\d+$/.test(v)) return err('shape', 'Enter a whole number.')
+      const n = Number(v)
+      if (n === 0) return err('zero', 'Zero means you are never offered anything. Pause the listing instead if that is what you want.')
+      if (n > 12) return err('ceiling', `${n} jobs on one date is more than anyone can turn up to. The most is 12.`)
+      if (n > 4) return warn('many', `${n} on one date means we may offer you all ${n}. Missing one you accepted costs a strike.`)
+      return ok()
+    },
+  },
+
+  /**
+   * A website, if there is one.
+   *
+   * The common mistake is not a malformed URL -- it is an Instagram
+   * handle typed here instead of in the Instagram box directly below,
+   * or a bare domain with no scheme, which renders as a dead relative
+   * link wherever it is shown.
+   */
+  website_url: {
+    step: 'details',
+    label: 'Website',
+    required: false,
+    normalise: v => String(v ?? '').trim(),
+    validate(v) {
+      if (!v) return ok()
+      if (/\s/.test(v)) return err('space', 'A web address has no spaces in it.')
+      if (/^@/.test(v) || /instagram\.com/i.test(v)) {
+        return warn('instagram', 'That is Instagram — there is a box for it just below, where it will link properly.')
+      }
+      const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`
+      let host
+      try { host = new URL(withScheme).hostname } catch { return err('shape', 'That does not look like a web address.') }
+      if (!host.includes('.')) return err('dot', 'A web address needs a dot in it, like yourname.com.')
+      if (host.endsWith('.')) return err('dot_edge', 'That ends in a dot.')
+      const tld = host.split('.').pop()
+      if (!/^[a-z]{2,}$/i.test(tld)) return err('tld', `".${tld}" is not an ending we recognise.`)
+      if (!/^https?:\/\//i.test(v)) return warn('scheme', `We will treat that as ${withScheme}`)
+      return ok()
+    },
+  },
+
   lead_time_days: {
     step: 'area',
     label: 'Notice you need',

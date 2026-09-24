@@ -86,6 +86,22 @@ export default function BankPanel({ payout, onAddPayout }) {
             {payout.method === 'upi' ? 'UPI' : 'Bank transfer'}
           </span>
         </span>
+        {/* ── On the card, next to the thing it changes ───────────────
+            There was a "Change account" button, four paragraphs further
+            down, after the verification note and the no-wallet note. It
+            did the same thing -- but somebody looking at the account
+            number and wanting to change it looks NEXT TO the account
+            number, and finding nothing there concludes there is no way.
+
+            The long one below stays: this one is a shortcut for the
+            person who already knows what they want, that one carries
+            the sentence explaining that editing restarts the check. */}
+        <button
+          type="button" onClick={onAddPayout}
+          className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11.5px] font-extrabold text-plum-700 ring-1 ring-plum-200 active:scale-[0.97]"
+        >
+          Change
+        </button>
       </div>
 
       {!verified && (
