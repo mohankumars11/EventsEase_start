@@ -27,8 +27,49 @@ android {
         // forgot to name a flavour.
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        /* ---- Every build is a different version, and says so ---------
+           This was a hardcoded `versionCode 1` / `versionName "1.0"` on
+           every apk ever produced here. Three consequences, all of which
+           bit:
+
+             - Android has no way to tell one build from the next, so
+               Settings > Apps > Sambramo Partners reads "1.0" whether
+               the apk is from today or from three weeks ago. There was
+               no way for anybody to check which one was installed.
+             - The package installer treats a same-versionCode apk as a
+               reinstall rather than an upgrade, which on some launchers
+               and file managers silently does nothing at all.
+             - Play Store refuses a second upload at the same
+               versionCode outright, so this would have blocked the
+               launch regardless.
+
+           `version.json` is written by scripts/write-version.mjs at web
+           build time and copied into the apk. Reading its timestamp here
+           makes the native version and the web bundle the same fact,
+           rather than two that can drift.
+
+           Minutes since 2026-01-01: monotonic, fits comfortably inside
+           the 2100000000 ceiling Play enforces, and readable as a date
+           by anybody who needs to. */
+        def buildStamp = { ->
+            def f = file("../../dist/version.json")
+            if (!f.exists()) return null
+            def m = f.text =~ /"builtAt"\s*:\s*"([^"]+)"/
+            return m ? m[0][1] : null
+        }()
+
+        if (buildStamp != null) {
+            def built = java.time.Instant.parse(buildStamp)
+            def epoch = java.time.Instant.parse("2026-01-01T00:00:00Z")
+            versionCode ((int) java.time.Duration.between(epoch, built).toMinutes())
+            versionName built.atZone(java.time.ZoneId.of("Asia/Kolkata"))
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd-HHmm"))
+        } else {
+            /* No web build beside us. Better to fail loudly at install
+               time than to ship another apk claiming to be 1.0. */
+            versionCode 1
+            versionName "0.0-no-web-build"
+        }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
