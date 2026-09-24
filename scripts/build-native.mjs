@@ -68,10 +68,53 @@ if (!['partner', 'customer'].includes(target)) {
 
    Both are folded into the bundle as constants at build time, so they
    have to be set for the BUILD and not merely for `cap sync`. */
+/* ── .env.android, which only CI has ever read ──────────────────────
+   `.github/workflows/android.yml` does `set -a; . ./.env.android` before
+   it builds. Nothing local ever did, and `vite.config.js` cannot help:
+   `loadEnv(mode, root, '')` reads .env, .env.production and .env.local
+   by name, and .env.android is none of those.
+
+   So every value in that file was a value only CI had -- exactly the
+   shape of the CAPACITOR_BUILD and VITE_SURFACE bug this file was
+   written to fix, found again in the same place. VITE_API_ORIGIN lives
+   there, and without it a locally built apk silently calls the
+   production host instead of wherever the file says.
+
+   Read here rather than in vite.config so it also reaches `cap sync`
+   and anything else this driver runs, and so the values are visible in
+   one place when a build does something surprising. */
+function readEnvFile(name) {
+  const file = join(ROOT, name)
+  if (!existsSync(file)) return {}
+  const out = {}
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const t = line.trim()
+    if (!t || t.startsWith('#')) continue
+    const eq = t.indexOf('=')
+    if (eq < 1) continue
+    out[t.slice(0, eq).trim()] = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '')
+  }
+  return out
+}
+
+const androidEnv = readEnvFile('.env.android')
+
 const env = {
   ...process.env,
+  ...androidEnv,
+  /* These two last: they are the whole point of this file and must not
+     be overridable by a checked-in file. */
   CAPACITOR_BUILD: 'true',
   VITE_SURFACE: target,
+}
+
+if (Object.keys(androidEnv).length) {
+  console.log('')
+  console.log(`── .env.android  (${Object.keys(androidEnv).length} values)`)
+  /* The api origin decides whether document classification reaches a
+     real endpoint or 404s, and it is invisible in the built apk. Worth
+     one line at build time rather than a debugging session later. */
+  console.log(`   VITE_API_ORIGIN = ${androidEnv.VITE_API_ORIGIN ?? '(unset -- the apk will call the production host)'}`)
 }
 
 const run = (label, cmd, args) => {
