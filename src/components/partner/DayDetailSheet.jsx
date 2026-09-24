@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import {
   X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote,
   MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange,
@@ -100,6 +101,10 @@ export default function DayDetailSheet({
 
   const [status, setStatus] = useState(row?.status ?? 'OPEN')
   const [slots, setSlots] = useState(row?.slots_total ?? 2)
+  /* Live, because this field has exactly one keystroke of
+     meaning and `min`/`max` on a number input are decoration --
+     a phone keypad types 0 and 50 and the browser accepts both. */
+  const slotsSays = FIELD_RULES.daily_slots.validate(String(slots ?? '').trim())
   const [note, setNote] = useState(row?.note ?? '')
   const [reason, setReason] = useState(row?.reason ?? 'personal')
   const [reasonDetail, setReasonDetail] = useState(row?.reason_detail ?? '')
@@ -315,10 +320,15 @@ export default function DayDetailSheet({
               {status === 'LIMITED' && (
                 <Field label="Most jobs you will take that day">
                   <input
-                    type="number" min="1" max="20" inputMode="numeric"
+                    type="number" min="1" max="12" inputMode="numeric"
                     value={slots} onChange={e => setSlots(e.target.value)}
                     className="w-full rounded-[14px] border-0 bg-ink/[0.04] px-3.5 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500"
                   />
+              {slotsSays?.says && slotsSays.severity !== 'ok' && (
+                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
+                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
+                }`}>{slotsSays.says}</p>
+              )}
                   {jobsOnDay.length > 0 && (
                     <p className="mt-1 text-[11px] text-ink-mute">
                       {jobsOnDay.length} already confirmed. A limit below that will be raised to match.

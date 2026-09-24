@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
@@ -67,6 +68,7 @@ export default function PartnerEntry() {
 
   const [stage, setStage]   = useState('email')   // 'email' | 'code'
   const [email, setEmail]   = useState('')
+  const [emailSays, setEmailSays] = useState(null)
   const [code, setCode]     = useState('')
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy]     = useState(false)
@@ -400,7 +402,18 @@ export default function PartnerEntry() {
                     <input
                       type="email"
                       value={email}
-                      onChange={e => { setEmail(e.target.value); setError(null) }}
+                      onChange={e => { setEmail(e.target.value); setError(null); setEmailSays(null) }}
+                      /* ── Checked when they LEAVE the field, not as they
+                         type ────────────────────────────────────────────
+                         Every address is invalid while it is being typed,
+                         so validating on each keystroke tells somebody
+                         their email is wrong six times before it is
+                         right. React routes onBlur through focusout. */
+                      onBlur={() => {
+                        const r = FIELD_RULES.contact_email
+                        const v = r.normalise(email)
+                        setEmailSays(v ? r.validate(v) : null)
+                      }}
                       onKeyDown={e => e.key === 'Enter' && requestCode()}
                       placeholder="you@example.com"
                       autoComplete="email"
@@ -411,6 +424,18 @@ export default function PartnerEntry() {
                       className="w-full rounded-2xl bg-ink/[0.03] py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
                     />
                   </div>
+                  {/* A typo here IS the failure: the code goes to an
+                      address nobody reads and the partner waits for a
+                      message that arrived somewhere else. The rule warns
+                      on gmial.com and friends with the correction rather
+                      than blocking, because it might be right. */}
+                  {emailSays?.says && emailSays.severity !== 'ok' && (
+                    <p className={`mt-1.5 text-[12px] font-semibold leading-snug ${
+                      emailSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
+                    }`}>
+                      {emailSays.says}
+                    </p>
+                  )}
                 </label>
 
                 <button

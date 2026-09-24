@@ -339,6 +339,46 @@ export const FIELD_RULES = {
     },
   },
 
+  /**
+   * How many jobs a partner will take on one day.
+   *
+   * `min` and `max` on a number input are decoration: a phone keypad
+   * will happily type 0 or 50 and the browser accepts both silently.
+   * Three screens carried this field with three different ceilings --
+   * 20, 20 and 12 -- so the same partner could say something on one
+   * screen that another would have refused.
+   *
+   * The floor is the part that matters. A LIMITED day with a limit of
+   * zero is a blocked day that does not look blocked: `match_partners`
+   * stops offering, the calendar shows amber rather than red, and the
+   * partner has no way to tell why the work stopped. That is the
+   * nonsense option this refuses outright rather than quietly clamping.
+   */
+  daily_slots: {
+    step: 'availability',
+    label: 'Jobs a day',
+    required: false,
+    normalise: v => String(v ?? '').trim(),
+    validate(v) {
+      if (!v) return ok()
+      if (!/^\d+$/.test(v)) return err('shape', 'Enter a whole number of jobs.')
+      const n = Number(v)
+      if (n === 0) {
+        return err('zero',
+          'Zero jobs is a blocked day. Choose Blocked instead, so you can see why the work stopped.')
+      }
+      if (n > 12) {
+        return err('ceiling',
+          `${n} jobs in one day is more than anyone can turn up to. The most is 12.`)
+      }
+      if (n > 6) {
+        return warn('many',
+          `${n} in one day is a lot. Missing one you accepted costs a strike.`)
+      }
+      return ok()
+    },
+  },
+
   lead_time_days: {
     step: 'area',
     label: 'Notice you need',

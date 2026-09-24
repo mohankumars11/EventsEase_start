@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import {
   X, Loader2, Check, AlertTriangle, CalendarCheck, CalendarClock, CalendarX2, Eraser,
 } from 'lucide-react'
@@ -114,6 +115,10 @@ export default function AvailabilityRangeSheet({
   const [from, setFrom] = useState(start)
   const [to, setTo] = useState(start)
   const [slots, setSlots] = useState(2)
+  /* Live, because this field has exactly one keystroke of
+     meaning and `min`/`max` on a number input are decoration --
+     a phone keypad types 0 and 50 and the browser accepts both. */
+  const slotsSays = FIELD_RULES.daily_slots.validate(String(slots ?? '').trim())
   const [reason, setReason] = useState('travel')
   const [reasonDetail, setReasonDetail] = useState('')
   const [note, setNote] = useState('')
@@ -264,9 +269,14 @@ export default function AvailabilityRangeSheet({
           {/* ── Only what this mode actually needs ──────────────────── */}
           {mode.status === 'LIMITED' && (
             <Field label="Jobs you will take each day">
-              <input type="number" min={1} max={20} value={slots}
+              <input type="number" min={1} max={12} inputMode="numeric" value={slots}
                      onChange={e => setSlots(e.target.value)}
                      className={`w-24 ${inputClass}`} />
+              {slotsSays?.says && slotsSays.severity !== 'ok' && (
+                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
+                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
+                }`}>{slotsSays.says}</p>
+              )}
             </Field>
           )}
 

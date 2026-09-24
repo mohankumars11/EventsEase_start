@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { Loader2, CalendarCheck, CalendarX2, CalendarClock } from 'lucide-react'
 
 /**
@@ -73,6 +74,10 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
   const [to, setTo] = useState(date ?? todayKey)
   const [status, setStatus] = useState(existing?.status ?? 'OPEN')
   const [slots, setSlots] = useState(existing?.slots_total ?? 2)
+  /* Live, because this field has exactly one keystroke of
+     meaning and `min`/`max` on a number input are decoration --
+     a phone keypad types 0 and 50 and the browser accepts both. */
+  const slotsSays = FIELD_RULES.daily_slots.validate(String(slots ?? '').trim())
   const [note, setNote] = useState(existing?.note ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -171,9 +176,14 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
 
       {status === 'LIMITED' && (
         <Field label="How many jobs will you take?" hint="Offers stop once this many are booked.">
-          <input type="number" min={1} max={12} value={slots}
+          <input type="number" min={1} max={12} inputMode="numeric" value={slots}
                  onChange={e => setSlots(e.target.value)}
                  className="w-24 rounded-2xl bg-white px-3.5 py-3 text-[14px] font-extrabold tabular-nums text-ink ring-1 ring-ink/[0.12]" />
+              {slotsSays?.says && slotsSays.severity !== 'ok' && (
+                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
+                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
+                }`}>{slotsSays.says}</p>
+              )}
         </Field>
       )}
 
