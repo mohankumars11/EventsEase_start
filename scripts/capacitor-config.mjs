@@ -134,6 +134,36 @@ const config = {
     // worth being relaxed about.
     cleartext: false,
     androidScheme: 'https',
+
+    /* ── The origin, and why it is not `localhost` ──────────────────
+       Capacitor serves the bundled assets from `https://localhost` by
+       default. A service worker is scoped to an ORIGIN, and the apks
+       built before CAPACITOR_BUILD was set registered one there --
+       precaching the whole app shell, with skipWaiting and
+       clientsClaim.
+
+       That worker survives installing a new apk over the old one. It
+       answers the launch navigation from its own cache BEFORE any code
+       in the new build runs, so a phone that ever ran one of those apks
+       keeps showing that build no matter how many correct apks are
+       installed on top. The version in Settings reads the new one
+       because that comes from the package; the screens read the old one
+       because they come from the cache.
+
+       Uninstalling clears it. Asking every partner to uninstall does
+       not scale and cannot be relied on.
+
+       Naming the host moves the app to an origin where that worker was
+       never registered, so it is simply not consulted. The old one stays
+       dormant under `localhost` until the app is uninstalled, and is
+       harmless there.
+
+       ── What this costs, stated plainly ──────────────────────────────
+       localStorage is per-origin, so everyone signs in once more after
+       this build. That is the price of the fix and it is worth paying
+       once. It is also why this host must now stay put: changing it
+       again signs everybody out again. */
+    hostname: `${target}.sambramo.app`,
   },
 
   ios: {
