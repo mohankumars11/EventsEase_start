@@ -46,7 +46,7 @@
  * machine and CI.
  */
 import { spawnSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { ROOT } from './lib/loadSrc.mjs'
 
@@ -85,6 +85,30 @@ const run = (label, cmd, args) => {
 
 run('capacitor config', 'node', ['scripts/capacitor-config.mjs', target, ...passthrough])
 
+/* ── dist/ is emptied first, explicitly ─────────────────────────────
+   Vite's `emptyOutDir` is supposed to default to true for an outDir
+   inside the root, and on this project it demonstrably does not: six
+   entry bundles had accumulated in dist/assets, and `cap sync` copied
+   every one of them into the apk.
+
+   That is what kept the old screens alive. A stale precaching service
+   worker serves its OWN cached index.html; that page asks for the entry
+   bundle it was built against; and it FINDS it, sitting in the apk
+   beside the new one. The previous build then runs perfectly -- no 404,
+   no chunk-load error, nothing for the error boundary or the preload
+   handler to catch. Cleaning the native assets alone did not help,
+   because the next `cap sync` put them straight back.
+
+   Emptied here rather than argued with in vite.config: this is the
+   build that produces an artefact somebody installs, and it should not
+   depend on a default behaving as documented. */
+const dist = join(ROOT, 'dist')
+if (existsSync(dist)) {
+  rmSync(dist, { recursive: true, force: true })
+  console.log('')
+  console.log('── emptied dist/')
+}
+
 /* `npm run build`, not `vite build`: the npm script also runs the api
    bundle staleness check and writes the version file. Skipping it is how
    a stale bundle reaches a deploy. */
@@ -97,7 +121,38 @@ run('web build', 'npm', ['run', 'build'])
 
    1 · no service worker in the build
    2 · the build really is the app that was asked for */
+/* ── Empty the native asset directory first ─────────────────────────
+   `cap sync` COPIES dist into android/app/src/main/assets/public and
+   never removes what is already there. Vite hashes every filename, so
+   each build leaves its predecessor behind: seven entry bundles and
+   five megabytes of dead chunks had accumulated by the time anybody
+   looked.
+
+   index.html always names the current one, so a clean launch was fine.
+   The problem is what a STALE precaching service worker does with the
+   rest. It serves its own cached index.html, that page asks for the
+   entry bundle it was built against -- and finds it, sitting right
+   there in the apk. The old app then runs perfectly: no 404, no
+   chunk-load error, nothing for the error boundary or the preload
+   handler to catch. Just the previous build, for ever, inside an apk
+   that also contains the new one.
+
+   That is the fuel. Removing it means a stale shell asks for something
+   that genuinely is not there, which IS caught, and reloads into the
+   installed build.
+
+   `dist/` is authoritative and `cap sync` rewrites the whole directory,
+   so there is nothing here worth keeping. */
+const nativeAssets = join(ROOT, 'android/app/src/main/assets/public')
+if (existsSync(nativeAssets)) {
+  rmSync(nativeAssets, { recursive: true, force: true })
+  console.log('')
+  console.log('── cleaned android assets')
+  console.log('')
+}
+
 run('native build check', 'node', ['scripts/check-native-build.mjs'])
+
 
 const versionFile = join(ROOT, 'dist/version.json')
 if (existsSync(versionFile)) {
@@ -109,6 +164,12 @@ if (existsSync(versionFile)) {
 }
 
 run('cap sync', 'npx', ['cap', 'sync'])
+
+/* Checked AGAIN after the sync, which is the only moment the answer
+   means anything -- before it, the directory has just been emptied and
+   the question is vacuous. This is the run that proves exactly one
+   build reached the native project. */
+run('native assets check', 'node', ['scripts/check-native-build.mjs'])
 
 const html = join(ROOT, 'dist/index.html')
 if (existsSync(html)) {
