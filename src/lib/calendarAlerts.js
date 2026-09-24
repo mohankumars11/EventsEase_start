@@ -398,10 +398,23 @@ export function coverageOf({ availability = {}, weeklyRules = [], todayISO, hori
       year: y,
       openDays: open,
       statedDays: stated_,
-      /* A standing week answers for every day it covers, so a month with
-         one is never "blank" -- it is described by a rule instead of by
-         rows. */
-      covered: open === 0 ? 1 : (hasStandingWeek ? 1 : stated_ / open),
+      /* ── A standing week is not coverage ───────────────────────────
+         This used to return 1 for every month when a standing week
+         existed. On screen that produced a card reading "your calendar
+         stops at 30 September" above six completely full bars -- the
+         headline and the picture contradicting each other on one card,
+         which is worse than either alone.
+
+         And it contradicted the argument the card is built on: "never
+         on Sundays" says nothing about whether you are free on 12
+         December. A rule is a default for days nobody has spoken about,
+         not a statement about them.
+
+         So `covered` is stated days over open days and nothing else.
+         `standing` rides alongside, so the bar can show that a month is
+         governed by a rule without claiming it is answered. */
+      covered: open === 0 ? 1 : stated_ / open,
+      standing: hasStandingWeek,
     })
     cursor.setUTCMonth(cursor.getUTCMonth() + 1)
   }

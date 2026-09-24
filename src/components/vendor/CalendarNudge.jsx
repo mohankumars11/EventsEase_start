@@ -183,11 +183,20 @@ function MonthStrip({ months = [] }) {
         return (
           <li key={m.key} className="flex min-w-0 flex-1 flex-col items-center gap-1">
             <span className="flex h-9 w-full items-end overflow-hidden rounded-[6px] bg-white/15">
+              {/* A month with only a standing week gets a thin floor
+                  rather than an empty bar or a full one. Empty would say
+                  we know nothing about it, which is not quite true; full
+                  would say it is answered, which is not true at all. */}
               <span
                 data-month={m.key}
                 data-covered={pct}
-                className={`w-full rounded-[6px] ${pct === 0 ? '' : 'bg-saffron-400'}`}
-                style={{ height: `${Math.max(pct === 0 ? 0 : 12, pct)}%` }}
+                data-standing={m.standing ? '1' : '0'}
+                className={`w-full rounded-[6px] ${
+                  pct === 0
+                    ? (m.standing ? 'bg-white/30' : '')
+                    : 'bg-saffron-400'
+                }`}
+                style={{ height: pct === 0 ? (m.standing ? '14%' : '0%') : `${Math.max(12, pct)}%` }}
               />
             </span>
             <span className={`truncate text-[9.5px] font-bold uppercase tracking-wide ${
