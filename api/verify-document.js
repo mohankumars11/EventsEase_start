@@ -55,7 +55,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
-import { resolveProvider } from '../serverlib/providers.js'
+import { resolveProvider, modelLadder } from '../serverlib/providers.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY
@@ -206,7 +206,7 @@ export default async function handler(req, res) {
   let parsed = null
   let raw = null
   try {
-    raw = await askModel(picked, imageBase64, mimeType, expectedType)
+    raw = await askModelWithFallback(picked, imageBase64, mimeType, expectedType)
     parsed = extractJson(raw)
   } catch (err) {
     return res.status(200).json({
@@ -263,6 +263,74 @@ const clamp01 = n => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0)
 const str = v => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 120) : null)
 const date = v => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null)
 
+/**
+ * Try each model in the ladder until one answers.
+ *
+ * A free model's 429 is normal weather on a shared tier, not an outage,
+ * and treating it as one is what made the whole classifier look absent:
+ * the endpoint reported `unavailable`, the ladder fell through to human
+ * review exactly as designed, and from the partner's side that is
+ * identical to having no check at all.
+ *
+ * Only a 429 or a 5xx moves to the next model, because only those mean
+ * "this model, right now". A 400 is a malformed request and a 401/403 is
+ * a key problem -- both would fail the same way on every model, and
+ * walking the list would turn one clear failure into five slow ones
+ * while a partner stands there holding a card.
+ */
+async function askModelWithFallback(picked, imageBase64, mimeType, expectedType) {
+  const ladder = modelLadder(picked)
+  let last = null
+
+  /* ── Two passes, because a 429 burst is measured in seconds ───────
+     Walking the ladder once answers about half the time: the free tier
+     rate-limits in waves, and a wave can be over the whole list at the
+     moment it is asked. A second pass a couple of seconds later catches
+     most of those, and costs nothing when the first model answers --
+     which is the common case.
+
+     Bounded by a deadline rather than by a count, because a partner is
+     standing there holding a card. Past it we stop and let a human
+     review the document, which is a worse answer arriving on time
+     rather than a better one arriving after they have given up. */
+  const deadline = Date.now() + 55_000
+
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass) await new Promise(r => setTimeout(r, 2000))
+    for (const model of ladder) {
+      if (Date.now() > deadline) throw last ?? new Error('out of time')
+      const t0 = Date.now()
+      try {
+        const out = await askModel({ ...picked, model }, imageBase64, mimeType, expectedType)
+        if (process.env.VERIFY_TRACE) console.log(`      [ladder] ${model} answered in ${Date.now() - t0}ms`)
+        return out
+      } catch (err) {
+        if (process.env.VERIFY_TRACE) console.log(`      [ladder] ${model} failed after ${Date.now() - t0}ms: ${err?.name} ${String(err?.message).slice(0,60)}`)
+        last = err
+        /* ── What "this model, right now" looks like ────────────────
+           429 rate-limited, 402 out of credit, 5xx upstream -- and a
+           TIMEOUT, which is the one that was missed. An AbortError
+           carries no status, so `status` came out 0, `retryable` came
+           out false, and the first slow model threw the whole ladder
+           away. One free model in this list answers in 38 seconds; it
+           was aborting at 8 and taking the four working models with it,
+           which is why the classifier answered about a third of the
+           time instead of nearly always.
+
+           A 400 is a malformed request and a 401/403 is a key problem.
+           Both fail identically on every model, so walking the list
+           would turn one clear failure into ten slow ones. */
+        const status = Number(String(err?.message ?? '').match(/returned (\d+)/)?.[1] ?? 0)
+        const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError'
+        const networkish = !status && !timedOut && /fetch failed|network|ECONN|ENOTFOUND/i.test(String(err?.message ?? ''))
+        const retryable = timedOut || networkish || status === 429 || status === 402 || status >= 500
+        if (!retryable) throw err
+      }
+    }
+  }
+  throw last ?? new Error('no model answered')
+}
+
 async function askModel(picked, imageBase64, mimeType, expectedType) {
   const { provider, key, model } = picked
   const hint = expectedType
@@ -299,7 +367,17 @@ async function askModel(picked, imageBase64, mimeType, expectedType) {
 
   /* A partner is standing there holding a card. Twenty-five seconds and
      then a human reviews it. */
-  const stop = AbortSignal.timeout(25_000)
+  /* Per MODEL, not per request, because the ladder above may try
+     several and a generous per-model wait becomes a two-minute silence
+     in front of a partner.
+
+     Twenty, not eight. Eight was set from a latency measurement taken
+     with a five-word prompt; the real one asks for ~700 tokens of JSON
+     and takes appreciably longer, so eight was aborting models that
+     were working. A rate-limited model still refuses in under a second,
+     so the list stays cheap to walk -- it is only the models that
+     ANSWER that cost time, and those are the ones worth waiting for. */
+  const stop = AbortSignal.timeout(20_000)
   const r = await fetch(provider.url, { method: 'POST', headers, body: JSON.stringify(body), signal: stop })
 
   if (!r.ok) throw new Error(`provider returned ${r.status}`)
