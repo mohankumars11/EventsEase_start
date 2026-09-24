@@ -107,7 +107,22 @@ RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
       JOIN public.booking_requests r ON r.id = l.request_id
      WHERE l.id = p_line
        AND l.status NOT IN ('cancelled', 'expired')
-       AND l.is_funded = TRUE
+       -- ── "Paid for" means money is in escrow ──────────────────────
+       -- The first version of this file read `l.is_funded`, which does
+       -- not exist: it is a DERIVED column on the partner_jobs view,
+       -- not a column on the table. Postgres said so plainly
+       -- (42703: column l.is_funded does not exist) and nothing was
+       -- applied.
+       --
+       -- This is the definition both views use -- 080:89 and 141:214 --
+       -- rather than a second opinion. `paid_at` on the line would have
+       -- been the easy guess and a worse one: escrow is per LINE, so a
+       -- booking with three masters can have one funded and two not,
+       -- and a HOLD row is the only thing that says which.
+       AND EXISTS (
+         SELECT 1 FROM public.escrow_ledger e
+          WHERE e.line_id = l.id AND e.kind = 'HOLD'
+       )
        AND r.event_date >= (now() AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '7 days'
   )
 $$;
