@@ -95,7 +95,7 @@ export default function LocationGate({ onGranted, compact = false }) {
         {permanently ? 'Location is switched off for Sambramo' : 'Turn on location to start'}
       </p>
 
-      <p className="mt-1 text-[11.5px] leading-snug text-saffron-900/80">
+      <p className="mt-1 text-[11.5px] leading-snug text-saffron-900">
         {permanently
           ? 'Android stops asking after two refusals, so this has to be changed in Settings.'
           : 'We need it only while this trip is running, so the customer can see you are on the way. It stops the moment you arrive.'}

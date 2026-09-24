@@ -110,7 +110,7 @@ export default function CalendarNudge({
             <button
               type="button"
               onClick={() => onDismiss?.(addDays(todayISO, 60))}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-bold text-white/70"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-bold text-white"
             >
               <Check size={13} /> I am open until then
             </button>

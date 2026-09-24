@@ -152,7 +152,7 @@ export default function ReviewCountdown({
         )}
       </div>
 
-      <p className="mt-1.5 text-[11.5px] leading-snug text-white/70">
+      <p className="mt-1.5 text-[11.5px] leading-snug text-white/85">
         {/* Once a review has been extended, repeating the original 24-hour
             promise underneath a clock counting to a different time is a
             small lie the partner can see. The sentence changes. */}
@@ -167,14 +167,14 @@ export default function ReviewCountdown({
           been pushed back twice deserves to know that, not to watch a
           fresh timer start over. */}
       {extended > 0 && (
-        <p className="mt-1 text-[11px] text-white/55">
+        <p className="mt-1 text-[11px] text-white/75">
           Extended {extended === 1 ? 'once' : `${extended} times`}
           {note ? ` — ${note}` : ''}
         </p>
       )}
 
       {!left?.over && submittedAt && (
-        <p className="mt-1 text-[11px] text-white/55">
+        <p className="mt-1 text-[11px] text-white/75">
           Sent {new Date(submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
           {' · '}
           {new Date(submittedAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
