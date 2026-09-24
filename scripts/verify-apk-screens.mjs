@@ -56,8 +56,13 @@ const ok = (n, cond, d = '') => {
 const work = mkdtempSync(join(tmpdir(), 'sambramo-apk-'))
 const web = join(work, 'public')
 
+/* Expand-Archive refuses anything not named .zip, however well-formed
+   the zip inside it is. Copied rather than renamed, so the apk that was
+   handed over is left exactly as it was. */
+const asZip = join(work, 'apk.zip')
 execFileSync('powershell', ['-NoProfile', '-Command',
-  `Expand-Archive -LiteralPath '${apk}' -DestinationPath '${work}\\apk' -Force`],
+  `Copy-Item -LiteralPath '${apk}' -Destination '${asZip}'; ` +
+  `Expand-Archive -LiteralPath '${asZip}' -DestinationPath '${work}\\apk' -Force`],
   { stdio: 'pipe' })
 
 const inner = join(work, 'apk', 'assets', 'public')
@@ -184,15 +189,40 @@ const capture = async (name) => {
 const textNow = async () =>
   (await send('Runtime.evaluate', { expression: 'document.body.innerText' })).result?.value ?? ''
 
-const goto = async (hash, settle = 3500) => {
+/**
+ * Navigate, then wait for the splash to LEAVE.
+ *
+ * SplashScreen is `fixed inset-0 z-[200]` and holds for 4500ms plus a
+ * 520ms fade. A fixed wait of 3.5s photographed the splash on every
+ * route while the app rendered underneath it -- which is why some text
+ * assertions passed against screenshots that showed nothing but the
+ * poster.
+ *
+ * Polled rather than slept: the app also has to finish its own first
+ * read, and a number tuned to this machine is a number that is wrong on
+ * a slower one.
+ */
+const goto = async (hash, timeout = 20000) => {
   await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${hash}` })
-  await sleep(settle)
+  const started = Date.now()
+  while (Date.now() - started < timeout) {
+    await sleep(400)
+    const gone = await send('Runtime.evaluate', { expression:
+      '!document.querySelector(".splash-ground") && document.body.innerText.trim().length > 40' })
+    if (gone.result?.value === true) { await sleep(900); return }
+  }
 }
 
 /* ── 5 · The tabs, and a marker unique to THIS build on each ─────── */
 console.log('WHAT THE APK ACTUALLY RENDERS\n')
 
 const TABS = [
+  ['Onboarding · details', '/partner/setup/details', 'apk-setup-details.png',
+   [['Business name', 'the field'], ['Contact number', 'the phone field']]],
+  ['Onboarding · bank',    '/partner/setup/bank',    'apk-setup-bank.png',
+   [['IFSC', 'the IFSC field']]],
+  ['Onboarding · area',    '/partner/setup/area',    'apk-setup-area.png',
+   [['Notice you need', 'the lead-time field']]],
   ['Jobs',     '/dashboard/vendor?tab=offers',       'apk-tab-jobs.png',
    [['Under review', 'the status pill'], ['Sambramo Partner', 'the header']]],
   ['Calendar', '/dashboard/vendor?tab=availability', 'apk-tab-calendar.png',
@@ -210,8 +240,67 @@ for (const [label, url, file, markers] of TABS) {
   await capture(file)
   console.log(`  ${label}`)
   for (const [needle, why] of markers) {
-    ok(`    ${why}`, text.includes(needle), `"${needle}" not on screen`)
+    ok(`    ${why}`, text.toLowerCase().includes(needle.toLowerCase()), `"${needle}" not on screen`)
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE CALLBACKS, MADE TO FIRE
+   ══════════════════════════════════════════════════════════════════
+
+   A validated field says nothing while its value is valid, which is
+   exactly what a partner with a finished profile sees: their own
+   correct details and no messages. "There are no callbacks" and "every
+   field is currently correct" look identical.
+
+   So this types WRONG values in and photographs what comes back.
+   React tracks input state through its own value setter, so a plain
+   `el.value = x` is silently ignored -- the native setter has to be
+   called and an input event dispatched, or the component never learns
+   anything changed. */
+console.log('')
+console.log('  Callbacks, with deliberately wrong values')
+
+const typeInto = async (labelText, value) => {
+  const expr = `(() => {
+    const label = [...document.querySelectorAll('label,span,p')]
+      .find(n => n.textContent.trim().startsWith(${JSON.stringify(labelText)}))
+    if (!label) return 'no label'
+    const field = label.closest('label') ?? label.parentElement
+    const el = field?.querySelector('input,textarea')
+      ?? field?.nextElementSibling?.querySelector?.('input,textarea')
+    if (!el) return 'no input'
+    const proto = el.tagName === 'TEXTAREA'
+      ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, ${JSON.stringify(value)})
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    /* focusout, not blur. React 17+ delegates onBlur through focusout
+       at the root container, and a dispatched blur event -- even with
+       bubbles forced on -- never reaches the handler. ValidatedField
+       only reveals its message once touched is set, which onBlur does,
+       so a blur that never arrives reads exactly like a field with no
+       validation on it at all.
+       No backticks in this comment: it lives inside a template literal
+       and one would end it. */
+    el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
+    return 'ok'
+  })()`
+  const r = await send('Runtime.evaluate', { expression: expr })
+  return r.result?.value
+}
+
+await goto('/partner/setup/details')
+await typeInto('Business name', '99999')
+await typeInto('Contact number', '98')
+await sleep(900)
+const badText = await textNow()
+await capture('apk-callbacks.png')
+
+for (const [needle, why] of [
+  ['An Indian mobile number has 10', 'the phone-length callback fires'],
+  ['a business name needs words in it', 'the all-digits-name callback fires'],
+]) {
+  ok(`    ${why}`, badText.toLowerCase().includes(needle.toLowerCase()), `"${needle}" did not appear`)
 }
 
 console.log('')
