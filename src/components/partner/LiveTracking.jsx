@@ -8,7 +8,9 @@ import {
 import {
   PHASE, trackingPhase, statusLine, formatDistance, formatEta, shouldBeWatching,
 } from '../../lib/trackingDisplay'
-import TrackingMap from './TrackingMap'
+import RouteMap from './RouteMap'
+import LocationGate from './LocationGate'
+import { supabase } from '../../lib/supabase'
 
 /**
  * On the way.
@@ -48,9 +50,34 @@ export default function LiveTracking({ job, onDone, initialSession = null, initi
   const [error, setError] = useState(null)
   const [live, setLive] = useState(null)      // last answer from push_locations
   const [unavailable, setUnavailable] = useState(false)
+  const [denied, setDenied] = useState(false)
   const stopRef = useRef(null)
 
   const lineId = job?.line_id ?? null
+
+  /* ---- The trail lives here now -----------------------------------
+     RouteMap takes points and knows nothing about Supabase, which is
+     what lets the screenshot harness -- and a future customer-facing
+     map -- use it unchanged. Re-read when a batch lands rather than on
+     a timer: the trail only changes when `live` does. */
+  const [trail, setTrail] = useState(initialTrail ?? [])
+
+  useEffect(() => {
+    if (initialTrail) return undefined
+    if (!session?.id) return undefined
+    let alive = true
+    supabase
+      .from('tracking_location_events')
+      .select('location, recorded_at')
+      .eq('session_id', session.id)
+      .order('recorded_at', { ascending: true })
+      .limit(300)
+      .then(({ data }) => {
+        if (!alive) return
+        setTrail((data ?? []).map(r => readPoint(r.location)).filter(Boolean))
+      })
+    return () => { alive = false }
+  }, [session?.id, live?.stored, initialTrail])
 
   /* What the database already thinks, so reopening the app mid-journey
      puts the partner back where they were rather than offering to start
@@ -75,8 +102,10 @@ export default function LiveTracking({ job, onDone, initialSession = null, initi
       onUpdate: res => { setLive(res); if (res.near) read() },
       onError: res => {
         if (res?.reason === 'denied') {
-          setError('Location permission is off, so we cannot show where you are. '
-                 + 'Turn it on in your phone settings and start the trip again.')
+          /* Not an error message any more. LocationGate raises the real
+             OS dialog; a sentence telling a partner in a van to go and
+             find Settings was a dead end with no button on it. */
+          setDenied(true)
         } else if (res?.reason === 'not_active' || res?.reason === 'expired') {
           /* The server closed the session. Re-read so the screen stops
              claiming to be sharing a location it is no longer sending. */
@@ -154,9 +183,22 @@ export default function LiveTracking({ job, onDone, initialSession = null, initi
         </p>
       )}
 
+      {/* Raised whenever the watch cannot run, and silent otherwise.
+          Offered BEFORE departure too, so a partner learns location is
+          off while still standing in the kitchen rather than halfway
+          down Hosur Road. */}
+      {(denied || phase === PHASE.IDLE) && (
+        <LocationGate onGranted={() => setDenied(false)} />
+      )}
+
       {shouldBeWatching(session) && (
         <>
-          <TrackingMap session={session} live={live} className="mt-3" initialTrail={initialTrail} />
+          <RouteMap
+            className="mt-3"
+            trail={trail}
+            me={trail.length ? trail[trail.length - 1] : null}
+            destination={readPoint(session?.destination)}
+          />
 
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Stat icon={Navigation} label="Distance left" value={distance ?? 'Working it out'} />
@@ -235,4 +277,21 @@ function Stat({ icon: Icon, label, value }) {
       <p className="mt-0.5 text-[15px] font-extrabold tabular-nums text-ink">{value}</p>
     </div>
   )
+}
+
+/**
+ * PostGIS geography, as PostgREST hands it over.
+ *
+ * A WKB hex string means the server is not emitting GeoJSON, and a
+ * half-parsed point drawn in the wrong hemisphere is worse than no
+ * point at all — so that case returns null and the map has one fewer
+ * thing to draw.
+ */
+function readPoint(geo) {
+  if (!geo) return null
+  if (typeof geo === 'object' && Array.isArray(geo.coordinates)) {
+    const [lng, lat] = geo.coordinates
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+  }
+  return null
 }

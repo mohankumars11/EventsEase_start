@@ -100,6 +100,50 @@ export async function locationPermissionState() {
 }
 
 /**
+ * Raise the OS permission dialog.
+ *
+ * ---- This call IS the dialog ---------------------------------------
+ * Android has no API for "show the permission prompt". The prompt is a
+ * side effect of ASKING for the permission, so a screen that wants to
+ * offer a button has to make this call from that button.
+ *
+ * Separated from `captureLocation` because the two wants differ: that
+ * one wants a FIX and asks for permission on the way, this one wants
+ * the ANSWER and nothing else. A screen offering "Turn on location"
+ * must not block for twelve seconds on a GPS cold start before it can
+ * redraw.
+ *
+ * Returns `{ granted, state }` and never rejects. After two refusals
+ * Android stops showing the dialog and returns denied immediately, for
+ * ever -- so a caller that kept offering the button would be offering
+ * one that does nothing. `state` is what tells them to stop.
+ */
+export async function requestLocationPermission() {
+  try {
+    if (NATIVE) {
+      const { Geolocation } = await import('@capacitor/geolocation')
+      const perm = await Geolocation.requestPermissions({ permissions: ['location'] })
+      const granted = perm?.location === 'granted' || perm?.coarseLocation === 'granted'
+      return { granted, state: granted ? 'granted' : (perm?.location ?? 'denied') }
+    }
+
+    /* On the web there is no request API: the browser raises its own
+       prompt the first time a position is asked for, and a refusal is
+       permanent for the origin until the user clears it. */
+    if (!navigator.geolocation) return { granted: false, state: 'unsupported' }
+    return await new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(
+        () => resolve({ granted: true, state: 'granted' }),
+        err => resolve({ granted: false, state: err?.code === 1 ? 'denied' : 'unavailable' }),
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
+      )
+    })
+  } catch {
+    return { granted: false, state: 'unavailable' }
+  }
+}
+
+/**
  * Ask the device, and store whatever comes back.
  *
  * Resolves `{ ok: true, fix }` or `{ ok: false, reason }`. Never rejects:
