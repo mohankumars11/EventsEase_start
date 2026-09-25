@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import PartnerMarketingCarousel from '../partner/PartnerMarketingCarousel'
 import { useSearchParams } from 'react-router-dom'
 import { CloudOff } from 'lucide-react'
 import { useEarnings } from '../../hooks/useEarnings'
@@ -72,6 +73,22 @@ import {
  */
 export default function Earnings({ vendorId, vendor, onAddPayout }) {
   const { jobs, payout, claims, adjustments, loading, error, retry, stale } = useEarnings(vendorId)
+
+  /* ── What a campaign is allowed to target on ──────────────────────
+     Built from facts this tab already holds, so deciding which cards
+     apply costs no extra request. `promotionApplies` reads a closed
+     list of keys and refuses anything it does not recognise — see the
+     header of lib/promotions.js for why silence is the safe direction
+     for an operator-authored predicate. */
+  const promoFacts = useMemo(() => ({
+    lifecycle: vendor?.is_verified
+      ? (vendor?.accepting_jobs ? 'LIVE' : 'UNDER_REVIEW')
+      : vendor?.verification_status === 'submitted' ? 'UNDER_REVIEW' : 'ONBOARDING',
+    hasCompletedEvent: (jobs ?? []).some(j => ['delivered', 'settled'].includes(j.status)),
+    profileIncomplete: !vendor?.business_name || !vendor?.avatar_url,
+    city: vendor?.city ?? null,
+  }), [vendor?.is_verified, vendor?.accepting_jobs, vendor?.verification_status,
+       vendor?.business_name, vendor?.avatar_url, vendor?.city, jobs])
 
   /* Sub-state on the same route, so back works, a deep link survives and
      a partner can be sent to one job. `?tab=` is untouched — the tab bar
@@ -189,6 +206,18 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         <KpiCards kpis={series.kpis} range={range} owedJobs={owedJobs} />
 
         <EarningsChart series={series.series} range={range} />
+
+        {/* ── After the numbers, before the breakdown ────────────────
+            A partner opens Earnings to find out what they are owed. A
+            promotion above that answer is an advert standing between
+            somebody and their money, so this sits after the chart.
+
+            Not in the right-hand rail either: that column is wrapped in
+            `{!open && …}` and would make the card vanish whenever a
+            transaction is open, which reads as a bug.
+
+            Renders nothing at all when no campaign is configured. */}
+        <PartnerMarketingCarousel vendorId={vendorId} facts={promoFacts} />
 
         <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <h2 className="text-[13.5px] font-extrabold text-ink">Earnings by service</h2>
