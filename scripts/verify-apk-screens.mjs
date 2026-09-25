@@ -236,7 +236,9 @@ const TABS = [
     ['Calendar coverage', 'the NEW coverage strip — Jobs said it and Calendar did not'],
     ['Available, limited or blocked', 'the row naming all four modes']]],
   ['Earnings', '/dashboard/vendor?tab=earnings',     'apk-tab-earnings.png',
-   [['Ready to claim', 'the hero']]],
+   [['Ready to claim', 'the hero'],
+    ['Grow the Sambramo community', 'the NEW campaign carousel, configured not compiled'],
+    ['₹2,500', 'the reward, read from the row in paise']]],
   ['More',     '/dashboard/vendor?tab=account',      'apk-tab-more.png',
    [['Sambramo Partner \u00b7', 'the NEW build stamp'], ['bundle ', 'the NEW bundle line']]],
   /* ── The bell's destination ────────────────────────────────────────

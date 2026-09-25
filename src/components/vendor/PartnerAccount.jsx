@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { PARTNER_TERMS_VERSION, PARTNER_TERMS_LONG } from '../../config/partnerTerms'
 import ValidatedField from '../partner/ValidatedField'
 import BuildStamp from '../partner/BuildStamp'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
   Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
   LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
-  TriangleAlert, Sparkles, Navigation,
+  TriangleAlert, Sparkles, Navigation, Gift, FileText,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -28,6 +29,7 @@ import PartnerAvatar from './PartnerAvatar'
 import ServiceArea from '../partner/ServiceArea'
 import PartnerHelp from './PartnerHelp'
 import PartnerInbox from './PartnerInbox'
+import PartnerReferral from './PartnerReferral'
 import PartnerMessages from './PartnerMessages'
 import NotificationPrefs from './NotificationPrefs'
 import { fetchNotifications, fetchMessages, fetchPrefs } from '../../lib/partnerInbox'
@@ -359,6 +361,9 @@ export default function PartnerAccount({
         ? <PartnerMessages vendorId={vendor?.id} initialRows={inbox.messages} />
         : <Absent what="Messages" />
     ) },
+    referral:     { title: 'Referral & rewards',     render: () => (
+      <PartnerReferral vendorId={vendor?.id} />
+    ) },
     reviews:      { title: 'Reviews',                render: () => (
       <PartnerReviews reviews={reviewRows} />
     ) },
@@ -369,8 +374,37 @@ export default function PartnerAccount({
         {!LAUNCH_OFFER && <YourPlan tier={tier} />}
       </div>
     ) },
+    terms:        { title: 'Partner terms',          render: () => (
+      <PartnerTermsScreen />
+    ) },
     settings:     { title: 'Settings',               render: () => (
-      <DangerZone vendor={vendor} onUpdateVendor={onUpdateVendor} onSignOut={onSignOut} />
+      <div className="space-y-4">
+        {/* ── Only what genuinely exists ───────────────────────────
+            The spec asks for Terms, Privacy, About and a version row
+            here. Three of those are real and one is not: there is no
+            privacy policy document anywhere in this codebase, and
+            `legal.js` ENTITY and GRIEVANCE are still null TODOs — a
+            legal name, CIN, GSTIN, registered address and a NAMED
+            grievance officer, none filled.
+
+            An About screen reading those would render four blanks, and
+            a Privacy row would open nothing. A row that has no
+            destination is worse than a missing row: it tells a partner
+            the thing exists. Both are reported rather than faked. */}
+        <Group title="About">
+          <Row icon={FileText} label="Partner terms" onClick={() => onOpenScreen('terms')} />
+          <Row icon={LifeBuoy} label="Help & support" onClick={() => onOpenScreen('help')} />
+        </Group>
+
+        <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-ink/[0.07]">
+          <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
+            This app
+          </p>
+          <BuildStamp />
+        </div>
+
+        <DangerZone vendor={vendor} onUpdateVendor={onUpdateVendor} onSignOut={onSignOut} />
+      </div>
     ) },
   }
 
@@ -434,6 +468,9 @@ export default function PartnerAccount({
              badge={lastFromUs && !lastFromUs.read_at ? 'New' : null} tone="attention" />
         <Row icon={Star}          label="Reviews"       onClick={() => onOpenScreen('reviews')}
              badge={reviewRows.length ? reviewAvg.toFixed(1) : null} tone="count" />
+        {/* No badge. A count here would be a number about money the
+            partner has not earned yet, sitting on a settings list. */}
+        <Row icon={Gift}          label="Referral & rewards" onClick={() => onOpenScreen('referral')} />
       </Group>
 
       <Group title="Support">
@@ -1360,5 +1397,41 @@ function DangerZone({ vendor, onUpdateVendor, onSignOut }) {
         )
       )}
     </section>
+  )
+}
+
+/**
+ * The partner terms, readable after signing them.
+ *
+ * `TermsGate` shows these once, before a partner can work, and then
+ * never again — so the one document they agreed to be bound by was
+ * unreadable from inside the app the moment they accepted it. Same
+ * source, same version string, so this cannot drift from what was
+ * actually agreed.
+ */
+function PartnerTermsScreen() {
+  return (
+    <div className="space-y-3">
+      <p className="rounded-[16px] bg-ink/[0.03] px-3.5 py-3 text-[12px] leading-relaxed text-ink-mute">
+        These are the terms you agreed to when you joined. Version{' '}
+        <span className="font-mono font-bold">{PARTNER_TERMS_VERSION}</span>.
+      </p>
+
+      <ol className="space-y-2.5">
+        {/* `heading` and `text` — the shape partnerTerms.js actually
+            uses. The first draft of this read `title`/`body` and would
+            have rendered eleven empty cards, which is the failure mode
+            of writing a renderer against a remembered shape instead of
+            the file. */}
+        {PARTNER_TERMS_LONG.map((t, i) => (
+          <li key={t.heading ?? i} className="rounded-[18px] bg-white p-3.5 ring-1 ring-ink/[0.07]">
+            {t.heading && (
+              <p className="text-[13px] font-extrabold leading-snug text-ink">{t.heading}</p>
+            )}
+            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">{t.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
   )
 }

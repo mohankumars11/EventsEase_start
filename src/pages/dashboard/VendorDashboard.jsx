@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { setTrackingContext, track, EVENTS } from '../../lib/track'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
@@ -177,6 +178,23 @@ export default function VendorDashboard() {
     })
     return () => { alive = false }
   }, [vendor?.id, tab])
+
+  /* ── Who and which build, set once ─────────────────────────────────
+     Every event carries this without each call site remembering to.
+     `surface` and the build come from the same version.json the build
+     stamp reads, so a regression can be tied to a release without
+     asking a partner what version they are on. */
+  useEffect(() => {
+    setTrackingContext({
+      vendorId: vendor?.id ?? null,
+      profileId: profile?.id ?? null,
+      surface: import.meta.env?.VITE_SURFACE ?? null,
+    })
+  }, [vendor?.id, profile?.id])
+
+  useEffect(() => {
+    if (tab === 'offers' && vendor?.id) track(EVENTS.JOBS_OPENED, { lifecycle })
+  }, [tab, vendor?.id, lifecycle])
 
   async function handleSignOut() {
     await signOut()

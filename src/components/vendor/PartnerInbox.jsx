@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { track, EVENTS } from '../../lib/track'
 import {
   Bell, Briefcase, IndianRupee, ShieldCheck, ClipboardList, Star,
   MessageCircle, Megaphone, CalendarDays, Gift, Check, Archive, ChevronRight,
@@ -156,15 +157,23 @@ export default function PartnerInbox({ rows, onRead, onNavigate }) {
   }, [onRead])
 
   const open = useCallback(async (n) => {
+    /* Kind, not title. A title is operator-authored free text and can
+       carry anything; the kind is a closed enum and is what a question
+       about notifications is actually asked in. */
+    track(EVENTS.NOTIFICATION_OPENED, { kind: n.kind, actionable: !!n.href })
     if (isUnread(n)) markRead([n.id])
     /* `href` has been on every row since 125 and read by nothing. It is
        an in-app path — `/dashboard/vendor?tab=availability` — so the
        caller routes it rather than this component navigating, which
        keeps Android's back button working. */
-    if (n.href) onNavigate?.(n.href)
+    if (n.href) {
+      track(EVENTS.NOTIFICATION_ACTION_CLICKED, { kind: n.kind })
+      onNavigate?.(n.href)
+    }
   }, [isUnread, markRead, onNavigate])
 
   const archive = useCallback(async (id) => {
+    track(EVENTS.NOTIFICATION_ARCHIVED, {})
     setArchivedIds(prev => new Set([...prev, id]))
     const res = await archiveNotifications([id])
     if (!res.ok) {

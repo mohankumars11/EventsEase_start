@@ -1,4 +1,5 @@
 import { CalendarDays, ArrowRight, Check } from 'lucide-react'
+import { track, EVENTS } from '../../lib/track'
 import { istTodayISO } from '../../lib/istTime'
 import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 
@@ -132,7 +133,13 @@ export default function CalendarNudge({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={onOpen}
+              onClick={() => {
+                track(EVENTS.CALENDAR_PROMPT_CLICKED, {
+                  severity: coverage.severity,
+                  coverage_days: coverage.coverageDays,
+                })
+                onOpen?.()
+              }}
               className="inline-flex items-center gap-1.5 rounded-full bg-saffron-400 px-4 py-2 text-[13px] font-extrabold text-plum-950 transition active:scale-[0.98]"
             >
               {coverage.firstBlank

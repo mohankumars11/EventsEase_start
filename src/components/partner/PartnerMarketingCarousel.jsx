@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { track, EVENTS } from '../../lib/track'
 import PromoDeck from '../home/PromoDeck'
 import { supabase } from '../../lib/supabase'
 import { selectPromotions, rewardLabel } from '../../lib/promotions'
@@ -127,6 +128,14 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
   /* Nothing configured, nothing rendered. Not a skeleton either: a
      loading shape for a card that may never exist is a promise of an
      advert. */
+  /* Viewed, once per set. Not per render and not per slide: a carousel
+     that rotates every five seconds would otherwise report a view every
+     five seconds and make the click-through rate meaningless. */
+  useEffect(() => {
+    if (!slides.length) return
+    track(EVENTS.PROMOTION_VIEWED, { count: slides.length, first: slides[0].key })
+  }, [slides.length, slides[0]?.key])
+
   if (!slides.length) return null
 
   return (
