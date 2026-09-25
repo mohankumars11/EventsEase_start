@@ -29,7 +29,7 @@ import ImageCropper from '../partner/ImageCropper'
  * should know that before they choose one, not after.
  */
 export default function PartnerAvatar({
-  vendorId, url, name, size = 40, editable = false, onChange,
+  vendorId, url, name, size = 40, editable = false, onChange, shape = 'circle',
 }) {
   const input = useRef(null)
   /* A SECOND file input, carrying `capture`. One input cannot both open
@@ -50,6 +50,22 @@ export default function PartnerAvatar({
 
   const initials = initialsFor(name)
   const px = `${size}px`
+
+  /* ── Square, on the surfaces that own the partner ──────────────────
+     A circle is the avatar of a *contact* -- somebody you message. The
+     partner's own photograph on their own header is not that; it is the
+     picture on their profile, and every app that means "this is you and
+     you can change it" uses a rounded square for it.
+
+     `circle` stays the default so nothing else in the app moves. Only
+     the two surfaces that are explicitly about this partner pass
+     `square`: the Jobs header and the profile screen. The radius is
+     proportional rather than fixed, because `rounded-2xl` on a 40px box
+     and on a 76px box are visibly different shapes. */
+  const radius = shape === 'square'
+    ? { borderRadius: `${Math.round(size * 0.28)}px` }
+    : null
+  const ring = shape === 'square' ? '' : 'rounded-full'
 
   /* ── Chosen, then positioned, then uploaded ─────────────────────
      This used to upload the file the instant it was picked. A phone
@@ -89,8 +105,8 @@ export default function PartnerAvatar({
      having uploaded one, which is the right outcome. */
   const face = (
     <span
-      className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-saffron-400 font-serif font-extrabold text-plum-950"
-      style={{ width: px, height: px, fontSize: `${Math.round(size * 0.38)}px` }}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-saffron-400 font-serif font-extrabold text-plum-950 ${ring}`}
+      style={{ width: px, height: px, fontSize: `${Math.round(size * 0.38)}px`, ...radius }}
     >
       {url && !hidden ? (
         <img

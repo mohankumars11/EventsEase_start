@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import PartnerEmptyState from '../partner/PartnerEmptyState'
 import { apiUrl } from '../../lib/api'
-import { Camera, Check, Clock, MapPin, X } from 'lucide-react'
+import { Camera, Check, Clock, MapPin, X, Inbox } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { OFFER_CARD } from '../../config/instantBooking'
@@ -216,7 +217,7 @@ function OfferCard({ offer, onAnswer, busy, hasPan }) {
   )
 }
 
-export default function OfferInbox({ vendorId }) {
+export default function OfferInbox({ vendorId, onOpenCalendar = null }) {
   const [offers, setOffers] = useState([])
   /* ── Whether TDS applies to this partner ───────────────────────────
      s.194-O waives it for a below-threshold individual with a PAN on
@@ -330,12 +331,15 @@ export default function OfferInbox({ vendorId }) {
       )}
 
       {offers.length === 0 ? (
-        <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
-          <p className="text-[14px] font-extrabold text-ink">No jobs right now</p>
-          <p className="mt-1 text-[12.5px] text-ink-mute">
-            Keep your calendar open and you will be first in line.
-          </p>
-        </div>
+        <PartnerEmptyState
+          data-empty="offers"
+          icon={Inbox}
+          title="No new opportunities yet"
+          message="When a customer's date, service and area match yours, the request lands here for you to accept or decline."
+          ctaLabel="Open my calendar"
+          onCta={onOpenCalendar}
+          footnote="We can only offer you days your calendar has spoken for. Where it says nothing, you are not in the running."
+        />
       ) : (
         <ul className="space-y-3">
           {offers.map(o => (

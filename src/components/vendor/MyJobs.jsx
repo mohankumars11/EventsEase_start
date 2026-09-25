@@ -185,6 +185,19 @@ export default function MyJobs({ vendorId }) {
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
           Jobs you accept appear here with the date, the area and what you earn.
         </p>
+        {/* The figure and the line above say what belongs here. This says
+            what has to be true for anything to arrive -- which is the
+            part a partner cannot work out by looking, and the part that
+            decides whether an empty list reads as "early days" or as
+            "this app does not work".
+
+            It says what the calendar ENABLES, not what it earns. Demand
+            is the customer's decision and we do not get to promise it. */}
+        <p className="mx-auto mt-2 max-w-[34ch] text-[11.5px] leading-snug text-ink-faint">
+          A request reaches you when a customer&apos;s date, service and area
+          match yours — so the further ahead your calendar speaks for, the
+          more of them we can put you in front of.
+        </p>
       </div>
     )
   }

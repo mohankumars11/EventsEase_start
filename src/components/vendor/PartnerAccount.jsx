@@ -93,6 +93,10 @@ import { destinationShort } from '../../lib/documents/mask'
 export default function PartnerAccount({
   vendor, profile, reviews, screen, onOpenScreen,
   onUpdateVendor, onSignOut, onOpenTrade,
+  /* Which requirement a deep link asked for, carried straight through
+     to the verification screen. Read from `?requirement=` by the
+     dashboard so Android's back button still works. */
+  openRequirementId = null,
 }) {
   const { user, fetchProfile } = useAuth()
 
@@ -287,7 +291,8 @@ export default function PartnerAccount({
             vendorId={vendor?.id}
             url={vendor?.avatar_url}
             name={vendor?.business_name ?? profile?.full_name}
-            size={56}
+            size={72}
+            shape="square"
             editable
             onChange={url => onUpdateVendor?.({ avatar_url: url })}
           />
@@ -323,7 +328,7 @@ export default function PartnerAccount({
       docs && !docs.unavailable
         ? <VendorDocuments vendor={vendor} byKind={docs.byKind} byRequirement={docs.byRequirement}
                            onUpdateVendor={onUpdateVendor} onChanged={readDocs}
-                           trades={listedTrades} />
+                           trades={listedTrades} openRequirementId={openRequirementId} />
         : <Absent what="Verification" />
     ) },
     bank:         { title: 'Bank & payments',        render: () => (

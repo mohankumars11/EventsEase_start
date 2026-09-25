@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { greetingFor, msUntilNextBand } from '../../lib/greeting'
 import { Bell, ChevronRight } from 'lucide-react'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
 import { useReviewClock } from './ReviewCountdown'
@@ -52,71 +53,58 @@ const STATE = {
   },
 }
 
-/* ── The wish, from the clock ────────────────────────────────────────
+/* ── The wish, from the clock, and the name in it ──────────────────
  *
- * Three bands, read off the DEVICE clock rather than the server's. A
- * partner opening the app at six in the morning in Bengaluru should read
- * "Good morning"; UTC would tell them it is half past midnight.
+ * The bands and the name now live in `src/lib/greeting.js` with no
+ * React around them, so `scripts/check-greeting.mjs` can assert all
+ * twenty-one weekday-by-band combinations and every way an Indian name
+ * gets typed into a free-text box. Checking that 4:59am still says
+ * "Good evening" by changing the device clock and looking is not
+ * checking it.
  *
- *   05:00  Good morning
- *   12:00  Good afternoon
- *   17:00  Good evening
+ * ── The name is back, and it belongs on this line ──────────────────
+ * This header carried no name at all, under a comment saying the
+ * business name below "does not need saying twice". That was right
+ * while the greeting was bare. It is a different line now: "Good
+ * morning, Rahul" names the PERSON and the h1 beneath names their
+ * BUSINESS. For a sole trader those are nearly the same thing, and
+ * nearly is the whole point -- a partner is a person, and the app
+ * opening by addressing their shop is the thing that makes it feel like
+ * software rather than like somebody they work with.
  *
- * Evening runs through the small hours on purpose. There is no "Good
- * night" band: a partner reading this at 2am is working, and wishing
- * them goodnight over a live jobs list is the app telling them to stop.
- *
- * No name in it, by instruction — the business name is the line below
- * and does not need saying twice.
+ * Where there is no usable first name the greeting loses the comma and
+ * stays correct. See `firstNameOf` for what "usable" excludes.
  */
-function wishFor(date) {
-  const h = date.getHours()
-  if (h >= 17 || h < 5) return 'Good evening'
-  return h < 12 ? 'Good morning' : 'Good afternoon'
-}
-
-/* Milliseconds until the band changes. Without this the greeting is
-   fixed at whatever it was when the component mounted, and this app is
-   one a partner leaves open on the jobs list all day — so it would
-   still read "Good morning" at four in the afternoon. */
-function msUntilNextBand(date) {
-  const h = date.getHours()
-  const bound = h < 5 ? 5 : h < 12 ? 12 : h < 17 ? 17 : 29 /* 29 = 05:00 tomorrow */
-  const next = new Date(date)
-  next.setHours(bound % 24, 0, 0, 0)
-  if (bound >= 24) next.setDate(next.getDate() + 1)
-  return next - date
-}
-
-function useWish() {
-  const [wish, setWish] = useState(() => wishFor(new Date()))
+function useGreeting(fullName) {
+  const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
     let timer
-    /* Re-arm from the new `now` each time rather than on a fixed
+    /* Re-armed from the new `now` each time rather than on a fixed
        interval, so this costs three timers a day and survives the clock
-       being changed or the device waking from sleep in a new band. The
-       extra second keeps a timer that fires a hair early from landing
-       back in the band it just left and scheduling a zero-length wait. */
+       being changed or the device waking from sleep in a different
+       band. The extra second keeps a timer that fires a hair early from
+       landing back in the band it just left and scheduling a
+       zero-length wait. */
     const arm = () => {
-      const now = new Date()
-      setWish(wishFor(now))
-      timer = setTimeout(arm, msUntilNextBand(now) + 1000)
+      const at = new Date()
+      setNow(at)
+      timer = setTimeout(arm, msUntilNextBand(at) + 1000)
     }
     timer = setTimeout(arm, msUntilNextBand(new Date()) + 1000)
     return () => clearTimeout(timer)
   }, [])
 
-  return wish
+  return greetingFor({ fullName, date: now })
 }
 
 export default function JobsHeader({
-  lifecycle, businessName, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
+  lifecycle, businessName, fullName = null, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
   reviewDueAt = null, reviewSubmittedAt = null,
   onAcceptingChange, onOpenProfile, onOpenAlerts,
 }) {
   const s = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
-  const wish = useWish()
+  const { wish, dayLine } = useGreeting(fullName)
 
   /* The same clock the detail card below uses, from the same hook, so
      the two can never disagree by a minute. */
@@ -141,12 +129,19 @@ export default function JobsHeader({
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-plum-300">
             Sambramo Partner
           </p>
-          <p className="mt-1.5 text-[13.5px] font-semibold leading-tight text-plum-200">
+          <p className="mt-1.5 truncate text-[13.5px] font-semibold leading-tight text-plum-200">
             {wish}
           </p>
           <h1 className="mt-0.5 truncate text-[19px] font-extrabold leading-tight">
             {businessName ?? 'Your business'}
           </h1>
+          {/* Warmth, not information -- the line above carries the
+              person and the line above that carries the status, so this
+              one is allowed to be worth nothing and just be pleasant.
+              Never hard-coded: it is the device's own weekday. */}
+          <p className="mt-0.5 text-[12px] font-semibold leading-tight text-plum-300">
+            {dayLine}
+          </p>
           {/* Under the name, not beside the bell: it is a statement
               about the business, and it is the control a partner reaches
               for in a hurry. */}
@@ -188,9 +183,9 @@ export default function JobsHeader({
             type="button"
             onClick={onOpenProfile}
             aria-label="Your account"
-            className="rounded-full ring-2 ring-white/25"
+            className="rounded-[13px] ring-2 ring-white/25"
           >
-            <PartnerAvatar url={avatarUrl} name={businessName} size={40} />
+            <PartnerAvatar url={avatarUrl} name={businessName} size={44} shape="square" />
           </button>
         </div>
       </div>

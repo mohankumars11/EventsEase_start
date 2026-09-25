@@ -31,6 +31,8 @@ export function usePartnerAttention(vendorId) {
     upcoming: 0,
     awaitingPayment: 0,
     claimable: 0,
+    rejectedRequirementId: null,
+    rejectedDocuments: 0,
     loading: true,
     error: null,
   })
@@ -42,7 +44,7 @@ export function usePartnerAttention(vendorId) {
     try {
       const today = new Date().toISOString().slice(0, 10)
 
-      const [offers, upcoming, unpaid, claim] = await Promise.all([
+      const [offers, upcoming, unpaid, claim, rejectedDocs] = await Promise.all([
         /* Live opportunities: offered, not yet answered, not expired. */
         supabase.from('partner_offer_feed').select('offer_id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId).eq('status', 'OFFERED')
@@ -61,14 +63,40 @@ export function usePartnerAttention(vendorId) {
         /* Delivered and not yet claimed. Money they can ask for. */
         supabase.from('partner_jobs').select('line_id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId).eq('status', 'delivered'),
+
+        /* ── Which document was sent back ──────────────────────────
+           "Action required" used to be account-level only: it lit up
+           when `vendors.verification_status` was 'rejected' -- a whole
+           account turned down -- and said nothing at all when a single
+           document came back while the account was still under review.
+           That is the far commoner case, and the one a partner can
+           actually fix in two minutes.
+
+           Not a count: the ID. A number tells somebody that something
+           is wrong; the id lets the tap open the exact row that needs
+           re-uploading instead of a list of eight. `requirement_id` is
+           indexed (143:90).
+
+           Oldest first, because a rejection sitting for three days is
+           more urgent than one from this morning. */
+        supabase.from('vendor_documents').select('requirement_id, updated_at')
+          .eq('vendor_id', vendorId).eq('status', 'rejected')
+          .order('updated_at', { ascending: true }).limit(1),
       ])
 
       if (run !== runId.current) return
+      /* A failed read here means we do not know, which is not the same
+         as knowing there is nothing. It stays null and the caller falls
+         back to the account-level signal it always had. */
+      const rejected = rejectedDocs?.error ? null : (rejectedDocs?.data?.[0] ?? null)
+
       setCounts({
         openOffers: offers.count ?? 0,
         upcoming: upcoming.count ?? 0,
         awaitingPayment: unpaid.count ?? 0,
         claimable: claim.count ?? 0,
+        rejectedRequirementId: rejected?.requirement_id ?? null,
+        rejectedDocuments: rejected ? 1 : 0,
         loading: false,
         error: offers.error ?? upcoming.error ?? null,
       })

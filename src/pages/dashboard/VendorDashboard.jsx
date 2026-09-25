@@ -358,6 +358,10 @@ export default function VendorDashboard() {
           <JobsHeader
             lifecycle={lifecycle}
             businessName={businessName}
+            /* The PERSON, for the greeting. The h1 below it carries the
+               business. `profiles.full_name` is free text, so
+               `firstNameOf` decides whether any of it is usable. */
+            fullName={profile?.full_name}
             vendorId={vendor?.id}
             avatarUrl={vendor?.avatar_url}
             unreadAlerts={unreadAlerts}
@@ -365,8 +369,18 @@ export default function VendorDashboard() {
             reviewDueAt={vendor?.review_due_at}
             reviewSubmittedAt={vendor?.submitted_at}
             onAcceptingChange={() => refresh()}
-            onOpenProfile={() => setTab('account')}
-            onOpenAlerts={() => setTab('account')}
+            /* ── Three tap targets, three destinations ──────────────
+               The avatar, the bell and the status pill all called
+               `setTab('account')`, which lands on the More LIST. So
+               tapping your own photograph, tapping a bell with an unread
+               badge on it, and tapping "Under review" all did the same
+               thing and none of them did what it said.
+
+               The Account tab already keeps its open screen in
+               `?screen=`, and `onAddPayout` below has used it since the
+               Earnings work, so naming the screen costs nothing. */
+            onOpenProfile={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
+            onOpenAlerts={() => setParams(keepReturn({ tab: 'account', screen: 'notifications' }))}
           />
         </div>
       )}
@@ -378,9 +392,23 @@ export default function VendorDashboard() {
         <div className="mb-4">
           <JobsStats
             vendorId={vendor?.id}
+            /* ── Every tile goes somewhere ──────────────────────────
+               `offers` matched neither branch and fell out of the
+               bottom, so "New jobs" -- the first tile, the one with the
+               count a partner most wants to act on -- was a button that
+               did nothing at all. It now scrolls to the offer inbox,
+               which is the thing it is counting.
+
+               `messages` went to the More list rather than to the
+               messages screen, the same one-level-short problem as the
+               bell. */
             onOpen={key => {
-              if (key === 'messages') setTab('account')
+              if (key === 'messages') setParams(keepReturn({ tab: 'account', screen: 'messages' }))
               else if (key === 'confirmed' || key === 'accepted') setTab('availability')
+              else if (key === 'offers') {
+                document.querySelector('[data-offer-inbox]')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
             }}
           />
         </div>
@@ -401,16 +429,45 @@ export default function VendorDashboard() {
           submittedAt={vendor?.submitted_at}
           extended={vendor?.review_extended ?? 0}
           note={vendor?.review_note}
+          onOpenCalendar={() => setTab('availability')}
         />
       )}
 
       {/* What needs doing, and nothing at all when nothing does. */}
       {tab === 'offers' && (
         <AttentionSummary
-          counts={{ ...attention, requiresAction: vendor?.verification_status === 'rejected' ? 1 : 0 }}
+          /* ── Two ways a partner can owe us something ────────────────
+             The account turned down, OR a single document sent back
+             while the account is still under review. Only the first
+             ever lit this row, so the commoner and far more fixable
+             case showed nothing on the tab the partner actually opens. */
+          counts={{
+            ...attention,
+            requiresAction:
+              (vendor?.verification_status === 'rejected' ? 1 : 0)
+              + (attention.rejectedDocuments ?? 0),
+          }}
+          /* ── "Action required" now lands on the action ──────────────
+             This was `setTab('account')` -- the More LIST. A partner
+             told something needs their attention was handed eight
+             folded rows and left to guess which one, on the one screen
+             where guessing costs them their account going live.
+
+             It goes to the verification screen, and carries the
+             requirement id when we know which document was sent back,
+             so the row that needs re-uploading is the row that opens.
+             `?requirement=` is read by VendorDocuments. */
           onOpen={key => {
             if (key === 'claimable' || key === 'awaitingPayment') setTab('earnings')
-            else if (key === 'requiresAction') setTab('account')
+            else if (key === 'requiresAction') {
+              setParams(keepReturn({
+                tab: 'account',
+                screen: 'verification',
+                ...(attention.rejectedRequirementId
+                  ? { requirement: attention.rejectedRequirementId }
+                  : {}),
+              }))
+            }
           }}
         />
       )}
@@ -546,7 +603,11 @@ export default function VendorDashboard() {
               <JobAlerts vendorId={vendor.id} />
 
               {/* New offers, which expire in 45 seconds. */}
-              <OfferInbox vendorId={vendor.id} />
+              {/* The scroll target for the "New jobs" tile. A tile
+                  that counts something must be able to take you to it. */}
+              <div data-offer-inbox>
+                <OfferInbox vendorId={vendor.id} onOpenCalendar={() => setTab('availability')} />
+              </div>
 
               {/* Seven days, three rows. Between the expiring offers and
                   the full job list because it answers the morning
@@ -725,6 +786,7 @@ export default function VendorDashboard() {
                leave the whole tab instead of closing the screen, and
                would make a notification unable to point at one. */
             screen={params.get('screen')}
+            openRequirementId={params.get('requirement')}
             onOpenScreen={next => setParams(keepReturn(
               next ? { tab: 'account', screen: next } : { tab: 'account' }))}
             onUpdateVendor={updateVendor}

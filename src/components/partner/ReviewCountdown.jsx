@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BadgeCheck, Clock, TriangleAlert } from 'lucide-react'
+import { BadgeCheck, Clock, TriangleAlert, ArrowRight } from 'lucide-react'
 
 /**
  * "Your listing will be reviewed within 24 hours" — and then the hours
@@ -123,6 +123,7 @@ export function useReviewClock({ dueAt, submittedAt }) {
 
 export default function ReviewCountdown({
   status, dueAt, submittedAt, extended = 0, note, compact = false,
+  onOpenCalendar = null,
 }) {
   const { left } = useReviewClock({ dueAt, submittedAt })
 
@@ -172,13 +173,53 @@ export default function ReviewCountdown({
       <p className="mt-1.5 text-[11.5px] leading-snug text-white/85">
         {/* Once a review has been extended, repeating the original 24-hour
             promise underneath a clock counting to a different time is a
-            small lie the partner can see. The sentence changes. */}
-        {left?.over
-          ? 'This is taking longer than the 24 hours we promised. Somebody is on it and will come back to you — you do not need to do anything.'
-          : extended > 0
-            ? 'We needed a little longer on yours. The time above is when to expect an answer — nothing more is needed from you.'
-            : 'We check every listing by hand within 24 hours. Nothing more is needed from you.'}
+            small lie the partner can see. The sentence changes.
+
+            ── The fourth branch: no deadline at all ──────────────────
+            `review_due_at` is NULL for a partner who submitted through
+            the fallback path in ReviewPublishStep (the RPC missing), and
+            for every partner whose row predates migration 142 — which is
+            227 of the 228 rows in this database today.
+
+            Until now that produced this card with NO time and NO
+            explanation: a heading, a paragraph promising 24 hours, and
+            nothing saying when they started or when they end. A partner
+            reading it cannot tell whether the clock is broken or whether
+            they are being ignored. Saying "we will confirm the time"
+            is less than a countdown and is at least true. */}
+        {!dueAt
+          ? 'We have your profile. We will confirm when to expect an answer shortly — nothing more is needed from you.'
+          : left?.over
+            ? 'This is taking longer than the 24 hours we promised. Somebody is on it and will come back to you — you do not need to do anything.'
+            : extended > 0
+              ? 'We needed a little longer on yours. The time above is when to expect an answer — nothing more is needed from you.'
+              : 'We check every listing by hand within 24 hours. Nothing more is needed from you.'}
       </p>
+
+      {/* ── The waiting period, spent ──────────────────────────────────
+          A partner under review can do nothing about the review, and
+          there is exactly one thing they CAN do that changes what
+          happens the moment it clears: say which days they can work.
+          `match_partners` will not offer a date the calendar has not
+          spoken for, so a partner approved on Friday with an empty
+          calendar is approved into silence.
+
+          It says what the calendar enables, not what it earns. */}
+      {onOpenCalendar && (
+        <div className="mt-2.5 border-t border-white/15 pt-2.5">
+          <p className="text-[11.5px] leading-snug text-white/85">
+            While we check your profile, tell us the days you can work. We can
+            only match you on days your calendar has spoken for.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenCalendar}
+            className="mt-2 inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-saffron-400 px-3.5 text-[12px] font-extrabold text-plum-950 transition active:scale-[0.98]"
+          >
+            Update calendar <ArrowRight size={12} />
+          </button>
+        </div>
+      )}
 
       {/* Said out loud rather than hidden. A partner whose review has
           been pushed back twice deserves to know that, not to watch a

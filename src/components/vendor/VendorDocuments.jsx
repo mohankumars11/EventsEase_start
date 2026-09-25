@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BadgeCheck } from 'lucide-react'
 import { requirementsFor } from '../../data/compliance'
 import { evaluateAll } from '../../lib/verification/satisfaction'
@@ -76,11 +76,11 @@ const CAPTION = {
 
 export default function VendorDocuments({
   vendor, byKind = {}, byRequirement = null, onUpdateVendor, onChanged, trades = [],
+  openRequirementId = null,
 }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [openId, setOpenId] = useState(null)
-
   const vendorId = vendor?.id
   const verified = !!vendor?.is_verified
   const status   = vendor?.verification_status ?? 'draft'
@@ -98,6 +98,22 @@ export default function VendorDocuments({
   const requirements = useMemo(
     () => requirementsFor({ trades, answers: { identity_document: identityChoice } }),
     [trades, identityChoice])
+
+  /* ── Opened from a deep link ───────────────────────────────────────
+     "Action required" on the Jobs tab now carries the id of the
+     document that was sent back, so the row needing a re-upload opens
+     itself rather than leaving the partner to find it among eight.
+
+     Applied once per id rather than on every render: re-applying would
+     fight a partner who followed the link and then opened a different
+     row. An id matching no requirement is ignored -- stale links
+     happen, and a link that opens nothing beats one that throws. */
+  const requestedRef = useRef(null)
+  useEffect(() => {
+    if (!openRequirementId || requestedRef.current === openRequirementId) return
+    requestedRef.current = openRequirementId
+    if (requirements.some(r => r.id === openRequirementId)) setOpenId(openRequirementId)
+  }, [openRequirementId, requirements])
 
   const identityReq = requirements.find(r => r.id === 'VER-ID-IDENTITY') ?? null
   const identityUploaded = !!(byRequirement ?? {})['VER-ID-IDENTITY']
