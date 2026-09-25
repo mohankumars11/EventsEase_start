@@ -238,6 +238,17 @@ const TABS = [
    [['Ready to claim', 'the hero']]],
   ['More',     '/dashboard/vendor?tab=account',      'apk-tab-more.png',
    [['Sambramo Partner \u00b7', 'the NEW build stamp'], ['bundle ', 'the NEW bundle line']]],
+  /* ── The bell's destination ────────────────────────────────────────
+     It used to land on the More LIST, one level short, leaving the
+     partner to find the Notifications row themselves. */
+  ['Notifications', '/dashboard/vendor?tab=account&screen=notifications',
+   'apk-screen-notifications.png',
+   [['Notifications', 'the screen the bell now opens'],
+    ['Calendar', 'the NEW calendar preference, unreachable for two migrations']]],
+  /* The avatar's destination, likewise. */
+  ['Partner profile', '/dashboard/vendor?tab=account&screen=profile',
+   'apk-screen-profile.png',
+   [['Partner profile', 'the screen the avatar now opens']]],
 ]
 
 for (const [label, url, file, markers] of TABS) {
