@@ -35,6 +35,15 @@ const ROWS = [
   ['reviews',       'Reviews',       'Somebody rates a job you did'],
   ['messages',      'Replies',       'We answer something you asked us'],
   ['announcements', 'From Sambramo', 'New areas, fee changes, festival notices'],
+  /* ── The one notification this system actually sends ─────────────
+     Migration 148 added the column so a partner could stop the
+     coverage sweep nudging them. It never appeared here, so the only
+     reminder the app has ever sent was the only one nobody could turn
+     off. Last in the list because it is the one most worth leaving on
+     -- match_partners cannot offer a date the calendar has not spoken
+     for, so a partner who silences this and then forgets goes quiet
+     without knowing why. */
+  ['calendar',      'Calendar',      'When your availability is running out'],
 ]
 
 export default function NotificationPrefs({ vendorId, initial }) {
@@ -47,13 +56,12 @@ export default function NotificationPrefs({ vendorId, initial }) {
     setPrefs(next)
     setSaving(key)
     setError(null)
-    const res = await savePrefs(vendorId, {
-      job_updates: next.job_updates,
-      payouts: next.payouts,
-      reviews: next.reviews,
-      messages: next.messages,
-      announcements: next.announcements,
-    })
+    /* Built from ROWS rather than enumerated by hand. The hand-written
+       list is how `calendar` was lost: the column was added, the row
+       was not, and the save silently dropped it for two migrations. A
+       switch that exists on screen is now a switch that gets sent. */
+    const res = await savePrefs(vendorId,
+      Object.fromEntries(ROWS.map(([k]) => [k, next[k]])))
     setSaving(null)
     if (!res.ok) {
       setPrefs(prefs)

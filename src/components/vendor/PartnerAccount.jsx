@@ -92,7 +92,7 @@ import { destinationShort } from '../../lib/documents/mask'
 
 export default function PartnerAccount({
   vendor, profile, reviews, screen, onOpenScreen,
-  onUpdateVendor, onSignOut, onOpenTrade,
+  onUpdateVendor, onSignOut, onOpenTrade, onNavigateTo,
   /* Which requirement a deep link asked for, carried straight through
      to the verification screen. Read from `?requirement=` by the
      dashboard so Android's back button still works. */
@@ -337,8 +337,19 @@ export default function PartnerAccount({
     notifications:{ title: 'Notifications',          render: () => (
       inboxReady
         ? <div className="space-y-3">
-            <PartnerInbox rows={inbox.rows}
-                          onRead={() => setInbox(s => (s ? { ...s, unread: 0 } : s))} />
+            <PartnerInbox
+              rows={inbox.rows}
+              /* The count drops by what was actually read, not to zero:
+                 reading three of eleven is not an empty inbox, and the
+                 badge saying so was a small lie the partner could catch
+                 by scrolling. */
+              onRead={ids => setInbox(s =>
+                (s ? { ...s, unread: Math.max(0, (s.unread ?? 0) - ids.length) } : s))}
+              /* `href` is an in-app path. Routed by the owner of the URL
+                 rather than by the list, so Android's back button still
+                 leaves the notification instead of the whole app. */
+              onNavigate={onNavigateTo}
+            />
             <NotificationPrefs vendorId={vendor?.id} initial={inbox.prefs} />
           </div>
         : <Absent what="Notifications" />

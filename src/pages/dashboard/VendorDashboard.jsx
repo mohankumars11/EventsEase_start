@@ -22,7 +22,7 @@ import Earnings from '../../components/vendor/Earnings'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
-import { fetchNotifications } from '../../lib/partnerInbox'
+import { unreadNotificationCount } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
 import CalendarMonth from '../../components/partner/CalendarMonth'
@@ -157,14 +157,23 @@ export default function VendorDashboard() {
   /* Counts only — the sections below fetch their own rows. */
   const attention = usePartnerAttention(vendor?.id)
 
-  /* Unread notifications, for the bell. Absent until 125 is applied,
-     which is why a failure leaves the count at zero rather than
-     blanking the header. */
+  /* ── The bell badge, which could only ever say 0 or 1 ──────────────
+     This called `fetchNotifications(vendor.id, 1)` and used the `unread`
+     it came back with. That number is the unread count WITHIN THE
+     FETCHED PAGE, and the page was one row — so a partner with eleven
+     unread notifications saw a badge reading 1, and the `9+` branch in
+     JobsHeader was code that could never run.
+
+     `unreadNotificationCount` asks the database with `head: true`. It
+     returns null when it cannot tell, which is kept distinct from zero:
+     a bell with no badge because the request failed and a bell with no
+     badge because nothing is waiting look identical, and only one of
+     them is true. */
   useEffect(() => {
     let alive = true
     if (!vendor?.id) return undefined
-    fetchNotifications(vendor.id, 1).then(({ unread, unavailable }) => {
-      if (alive && !unavailable) setUnreadAlerts(unread)
+    unreadNotificationCount(vendor.id).then(n => {
+      if (alive && n !== null) setUnreadAlerts(n)
     })
     return () => { alive = false }
   }, [vendor?.id, tab])
@@ -787,6 +796,15 @@ export default function VendorDashboard() {
                would make a notification unable to point at one. */
             screen={params.get('screen')}
             openRequirementId={params.get('requirement')}
+            /* A notification's `href` is an in-app path written by the
+               server (`/dashboard/vendor?tab=availability`). Routed here
+               rather than inside the list, so the URL stays the one
+               thing that owns navigation and the back button still
+               leaves the notification rather than the app. */
+            onNavigateTo={href => {
+              if (typeof href !== 'string' || !href.startsWith('/')) return
+              navigate(href)
+            }}
             onOpenScreen={next => setParams(keepReturn(
               next ? { tab: 'account', screen: next } : { tab: 'account' }))}
             onUpdateVendor={updateVendor}
