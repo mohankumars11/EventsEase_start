@@ -233,6 +233,7 @@ const TABS = [
   ['Calendar', '/dashboard/vendor?tab=availability', 'apk-tab-calendar.png',
    [['Set dates', 'the NEW header button (was "Block dates")'],
     ['Set a range of dates', 'the MERGED tools row (was two rows opening one sheet)'],
+    ['Calendar coverage', 'the NEW coverage strip — Jobs said it and Calendar did not'],
     ['Available, limited or blocked', 'the row naming all four modes']]],
   ['Earnings', '/dashboard/vendor?tab=earnings',     'apk-tab-earnings.png',
    [['Ready to claim', 'the hero']]],
