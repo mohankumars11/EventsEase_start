@@ -80,13 +80,25 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
       ])
       if (!alive) return
 
-      /* 154 not pasted yet. A missing table is not an error worth
-         showing: there is simply nothing to advertise, which is exactly
-         what an empty result means too. */
-      if (promos.error) { setRows(isMissingTable(promos.error) ? [] : []); return }
+      /* ── 154 not pasted yet, or the read failed ──────────────────
+         Both end the same way and that is correct, not lazy: there is
+         nothing to advertise either way, and a marketing card is not
+         worth an error state. `isMissingTable` is still consulted so
+         the distinction is visible to anybody debugging, and so a real
+         failure is not silently indistinguishable from an empty table
+         in the console. */
+      if (promos.error) {
+        if (!isMissingTable(promos.error)) {
+          console.warn('promotions unavailable:', promos.error.message)
+        }
+        setRows([])
+        return
+      }
 
       setRows(promos.data ?? [])
-      setDismissed((hidden.data ?? []).map(d => d.promotion_id))
+      /* A failed dismissal read means we show a card they hid. Better
+         than hiding one they have not, which is the other direction. */
+      setDismissed(hidden.error ? [] : (hidden.data ?? []).map(d => d.promotion_id))
     })()
 
     return () => { alive = false }
