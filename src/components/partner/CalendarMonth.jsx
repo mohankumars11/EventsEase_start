@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 import {
   CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin,
   CalendarDays, RotateCw,
@@ -61,6 +62,11 @@ export default function CalendarMonth({
   onSaveWeeklyRules,
 }) {
   const todayISO = istTodayISO()
+
+  /* The same answer the Jobs card reads, so the two surfaces cannot
+     disagree about how far ahead this calendar speaks. */
+  const coverage = useCalendarCoverage({ availability, weeklyRules, vendor })
+
   const [view, setView] = useState('month')
   const [selected, setSelected] = useState(null)
   /* null when closed; otherwise { from, mode } — so the same sheet serves
@@ -255,6 +261,45 @@ export default function CalendarMonth({
             Set your availability
           </button>
         </div>
+      )}
+
+      {/* ── Coverage, on the screen where it can be fixed ─────────────
+          The Jobs tab has told partners their calendar stops on the 30th
+          since the six-month card landed. Tapping through to the
+          Calendar — the one place the thing can be changed — showed no
+          mention of it at all, so the partner arrived with a problem and
+          no indication of where it was.
+
+          Same hook as that card, so the two cannot disagree by a day. */}
+      {coverage.severity !== 'ok' && (
+        <section
+          data-coverage={coverage.severity}
+          className="rounded-[22px] bg-white p-3.5 ring-1 ring-ink/[0.06]"
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
+              Calendar coverage
+            </p>
+            <p className="text-[11.5px] font-extrabold tabular-nums text-ink-soft">
+              {coverage.coverageDays} of {coverage.targetDays} days
+            </p>
+          </div>
+
+          <span className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.07]">
+            <span
+              className={`h-full rounded-full ${
+                coverage.severity === 'thin' ? 'bg-saffron-400' : 'bg-plum-600'
+              }`}
+              style={{ width: `${Math.max(2, Math.round(coverage.fraction * 100))}%` }}
+            />
+          </span>
+
+          <p className="mt-2 text-[12px] leading-snug text-ink-mute">
+            {coverage.firstBlank
+              ? `Nothing said about ${coverage.firstBlank.label} yet. Customers plan celebrations months ahead, so the further out you go the more we can match you.`
+              : 'Customers plan celebrations months ahead. The further out your calendar goes, the more we can match you.'}
+          </p>
+        </section>
       )}
 
       <section>

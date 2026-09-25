@@ -56,6 +56,30 @@ import { coverageOf, ALERT_LEVEL as LEVEL } from './pricing.bundle.js'
 /** No partner hears from this more often than once a week. */
 export const QUIET_DAYS = 7
 
+/**
+ * How long each severity stays quiet, in days.
+ *
+ * An empty calendar is a partner who cannot be offered anything at all,
+ * and is worth a weekly sentence. A calendar that is merely thin is
+ * worth a monthly one -- nudging somebody who has already stated three
+ * months every week is how a reminder becomes a thing people switch
+ * off, and they switch off the whole channel, including the week it
+ * mattered.
+ */
+export const QUIET_FOR = {
+  empty: 7,
+  short: 14,
+  thin: 30,
+}
+
+/* The widest window any severity asks for. The query has to reach back
+   at least this far or the per-severity checks below are reading an
+   empty result and concluding nobody has been told. */
+export const LOOKBACK_DAYS = Math.max(...Object.values(QUIET_FOR))
+
+const daysBetween = (fromISO, toISO) =>
+  Math.round((new Date(`${toISO}T00:00:00Z`) - new Date(`${fromISO}T00:00:00Z`)) / 86_400_000)
+
 /** How many to warn in one pass. A sweep that wakes the whole city at
  *  03:00 is a sweep somebody turns off. */
 export const SWEEP_LIMIT = 200
@@ -99,7 +123,12 @@ export async function sweepCalendarCoverage(db, notify = null) {
       .select('vendor_id, created_at')
       .in('vendor_id', ids)
       .eq('kind', 'calendar')
-      .gte('created_at', new Date(Date.now() - QUIET_DAYS * 86400000).toISOString()),
+      /* Wide enough for the LONGEST quiet window, not just the shortest.
+         This looked back QUIET_DAYS, which is right for an empty
+         calendar and far too short for a thin one -- a partner told
+         eight days ago would have looked untold, and the 30-day silence
+         a thin calendar is meant to get would never have held. */
+      .gte('created_at', new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString()),
     /* Rule 5, added last and arguably the most important: a partner who
        switched this off must actually have it off. Only rows that say
        `calendar = false` are collected -- the column defaults to true
@@ -123,7 +152,18 @@ export async function sweepCalendarCoverage(db, notify = null) {
   const rulesFor = {}
   for (const r of rulesRes.data ?? []) (rulesFor[r.vendor_id] ??= []).push(r)
 
-  const recentlyTold = new Set((recentRes.data ?? []).map(r => r.vendor_id))
+  /* When each partner was last told, not merely whether. The Set could
+     answer "inside seven days"; graded silences need the date. Newest
+     wins, because a partner told twice should be judged on the second. */
+  const toldAt = {}
+  for (const r of recentRes.data ?? []) {
+    const day = String(r.created_at).slice(0, 10)
+    if (!toldAt[r.vendor_id] || day > toldAt[r.vendor_id]) toldAt[r.vendor_id] = day
+  }
+  const recentlyTold = new Set(
+    Object.entries(toldAt)
+      .filter(([, day]) => daysBetween(day, todayISO) < QUIET_DAYS)
+      .map(([id]) => id))
   /* A failed prefs read must not become "everybody said yes". If the
      column is missing because 148 has not been pasted, the error is a
      42703 and NOBODY is swept -- silence is the safe direction when the
@@ -148,10 +188,41 @@ export async function sweepCalendarCoverage(db, notify = null) {
       weeklyRules: rulesFor[v.id] ?? [],                                     // rule 2
       todayISO,
     })
-    if (coverage.level !== LEVEL.WARN) { bump('calendar_is_current'); continue } // rule 1
+
+    /* ── Graded, rather than one threshold ─────────────────────────
+       This fired only at LEVEL.WARN, which needs an empty calendar or
+       one stopping inside a fortnight. So a partner with two months
+       stated -- comfortably short of the six the matching engine can
+       use, and losing every wedding booked further out -- was told
+       nothing at all, for ever, because they were not quite bad enough
+       to trip a boolean.
+
+       Severity is how far behind they are; the quiet window below is
+       how often that earns a sentence. An empty calendar is worth
+       hearing about weekly. A calendar that is merely thin is worth
+       hearing about monthly, and pretending otherwise is how a
+       reminder becomes something people turn off. */
+    const stated = Object.keys(byVendor[v.id] ?? {}).filter(d => d >= todayISO).length
+    const hasWeek = (rulesFor[v.id] ?? []).length > 0
+    const severity = !stated && !hasWeek ? 'empty'
+      : coverage.fraction >= 1 ? 'ok'
+      : coverage.fraction >= 0.5 ? 'thin'
+      : 'short'
+
+    if (severity === 'ok') { bump('calendar_is_current'); continue }          // rule 1
+
+    /* Rule 3 is applied above as one window for everybody. This narrows
+       it per severity: `recentlyTold` already excludes anyone spoken to
+       inside QUIET_DAYS, so a thin or short calendar additionally needs
+       its own longer silence, checked against the same sent-row ledger. */
+    const quietFor = QUIET_FOR[severity]
+    const lastTold = toldAt[v.id] ?? null
+    if (lastTold && daysBetween(lastTold, todayISO) < quietFor) {
+      bump('told_recently'); continue
+    }
 
     result.stale++
-    due.push({ vendor: v, coverage })
+    due.push({ vendor: v, coverage, severity })
   }
 
   if (!due.length) return result

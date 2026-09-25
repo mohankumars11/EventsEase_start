@@ -1,7 +1,6 @@
-import { useMemo } from 'react'
 import { CalendarDays, ArrowRight, Check } from 'lucide-react'
 import { istTodayISO } from '../../lib/istTime'
-import { coverageOf, LEVEL } from '../../lib/calendarAlerts'
+import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 
 /**
  * "Your calendar is set through 30 October."
@@ -55,18 +54,15 @@ import { coverageOf, LEVEL } from '../../lib/calendarAlerts'
 export default function CalendarNudge({
   availability, weeklyRules = [], vendor = null, onOpen, onDismiss,
 }) {
-  const todayISO = istTodayISO()
-
-  const coverage = useMemo(
-    () => coverageOf({ availability, weeklyRules, todayISO }),
-    [availability, weeklyRules, todayISO])
-
-  /* What the partner last confirmed. A confirmation that has since been
-     overtaken by the calendar is no longer a reason to stay quiet. */
-  const confirmedThrough = vendor?.calendar_reviewed_through ?? null
-  const confirmedAhead = confirmedThrough && confirmedThrough > todayISO
-    ? Math.round((new Date(`${confirmedThrough}T00:00:00Z`) - new Date(`${todayISO}T00:00:00Z`)) / 86400000)
-    : 0
+  /* ── One answer, read by three surfaces ────────────────────────────
+     This card, the Calendar tab's own coverage strip and the server
+     sweep all used to decide independently whether a partner was
+     behind. So a partner could be told here that their calendar stops
+     on the 30th, tap through to the Calendar, and find no mention of
+     it. Three opinions about one fact is how a status stops being
+     believed. */
+  const coverage = useCalendarCoverage({ availability, weeklyRules, vendor })
+  const { todayISO } = coverage
 
   /* ── Why this is no longer gated on WARN ───────────────────────────
      It was, and so almost nobody ever saw it. WARN needs an empty
@@ -83,9 +79,7 @@ export default function CalendarNudge({
 
      It does not become a nag, because "I am open until then" records a
      real date on the vendor row and buys 60 days of silence. */
-  const shortOfHorizon = coverage.fraction < 1
-  if (coverage.level !== LEVEL.WARN && !shortOfHorizon) return null
-  if (confirmedAhead >= 30) return null
+  if (!coverage.needsUpdate) return null
 
   /* Empty and merely short are different situations and get different
      headlines. Telling somebody with four months stated that their

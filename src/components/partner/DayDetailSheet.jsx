@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { assessChange, LEVEL } from '../../lib/calendarAlerts'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
-import {
-  X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote,
-  MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange,
-} from 'lucide-react'
+import { X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote, MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange, Info } from 'lucide-react'
 import {
   STATUS, dayStatus, hoursFor, hoursLabel, clockLabel, reasonLabel,
 } from '../../lib/availability'
@@ -132,6 +130,11 @@ export default function DayDetailSheet({
     setError(null); setSaved(false); setConfirmBlock(false)
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* Changing the decision disarms the confirm. Somebody who arms a
+     block and then switches to Limited must not be one tap from a
+     blocked day they did not choose. */
+  useEffect(() => { setConfirmBlock(false) }, [status, slots])
+
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -141,6 +144,39 @@ export default function DayDetailSheet({
   const pretty = new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IN', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
   })
+  /* "21 Dec" for the save confirmation. The long form above is a
+     heading; this sits inside a sentence. */
+  const shortDay = new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', timeZone: 'UTC',
+  })
+  /* ── One engine, both paths ────────────────────────────────────────
+     The range sheet has run every change through `assessChange` since
+     the alerts work; this sheet had its own rule -- block a day that
+     already has a booking -- and nothing else. So tapping a free date
+     and blocking it said NOTHING about what blocking does, which is the
+     one thing a partner is actually deciding.
+
+     Same engine now, so the rationing holds: the quiet consequence line
+     appears on every block, and red is still reserved for a clash, a
+     blackout, or real demand. Two implementations of "is this worth
+     interrupting them for" would drift, and the one that drifted would
+     be the one nobody was watching. */
+  const alert = useMemo(() => assessChange({
+    dates: [date],
+    status,
+    availability,
+    jobs: jobsOnDay,
+    interestByDate: interestOnDay ? new Map([[date, interestOnDay]]) : null,
+    weeklyRules,
+    maxPerDay: status === 'LIMITED' ? Math.max(1, Number(slots) || 1) : 1,
+    todayISO: istTodayISO(),
+  }), [date, status, availability, jobsOnDay, interestOnDay, weeklyRules, slots])
+
+  const needsConfirm = alert.needsConfirm
+
+  /* Still its own value: the clash sentence says something the generic
+     consequence line does not -- that existing work is NOT cancelled --
+     and that is the fear this sheet exists to answer. */
   const blockingBookedDay = status === 'BLOCKED' && jobsOnDay.length > 0
 
   /* A count of real enquiries, or nothing. INTEREST_FLOOR exists because
@@ -150,7 +186,7 @@ export default function DayDetailSheet({
 
   async function save() {
     if (busy) return
-    if (blockingBookedDay && !confirmBlock) { setConfirmBlock(true); return }
+    if (needsConfirm && !confirmBlock) { setConfirmBlock(true); return }
 
     setBusy(true); setError(null); setSaved(false)
     try {
@@ -406,6 +442,24 @@ export default function DayDetailSheet({
                 </div>
               </Field>
 
+              {/* ── What blocking a date DOES ─────────────────────────
+                  Rendered on every block, in the quietest tone the
+                  sheet has. It is not a warning and must not read as
+                  one: it is a description of the button, and a partner
+                  is entitled to read it before pressing, every time.
+
+                  `assessChange` rations the loud ones -- a clash, a
+                  blackout, real demand -- so this line appearing always
+                  does not make those appear always. That distinction is
+                  the whole argument in calendarAlerts.js's header. */}
+              {alert.signals.filter(sig => sig.id === 'blocked').map(sig => (
+                <p key={sig.id} data-signal="blocked"
+                   className="flex items-start gap-2 rounded-[16px] bg-ink/[0.04] px-3.5 py-3 text-[12px] leading-snug text-ink-soft">
+                  <Info size={15} className="mt-px shrink-0 text-ink-mute" />
+                  <span>{sig.says}</span>
+                </p>
+              ))}
+
               {blockingBookedDay && (
                 <p className="flex items-start gap-2 rounded-[16px] bg-saffron-50 px-3.5 py-3 text-[12px] leading-snug text-saffron-900 ring-1 ring-saffron-300">
                   <AlertTriangle size={15} className="mt-px shrink-0" />
@@ -458,6 +512,33 @@ export default function DayDetailSheet({
                   </span>
                   <CalendarRange size={16} className="shrink-0 text-plum-700" />
                 </button>
+              )}
+
+              {/* ── What was saved, not merely that something was ──────
+                  The button flashed "Saved" for two seconds and that was
+                  the whole confirmation. It tells a partner the request
+                  succeeded; it does not tell them what the calendar now
+                  says, which is the thing they came to change and the
+                  thing they will be held to.
+
+                  Inline rather than a dialog: the spec asks for
+                  lightweight feedback, and a sheet that opens a second
+                  sheet to confirm the first is how a two-tap job becomes
+                  a four-tap one. */}
+              {saved && (
+                <p data-saved={status}
+                   className="flex items-start gap-2 rounded-[16px] bg-forest-50 px-3.5 py-3 text-[12.5px] leading-snug text-forest-900 ring-1 ring-forest-200">
+                  <Check size={15} strokeWidth={3} className="mt-px shrink-0" />
+                  <span>
+                    <strong>{shortDay}</strong> is now{' '}
+                    <strong>{(STATES.find(x => x.id === status)?.label ?? status).toLowerCase()}</strong>.
+                    {status === 'BLOCKED'
+                      ? ' No offers will reach you on it.'
+                      : status === 'LIMITED'
+                        ? ` We will offer you at most ${Math.max(1, Number(slots) || 1)} that day.`
+                        : ' We can offer you work on it.'}
+                  </span>
+                </p>
               )}
 
               <div className="flex gap-2 pt-0.5">
