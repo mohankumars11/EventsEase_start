@@ -138,9 +138,25 @@ try {
      'BLOCKED is being ignored by match_partners')
 
   console.log('\nLIMITED, AND FULL\n')
-  /* The branch that has never once fired in production, because nothing
-     ever incremented slots_booked. Written here with the service role
-     because after 132 the column belongs to the server. */
+  /* ── This was asserting the mechanism 132 deleted ──────────────────
+     It forced `slots_booked = 2` and expected the partner to vanish,
+     and it had failed for as long as anybody had run it, reporting
+     "THE CAPACITY BRANCH IS DEAD".
+
+     The branch is not dead. It is fed from somewhere else.
+
+     021 created `slots_booked`, six versions of `match_partners` read
+     it, and NOTHING ever incremented it -- the bug 132 is named after.
+     132's answer was to stop trusting a counter nobody maintained and
+     recompute it; 147 went further and counts live ACCEPTED dispatch
+     offers for the date directly against the cap. So `slots_booked` is
+     a derived convenience column the matcher deliberately does not
+     read, and writing to it by hand proves only that it is ignored.
+
+     Established by experiment before this was rewritten:
+       slots_booked forced to 2, cap 2  ->  still offered  (ignored)
+       slots_total 0                    ->  NOT offered    (enforced)
+       slots_total back to 2            ->  offered again  */
   await admin.from('vendor_availability').upsert(
     { vendor_id: subject.id, slot_date: DATE, status: 'LIMITED',
       slots_total: 2, slots_booked: 0 },
@@ -148,10 +164,24 @@ try {
   ok('a LIMITED day with room still offers work', await appears(),
      'a capped day with space is being treated as full')
 
-  await admin.from('vendor_availability').update({ slots_booked: 2 })
+  /* A cap of nothing is the only shape of "full" arrangeable without a
+     real booking. There are no ACCEPTED offers anywhere in this
+     database, so the accepted-job path cannot be exercised with live
+     data -- said plainly rather than faked, because a synthetic
+     accepted offer would test the fixture and not dispatch. */
+  await admin.from('vendor_availability').update({ slots_total: 0 })
     .eq('vendor_id', subject.id).eq('slot_date', DATE)
-  ok('a LIMITED day with nothing left stops offering work', !(await appears()),
-     'THE CAPACITY BRANCH IS DEAD - a full day is still being offered')
+  ok('a LIMITED day with no room left stops offering work', !(await appears()),
+     'the cap is not being read at all')
+
+  /* And the counter stays ignored, on purpose. A future change that
+     makes the matcher read `slots_booked` again fails here, which is
+     the regression 132 exists to prevent. */
+  await admin.from('vendor_availability')
+    .update({ slots_total: 2, slots_booked: 2 })
+    .eq('vendor_id', subject.id).eq('slot_date', DATE)
+  ok('and slots_booked is NOT what it reads', await appears(),
+     'the matcher is trusting a counter nothing reliably maintains - see 132')
 
   console.log('\nTHE CAP THE PARTNER NEVER SET (needs 134)\n')
   /* Before 134 the flat NOT EXISTS answered first and
