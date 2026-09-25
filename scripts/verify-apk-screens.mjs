@@ -252,6 +252,15 @@ const TABS = [
   ['Partner profile', '/dashboard/vendor?tab=account&screen=profile',
    'apk-screen-profile.png',
    [['Partner profile', 'the screen the avatar now opens']]],
+  ['Referral', '/dashboard/vendor?tab=account&screen=referral',
+   'apk-screen-referral.png',
+   [['Grow the Sambramo community', 'the NEW referral screen, titled from the campaign'],
+    ['Share your code', 'the share action'],
+    ['0 of 20', 'progress against the CONFIGURED threshold, not a constant']]],
+  ['Settings', '/dashboard/vendor?tab=account&screen=settings',
+   'apk-screen-settings.png',
+   [['Partner terms', 'the NEW terms row — Settings held only Close account'],
+    ['bundle ', 'the build stamp']]],
 ]
 
 for (const [label, url, file, markers] of TABS) {
