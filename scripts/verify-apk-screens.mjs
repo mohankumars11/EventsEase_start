@@ -309,6 +309,97 @@ for (const [needle, why] of [
   ok(`    ${why}`, badText.toLowerCase().includes(needle.toLowerCase()), `"${needle}" did not appear`)
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   IT HAS TO FIT ON A REAL PHONE
+   ══════════════════════════════════════════════════════════════════
+
+   This harness ran every check at 430px, which is a large modern
+   handset. The phones partners actually carry are narrower -- 360px is
+   still the commonest Android width in India, and a Redmi or a Moto G
+   sits there. A card that overflows at 360 and fits at 430 passes every
+   assertion above and is broken on the device it was built for.
+
+   Horizontal overflow is the specific failure worth catching, because
+   it is invisible in a screenshot: the page simply scrolls sideways and
+   a CTA ends up off the right edge where nobody finds it. A few pixels
+   of tolerance because a sub-pixel rounding on a transform is not a
+   layout bug.
+
+   The bottom nav is checked too: it is `fixed`, so content that ends
+   underneath it is unreachable rather than merely ugly. */
+console.log('')
+console.log('  Every width a partner actually holds')
+
+const WIDTHS = [360, 375, 390, 412]
+const NARROW_ROUTES = [
+  ['Jobs', '/dashboard/vendor?tab=offers'],
+  ['Calendar', '/dashboard/vendor?tab=availability'],
+  ['Earnings', '/dashboard/vendor?tab=earnings'],
+  ['More', '/dashboard/vendor?tab=account'],
+]
+
+for (const w of WIDTHS) {
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: w, height: 860, deviceScaleFactor: 1, mobile: true })
+  let worstOver = 0
+  let worstRoute = null
+  let covered = null
+
+  for (const [label, url] of NARROW_ROUTES) {
+    await goto(url)
+    /* ── Scrolled to the BOTTOM first ──────────────────────────────
+       The first version of this test flagged any control whose box
+       crossed the top edge of the fixed tab bar. That is not a bug: on
+       a scrollable page almost everything crosses that line at some
+       scroll position, and it reported four false failures on content
+       that scrolls clear perfectly well.
+
+       The real failure is content that can NEVER be scrolled out from
+       under the bar -- a page whose scroll container has no bottom
+       padding, so its last row is permanently covered. So: scroll to
+       the end, settle, and only then ask what is still underneath. */
+    await send('Runtime.evaluate', {
+      expression: 'window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" })',
+    })
+    await sleep(350)
+
+    const probe = await send('Runtime.evaluate', {
+      returnByValue: true,
+      expression: `(() => {
+        const d = document.documentElement
+        const over = Math.max(0, d.scrollWidth - d.clientWidth)
+        const nav = document.querySelector('nav')
+        if (!nav) return { over, buried: null }
+        const navTop = nav.getBoundingClientRect().top
+        let buried = null
+        for (const el of document.querySelectorAll('button, a, input, textarea')) {
+          if (nav.contains(el)) continue
+          const r = el.getBoundingClientRect()
+          if (r.height === 0) continue
+          /* Its MIDDLE is under the bar, at the very bottom of the
+             scroll. Nothing the partner can do reaches it. */
+          const mid = r.top + r.height / 2
+          if (mid > navTop + 2 && r.top < window.innerHeight) {
+            buried = el.textContent?.trim().slice(0, 30) || el.getAttribute('aria-label') || 'a control'
+            break
+          }
+        }
+        return { over, buried }
+      })()`,
+    })
+    const { over = 0, buried = null } = probe.result?.value ?? {}
+    if (over > worstOver) { worstOver = over; worstRoute = label }
+    if (buried && !covered) covered = `${label}: "${buried}"`
+  }
+
+  ok(`    ${w}px — no sideways scroll`, worstOver <= 2,
+     `${worstRoute} overflows by ${worstOver}px`)
+  ok(`    ${w}px — nothing tappable under the tab bar`, !covered, covered ?? '')
+}
+
+await send('Emulation.setDeviceMetricsOverride',
+  { width: 430, height: 900, deviceScaleFactor: 1, mobile: true })
+
 console.log('')
 const evicted = logs.filter(l => /service worker|stale cache/i.test(l))
 if (evicted.length) console.log('  worker log:', evicted[0])
