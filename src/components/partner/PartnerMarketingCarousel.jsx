@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { track, EVENTS } from '../../lib/track'
+import { shareText, shareSaid } from '../../lib/share'
 import PromoDeck from '../home/PromoDeck'
 import { supabase } from '../../lib/supabase'
 import { selectPromotions, rewardLabel } from '../../lib/promotions'
@@ -64,6 +65,8 @@ const ART = {
 export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
   const [rows, setRows] = useState(null)
   const [dismissed, setDismissed] = useState([])
+  const [code, setCode] = useState(null)
+  const [said, setSaid] = useState(null)
 
   useEffect(() => {
     let alive = true
@@ -97,6 +100,11 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
       }
 
       setRows(promos.data ?? [])
+      /* Only needed by a referral card, and cheap enough to fetch
+         alongside rather than on the tap -- a share sheet that takes a
+         round trip to open feels broken. */
+      supabase.from('vendors').select('referral_code').eq('id', vendorId).maybeSingle()
+        .then(({ data }) => { if (alive) setCode(data?.referral_code ?? null) })
       /* A failed dismissal read means we show a card they hid. Better
          than hiding one they have not, which is the other direction. */
       setDismissed(hidden.error ? [] : (hidden.data ?? []).map(d => d.promotion_id))
@@ -109,9 +117,33 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
     const live = selectPromotions(rows, facts, { dismissed })
     return live.map(p => {
       const reward = rewardLabel(p.reward_paise)
+
+      /* ── "Invite partners" must invite, not navigate ──────────────
+         A referral card routed to the profile screen, which is where
+         the code happens to live -- so tapping a button that says
+         "Invite partners" moved the partner to a settings page and
+         left them to work out the rest. It opens the phone's share
+         sheet now, which is what the words promise.
+
+         Only when there IS a code to share. Without one it falls back
+         to the route, rather than opening a sheet with a hole in it. */
+      const shares = p.type === 'referral' && !!code
+
       return {
         key: p.id,
         to: p.cta_route ?? '/dashboard/vendor?tab=account',
+        onAction: shares
+          ? async () => {
+              track(EVENTS.REFERRAL_SHARED, { from: 'carousel' })
+              const res = await shareText({
+                title: 'Join me on Sambramo',
+                text: `Join me on Sambramo as a partner. Use my code ${code} when you sign up.`,
+                dialogTitle: 'Invite a partner',
+              })
+              const msg = shareSaid(res.how)
+              if (msg) { setSaid(msg); setTimeout(() => setSaid(null), 3000) }
+            }
+          : undefined,
         background: GROUND[p.type] ?? GROUND.announcement,
         art: p.icon ?? ART[p.type] ?? ART.announcement,
         eyebrow: p.subtitle ?? null,
@@ -123,7 +155,7 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
         cta: p.cta_label ?? 'Open',
       }
     })
-  }, [rows, facts, dismissed])
+  }, [rows, facts, dismissed, code])
 
   /* Nothing configured, nothing rendered. Not a skeleton either: a
      loading shape for a card that may never exist is a promise of an
@@ -141,6 +173,12 @@ export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
   return (
     <section aria-label="From Sambramo" data-promotions={slides.length}>
       <PromoDeck slides={slides} interval={5500} />
+      {/* The clipboard fallback has to SAY so. A share that silently
+          copies is indistinguishable from a button that does nothing,
+          which is the bug this whole change exists to fix. */}
+      {said && (
+        <p className="mt-1.5 text-center text-[11.5px] font-semibold text-ink-mute">{said}</p>
+      )}
     </section>
   )
 }

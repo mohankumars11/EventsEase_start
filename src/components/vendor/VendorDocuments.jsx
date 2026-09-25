@@ -192,8 +192,30 @@ export default function VendorDocuments({
         />
       )}
 
+      {/* ── `results` is an OBJECT, keyed by requirement id ───────────
+          This read `results.map(...)`, which throws — `evaluateAll`
+          returns `{ results: { [id]: verdict } }`, not an array. So
+          this whole screen has been rendering "Something went wrong"
+          for as long as that line has been there: the one place a
+          partner uploads a document, and the destination of every
+          "Action required" prompt.
+
+          The second half of the same mistake: it destructured
+          `verdict` from each entry, and there is no `verdict` field.
+          The entry IS the verdict — `{ ...res, requirement, row }` —
+          so `verdict` was undefined on every row even when the map
+          worked.
+
+          Driven off `requirements` rather than Object.values(results),
+          because the requirements list is already ordered (identity,
+          then trade, then business) and an object's key order is not
+          something to rely on for what a partner reads top to bottom.
+          Same shape ComplianceStep uses. */}
       <ul className="space-y-2">
-        {results.map(({ requirement, verdict, state }) => (
+        {requirements.map(requirement => {
+          const verdict = results[requirement.id]
+          const state = verdict?.state ?? 'none'
+          return (
           <li key={requirement.id} data-requirement={requirement.id} data-state={state}>
             <button
               type="button"
@@ -226,7 +248,8 @@ export default function VendorDocuments({
               </div>
             )}
           </li>
-        ))}
+          )
+        })}
       </ul>
 
       {error && (

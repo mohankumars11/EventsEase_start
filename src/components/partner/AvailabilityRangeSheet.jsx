@@ -61,7 +61,29 @@ const REASONS = [
   ['other', 'Other'],
 ]
 
+/**
+ * How many days one press may change.
+ *
+ * ── Ninety for anything that CLOSES a day ──────────────────────────
+ * A cap exists because the damage is asymmetric. Blocking six months by
+ * accident takes a partner out of every match until somebody notices,
+ * and they notice by wondering why the phone stopped ringing — which is
+ * the slowest possible feedback loop.
+ *
+ * ── The horizon for OPENING them ───────────────────────────────────
+ * Opening is the opposite. It is what the coverage card on the Calendar
+ * tab asks for in as many words: "open the next 181 days". Truncating
+ * that to 90 would write half of what the button promised and say
+ * nothing about it, which is worse than either number.
+ *
+ * So the cap follows the direction of the change, not the size of it.
+ * A partner opening six months has said something ambitious about their
+ * own availability; a partner blocking six months has said something
+ * that costs them work, and that one still gets stopped at ninety and
+ * told why.
+ */
 const MAX_DAYS = 90
+const MAX_DAYS_OPENING = 190
 
 /* The fourth entry has `status: null`, which every write path already
    reads as "delete these rows". */
@@ -103,6 +125,7 @@ export default function AvailabilityRangeSheet({
   interestByDate = null,
   maxPerDay = 1,
   initialFrom = null,
+  initialTo = null,
   initialMode = 'BLOCKED',
   onSetRange,
   onClearDays,
@@ -110,10 +133,20 @@ export default function AvailabilityRangeSheet({
 }) {
   const today = istTodayISO()
   const start = initialFrom && initialFrom >= today ? initialFrom : today
+  /* ── Both ends, when the caller knows both ─────────────────────────
+     The coverage button on the Calendar tab opens this sheet meaning
+     one specific thing: today through the six-month horizon. Seeding
+     only the start would leave the partner to pick an end date they
+     have already asked for, which is the four-decisions-for-one-
+     intention problem that button exists to remove.
+
+     Still clamped to `start`, so a `to` before the beginning cannot
+     produce a backwards range. */
+  const finish = initialTo && initialTo >= start ? initialTo : start
 
   const [modeId, setModeId] = useState(initialMode)
   const [from, setFrom] = useState(start)
-  const [to, setTo] = useState(start)
+  const [to, setTo] = useState(finish)
   const [slots, setSlots] = useState(2)
   /* Live, because this field has exactly one keystroke of
      meaning and `min`/`max` on a number input are decoration --
@@ -133,8 +166,14 @@ export default function AvailabilityRangeSheet({
      range of dates" arms the destructive choice by default. */
   const mode = MODES.find(m => m.id === modeId) ?? MODES[0]
 
+  /* The cap in force for THIS mode, named once. The truncation notice
+     below prints it, and a message that says "longer than 90 days"
+     while the engine allowed 190 is the exact silent-truncation lie the
+     notice exists to prevent -- just inverted. */
+  const capNow = mode.status === 'OPEN' ? MAX_DAYS_OPENING : MAX_DAYS
+
   const { days, truncated } = useMemo(
-    () => expandRange(from, to, MAX_DAYS), [from, to])
+    () => expandRange(from, to, capNow), [from, to, capNow])
 
   /* Every alert in one call, so the rules live in one file and this
      component only decides where on the screen they go. */
@@ -265,7 +304,7 @@ export default function AvailabilityRangeSheet({
           )}
           {truncated && (
             <p className="rounded-[14px] bg-saffron-50 px-3.5 py-2.5 text-[11.5px] leading-snug text-saffron-900 ring-1 ring-saffron-200">
-              That range is longer than {MAX_DAYS} days. Only the first {MAX_DAYS} will be
+              That range is longer than {capNow} days. Only the first {capNow} will be
               set — do the rest in a second go.
             </p>
           )}

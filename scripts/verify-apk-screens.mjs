@@ -155,7 +155,14 @@ const logs = []
 ws.onmessage = e => {
   const m = JSON.parse(e.data)
   if (m.id && pending.has(m.id)) { pending.get(m.id)(m.result); pending.delete(m.id) }
+  if (m.method === 'Runtime.exceptionThrown') {
+    const d = m.params.exceptionDetails
+    logs.push('UNCAUGHT ' + (d?.exception?.description ?? d?.text ?? 'error'))
+  }
   if (m.method === 'Runtime.consoleAPICalled') {
+    if (m.params.type === 'error') {
+      logs.push('CONSOLE.ERROR ' + m.params.args.map(a => a.value ?? a.description ?? '').join(' '))
+    }
     logs.push(m.params.args.map(a => a.value ?? a.description ?? '').join(' '))
   }
 }
@@ -234,6 +241,7 @@ const TABS = [
    [['Set dates', 'the NEW header button (was "Block dates")'],
     ['Set a range of dates', 'the MERGED tools row (was two rows opening one sheet)'],
     ['Calendar coverage', 'the NEW coverage strip — Jobs said it and Calendar did not'],
+    ['Open the next', 'the NEW one-tap coverage button'],
     ['Available, limited or blocked', 'the row naming all four modes']]],
   ['Earnings', '/dashboard/vendor?tab=earnings',     'apk-tab-earnings.png',
    [['Ready to claim', 'the hero'],
@@ -350,6 +358,88 @@ for (const [needle, why] of [
 
    The bottom nav is checked too: it is `fixed`, so content that ends
    underneath it is unreachable rather than merely ugly. */
+/* ══════════════════════════════════════════════════════════════════
+   A NOTIFICATION HAS TO GO SOMEWHERE
+   ══════════════════════════════════════════════════════════════════
+
+   Asserting that the Notification Center RENDERS says nothing about
+   whether tapping a row does anything. `href` has been written into
+   every notification since migration 125 and was read by no UI at all
+   until recently -- so "the screen exists" and "the screen works" were
+   two very different claims and only one of them was checked.
+
+   This taps a real row and reads `location.search` afterwards. */
+/* ══════════════════════════════════════════════════════════════════
+   EVERY SCREEN IN More, OPENED
+   ══════════════════════════════════════════════════════════════════
+
+   The TABS table above checks a handful of screens by looking for a
+   word on them. That proves the ones it names render; it says nothing
+   about the other six, and "Something went wrong" on a partner's phone
+   is exactly a screen nobody opened here.
+
+   This opens all of them and attributes any error to the screen that
+   produced it, rather than reporting one anonymous console error at the
+   end of the run. */
+console.log('')
+console.log('  Every screen in More opens without throwing')
+
+const SCREENS = ['profile', 'services', 'business', 'area', 'verification',
+                 'bank', 'notifications', 'messages', 'reviews', 'referral',
+                 'help', 'settings', 'terms']
+
+for (const screen of SCREENS) {
+  const before = logs.length
+  await goto(`/dashboard/vendor?tab=account&screen=${screen}`)
+  await sleep(600)
+
+  const fresh = logs.slice(before)
+  const broke = fresh.find(l => /^UNCAUGHT|^CONSOLE\.ERROR|Unhandled render error/i.test(l))
+  const boundary = (await send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `document.body.innerText.includes('Something went wrong')`,
+  })).result?.value
+
+  ok(`    ${screen}`, !broke && !boundary,
+     broke ? broke.slice(0, 120) : 'the error boundary caught something')
+}
+
+console.log('')
+console.log('  A notification goes where it says')
+
+const DEEP = [
+  ['calendar',     'tab=availability'],
+  ['payout',       'tab=earnings'],
+  ['verification', 'screen=verification'],
+]
+
+for (const [kind, expect] of DEEP) {
+  await goto('/dashboard/vendor?tab=account&screen=notifications')
+
+  const tapped = await send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `(() => {
+      const el = document.querySelector('[data-notification="${kind}"]')
+      if (!el) return 'absent'
+      el.click()
+      return 'tapped'
+    })()`,
+  })
+
+  if (tapped.result?.value !== 'tapped') {
+    console.log(`    · no ${kind} notification on this account; skipped`)
+    continue
+  }
+
+  await sleep(1500)
+  const where = (await send('Runtime.evaluate',
+    { returnByValue: true, expression: 'location.search' })).result?.value ?? ''
+
+  ok(`    a ${kind} notification opens ${expect}`,
+     where.includes(expect),
+     `landed on "${where}"`)
+}
+
 console.log('')
 console.log('  Every width a partner actually holds')
 
@@ -426,6 +516,25 @@ await send('Emulation.setDeviceMetricsOverride',
 console.log('')
 const evicted = logs.filter(l => /service worker|stale cache/i.test(l))
 if (evicted.length) console.log('  worker log:', evicted[0])
+
+/* ── Anything that actually threw ──────────────────────────────────
+   A screen can render its assertions and still be throwing underneath:
+   an error inside an effect does not stop the markup, it stops the
+   NEXT thing. "Something went wrong" on a partner's phone starts here
+   and was invisible to this harness until now. */
+const thrown = [...new Set(logs.filter(l =>
+  /^UNCAUGHT|^CONSOLE\.ERROR|Minified React error|Rendered (more|fewer) hooks/i.test(l)))]
+if (thrown.length) {
+  console.log('')
+  console.log(`  ${cross} ${thrown.length} error(s) on the console:`)
+  for (const t of thrown.slice(0, 8)) console.log('      ' + t.slice(0, 180))
+  bad++; ran++
+  fails.push(`${thrown.length} console error(s) — see above`)
+} else {
+  console.log('')
+  console.log(`  ${tick} no console errors on any route`)
+  ran++
+}
 
 ws.close(); browser.kill(); server.close()
 try { rmSync(work, { recursive: true, force: true }) } catch { /* windows holds it */ }

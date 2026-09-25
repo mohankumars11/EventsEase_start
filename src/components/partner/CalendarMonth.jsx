@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 import {
-  CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin,
-  CalendarDays, RotateCw,
+  CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin, CalendarDays, RotateCw, CalendarCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
@@ -299,6 +298,32 @@ export default function CalendarMonth({
               ? `Nothing said about ${coverage.firstBlank.label} yet. Customers plan celebrations months ahead, so the further out you go the more we can match you.`
               : 'Customers plan celebrations months ahead. The further out your calendar goes, the more we can match you.'}
           </p>
+
+          {/* ── The card said what was wrong, not how to fix it ───────
+              A partner reading "5 of 181 days" knows they are behind
+              and still has to work out that the answer is the range
+              sheet, then pick today, pick a date six months out, and
+              choose Available — four decisions to express one
+              intention.
+
+              This is that intention as a button. It opens the range
+              sheet pre-filled from today to the horizon and armed on
+              Available, so the partner confirms rather than composes.
+
+              It deliberately does NOT write on tap. Opening the whole
+              next six months is a real commitment about real Saturdays,
+              and a one-tap version would have partners taking jobs on
+              days they never thought about. The sheet is where the day
+              count, the clash list and the confirm already live. */}
+          <button
+            type="button"
+            data-cover-horizon
+            onClick={() => setRange({ from: todayISO, to: coverage.horizonISO, mode: 'OPEN' })}
+            className="mt-3 inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[13px] font-extrabold text-white transition active:scale-[0.98]"
+          >
+            <CalendarCheck size={14} />
+            Open the next {coverage.targetDays} days
+          </button>
         </section>
       )}
 
@@ -415,6 +440,7 @@ export default function CalendarMonth({
           interestByDate={interestByDate}
           maxPerDay={maxPerDay}
           initialFrom={range.from}
+          initialTo={range.to ?? null}
           initialMode={range.mode}
           onSetRange={onSetRange}
           onClearDays={onClearDays}

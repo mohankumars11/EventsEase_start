@@ -94,9 +94,17 @@ export function useCalendarCoverage({ availability = {}, weeklyRules = [], vendo
       ? Math.round((new Date(`${confirmedThrough}T00:00:00Z`) - new Date(`${todayISO}T00:00:00Z`)) / 86_400_000)
       : 0
 
+    /* The last day of the horizon, as a date rather than a count. The
+       coverage button opens a range sheet and a range sheet needs two
+       ends; deriving it at the call site would put the six-month rule
+       in two places. */
+    const end = new Date(`${todayISO}T00:00:00Z`)
+    end.setUTCMonth(end.getUTCMonth() + CALENDAR_HORIZON_MONTHS)
+
     return {
       ...coverage,
       todayISO,
+      horizonISO: end.toISOString().slice(0, 10),
       coverageDays: coverage.days,
       targetDays: target,
       severity,

@@ -122,12 +122,28 @@ ok('the button prints the day count',
    '"14 to 16" is three days to a person and two to a naive loop')
 ok('every mode words its own button', /cta: n =>/.test(sheet))
 ok('truncation is announced',
-   /truncated && \(/.test(sheet) && /longer than \{MAX_DAYS\} days/.test(sheetSrc),
+   /truncated && \(/.test(sheet) && /longer than \{capNow\} days/.test(sheetSrc),
    'a silent truncation is how somebody blocks 90 days believing they blocked 300')
 ok('the range is expanded by the shared engine, not a local loop',
-   /expandRange\(from, to, MAX_DAYS\)/.test(sheet) &&
+   /expandRange\(from, to, capNow\)/.test(sheet) &&
    !/setUTCDate\(/.test(sheet),
    'a second expansion is a second off-by-one')
+
+/* ── The cap follows the DIRECTION of the change ──────────────────
+   Blocking six months by accident takes a partner out of every match
+   until they notice the phone has stopped ringing, which is the
+   slowest feedback loop there is. Opening six months is what the
+   coverage card asks for in as many words. So closing stays capped at
+   ninety and opening reaches the horizon. */
+ok('closing a range is still capped at 90',
+   /const MAX_DAYS = 90/.test(sheetSrc))
+ok('opening one reaches the six-month horizon',
+   /const MAX_DAYS_OPENING = 19\d/.test(sheetSrc))
+ok('and the cap in force is chosen by the mode',
+   /capNow = mode\.status === 'OPEN' \? MAX_DAYS_OPENING : MAX_DAYS/.test(sheetSrc))
+ok('the truncation notice prints the cap actually applied',
+   /longer than \{capNow\} days/.test(sheetSrc),
+   'saying "90" while the engine allowed 190 is the same lie inverted')
 
 /* ══════════════════════════════════════════════════════════════════ */
 console.log('\nTHE CONFIRM IS ARMED BY RED AND BY NOTHING ELSE\n')

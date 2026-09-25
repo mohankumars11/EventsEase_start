@@ -3,6 +3,7 @@ import { Check, Copy, Share2, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rewardLabel } from '../../lib/promotions'
 import { track, EVENTS } from '../../lib/track'
+import { shareText, shareSaid } from '../../lib/share'
 
 /**
  * Invite other professionals, and see honestly how far off the reward is.
@@ -44,6 +45,7 @@ export default function PartnerReferral({ vendorId }) {
   const [state, setState] = useState(null)
   const [code, setCode] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [said, setSaid] = useState(null)
   const [unavailable, setUnavailable] = useState(false)
 
   useEffect(() => {
@@ -109,14 +111,25 @@ export default function PartnerReferral({ vendorId }) {
   const qualified = state.qualified ?? 0
   const pct = needed ? Math.min(100, Math.round((qualified / needed) * 100)) : 0
 
+  /* ── This used to check `navigator.share` ──────────────────────────
+     Which does not exist inside an Android WebView — the Web Share API
+     is Chrome's, not the WebView component's. So the condition was
+     false every single time in the apk and it silently took the
+     clipboard branch: no sheet, no WhatsApp, no confirmation. A partner
+     tapping "Share your code" got nothing they could see.
+
+     `shareText` bridges to Android's ACTION_SEND through
+     @capacitor/share, which is the thing that actually raises the
+     chooser. See the header of lib/share.js. */
   async function share() {
     track(EVENTS.REFERRAL_SHARED, { has_campaign: !!campaign })
-    const text = `Join me on Sambramo. Use my code ${code} when you sign up.`
-    try {
-      if (navigator.share) { await navigator.share({ text }); return }
-      await navigator.clipboard.writeText(text)
-      setCopied(true); setTimeout(() => setCopied(false), 2000)
-    } catch { /* the partner dismissed the sheet; nothing to say */ }
+    const res = await shareText({
+      title: 'Join me on Sambramo',
+      text: `Join me on Sambramo as a partner. Use my code ${code} when you sign up.`,
+      dialogTitle: 'Invite a partner',
+    })
+    const msg = shareSaid(res.how)
+    if (msg) { setSaid(msg); setTimeout(() => setSaid(null), 3000) }
   }
 
   return (
@@ -160,6 +173,10 @@ export default function PartnerReferral({ vendorId }) {
         >
           <Share2 size={14} /> Share your code
         </button>
+
+        {said && (
+          <p className="mt-2 text-[11.5px] font-semibold text-ink-mute">{said}</p>
+        )}
       </section>
 
       {campaign && (

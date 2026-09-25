@@ -22,6 +22,22 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  *   — Under reduced motion it does not auto-advance at all; the dots still
  *     work, so nothing is unreachable.
  */
+/**
+ * One slide's wrapper: a link when it has a destination, a button when
+ * it has an action.
+ *
+ * Both, deliberately, rather than always a button with a navigate
+ * inside it — a real <Link> is what makes long-press-to-open-in-new-tab
+ * and middle-click work on the web, and the customer home relies on
+ * that.
+ */
+function Slide({ to, onAction, children, ...rest }) {
+  if (onAction) {
+    return <button type="button" onClick={onAction} {...rest}>{children}</button>
+  }
+  return <Link to={to} {...rest}>{children}</Link>
+}
+
 export default function PromoDeck({ slides = [], interval = 5000 }) {
   const items = slides.filter(Boolean)
   const reduced = useReducedMotion()
@@ -59,10 +75,19 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
         onMouseEnter={() => setHeld(true)}
         onMouseLeave={() => setHeld(false)}
       >
-        <Link
+        {/* ── A slide that DOES something, not only goes somewhere ──
+            A referral card whose CTA says "Invite partners" must open
+            the phone's share sheet, and a <Link> can only navigate. So
+            a slide may carry `onAction` instead of `to`, and the
+            wrapper becomes a button.
+
+            `to` stays the default, because every slide on the customer
+            home is a destination and none of them should change. */}
+        <Slide
           key={slide.key}
           to={slide.to}
-          className="animate-fade-in block"
+          onAction={slide.onAction}
+          className="animate-fade-in block w-full text-left"
           style={{ background: slide.background }}
         >
           {/* ── Sizing ────────────────────────────────────────────────
@@ -98,7 +123,7 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
               </span>
             </div>
           </div>
-        </Link>
+        </Slide>
 
         {/* The dot is the artwork; the button around it is the target.
             These were bare 6px buttons — far under Android's 48dp minimum,
