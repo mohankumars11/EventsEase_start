@@ -37,21 +37,21 @@ const CARDS = [
 function CardArt({ id, Icon }) {
   if (id === 'grow') {
     return (
-      <div aria-hidden="true" className="absolute right-3 top-7 h-24 w-24 opacity-95">
+      <div aria-hidden="true" className="absolute right-3 top-7 h-20 w-20 opacity-95">
         <div className="absolute bottom-1 left-1 h-10 w-10 rounded-xl bg-plum-800/90 rotate-[-8deg]" />
         <div className="absolute bottom-1 left-12 h-16 w-9 rounded-xl bg-plum-700/90 rotate-[8deg]" />
-        <TrendingUp className="absolute right-0 top-0 h-16 w-16 text-fuchsia-600" strokeWidth={2.8} />
-        <div className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-fuchsia-600 ring-4 ring-yellow-200/70" />
+        <TrendingUp className="absolute right-0 top-0 h-12 w-12 text-fuchsia-600" strokeWidth={2.8} />
+        <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-fuchsia-600 ring-4 ring-yellow-200/70" />
       </div>
     )
   }
   if (id === 'invite') {
     return (
-      <div aria-hidden="true" className="absolute right-2 top-5 h-28 w-28">
+      <div aria-hidden="true" className="absolute right-2 top-5 h-24 w-24">
         <div className="absolute right-1 top-1 flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-rose-500 shadow-lg">
-          <Gift size={27} strokeWidth={2.4} />
+          <Gift size={23} strokeWidth={2.4} />
         </div>
-        <UsersRound className="absolute bottom-0 left-2 h-16 w-16 text-white/90" strokeWidth={1.8} />
+        <UsersRound className="absolute bottom-0 left-2 h-14 w-14 text-white/90" strokeWidth={1.8} />
         <span className="absolute bottom-1 right-0 h-7 w-7 rounded-full bg-yellow-300 ring-4 ring-white/20" />
       </div>
     )
@@ -92,19 +92,19 @@ export default function PartnerGrowthCarousel({ onGrow, onInvite, onProfile }) {
         {CARDS.map(({ id, eyebrow, title, body, cta, className, icon: Icon }) => (
           <article
             key={id}
-            className={`relative min-w-[90%] snap-start overflow-hidden rounded-[22px] p-4 shadow-[0_10px_26px_rgba(35,10,70,0.12)] ring-1 ring-black/5 ${className}`}
+            className={`relative min-w-[88%] snap-start overflow-hidden rounded-[22px] p-3.5 shadow-[0_8px_22px_rgba(35,10,70,0.10)] ring-1 ring-black/5 ${className}`}
           >
-            <div className="relative z-10 min-h-[184px] pr-24">
+            <div className="relative z-10 min-h-[164px] pr-20">
               <p className="inline-flex rounded-full border border-current/25 bg-white/20 px-2 py-1 text-[9px] font-black uppercase tracking-wide">
                 {eyebrow}
               </p>
-              <h3 className="mt-2 whitespace-pre-line text-[25px] font-black leading-[0.93] tracking-[-0.035em]">{title}</h3>
-              <p className="mt-2 max-w-[230px] text-[11.5px] font-semibold leading-snug opacity-90">{body}</p>
+              <h3 className="mt-2 whitespace-pre-line text-[21px] font-black leading-[0.93] tracking-[-0.035em]">{title}</h3>
+              <p className="mt-2 max-w-[205px] text-[10.5px] font-semibold leading-snug opacity-90">{body}</p>
 
               <button
                 type="button"
                 onClick={() => actions[id]?.()}
-                className="mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-full bg-plum-950 px-4 text-[11.5px] font-black text-white shadow-sm transition active:scale-[0.98]"
+                className="mt-3 inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-plum-950 px-3.5 text-[10.5px] font-black text-white shadow-sm transition active:scale-[0.98]"
               >
                 {cta}
                 <ArrowRight size={14} />
