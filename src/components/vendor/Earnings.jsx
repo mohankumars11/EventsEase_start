@@ -1,158 +1,278 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CloudOff } from 'lucide-react'
+import {
+  ArrowRight, BarChart3, CalendarDays, CheckCircle2, Clock3, FileText,
+  Landmark, Search, ShieldCheck, Sparkles, TrendingUp, WalletCards,
+} from 'lucide-react'
 import { useEarnings } from '../../hooks/useEarnings'
 import { statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
 import { buildRange, hasPriorData } from '../../lib/earningsRange'
 import { earningsSeries } from '../../lib/earningsSeries'
 import { OWED_STATES } from '../../lib/payoutState'
 import ScreenState from '../ui/ScreenState'
-import PayoutHistory from './PayoutHistory'
 import EarningsStatement from './EarningsStatement'
-import EarningsHero from './earnings/EarningsHero'
-import RangeFilter from './earnings/RangeFilter'
-import KpiCards from './earnings/KpiCards'
-import EarningsChart from './earnings/EarningsChart'
-import Donut from './earnings/Donut'
 import BankPanel from './earnings/BankPanel'
 import DocumentsSection from './earnings/DocumentsSection'
-import AdjustmentsPanel from './earnings/AdjustmentsPanel'
-import TransactionDetail from './earnings/TransactionDetail'
-import EarningsMarketingCarousel from './EarningsMarketingCarousel'
-import {
-  TransactionList, TransactionTable, TransactionFilters, filterRows,
-} from './earnings/Transactions'
+import EarningsChart from './earnings/EarningsChart'
+
+const money = paise => `₹${Math.round((Number(paise) || 0) / 100).toLocaleString('en-IN')}`
+
+const promo = [
+  {
+    title: 'EVERY RUPEE. CLEAR AS DAY.',
+    body: 'See your earned, pending and paid money in one place.',
+    action: 'Understand earnings',
+    icon: BarChart3,
+    cls: 'from-[#32105f] via-[#6d28d9] to-[#9b4dff]',
+  },
+  {
+    title: 'KEEP YOUR CALENDAR OPEN.',
+    body: 'Accurate availability helps you get more matching opportunities.',
+    action: 'Set availability',
+    icon: CalendarDays,
+    cls: 'from-[#063f38] via-[#087f6b] to-[#18a779]',
+  },
+  {
+    title: 'FINISH. EARN. GROW.',
+    body: 'Complete more events, get paid on time and grow your business.',
+    action: 'See how it works',
+    icon: TrendingUp,
+    cls: 'from-[#8f240d] via-[#e24a16] to-[#ff8a24]',
+  },
+]
+
+function RangeTabs({ rangeId, onChange }) {
+  const tabs = [
+    ['today', 'Today'],
+    ['week', 'Week'],
+    ['month', 'Month'],
+    ['last-month', 'Last month'],
+    ['fy', 'This year'],
+  ]
+  return (
+    <div className="grid grid-cols-5 gap-1 rounded-[18px] bg-white p-1 shadow-sm ring-1 ring-ink/[0.06]">
+      {tabs.map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className={`min-h-[38px] rounded-full px-1 text-[11px] font-extrabold transition-colors ${
+            rangeId === id ? 'bg-plum-600 text-white shadow-sm' : 'text-ink-soft'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function MiniKpi({ icon: Icon, label, value, sub, tone }) {
+  const tones = {
+    earned: 'bg-[#f7f0ff] text-plum-700',
+    jobs: 'bg-[#eef7ff] text-blue-700',
+    pending: 'bg-[#fff8e9] text-amber-700',
+    paid: 'bg-[#edf9f3] text-emerald-700',
+  }
+  return (
+    <div className="min-h-[92px] rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-ink/[0.05]">
+      <div className="flex items-start gap-2.5">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] ${tones[tone]}`}>
+          <Icon size={20} strokeWidth={2.4} />
+        </span>
+        <div className="min-w-0">
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-[8.5px] font-extrabold uppercase tracking-[0.08em] ${tones[tone]}`}>{label}</span>
+          <p className="mt-1 font-extrabold leading-none text-ink">{value}</p>
+          <p className="mt-1 text-[9.5px] leading-tight text-ink-mute">{sub}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PromoCards({ onCalendar, onWork }) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-center gap-1">
+        <span className="h-1.5 w-5 rounded-full bg-plum-600" />
+        <span className="h-1.5 w-1.5 rounded-full bg-ink/10" />
+        <span className="h-1.5 w-1.5 rounded-full bg-ink/10" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {promo.map((p, i) => {
+          const Icon = p.icon
+          return (
+            <button
+              key={p.title}
+              type="button"
+              onClick={i === 1 ? onCalendar : i === 2 ? onWork : undefined}
+              className={`relative min-h-[142px] overflow-hidden rounded-[16px] bg-gradient-to-br ${p.cls} p-2.5 text-left text-white shadow-sm`}
+            >
+              <Icon className="absolute right-2 bottom-2 h-12 w-12 opacity-25" strokeWidth={1.6} />
+              <p className="relative text-[11px] font-black leading-[1.05]">{p.title}</p>
+              <p className="relative mt-2 text-[8.5px] font-semibold leading-[1.25] text-white/85">{p.body}</p>
+              <span className="absolute bottom-2 left-2.5 right-2.5 inline-flex items-center justify-center rounded-full bg-white px-2 py-1.5 text-[8px] font-extrabold text-plum-800">
+                {p.action} <ArrowRight size={10} className="ml-1" />
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
 
 export default function Earnings({ vendorId, vendor, onAddPayout }) {
   const { jobs, payout, claims, adjustments, loading, error, retry, stale } = useEarnings(vendorId)
   const [params, setParams] = useSearchParams()
   const rangeId = params.get('range') ?? 'month'
-  const openId = params.get('txn')
-  const [filters, setFilters] = useState({ q: '', state: null })
+  const [query, setQuery] = useState('')
 
-  const setParam = useCallback((key, value) => {
-    setParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (value == null) next.delete(key)
-      else next.set(key, value)
-      return next
-    }, { replace: true })
-  }, [setParams])
-
-  const claimBy = useMemo(
-    () => Object.fromEntries((claims ?? []).map(c => [c.line_id, c])), [claims])
   const fy = useMemo(() => financialYear(), [])
   const hasPan = !!payout?.pan
   const annualInr = useMemo(() => annualGrossInr(jobs, fy), [jobs, fy])
   const range = useMemo(() => buildRange(rangeId), [rangeId])
   const hasPrev = useMemo(() => hasPriorData(jobs, range), [jobs, range])
+  const claimBy = useMemo(() => Object.fromEntries((claims ?? []).map(c => [c.line_id, c])), [claims])
   const series = useMemo(
     () => earningsSeries(jobs, range, { hasPan, annualGrossInr: annualInr, claimBy, hasPrev }),
-    [jobs, range, hasPan, annualInr, claimBy, hasPrev])
+    [jobs, range, hasPan, annualInr, claimBy, hasPrev],
+  )
   const fyStatement = useMemo(
     () => statement(jobs, { fy, hasPan, annualGrossInr: annualInr }),
-    [jobs, fy, hasPan, annualInr])
+    [jobs, fy, hasPan, annualInr],
+  )
 
   const ready = series.byState.ready ?? { net: 0, count: 0 }
   const owedJobs = OWED_STATES.reduce((n, s) => n + (series.byState[s]?.count ?? 0), 0)
-
-  const visible = useMemo(() => (
-    filterRows(series.rows, filters)
-      .filter(e => e.state !== 'cancelled')
-      .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
-  ), [series.rows, filters])
-
-  const open = useMemo(
-    () => series.rows.find(e => e.row.line_id === openId) ?? null,
-    [series.rows, openId])
-
-  if (loading) return <ScreenState loading rows={4} what="your earnings" />
-  if (error && jobs.length === 0) {
-    return <ScreenState error what="your earnings" onRetry={retry} />
-  }
-
-  const detail = open && (
-    <TransactionDetail
-      entry={open}
-      claim={claimBy[open.row.line_id] ?? null}
-      payout={payout}
-      partner={vendor ?? {}}
-      hasPan={hasPan}
-      annualGrossInr={annualInr}
-      adjustments={(adjustments ?? []).filter(a => a.line_id === open.row.line_id)}
-      onClaimed={retry}
-      onClose={() => setParam('txn', null)}
-    />
+  const visibleJobs = useMemo(
+    () => series.rows
+      .filter(x => x.state !== 'cancelled')
+      .filter(x => !query || [x.row.occasion_name, x.row.area_label, x.row.service_name, x.row.trade]
+        .filter(Boolean).join(' ').toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? ''))),
+    [series.rows, query],
   )
 
+  if (loading) return <ScreenState loading rows={4} what="your earnings" />
+  if (error && jobs.length === 0) return <ScreenState error what="your earnings" onRetry={retry} />
+
+  const destination = payout?.account_number
+    ? `Account ending ${String(payout.account_number).slice(-4)}`
+    : 'your bank account'
+
   return (
-    <div className="space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0">
+    <div className="space-y-2.5 pb-4">
       {stale && (
-        <div className="flex items-start gap-2 rounded-[16px] bg-saffron-400/10 px-3.5 py-2.5 ring-1 ring-saffron-300/50 lg:col-span-12">
-          <CloudOff size={14} className="mt-0.5 shrink-0 text-saffron-800" />
-          <p className="text-[12px] font-semibold leading-snug text-saffron-800">
-            Showing your last known figures. We could not refresh just now.{' '}
-            <button type="button" onClick={retry} className="underline underline-offset-2">Try again</button>
-          </p>
+        <div className="rounded-[14px] bg-saffron-400/10 px-3 py-2 text-[11px] font-semibold text-saffron-800 ring-1 ring-saffron-300/50">
+          Showing your last known figures. <button type="button" onClick={retry} className="underline">Try again</button>
         </div>
       )}
 
-      <div className="space-y-3.5 lg:col-span-8">
-        <div className="lg:hidden">
-          <EarningsHero readyPaise={ready.net} readyCount={ready.count} payout={payout} onAddPayout={onAddPayout} />
+      {/* Reference-design hero */}
+      <section className="relative min-h-[158px] overflow-hidden rounded-[20px] bg-gradient-to-br from-[#32105f] via-[#5c18b5] to-[#7b2cff] px-4 py-3.5 text-white shadow-sm">
+        <div className="absolute -right-5 top-3 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute right-5 top-10 flex h-20 w-24 items-center justify-center rounded-[20px] border border-white/25 bg-white/10 shadow-[0_15px_40px_rgba(0,0,0,.2)]">
+          <WalletCards size={48} className="text-white/90" strokeWidth={1.5} />
+          <span className="absolute -right-2 -bottom-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[18px] font-black text-plum-700 shadow-lg">₹</span>
         </div>
-
-        <RangeFilter range={range} onChange={id => setParam('range', id)} />
-        <KpiCards kpis={series.kpis} range={range} owedJobs={owedJobs} />
-
-        <section id="earnings-over-time">
-          <EarningsChart series={series.series} range={range} />
-        </section>
-
-        <EarningsMarketingCarousel />
-
-        <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <h2 className="text-[13.5px] font-extrabold text-ink">Earnings by service</h2>
-          <p className="mb-3 text-[11px] text-ink-mute">{range.label}</p>
-          <Donut slices={series.byTrade} total={series.kpis.earned.value} centreLabel={range.label} />
-        </section>
-
-        <section id="your-work" className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <div className="mb-2.5 flex items-baseline justify-between gap-2">
-            <h2 className="text-[13.5px] font-extrabold text-ink">Your work</h2>
-            <p className="text-[11px] text-ink-mute">{visible.length} {visible.length === 1 ? 'job' : 'jobs'}</p>
+        <div className="relative">
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/75">Ready to claim</p>
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-2.5 py-1 text-[8.5px] font-bold">
+              <ShieldCheck size={11} /> Payouts go directly to your bank
+            </span>
           </div>
-          <TransactionFilters rows={series.rows} value={filters} onChange={setFilters} />
-          <div className="mt-3 lg:hidden"><TransactionList rows={visible} onOpen={id => setParam('txn', id)} /></div>
-          <div className="mt-3 hidden lg:block"><TransactionTable rows={visible} onOpen={id => setParam('txn', id)} /></div>
-        </section>
-
-        <div className="lg:hidden">
-          <PayoutHistory claims={claims} jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))} hasPan={hasPan} annualGrossInr={annualInr} />
+          <p className="mt-1 font-serif text-[31px] font-extrabold leading-none">{money(ready.net)}</p>
+          <p className="mt-1.5 max-w-[230px] text-[10.5px] font-semibold leading-snug text-white/80">
+            {ready.net > 0 ? `${ready.count} completed ${ready.count === 1 ? 'job' : 'jobs'} are ready.` : 'Nothing is claimable yet. Money becomes yours a day after the event.'}
+          </p>
+          <div className="absolute left-0 right-0 bottom-0 flex items-center gap-1.5 border-t border-white/15 pt-2 text-[10px] text-white/75">
+            <Landmark size={12} />
+            <span>Paid straight to {destination}</span>
+            <ArrowRight size={11} className="ml-auto" />
+          </div>
         </div>
-        <EarningsStatement statement={fyStatement} />
+      </section>
+
+      <RangeTabs rangeId={rangeId} onChange={id => setParams(prev => { const n = new URLSearchParams(prev); n.set('range', id); return n }, { replace: true })} />
+
+      <div className="grid grid-cols-2 gap-2.5">
+        <MiniKpi icon={BarChart3} label="Earned" value={money(series.kpis.earned.value)} sub={`Net · ${range.label}`} tone="earned" />
+        <MiniKpi icon={CalendarDays} label="Jobs done" value={series.kpis.jobs.value} sub="Completed in this range" tone="jobs" />
+        <MiniKpi icon={Clock3} label="Pending" value={money(series.kpis.pending.value)} sub={owedJobs ? `${owedJobs} jobs across all time` : 'Nothing owed right now'} tone="pending" />
+        <MiniKpi icon={WalletCards} label="Paid out" value={money(series.kpis.paid.value)} sub="Sent to your account" tone="paid" />
       </div>
 
-      <div className="space-y-3.5 lg:col-span-4 lg:sticky lg:top-4">
-        <div className="hidden lg:block">
-          <EarningsHero readyPaise={ready.net} readyCount={ready.count} payout={payout} onAddPayout={onAddPayout} />
+      <EarningsChart series={series.series} range={range} />
+
+      <PromoCards
+        onCalendar={() => setParams(prev => { const n = new URLSearchParams(prev); n.set('tab', 'availability'); n.delete('range'); return n }, { replace: true })}
+        onWork={() => document.getElementById('your-work')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
+
+      <section className="rounded-[18px] bg-white p-3.5 shadow-sm ring-1 ring-ink/[0.06]">
+        <div className="flex items-center gap-2">
+          <BarChart3 size={18} className="text-plum-600" />
+          <div>
+            <h2 className="text-[13px] font-extrabold text-ink">Earnings by service</h2>
+            <p className="text-[10px] text-ink-mute">{range.label}</p>
+          </div>
         </div>
-        {detail}
-        {!open && (
-          <>
-            <div className="hidden lg:block">
-              <PayoutHistory claims={claims} jobsByLine={Object.fromEntries(jobs.map(j => [j.line_id, j]))} hasPan={hasPan} annualGrossInr={annualInr} />
-            </div>
-            <AdjustmentsPanel adjustments={(adjustments ?? []).filter(a => !a.line_id)} />
-            <BankPanel payout={payout} onAddPayout={onAddPayout} />
-            <DocumentsSection statement={fyStatement} fy={fy} partner={vendor ?? {}} />
-          </>
+        {series.byTrade.length === 0 ? (
+          <div className="mt-3 flex min-h-[62px] items-center justify-center rounded-[14px] bg-[#faf8ff] text-center text-[10.5px] text-ink-mute">
+            <span><Sparkles size={15} className="mx-auto mb-1 text-plum-600" />Nothing in this range yet. Your trades appear here once a job in the window has been paid for.</span>
+          </div>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {series.byTrade.slice(0, 4).map(item => (
+              <li key={item.trade} className="flex items-center gap-2 text-[10.5px]">
+                <span className="h-2.5 w-2.5 rounded-full bg-plum-500" />
+                <span className="min-w-0 flex-1 truncate font-semibold">{item.trade}</span>
+                <span className="font-extrabold">{money(item.net)}</span>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </section>
+
+      <section id="your-work" className="rounded-[18px] bg-white p-3.5 shadow-sm ring-1 ring-ink/[0.06]">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText size={18} className="text-plum-600" />
+            <h2 className="text-[13px] font-extrabold">Your work</h2>
+          </div>
+          <span className="text-[10px] text-ink-mute">{visibleJobs.length} jobs</span>
+        </div>
+        <div className="flex h-9 items-center gap-2 rounded-[12px] bg-ink/[0.035] px-2.5 ring-1 ring-ink/[0.05]">
+          <Search size={14} className="text-ink-mute" />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a job, occasion or area" className="min-w-0 flex-1 bg-transparent text-[11px] outline-none placeholder:text-ink-mute" />
+        </div>
+        <div className="mt-2 space-y-1.5">
+          {visibleJobs.slice(0, 4).map(x => (
+            <div key={x.row.line_id} className="flex items-center gap-2 rounded-[12px] bg-[#faf9fd] px-2.5 py-2">
+              <CheckCircle2 size={15} className="text-emerald-600" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[10.5px] font-extrabold">{x.row.occasion_name || x.row.service_name || x.row.trade || 'Job'}</p>
+                <p className="truncate text-[9px] text-ink-mute">{x.row.area_label || x.date || 'Completed job'}</p>
+              </div>
+              <span className="text-[10.5px] font-extrabold">{money(x.money.netPaise)}</span>
+            </div>
+          ))}
+          {visibleJobs.length === 0 && <div className="py-3 text-center text-[10.5px] text-ink-mute">No jobs match this filter.</div>}
+        </div>
+      </section>
+
+      <EarningsStatement statement={fyStatement} />
+
+      <BankPanel payout={payout} onAddPayout={onAddPayout} />
+      <DocumentsSection statement={fyStatement} fy={fy} partner={vendor ?? {}} />
 
       {jobs.length === 0 && (
-        <div className="lg:col-span-12">
-          <ScreenState empty title="No earnings yet" message="Keep your list and your calendar current — that is what decides how often you are matched." />
+        <div className="rounded-[18px] bg-[#faf8ff] px-4 py-3 text-center ring-1 ring-plum-100">
+          <Sparkles size={18} className="mx-auto text-plum-600" />
+          <p className="mt-1 text-[12px] font-extrabold text-ink">No earnings yet</p>
+          <p className="text-[10px] text-ink-mute">Keep your list and your calendar current — that is what decides how often you are matched.</p>
         </div>
       )}
     </div>
