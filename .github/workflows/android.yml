@@ -57,7 +57,7 @@ name: Android APKs
 on:
   workflow_dispatch:          # the button. This is how you get an APK.
   push:
-    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt]
+    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926]
     # Only when something that affects the native shell changes. A copy
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
