@@ -162,74 +162,184 @@ export default function CalendarMonth({
   }
 
   return (
-    <div className="space-y-3">
-      <header className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-[19px] font-extrabold leading-tight text-ink">Calendar</h2>
-          <p className="mt-0.5 text-[12.5px] leading-snug text-ink-mute">
-            Manage your availability, block dates and stay in control of your bookings.
-          </p>
-        </div>
-        {/* Was "Block dates", and that was the whole bias: the only bulk
-            action the calendar offered was the one that stops work. */}
-        <button
-          type="button" onClick={() => setRange({ from: null, mode: 'OPEN' })}
-          className="flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-plum-700 px-4 text-[12.5px] font-extrabold text-white"
-        >
-          <CalendarPlus size={14} /> Set dates
-        </button>
-      </header>
+    <div className="space-y-3 pb-2">
+      {/* Futuristic calendar header — same actions, clearer first-time experience. */}
+      <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-4 pt-4 text-white shadow-[0_14px_34px_rgba(63,25,130,0.22)]">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-fuchsia-400/20 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-12 right-10 h-24 w-24 rounded-full bg-violet-300/15 blur-2xl" />
 
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200">SAMBRAMO PARTNER</p>
+            <h1 className="mt-1 text-[26px] font-black leading-none tracking-[-0.03em]">Calendar</h1>
+            <p className="mt-2 max-w-[250px] text-[11.5px] font-medium leading-snug text-white/75">
+              Tell us when you can work. We will use it when matching your next event.
+            </p>
+          </div>
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] bg-white/10 ring-1 ring-white/15">
+            <CalendarDays size={34} className="text-violet-100" />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setRange({ from: null, mode: 'OPEN' })}
+          className="relative mt-4 flex min-h-[48px] w-full items-center gap-3 rounded-[17px] bg-white px-3.5 text-left text-plum-950 shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition active:scale-[0.99]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-violet-100 text-violet-700">
+            <CalendarPlus size={18} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px] font-black">Set your dates</span>
+            <span className="block text-[10.5px] font-semibold text-ink-mute">Available, limited or blocked — a few taps.</span>
+          </span>
+          <ChevronRight size={18} className="shrink-0 text-violet-700" />
+        </button>
+      </section>
+
+      {/* One clear switch between the three existing calendar views. */}
       <div className="flex items-center gap-2">
-        <div className="grid flex-1 grid-cols-3 gap-1 rounded-full bg-ink/[0.05] p-1">
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 rounded-full bg-ink/[0.055] p-1">
           {VIEWS.map(([id, label]) => (
             <button
-              key={id} type="button" onClick={() => setView(id)}
+              key={id}
+              type="button"
+              onClick={() => setView(id)}
               aria-pressed={view === id}
-              className={`min-h-[34px] rounded-full text-[12.5px] font-extrabold transition ${
-                view === id ? 'bg-plum-700 text-white' : 'text-ink-soft'}`}
+              className={[
+                'min-h-[38px] rounded-full text-[12.5px] font-black transition active:scale-[0.99]',
+                view === id ? 'bg-plum-700 text-white shadow-sm' : 'text-ink-soft',
+              ].join(' ')}
             >
               {label}
             </button>
           ))}
         </div>
         <button
-          type="button" onClick={goToday}
-          className="min-h-[36px] shrink-0 rounded-full bg-white px-3.5 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
+          type="button"
+          onClick={goToday}
+          className="min-h-[40px] shrink-0 rounded-full bg-white px-3.5 text-[12px] font-black text-plum-700 ring-1 ring-plum-200"
         >
           Today
         </button>
       </div>
 
-      {/* An availability read that failed must say so. Without this the
-          month renders every date as "Not set" — an empty calendar the
-          partner has already filled in. */}
       {availabilityError && (
-        <p className="flex items-start gap-2 rounded-[16px] bg-rose-50 px-3.5 py-3 text-[12px] font-bold leading-snug text-rose-800 ring-1 ring-rose-200">
+        <p className="flex items-start gap-2 rounded-[16px] bg-rose-50 px-3.5 py-3 text-[11.5px] font-bold leading-snug text-rose-800 ring-1 ring-rose-200">
           <RotateCw size={14} className="mt-px shrink-0" />
-          Your marked days could not be loaded, so this month may be incomplete.
-          Nothing has been lost — pull down to try again.
+          Your marked days could not be loaded, so this month may be incomplete. Nothing has been lost — try again.
         </p>
       )}
 
-      <ScreenState
-        loading={loading} error={error} onRetry={retry} what="your calendar" rows={4}
-      >
+      <ScreenState loading={loading} error={error} onRetry={retry} what="your calendar" rows={4}>
         {view === 'month' && (
-          <div className="space-y-3">
-            <MonthGrid
-              jobs={jobs}
-              availability={availability}
-              weeklyRules={weeklyRules}
-              conflicts={conflicts}
-              maxPerDay={maxPerDay}
-              selected={selected}
-              onSelect={setSelected}
-              cursor={cursor}
-              onCursor={setCursor}
-            />
-            <CalendarLegend />
-          </div>
+          <section className="overflow-hidden rounded-[24px] bg-white p-3 shadow-[0_8px_24px_rgba(42,8,92,0.07)] ring-1 ring-ink/[0.06]">
+            <div className="mb-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
+                disabled={cursor.getFullYear() === new Date(`${todayISO}T00:00:00Z`).getUTCFullYear() && cursor.getMonth() === new Date(`${todayISO}T00:00:00Z`).getUTCMonth()}
+                aria-label="Previous month"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.035] text-ink-soft disabled:opacity-30"
+              >
+                <span className="text-xl leading-none">‹</span>
+              </button>
+              <button
+                type="button"
+                onClick={goToday}
+                className="text-center"
+                aria-label="Return to current month"
+              >
+                <p className="text-[16px] font-black tracking-[-0.02em] text-ink">
+                  {new Date(`${todayISO}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                </p>
+                <p className="mt-0.5 text-[9.5px] font-bold text-ink-mute">Tap to return to today</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
+                aria-label="Next month"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.035] text-ink-soft"
+              >
+                <span className="text-xl leading-none">›</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {['S','M','T','W','T','F','S'].map((d, i) => (
+                <div key={`${d}-${i}`} className="py-1 text-center text-[9px] font-black uppercase tracking-wide text-ink-faint">{d}</div>
+              ))}
+            </div>
+
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {(() => {
+                const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
+                const total = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()
+                const pad = first.getDay()
+                const grid = Array.from({ length: pad }, () => null)
+                for (let d = 1; d <= total; d++) grid.push(new Date(cursor.getFullYear(), cursor.getMonth(), d))
+                while (grid.length % 7 !== 0) grid.push(null)
+                return grid.map((date, i) => {
+                  if (!date) return <div key={`blank-${i}`} className="aspect-square" />
+                  const iso = date.toISOString().slice(0, 10)
+                  const isPast = iso < todayISO
+                  const isToday = iso === todayISO
+                  const jobsOnDay = byDay[iso] ?? []
+                  const v = dayStatus({
+                    dateISO: iso,
+                    row: availability[iso] ?? null,
+                    weeklyRules,
+                    jobsOnDay,
+                    maxPerDay,
+                    todayISO,
+                  })
+                  const severity = conflicts[iso]
+                  const status = v.status
+                  const styles = {
+                    [STATUS.OPEN]: 'bg-emerald-50 text-emerald-900 ring-emerald-200',
+                    [STATUS.LIMITED]: 'bg-amber-50 text-amber-900 ring-amber-200',
+                    [STATUS.BOOKED]: 'bg-violet-50 text-violet-900 ring-violet-200',
+                    [STATUS.BLOCKED]: 'bg-ink/[0.06] text-ink-soft ring-ink/[0.12]',
+                    [STATUS.UNSET]: 'bg-white text-ink-mute ring-ink/[0.07]',
+                  }[status] ?? 'bg-white text-ink-mute ring-ink/[0.07]'
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => setSelected(iso)}
+                      aria-label={`${date.toDateString()} — ${status}${v.reason ? ` — ${v.reason}` : ''}`}
+                      className={[
+                        'relative flex aspect-square min-h-[46px] flex-col items-center justify-center rounded-[14px] ring-1 transition active:scale-[0.97]',
+                        styles,
+                        isPast ? 'opacity-35' : 'hover:ring-plum-300',
+                        isToday ? 'ring-2 ring-plum-500 ring-offset-1' : '',
+                      ].join(' ')}
+                    >
+                      <span className={`text-[13px] font-black leading-none ${isToday ? 'text-plum-700' : ''}`}>{date.getDate()}</span>
+                      <span className="mt-1 max-w-full truncate px-0.5 text-[7.5px] font-extrabold leading-none opacity-70">
+                        {status === STATUS.OPEN ? 'Open'
+                          : status === STATUS.LIMITED ? `${v.remaining ?? rowSlots(availability[iso])} left`
+                          : status === STATUS.BOOKED ? 'Booked'
+                          : status === STATUS.BLOCKED ? 'Blocked'
+                          : 'Not set'}
+                      </span>
+                      {jobsOnDay.length > 0 && (
+                        <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-violet-600" />
+                      )}
+                      {severity && severity !== 'ok' && (
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-rose-500" />
+                      )}
+                    </button>
+                  )
+                })
+              })()}
+            </div>
+
+            <div className="mt-3">
+              <CalendarLegend />
+            </div>
+          </section>
         )}
 
         {view === 'week' && (
@@ -247,79 +357,49 @@ export default function CalendarMonth({
       </ScreenState>
 
       {!configured && !loading && !error && (
-        <div className="rounded-[22px] bg-plum-50 px-5 py-5 text-center ring-1 ring-plum-100">
-          <p className="text-[13.5px] font-extrabold text-ink">Your calendar isn't set up yet.</p>
-          <p className="mx-auto mt-1 max-w-[34ch] text-[12.5px] leading-relaxed text-ink-mute">
-            Tell us the days you normally work and we will stop offering you jobs on the
-            days you don't.
+        <div className="rounded-[22px] bg-gradient-to-br from-violet-50 to-white px-5 py-5 text-center ring-1 ring-violet-100">
+          <p className="text-[13.5px] font-black text-ink">Your calendar isn't set up yet.</p>
+          <p className="mx-auto mt-1 max-w-[34ch] text-[12px] leading-relaxed text-ink-mute">
+            Tell us the days you normally work and we will stop offering you jobs on the days you don't.
           </p>
           <button
-            type="button" onClick={() => setRecurring(true)}
-            className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-plum-700 px-5 text-[13px] font-extrabold text-white"
+            type="button"
+            onClick={() => setRecurring(true)}
+            className="mt-3 inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-plum-700 px-5 text-[13px] font-black text-white"
           >
             Set your availability
           </button>
         </div>
       )}
 
-      {/* ── Coverage, on the screen where it can be fixed ─────────────
-          The Jobs tab has told partners their calendar stops on the 30th
-          since the six-month card landed. Tapping through to the
-          Calendar — the one place the thing can be changed — showed no
-          mention of it at all, so the partner arrived with a problem and
-          no indication of where it was.
-
-          Same hook as that card, so the two cannot disagree by a day. */}
       {coverage.severity !== 'ok' && (
         <section
           data-coverage={coverage.severity}
-          className="rounded-[22px] bg-white p-3.5 ring-1 ring-ink/[0.06]"
+          className="rounded-[22px] bg-white p-3.5 shadow-[0_6px_18px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]"
         >
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
-              Calendar coverage
-            </p>
-            <p className="text-[11.5px] font-extrabold tabular-nums text-ink-soft">
-              {coverage.coverageDays} of {coverage.targetDays} days
-            </p>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Calendar coverage</p>
+              <p className="mt-0.5 text-[12px] font-extrabold text-ink-soft">{coverage.coverageDays} of {coverage.targetDays} days ready</p>
+            </div>
+            <p className="text-[11px] font-black text-plum-700">{Math.round(coverage.fraction * 100)}%</p>
           </div>
-
-          <span className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.07]">
+          <span className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-ink/[0.07]">
             <span
-              className={`h-full rounded-full ${
-                coverage.severity === 'thin' ? 'bg-saffron-400' : 'bg-plum-600'
-              }`}
+              className={`h-full rounded-full ${coverage.severity === 'thin' ? 'bg-saffron-400' : 'bg-plum-600'}`}
               style={{ width: `${Math.max(2, Math.round(coverage.fraction * 100))}%` }}
             />
           </span>
-
-          <p className="mt-2 text-[12px] leading-snug text-ink-mute">
+          <p className="mt-2 text-[11.5px] leading-snug text-ink-mute">
             {coverage.firstBlank
               ? `Nothing said about ${coverage.firstBlank.label} yet. Customers plan celebrations months ahead, so the further out you go the more we can match you.`
               : 'Customers plan celebrations months ahead. The further out your calendar goes, the more we can match you.'}
           </p>
-
-          {/* ── The card said what was wrong, not how to fix it ───────
-              A partner reading "5 of 181 days" knows they are behind
-              and still has to work out that the answer is the range
-              sheet, then pick today, pick a date six months out, and
-              choose Available — four decisions to express one
-              intention.
-
-              This is that intention as a button. It opens the range
-              sheet pre-filled from today to the horizon and armed on
-              Available, so the partner confirms rather than composes.
-
-              It deliberately does NOT write on tap. Opening the whole
-              next six months is a real commitment about real Saturdays,
-              and a one-tap version would have partners taking jobs on
-              days they never thought about. The sheet is where the day
-              count, the clash list and the confirm already live. */}
           <button
             type="button"
             data-cover-horizon
             onClick={() => setRange({ from: todayISO, to: coverage.horizonISO, mode: 'OPEN' })}
-            className="mt-3 inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[13px] font-extrabold text-white transition active:scale-[0.98]"
+            className="mt-3 inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[12.5px] font-black text-white"
           >
             <CalendarCheck size={14} />
             Open the next {coverage.targetDays} days
@@ -328,81 +408,65 @@ export default function CalendarMonth({
       )}
 
       <section>
-        <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
-          Availability tools
-        </p>
-        <div className="overflow-hidden rounded-[22px] bg-white ring-1 ring-ink/[0.06]">
-          {/* ── One door, not two ─────────────────────────────────────
-              There were two rows here, one naming the opening direction
-              and one naming the closing one. Both opened the SAME sheet
-              and differed only in which mode it started on -- and that
-              sheet carries a four-way picker across the top, so
-              whichever row you pressed, the first thing you saw was the
-              choice you had supposedly just made.
-
-              They were not two tools. They were one tool listed twice,
-              each time under half its name -- which also hid the two
-              modes NEITHER row mentioned (capping a day, and clearing
-              days back to the standing week) behind labels that gave no
-              hint they existed. */}
-          <Tool icon={CalendarRange} title="Set a range of dates"
-                hint="Available, limited or blocked — e.g. 25 Sep to 31 Oct"
-                onClick={() => setRange({ from: null, mode: null })} />
-          <Tool icon={Repeat} title="Set your usual week"
-                hint="E.g. never on Sundays" onClick={() => setRecurring(true)} />
-          {/* Honest rather than aspirational: there is no Google
-              integration in this codebase — no OAuth, no client, nothing.
-              A button that looked live would be a promise the app cannot
-              keep the first time somebody pressed it. */}
-          <Tool icon={CalendarDays} title="Sync Google Calendar"
-                hint="Coming soon" disabled />
+        <div className="mb-1.5 flex items-center justify-between px-0.5">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Availability tools</p>
+            <p className="mt-0.5 text-[11px] text-ink-mute">Set your routine once, or change a group of dates.</p>
+          </div>
+          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[9.5px] font-black text-violet-700">Quick actions</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <ToolCard icon={CalendarRange} title="Set a range" hint="Open, limited or blocked" onClick={() => setRange({ from: null, mode: null })} />
+          <ToolCard icon={Repeat} title="Usual week" hint="Set days you normally work" onClick={() => setRecurring(true)} />
+          <ToolCard icon={CalendarDays} title="Google Calendar" hint="Coming soon" disabled />
+          <ToolCard icon={ZapIcon} title="Busy next 7 days" hint="Block seven days" onClick={() => bulkBlock(7)} />
         </div>
       </section>
 
       <section>
-        <div className="mb-1.5 flex items-baseline justify-between gap-2">
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
-            Upcoming bookings
-          </p>
+        <div className="mb-1.5 flex items-end justify-between px-0.5">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Upcoming bookings</p>
+            <p className="mt-0.5 text-[11px] text-ink-mute">{upcoming.length ? `${upcoming.length} upcoming event${upcoming.length === 1 ? '' : 's'}` : 'Nothing booked yet'}</p>
+          </div>
           {upcoming.length > 0 && (
-            <button type="button" onClick={() => setView('list')}
-                    className="text-[11.5px] font-extrabold text-plum-700">
-              View all
-            </button>
+            <button type="button" onClick={() => setView('list')} className="text-[11px] font-black text-plum-700">View all <ChevronRight size={13} className="inline" /></button>
           )}
         </div>
         {upcoming.length === 0 ? (
-          <p className="rounded-[18px] bg-ink/[0.02] px-4 py-5 text-center text-[12.5px] text-ink-mute">
-            No upcoming bookings.
-          </p>
+          <div className="rounded-[20px] bg-white px-4 py-5 ring-1 ring-ink/[0.06]">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-violet-50 text-violet-700">
+                <CalendarCheck size={18} />
+              </span>
+              <div>
+                <p className="text-[12.5px] font-black text-ink">No upcoming bookings</p>
+                <p className="mt-0.5 text-[11px] text-ink-mute">Accepted events will appear here automatically.</p>
+              </div>
+            </div>
+          </div>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {upcoming.map(j => (
               <li key={j.line_id}>
                 <button
-                  type="button" onClick={() => setSelected(j.event_date)}
-                  className="flex w-full items-center gap-3 rounded-[18px] bg-white px-3.5 py-3 text-left ring-1 ring-ink/[0.06]"
+                  type="button"
+                  onClick={() => setSelected(j.event_date)}
+                  className="flex w-full items-center gap-3 rounded-[18px] bg-white px-3.5 py-3 text-left shadow-[0_4px_16px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]"
                 >
-                  <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[14px] bg-plum-50 text-plum-800">
-                    <span className="text-[14px] font-extrabold leading-none">
+                  <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[14px] bg-violet-50 text-violet-800">
+                    <span className="text-[14px] font-black leading-none">
                       {new Date(`${j.event_date}T00:00:00Z`).getUTCDate()}
                     </span>
                     <span className="text-[9px] font-bold uppercase leading-none">
-                      {new Date(`${j.event_date}T00:00:00Z`).toLocaleDateString('en-IN',
-                        { month: 'short', timeZone: 'UTC' })}
+                      {new Date(`${j.event_date}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'short', timeZone: 'UTC' })}
                     </span>
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-extrabold text-ink">
-                      {j.occasion_name ?? j.service_name ?? 'Booking'}
-                    </span>
-                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-ink-mute">
+                    <span className="block truncate text-[12.5px] font-black text-ink">{j.occasion_name ?? j.service_name ?? 'Booking'}</span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10.5px] text-ink-mute">
                       {j.time_note && <span>{j.time_note}</span>}
-                      {j.area_label && (
-                        <span className="inline-flex items-center gap-0.5">
-                          <MapPin size={10} />{j.area_label}
-                        </span>
-                      )}
+                      {j.area_label && <span className="inline-flex items-center gap-0.5"><MapPin size={10} />{j.area_label}</span>}
                     </span>
                   </span>
                   <ChevronRight size={16} className="shrink-0 text-ink-faint" />
@@ -424,9 +488,6 @@ export default function CalendarMonth({
           onSetDay={onSetDay}
           onClearDay={iso => onClearDays([iso])}
           interestOnDay={interestByDate.get(selected) ?? null}
-          /* Tapping a date and wanting "and the six days after it" is the
-             commonest thing a partner does next. The day sheet closes and
-             hands its date over as the start of the range. */
           onApplyToRange={mode => { setRange({ from: selected, mode }); setSelected(null) }}
           onClose={() => setSelected(null)}
         />
