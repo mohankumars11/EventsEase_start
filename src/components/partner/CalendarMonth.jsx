@@ -170,7 +170,7 @@ export default function CalendarMonth({
         <div className="pointer-events-none absolute -left-16 top-12 h-28 w-40 -rotate-[24deg] rounded-[48px] bg-violet-300/10 blur-xl" />
 
         <div className="relative flex min-h-[92px] items-start justify-between gap-3">
-          <div className="min-w-0 pt-0.5">
+          <div className="min-w-0 pt-1">
             <h1 className="text-[27px] font-black leading-none tracking-[-0.04em]">Calendar</h1>
             <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-white/80">
               Manage your availability, block dates and stay in control of your bookings.
