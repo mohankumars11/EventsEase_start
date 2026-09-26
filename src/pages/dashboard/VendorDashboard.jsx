@@ -457,6 +457,16 @@ export default function VendorDashboard() {
           extended={vendor?.review_extended ?? 0}
           note={vendor?.review_note}
           onOpenCalendar={() => setTab('availability')}
+          /* ── The listings actually under review ────────────────────
+             Straight to the services screen, which is where they live.
+             The count and the names come from the listings this tab
+             already holds, so the card costs no extra request -- and a
+             partner with nothing listed gets no button rather than one
+             that opens an empty screen. */
+          listingCount={services?.length ?? 0}
+          listingNames={(services ?? [])
+            .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
+          onOpenListing={() => setParams(keepReturn({ tab: 'account', screen: 'services' }))}
         />
       )}
 

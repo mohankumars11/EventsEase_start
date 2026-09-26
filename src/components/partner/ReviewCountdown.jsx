@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { BadgeCheck, Clock, TriangleAlert, ArrowRight } from 'lucide-react'
+import ReviewDial from './ReviewDial'
+import { BadgeCheck, Clock, TriangleAlert, ArrowRight, ChevronRight } from 'lucide-react'
 
 /**
  * "Your listing will be reviewed within 24 hours" — and then the hours
@@ -69,6 +70,34 @@ function remaining(due, now) {
  * `23h 47m`, not `23 hours 47 minutes left`: it sits inside a status
  * pill a few characters wide, and the long form wrapped.
  */
+/**
+ * The promised window, for the dial's denominator only.
+ *
+ * `review_sla_hours()` is the real one and it lives in the database
+ * (142). This is not a second source of truth: nothing is written from
+ * it and no deadline is computed from it. It is the scale the ring is
+ * drawn against when there is no deadline to drain, and being an hour
+ * out would move a ring by a few degrees.
+ */
+const SLA_HOURS = 24
+
+/** "23h" / "47m" / "12s" — small enough to sit inside a 54px ring. */
+function shortLeft(left) {
+  if (!left) return null
+  if (left.hours >= 1) return `${left.hours}h`
+  if (left.minutes >= 1) return `${left.minutes}m`
+  return `${left.seconds}s`
+}
+
+/** The same, counting the other way. */
+function shortElapsed(e) {
+  if (!e) return null
+  if (e.hours >= 24) return `${Math.floor(e.hours / 24)}d`
+  if (e.hours >= 1) return `${e.hours}h`
+  if (e.minutes >= 1) return `${e.minutes}m`
+  return `${e.seconds}s`
+}
+
 export function reviewWording(left) {
   if (!left) return null
   if (left.over) return 'Taking a little longer'
@@ -94,19 +123,53 @@ export function useReviewClock({ dueAt, submittedAt }) {
   const [now, setNow] = useState(() => Date.now())
   const left = dueAt ? remaining(dueAt, now) : null
 
+  /* ── It keeps ticking in every state that has a clock ──────────────
+     This used to stop on two conditions: no `dueAt`, and `left.over`.
+     Both are states a real partner sits in — four of seven under review
+     have no deadline, and an overdue review is precisely the one
+     somebody stares at — and in both the card froze. A frozen clock on
+     a card about waiting reads as a stalled process, which is the worst
+     available reading and was the reported bug.
+
+     It now ticks whenever there is anything to count: a deadline to
+     count down to, or a submission time to count up from. */
+  const ticking = !!dueAt || !!submittedAt
+  const insideLastHour = !!left && !left.over && left.ms < 3_600_000
+
   useEffect(() => {
-    if (!dueAt) return undefined
-    if (left?.over) return undefined
-    /* Per second inside the last hour, per minute before that. A
-       24-hour countdown re-rendering every second for a day is a
-       battery leak nobody attributes to the right screen. */
-    /* Per second inside the last hour, per minute before it. Now that
-       the wording carries minutes, the per-minute tick is visible --
-       which it was not when the text said only "23 hours left". */
-    const step = (left?.ms ?? 0) < 3_600_000 ? 1000 : 60_000
+    if (!ticking) return undefined
+    /* Per second in the last hour and while overdue, per minute
+       otherwise. A 24-hour countdown re-rendering every second for a
+       day is a battery leak nobody attributes to the right screen; an
+       overdue clock is one somebody is watching. */
+    const step = insideLastHour || left?.over ? 1000 : 60_000
     const id = setInterval(() => setNow(Date.now()), step)
     return () => clearInterval(id)
-  }, [dueAt, left?.over, left?.ms === null, (left?.ms ?? 0) < 3_600_000])
+  }, [ticking, insideLastHour, left?.over])
+
+  /* ── Elapsed, for a review with no deadline on it ──────────────────
+     Four of the seven partners under review have no `review_due_at`:
+     they submitted through the fallback path that writes the status
+     with a plain UPDATE and computes nothing. Migration 157 backfills
+     them and stops it recurring, but a card must still work on a
+     database where 157 has not been pasted.
+
+     Counting UP from `submitted_at` invents nothing. It is arithmetic
+     on a real column and it never implies a finish time we have not
+     got -- unlike `submitted_at + 24h`, which would BE a deadline
+     dressed as a display. */
+  let elapsed = null
+  if (submittedAt) {
+    const since = now - new Date(submittedAt).getTime()
+    if (Number.isFinite(since) && since >= 0) {
+      elapsed = {
+        ms: since,
+        hours: Math.floor(since / 3_600_000),
+        minutes: Math.floor((since % 3_600_000) / 60_000),
+        seconds: Math.floor((since % 60_000) / 1000),
+      }
+    }
+  }
 
   let fraction = null
   if (dueAt && submittedAt) {
@@ -118,14 +181,37 @@ export function useReviewClock({ dueAt, submittedAt }) {
     }
   }
 
-  return { left, words: reviewWording(left), fraction }
+  /* ── What the dial shows, decided once ────────────────────────────
+     Three cases, one place. A component branching on `dueAt` AND
+     `left.over` AND `submittedAt` at the point of render is how the
+     header and the card started disagreeing about a minute. */
+  const dialFraction = fraction != null
+    ? fraction
+    : elapsed
+      ? Math.min(1, elapsed.ms / (SLA_HOURS * 3_600_000))
+      : 0
+
+  const dialLabel = left && !left.over
+    ? shortLeft(left)
+    : elapsed
+      ? shortElapsed(elapsed)
+      : null
+
+  return {
+    left,
+    words: reviewWording(left),
+    fraction,
+    elapsed,
+    dial: { fraction: dialFraction, label: dialLabel, over: !!left?.over },
+  }
 }
 
 export default function ReviewCountdown({
   status, dueAt, submittedAt, extended = 0, note, compact = false,
   onOpenCalendar = null,
+  onOpenListing = null, listingCount = 0, listingNames = null,
 }) {
-  const { left } = useReviewClock({ dueAt, submittedAt })
+  const { left, words, elapsed, dial } = useReviewClock({ dueAt, submittedAt })
 
   if (status === 'approved') {
     return (
@@ -152,22 +238,37 @@ export default function ReviewCountdown({
 
   if (status !== 'submitted') return null
 
-  const words = reviewWording(left)
-
+  /* `words` comes from the hook now, alongside the dial and the elapsed
+     clock, so the header and this card cannot word the same moment two
+     different ways. It was recomputed here as well, which was harmless
+     until the hook started returning it and became a redeclaration. */
   return (
     <div className={`rounded-[18px] bg-plum-950 px-3.5 py-3 text-white ${compact ? '' : 'mb-3'}`}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="flex items-center gap-2 text-[12.5px] font-extrabold">
-          <Clock size={14} className="shrink-0 text-white/70" />
-          With our team
-        </p>
-        {words && (
-          <p className={`shrink-0 text-[12.5px] font-extrabold tabular-nums ${
-            left.over ? 'text-saffron-300' : 'text-white'
-          }`}>
-            {words}
+      <div className="flex items-start gap-3">
+        {/* The dial, and it is never still. See ReviewDial's header for
+            what it counts in each of the three states. */}
+        <ReviewDial {...dial} />
+
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-[12.5px] font-extrabold">
+            <Clock size={14} className="shrink-0 text-white/70" />
+            With our team
           </p>
-        )}
+
+          {/* ── The words beside the dial, not instead of it ──────────
+              The dial carries "2h"; this carries "2h 21m left". One is
+              glanceable and one is exact, and a partner checking a
+              review wants both — which is why the elapsed case has a
+              sentence of its own rather than borrowing the countdown's. */}
+          <p className={`mt-0.5 text-[13px] font-extrabold tabular-nums ${
+            left?.over ? 'text-saffron-300' : 'text-white'
+          }`}>
+            {words
+              ?? (elapsed
+                ? `With us ${elapsed.hours >= 1 ? `${elapsed.hours}h ` : ''}${String(elapsed.minutes).padStart(2, '0')}m`
+                : 'Just sent')}
+          </p>
+        </div>
       </div>
 
       <p className="mt-1.5 text-[11.5px] leading-snug text-white/85">
@@ -219,6 +320,39 @@ export default function ReviewCountdown({
             Update calendar <ArrowRight size={12} />
           </button>
         </div>
+      )}
+
+      {/* ── What is actually being reviewed ───────────────────────────
+          The card said a review was happening and gave no way to look
+          at the thing under review. A partner who submitted three
+          trades and then wondered whether the photos went up, or
+          whether they picked the right category, had to go More → My
+          services and find it — on the one screen where they are
+          already anxious and already being told to wait.
+
+          Named, and plural when it is. "Your listing" when they
+          submitted four is the kind of small wrongness that makes
+          somebody check whether the other three arrived. */}
+      {onOpenListing && listingCount > 0 && (
+        <button
+          type="button"
+          onClick={onOpenListing}
+          className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-[14px] bg-white/[0.08] px-3 py-2.5 text-left transition active:scale-[0.99]"
+        >
+          <span className="min-w-0">
+            <span className="block text-[12px] font-extrabold text-white">
+              {listingCount === 1
+                ? 'See the listing being reviewed'
+                : `See the ${listingCount} listings being reviewed`}
+            </span>
+            {listingNames && (
+              <span className="mt-0.5 block truncate text-[11px] text-white/70">
+                {listingNames}
+              </span>
+            )}
+          </span>
+          <ChevronRight size={15} className="shrink-0 text-white/60" />
+        </button>
       )}
 
       {/* Said out loud rather than hidden. A partner whose review has

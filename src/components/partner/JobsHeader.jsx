@@ -126,8 +126,52 @@ export default function JobsHeader({
     <header className="bg-plum-950 px-4 pb-5 text-white sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-plum-300">
-            Sambramo Partner
+          {/* ── The wordmark, and it is the first thing on the screen ──
+              This was 10px mono in plum-300 on plum-950: the same
+              treatment a caption gets, at the size a caption gets, in a
+              colour two steps off the background. It read as a label
+              about the screen rather than as the name of the product,
+              which is what it is.
+
+              Saffron on plum-950 is the brand's attention pair and the
+              only one already proven against check-dark-card-contrast.
+              Wide uppercase tracking is what makes a humanist face
+              (Manrope) read geometric — a second font would be a new
+              network request on the first screen of a cold start.
+
+              ── The moving part is a sweep, not a wiggle ──────────────
+              `sheen` is an existing keyframe: a skewed highlight that
+              crosses the letters every 3.2 seconds. It is the cheapest
+              kind of alive — no layout, no repaint of anything else,
+              one transform on one absolutely-positioned element — and
+              under prefers-reduced-motion it simply does not run,
+              leaving a wordmark that is still bold and still legible.
+
+              Deliberately NOT text that changes. A name that rewrites
+              itself is a name somebody has to read twice. */}
+          <p className="relative inline-flex items-center gap-1.5 overflow-hidden">
+            <span className="relative text-[12.5px] font-extrabold uppercase tracking-[0.22em] text-saffron-400">
+              Sambramo
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 -left-6 w-6 bg-white/40 blur-[3px] motion-safe:animate-sheen"
+              />
+            </span>
+            <span className="text-[12.5px] font-bold uppercase tracking-[0.18em] text-white/55">
+              Partner
+            </span>
+            {/* Not decoration: it is green while the partner is
+                accepting work and grey while they are not, so the
+                wordmark itself carries the one state that decides
+                whether the app does anything today. */}
+            <span
+              aria-hidden="true"
+              className={`ml-0.5 h-1.5 w-1.5 rounded-full ${
+                acceptingJobs
+                  ? 'bg-forest-400 motion-safe:animate-glow-pulse'
+                  : 'bg-white/30'
+              }`}
+            />
           </p>
           <p className="mt-1.5 truncate text-[13.5px] font-semibold leading-tight text-plum-200">
             {wish}

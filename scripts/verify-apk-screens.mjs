@@ -236,7 +236,9 @@ const TABS = [
     ['Passport', 'the NEW passport option'],
     ['a person reads the card', 'the NEW honesty line on the weaker IDs']]],
   ['Jobs',     '/dashboard/vendor?tab=offers',       'apk-tab-jobs.png',
-   [['Under review', 'the status pill'], ['Sambramo Partner', 'the header']]],
+   [['Under review', 'the status pill'], ['Sambramo', 'the wordmark'],
+    ['With our team', 'the review card'],
+    ['See the', 'the NEW listing button on the review card']]],
   ['Calendar', '/dashboard/vendor?tab=availability', 'apk-tab-calendar.png',
    [['Set dates', 'the NEW header button (was "Block dates")'],
     ['Set a range of dates', 'the MERGED tools row (was two rows opening one sheet)'],
@@ -271,14 +273,52 @@ const TABS = [
     ['bundle ', 'the build stamp']]],
 ]
 
+/**
+ * Wait for a needle, rather than photographing once and hoping.
+ *
+ * Several of these markers arrive from the network AFTER first paint --
+ * the campaign carousel fetches promotions, the referral screen fetches
+ * progress, the notification list fetches rows. A single `textNow()`
+ * straight after the splash leaves catches them on a good run and
+ * misses them on a slow one, which is how this harness reported the
+ * carousel present and then absent on two runs of the SAME apk.
+ *
+ * A flaky check is worse than no check: it teaches whoever sees it to
+ * re-run until green, and the one time it means something they re-run
+ * until green too.
+ */
+const waitForText = async (needle, ms = 8000) => {
+  const want = needle.toLowerCase()
+  const until = Date.now() + ms
+  let text = ''
+  do {
+    text = await textNow()
+    if (text.toLowerCase().includes(want)) return { found: true, text }
+    await sleep(400)
+  } while (Date.now() < until)
+  return { found: false, text }
+}
+
 for (const [label, url, file, markers] of TABS) {
   await goto(url)
-  const text = await textNow()
-  await capture(file)
   console.log(`  ${label}`)
+
+  /* The first marker is polled; by the time it lands the rest of the
+     screen has settled too, so the others are checked against that
+     same text rather than each paying the wait again. */
+  let text = await textNow()
   for (const [needle, why] of markers) {
-    ok(`    ${why}`, text.toLowerCase().includes(needle.toLowerCase()), `"${needle}" not on screen`)
+    if (!text.toLowerCase().includes(needle.toLowerCase())) {
+      const r = await waitForText(needle)
+      text = r.text
+    }
+    ok(`    ${why}`, text.toLowerCase().includes(needle.toLowerCase()),
+       `"${needle}" not on screen`)
   }
+
+  /* Photographed last, so the picture shows the settled screen rather
+     than the one the first assertion raced. */
+  await capture(file)
 }
 
 /* ══════════════════════════════════════════════════════════════════
