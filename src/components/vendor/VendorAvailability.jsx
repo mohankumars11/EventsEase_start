@@ -305,7 +305,59 @@ export default function VendorAvailability({
   /* ── Render ───────────────────────────────────────────── */
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-800 via-plum-700 to-plum-500 p-5 text-white shadow-[0_18px_45px_rgba(61,20,111,0.22)]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/70">
+              <Sparkles size={13} /> Availability control
+            </div>
+            <h2 className="mt-2 text-[25px] font-black leading-[1.05] tracking-[-0.03em]">
+              Your calendar runs the matching.
+            </h2>
+            <p className="mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-white/80">
+              Open days are eligible for work. Busy days stay protected. Set it once and let SAMBRAMO match around it.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-white/15 bg-white/10 px-3 py-2.5 text-right backdrop-blur">
+            <p className="text-[10px] font-extrabold uppercase tracking-wide text-white/60">6-month view</p>
+            <p className="mt-0.5 text-[20px] font-black">{answered}/6</p>
+            <p className="text-[9.5px] font-bold text-white/55">months reviewed</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <CalendarDays size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Open</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">{horizon.open} days</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <Pause size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Busy</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">{horizon.blocked} days</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <Zap size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Capacity</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">{maxPerDay} job{maxPerDay === 1 ? '' : 's'}/day</p>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          ['OPEN', 'Customers can match you', 'bg-emerald-50 text-emerald-800 ring-emerald-200'],
+          ['LIMITED', 'Partial capacity', 'bg-amber-50 text-amber-800 ring-amber-200'],
+          ['BUSY', 'Do not dispatch', 'bg-rose-50 text-rose-800 ring-rose-200'],
+          ['6 MONTHS', 'Plan ahead', 'bg-plum-50 text-plum-800 ring-plum-200'],
+        ].map(([label, copy, skin]) => (
+          <div key={label} className={`rounded-[18px] px-3 py-2.5 ring-1 ${skin}`}>
+            <p className="text-[10px] font-black tracking-[0.12em]">{label}</p>
+            <p className="mt-1 text-[10.5px] font-bold leading-snug opacity-80">{copy}</p>
+          </div>
+        ))}
+      </div>
 
       {/* ══════════════════════════════════════════════════
           1 · AM I ON?
