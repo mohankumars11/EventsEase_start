@@ -1,69 +1,10 @@
 name: Android APKs
 
-# ══════════════════════════════════════════════════════════════════════
-# WHY THIS BUILDS ON CI AND NOT ON THE DEV MACHINE
-# ══════════════════════════════════════════════════════════════════════
-#
-# The Android SDK is a ~3 GB install, the Android Gradle Plugin needs
-# JDK 17 or 21 (the dev box has 22, which AGP rejects), and a Gradle
-# build wants more memory than a 3.9 GB machine has spare while Vite is
-# also running. Every one of those is free on a GitHub runner.
-#
-# ══════════════════════════════════════════════════════════════════════
-# THE WEB APP IS COMPILED INTO THE APK
-# ══════════════════════════════════════════════════════════════════════
-#
-# It used to be a shell around the live site (`server.url`), and the
-# argument was good — a deploy reached every phone in minutes. It did
-# not survive contact with Android:
-#
-#   the bridge      Capacitor injects window.Capacitor with
-#                   addDocumentStartJavaScript and falls back to an
-#                   injector that only rewrites LOCAL assets. When the
-#                   fallback is taken, a REMOTE origin gets nothing — no
-#                   error, the page just loads without a bridge, so the
-#                   app reports itself as a browser and native push
-#                   cannot register. A real device did exactly this.
-#
-#   the cache       vite-plugin-pwa precaches the shell, and a WebView
-#                   holds that far harder than Chrome. Relaunching after
-#                   a deploy kept serving code from hours earlier — the
-#                   instant-update benefit not actually arriving.
-#
-# So there is a real `vite build` now, its output ships inside the apk,
-# and the service worker is disabled for it. Every change needs a new
-# APK. That is how an app works, and it is the price of the app being an
-# app rather than a bookmark.
-#
-# ── No secrets, still ────────────────────────────────────────────────
-# .env.android holds only values already public in the browser bundle:
-# the Supabase anon key (RLS decides what it may read) and the Firebase
-# web config (the service account does the authorising, on the server).
-# That file documents the rule at length.
-#
-# ══════════════════════════════════════════════════════════════════════
-# DEBUG, DELIBERATELY
-# ══════════════════════════════════════════════════════════════════════
-#
-# A debug APK installs straight onto a phone from a downloaded file and
-# needs no keystore. A release AAB needs an upload key that must never
-# touch this repository — see the `release` job, which is here as a
-# skeleton and stays disabled until that key exists in GitHub Secrets.
-#
-# Debug builds get real native push. The FCM registration is keyed to
-# the applicationId and the google-services.json in the repo, and both
-# are the same for debug and release.
-
 on:
-  workflow_dispatch:          # the button. This is how you get an APK.
+  workflow_dispatch:
   push:
-    branches: [feature/without-shopping]
-    # Only when something that affects the native shell changes. A copy
-    # edit in a React component does not need a new APK -- the phone
-    # picks it up from the live site on next launch.
+    branches: [feature/without-shopping, earnings_ui_from_chatgpt]
     paths:
-      # The apk now CONTAINS the web app, so a change to src/ is a change
-      # to the app. Everything that ships inside it belongs here.
       - 'src/**'
       - 'public/**'
       - 'index.html'
@@ -75,9 +16,6 @@ on:
       - 'package.json'
       - '.github/workflows/android.yml'
 
-# The release job writes to the repo. Declared once, at the top, and
-# scoped to nothing else — the default token can read everything, and
-# broadening it further is not needed to attach two files.
 permissions:
   contents: write
 
@@ -85,276 +23,80 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      # Both apps, independently, so a failure in one still yields the
-      # other. `fail-fast: false` matters here: the partner APK is the
-      # one being waited on and it must not be cancelled because the
-      # customer flavour tripped.
       fail-fast: false
       matrix:
         flavour: [customer, partner]
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          # 21, not 22. AGP 8.x refuses 22 outright.
           java-version: '21'
-
       - name: Android SDK
         uses: android-actions/setup-android@v3
-
       - uses: actions/setup-node@v4
         with:
-          # 22, and it is not a preference. @capacitor/cli 8.5 declares
-          # engines.node >= 22.0.0, so `npx cap sync` refuses to run on
-          # 20 -- which is why it worked on the dev machine (Node 24) and
-          # failed on every runner.
           node-version: '22'
           cache: npm
-
-      # ══════════════════════════════════════════════════════════════
-      # One command per step, deliberately
-      # ══════════════════════════════════════════════════════════════
-      #
-      # These four used to be one step, and when it failed the only
-      # thing visible without admin rights on the repo was the step
-      # NAME — which named four commands. Job logs need admin auth to
-      # download; step names and conclusions do not.
-      #
-      # So each command is its own step. A failure now says which one,
-      # to anybody who can see the run at all.
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
-
       - name: Write the Capacitor config
         run: node scripts/capacitor-config.mjs ${{ matrix.flavour }}
-
-      # `cap sync` runs `cap copy`, which copies webDir into the Android
-      # assets folder and FAILS if that folder does not exist. dist/ is
-      # gitignored, so a fresh checkout has nothing there.
-      #
-      # A stub rather than a real `vite build`: capacitor.config.json
-      # sets server.url to the live site, so the WebView never loads
-      # these files, and building them would mean putting every VITE_
-      # secret into this repository to produce assets nothing reads.
-      #
-      # Not blank on purpose. If server.url is ever removed and somebody
-      # forgets this step exists, the app opens on a sentence saying so
-      # rather than on white.
-      # ══════════════════════════════════════════════════════════════
-      # The real build, and what makes the two apps different
-      # ══════════════════════════════════════════════════════════════
-      #
-      # VITE_SURFACE is the important line. Bundled assets are served
-      # from localhost in BOTH apps, so the hostname check that separates
-      # the customer site from the partner site cannot work here — the
-      # partner APK would identify itself as the customer app and show
-      # the customer home. Stamping it at compile time makes it the one
-      # signal that cannot be wrong.
-      #
-      # CAPACITOR_BUILD turns off the service worker: precaching is
-      # pointless when the assets are already local, and it is how a
-      # relaunch ended up serving a stale copy of the app.
       - name: Build the web app
         env:
           CAPACITOR_BUILD: 'true'
           VITE_SURFACE: ${{ matrix.flavour }}
-          # Shown on the alerts card. Two apps with the same name and
-          # icon can sit side by side on a home screen -- the installed
-          # APK and a shortcut to the website -- and this is how anyone
-          # can tell which one is open, and whether its code is current.
           VITE_BUILD: ${{ github.sha }}
         run: |
           set -a; . ./.env.android; set +a
           npm run build
-
-          # The push service worker cannot read import.meta.env, so its
-          # config is baked in here. Without this it initialises with
-          # nulls, never attaches onBackgroundMessage, and every push is
-          # delivered to a browser that shows nothing -- with no error
-          # on either side. The script exits non-zero rather than skip.
           node scripts/write-sw-config.mjs
-
-          # Publishes which build this is, so an INSTALLED app can notice
-          # a newer one exists. The apk cannot update itself and there is
-          # no store updater yet.
           node scripts/write-version.mjs
-
-          ls -la dist/ | head
           test -f dist/index.html
-          grep -q '__FIREBASE_SW_CONFIG__' dist/firebase-messaging-sw.js             && { echo 'service worker config was NOT baked'; exit 1; } || true
-
-      # ══════════════════════════════════════════════════════════════
-      # Open the screens before packaging them
-      # ══════════════════════════════════════════════════════════════
-      #
-      # An APK shipped in which the instant booking screen threw on open:
-      #
-      #   ReferenceError: Cannot access 'E' before initialization
-      #
-      # Every check above it passed and every one was right to. esbuild
-      # compiles a temporal dead zone; rollup bundles it; neither
-      # EXECUTES a component. A bundler answers "does this parse and
-      # resolve" — only a browser answers "does this render".
-      #
-      # So the last gate before packaging is a browser opening fourteen
-      # routes and failing on any uncaught exception or error boundary.
-      # Verified against the broken bundle: it fails on that one route
-      # and passes the other thirteen.
+          grep -q '__FIREBASE_SW_CONFIG__' dist/firebase-messaging-sw.js && { echo 'service worker config was NOT baked'; exit 1; } || true
       - name: Open every screen
         run: |
-          # No install. The ubuntu-latest image ships Google Chrome at
-          # /usr/bin/google-chrome, which the script already looks for.
-          # `apt install chromium-browser` on 24.04 is a snap shim that
-          # either fails or lands somewhere the script does not check,
-          # and installing a browser onto a runner that has one is a
-          # minute of every build spent on nothing.
           which google-chrome google-chrome-stable chromium 2>/dev/null || true
           node scripts/smoke-routes.mjs
-
-      # A double hyphen in a manifest comment is illegal XML and fails
-      # the merger four minutes into the build, with an error that names
-      # the gradle task rather than the punctuation. It has cost two
-      # builds. This costs ten milliseconds.
       - name: Manifest is well-formed
         run: node scripts/check-android-manifest.mjs
-
       - name: Sync Capacitor
         run: npx cap sync android
-
       - name: Build
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew \
-            assemble${{ matrix.flavour == 'customer' && 'Customer' || 'Partner' }}Debug \
-            --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="-Xmx3g"
-
-      # Gradle's default output hides the real cause behind "Execution
-      # failed for task". This prints it when something breaks, so a
-      # failed run is diagnosable from the log rather than by guessing.
-      - name: What went wrong
-        if: failure()
-        working-directory: android
-        run: |
-          ./gradlew assemble${{ matrix.flavour == 'customer' && 'Customer' || 'Partner' }}Debug \
-            --no-daemon --info --stacktrace 2>&1 | tail -120 || true
-
+          ./gradlew assemble${{ matrix.flavour == 'customer' && 'Customer' || 'Partner' }}Debug --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx3g"
       - name: Name it something a person can read
         run: |
           mkdir -p out
           find android/app/build/outputs/apk -name '*.apk' -print
-          cp "$(find android/app/build/outputs/apk -name '*.apk' | head -1)" \
-             "out/sambramo-${{ matrix.flavour }}.apk"
+          cp "$(find android/app/build/outputs/apk -name '*.apk' | head -1)" "out/sambramo-${{ matrix.flavour }}.apk"
           ls -lh out/
-
       - uses: actions/upload-artifact@v4
         with:
           name: sambramo-${{ matrix.flavour }}-apk
           path: out/*.apk
-          # Long enough to install on a few phones, short enough that
-          # stale builds do not accumulate and get installed by mistake.
           retention-days: 14
 
-  # ══════════════════════════════════════════════════════════════════
-  # A link that can actually be tapped
-  # ══════════════════════════════════════════════════════════════════
-  #
-  # Workflow ARTIFACTS require the person downloading them to be signed
-  # in to GitHub — including on a public repository — and the download
-  # control is frequently inert on a phone browser. So the one place the
-  # APK was published was the one place it could not be installed from.
-  #
-  # Release assets have none of that. They are plain URLs, they work
-  # signed out, and tapping one on Android hands the file straight to the
-  # package installer:
-  #
-  #   https://github.com/<owner>/<repo>/releases/download/android-latest/sambramo-partner.apk
-  #
-  # ── One rolling tag, not one per build ────────────────────────────
-  # `android-latest` is deleted and recreated every run, so the URL above
-  # never changes and can be sent to a partner once. Versioned releases
-  # are what the Play Store track is for; this is a test build, and a
-  # test build that needs a new link every time is a support burden.
   release:
     needs: build
     runs-on: ubuntu-latest
-    # Only when both flavours built. A release carrying one of the two
-    # apps is worse than no release: somebody installs the partner app,
-    # looks for the customer one, and finds a stale copy from days ago.
     if: success()
-
     steps:
-      - uses: actions/checkout@v4
-
       - uses: actions/download-artifact@v4
         with:
           path: apks
           merge-multiple: true
-
-      - name: What is being published
-        run: ls -lh apks/
-
-      # ══════════════════════════════════════════════════════════════
-      # The notes go in a FILE, not in an argument
-      # ══════════════════════════════════════════════════════════════
-      #
-      # They were an inline multi-line string, and its continuation lines
-      # sat at column 0 — which ends a YAML block scalar. Everything after
-      # the first blank line became a top-level YAML key, the workflow
-      # stopped parsing, and GitHub produced a run with ZERO jobs named
-      # after the file path instead of after the workflow.
-      #
-      # That failure mode is worth recognising: a run with no jobs and a
-      # path for a name is always a YAML parse error, never a build
-      # problem, and no amount of reading the build logs will show it.
-      - name: Write the release notes
-        run: |
-          {
-            echo "Debug builds from \`${{ github.sha }}\`."
-            echo
-            echo "**Install on an Android phone:** tap a link below, then allow your browser to install unknown apps when asked."
-            echo
-            echo "- [Sambramo — customer](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk)"
-            echo "- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk)"
-            echo
-            echo "Both apps load the live site, so a deploy reaches them without a reinstall. A new APK is only needed when something native changes — push, permissions, a plugin, the icon."
-          } > notes.md
-          cat notes.md
-
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Deleted first so the tag moves. `gh release create` refuses to
-          # overwrite, and an --edit path would leave the old assets
-          # attached alongside the new ones.
           gh release delete android-latest --yes --cleanup-tag || true
-
-          # Published BESIDE the apks, in the release they come from.
-          #
-          # The update prompt compares the installed build against this.
-          # It first compared against the WEBSITE's build and told every
-          # user to update forever — the site deploys on every push, the
-          # apk only when src/ changes, so two current builds always
-          # carry different shas. A value published here can only ever
-          # describe a build that was actually packaged.
-          printf '{"build":"%s","builtAt":"%s"}\n' \
-            "${{ github.sha }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apks/version.json
-          cat apks/version.json
-
-          gh release create android-latest \
-            apks/sambramo-customer.apk \
-            apks/sambramo-partner.apk \
-            apks/version.json \
-            --title "Sambramo — Android test builds" \
-            --notes-file notes.md
-
+          printf '{"build":"${{ github.sha }}","builtAt":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apks/version.json
+          gh release create android-latest apks/sambramo-customer.apk apks/sambramo-partner.apk apks/version.json --title "Sambramo — Android test builds" --notes "Earnings-tab UI build."
       - name: The links
         run: |
-          echo "Customer: https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk"
-          echo "Partner:  https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk"
+          echo "Partner: https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk"
