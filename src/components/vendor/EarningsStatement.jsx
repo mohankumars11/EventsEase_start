@@ -52,7 +52,7 @@ export default function EarningsStatement({ statement: s }) {
   }
 
   return (
-    <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <div id="your-statement" className="scroll-mt-24 rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-[12px] font-extrabold uppercase tracking-wider text-ink-mute">
           Your statement
