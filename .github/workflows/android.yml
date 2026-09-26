@@ -3,7 +3,7 @@ name: Android APKs
 on:
   workflow_dispatch:
   push:
-    branches: [feature/without-shopping, earnings_ui_from_chatgpt, fix/earnings-installable-20260926]
+    branches: [feature/without-shopping, earnings_ui_from_chatgpt, fix/earnings-installable-20260926, feature/earnings-futuristic-carousel-20260926]
     paths:
       - 'src/**'
       - 'public/**'
