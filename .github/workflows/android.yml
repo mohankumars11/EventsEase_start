@@ -56,6 +56,8 @@ name: Android APKs
 
 on:
   workflow_dispatch:          # the button. This is how you get an APK.
+  pull_request:
+    branches: [main]
   push:
     branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926]
     # Only when something that affects the native shell changes. A copy
@@ -289,7 +291,7 @@ jobs:
     # Only when both flavours built. A release carrying one of the two
     # apps is worse than no release: somebody installs the partner app,
     # looks for the customer one, and finds a stale copy from days ago.
-    if: success()
+    if: success() && github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
