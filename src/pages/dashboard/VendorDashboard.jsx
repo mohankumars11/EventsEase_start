@@ -26,6 +26,8 @@ import JobsStats from '../../components/partner/JobsStats'
 import { unreadNotificationCount } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
+import PartnerGrowthCarousel from '../../components/partner/PartnerGrowthCarousel'
+import PartnerHowItWorks from '../../components/partner/PartnerHowItWorks'
 import CalendarMonth from '../../components/partner/CalendarMonth'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
@@ -86,6 +88,7 @@ export default function VendorDashboard() {
      header stays a presentational strip, and so the same number can
      later drive a tab badge without a second query. */
   const [unreadAlerts, setUnreadAlerts] = useState(0)
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false)
 
   const account = useVendorAccount()
   const {
@@ -467,6 +470,15 @@ export default function VendorDashboard() {
           listingNames={(services ?? [])
             .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
           onOpenListing={() => setParams(keepReturn({ tab: 'account', screen: 'services' }))}
+          onHowItWorks={() => setHowItWorksOpen(true)}
+        />
+      )}
+
+      {tab === 'offers' && (
+        <PartnerGrowthCarousel
+          onGrow={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
+          onInvite={() => setParams(keepReturn({ tab: 'account', screen: 'referral' }))}
+          onProfile={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
         />
       )}
 
@@ -846,6 +858,8 @@ export default function VendorDashboard() {
         )}
       </div>
     </div>
+
+    <PartnerHowItWorks open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
   )
 }
 
