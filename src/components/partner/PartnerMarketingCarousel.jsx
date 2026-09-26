@@ -1,184 +1,65 @@
-import { useEffect, useMemo, useState } from 'react'
-import { track, EVENTS } from '../../lib/track'
-import { shareText, shareSaid } from '../../lib/share'
+import { useMemo } from 'react'
 import PromoDeck from '../home/PromoDeck'
-import { supabase } from '../../lib/supabase'
-import { selectPromotions, rewardLabel } from '../../lib/promotions'
-import { isMissingTable } from '../../lib/serviceCatalog'
 
-/**
- * The campaigns that apply to this partner, on the Earnings tab.
- *
- * ══════════════════════════════════════════════════════════════════════
- * IT RENDERS NOTHING UNTIL SOMEBODY CONFIGURES SOMETHING
- * ══════════════════════════════════════════════════════════════════════
- *
- * No campaign in the table, no card on screen. Not a placeholder, not a
- * "coming soon", not a referral promising a reward nobody has set.
- *
- * That is the whole design. A marketing surface that ships with a
- * hard-coded card is a commitment made by whoever wrote the JSX, on a
- * date they chose, to every partner who has that build installed —
- * which is a different set of people every week, because partners
- * update when they feel like it. Two partners doing the same thing
- * would see two different promises, both in writing.
- *
- * So the copy, the reward, the window and the audience all live in
- * `partner_promotions`, and this reads them.
- *
- * ══════════════════════════════════════════════════════════════════════
- * ON THE EARNINGS TAB, AND DELIBERATELY NOT AT THE TOP OF IT
- * ══════════════════════════════════════════════════════════════════════
- *
- * It sits after the chart, before the breakdown. A partner opens
- * Earnings to find out what they are owed; a promotion above that
- * answer is an advert standing between somebody and their money.
- *
- * ══════════════════════════════════════════════════════════════════════
- * NO AMOUNT IS COMPUTED HERE
- * ══════════════════════════════════════════════════════════════════════
- *
- * `reward_paise` is formatted by `rewardLabel` and shown. Nothing in
- * this component decides what anybody is owed — `referral_progress()`
- * says whether a threshold is met, and an operator pays through
- * `record_adjustment`, which writes an auditable row with a reason.
+/*
+ * Earnings-only marketing deck.
+ * This is intentionally self-contained: it does not depend on promotion
+ * rows or invent earnings. The financial figures remain owned by Earnings.
  */
+const SLIDES = [
+  {
+    key: 'paid-after-event',
+    background: 'linear-gradient(135deg,#32105f 0%,#5c18b5 58%,#7b2cff 100%)',
+    art: '₹',
+    eyebrow: 'GET PAID AFTER EVERY EVENT',
+    title: 'AFTER EVERY EVENT',
+    body: 'Money becomes available after the event and flows to your registered bank account.',
+    cta: 'Learn how it works',
+  },
+  {
+    key: 'razorpay-payouts',
+    background: 'linear-gradient(135deg,#111827 0%,#2d1b69 55%,#6d28d9 100%)',
+    art: 'R',
+    eyebrow: 'SECURE PAYOUTS WITH RAZORPAY',
+    title: 'RAZORPAY PAYOUTS',
+    body: 'Track payouts toward your registered bank account in one clear place.',
+    cta: 'View payout details',
+  },
+  {
+    key: 'transparent-earnings',
+    background: 'linear-gradient(135deg,#24103f 0%,#6b21a8 55%,#9333ea 100%)',
+    art: '₹',
+    eyebrow: 'TRANSPARENT EARNINGS & TAX',
+    title: 'KNOW WHAT YOU EARN',
+    body: 'See customer billing, SAMBRAMO commission and your tax statement clearly.',
+    cta: 'View your statement',
+  },
+  {
+    key: 'grow-with-sambramo',
+    background: 'linear-gradient(135deg,#2e1065 0%,#581c87 58%,#8b5cf6 100%)',
+    art: '↗',
+    eyebrow: 'GROW MORE WITH SAMBRAMO',
+    title: 'KEEP YOUR SERVICES CURRENT',
+    body: 'Keep your services and calendar current to stay eligible for relevant event work.',
+    cta: 'Open your account',
+  },
+]
 
-/* Plum and the one supporting violet, because every other surface on
-   this tab is white and the deck has to read as a different KIND of
-   thing without introducing a colour. Keyed by promotion type so two
-   referral cards never look like two different products. */
-const GROUND = {
-  referral:     'linear-gradient(135deg,#4c1d95 0%,#7c3aed 100%)',
-  calendar:     'linear-gradient(135deg,#2e1065 0%,#6d28d9 100%)',
-  profile:      'linear-gradient(135deg,#3b0764 0%,#7c3aed 100%)',
-  education:    'linear-gradient(135deg,#2e1065 0%,#5b21b6 100%)',
-  seasonal:     'linear-gradient(135deg,#4c1d95 0%,#9333ea 100%)',
-  announcement: 'linear-gradient(135deg,#2e1065 0%,#4c1d95 100%)',
-}
-
-const ART = {
-  referral: '\u{1F91D}', calendar: '\u{1F4C5}', profile: '\u{2728}',
-  education: '\u{1F4A1}', seasonal: '\u{1F389}', announcement: '\u{1F4E2}',
-}
-
-export default function PartnerMarketingCarousel({ vendorId, facts = {} }) {
-  const [rows, setRows] = useState(null)
-  const [dismissed, setDismissed] = useState([])
-  const [code, setCode] = useState(null)
-  const [said, setSaid] = useState(null)
-
-  useEffect(() => {
-    let alive = true
-    if (!vendorId) return undefined
-
-    ;(async () => {
-      /* The RLS policy in 154 already filters to live campaigns, so this
-         asks for everything it is allowed to see. The client-side window
-         check in `promotionIsLive` is belt and braces for a clock that
-         disagrees, not a second gate. */
-      const [promos, hidden] = await Promise.all([
-        supabase.from('partner_promotions').select('*'),
-        supabase.from('partner_promotion_dismissals')
-          .select('promotion_id').eq('vendor_id', vendorId),
-      ])
-      if (!alive) return
-
-      /* ── 154 not pasted yet, or the read failed ──────────────────
-         Both end the same way and that is correct, not lazy: there is
-         nothing to advertise either way, and a marketing card is not
-         worth an error state. `isMissingTable` is still consulted so
-         the distinction is visible to anybody debugging, and so a real
-         failure is not silently indistinguishable from an empty table
-         in the console. */
-      if (promos.error) {
-        if (!isMissingTable(promos.error)) {
-          console.warn('promotions unavailable:', promos.error.message)
-        }
-        setRows([])
-        return
-      }
-
-      setRows(promos.data ?? [])
-      /* Only needed by a referral card, and cheap enough to fetch
-         alongside rather than on the tap -- a share sheet that takes a
-         round trip to open feels broken. */
-      supabase.from('vendors').select('referral_code').eq('id', vendorId).maybeSingle()
-        .then(({ data }) => { if (alive) setCode(data?.referral_code ?? null) })
-      /* A failed dismissal read means we show a card they hid. Better
-         than hiding one they have not, which is the other direction. */
-      setDismissed(hidden.error ? [] : (hidden.data ?? []).map(d => d.promotion_id))
-    })()
-
-    return () => { alive = false }
-  }, [vendorId])
-
-  const slides = useMemo(() => {
-    const live = selectPromotions(rows, facts, { dismissed })
-    return live.map(p => {
-      const reward = rewardLabel(p.reward_paise)
-
-      /* ── "Invite partners" must invite, not navigate ──────────────
-         A referral card routed to the profile screen, which is where
-         the code happens to live -- so tapping a button that says
-         "Invite partners" moved the partner to a settings page and
-         left them to work out the rest. It opens the phone's share
-         sheet now, which is what the words promise.
-
-         Only when there IS a code to share. Without one it falls back
-         to the route, rather than opening a sheet with a hole in it. */
-      const shares = p.type === 'referral' && !!code
-
-      return {
-        key: p.id,
-        to: p.cta_route ?? '/dashboard/vendor?tab=account',
-        onAction: shares
-          ? async () => {
-              track(EVENTS.REFERRAL_SHARED, { from: 'carousel' })
-              const res = await shareText({
-                title: 'Join me on Sambramo',
-                text: `Join me on Sambramo as a partner. Use my code ${code} when you sign up.`,
-                dialogTitle: 'Invite a partner',
-              })
-              const msg = shareSaid(res.how)
-              if (msg) { setSaid(msg); setTimeout(() => setSaid(null), 3000) }
-            }
-          : undefined,
-        background: GROUND[p.type] ?? GROUND.announcement,
-        art: p.icon ?? ART[p.type] ?? ART.announcement,
-        eyebrow: p.subtitle ?? null,
-        title: p.title,
-        /* The reward is appended rather than interpolated into the body,
-           so a campaign with no amount configured simply has a shorter
-           sentence instead of one with a hole in it. */
-        body: [p.body, reward ? `Unlock ${reward}.` : null].filter(Boolean).join(' '),
-        cta: p.cta_label ?? 'Open',
-      }
-    })
-  }, [rows, facts, dismissed, code])
-
-  /* Nothing configured, nothing rendered. Not a skeleton either: a
-     loading shape for a card that may never exist is a promise of an
-     advert. */
-  /* Viewed, once per set. Not per render and not per slide: a carousel
-     that rotates every five seconds would otherwise report a view every
-     five seconds and make the click-through rate meaningless. */
-  useEffect(() => {
-    if (!slides.length) return
-    track(EVENTS.PROMOTION_VIEWED, { count: slides.length, first: slides[0].key })
-  }, [slides.length, slides[0]?.key])
-
-  if (!slides.length) return null
+export default function PartnerMarketingCarousel() {
+  const slides = useMemo(() => SLIDES.map(s => ({
+    ...s,
+    to: s.key === 'razorpay-payouts'
+      ? '#your-account'
+      : s.key === 'transparent-earnings'
+        ? '#your-statement'
+        : s.key === 'grow-with-sambramo'
+          ? '#your-account'
+          : '#earnings-over-time',
+  })), [])
 
   return (
-    <section aria-label="From Sambramo" data-promotions={slides.length}>
+    <section aria-label="Earnings information" data-promotions={slides.length}>
       <PromoDeck slides={slides} interval={5500} />
-      {/* The clipboard fallback has to SAY so. A share that silently
-          copies is indistinguishable from a button that does nothing,
-          which is the bug this whole change exists to fix. */}
-      {said && (
-        <p className="mt-1.5 text-center text-[11.5px] font-semibold text-ink-mute">{said}</p>
-      )}
     </section>
   )
 }
