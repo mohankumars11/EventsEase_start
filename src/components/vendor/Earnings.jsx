@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import PartnerMarketingCarousel from '../partner/PartnerMarketingCarousel'
 import { useSearchParams } from 'react-router-dom'
-import { CloudOff } from 'lucide-react'
+import { CalendarCheck2, CloudOff, Landmark, ReceiptIndianRupee, ShieldCheck } from 'lucide-react'
 import { useEarnings } from '../../hooks/useEarnings'
 import { statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
 import { buildRange, hasPriorData } from '../../lib/earningsRange'
@@ -211,17 +211,35 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
 
         <EarningsChart series={series.series} range={range} />
 
-        {/* ── After the numbers, before the breakdown ────────────────
-            A partner opens Earnings to find out what they are owed. A
-            promotion above that answer is an advert standing between
-            somebody and their money, so this sits after the chart.
-
-            Not in the right-hand rail either: that column is wrapped in
-            `{!open && …}` and would make the card vanish whenever a
-            transaction is open, which reads as a bug.
-
-            Renders nothing at all when no campaign is configured. */}
-        <PartnerMarketingCarousel vendorId={vendorId} facts={promoFacts} />
+        <section id="how-payouts-work" className="scroll-mt-24 rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(42,8,92,0.05)] ring-1 ring-plum-100">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[9.5px] font-black uppercase tracking-[0.12em] text-plum-700">PAYMENT GUIDE</p>
+              <h2 className="mt-1 text-[15px] font-black text-ink">How your payout works</h2>
+              <p className="mt-1 text-[11px] leading-snug text-ink-mute">A simple view of what happens after an event is completed.</p>
+            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-plum-50 text-plum-700">
+              <ReceiptIndianRupee size={18} />
+            </span>
+          </div>
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+            <div className="rounded-[17px] bg-plum-50 p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-plum-600 text-white"><CalendarCheck2 size={16} /></div>
+              <p className="mt-2 text-[11.5px] font-black text-ink">1. Event completed</p>
+              <p className="mt-1 text-[10px] leading-snug text-ink-mute">The completed job becomes eligible for the payout process.</p>
+            </div>
+            <div className="rounded-[17px] bg-blue-50 p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white"><ShieldCheck size={16} /></div>
+              <p className="mt-2 text-[11.5px] font-black text-ink">2. Holding window</p>
+              <p className="mt-1 text-[10px] leading-snug text-ink-mute">The payment remains in the defined holding state before it becomes claimable.</p>
+            </div>
+            <div className="rounded-[17px] bg-emerald-50 p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white"><Landmark size={16} /></div>
+              <p className="mt-2 text-[11.5px] font-black text-ink">3. Bank payout</p>
+              <p className="mt-1 text-[10px] leading-snug text-ink-mute">Eligible earnings are paid to the registered bank account shown below.</p>
+            </div>
+          </div>
+        </section>
 
         <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <h2 className="text-[13.5px] font-extrabold text-ink">Earnings by service</h2>
