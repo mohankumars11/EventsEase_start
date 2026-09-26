@@ -285,7 +285,6 @@ export default function VendorDashboard() {
   }
 
   return (
-    <>
     /* ── Clear the tab bar, and only the tab bar ──────────────────────
        This was `pb-28` -- 112px, a round number picked by eye. The bar
        actually measures ~63px (py-2 + pt-2.5 around a 28px icon and its
@@ -857,9 +856,9 @@ export default function VendorDashboard() {
             onOpenTrade={trade => setParams(keepReturn({ tab: 'list', start: trade }))}
           />
         )}
+
+        <PartnerHowItWorks open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
       </div>
-    <PartnerHowItWorks open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
-    </>
   )
 }
 
