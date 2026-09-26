@@ -65,7 +65,6 @@ export function useReviewClock({ dueAt, submittedAt, extended = 0 }) {
     return () => clearInterval(id)
   }, [ticking])
 
-  const insideLastHour = !!left && !left.over && left.ms < 3_600_000
 
   let elapsed = null
   if (submittedAt) {
@@ -81,9 +80,9 @@ export function useReviewClock({ dueAt, submittedAt, extended = 0 }) {
   }
 
   let fraction = null
-  if (dueAt && submittedAt) {
+  if (effectiveDueAt && submittedAt) {
     const start = new Date(submittedAt).getTime()
-    const end = new Date(dueAt).getTime()
+    const end = new Date(effectiveDueAt).getTime()
     const span = end - start
     if (Number.isFinite(span) && span > 0) {
       fraction = Math.min(1, Math.max(0, (now - start) / span))
