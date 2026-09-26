@@ -857,8 +857,10 @@ export default function VendorDashboard() {
           />
         )}
 
-        <PartnerHowItWorks open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
       </div>
+
+      <PartnerHowItWorks open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
+    </div>
   )
 }
 
