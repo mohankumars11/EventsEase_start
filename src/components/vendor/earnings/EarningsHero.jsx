@@ -1,65 +1,7 @@
-import { ArrowRight, Landmark } from 'lucide-react'
+import { ArrowRight, Banknote, Landmark, ShieldCheck, Sparkles } from 'lucide-react'
 import { formatINR } from '../../../utils/format'
 import { destinationOf, payoutReady } from '../../../lib/documents/mask'
 
-/**
- * What is yours right now, and where it will land.
- *
- * ══════════════════════════════════════════════════════════════════════
- * THREE ROWS FROM THE REFERENCE DESIGN ARE DELIBERATELY ABSENT
- * ══════════════════════════════════════════════════════════════════════
- *
- * (Carried verbatim from EarningsSummary.jsx, which this replaces. The
- * argument is the most valuable thing in the module and must not be lost
- * with the file.)
- *
- * The design this was built from shows "Customer tips", "Incentives"
- * and "Adjustments". None of the three exists: there is no tip column,
- * no incentive table and no adjustment ledger anywhere in the schema.
- *
- * Rendering them as ₹0 would be a placeholder a partner reads as a
- * feature, and rendering them with a number would be inventing money.
- * A partner shown ₹1,180 of tips will ask where it went, and the honest
- * answer -- that it was never real -- is the most expensive sentence
- * this app could ever have to say. They come back when there is a
- * column behind them.
- *
- * Migration 140 gives adjustments a column. Tips and incentives still
- * have none, and stay absent until they do.
- *
- * ══════════════════════════════════════════════════════════════════════
- * "ASK FOR IT" IS ONE BUTTON, AND IT USED NOT TO BE
- * ══════════════════════════════════════════════════════════════════════
- *
- * `claim_payment(p_line_id)` settles ONE line. There was no bulk payout
- * call, so a single button claiming everything would have been N round
- * trips with a partial-failure story nobody had designed -- which is why
- * the screen this replaces sent the partner down to the jobs instead.
- *
- * Migration 138 adds `claim_all_ready()`, which does the loop inside one
- * transaction and returns what it claimed and what it skipped. Until
- * that is pasted the button is not rendered, because `onClaim` is only
- * passed once the RPC exists.
- *
- * ══════════════════════════════════════════════════════════════════════
- * THE DARK IS A STRIP, NOT A CARD
- * ══════════════════════════════════════════════════════════════════════
- *
- * The screen it replaced opened with a plum gradient card, which was the
- * only dark surface left in the partner app's BODY. The converted
- * screens put dark in a `bg-plum-950` header strip and nowhere else, and
- * a third dark treatment — neither plum-950 nor plum-600 — is how a
- * design system stops being one.
- *
- * ══════════════════════════════════════════════════════════════════════
- * ONE FIGURE, AND IT IS THE ACTIONABLE ONE
- * ══════════════════════════════════════════════════════════════════════
- *
- * Ready to claim, not lifetime earnings. Two large totals on one screen,
- * one of them a lifetime sum and one of them claimable, is the pair most
- * easily confused — and the confusion is expensive in the direction
- * where somebody believes the larger number is available.
- */
 export default function EarningsHero({
   readyPaise = 0, readyCount = 0, payout, onClaim, onAddPayout, claiming = false,
 }) {
@@ -67,27 +9,41 @@ export default function EarningsHero({
   const has = readyPaise > 0
 
   return (
-    <section className="overflow-hidden rounded-[22px] bg-plum-950 p-4 text-white">
-      <p className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-white/60">
-        Ready to claim
-      </p>
-      <p className="mt-1 font-serif text-[32px] font-extrabold leading-none tracking-tight tabular-nums">
-        {formatINR(Math.round(readyPaise / 100))}
-      </p>
-      <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/70">
-        {has
-          ? `${readyCount} ${readyCount === 1 ? 'job is' : 'jobs are'} done and past the holding window.`
-          : 'Nothing is claimable yet. Money becomes yours a day after the event.'}
-      </p>
+    <section className="relative overflow-hidden rounded-[24px] bg-white p-4 shadow-[0_12px_32px_rgba(42,8,92,0.08)] ring-1 ring-plum-100">
+      <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-plum-100/80 blur-2xl" />
+      <div className="absolute -left-8 bottom-[-55px] h-28 w-28 rounded-full bg-fuchsia-100/70 blur-2xl" />
 
-      {/* Rendered only when there is an RPC behind it. A button that
-          looks live and does nothing is worse on this screen than no
-          button at all — see `claim_all_ready` above. Until 138 is
-          pasted, the partner claims from the job, which works today. */}
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-plum-50 px-2.5 py-1 text-[9.5px] font-black uppercase tracking-[0.12em] text-plum-700 ring-1 ring-plum-100">
+            <Sparkles size={11} />
+            Ready to claim
+          </div>
+          <p className="mt-2 font-serif text-[34px] font-extrabold leading-none tracking-tight text-ink tabular-nums">
+            {formatINR(Math.round(readyPaise / 100))}
+          </p>
+          <p className="mt-2 max-w-[245px] text-[12px] font-semibold leading-snug text-ink-mute">
+            {has
+              ? `${readyCount} ${readyCount === 1 ? 'job is' : 'jobs are'} done and past the holding window.`
+              : 'Nothing is claimable yet. Money becomes yours a day after the event.'}
+          </p>
+        </div>
+
+        <div className="relative mt-1 flex h-[82px] w-[88px] shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-plum-700 to-purple-500 text-white shadow-[0_16px_28px_rgba(42,8,92,0.22)]">
+          <Landmark size={36} />
+          <span className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-plum-700 shadow-lg ring-1 ring-plum-100">
+            <Banknote size={18} />
+          </span>
+          <span className="absolute -bottom-2 -left-2 flex h-7 w-7 items-center justify-center rounded-full bg-forest-100 text-forest-700 shadow-md">
+            <ShieldCheck size={15} />
+          </span>
+        </div>
+      </div>
+
       {has && ready && onClaim && (
         <button
           type="button" onClick={onClaim} disabled={claiming}
-          className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-full bg-saffron-500 px-4 text-[13.5px] font-extrabold text-plum-950 disabled:opacity-60"
+          className="relative mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[13.5px] font-extrabold text-white shadow-[0_10px_20px_rgba(42,8,92,0.18)] disabled:opacity-60"
         >
           {claiming ? 'Asking…' : `Ask for ${formatINR(Math.round(readyPaise / 100))}`}
           {!claiming && <ArrowRight size={15} />}
@@ -95,36 +51,29 @@ export default function EarningsHero({
       )}
 
       {has && ready && !onClaim && (
-        <p className="mt-3 rounded-[14px] bg-white/10 px-3 py-2.5 text-[12px] font-semibold leading-snug text-white/80">
-          Open any job marked <span className="font-extrabold text-white">Ready</span> below
-          to ask for its payment.
+        <p className="relative mt-3 rounded-[14px] bg-plum-50 px-3 py-2.5 text-[12px] font-semibold leading-snug text-plum-900">
+          Open any job marked <span className="font-extrabold">Ready</span> below to ask for its payment.
         </p>
       )}
 
-      {/* A partner with money ready and nowhere to send it is the worst
-          state this screen can show, so it is said here rather than
-          further down. */}
       {has && !ready && (
         <button
           type="button" onClick={onAddPayout}
-          className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-full bg-saffron-500 px-4 text-[13px] font-extrabold text-plum-950"
+          className="relative mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[13px] font-extrabold text-white shadow-[0_10px_20px_rgba(42,8,92,0.18)]"
         >
           {payout ? 'We are checking your account' : 'Add your bank account'}
           <ArrowRight size={14} />
         </button>
       )}
 
-      <p className="mt-3 flex items-center gap-1.5 border-t border-white/10 pt-2.5 text-[11.5px] text-white/60">
-        <Landmark size={12} className="shrink-0" />
-        {/* Never "wallet". There is no balance held here — money goes
-            straight to a bank account, and calling it a wallet would
-            describe a product that does not exist. */}
-        <span className="min-w-0 truncate">
+      <div className="relative mt-3 flex items-center gap-1.5 border-t border-ink/[0.07] pt-2.5">
+        <Landmark size={13} className="shrink-0 text-plum-600" />
+        <span className="min-w-0 truncate text-[11.5px] font-semibold text-ink-mute">
           {payout
             ? `Paid straight to ${destinationOf(payout)}`
             : 'Paid straight to your bank. No wallet, no balance held here.'}
         </span>
-      </p>
+      </div>
     </section>
   )
 }
