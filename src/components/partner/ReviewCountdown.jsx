@@ -38,18 +38,34 @@ export function reviewWording(left) {
   return `${left.hours}h ${String(left.minutes).padStart(2, '0')}m left`
 }
 
-export function useReviewClock({ dueAt, submittedAt }) {
+export function useReviewClock({ dueAt, submittedAt, extended = 0 }) {
   const [now, setNow] = useState(() => Date.now())
-  const left = dueAt ? remaining(dueAt, now) : null
-  const ticking = !!dueAt || !!submittedAt
-  const insideLastHour = !!left && !left.over && left.ms < 3_600_000
+
+  // The first review window is ALWAYS exactly 24 hours from the real
+  // submission timestamp. A stale/mis-stamped due_at must never turn the
+  // first window into 48/53 hours. Only a backend-created extension may
+  // legitimately move the deadline beyond the first 24-hour window.
+  const submittedMs = submittedAt ? new Date(submittedAt).getTime() : NaN
+  const canonicalFirstDueMs = Number.isFinite(submittedMs)
+    ? submittedMs + SLA_HOURS * 3_600_000
+    : NaN
+  const backendDueMs = dueAt ? new Date(dueAt).getTime() : NaN
+  const effectiveDueMs = extended > 0 && Number.isFinite(backendDueMs)
+    ? backendDueMs
+    : canonicalFirstDueMs
+  const effectiveDueAt = Number.isFinite(effectiveDueMs) ? new Date(effectiveDueMs).toISOString() : null
+  const left = effectiveDueAt ? remaining(effectiveDueAt, now) : null
+  const ticking = Number.isFinite(submittedMs) || !!dueAt
 
   useEffect(() => {
     if (!ticking) return undefined
-    const step = insideLastHour || left?.over ? 1000 : 60_000
-    const id = setInterval(() => setNow(Date.now()), step)
+    // This is a LIVE clock. Do not downgrade to minute ticks; partners
+    // should see the seconds move continuously.
+    const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [ticking, insideLastHour, left?.over])
+  }, [ticking])
+
+  const insideLastHour = !!left && !left.over && left.ms < 3_600_000
 
   let elapsed = null
   if (submittedAt) {
@@ -115,7 +131,7 @@ export default function ReviewCountdown({
   listingNames = null,
   onHowItWorks = null,
 }) {
-  const { left, elapsed, dial } = useReviewClock({ dueAt, submittedAt })
+  const { left, elapsed, dial } = useReviewClock({ dueAt, submittedAt, extended })
 
   if (status === 'approved') {
     return (
@@ -145,36 +161,36 @@ export default function ReviewCountdown({
   const sent = formatSent(submittedAt)
 
   return (
-    <div className={`mb-4 overflow-hidden rounded-[24px] bg-gradient-to-br from-yellow-300 via-amber-300 to-yellow-400 px-4 py-4 text-plum-950 shadow-[0_10px_30px_rgba(83,50,0,0.14)] ring-1 ring-yellow-500/50 ${compact ? 'mb-0' : ''}`}>
-      <div className="flex items-start gap-3">
+    <div className={`mb-3 overflow-hidden rounded-[22px] bg-gradient-to-br from-yellow-300 via-amber-300 to-yellow-400 px-3.5 py-3.5 text-plum-950 shadow-[0_10px_30px_rgba(83,50,0,0.14)] ring-1 ring-yellow-500/50 ${compact ? 'mb-0' : ''}`}>
+      <div className="flex items-start gap-2.5">
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-[12.5px] font-black">
             <Clock3 size={16} className="shrink-0" />
             With our team
           </p>
 
-          <h2 className="mt-1 text-[28px] font-black leading-[0.94] tracking-[-0.04em]">
+          <h2 className="mt-1 text-[24px] font-black leading-[0.96] tracking-[-0.04em]">
             {overdue ? <>We need a<br />little more time.</> : <>We’re reviewing<br />your profile</>}
           </h2>
 
-          <p className="mt-2 max-w-[250px] text-[12px] font-semibold leading-snug text-plum-950/80">
+          <p className="mt-2 max-w-[220px] text-[11px] font-semibold leading-snug text-plum-950/80">
             {overdue
               ? 'Your review is taking a little longer than expected. We will keep you updated.'
               : 'Our team is verifying your details and listed services. This usually takes up to 24 hours.'}
           </p>
         </div>
 
-        <div className="relative flex h-[116px] w-[116px] shrink-0 items-center justify-center rounded-full">
+        <div className="relative flex h-[104px] w-[104px] shrink-0 items-center justify-center rounded-full">
           <div className="absolute inset-0 rounded-full bg-white/35 blur-[1px]" />
-          <div className="relative flex h-[110px] w-[110px] items-center justify-center rounded-full bg-yellow-200/30 ring-1 ring-white/60">
-            <ReviewDial {...dial} label={null} size={104} />
+          <div className="relative flex h-[100px] w-[100px] items-center justify-center rounded-full bg-yellow-200/30 ring-1 ring-white/60">
+            <ReviewDial {...dial} label={null} size={96} />
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[15px] font-black tabular-nums leading-none">
+              <span className="text-[13px] font-black tabular-nums leading-none">
                 {left && !overdue
-                  ? `${left.hours}h ${String(left.minutes).padStart(2, '0')}m`
+                  ? `${left.hours}h ${String(left.minutes).padStart(2, '0')}m ${String(left.seconds).padStart(2, '0')}s`
                   : elapsed
                     ? `${elapsed.hours}h ${String(elapsed.minutes).padStart(2, '0')}m`
-                    : '24h'}
+                    : '24h 00m 00s'}
               </span>
               <span className="mt-1 text-[9.5px] font-extrabold uppercase tracking-wide text-plum-950/65">
                 {overdue ? 'elapsed' : 'remaining'}
@@ -184,7 +200,7 @@ export default function ReviewCountdown({
         </div>
       </div>
 
-      <div className="mt-3 flex items-start gap-2.5 rounded-[17px] bg-white/75 px-3 py-2.5 ring-1 ring-white/70">
+      <div className="mt-2.5 flex items-start gap-2 rounded-[17px] bg-white/75 px-3 py-2.5 ring-1 ring-white/70">
         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm">
           <Info size={14} />
         </span>
@@ -197,7 +213,7 @@ export default function ReviewCountdown({
         </p>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-2.5 grid grid-cols-2 gap-2">
         {onOpenCalendar && (
           <button
             type="button"
@@ -227,7 +243,7 @@ export default function ReviewCountdown({
         <button
           type="button"
           onClick={onOpenListing}
-          className="mt-2 flex min-h-[58px] w-full items-center justify-between gap-2 rounded-[17px] bg-white/80 px-3 text-left shadow-sm ring-1 ring-white transition active:scale-[0.99]"
+          className="mt-2 flex min-h-[50px] w-full items-center justify-between gap-2 rounded-[17px] bg-white/80 px-3 text-left shadow-sm ring-1 ring-white transition active:scale-[0.99]"
         >
           <span className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
