@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ArrowRight, BarChart3, CalendarDays, CheckCircle2, Clock3, FileText,
-  Landmark, Search, ShieldCheck, Sparkles, TrendingUp, WalletCards,
+  BarChart3, CalendarDays, CheckCircle2, Clock3, FileText,
+  Landmark, Search, ShieldCheck, Sparkles, WalletCards,
 } from 'lucide-react'
 import { useEarnings } from '../../hooks/useEarnings'
 import { statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
@@ -14,34 +14,14 @@ import EarningsStatement from './EarningsStatement'
 import BankPanel from './earnings/BankPanel'
 import DocumentsSection from './earnings/DocumentsSection'
 import EarningsChart from './earnings/EarningsChart'
+import EarningsMarketingCarousel from './EarningsMarketingCarousel'
 
 const money = paise => `₹${Math.round((Number(paise) || 0) / 100).toLocaleString('en-IN')}`
 
-const promo = [
-  {
-    title: 'EVERY RUPEE. CLEAR AS DAY.',
-    body: 'See your earned, pending and paid money in one place.',
-    action: 'Understand earnings',
-    icon: BarChart3,
-    cls: 'from-[#32105f] via-[#6d28d9] to-[#9b4dff]',
-  },
-  {
-    title: 'KEEP YOUR CALENDAR OPEN.',
-    body: 'Accurate availability helps you get more matching opportunities.',
-    action: 'Set availability',
-    icon: CalendarDays,
-    cls: 'from-[#063f38] via-[#087f6b] to-[#18a779]',
-  },
-  {
-    title: 'FINISH. EARN. GROW.',
-    body: 'Complete more events, get paid on time and grow your business.',
-    action: 'See how it works',
-    icon: TrendingUp,
-    cls: 'from-[#8f240d] via-[#e24a16] to-[#ff8a24]',
-  },
-]
-
 function RangeTabs({ rangeId, onChange }) {
+  const [customOpen, setCustomOpen] = useState(false)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
   const tabs = [
     ['today', 'Today'],
     ['week', 'Week'],
@@ -49,20 +29,44 @@ function RangeTabs({ rangeId, onChange }) {
     ['last-month', 'Last month'],
     ['fy', 'This year'],
   ]
+  const customSelected = typeof rangeId === 'string' && rangeId.includes('..')
+
   return (
-    <div className="grid grid-cols-5 gap-1 rounded-[18px] bg-white p-1 shadow-sm ring-1 ring-ink/[0.06]">
-      {tabs.map(([id, label]) => (
+    <div className="rounded-[18px] bg-white p-1 shadow-sm ring-1 ring-ink/[0.06]">
+      <div className="flex gap-1 overflow-x-auto">
+        {tabs.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => { setCustomOpen(false); onChange(id) }}
+            className={`min-h-[38px] shrink-0 rounded-full px-3 text-[11px] font-extrabold transition-colors ${rangeId === id ? 'bg-plum-600 text-white shadow-sm' : 'text-ink-soft'}`}
+          >
+            {label}
+          </button>
+        ))}
         <button
-          key={id}
           type="button"
-          onClick={() => onChange(id)}
-          className={`min-h-[38px] rounded-full px-1 text-[11px] font-extrabold transition-colors ${
-            rangeId === id ? 'bg-plum-600 text-white shadow-sm' : 'text-ink-soft'
-          }`}
+          onClick={() => setCustomOpen(v => !v)}
+          className={`min-h-[38px] shrink-0 rounded-full px-3 text-[11px] font-extrabold transition-colors ${customSelected ? 'bg-plum-600 text-white shadow-sm' : 'text-ink-soft'}`}
         >
-          {label}
+          Custom
         </button>
-      ))}
+      </div>
+      {customOpen && (
+        <div className="mt-2 grid grid-cols-[1fr_1fr_auto] items-end gap-2 border-t border-ink/[0.06] px-1 pt-2">
+          <label className="text-[9px] font-extrabold text-ink-mute">
+            From
+            <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="mt-1 h-9 w-full rounded-[10px] bg-ink/[0.035] px-2 text-[10px] font-semibold text-ink outline-none ring-1 ring-ink/[0.06]" />
+          </label>
+          <label className="text-[9px] font-extrabold text-ink-mute">
+            To
+            <input type="date" value={to} min={from || undefined} onChange={e => setTo(e.target.value)} className="mt-1 h-9 w-full rounded-[10px] bg-ink/[0.035] px-2 text-[10px] font-semibold text-ink outline-none ring-1 ring-ink/[0.06]" />
+          </label>
+          <button type="button" disabled={!from || !to} onClick={() => { onChange(`${from}..${to}`); setCustomOpen(false) }} className="h-9 rounded-[10px] bg-plum-600 px-3 text-[10px] font-extrabold text-white disabled:opacity-40">
+            Apply
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -87,38 +91,6 @@ function MiniKpi({ icon: Icon, label, value, sub, tone }) {
         </div>
       </div>
     </div>
-  )
-}
-
-function PromoCards({ onCalendar, onWork }) {
-  return (
-    <section>
-      <div className="mb-2 flex items-center justify-center gap-1">
-        <span className="h-1.5 w-5 rounded-full bg-plum-600" />
-        <span className="h-1.5 w-1.5 rounded-full bg-ink/10" />
-        <span className="h-1.5 w-1.5 rounded-full bg-ink/10" />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {promo.map((p, i) => {
-          const Icon = p.icon
-          return (
-            <button
-              key={p.title}
-              type="button"
-              onClick={i === 1 ? onCalendar : i === 2 ? onWork : undefined}
-              className={`relative min-h-[142px] overflow-hidden rounded-[16px] bg-gradient-to-br ${p.cls} p-2.5 text-left text-white shadow-sm`}
-            >
-              <Icon className="absolute right-2 bottom-2 h-12 w-12 opacity-25" strokeWidth={1.6} />
-              <p className="relative text-[11px] font-black leading-[1.05]">{p.title}</p>
-              <p className="relative mt-2 text-[8.5px] font-semibold leading-[1.25] text-white/85">{p.body}</p>
-              <span className="absolute bottom-2 left-2.5 right-2.5 inline-flex items-center justify-center rounded-full bg-white px-2 py-1.5 text-[8px] font-extrabold text-plum-800">
-                {p.action} <ArrowRight size={10} className="ml-1" />
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </section>
   )
 }
 
@@ -169,6 +141,8 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         </div>
       )}
 
+      <EarningsMarketingCarousel />
+
       {/* Reference-design hero */}
       <section className="relative min-h-[158px] overflow-hidden rounded-[20px] bg-gradient-to-br from-[#32105f] via-[#5c18b5] to-[#7b2cff] px-4 py-3.5 text-white shadow-sm">
         <div className="absolute -right-5 top-3 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
@@ -204,12 +178,8 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         <MiniKpi icon={WalletCards} label="Paid out" value={money(series.kpis.paid.value)} sub="Sent to your account" tone="paid" />
       </div>
 
-      <EarningsChart series={series.series} range={range} />
+      <div id="earnings-over-time"><EarningsChart series={series.series} range={range} /></div>
 
-      <PromoCards
-        onCalendar={() => setParams(prev => { const n = new URLSearchParams(prev); n.set('tab', 'availability'); n.delete('range'); return n }, { replace: true })}
-        onWork={() => document.getElementById('your-work')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-      />
 
       <section className="rounded-[18px] bg-white p-3.5 shadow-sm ring-1 ring-ink/[0.06]">
         <div className="flex items-center gap-2">
@@ -263,9 +233,9 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         </div>
       </section>
 
-      <EarningsStatement statement={fyStatement} />
+      <div id="your-statement"><EarningsStatement statement={fyStatement} /></div>
 
-      <BankPanel payout={payout} onAddPayout={onAddPayout} />
+      <div id="your-account"><BankPanel payout={payout} onAddPayout={onAddPayout} /></div>
       <DocumentsSection statement={fyStatement} fy={fy} partner={vendor ?? {}} />
 
       {jobs.length === 0 && (
