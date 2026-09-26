@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 import {
-  CalendarPlus, CalendarRange, Repeat, ChevronRight, MapPin, CalendarDays, RotateCw, CalendarCheck,
+  CalendarPlus, CalendarRange, Repeat, ChevronRight, ChevronDown, MapPin, CalendarDays, RotateCw, CalendarCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
@@ -163,41 +163,62 @@ export default function CalendarMonth({
 
   return (
     <div className="space-y-3 pb-2">
-      {/* Futuristic calendar header — same actions, clearer first-time experience. */}
-      <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-4 pt-4 text-white shadow-[0_14px_34px_rgba(63,25,130,0.22)]">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-fuchsia-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 right-10 h-24 w-24 rounded-full bg-violet-300/15 blur-2xl" />
+      {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
+      <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-3.5 pt-4 text-white shadow-[0_12px_28px_rgba(63,25,130,0.20)]">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-10 right-16 h-28 w-28 rounded-full bg-violet-300/15 blur-2xl" />
+        <div className="pointer-events-none absolute -left-16 top-12 h-28 w-40 -rotate-[24deg] rounded-[48px] bg-violet-300/10 blur-xl" />
 
-        <div className="relative flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200">SAMBRAMO PARTNER</p>
-            <h1 className="mt-1 text-[26px] font-black leading-none tracking-[-0.03em]">Calendar</h1>
-            <p className="mt-2 max-w-[250px] text-[11.5px] font-medium leading-snug text-white/75">
-              Tell us when you can work. We will use it when matching your next event.
+        <div className="relative flex min-h-[92px] items-start justify-between gap-3">
+          <div className="min-w-0 pt-0.5">
+            <h1 className="text-[27px] font-black leading-none tracking-[-0.04em]">Calendar</h1>
+            <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-white/80">
+              Manage your availability, block dates and stay in control of your bookings.
             </p>
           </div>
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] bg-white/10 ring-1 ring-white/15">
-            <CalendarDays size={34} className="text-violet-100" />
+
+          {/* Lightweight CSS illustration so the APK remains self-contained. */}
+          <div className="relative mt-0.5 mr-1 h-[76px] w-[94px] shrink-0">
+            <div className="absolute right-0 top-0 h-[67px] w-[76px] -rotate-[4deg] rounded-[16px] bg-gradient-to-br from-fuchsia-400 to-violet-200 p-2 shadow-[0_10px_18px_rgba(24,7,70,0.28)]">
+              <div className="h-full rounded-[11px] bg-white/90 p-1.5">
+                <div className="mb-1 flex gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <span className="h-2 rounded bg-violet-200" /><span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-violet-200" />
+                  <span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-white" /><span className="h-2 rounded bg-violet-200" />
+                  <span className="h-2 rounded bg-violet-200" /><span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-white" />
+                </div>
+              </div>
+            </div>
+            <span className="absolute -bottom-1 right-0 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-300 to-violet-600 shadow-[0_8px_16px_rgba(24,7,70,0.32)]">
+              <span className="h-5 w-5 rounded-full border-[3px] border-white/90 border-t-transparent" />
+            </span>
+            <span className="absolute left-1 top-3 h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(253,224,71,0.9)]" />
+            <span className="absolute left-10 top-0 text-[16px] text-yellow-200">✦</span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={() => setRange({ from: null, mode: 'OPEN' })}
-          className="relative mt-4 flex min-h-[48px] w-full items-center gap-3 rounded-[17px] bg-white px-3.5 text-left text-plum-950 shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition active:scale-[0.99]"
+          className="relative mt-2 flex min-h-[58px] w-full items-center gap-3 rounded-[17px] bg-white px-3.5 text-left text-plum-950 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition active:scale-[0.99]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-violet-100 text-violet-700">
-            <CalendarPlus size={18} />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-violet-600 text-white shadow-sm">
+            <CalendarPlus size={19} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13.5px] font-black">Set your dates</span>
-            <span className="block text-[10.5px] font-semibold text-ink-mute">Available, limited or blocked — a few taps.</span>
+            <span className="block text-[13.5px] font-black leading-tight">Set dates</span>
+            <span className="mt-0.5 block text-[10.5px] font-medium leading-tight text-ink-mute">
+              Mark available, limited or blocked dates in just a few taps.
+            </span>
           </span>
-          <ChevronRight size={18} className="shrink-0 text-violet-700" />
+          <ChevronRight size={20} className="shrink-0 text-plum-800" />
         </button>
       </section>
 
-      {/* One clear switch between the three existing calendar views. */}
       <div className="flex items-center gap-2">
         <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 rounded-full bg-ink/[0.055] p-1">
           {VIEWS.map(([id, label]) => (
@@ -207,7 +228,7 @@ export default function CalendarMonth({
               onClick={() => setView(id)}
               aria-pressed={view === id}
               className={[
-                'min-h-[38px] rounded-full text-[12.5px] font-black transition active:scale-[0.99]',
+                'min-h-[36px] rounded-full text-[12px] font-black transition active:scale-[0.99]',
                 view === id ? 'bg-plum-700 text-white shadow-sm' : 'text-ink-soft',
               ].join(' ')}
             >
@@ -218,8 +239,9 @@ export default function CalendarMonth({
         <button
           type="button"
           onClick={goToday}
-          className="min-h-[40px] shrink-0 rounded-full bg-white px-3.5 text-[12px] font-black text-plum-700 ring-1 ring-plum-200"
+          className="flex min-h-[38px] shrink-0 items-center gap-1 rounded-full bg-white px-3.5 text-[11.5px] font-black text-plum-700 ring-1 ring-plum-300"
         >
+          <CalendarDays size={13} />
           Today
         </button>
       </div>
@@ -233,41 +255,36 @@ export default function CalendarMonth({
 
       <ScreenState loading={loading} error={error} onRetry={retry} what="your calendar" rows={4}>
         {view === 'month' && (
-          <section className="overflow-hidden rounded-[24px] bg-white p-3 shadow-[0_8px_24px_rgba(42,8,92,0.07)] ring-1 ring-ink/[0.06]">
-            <div className="mb-2 flex items-center justify-between">
+          <section className="overflow-hidden rounded-[23px] bg-white p-3 shadow-[0_6px_22px_rgba(42,8,92,0.055)] ring-1 ring-ink/[0.06]">
+            <div className="mb-1 flex items-center justify-between px-0.5">
               <button
                 type="button"
                 onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
                 disabled={cursor.getFullYear() === new Date(`${todayISO}T00:00:00Z`).getUTCFullYear() && cursor.getMonth() === new Date(`${todayISO}T00:00:00Z`).getUTCMonth()}
                 aria-label="Previous month"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.035] text-ink-soft disabled:opacity-30"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.025] text-ink-soft disabled:opacity-30"
               >
-                <span className="text-xl leading-none">‹</span>
+                <span className="text-[24px] leading-none">‹</span>
               </button>
-              <button
-                type="button"
-                onClick={goToday}
-                className="text-center"
-                aria-label="Return to current month"
-              >
-                <p className="text-[16px] font-black tracking-[-0.02em] text-ink">
+              <button type="button" onClick={goToday} aria-label="Return to current month" className="flex items-center gap-1">
+                <p className="text-[15px] font-black tracking-[-0.02em] text-ink">
                   {new Date(`${todayISO}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
                 </p>
-                <p className="mt-0.5 text-[9.5px] font-bold text-ink-mute">Tap to return to today</p>
+                <ChevronDown size={15} className="text-ink-soft" />
               </button>
               <button
                 type="button"
                 onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
                 aria-label="Next month"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.035] text-ink-soft"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.025] text-ink-soft"
               >
-                <span className="text-xl leading-none">›</span>
+                <span className="text-[24px] leading-none">›</span>
               </button>
             </div>
 
             <div className="grid grid-cols-7 gap-1">
-              {['S','M','T','W','T','F','S'].map((d, i) => (
-                <div key={`${d}-${i}`} className="py-1 text-center text-[9px] font-black uppercase tracking-wide text-ink-faint">{d}</div>
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                <div key={d} className="py-1 text-center text-[8.5px] font-bold text-ink-mute">{d}</div>
               ))}
             </div>
 
@@ -298,8 +315,8 @@ export default function CalendarMonth({
                   const styles = {
                     [STATUS.OPEN]: 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                     [STATUS.LIMITED]: 'bg-amber-50 text-amber-900 ring-amber-200',
-                    [STATUS.BOOKED]: 'bg-violet-50 text-violet-900 ring-violet-200',
-                    [STATUS.BLOCKED]: 'bg-ink/[0.06] text-ink-soft ring-ink/[0.12]',
+                    [STATUS.BOOKED]: 'bg-violet-100 text-violet-900 ring-violet-300',
+                    [STATUS.BLOCKED]: 'bg-[#3b146b] text-white ring-[#3b146b]',
                     [STATUS.UNSET]: 'bg-white text-ink-mute ring-ink/[0.07]',
                   }[status] ?? 'bg-white text-ink-mute ring-ink/[0.07]'
                   return (
@@ -310,16 +327,16 @@ export default function CalendarMonth({
                       onClick={() => setSelected(iso)}
                       aria-label={`${date.toDateString()} — ${status}${v.reason ? ` — ${v.reason}` : ''}`}
                       className={[
-                        'relative flex aspect-square min-h-[46px] flex-col items-center justify-center rounded-[14px] ring-1 transition active:scale-[0.97]',
+                        'relative flex aspect-square min-h-[47px] flex-col items-center justify-center rounded-[14px] ring-1 transition active:scale-[0.97]',
                         styles,
-                        isPast ? 'opacity-35' : 'hover:ring-plum-300',
-                        isToday ? 'ring-2 ring-plum-500 ring-offset-1' : '',
+                        isPast ? 'opacity-40' : 'hover:ring-plum-300',
+                        isToday ? 'ring-2 ring-plum-600 ring-offset-1' : '',
                       ].join(' ')}
                     >
-                      <span className={`text-[13px] font-black leading-none ${isToday ? 'text-plum-700' : ''}`}>{date.getDate()}</span>
-                      <span className="mt-1 max-w-full truncate px-0.5 text-[7.5px] font-extrabold leading-none opacity-70">
+                      <span className={`text-[12px] font-black leading-none ${isToday ? 'text-plum-700' : ''}`}>{date.getDate()}</span>
+                      <span className="mt-1 max-w-full truncate px-0.5 text-[8px] font-semibold leading-none opacity-75">
                         {status === STATUS.OPEN ? 'Open'
-                          : status === STATUS.LIMITED ? `${v.remaining ?? availability[iso]?.slots_total ?? 1} left`
+                          : status === STATUS.LIMITED ? 'Limited'
                           : status === STATUS.BOOKED ? 'Booked'
                           : status === STATUS.BLOCKED ? 'Blocked'
                           : 'Not set'}
@@ -336,7 +353,7 @@ export default function CalendarMonth({
               })()}
             </div>
 
-            <div className="mt-3">
+            <div className="mt-2.5 rounded-[18px] border border-ink/[0.08] px-3 py-3">
               <CalendarLegend />
             </div>
           </section>
@@ -373,10 +390,7 @@ export default function CalendarMonth({
       )}
 
       {coverage.severity !== 'ok' && (
-        <section
-          data-coverage={coverage.severity}
-          className="rounded-[22px] bg-white p-3.5 shadow-[0_6px_18px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]"
-        >
+        <section data-coverage={coverage.severity} className="rounded-[20px] bg-white p-3.5 shadow-[0_6px_18px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Calendar coverage</p>
@@ -385,24 +399,13 @@ export default function CalendarMonth({
             <p className="text-[11px] font-black text-plum-700">{Math.round(coverage.fraction * 100)}%</p>
           </div>
           <span className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-ink/[0.07]">
-            <span
-              className={`h-full rounded-full ${coverage.severity === 'thin' ? 'bg-saffron-400' : 'bg-plum-600'}`}
-              style={{ width: `${Math.max(2, Math.round(coverage.fraction * 100))}%` }}
-            />
+            <span className={`h-full rounded-full ${coverage.severity === 'thin' ? 'bg-saffron-400' : 'bg-plum-600'}`} style={{ width: `${Math.max(2, Math.round(coverage.fraction * 100))}%` }} />
           </span>
           <p className="mt-2 text-[11.5px] leading-snug text-ink-mute">
-            {coverage.firstBlank
-              ? `Nothing said about ${coverage.firstBlank.label} yet. Customers plan celebrations months ahead, so the further out you go the more we can match you.`
-              : 'Customers plan celebrations months ahead. The further out your calendar goes, the more we can match you.'}
+            {coverage.firstBlank ? `Nothing said about ${coverage.firstBlank.label} yet. Customers plan celebrations months ahead, so the further out you go the more we can match you.` : 'Customers plan celebrations months ahead. The further out you go, the more we can match you.'}
           </p>
-          <button
-            type="button"
-            data-cover-horizon
-            onClick={() => setRange({ from: todayISO, to: coverage.horizonISO, mode: 'OPEN' })}
-            className="mt-3 inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[12.5px] font-black text-white"
-          >
-            <CalendarCheck size={14} />
-            Open the next {coverage.targetDays} days
+          <button type="button" data-cover-horizon onClick={() => setRange({ from: todayISO, to: coverage.horizonISO, mode: 'OPEN' })} className="mt-3 inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-plum-600 px-4 text-[12.5px] font-black text-white">
+            <CalendarCheck size={14} /> Open the next {coverage.targetDays} days
           </button>
         </section>
       )}
@@ -410,37 +413,37 @@ export default function CalendarMonth({
       <section>
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Availability tools</p>
-            <p className="mt-0.5 text-[11px] text-ink-mute">Set your routine once, or change a group of dates.</p>
+            <p className="text-[13px] font-black tracking-[-0.02em] text-ink">Availability Tools</p>
           </div>
-          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[9.5px] font-black text-violet-700">Quick actions</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[9.5px] font-black text-violet-700">
+            <span className="text-[11px]">ϟ</span> Quick actions
+          </span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <ToolCard icon={CalendarRange} title="Set a range" hint="Open, limited or blocked" onClick={() => setRange({ from: null, mode: null })} />
-          <ToolCard icon={Repeat} title="Usual week" hint="Set days you normally work" onClick={() => setRecurring(true)} />
-          <ToolCard icon={CalendarDays} title="Google Calendar" hint="Coming soon" disabled />
+        <div className="grid grid-cols-3 gap-2">
+          <ToolCard tone="purple" icon={CalendarRange} title="Set a range of dates" hint="Available, limited or blocked — e.g. 25 Sep to 31 Oct" onClick={() => setRange({ from: null, mode: null })} />
+          <ToolCard tone="blue" icon={Repeat} title="Set your usual week" hint="E.g. never on Sundays" onClick={() => setRecurring(true)} />
+          <ToolCard tone="gold" icon={CalendarDays} title="Sync Google Calendar" hint="Coming soon" disabled google />
         </div>
       </section>
 
       <section>
         <div className="mb-1.5 flex items-end justify-between px-0.5">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-faint">Upcoming bookings</p>
-            <p className="mt-0.5 text-[11px] text-ink-mute">{upcoming.length ? `${upcoming.length} upcoming event${upcoming.length === 1 ? '' : 's'}` : 'Nothing booked yet'}</p>
+            <p className="text-[13px] font-black tracking-[-0.02em] text-ink">Upcoming bookings</p>
           </div>
           {upcoming.length > 0 && (
             <button type="button" onClick={() => setView('list')} className="text-[11px] font-black text-plum-700">View all <ChevronRight size={13} className="inline" /></button>
           )}
         </div>
         {upcoming.length === 0 ? (
-          <div className="rounded-[20px] bg-white px-4 py-5 ring-1 ring-ink/[0.06]">
+          <div className="rounded-[19px] bg-white px-4 py-4 shadow-[0_4px_16px_rgba(42,8,92,0.045)] ring-1 ring-ink/[0.06]">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-violet-50 text-violet-700">
                 <CalendarCheck size={18} />
               </span>
               <div>
                 <p className="text-[12.5px] font-black text-ink">No upcoming bookings</p>
-                <p className="mt-0.5 text-[11px] text-ink-mute">Accepted events will appear here automatically.</p>
+                <p className="mt-0.5 text-[10.5px] text-ink-mute">Once you accept jobs, they will appear here.</p>
               </div>
             </div>
           </div>
@@ -448,25 +451,14 @@ export default function CalendarMonth({
           <ul className="space-y-2">
             {upcoming.map(j => (
               <li key={j.line_id}>
-                <button
-                  type="button"
-                  onClick={() => setSelected(j.event_date)}
-                  className="flex w-full items-center gap-3 rounded-[18px] bg-white px-3.5 py-3 text-left shadow-[0_4px_16px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]"
-                >
+                <button type="button" onClick={() => setSelected(j.event_date)} className="flex w-full items-center gap-3 rounded-[18px] bg-white px-3.5 py-3 text-left shadow-[0_4px_16px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06]">
                   <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[14px] bg-violet-50 text-violet-800">
-                    <span className="text-[14px] font-black leading-none">
-                      {new Date(`${j.event_date}T00:00:00Z`).getUTCDate()}
-                    </span>
-                    <span className="text-[9px] font-bold uppercase leading-none">
-                      {new Date(`${j.event_date}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'short', timeZone: 'UTC' })}
-                    </span>
+                    <span className="text-[14px] font-black leading-none">{new Date(`${j.event_date}T00:00:00Z`).getUTCDate()}</span>
+                    <span className="text-[9px] font-bold uppercase leading-none">{new Date(`${j.event_date}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'short', timeZone: 'UTC' })}</span>
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[12.5px] font-black text-ink">{j.occasion_name ?? j.service_name ?? 'Booking'}</span>
-                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10.5px] text-ink-mute">
-                      {j.time_note && <span>{j.time_note}</span>}
-                      {j.area_label && <span className="inline-flex items-center gap-0.5"><MapPin size={10} />{j.area_label}</span>}
-                    </span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10.5px] text-ink-mute">{j.time_note && <span>{j.time_note}</span>}{j.area_label && <span className="inline-flex items-center gap-0.5"><MapPin size={10} />{j.area_label}</span>}</span>
                   </span>
                   <ChevronRight size={16} className="shrink-0 text-ink-faint" />
                 </button>
@@ -514,26 +506,37 @@ export default function CalendarMonth({
           vendor={vendor}
           onSave={onSaveWeeklyRules}
           onClose={() => setRecurring(false)}
-        />
+          />
       )}
     </div>
   )
 }
 
-function ToolCard({ icon: Icon, title, hint, onClick, disabled = false }) {
+function ToolCard({ icon: Icon, title, hint, onClick, disabled = false, tone = 'purple', google = false }) {
+  const tones = {
+    purple: 'bg-[#f4edff] text-plum-900',
+    blue: 'bg-[#eef6ff] text-blue-950',
+    gold: 'bg-[#fff7e8] text-amber-950',
+  }
+  const iconTones = {
+    purple: 'bg-[#e9d8ff] text-violet-700',
+    blue: 'bg-[#dbeeff] text-blue-600',
+    gold: 'bg-[#ffefcf] text-amber-700',
+  }
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex min-h-[112px] flex-col items-start justify-between rounded-[20px] bg-white p-3 text-left shadow-[0_6px_18px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06] transition active:scale-[0.985] disabled:opacity-55"
+      className={`relative flex min-h-[150px] min-w-0 flex-col items-start overflow-hidden rounded-[18px] p-3 text-left shadow-[0_5px_16px_rgba(42,8,92,0.045)] ring-1 ring-ink/[0.035] transition active:scale-[0.985] disabled:opacity-75 ${tones[tone]}`}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-violet-50 text-violet-700">
-        <Icon size={17} />
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${iconTones[tone]}`}>
+        {google ? <span className="text-[22px] font-black leading-none" style={{ fontFamily: 'Arial, sans-serif' }}>G</span> : <Icon size={17} />}
       </span>
-      <span className="mt-2 block text-[12px] font-black leading-tight text-ink">{title}</span>
-      <span className="mt-0.5 block text-[10px] leading-snug text-ink-mute">{hint}</span>
-      {!disabled && <ChevronRight size={15} className="mt-2 self-end text-plum-600" />}
+      <span className="mt-2.5 block text-[11.5px] font-black leading-[1.15] text-ink">{title}</span>
+      <span className="mt-1 block line-clamp-3 text-[9.5px] leading-[1.3] text-ink-soft">{hint}</span>
+      {!disabled && <ChevronRight size={15} className="absolute bottom-3 right-3 text-plum-700" />}
+      {disabled && <span className="absolute bottom-3 left-3 rounded-full bg-white/70 px-2 py-0.5 text-[8.5px] font-bold text-amber-800">Coming soon</span>}
     </button>
   )
 }
