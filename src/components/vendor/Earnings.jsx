@@ -189,6 +189,10 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         </div>
       )}
 
+      <div className="lg:col-span-12">
+        <PartnerMarketingCarousel vendorId={vendorId} facts={promoFacts} />
+      </div>
+
       {/* ── Left: the analysis ────────────────────────────────────── */}
       <div className="space-y-3.5 lg:col-span-8">
         {/* On a phone the hero leads, because "what is mine now" is the
