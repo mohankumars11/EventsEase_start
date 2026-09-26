@@ -42,7 +42,7 @@ import { destinationOf } from '../../../lib/documents/mask'
 export default function BankPanel({ payout, onAddPayout }) {
   if (!payout) {
     return (
-      <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+      <section id="your-account" className="scroll-mt-24 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <h2 className="text-[13.5px] font-extrabold text-ink">Where should we pay you?</h2>
         <p className="mt-1 text-[12px] leading-relaxed text-ink-mute">
           Add a bank account or UPI id. Nothing can be paid out until
