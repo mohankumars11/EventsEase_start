@@ -319,7 +319,7 @@ export default function CalendarMonth({
                       <span className={`text-[13px] font-black leading-none ${isToday ? 'text-plum-700' : ''}`}>{date.getDate()}</span>
                       <span className="mt-1 max-w-full truncate px-0.5 text-[7.5px] font-extrabold leading-none opacity-70">
                         {status === STATUS.OPEN ? 'Open'
-                          : status === STATUS.LIMITED ? `${v.remaining ?? rowSlots(availability[iso])} left`
+                          : status === STATUS.LIMITED ? `${v.remaining ?? availability[iso]?.slots_total ?? 1} left`
                           : status === STATUS.BOOKED ? 'Booked'
                           : status === STATUS.BLOCKED ? 'Blocked'
                           : 'Not set'}
@@ -419,7 +419,6 @@ export default function CalendarMonth({
           <ToolCard icon={CalendarRange} title="Set a range" hint="Open, limited or blocked" onClick={() => setRange({ from: null, mode: null })} />
           <ToolCard icon={Repeat} title="Usual week" hint="Set days you normally work" onClick={() => setRecurring(true)} />
           <ToolCard icon={CalendarDays} title="Google Calendar" hint="Coming soon" disabled />
-          <ToolCard icon={ZapIcon} title="Busy next 7 days" hint="Block seven days" onClick={() => bulkBlock(7)} />
         </div>
       </section>
 
@@ -518,6 +517,24 @@ export default function CalendarMonth({
         />
       )}
     </div>
+  )
+}
+
+function ToolCard({ icon: Icon, title, hint, onClick, disabled = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex min-h-[112px] flex-col items-start justify-between rounded-[20px] bg-white p-3 text-left shadow-[0_6px_18px_rgba(42,8,92,0.05)] ring-1 ring-ink/[0.06] transition active:scale-[0.985] disabled:opacity-55"
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-violet-50 text-violet-700">
+        <Icon size={17} />
+      </span>
+      <span className="mt-2 block text-[12px] font-black leading-tight text-ink">{title}</span>
+      <span className="mt-0.5 block text-[10px] leading-snug text-ink-mute">{hint}</span>
+      {!disabled && <ChevronRight size={15} className="mt-2 self-end text-plum-600" />}
+    </button>
   )
 }
 
