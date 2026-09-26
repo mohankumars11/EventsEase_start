@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PartnerEmptyState from '../partner/PartnerEmptyState'
 import { apiUrl } from '../../lib/api'
-import { Camera, Check, Clock, MapPin, X, Inbox } from 'lucide-react'
+import { Camera, Check, Clock, MapPin, X, Inbox, Sparkles, Timer, CalendarDays } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import { OFFER_CARD } from '../../config/instantBooking'
@@ -323,7 +323,64 @@ export default function OfferInbox({ vendorId, onOpenCalendar = null }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-800 via-plum-700 to-plum-500 p-5 text-white shadow-[0_18px_45px_rgba(61,20,111,0.22)]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/70">
+              <Sparkles size={13} /> Partner workspace
+            </div>
+            <h2 className="mt-2 text-[25px] font-black leading-[1.05] tracking-[-0.03em]">
+              Work that fits your calendar.
+            </h2>
+            <p className="mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-white/80">
+              Review live opportunities, see exactly what you earn, and respond before the window closes.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-white/15 bg-white/10 px-3 py-2.5 text-right backdrop-blur">
+            <p className="text-[10px] font-extrabold uppercase tracking-wide text-white/60">Live offers</p>
+            <p className="mt-0.5 text-[24px] font-black tabular-nums">{offers.length}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <Timer size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Response</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">45 sec</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <CalendarDays size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Matching</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">Date + area</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+            <Check size={14} className="text-white/75" />
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/55">Your choice</p>
+            <p className="mt-0.5 text-[12px] font-extrabold">Accept / Pass</p>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="rounded-[20px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">Now</p>
+          <p className="mt-1 text-[13px] font-extrabold text-ink">New opportunities</p>
+          <p className="mt-0.5 text-[11.5px] text-ink-soft">Only matching work reaches this inbox.</p>
+        </div>
+        <div className="rounded-[20px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">Next</p>
+          <p className="mt-1 text-[13px] font-extrabold text-ink">Your accepted jobs</p>
+          <p className="mt-0.5 text-[11.5px] text-ink-soft">Confirmed work stays visible below.</p>
+        </div>
+        <button type="button" onClick={onOpenCalendar}
+          className="rounded-[20px] bg-plum-50 p-3.5 text-left ring-1 ring-plum-200/70 transition active:scale-[0.99]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Improve matching</p>
+          <p className="mt-1 text-[13px] font-extrabold text-plum-900">Keep your calendar current →</p>
+          <p className="mt-0.5 text-[11.5px] text-plum-800/70">Tell us where you are free.</p>
+        </button>
+      </div>
+
       {flash && (
         <p className="rounded-[16px] bg-surface-sunk/[0.06] p-3 text-center text-[12.5px] font-bold text-ink-soft">
           {typeof flash === 'string' ? flash : String(flash)}
