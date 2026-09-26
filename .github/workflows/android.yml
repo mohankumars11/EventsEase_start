@@ -77,16 +77,7 @@ jobs:
           APK="$(find android/app/build/outputs/apk -name '*.apk' | head -1)"
           test -s "$APK"
           unzip -t "$APK" >/dev/null
-          test "$(python - <<'PY'
-import zipfile,sys
-p=sys.argv[1]
-with zipfile.ZipFile(p) as z:
-    names=z.namelist()
-    assert 'AndroidManifest.xml' in names
-    assert 'resources.arsc' in names
-    print(len(names))
-PY
-"$APK")" -gt 100
+          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); n=z.namelist(); assert 'AndroidManifest.xml' in n and 'resources.arsc' in n and len(n)>100; z.close()" "$APK"
           echo "Verified APK: $APK"
           sha256sum "$APK"
       - name: Name it something a person can read
