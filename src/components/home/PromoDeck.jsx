@@ -107,6 +107,7 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
             </span>
 
             <div className="relative min-w-0 flex-1">
+              {slide.renderBrand}
               {slide.eyebrow && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2.5 py-1 text-[9.5px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
                   {slide.eyebrow}
