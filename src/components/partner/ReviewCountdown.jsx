@@ -167,7 +167,7 @@ export default function ReviewCountdown({
         <div className="relative flex h-[116px] w-[116px] shrink-0 items-center justify-center rounded-full">
           <div className="absolute inset-0 rounded-full bg-white/35 blur-[1px]" />
           <div className="relative flex h-[110px] w-[110px] items-center justify-center rounded-full bg-yellow-200/30 ring-1 ring-white/60">
-            <ReviewDial {...dial} size={104} />
+            <ReviewDial {...dial} label={null} size={104} />
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[15px] font-black tabular-nums leading-none">
                 {left && !overdue
