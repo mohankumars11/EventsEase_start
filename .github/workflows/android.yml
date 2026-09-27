@@ -59,7 +59,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926]
+    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/job-steps-futuristic-ui-20260927]
     # Only when something that affects the native shell changes. A copy
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
