@@ -464,7 +464,7 @@ export default function VendorDashboard() {
             }}
           />
         </div>
-  
+      )}
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel
