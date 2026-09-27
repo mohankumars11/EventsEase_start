@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Bell, CalendarDays, ChevronRight, Gift, PartyPopper, Users } from 'lucide-react'
+import { Bell, Gift, PartyPopper, Users } from 'lucide-react'
 import { greetingFor, msUntilNextBand } from '../../lib/greeting'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
 import OnlineToggle from './OnlineToggle'
 import PartnerAvatar from '../vendor/PartnerAvatar'
-
-const STATE = {
-  [LIFECYCLE.LIVE]: { label: 'Live', dot: 'bg-emerald-300', tone: 'text-emerald-100' },
-  [LIFECYCLE.UNDER_REVIEW]: { label: 'Under review', dot: 'bg-yellow-300', tone: 'text-yellow-50' },
-  [LIFECYCLE.REQUIRES_ACTION]: { label: 'Action needed', dot: 'bg-rose-300', tone: 'text-rose-50' },
-  [LIFECYCLE.ONBOARDING]: { label: 'Setting up', dot: 'bg-white/50', tone: 'text-white/85' },
-}
 
 function useGreeting(fullName) {
   const [now, setNow] = useState(() => new Date())
@@ -73,13 +66,11 @@ export default function JobsHeader({
   reviewDueAt = null, reviewSubmittedAt = null,
   onAcceptingChange, onOpenProfile, onOpenAlerts,
 }) {
-  const state = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
   const { wish, dayLine } = useGreeting(fullName)
-  const underReview = lifecycle === LIFECYCLE.UNDER_REVIEW
 
   return (
     <header className="relative isolate overflow-hidden bg-gradient-to-br from-[#10052F] via-[#24105F] to-[#4B0B78] text-white">
-      <div className="relative min-h-[195px] overflow-hidden px-4 pb-2 pt-[calc(8px+env(safe-area-inset-top,0px))] sm:min-h-[220px] sm:px-6">
+      <div className="relative min-h-[185px] overflow-hidden px-4 pb-2 pt-[calc(8px+env(safe-area-inset-top,0px))] sm:min-h-[210px] sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_28%,rgba(168,85,247,.35),transparent_25%),radial-gradient(circle_at_45%_85%,rgba(236,72,153,.22),transparent_32%)]" />
         <div className="relative z-20 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -116,19 +107,6 @@ export default function JobsHeader({
 
         <HeroArtwork />
 
-        <div className="absolute bottom-2 left-3 right-3 z-30 sm:left-6 sm:right-6">
-          <button type="button" onClick={onOpenProfile} data-partner-state={lifecycle} className="flex w-full items-center gap-3 rounded-[18px] border border-yellow-200/70 bg-gradient-to-r from-[#FFF8D9] via-[#FFF4C2] to-[#FFE58A] px-3 py-2.5 text-left text-[#16205C] shadow-[0_12px_30px_rgba(0,0,0,.18)] sm:px-5 sm:py-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFD83D] shadow-inner sm:h-14 sm:w-14"><span className="text-xl">◷</span></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[18px] font-black leading-tight text-[#16205C] sm:text-[23px]">{state.label}</span>
-              <span className="mt-0.5 block text-[11px] font-semibold leading-tight text-[#46506F] sm:text-[14px]">
-                {underReview ? 'Your listing is being reviewed by our team.' : state.label === 'Live' ? 'Your profile is live and ready for opportunities.' : state.label === 'Action needed' ? 'Something needs your attention.' : 'Finish setup to receive opportunities.'}
-              </span>
-            </span>
-            {underReview && <span className="hidden shrink-0 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-[#7B3F00] shadow-sm sm:block">Taking a little longer <ChevronRight size={18} className="inline-block align-middle" /></span>}
-            {!underReview && <span className="shrink-0"><ChevronRight size={18} /></span>}
-          </button>
-        </div>
       </div>
     </header>
   )
