@@ -120,7 +120,7 @@ export default function JobsHeader({
           <button type="button" onClick={onOpenProfile} data-partner-state={lifecycle} className="flex w-full items-center gap-3 rounded-[24px] border border-yellow-200/70 bg-gradient-to-r from-[#FFF8D9] via-[#FFF4C2] to-[#FFE58A] px-4 py-3 text-left text-[#16205C] shadow-[0_12px_30px_rgba(0,0,0,.18)] sm:px-5 sm:py-4">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFD83D] shadow-inner sm:h-14 sm:w-14"><span className="text-2xl">◷</span></span>
             <span className="min-w-0 flex-1">
-              <span className={`block text-[19px] font-black leading-tight sm:text-[25px] ${state.tone}`}>{state.label}</span>
+              <span className="block text-[19px] font-black leading-tight text-[#16205C] sm:text-[25px]">{state.label}</span>
               <span className="mt-0.5 block text-[12px] font-semibold leading-tight text-[#46506F] sm:text-[16px]">
                 {underReview ? 'Your listing is being reviewed by our team.' : state.label === 'Live' ? 'Your profile is live and ready for opportunities.' : state.label === 'Action needed' ? 'Something needs your attention.' : 'Finish setup to receive opportunities.'}
               </span>
