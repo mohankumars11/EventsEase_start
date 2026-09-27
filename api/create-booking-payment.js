@@ -1,0 +1,182 @@
+/**
+ * Open one payment for every master who has accepted so far.
+ *
+ * POST /api/create-booking-payment
+ *   { customerId, lineIds: [uuid, ...] }
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ONE TAP, ONE CHARGE, FOR EVERYONE WHO SAID YES
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Not one payment per master — five Razorpay checkouts for one birthday
+ * is five UPI PINs and five chances to abandon, worst on masters four
+ * and five, which are the hardest to fill anyway.
+ *
+ * Not all-or-nothing either — a four-line basket completes about
+ * two-thirds of the time at the current card, so waiting for the last
+ * master would leave most customers unable to pay anybody.
+ *
+ * So: the accepted lines, summed, in one order. When a sixth master
+ * accepts an hour later, that is a second tap for that one line and the
+ * first three are untouched.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THE AMOUNT IS RE-READ FROM THE DATABASE
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The client sends LINE IDS and nothing else that matters. Every amount
+ * comes from `booking_lines.quoted_amount_paise`, which was written
+ * server-side at dispatch. A client that could name its own amount could
+ * name ₹1 — the same rule `api/create-milestone-payment.js` states, for
+ * the same reason.
+ *
+ * Lines that are not `accepted`, not the caller's, or already paid are
+ * silently dropped rather than erroring: a customer who taps Pay twice
+ * on a slow connection should be charged once, not shown a failure.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * THIS ENDPOINT DOES NOT MARK ANYTHING PAID
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * It opens an order and parks the intent. `api/razorpay-webhook.js` is
+ * the only witness that money arrived — the browser's success callback
+ * is not one, because somebody who pays and closes the tab leaves a
+ * captured payment this app never hears about.
+ */
+import { createClient } from '@supabase/supabase-js'
+import { cors } from './_lib/cors.js'
+import { createOrder, providerName, enabledMethods } from './_lib/payments.js'
+import { testChargePaise } from './_lib/testCharge.js'
+
+const url = process.env.VITE_SUPABASE_URL
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+export default async function handler(req, res) {
+  // Preflight, and the headers every response needs. See _lib/cors.js.
+  if (cors(req, res)) return
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
+
+  const { customerId, lineIds } = req.body ?? {}
+  if (!customerId) return res.status(400).json({ error: 'customerId required' })
+  if (!Array.isArray(lineIds) || !lineIds.length) {
+    return res.status(400).json({ error: 'lineIds required' })
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     LIVE KEYS WITHOUT A LIVE WEBHOOK SECRET TAKE MONEY AND LOSE IT
+     ══════════════════════════════════════════════════════════════
+
+     Razorpay's test and live webhooks are separate objects with
+     separate secrets. Switching the API keys to live does not carry the
+     test webhook across — so a live payment arrives signed with a
+     secret this server has never seen, the signature check rejects it,
+     and `api/_lib/bookingCapture.js` never runs.
+
+     The customer is charged. Nothing is recorded. The line stays
+     unpaid, the master is never confirmed, and the only trace is a row
+     in somebody else's dashboard.
+
+     That is the worst state this system can reach, and it is entirely
+     preventable: refuse to open the checkout at all. No money is taken,
+     the customer sees a sentence instead of a silent loss, and the fix
+     is one environment variable.
+
+     Deliberately checked here rather than trusted to a deployment
+     checklist. A checklist is a thing somebody does once. */
+  const isLive = String(process.env.RAZORPAY_KEY_ID ?? '').startsWith('rzp_live')
+  const hasLiveWebhook = !!process.env.RAZORPAY_WEBHOOK_SECRET_LIVE
+
+  if (isLive && !hasLiveWebhook) {
+    return res.status(503).json({
+      error: 'Payments are being switched on',
+      detail:
+        'Live keys are configured but the live webhook secret is not, so a '
+        + 'payment could be taken without being recorded. Set '
+        + 'RAZORPAY_WEBHOOK_SECRET_LIVE from the webhook created in Razorpay '
+        + 'Live mode.',
+      scan: 'Payments are back in a moment — nothing has been charged.',
+    })
+  }
+
+  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+
+  // Ownership is checked here rather than trusted, because this runs with
+  // the service role and RLS is not protecting anything on this path.
+  const { data: lines, error } = await db
+    .from('booking_lines')
+    .select('id, service_name, quoted_amount_paise, status, request_id, booking_requests!inner(customer_id, event_date, area_label)')
+    .in('id', lineIds)
+
+  if (error) return res.status(500).json({ error: error.message })
+
+  const payable = (lines ?? []).filter(
+    l => l.booking_requests?.customer_id === customerId && l.status === 'accepted',
+  )
+
+  if (!payable.length) {
+    return res.status(400).json({
+      error: 'Nothing to pay for',
+      detail: 'Those lines are not yours, not accepted yet, or already paid.',
+    })
+  }
+
+  const quotedPaise = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
+  const first = payable[0].booking_requests
+
+  /* The ₹1 live-mode smoke test.
+   *
+   * Off unless PAYMENT_TEST_CHARGE_PAISE is set. When it is, the gateway
+   * is handed that amount instead of the real one — see the header of
+   * api/_lib/testCharge.js for why the mock provider cannot answer the
+   * question this answers, and for the three things that stop it being
+   * left on. The QUOTE is untouched: only what is charged changes. */
+  const testPaise = testChargePaise()
+  const amountPaise = testPaise ?? quotedPaise
+
+  const order = await createOrder({
+    amountPaise,
+    // Razorpay caps receipts at 40 characters.
+    receipt: `sb_${payable[0].request_id}`.slice(0, 40),
+    // The webhook reads these back off the order to know which lines this
+    // payment funds. It is the only link between one captured payment and
+    // the N escrow holds it becomes, so nothing here is decoration.
+    notes: {
+      kind: 'booking_lines',
+      customerId,
+      lineIds: payable.map(l => l.id).join(','),
+      eventDate: first?.event_date ?? '',
+      area: first?.area_label ?? '',
+      lines: String(payable.length),
+      quotedPaise: String(quotedPaise),
+      testCharge: testPaise ? 'true' : 'false',
+    },
+  })
+
+  if (!order.ok) return res.status(502).json({ error: order.error })
+
+  /* Which methods to put first in the sheet, decided here because
+     the browser cannot ask: /v1/methods sends no CORS headers. */
+  const methods = await enabledMethods()
+
+  return res.status(200).json({
+    provider: providerName(),
+    // null when the probe could not answer. The client must treat null
+    // as "do not force an order", never as "UPI is off".
+    upiEnabled: methods ? methods.upi === true : null,
+    orderId: order.id,
+    amountPaise,
+    keyId: order.keyId,
+    // Stated rather than implied. A screen that shows ₹1 while the basket
+    // says ₹31,200 and does not say why is a screen somebody deploys.
+    testCharge: testPaise ? { chargedPaise: testPaise, quotedPaise } : null,
+    lines: payable.map(l => ({
+      id: l.id, name: l.service_name, paise: l.quoted_amount_paise,
+    })),
+    // The mock provider returns this so the dev UI can settle without a
+    // real gateway. It is absent in production, and the client must treat
+    // its absence as "open the real checkout".
+    mockSettleUrl: order.mockSettleUrl ?? null,
+  })
+}

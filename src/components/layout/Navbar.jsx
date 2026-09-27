@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
+import { isPartnerSurface } from '../../config/surface'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import SambramoLogo from '../ui/SambramoLogo'
 import { CTA } from '../../config/sambramo'
@@ -28,7 +29,6 @@ const NAV_LINKS = [
 // account-scoped history pages moved into the profile menu, where people
 // already look for "my stuff", and Dashboard is the logo/home tap.
 const CUSTOMER_LINKS = [
-  { to: '/shop',                        label: 'Shop' },
   { to: '/dashboard/customer/events',   label: 'My Celebrations' },
 ]
 
@@ -36,6 +36,7 @@ export default function Navbar() {
   const { user, profile, signOut } = useAuth()
   const { cartCount, cartPath } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  const closeMenu = () => setMenuOpen(false)
   const [scrolled, setScrolled] = useState(false)
   const navigate   = useNavigate()
   const location   = useLocation()
@@ -69,12 +70,44 @@ export default function Navbar() {
     return '/dashboard/customer'
   }
 
-  const isCustomer = profile?.role === 'customer'
-  const showCart   = !profile || isCustomer
+  /* The SURFACE, not the role. A customer signing into the partner
+     app should still see the partner header — it is which app was
+     installed, not who is holding it. */
+  const isPartnerApp = isPartnerSurface()
 
-  const navClass = scrolled
-    ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
-    : 'bg-surface border-b border-hairline/10'
+  const isCustomer = profile?.role === 'customer'
+
+  /* No shopping cart in the partner app.
+   *
+   * `!profile` was the hole: a signed-out visitor is treated as a
+   * customer-in-waiting, which is right on the customer app and wrong on
+   * the partner one. A decorator opening the partner link was shown a
+   * shopping bag in the bar above a page asking them to sell — the first
+   * icon on the screen belonged to the other product.
+   *
+   * Keyed on the surface, not the role, because the person this affects
+   * most has no role yet. */
+  const showCart   = !isPartnerSurface() && (!profile || isCustomer)
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE PARTNER APP WEARS A DARK BAR
+     ══════════════════════════════════════════════════════════════════
+
+     The customer app is white and airy, which suits somebody browsing
+     for a birthday. The partner app is a work tool, opened in a hurry
+     and often outdoors, and a solid dark bar does two things a white one
+     cannot: it is legible in sunlight, and it tells somebody which of
+     the two Sambramos they have opened before they read a word.
+
+     plum-950 rather than a new navy. It is the darkest colour the brand
+     already has, it is what the saffron CTA sits on everywhere else, and
+     inventing a second dark for one bar is how a palette stops being
+     one. */
+  const navClass = isPartnerApp
+    ? 'bg-plum-950 border-b border-white/10'
+    : scrolled
+      ? 'bg-surface/90 backdrop-blur-md shadow-lg border-transparent'
+      : 'bg-surface border-b border-hairline/10'
 
   const linkClass = 'text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07]'
 
@@ -93,12 +126,42 @@ export default function Navbar() {
                 overflowed: it was hidden below 640px, and now only the very
                 narrowest phones, where the bar also holds the cart and the
                 menu button, have to drop it. */}
-            <SambramoLogo
-              size={32}
-              ground="onLight"
-              caption="emotion"
-              captionClassName="hidden min-[360px]:flex"
-            />
+            {/* ══════════════════════════════════════════════════════
+                THE PARTNER APP SAYS WHAT IT IS
+                ══════════════════════════════════════════════════════
+
+                "Every emotion, valued" is the customer promise, and it is
+                a good one. On the partner app it is the wrong sentence
+                entirely: a decorator opening this at 7am to see whether
+                there is work has no use for how the customer feels, and
+                the two apps then wear the same header on the same phone.
+
+                So the earning app is named as the earning app —
+                "PARTNERS", in the saffron that is now its icon and its
+                buttons. It also removes the one line that made a partner
+                glancing at their home screen unsure which of the two
+                Sambramos they had opened. */}
+            {isPartnerApp ? (
+              /* White on navy. The wordmark's own teal disappears against
+                 plum-950, so the partner lockup is set as type — which is
+                 also why PARTNERS can be the loud half here and the muted
+                 half on white. */
+              <span className="flex items-baseline gap-2">
+                <span className="font-serif text-[21px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+                  Partners
+                </span>
+              </span>
+            ) : (
+              <SambramoLogo
+                size={32}
+                ground="onLight"
+                caption="emotion"
+                captionClassName="hidden min-[360px]:flex"
+              />
+            )}
           </Link>
 
           {/* Desktop nav links */}
@@ -118,11 +181,6 @@ export default function Navbar() {
                 </button>
               )
             ))}
-            {!user && (
-              <Link to="/shop" className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
-                Shop
-              </Link>
-            )}
             {isCustomer && CUSTOMER_LINKS.map(({ to, label }) => (
               <Link key={to} to={to} className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${linkClass}`}>
                 {label}
@@ -167,6 +225,10 @@ export default function Navbar() {
               className="p-2.5 rounded-lg text-ink-mute hover:text-ink hover:bg-surface-sunk/[0.07] transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              /* Inherits ink on the customer's white bar; needs white on
+                 the partner's navy one, or it is a dark icon on a dark
+                 ground. */
+              style={isPartnerApp ? { color: '#fff' } : undefined}
               aria-expanded={menuOpen}
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -182,7 +244,7 @@ export default function Navbar() {
         <div className="border-t border-hairline/10 bg-surface px-4 py-4 flex flex-col gap-1">
           {!user && NAV_LINKS.map(({ label, hash, to }) => (
             to ? (
-              <MobileLink key={label} to={to}>{label}</MobileLink>
+              <MobileLink key={label} to={to} onNavigate={closeMenu}>{label}</MobileLink>
             ) : (
               <button
                 key={label}
@@ -210,12 +272,12 @@ export default function Navbar() {
 
               {isCustomer && (
                 <>
-                  <MobileLink to="/services">Services &amp; packages</MobileLink>
-                  <MobileLink to="/dashboard/customer/orders">My Orders</MobileLink>
-                  <MobileLink to="/dashboard/customer/requests">My Requests</MobileLink>
+                  <MobileLink to="/services" onNavigate={closeMenu}>Services &amp; packages</MobileLink>
+                  <MobileLink to="/dashboard/customer/orders" onNavigate={closeMenu}>My Orders</MobileLink>
+                  <MobileLink to="/dashboard/customer/requests" onNavigate={closeMenu}>My Requests</MobileLink>
                 </>
               )}
-              <MobileLink to={dashboardLink()}>Dashboard</MobileLink>
+              <MobileLink to={dashboardLink()} onNavigate={closeMenu}>Dashboard</MobileLink>
 
               <button
                 onClick={() => { signOut(); navigate('/') }}
@@ -226,8 +288,6 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <MobileLink to="/shop">Shop</MobileLink>
-              <div className="border-t border-hairline/10 my-2" />
               <div className="flex gap-2">
                 <Link
                   to="/login"
@@ -253,10 +313,19 @@ export default function Navbar() {
   )
 }
 
-function MobileLink({ to, children }) {
+/* Closes the menu on tap, not on the route changing.
+ *
+ * The menu was dismissed by an effect watching location.pathname, which
+ * works for every link EXCEPT the one pointing at the page you are
+ * already on. Tapping "Dashboard" from /dashboard/vendor changed no
+ * pathname, fired no effect, and left the panel sitting open over the
+ * screen -- reported, accurately, as "the dashboard button does not
+ * work". It navigated perfectly; it just never got out of the way. */
+function MobileLink({ to, children, onNavigate }) {
   return (
     <Link
       to={to}
+      onClick={onNavigate}
       className="text-sm font-medium text-ink-soft py-3 px-3 rounded-lg hover:bg-surface-sunk/[0.07] hover:text-ink transition-colors"
     >
       {children}

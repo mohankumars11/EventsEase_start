@@ -1,4 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&display=swap');
+/* The Google Fonts request lives in index.html, with the preconnects
+   and before the CSS is parsed. It used to be duplicated here as an
+   @import — a second serial round trip for very nearly the same URL,
+   asking for a different set of Playfair weights. */
+
+/* ── The splash's own face ─────────────────────────────────────────────
+   Archivo Black, served from inside the apk rather than from a CDN.
+
+   The @import above fetches Manrope and Playfair from Google Fonts, and
+   that is correct on the website and wrong in a bundled Android build: the
+   HTML, the CSS and the JS are all local, and the FONT is a network round
+   trip that happens on every cold start. With display=swap the launch
+   screen paints the name in a fallback and swaps to the real face somewhere
+   in the middle of a 1500ms animation -- a reflow of the one word the whole
+   screen exists to show.
+
+   A private family name rather than declaring 'Archivo Black': two
+   @font-face sources for one family is how a browser ends up picking the
+   wrong one for a weight nobody checked. This face is used by exactly one
+   class, so it gets a name that says so.
+
+   font-display:block is safe here and would not be on a CDN copy. There is
+   no network involved, so "block" means one or two frames rather than three
+   seconds of invisible text -- and invisible is the right behaviour for a
+   wordmark, which is meaningless in a fallback face.
+
+   Latin subset only, 18KB. SIL Open Font Licence 1.1, so bundling it in the
+   apk is expressly permitted. */
+@font-face {
+  font-family: 'Sambramo Display';
+  src: url('/fonts/ArchivoBlack-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
 
 @tailwind base;
 @tailwind components;
@@ -44,7 +78,25 @@
     --ink-mute:    107 91 133;     /* #6B5B85 */
     --ink-faint:   122 107 148;    /* #7A6B94 — white cards only */
     --surface:     255 255 255;
-    --surface-sunk: 124 58 237;    /* used at low alpha: bg-surface-sunk/5 */
+    /* Used only at low alpha (bg-surface-sunk/5). It was plum-600, which is
+       why every "sunk" surface in the app read faintly lavender rather than
+       recessed. A recess is not a colour. */
+    --surface-sunk: 17 15 25;      /* used at low alpha: bg-surface-sunk/5 */
+
+    /* ── The partner app's ground, and its recesses ──────────────────
+       `--surface-sunk` above is a NEAR-BLACK meant only for low-alpha
+       tints, and it was used bare as the partner app's page background:
+       `bg-surface-sunk` on PartnerAppShell painted #110F19 behind every
+       tab. Every white card floated on black and every section heading
+       that used an ink token vanished into it.
+
+       These two exist so nobody has to reach for an alpha modifier to
+       get a page colour. `--page` is the canvas; `--page-sunk` is the
+       very light lavender for a recessed panel — a tint of the brand
+       purple rather than a grey, so a recess still belongs to Sambramo.
+       Both are opaque and safe to use bare, which is the whole point. */
+    --page:        255 255 255;    /* #FFFFFF */
+    --page-sunk:   247 245 252;    /* #F7F5FC */
     --hairline:     31 16 51;      /* used at low alpha: ring-hairline/10 */
     --accent:      124 58 237;     /* plum-600 */
 
@@ -63,9 +115,15 @@
        plum because the mark only ever sat on a plum bar; on a white bar that
        default is a dark dot in the middle of the logo. Tied to --bar so the
        two can never disagree again. */
-    --sambramo-knockout: var(--bar);
     --shadow-1: 0 2px 10px -6px rgba(70, 30, 120, 0.28);
     --shadow-2: 0 18px 38px -18px rgba(70, 30, 120, 0.30);
+    /* A third, larger tier for hero cards, sheets and modals — bigger
+       blur, lower spread, same violet tint as --shadow-1/2 on this
+       surface. Not a replacement for either: .home-card/.event-card still
+       rest on --shadow-1 and lift to --shadow-2 on hover; --shadow-lift is
+       for things that are already above the page (a sheet, a hero tile)
+       and need to look it at rest, not just on hover. */
+    --shadow-lift: 0 30px 70px -24px rgba(70, 30, 120, 0.34);
   }
 
   html {
@@ -186,6 +244,35 @@
 
   .glass-nav {
     @apply bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm;
+  }
+  /* A frosted panel for anything that floats above the page rather than
+     sitting in it — modals, sheets, dropdowns. 43 places already hand-roll
+     `backdrop-blur` + an ad-hoc white alpha + an ad-hoc ring; this is the
+     one class they converge on. Uses --hairline so it re-tints per surface
+     the same way .home-card/.shop-card already do. */
+  .glass-panel {
+    @apply rounded-3xl bg-white/70 backdrop-blur-md;
+    outline: 1px solid rgb(var(--hairline) / 0.12);
+    outline-offset: -1px;
+    box-shadow: var(--shadow-lift);
+  }
+  /* A soft bloom behind a hero CTA or an active state, in the surface's own
+     --accent — never a new colour. Put `.glow-ring` on a `relative`
+     ancestor (or add `relative` alongside it); the bloom sits in a
+     pseudo-element so it never affects layout or eats a click. */
+  .glow-ring {
+    position: relative;
+  }
+  .glow-ring::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(closest-side, rgb(var(--accent) / 0.32), transparent 72%);
+    filter: blur(8px);
+    animation: glow-pulse 2.4s ease-in-out infinite;
+    pointer-events: none;
   }
   .tag {
     @apply inline-block px-3 py-1 bg-plum-50 text-plum-700 text-xs font-semibold rounded-full;
@@ -451,6 +538,7 @@
     --notch: #FFFFFF;
     --shadow-1: 0 2px 10px -6px rgba(6, 60, 42, 0.26);
     --shadow-2: 0 18px 38px -18px rgba(6, 60, 42, 0.30);
+    --shadow-lift: 0 30px 70px -24px rgba(6, 60, 42, 0.34);
     background: #FFFFFF;
   }
   /* Opaque, not translucent. The bar is sticky and the filter row sticks
@@ -518,6 +606,7 @@
     --notch: #FFFFFF;
     --shadow-1: 0 18px 40px -24px rgba(6, 60, 42, 0.35);
     --shadow-2: 0 22px 46px -22px rgba(6, 60, 42, 0.38);
+    --shadow-lift: 0 34px 76px -26px rgba(6, 60, 42, 0.4);
     position: relative;
     isolation: isolate;
     /* White, and the three lights and the dot grid are both gone.
@@ -1082,341 +1171,6 @@
   @screen md { .pr-chat-dock { padding-right: 5.5rem; } }
   @screen lg { .pr-chat-dock { padding-right: 1rem; } }
 
-  /* ── BrandFilm ───────────────────────────────────────
-     The home hero's gifting film (components/home/BrandFilm).
-     Every rule is transform or opacity only, so the whole thing
-     stays on the compositor and never triggers layout — the
-     reason it can run above the fold on a mid-range Android
-     without costing scroll smoothness.
-
-     ── The timing contract ──────────────────────────────
-     BEAT_MS is 2400. The first cut ran at 1000 and read as a
-     flicker: you registered that something moved without ever
-     reading it. Each beat now splits three ways:
-
-       0–150ms      the cut lands, ground still cross-fading
-       150–1400ms   the subject arrives and resolves
-       1400–2400ms  the settled frame, which is what people
-                    actually look at — and which must NOT be
-                    still, or the panel dies for a full second
-
-     That last third is why most rules below carry a second,
-     looping animation after the entrance (comma-separated, with
-     its own delay). Slower pacing without sustained motion is
-     just a slideshow with longer gaps.
-
-     ── The two transform-boxes ──────────────────────────
-       fill-box   origin is the element's own bounding box, for
-                  anything pivoting about the middle of itself.
-       view-box   origin is the 0 0 200 120 canvas, for anything
-                  whose pivot the JSX names in those coordinates
-                  — a flame hinges at its wick, not at the centre
-                  of the teardrop. `.film-pivot` marks those.
-     Neither is the default: an untagged transform on an SVG child
-     pivots about the SVG root's top-left corner. */
-  .film-pivot { transform-box: view-box; }
-
-  /* Ambient motes. Travel is in px because a percentage translate
-     on a 5px dot is 5px of travel; sized against the tallest the
-     card gets. --mote-o is the dot's peak opacity, set inline. */
-  @keyframes film-mote {
-    0%   { opacity: 0; transform: translateY(0) scale(0.6); }
-    14%  { opacity: var(--mote-o, 0.22); }
-    84%  { opacity: var(--mote-o, 0.22); }
-    100% { opacity: 0; transform: translateY(-262px) scale(1.2); }
-  }
-  .film-mote { bottom: -12px; animation: film-mote linear infinite; }
-
-  /* A lens vignette on a lit surface, not a dark scrim: the grounds are
-     cream now, so this is the falloff at the edge of a softbox — warm and
-     shallow. At the old 62% black it turned every corner to mud. */
-  .film-vignette {
-    background: radial-gradient(125% 100% at 58% 40%, transparent 42%, rgba(92, 58, 26, 0.20) 100%);
-    pointer-events: none;
-  }
-
-  /* Film grain. The single cheapest cue that something is a
-     photograph rather than a diagram — the flat-vector look was
-     the main reason the first cut read as a cartoon. Kept very
-     low; above ~7% it stops being grain and starts being noise
-     over the type. */
-  .film-grain {
-    pointer-events: none;
-    opacity: 0.055;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  /* Caption: three lines in reading order. */
-  @keyframes film-line {
-    0%   { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-line   { animation: film-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .film-line-2 { animation-delay: 0.10s; }
-  .film-line-3 { animation-delay: 0.20s; }
-
-  /* The two shared sustained motions: a slow drift and a slow
-     breathe. Used with their own delays so nothing in a frame
-     moves in step with anything else. */
-  @keyframes film-float {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-3px); }
-  }
-  @keyframes film-breathe {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.025); }
-  }
-
-  /* ── Beat 1: the occasion ──────────────────────────── */
-  @keyframes film-bloom {
-    0%   { opacity: 0;    transform: scale(0.55); }
-    30%  { opacity: 1;    transform: scale(1.06); }
-    55%  { opacity: 0.9;  transform: scale(1); }
-    100% { opacity: 0.95; transform: scale(1.04); }
-  }
-  .film-bloom { transform-box: fill-box; transform-origin: center; animation: film-bloom 2.4s ease-out both; }
-
-  @keyframes film-land {
-    0%   { opacity: 0; transform: translateY(30px) scale(0.93); }
-    55%  { opacity: 1; transform: translateY(-4px) scale(1.012); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-land {
-    transform-box: fill-box; transform-origin: center bottom;
-    animation: film-land 0.85s cubic-bezier(0.16, 1, 0.3, 1) both,
-               film-float 3.4s ease-in-out 0.95s infinite;
-  }
-
-  /* Catches, then breathes for the rest of the beat. */
-  @keyframes film-flame-in {
-    0%   { opacity: 0; transform: scale(0.2, 0.1); }
-    45%  { opacity: 1; transform: scale(1.12, 1.18); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes film-flicker {
-    0%, 100% { transform: scale(1, 1)       translateX(0); }
-    25%      { transform: scale(0.94, 1.06) translateX(0.5px); }
-    50%      { transform: scale(1.05, 0.97) translateX(-0.4px); }
-    75%      { transform: scale(0.97, 1.03) translateX(0.3px); }
-  }
-  .film-flame {
-    animation: film-flame-in 0.55s ease-out 0.45s both,
-               film-flicker 1.1s ease-in-out 1s infinite;
-  }
-
-  @keyframes film-twinkle {
-    0%   { opacity: 0;    transform: scale(0.2) rotate(-45deg); }
-    40%  { opacity: 1;    transform: scale(1.18) rotate(0deg); }
-    100% { opacity: 0.55; transform: scale(0.85) rotate(16deg); }
-  }
-  .film-twinkle { animation: film-twinkle 0.9s ease-out both; }
-
-  /* The other celebrations, each on its own period so the group
-     never pulses as one block. */
-  @keyframes film-orbit {
-    0%   { opacity: 0; transform: translateY(14px) scale(0.85); }
-    45%  { opacity: 1; transform: translateY(0)    scale(1); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-orbit-1, .film-orbit-2, .film-orbit-3 { transform-box: fill-box; transform-origin: center; }
-  .film-orbit-1 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both, film-float 3.8s ease-in-out 1.05s infinite; }
-  .film-orbit-2 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both, film-float 4.6s ease-in-out 1.25s infinite; }
-  .film-orbit-3 { animation: film-orbit 0.8s cubic-bezier(0.16,1,0.3,1) 0.65s both, film-float 4.1s ease-in-out 1.45s infinite; }
-
-  /* ── Beat 2: the picking ───────────────────────────── */
-  /* Five things arrive one after another, then drift. The stagger
-     is the point: a hamper assembled all at once is a graphic, a
-     hamper assembled item by item is somebody choosing. */
-  @keyframes film-item-in {
-    0%   { opacity: 0; transform: translateY(-34px) rotate(-6deg) scale(0.9); }
-    65%  { opacity: 1; transform: translateY(3px)   rotate(1deg)  scale(1.02); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-item { transform-box: fill-box; transform-origin: center bottom; }
-  .film-item-1 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.12s both, film-float 3.6s ease-in-out 1.3s infinite; }
-  .film-item-2 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.32s both, film-float 4.2s ease-in-out 1.5s infinite; }
-  .film-item-3 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.52s both, film-float 3.9s ease-in-out 1.7s infinite; }
-  .film-item-4 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.72s both, film-float 4.5s ease-in-out 1.9s infinite; }
-  .film-item-5 { animation: film-item-in 0.6s cubic-bezier(0.34,1.3,0.5,1) 0.92s both, film-float 4.0s ease-in-out 2.1s infinite; }
-
-  /* ── The makers beat ───────────────────────────────── */
-  /* The doll arrives, overshoots, settles, then sways on a long ease. The
-     sway is the point: a turned wooden object photographed on a turntable
-     never sits perfectly still, and 2.5 degrees is enough to read as an
-     object under a light rather than a sticker on a background. Anything
-     more and it looks like it is falling over. */
-  @keyframes film-turn-in {
-    0%   { opacity: 0; transform: translateY(26px) rotate(-7deg) scale(0.9); }
-    60%  { opacity: 1; transform: translateY(-3px) rotate(2deg)  scale(1.02); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes film-turn-sway {
-    0%, 100% { transform: rotate(-2.5deg); }
-    50%      { transform: rotate(2.5deg); }
-  }
-  .film-turn {
-    animation: film-turn-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both,
-               film-turn-sway 4.2s ease-in-out 0.9s infinite;
-  }
-
-  /* The light pass. soft-light rather than screen, so it tints the surface
-     it crosses instead of washing it out — foil goes warmer, shell goes
-     cooler, cream stays cream. On a dark ground this would be invisible;
-     on the lit grounds it is exactly the sweep you get moving a lamp across
-     lacquer. */
-  @keyframes film-iridescent {
-    0%   { opacity: 0;    transform: translateX(-70%) skewX(-14deg); }
-    22%  { opacity: 0.55; }
-    72%  { opacity: 0.55; }
-    100% { opacity: 0;    transform: translateX(280%) skewX(-14deg); }
-  }
-  .film-iridescent {
-    position: absolute;
-    top: -10%;
-    bottom: -10%;
-    left: 0;
-    width: 34%;
-    pointer-events: none;
-    mix-blend-mode: soft-light;
-    background: linear-gradient(
-      100deg,
-      transparent 0%,
-      rgba(255, 214, 170, 0.55) 28%,
-      rgba(196, 224, 255, 0.5) 52%,
-      rgba(255, 192, 232, 0.45) 74%,
-      transparent 100%
-    );
-    animation: film-iridescent 7.5s ease-in-out infinite;
-  }
-
-  /* ── Beat 3: the packing ───────────────────────────── */
-  @keyframes film-lid {
-    0%   { opacity: 0; transform: translateY(-30px); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-lid { transform-box: fill-box; animation: film-lid 0.45s cubic-bezier(0.34, 1.2, 0.6, 1) 0.22s both; }
-
-  /* pathLength="100" puts the dash maths in percent, so the draw
-     stays correct if the geometry is ever redrawn. */
-  @keyframes film-ribbon {
-    0%   { stroke-dashoffset: 100; }
-    100% { stroke-dashoffset: 0; }
-  }
-  .film-ribbon   { stroke-dasharray: 100; animation: film-ribbon 0.4s ease-out 0.72s both; }
-  .film-ribbon-2 { animation-delay: 0.92s; }
-
-  /* The specular band travelling down the satin for the rest of
-     the beat. This is what stops gold reading as yellow plastic. */
-  @keyframes film-sheen-band {
-    0%   { stroke-dashoffset: 70;  opacity: 0; }
-    18%  { opacity: 0.6; }
-    82%  { opacity: 0.6; }
-    100% { stroke-dashoffset: -70; opacity: 0; }
-  }
-  .film-sheen-band {
-    stroke-dasharray: 16 200;
-    animation: film-sheen-band 1.5s ease-in-out 1.15s infinite;
-  }
-
-  @keyframes film-bow {
-    0%   { opacity: 0; transform: scale(0.25) rotate(-22deg); }
-    55%  { opacity: 1; transform: scale(1.1)  rotate(3deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-bow {
-    animation: film-bow 0.42s cubic-bezier(0.34, 1.5, 0.6, 1) 1.18s both,
-               film-breathe 3s ease-in-out 1.7s infinite;
-  }
-
-  /* The foil wordmark catches light a beat after the lid lands. */
-  @keyframes film-foil {
-    0%   { opacity: 0; }
-    100% { opacity: 1; }
-  }
-  .film-foil { animation: film-foil 0.5s ease-out 0.66s both; }
-
-  @keyframes film-tag {
-    0%   { opacity: 0; transform: translate(-10px, 5px) rotate(-10deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  .film-tag {
-    transform-box: fill-box;
-    animation: film-tag 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.42s both,
-               film-float 3.2s ease-in-out 1.95s infinite;
-  }
-
-  /* ── Beat 4: the handover ──────────────────────────── */
-  @keyframes film-route {
-    0%   { stroke-dashoffset: 100; opacity: 0; }
-    15%  { opacity: 0.85; }
-    100% { stroke-dashoffset: 0;   opacity: 0.85; }
-  }
-  .film-route { animation: film-route 0.75s linear both; }
-
-  @keyframes film-hand-give {
-    0%   { opacity: 0; transform: translateX(-46px); }
-    100% { opacity: 1; transform: none; }
-  }
-  @keyframes film-hand-take {
-    0%   { opacity: 0; transform: translateX(46px); }
-    100% { opacity: 1; transform: none; }
-  }
-  /* The giving hand leads, the receiving hand answers it. */
-  .film-hand-give { transform-box: fill-box; animation: film-hand-give 0.8s cubic-bezier(0.16,1,0.3,1) 0.12s both; }
-  .film-hand-take { transform-box: fill-box; animation: film-hand-take 0.8s cubic-bezier(0.16,1,0.3,1) 0.38s both; }
-
-  /* The box crosses the gap and then hangs, held between them. */
-  @keyframes film-pass {
-    0%   { opacity: 0; transform: translate(-34px, 6px) rotate(-7deg); }
-    60%  { opacity: 1; transform: translate(2px, -3px)  rotate(1.5deg); }
-    100% { opacity: 1; transform: none; }
-  }
-  /* Starts almost with the giving hand, not 400ms after it. At the old delay
-     the hands had both landed and the caption had fully resolved while the
-     box was still at zero opacity — so for about half a second the frame was
-     two people reaching at nothing, which is the one thing this beat must
-     never show. The box now travels as the hands arrive to meet it. */
-  .film-pass {
-    transform-box: fill-box;
-    animation: film-pass 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both,
-               film-float 2.8s ease-in-out 1.25s infinite;
-  }
-
-  /* ── Beat 5: the opening ───────────────────────────── */
-  @keyframes film-lid-off {
-    0%   { opacity: 1; transform: translateY(0)     rotate(0deg)   scale(1); }
-    50%  { opacity: 1; transform: translateY(-38px) rotate(-12deg) scale(1.02); }
-    100% { opacity: 0; transform: translateY(-62px) rotate(-21deg) scale(1.05); }
-  }
-  .film-lid-off { animation: film-lid-off 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both; }
-
-  @keyframes film-burst {
-    0%   { opacity: 0;   transform: scale(0.35); }
-    35%  { opacity: 1;   transform: scale(1.1); }
-    100% { opacity: 0.8; transform: scale(1.02); }
-  }
-  .film-burst {
-    transform-box: fill-box; transform-origin: center;
-    animation: film-burst 0.85s ease-out 0.28s both,
-               film-breathe 2.6s ease-in-out 1.15s infinite;
-  }
-
-  @keyframes film-rays {
-    0%   { opacity: 0;    transform: scale(0.4)  rotate(-10deg); }
-    40%  { opacity: 0.55; transform: scale(1.03) rotate(0deg); }
-    100% { opacity: 0.34; transform: scale(1)    rotate(9deg); }
-  }
-  .film-rays { animation: film-rays 2.2s ease-out 0.2s both; }
-
-  /* Hearts leave the box and keep going. Staggered inline so four
-     read as four reactions rather than one volley. */
-  @keyframes film-lift {
-    0%   { opacity: 0; transform: translateY(16px)  scale(0.4); }
-    22%  { opacity: 1; transform: translateY(0)     scale(1.06); }
-    100% { opacity: 0; transform: translateY(-52px) scale(0.82); }
-  }
-  .film-lift { transform-box: fill-box; transform-origin: center bottom; animation: film-lift 1.1s cubic-bezier(0.3, 0.8, 0.4, 1) both; }
 }
 
 /* ── Reduced motion ────────────────────────────────────
@@ -1433,6 +1187,9 @@
   .animate-spin-slow,
   .animate-sheen,
   .animate-pulse-ring,
+  .animate-glow-pulse,
+  .animate-drift-soft,
+  .glow-ring::before,
   /* The brand banner keeps its gradient and loses the drift — the panel is a
      finished surface standing still, which is more than can be said for most
      things that animate. */
@@ -1469,34 +1226,6 @@
   .animate-pop-in {
     animation-duration: 0.01ms !important;
   }
-  /* BrandFilm switches to its storyboard under this preference (see
-     the component), so what is left to do here is make the five still
-     drawings render at their resting state rather than at frame zero
-     — most of them start at opacity 0 or scale 0.2, which would leave
-     a storyboard of empty panels. Every animated class in the film is
-     listed; the ones whose resting state is mid-flight (the departing
-     lid, the box crossing between two hands) are pinned by the block
-     below instead, to where the eye expects them. */
-  .film-mote, .film-line, .film-iridescent,
-  .film-bloom, .film-land, .film-flame, .film-twinkle,
-  .film-orbit-1, .film-orbit-2, .film-orbit-3,
-  .film-item-1, .film-item-2, .film-item-3, .film-item-4, .film-item-5,
-  .film-turn,
-  .film-lid, .film-ribbon, .film-bow, .film-tag, .film-foil, .film-sheen-band,
-  .film-route, .film-hand-give, .film-hand-take, .film-pass,
-  .film-lid-off, .film-burst, .film-rays, .film-lift {
-    animation: none !important;
-    opacity: 1;
-    transform: none;
-  }
-  /* Drawn strokes have to be completed, not left at their start offset. */
-  .film-ribbon,
-  .film-route { stroke-dashoffset: 0; }
-  /* Both light passes are highlights over surfaces that already read —
-     frozen in place the satin band is a scratch and the prismatic sweep is
-     a smear across a third of the card, so neither shows. */
-  .film-sheen-band,
-  .film-iridescent { opacity: 0; }
   /* Grain is texture, not motion, and the vignette is a gradient — both
      stay. Removing them would leave the storyboard flatter than the film
      it stands in for, which is the opposite of the point. */
@@ -1584,4 +1313,1171 @@
     .deck-out { opacity: 0 !important; }
     .deck-in  { opacity: 1 !important; transform: none !important; }
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   AURORA — the design language
+   ══════════════════════════════════════════════════════════════════════
+
+   Everything above this line is the previous system: a flat white ground on
+   every surface, with white cards separated from it by a tinted shadow. It
+   was coherent and its contrast was measured, and it is left intact because
+   162 files still render through it.
+
+   This is what replaces it, screen by screen. Two things change.
+
+   ── 1. Depth comes from TONE, not from shadow ────────────────────────────
+   The old system had one ground (#FFF) and one paper (#FFF), which meant a
+   card could only be told from the page it sat on by its shadow. Push that
+   far enough and every screen becomes white rectangles on white with grey
+   halos under them — which is what a phone screenshot of the old build
+   actually looks like.
+
+   Aurora uses a tonal ramp instead, the way Material 3 does: the canvas is
+   the LOWEST tone and each layer above it steps lighter, so a card is
+   legible as raised with the shadow switched off entirely. Shadow is then
+   free to do what it is good at — signalling that something is temporarily
+   above the page (a sheet, a dragged tile) rather than permanently part of it.
+
+     --a-canvas     the page
+     --a-low        sunk panels, input wells, inactive chips
+     --a-surf       the default card
+     --a-high       a card on a card, a selected state
+     --a-line       the hairline, as channels for alpha
+
+   Each canvas class re-tints the whole ramp, so the concierge is warm violet
+   and the storefront is cool green WITHOUT a single component knowing which
+   room it is in — the same discipline the ink tokens already had.
+
+   ── 2. The accent is a gradient, not a colour ────────────────────────────
+   `--a-aurora` is the brand's light: a three-stop sweep that belongs to
+   Sambramo the way a single flat hex never could. It is used on hero grounds,
+   active rails and primary buttons. The flat `--accent` stays for anything
+   that needs a solid colour (a focus ring, an icon), because a gradient
+   cannot be a border-color and should not be a text colour.
+
+   ── Type, geometry, motion ───────────────────────────────────────────────
+   Corners are 28/36px, not 12/16 — Expressive's shift, and at phone scale it
+   is the difference between an object and a div. Motion overshoots and
+   settles rather than fading. Every animation here is transform/opacity or
+   background-position only, and the blanket reduced-motion rule at the
+   bottom of this section switches all of it off. */
+
+@layer components {
+  /* ── One warm room, not two tinted ones ────────────────────────────────
+     This used to be a cool violet-white ground for the concierge and a
+     cool mint-green ground for the shop — each room telling itself apart
+     by tinting the whole page. A concrete reference changed that: a warm
+     ivory ground with colour living ENTIRELY inside the moment tiles reads
+     calmer, holds a gifting catalogue's photography better (a green cast
+     fights product photos; a neutral warm one does not), and is closer to
+     what this codebase's own design notes already argued for the shop
+     specifically — "the ground is pure and nothing tints it; colour only
+     inside the tile."
+
+     So both rooms share one warm neutral ramp now. Room identity moves
+     from the page tint into the aurora sweep and the moment-tile gradients,
+     which is where a customer actually reads it — on the thing they are
+     choosing, not on the paper it sits on. */
+  /* ── Pure white, and how a card survives it ──────────────────────────
+     This ramp used to be warm ivory: --a-canvas was #FFF8F0 and a card was
+     #FFFFFF, so the card was LIGHTER than the page and needed no shadow to
+     read as raised. That model cannot survive the page going white — a white
+     card on a white page separated by a 7% hairline measures about 1.06:1,
+     which is visible on a good monitor and gone on a phone in daylight.
+
+     So the separation moves from tone to line-plus-contact:
+
+       hairline 0.12   the card edge. ~1.3:1 — a drawn edge, not a halo.
+       contact shadow  two layers, both with NEGATIVE spread, so twelve cards
+                       on a screen do not become twelve grey smudges. The
+                       first layer is a 1px contact line under the bottom
+                       edge; the second is a short, tight ambient.
+       --a-low         a real neutral for RECESSED things. Inverting the
+                       relationship — sinking the container instead of
+                       raising each card — is what lets a dense grid scale.
+
+     Two things fall out of this for free. The ink ramp becomes legal: the
+     header of this file records --ink-faint at 4.4:1 on the tinted ground,
+     which fails AA, and 4.8:1 on white, which passes. And `body` and
+     --notch already assumed #FFFFFF — the ivory canvas was the only surface
+     in the app disagreeing with its own base. */
+  .a-canvas, .a-shop {
+    --a-canvas: #FFFFFF;
+    --a-low:    #F5F5F7;
+    --a-surf:   #FFFFFF;
+    --a-high:   #FFFFFF;
+    --a-line:   17 15 25;
+    --a-shadow: 0 8px 24px -8px rgb(17 15 25 / 0.12), 0 2px 6px -2px rgb(17 15 25 / 0.06);
+    --a-contact: 0 1px 2px -1px rgb(17 15 25 / 0.06), 0 4px 12px -6px rgb(17 15 25 / 0.08);
+    --a-sheet:  0 -8px 32px -12px rgb(17 15 25 / 0.14);
+    background: var(--a-canvas, #FFFFFF);
+  }
+  .a-canvas {
+    --a-aurora: linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%);
+  }
+  .a-shop {
+    --a-aurora: linear-gradient(115deg, #0E523C 0%, #1C8560 38%, #38A47B 68%, #FBBF24 100%);
+  }
+
+  /* ── Surfaces ───────────────────────────────────────────────────────
+     .a-card is the workhorse and it carries NO shadow. That is deliberate:
+     it is legible against --a-canvas on tone alone, and a screen of twelve
+     shadowed cards is a screen with twelve grey smudges on it. */
+  /* ── Every var below carries a fallback, and that is not defensive
+     styling — it is the difference between a component that degrades and
+     one that vanishes. An unset custom property makes the whole
+     declaration invalid at computed-value time, and `background` then
+     resolves to TRANSPARENT: an invisible panel, with no error anywhere.
+     The old semantic tokens have the same rule written at the top of this
+     file. These classes are used on screens that have not moved onto an
+     Aurora canvas yet (AppBar is on both), so the fallback is not
+     hypothetical — it is the common case during the migration. */
+  .a-card {
+    @apply relative rounded-[28px];
+    background: var(--a-surf, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.12);
+    outline-offset: -1px;
+    box-shadow: var(--a-contact, 0 1px 2px -1px rgb(17 15 25 / 0.06), 0 4px 12px -6px rgb(17 15 25 / 0.08));
+  }
+  /* A card inside a sunk group. The ground is already doing the separating,
+     so stacking a shadow on top of it is the smudge this system avoids. */
+  .a-well .a-card,
+  .a-group .a-card { box-shadow: none; }
+  /* A card that is genuinely above the page — a sheet, a dialog, a hero. */
+  .a-raised {
+    @apply relative rounded-[28px];
+    background: var(--a-surf, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.08);
+    outline-offset: -1px;
+    box-shadow: var(--a-shadow, 0 8px 24px -8px rgb(17 15 25 / 0.12), 0 2px 6px -2px rgb(17 15 25 / 0.06));
+  }
+  /* The recessed container. Cards sit IN it, not on it. */
+  .a-group {
+    @apply relative rounded-[28px];
+    background: var(--a-low, #F5F5F7);
+  }
+  /* Sunk: belongs to the room rather than sitting on it. Replaces the old
+     `.home-glass` / `bg-surface-sunk/5` idiom, which on a white ground was
+     white on white. */
+  .a-well {
+    @apply relative rounded-[24px];
+    background: var(--a-low, #F5F5F7);
+  }
+  /* A card on a card, or a selected state that must not rely on colour. */
+  .a-high {
+    background: var(--a-high, #FFFFFF);
+    outline: 1px solid rgb(var(--a-line, 17 15 25) / 0.12);
+    outline-offset: -1px;
+  }
+  .a-hairline { border-color: rgb(var(--a-line, 17 15 25) / 0.08); }
+
+  /* ── The wordmark caption, revealed left to right ────────────────────
+     A clip-path wipe rather than a fade or a typewriter. A fade says nothing
+     about direction; a typewriter re-lays out the line on every frame, which
+     on a caption sitting under a logo makes the logo appear to twitch.
+     Clipping leaves the text's box at its final size from frame one, so
+     nothing around it moves — only the reveal travels.
+
+     `inset()` from the right edge to zero, once, on mount. It is chrome the
+     customer sees on every cold open, so it is quick and it does not loop:
+     an animation that repeats in an app bar is a distraction with a permanent
+     licence. */
+  .brand-wipe {
+    animation: brand-wipe 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  }
+  @keyframes brand-wipe {
+    from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+    to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+  }
+
+  /* The gold hairline that travels with it. */
+  .brand-rule {
+    animation: brand-rule 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+    transform-origin: left center;
+  }
+  @keyframes brand-rule {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE SPLASH — the mark being written
+     ══════════════════════════════════════════════════════════════════
+
+     A Spencerian capital is a written thing, and the one honest way to
+     introduce it is to write it. Three techniques were on the table:
+
+       stroke-dashoffset  the real handwriting trick, and unavailable here:
+                          it needs the glyph as a <path> with a measurable
+                          length, and the S is live type. Converting it to
+                          path data would freeze the letter at one weight and
+                          lose the font's hinting at small sizes, which is the
+                          whole reason it is type.
+       a Lottie/JSON rig  a dependency, a second animation runtime, and an
+                          asset that drifts from the SVG the app actually uses.
+       a travelling mask  what this is.
+
+     The mask sweeps top-to-bottom because that is the direction a Spencerian
+     S is actually written — flag, spine, curl — and at 1.1s the eye reads it
+     as the letter arriving rather than as a rectangle passing over it. The
+     easing matters more than the duration: a linear wipe reads mechanical, so
+     it starts fast and settles, the way a pen does.
+   */
+  /* ── Retired with the Spencerian S ───────────────────────────────────
+     `.ink-write` swept a mask down a letterform, which is how a Spencerian
+     capital is actually written and the reason the effect earned its 1.15s.
+     There is no letterform any more — the mark is the word — and a wipe
+     applied to a WORD does not read as handwriting. It reads as a loading
+     bar filling, which is the one thing a launch screen must not look like.
+
+     Kept as a class rather than deleted so an uploaded logo could use it,
+     but nothing renders it today. If nothing does by the next brand pass,
+     delete it and its keyframes together. */
+  .ink-write {
+    animation: ink-write 1150ms cubic-bezier(0.16, 0.84, 0.28, 1) 180ms both;
+  }
+  @keyframes ink-write {
+    from { clip-path: inset(0 0 100% 0); opacity: 0.65; }
+    60%  { opacity: 1; }
+    to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+  }
+
+  /* The wordmark, after the mark. Rises rather than wipes: the S was drawn,
+     so the name should arrive as a caption to it rather than compete with a
+     second directional gesture. */
+  /* The word arriving. The 1150ms delay these three carried was the S being
+     written above them — with it gone, the splash held a blank aqua screen
+     for over a second before anything appeared, which reads as the app
+     having failed to start rather than as anticipation. They now open
+     almost immediately and the composition settles at 1.4s, leaving the
+     stillness on the finished mark that the four-second hold is for. */
+  .ink-rise {
+    animation: ink-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+  }
+  @keyframes ink-rise {
+    from { opacity: 0; transform: translateY(10px); letter-spacing: 0.06em; }
+    to   { opacity: 1; transform: translateY(0);    letter-spacing: -0.015em; }
+  }
+  .ink-rise-late { animation-delay: 550ms; }
+
+  /* A hairline that opens outward from the centre under the name. */
+  .ink-rule {
+    animation: ink-rule 700ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
+    transform-origin: center;
+  }
+  @keyframes ink-rule {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     AMETHYST — the launch ground
+     ══════════════════════════════════════════════════════════════════
+
+     #2A085C. Flat, and flat on purpose.
+
+     `.brand-aqua` below is two gradients, and the paragraph there explains
+     why a brand ground wants depth. That reasoning does not survive here,
+     because this ground has to match FOUR other surfaces exactly: the
+     Android 12 splash window, the window behind the WebView, the Capacitor
+     background and the adaptive icon's back layer. Every one of those is a
+     single colour by construction -- an Android @color cannot hold a
+     gradient. A gradient here would mean the WebView fading in over a flat
+     native splash of a visibly different shade, which is a seam on every
+     cold start, bought in exchange for depth the wordmark's own bevel is
+     already providing.
+
+     Written out rather than referencing the palette, for the same reason
+     `.brand-aqua` is: scripts/render-app-icons.mjs reproduces this value
+     outside the build and cannot resolve a Tailwind class. */
+  /* ══════════════════════════════════════════════════════════════════
+     THE NATIVE SHELL
+     ══════════════════════════════════════════════════════════════════
+
+     The partner entry flow is a sequence of full-screen states, not a
+     document. These four classes are what make it stop behaving like a
+     web page, and each fixes something specific:
+
+     `100dvh`, not `100vh`. On Android Chrome `vh` is locked to the
+     viewport with the URL bar HIDDEN, so a `100vh` screen is taller than
+     the visible area on first paint and the bottom of it -- which is
+     where every CTA in this flow lives -- sits under the browser chrome
+     until you scroll. `dvh` tracks the bar as it collapses. The `vh`
+     fallback above it is for WebViews old enough not to know `dvh`.
+
+     `overscroll-behavior: none` kills the rubber-band. Without it a
+     vertical drag on a screen with nothing to scroll still bounces, and
+     a bounce is the single clearest tell that something is a web page.
+
+     Safe areas are padding, not margin, so the ground still paints edge
+     to edge behind the status bar and the gesture pill while the content
+     stays clear of both. */
+  .native-screen {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* A CTA sitting directly on the Android gesture bar is a CTA that
+     dismisses the app half the time it is tapped. 14px clear of it. */
+  .safe-cta {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  }
+
+  /* ── The onboarding rail ───────────────────────────────────────────
+     One slide visible, never a sliver of the next. `snap-stop: always`
+     is the part people leave out: without it a fast flick travels two or
+     three slides and the partner never sees the middle one.
+
+     The scrollbar is hidden rather than styled. It is a horizontal rail
+     of three full-screen panels; a scrollbar across the bottom of it
+     would read as a document. */
+  .native-rail {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .native-rail::-webkit-scrollbar { display: none; }
+
+  .native-slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    overflow: hidden;
+  }
+
+  /* The pulse under a location marker while a fix is being taken. Two
+     rings offset by half the cycle so there is always one travelling --
+     a single ring reads as a stutter every time it restarts. */
+  @keyframes loc-pulse {
+    from { transform: scale(0.35); opacity: 0.55; }
+    to   { transform: scale(1);    opacity: 0; }
+  }
+  .loc-pulse       { animation: loc-pulse 2s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+  .loc-pulse-late  { animation-delay: 1s; }
+
+  .brand-amethyst {
+    background-color: #2A085C;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE LAUNCH SCREEN
+     ══════════════════════════════════════════════════════════════════
+
+     Every line of type here is LIVE, and that is the point of the whole
+     block. The artwork it sits on top of, brand/splash-source.png, has the
+     wordmark, the category line and both promise lines baked into it. Baked
+     text cannot animate, cannot resize itself for a 320px handset, and
+     cannot be corrected without re-rendering the picture -- and a launch
+     screen that is one flat photograph reads exactly like what it is,
+     which is somebody's export pasted over the app.
+
+     So scripts/render-splash-art.mjs crops the source to the illustration
+     alone (measured rows: the art runs y494-1376 of 1774) and the four
+     lines are set here, in the app's own face, at the app's own sizes, and
+     animated in. */
+
+  /* ── The room the screen sits in ───────────────────────────────────
+     A flat fill and an illustration pasted on it reads as two objects. A
+     ground with a light source in it reads as one: the artwork's own glow
+     comes from the centre, so the screen is lit from the same place.
+
+     Three layers, cheapest first, all static gradients rather than
+     anything animated, so this costs one paint and nothing per frame:
+
+       a broad warm bloom behind the illustration, picking up the gold
+       a tighter cool highlight behind the lockup, lifting the wordmark
+       a vignette pulling the corners down so the middle reads as nearer
+
+     `background-attachment` is deliberately absent: fixed backgrounds
+     inside a position:fixed element are a known compositing trap on
+     Android WebView and would cost a full-screen repaint per frame. */
+  .splash-ground {
+    background-color: #25034B;
+    background-image:
+      radial-gradient(120% 52% at 50% 78%, rgba(245, 194, 76, 0.16) 0%, rgba(245, 194, 76, 0) 60%),
+      radial-gradient(80% 34% at 50% 20%, rgba(183, 154, 232, 0.26) 0%, rgba(183, 154, 232, 0) 70%),
+      radial-gradient(140% 100% at 50% 50%, rgba(0, 0, 0, 0) 42%, rgba(8, 0, 22, 0.55) 100%),
+      linear-gradient(180deg, #340C6A 0%, #25034B 48%, #140134 100%);
+  }
+
+  /* ── The glass the wordmark is cut from ────────────────────────────
+     A specular highlight has to be brighter than what it crosses, and
+     nothing is brighter than #FFF -- so the letters are not flat white.
+     White on the top face, lavender where the bevel turns, white again on
+     the return, deeper lavender at the bottom edge. That is what gives the
+     caps a top and a bottom rather than a silhouette.
+
+     The fallback `color` is not decoration: if background-clip:text is
+     unsupported, a transparent fill is an invisible logo. */
+  .splash-mark > span {
+    color: #FFFFFF;
+    background-image: linear-gradient(
+      178deg,
+      #FFFFFF 0%, #FFFFFF 38%, #E9DEFB 52%,
+      #FFFFFF 66%, #CDB8F2 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* The gold line gets the same treatment, warm instead of cool, plus a
+     bloom so it reads as emitting rather than merely being yellow. */
+  .splash-promise-2 {
+    text-shadow: 0 0 18px rgba(245, 194, 76, 0.38);
+  }
+
+  /* ── The wordmark, one span per letter ─────────────────────────────
+     Per letter because the stagger IS the animation: eight letters rising
+     45ms apart reads as a word being set, where the same word fading in as
+     one block reads as an image loading.
+
+     The container keeps `display:inline-block` so its width is the word's
+     own width -- that is what the category line below justifies itself
+     against, and it only works if the letters are laid out normally rather
+     than positioned. */
+  /* The lockup wrapper. THIS is the inline-block whose width the category
+     line justifies against; the wordmark and the line are siblings inside
+     it, never parent and child.
+
+     They were nested once, and the bug is worth recording: `.splash-mark >
+     span` styles the letters, and the category line was also a span and
+     also a direct child, so it inherited display:inline-block at a higher
+     specificity than its own class could undo. It laid out beside the
+     wordmark instead of under it, its word gaps collapsed, and the lockup
+     ran off both edges of the screen. */
+  .splash-lockup {
+    display: inline-block;
+    text-align: center;
+    /* The size lives HERE, not on the wordmark, because the category line
+       is sized in em and has to derive from the same number.
+
+       SAMBRAMO in Archivo Black at -0.005em advances 6.515em. So the size
+       that makes the word span 82% of any viewport is
+
+           0.82 x 100vw / 6.515  =  12.6vw
+
+       and the category line, being width:100% of this box, follows without
+       a second calculation.
+
+       ── The first version of this number was wrong, and how ──────────
+       It said 14.84vw, from a measured advance of 5.795em. That probe ran
+       before the webfont had actually loaded: document.fonts.ready
+       resolves whether or not an @font-face succeeded, so the figure came
+       from a fallback face that is 12% narrower than Archivo Black. The
+       wordmark then rendered at 97% of the screen and ran into both edges.
+       Any re-measurement has to assert the face is really active first.
+
+       82% rather than 86%: the screen carries px-5 either side, so 86%
+       left eleven pixels of slack on a 360px handset, and a wordmark that
+       nearly touches its own padding reads as cropped. */
+    font-size: clamp(1.8rem, 12.6vw, 3.9rem);
+  }
+
+  .splash-mark {
+    display: block;
+    white-space: nowrap;
+    font-family: 'Sambramo Display', 'Arial Black', system-ui, sans-serif;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 0.92;
+    letter-spacing: -0.005em;
+    /* Size comes from `.splash-lockup` above, so the category line can be
+       set in em against the same value. */
+    font-size: 1em;
+    filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.45));
+  }
+  .splash-mark > span {
+    display: inline-block;
+    animation: splash-letter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes splash-letter {
+    from { opacity: 0; transform: translateY(0.34em) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── The category line, justified to the wordmark ──────────────────
+     EVENT DELIVERY APP set so its E and its final P line up with the S and
+     the O above. That alignment is what makes two lines of very different
+     length read as one object, and it is how the source artwork sets it.
+
+     flex + space-between over one span per character, NOT letter-spacing.
+     Letter-spacing would need a different value at every screen width and
+     would still be wrong, because CSS adds the space after the final letter
+     too -- so a letter-spaced line is always narrower than its box by one
+     space and never quite lines up.
+
+     The word gaps are `.sp` spans rather than real spaces: space-between
+     distributes between FLEX ITEMS, and a text space inside a flex
+     container collapses to nothing. */
+  .splash-tagline {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 0.30em;
+    font-family: Manrope, system-ui, sans-serif;
+    font-weight: 800;
+    color: #B79AE8;
+    line-height: 1;
+    font-size: 0.163em;
+    animation: splash-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 600ms both;
+  }
+  .splash-tagline > span { font-style: normal; }
+  .splash-tagline > .sp  { width: 0.5em; flex: none; }
+
+  /* ── The illustration ──────────────────────────────────────────────
+     Rises and settles rather than cutting in. The scale is small on
+     purpose: 0.965 to 1 is enough to read as arriving, and anything more
+     on a picture this busy reads as a zoom. */
+  .splash-art {
+    display: block;
+    /* Full viewport width, deliberately wider than the padded column it
+       sits in. The crop carries the source's own purple, which is close to
+       this screen's ground but not identical, so any visible left or right
+       edge reads as a pasted rectangle. Bleeding it past both edges means
+       there are no side edges to see.
+
+       Top and bottom still meet the ground, so those two are feathered.
+       One mask layer in one direction, rather than two composited:
+       mask-composite support is uneven and a mask that fails closed would
+       hide the illustration entirely. */
+    width: 100vw;
+    max-width: none;
+    height: auto;
+    -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 7%, #000 93%, transparent 100%);
+            mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 7%, #000 93%, transparent 100%);
+    animation: splash-art-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
+  }
+  @keyframes splash-art-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.965); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── The promise, two lines ────────────────────────────────────────
+     The second line is the one that carries the offer, so it arrives
+     after the first and in the artwork's own gold rather than white. */
+  .splash-promise-1,
+  .splash-promise-2,
+  .splash-rule {
+    animation: splash-fade-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .splash-promise-1 { animation-delay: 1500ms; }
+  .splash-promise-2 { animation-delay: 1700ms; }
+  .splash-rule      { animation-delay: 1950ms; }
+
+  @keyframes splash-fade-up {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── The shine ─────────────────────────────────────────────────────
+     One pass across the finished wordmark, late, once. It is an overlay
+     rather than a gradient clipped INTO the type: a clipped gradient
+     replaces the fill, so mid sweep the letters go grey instead of white,
+     and under reduced motion they freeze that way.
+
+     mix-blend-mode:overlay on a white band means the letters can only get
+     brighter and the purple ground beneath is barely touched. */
+  .splash-shine {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    background: linear-gradient(104deg,
+      rgba(255,255,255,0) 42%, rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0) 58%);
+    background-size: 240% 100%;
+    background-repeat: no-repeat;
+    animation: splash-shine 820ms cubic-bezier(0.36, 0, 0.28, 1) 2400ms both;
+  }
+  @keyframes splash-shine {
+    from { background-position: 190% 0; }
+    to   { background-position: -70% 0; }
+  }
+
+  /* The wordmark on a LIGHT ground.
+
+     The launch screen sets the name in white on amethyst. Everywhere else
+     in the app it sits on white, and it was inked with `.brand-aqua-text`,
+     a teal gradient -- so the first thing anyone saw of the brand and the
+     next thing were two different colours.
+
+     Same ramp the launch artwork uses, clipped to the type. The fallback
+     `color` underneath is not decoration: if background-clip:text is
+     unsupported or the gradient fails to paint, a transparent fill is an
+     invisible logo. #2A085C clears 4.5:1 on white on its own, so the
+     fallback is legible rather than merely present. */
+  .brand-amethyst-text {
+    color: #2A085C;
+    background-image: linear-gradient(118deg, #1B0240 0%, #2A085C 34%, #4A1A8F 72%, #5B21A8 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* The splash face. See the @font-face at the top of this file for why it
+     is not simply `font-sans`. */
+  .brand-wordmark-sans {
+    font-family: 'Sambramo Display', 'Arial Black', system-ui, sans-serif;
+    font-weight: 400;
+  }
+
+  /* ── The wordmark, fitted to the handset ───────────────────────────
+     SAMBRAMO in Archivo Black, at letter-spacing -0.005em, has an advance
+     width of 5.795em. Measured, not estimated. So the font-size that makes
+     the word occupy 86% of any viewport is:
+
+         0.86 x 100vw / 5.795  =  14.84vw
+
+     which is why that number is here and why this needs no JavaScript. An
+     earlier draft measured the text at runtime and set a font-size from it;
+     that is a layout read on the first frame of the one screen that must
+     not stutter, to arrive at a constant that can be worked out once.
+
+     The clamp bounds are for the two ends nobody tests on. The floor stops
+     it collapsing on a 320px device; the ceiling stops it becoming a
+     billboard on a tablet, and is set so the word still fits inside
+     `max-w-md` minus the container's padding.
+
+     Tracking is POSITIVE and small. Heavy caps want air between them;
+     `.brand-wordmark-fit` above uses -0.028em because that was measured on
+     Playfair in mixed case, and applying it here closes the letters into a
+     slab. */
+  .brand-wordmark-fit-caps {
+    font-size: clamp(2rem, 14.84vw, 4.3rem);
+    letter-spacing: -0.005em;
+    line-height: 0.92;
+  }
+
+  /* ── The gloss ─────────────────────────────────────────────────────
+     Three layers, and the order is the design:
+
+       ::before   a blurred dark copy, 2px down -- the drop shadow
+       the span   a vertical bevel gradient clipped to the type
+       ::after    a narrow white band sweeping across, clipped to the type
+
+     ── Why the shadow is a pseudo-element ────────────────────────────
+     Two reasons, and both are traps that cost an afternoon each.
+
+     text-shadow does not work at all: with -webkit-text-fill-color set to
+     transparent the shadow paints inside the glyph's own box and is no
+     longer covered by the fill, so it shows THROUGH the letters as a grey
+     haze rather than behind them.
+
+     filter: drop-shadow() on this element does work, and costs too much:
+     ::after animates background-position, which is a repaint rather than a
+     composite, so a filter on the shared parent would re-blur the whole
+     word on every frame of the sweep. As a separate static pseudo-element
+     the blur is painted once and never touched again.
+
+     ── Why the base is not flat white ────────────────────────────────
+     A specular highlight has to be brighter than what it crosses, and
+     nothing is brighter than #FFF. So the letters are white at the top
+     face, lavender where the bevel turns, white again on the return and
+     deeper lavender at the bottom edge. The sweep then reads as light
+     moving over a solid object rather than as a white shape passing over a
+     white shape.
+
+     `color` underneath is not decoration: if background-clip:text is
+     unsupported, a transparent fill is an invisible logo. Same guard
+     `.brand-aqua-text` documents. */
+  .brand-amethyst-gloss {
+    position: relative;
+    z-index: 0;
+    color: #FFFFFF;
+    background-image: linear-gradient(
+      180deg,
+      #FFFFFF 0%,
+      #FFFFFF 40%,
+      #E4D8FA 54%,
+      #FFFFFF 70%,
+      #C4AFEE 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .brand-amethyst-gloss::before,
+  .brand-amethyst-gloss::after {
+    content: attr(data-word);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: inherit;
+    pointer-events: none;
+  }
+
+  .brand-amethyst-gloss::before {
+    z-index: -1;
+    color: rgba(10, 2, 30, 0.55);
+    -webkit-text-fill-color: rgba(10, 2, 30, 0.55);
+    transform: translateY(2px);
+    filter: blur(3px);
+  }
+
+  .brand-amethyst-gloss::after {
+    background-image: linear-gradient(
+      104deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.92) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    background-size: 260% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    will-change: background-position;
+    animation: gloss-sweep 620ms cubic-bezier(0.32, 0, 0.26, 1) 300ms both;
+  }
+
+  @keyframes gloss-sweep {
+    from { background-position: 195% 0; }
+    to   { background-position: -70% 0; }
+  }
+
+  /* ── The caps rise ─────────────────────────────────────────────────
+     `.ink-rise` settles to -0.015em, which is right for Playfair at display
+     size and wrong for heavy caps. This is the same gesture with the
+     tracking running the other way, and 100ms shorter: the partner splash
+     has 1500ms to spend where the customer's has 2000.
+
+     The `to` value matches `.brand-wordmark-fit-caps` exactly, so the
+     animation's `both` fill and the static rule agree and there is no step
+     when one hands over to the other. */
+  .ink-rise-caps {
+    animation: ink-rise-caps 520ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+  }
+  @keyframes ink-rise-caps {
+    from { opacity: 0; transform: translateY(9px); letter-spacing: 0.075em; }
+    to   { opacity: 1; transform: translateY(0);   letter-spacing: -0.005em; }
+  }
+
+  /* ── The tagline, justified to the wordmark ────────────────────────
+     EVENT DELIVERY APP set so its first and last letters line up with the
+     S and the O above it. That alignment is the lockup: two lines of very
+     different length reading as one object.
+
+     It is done with flex and space-between over one span per character,
+     not with letter-spacing. Letter-spacing would need a different value
+     at every screen width and would still be wrong, because CSS adds the
+     space AFTER the final letter too -- so a letter-spaced line is always
+     narrower than its box by one space, and never quite lines up.
+
+     The word gaps are `.sp` spans rather than real spaces: space-between
+     distributes between FLEX ITEMS, and a text space inside a flex
+     container collapses to nothing. */
+  .brand-tagline-justify {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    line-height: 1;
+  }
+  .brand-tagline-justify > span { font-style: normal; }
+  .brand-tagline-justify > .sp  { width: 0.5em; flex: none; }
+
+  /* The partner timings for the two elements that already exist. Applied
+     alongside .ink-rise-late and .ink-rule, later in the cascade, so only
+     the delay and duration move. */
+  .ink-rise-late-swift { animation-delay: 520ms; animation-duration: 460ms; }
+  .ink-rule-swift      { animation-delay: 420ms; animation-duration: 480ms; }
+
+  /* The corner spark. Arrives last and quietly, after the lockup has
+     settled -- it is a signature on a finished thing, not part of the
+     composition, so it must not compete with the sweep. */
+  .spark-in {
+    animation: spark-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 820ms both;
+  }
+  @keyframes spark-in {
+    from { opacity: 0; transform: scale(0.6) rotate(-25deg); }
+    to   { opacity: 0.92; transform: scale(1) rotate(0deg); }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     COMFORTABLE AQUA — the brand ground
+     ══════════════════════════════════════════════════════════════════
+
+     The surface the brand stands on: the app icon, the splash, the seal on
+     a celebration card, the tab bar's primary chip. It replaces navy, which
+     was the ground for the gold Spencerian S and had no reason to survive
+     the S being retired.
+
+     ── It is two gradients, not one ────────────────────────────────────
+     A single linear ramp corner-to-corner is flat — it reads as a coloured
+     rectangle, which is what a brand ground must not be. The reference tile
+     has depth: the colour travels on the diagonal AND the light pools
+     off-centre, the way it does on anything with a surface.
+
+     So: a linear ramp carries the hue from the deep corner to the light
+     one, and a wide radial sits over it, offset toward the far corner, to
+     put the light somewhere specific. The radial is the "radius" half of
+     the name and it is the whole difference between this and a swatch.
+
+     ── Why it is fixed and not animated ───────────────────────────────
+     `.a-aurora` next door pans its background under a 14s animation, which
+     is right for a hero panel somebody scrolls past. This is the app icon
+     and the launch screen — surfaces a person sees for four seconds at a
+     time, hundreds of times. Movement there is not a brand moment, it is a
+     tic. It holds still.
+
+     Every value is written out rather than referencing the palette, because
+     these same stops have to be reproduced by the icon renderer running
+     outside the build (scripts/render-brand-assets.mjs). Two copies is one
+     more than ideal; a Tailwind class the renderer cannot resolve is worse. */
+  .brand-aqua {
+    background-color: #1B5C73;
+    background-image:
+      radial-gradient(120% 100% at 88% 92%, rgba(140, 224, 214, 0.55) 0%, rgba(85, 178, 175, 0) 62%),
+      linear-gradient(135deg, #17566C 0%, #256F8A 34%, #3D96A4 62%, #5FBBB4 100%);
+  }
+
+  /* The same ground for a small square — a seal, a chip, an avatar.
+     The stops are pulled tighter because a 40px square shows perhaps a
+     third of a 135° ramp; at the full spread a seal reads as one flat
+     mid-teal and the gradient is wasted. */
+  .brand-aqua-chip {
+    background-color: #1B5C73;
+    background-image:
+      radial-gradient(110% 110% at 85% 90%, rgba(150, 230, 220, 0.5) 0%, rgba(85, 178, 175, 0) 70%),
+      linear-gradient(140deg, #17566C 0%, #2F8AA0 55%, #55B2AF 100%);
+  }
+
+  /* The wordmark on a white ground.
+     A gradient in TYPE, not behind it — the same ramp the ground uses, so
+     "Sambramo" on white and "Sambramo" on the splash are recognisably the
+     same object rather than two different logos.
+
+     The fallback colour underneath is not defensive decoration: if
+     background-clip:text is unsupported or the gradient fails to paint,
+     transparent fill is an invisible logo. aqua-800 is the stop that clears
+     4.5:1 on white on its own. */
+  .brand-aqua-text {
+    color: #1B5C73;
+    background-image: linear-gradient(118deg, #134A5E 0%, #1B5C73 30%, #2F8AA0 68%, #3D96A4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ── The wordmark, fitted to the screen ─────────────────────────────
+     Wherever the name is the subject of the screen — the splash, the auth
+     panels, the app icon — it is centred and sized against the VIEWPORT
+     rather than set at a fixed px. A 42px wordmark is comfortable on a
+     412px Pixel and cramped on a 360px Galaxy A-series, which is most of
+     this market; hard-coding one number picks a winner between them.
+
+     clamp() with a vw middle term means the mark keeps the same optical
+     margin either side on every handset — the floor stops it collapsing on
+     a 320px device, the ceiling stops it becoming a billboard on a tablet.
+     The tracking tightens as it grows, which is what a type designer does
+     by hand at display sizes and what makes the difference between "large
+     text" and a wordmark. */
+  .brand-wordmark-fit {
+    font-size: clamp(2rem, 13.5vw, 4.25rem);
+    letter-spacing: -0.028em;
+    line-height: 0.95;
+  }
+
+  /* ── The brand light ────────────────────────────────────────────────
+     A hero ground. `background-size` is oversized so `aurora-pan` has
+     somewhere to travel; the animation moves background-position only. */
+  .a-aurora {
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
+    background-size: 220% 220%;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+  /* The same sweep as a 3px top rail on a card — the cheapest way to mark a
+     section as the brand's without painting a whole panel. */
+  .a-rail::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    border-radius: inherit;
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
+    background-size: 220% 220%;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+  /* Type in the brand's light. Needs a fallback colour underneath: if the
+     clip is unsupported or the gradient fails to paint, transparent text is
+     an invisible heading. */
+  .a-aurora-text {
+    color: rgb(var(--accent));
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
+    background-size: 220% 220%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: aurora-pan 14s ease-in-out infinite;
+  }
+
+  /* ── Controls ───────────────────────────────────────────────────────
+     min-height 48px, not 44: 48dp is the Android touch target, and this app
+     is used on phones with a thumb. */
+  .a-btn {
+    @apply inline-flex items-center justify-center gap-2 min-h-[48px] px-6
+           rounded-full text-[15px] font-extrabold tracking-tight
+           transition-transform duration-200 active:scale-[0.97]
+           disabled:opacity-45 disabled:pointer-events-none;
+  }
+  .a-btn-primary {
+    @apply a-btn text-white;
+    background-image: var(--a-aurora, linear-gradient(115deg, #7C3AED 0%, #A56EFF 34%, #E879F9 64%, #FBBF24 100%));
+    background-size: 220% 220%;
+    box-shadow: 0 10px 26px -12px rgb(var(--accent) / 0.75);
+  }
+  .a-btn-quiet {
+    @apply a-btn;
+    background: var(--a-low, #FBEFDE);
+    color: rgb(var(--ink));
+  }
+  .a-btn-ghost {
+    @apply a-btn;
+    color: rgb(var(--ink));
+    outline: 1.5px solid rgb(var(--a-line, 42 30 20) / 0.14);
+    outline-offset: -1.5px;
+  }
+  /* Pill filter/segment chip. `aria-pressed` drives the selected look rather
+     than a second class, so the accessible state and the visible state
+     cannot disagree — they are the same attribute. */
+  .a-chip {
+    @apply inline-flex shrink-0 items-center gap-1.5 min-h-[40px] px-4
+           rounded-full text-[13px] font-bold whitespace-nowrap
+           transition-colors duration-150;
+    background: var(--a-low, #FBEFDE);
+    color: rgb(var(--ink-soft));
+  }
+  .a-chip[aria-pressed='true'] {
+    background: rgb(var(--accent));
+    color: #fff;
+  }
+  .a-field {
+    @apply w-full min-h-[52px] px-4 rounded-2xl text-[15px]
+           placeholder:text-ink-mute;
+    background: var(--a-low, #FBEFDE);
+    color: rgb(var(--ink));
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .a-field:focus {
+    outline: none;
+    background: var(--a-surf, #FFFFFF);
+    border-color: rgb(var(--accent) / 0.55);
+  }
+
+  /* ── Chrome ─────────────────────────────────────────────────────────
+     Opaque, for the reason the old bars were: content sliding under a
+     translucent sticky bar reads as a rendering fault, not as depth. */
+  .a-appbar {
+    background: var(--a-canvas, var(--bar, #FFFFFF));
+    border-bottom: 1px solid rgb(var(--a-line, 42 30 20) / 0.07);
+  }
+  /* A bottom sheet. Shadow points UP — it is lit from the page it covers. */
+  .a-sheet {
+    @apply rounded-t-[32px];
+    background: var(--a-surf, #FFFFFF);
+    box-shadow: var(--a-sheet, 0 -12px 48px -16px rgba(60, 40, 20, 0.20));
+  }
+
+  /* ── Entrances ──────────────────────────────────────────────────────
+     `.a-stagger` gives its children a rising delay so a list arrives as a
+     cascade rather than as a block. Capped at 8: past that the last row is
+     waiting long enough to read as lag rather than as choreography. */
+  .a-stagger > * { animation: spring-up 0.52s cubic-bezier(0.2, 0.9, 0.25, 1.12) both; }
+  .a-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .a-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+  .a-stagger > *:nth-child(3) { animation-delay: 0.10s; }
+  .a-stagger > *:nth-child(4) { animation-delay: 0.14s; }
+  .a-stagger > *:nth-child(5) { animation-delay: 0.18s; }
+  .a-stagger > *:nth-child(6) { animation-delay: 0.22s; }
+  .a-stagger > *:nth-child(7) { animation-delay: 0.26s; }
+  .a-stagger > *:nth-child(n+8) { animation-delay: 0.30s; }
+
+  /* ── Reduced motion ─────────────────────────────────────────────────
+     Every Aurora animation, off. The staggered children resolve to their
+     final state rather than being suppressed — `spring-up` starts at
+     opacity 0, so merely cancelling it would leave a blank screen. */
+  @media (prefers-reduced-motion: reduce) {
+    .a-aurora,
+    .a-rail::before,
+    .a-aurora-text {
+      animation: none !important;
+      background-position: 0% 50% !important;
+    }
+    .a-stagger > * {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    /* Both of these start clipped or scaled to nothing under `both`, so
+       cancelling the animation without restoring the end state would leave
+       the wordmark's caption invisible and its rule at zero width. Same trap
+       the planBuilder block documents. */
+    .brand-wipe {
+      animation: none !important;
+      clip-path: none !important;
+      opacity: 1 !important;
+    }
+    .brand-rule {
+      animation: none !important;
+      transform: none !important;
+    }
+    /* The splash. All four start from clipped, zero-scale or zero-opacity
+       under `both`; cancelling them without restoring the end state leaves a
+       navy rectangle with nothing on it. */
+    .ink-write, .ink-rise, .ink-rise-late, .ink-rule {
+      animation: none !important;
+      clip-path: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      letter-spacing: -0.015em !important;
+    }
+    /* The caps variant needs its own entry rather than joining the selector
+       above, because that rule forces letter-spacing to -0.015em: Playfair's
+       resting value, which on heavy caps closes the letters into a slab.
+
+       Like the rule above it, this restores an END state rather than merely
+       cancelling. `both` fill means cancelling alone leaves opacity 0. */
+    .ink-rise-caps {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      letter-spacing: -0.005em !important;
+    }
+    .spark-in {
+      animation: none !important;
+      opacity: 0.92 !important;
+      transform: none !important;
+    }
+    /* The sweep, removed outright. The bevel and the shadow stay: they are
+       static gradients rather than motion, and stripping them would leave
+       the one screen that is entirely a logo with a flat logo on it. What
+       reduced motion asks us to remove is the thing that moves. */
+    .brand-amethyst-gloss::after {
+      animation: none !important;
+      display: none !important;
+    }
+    /* The launch screen. Every one of these starts from opacity 0 under
+       `both`, so cancelling the animation without restoring the end state
+       leaves a purple rectangle with nothing on it. */
+    .splash-mark > span,
+    .splash-tagline,
+    .splash-art,
+    .splash-promise-1,
+    .splash-promise-2,
+    .splash-rule {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    /* The shine is the only thing here that is purely motion, so it is the
+       only thing removed outright rather than settled. */
+    .splash-shine {
+      animation: none !important;
+      display: none !important;
+    }
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   The matching screen's two motions
+   ══════════════════════════════════════════════════════════════════════
+
+   Both exist for one reason: between state changes, that screen does not
+   move, and a page that is not moving is a page that has crashed to
+   anyone who has not read the code. Neither carries information --
+   `components/book/TradeSprite.jsx` explains why that separation is the
+   whole point.
+
+   Kept as plain keyframes rather than Tailwind config so they survive a
+   tailwind.config.js edit without a dev-server restart, which is its own
+   recurring trap in this project. */
+
+@keyframes sb-bob {
+  0%, 100% { transform: translateY(0)      rotate(0deg);   }
+  30%      { transform: translateY(-3.5px) rotate(-5deg);  }
+  60%      { transform: translateY(-1px)   rotate(4deg);   }
+}
+
+/* 2.4s, not 1s. Fast bobbing reads as agitation; this should read as
+   somebody working, not somebody panicking. */
+.sb-bob { animation: sb-bob 2.4s ease-in-out infinite; }
+
+@keyframes sb-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.sb-fade-in { animation: sb-fade-in 420ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-bob, .sb-fade-in { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   The ticket shape
+   ══════════════════════════════════════════════════════════════════════
+
+   A discount rendered as a row of text is a line item. The same number
+   with a notch bitten out of each side and a dashed tear line is a
+   ticket, and people treat a ticket as something they HAVE. That is the
+   whole difference between "8% is applied" and "I got 8% off", and it
+   costs two pseudo-elements.
+
+   The notches are painted with the PAGE ground, not white, because these
+   cards sit on `a-canvas` — a hardcoded white circle would show as a
+   pale disc against it wherever the ground is tinted. */
+
+.sb-ticket-stub {
+  position: relative;
+  border-right: 1.5px dashed currentColor;
+  opacity: 1;
+}
+
+/* The dash needs to be faint without dragging the icon and label down
+   with it, so the opacity lands on the border alone. */
+.sb-ticket-stub::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-right: 1.5px dashed var(--a-canvas, #fff);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* The two bites, top and bottom of the tear line. */
+.sb-ticket-stub::before {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--a-canvas, #fff);
+  box-shadow: 0 calc(100% + 14px) 0 0 var(--a-canvas, #fff);
 }

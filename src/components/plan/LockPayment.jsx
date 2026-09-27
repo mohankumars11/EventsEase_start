@@ -3,7 +3,7 @@ import { ShieldCheck, Copy, Check, AlertTriangle, MessageCircle } from 'lucide-r
 import {
   IS_CONFIGURED as UPI_CONFIGURED, UPI_ID, buildAppUpiLinks, generateQrDataUrl,
 } from '../../lib/payment/upiProvider'
-import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../shop/UpiAppIcons'
+import { GooglePayIcon, PhonePeIcon, PaytmIcon, UpiIcon } from '../common/UpiAppIcons'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 import { BRAND } from '../../config/sambramo'
 import { formatINR } from '../../utils/format'

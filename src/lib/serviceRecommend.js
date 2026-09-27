@@ -169,6 +169,71 @@ const OCCASION_ESSENTIALS = {
     dining: 0.80, invitations: 0.45, transport: 0.40, bouncers: 0.40,
     gifting: 0.50, live_music: 0.30, cleanup: 0.55, venue: 0.75,
   },
+
+  /* ── The ten the life-cycle audit added ───────────────────────────────
+     Weighted from what actually gets bought at each, not from what the
+     catalogue would like to sell. Two of them break the usual shape and
+     should: `vehicle_pooja` puts vehicle_decor above photography because the
+     garland IS the occasion, and `shop_opening` puts sweets above catering
+     because a launch feeds the street rather than a guest list. */
+  vehicle_pooja: {
+    vehicle_decor: 0.95, priest: 0.90, pooja: 0.82, photography: 0.70,
+    sweets: 0.75, videography: 0.45, vehicle_care: 0.45, cake: 0.30,
+    return_gifts: 0.28, drum: 0.25, nadaswaram: 0.25, cleanup: 0.22,
+  },
+  half_saree: {
+    priest: 0.90, pooja: 0.85, photography: 0.88, videography: 0.62,
+    makeup: 0.78, bridal_wear: 0.70, mehendi: 0.60, dining: 0.80,
+    nadaswaram: 0.55, return_gifts: 0.70, invitations: 0.50,
+    venue: 0.70, live_music: 0.35, photobooth: 0.35, cleanup: 0.50,
+  },
+  mundan: {
+    priest: 0.92, pooja: 0.88, photography: 0.72, dining: 0.68,
+    return_gifts: 0.55, sweets: 0.50, transport: 0.40, cake: 0.35,
+    nadaswaram: 0.35, videography: 0.35, nanny: 0.30, cleanup: 0.40,
+  },
+  annaprashana: {
+    priest: 0.92, pooja: 0.88, photography: 0.82, videography: 0.50,
+    dining: 0.72, return_gifts: 0.65, cake: 0.45, sweets: 0.45,
+    nadaswaram: 0.40, livestream: 0.35, invitations: 0.35, nanny: 0.30,
+    photobooth: 0.30, cleanup: 0.42,
+  },
+  reception: {
+    photography: 0.92, videography: 0.75, dining: 0.88, venue: 0.85,
+    emcee: 0.70, dj: 0.65, makeup: 0.72, live_counters: 0.60,
+    return_gifts: 0.68, invitations: 0.62, wedding_car: 0.50, bar: 0.45,
+    photobooth: 0.45, hospitality: 0.45, valet: 0.45, cake: 0.55,
+    live_music: 0.40, fireworks: 0.30, signage: 0.35, cleanup: 0.60,
+  },
+  shop_opening: {
+    inauguration: 0.95, priest: 0.90, pooja: 0.82, sweets: 0.85,
+    photography: 0.75, signage: 0.70, nadaswaram: 0.55, drum: 0.55,
+    emcee: 0.55, videography: 0.50, gifting: 0.45, hospitality: 0.42,
+    folk: 0.35, bouncers: 0.35, invitations: 0.35, cleanup: 0.45,
+  },
+  bhoomi_pooja: {
+    priest: 0.94, pooja: 0.90, tent: 0.75, photography: 0.62,
+    dining: 0.65, drone: 0.45, sweets: 0.45, washrooms: 0.42,
+    power: 0.40, nadaswaram: 0.35, return_gifts: 0.35, transport: 0.35,
+    videography: 0.30, cleanup: 0.45,
+  },
+  aksharabhyasa: {
+    priest: 0.92, pooja: 0.88, photography: 0.68, sweets: 0.45,
+    return_gifts: 0.40, dining: 0.40, videography: 0.28, bhajan: 0.25,
+    cleanup: 0.20,
+  },
+  haldi: {
+    mehendi: 0.85, photography: 0.88, decor: 0.80, drum: 0.70,
+    videography: 0.62, makeup: 0.65, dining: 0.65, live_counters: 0.55,
+    cleanup: 0.70, ice_cream: 0.42, dj: 0.45, photobooth: 0.40,
+    return_gifts: 0.45, cooling: 0.40, drone: 0.30, venue: 0.60,
+  },
+  farewell: {
+    memory_wall: 0.80, photography: 0.72, dining: 0.75, av_setup: 0.62,
+    emcee: 0.50, cake: 0.55, gifting: 0.60, videography: 0.48,
+    livestream: 0.42, photobooth: 0.40, live_music: 0.35, dj: 0.30,
+    venue: 0.60, invitations: 0.28, cleanup: 0.45,
+  },
 }
 
 /**

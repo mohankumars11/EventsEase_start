@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { isPartnerSurface, isAdminSurface, homeFor, SURFACE } from './config/surface'
+import { usePartnerStage } from './hooks/usePartnerStage'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
 import { ToastProvider } from './context/ToastContext'
@@ -10,14 +12,20 @@ import Navbar from './components/layout/Navbar'
 import BottomNav from './components/layout/BottomNav'
 import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
-import ChatWidget from './components/customer/ChatWidget'
 import JourneyTracker from './components/common/JourneyTracker'
 import ResumePrompt from './components/common/ResumePrompt'
+import SplashScreen from './components/ui/SplashScreen'
+import UpdateAvailable from './components/common/UpdateAvailable'
+import PushRouter from './components/common/PushRouter'
+import PartnerBottomNav from './components/layout/PartnerBottomNav'
+import PartnerAppShell from './components/layout/PartnerAppShell'
+import { isPartnerSurface as _isPartner } from './config/surface'
 
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
 import HomeScreen from './pages/HomeScreen'
+import PayBridge from './pages/PayBridge'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -31,32 +39,54 @@ const FestivalDetailPage = lazy(() => import('./pages/FestivalDetailPage'))
 const PlanHub            = lazy(() => import('./pages/plan/PlanHub'))
 const PlanningWizard     = lazy(() => import('./pages/plan/PlanningWizard'))
 const CelebrationBuilder = lazy(() => import('./pages/plan/CelebrationBuilder'))
+const CelebrationJourney = lazy(() => import('./pages/plan/CelebrationJourney'))
 const PlanConfirmation   = lazy(() => import('./pages/plan/PlanConfirmation'))
 const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
-const Shop               = lazy(() => import('./pages/shop/Shop'))
-const ShopCategory       = lazy(() => import('./pages/shop/ShopCategory'))
-const ProductDetail      = lazy(() => import('./pages/shop/ProductDetail'))
-const ShopCart           = lazy(() => import('./pages/shop/ShopCart'))
+
+// Instant booking — the marketplace bucket. Short flow, real dispatch,
+// pay per master. The pre-book journey above is untouched.
+const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
+const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
+const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
 
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
 const ServicesPicker = lazy(() => import('./pages/customer/ServicesPicker'))
 const EventServices  = lazy(() => import('./pages/customer/EventServices'))
-const MyOrders       = lazy(() => import('./pages/customer/MyOrders'))
 const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
 const Cart           = lazy(() => import('./pages/customer/Cart'))
 const Account        = lazy(() => import('./pages/customer/Account'))
 
 // Track — every celebration and every order, with the steps and the payments.
 const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
-const OrderTracker        = lazy(() => import('./pages/track/OrderTracker'))
 const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'))
 
 // Vendor & Admin
-const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
+const PartnerLanding   = lazy(() => import('./pages/partner/PartnerLanding'))
+const PartnerEntry     = lazy(() => import('./pages/partner/PartnerEntry'))
+/* The partner entry flow. Lazy like the rest: a customer never loads any
+   of it, and on the partner APK it is the first thing fetched anyway. */
+const PartnerOnboarding    = lazy(() => import('./pages/partner/PartnerOnboarding'))
+const LocationPermission   = lazy(() => import('./pages/partner/LocationPermission'))
+const LocationCapture      = lazy(() => import('./pages/partner/LocationCapture'))
+const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'))
+const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
+const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
+const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
+/* One job, in full. A route rather than a taller card so a notification
+   can point AT a booking instead of dropping somebody on a list. */
+const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
+/* The six onboarding steps. Each is gated by StepGate, so a typed URL
+   cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
+const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
+const BusinessServicesStep = lazy(() => import('./pages/partner/steps/BusinessServicesStep'))
+const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
+const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAreaStep'))
+const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
+const BankPaymentsStep     = lazy(() => import('./pages/partner/steps/BankPaymentsStep'))
+const ReviewPublishStep    = lazy(() => import('./pages/partner/steps/ReviewPublishStep'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
-const AdminEventDetail = lazy(() => import('./pages/admin/AdminEventDetail'))
 
 function PageLoader() {
   return (
@@ -94,6 +124,82 @@ function DashboardRedirect() {
   if (profile.role === 'vendor') return <Navigate to="/dashboard/vendor"   replace />
   if (profile.role === 'admin')  return <Navigate to="/dashboard/admin"    replace />
   return <Navigate to="/dashboard/customer" replace />
+}
+
+/**
+ * `/` means two different things depending on which app this is.
+ *
+ * Both apps are ONE deployment of one bundle. What separates them is the
+ * hostname — sambramo-partners.vercel.app and the Capacitor partner
+ * flavour resolve to the partner surface; everything else is a customer.
+ *
+ * A master who opens the partner app wants today's jobs. Landing them on
+ * the customer home — festivals, occasion tiles, the shop — is landing
+ * them in the wrong product, and it is what happened until this existed.
+ *
+ * This changes the LANDING and nothing else. Every route stays reachable
+ * on both hosts and every permission is still decided by role and RLS.
+ * A surface is not a security boundary, and treating a hostname as one is
+ * how you end up with an app whose access control can be changed by
+ * typing a different URL.
+ */
+/**
+ * A vendor's landing, decided by how far through setup they actually are.
+ *
+ * This used to be one line in RootScreen sending every vendor to
+ * `/dashboard/vendor`, which is why a partner who had just verified an
+ * email — no vendors row, no trade, nothing — landed on the working
+ * dashboard and never saw "Great! Let's get started". The rule now lives
+ * in lib/partnerStage.js and every entry point asks it.
+ *
+ * Its own component because a hook cannot be called after the early
+ * returns in RootScreen, and RootScreen must not pay for this query on
+ * the customer home.
+ */
+function VendorLanding() {
+  const { route, loading } = usePartnerStage()
+  if (loading) return null
+  return <Navigate to={route} replace />
+}
+
+function RootScreen() {
+  const { profile, loading } = useAuth()
+
+  if (loading) return null
+
+  /* ── The ROLE decides, before the hostname does ──────────────────
+   *
+   * This used to check the surface first, so a vendor was only sent to
+   * their dashboard on the partner hostname. Inside the Android app the
+   * hostname check did not hold, and the result was a master looking at
+   * the customer home — "Finding 4 masters near Koramangala", about
+   * bookings they had made themselves while testing.
+   *
+   * That is absurd on its face, and the surface was never the right
+   * thing to key it on. A signed-in vendor has no use for the customer
+   * home on ANY host: not on sambramoh.vercel.app, not in either app,
+   * not on a preview URL. The hostname only ever answered "which app is
+   * this", and the real question is "who is this".
+   *
+   * So the role is checked first and the surface is the fallback, for
+   * the one case the role cannot answer: a visitor who is not signed in
+   * yet. */
+  /* Not a fixed destination: a partner mid-setup is sent back to where
+     they stopped, not to a dashboard that has nothing to show them. */
+  if (profile?.role === 'vendor') return <VendorLanding />
+  if (profile?.role === 'admin')  return <Navigate to="/dashboard/admin"  replace />
+
+  /* The console host never renders the storefront. Somebody arriving
+     here signed out gets the sign-in, not festivals and occasion tiles
+     — and if they turn out not to be an operator, ProtectedRoute
+     refuses them at /dashboard/admin exactly as it always did. */
+  if (isAdminSurface()) {
+    return <Navigate to={homeFor(SURFACE.admin, { signedIn: !!profile, role: profile?.role ?? null })} replace />
+  }
+
+  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+
+  return <Navigate to={homeFor(SURFACE.partner, { signedIn: !!profile, role: profile?.role ?? null })} replace />
 }
 
 /** A UUID, as opposed to a catalogue slug like `birthday`. */
@@ -241,56 +347,13 @@ function AppRoutes() {
           the wild in the tab bar, in post-login redirects, in the profile menu
           and in anything a customer has bookmarked. It keeps its guard, so the
           signed-out variant is only ever reachable at `/`. */}
-      <Route path="/"       element={<ScreenShell><HomeScreen /></ScreenShell>} />
+      <Route path="/"       element={<RootScreen />} />
       <Route path="/signup"         element={<BareShell><SignupPage /></BareShell>} />
       <Route path="/login"          element={<BareShell><LoginPage /></BareShell>} />
       <Route path="/auth/callback"  element={<BareShell><AuthCallbackPage /></BareShell>} />
 
       {/* ── Festival detail (public) ────────────────── */}
       <Route path="/festivals/:id" element={<ScreenShell><FestivalDetailPage /></ScreenShell>} />
-
-      {/* ── Shop (public browsing, checkout requires login) ── */}
-      <Route path="/shop" element={<ScreenShell><Shop /></ScreenShell>} />
-      {/* Public: a guest can build and review a cart, and is asked to sign
-          in at checkout. Gating the cart page itself bounced anyone who
-          tapped the cart icon straight to /login, which reads as "your
-          items are gone" and is the classic way to lose a basket.
-
-          ── Why the checkout has no site chrome ──────────────────────
-          It was on AppShell, so a customer one tap from paying got, stacked
-          above the thing they came to do: the marketing navbar, a "Pilot —
-          Bengaluru — somewhere else? [notify me]" bar, a marquee of festivals
-          sliding sideways, a "Back to Home" link — and beneath it a 400px
-          footer offering birthdays, weddings, baby showers, a sitemap, two
-          contact buttons and the pilot notice a second time.
-
-          Every one of those is a way out of a checkout, and two actively
-          argued with it: the banner invited someone mid-purchase to register
-          interest in a city we don't serve, and the ticker moved continuously
-          beside a form they were typing an address into. No storefront of any
-          size ships its full site header on its checkout, and this is why.
-
-          The page draws its own instead — CheckoutHeader (one exit, the
-          brand, a padlock, a three-step rail) and CheckoutFooter (payment
-          methods, the refund promise, a human to call). The tab bar stays: it
-          is the app's navigation, not the marketing site's. */}
-      <Route path="/shop/cart" element={<ScreenShell><ShopCart /></ScreenShell>} />
-      <Route path="/shop/product/:id" element={<ScreenShell><ProductDetail /></ScreenShell>} />
-      {/* Cakes used to get their own storefront (CakeShop), because the old
-          ShopCategory could express neither the 50-odd occasion tags nor the
-          fact that every cake is configurable. The rebuilt listing does both
-          — occasion chips come from `groupsForCategory`, which already routes
-          Cakes through its own taxonomy, and a configurable row renders
-          "Choose options" instead of a one-tap Add — so the shelf no longer
-          needs a second page, and having one meant the most-visited shelf in
-          the shop was the one screen that did not look like the shop.
-          /shop/Cakes?occasion=Birthday still resolves; the param is read the
-          same way. */}
-      {/* Hampers merged into Gifts (migration 031). The old URL is in the wild —
-          festival banners, the chat widget, anything a customer bookmarked — so
-          it redirects rather than falling through to an empty category page. */}
-      <Route path="/shop/Hampers" element={<Navigate to="/shop/Gifts" replace />} />
-      <Route path="/shop/:category" element={<ScreenShell><ShopCategory /></ScreenShell>} />
 
       {/* ── Planning ────────────────────────────────────
           /plan is the hub every "plan" button in the app lands on, and it
@@ -334,6 +397,33 @@ function AppRoutes() {
           same reason the wizard and the catalog are — a price behind a login
           is a price nobody sees. Login is asked at send, where there is
           something to save. */}
+      {/* ── The guided journey ─────────────────────────────────────
+          The door every occasion card now opens, and the one built for the
+          customer who has NOT already decided what they want. One question
+          per screen, in the order a family actually decides, and — the rule
+          the whole flow is organised around — no price until the end.
+
+          BareShell, not ScreenShell: this is a single-decision flow and the
+          tab bar at the bottom of it is an invitation to abandon halfway. It
+          is in FOCUSED_ROUTES for the same reason, so the chat bubble does
+          not float over its action bar either.
+
+          Public, like every other planning door. A price behind a login is a
+          price nobody sees, and here the price is the payoff for nine
+          minutes of work. Sign-in is asked at send. */}
+      <Route path="/celebrate/:occasionId" element={<BareShell><CelebrationJourney /></BareShell>} />
+
+      {/* Instant booking. BareShell for the same reason the journey uses
+          it: a flow with its own progress bar and its own action bar does
+          not also want the app's tab bar competing at the bottom. */}
+      <Route path="/book/instant" element={<BareShell><InstantBooking /></BareShell>} />
+
+      {/* The two doors, for a date that could honestly take either lane. */}
+      <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />
+
+      {/* The occasion grid lands here: one question, then the fork. */}
+      <Route path="/book/when" element={<BareShell><WhenStep /></BareShell>} />
+
       <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
       <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
 
@@ -408,19 +498,19 @@ function AppRoutes() {
           shop now: browse freely, sign in when you add something. */}
       <Route path="/dashboard/customer/services" element={<Navigate to="/services" replace />} />
       <Route path="/dashboard/customer/events/:eventId" element={<LegacyEventRedirect />} />
-      {/* Pooja items moved into the real Shop/payment flow — redirect the old link */}
-      <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/shop/Pooja%20%26%20Essentials" replace />} />
+      {/* This pointed into the shop's pooja shelf, which no longer exists.
+          Pooja is a celebration we arrange, not a box we post. */}
+      <Route path="/dashboard/customer/pooja-items" element={<Navigate to="/plan" replace />} />
       {/* The four signed-in customer screens. They were on the dashboard
           shell, which is now vendor/admin only: a customer checking an order
           does not need an operations navbar, and the pilot-city notify-me form
           above it was addressed to somebody who has already bought. Each draws
           the shared app bar instead — one back control, the screen's name, the
           cart and the account menu. */}
-      <Route path="/dashboard/customer/orders" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><MyOrders /></ScreenShell>
-        </ProtectedRoute>
-      } />
+      {/* Orders were shop parcels. Track is where a customer's relationship
+          with us lives now, and it is the honest destination for anyone
+          following an old "my orders" link. */}
+      <Route path="/dashboard/customer/orders" element={<Navigate to="/track" replace />} />
       <Route path="/dashboard/customer/requests" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <ScreenShell><MyRequests /></ScreenShell>
@@ -479,11 +569,7 @@ function AppRoutes() {
           trackers below stay guarded, because those DO show somebody's own
           data. */}
       <Route path="/track" element={<ScreenShell><TrackHub /></ScreenShell>} />
-      <Route path="/track/order/:orderId" element={
-        <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><OrderTracker /></ScreenShell>
-        </ProtectedRoute>
-      } />
+      <Route path="/track/order/:orderId" element={<Navigate to="/track" replace />} />
       {/* One component, two doors: a wizard celebration lives in `events`, a
           builder or cart one in `service_enquiries`. The customer is owed one
           screen regardless of which table it landed in. */}
@@ -498,17 +584,138 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      {/* ── Vendor onboarding ──────────────────────── */}
-      <Route path="/onboarding/vendor" element={
+      {/* ── The partner front door ─────────────────────
+          Public and unprotected on purpose. This is the page a master
+          reaches from a WhatsApp forward or a shop visit, before any
+          account exists — putting it behind ProtectedRoute would send
+          every prospective partner to a login for an account they have
+          not created.
+
+          config/surface.js sends the partner hostname's root here, which
+          is why the path is also aliased at '/partner'. */}
+      {/* The payment sheet, opened in the phone real browser. It carries no
+          session and needs no chrome -- see the page header. */}
+      <Route path="/pay" element={<BareShell><PayBridge /></BareShell>} />
+
+      {/* /partner is the pitch — where a WhatsApp forward lands and
+          where somebody who has not decided yet needs convincing.
+          /partner/join is the door, and it is where homeFor() sends a
+          signed-out partner, so it is the APK's first screen. They were
+          the same page, which meant the first thing a partner saw after
+          installing was an argument for installing. */}
+      <Route path="/partner"      element={<BareShell><PartnerLanding /></BareShell>} />
+      <Route path="/partner/join" element={<BareShell><PartnerEntry /></BareShell>} />
+
+      {/* ── The partner entry flow ──────────────────────────────
+
+          Nine screens between the splash and the dashboard, each its own
+          route so the Android back button walks them in order rather than
+          leaving the app.
+
+          They are NOT wrapped in BareShell. That wrapper exists to stop a
+          page shell stacking a second logo and a footer around an auth
+          screen -- but it also sets min-h-screen, which is `100vh`, and
+          `100vh` on Android Chrome is measured with the URL bar hidden.
+          Every one of these screens puts a CTA at the bottom, and under a
+          min-h-screen parent that CTA sits below the fold until you
+          scroll. `.native-screen` uses `100dvh` instead, and each screen
+          already draws its own full-bleed ground, so there is nothing for
+          a shell to add. */}
+      <Route path="/partner/onboarding"            element={<PageBoundary><PartnerOnboarding /></PageBoundary>} />
+      <Route path="/partner/location-permission"   element={<PageBoundary><LocationPermission /></PageBoundary>} />
+      <Route path="/partner/location"              element={<PageBoundary><LocationCapture /></PageBoundary>} />
+      <Route path="/partner/location-confirmation" element={<PageBoundary><LocationConfirm /></PageBoundary>} />
+      {/* Is the city we just detected one we recruit in? Its own route
+          rather than a branch inside the onboarding form, where a
+          decorator in Mysuru used to find out three steps after typing
+          a business name. Signed out: it runs BEFORE the login, which
+          is the point — nobody should make an account to be told we
+          are not there yet. */}
+      <Route path="/partner/market" element={<PageBoundary><MarketCheck /></PageBoundary>} />
+      <Route path="/partner/jobs/:lineId" element={<PageBoundary><JobDetails /></PageBoundary>} />
+
+      {/* /partner/login is the name the flow uses; /partner/join is what
+          homeFor() and four existing call sites already point at. Same
+          screen, rather than a redirect, so neither has to be chased
+          down and changed. */}
+      <Route path="/partner/login" element={<BareShell><PartnerEntry /></BareShell>} />
+
+      <Route path="/partner/setup" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <BareShell><VendorOnboarding /></BareShell>
+          <PageBoundary><PartnerSetupIntro /></PageBoundary>
         </ProtectedRoute>
       } />
 
+      {/* ── Step 1's sub-flow, and the Add Service door ──────────────
+          `/partner/setup/services` is step 1 of the six.
+          `/partner/services` is the same screen reached later from
+          More → My Services → Add Service. One component, so the
+          twenty-six trades and the duplicate rule cannot drift between
+          the two ways in — WhatYouOffer reads which one it is from the
+          path and sends the partner back to the right place. */}
+      <Route path="/partner/services" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><WhatYouOffer /></PageBoundary>
+        </ProtectedRoute>
+      } />
+{/* ── The six steps ────────────────────────────────────────────
+          Each wrapped in StepGate, which sends a partner back to the
+          home if the step ahead of them is still locked. The disabled
+          buttons on the home are a courtesy; this is the rule. */}
+      <Route path="/partner/setup/services" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="business"><BusinessServicesStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/details" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="details"><PartnerDetailsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/area" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="area"><ServiceAreaStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/compliance" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="compliance"><ComplianceStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/bank" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="bank"><BankPaymentsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/setup/review" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="review"><ReviewPublishStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Vendor onboarding ───────────────────────
+          REMOVED. The four-step /onboarding/vendor wizard is gone; every
+          entry point now lands on /partner/setup instead.
+
+          Known gap, accepted deliberately when this was removed: that
+          wizard was the only thing that created the `vendors` row, set
+          verification_status = 'submitted', and called
+          set_partner_location to write the geography point
+          match_partners() matches on. Until that work moves into the
+          setup steps, a brand-new partner reaches /partner/setup with no
+          vendors row, every step's .update() no-ops, and ServiceAreaStep
+          cannot be completed because its Continue is gated on a location
+          nothing sets any more. */}
+
       {/* ── Vendor ─────────────────────────────────── */}
+      {/* PartnerAppShell, not DashboardShell. DashboardShell renders the
+          customer app's Navbar — logo, desktop links, city picker and a
+          hamburger drawer — above the partner's own header and bottom
+          bar, which is three navigation systems on one screen and two of
+          them duplicates. See components/layout/PartnerAppShell. */}
       <Route path="/dashboard/vendor" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <DashboardShell><VendorDashboard /></DashboardShell>
+          <PartnerAppShell><PageBoundary><VendorDashboard /></PageBoundary></PartnerAppShell>
         </ProtectedRoute>
       } />
 
@@ -518,11 +725,14 @@ function AppRoutes() {
           <DashboardShell><AdminDashboard /></DashboardShell>
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/admin/events/:eventId" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <DashboardShell><AdminEventDetail /></DashboardShell>
-        </ProtectedRoute>
-      } />
+
+      {/* ── A short endpoint a person can type ────────────────────────
+          /dashboard/admin is where the console lives and is not a thing
+          anybody remembers. This is the address that goes in a bookmark
+          and gets read out over a phone. It is an alias, not a second
+          console: the route below still guards on role, and RLS still
+          decides what any of it returns. */}
+      <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
 
       <Route path="/dashboard" element={<DashboardRedirect />} />
       <Route path="*"          element={<Navigate to="/" replace />} />
@@ -557,12 +767,26 @@ export default function App() {
                   /dashboard/customer are two routes onto one screen and the
                   card belongs to neither of them in particular. */}
               <ResumePrompt />
-              {/* One assistant for the whole app, opened by the Help tab in
-                  BottomNav. It used to be mounted inside three separate
-                  shells, which is why it floated over the page: a component
-                  living inside the layout it must not disturb has nowhere to
-                  go but on top of it. */}
-              <ChatWidget />
+              {/* The mark, once, on a device's first open. An overlay over a
+                  mounted app rather than a gate in front of one — mounted
+                  last so it paints above everything, and dismissible by tap
+                  so it can never trap anyone on a logo. */}
+              <SplashScreen />
+              {/* Only ever visible in the installed app, and only when a
+                  newer build actually exists. See the component — the web
+                  updates itself, so it renders nothing there. */}
+              <UpdateAvailable app={_isPartner() ? 'partner' : 'customer'} />
+              {/* Takes a master to the job they tapped.
+
+                  Inside the router because it navigates, and mounted
+                  once for the whole app rather than on the dashboard:
+                  the tap that matters most is the one that arrives
+                  while the partner is somewhere else entirely, or
+                  while the app is closed. Renders nothing. */}
+              <PushRouter />
+              {/* The partner app gets its own tab bar. BottomNav returns
+                  null on this surface -- see its header. */}
+              <PartnerBottomNav />
               {/* One sheet for the whole app, mounted above the routes. Any
                   surface raises it through `openCityPicker()` — the two app
                   bars, the storefront's serviceability strip, the plan hub —
