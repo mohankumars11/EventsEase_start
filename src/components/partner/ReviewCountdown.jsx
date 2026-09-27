@@ -217,11 +217,11 @@ export default function ReviewCountdown({
           <button
             type="button"
             onClick={onOpenCalendar}
-            className="flex min-h-[46px] min-w-0 items-center justify-center gap-1 rounded-full bg-plum-950 px-2 text-[11px] font-black text-white shadow-sm transition active:scale-[0.98] whitespace-nowrap"
+            className="flex min-h-[46px] min-w-0 flex-nowrap items-center justify-center gap-0.5 rounded-full bg-plum-950 px-1.5 text-[10px] font-black text-white shadow-sm transition active:scale-[0.98] whitespace-nowrap"
           >
-            <CalendarDays size={15} className="shrink-0" />
+            <CalendarDays size={14} className="shrink-0" />
             <span className="whitespace-nowrap">Update calendar</span>
-            <span className="shrink-0"><ChevronRight size={15} /></span>
+            <span className="shrink-0"><ChevronRight size={14} /></span>
           </button>
         )}
 
@@ -229,9 +229,9 @@ export default function ReviewCountdown({
           <button
             type="button"
             onClick={onHowItWorks}
-            className="flex min-h-[46px] min-w-0 items-center justify-center gap-1 rounded-full bg-white/80 px-2 text-[11px] font-black text-plum-950 shadow-sm ring-1 ring-white transition active:scale-[0.98] whitespace-nowrap"
+            className="flex min-h-[46px] min-w-0 flex-nowrap items-center justify-center gap-0.5 rounded-full bg-white/80 px-1.5 text-[10px] font-black text-plum-950 shadow-sm ring-1 ring-white transition active:scale-[0.98] whitespace-nowrap"
           >
-            <PlayCircle size={15} fill="currentColor" className="shrink-0 text-plum-900" />
+            <PlayCircle size={14} fill="currentColor" className="shrink-0 text-plum-900" />
             <span className="whitespace-nowrap">See how it works</span>
             <ChevronRight size={15} className="shrink-0" />
           </button>
