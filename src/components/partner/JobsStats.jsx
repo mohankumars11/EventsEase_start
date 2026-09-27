@@ -87,7 +87,7 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    <div className="mx-0 bg-white px-5 pb-20 pt-4 sm:px-6">
+    <div className="mx-0 bg-white px-5 pb-7 pt-2 sm:px-6">
       <div className="grid grid-cols-4 gap-2 sm:gap-3">
         {tiles.map((t, index) => {
           const Icon = t.icon
@@ -119,13 +119,11 @@ export default function JobsStats({ vendorId, onOpen }) {
                 {t.value}
               </span>
 
-              <span className="relative mt-1 flex w-full min-w-0 items-center justify-between gap-1">
-                <span className="min-w-0 truncate text-[14px] font-black leading-tight sm:text-[18px]">
-                  {t.label}
-                </span>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/45 sm:h-11 sm:w-11">
-                  <span className="text-[25px] leading-none sm:text-3xl">›</span>
-                </span>
+              <span className="relative mt-1 min-w-0 pr-10 text-[14px] font-black leading-tight sm:pr-12 sm:text-[18px]">
+                {t.label}
+              </span>
+              <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/45 sm:bottom-4 sm:right-4 sm:h-11 sm:w-11">
+                <span className="text-[25px] leading-none sm:text-3xl">›</span>
               </span>
             </button>
           )
