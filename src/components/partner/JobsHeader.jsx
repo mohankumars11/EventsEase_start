@@ -123,174 +123,48 @@ export default function JobsHeader({
      These two paddings have to stay equal to the page's. If the column
      ever changes, this changes with it. */
   return (
-    <header className="bg-plum-950 px-4 pb-5 text-white sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))]">
-      <div className="flex items-start justify-between gap-3">
+    <header className="relative isolate overflow-hidden bg-gradient-to-br from-[#10052F] via-[#24105F] to-[#4B0B78] px-4 pb-7 pt-[calc(14px+env(safe-area-inset-top,0px))] text-white sm:px-6" style={{backgroundImage:'radial-gradient(circle at 78% 22%, rgba(168,85,247,.34), transparent 25%), radial-gradient(circle at 58% 78%, rgba(236,72,153,.18), transparent 28%), linear-gradient(135deg,#10052F 0%,#24105F 48%,#4B0B78 100%)'}}>
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {/* ── The wordmark, and it is the first thing on the screen ──
-              This was 10px mono in plum-300 on plum-950: the same
-              treatment a caption gets, at the size a caption gets, in a
-              colour two steps off the background. It read as a label
-              about the screen rather than as the name of the product,
-              which is what it is.
-
-              Saffron on plum-950 is the brand's attention pair and the
-              only one already proven against check-dark-card-contrast.
-              Wide uppercase tracking is what makes a humanist face
-              (Manrope) read geometric — a second font would be a new
-              network request on the first screen of a cold start.
-
-              ── The moving part is a sweep, not a wiggle ──────────────
-              `sheen` is an existing keyframe: a skewed highlight that
-              crosses the letters every 3.2 seconds. It is the cheapest
-              kind of alive — no layout, no repaint of anything else,
-              one transform on one absolutely-positioned element — and
-              under prefers-reduced-motion it simply does not run,
-              leaving a wordmark that is still bold and still legible.
-
-              Deliberately NOT text that changes. A name that rewrites
-              itself is a name somebody has to read twice. */}
-          <p className="relative inline-flex items-center gap-1.5 overflow-hidden">
-            <span className="relative text-[12.5px] font-extrabold uppercase tracking-[0.22em] text-saffron-400">
-              Sambramo
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 -left-6 w-6 bg-white/40 blur-[3px] motion-safe:animate-sheen"
-              />
-            </span>
-            <span className="text-[12.5px] font-bold uppercase tracking-[0.18em] text-white/55">
-              Partner
-            </span>
-            {/* Not decoration: it is green while the partner is
-                accepting work and grey while they are not, so the
-                wordmark itself carries the one state that decides
-                whether the app does anything today. */}
-            <span
-              aria-hidden="true"
-              className={`ml-0.5 h-1.5 w-1.5 rounded-full ${
-                acceptingJobs
-                  ? 'bg-forest-400 motion-safe:animate-glow-pulse'
-                  : 'bg-white/30'
-              }`}
-            />
-          </p>
-          <p className="mt-1.5 truncate text-[13.5px] font-semibold leading-tight text-plum-200">
-            {wish}
-          </p>
-          <h1 className="mt-0.5 truncate text-[19px] font-extrabold leading-tight">
-            {businessName ?? 'Your business'}
-          </h1>
-          {/* Warmth, not information -- the line above carries the
-              person and the line above that carries the status, so this
-              one is allowed to be worth nothing and just be pleasant.
-              Never hard-coded: it is the device's own weekday. */}
-          <p className="mt-0.5 text-[12px] font-semibold leading-tight text-plum-300">
-            {dayLine}
-          </p>
-          {/* Under the name, not beside the bell: it is a statement
-              about the business, and it is the control a partner reaches
-              for in a hurry. */}
-          <div className="mt-2">
-            <OnlineToggle
-              vendorId={vendorId}
-              initial={acceptingJobs}
-              onChange={onAcceptingChange}
-            />
+          <div className="flex items-center gap-2.5">
+            <span className="relative text-[25px] font-black uppercase tracking-[-0.045em] text-white drop-shadow-[0_0_16px_rgba(255,255,255,.35)] sm:text-[31px]">Sambramo<span aria-hidden="true" className="pointer-events-none absolute -bottom-2 left-0 h-1.5 w-[88%] -skew-x-[24deg] rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-transparent shadow-[0_0_14px_rgba(168,85,247,.9)]" /></span>
+            <span className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_18px_rgba(168,85,247,.28)] sm:text-[12px]">Partner</span>
+            <span aria-hidden="true" className={`h-3 w-3 shrink-0 rounded-full ring-4 ring-emerald-400/10 ${acceptingJobs ? 'bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.85)]' : 'bg-white/35'}`} />
           </div>
+          <p className="mt-5 text-[15px] font-semibold leading-tight text-violet-100 sm:text-[20px]">{wish},</p>
+          <h1 className="mt-1 max-w-[320px] truncate text-[27px] font-black leading-none tracking-[-0.035em] sm:max-w-[520px] sm:text-[42px]">{businessName ?? 'Your business'} <span aria-hidden="true">👋</span></h1>
+          <p className="mt-2 text-[16px] font-bold text-violet-100/90 sm:text-[21px]">{dayLine}</p>
+          <div className="mt-5"><OnlineToggle vendorId={vendorId} initial={acceptingJobs} onChange={onAcceptingChange} /></div>
         </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={onOpenAlerts}
-            aria-label={unreadAlerts
-              ? `Alerts and updates, ${unreadAlerts} unread`
-              : 'Alerts and updates'}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/10"
-          >
-            <Bell size={17} />
-            {/* The count, not a bare dot. "3" tells a partner whether
-                this is worth opening now; a dot only says "something". */}
-            {unreadAlerts > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9.5px] font-extrabold tabular-nums text-white ring-2 ring-plum-950">
-                {unreadAlerts > 9 ? '9+' : unreadAlerts}
-              </span>
-            )}
+        <div className="relative z-20 flex shrink-0 items-start gap-2 sm:gap-3">
+          <button type="button" onClick={onOpenAlerts} aria-label={unreadAlerts ? `Alerts and updates, ${unreadAlerts} unread` : 'Alerts and updates'} className="relative flex h-12 w-12 items-center justify-center rounded-full border border-fuchsia-300/55 bg-violet-950/55 shadow-[0_0_24px_rgba(168,85,247,.6)] backdrop-blur sm:h-16 sm:w-16">
+            <Bell size={25} className="text-white sm:h-8 sm:w-8" />
+            {unreadAlerts > 0 && <span className="absolute right-0 top-0 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-[#24105F]">{unreadAlerts > 9 ? '9+' : unreadAlerts}</span>}
           </button>
-
-          {/* ── The face, top right ──────────────────────────────────
-              Where the reference design puts it, and it goes to the
-              account rather than opening a menu: there is one place to
-              change anything about yourself and this is the shortest
-              route to it. Falls back to initials, which is what every
-              partner sees until they add a photograph. */}
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            aria-label="Your account"
-            className="rounded-[13px] ring-2 ring-white/25"
-          >
-            <PartnerAvatar url={avatarUrl} name={businessName} size={44} shape="square" />
+          <button type="button" onClick={onOpenProfile} aria-label="Your account" className="rounded-[16px] border-2 border-fuchsia-300/70 shadow-[0_0_20px_rgba(168,85,247,.5)]">
+            <PartnerAvatar url={avatarUrl} name={businessName} size={48} shape="square" />
           </button>
         </div>
       </div>
-
-      {/* ── The status, and the clock when there is one ──────────────
-          ════════════════════════════════════════════════════════════
-          ONE STATUS ELEMENT, NOT TWO
-          ════════════════════════════════════════════════════════════
-
-          The review countdown used to be its own card rendered ABOVE
-          this header in VendorDashboard. Because the header is pulled up
-          by `-mt-4` to sit flush with the top of the screen, the card
-          was dragged with it and ended up half off the top edge, its
-          corners cut by the header behind it — visible in a partner's
-          screenshot as a dark slab floating above everything.
-
-          It was also saying the same thing twice. This pill already
-          reads "Under review · We are checking your profile"; the card
-          above it read "With our team · 23 hours left". Two elements,
-          one subject, fighting for the same corner of the screen.
-
-          So the clock lives HERE, where the status already is, and the
-          detail card moved down into the content where there is room
-          for it. The bar underneath fills as the promised window
-          elapses, which is the thing that makes a wait feel finite. */}
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        data-partner-state={lifecycle}
-        className={`mt-3 w-full rounded-[18px] px-3.5 py-2.5 text-left ring-1 ${s.pill}`}
-      >
-        <span className="flex items-center gap-2">
-          {/* Never colour alone — the dot has a word beside it. §59. */}
-          <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} aria-hidden="true" />
-          <span className="text-[12.5px] font-extrabold">{s.label}</span>
-          {/* The subtitle gives way to the clock rather than competing
-              with it. "We are checking your pro..." next to "23 min 58s
-              left" is two truncated half-sentences in one row, and the
-              clock is the more useful of the two by a distance --
-              "Under review" already says what the subtitle was for. */}
-          {words ? (
-            <span className={`min-w-0 flex-1 text-right text-[11.5px] font-extrabold tabular-nums ${
-              left?.over ? 'text-saffron-200' : ''
-            }`}>
-              {words}
-            </span>
-          ) : (
-            <span className="min-w-0 flex-1 truncate text-[11.5px] opacity-70">{s.sub}</span>
-          )}
-          <ChevronRight size={14} className="shrink-0 opacity-60" />
-        </span>
-
-        {fraction !== null && !left?.over && (
-          <span className="mt-2 block h-1 w-full overflow-hidden rounded-full bg-white/15">
-            <span
-              className="block h-full rounded-full bg-amber-300 transition-[width] duration-700 ease-out"
-              style={{ width: `${Math.round(fraction * 100)}%` }}
-            />
-          </span>
-        )}
-      </button>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-10 top-20 h-44 w-44 rounded-full bg-fuchsia-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-[32%] h-24 w-72 -rotate-12 rounded-[50%] bg-fuchsia-500/20 blur-2xl" />
+        <span className="absolute right-[34%] top-[32%] text-2xl text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.9)]">✦</span>
+        <span className="absolute right-[20%] top-[60%] text-lg text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.8)]">✦</span>
+        <div className="absolute right-[10%] top-[28%] w-[43%] max-w-[390px] min-w-[210px] rotate-[-5deg] sm:right-[8%] sm:top-[22%]">
+          <div className="absolute -right-2 -top-7 z-20 rounded-2xl border border-white/30 bg-violet-800/80 px-4 py-3 text-center text-[10px] font-black leading-tight text-white shadow-[0_0_24px_rgba(168,85,247,.45)] sm:text-[13px]">Let’s create<br />more celebrations<br />together!</div>
+          <div className="relative rounded-[28px] border-2 border-fuchsia-300/70 bg-gradient-to-br from-violet-400/90 via-fuchsia-300/80 to-violet-700/90 p-3 shadow-[0_16px_45px_rgba(0,0,0,.35),0_0_35px_rgba(168,85,247,.7)]">
+            <div className="absolute -top-6 left-[18%] h-12 w-5 rounded-full border-4 border-fuchsia-200/80 bg-violet-950" />
+            <div className="absolute -top-6 left-[48%] h-12 w-5 rounded-full border-4 border-fuchsia-200/80 bg-violet-950" />
+            <div className="absolute -top-6 right-[18%] h-12 w-5 rounded-full border-4 border-fuchsia-200/80 bg-violet-950" />
+            <div className="rounded-[20px] bg-white/95 p-4 shadow-inner"><div className="grid grid-cols-2 gap-2">{[1,2,3,4].map(i => <span key={i} className="flex h-8 items-center justify-center rounded-lg bg-violet-50"><span className="h-2.5 w-6 rounded-full bg-violet-700" /></span>)}</div></div>
+          </div>
+          <div className="absolute -left-10 bottom-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-[0_8px_20px_rgba(0,0,0,.25)] rotate-[8deg] sm:h-16 sm:w-16"><span className="text-3xl">🎁</span></div>
+          <div className="absolute -left-1 bottom-[-8px] flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-2xl shadow-[0_0_22px_rgba(124,58,237,.65)]"><span>👥</span></div>
+          <div className="absolute -right-3 bottom-[-5px] flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500 text-2xl shadow-[0_0_22px_rgba(217,70,239,.7)]"><span>🎉</span></div>
+          <div className="absolute -left-2 top-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-700 text-3xl shadow-[0_0_28px_rgba(168,85,247,.8)]"><span>🔔</span></div>
+        </div>
+      </div>
     </header>
   )
 }
