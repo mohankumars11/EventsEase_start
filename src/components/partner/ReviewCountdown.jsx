@@ -188,7 +188,7 @@ export default function ReviewCountdown({
                 {left && !overdue
                   ? `${left.hours}h ${String(left.minutes).padStart(2, '0')}m ${String(left.seconds).padStart(2, '0')}s`
                   : elapsed
-                    ? `${elapsed.hours}h ${String(elapsed.minutes).padStart(2, '0')}m`
+                    ? `${elapsed.hours}h ${String(elapsed.minutes).padStart(2, '0')}m ${String(elapsed.seconds).padStart(2, '0')}s`
                     : '24h 00m 00s'}
               </span>
               <span className="mt-1 text-[9.5px] font-extrabold uppercase tracking-wide text-plum-950/65">
@@ -217,11 +217,11 @@ export default function ReviewCountdown({
           <button
             type="button"
             onClick={onOpenCalendar}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-plum-950 px-3 text-[12.5px] font-black text-white shadow-sm transition active:scale-[0.98]"
+            className="flex min-h-[46px] min-w-0 items-center justify-center gap-1 rounded-full bg-plum-950 px-2 text-[11px] font-black text-white shadow-sm transition active:scale-[0.98] whitespace-nowrap"
           >
-            <CalendarDays size={16} />
-            Update calendar
-            <span className="ml-auto"><ChevronRight size={15} /></span>
+            <CalendarDays size={15} className="shrink-0" />
+            <span className="whitespace-nowrap">Update calendar</span>
+            <span className="shrink-0"><ChevronRight size={15} /></span>
           </button>
         )}
 
@@ -229,11 +229,11 @@ export default function ReviewCountdown({
           <button
             type="button"
             onClick={onHowItWorks}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-white/80 px-3 text-[12.5px] font-black text-plum-950 shadow-sm ring-1 ring-white transition active:scale-[0.98]"
+            className="flex min-h-[46px] min-w-0 items-center justify-center gap-1 rounded-full bg-white/80 px-2 text-[11px] font-black text-plum-950 shadow-sm ring-1 ring-white transition active:scale-[0.98] whitespace-nowrap"
           >
-            <PlayCircle size={17} fill="currentColor" className="text-plum-900" />
-            See how it works
-            <ChevronRight size={15} className="ml-auto" />
+            <PlayCircle size={15} fill="currentColor" className="shrink-0 text-plum-900" />
+            <span className="whitespace-nowrap">See how it works</span>
+            <ChevronRight size={15} className="shrink-0" />
           </button>
         )}
       </div>
