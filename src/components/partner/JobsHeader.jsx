@@ -1,91 +1,22 @@
 import { useEffect, useState } from 'react'
+import { Bell, CalendarDays, ChevronRight, Gift, PartyPopper, Users } from 'lucide-react'
 import { greetingFor, msUntilNextBand } from '../../lib/greeting'
-import { Bell, ChevronRight } from 'lucide-react'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
-import { useReviewClock } from './ReviewCountdown'
 import OnlineToggle from './OnlineToggle'
 import PartnerAvatar from '../vendor/PartnerAvatar'
 
-/**
- * The strip at the top of the operations home.
- *
- * ══════════════════════════════════════════════════════════════════════
- * TWO DIFFERENT FACTS, AND THEY ARE BOTH HERE
- * ══════════════════════════════════════════════════════════════════════
- *
- * The switch is whether this partner is taking work at all right now —
- * `vendors.accepting_jobs`, which migration 126 added and which
- * `match_partners` reads. It answers "am I getting jobs today", and the
- * partner controls it.
- *
- * The pill is the state that decides whether work COULD arrive, which
- * the partner mostly does not control:
- *
- *   Live            approved, and a listing is live
- *   Under review    everything submitted, waiting on us
- *   Action needed   something was sent back
- *   Setting up      onboarding is not finished
- *
- * Both are needed, and neither answers for the other. A partner who is
- * Online but not yet verified is getting no jobs, and a switch on its
- * own would leave them with no way to find out why.
- */
 const STATE = {
-  [LIFECYCLE.LIVE]: {
-    label: 'Live', dot: 'bg-forest-400',
-    pill: 'bg-forest-500/15 text-forest-100 ring-forest-400/30',
-    sub: 'Receiving opportunities',
-  },
-  [LIFECYCLE.UNDER_REVIEW]: {
-    label: 'Under review', dot: 'bg-amber-300',
-    pill: 'bg-amber-400/15 text-amber-100 ring-amber-300/30',
-    sub: 'We are checking your profile',
-  },
-  [LIFECYCLE.REQUIRES_ACTION]: {
-    label: 'Action needed', dot: 'bg-rose-400',
-    pill: 'bg-rose-500/15 text-rose-100 ring-rose-400/30',
-    sub: 'Something needs your attention',
-  },
-  [LIFECYCLE.ONBOARDING]: {
-    label: 'Setting up', dot: 'bg-white/50',
-    pill: 'bg-white/10 text-white/80 ring-white/20',
-    sub: 'Finish setup to receive jobs',
-  },
+  [LIFECYCLE.LIVE]: { label: 'Live', dot: 'bg-emerald-300', tone: 'text-emerald-100' },
+  [LIFECYCLE.UNDER_REVIEW]: { label: 'Under review', dot: 'bg-yellow-300', tone: 'text-yellow-50' },
+  [LIFECYCLE.REQUIRES_ACTION]: { label: 'Action needed', dot: 'bg-rose-300', tone: 'text-rose-50' },
+  [LIFECYCLE.ONBOARDING]: { label: 'Setting up', dot: 'bg-white/50', tone: 'text-white/85' },
 }
 
-/* ── The wish, from the clock, and the name in it ──────────────────
- *
- * The bands and the name now live in `src/lib/greeting.js` with no
- * React around them, so `scripts/check-greeting.mjs` can assert all
- * twenty-one weekday-by-band combinations and every way an Indian name
- * gets typed into a free-text box. Checking that 4:59am still says
- * "Good evening" by changing the device clock and looking is not
- * checking it.
- *
- * ── The name is back, and it belongs on this line ──────────────────
- * This header carried no name at all, under a comment saying the
- * business name below "does not need saying twice". That was right
- * while the greeting was bare. It is a different line now: "Good
- * morning, Rahul" names the PERSON and the h1 beneath names their
- * BUSINESS. For a sole trader those are nearly the same thing, and
- * nearly is the whole point -- a partner is a person, and the app
- * opening by addressing their shop is the thing that makes it feel like
- * software rather than like somebody they work with.
- *
- * Where there is no usable first name the greeting loses the comma and
- * stays correct. See `firstNameOf` for what "usable" excludes.
- */
 function useGreeting(fullName) {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
     let timer
-    /* Re-armed from the new `now` each time rather than on a fixed
-       interval, so this costs three timers a day and survives the clock
-       being changed or the device waking from sleep in a different
-       band. The extra second keeps a timer that fires a hair early from
-       landing back in the band it just left and scheduling a
-       zero-length wait. */
     const arm = () => {
       const at = new Date()
       setNow(at)
@@ -98,199 +29,107 @@ function useGreeting(fullName) {
   return greetingFor({ fullName, date: now })
 }
 
+function HeroArtwork() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-[-8px] h-[235px] w-[58%] max-w-[255px] sm:right-[3%] sm:h-[280px] sm:max-w-[330px]">
+      <div className="absolute inset-x-0 bottom-4 h-32 rounded-full bg-fuchsia-500/25 blur-3xl" />
+      <div className="absolute right-1 top-7 w-[88%] rotate-[-6deg] rounded-[28px] border-2 border-fuchsia-300/80 bg-gradient-to-br from-violet-300/90 via-fuchsia-300/75 to-violet-700/95 p-2 shadow-[0_18px_45px_rgba(0,0,0,.35),0_0_34px_rgba(168,85,247,.75)]">
+        <div className="absolute -top-5 left-[18%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
+        <div className="absolute -top-5 left-[48%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
+        <div className="absolute -top-5 right-[18%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
+        <div className="rounded-[20px] bg-white/95 p-3">
+          <div className="grid grid-cols-2 gap-2">
+            {[1, 2, 3, 4].map(i => (
+              <span key={i} className="flex h-8 items-center justify-center rounded-lg bg-violet-50">
+                <span className="h-2.5 w-7 rounded-full bg-violet-700" />
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-[2%] bottom-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-xl rotate-[7deg]">
+        <Gift size={30} className="text-fuchsia-500" />
+      </div>
+      <div className="absolute left-[18%] bottom-[-2px] flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-[0_0_25px_rgba(124,58,237,.8)]">
+        <Users size={29} />
+      </div>
+      <div className="absolute right-[-2px] bottom-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500 text-white shadow-[0_0_25px_rgba(217,70,239,.75)]">
+        <PartyPopper size={28} />
+      </div>
+      <div className="absolute left-[18%] top-12 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-700 text-3xl shadow-[0_0_30px_rgba(168,85,247,.8)]">
+        <span>🔔</span>
+      </div>
+      <span className="absolute right-[2%] top-0 rotate-[5deg] rounded-2xl border border-white/20 bg-violet-800/85 px-3 py-2 text-center text-[10px] font-black leading-tight text-white shadow-xl sm:text-[12px]">
+        Let’s create<br />more celebrations<br />together!
+      </span>
+      <span className="absolute left-[5%] top-5 text-xl text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.9)]">✦</span>
+      <span className="absolute right-[38%] top-1 text-lg text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.9)]">✦</span>
+    </div>
+  )
+}
+
 export default function JobsHeader({
   lifecycle, businessName, fullName = null, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
   reviewDueAt = null, reviewSubmittedAt = null,
   onAcceptingChange, onOpenProfile, onOpenAlerts,
 }) {
-  const s = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
+  const state = STATE[lifecycle] ?? STATE[LIFECYCLE.ONBOARDING]
   const { wish, dayLine } = useGreeting(fullName)
+  const underReview = lifecycle === LIFECYCLE.UNDER_REVIEW
 
-  /* The same clock the detail card below uses, from the same hook, so
-     the two can never disagree by a minute. */
-  const { left, words, fraction } = useReviewClock({
-    dueAt: lifecycle === LIFECYCLE.UNDER_REVIEW ? reviewDueAt : null,
-    submittedAt: reviewSubmittedAt,
-  })
-
-  /* ── px-4, matching the page column exactly ──────────────
-     VendorDashboard lays its content out in `px-4 sm:px-6` and pulls
-     this header out of it with `-mx-4 sm:-mx-6`. The header then applied
-     its OWN px-5, so every line inside it started 4px further right than
-     every card below it — a stagger down the whole left edge of the Jobs
-     tab, small enough to read as sloppiness rather than as a bug.
-
-     These two paddings have to stay equal to the page's. If the column
-     ever changes, this changes with it. */
   return (
-    <header className="bg-plum-950 px-4 pb-5 text-white sm:px-6 pt-[calc(12px+env(safe-area-inset-top,0px))]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {/* ── The wordmark, and it is the first thing on the screen ──
-              This was 10px mono in plum-300 on plum-950: the same
-              treatment a caption gets, at the size a caption gets, in a
-              colour two steps off the background. It read as a label
-              about the screen rather than as the name of the product,
-              which is what it is.
+    <header className="relative isolate overflow-hidden bg-gradient-to-br from-[#10052F] via-[#24105F] to-[#4B0B78] text-white">
+      <div className="relative min-h-[380px] overflow-hidden px-4 pb-4 pt-[calc(14px+env(safe-area-inset-top,0px))] sm:min-h-[410px] sm:px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_28%,rgba(168,85,247,.35),transparent_25%),radial-gradient(circle_at_45%_85%,rgba(236,72,153,.22),transparent_32%)]" />
+        <div className="relative z-20 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="relative text-[25px] font-black uppercase tracking-[-0.05em] drop-shadow-[0_0_16px_rgba(255,255,255,.35)] sm:text-[31px]">
+                SAMBRAMO
+                <span aria-hidden="true" className="absolute -bottom-2 left-0 h-1.5 w-[88%] -skew-x-[24deg] rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-transparent shadow-[0_0_14px_rgba(168,85,247,.9)]" />
+              </span>
+              <span className="rounded-full border border-fuchsia-300/45 bg-fuchsia-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] sm:text-[12px]">PARTNER</span>
+              <span className={`h-3 w-3 shrink-0 rounded-full ring-4 ring-emerald-400/10 ${acceptingJobs ? 'bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.85)]' : 'bg-white/30'}`} />
+            </div>
 
-              Saffron on plum-950 is the brand's attention pair and the
-              only one already proven against check-dark-card-contrast.
-              Wide uppercase tracking is what makes a humanist face
-              (Manrope) read geometric — a second font would be a new
-              network request on the first screen of a cold start.
+            <p className="mt-6 text-[16px] font-semibold leading-tight text-violet-100 sm:text-[20px]">{wish},</p>
+            <h1 className="mt-1 max-w-[330px] truncate text-[28px] font-black leading-none tracking-[-0.04em] sm:max-w-[520px] sm:text-[42px]">
+              {businessName ?? 'Your business'} <span aria-hidden="true">👋</span>
+            </h1>
+            <p className="mt-2 text-[17px] font-bold text-violet-100/90 sm:text-[21px]">{dayLine}</p>
 
-              ── The moving part is a sweep, not a wiggle ──────────────
-              `sheen` is an existing keyframe: a skewed highlight that
-              crosses the letters every 3.2 seconds. It is the cheapest
-              kind of alive — no layout, no repaint of anything else,
-              one transform on one absolutely-positioned element — and
-              under prefers-reduced-motion it simply does not run,
-              leaving a wordmark that is still bold and still legible.
+            <div className="mt-5">
+              <OnlineToggle vendorId={vendorId} initial={acceptingJobs} onChange={onAcceptingChange} />
+            </div>
+          </div>
 
-              Deliberately NOT text that changes. A name that rewrites
-              itself is a name somebody has to read twice. */}
-          <p className="relative inline-flex items-center gap-1.5 overflow-hidden">
-            <span className="relative text-[12.5px] font-extrabold uppercase tracking-[0.22em] text-saffron-400">
-              Sambramo
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 -left-6 w-6 bg-white/40 blur-[3px] motion-safe:animate-sheen"
-              />
-            </span>
-            <span className="text-[12.5px] font-bold uppercase tracking-[0.18em] text-white/55">
-              Partner
-            </span>
-            {/* Not decoration: it is green while the partner is
-                accepting work and grey while they are not, so the
-                wordmark itself carries the one state that decides
-                whether the app does anything today. */}
-            <span
-              aria-hidden="true"
-              className={`ml-0.5 h-1.5 w-1.5 rounded-full ${
-                acceptingJobs
-                  ? 'bg-forest-400 motion-safe:animate-glow-pulse'
-                  : 'bg-white/30'
-              }`}
-            />
-          </p>
-          <p className="mt-1.5 truncate text-[13.5px] font-semibold leading-tight text-plum-200">
-            {wish}
-          </p>
-          <h1 className="mt-0.5 truncate text-[19px] font-extrabold leading-tight">
-            {businessName ?? 'Your business'}
-          </h1>
-          {/* Warmth, not information -- the line above carries the
-              person and the line above that carries the status, so this
-              one is allowed to be worth nothing and just be pleasant.
-              Never hard-coded: it is the device's own weekday. */}
-          <p className="mt-0.5 text-[12px] font-semibold leading-tight text-plum-300">
-            {dayLine}
-          </p>
-          {/* Under the name, not beside the bell: it is a statement
-              about the business, and it is the control a partner reaches
-              for in a hurry. */}
-          <div className="mt-2">
-            <OnlineToggle
-              vendorId={vendorId}
-              initial={acceptingJobs}
-              onChange={onAcceptingChange}
-            />
+          <div className="relative z-30 flex shrink-0 items-start gap-2">
+            <button type="button" onClick={onOpenAlerts} aria-label={unreadAlerts ? `Alerts and updates, ${unreadAlerts} unread` : 'Alerts and updates'} className="relative flex h-12 w-12 items-center justify-center rounded-full border border-fuchsia-300/50 bg-violet-950/55 shadow-[0_0_24px_rgba(168,85,247,.6)] backdrop-blur sm:h-16 sm:w-16">
+              <Bell size={25} className="text-white sm:h-8 sm:w-8" />
+              {unreadAlerts > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-[#24105F]">{unreadAlerts > 9 ? '9+' : unreadAlerts}</span>}
+            </button>
+            <button type="button" onClick={onOpenProfile} aria-label="Your account" className="rounded-[16px] border-2 border-fuchsia-300/70 shadow-[0_0_20px_rgba(168,85,247,.5)]">
+              <PartnerAvatar url={avatarUrl} name={businessName} size={48} shape="square" />
+            </button>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={onOpenAlerts}
-            aria-label={unreadAlerts
-              ? `Alerts and updates, ${unreadAlerts} unread`
-              : 'Alerts and updates'}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/10"
-          >
-            <Bell size={17} />
-            {/* The count, not a bare dot. "3" tells a partner whether
-                this is worth opening now; a dot only says "something". */}
-            {unreadAlerts > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9.5px] font-extrabold tabular-nums text-white ring-2 ring-plum-950">
-                {unreadAlerts > 9 ? '9+' : unreadAlerts}
-              </span>
-            )}
-          </button>
+        <HeroArtwork />
 
-          {/* ── The face, top right ──────────────────────────────────
-              Where the reference design puts it, and it goes to the
-              account rather than opening a menu: there is one place to
-              change anything about yourself and this is the shortest
-              route to it. Falls back to initials, which is what every
-              partner sees until they add a photograph. */}
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            aria-label="Your account"
-            className="rounded-[13px] ring-2 ring-white/25"
-          >
-            <PartnerAvatar url={avatarUrl} name={businessName} size={44} shape="square" />
+        <div className="absolute bottom-4 left-4 right-4 z-30 sm:left-6 sm:right-6">
+          <button type="button" onClick={onOpenProfile} data-partner-state={lifecycle} className="flex w-full items-center gap-3 rounded-[24px] border border-yellow-200/70 bg-gradient-to-r from-[#FFF8D9] via-[#FFF4C2] to-[#FFE58A] px-4 py-3 text-left text-[#16205C] shadow-[0_12px_30px_rgba(0,0,0,.18)] sm:px-5 sm:py-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFD83D] shadow-inner sm:h-14 sm:w-14"><span className="text-2xl">◷</span></span>
+            <span className="min-w-0 flex-1">
+              <span className={`block text-[19px] font-black leading-tight sm:text-[25px] ${state.tone}`}>{state.label}</span>
+              <span className="mt-0.5 block text-[12px] font-semibold leading-tight text-[#46506F] sm:text-[16px]">
+                {underReview ? 'Your listing is being reviewed by our team.' : state.label === 'Live' ? 'Your profile is live and ready for opportunities.' : state.label === 'Action needed' ? 'Something needs your attention.' : 'Finish setup to receive opportunities.'}
+              </span>
+            </span>
+            {underReview && <span className="hidden shrink-0 rounded-full bg-white/80 px-4 py-3 text-[12px] font-black text-[#7B3F00] shadow-sm sm:block">Taking a little longer <ChevronRight size={18} className="inline-block align-middle" /></span>}
+            {!underReview && <span className="shrink-0"><ChevronRight size={18} /></span>}
           </button>
         </div>
       </div>
-
-      {/* ── The status, and the clock when there is one ──────────────
-          ════════════════════════════════════════════════════════════
-          ONE STATUS ELEMENT, NOT TWO
-          ════════════════════════════════════════════════════════════
-
-          The review countdown used to be its own card rendered ABOVE
-          this header in VendorDashboard. Because the header is pulled up
-          by `-mt-4` to sit flush with the top of the screen, the card
-          was dragged with it and ended up half off the top edge, its
-          corners cut by the header behind it — visible in a partner's
-          screenshot as a dark slab floating above everything.
-
-          It was also saying the same thing twice. This pill already
-          reads "Under review · We are checking your profile"; the card
-          above it read "With our team · 23 hours left". Two elements,
-          one subject, fighting for the same corner of the screen.
-
-          So the clock lives HERE, where the status already is, and the
-          detail card moved down into the content where there is room
-          for it. The bar underneath fills as the promised window
-          elapses, which is the thing that makes a wait feel finite. */}
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        data-partner-state={lifecycle}
-        className={`mt-3 w-full rounded-[18px] px-3.5 py-2.5 text-left ring-1 ${s.pill}`}
-      >
-        <span className="flex items-center gap-2">
-          {/* Never colour alone — the dot has a word beside it. §59. */}
-          <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} aria-hidden="true" />
-          <span className="text-[12.5px] font-extrabold">{s.label}</span>
-          {/* The subtitle gives way to the clock rather than competing
-              with it. "We are checking your pro..." next to "23 min 58s
-              left" is two truncated half-sentences in one row, and the
-              clock is the more useful of the two by a distance --
-              "Under review" already says what the subtitle was for. */}
-          {words ? (
-            <span className={`min-w-0 flex-1 text-right text-[11.5px] font-extrabold tabular-nums ${
-              left?.over ? 'text-saffron-200' : ''
-            }`}>
-              {words}
-            </span>
-          ) : (
-            <span className="min-w-0 flex-1 truncate text-[11.5px] opacity-70">{s.sub}</span>
-          )}
-          <ChevronRight size={14} className="shrink-0 opacity-60" />
-        </span>
-
-        {fraction !== null && !left?.over && (
-          <span className="mt-2 block h-1 w-full overflow-hidden rounded-full bg-white/15">
-            <span
-              className="block h-full rounded-full bg-amber-300 transition-[width] duration-700 ease-out"
-              style={{ width: `${Math.round(fraction * 100)}%` }}
-            />
-          </span>
-        )}
-      </button>
     </header>
   )
 }
