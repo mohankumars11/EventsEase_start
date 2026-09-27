@@ -384,7 +384,7 @@ export default function VendorDashboard() {
           corners clipped. The review countdown was doing exactly that.
           Its clock now lives inside the header's own status pill. */}
       {tab === 'offers' && (
-        <div className="-mx-4 -mt-4 mb-4 sm:-mx-6">
+        <div className="-mx-4 -mt-4 mb-0 sm:-mx-6">
           <JobsHeader
             lifecycle={lifecycle}
             businessName={businessName}
