@@ -1,42 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, CheckCheck, CalendarCheck, MessageSquare } from 'lucide-react'
+import {
+  BriefcaseBusiness,
+  CalendarCheck2,
+  ClipboardCheck,
+  MessageCircle,
+  ChevronRight,
+} from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useLivePoll } from '../../hooks/useLivePoll'
 
 /**
- * Four numbers across the top of the operations home.
+ * Compact Jobs-tab action cards.
  *
- * ══════════════════════════════════════════════════════════════════════
- * EVERY ONE OF THEM IS A COUNT OF ROWS
- * ══════════════════════════════════════════════════════════════════════
- *
- * The reference design shows 6 / 2 / 1 / 4. Those are placeholders, and
- * the temptation with a tile row is to keep the shape and fill it with
- * whatever is nearest to hand. A dashboard number that nobody can trace
- * to a row is worse than an empty space, because a partner who taps
- * "1 Confirmed" and finds two bookings stops believing the other three.
- *
- * So:
- *
- *   New jobs    offers open right now — OFFERED and not yet expired
- *   Accepted    won, waiting on the customer to pay
- *   Confirmed   funded, still ahead of them
- *   Messages    replies from Sambramo they have not read
- *
- * "Responded" from the design is not here. It counts a thing that has
- * already happened and needs nothing done about it, and a tile that
- * never asks anything of anybody is a tile occupying a quarter of the
- * most valuable strip in the app. Accepted-awaiting-payment does need
- * watching, so it takes the slot.
- *
- * ══════════════════════════════════════════════════════════════════════
- * A ZERO IS SHOWN, NOT HIDDEN
- * ══════════════════════════════════════════════════════════════════════
- *
- * Unlike the attention rows below, which vanish at zero because they are
- * a to-do list. This is a scoreboard: four tiles that rearrange
- * themselves as counts change would be unreadable, and "0 new jobs" is
- * an answer a partner opens the app to get.
+ * Counts and click destinations are unchanged. This is presentation only:
+ * each destination is now a clearly tappable, compact card with a familiar
+ * icon, strong label and restrained colour system.
  */
 export default function JobsStats({ vendorId, onOpen }) {
   const [n, setN] = useState({ offers: 0, accepted: 0, confirmed: 0, messages: 0 })
@@ -45,9 +23,6 @@ export default function JobsStats({ vendorId, onOpen }) {
     if (!vendorId) return
     const today = new Date().toISOString().slice(0, 10)
 
-    /* head:true with count:'exact' asks the server for the number and
-       sends back no rows at all — four counts for roughly the bytes of
-       one, on a screen that polls. */
     const [offers, jobs, msgs] = await Promise.all([
       supabase.from('partner_offer_feed')
         .select('offer_id', { count: 'exact', head: true })
@@ -56,8 +31,6 @@ export default function JobsStats({ vendorId, onOpen }) {
       supabase.from('partner_jobs')
         .select('line_id, status, is_funded, paid_at, event_date')
         .gte('event_date', today),
-      /* Absent until 125 is applied, which is why this one is allowed to
-         fail quietly rather than blanking the row. */
       supabase.from('partner_messages')
         .select('id', { count: 'exact', head: true })
         .eq('vendor_id', vendorId).eq('sender', 'operator').is('read_at', null),
@@ -76,23 +49,46 @@ export default function JobsStats({ vendorId, onOpen }) {
   useLivePoll(read, 20_000, [read])
 
   const tiles = [
-    { id: 'offers',    icon: Bell,          label: 'New jobs',  value: n.offers,
-      tone: n.offers ? 'bg-saffron-400/15 text-saffron-800' : 'bg-ink/[0.04] text-ink-mute' },
-    { id: 'accepted',  icon: CheckCheck,    label: 'Accepted',  value: n.accepted,
-      tone: 'bg-plum-50 text-plum-700' },
-    { id: 'confirmed', icon: CalendarCheck, label: 'Confirmed', value: n.confirmed,
-      tone: 'bg-forest-50 text-forest-700' },
-    { id: 'messages',  icon: MessageSquare, label: 'Messages',  value: n.messages,
-      tone: n.messages ? 'bg-plum-50 text-plum-700' : 'bg-ink/[0.04] text-ink-mute' },
+    {
+      id: 'offers',
+      icon: BriefcaseBusiness,
+      label: 'New jobs',
+      value: n.offers,
+      iconTone: 'bg-violet-100 text-violet-700',
+      cardTone: 'border-violet-100 bg-violet-50/70',
+      accent: 'bg-violet-600',
+    },
+    {
+      id: 'accepted',
+      icon: ClipboardCheck,
+      label: 'Accepted',
+      value: n.accepted,
+      iconTone: 'bg-emerald-100 text-emerald-700',
+      cardTone: 'border-emerald-100 bg-emerald-50/70',
+      accent: 'bg-emerald-600',
+    },
+    {
+      id: 'confirmed',
+      icon: CalendarCheck2,
+      label: 'Confirmed',
+      value: n.confirmed,
+      iconTone: 'bg-sky-100 text-sky-700',
+      cardTone: 'border-sky-100 bg-sky-50/70',
+      accent: 'bg-sky-600',
+    },
+    {
+      id: 'messages',
+      icon: MessageCircle,
+      label: 'Messages',
+      value: n.messages,
+      iconTone: 'bg-fuchsia-100 text-fuchsia-700',
+      cardTone: 'border-fuchsia-100 bg-fuchsia-50/70',
+      accent: 'bg-fuchsia-600',
+    },
   ]
 
   return (
-    /* ── Two by two on a narrow phone ─────────────────────────────────
-       Four across fits at 390 and is cramped at 360 — the labels
-       ("Confirmed", "Messages") end up nearly touching, and a row of
-       four tiny unreadable tiles is worse than two readable rows.
-       grid-cols-2 below the `xs` breakpoint, four above it. */
-    <div className="-mt-6 grid grid-cols-2 gap-2 rounded-[22px] bg-white p-3 shadow-[0_6px_24px_rgba(0,0,0,0.07)] xs:grid-cols-4">
+    <section aria-label="Jobs overview" className="-mt-4 grid grid-cols-2 gap-2.5 rounded-[24px] bg-white p-2.5 shadow-[0_8px_26px_rgba(42,8,92,0.08)] xs:grid-cols-4">
       {tiles.map(t => {
         const Icon = t.icon
         return (
@@ -100,20 +96,32 @@ export default function JobsStats({ vendorId, onOpen }) {
             key={t.id}
             type="button"
             onClick={() => onOpen?.(t.id)}
-            className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-center"
+            aria-label={`${t.label}: ${t.value}`}
+            className={`group relative min-w-0 overflow-hidden rounded-[18px] border px-3 py-3 text-left transition duration-150 active:scale-[0.98] active:shadow-inner ${t.cardTone}`}
           >
-            <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${t.tone}`}>
-              <Icon size={15} />
+            <span className={`absolute left-0 top-0 h-1 w-full ${t.accent}`} aria-hidden="true" />
+
+            <span className="flex items-start justify-between gap-2">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${t.iconTone}`}>
+                <Icon size={18} strokeWidth={2.25} />
+              </span>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/80 text-slate-600 ring-1 ring-black/[0.04] transition-transform group-hover:translate-x-0.5">
+                <ChevronRight size={15} strokeWidth={2.5} />
+              </span>
             </span>
-            <span className="text-[17px] font-extrabold leading-none tabular-nums text-ink">
+
+            <span className="mt-3 block text-[22px] font-black leading-none tracking-tight text-[#21113d] tabular-nums">
               {t.value}
             </span>
-            <span className="text-[10.5px] font-semibold leading-tight text-ink-mute">
+            <span className="mt-1 block truncate text-[11.5px] font-extrabold text-slate-700">
               {t.label}
+            </span>
+            <span className="mt-1 block text-[9px] font-semibold text-slate-500">
+              Tap to open
             </span>
           </button>
         )
       })}
-    </div>
+    </section>
   )
 }
