@@ -87,7 +87,7 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    <div className="mx-0 bg-white px-5 pb-7 pt-2 sm:px-6">
+    <div className="-mx-4 bg-white px-3 pb-3 pt-2 sm:-mx-6 sm:px-6">
       <div className="grid grid-cols-4 gap-2 sm:gap-3">
         {tiles.map((t, index) => {
           const Icon = t.icon
@@ -108,22 +108,22 @@ export default function JobsStats({ vendorId, onOpen }) {
               key={t.id}
               type="button"
               onClick={() => onOpen?.(t.id)}
-              className={`group relative flex h-[164px] min-w-0 flex-col overflow-hidden rounded-[20px] p-3.5 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[185px] sm:rounded-[26px] sm:p-5 ${palettes[index]}`}
+              className={`group relative flex h-[92px] min-w-0 flex-col overflow-hidden rounded-[16px] p-2 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[120px] sm:rounded-[20px] sm:p-3 ${palettes[index]}`}
             >
               <span className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-white/25 blur-xl" />
-              <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] shadow-sm sm:h-14 sm:w-14 sm:rounded-[18px] ${iconTones[index]}`}>
-                <Icon size={25} strokeWidth={2.4} />
+              <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-[11px] shadow-sm sm:h-11 sm:w-11 sm:rounded-[14px] ${iconTones[index]}`}>
+                <Icon size={19} strokeWidth={2.4} />
               </span>
 
-              <span className="relative mt-auto text-[34px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[46px]">
+              <span className="relative mt-auto text-[26px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[34px]">
                 {t.value}
               </span>
 
-              <span className="relative mt-1 min-w-0 pr-10 text-[14px] font-black leading-tight sm:pr-12 sm:text-[18px]">
+              <span className="relative mt-0 min-w-0 pr-7 text-[11px] font-black leading-tight sm:pr-10 sm:text-[15px]">
                 {t.label}
               </span>
-              <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/45 sm:bottom-4 sm:right-4 sm:h-11 sm:w-11">
-                <span className="text-[25px] leading-none sm:text-3xl">›</span>
+              <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/45 sm:bottom-3 sm:right-3 sm:h-9 sm:w-9">
+                <span className="text-[20px] leading-none sm:text-2xl">›</span>
               </span>
             </button>
           )
