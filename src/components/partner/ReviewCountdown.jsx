@@ -131,6 +131,7 @@ export default function ReviewCountdown({
   onHowItWorks = null,
 }) {
   const { left, elapsed, dial } = useReviewClock({ dueAt, submittedAt, extended })
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   if (status === 'approved') {
     return (
@@ -158,7 +159,6 @@ export default function ReviewCountdown({
   const overdue = !!left?.over
   const extendedReview = extended > 0
   const sent = formatSent(submittedAt)
-  const [detailsOpen, setDetailsOpen] = useState(false)
 
   return (
     <div className={`mb-3 overflow-hidden rounded-[24px] bg-gradient-to-r from-[#FFF9E8] via-[#FFF4C9] to-[#FFE89A] px-4 py-4 shadow-[0_8px_26px_rgba(121,83,8,.12)] ring-1 ring-amber-200 ${compact ? 'mb-0' : ''}`}>
