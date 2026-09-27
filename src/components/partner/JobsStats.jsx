@@ -87,33 +87,50 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    /* ── Two by two on a narrow phone ─────────────────────────────────
-       Four across fits at 390 and is cramped at 360 — the labels
-       ("Confirmed", "Messages") end up nearly touching, and a row of
-       four tiny unreadable tiles is worse than two readable rows.
-       grid-cols-2 below the `xs` breakpoint, four above it. */
-    <div className="-mt-6 grid grid-cols-2 gap-2 rounded-[22px] bg-white p-3 shadow-[0_6px_24px_rgba(0,0,0,0.07)] xs:grid-cols-4">
-      {tiles.map(t => {
-        const Icon = t.icon
-        return (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onOpen?.(t.id)}
-            className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-center"
-          >
-            <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${t.tone}`}>
-              <Icon size={15} />
-            </span>
-            <span className="text-[17px] font-extrabold leading-none tabular-nums text-ink">
-              {t.value}
-            </span>
-            <span className="text-[10.5px] font-semibold leading-tight text-ink-mute">
-              {t.label}
-            </span>
-          </button>
-        )
-      })}
+    <div className="mx-0 bg-white px-5 pb-20 pt-4 sm:px-6">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        {tiles.map((t, index) => {
+          const Icon = t.icon
+          const palettes = [
+            'bg-[#E8CCFF] text-[#16002E] ring-[#D4A8FF]',
+            'bg-[#D8F6E2] text-[#071C12] ring-[#B9E8C9]',
+            'bg-[#D8EEFF] text-[#071B45] ring-[#B8DDFF]',
+            'bg-[#FFD9E7] text-[#350016] ring-[#FFBBD0]',
+          ]
+          const iconTones = [
+            'bg-[#F7EFFF] text-[#16002E]',
+            'bg-[#F2FFF6] text-[#071C12]',
+            'bg-[#F2F9FF] text-[#071B45]',
+            'bg-[#FFF2F7] text-[#350016]',
+          ]
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onOpen?.(t.id)}
+              className={`group relative flex h-[164px] min-w-0 flex-col overflow-hidden rounded-[20px] p-3.5 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[185px] sm:rounded-[26px] sm:p-5 ${palettes[index]}`}
+            >
+              <span className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-white/25 blur-xl" />
+              <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] shadow-sm sm:h-14 sm:w-14 sm:rounded-[18px] ${iconTones[index]}`}>
+                <Icon size={25} strokeWidth={2.4} />
+              </span>
+
+              <span className="relative mt-auto text-[34px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[46px]">
+                {t.value}
+              </span>
+
+              <span className="relative mt-1 flex w-full min-w-0 items-center justify-between gap-1">
+                <span className="min-w-0 truncate text-[14px] font-black leading-tight sm:text-[18px]">
+                  {t.label}
+                </span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/45 sm:h-11 sm:w-11">
+                  <span className="text-[25px] leading-none sm:text-3xl">›</span>
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
