@@ -419,6 +419,28 @@ export default function VendorDashboard() {
           Four counts, each traceable to rows, riding up over the
           header's bottom edge the way the reference design has them. */}
       {tab === 'offers' && (
+        <ReviewCountdown
+          status={vendor?.verification_status}
+          dueAt={vendor?.review_due_at}
+          submittedAt={vendor?.submitted_at}
+          extended={vendor?.review_extended ?? 0}
+          note={vendor?.review_note}
+          onOpenCalendar={() => setTab('availability')}
+          /* ── The listings actually under review ────────────────────
+             Straight to the services screen, which is where they live.
+             The count and the names come from the listings this tab
+             already holds, so the card costs no extra request -- and a
+             partner with nothing listed gets no button rather than one
+             that opens an empty screen. */
+          listingCount={services?.length ?? 0}
+          listingNames={(services ?? [])
+            .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
+          onOpenListing={() => setParams(keepReturn({ tab: 'account', screen: 'services' }))}
+          onHowItWorks={() => setHowItWorksOpen(true)}
+        />
+      )}
+
+      {tab === 'offers' && (
         <div className="mb-4">
           <JobsStats
             vendorId={vendor?.id}
@@ -442,37 +464,7 @@ export default function VendorDashboard() {
             }}
           />
         </div>
-      )}
-
-      {/* ── The review clock, in full ─────────────────────────────────
-          Below the scoreboard, in the content column, where it is one
-          card among cards and aligned with every other. The header
-          carries the glanceable version; this is where the detail
-          lives — when it was sent, whether it has been extended, and
-          what was said if something needs changing.
-
-          Renders nothing at all unless there is something to say. */}
-      {tab === 'offers' && (
-        <ReviewCountdown
-          status={vendor?.verification_status}
-          dueAt={vendor?.review_due_at}
-          submittedAt={vendor?.submitted_at}
-          extended={vendor?.review_extended ?? 0}
-          note={vendor?.review_note}
-          onOpenCalendar={() => setTab('availability')}
-          /* ── The listings actually under review ────────────────────
-             Straight to the services screen, which is where they live.
-             The count and the names come from the listings this tab
-             already holds, so the card costs no extra request -- and a
-             partner with nothing listed gets no button rather than one
-             that opens an empty screen. */
-          listingCount={services?.length ?? 0}
-          listingNames={(services ?? [])
-            .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
-          onOpenListing={() => setParams(keepReturn({ tab: 'account', screen: 'services' }))}
-          onHowItWorks={() => setHowItWorksOpen(true)}
-        />
-      )}
+  
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel
