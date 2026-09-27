@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bell, Gift, PartyPopper, Users } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { greetingFor, msUntilNextBand } from '../../lib/greeting'
 import { LIFECYCLE } from '../../lib/partnerOnboarding'
 import OnlineToggle from './OnlineToggle'
@@ -20,45 +20,6 @@ function useGreeting(fullName) {
   }, [])
 
   return greetingFor({ fullName, date: now })
-}
-
-function HeroArtwork() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-[-4px] h-[128px] w-[58%] max-w-[190px] sm:right-[3%] sm:h-[165px] sm:max-w-[250px]">
-      <div className="absolute inset-x-0 bottom-2 h-16 rounded-full bg-fuchsia-500/25 blur-3xl" />
-      <div className="absolute right-1 top-7 w-[88%] rotate-[-6deg] rounded-[20px] border-2 border-fuchsia-300/80 bg-gradient-to-br from-violet-300/90 via-fuchsia-300/75 to-violet-700/95 p-2 shadow-[0_18px_45px_rgba(0,0,0,.35),0_0_34px_rgba(168,85,247,.75)]">
-        <div className="absolute -top-5 left-[18%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
-        <div className="absolute -top-5 left-[48%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
-        <div className="absolute -top-5 right-[18%] h-11 w-4 rounded-full border-4 border-fuchsia-100 bg-violet-950" />
-        <div className="rounded-[14px] bg-white/95 p-2">
-          <div className="grid grid-cols-2 gap-1.5">
-            {[1, 2, 3, 4].map(i => (
-              <span key={i} className="flex h-5 items-center justify-center rounded-md bg-violet-50">
-                <span className="h-1.5 w-5 rounded-full bg-violet-700" />
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="absolute left-[2%] bottom-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-xl rotate-[7deg]">
-        <Gift size={21} className="text-fuchsia-500" />
-      </div>
-      <div className="absolute left-[18%] bottom-[-2px] flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-[0_0_25px_rgba(124,58,237,.8)]">
-        <Users size={20} />
-      </div>
-      <div className="absolute right-[-2px] bottom-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500 text-white shadow-[0_0_25px_rgba(217,70,239,.75)]">
-        <PartyPopper size={20} />
-      </div>
-      <div className="absolute left-[18%] top-12 flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-700 text-2xl shadow-[0_0_30px_rgba(168,85,247,.8)]">
-        <span>🔔</span>
-      </div>
-      <span className="absolute right-[2%] top-0 rotate-[5deg] rounded-2xl border border-white/20 bg-violet-800/85 px-2 py-1.5 text-center text-[8px] font-black leading-tight text-white shadow-xl sm:text-[10px]">
-        Let’s create<br />more celebrations<br />together!
-      </span>
-      <span className="absolute left-[5%] top-5 text-base text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.9)]">✦</span>
-      <span className="absolute right-[38%] top-1 text-sm text-yellow-200 drop-shadow-[0_0_12px_rgba(253,224,71,.9)]">✦</span>
-    </div>
-  )
 }
 
 export default function JobsHeader({
@@ -104,8 +65,6 @@ export default function JobsHeader({
             </button>
           </div>
         </div>
-
-        <HeroArtwork />
 
       </div>
     </header>
