@@ -476,9 +476,9 @@ export default function VendorDashboard() {
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel
-          onGrow={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
+          onGrow={() => setParams(keepReturn({ tab: 'account', screen: 'growth' }))}
           onInvite={() => setParams(keepReturn({ tab: 'account', screen: 'referral' }))}
-          onProfile={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
+          onProfile={() => setParams(keepReturn({ tab: 'account', screen: 'buildprofile' }))}
         />
       )}
 
