@@ -286,6 +286,32 @@ export default function PartnerAccount({
      bank details unverified, a service still in draft, unread messages.
      A quiet list, and a badge that means something when it appears. */
   const SCREENS = {
+    growth: { title: 'Grow with Sambramo', render: () => (
+      <div className="space-y-3">
+        <section className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <p className="text-[14px] font-extrabold text-ink">Grow your event business</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-mute">Build a stronger presence, expand your services and connect with more event professionals.</p>
+        </section>
+        <Group title="Growth actions">
+          <Row icon={Store} label="Improve your business profile" onClick={() => onOpenScreen('business')} />
+          <Row icon={ClipboardList} label="Manage your services" onClick={() => onOpenScreen('services')} />
+          <Row icon={Gift} label="Trade Champion 26 referrals" onClick={() => onOpenScreen('referral')} />
+          <Row icon={Navigation} label="Expand service area" onClick={() => onOpenScreen('area')} />
+        </Group>
+      </div>
+    ) },
+    buildprofile: { title: 'Build Your Profile', render: () => (
+      <div className="space-y-3">
+        <p className="text-[12.5px] leading-relaxed text-ink-mute">Choose a section to complete or update. Each action opens the exact place where you can make the change.</p>
+        <Group title="Profile checklist">
+          <Row icon={UserRound} label="Your personal details" onClick={() => onOpenScreen('profile')} />
+          <Row icon={Sparkles} label="Business information and public profile" onClick={() => onOpenScreen('business')} />
+          <Row icon={Store} label="Trade and service listings" onClick={() => onOpenScreen('services')} />
+          <Row icon={ShieldCheck} label="Verification documents" onClick={() => onOpenScreen('verification')} />
+          <Row icon={Navigation} label="Service area and availability" onClick={() => onOpenScreen('area')} />
+        </Group>
+      </div>
+    ) },
     profile:      { title: 'Partner profile',        render: () => (
       <div className="space-y-3">
         <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
