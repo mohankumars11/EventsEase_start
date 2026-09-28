@@ -240,6 +240,38 @@ if (evalAfter) {
   await sleep(500)
 }
 
+/* ── --assert <file.js> ────────────────────────────────────────────────
+   A photograph answers "does it look right"; this answers "does it DO
+   the thing" — taps a control, waits for the screen it should open, and
+   says so. The file is the body of an async function evaluated in the
+   page, returning [{ name, ok, detail }]. Any false fails the run, after
+   the photo is taken, so a failure comes with a picture of the state it
+   failed in. `--eval` fires before React has necessarily painted, so an
+   assert script must poll for what it waits on, not assume it. */
+const assertFile = flag('assert', null)
+let assertFailed = 0
+if (assertFile) {
+  const body = readFileSync(resolve(ROOT, assertFile), 'utf8')
+  const res = await send('Runtime.evaluate', {
+    expression: `(async () => { ${body}\n })()`,
+    awaitPromise: true, returnByValue: true,
+  })
+  const checks = res?.result?.value
+  if (!Array.isArray(checks)) {
+    console.error('\n  ASSERT SCRIPT DID NOT RETURN CHECKS:',
+      res?.exceptionDetails?.exception?.description ?? JSON.stringify(res).slice(0, 300))
+    assertFailed = 1
+  } else {
+    console.log('')
+    for (const c of checks) {
+      if (!c.ok) assertFailed++
+      console.log(`  ${c.ok ? String.fromCharCode(10003) : String.fromCharCode(10007)} ${c.name}${c.ok || !c.detail ? '' : `   <-- ${c.detail}`}`)
+    }
+    console.log(`\n  ${checks.length - assertFailed} of ${checks.length} passed`)
+  }
+  await sleep(250)
+}
+
 /* scrollHeight, not getLayoutMetrics: with a deviceScaleFactor the
    metrics come back in device pixels and the page gets photographed at
    twice its height, most of it blank. */
@@ -278,3 +310,4 @@ if (errors.length) {
 }
 
 ws.close(); browser.kill(); server.close()
+if (assertFailed) process.exit(1)

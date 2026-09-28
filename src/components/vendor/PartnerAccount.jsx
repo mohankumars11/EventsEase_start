@@ -6,7 +6,7 @@ import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck, ClipboardList,
   Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
   LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
-  TriangleAlert, Sparkles, Navigation, Gift, FileText,
+  TriangleAlert, Sparkles, Navigation, Gift, FileText, TrendingUp,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -29,7 +29,12 @@ import PartnerAvatar from './PartnerAvatar'
 import ServiceArea from '../partner/ServiceArea'
 import PartnerHelp from './PartnerHelp'
 import PartnerInbox from './PartnerInbox'
-import PartnerReferral from './PartnerReferral'
+import TradeChampion from '../partner/referrals/TradeChampion'
+import GrowHub from '../partner/growth/GrowHub'
+import BuildProfile from '../partner/growth/BuildProfile'
+import { profileChecklist } from '../../lib/profileCompletion'
+import { tradeById } from '../../lib/trades'
+import { referralScreenMeta } from '../../lib/referralModel'
 import PartnerMessages from './PartnerMessages'
 import NotificationPrefs from './NotificationPrefs'
 import { fetchNotifications, fetchMessages, fetchPrefs } from '../../lib/partnerInbox'
@@ -95,6 +100,14 @@ import { destinationShort } from '../../lib/documents/mask'
 export default function PartnerAccount({
   vendor, profile, reviews, screen, onOpenScreen,
   onUpdateVendor, onSignOut, onOpenTrade, onNavigateTo,
+  /* Where inside a screen the partner is (`?trade=`, `?rid=`, the list
+     filters), how to move there, and how to go up one level. All three
+     are the URL, owned by VendorDashboard, for the same reason `screen`
+     is: Android's back button. */
+  screenParams = {}, onScreenParams, onUp,
+  /* From useVendorAccount, for the profile checklist: the standing week
+     and how many days carry a mark. */
+  weeklyRules = [], markedDays = 0,
   /* Which requirement a deep link asked for, carried straight through
      to the verification screen. Read from `?requirement=` by the
      dashboard so Android's back button still works. */
@@ -119,19 +132,19 @@ export default function PartnerAccount({
      "open this always". */
   const [payout, setPayout] = useState(null)
   const [payoutLoaded, setPayoutLoaded] = useState(false)
-  useEffect(() => {
+  const readPayout = useCallback(async () => {
     if (!vendor?.id) return
-    let dead = false
-    supabase.from('vendor_payout_details')
+    const { data, error } = await supabase.from('vendor_payout_details')
       .select('method, upi_id, account_number, verified_at')
       .eq('vendor_id', vendor.id).maybeSingle()
-      .then(({ data }) => {
-        if (dead) return
-        setPayout(data ?? null)
-        setPayoutLoaded(true)
-      })
-    return () => { dead = true }
+    /* A failed re-read keeps what was there: "not added" on a flaky
+       connection would tell a partner with bank details that they have
+       none. The first read still answers, so the fold is not stuck. */
+    if (error) { setPayoutLoaded(true); return }
+    setPayout(data ?? null)
+    setPayoutLoaded(true)
   }, [vendor?.id])
+  useEffect(() => { readPayout() }, [readPayout])
 
   /* ══════════════════════════════════════════════════════════════════
      THE DOCUMENTS ARE READ HERE, NOT INSIDE THE SECTION
@@ -155,12 +168,11 @@ export default function PartnerAccount({
      nothing else on this tab. One query, not one per section. */
   const [listings, setListings] = useState(null)
   const listedTrades = (listings ?? []).map(r => r.trade)
-  useEffect(() => {
+  const readListings = useCallback(async () => {
     if (!vendor?.id) return
-    let dead = false
-    fetchListings(vendor.id).then(rows => { if (!dead) setListings(rows) })
-    return () => { dead = true }
+    setListings(await fetchListings(vendor.id))
   }, [vendor?.id])
+  useEffect(() => { readListings() }, [readListings])
 
   /* ══════════════════════════════════════════════════════════════════
      THE INBOX IS READ HERE, AND THE ROWS ARE NOT OFFERED UNTIL IT IS
@@ -219,6 +231,33 @@ export default function PartnerAccount({
     setDocs(await fetchDocuments(vendor.id))
   }, [vendor?.id])
   useEffect(() => { readDocs() }, [readDocs])
+
+  /* ── One checklist, from saved rows, for two screens ─────────────
+     Build Your Profile shows it; Grow with Sambramo reads the same
+     answers. Computed here because every fact it needs is already read
+     on this tab — and recomputed whenever any of them changes, so a
+     save anywhere on More is reflected without a reload. */
+  const checklist = useMemo(() => profileChecklist({
+    profile, vendor, listings, weeklyRules, markedDays,
+    docs, requirements: requirementsFor(listedTrades), payout, payoutLoaded,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [profile, vendor, listings, weeklyRules, markedDays, docs, payout, payoutLoaded])
+
+  /* Re-read on the way into either screen: a partner arriving from the
+     Listing or Calendar tab has changed rows this tab read long ago. */
+  /* Not the dashboard's own refresh: that sets `loading`, which unmounts
+     this tab, which remounts the screen, which would call it again. The
+     week and the day marks are kept current by the calendar's own saves. */
+  const refreshFacts = useCallback(() => {
+    readListings(); readDocs(); readPayout()
+  }, [readListings, readDocs, readPayout])
+
+  /* A checklist target is a More screen or a dashboard tab; nothing
+     else, and never a generic fallback. */
+  const go = to => {
+    if (to?.screen) onOpenScreen(to.screen)
+    else if (to?.tab) onNavigateTo?.(to.tab === 'offers' ? '/dashboard/vendor' : `/dashboard/vendor?tab=${to.tab}`)
+  }
 
   const docCount = docs ? Object.keys(docs.byRequirement ?? docs.byKind).length : 0
   const verificationSummary = vendor?.is_verified
@@ -286,31 +325,17 @@ export default function PartnerAccount({
      bank details unverified, a service still in draft, unread messages.
      A quiet list, and a badge that means something when it appears. */
   const SCREENS = {
+    /* ── Three destinations, and they are not the same screen ───────
+       Grow is the business view (can you be sent work, what is your
+       listing doing), Build Your Profile is the checklist, and Trade
+       Champion 26 is referrals. Each used to be a list of links to the
+       others, so every one of them felt like the same page. */
     growth: { title: 'Grow with Sambramo', render: () => (
-      <div className="space-y-3">
-        <section className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <p className="text-[14px] font-extrabold text-ink">Grow your event business</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-mute">Build a stronger presence, expand your services and connect with more event professionals.</p>
-        </section>
-        <Group title="Growth actions">
-          <Row icon={Store} label="Improve your business profile" onClick={() => onOpenScreen('business')} />
-          <Row icon={ClipboardList} label="Manage your services" onClick={() => onOpenScreen('services')} />
-          <Row icon={Gift} label="Trade Champion 26 referrals" onClick={() => onOpenScreen('referral')} />
-          <Row icon={Navigation} label="Expand service area" onClick={() => onOpenScreen('area')} />
-        </Group>
-      </div>
+      <GrowHub checklist={checklist} vendor={vendor} listings={listings}
+               onGo={go} onRefresh={refreshFacts} />
     ) },
     buildprofile: { title: 'Build Your Profile', render: () => (
-      <div className="space-y-3">
-        <p className="text-[12.5px] leading-relaxed text-ink-mute">Choose a section to complete or update. Each action opens the exact place where you can make the change.</p>
-        <Group title="Profile checklist">
-          <Row icon={UserRound} label="Your personal details" onClick={() => onOpenScreen('profile')} />
-          <Row icon={Sparkles} label="Business information and public profile" onClick={() => onOpenScreen('business')} />
-          <Row icon={Store} label="Trade and service listings" onClick={() => onOpenScreen('services')} />
-          <Row icon={ShieldCheck} label="Verification documents" onClick={() => onOpenScreen('verification')} />
-          <Row icon={Navigation} label="Service area and availability" onClick={() => onOpenScreen('area')} />
-        </Group>
-      </div>
+      <BuildProfile checklist={checklist} onGo={go} onRefresh={refreshFacts} />
     ) },
     profile:      { title: 'Partner profile',        render: () => (
       <div className="space-y-3">
@@ -387,9 +412,16 @@ export default function PartnerAccount({
         ? <PartnerMessages vendorId={vendor?.id} initialRows={inbox.messages} />
         : <Absent what="Messages" />
     ) },
-    referral:     { title: 'Referral & rewards',     render: () => (
-      <PartnerReferral vendorId={vendor?.id} />
-    ) },
+    /* The canonical referral destination. Its sub-views (a trade, one
+       referral) are in the URL too, and each goes up one level. */
+    referral: {
+      ...referralScreenMeta(screenParams, tradeById(screenParams.trade)?.name),
+      render: () => (
+        <TradeChampion
+          view={screenParams}
+          onView={(next, opts) => onScreenParams?.('referral', next, opts)} />
+      ),
+    },
     reviews:      { title: 'Reviews',                render: () => (
       <PartnerReviews reviews={reviewRows} />
     ) },
@@ -439,12 +471,17 @@ export default function PartnerAccount({
   if (open) {
     return (
       <div>
+        {/* Up one level, not always to More: from a referral to its
+            trade, from a trade to the dashboard. `onUp` pops history when
+            that is where the partner came from, so this button and
+            Android's back button agree. */}
         <button
           type="button"
-          onClick={() => onOpenScreen?.(null)}
+          onClick={() => (onUp ? onUp(open.parent ?? null) : onOpenScreen?.(null))}
+          data-testid="screen-back"
           className="mb-3 flex min-h-[40px] items-center gap-1.5 text-[13px] font-extrabold text-ink-soft"
         >
-          <ArrowLeft size={16} /> More
+          <ArrowLeft size={16} /> {open.parent ? 'Back' : 'More'}
         </button>
         <h1 className="mb-3 text-[20px] font-extrabold leading-tight text-ink">{open.title}</h1>
         {open.render()}
@@ -494,6 +531,16 @@ export default function PartnerAccount({
              badge={lastFromUs && !lastFromUs.read_at ? 'New' : null} tone="attention" />
         <Row icon={Star}          label="Reviews"       onClick={() => onOpenScreen('reviews')}
              badge={reviewRows.length ? reviewAvg.toFixed(1) : null} tone="count" />
+      </Group>
+
+      {/* Three rows, three different screens. The profile badge is the
+          checklist's own count of saved items, so it moves when a save
+          lands and never because a form was opened. */}
+      <Group title="Grow">
+        <Row icon={TrendingUp}    label="Grow with Sambramo" onClick={() => onOpenScreen('growth')} />
+        <Row icon={ClipboardList} label="Build your profile" onClick={() => onOpenScreen('buildprofile')}
+             badge={checklist.done < checklist.total ? `${checklist.done}/${checklist.total}` : null}
+             tone="attention" />
         {/* No badge. A count here would be a number about money the
             partner has not earned yet, sitting on a settings list. */}
         <Row icon={Gift}          label="Referral & rewards" onClick={() => onOpenScreen('referral')} />

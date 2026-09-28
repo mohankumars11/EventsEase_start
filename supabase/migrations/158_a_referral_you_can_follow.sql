@@ -616,11 +616,12 @@ COMMIT;
 -- Claiming: an invitation, or a partner's own code
 -- ═══════════════════════════════════════════════════════════════════════
 --
--- 155's checks, unchanged in substance, plus four: an invitation that is
--- expired, one somebody else already used, the same claim twice (which
--- answers ok, so a retry is harmless), and a race between two claims
--- (the unique index answers, and the caller hears the same sentence as
--- every other refusal).
+-- 155's checks, unchanged in substance, plus five: an invitation that is
+-- expired, one somebody else already used, a partner who was already
+-- established before claiming, the same claim twice (which answers ok,
+-- so a retry is harmless), and a race between two claims (the unique
+-- index answers, and the caller hears the same sentence as every other
+-- refusal).
 
 BEGIN;
 
@@ -679,6 +680,17 @@ BEGIN
     v_reason := 'invite_expired';
   ELSIF EXISTS (SELECT 1 FROM public.partner_referrals WHERE referred_id = v_me.id) THEN
     v_reason := 'already_referred';
+
+  -- ── A partner who was already here was not referred ────────────────
+  -- Without this, anybody established could claim a friend's code and
+  -- hand them a referral for a partner who was already live -- or
+  -- already delivering, which is the step the reward pays for.
+  ELSIF v_me.created_at < now() - INTERVAL '30 days'
+     OR v_me.is_verified
+     OR EXISTS (SELECT 1 FROM public.dispatch_offers o
+                 WHERE o.vendor_id = v_me.id AND o.status = 'ACCEPTED') THEN
+    v_reason := 'existing_partner';
+
   ELSIF v_me.contact_phone IS NOT NULL
     AND regexp_replace(v_me.contact_phone, '\D', '', 'g') <> ''
     AND right(regexp_replace(v_me.contact_phone, '\D', '', 'g'), 10)

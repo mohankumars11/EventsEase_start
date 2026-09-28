@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
 import { ensureVendorRow } from '../../lib/ensureVendor'
+import InviteCodeEntry from '../../components/partner/referrals/InviteCodeEntry'
 
 /**
  * The master onboarding home — "Great! Let's get started".
@@ -119,6 +120,10 @@ export default function PartnerSetupIntro() {
           Tell us about your business and the services you provide. We&apos;ll use this
           information to match you with the right customers and event opportunities.
         </p>
+
+        {/* Claims a code that came with an invitation link, once the
+            partner row above exists; otherwise a folded field. */}
+        <InviteCodeEntry vendorId={account?.vendor?.id} />
 
         {/* ── How much is left, said once ───────────────────────────
             A partner on step 4 of 6 is most of the way there, and a

@@ -30,6 +30,8 @@ import PartnerGrowthCarousel from '../../components/partner/PartnerGrowthCarouse
 import PartnerHowItWorks from '../../components/partner/PartnerHowItWorks'
 import CalendarMonth from '../../components/partner/CalendarMonth'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
+import { usePendingPartnerReferral } from '../../hooks/usePendingPartnerReferral'
+import { useAccountScreens } from '../../hooks/useAccountScreens'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 
 /**
@@ -116,6 +118,17 @@ export default function VendorDashboard() {
   }
   const setTab = id =>
     setParams(keepReturn(id === 'offers' ? {} : { tab: id }), { replace: true })
+
+  /* Opening a More screen and coming back from it — pushed with an `up`
+     marker so the on-screen Back and Android's back button agree. See
+     hooks/useAccountScreens. */
+  const { screenParams, openAccount, goUp, setScreenParams } = useAccountScreens()
+
+  /* A partner who was already set up and then opened an invitation link
+     lands here, not on setup. Claimed quietly; the server refuses what
+     should be refused (an existing partner already referred, their own
+     code) with no harm done. */
+  usePendingPartnerReferral(vendor?.id)
 
   const businessName = vendor?.business_name ?? profile?.full_name ?? 'Your business'
 
@@ -409,8 +422,8 @@ export default function VendorDashboard() {
                The Account tab already keeps its open screen in
                `?screen=`, and `onAddPayout` below has used it since the
                Earnings work, so naming the screen costs nothing. */
-            onOpenProfile={() => setParams(keepReturn({ tab: 'account', screen: 'profile' }))}
-            onOpenAlerts={() => setParams(keepReturn({ tab: 'account', screen: 'notifications' }))}
+            onOpenProfile={() => openAccount('profile')}
+            onOpenAlerts={() => openAccount('notifications')}
           />
         </div>
       )}
@@ -433,7 +446,7 @@ export default function VendorDashboard() {
                messages screen, the same one-level-short problem as the
                bell. */
             onOpen={key => {
-              if (key === 'messages') setParams(keepReturn({ tab: 'account', screen: 'messages' }))
+              if (key === 'messages') openAccount('messages')
               else if (key === 'confirmed' || key === 'accepted') setTab('availability')
               else if (key === 'offers') {
                 document.querySelector('[data-offer-inbox]')
@@ -469,16 +482,16 @@ export default function VendorDashboard() {
           listingCount={services?.length ?? 0}
           listingNames={(services ?? [])
             .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
-          onOpenListing={() => setParams(keepReturn({ tab: 'account', screen: 'services' }))}
+          onOpenListing={() => openAccount('services')}
           onHowItWorks={() => setHowItWorksOpen(true)}
         />
       )}
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel
-          onGrow={() => setParams(keepReturn({ tab: 'account', screen: 'growth' }))}
-          onInvite={() => setParams(keepReturn({ tab: 'account', screen: 'referral' }))}
-          onProfile={() => setParams(keepReturn({ tab: 'account', screen: 'buildprofile' }))}
+          onGrow={() => openAccount('growth')}
+          onInvite={() => openAccount('referral')}
+          onProfile={() => openAccount('buildprofile')}
         />
       )}
 
@@ -732,7 +745,10 @@ export default function VendorDashboard() {
                they had asked for. The Account tab already keeps its open
                screen in `?screen=`, so naming it costs nothing and turns
                "Change" into one press instead of three. */
-            onAddPayout={() => setParams(keepReturn({ tab: 'account', screen: 'bank' }))}
+            onAddPayout={() => openAccount('bank')}
+            /* The same destination as More → Referral & rewards, opened
+               the same way, so Back returns here to Earnings. */
+            onOpenReferral={() => openAccount('referral')}
           />
         )}
 
@@ -845,8 +861,12 @@ export default function VendorDashboard() {
               if (typeof href !== 'string' || !href.startsWith('/')) return
               navigate(href)
             }}
-            onOpenScreen={next => setParams(keepReturn(
-              next ? { tab: 'account', screen: next } : { tab: 'account' }))}
+            onOpenScreen={next => (next ? openAccount(next) : goUp(null))}
+            screenParams={screenParams}
+            onScreenParams={setScreenParams}
+            onUp={goUp}
+            weeklyRules={weeklyRules}
+            markedDays={Object.keys(availability ?? {}).length}
             onUpdateVendor={updateVendor}
             onSignOut={handleSignOut}
             /* More → My Services → a trade opens that trade's own

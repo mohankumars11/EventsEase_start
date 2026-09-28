@@ -6,6 +6,7 @@ import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
+import { stashPartnerRef } from '../../lib/referrals'
 
 /**
  * The first screen of the partner app.
@@ -78,6 +79,14 @@ export default function PartnerEntry() {
   const [showTerms, setShowTerms] = useState(false)
   /* Email is the fallback route now, folded away until asked for. */
   const [emailOpen, setEmailOpen] = useState(false)
+
+  /* An invitation link is /partner/join?ref=CODE, opened by somebody
+     with no partner row yet. The code waits in storage until there is
+     one to attach it to — see lib/referrals.js for why it is not the
+     customer programme's `ee_pending_ref`. */
+  useEffect(() => {
+    stashPartnerRef(new URLSearchParams(window.location.search).get('ref'))
+  }, [])
 
   /* ══════════════════════════════════════════════════════════════════
      NEW OR RETURNING, ASKED OUTRIGHT

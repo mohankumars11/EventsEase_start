@@ -6,6 +6,7 @@ import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import SambramoLogo from '../../components/ui/SambramoLogo'
 import { isPartnerSurface } from '../../config/surface'
+import { stashPartnerRef } from '../../lib/referrals'
 
 const RESEND_SECONDS = 60
 
@@ -60,10 +61,17 @@ export default function SignupPage() {
   // Capture a referral code from a shared link (?ref=CODE) before the
   // signup flow (email OTP or Google) navigates away from this URL —
   // AuthContext resolves and applies it once the profile is created.
+  //
+  // On the partner app the code is a PARTNER invitation, kept under its
+  // own key: `ee_pending_ref` is spent by AuthContext on the customer
+  // programme the first time a profile loads, which would consume a
+  // partner's code and look it up in the wrong table.
   useEffect(() => {
     const ref = new URLSearchParams(location.search).get('ref')
-    if (ref) localStorage.setItem('ee_pending_ref', ref.toUpperCase())
-  }, [location.search])
+    if (!ref) return
+    if (PARTNER) stashPartnerRef(ref)
+    else localStorage.setItem('ee_pending_ref', ref.toUpperCase())
+  }, [location.search, PARTNER])
 
   /* The role can arrive in the URL, and then the chooser is skipped.
 
