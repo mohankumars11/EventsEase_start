@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLivePoll } from '../../hooks/useLivePoll'
 import ScreenState from '../ui/ScreenState'
+import { useFieldCheck, FieldMessage } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
+import { parseServerError } from '../../lib/validation/serverError'
 import {
   CalendarDays, MapPin, Phone, User, IndianRupee, Loader2, Check,
   CircleDollarSign, PartyPopper, Lock, TriangleAlert, ChevronRight, ChevronDown,
@@ -233,6 +236,8 @@ function JobCard({ job, onChange }) {
   const [marking, setMarking] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [why, setWhy] = useState('')
+  const [whyShown, setWhyShown] = useState(false)
+  const whyCheck = useFieldCheck('cancel_reason', why, { showAll: whyShown })
   const [cancelling, setCancelling] = useState(false)
   const [standing, setStanding] = useState(null)
   const [problem, setProblem] = useState(null)
@@ -301,12 +306,13 @@ function JobCard({ job, onChange }) {
   }
 
   async function cancelJob() {
+    if (whyCheck.isError) { setWhyShown(true); return }
     setCancelling(true); setProblem(null)
     const { data, error } = await supabase.rpc('partner_cancel_line', {
-      p_line_id: job.line_id, p_reason: why.trim(),
+      p_line_id: job.line_id, p_reason: normalise('cancel_reason', why),
     })
     setCancelling(false)
-    if (error) { setProblem(error.message); return }
+    if (error) { setProblem(parseServerError(error).says); return }
     if (!data?.ok) { setProblem(data?.scan ?? 'Could not cancel this job'); return }
     setCancelOpen(false); setWhy('')
     // Said plainly whichever way it went — a suspension must never be
@@ -492,12 +498,15 @@ function JobCard({ job, onChange }) {
               </p>
             )}
             <textarea
+              {...whyCheck.inputProps}
               value={why}
               onChange={e => setWhy(e.target.value)}
               rows={2}
               placeholder="My van broke down and I cannot reach Koramangala by 6pm…"
-              className="mt-2 w-full resize-none rounded-xl bg-white p-2.5 text-[12.5px] text-ink outline-none ring-1 ring-amber-200 focus:ring-amber-400"
+              aria-label="Why you cannot do it"
+              className={'mt-2 w-full resize-none rounded-xl bg-white p-2.5 text-[12.5px] text-ink outline-none ring-1 ring-amber-200 focus:ring-amber-400' + whyCheck.ring}
             />
+            <FieldMessage check={whyCheck} />
             <div className="mt-2 flex gap-2">
               <button
                 onClick={cancelJob}

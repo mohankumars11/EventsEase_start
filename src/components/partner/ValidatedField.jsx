@@ -71,6 +71,12 @@ export default function ValidatedField({
   inputMode,
   rows = 4,
   onValidity,
+  /* A refusal from the server for this value (migration 159), placed
+     here by the form. The form clears it when the value changes. */
+  serverError = null,
+  /* Which box this is, when two boxes share a rule (the WhatsApp and
+     call numbers are both phones). Used for data-field and the test id. */
+  name,
 }) {
   const rule = FIELD_RULES[field] ?? {}
   const [touched, setTouched] = useState(false)
@@ -79,12 +85,13 @@ export default function ValidatedField({
   const raw = value ?? ''
   const result = validateField(field, raw, ctx)
   const show = (touched || showAll) && String(raw).length >= 0
-  const severity = show ? result.severity : SEVERITY.OK
+  const severity = serverError ? SEVERITY.ERROR : show ? result.severity : SEVERITY.OK
+  const says = serverError ?? (show ? result.says : null)
 
   /* The tick is earned, not default. It appears only once something has
      actually been typed and checked out — a green tick on an empty
      optional box is noise. */
-  const settled = show && result.severity === SEVERITY.OK && String(raw).trim().length > 0
+  const settled = !serverError && show && result.severity === SEVERITY.OK && String(raw).trim().length > 0
 
   const commit = next => {
     onChange?.(next)
@@ -120,8 +127,11 @@ export default function ValidatedField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           inputMode={inputMode}
-          aria-invalid={severity === SEVERITY.ERROR}
-          aria-describedby={show && result.says ? `${id}-msg` : undefined}
+          aria-invalid={severity === SEVERITY.ERROR ? true : undefined}
+          aria-describedby={says ? `${id}-msg` : undefined}
+          aria-required={rule.required ? true : undefined}
+          data-field={name ?? field}
+          data-testid={`field-${name ?? field}`}
           onChange={e => commit(e.target.value)}
           onBlur={() => {
             setTouched(true)
@@ -139,10 +149,11 @@ export default function ValidatedField({
         )}
       </span>
 
-      {show && result.says ? (
+      {says ? (
         <span
           id={`${id}-msg`}
           role={severity === SEVERITY.ERROR ? 'alert' : undefined}
+          data-field-message={name ?? field}
           className={`mt-1 flex items-start gap-1.5 text-[11.5px] leading-snug ${
             severity === SEVERITY.ERROR ? 'text-saffron-800' : 'text-ink-mute'
           }`}
@@ -150,7 +161,7 @@ export default function ValidatedField({
           {severity === SEVERITY.ERROR
             ? <AlertCircle size={12} className="mt-0.5 shrink-0" />
             : <Info size={12} className="mt-0.5 shrink-0" />}
-          {result.says}
+          {says}
         </span>
       ) : hint ? (
         <span className="mt-1 block text-[11.5px] leading-snug text-ink-mute">{hint}</span>

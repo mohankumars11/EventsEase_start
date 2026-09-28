@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Images, Loader2, Trash2, Check, Clock, AlertCircle, Plus } from 'lucide-react'
 import Fold from './Fold'
-import WorkUpload from './WorkUpload'
+import WorkUpload, { workItemsBad } from './WorkUpload'
+import { fails, focusFirstInvalid } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 import { workPromptsFor } from '../../data/workPrompts'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import {
@@ -50,6 +52,7 @@ export default function WorkLibrary({ vendor }) {
   const [busy, setBusy] = useState(null)
   const [pending, setPending] = useState([])
   const [saving, setSaving] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   const load = useCallback(async () => {
     if (!vendor?.id) return
@@ -84,6 +87,7 @@ export default function WorkLibrary({ vendor }) {
 
   async function save() {
     if (!pending.length) return
+    if (workItemsBad(pending)) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
     setSaving(true)
     const { added, error } = await addWork(vendor.id, pending, rows.length)
     setSaving(false)
@@ -102,6 +106,9 @@ export default function WorkLibrary({ vendor }) {
 
   async function caption(row, text) {
     if ((row.caption ?? '') === text) return
+    /* Saved on blur, so refused on blur: said, and the old caption kept. */
+    if (fails('caption', text)) { toast.error('That caption has something it cannot hold — code, a phone number, or more than 140 characters.'); return }
+    text = normalise('caption', text)
     try { await updateWork(row.id, { caption: text || null }) }
     catch (err) { toast.error(friendlyError(err, 'Could not save that caption.')) }
   }
@@ -195,6 +202,7 @@ export default function WorkLibrary({ vendor }) {
             <WorkUpload
               value={pending}
               onChange={setPending}
+              showAll={showAll}
               trade={vendor?.category}
               copy={workPromptsFor(vendor?.category)}
             />

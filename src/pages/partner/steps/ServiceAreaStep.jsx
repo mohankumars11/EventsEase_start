@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import ValidatedField from '../../../components/partner/ValidatedField'
+import { validateField, normalise, SEVERITY } from '../../../lib/validation/fieldRules'
+import { useServerErrors, focusFirstInvalid } from '../../../components/partner/FieldCheck'
+import { asFormError } from '../../../lib/validation/serverError'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, MapPin } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
@@ -99,15 +102,23 @@ export default function ServiceAreaStep() {
   const toggleDay = w => setOffDays(d => (d.includes(w) ? d.filter(x => x !== w) : [...d, w]))
   const located = !!v?.city && !!v?.pincode
 
+  const [showAll, setShowAll] = useState(false)
+  const server = useServerErrors()
+
   async function save() {
     if (!v?.id || busy) return
+    /* This saved `Math.max(0, Number(lead) || 0)` without asking the
+       rule: "1e3" went in as 1000 days. Refused now, and said. */
+    if (validateField('lead_time_days', lead).severity === SEVERITY.ERROR) {
+      setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return
+    }
     setBusy(true); setError(null)
     try {
       const { error: err } = await supabase.from('vendors').update({
         service_radius_km: Math.min(200, Math.max(1, radius)),
-        lead_time_days: Math.max(0, Number(lead) || 0),
+        lead_time_days: normalise('lead_time_days', lead) === '' ? 0 : Number(normalise('lead_time_days', lead)),
       }).eq('id', v.id)
-      if (err) throw err
+      if (err) throw asFormError(err)
 
       /* One row per weekday, so unticking a day is a row that says
          "available", not a row that vanished — the distinction
@@ -136,7 +147,7 @@ export default function ServiceAreaStep() {
       await refresh()
       navigate('/partner/setup/compliance')
     } catch (e) {
-      setError(e?.message ?? 'Could not save. Try once more.')
+      if (!server.take(e)) setError(e?.message ?? 'Could not save. Try once more.')
     } finally {
       setBusy(false)
     }
@@ -221,7 +232,8 @@ export default function ServiceAreaStep() {
           The rule knows the column's CHECK is 0-365, so a partner who
           types 400 is told why here rather than by Postgres later. */}
       <ValidatedField
-        field="lead_time_days" value={lead} onChange={setLead}
+        field="lead_time_days" value={lead} onChange={val => { server.clear('lead_time_days'); setLead(val) }}
+        showAll={showAll} serverError={server.errors.lead_time_days}
         label="Notice you need" inputMode="numeric"
         hint="The shortest warning you can take a job on, in days."
         placeholder="2" />

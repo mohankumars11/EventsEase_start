@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { asFormError } from './validation/serverError'
 import { compressImage } from './imageUpload'
 import { isMissingTable } from './serviceCatalog'
 
@@ -355,7 +356,9 @@ export async function saveDocumentDetails({
     .select()
     .maybeSingle()
 
-  if (error) throw new Error(error.message)
+  /* Structured, so a refusal from migration 159 lands under the box it
+     is about, and a raw Postgres sentence never reaches the partner. */
+  if (error) throw asFormError(error)
   return data
 }
 

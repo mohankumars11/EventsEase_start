@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { isMissingTable } from './serviceCatalog'
+import { parseServerError } from './validation/serverError'
 
 /**
  * The partner's inbox: what happened, what they said, and what they want
@@ -210,7 +211,9 @@ export async function sendMessage(vendorId, body, lineId = null) {
     .select('id, line_id, sender, body, read_at, created_at')
     .single()
 
-  if (error) return { ok: false, error: error.message, unavailable: isMissingTable(error) }
+  /* The server's own sentence for a refused value (159); never the raw
+     Postgres text, which can carry the value back. */
+  if (error) return { ok: false, error: parseServerError(error).says, unavailable: isMissingTable(error) }
   return { ok: true, row: data }
 }
 

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, Loader2, TriangleAlert } from 'lucide-react'
 import { uploadDocument, saveDocumentDetails, signedUrlFor } from '../../lib/partnerDocuments'
 import { checkIdentity } from '../../lib/validation/identity'
+import { normalise, todayKey } from '../../lib/validation/fieldRules'
+import { useFieldCheck, FieldMessage, useServerErrors, focusFirstInvalid, anyError } from './FieldCheck'
 import { assessFile } from '../../lib/verification/imageQuality'
 import { verification } from '../../lib/verification/providers'
 import { judgeReading } from '../../lib/verification/providers/vision'
@@ -183,6 +185,22 @@ export default function DocumentCapture({
     ? checkIdentity(requirement.checksumKind, number)
     : null
   const numberSettled = number.trim().length >= 4
+
+  /* The other four boxes, checked the way every other form is. The number
+     keeps its own live checksum line above; this adds the gate. */
+  const [showAll, setShowAll] = useState(false)
+  const server = useServerErrors()
+  const numberField = useFieldCheck('doc_number', number, { showAll, name: 'doc_number',
+    ctx: { kind: requirement.checksumKind ?? null, required: false }, serverError: server.errors.doc_number })
+  const holderField = useFieldCheck('doc_holder_name', holderName, { showAll,
+    ctx: { required: !!requirement.holderNameRequired }, serverError: server.errors.doc_holder_name })
+  const authorityField = useFieldCheck('doc_authority', authority, { showAll,
+    ctx: { required: !!requirement.issuingAuthorityRequired }, serverError: server.errors.doc_authority })
+  const issueField = useFieldCheck('doc_issue_date', issueDate, { showAll,
+    ctx: { today: todayKey() }, serverError: server.errors.doc_issue_date })
+  const expiryField = useFieldCheck('doc_expiry_date', expiryDate, { showAll,
+    ctx: { today: todayKey(), required: !!requirement.expiryRequired, doc_issue_date: issueDate || null },
+    serverError: server.errors.doc_expiry_date })
 
   const [quality, setQuality] = useState(null)
   /* What the classifier said, and which step is running. Separate from
@@ -410,6 +428,10 @@ export default function DocumentCapture({
       setError(numberCheck.says)
       return
     }
+    if (anyError(numberField, holderField, authorityField, issueField, expiryField)) {
+      setShowAll(true); setTimeout(() => focusFirstInvalid(), 0)
+      return
+    }
     setSaving(true); setError(null)
     try {
       const saved = await saveDocumentDetails({
@@ -419,9 +441,9 @@ export default function DocumentCapture({
         listingId: listingId ?? null,
         trade: requirement.trade ?? null,
         existing: row,
-        number: number.trim() || null,
-        holderName: holderName.trim() || null,
-        issuingAuthority: authority.trim() || null,
+        number: normalise('doc_number', number) || null,
+        holderName: normalise('doc_holder_name', holderName) || null,
+        issuingAuthority: normalise('doc_authority', authority) || null,
         issueDate: issueDate || null,
         expiryDate: expiryDate || null,
         checksumOk: numberCheck ? numberCheck.ok : undefined,
@@ -430,7 +452,7 @@ export default function DocumentCapture({
       onUploaded?.(saved)
       onClose?.()
     } catch (e) {
-      setError(e?.message ?? 'Could not save those details.')
+      if (!server.take(e)) setError(e?.message ?? 'Could not save those details.')
     } finally {
       setSaving(false)
     }
@@ -551,12 +573,18 @@ export default function DocumentCapture({
               )}
             </span>
             <input
-              className={inputCls}
+              {...numberField.inputProps}
+              className={inputCls + numberField.ring}
               value={number}
               inputMode={requirement.checksumKind === 'aadhaar' ? 'numeric' : 'text'}
               placeholder={requirement.mask ?? ''}
-              onChange={e => setNumber(e.target.value)}
+              autoComplete="off"
+              onChange={e => { server.clear('doc_number'); setNumber(e.target.value) }}
             />
+            {/* Only when the checksum line below has nothing to say:
+                a character that is not part of any number, or a
+                refusal from the server. Never the number itself. */}
+            {!(numberCheck && numberSettled) && <FieldMessage check={numberField} />}
             {numberCheck && numberSettled && (
               <span className={`mt-1 block text-[11.5px] leading-snug ${
                 numberCheck.ok ? 'text-forest-700' : 'text-saffron-800'
@@ -577,8 +605,10 @@ export default function DocumentCapture({
             <span className="mb-1 block text-[11.5px] font-extrabold text-ink">
               Name exactly as printed
             </span>
-            <input className={inputCls} value={holderName}
-                   onChange={e => setHolderName(e.target.value)} />
+            <input {...holderField.inputProps} className={inputCls + holderField.ring} value={holderName}
+                   autoComplete="name"
+                   onChange={e => { server.clear('doc_holder_name'); setHolderName(e.target.value) }} />
+            <FieldMessage check={holderField} />
           </label>
         )}
 
@@ -587,8 +617,9 @@ export default function DocumentCapture({
             <span className="mb-1 block text-[11.5px] font-extrabold text-ink">
               Who issued it
             </span>
-            <input className={inputCls} value={authority} placeholder="BBMP, RTO, FSSAI…"
-                   onChange={e => setAuthority(e.target.value)} />
+            <input {...authorityField.inputProps} className={inputCls + authorityField.ring} value={authority} placeholder="BBMP, RTO, FSSAI…"
+                   onChange={e => { server.clear('doc_authority'); setAuthority(e.target.value) }} />
+            <FieldMessage check={authorityField} />
           </label>
         )}
 
@@ -597,14 +628,18 @@ export default function DocumentCapture({
             <span className="mb-1 block text-[11.5px] font-extrabold text-ink">
               Issued on <span className="font-semibold text-ink-mute">optional</span>
             </span>
-            <input type="date" className={inputCls} value={issueDate}
-                   onChange={e => setIssueDate(e.target.value)} />
+            <input type="date" {...issueField.inputProps} className={inputCls + issueField.ring} value={issueDate}
+                   max={todayKey()}
+                   onChange={e => { server.clear('doc_issue_date'); setIssueDate(e.target.value) }} />
+            <FieldMessage check={issueField} />
           </label>
           {requirement.expiryRequired && (
             <label className="min-w-0 flex-1">
               <span className="mb-1 block text-[11.5px] font-extrabold text-ink">Expires on</span>
-              <input type="date" className={inputCls} value={expiryDate}
-                     onChange={e => setExpiryDate(e.target.value)} />
+              <input type="date" {...expiryField.inputProps} className={inputCls + expiryField.ring} value={expiryDate}
+                     min={todayKey()}
+                     onChange={e => { server.clear('doc_expiry_date'); setExpiryDate(e.target.value) }} />
+              <FieldMessage check={expiryField} />
             </label>
           )}
         </div>

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
+import { useFieldCheck, FieldMessage, focusFirstInvalid, anyError } from './FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
+import { parseServerError } from '../../lib/validation/serverError'
 import {
   X, Loader2, Check, AlertTriangle, CalendarCheck, CalendarClock, CalendarX2, Eraser,
 } from 'lucide-react'
@@ -155,6 +158,16 @@ export default function AvailabilityRangeSheet({
   const [reason, setReason] = useState('travel')
   const [reasonDetail, setReasonDetail] = useState('')
   const [note, setNote] = useState('')
+
+  /* Asked of the rules before a save, as the day sheet is: slots were
+     saved as `Math.max(1, Number(slots) || 1)`, and maxLength cut the
+     reason and note without a word. Dates are checked in India time. */
+  const [showAll, setShowAll] = useState(false)
+  const fromCheck = useFieldCheck('date_from', from, { showAll, ctx: { today } })
+  const toCheck = useFieldCheck('date_to', to, { showAll, ctx: { date_from: from, required: true } })
+  const slotsCheck = useFieldCheck('daily_slots', String(slots ?? ''), { showAll })
+  const reasonCheck = useFieldCheck('reason_detail', reasonDetail, { showAll })
+  const noteCheck = useFieldCheck('availability_note', note, { showAll, ctx: { max: 200 } })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -194,6 +207,13 @@ export default function AvailabilityRangeSheet({
 
   async function save() {
     if (!days.length || busy) return
+    const inPlay = [
+      fromCheck, toCheck,
+      mode.status === 'LIMITED' && slotsCheck,
+      mode.status === 'BLOCKED' && reason === 'other' && reasonCheck,
+      mode.status !== null && noteCheck,
+    ].filter(Boolean)
+    if (anyError(...inPlay)) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
     if (alert.needsConfirm && !confirm) { setConfirm(true); return }
     setBusy(true); setError(null)
     try {
@@ -201,18 +221,19 @@ export default function AvailabilityRangeSheet({
         await onClearDays(days)
       } else {
         await onSetRange(days, mode.status, {
-          slots_total: mode.status === 'LIMITED' ? Math.max(1, Number(slots) || 1) : null,
-          note: note.trim() || null,
+          slots_total: mode.status === 'LIMITED' ? Number(normalise('daily_slots', String(slots))) : null,
+          note: normalise('availability_note', note) || null,
           reason: mode.status === 'BLOCKED' ? reason : null,
           reason_detail: mode.status === 'BLOCKED' && reason === 'other'
-            ? (reasonDetail.trim() || null) : null,
+            ? (normalise('reason_detail', reasonDetail) || null) : null,
           hours: null,
         })
       }
       setSaved(true)
       setTimeout(onClose, 700)
     } catch (err) {
-      setError(err?.message ?? 'That did not save. Your previous availability is still active.')
+      setError(err?.code ? parseServerError(err).says
+        : err?.message ?? 'That did not save. Your previous availability is still active.')
     } finally {
       setBusy(false)
     }
@@ -269,17 +290,19 @@ export default function AvailabilityRangeSheet({
           {/* ── When ────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 gap-2">
             <Field label="From">
-              <input type="date" min={today} value={from}
+              <input {...fromCheck.inputProps} type="date" min={today} value={from}
                      onChange={e => {
                        setFrom(e.target.value)
                        if (to < e.target.value) setTo(e.target.value)
                      }}
-                     className={inputClass} />
+                     className={inputClass + fromCheck.ring} />
+              <FieldMessage check={fromCheck} />
             </Field>
             <Field label="To">
-              <input type="date" min={from} value={to}
+              <input {...toCheck.inputProps} type="date" min={from} value={to}
                      onChange={e => setTo(e.target.value)}
-                     className={inputClass} />
+                     className={inputClass + toCheck.ring} />
+              <FieldMessage check={toCheck} />
             </Field>
           </div>
 
@@ -312,14 +335,12 @@ export default function AvailabilityRangeSheet({
           {/* ── Only what this mode actually needs ──────────────────── */}
           {mode.status === 'LIMITED' && (
             <Field label="Jobs you will take each day">
-              <input type="number" min={1} max={12} inputMode="numeric" value={slots}
+              <input {...slotsCheck.inputProps} type="number" min={1} max={12} inputMode="numeric" value={slots}
                      onChange={e => setSlots(e.target.value)}
-                     className={`w-24 ${inputClass}`} />
-              {slotsSays?.says && slotsSays.severity !== 'ok' && (
-                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
-                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
-                }`}>{slotsSays.says}</p>
-              )}
+                     className={`w-24 ${inputClass}` + slotsCheck.ring} />
+              {slotsSays?.says && slotsSays.severity !== 'ok' && !slotsCheck.says
+                ? <p className="mt-1 text-[11.5px] font-semibold leading-snug text-ink-mute">{slotsSays.says}</p>
+                : <FieldMessage check={slotsCheck} />}
             </Field>
           )}
 
@@ -336,19 +357,23 @@ export default function AvailabilityRangeSheet({
                 ))}
               </div>
               {reason === 'other' && (
-                <input value={reasonDetail} onChange={e => setReasonDetail(e.target.value)}
-                       maxLength={60} placeholder="In your own words"
-                       className={`mt-2 ${inputClass}`} />
+                <>
+                  <input {...reasonCheck.inputProps} value={reasonDetail} onChange={e => setReasonDetail(e.target.value)}
+                         placeholder="In your own words" aria-label="Reason, in your own words"
+                         className={`mt-2 ${inputClass}` + reasonCheck.ring} />
+                  <FieldMessage check={reasonCheck} />
+                </>
               )}
             </Field>
           )}
 
           {mode.status !== null && (
             <Field label="Private note" hint={`${note.length}/200`}>
-              <textarea rows={2} maxLength={200} value={note}
+              <textarea {...noteCheck.inputProps} rows={2} value={note}
                         onChange={e => setNote(e.target.value)}
-                        placeholder="Only you see this."
-                        className={`resize-none ${inputClass}`} />
+                        placeholder="Only you see this." aria-label="Private note"
+                        className={`resize-none ${inputClass}` + noteCheck.ring} />
+              <FieldMessage check={noteCheck} />
             </Field>
           )}
 

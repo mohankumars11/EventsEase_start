@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
 import ValidatedField from '../../../components/partner/ValidatedField'
+import { useServerErrors, focusFirstInvalid } from '../../../components/partner/FieldCheck'
+import { asFormError } from '../../../lib/validation/serverError'
 import { validateStep, normalise } from '../../../lib/validation/fieldRules'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
@@ -55,7 +57,8 @@ export default function PartnerDetailsStep() {
     }))
   }, [v, profile])
 
-  const set = (k, val) => setForm(f => ({ ...f, [k]: val }))
+  const server = useServerErrors()
+  const set = (k, val) => { server.clear(k); setForm(f => ({ ...f, [k]: val })) }
   /* Continue asks the rule engine, not a list of non-empty strings.
      The old test passed for a business_name of "1" and a phone of
      "hello" -- present is not the same as correct. */
@@ -63,26 +66,31 @@ export default function PartnerDetailsStep() {
   const ready = check.canContinue
   const [showAll, setShowAll] = useState(false)
 
+  /* Every problem at once, and the first one in view. */
+  const reveal = () => { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0) }
+
   async function save() {
     if (!v?.id || busy) return
     /* Continue is disabled when this is false, but a form can also be
        submitted by a keyboard. The gate belongs here too. */
-    if (!validateStep('details', form).canContinue) { setShowAll(true); return }
+    if (!validateStep('details', form).canContinue) { reveal(); return }
     setBusy(true); setError(null)
     try {
       const { error: err } = await supabase.from('vendors').update({
         business_name: normalise('business_name', form.business_name),
         contact_phone: normalise('contact_phone', form.contact_phone),
         description: normalise('description', form.description),
-        years_active: Number(form.years_active) || 0,
-        website_url: form.website_url.trim() || null,
+        years_active: form.years_active === '' ? 0 : Number(normalise('years_active', form.years_active)),
+        website_url: normalise('website_url', form.website_url) || null,
         instagram_url: normalise('instagram_url', form.instagram_url) || null,
       }).eq('id', v.id)
-      if (err) throw err
+      if (err) throw asFormError(err)
       await refresh()
       navigate('/partner/setup/area')
     } catch (e) {
-      setError(e?.message ?? 'Could not save. Try once more.')
+      /* A refusal from the server goes under its box; only a network or
+         other failure uses the banner. */
+      if (!server.take(e)) setError(e?.message ?? 'Could not save. Try once more.')
     } finally {
       setBusy(false)
     }
@@ -98,6 +106,7 @@ export default function PartnerDetailsStep() {
 
   return (
     <StepShell stepId="details" canContinue={ready} busy={busy}
+      onBlocked={reveal}
       onContinue={() => { setShowAll(true); save() }}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
         Partner details
@@ -117,12 +126,14 @@ export default function PartnerDetailsStep() {
 
       <ValidatedField
         field="business_name" value={form.business_name} showAll={showAll}
+        serverError={server.errors.business_name}
         onChange={val => set('business_name', val)}
         hint="What customers will see on your offer."
         placeholder="Anna Ruchi Caterers" autoComplete="organization" />
 
       <ValidatedField
         field="contact_phone" value={form.contact_phone} showAll={showAll}
+        serverError={server.errors.contact_phone}
         onChange={val => set('contact_phone', val)}
         label="Contact number" inputMode="tel" autoComplete="tel"
         hint="The number we ring on the day of an event."
@@ -130,11 +141,13 @@ export default function PartnerDetailsStep() {
 
       <ValidatedField
         field="years_active" value={form.years_active} showAll={showAll}
+        serverError={server.errors.years_active}
         onChange={val => set('years_active', val)}
         inputMode="numeric" placeholder="12" />
 
       <ValidatedField
         field="description" value={form.description} showAll={showAll}
+        serverError={server.errors.description}
         onChange={val => set('description', val)}
         label="About your business" multiline
         hint="A few lines in your own words. Contact details are shared once a job is confirmed, so they do not go here."
@@ -142,6 +155,7 @@ export default function PartnerDetailsStep() {
 
       <ValidatedField
         field="instagram_url" value={form.instagram_url} showAll={showAll}
+        serverError={server.errors.instagram_url}
         onChange={val => set('instagram_url', val)}
         label="Instagram" placeholder="instagram.com/yourwork" />
 

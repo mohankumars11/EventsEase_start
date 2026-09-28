@@ -5,6 +5,8 @@ import { AVAILABILITY_ORDER, AVAILABILITY_STATES, WEEKDAYS } from '../../config/
 import { currentPosition, nearestServed } from '../../lib/pincodeDirectory'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { useToast } from '../../context/ToastContext'
+import { useFieldCheck, FieldMessage, focusFirstInvalid } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * "What is happening on this day?"
@@ -66,6 +68,8 @@ export default function DayStatusSheet({
   )
   const [scope, setScope] = useState('day')
   const [note,  setNote]  = useState(currentNote ?? '')
+  const [noteShowAll, setNoteShowAll] = useState(false)
+  const noteCheck = useFieldCheck('availability_note', note, { showAll: noteShowAll, ctx: { max: 120 } })
   /* { area_label, lat, lng } or null. Null is the common case and means
      the partner's usual base. */
   const [where, setWhere] = useState(currentWhere ?? null)
@@ -137,12 +141,15 @@ export default function DayStatusSheet({
   }[scope]
 
   async function save() {
+    /* The slot count is a stepper and cannot be wrong; the note was cut
+       at maxLength on paste. Asked of its rule now. */
+    if (noteCheck.isError) { setNoteShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
     setSaving(true)
     try {
       await onSave({
         status, scope,
         slots: status === 'LIMITED' ? slots : null,
-        note: note.trim(),
+        note: normalise('availability_note', note),
         /* Three columns or three nulls — never a half-set location. A
            row with an area name and no point would be a place dispatch
            cannot measure from. */
@@ -356,13 +363,14 @@ export default function DayStatusSheet({
               Note for yourself (optional)
             </label>
             <input
+              {...noteCheck.inputProps}
               id="day-note"
-              className="input"
+              className={'input' + noteCheck.ring}
               placeholder="e.g. Ramesh wedding, Jayanagar"
               value={note}
-              maxLength={120}
               onChange={e => setNote(e.target.value)}
             />
+            <FieldMessage check={noteCheck} />
           </div>
         </div>
 

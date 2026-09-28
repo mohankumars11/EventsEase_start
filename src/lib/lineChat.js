@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { parseServerError } from './validation/serverError'
 
 /**
  * The partner and the customer, talking about one job.
@@ -81,6 +82,8 @@ export async function send(lineId, body) {
     if (/not your booking/i.test(error.message)) {
       return { ok: false, says: 'This is not your booking.' }
     }
+    /* A message the server refused for what it contains (159). */
+    if (error.code === '22023') return { ok: false, says: parseServerError(error).says }
     return { ok: false, says: 'That did not send. Try once more.' }
   }
   return { ok: true, row: data }

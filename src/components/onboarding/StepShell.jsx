@@ -43,6 +43,13 @@ export default function StepShell({
   /* A step may put its own line under the header: "3 of 5 cuisines",
      "2 of 4 documents". Subordinate to the step counter above it. */
   subProgress = null,
+  /* Opt-in. A disabled button cannot be pressed, so on a step where a
+     required box has never been touched, Continue looked dead and no
+     message ever appeared. A step that passes `onBlocked` keeps the
+     button looking exactly as disabled, but a press runs onBlocked —
+     which reveals every error and moves to the first — instead of
+     doing nothing. Steps that do not pass it behave as before. */
+  onBlocked,
 }) {
   const navigate = useNavigate()
   const index = STEPS.findIndex(s => s.id === stepId)
@@ -91,11 +98,13 @@ export default function StepShell({
         <button
           type="button"
           data-cta="step-continue"
-          disabled={!canContinue || busy}
-          onClick={onContinue}
+          disabled={busy || (!canContinue && !onBlocked)}
+          aria-disabled={!canContinue || busy ? true : undefined}
+          data-blocked={!canContinue ? 'true' : undefined}
+          onClick={!canContinue && onBlocked ? onBlocked : onContinue}
           className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
                      bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold
-                     text-white transition active:scale-[0.99] disabled:opacity-40"
+                     text-white transition active:scale-[0.99] disabled:opacity-40 aria-disabled:opacity-40"
         >
           {busy && <Loader2 size={16} className="animate-spin" />}
           {cta}

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Building2, AlertCircle } from 'lucide-react'
+import { CheckedInput } from '../partner/FieldCheck'
 
 /**
  * What a hall actually costs, said before anybody books it.
@@ -65,7 +66,7 @@ const EXTRAS = [
   { id: 'ac_charge', label: 'Air conditioning', hint: 'Blank if the AC is in the rent.' },
 ]
 
-export default function VenueTerms({ value = {}, onChange }) {
+export default function VenueTerms({ value = {}, onChange, showAll = false }) {
   const set = (id, v) => onChange({ ...value, [id]: v || undefined })
   const named = EXTRAS.filter(e => String(value[e.id] ?? '').trim() !== '')
 
@@ -116,21 +117,24 @@ export default function VenueTerms({ value = {}, onChange }) {
                   })}
                 </div>
               ) : (
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   {f.kind === 'money' && (
                     <span className="font-serif text-[18px] font-extrabold text-ink">₹</span>
                   )}
-                  <input
+                  <CheckedInput
+                    field={f.kind === 'money' ? 'item_price' : 'exact_quantity'} name={'venue_' + f.id}
+                    showAll={showAll}
                     value={value[f.id] ?? ''}
-                    onChange={e => set(f.id, e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
+                    onChange={val => set(f.id, val)}
                     inputMode="numeric"
                     placeholder="—"
                     aria-label={f.label}
                     className="w-36 rounded-2xl bg-white px-3.5 py-2.5 text-[15px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
-                  />
-                  {f.suffix && (
-                    <span className="text-[13px] font-bold text-ink-mute">{f.suffix}</span>
-                  )}
+                  >
+                    {f.suffix && (
+                      <span className="text-[13px] font-bold text-ink-mute">{f.suffix}</span>
+                    )}
+                  </CheckedInput>
                 </div>
               )}
             </div>
@@ -155,14 +159,16 @@ export default function VenueTerms({ value = {}, onChange }) {
                 <span className="block text-[12.5px] font-extrabold leading-tight text-ink">{e.label}</span>
                 <span className="block text-[11px] leading-snug text-ink-mute">{e.hint}</span>
               </span>
-              <span className="flex shrink-0 items-center gap-1">
+              <span className="flex max-w-[60%] shrink-0 flex-wrap items-center justify-end gap-1">
                 <span className="font-serif text-[15px] font-extrabold text-ink">₹</span>
-                <input
+                <CheckedInput
+                  field="item_price" name={'venue_' + e.id} showAll={showAll}
                   value={value[e.id] ?? ''}
-                  onChange={e2 => set(e.id, e2.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
+                  onChange={val => set(e.id, val)}
                   inputMode="numeric"
                   placeholder="—"
                   aria-label={e.label}
+                  messageClassName="text-right"
                   className="w-24 rounded-xl bg-white px-3 py-2 text-center text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
                 />
               </span>
@@ -171,10 +177,12 @@ export default function VenueTerms({ value = {}, onChange }) {
         </div>
 
         <div className="relative mt-3">
-          <input
+          <CheckedInput
+            field="venue_note" name="venue_other_note" showAll={showAll}
             value={value.other_note ?? ''}
-            onChange={e => set('other_note', e.target.value)}
+            onChange={val => set('other_note', val)}
             placeholder="Anything else you charge — say it your way"
+            aria-label="Anything else you charge"
             className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-3.5 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
           />
         </div>

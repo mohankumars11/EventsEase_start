@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronRight, Search, Leaf, Drumstick, Flame } from 'lucide-react'
+import { CheckedInput } from '../partner/FieldCheck'
 import {
   KITCHEN_TYPES, cuisinesFor, regionsFor, coursesForCuisine, dietOf,
 } from '../../data/cateringFunnel'
@@ -354,7 +355,7 @@ const asDish = d => (typeof d === 'string'
 
 export function DishPickerStep({
   title, blurb, emoji, courses = [], chosen = [], onChange,
-  note = '', onNote, uploads, onUploads,
+  note = '', onNote, uploads, onUploads, showAll = false,
 }) {
   const [open, setOpen] = useState(null)
   const picked = new Set(chosen)
@@ -539,11 +540,13 @@ export function DishPickerStep({
             Type it here. A person reads these — if it belongs in the list, we
             add it, and every caterer after you gets to tick it.
           </p>
-          <textarea
+          <CheckedInput
+            as="textarea" field="catering_note" showAll={showAll}
             value={note}
-            onChange={e => onNote(e.target.value)}
+            onChange={onNote}
             rows={3}
             placeholder="Kaipuli gojju, uppu huli saaru, my grandmother's chutney pudi…"
+            aria-label="Your specialities"
             className="mt-2.5 w-full resize-y rounded-2xl bg-ink/[0.02] p-3 text-[13.5px] leading-relaxed text-ink ring-1 ring-ink/[0.08] placeholder:text-ink-mute"
           />
         </div>
@@ -568,7 +571,7 @@ export function DishPickerStep({
 
 /** One cuisine, its own courses, and nothing belonging to another. */
 export function CuisineDishStep({
-  cuisineId, kitchen, chosen, onChange, note, onNote, uploads, onUploads,
+  cuisineId, kitchen, chosen, onChange, note, onNote, uploads, onUploads, showAll,
   additions = [],
 }) {
   const cuisine = CUISINE_BY_ID[cuisineId]
@@ -605,6 +608,7 @@ export function CuisineDishStep({
       onChange={onChange}
       note={note}
       onNote={onNote}
+      showAll={showAll}
       uploads={uploads}
       onUploads={onUploads}
     />

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Send, Loader2, MessageSquare, Lock } from 'lucide-react'
 import { fetchThread, send, markRead, canWrite, subscribe } from '../../lib/lineChat'
+import { useFieldCheck, FieldMessage } from './FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * Talking to the customer, about this job.
@@ -49,6 +51,8 @@ export default function JobChat({
 }) {
   const [rows, setRows] = useState(initialRows ?? [])
   const [text, setText] = useState('')
+  const [showMsg, setShowMsg] = useState(false)
+  const msgCheck = useFieldCheck('chat_message', text.trim() ? text : '', { showAll: showMsg })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [writable, setWritable] = useState(initialCanWrite ?? false)
@@ -84,8 +88,12 @@ export default function JobChat({
 
   async function submit(e) {
     e?.preventDefault?.()
-    const body = text.trim()
+    const body = normalise('chat_message', text)
     if (!body || busy) return
+    /* Refused before it leaves, and said: maxLength used to cut a long
+       paste without a word, and a message is exactly where somebody
+       would not notice the end had gone. */
+    if (msgCheck.isError) { setShowMsg(true); return }
     setBusy(true); setError(null)
     const res = await send(lineId, body)
     setBusy(false)
@@ -154,15 +162,17 @@ export default function JobChat({
             ))}
           </div>
 
+          <FieldMessage check={msgCheck} className="mt-2" />
           <form onSubmit={submit} className="mt-2 flex items-end gap-2">
             <textarea
-              rows={1} value={text} maxLength={2000}
+              {...msgCheck.inputProps}
+              rows={1} value={text} aria-label="Message"
               onChange={e => setText(e.target.value)}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e) }
               }}
               placeholder="Write a message…"
-              className="min-h-[44px] w-full resize-none rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] text-ink ring-1 ring-ink/[0.08] placeholder:text-ink-mute focus:ring-2 focus:ring-plum-500"
+              className={'min-h-[44px] w-full resize-none rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] text-ink ring-1 ring-ink/[0.08] placeholder:text-ink-mute focus:ring-2 focus:ring-plum-500' + msgCheck.ring}
             />
             <button
               type="submit" disabled={busy || !text.trim()} aria-label="Send"

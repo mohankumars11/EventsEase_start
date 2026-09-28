@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import ValidatedField from '../../../components/partner/ValidatedField'
-import { validateField } from '../../../lib/validation/fieldRules'
+import { validateField, normalise, SEVERITY } from '../../../lib/validation/fieldRules'
+import { useServerErrors, focusFirstInvalid } from '../../../components/partner/FieldCheck'
+import { asFormError } from '../../../lib/validation/serverError'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Lock, Check } from 'lucide-react'
 import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
@@ -56,16 +58,22 @@ export default function BankPaymentsStep() {
      rule also knows a real code's bank prefix cannot be digits. A form
      whose button disagrees with its own error messages is a form that
      blocks somebody who has fixed everything it complained about. */
+  /* `validateField` has no `.ok`: it returns a severity. Reading
+     `.ok` made this false for every input, valid or not, so the save
+     below returned before writing anything. A warning ("one word — is
+     that exactly how it is printed?") does not block. */
+  const passes = (f, value) => validateField(f, value).severity !== SEVERITY.ERROR
   const ready = method === 'upi'
-    ? validateField('upi_id', upi).ok
-    : ['account_name', 'account_number', 'ifsc'].every((f, i) =>
-        validateField(f, [holder, number, ifsc][i]).ok)
+    ? passes('upi_id', upi)
+    : ['account_name', 'account_number', 'ifsc'].every((f, i) => passes(f, [holder, number, ifsc][i]))
+  const server = useServerErrors()
+  const reveal = () => { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0) }
 
   async function save() {
     if (!v?.id || busy) return
     /* Everything it has been holding back, said at once, rather than a
        button that will not move and no explanation of why. */
-    if (!ready) { setShowAll(true); return }
+    if (!ready) { reveal(); return }
     setBusy(true); setError(null)
     try {
       /* ── The column is `account_name` ────────────────────────────
@@ -78,21 +86,23 @@ export default function BankPaymentsStep() {
          along. Two forms writing one table, and only one of them was
          checked against the schema. */
       const row = method === 'upi'
-        ? { vendor_id: v.id, method: 'upi', upi_id: upi.trim(),
+        ? { vendor_id: v.id, method: 'upi', upi_id: normalise('upi_id', upi),
             account_name: null, account_number: null, ifsc: null }
         : {
             vendor_id: v.id, method: 'bank', upi_id: null,
-            account_name: holder.trim(),
-            account_number: number.trim(),
-            ifsc: ifsc.trim().toUpperCase(),
+            /* Stored the way the rules clean them, which is the form
+               migration 159 checks: digits only, IFSC upper case. */
+            account_name: normalise('account_name', holder),
+            account_number: normalise('account_number', number),
+            ifsc: normalise('ifsc', ifsc),
           }
       const { error: err } = await supabase
         .from('vendor_payout_details').upsert(row, { onConflict: 'vendor_id' })
-      if (err) throw err
+      if (err) throw asFormError(err)
       await refresh()
       navigate('/partner/setup/review')
     } catch (e) {
-      setError(e?.message ?? 'Could not save those details. Check them and try again.')
+      if (!server.take(e)) setError(e?.message ?? 'Could not save those details. Check them and try again.')
     } finally {
       setBusy(false)
     }
@@ -176,21 +186,24 @@ export default function BankPaymentsStep() {
            check-partner-input-rules' 162 assertions cover. */}
       {method === 'upi' ? (
         <ValidatedField
-          field="upi_id" value={upi} onChange={setUpi} showAll={showAll}
+          field="upi_id" value={upi} onChange={val => { server.clear('upi_id'); setUpi(val) }} showAll={showAll}
+          serverError={server.errors.upi_id}
           label="UPI ID" hint="The one you already receive money on."
           placeholder="yourname@okhdfcbank" autoComplete="off" />
       ) : (
         <>
           <ValidatedField
-            field="account_name" value={holder} onChange={setHolder} showAll={showAll}
+            field="account_name" value={holder} onChange={val => { server.clear('account_name'); setHolder(val) }} showAll={showAll}
+            serverError={server.errors.account_name}
             label="Account holder name" hint="Exactly as the bank has it."
             autoComplete="name" />
           <ValidatedField
-            field="account_number" value={number} onChange={setNumber} showAll={showAll}
+            field="account_number" value={number} onChange={val => { server.clear('account_number'); setNumber(val) }} showAll={showAll}
+            serverError={server.errors.account_number}
             label="Account number" inputMode="numeric" autoComplete="off" />
           <ValidatedField
-            field="ifsc" value={ifsc} onChange={v => setIfsc(String(v).toUpperCase())}
-            showAll={showAll} label="IFSC"
+            field="ifsc" value={ifsc} onChange={val => { server.clear('ifsc'); setIfsc(String(val).toUpperCase()) }}
+            showAll={showAll} label="IFSC" serverError={server.errors.ifsc}
             hint="Eleven characters, and the fifth is always a zero."
             placeholder="HDFC0001234" autoComplete="off" />
         </>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { CheckedInput, fails, focusFirstInvalid } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 import {
   ArrowLeft, Check, ChevronRight, Loader2, Send, X,
   UtensilsCrossed, Video, Flame,
@@ -27,7 +29,7 @@ import PriceGuidance from './PriceGuidance'
 import DistanceRates from './DistanceRates'
 import ListingSignature from './ListingSignature'
 import MenuDishStep from './MenuDishStep'
-import WorkUpload from './WorkUpload'
+import WorkUpload, { workItemsBad } from './WorkUpload'
 import { workPromptsFor } from '../../data/workPrompts'
 import { completeTrade } from '../../lib/tradeQueue'
 import { addWork } from '../../lib/partnerWork'
@@ -531,6 +533,28 @@ export default function AddItemFlow({
     ? completenessOf(questionScreens.find(x => x.id === step).groups, detail).missing
     : []
 
+  /* Every box on the price step and every typed answer, asked of its
+     rule. These boxes used to strip letters and cut digits as they were
+     typed, so nothing invalid could be entered and nothing needed
+     checking; they now keep what was typed, so the gate asks. */
+  const [showChecks, setShowChecks] = useState(false)
+  const typedBad = Object.entries(detail ?? {}).some(([k, val]) =>
+    typeof val === 'string' && (k.endsWith('__other') ? fails('other_choice', val) : false))
+    || (opsScreens ?? []).some(s => (s.groups ?? []).some(g => {
+      const val = detail?.[g.stateKey ?? g.id]
+      return g.exact && typeof val === 'string' && !(g.choices ?? []).some(c => c.id === val)
+        && fails('exact_quantity', val)
+    }))
+  const priceBad = fails('item_price', price) || fails('min_order', minOrder)
+    || Object.values(menuRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
+    || Object.values(distanceRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
+    || Object.entries(venueTerms ?? {}).some(([k, r]) =>
+         k === 'other_note' ? fails('venue_note', r) : fails('item_price', r == null ? '' : String(r)))
+  const workBad = workItemsBad(work)
+  const noteBad = fails('catering_note', dishNotes?.[step] ?? '')
+  const blockedHere = (step === 'price' && priceBad) || (step === 'work' && workBad)
+    || (step !== 'review' && step !== 'trade' && (typedBad || noteBad))
+
   const canAdvance = (
     step === 'trade' ? !!trade
     : step === 'offerings' ? picked.length > 0
@@ -681,9 +705,9 @@ export default function AddItemFlow({
          blob rebuilt from their answers — is. */
       if (isEdit) {
         await onUpdate(editing.id, {
-          price: price === '' ? null : Number(price),
+          price: normalise('item_price', price) === '' ? null : Number(normalise('item_price', price)),
           unit,
-          min_quantity: /^\d+$/.test(minOrder) ? Math.max(1, Number(minOrder)) : 1,
+          min_quantity: /^\d+$/.test(normalise('min_order', minOrder)) ? Math.max(1, Number(normalise('min_order', minOrder))) : 1,
           specs,
         })
         toast.success('Saved. Your changes are on the listing.')
@@ -696,12 +720,12 @@ export default function AddItemFlow({
           name: nameOf(id),
           category: trade,
           description: null,
-          price: price === '' ? null : Number(price),
+          price: normalise('item_price', price) === '' ? null : Number(normalise('item_price', price)),
           unit,
           /* A plain number becomes min_quantity, which coordinators and
              the quote engine already read. Anything else is a sentence
              and belongs with the other free text. */
-          min_quantity: /^\d+$/.test(minOrder) ? Math.max(1, Number(minOrder)) : 1,
+          min_quantity: /^\d+$/.test(normalise('min_order', minOrder)) ? Math.max(1, Number(normalise('min_order', minOrder))) : 1,
           lead_time_days: null,
           specs,
         })
@@ -821,7 +845,7 @@ export default function AddItemFlow({
           )}
 
           {step === 'detail' && (
-            <DetailStep groups={groups} value={detail} onChange={setDetail} />
+            <DetailStep groups={groups} value={detail} onChange={setDetail} showAll={showChecks} />
           )}
 
           {step === 'menus' && (
@@ -859,6 +883,7 @@ export default function AddItemFlow({
               onChange={setDishes}
               note={dishNotes[step] ?? ''}
               onNote={noteFor}
+              showAll={showChecks}
               uploads={uploads}
               onUploads={setUploads}
             />
@@ -874,6 +899,7 @@ export default function AddItemFlow({
               onChange={setDishes}
               note={dishNotes[step] ?? ''}
               onNote={noteFor}
+              showAll={showChecks}
               uploads={uploads}
               onUploads={setUploads}
             />
@@ -889,6 +915,7 @@ export default function AddItemFlow({
               onChange={setDishes}
               note={dishNotes[step] ?? ''}
               onNote={noteFor}
+              showAll={showChecks}
               uploads={uploads}
               onUploads={setUploads}
             />
@@ -899,6 +926,7 @@ export default function AddItemFlow({
               screen={opsScreens.find(x => x.id === step.slice(4))}
               value={detail}
               onChange={setDetail}
+              showAll={showChecks}
             />
           )}
 
@@ -907,7 +935,7 @@ export default function AddItemFlow({
           )}
 
           {step === 'work' && (
-            <WorkUpload value={work} onChange={setWork} trade={trade}
+            <WorkUpload value={work} onChange={setWork} trade={trade} showAll={showChecks}
               copy={workPromptsFor(trade)} />
           )}
 
@@ -932,6 +960,7 @@ export default function AddItemFlow({
               distanceRates={distanceRates} setDistanceRates={setDistanceRates}
               isVenue={trade === 'Venue'}
               venueTerms={venueTerms} setVenueTerms={setVenueTerms}
+              showAll={showChecks}
             />
           )}
 
@@ -978,7 +1007,10 @@ export default function AddItemFlow({
             <button
               type="button"
               disabled={!canAdvance || busy}
-              onClick={step === 'review' ? submit : goNext}
+              aria-disabled={blockedHere ? true : undefined}
+              onClick={blockedHere
+                ? () => { setShowChecks(true); setTimeout(() => focusFirstInvalid(), 0) }
+                : step === 'review' ? submit : goNext}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3.5 text-[15px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:opacity-40"
             >
               {busy && <Loader2 size={16} className="animate-spin" />}
@@ -1092,7 +1124,7 @@ function OfferingStep({ offerings, picked, alreadyHave, onToggle }) {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-export function DetailStep({ groups, value, onChange }) {
+export function DetailStep({ groups, value, onChange, showAll = false }) {
   /* The functional updater, not a spread of `value`.
      `value` is the prop from the last render, so two taps inside one
      React batch both build on the SAME object and the second silently
@@ -1171,13 +1203,17 @@ export function DetailStep({ groups, value, onChange }) {
               So the box says what it is doing. No extra button: adding
               one would imply the ticks need submitting too. */}
           <div className="relative mt-2.5">
-            <input
+            {/* Kept, checked, and "Saved" only when it is something a
+                customer can be shown: not a phone number, not a tag. */}
+            <CheckedInput
+              field="other_choice" name={'other_' + g.id} showAll={showAll}
               value={value[`${g.id}__other`] ?? ''}
-              onChange={e => setOther(g, e.target.value)}
+              onChange={val => (e => setOther(g, e.target.value))({ target: { value: val } })}
               placeholder="Something else? Type it here"
+              aria-label="Something else"
               className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
             />
-            {(value[`${g.id}__other`] ?? '').trim().length > 0 && (
+            {(value[`${g.id}__other`] ?? '').trim().length > 0 && !fails('other_choice', value[`${g.id}__other`]) && (
               <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
                 <Check size={10} /> Saved
               </span>
@@ -1362,7 +1398,7 @@ function MenuStep({ menus, chosen, counters, onToggleMenu, onAllMenus, onToggleC
    exist eight taps into a modal behind a partner session, and the
    exact-number field beside the chips is the sort of thing that has to
    be looked at rather than reasoned about. */
-export function OperationsStep({ screen, value, onChange }) {
+export function OperationsStep({ screen, value, onChange, showAll = false }) {
   if (!screen) return null
 
   /* Where this group's answer is kept.
@@ -1440,12 +1476,10 @@ export function OperationsStep({ screen, value, onChange }) {
               <span className="shrink-0 text-[12px] font-bold text-ink-mute">
                 {g.exact.label}
               </span>
-              <input
+              <CheckedInput
+                field="exact_quantity" name={'exact_' + keyOf(g)} showAll={showAll}
                 value={g.choices.some(c => c.id === value[keyOf(g)]) ? '' : (value[keyOf(g)] ?? '')}
-                onChange={e => {
-                  const n = e.target.value.replace(/\D/g, '').slice(0, 6)
-                  onChange(prev => ({ ...prev, [keyOf(g)]: n || undefined }))
-                }}
+                onChange={t => onChange(prev => ({ ...prev, [keyOf(g)]: t || undefined }))}
                 inputMode="numeric"
                 placeholder="—"
                 aria-label={`${g.question} — exact number`}
@@ -1459,16 +1493,20 @@ export function OperationsStep({ screen, value, onChange }) {
 
           {/* Every question takes what our list does not have. */}
           <div className="relative mt-2.5">
-            <input
+            {/* Kept, checked, and "Saved" only when it is something a
+                customer can be shown: not a phone number, not a tag. */}
+            <CheckedInput
+              field="other_choice" name={'other_' + keyOf(g)} showAll={showAll}
               value={value[`${keyOf(g)}__other`] ?? ''}
-              onChange={e => {
+              onChange={val => (e => {
                 const t = e.target.value
                 onChange(prev => ({ ...prev, [`${keyOf(g)}__other`]: t }))
-              }}
+              })({ target: { value: val } })}
               placeholder="Something else? Type it here"
+              aria-label="Something else"
               className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
             />
-            {(value[`${keyOf(g)}__other`] ?? '').trim().length > 0 && (
+            {(value[`${keyOf(g)}__other`] ?? '').trim().length > 0 && !fails('other_choice', value[`${keyOf(g)}__other`]) && (
               <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
                 <Check size={10} /> Saved
               </span>
@@ -1607,7 +1645,7 @@ function PriceStep({
   menus, price, setPrice, unit, setUnit, minOrder, setMinOrder,
   isCatering, menuRates, setMenuRates,
   chargesByDistance, distanceRates, setDistanceRates,
-  isVenue, venueTerms, setVenueTerms,
+  isVenue, venueTerms, setVenueTerms, showAll = false,
 }) {
   return (
     <div className="space-y-4">
@@ -1620,18 +1658,18 @@ function PriceStep({
           number — because being told after the first job is how a partner
           decides the platform was not straight with them. */}
       {isCatering && menus.length > 0 && (
-        <PriceGuidance menus={menus} rates={menuRates} onChange={setMenuRates} />
+        <PriceGuidance menus={menus} rates={menuRates} onChange={setMenuRates} showAll={showAll} />
       )}
 
       {/* A transporter's rate is four numbers, not one. See
           DistanceRates for why a single field could not hold it. */}
       {chargesByDistance && (
-        <DistanceRates rates={distanceRates} onChange={setDistanceRates} />
+        <DistanceRates rates={distanceRates} onChange={setDistanceRates} showAll={showAll} />
       )}
 
       {/* A rent, a deposit, and the six lines that usually turn up after
           the advance is paid. See VenueTerms. */}
-      {isVenue && <VenueTerms value={venueTerms} onChange={setVenueTerms} />}
+      {isVenue && <VenueTerms value={venueTerms} onChange={setVenueTerms} showAll={showAll} />}
 
       {/* ── The three objections, answered on the screen they surface ──
           What does it cost me, can I say no, and do I actually get paid.
@@ -1649,13 +1687,18 @@ function PriceStep({
             Leave it blank if you would rather quote each job. Nothing is
             shown to a customer until our team has checked it.
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-serif text-[20px] font-extrabold text-ink">₹</span>
-            <input
+            {/* Kept as typed. `replace(/\D/g,'').slice(0, 7)` turned
+                "4,50o" into 450 and a pasted 25000000 into 2500000, a
+                different price saved without a word. */}
+            <CheckedInput
+              field="item_price" showAll={showAll}
               value={price}
-              onChange={e => setPrice(e.target.value.replace(/\D/g, '').slice(0, 7))}
+              onChange={setPrice}
               inputMode="numeric"
               placeholder="450"
+              aria-label="Your price"
               className="min-w-0 flex-1 rounded-2xl bg-white px-4 py-3 text-[16px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
             />
           </div>
@@ -1710,13 +1753,15 @@ function PriceStep({
           })}
         </div>
         <div className="relative mt-2.5">
-          <input
+          <CheckedInput
+            field="min_order" showAll={showAll}
             value={/^\d*$/.test(minOrder) ? '' : minOrder}
-            onChange={e => setMinOrder(e.target.value)}
+            onChange={setMinOrder}
             placeholder="Or say it your way — “one function, any size”"
+            aria-label="Smallest order, in your words"
             className="w-full rounded-2xl bg-ink/[0.02] py-2.5 pl-3.5 pr-20 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
           />
-          {minOrder && !/^\d+$/.test(minOrder) && (
+          {minOrder && !/^\d+$/.test(minOrder) && !fails('min_order', minOrder) && (
             <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full bg-forest-50 px-2 py-1 text-[10.5px] font-extrabold text-forest-700">
               <Check size={10} /> Saved
             </span>

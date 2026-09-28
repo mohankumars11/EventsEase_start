@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { assessChange, LEVEL } from '../../lib/calendarAlerts'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote, MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange, Info } from 'lucide-react'
+import { useFieldCheck, FieldMessage, focusFirstInvalid, anyError } from './FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
+import { parseServerError } from '../../lib/validation/serverError'
 import {
   STATUS, dayStatus, hoursFor, hoursLabel, clockLabel, reasonLabel,
 } from '../../lib/availability'
@@ -110,6 +113,17 @@ export default function DayDetailSheet({
   const [from, setFrom] = useState(defaultHours[0]?.start ?? '09:00')
   const [to, setTo] = useState(defaultHours[0]?.end ?? '22:00')
 
+  /* Every box on the sheet, asked of its rule before a save. The slot
+     count used to be saved as `Math.max(1, Number(slots) || 1)` (so
+     "abc" became 1 and 20 went through past the ceiling of 12) and the
+     reason and note were cut at maxLength without a word. */
+  const [showAll, setShowAll] = useState(false)
+  const slotsCheck = useFieldCheck('daily_slots', String(slots ?? ''), { showAll })
+  const reasonCheck = useFieldCheck('reason_detail', reasonDetail, { showAll })
+  const noteCheck = useFieldCheck('availability_note', note, { showAll, ctx: { max: 200 } })
+  const fromCheck = useFieldCheck('time_from', from, { showAll })
+  const toCheck = useFieldCheck('time_to', to, { showAll, ctx: { time_from: from } })
+
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -187,15 +201,23 @@ export default function DayDetailSheet({
   async function save() {
     if (busy) return
     if (needsConfirm && !confirmBlock) { setConfirmBlock(true); return }
+    const inPlay = [
+      noteCheck,
+      status === 'LIMITED' && slotsCheck,
+      status === 'BLOCKED' && reason === 'other' && reasonCheck,
+      status !== 'BLOCKED' && customHours && fromCheck,
+      status !== 'BLOCKED' && customHours && toCheck,
+    ].filter(Boolean)
+    if (anyError(...inPlay)) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
 
     setBusy(true); setError(null); setSaved(false)
     try {
       await onSetDay(date, status, {
-        slots_total: status === 'LIMITED' ? Math.max(1, Number(slots) || 1) : null,
-        note: note.trim() || null,
+        slots_total: status === 'LIMITED' ? Number(normalise('daily_slots', String(slots))) : null,
+        note: normalise('availability_note', note) || null,
         reason: status === 'BLOCKED' ? reason : null,
         reason_detail: status === 'BLOCKED' && reason === 'other'
-          ? (reasonDetail.trim() || null) : null,
+          ? (normalise('reason_detail', reasonDetail) || null) : null,
         hours: customHours ? [{ start: from, end: to }] : null,
       })
       setSaved(true)
@@ -204,7 +226,8 @@ export default function DayDetailSheet({
          reopen it to check. */
       setTimeout(() => setSaved(false), 2200)
     } catch (err) {
-      setError(err?.message ?? 'That did not save. Your previous availability is still active.')
+      setError(err?.code ? parseServerError(err).says
+        : err?.message ?? 'That did not save. Your previous availability is still active.')
     } finally {
       setBusy(false)
     }
@@ -356,15 +379,16 @@ export default function DayDetailSheet({
               {status === 'LIMITED' && (
                 <Field label="Most jobs you will take that day">
                   <input
+                    {...slotsCheck.inputProps}
                     type="number" min="1" max="12" inputMode="numeric"
                     value={slots} onChange={e => setSlots(e.target.value)}
-                    className="w-full rounded-[14px] border-0 bg-ink/[0.04] px-3.5 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500"
+                    className={'w-full rounded-[14px] border-0 bg-ink/[0.04] px-3.5 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500' + slotsCheck.ring}
                   />
-              {slotsSays?.says && slotsSays.severity !== 'ok' && (
-                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
-                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
-                }`}>{slotsSays.says}</p>
-              )}
+                  {/* The rule speaks as soon as there is something to say
+                      (a warning above 6 included), as it did before. */}
+                  {slotsSays?.says && slotsSays.severity !== 'ok' && !slotsCheck.says
+                    ? <p className="mt-1 text-[11.5px] font-semibold leading-snug text-ink-mute">{slotsSays.says}</p>
+                    : <FieldMessage check={slotsCheck} />}
                   {jobsOnDay.length > 0 && (
                     <p className="mt-1 text-[11px] text-ink-mute">
                       {jobsOnDay.length} already confirmed. A limit below that will be raised to match.
@@ -388,11 +412,15 @@ export default function DayDetailSheet({
                     ))}
                   </div>
                   {reason === 'other' && (
-                    <input
-                      value={reasonDetail} onChange={e => setReasonDetail(e.target.value)}
-                      maxLength={60} placeholder="In your own words"
-                      className="mt-2 w-full rounded-[14px] border-0 bg-ink/[0.04] px-3.5 py-2.5 text-[13px] text-ink ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500"
-                    />
+                    <>
+                      <input
+                        {...reasonCheck.inputProps}
+                        value={reasonDetail} onChange={e => setReasonDetail(e.target.value)}
+                        placeholder="In your own words" aria-label="Reason, in your own words"
+                        className={'mt-2 w-full rounded-[14px] border-0 bg-ink/[0.04] px-3.5 py-2.5 text-[13px] text-ink ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500' + reasonCheck.ring}
+                      />
+                      <FieldMessage check={reasonCheck} />
+                    </>
                   )}
                 </Field>
               )}
@@ -410,15 +438,19 @@ export default function DayDetailSheet({
                   {customHours && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <input
+                        {...fromCheck.inputProps}
                         type="time" value={from} onChange={e => setFrom(e.target.value)}
                         aria-label="Start time"
-                        className="w-full rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08]"
+                        className={'w-full rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08]' + fromCheck.ring}
                       />
                       <input
+                        {...toCheck.inputProps}
                         type="time" value={to} onChange={e => setTo(e.target.value)}
                         aria-label="End time"
-                        className="w-full rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08]"
+                        className={'w-full rounded-[14px] border-0 bg-ink/[0.04] px-3 py-2.5 text-[13px] font-bold text-ink ring-1 ring-ink/[0.08]' + toCheck.ring}
                       />
+                      <FieldMessage check={fromCheck} className="col-span-2" />
+                      <FieldMessage check={toCheck} className="col-span-2" />
                     </div>
                   )}
                   {customHours && (
@@ -434,12 +466,14 @@ export default function DayDetailSheet({
                 <div className="flex items-start gap-2 rounded-[14px] bg-ink/[0.04] px-3 py-2.5 ring-1 ring-ink/[0.08] focus-within:ring-2 focus-within:ring-plum-500">
                   <StickyNote size={14} className="mt-0.5 shrink-0 text-ink-mute" />
                   <textarea
-                    rows={2} maxLength={200} value={note}
+                    {...noteCheck.inputProps}
+                    rows={2} value={note}
                     onChange={e => setNote(e.target.value)}
-                    placeholder="Only you see this."
+                    placeholder="Only you see this." aria-label="Private note"
                     className="w-full resize-none border-0 bg-transparent p-0 text-[13px] text-ink placeholder:text-ink-faint focus:ring-0"
                   />
                 </div>
+                <FieldMessage check={noteCheck} />
               </Field>
 
               {/* ── What blocking a date DOES ─────────────────────────

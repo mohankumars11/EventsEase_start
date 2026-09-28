@@ -3,6 +3,8 @@ import { Search, MapPin, Plus, Building2, Loader2, Check } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { VENUE_KINDS, searchUnclaimed, claimVenue, proposeVenue } from '../../lib/venues'
+import { CheckedInput, fails, focusFirstInvalid } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * How a venue manager tells us which building is theirs.
@@ -176,6 +178,9 @@ function ProposeVenue({ vendorId, name: initial, onCancel, onDone }) {
   const [locating, setLocating] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  /* The pincode was stripped to digits and cut at six on every keystroke,
+     so "5600 34a" became 560034 without a word. Kept, and checked. */
+  const [showAll, setShowAll] = useState(false)
 
   /* Standing at the venue is the easiest way to get its coordinates right,
      and a venue manager filling this in is very often standing in it. The
@@ -194,7 +199,9 @@ function ProposeVenue({ vendorId, name: initial, onCancel, onDone }) {
 
   async function submit(e) {
     e.preventDefault()
-    if (!form.name.trim()) { toast.error('Your venue needs a name.'); return }
+    if (fails('venue_name', form.name) || fails('venue_pincode', form.pincode)) {
+      setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return
+    }
     if (!form.area_label && !pin) { toast.error('Pick the area, or share your location.'); return }
 
     const area = BENGALURU_AREAS.find(a => a.name === form.area_label)
@@ -202,7 +209,12 @@ function ProposeVenue({ vendorId, name: initial, onCancel, onDone }) {
 
     setBusy(true)
     try {
-      await proposeVenue(vendorId, { ...form, lat: at?.lat, lng: at?.lng })
+      await proposeVenue(vendorId, {
+        ...form,
+        name: normalise('venue_name', form.name),
+        pincode: normalise('venue_pincode', form.pincode),
+        lat: at?.lat, lng: at?.lng,
+      })
       toast.success('Sent for checking. We will turn it on shortly.')
       onDone?.()
     } catch (err) {
@@ -222,10 +234,11 @@ function ProposeVenue({ vendorId, name: initial, onCancel, onDone }) {
       </div>
 
       <Field label="Venue name">
-        <input
+        <CheckedInput
+          field="venue_name" showAll={showAll}
           value={form.name}
-          onChange={e => set('name', e.target.value)}
-          placeholder="Sri Lakshmi Kalyana Mantapa"
+          onChange={v => set('name', v)}
+          placeholder="Sri Lakshmi Kalyana Mantapa" aria-label="Venue name"
           className="w-full rounded-2xl bg-white px-4 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
         />
       </Field>
@@ -288,11 +301,12 @@ function ProposeVenue({ vendorId, name: initial, onCancel, onDone }) {
       </button>
 
       <Field label="Pincode (optional)">
-        <input
+        <CheckedInput
+          field="venue_pincode" showAll={showAll}
           value={form.pincode}
-          onChange={e => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+          onChange={v => set('pincode', v)}
           inputMode="numeric"
-          placeholder="560034"
+          placeholder="560034" aria-label="Pincode"
           className="w-full rounded-2xl bg-white px-4 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
         />
       </Field>

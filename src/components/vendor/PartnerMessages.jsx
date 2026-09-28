@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Send, Loader2 } from 'lucide-react'
 import { fetchMessages, sendMessage } from '../../lib/partnerInbox'
+import { useFieldCheck, FieldMessage } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * A way to tell somebody at Sambramo that the gate is locked.
@@ -31,6 +33,8 @@ import { fetchMessages, sendMessage } from '../../lib/partnerInbox'
 export default function PartnerMessages({ vendorId, initialRows }) {
   const [rows, setRows] = useState(initialRows ?? [])
   const [text, setText] = useState('')
+  const [showMsg, setShowMsg] = useState(false)
+  const msgCheck = useFieldCheck('partner_message', text.trim() ? text : '', { showAll: showMsg })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const endRef = useRef(null)
@@ -42,8 +46,9 @@ export default function PartnerMessages({ vendorId, initialRows }) {
   }, [rows.length])
 
   async function send() {
-    const body = text.trim()
+    const body = normalise('partner_message', text)
     if (!body || busy) return
+    if (msgCheck.isError) { setShowMsg(true); return }
     setBusy(true); setError(null)
     const res = await sendMessage(vendorId, body)
     setBusy(false)
@@ -88,14 +93,15 @@ export default function PartnerMessages({ vendorId, initialRows }) {
         </ul>
       )}
 
+      <FieldMessage check={msgCheck} className="mb-2" />
       <div className="flex items-end gap-2">
         <textarea
+          {...msgCheck.inputProps}
           value={text}
           onChange={e => setText(e.target.value)}
           rows={2}
-          maxLength={4000}
-          placeholder="What has happened?"
-          className="min-w-0 flex-1 resize-none rounded-[16px] bg-white px-3.5 py-2.5 text-[13px] leading-snug text-ink ring-1 ring-ink/[0.12] placeholder:text-ink-mute focus:outline-none focus:ring-2 focus:ring-plum-400"
+          placeholder="What has happened?" aria-label="Message"
+          className={'min-w-0 flex-1 resize-none rounded-[16px] bg-white px-3.5 py-2.5 text-[13px] leading-snug text-ink ring-1 ring-ink/[0.12] placeholder:text-ink-mute focus:outline-none focus:ring-2 focus:ring-plum-400' + msgCheck.ring}
         />
         <button
           type="button"

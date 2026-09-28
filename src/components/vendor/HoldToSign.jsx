@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useFieldCheck, FieldMessage } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * Hold for a second to sign. The mechanic, on its own.
@@ -49,7 +51,10 @@ export default function HoldToSign({
   const started = useRef(0)
 
   const signed = !!value?.signed_at
-  const ready = name.trim().length >= 2
+  /* The same person-name rule as everywhere else: no digits, no code,
+     at most 80 characters, said rather than silently cut. */
+  const nameCheck = useFieldCheck('signature_name', name, { name: 'signature_name' })
+  const ready = name.trim().length >= 2 && !nameCheck.isError
 
   /* Editing the name after signing un-signs it — otherwise somebody
      could sign as one person and submit as another, which is the one
@@ -71,7 +76,7 @@ export default function HoldToSign({
     if (p >= 1) {
       stop()
       onChange({
-        name: name.trim(),
+        name: normalise('signature_name', name),
         signed_at: new Date().toISOString(),
         method: 'hold',
         ...(extra ?? {}),
@@ -97,12 +102,14 @@ export default function HoldToSign({
       <label className="block">
         <span className="block text-[12.5px] font-extrabold text-ink">{label}</span>
         <input
+          {...nameCheck.inputProps}
           value={name}
-          onChange={e => setName(e.target.value.slice(0, 80))}
+          onChange={e => setName(e.target.value)}
           placeholder={placeholder}
           autoComplete="name"
-          className="mt-1.5 w-full rounded-2xl bg-white px-3.5 py-3 text-[15px] font-bold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
+          className={'mt-1.5 w-full rounded-2xl bg-white px-3.5 py-3 text-[15px] font-bold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute' + nameCheck.ring}
         />
+        <FieldMessage check={nameCheck} />
       </label>
 
       {signed ? (

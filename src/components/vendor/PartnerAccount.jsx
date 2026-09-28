@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PARTNER_TERMS_VERSION, PARTNER_TERMS_LONG } from '../../config/partnerTerms'
 import ValidatedField from '../partner/ValidatedField'
 import BuildStamp from '../partner/BuildStamp'
+import { validateForm, normalise } from '../../lib/validation/fieldRules'
+import { useServerErrors, focusFirstInvalid, useFieldCheck, FieldMessage } from '../partner/FieldCheck'
+import { asFormError, parseServerError } from '../../lib/validation/serverError'
 import {
   Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck, ClipboardList,
   Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
@@ -355,7 +358,7 @@ export default function PartnerAccount({
           profile={profile}
           onSaved={async patch => {
             const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
-            if (error) throw new Error(error.message)
+            if (error) throw asFormError(error)
             await fetchProfile(user.id)
           }}
         />
@@ -779,6 +782,24 @@ function useDirtyForm(initial) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(null)
+  /* Every More section saves through this, so the rules are taught
+     once: `gate` asks each field's rule and, on a refusal, shows every
+     message and moves to the first; `fail` puts a server refusal under
+     its box and anything else in the section's own line, never as raw
+     Postgres text. */
+  const [showAll, setShowAll] = useState(false)
+  const server = useServerErrors()
+  const gate = entries => {
+    const r = validateForm(entries)
+    if (r.canSave) return true
+    setShowAll(true)
+    setTimeout(() => focusFirstInvalid(), 0)
+    return false
+  }
+  const fail = e => {
+    if (server.take(e)) return
+    setError(e?.code ? parseServerError(e).says : (e?.message ?? 'That did not save.'))
+  }
 
   const key = JSON.stringify(initial)
   useEffect(() => { setForm(initial); setSaved(false) }, [key])   // eslint-disable-line react-hooks/exhaustive-deps
@@ -792,6 +813,8 @@ function useDirtyForm(initial) {
     setForm(f => ({ ...f, [k]: v }))
     setSaved(false)
     setError(null)
+    server.reset()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const reset = useCallback(() => {
@@ -850,25 +873,37 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
   }), [vendor])
 
   const f = useDirtyForm(initial)
+  /* A select cannot hold a wrong value from the screen, but a crafted
+     request can, and the server refuses one (159). Said here if so. */
+  const trade = useFieldCheck('trade_name', f.form.category, {
+    showAll: f.showAll, serverError: f.server.errors.trade_name, name: 'category' })
 
   async function save() {
-    if (!f.form.business_name.trim()) { f.setError('Your business needs a name.'); return }
+    if (!f.gate({
+      business_name:  { field: 'business_name', value: f.form.business_name },
+      category:       { field: 'trade_name', value: f.form.category },
+      description:    { field: 'description', value: f.form.description },
+      years_active:   { field: 'years_active', value: f.form.years_experience },
+      starting_price: { field: 'starting_price', value: f.form.starting_price },
+    })) return
     if (f.form.description.trim() && f.form.description.trim().length < 30) {
       f.setError('A description under 30 characters tells a customer nothing. Add a line or two.')
       return
     }
     f.setSaving(true); f.setError(null)
     try {
+      const years = normalise('years_active', f.form.years_experience)
+      const price = normalise('starting_price', f.form.starting_price)
       await onUpdateVendor({
-        business_name:    f.form.business_name.trim(),
+        business_name:    normalise('business_name', f.form.business_name),
         category:         f.form.category || null,
-        description:      f.form.description.trim() || null,
-        years_experience: f.form.years_experience === '' ? null : Number(f.form.years_experience),
-        starting_price:   f.form.starting_price === '' ? null : Number(f.form.starting_price),
+        description:      normalise('description', f.form.description) || null,
+        years_experience: years === '' ? null : Number(years),
+        starting_price:   price === '' ? null : Number(price),
       })
       f.setSaved(true)
     } catch (e) {
-      f.setError(e.message)
+      f.fail(e)
     } finally {
       f.setSaving(false)
     }
@@ -891,14 +926,16 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
              of them silent. */}
         <ValidatedField
           field="business_name" value={f.form.business_name}
+            showAll={f.showAll} serverError={f.server.errors.business_name}
           onChange={v => f.set('business_name', v)}
           label="Business name" />
 
         <Field label="Your trade" htmlFor="ba-cat" hint="This decides which jobs we send you.">
-          <select id="ba-cat" className="input" value={f.form.category} onChange={e => f.set('category', e.target.value)}>
+          <select {...trade.inputProps} id="ba-cat" className={'input' + trade.ring} value={f.form.category} onChange={e => f.set('category', e.target.value)}>
             <option value="">Choose your trade…</option>
             {VENDOR_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+          <FieldMessage check={trade} />
         </Field>
 
         <Field
@@ -907,7 +944,8 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
           hint={`${f.form.description.length}/300 · this is what a customer reads before they book you.`}
         >
           <ValidatedField
-            field="description" value={f.form.description} multiline rows={4}
+            field="description" value={f.form.description}
+            showAll={f.showAll} serverError={f.server.errors.description} multiline rows={4}
             onChange={v => f.set('description', v)} label=" " />
         </Field>
 
@@ -916,11 +954,13 @@ function BusinessDetails({ vendor, onUpdateVendor }) {
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Years in the trade" htmlFor="ba-yrs">
             <ValidatedField
-              field="years_active" value={f.form.years_experience} inputMode="numeric"
+              field="years_active" value={f.form.years_experience}
+            showAll={f.showAll} serverError={f.server.errors.years_active} inputMode="numeric"
               onChange={v => f.set('years_experience', v)} label=" " />
           </Field>
           <ValidatedField
-            field="starting_price" value={f.form.starting_price} inputMode="numeric"
+            field="starting_price" value={f.form.starting_price}
+            showAll={f.showAll} serverError={f.server.errors.starting_price} inputMode="numeric"
             onChange={v => f.set('starting_price', String(v).replace(/\D/g, '').slice(0, 7))}
             label="Starting price ₹" />
         </div>
@@ -992,7 +1032,7 @@ function ReachDetails({ vendor, onUpdateVendor }) {
   }
 
   async function save() {
-    const pin = f.form.pincode.trim()
+    const pin = normalise('pincode', f.form.pincode)
     const pinChanged = pin !== (vendor?.pincode ?? '')
 
     /* ── Only validated when it CHANGED ────────────────────────────
@@ -1002,10 +1042,13 @@ function ReachDetails({ vendor, onUpdateVendor }) {
        by a field they had not touched and were not being asked about.
        The radius is the single most important number on this form and
        it was gated behind an unrelated one. */
-    if (pinChanged && !/^[1-9][0-9]{5}$/.test(pin)) {
-      f.setError('That is not a valid six-digit pincode.')
-      return
-    }
+    /* Still only when it CHANGED (see above); now the same rule as
+       everywhere else, so "56OOO1" is told about the letter O. */
+    if (!f.gate({
+      ...(pinChanged ? { pincode: { field: 'pincode', value: f.form.pincode } } : {}),
+      area:           { field: 'area', value: f.form.area },
+      daily_capacity: { field: 'daily_capacity', value: f.form.daily_capacity },
+    })) return
 
     f.setSaving(true); f.setError(null)
     try {
@@ -1064,14 +1107,18 @@ function ReachDetails({ vendor, onUpdateVendor }) {
          city `set_partner_location` just wrote arrive with it. Refetching
          the whole account instead would blank the dashboard and collapse
          every fold on the tab for one changed field. */
+      /* daily_capacity was clamped here: "0" and "abc" were saved as 1
+         and 20 went through, although the rule's ceiling is 12. It is
+         checked above and saved as typed. */
+      const cap = normalise('daily_capacity', f.form.daily_capacity)
       await onUpdateVendor({
-        area:              f.form.area.trim() || null,
+        area:              normalise('area', f.form.area) || null,
         service_radius_km: Math.min(200, Math.max(1, Number(f.form.service_radius_km) || 10)),
-        daily_capacity:    Math.min(50, Math.max(1, Number(f.form.daily_capacity) || 1)),
+        daily_capacity:    cap === '' ? 1 : Number(cap),
       })
       f.setSaved(true)
     } catch (e) {
-      f.setError(e.message)
+      f.fail(e)
     } finally {
       f.setSaving(false)
     }
@@ -1106,10 +1153,12 @@ function ReachDetails({ vendor, onUpdateVendor }) {
 
         <div className="grid grid-cols-2 gap-2.5">
           <ValidatedField
-            field="pincode" value={f.form.pincode} inputMode="numeric"
+            field="pincode" value={f.form.pincode}
+            showAll={f.showAll} serverError={f.server.errors.pincode} inputMode="numeric"
             onChange={v => f.set('pincode', v)} label="Pincode" />
           <ValidatedField
-            field="area" value={f.form.area} placeholder="Jayanagar"
+            field="area" value={f.form.area}
+            showAll={f.showAll} serverError={f.server.errors.area} placeholder="Jayanagar"
             onChange={v => f.set('area', v)}
             label="Area" />
         </div>
@@ -1153,7 +1202,8 @@ function ReachDetails({ vendor, onUpdateVendor }) {
         </Field>
 
         <ValidatedField
-          field="daily_capacity" value={f.form.daily_capacity} inputMode="numeric"
+          field="daily_capacity" value={f.form.daily_capacity}
+            showAll={f.showAll} serverError={f.server.errors.daily_capacity} inputMode="numeric"
           onChange={v => f.set('daily_capacity', String(v).replace(/\D/g, '').slice(0, 2))}
           label="Jobs you can take in one day"
           hint="One decorator with one van is not two decorators. We will not offer you more than this on any one date." />
@@ -1185,20 +1235,23 @@ function ContactDetails({ vendor, onUpdateVendor }) {
 
   async function save() {
     const ten = v => v.replace(/\D/g, '').slice(-10)
-    if (f.form.contact_phone && ten(f.form.contact_phone).length !== 10) {
-      f.setError('An Indian mobile number is ten digits.'); return
-    }
+    if (!f.gate({
+      contact_phone:  { field: 'contact_phone', value: f.form.contact_phone },
+      whatsapp_phone: { field: 'whatsapp_phone', value: f.form.whatsapp_phone },
+      website_url:    { field: 'website_url', value: f.form.website_url },
+      instagram_url:  { field: 'instagram_url', value: f.form.instagram_url },
+    })) return
     f.setSaving(true); f.setError(null)
     try {
       await onUpdateVendor({
-        contact_phone:  f.form.contact_phone.trim() || null,
-        whatsapp_phone: f.form.whatsapp_phone.trim() || null,
-        website_url:    f.form.website_url.trim() || null,
-        instagram_url:  f.form.instagram_url.trim() || null,
+        contact_phone:  normalise('contact_phone', f.form.contact_phone) || null,
+        whatsapp_phone: normalise('whatsapp_phone', f.form.whatsapp_phone) || null,
+        website_url:    normalise('website_url', f.form.website_url) || null,
+        instagram_url:  normalise('instagram_url', f.form.instagram_url) || null,
       })
       f.setSaved(true)
     } catch (e) {
-      f.setError(e.message)
+      f.fail(e)
     } finally {
       f.setSaving(false)
     }
@@ -1217,7 +1270,8 @@ function ContactDetails({ vendor, onUpdateVendor }) {
           hint="What a customer rings on the day. Leave it empty and we use your sign-in number."
         >
           <ValidatedField
-            field="contact_phone" value={f.form.contact_phone} inputMode="tel"
+            field="contact_phone" value={f.form.contact_phone}
+            showAll={f.showAll} serverError={f.server.errors.contact_phone} inputMode="tel"
             onChange={v => f.set('contact_phone', v)} label=" " />
         </Field>
         <Field label="WhatsApp number" htmlFor="cd-wa" hint="Only if it is different from the number above.">
@@ -1225,16 +1279,19 @@ function ContactDetails({ vendor, onUpdateVendor }) {
               phone number, and a partner who mistypes one here is
               unreachable in exactly the same way. */}
           <ValidatedField
-            field="contact_phone" value={f.form.whatsapp_phone} inputMode="tel"
+            field="whatsapp_phone" value={f.form.whatsapp_phone}
+            showAll={f.showAll} serverError={f.server.errors.whatsapp_phone} inputMode="tel"
             onChange={v => f.set('whatsapp_phone', v)} label=" " />
         </Field>
         <ValidatedField
-          field="website_url" value={f.form.website_url} inputMode="url"
+          field="website_url" value={f.form.website_url}
+            showAll={f.showAll} serverError={f.server.errors.website_url} inputMode="url"
           placeholder="https://" onChange={v => f.set('website_url', v)}
           label="Website" />
         <Field label="Instagram" htmlFor="cd-ig" hint="Your work is your sales pitch. A live page is worth more than a description.">
           <ValidatedField
-            field="instagram_url" value={f.form.instagram_url} inputMode="url"
+            field="instagram_url" value={f.form.instagram_url}
+            showAll={f.showAll} serverError={f.server.errors.instagram_url} inputMode="url"
             onChange={v => f.set('instagram_url', v)} label=" "
             placeholder="https://instagram.com/…" />
         </Field>
@@ -1257,13 +1314,16 @@ function OwnerDetails({ profile, onSaved }) {
   const f = useDirtyForm(initial)
 
   async function save() {
-    if (!f.form.full_name.trim()) { f.setError('We need a name to put on your account.'); return }
+    if (!f.gate({
+      full_name:   { field: 'full_name', value: f.form.full_name },
+      owner_phone: { field: 'owner_phone', value: f.form.phone },
+    })) return
     f.setSaving(true); f.setError(null)
     try {
-      await onSaved({ full_name: f.form.full_name.trim(), phone: f.form.phone.trim() || null })
+      await onSaved({ full_name: normalise('full_name', f.form.full_name), phone: normalise('owner_phone', f.form.phone) || null })
       f.setSaved(true)
     } catch (e) {
-      f.setError(e.message)
+      f.fail(e)
     } finally {
       f.setSaving(false)
     }
@@ -1273,11 +1333,13 @@ function OwnerDetails({ profile, onSaved }) {
     <Fold icon={UserRound} title="Your details" summary={profile?.full_name ?? profile?.email ?? 'Signed in'}>
       <div className="space-y-3.5">
         <ValidatedField
-          field="account_name" value={f.form.full_name}
+          field="full_name" value={f.form.full_name}
+            showAll={f.showAll} serverError={f.server.errors.full_name}
           onChange={v => f.set('full_name', v)}
           label="Your name" autoComplete="name" />
         <ValidatedField
-          field="contact_phone" value={f.form.phone} inputMode="tel"
+          field="owner_phone" value={f.form.phone}
+            showAll={f.showAll} serverError={f.server.errors.owner_phone} inputMode="tel"
           onChange={v => f.set('phone', v)}
           label="Your phone" autoComplete="tel" />
 
@@ -1394,15 +1456,18 @@ function DangerZone({ vendor, onUpdateVendor, onSignOut }) {
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [showReason, setShowReason] = useState(false)
+  const reasonCheck = useFieldCheck('closure_reason', reason, { showAll: showReason })
 
   const alreadyAsked = !!vendor?.closure_requested_at
 
   async function requestClosure() {
+    if (reasonCheck.isError) { setShowReason(true); setTimeout(() => focusFirstInvalid(), 0); return }
     setBusy(true); setError(null)
     try {
       await onUpdateVendor({
         closure_requested_at: new Date().toISOString(),
-        closure_reason: reason.trim() || null,
+        closure_reason: normalise('closure_reason', reason) || null,
       })
       setAsking(false)
     } catch (e) {
@@ -1410,7 +1475,7 @@ function DangerZone({ vendor, onUpdateVendor, onSignOut }) {
          instead of showing a Postgres error to a decorator. */
       setError(/column|schema cache/i.test(e.message ?? '')
         ? `Message us on WhatsApp (${BRAND.whatsappNumber}) and we will close it for you.`
-        : e.message)
+        : e?.code ? parseServerError(e).says : e.message)
     } finally {
       setBusy(false)
     }
@@ -1442,10 +1507,12 @@ function DangerZone({ vendor, onUpdateVendor, onSignOut }) {
               Why are you leaving? <span className="font-semibold text-rose-900/60">(optional)</span>
             </label>
             <textarea
-              id="dz-reason" rows={2} className="input resize-none"
+              {...reasonCheck.inputProps}
+              id="dz-reason" rows={2} className={'input resize-none' + reasonCheck.ring}
               placeholder="Not enough work, moving city, taking a break…"
               value={reason} onChange={e => setReason(e.target.value)}
             />
+            <FieldMessage check={reasonCheck} />
             {error && <p className="mt-2 text-[12px] font-bold text-rose-700">{error}</p>}
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={() => setAsking(false)} className="btn-secondary flex-[2]">

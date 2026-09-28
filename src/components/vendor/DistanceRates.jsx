@@ -1,5 +1,6 @@
 import React from 'react'
 import { Truck } from 'lucide-react'
+import { CheckedInput } from '../partner/FieldCheck'
 
 /**
  * The four numbers a transporter actually quotes.
@@ -65,7 +66,7 @@ const FIELDS = [
   },
 ]
 
-export default function DistanceRates({ rates = {}, onChange }) {
+export default function DistanceRates({ rates = {}, onChange, showAll = false }) {
   const set = (id, v) => onChange({ ...rates, [id]: v || undefined })
 
   return (
@@ -115,22 +116,24 @@ export default function DistanceRates({ rates = {}, onChange }) {
             {/* The typed number and the chips are ONE value, for the same
                 reason the ops screens work that way: two answers to one
                 question, both lit, and no way to know which we kept. */}
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-[12px] font-bold text-ink-mute">Or exact</span>
               {f.prefix && (
                 <span className="font-serif text-[16px] font-extrabold text-ink">{f.prefix}</span>
               )}
-              <input
+              <CheckedInput
+                field="rate_amount" name={'distance_' + f.id} showAll={showAll}
                 value={f.presets.includes(rates[f.id]) ? '' : (rates[f.id] ?? '')}
-                onChange={e => set(f.id, e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                onChange={val => set(f.id, val)}
                 inputMode="numeric"
                 placeholder="—"
                 aria-label={f.label}
                 className="w-24 rounded-xl bg-white px-3 py-2 text-center text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
-              />
-              {f.suffix && (
-                <span className="text-[12px] font-bold text-ink-mute">{f.suffix}</span>
-              )}
+              >
+                {f.suffix && (
+                  <span className="text-[12px] font-bold text-ink-mute">{f.suffix}</span>
+                )}
+              </CheckedInput>
             </div>
           </label>
         ))}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { X, Loader2, Check, Repeat } from 'lucide-react'
 import { istTodayISO } from '../../lib/istTime'
+import { CheckedInput, fails, focusFirstInvalid } from './FieldCheck'
 
 /**
  * The week a partner works, as a standing rule.
@@ -79,6 +80,7 @@ export default function RecurringAvailability({
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
 
+  const [showAll, setShowAll] = useState(false)
   const patch = (weekday, next) =>
     setRows(rs => rs.map(r => (r.weekday === weekday ? { ...r, ...next } : r)))
 
@@ -86,6 +88,13 @@ export default function RecurringAvailability({
 
   async function save() {
     if (busy) return
+    /* The same checks the day sheet makes: a real time, an end that is
+       not the start, dates that are not in the past or back to front. */
+    const hoursBad = customHours && rows.some(r => r.is_available
+      && (fails('time_from', r.start_time) || fails('time_to', r.end_time, { time_from: r.start_time })))
+    if (hoursBad || fails('date_from', from, { today }) || fails('date_to', until, { date_from: from })) {
+      setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return
+    }
     setBusy(true); setError(null)
     try {
       await onSave(rows.map(r => ({
@@ -155,12 +164,15 @@ export default function RecurringAvailability({
                 </div>
                 {customHours && r.is_available && (
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <input type="time" value={r.start_time} aria-label={`${r.label} start`}
-                           onChange={e => patch(r.weekday, { start_time: e.target.value })}
-                           className={timeClass} />
-                    <input type="time" value={r.end_time} aria-label={`${r.label} end`}
-                           onChange={e => patch(r.weekday, { end_time: e.target.value })}
-                           className={timeClass} />
+                    <CheckedInput field="time_from" name={'start_' + r.weekday} showAll={showAll}
+                           type="time" value={r.start_time} aria-label={`${r.label} start`}
+                           onChange={val => patch(r.weekday, { start_time: val })}
+                           className={timeClass} messageClassName="col-span-2" />
+                    <CheckedInput field="time_to" name={'end_' + r.weekday} showAll={showAll}
+                           ctx={{ time_from: r.start_time }}
+                           type="time" value={r.end_time} aria-label={`${r.label} end`}
+                           onChange={val => patch(r.weekday, { end_time: val })}
+                           className={timeClass} messageClassName="col-span-2" />
                   </div>
                 )}
               </li>
@@ -176,12 +188,14 @@ export default function RecurringAvailability({
 
           <div className="grid grid-cols-2 gap-2">
             <Field label="Starting">
-              <input type="date" value={from} min={today}
-                     onChange={e => setFrom(e.target.value)} className={inputClass} />
+              <CheckedInput field="date_from" name="week_from" showAll={showAll} ctx={{ today }}
+                     type="date" value={from} min={today} aria-label="Starting"
+                     onChange={setFrom} className={inputClass} />
             </Field>
             <Field label="Until" hint="optional">
-              <input type="date" value={until} min={from}
-                     onChange={e => setUntil(e.target.value)} className={inputClass} />
+              <CheckedInput field="date_to" name="week_until" showAll={showAll} ctx={{ date_from: from }}
+                     type="date" value={until} min={from} aria-label="Until"
+                     onChange={setUntil} className={inputClass} />
             </Field>
           </div>
           <p className="text-[11px] leading-snug text-ink-mute">

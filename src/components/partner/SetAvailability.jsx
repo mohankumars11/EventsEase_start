@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { Loader2, CalendarCheck, CalendarX2, CalendarClock } from 'lucide-react'
+import { useFieldCheck, FieldMessage, focusFirstInvalid, anyError } from './FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
+import { parseServerError } from '../../lib/validation/serverError'
 
 /**
  * Set availability — one date, or a run of them.
@@ -82,6 +85,14 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
+  /* Saved as `Number(slots) || 1` and cut at maxLength before; asked
+     of the rules now, as the calendar's other sheets are. */
+  const [showAll, setShowAll] = useState(false)
+  const fromCheck = useFieldCheck('date_from', from, { showAll, ctx: { today: todayKey } })
+  const toCheck = useFieldCheck('date_to', to, { showAll, ctx: { date_from: from, required: mode === 'range' } })
+  const slotsCheck = useFieldCheck('daily_slots', String(slots ?? ''), { showAll })
+  const noteCheck = useFieldCheck('availability_note', note, { showAll, ctx: { max: 120 } })
+
   /* Inclusive of both ends, and capped. A typo in a date field can ask
      for four thousand rows; ninety days is longer than anyone plans a
      decorating business and short enough to be one write. */
@@ -98,19 +109,22 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
   })()
 
   async function save() {
-    if (!days.length || busy) return
+    if (busy) return
+    const inPlay = [fromCheck, mode === 'range' && toCheck, status === 'LIMITED' && slotsCheck, noteCheck].filter(Boolean)
+    if (anyError(...inPlay)) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
+    if (!days.length) return
     setBusy(true); setError(null)
     const extra = {
-      slots_total: status === 'LIMITED' ? Number(slots) || 1 : null,
+      slots_total: status === 'LIMITED' ? Number(normalise('daily_slots', String(slots))) : null,
       slots_booked: 0,
-      note: note.trim() || null,
+      note: normalise('availability_note', note) || null,
     }
     try {
       if (days.length === 1) await onSetDay(days[0], status, extra)
       else await onSetRange(days, status, extra)
       onDone?.()
     } catch (err) {
-      setError(err?.message ?? 'That did not save.')
+      setError(err?.code ? parseServerError(err).says : err?.message ?? 'That did not save.')
     } finally {
       setBusy(false)
     }
@@ -133,15 +147,17 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
 
       <div className={mode === 'range' ? 'grid grid-cols-2 gap-2' : ''}>
         <Field label={mode === 'range' ? 'From' : 'Date'}>
-          <input type="date" value={from} min={todayKey}
+          <input {...fromCheck.inputProps} type="date" value={from} min={todayKey}
                  onChange={e => { setFrom(e.target.value); if (mode === 'single') setTo(e.target.value) }}
-                 className="w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.12]" />
+                 className={'w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.12]' + fromCheck.ring} />
+          <FieldMessage check={fromCheck} />
         </Field>
         {mode === 'range' && (
           <Field label="To">
-            <input type="date" value={to} min={from}
+            <input {...toCheck.inputProps} type="date" value={to} min={from}
                    onChange={e => setTo(e.target.value)}
-                   className="w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.12]" />
+                   className={'w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.12]' + toCheck.ring} />
+            <FieldMessage check={toCheck} />
           </Field>
         )}
       </div>
@@ -176,28 +192,27 @@ export default function SetAvailability({ date, availability, onSetDay, onSetRan
 
       {status === 'LIMITED' && (
         <Field label="How many jobs will you take?" hint="Offers stop once this many are booked.">
-          <input type="number" min={1} max={12} inputMode="numeric" value={slots}
+          <input {...slotsCheck.inputProps} type="number" min={1} max={12} inputMode="numeric" value={slots}
                  onChange={e => setSlots(e.target.value)}
-                 className="w-24 rounded-2xl bg-white px-3.5 py-3 text-[14px] font-extrabold tabular-nums text-ink ring-1 ring-ink/[0.12]" />
-              {slotsSays?.says && slotsSays.severity !== 'ok' && (
-                <p className={`mt-1 text-[11.5px] font-semibold leading-snug ${
-                  slotsSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
-                }`}>{slotsSays.says}</p>
-              )}
+                 className={'w-24 rounded-2xl bg-white px-3.5 py-3 text-[14px] font-extrabold tabular-nums text-ink ring-1 ring-ink/[0.12]' + slotsCheck.ring} />
+              {slotsSays?.says && slotsSays.severity !== 'ok' && !slotsCheck.says
+                ? <p className="mt-1 text-[11.5px] font-semibold leading-snug text-ink-mute">{slotsSays.says}</p>
+                : <FieldMessage check={slotsCheck} />}
         </Field>
       )}
 
       <Field label="Note" hint="For you only. Customers never see it.">
-        <input type="text" value={note} maxLength={120}
+        <input {...noteCheck.inputProps} type="text" value={note}
                onChange={e => setNote(e.target.value)}
-               placeholder="Wedding in the family"
-               className="w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] text-ink ring-1 ring-ink/[0.12] placeholder:text-ink-mute" />
+               placeholder="Wedding in the family" aria-label="Note"
+               className={'w-full rounded-2xl bg-white px-3.5 py-3 text-[14px] text-ink ring-1 ring-ink/[0.12] placeholder:text-ink-mute' + noteCheck.ring} />
+        <FieldMessage check={noteCheck} />
       </Field>
 
       {error && <p className="text-[12px] font-semibold text-rose-700">{error}</p>}
 
       <button
-        type="button" onClick={save} disabled={!days.length || busy}
+        type="button" onClick={save} disabled={busy}
         className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-plum-500 text-[15px] font-extrabold text-white disabled:opacity-40"
       >
         {busy && <Loader2 size={16} className="animate-spin" />}

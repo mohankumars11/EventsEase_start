@@ -1,5 +1,6 @@
 import { IndianRupee, ShieldCheck, TrendingUp, Info } from 'lucide-react'
 import { rateFactor } from '../../data/marketRates'
+import { CheckedInput } from '../partner/FieldCheck'
 
 /**
  * A rate per menu, and the truth about who sets the customer's price.
@@ -65,7 +66,7 @@ function marketFor(menu) {
   return Math.round((base * rateFactor('provisions')) / 10) * 10
 }
 
-export default function PriceGuidance({ menus = [], rates = {}, onChange }) {
+export default function PriceGuidance({ menus = [], rates = {}, onChange, showAll = false }) {
   if (!menus.length) return null
 
   return (
@@ -111,22 +112,24 @@ export default function PriceGuidance({ menus = [], rates = {}, onChange }) {
               </p>
             )}
 
-            <div className="mt-2.5 flex items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.04] text-ink-soft">
                 <IndianRupee size={17} />
               </span>
-              <input
+              {/* Kept as typed. It stripped letters and cut at six digits,
+                  so "45o" became 45 and a pasted 1200000 became 120000:
+                  a different rate, saved without a word. */}
+              <CheckedInput
+                field="rate_amount" name={'menu_rate_' + m.id} showAll={showAll}
                 value={rates[m.id] ?? ''}
-                onChange={e => onChange({
-                  ...rates,
-                  [m.id]: e.target.value.replace(/\D/g, '').slice(0, 6),
-                })}
+                onChange={val => onChange({ ...rates, [m.id]: val })}
                 inputMode="numeric"
                 placeholder={market ? String(market) : 'Your rate'}
                 aria-label={`Your rate for ${m.name}`}
                 className="min-w-0 flex-1 rounded-2xl bg-white px-4 py-3 text-[16px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
-              />
-              <span className="shrink-0 text-[12px] font-bold text-ink-mute">a plate</span>
+              >
+                <span className="shrink-0 text-[12px] font-bold text-ink-mute">a plate</span>
+              </CheckedInput>
             </div>
 
             {/* Guidance, never a gate. Both of these are informative and

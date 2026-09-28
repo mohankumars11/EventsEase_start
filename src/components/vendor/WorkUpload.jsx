@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { CheckedInput, fails } from '../partner/FieldCheck'
 import {
   Camera, ImagePlus, Video, Loader2, X, FileText, Quote, Plus, Play,
 } from 'lucide-react'
@@ -53,7 +54,24 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 
 const MAX_VIDEO = 40 * 1024 * 1024      // matches the bucket, migration 110
 
+/* A testimonial counts as started once any of its three boxes has
+   something in it. An empty one is dropped on save (lib/partnerWork),
+   so it is not an error; a quote with no words but a name is. */
+const testimonialStarted = w => [w.body, w.said_by, w.said_about].some(x => String(x ?? '').trim())
+
+/**
+ * Is anything in this list wrong? For the save that carries it:
+ * AddItemFlow's work step and WorkLibrary on More.
+ */
+export function workItemsBad(items = []) {
+  return items.some(it => it.kind === 'testimonial'
+    ? testimonialStarted(it) && (fails('testimonial_body', it.body)
+        || fails('testimonial_by', it.said_by) || fails('testimonial_about', it.said_about))
+    : fails('caption', it.caption))
+}
+
 export default function WorkUpload({
+  showAll = false,
   value = [], onChange, trade,
   /* What this trade's work is called, so the screen speaks the partner's
      language rather than ours. */
@@ -179,12 +197,16 @@ export default function WorkUpload({
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/[0.04] text-ink-mute">
                   {p.kind === 'document' ? <FileText size={16} /> : <ImagePlus size={16} />}
                 </span>
-                <input
-                  value={p.caption ?? ''}
-                  onChange={e => setField(p, 'caption', e.target.value)}
-                  placeholder={copy.captionHint ?? `What is this? (optional)`}
-                  className="min-w-0 flex-1 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-                />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <CheckedInput
+                    field="caption" name={'caption_' + p.path} showAll={showAll}
+                    value={p.caption ?? ''}
+                    onChange={val => setField(p, 'caption', val)}
+                    placeholder={copy.captionHint ?? `What is this? (optional)`}
+                    aria-label="Caption"
+                    className="min-w-0 flex-1 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+                  />
+                </span>
               </Row>
             ))}
           </div>
@@ -217,12 +239,16 @@ export default function WorkUpload({
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/[0.04] text-ink-mute">
                   <Play size={16} />
                 </span>
-                <input
-                  value={v.caption ?? ''}
-                  onChange={e => setField(v, 'caption', e.target.value)}
-                  placeholder="What is in it? (optional)"
-                  className="min-w-0 flex-1 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-                />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <CheckedInput
+                    field="caption" name={'caption_' + v.path} showAll={showAll}
+                    value={v.caption ?? ''}
+                    onChange={val => setField(v, 'caption', val)}
+                    placeholder="What is in it? (optional)"
+                    aria-label="Video caption"
+                    className="min-w-0 flex-1 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+                  />
+                </span>
               </Row>
             ))}
           </div>
@@ -243,13 +269,18 @@ export default function WorkUpload({
           <div key={w.key} className="mt-2.5 rounded-2xl bg-ink/[0.02] p-3 ring-1 ring-ink/[0.06]">
             <div className="flex items-start gap-2">
               <Quote size={14} className="mt-1 shrink-0 text-ink-mute" />
-              <textarea
-                value={w.body ?? ''}
-                onChange={e => setField(w, 'body', e.target.value)}
-                rows={2}
-                placeholder="What they said"
-                className="min-w-0 flex-1 resize-none rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-              />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <CheckedInput
+                  as="textarea"
+                  field="testimonial_body" name={'quote_' + w.key}
+                  showAll={showAll && testimonialStarted(w)}
+                  value={w.body ?? ''}
+                  onChange={val => setField(w, 'body', val)}
+                  rows={2}
+                  placeholder="What they said" aria-label="What they said"
+                  className="min-w-0 flex-1 resize-none rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+                />
+              </span>
               <button
                 type="button" onClick={() => remove(w)} aria-label="Remove"
                 className="mt-1 shrink-0 rounded-full p-1 text-ink-mute hover:bg-ink/[0.05]"
@@ -258,18 +289,24 @@ export default function WorkUpload({
               </button>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <input
-                value={w.said_by ?? ''}
-                onChange={e => setField(w, 'said_by', e.target.value)}
-                placeholder="Who said it"
-                className="rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-              />
-              <input
-                value={w.said_about ?? ''}
-                onChange={e => setField(w, 'said_about', e.target.value)}
-                placeholder="At what event"
-                className="rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
-              />
+              <span className="flex min-w-0 flex-col">
+                <CheckedInput
+                  field="testimonial_by" name={'said_by_' + w.key} showAll={showAll}
+                  value={w.said_by ?? ''}
+                  onChange={val => setField(w, 'said_by', val)}
+                  placeholder="Who said it" aria-label="Who said it"
+                  className="rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+                />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <CheckedInput
+                  field="testimonial_about" name={'said_about_' + w.key} showAll={showAll}
+                  value={w.said_about ?? ''}
+                  onChange={val => setField(w, 'said_about', val)}
+                  placeholder="At what event" aria-label="At what event"
+                  className="rounded-xl bg-white px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
+                />
+              </span>
             </div>
           </div>
         ))}

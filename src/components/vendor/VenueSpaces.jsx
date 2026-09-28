@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Plus, Pencil, Trash2, Users, Snowflake, Loader2, Check, X } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { saveSpace, removeSpace } from '../../lib/venues'
+import { CheckedInput, fails, focusFirstInvalid } from '../partner/FieldCheck'
+import { normalise } from '../../lib/validation/fieldRules'
 
 /**
  * The halls inside one venue.
@@ -157,6 +159,22 @@ export default function VenueSpaces({ venue, onChanged }) {
 
 function SpaceForm({ value, onChange, onSave, onCancel, busy }) {
   const set = (k, v) => onChange({ ...value, [k]: v })
+  /* Capacities were stripped to digits and cut at five, so "1,2OO" was
+     saved as 12 and a pasted 150000 as 15000. Kept as typed now, and
+     asked of the rule before Save. */
+  const [showAll, setShowAll] = useState(false)
+  const save = () => {
+    const bad = fails('space_name', value.space_name)
+      || fails('venue_capacity', String(value.floating_capacity ?? ''))
+      || fails('venue_capacity', String(value.seated_capacity ?? ''))
+    if (bad) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
+    onSave({
+      ...value,
+      space_name: normalise('space_name', value.space_name),
+      floating_capacity: normalise('venue_capacity', String(value.floating_capacity ?? '')) || null,
+      seated_capacity: normalise('venue_capacity', String(value.seated_capacity ?? '')) || null,
+    })
+  }
 
   return (
     <div className="rounded-[18px] bg-white p-4 ring-1 ring-saffron-300/70">
@@ -164,19 +182,20 @@ function SpaceForm({ value, onChange, onSave, onCancel, busy }) {
         <span className="mb-1.5 block text-[12px] font-extrabold uppercase tracking-[0.06em] text-ink-mute">
           Hall name
         </span>
-        <input
+        <CheckedInput
+          field="space_name" showAll={showAll}
           value={value.space_name}
-          onChange={e => set('space_name', e.target.value)}
-          placeholder="Grand Ballroom"
+          onChange={v => set('space_name', v)}
+          placeholder="Grand Ballroom" aria-label="Hall name"
           className="w-full rounded-2xl bg-white px-4 py-2.5 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
         />
       </label>
 
       <div className="mt-3 grid grid-cols-2 gap-2.5">
-        <Num label="Standing" hint="Reception" value={value.floating_capacity}
-             onChange={v => set('floating_capacity', v)} />
-        <Num label="Seated" hint="Sit-down meal" value={value.seated_capacity}
-             onChange={v => set('seated_capacity', v)} />
+        <Num label="Standing" hint="Reception" value={value.floating_capacity} name="floating_capacity"
+             showAll={showAll} onChange={v => set('floating_capacity', v)} />
+        <Num label="Seated" hint="Sit-down meal" value={value.seated_capacity} name="seated_capacity"
+             showAll={showAll} onChange={v => set('seated_capacity', v)} />
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2.5">
@@ -203,7 +222,7 @@ function SpaceForm({ value, onChange, onSave, onCancel, busy }) {
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white py-2.5 text-[13px] font-extrabold text-ink-mute ring-1 ring-ink/[0.08]">
           <X size={14} /> Cancel
         </button>
-        <button type="button" onClick={() => onSave(value)} disabled={busy || !value.space_name.trim()}
+        <button type="button" onClick={save} disabled={busy || !String(value.space_name ?? '').trim()}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-saffron-400 py-2.5 text-[13px] font-extrabold text-plum-950 disabled:opacity-50">
           {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
         </button>
@@ -212,17 +231,18 @@ function SpaceForm({ value, onChange, onSave, onCancel, busy }) {
   )
 }
 
-function Num({ label, hint, value, onChange }) {
+function Num({ label, hint, value, onChange, name, showAll = false }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-extrabold uppercase tracking-[0.06em] text-ink-mute">
         {label}
       </span>
-      <input
-        value={value ?? ''}
-        onChange={e => onChange(e.target.value.replace(/\D/g, '').slice(0, 5))}
+      <CheckedInput
+        field="venue_capacity" name={name} showAll={showAll}
+        value={value == null ? '' : String(value)}
+        onChange={onChange}
         inputMode="numeric"
-        placeholder={hint}
+        placeholder={hint} aria-label={label}
         className="w-full rounded-2xl bg-white px-3.5 py-2.5 text-[14px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:text-[12px] placeholder:font-normal placeholder:text-ink-mute"
       />
     </label>

@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { BANKS, bankForCode, codeForBank } from '../../data/indianBanks'
 import { lookupIfsc, looksLikeIfsc } from '../../lib/ifsc'
 import { last4 } from '../../lib/documents/mask'
+import { normalise } from '../../lib/validation/fieldRules'
+import { useFieldCheck, FieldMessage, useServerErrors, focusFirstInvalid, anyError } from '../partner/FieldCheck'
+import { parseServerError } from '../../lib/validation/serverError'
 
 /**
  * Where this partner gets paid.
@@ -119,28 +122,52 @@ export default function PayoutDetails({ vendorId, onSaved }) {
     return !!want && ifsc.trim().toUpperCase().slice(0, 4) !== want
   }, [bank, ifsc])
 
-  const digits = accNo.replace(/\D/g, '')
-  const ready = method === 'upi'
-    ? /^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upiId.trim())
-    : !!accName.trim() && digits.length >= 9 && digits === accNo2.replace(/\D/g, '')
-        && looksLikeIfsc(ifsc) && !bankMismatch && branch?.ok === true
+  /* ══════════════════════════════════════════════════════════════════
+     THE SAME RULES AS THE SETUP STEP, NOT A THIRD SET
+     ══════════════════════════════════════════════════════════════════
+     This screen had its own regexes and `accNo.replace(/\D/g, '')`,
+     so "12345abc6789" was saved as an account number nobody typed, and
+     `maxLength` cut a pasted IFSC or PAN to a valid-looking shorter
+     one. Now each box asks fieldRules, keeps what was typed, and says
+     what is wrong; the bank and branch checks below stay as they were. */
+  const [showAll, setShowAll] = useState(false)
+  const server = useServerErrors()
+  const digits = normalise('account_number', accNo)
+  const upiCheck = useFieldCheck('upi_id', upiId, { showAll, serverError: server.errors.upi_id })
+  const ifscCheck = useFieldCheck('ifsc', ifsc, { showAll, serverError: server.errors.ifsc })
+  const nameCheck = useFieldCheck('account_name', accName, { showAll, serverError: server.errors.account_name })
+  const accCheck = useFieldCheck('account_number', accNo, { showAll, serverError: server.errors.account_number })
+  const acc2Check = useFieldCheck('account_number_confirm', accNo2, { showAll, ctx: { account_number: digits } })
+  const panCheck = useFieldCheck('payout_pan', pan, { showAll, serverError: server.errors.pan,
+    ctx: { account_name: accName } })
+  const fieldsOk = method === 'upi'
+    ? !anyError(upiCheck, panCheck)
+    : !anyError(ifscCheck, nameCheck, accCheck, acc2Check, panCheck)
+  /* The bank and branch lookups are this screen's own, and stay gates. */
+  const ready = fieldsOk && (method === 'upi' || (!bankMismatch && branch?.ok === true && looksLikeIfsc(normalise('ifsc', ifsc))))
 
   async function save() {
+    if (!fieldsOk) { setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return }
     setSaving(true); setError(null); setSaved(false)
     const payload = method === 'upi'
-      ? { vendor_id: vendorId, method: 'upi', upi_id: upiId.trim(),
+      ? { vendor_id: vendorId, method: 'upi', upi_id: normalise('upi_id', upiId),
           account_name: null, account_number: null, ifsc: null }
       : { vendor_id: vendorId, method: 'bank',
-          account_name: accName.trim(), account_number: digits,
-          ifsc: ifsc.trim().toUpperCase(), upi_id: null }
-    if (pan.trim()) payload.pan = pan.trim().toUpperCase()
+          account_name: normalise('account_name', accName), account_number: digits,
+          ifsc: normalise('ifsc', ifsc), upi_id: null }
+    if (normalise('payout_pan', pan)) payload.pan = normalise('payout_pan', pan)
 
     const { data, error: e } = await supabase
       .from('vendor_payout_details').upsert(payload, { onConflict: 'vendor_id' })
       .select().maybeSingle()
 
     setSaving(false)
-    if (e) { setError(e.message); return }
+    if (e) {
+      /* A refusal from the server (159) goes under its box. The raw
+         Postgres sentence is never shown. */
+      if (!server.take(e)) setError(parseServerError(e).says)
+      return
+    }
     setRow(data); setSaved(true); setAccNo(''); setAccNo2('')
     /* The Account tab prints this row's summary on the collapsed fold
        above ("UPI · name@oksbi · being checked"). Without this it would
@@ -206,11 +233,13 @@ export default function PayoutDetails({ vendorId, onSaved }) {
         <div className="mt-4">
           <label className="label" htmlFor="po-upi">Your UPI ID</label>
           <input
-            id="po-upi" className="input" inputMode="email" autoCapitalize="none"
+            {...upiCheck.inputProps}
+            id="po-upi" className={'input' + upiCheck.ring} inputMode="email" autoCapitalize="none"
             placeholder="name@oksbi"
             value={upiId}
-            onChange={e => { setUpiId(e.target.value); setSaved(false) }}
+            onChange={e => { server.clear('upi_id'); setUpiId(e.target.value); setSaved(false) }}
           />
+          <FieldMessage check={upiCheck} />
           <p className="mt-1 text-[11.5px] font-semibold text-ink-mute">
             The one on your phone's UPI app. Money reaches you in seconds.
           </p>
@@ -232,11 +261,13 @@ export default function PayoutDetails({ vendorId, onSaved }) {
           <div>
             <label className="label" htmlFor="po-ifsc">IFSC code</label>
             <input
-              id="po-ifsc" className="input uppercase" autoCapitalize="characters"
-              placeholder="CNRB0001234" maxLength={11}
+              {...ifscCheck.inputProps}
+              id="po-ifsc" className={'input uppercase' + ifscCheck.ring} autoCapitalize="characters"
+              placeholder="CNRB0001234"
               value={ifsc}
-              onChange={e => { setIfsc(e.target.value.toUpperCase()); setSaved(false) }}
+              onChange={e => { server.clear('ifsc'); setIfsc(e.target.value.toUpperCase()); setSaved(false) }}
             />
+            <FieldMessage check={ifscCheck} />
 
             {/* Everything the code already knows, so nobody types it. */}
             {checking && (
@@ -274,20 +305,24 @@ export default function PayoutDetails({ vendorId, onSaved }) {
           <div>
             <label className="label" htmlFor="po-name">Name on the account</label>
             <input
-              id="po-name" className="input" placeholder="As printed in your passbook"
+              {...nameCheck.inputProps}
+              id="po-name" className={'input' + nameCheck.ring} placeholder="As printed in your passbook"
               value={accName}
-              onChange={e => { setAccName(e.target.value); setSaved(false) }}
+              onChange={e => { server.clear('account_name'); setAccName(e.target.value); setSaved(false) }}
             />
+            <FieldMessage check={nameCheck} />
           </div>
 
           <div>
             <label className="label" htmlFor="po-acc">Account number</label>
             <input
-              id="po-acc" className="input" inputMode="numeric"
+              {...accCheck.inputProps}
+              id="po-acc" className={'input' + accCheck.ring} inputMode="numeric" autoComplete="off"
               placeholder={row?.account_number ? 'Enter again to change it' : ''}
               value={accNo}
-              onChange={e => { setAccNo(e.target.value); setSaved(false) }}
+              onChange={e => { server.clear('account_number'); setAccNo(e.target.value); setSaved(false) }}
             />
+            <FieldMessage check={accCheck} />
             {row?.account_number && !accNo && (
               <p className="mt-1 text-[11.5px] font-semibold text-ink-mute">
                 Currently ending {last4(row.account_number)}.
@@ -298,18 +333,15 @@ export default function PayoutDetails({ vendorId, onSaved }) {
           <div>
             <label className="label" htmlFor="po-acc2">Account number again</label>
             <input
-              id="po-acc2" className="input" inputMode="numeric"
+              {...acc2Check.inputProps}
+              id="po-acc2" className={'input' + acc2Check.ring} inputMode="numeric" autoComplete="off"
               value={accNo2}
               onChange={e => { setAccNo2(e.target.value); setSaved(false) }}
             />
             {/* Typed twice because a transposed digit is the one mistake
                 that silently succeeds — the money leaves, and it lands
                 somewhere real that is not you. */}
-            {accNo2 && digits !== accNo2.replace(/\D/g, '') && (
-              <p className="mt-1 text-[12px] font-bold text-rose-700">
-                These two do not match.
-              </p>
-            )}
+            <FieldMessage check={acc2Check} />
           </div>
         </div>
       )}
@@ -317,11 +349,13 @@ export default function PayoutDetails({ vendorId, onSaved }) {
       <div className="mt-3.5">
         <label className="label" htmlFor="po-pan">PAN <span className="font-semibold text-ink-mute">(optional for now)</span></label>
         <input
-          id="po-pan" className="input uppercase" autoCapitalize="characters" maxLength={10}
+          {...panCheck.inputProps}
+          id="po-pan" className={'input uppercase' + panCheck.ring} autoCapitalize="characters" autoComplete="off"
           placeholder="ABCDE1234F"
           value={pan}
-          onChange={e => { setPan(e.target.value.toUpperCase()); setSaved(false) }}
+          onChange={e => { server.clear('pan'); setPan(e.target.value.toUpperCase()); setSaved(false) }}
         />
+        <FieldMessage check={panCheck} />
         <p className="mt-1 text-[11.5px] font-semibold text-ink-mute">
           Needed once your earnings pass ₹20,000 in a year. Adding it now saves a chase later.
         </p>
@@ -341,7 +375,8 @@ export default function PayoutDetails({ vendorId, onSaved }) {
       <button
         type="button"
         onClick={save}
-        disabled={!ready || saving}
+        disabled={saving || (fieldsOk && !ready)}
+        aria-disabled={!ready || saving ? true : undefined}
         className="btn-primary mt-4 w-full disabled:opacity-45"
       >
         {saving ? 'Saving…' : saved ? 'Saved' : row ? 'Update payout details' : 'Save payout details'}

@@ -7,6 +7,7 @@ import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
 import { stashPartnerRef } from '../../lib/referrals'
+import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRules'
 
 /**
  * The first screen of the partner app.
@@ -140,7 +141,15 @@ export default function PartnerEntry() {
 
   useEffect(() => { if (stage === 'code') codeRef.current?.focus() }, [stage])
 
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())
+  /* The same rule the blur message uses, so the button and the message
+     cannot disagree (the old regex let "ravi@gmail..com" through). */
+  const emailOk = validateField('login_email', email).severity !== SEVERITY.ERROR && !!email.trim()
+  /* The code, as typed. It used to be stripped to digits and cut at six,
+     so a pasted "Your code: 123456" or a seven-digit slip became a
+     different code without a word. Spaces are allowed, nothing else. */
+  const codeCheck = validateField('otp_code', code, { length: 6 })
+  const codeOk = codeCheck.severity !== SEVERITY.ERROR
+  const [codeTouched, setCodeTouched] = useState(false)
 
   /* Written down BEFORE any auth leaves this screen. AuthContext reads
      it when the session lands and defaults to 'customer' without it —
@@ -179,11 +188,12 @@ export default function PartnerEntry() {
   }
 
   async function submitCode() {
-    if (code.length < 6 || busy) return
+    if (busy) return
+    if (!codeOk) { setCodeTouched(true); codeRef.current?.focus(); return }
     setBusy(true); setError(null)
     parkRole()
     try {
-      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      await verifyEmailOtp(normalise('login_email', email), codeCheck.value)
       /* Where they land is decided by role once the profile exists —
          RootScreen and ProtectedRoute already own that. */
       navigate('/', { replace: true })
@@ -419,10 +429,12 @@ export default function PartnerEntry() {
                          their email is wrong six times before it is
                          right. React routes onBlur through focusout. */
                       onBlur={() => {
-                        const r = FIELD_RULES.contact_email
-                        const v = r.normalise(email)
-                        setEmailSays(v ? r.validate(v) : null)
+                        const r = validateField('login_email', email)
+                        setEmailSays(email.trim() ? r : null)
                       }}
+                      data-field="login_email" data-testid="field-login_email"
+                      aria-invalid={emailSays?.severity === SEVERITY.ERROR ? true : undefined}
+                      aria-describedby={emailSays?.says ? 'entry-email-msg' : undefined}
                       onKeyDown={e => e.key === 'Enter' && requestCode()}
                       placeholder="you@example.com"
                       autoComplete="email"
@@ -439,7 +451,7 @@ export default function PartnerEntry() {
                       on gmial.com and friends with the correction rather
                       than blocking, because it might be right. */}
                   {emailSays?.says && emailSays.severity !== 'ok' && (
-                    <p className={`mt-1.5 text-[12px] font-semibold leading-snug ${
+                    <p id="entry-email-msg" data-field-message="login_email" className={`mt-1.5 text-[12px] font-semibold leading-snug ${
                       emailSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
                     }`}>
                       {emailSays.says}
@@ -480,7 +492,11 @@ export default function PartnerEntry() {
             <input
               ref={codeRef}
               value={code}
-              onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null) }}
+              onChange={e => { setCode(e.target.value); setError(null) }}
+              onBlur={() => code && setCodeTouched(true)}
+              data-field="otp_code" data-testid="field-otp_code"
+              aria-invalid={codeTouched && !codeOk ? true : undefined}
+              aria-describedby={codeTouched && !codeOk ? 'entry-code-msg' : undefined}
               onKeyDown={e => e.key === 'Enter' && submitCode()}
               placeholder="······"
               inputMode="numeric"
@@ -489,10 +505,16 @@ export default function PartnerEntry() {
               className="mt-6 w-full rounded-2xl bg-ink/[0.03] py-4 text-center text-[26px] font-extrabold tracking-[0.5em] text-ink ring-1 ring-ink/[0.08] placeholder:tracking-[0.4em] placeholder:text-ink-mute/40 focus:bg-white focus:ring-2 focus:ring-royal-500"
             />
 
+            {codeTouched && !codeOk && (
+
+              <p id="entry-code-msg" role="alert" data-field-message="otp_code" className="mt-2 text-center text-[12.5px] font-semibold text-saffron-800">{codeCheck.says}</p>
+
+            )}
+
             <button
               type="button"
               onClick={submitCode}
-              disabled={code.length < 6 || busy}
+              disabled={!code.trim() || busy}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-4 text-[15.5px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : null}
