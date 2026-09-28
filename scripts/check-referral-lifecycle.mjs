@@ -236,10 +236,17 @@ try {
   const expired = (await C.client.rpc('claim_referral_code', { p_code: expiring?.code })).data
   ok('an expired invitation is refused', expiring && expired?.ok === false, expired)
 
-  const rows = (await A.client.rpc('my_referrals', { p_trade_id: 'SBM-TRD-014' })).data
-  ok('the referral carries the invitation\'s trade', rows?.length === 1 && rows[0].trade_id === 'SBM-TRD-014' && rows[0].invite_code === inv1.code, rows)
+  /* The trade's list holds the real referral AND the refused attempt to
+     reuse its invitation — filed under the invitation's trade on purpose,
+     shown as "could not count" with no name and no reason. */
+  const all = (await A.client.rpc('my_referrals', { p_trade_id: 'SBM-TRD-014' })).data ?? []
+  const rows = all.filter(r => !r.not_eligible)
+  ok('the referral carries the invitation\'s trade', rows.length === 1 && rows[0].trade_id === 'SBM-TRD-014' && rows[0].invite_code === inv1.code, all)
   ok('and starts as signed up, not eligible, not paid',
-     rows[0].state === 'registered' && rows[0].reward_status === 'not_eligible' && !rows[0].paid_at, rows[0])
+     rows[0]?.state === 'registered' && rows[0]?.reward_status === 'not_eligible' && !rows[0]?.paid_at, rows[0])
+  ok('the refused reuse is under the same trade, anonymous',
+     all.filter(r => r.not_eligible).length === 1 && all.find(r => r.not_eligible).referred_name === null
+     && !all.find(r => r.not_eligible).invite_code, all.filter(r => r.not_eligible))
   ok('the refused attempts show as not eligible, with no name',
      ((await A.client.rpc('my_referrals', { p_state: 'rejected' })).data ?? []).every(r => r.referred_name === null && r.not_eligible))
   const leak = await A.client.from('partner_referrals').select('rejected_reason').limit(1)
