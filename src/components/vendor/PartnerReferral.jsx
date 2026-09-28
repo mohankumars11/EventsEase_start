@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Check, Copy, Share2, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rewardLabel } from '../../lib/promotions'
+import { VENDOR_CATEGORIES } from '../../config/vendor'
 import { track, EVENTS } from '../../lib/track'
 import { shareText, shareSaid } from '../../lib/share'
 
@@ -47,6 +48,7 @@ export default function PartnerReferral({ vendorId }) {
   const [copied, setCopied] = useState(false)
   const [said, setSaid] = useState(null)
   const [unavailable, setUnavailable] = useState(false)
+  const [referrals, setReferrals] = useState([])
 
   useEffect(() => {
     let alive = true
@@ -179,6 +181,23 @@ export default function PartnerReferral({ vendorId }) {
         )}
       </section>
 
+      <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <h3 className="text-[13px] font-extrabold text-ink">Trade Champion 26 · network</h3>
+        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-mute">Explore all 26 partner trades. Referral progress is based on recorded partner milestones; rewards qualify only after a completed event and an active approved campaign.</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {VENDOR_CATEGORIES.map((trade, index) => <div key={trade} className="flex min-h-[42px] items-center gap-2 rounded-xl bg-page-sunk px-2.5 py-2"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-plum-100 text-[10px] font-black text-plum-700">{index + 1}</span><span className="text-[11px] font-semibold leading-tight text-ink">{trade}</span></div>)}
+        </div>
+      </section>
+      <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <h3 className="text-[13px] font-extrabold text-ink">Referral lifecycle</h3>
+        <div className="mt-3 space-y-2">
+          {['invited','registered','onboarding_completed','verified','live','first_event_completed','reward_unlocked'].map((stage, i) => {
+            const count = referrals.filter(r => ['rejected'].includes(r.state) ? false : ['invited','registered','onboarding_completed','verified','live','first_event_completed','reward_unlocked'].indexOf(r.state) >= i).length
+            return <div key={stage} className="flex items-center justify-between gap-3 rounded-xl bg-page-sunk px-3 py-2"><span className="text-[11.5px] font-semibold capitalize text-ink">{stage.replaceAll('_',' ')}</span><span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black tabular-nums text-plum-700">{count}</span></div>
+          })}
+        </div>
+        <p className="mt-2 text-[10.5px] leading-relaxed text-ink-mute">Counts reflect persisted referral records visible to this partner. The app does not manually advance milestones or issue payouts.</p>
+      </section>
       {campaign && (
         <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <div className="flex items-baseline justify-between gap-2">
