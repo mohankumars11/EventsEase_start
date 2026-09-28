@@ -28,6 +28,22 @@ const SLIDES = [
     </div>,
   },
   {
+    key: 'trade-champion-26',
+    eyebrow: 'GROW THE EVENT COMMUNITY',
+    title: 'Trade Champion 26.',
+    body: 'Refer trusted event professionals. Follow their journey from sign-up to verification and a completed event. Eligible benefits unlock when campaign conditions are met.',
+    cta: 'Explore referrals',
+    target: '/dashboard/vendor?tab=account&screen=referral',
+    accent: 'plum',
+    Art: () => <div className="relative h-[132px] w-[154px] shrink-0">
+      <div className="absolute right-2 top-1 flex h-24 w-24 items-center justify-center rounded-[28px] bg-white/90 text-plum-700 shadow-[0_18px_35px_rgba(42,8,92,0.20)]">
+        <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-plum-50"><Sparkles size={34} /></div>
+      </div>
+      <div className="absolute bottom-1 left-1 flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-plum-700 to-purple-500 text-white shadow-[0_18px_34px_rgba(42,8,92,0.32)]"><Gift size={34} /></div>
+      <span className="absolute bottom-0 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-saffron-300 text-plum-950 shadow-lg"><UsersRound size={17} /></span>
+    </div>,
+  },
+  {
     key: 'razorpay-payouts',
     eyebrow: 'SECURE PAYOUTS WITH RAZORPAY',
     title: 'Payouts, clearly tracked.',

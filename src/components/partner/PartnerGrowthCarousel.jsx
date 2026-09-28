@@ -17,7 +17,7 @@ const CARDS = [
     eyebrow: 'KNOW SOMEONE GOOD?',
     title: 'BRING YOUR PEOPLE.\nGROW TOGETHER.',
     body: 'Invite trusted event professionals and earn through eligible referral campaigns.',
-    cta: 'Invite & Earn',
+    cta: 'Trade Champion 26',
     className: 'bg-gradient-to-br from-red-500 via-rose-500 to-orange-400 text-white',
     icon: Gift,
     accent: 'bg-white/15',
