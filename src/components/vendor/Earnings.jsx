@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import PartnerMarketingCarousel from '../partner/PartnerMarketingCarousel'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { CalendarCheck2, CloudOff, Landmark, ReceiptIndianRupee, ShieldCheck } from 'lucide-react'
 import { useEarnings } from '../../hooks/useEarnings'
 import { statement, financialYear, annualGrossInr } from '../../lib/earningsStatement'
@@ -72,6 +72,7 @@ import {
  * the duplicate-navigation defect `check-one-partner-ui` exists to stop.
  */
 export default function Earnings({ vendorId, vendor, onAddPayout }) {
+  const navigate = useNavigate()
   const { jobs, payout, claims, adjustments, loading, error, retry, stale } = useEarnings(vendorId)
 
   /* ── What a campaign is allowed to target on ──────────────────────
@@ -210,6 +211,13 @@ export default function Earnings({ vendorId, vendor, onAddPayout }) {
         <KpiCards kpis={series.kpis} range={range} owedJobs={owedJobs} />
 
         <EarningsChart series={series.series} range={range} />
+
+        <button type="button" onClick={() => navigate('/dashboard/vendor?tab=account&screen=referral')} className="group relative w-full overflow-hidden rounded-[22px] bg-gradient-to-br from-violet-700 via-purple-700 to-fuchsia-600 p-4 text-left text-white shadow-[0_10px_28px_rgba(42,8,92,0.16)] ring-1 ring-purple-300/30">
+          <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]">Partner growth • 26 trades</span>
+          <span className="mt-2 block text-[20px] font-black leading-tight tracking-[-0.03em]">Trade Champion 26</span>
+          <span className="mt-1 block max-w-[290px] text-[11px] font-semibold leading-snug text-white/90">Invite trusted event professionals, grow your trade network and explore upcoming referral benefits.</span>
+          <span className="mt-3 inline-flex min-h-[34px] items-center gap-2 rounded-full bg-white px-4 text-[11px] font-extrabold text-violet-800">Explore referral rewards <span aria-hidden="true">→</span></span>
+        </button>
 
         <section id="how-payouts-work" className="scroll-mt-24 rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(42,8,92,0.05)] ring-1 ring-plum-100">
           <div className="flex items-start justify-between gap-3">
