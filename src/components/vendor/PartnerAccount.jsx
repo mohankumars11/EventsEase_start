@@ -3,7 +3,7 @@ import { PARTNER_TERMS_VERSION, PARTNER_TERMS_LONG } from '../../config/partnerT
 import ValidatedField from '../partner/ValidatedField'
 import BuildStamp from '../partner/BuildStamp'
 import {
-  Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck,
+  Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck, ClipboardList,
   Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
   LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
   TriangleAlert, Sparkles, Navigation, Gift, FileText,
