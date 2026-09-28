@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight, Banknote, CalendarCheck2, ChevronLeft, ChevronRight,
-  FileText, Landmark, Percent, ReceiptIndianRupee, ShieldCheck, Sparkles, WalletCards,
+  FileText, Landmark, Percent, ReceiptIndianRupee, ShieldCheck, Sparkles, UsersRound, WalletCards,
 } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
