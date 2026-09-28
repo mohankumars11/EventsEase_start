@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Check, Copy, Share2, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rewardLabel } from '../../lib/promotions'
+import { VENDOR_CATEGORIES } from '../../config/vendor'
 import { track, EVENTS } from '../../lib/track'
 import { shareText, shareSaid } from '../../lib/share'
 
@@ -47,6 +48,7 @@ export default function PartnerReferral({ vendorId }) {
   const [copied, setCopied] = useState(false)
   const [said, setSaid] = useState(null)
   const [unavailable, setUnavailable] = useState(false)
+  const [selectedTrade, setSelectedTrade] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -125,7 +127,7 @@ export default function PartnerReferral({ vendorId }) {
     track(EVENTS.REFERRAL_SHARED, { has_campaign: !!campaign })
     const res = await shareText({
       title: 'Join me on Sambramo',
-      text: `Join me on Sambramo as a partner. Use my code ${code} when you sign up.`,
+      text: `Join me on Sambramo as a${selectedTrade ? ` ${selectedTrade} professional` : ' partner'}. Use my code ${code} when you sign up.`,
       dialogTitle: 'Invite a partner',
     })
     const msg = shareSaid(res.how)
@@ -177,6 +179,26 @@ export default function PartnerReferral({ vendorId }) {
         {said && (
           <p className="mt-2 text-[11.5px] font-semibold text-ink-mute">{said}</p>
         )}
+      </section>
+
+      <section className='rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.06]'>
+        <div className='flex items-center justify-between gap-2'>
+          <div>
+            <p className='text-[12.5px] font-extrabold text-ink'>Invite across 26 event trades</p>
+            <p className='mt-1 text-[11px] leading-snug text-ink-mute'>Choose a professional type to personalize your invite. Your referral code stays the same.</p>
+          </div>
+          <span className='shrink-0 rounded-full bg-plum-50 px-2.5 py-1 text-[10px] font-black text-plum-700'>26 trades</span>
+        </div>
+        <div className='mt-3 grid grid-cols-2 gap-2'>
+          {VENDOR_CATEGORIES.map(trade => (
+            <button key={trade} type='button' aria-pressed={selectedTrade === trade}
+              onClick={() => setSelectedTrade(current => current === trade ? '' : trade)}
+              className={'min-h-[40px] rounded-[12px] border px-2.5 py-2 text-left text-[10.5px] font-bold leading-tight transition ' + (selectedTrade === trade ? 'border-plum-500 bg-plum-50 text-plum-800 ring-1 ring-plum-300' : 'border-ink/10 bg-page-sunk text-ink-soft')}>
+              {trade}
+            </button>
+          ))}
+        </div>
+        {selectedTrade && <p className='mt-2 text-[11px] font-semibold text-plum-700'>Invite tailored for: {selectedTrade}</p>}
       </section>
 
       {campaign && (
