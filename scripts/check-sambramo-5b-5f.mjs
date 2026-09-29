@@ -1,18 +1,33 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
 import path from 'node:path'
+import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
-import { VENDOR_CATEGORIES, TRADE_FOR_SERVICE } from '../src/config/vendor.js'
-import { TRADES } from '../src/data/partnerCatalogue.js'
-import { specsForTrade } from '../src/data/partnerSpecs.js'
-import { specsForServices } from '../src/data/partnerServiceSpecs.js'
-import { operationScreensFor } from '../src/data/partnerOperations.js'
-import { reconcilePartnerQuestionGroups, filterPartnerQuestionGroups } from '../src/data/sambramoPartnerQuestionnaireV2Rules.js'
-import { LOGISTICS_SERVICE_SPECS, LOGISTICS_TRADES, logisticsSpecsForServices } from '../src/data/logisticsPartnerSpecsV2.js'
-import { LOGISTICS_PRICING, priceLogisticsLine, platformSplit } from '../src/data/logisticsPricing.js'
-import { TRADE_BOUNDARY_BY_SERVICE, customerMatchRequirements } from '../src/lib/matchingReconciliation.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const load = async file => {
+  const out = await build({ entryPoints: [file], bundle: true, format: 'esm', write: false, platform: 'node' })
+  return import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'))
+}
+const V = await load(path.join(ROOT, 'src/config/vendor.js'))
+const P = await load(path.join(ROOT, 'src/data/partnerCatalogue.js'))
+const PT = await load(path.join(ROOT, 'src/data/partnerSpecs.js'))
+const PS = await load(path.join(ROOT, 'src/data/partnerServiceSpecs.js'))
+const OPSM = await load(path.join(ROOT, 'src/data/partnerOperations.js'))
+const QR = await load(path.join(ROOT, 'src/data/sambramoPartnerQuestionnaireV2Rules.js'))
+const LP = await load(path.join(ROOT, 'src/data/logisticsPartnerSpecsV2.js'))
+const PR = await load(path.join(ROOT, 'src/data/logisticsPricing.js'))
+const MR = await load(path.join(ROOT, 'src/lib/matchingReconciliation.js'))
+
+const { VENDOR_CATEGORIES, TRADE_FOR_SERVICE } = V
+const { TRADES } = P
+const { specsForTrade } = PT
+const { specsForServices } = PS
+const { operationScreensFor } = OPSM
+const { reconcilePartnerQuestionGroups, filterPartnerQuestionGroups } = QR
+const { LOGISTICS_SERVICE_SPECS, logisticsSpecsForServices } = LP
+const { LOGISTICS_PRICING, priceLogisticsLine, platformSplit } = PR
+const { TRADE_BOUNDARY_BY_SERVICE, customerMatchRequirements } = MR
 const failures = []
 const ok = (cond, msg) => cond || failures.push(msg)
 
