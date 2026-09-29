@@ -6,30 +6,30 @@ export const LOGISTICS_PRICE_BOOK_VERSION = '2026-09-29.1'
 const INR = n => Math.round(Number(n) || 0)
 
 export const LOGISTICS_PRICING = {
-  mini_truck: {
+  mini_truck: { serviceName: 'Mini truck / pickup',
     tradeId: 'L01', base: 900, includedKm: 10, extraKm: 24,
     weightSurcharge: [{ upto: 500, add: 0 }, { upto: 750, add: 180 }, { upto: 1500, add: 420 }],
   },
-  goods_vehicle: {
+  goods_vehicle: { serviceName: 'Medium / large goods vehicle',
     tradeId: 'L02',
     baseByClass: { '14ft': 2200, '17ft': 2800, '19ft': 3400, container: 3900, other: 3200 },
     includedKm: 15, extraKm: 34,
     weightSurcharge: [{ upto: 2000, add: 0 }, { upto: 4000, add: 700 }, { upto: 7000, add: 1500 }, { upto: 10000, add: 2400 }],
   },
-  passenger_transport: {
+  passenger_transport: { serviceName: 'Group passenger transport',
     tradeId: 'L03',
     packageBySeats: [{ upto: 9, rate: 2600 }, { upto: 17, rate: 3600 }, { upto: 26, rate: 4600 }, { upto: 33, rate: 5600 }, { upto: 45, rate: 7200 }],
     includedKm: 100, extraKm: 24, driverAllowance: 450, extraHour: 350, stopCharge: 120,
   },
-  event_equipment: {
+  event_equipment: { serviceName: 'Event operations equipment rental',
     tradeId: 'L04',
     dayRateByQty: [{ upto: 5, rate: 1200 }, { upto: 20, rate: 2200 }, { upto: 50, rate: 4000 }, { upto: 100, rate: 6500 }],
     deliveryFee: 650, setupFee: 900, pickupFee: 500,
   },
-  loading_crew: { tradeId: 'L05', perPersonShift: 650, includedHours: 8, overtimeHour: 110, equipmentFee: 350 },
-  warehouse_storage: { tradeId: 'L06', sqftMonthRate: 22, inbound: 900, outbound: 900, pickupDelivery: 650 },
-  event_materials: { tradeId: 'L07', minimumOrder: 2500, deliveryFee: 450, rushSurchargePct: 12, customizationFee: 750 },
-  event_logistics: { tradeId: 'L08', minimumProjectFee: 6000, coordinationFeePct: 8, transportManagementFee: 1800, siteSurveyFee: 1500 },
+  loading_crew: { serviceName: 'Loading & unloading crew', tradeId: 'L05', perPersonShift: 650, includedHours: 8, overtimeHour: 110, equipmentFee: 350 },
+  warehouse_storage: { serviceName: 'Warehouse / storage', tradeId: 'L06', sqftMonthRate: 22, inbound: 900, outbound: 900, pickupDelivery: 650 },
+  event_materials: { serviceName: 'Bulk event materials', tradeId: 'L07', minimumOrder: 2500, deliveryFee: 450, rushSurchargePct: 12, customizationFee: 750 },
+  event_logistics: { serviceName: 'End-to-end event logistics', tradeId: 'L08', minimumProjectFee: 6000, coordinationFeePct: 8, transportManagementFee: 1800, siteSurveyFee: 1500 },
 }
 
 const kmBetween = input => {
@@ -113,7 +113,7 @@ export function priceLogisticsLine({ serviceId, demand = {} }) {
   }
 
   const rounded = Math.max(500, Math.round(total / 50) * 50)
-  return { ok: true, serviceId, tradeId: p.tradeId, amountPaise: rounded * 100,
+  return { ok: true, serviceId, serviceName: p.serviceName, tradeId: p.tradeId, amountPaise: rounded * 100,
     basis: { version: LOGISTICS_PRICE_BOOK_VERSION, engine: 'sambramo-logistics-deterministic-v1', serviceId, input: demand, components, roundedInr: rounded } }
 }
 
