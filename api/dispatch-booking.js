@@ -43,6 +43,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
+import { authenticatedUser } from './_lib/auth.js'
 import { notifyForWave } from './_lib/fcm.js'
 // One import, and it has an extension Node can resolve. See the header of
 // scripts/build-api-bundle.mjs for why this is a bundle rather than five
@@ -127,14 +128,17 @@ export default async function handler(req, res) {
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+  const authn = await authenticatedUser(req, db)
+  if (authn.error) return res.status(401).json({ error: 'Authentication required' })
 
   const {
-    customerId, occasionId, occasionName, eventDate, guestCount = 40, venueSpaceId = null,
+    customerId: bodyCustomerId, occasionId, occasionName, eventDate, guestCount = 40, venueSpaceId = null,
     radiusKm = 5, lat, lng, addressText, areaLabel, city = 'Bengaluru',
     notes = null, lines = [],
   } = req.body ?? {}
 
-  if (!customerId)          return res.status(400).json({ error: 'customerId required' })
+  const customerId = authn.user.id
+  if (bodyCustomerId && bodyCustomerId !== customerId) return res.status(403).json({ error: 'customer mismatch' })
   if (!eventDate)           return res.status(400).json({ error: 'eventDate required' })
   if (lat == null || lng == null) return res.status(400).json({ error: 'lat and lng required' })
   if (!Array.isArray(lines) || lines.length === 0) return res.status(400).json({ error: 'at least one line required' })
