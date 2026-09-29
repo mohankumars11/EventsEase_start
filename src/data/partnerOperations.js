@@ -1,4 +1,4 @@
-import { OPERATION_SCREENS as CATERING_SCREENS } from './cateringOperations'
+import { OPERATION_SCREENS as CATERING_SCREENS } from './cateringOperations.js'
 
 // How every partner actually works — not just caterers.
 //
