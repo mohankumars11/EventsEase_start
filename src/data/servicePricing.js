@@ -324,6 +324,41 @@ export const SERVICE_GROUPS = [
     ],
   },
   {
+    id: 'logistics',
+    label: 'Event logistics',
+    hint: 'Move, store, set up and coordinate the physical side of an event',
+    surface: 'bg-gradient-to-br from-violet-50 via-white to-white',
+    spine: 'bg-gradient-to-b from-violet-400 to-indigo-600',
+    tile: 'bg-violet-50 text-violet-700 ring-violet-200/70',
+    ink: 'text-violet-700',
+    services: [
+      { id: 'mini_truck', name: 'Mini truck / pickup', emoji: '🛻', unit: 'fixed', base: 800, scales: false,
+        pricingMode: 'logistics', trade: 'Mini Truck / Pickup',
+        desc: 'Small event cargo such as décor, flowers, food containers and equipment' },
+      { id: 'goods_vehicle', name: 'Medium / large goods vehicle', emoji: '🚚', unit: 'fixed', base: 1800, scales: false,
+        pricingMode: 'logistics', trade: 'Medium / Large Goods Vehicle',
+        desc: 'Bulk or heavy event cargo with structured payload and access requirements' },
+      { id: 'passenger_transport', name: 'Group passenger transport', emoji: '🚌', unit: 'fixed', base: 5000, scales: false,
+        pricingMode: 'logistics', trade: 'Passenger Transport',
+        desc: 'Tempo traveller, mini-bus or bus for scheduled guest movement' },
+      { id: 'event_equipment', name: 'Event operations equipment rental', emoji: '🧰', unit: 'fixed', base: 1200, scales: false,
+        pricingMode: 'logistics', trade: 'Event Equipment Rental',
+        desc: 'General reusable event equipment; specialised AV, lighting, power and furniture remain in their own trades' },
+      { id: 'loading_crew', name: 'Loading & unloading crew', emoji: '📦', unit: 'per_unit', base: 1200, unitLabel: 'person',
+        qtyFor: () => 2, pricingMode: 'logistics', trade: 'Loading & Unloading Crew',
+        desc: 'Material handling labour by crew size and shift' },
+      { id: 'warehouse_storage', name: 'Warehouse / storage', emoji: '🏭', unit: 'per_unit', base: 25, unitLabel: 'sq ft / month',
+        pricingMode: 'logistics', trade: 'Warehouse / Storage',
+        desc: 'Temporary event inventory storage with access and handling' },
+      { id: 'event_materials', name: 'Bulk event materials', emoji: '🧱', unit: 'fixed', base: 1000, scales: false,
+        pricingMode: 'logistics', trade: 'Event Materials Supplier',
+        desc: 'Bulk consumables, raw event materials and catalogue SKUs' },
+      { id: 'event_logistics', name: 'End-to-end event logistics', emoji: '🗺️', unit: 'fixed', base: 0, scales: false,
+        pricingMode: 'quote', trade: 'End-to-End Event Logistics',
+        desc: 'Multi-vendor pickup, consolidation, storage, delivery, setup and strike' },
+    ],
+  },
+  {
     id: 'traditions',
     label: 'The traditional parts',
     hint: 'Booked separately, and usually first',
@@ -357,7 +392,7 @@ export const SERVICE_BY_ID = Object.fromEntries(ALL_SERVICES.map(s => [s.id, s])
  * Which group a service belongs to, and therefore what colour it is.
  *
  * ── Why the groups carry a palette ──────────────────────────────────────
- * The service list is thirty-nine white rows. Scrolling it, every card looks
+ * The service list is now a structured event + logistics catalogue. Scrolling it, every card looks
  * like the one above it, so finding "the photographer" means reading names
  * until one matches — and the grouping that would have helped (`label`) is
  * only a heading somebody has already scrolled past.
@@ -405,6 +440,7 @@ export function serviceCost(service, guestCount, qty) {
 
 /** Human-readable "₹120 per guest" / "₹2,200 per guard" / "one-off". */
 export function serviceUnitLabel(service) {
+  if (service?.pricingMode === 'quote') return 'quote after requirements'
   if (service?.unit === 'per_guest') return 'per guest'
   if (service?.unit === 'per_unit') return `per ${service.unitLabel ?? 'unit'}`
   return service?.scales ? 'for the event, scaled to your size' : 'for the event'
