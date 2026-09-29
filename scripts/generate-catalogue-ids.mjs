@@ -125,12 +125,12 @@ for (const c of M.FOOD_COUNTERS ?? []) {
    Everything a partner touches while listing what they do. None of it
    had an identity a database could hold:
 
-     TRADES        24, and they are plain STRINGS. "Catering & Food" is
+     TRADES        34, and they are plain STRINGS. "Catering & Food" is
                    the primary key of the whole listing flow, typed out
                    in twenty places. One renamed trade orphans every
                    listing under it, silently.
 
-     SERVICES      62 offerings. serviceId is unique and readable, and
+     SERVICES      73 current dispatchable offerings. serviceId is unique and readable, and
                    it stays the natural key — but it is not stable
                    against a rename either.
 
@@ -140,9 +140,9 @@ for (const c of M.FOOD_COUNTERS ?? []) {
                    cannot be read without knowing which group it came
                    from. That is the bug that makes answers unqueryable.
 
-     OPERATIONS    7 screens, 14 groups — the catering ones.
+     OPERATIONS    6 shared screens plus Catering's dedicated flow.
 
-     UNITS         8 ways of pricing.
+     UNITS         11 ways of pricing.
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── trades ──────────────────────────────────────────────────────── */
