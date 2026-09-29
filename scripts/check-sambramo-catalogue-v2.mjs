@@ -22,7 +22,9 @@ const expectedTrades = [
   'Passenger Transport','Event Equipment Rental','Loading & Unloading Crew','Warehouse / Storage',
   'Event Materials Supplier','End-to-End Event Logistics',
 ]
-const assert = (ok, message) => { if (!ok) throw new Error(message) }
+const failures = []
+const assert = (ok, message) => { if (!ok) failures.push(message) }
+
 
 assert(V.VENDOR_CATEGORIES.length === 34, `expected 34 trades, got ${V.VENDOR_CATEGORIES.length}`)
 assert(P.TRADES.length === 34, `partnerCatalogue resolved ${P.TRADES.length} trades`)
@@ -74,6 +76,11 @@ for (const [trade, ids] of Object.entries(logisticsServices)) {
     assert(V.TRADE_FOR_SERVICE[id] === trade, `wrong logistics mapping: ${id}`)
     assert(SS.SPECS_BY_SERVICE[id].length >= 3, `logistics questionnaire too short: ${id}`)
   }
+}
+
+if (failures.length) {
+  console.error(JSON.stringify({ status: 'FAIL', failures }, null, 2))
+  process.exit(1)
 }
 
 console.log(JSON.stringify({
