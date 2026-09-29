@@ -415,7 +415,8 @@ export const TRADE_FOR_SERVICE = {
   warehouse_storage: 'Warehouse / Storage',
   event_materials: 'Event Materials Supplier',
   event_logistics: 'End-to-End Event Logistics',
-  house_shift:    'Medium / Large Goods Vehicle',
+  /* household shifting is intentionally not part of Sambramo's current
+     Events + Logistics customer catalogue */
   bouncers:       'Security Services',
   venue:          'Venue',
   /* ── Stage 3 ─────────────────────────────────────────────────────── */
