@@ -367,3 +367,39 @@ jobs:
         run: |
           echo "Customer: https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk"
           echo "Partner:  https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk"
+
+      # ══════════════════════════════════════════════════════════════
+      # A partner link no other branch can replace
+      # ══════════════════════════════════════════════════════════════
+      #
+      # `android-latest` is recreated by EVERY branch that builds, with
+      # both APKs, so the partner link served whichever branch built last
+      # (on 2026-09-29 a customer branch, 88d802fb). Partner testers get
+      # `partner-latest`, published only from the partner branch, with
+      # only the partner APK and a version.json naming the exact commit.
+      # A pre-release, so it never becomes the repository's "Latest", and
+      # its tag points at the commit that was built.
+      - name: Publish the partner test build (partner-latest)
+        if: github.ref_name == 'refactor/sambramo-workbook-pricing-20260929'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p partner
+          cp apks/sambramo-partner.apk partner/sambramo-partner.apk
+          printf '{"build":"%s","branch":"%s","builtAt":"%s"}\n' \
+            "${{ github.sha }}" "${{ github.ref_name }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > partner/version.json
+          cat partner/version.json
+          {
+            echo "Partner app test build from \`${{ github.sha }}\` on \`${{ github.ref_name }}\`."
+            echo
+            echo "Uninstall the previous Sambramo Partners app first: every CI build is signed with a new debug certificate."
+          } > partner/notes.md
+          gh release delete partner-latest --yes --cleanup-tag || true
+          gh release create partner-latest \
+            partner/sambramo-partner.apk \
+            partner/version.json \
+            --target "${{ github.sha }}" \
+            --prerelease \
+            --title "Sambramo Partners — test build" \
+            --notes-file partner/notes.md
+          echo "Partner test link: https://github.com/${{ github.repository }}/releases/download/partner-latest/sambramo-partner.apk"

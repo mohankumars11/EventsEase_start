@@ -25,6 +25,7 @@ const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf
 const SUITES = {
   lab: async () => (await import('./suites/fieldLab.mjs')).fieldLab,
   e2e: async () => (await import('./suites/partnerE2E.mjs')).partnerE2E,
+  logistics: async () => (await import('./suites/logisticsE2E.mjs')).logisticsE2E,
 }
 const run = which === 'all' ? Object.keys(SUITES) : [which]
 

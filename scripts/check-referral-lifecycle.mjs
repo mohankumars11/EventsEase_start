@@ -213,7 +213,7 @@ try {
   const s0 = (await A.client.rpc('my_referral_summary')).data
   const photo0 = s0.trades.find(t => t.trade_id === 'SBM-TRD-014')
   ok('the invitation is counted as an invitation', photo0.invited === 1 && photo0.registered === 0, photo0)
-  ok('the summary covers all 26 trades', s0.trades.length === 26, s0.trades.length)
+  ok('the summary covers every active trade (34: 26 event + 8 logistics)', s0.trades.length === 34, s0.trades.length)
 
   const bad = (await B.client.rpc('claim_referral_code', { p_code: 'QQQQQQQQ' })).data
   ok('an unknown code is refused', bad?.ok === false && bad.says === 'That code cannot be used on this account.', bad)

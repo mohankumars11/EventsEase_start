@@ -127,6 +127,26 @@ const migration = fs.readFileSync(path.join(ROOT, 'supabase/migrations/163_fix_l
 ok(/match_booking_line_partners/.test(migration), 'matching reconciliation migration missing')
 ok(/REVOKE ALL ON FUNCTION public\.dispatch_wave/.test(migration), 'dispatch_wave execution scope not explicitly tightened')
 
+/* ── Partner capacities reach the matcher ─────────────────────────────
+   Built from answers in the shape the questionnaire actually stores them
+   ("<service>:<question>"). The bare-key version of this passed every
+   check while every real logistics profile carried max_payload_kg: null,
+   which the 161/163 matcher reads as 0 and so never offered a truck
+   partner a job with a stated weight. */
+const cap = (trade, picked, detail) => MR.buildPartnerMatchProfile({ trade, picked, detail }).capabilityNumbers
+ok(cap('Mini Truck / Pickup', ['mini_truck'], { 'mini_truck:payload': '750' }).max_payload_kg === 750,
+   'L01 payload answer does not reach max_payload_kg')
+ok(cap('Medium / Large Goods Vehicle', ['goods_vehicle'], { 'goods_vehicle:payload': '7000' }).max_payload_kg === 7000,
+   'L02 payload answer does not reach max_payload_kg')
+ok(cap('Passenger Transport', ['passenger_transport'], { 'passenger_transport:seats': '26' }).max_passengers === 26,
+   'L03 seats answer does not reach max_passengers')
+ok(cap('Loading & Unloading Crew', ['loading_crew'], { 'loading_crew:crew_size': '8' }).max_crew === 8,
+   'L05 crew answer does not reach max_crew')
+ok(cap('Warehouse / Storage', ['warehouse_storage'], { 'warehouse_storage:capacity': '2000' }).max_storage_sqft === 2000,
+   'L06 capacity answer does not reach max_storage_sqft')
+ok(cap('Mini Truck / Pickup', ['mini_truck'], { 'mini_truck:payload': '500', 'other:payload': '1500' }).max_payload_kg === 1500,
+   'the largest payload across offerings is not the one used')
+
 if (failures.length) {
   console.error('\n5B→5F VALIDATION FAILED')
   for (const f of failures) console.error(' - ' + f)

@@ -44,6 +44,16 @@ function numeric(v) {
   return Number.isFinite(n) ? n : null
 }
 
+/** A numeric answer by question id, bare or service-prefixed; the largest wins. */
+export function answerNumber(detail = {}, id) {
+  const found = Object.entries(detail ?? {})
+    .filter(([k]) => k === id || k.endsWith(':' + id))
+    .flatMap(([, v]) => arr(v))
+    .map(v => (v === '' || v == null ? null : numeric(v)))
+    .filter(n => n != null && n > 0)
+  return found.length ? Math.max(...found) : null
+}
+
 export function buildPartnerMatchProfile({ trade, picked = [], detail = {}, opsScreens = [], serviceRadiusKm = null }) {
   const capabilityTags = new Set(picked.map(id => 'service:' + id))
   const capabilityNumbers = {}
@@ -70,10 +80,18 @@ export function buildPartnerMatchProfile({ trade, picked = [], detail = {}, opsS
     }
   }
 
-  if (trade === 'Mini Truck / Pickup' || trade === 'Medium / Large Goods Vehicle') capabilityNumbers.max_payload_kg = numeric(detail.payload)
-  if (trade === 'Passenger Transport') capabilityNumbers.max_passengers = numeric(detail.seats)
-  if (trade === 'Loading & Unloading Crew') capabilityNumbers.max_crew = numeric(detail.crew_size)
-  if (trade === 'Warehouse / Storage') capabilityNumbers.max_storage_sqft = numeric(detail.capacity)
+  /* ── Capacities the matcher filters on (161/163) ─────────────────────
+     The questionnaire stores answers under service-prefixed keys
+     ("mini_truck:payload", "passenger_transport:seats"), never the bare
+     id. Reading `detail.payload` found nothing, so every logistics
+     capacity was null and the matcher, which compares
+     max_payload_kg >= the customer's weight with null as 0, could never
+     offer a weight-specified job to any truck partner. Read the bare id or
+     any "<service>:<id>" key, and take the largest across offerings. */
+  if (trade === 'Mini Truck / Pickup' || trade === 'Medium / Large Goods Vehicle') capabilityNumbers.max_payload_kg = answerNumber(detail, 'payload')
+  if (trade === 'Passenger Transport') capabilityNumbers.max_passengers = answerNumber(detail, 'seats')
+  if (trade === 'Loading & Unloading Crew') capabilityNumbers.max_crew = answerNumber(detail, 'crew_size')
+  if (trade === 'Warehouse / Storage') capabilityNumbers.max_storage_sqft = answerNumber(detail, 'capacity')
   if (serviceRadiusKm != null) capabilityNumbers.service_radius_km = numeric(serviceRadiusKm)
 
   return { contractVersion: MATCHING_CONTRACT_VERSION, trade, serviceIds: picked, capabilityTags: [...capabilityTags], capabilityNumbers, capabilityValues }
