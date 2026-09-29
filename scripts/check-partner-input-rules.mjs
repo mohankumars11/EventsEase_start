@@ -27,7 +27,7 @@
  *   node scripts/check-partner-input-rules.mjs --sabotage
  */
 import { spawnSync } from 'node:child_process'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -37,6 +37,7 @@ const sabotage = process.argv.includes('--sabotage')
 
 const OUT = join(ROOT, 'node_modules/.cache/input-rules.mjs')
 const ENTRY = join(ROOT, 'node_modules/.cache/input-rules-entry.mjs')
+mkdirSync(dirname(ENTRY), { recursive: true })
 writeFileSync(ENTRY, [
   `export * from ${JSON.stringify(join(ROOT, 'src/lib/validation/fieldRules.js'))}`,
   `export * from ${JSON.stringify(join(ROOT, 'src/lib/validation/identity.js'))}`,
