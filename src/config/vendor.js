@@ -406,6 +406,7 @@ export const TRADE_FOR_SERVICE = {
   /* Legacy service ids remain readable but are no longer the preferred
      customer routes. New logistics bookings use the dedicated ids below. */
   goods_move:     'Mini Truck / Pickup',
+  transport:      'Passenger Transport',
   house_shift:    'Medium / Large Goods Vehicle',
   bouncers:       'Security Services',
   venue:          'Venue',
