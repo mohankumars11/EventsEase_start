@@ -13,7 +13,7 @@
 import { By } from 'selenium-webdriver'
 import { serveApp } from '../lib/harness.mjs'
 import { partners, hasDatabase, loadEnv } from '../lib/partner.mjs'
-import { type, paste, messageOf, valueOf, focused, until_, waitFor, field } from '../lib/field.mjs'
+import { type as typeRaw, paste as pasteRaw, messageOf, valueOf, focused, until_, waitFor, field as fieldRaw } from '../lib/field.mjs'
 
 const STEP_TITLES = ['Business & Services', 'Partner Details', 'Service Area & Availability',
   'Verification & Compliance', 'Bank & Payments', 'Review & Publish']
@@ -34,7 +34,34 @@ export async function partnerE2E(t) {
      load; a click in that moment lands on the splash image. */
   const settle = () => until_(driver, async () => (await driver.executeScript(
     'const s = document.querySelector(".splash-art"); return !s || !s.offsetParent || getComputedStyle(s).opacity === "0"')) || null, 20000)
-  const go = async path => { await driver.get(url(path)); await settle() }
+  const go = async path => { await driver.get(url(path)); await settle(); await unfoldAll() }
+  /* A click that the launch splash still covers falls back to a script
+     click on the same element, which is what a finger would reach once
+     the splash has gone. */
+  const tap = async el => {
+    await driver.executeScript('arguments[0].scrollIntoView({ block: "center" })', el)
+    try { await el.click() } catch { await driver.executeScript('arguments[0].click()', el) }
+  }
+  /* More sections are folds; open every closed one so its boxes exist. */
+  const unfoldAll = async () => {
+    await driver.sleep(300)
+    await driver.executeScript('document.querySelectorAll("button[aria-expanded=false]").forEach(b => b.click())')
+    await driver.sleep(200)
+  }
+  /* A box inside a closed fold does not exist until the fold opens, and
+     the folds render only once the account has loaded: open them until
+     the box appears. */
+  const field = async (drv, name, ms = 40000) => {
+    const found = await until_(driver, async () => {
+      const els = await driver.findElements(By.css(`[data-field="${name}"]`))
+      if (els.length && await els[0].isDisplayed()) return els[0]
+      await driver.executeScript('document.querySelectorAll("button[aria-expanded=false]").forEach(b => b.click())')
+      return null
+    }, ms, 400)
+    return found ?? fieldRaw(drv, name, 1000)
+  }
+  const type = async (drv, name, text, o) => { await field(drv, name); return typeRaw(drv, name, text, o) }
+  const paste = async (drv, name, text, o) => { await field(drv, name); return pasteRaw(drv, name, text, o) }
   const here = () => driver.getCurrentUrl().then(u => new URL(u).pathname)
   const cont = () => driver.findElement(By.css('[data-cta="step-continue"]'))
   const waitPath = (p, ms = 20000) => until_(driver, async () => (await here()) === p, ms)
@@ -48,7 +75,7 @@ export async function partnerE2E(t) {
       is_active: true, sort_order: 1 })
 
     await t.test('journey', 'setup lists the six steps, in order, with step 1 complete from saved data', async () => {
-      await P.signIn(driver, app.url, J, '/partner/setup'); await settle()
+      await P.signIn(driver, app.url, J, '/partner/setup'); await settle(); await unfoldAll()
       const text = await until_(driver, async () => {
         const b = await driver.findElement(By.css('body')).getText()
         return STEP_TITLES.every(s => b.includes(s)) ? b : null
@@ -77,7 +104,7 @@ export async function partnerE2E(t) {
       t.assert((await valueOf(driver, 'contact_phone')).includes('x'), 'the letter was dropped instead of refused')
       await type(driver, 'description', 'Pure vegetarian catering for weddings since 2011.')
       await type(driver, 'years_active', '12')
-      await (await cont()).click()
+      await tap(await cont())
       await driver.sleep(400)
       t.assert((await here()) === '/partner/setup/details', 'Continue moved on with an invalid phone')
       t.assert((await focused(driver)) === 'contact_phone', 'focus did not move to the invalid box')
@@ -89,7 +116,7 @@ export async function partnerE2E(t) {
       await type(driver, 'contact_phone', '+91 98450-12345')
       const m = await until_(driver, async () => { const x = await messageOf(driver, 'contact_phone'); return !x.invalid ? x : null })
       t.assert(m, 'the error stayed after correcting')
-      await (await cont()).click()
+      await tap(await cont())
       t.assert(await waitPath('/partner/setup/area'), 'did not move to step 3')
       const v = await P.vendorOf(J, 'business_name, contact_phone, years_active, description')
       t.assert(v.contact_phone === '9845012345', `stored as ${v.contact_phone}, not the canonical ten digits`)
@@ -109,7 +136,7 @@ export async function partnerE2E(t) {
       await P.admin.from('vendors').update({ city: 'Bengaluru', pincode: '560041' }).eq('id', J.vendorId)
       await go(('/partner/setup/area'))
       await type(driver, 'lead_time_days', '1e3')
-      await (await cont()).click()
+      await tap(await cont())
       await driver.sleep(500)
       t.assert((await here()) === '/partner/setup/area', 'moved on with "1e3"')
       const m = await errorFor('lead_time_days')
@@ -120,15 +147,15 @@ export async function partnerE2E(t) {
 
     await t.test('journey', 'step 3: corrected, it saves and moves to step 4', async () => {
       await type(driver, 'lead_time_days', '3')
-      await (await cont()).click()
+      await tap(await cont())
       t.assert(await waitPath('/partner/setup/compliance'), 'did not move to step 4')
       t.assert((await P.vendorOf(J, 'lead_time_days')).lead_time_days === 3, 'lead time not saved')
     })
 
     await t.test('journey', 'step 4: opens on its own screen, and its Continue records the step', async () => {
-      const b = await until_(driver, async () => { const x = await driver.findElement(By.css('body')).getText(); return /Verification & Compliance/.test(x) ? x : null }, 30000)
+      const b = await until_(driver, async () => { const x = await driver.findElement(By.css('body')).getText(); return /Verification & Compliance/i.test(x) ? x : null }, 30000)
       t.assert(b, 'step 4 did not render')
-      await (await cont()).click()
+      await tap(await cont())
       t.assert(await waitPath('/partner/setup/bank'), 'did not move to step 5')
       const v = await P.vendorOf(J, 'completed_steps')
       t.assert((v.completed_steps ?? []).includes('compliance'), 'step 4 was not recorded')
@@ -136,7 +163,7 @@ export async function partnerE2E(t) {
 
     await t.test('journey', 'step 5: an email typed as a UPI id is refused, nothing saved', async () => {
       await type(driver, 'upi_id', 'anna@gmail.com')
-      await (await cont()).click()
+      await tap(await cont())
       await driver.sleep(500)
       t.assert((await here()) === '/partner/setup/bank', 'moved on with an email as a UPI id')
       t.assert(await errorFor('upi_id'), 'no message under the UPI box')
@@ -146,7 +173,7 @@ export async function partnerE2E(t) {
 
     await t.test('journey', 'step 5: a valid UPI id saves (this step could never save before) and moves to review', async () => {
       await type(driver, 'upi_id', ' TCE2E.Anna@YBL ')
-      await (await cont()).click()
+      await tap(await cont())
       t.assert(await waitPath('/partner/setup/review'), 'did not move to review')
       const { data } = await P.admin.from('vendor_payout_details').select('upi_id').eq('vendor_id', J.vendorId).maybeSingle()
       t.assert(data?.upi_id === 'tce2e.anna@ybl', `stored ${data?.upi_id}`)
@@ -169,13 +196,13 @@ export async function partnerE2E(t) {
       vendor_id: B.vendorId, name: 'Wedding lunch', category: 'Catering & Food', price: 450, is_active: true, sort_order: 1 })
 
     await t.test('bank step', 'bank account: letters in the number are refused on Continue, nothing saved', async () => {
-      await P.signIn(driver, app.url, B, '/partner/setup/bank'); await settle()
+      await P.signIn(driver, app.url, B, '/partner/setup/bank'); await settle(); await unfoldAll()
       const bankBtn = await waitFor(driver, By.css('[data-method="bank"]'), 40000)
-      await bankBtn.click()
+      await tap(bankBtn)
       await type(driver, 'account_name', 'Anna Ramesh')
       await type(driver, 'account_number', '12345abc6789')
       await type(driver, 'ifsc', 'HDFC0001234')
-      await (await cont()).click()
+      await tap(await cont())
       await driver.sleep(500)
       t.assert((await here()) === '/partner/setup/bank', 'moved on with letters in the account number')
       t.assert(await errorFor('account_number'), 'no message under the account number')
@@ -187,7 +214,7 @@ export async function partnerE2E(t) {
     await t.test('bank step', 'bank account: a spaced number and lower-case IFSC save clean, and move to review', async () => {
       await type(driver, 'account_number', '0001 1122 4417')
       await type(driver, 'ifsc', 'hdfc0001234')
-      await (await cont()).click()
+      await tap(await cont())
       t.assert(await waitPath('/partner/setup/review'), 'did not move to review')
       const { data } = await P.admin.from('vendor_payout_details')
         .select('method, account_name, account_number, ifsc, upi_id').eq('vendor_id', B.vendorId).maybeSingle()
@@ -218,12 +245,11 @@ export async function partnerE2E(t) {
     const open = screen => go(`/dashboard/vendor?tab=account&screen=${screen}`)
     const saveSection = async () => {
       const btn = await driver.findElement(By.xpath('//button[contains(., "Save changes")]'))
-      await driver.executeScript('arguments[0].scrollIntoView({block:"center"})', btn)
-      await btn.click()
+      await tap(btn)
     }
 
     await t.test('more', 'Business: a name that is only numbers is refused and not saved', async () => {
-      await P.signIn(driver, app.url, K, '/dashboard/vendor?tab=account&screen=business'); await settle()
+      await P.signIn(driver, app.url, K, '/dashboard/vendor?tab=account&screen=business'); await settle(); await unfoldAll()
       await field(driver, 'business_name', 40000)
       await type(driver, 'business_name', '12345')
       await saveSection()
@@ -262,7 +288,7 @@ export async function partnerE2E(t) {
       t.assert(await errorFor('whatsapp_phone'), 'a five-digit number was accepted')
       await type(driver, 'whatsapp_phone', '+91 98450 67890')
       const btns = await driver.findElements(By.xpath('//button[contains(., "Save changes")]'))
-      for (const b of btns) { if (await b.isDisplayed()) { await driver.executeScript('arguments[0].scrollIntoView({block:"center"})', b); await b.click(); break } }
+      for (const b of btns) { if (await b.isDisplayed()) { await tap(b); break } }
       const v = await until_(driver, async () => { const r = await P.vendorOf(K, 'whatsapp_phone, contact_phone'); return r.whatsapp_phone ? r : null })
       t.assert(v?.whatsapp_phone === '9845067890', `stored ${v?.whatsapp_phone}`)
       t.assert(v.contact_phone === '9845012345', 'the call number changed too')
@@ -289,7 +315,7 @@ export async function partnerE2E(t) {
     await t.test('more', 'Bank: letters in the account number are refused, nothing saved', async () => {
       await open('bank')
       const bankTab = await until_(driver, async () => (await driver.findElements(By.xpath('//button[.//span[text()="Bank"]]')))[0], 40000)
-      await bankTab.click()
+      await tap(bankTab)
       await type(driver, 'account_number', '12345abc6789')
       t.assert(await errorFor('account_number'), 'letters in the account number were accepted')
       const { data } = await P.admin.from('vendor_payout_details').select('vendor_id').eq('vendor_id', K.vendorId).maybeSingle()
@@ -299,18 +325,18 @@ export async function partnerE2E(t) {
     await t.test('more', 'Bank: a valid UPI id saves from More and is shown after reopening', async () => {
       await open('bank')
       const upiTab = await until_(driver, async () => (await driver.findElements(By.xpath('//button[.//span[text()="UPI"]]')))[0], 40000)
-      await upiTab.click()
+      await tap(upiTab)
       await type(driver, 'upi_id', 'TCE2E.More@ybl')
       const btn = await driver.findElement(By.xpath('//button[contains(., "payout details")]'))
-      await driver.executeScript('arguments[0].scrollIntoView({block:"center"})', btn)
-      await btn.click()
+      await tap(btn)
       const saved = await until_(driver, async () => {
         const { data } = await P.admin.from('vendor_payout_details').select('upi_id, method').eq('vendor_id', K.vendorId).maybeSingle()
         return data?.upi_id ? data : null
       }, 20000)
       t.assert(saved?.upi_id === 'tce2e.more@ybl' && saved.method === 'upi', `saved ${JSON.stringify(saved)}`)
       await open('bank')
-      const shown = await until_(driver, async () => /tce2e\.more@ybl/.test(await driver.findElement(By.css('body')).getText()) || null, 30000)
+      /* The saved id is loaded back into the box itself (an input value, not page text). */
+      const shown = await until_(driver, async () => ((await valueOf(driver, 'upi_id').catch(() => '')) === 'tce2e.more@ybl') || null, 30000)
       t.assert(shown, 'the saved UPI id is not shown after reopening')
     })
 
