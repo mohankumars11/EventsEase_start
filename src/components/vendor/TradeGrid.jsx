@@ -3,7 +3,7 @@ import {
   Search, X, Check, UtensilsCrossed, Camera, Video, Flower2, Building2, Music,
   Sparkles, Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
   Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse, Flame,
-  Gift, Package, ClipboardList, PackageOpen,
+  Gift, Package, ClipboardList, PackageOpen, Truck, Warehouse, UsersRound,
 } from 'lucide-react'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 
@@ -20,7 +20,8 @@ import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
  * platform can list were two taps and one decision away from somebody who
  * had opened the app specifically to list one.
  *
- * The grid IS the screen now, in both places. One implementation, so the
+ * The grid IS the screen now, in both places. It serves the full 34-trade catalogue, so the
+ * partner sees event and logistics work in one consistent taxonomy. One implementation, so the
  * search that already understands "biryani" cannot drift from the one on
  * the tab.
  *
@@ -57,6 +58,14 @@ const TRADE_ICON = {
   'Sound & AV': Speaker,
   'Tent & Furniture': Tent,
   'Transportation': Truck,
+  'Mini Truck / Pickup': Truck,
+  'Medium / Large Goods Vehicle': Truck,
+  'Passenger Transport': UsersRound,
+  'Event Equipment Rental': Package,
+  'Loading & Unloading Crew': UsersRound,
+  'Warehouse / Storage': Warehouse,
+  'Event Materials Supplier': PackageOpen,
+  'End-to-End Event Logistics': ClipboardList,
   'Valet Parking': ParkingSquare,
   'Venue': Building2,
   'Videography': Video,
@@ -126,7 +135,7 @@ export default function TradeGrid({
           THE SEARCH DOES NOT SCROLL AWAY
           ══════════════════════════════════════════════════════════════
 
-          Twenty-six cards is about nine screens on a 360px phone. The
+          Thirty-four cards is about nine screens on a 360px phone. The
           search sat at the top of that column, so the moment a partner
           started scrolling to look for their trade the one control that
           would have found it in two letters was gone above the fold —
