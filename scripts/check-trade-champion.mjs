@@ -54,12 +54,14 @@ ok('every trade has a database id', T.every(t => /^SBM-TRD-\d{3}$/.test(t.id ?? 
    T.filter(t => !t.id).map(t => t.name).join(', '))
 ok('and no two share one', new Set(T.map(t => t.id)).size === 34)
 
-const seedSources = [read('supabase/migrations/107_catalogue_seed.generated.sql'), read('supabase/migrations/160_logistics_listing_catalogue_backfill.sql')]
-const seed = new Map(seedSources.flatMap(source => [...source.matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\\d+)', '((?:[^']|'')+)'/g)]).map(m => [m[1], m[2].replace(/''/g, "'")])));
-/* legacy source remains above for explanatory compatibility */
-/*
-  .matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
-  .map(m => [m[1], m[2].replace(/''/g, "'")]))
+const seedSources = [
+  read('supabase/migrations/107_catalogue_seed.generated.sql'),
+  read('supabase/migrations/160_logistics_listing_catalogue_backfill.sql'),
+]
+const seed = new Map(seedSources.flatMap(source =>
+  [...source.matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \\('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
+    .map(m => [m[1], m[2].replace(/''/g, "'")])
+))
 ok('the seeded listing_trades table has the same 34', seed.size === 34, `seed has ${seed.size}`)
 ok('with the same name for every id', T.every(t => seed.get(t.id) === t.name),
    T.filter(t => seed.get(t.id) !== t.name).map(t => `${t.id}: ${t.name} vs ${seed.get(t.id)}`).join('; '))
