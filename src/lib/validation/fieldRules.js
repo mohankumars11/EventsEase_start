@@ -915,6 +915,18 @@ export const FIELD_RULES = {
     validate: v => (v ? rupees(v, { noun: 'A rate', min: 1, max: 999999, decimals: false }) ?? ok() : ok()),
   },
 
+  percentage: {
+    step: 'business',
+    label: 'Percentage',
+    required: false,
+    normalise: normaliseAmount,
+    validate(v) {
+      if (!v) return ok()
+      const bad = rupees(v, { noun: 'A percentage', min: 0, max: 100, decimals: true })
+      return bad ?? ok()
+    },
+  },
+
   /* "Minimum order" is a number of plates or guests, or a sentence
      ("one function, any size"). A number is checked as a number. */
   min_order: {
