@@ -413,7 +413,6 @@ export const TRADE_FOR_SERVICE = {
   goods_vehicle:  'Medium / Large Goods Vehicle',
   passenger_transport: 'Passenger Transport',
   event_equipment: 'Event Equipment Rental',
-  event_equipment_rental: 'Event Equipment Rental',
   loading_crew:   'Loading & Unloading Crew',
   warehouse_storage: 'Warehouse / Storage',
   event_materials: 'Event Materials Supplier',
