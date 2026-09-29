@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Trade Champion 26, Grow with Sambramo and Build Your Profile — the
+ * Trade Champion 26 / 34-trade catalogue, Grow with Sambramo and Build Your Profile — the
  * parts that can be proved without a browser or a database.
  *
  *   node scripts/check-trade-champion.mjs
@@ -43,7 +43,7 @@ const M = await loadSrc({
 })
 
 /* ══════════════════════════════════════════════════════════════════ */
-head('THE 26')
+head('THE TRADE CATALOGUE')
 
 const T = M.PARTNER_TRADES
 ok('there are 26 canonical trades', M.VENDOR_CATEGORIES.length === 26, `found ${M.VENDOR_CATEGORIES.length}`)
@@ -52,7 +52,7 @@ ok('and the Trade Champion list is exactly them, in order',
 ok('no trade is listed twice', new Set(T.map(t => t.name)).size === 26)
 ok('every trade has a database id', T.every(t => /^SBM-TRD-\d{3}$/.test(t.id ?? '')),
    T.filter(t => !t.id).map(t => t.name).join(', '))
-ok('and no two share one', new Set(T.map(t => t.id)).size === 26)
+ok('and no two share one', new Set(T.map(t => t.id)).size === 34)
 
 const seed = new Map([...read('supabase/migrations/107_catalogue_seed.generated.sql')
   .matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
