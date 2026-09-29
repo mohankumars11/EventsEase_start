@@ -59,7 +59,7 @@ const seedSources = [
   read('supabase/migrations/160_logistics_listing_catalogue_backfill.sql'),
 ]
 const seed = new Map(seedSources.flatMap(source =>
-  [...source.matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \\('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
+  [...source.matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
     .map(m => [m[1], m[2].replace(/''/g, "'")])
 ))
 ok('the seeded listing_trades table has the same 34', seed.size === 34, `seed has ${seed.size}`)
