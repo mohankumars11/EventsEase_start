@@ -50,6 +50,8 @@ import {
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { operationScreensFor } from '../../data/partnerOperations'
 import { reconcilePartnerQuestionGroups } from '../../data/sambramoPartnerQuestionnaireV2Rules'
+import { LOGISTICS_TRADES, logisticsSpecsForServices } from '../../data/logisticsPartnerSpecsV2'
+import LogisticsPriceBook from './LogisticsPriceBook'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -147,6 +149,7 @@ function seedFrom(row) {
       (specs.dishes_typed ?? []).map(t => [t.screen, t.text])),
     menuRates: specs.menu_rates ?? {},
     distanceRates: specs.distance_rates ?? {},
+    logisticsRates: specs.logistics_rates ?? {},
     venueTerms: specs.venue_terms ?? {},
     kitchen: specs.kitchen_type ?? null,
     cuisines: specs.cuisines ?? [],
@@ -214,6 +217,7 @@ export default function AddItemFlow({
      PriceGuidance for why that is worse than asking three times. */
   const [menuRates, setMenuRates] = useState(isEdit ? seed.menuRates : {})
   const [distanceRates, setDistanceRates] = useState(isEdit ? seed.distanceRates : {})
+  const [logisticsRates, setLogisticsRates] = useState(isEdit ? seed.logisticsRates : {})
   /* Null until the partner has held the sign button. Cleared if they
      change the name afterwards — see ListingSignature. */
   const [signature, setSignature] = useState(isEdit ? seed.signature : null)
@@ -249,7 +253,9 @@ export default function AddItemFlow({
      matter. Both were true. */
   const groups = useMemo(
     () => (trade
-      ? reconcilePartnerQuestionGroups(specsForServices(picked, specsForTrade(trade)))
+      ? (LOGISTICS_TRADES.has(trade)
+        ? reconcilePartnerQuestionGroups(logisticsSpecsForServices(picked))
+        : reconcilePartnerQuestionGroups(specsForServices(picked, specsForTrade(trade))))
       : []),
     [trade, picked])
   const isCatering = trade === CATERING
@@ -634,6 +640,10 @@ export default function AddItemFlow({
       const fare = Object.fromEntries(
         Object.entries(distanceRates).filter(([, v]) => String(v ?? '').trim() !== ''))
       if (Object.keys(fare).length) specs.distance_rates = fare
+
+      const logistics = Object.fromEntries(
+        Object.entries(logisticsRates).filter(([, v]) => String(v ?? '').trim() !== ''))
+      if (Object.keys(logistics).length) specs.logistics_rates = logistics
 
       /* Everything on top of the rent, kept as the separate numbers they
          are. Flattened into one figure they would be exactly the surprise
