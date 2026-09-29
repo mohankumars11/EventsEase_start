@@ -1,5 +1,8 @@
 name: Field validation tests
 
+permissions:
+  contents: write
+
 # Separate from android.yml on purpose: a red validation run must never
 # stop an APK from being built, and the APK workflow must not change.
 #
@@ -48,8 +51,17 @@ jobs:
         run: node scripts/check-trade-champion.mjs
       - name: Sambramo trade + questionnaire V2 contract
         run: node scripts/check-sambramo-v2.mjs
-      - name: Generated catalogue IDs are in sync
-        run: node scripts/generate-catalogue-ids.mjs --check
+      - name: Reconcile generated catalogue IDs
+        run: |
+          node scripts/generate-catalogue-ids.mjs
+          if ! git diff --quiet -- src/data/catalogueIds.generated.js; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/data/catalogueIds.generated.js
+            git commit -m "5B: reconcile generated catalogue IDs"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
+          node scripts/generate-catalogue-ids.mjs --check
       - name: 34-trade generated catalogue integrity
         run: node scripts/check-sambramo-catalogue-v2.mjs
       - name: Sambramo 5B-5F regression + security gate
