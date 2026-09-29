@@ -50,6 +50,8 @@ jobs:
         run: node scripts/check-sambramo-v2.mjs
       - name: 34-trade generated catalogue integrity
         run: node scripts/check-sambramo-catalogue-v2.mjs
+      - name: Sambramo 5B-5F regression + security gate
+        run: node scripts/check-sambramo-5b-5f.mjs
 
       - name: Build the partner web app (for the harness stylesheet)
         env:
