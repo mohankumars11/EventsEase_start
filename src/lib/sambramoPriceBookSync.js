@@ -98,7 +98,21 @@ export async function syncPartnerPriceBook(service) {
 
   if (latestError) return { ok: false, reason: latestError.message }
   const version = (Number(latestRows?.[0]?.version) || 0) + 1
-  const rows = monetaryRows(service, version)
+  const now = new Date().toISOString()
+
+  // Close the prior active version, preserving it as an immutable historical
+  // rate basis. The new version becomes the only active basis.
+  const { error: closeError } = await supabase
+    .from('sambramo_partner_price_books')
+    .update({ status: 'expired', effective_to: now })
+    .eq('vendor_service_id', service.id)
+    .eq('status', 'active')
+    .is('effective_to', null)
+
+  if (closeError) return { ok: false, reason: closeError.message }
+
+  const rows = monetaryRows({ ...service }, version)
+  rows.forEach(row => { row.effective_from = now })
   if (!rows.length) return { ok: true, version, rows: 0 }
 
   const { error } = await supabase
