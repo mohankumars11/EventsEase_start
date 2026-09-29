@@ -46,18 +46,21 @@ const M = await loadSrc({
 head('THE TRADE CATALOGUE')
 
 const T = M.PARTNER_TRADES
-ok('there are 26 canonical trades', M.VENDOR_CATEGORIES.length === 26, `found ${M.VENDOR_CATEGORIES.length}`)
+ok('there are 34 canonical trades', M.VENDOR_CATEGORIES.length === 34, `found ${M.VENDOR_CATEGORIES.length}`)
 ok('and the Trade Champion list is exactly them, in order',
-   T.length === 26 && T.every((t, i) => t.name === M.VENDOR_CATEGORIES[i]))
-ok('no trade is listed twice', new Set(T.map(t => t.name)).size === 26)
+   T.length === 34 && T.every((t, i) => t.name === M.VENDOR_CATEGORIES[i]))
+ok('no trade is listed twice', new Set(T.map(t => t.name)).size === 34)
 ok('every trade has a database id', T.every(t => /^SBM-TRD-\d{3}$/.test(t.id ?? '')),
    T.filter(t => !t.id).map(t => t.name).join(', '))
 ok('and no two share one', new Set(T.map(t => t.id)).size === 34)
 
-const seed = new Map([...read('supabase/migrations/107_catalogue_seed.generated.sql')
+const seedSources = [read('supabase/migrations/107_catalogue_seed.generated.sql'), read('supabase/migrations/160_logistics_listing_catalogue_backfill.sql')]
+const seed = new Map(seedSources.flatMap(source => [...source.matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\\d+)', '((?:[^']|'')+)'/g)]).map(m => [m[1], m[2].replace(/''/g, "'")])));
+/* legacy source remains above for explanatory compatibility */
+/*
   .matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
   .map(m => [m[1], m[2].replace(/''/g, "'")]))
-ok('the seeded listing_trades table has the same 26', seed.size === 26, `seed has ${seed.size}`)
+ok('the seeded listing_trades table has the same 34', seed.size === 34, `seed has ${seed.size}`)
 ok('with the same name for every id', T.every(t => seed.get(t.id) === t.name),
    T.filter(t => seed.get(t.id) !== t.name).map(t => `${t.id}: ${t.name} vs ${seed.get(t.id)}`).join('; '))
 ok('tradeById finds each one back', T.every(t => M.tradeById(t.id)?.name === t.name))
