@@ -171,6 +171,9 @@ jobs:
           VITE_BUILD: ${{ github.sha }}
         run: |
           set -a; . ./.env.android; set +a
+          # Keep the checked-in API bundle synchronized in CI before the
+          # frontend build's stale-bundle gate runs.
+          node scripts/build-api-bundle.mjs
           npm run build
 
           # The push service worker cannot read import.meta.env, so its
