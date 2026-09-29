@@ -75,6 +75,8 @@ export { POLICY_VERSION, instantCancellationRung, CANCELLATION_LADDER } from ${J
 export { specModeFor, DISCUSS_SERVICES, QUOTE_ONLY_SERVICES, setupSpec } from ${JSON.stringify(join(ROOT, 'src/data/instantSetups.js'))}
 export { TAX } from ${JSON.stringify(join(ROOT, 'src/config/legal.js'))}
 export { optionMultiplier, optionSummary, defaultOptions, optionsFor } from ${JSON.stringify(join(ROOT, 'src/data/instantOptions.js'))}
+export { priceLogisticsLine, logisticsServiceIds, platformSplit, LOGISTICS_PRICE_BOOK_VERSION } from ${JSON.stringify(join(ROOT, 'src/data/logisticsPricing.js'))}
+export { customerMatchRequirements, MATCHING_CONTRACT_VERSION } from ${JSON.stringify(join(ROOT, 'src/lib/matchingReconciliation.js'))}
 export { coverageOf, LEVEL as ALERT_LEVEL } from ${JSON.stringify(join(ROOT, 'src/lib/calendarAlerts.js'))}
 `
 
