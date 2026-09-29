@@ -75,7 +75,7 @@ export default function LogisticsPriceBook({ trade, value = {}, onChange }) {
             <span className="mb-1 block text-[12px] font-bold text-ink-mute">{label}</span>
             <div className="flex items-center gap-2">
               <CheckedInput
-                field={suffix === '%' ? 'percentage' : 'rate_amount'}
+                field={suffix === '%' ? 'percentage' : /km|people|crew/i.test(id) ? 'exact_quantity' : 'rate_amount'}
                 name={'logistics_' + id}
                 value={value[id] ?? ''}
                 onChange={v => set(id, v)}
