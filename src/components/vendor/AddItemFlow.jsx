@@ -1808,9 +1808,7 @@ function PriceStep({
           )}
         </div>
       </div>
-
-      </div>
-      </div>
+      </>
       )}
       
       {isCatering && (
