@@ -49,7 +49,7 @@ export function buildPartnerMatchProfile({ trade, picked = [], detail = {}, opsS
 
   for (const [key, value] of Object.entries(detail ?? {})) {
     const values = arr(value)
-    for (const v of values) if (typeof v === 'string' && v.trim()) capabilityTags.add('answer:' + key + ':' + v)
+    for (const v of values) if (typeof v === 'string' && v.trim()) { capabilityTags.add('answer:' + key + ':' + v); capabilityTags.add('option:' + key + ':' + v) }
     const n = numeric(value)
     if (n != null) capabilityNumbers[key] = n
     capabilityValues[key] = values
