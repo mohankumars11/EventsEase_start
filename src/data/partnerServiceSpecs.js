@@ -3871,6 +3871,356 @@ export const SPECS_BY_SERVICE = {
      Somebody who deals with offices on the family's behalf. Which
      office is the whole service — a person who can get a loudspeaker
      permission cannot necessarily get an excise licence. */
+  /* ══════════════════════════════════════════════════════════════════
+     LOGISTICS — canonical service-specific capability questions
+     These deliberately avoid the shared notice/travel/team/rate questions.
+     ══════════════════════════════════════════════════════════════════ */
+
+  mini_truck: [
+    {
+      id: 'vehicle_class',
+      question: 'Which small vehicle do you operate?',
+      type: 'multi',
+      choices: [
+        { id: 'pickup', label: 'Pickup / open-body' },
+        { id: 'mini_truck', label: 'Mini truck' },
+        { id: 'tata_ace', label: 'Tata Ace / equivalent' },
+        { id: 'closed_body', label: 'Closed-body mini truck' },
+      ],
+    },
+    {
+      id: 'payload',
+      question: 'What payload can you carry?',
+      type: 'one',
+      choices: [
+        { id: '500', label: 'Up to 500 kg' },
+        { id: '750', label: 'Up to 750 kg' },
+        { id: '1200', label: 'Up to 1.2 tonnes' },
+        { id: '2000', label: 'Up to 2 tonnes' },
+      ],
+      exact: { label: 'Or exact kg', unit: 'kg', max: 5000 },
+    },
+    {
+      id: 'cargo_access',
+      question: 'Which event cargo can you accept?',
+      type: 'multi',
+      choices: [
+        { id: 'chairs_furniture', label: 'Chairs & furniture' },
+        { id: 'decor', label: 'Decor & floral materials' },
+        { id: 'food', label: 'Food / catering loads' },
+        { id: 'equipment', label: 'Event equipment' },
+        { id: 'fragile', label: 'Fragile / packed goods' },
+      ],
+    },
+  ],
+
+  goods_vehicle: [
+    {
+      id: 'vehicle_class',
+      question: 'Which goods vehicles do you operate?',
+      type: 'multi',
+      choices: [
+        { id: '14ft', label: '14 ft' },
+        { id: '17ft', label: '17 ft' },
+        { id: '19ft', label: '19 ft' },
+        { id: 'container', label: 'Container body' },
+        { id: 'lcv_hcv', label: 'Other LCV / HCV' },
+      ],
+    },
+    {
+      id: 'payload',
+      question: 'What is your maximum payload?',
+      type: 'one',
+      choices: [
+        { id: '1500', label: 'Up to 1.5 tonnes' },
+        { id: '4000', label: 'Up to 4 tonnes' },
+        { id: '7000', label: 'Up to 7 tonnes' },
+        { id: '10000', label: '10 tonnes or more' },
+      ],
+      exact: { label: 'Or exact tonnes', unit: 'kg', max: 50000 },
+    },
+    {
+      id: 'load_dimensions',
+      question: 'Which cargo conditions can you handle?',
+      type: 'multi',
+      choices: [
+        { id: 'standard', label: 'Standard pallet / boxed cargo' },
+        { id: 'long', label: 'Long / oversized items' },
+        { id: 'fragile', label: 'Fragile event equipment' },
+        { id: 'special_handling', label: 'Special handling' },
+      ],
+    },
+    {
+      id: 'access',
+      question: 'Which access situations can you handle?',
+      type: 'multi',
+      choices: [
+        { id: 'narrow', label: 'Narrow roads' },
+        { id: 'basement', label: 'Basement / ramp access' },
+        { id: 'loading_bay', label: 'Loading bay' },
+        { id: 'night', label: 'Night loading' },
+      ],
+    },
+  ],
+
+  passenger_transport: [
+    {
+      id: 'vehicle_class',
+      question: 'Which passenger vehicles do you operate?',
+      type: 'multi',
+      choices: [
+        { id: 'sedan_suv', label: 'Sedan / SUV' },
+        { id: 'tempo_9_14', label: '9–14 seat tempo traveller' },
+        { id: 'tempo_17_20', label: '17–20 seat traveller' },
+        { id: 'bus_20_35', label: '20–35 seat bus' },
+        { id: 'bus_36_plus', label: '36+ seat bus' },
+      ],
+    },
+    {
+      id: 'seats',
+      question: 'How many passengers can one vehicle carry?',
+      type: 'one',
+      choices: [
+        { id: '9', label: 'Up to 9' },
+        { id: '14', label: 'Up to 14' },
+        { id: '20', label: 'Up to 20' },
+        { id: '35', label: 'Up to 35' },
+        { id: '50', label: '50 or more' },
+      ],
+      exact: { label: 'Or exact seats', unit: 'seats', max: 70 },
+    },
+    {
+      id: 'route_model',
+      question: 'Which passenger routes can you accept?',
+      type: 'multi',
+      choices: [
+        { id: 'point_to_point', label: 'Point to point' },
+        { id: 'multi_stop', label: 'Multi-stop' },
+        { id: 'shuttle', label: 'Event shuttle' },
+        { id: 'airport', label: 'Airport transfers' },
+        { id: 'outstation', label: 'Outstation' },
+      ],
+    },
+    {
+      id: 'luggage',
+      question: 'Can you carry guest luggage?',
+      type: 'one',
+      choices: [
+        { id: 'included', label: 'Yes, in the vehicle' },
+        { id: 'limited', label: 'Yes, within declared capacity' },
+        { id: 'no', label: 'No luggage service' },
+      ],
+    },
+  ],
+
+  event_equipment: [
+    {
+      id: 'asset_categories',
+      question: 'What event equipment do you rent?',
+      type: 'multi',
+      choices: [
+        { id: 'cooking', label: 'Cooking / serving equipment' },
+        { id: 'display', label: 'Display / queue equipment' },
+        { id: 'portable', label: 'Portable event equipment' },
+        { id: 'barriers', label: 'Barriers / crowd equipment' },
+        { id: 'misc', label: 'Other general event equipment' },
+      ],
+    },
+    {
+      id: 'inventory_model',
+      question: 'How is your rental inventory managed?',
+      type: 'one',
+      choices: [
+        { id: 'sku', label: 'SKU / item-level stock' },
+        { id: 'sets', label: 'Packaged sets' },
+        { id: 'fleet', label: 'Asset fleet' },
+      ],
+    },
+    {
+      id: 'delivery_setup',
+      question: 'What do you provide with the rental?',
+      type: 'multi',
+      choices: [
+        { id: 'delivery', label: 'Delivery' },
+        { id: 'setup', label: 'Setup' },
+        { id: 'collection', label: 'Collection / strike' },
+        { id: 'operator', label: 'Operator when required' },
+      ],
+    },
+  ],
+
+  loading_crew: [
+    {
+      id: 'roles',
+      question: 'Which material-handling work can your crew do?',
+      type: 'multi',
+      choices: [
+        { id: 'loading', label: 'Loading' },
+        { id: 'unloading', label: 'Unloading' },
+        { id: 'carry', label: 'Long-carry / internal movement' },
+        { id: 'setup', label: 'Event setup assistance' },
+        { id: 'strike', label: 'Dismantling / strike' },
+      ],
+    },
+    {
+      id: 'crew_count',
+      question: 'How many workers can you send in one shift?',
+      type: 'one',
+      choices: [
+        { id: '2', label: '2' },
+        { id: '5', label: '3–5' },
+        { id: '10', label: '6–10' },
+        { id: '20', label: '11–20' },
+      ],
+      exact: { label: 'Or exact workers', unit: 'people', max: 100 },
+    },
+    {
+      id: 'handling_conditions',
+      question: 'Which site conditions can you handle?',
+      type: 'multi',
+      choices: [
+        { id: 'stairs', label: 'Stairs' },
+        { id: 'lift', label: 'Lift access' },
+        { id: 'long_carry', label: 'Long carry' },
+        { id: 'heavy', label: 'Heavy-item handling' },
+        { id: 'tools', label: 'Own handling tools' },
+      ],
+    },
+  ],
+
+  warehouse_storage: [
+    {
+      id: 'storage_type',
+      question: 'What kind of event storage can you provide?',
+      type: 'multi',
+      choices: [
+        { id: 'floor', label: 'Floor storage' },
+        { id: 'racked', label: 'Racked storage' },
+        { id: 'caged', label: 'Caged / lockable' },
+        { id: 'vehicle', label: 'Vehicle / container storage' },
+      ],
+    },
+    {
+      id: 'capacity',
+      question: 'What storage capacity can you accept?',
+      type: 'one',
+      choices: [
+        { id: '50', label: 'Up to 50 sq ft' },
+        { id: '200', label: 'Up to 200 sq ft' },
+        { id: '500', label: 'Up to 500 sq ft' },
+        { id: '1000', label: '1,000+ sq ft' },
+      ],
+      exact: { label: 'Or exact sq ft', unit: 'sq ft', max: 100000 },
+    },
+    {
+      id: 'handling',
+      question: 'Can you handle movement in and out?',
+      type: 'multi',
+      choices: [
+        { id: 'receive', label: 'Receive incoming stock' },
+        { id: 'dispatch', label: 'Dispatch stock' },
+        { id: 'consolidate', label: 'Consolidation / staging' },
+        { id: 'inventory', label: 'Inventory counting' },
+      ],
+    },
+    {
+      id: 'conditions',
+      question: 'Which storage conditions do you support?',
+      type: 'multi',
+      choices: [
+        { id: 'standard', label: 'Standard dry storage' },
+        { id: 'temperature', label: 'Temperature-controlled' },
+        { id: 'secure', label: 'Enhanced security' },
+      ],
+    },
+  ],
+
+  event_materials: [
+    {
+      id: 'material_categories',
+      question: 'Which event materials do you supply?',
+      type: 'multi',
+      choices: [
+        { id: 'packing', label: 'Packing materials' },
+        { id: 'paper', label: 'Paper / stationery materials' },
+        { id: 'fabric', label: 'Fabric / soft goods' },
+        { id: 'floral', label: 'Floral / decoration materials' },
+        { id: 'consumables', label: 'Event consumables' },
+      ],
+    },
+    {
+      id: 'inventory',
+      question: 'Do you keep ready stock?',
+      type: 'one',
+      choices: [
+        { id: 'stocked', label: 'Yes, ready stock' },
+        { id: 'partial', label: 'Partly stocked' },
+        { id: 'source', label: 'Sourced after order' },
+      ],
+    },
+    {
+      id: 'order_model',
+      question: 'Which order types can you fulfil?',
+      type: 'multi',
+      choices: [
+        { id: 'standard', label: 'Standard catalogue items' },
+        { id: 'bulk', label: 'Bulk quantities' },
+        { id: 'custom', label: 'Custom / bespoke sourcing' },
+        { id: 'rush', label: 'Rush orders' },
+      ],
+    },
+  ],
+
+  event_logistics: [
+    {
+      id: 'scope',
+      question: 'What can you coordinate end to end?',
+      type: 'multi',
+      choices: [
+        { id: 'transport', label: 'Transport' },
+        { id: 'storage', label: 'Storage / consolidation' },
+        { id: 'crew', label: 'Loading / setup crew' },
+        { id: 'delivery_windows', label: 'Scheduled delivery windows' },
+        { id: 'multi_vendor', label: 'Multiple vendor movements' },
+      ],
+    },
+    {
+      id: 'multi_location',
+      question: 'How many locations can one project include?',
+      type: 'one',
+      choices: [
+        { id: '1', label: 'One' },
+        { id: '3', label: 'Up to 3' },
+        { id: '10', label: '4–10' },
+        { id: '20', label: '10+' },
+      ],
+      exact: { label: 'Or exact locations', unit: 'locations', max: 100 },
+    },
+    {
+      id: 'project_resources',
+      question: 'Which resources can you coordinate?',
+      type: 'multi',
+      choices: [
+        { id: 'own', label: 'Our own resources' },
+        { id: 'leased', label: 'Leased resources' },
+        { id: 'partner', label: 'Partner resources' },
+        { id: 'hybrid', label: 'Hybrid network' },
+      ],
+    },
+    {
+      id: 'survey',
+      question: 'Which projects need a site survey?',
+      type: 'multi',
+      choices: [
+        { id: 'large_venue', label: 'Large venues' },
+        { id: 'complex_access', label: 'Complex access' },
+        { id: 'multi_site', label: 'Multi-site projects' },
+        { id: 'heavy_equipment', label: 'Heavy equipment' },
+        { id: 'none', label: 'None' },
+      ],
+    },
+  ],
+
   permits: [
     {
       id: 'permits',
