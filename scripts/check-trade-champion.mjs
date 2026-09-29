@@ -43,13 +43,14 @@ const M = await loadSrc({
 })
 
 /* ══════════════════════════════════════════════════════════════════ */
-head('THE 26')
+head('THE 34 PARTNER CATALOGUE / 26 TRADE CHAMPION')
 
 const T = M.PARTNER_TRADES
-ok('there are 26 canonical trades', M.VENDOR_CATEGORIES.length === 26, `found ${M.VENDOR_CATEGORIES.length}`)
+const CHAMPION_TRADES = M.VENDOR_CATEGORIES.slice(0, 26)
+ok('there are 34 partner trades', M.VENDOR_CATEGORIES.length === 34, `found ${M.VENDOR_CATEGORIES.length}`)
 ok('and the Trade Champion list is exactly them, in order',
-   T.length === 26 && T.every((t, i) => t.name === M.VENDOR_CATEGORIES[i]))
-ok('no trade is listed twice', new Set(T.map(t => t.name)).size === 26)
+   T.length === 26 && T.every((t, i) => t.name === CHAMPION_TRADES[i]))
+ok('no trade is listed twice', new Set(M.VENDOR_CATEGORIES).size === 34)
 ok('every trade has a database id', T.every(t => /^SBM-TRD-\d{3}$/.test(t.id ?? '')),
    T.filter(t => !t.id).map(t => t.name).join(', '))
 ok('and no two share one', new Set(T.map(t => t.id)).size === 26)
@@ -57,8 +58,8 @@ ok('and no two share one', new Set(T.map(t => t.id)).size === 26)
 const seed = new Map([...read('supabase/migrations/107_catalogue_seed.generated.sql')
   .matchAll(/INSERT INTO public\.listing_trades \(id, name[^)]*\) VALUES \('(SBM-TRD-\d+)', '((?:[^']|'')+)'/g)]
   .map(m => [m[1], m[2].replace(/''/g, "'")]))
-ok('the seeded listing_trades table has the same 26', seed.size === 26, `seed has ${seed.size}`)
-ok('with the same name for every id', T.every(t => seed.get(t.id) === t.name),
+ok('the seeded Trade Champion listing_trades table still has the original 26', seed.size === 26, `seed has ${seed.size}`)
+ok('with the same name for every Trade Champion id', T.every(t => seed.get(t.id) === t.name),
    T.filter(t => seed.get(t.id) !== t.name).map(t => `${t.id}: ${t.name} vs ${seed.get(t.id)}`).join('; '))
 ok('tradeById finds each one back', T.every(t => M.tradeById(t.id)?.name === t.name))
 ok('and nothing for an id that is not a trade', M.tradeById('SBM-TRD-999') === null)
