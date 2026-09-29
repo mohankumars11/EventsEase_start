@@ -59,7 +59,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/jobs-perfect-mobile-alignment-20260927, feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929]
+    branches: [build/sambramo-partner-apk-20260929]
     # Only when something that affects the native shell changes. A copy
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
@@ -87,13 +87,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      # Both apps, independently, so a failure in one still yields the
-      # other. `fail-fast: false` matters here: the partner APK is the
-      # one being waited on and it must not be cancelled because the
-      # customer flavour tripped.
+      # This branch is a partner-only APK build. Customer APKs are not
+      # produced or published from this branch.
       fail-fast: false
       matrix:
-        flavour: [customer, partner]
+        flavour: [partner]
 
     steps:
       - uses: actions/checkout@v4
@@ -266,7 +264,7 @@ jobs:
           retention-days: 14
 
   # ══════════════════════════════════════════════════════════════════
-  # A link that can actually be tapped
+  # A partner-only link that can actually be tapped
   # ══════════════════════════════════════════════════════════════════
   #
   # Workflow ARTIFACTS require the person downloading them to be signed
@@ -278,7 +276,7 @@ jobs:
   # signed out, and tapping one on Android hands the file straight to the
   # package installer:
   #
-  #   https://github.com/<owner>/<repo>/releases/download/android-latest/sambramo-partner.apk
+  #   https://github.com/<owner>/<repo>/releases/download/sambramo-partner-apk-latest/sambramo-partner.apk
   #
   # ── One rolling tag, not one per build ────────────────────────────
   # `android-latest` is deleted and recreated every run, so the URL above
@@ -324,10 +322,9 @@ jobs:
             echo
             echo "**Install on an Android phone:** tap a link below, then allow your browser to install unknown apps when asked."
             echo
-            echo "- [Sambramo — customer](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk)"
-            echo "- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk)"
+            echo "- [Sambramo Partners](https://github.com/${{ github.repository }}/releases/download/sambramo-partner-apk-latest/sambramo-partner.apk)"
             echo
-            echo "Both apps load the live site, so a deploy reaches them without a reinstall. A new APK is only needed when something native changes — push, permissions, a plugin, the icon."
+            echo "This release is built from the dedicated partner APK branch and contains the bundled React app for the partner surface. It is not a Vercel deployment."
           } > notes.md
           cat notes.md
 
@@ -338,7 +335,7 @@ jobs:
           # Deleted first so the tag moves. `gh release create` refuses to
           # overwrite, and an --edit path would leave the old assets
           # attached alongside the new ones.
-          gh release delete android-latest --yes --cleanup-tag || true
+          gh release delete sambramo-partner-apk-latest --yes --cleanup-tag || true
 
           # Published BESIDE the apks, in the release they come from.
           #
@@ -352,14 +349,12 @@ jobs:
             "${{ github.sha }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apks/version.json
           cat apks/version.json
 
-          gh release create android-latest \
-            apks/sambramo-customer.apk \
+          gh release create sambramo-partner-apk-latest \
             apks/sambramo-partner.apk \
             apks/version.json \
-            --title "Sambramo — Android test builds" \
+            --title "Sambramo Partners — APK" \
             --notes-file notes.md
 
       - name: The links
         run: |
-          echo "Customer: https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-customer.apk"
-          echo "Partner:  https://github.com/${{ github.repository }}/releases/download/android-latest/sambramo-partner.apk"
+          echo "Partner: https://github.com/${{ github.repository }}/releases/download/sambramo-partner-apk-latest/sambramo-partner.apk"
