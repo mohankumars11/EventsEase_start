@@ -48,6 +48,11 @@ jobs:
         run: node scripts/check-trade-champion.mjs
       - name: Sambramo trade + questionnaire V2 contract
         run: node scripts/check-sambramo-v2.mjs
+      - name: Regenerate generated catalogue IDs for reconciliation
+        run: |
+          node scripts/generate-catalogue-ids.mjs
+          mkdir -p reports/generated
+          cp src/data/catalogueIds.generated.js reports/generated/catalogueIds.generated.js
       - name: 34-trade generated catalogue integrity
         run: node scripts/check-sambramo-catalogue-v2.mjs
       - name: Sambramo 5B-5F regression + security gate
