@@ -107,6 +107,9 @@ for (const [code, services] of Object.entries(boundaryAssertions)) {
   for (const sid of services) ok(TRADE_BOUNDARY_BY_SERVICE[sid]?.code === code, code + ': wrong service boundary for ' + sid)
 }
 
+const androidWorkflow = fs.readFileSync(path.join(ROOT, '.github/workflows/android.yml'), 'utf8')
+ok(androidWorkflow.indexOf('npx cap sync android') >= 0 && androidWorkflow.indexOf('./gradlew') > androidWorkflow.indexOf('npx cap sync android'), 'Capacitor sync must precede Gradle packaging')
+
 const sourceChecks = [
   ['api/dispatch-booking.js', /match_requirements:/, 'dispatch booking must persist match requirements'],
   ['api/dispatch-booking.js', /priceLogisticsLine/, 'dispatch booking must use deterministic logistics pricing'],
