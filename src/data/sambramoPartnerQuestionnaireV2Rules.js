@@ -148,7 +148,7 @@ export function reconcilePartnerQuestionGroups(groups = []) {
     }
 
     const canonical = canonicalPartnerFieldId(group);
-    const dedupe = group?.forService && CROSS_OFFERING_DEDUP.has(canonical);
+    const dedupe = CROSS_OFFERING_DEDUP.has(canonical);
     const key = dedupe ? canonical : group.id;
 
     if (!seen.has(key)) {
