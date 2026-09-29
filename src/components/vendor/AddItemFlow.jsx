@@ -554,11 +554,25 @@ export default function AddItemFlow({
       return g.exact && typeof val === 'string' && !(g.choices ?? []).some(c => c.id === val)
         && fails('exact_quantity', val)
     }))
-  const priceBad = fails('item_price', price) || fails('min_order', minOrder)
-    || Object.values(menuRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
-    || Object.values(distanceRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
-    || Object.entries(venueTerms ?? {}).some(([k, r]) =>
-         k === 'other_note' ? fails('venue_note', r) : fails('item_price', r == null ? '' : String(r)))
+  const logisticsRateBad = LOGISTICS_TRADES.has(trade) && (
+    Object.keys(logisticsRates ?? {}).length === 0
+    || Object.entries(logisticsRates ?? {}).some(([k, r]) => {
+      if (String(r ?? '').trim() === '') return false
+      const field = /_pct$/.test(k)
+        ? 'percentage'
+        : /km|people|crew/i.test(k)
+          ? 'exact_quantity'
+          : 'rate_amount'
+      return fails(field, String(r))
+    })
+  )
+  const priceBad = LOGISTICS_TRADES.has(trade)
+    ? logisticsRateBad
+    : fails('item_price', price) || fails('min_order', minOrder)
+      || Object.values(menuRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
+      || Object.values(distanceRates ?? {}).some(r => fails('rate_amount', r == null ? '' : String(r)))
+      || Object.entries(venueTerms ?? {}).some(([k, r]) =>
+           k === 'other_note' ? fails('venue_note', r) : fails('item_price', r == null ? '' : String(r)))
   const workBad = workItemsBad(work)
   const noteBad = fails('catering_note', dishNotes?.[step] ?? '')
   const blockedHere = (step === 'price' && priceBad) || (step === 'work' && workBad)
@@ -1673,6 +1687,8 @@ function PriceStep({
         />
       )}
 
+      {!LOGISTICS_TRADES.has(trade) && (
+      <>
       {/* ── A rate per menu ────────────────────────────────────────────
           This used to be a read-only list of our own reference rates
           above a single "your price" field. It showed a caterer three
@@ -1793,6 +1809,10 @@ function PriceStep({
         </div>
       </div>
 
+      </div>
+      </div>
+      )}
+      
       {isCatering && (
         <div className="rounded-[20px] bg-ink/[0.02] p-4">
           <p className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">
