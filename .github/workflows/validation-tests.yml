@@ -1,0 +1,69 @@
+name: Field validation tests
+
+# Separate from android.yml on purpose: a red validation run must never
+# stop an APK from being built, and the APK workflow must not change.
+#
+# Offline suites only: the rule matrix, the inventory check, the existing
+# input-rule and referral checks, and the Selenium field lab against real
+# components with a stub server. The database suites (server parity and
+# direct writes, and the end-to-end journey) create throwaway partners on
+# the only Supabase project there is, so they run locally; here they are
+# reported as SKIPPED, never as passed.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/trade-champion-referral-from-build145]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'supabase/migrations/**'
+      - 'package.json'
+      - '.github/workflows/validation-tests.yml'
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Rule matrix (every rule, every category that applies)
+        run: node scripts/check-field-validation-matrix.mjs
+      - name: Field inventory is complete
+        run: node scripts/check-validation-inventory.mjs
+      - name: Existing input rules
+        run: node scripts/check-partner-input-rules.mjs
+      - name: Referral lifecycle rules (SQL)
+        run: node scripts/check-referral-lifecycle.mjs
+      - name: Trade Champion model
+        run: node scripts/check-trade-champion.mjs
+
+      - name: Build the partner web app (for the harness stylesheet)
+        env:
+          CAPACITOR_BUILD: 'true'
+          VITE_SURFACE: partner
+        run: |
+          set -a; . ./.env.android; set +a
+          npm run build
+
+      - name: Selenium field lab (headless Chrome)
+        env:
+          BROWSER: chrome
+        run: node tests/selenium/run.mjs lab
+
+      - name: Database suites
+        run: echo "Server parity, direct writes and the end-to-end journey run locally against the database; SKIPPED here."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-reports
+          path: reports/
+          retention-days: 14

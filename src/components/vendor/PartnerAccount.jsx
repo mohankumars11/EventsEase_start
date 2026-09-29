@@ -823,7 +823,7 @@ function useDirtyForm(initial) {
     setSaved(false)
   }, [key])
 
-  return { form, set, reset, dirty, saving, setSaving, saved, setSaved, error, setError }
+  return { form, set, reset, dirty, saving, setSaving, saved, setSaved, error, setError, showAll, server, gate, fail }
 }
 
 function SaveBar({ dirty, saving, saved, error, onSave, reset, label = 'Save changes' }) {

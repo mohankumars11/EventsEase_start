@@ -154,3 +154,6 @@ supabase/sandbox/
 # because a pattern here would be guessing at what they contain.
 Live_Key_Secret
 Live_API_Key
+
+# Generated test reports (validation matrix, Selenium)
+reports/
