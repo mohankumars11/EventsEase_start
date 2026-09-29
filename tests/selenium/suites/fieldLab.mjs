@@ -119,7 +119,10 @@ export async function fieldLab(t) {
     }
 
     await t.test('form', 'Save with required boxes empty reveals every message and moves to the first', async () => {
-      await driver.findElement(By.css('[data-testid="lab-save"]')).click()
+      {
+        const save = await driver.findElement(By.css('[data-testid="lab-save"]'))
+        await driver.executeScript('arguments[0].scrollIntoView({ block: "center" }); arguments[0].click()', save)
+      }
       const first = await until_(driver, () => focused(driver))
       const required = lab.filter(f => f.required).map(f => 'lab_' + f.id)
       t.assert(required.includes(first), `focus went to ${first}, not a required box`)
@@ -143,6 +146,9 @@ export async function fieldLab(t) {
     })
 
     await t.test('bank', 'a pasted 12-character IFSC is kept whole and refused (no maxLength cut)', async () => {
+      const bankTab = await driver.findElements(By.xpath('//section[@data-testid="bank-screen"]//button[.//span[text()="Bank"]]'))
+      if (bankTab.length) await driver.executeScript('arguments[0].scrollIntoView({ block: "center" }); arguments[0].click()', bankTab[0])
+      await waitFor(driver, byField('ifsc'))
       await paste(driver, 'ifsc', 'HDFC00012345')
       t.assert((await valueOf(driver, 'ifsc')).length === 12, 'the IFSC was cut to 11 characters')
       const m = await until_(driver, async () => { const x = await messageOf(driver, 'ifsc'); return x.invalid ? x : null })
@@ -151,10 +157,11 @@ export async function fieldLab(t) {
 
     await t.test('bank', 'a server refusal (22023) is shown under the UPI box, not as a banner', async () => {
       const upiTab = await driver.findElements(By.xpath('//section[@data-testid="bank-screen"]//button[.//span[text()="UPI"]]'))
-      if (upiTab.length) await upiTab[0].click()
+      if (upiTab.length) await driver.executeScript('arguments[0].scrollIntoView({ block: "center" }); arguments[0].click()', upiTab[0])
+      await waitFor(driver, byField('upi_id'))
       await type(driver, 'upi_id', 'refusedname@ybl')
       const saveBtn = await driver.findElement(By.xpath('//section[@data-testid="bank-screen"]//button[contains(., "payout details")]'))
-      await saveBtn.click()
+      await driver.executeScript('arguments[0].scrollIntoView({ block: "center" }); arguments[0].click()', saveBtn)
       const m = await until_(driver, async () => { const x = await messageOf(driver, 'upi_id'); return x.invalid && /server says/i.test(x.says ?? '') ? x : null })
       t.assert(m, 'the server\'s refusal did not appear under the UPI box')
       const banner = await driver.executeScript('return [...document.querySelectorAll(\'[data-testid="bank-screen"] .bg-rose-50\')].map(e => e.textContent).join(" ")')
