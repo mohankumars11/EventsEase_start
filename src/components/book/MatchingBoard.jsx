@@ -274,6 +274,8 @@ function AwaitingPayment({ line, master, masterId, onPay, onCancel, paying }) {
  * @param failed     a dispatch error, surfaced here rather than back on
  *                   the form the customer has already left.
  */
+async function authHeaders() { const { data } = await supabase.auth.getSession(); return { 'content-type': 'application/json', ...(data?.session?.access_token ? { Authorization: 'Bearer ' + data.session.access_token } : {}) } }
+
 export default function MatchingBoard({ requestId, onPay, pending = [], area = null, eventDate = null, failed = null, onRetry }) {
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState(null)
@@ -416,7 +418,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
 
       const res = await fetch(apiUrl('/api/create-booking-payment'), {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ customerId: uid, lineIds: payableLines.map(l => l.id) }),
       })
 
