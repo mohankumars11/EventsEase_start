@@ -85,7 +85,7 @@ export const LOGISTICS_SERVICE_SPECS = {
       c('trolley', 'Trolleys'), c('dolly', 'Platform dolly'),
       c('straps', 'Straps / securing gear'), c('forklift', 'Forklift'),
       c('none', 'Manpower only'),
-    ]),
+    ], { showWhen: { type: 'detailPresent', field: 'roles' } }),
   ],
 
   warehouse_storage: [
@@ -101,7 +101,7 @@ export const LOGISTICS_SERVICE_SPECS = {
     many('conditions', 'What storage conditions can you support?', [
       c('dry', 'Dry / weather protected'), c('cctv', 'CCTV monitored'),
       c('restricted', 'Restricted access'), c('temperature', 'Temperature controlled'),
-    ]),
+    ], { showWhen: { type: 'detailPresent', field: 'storage_type' } }),
   ],
 
   event_materials: [
@@ -117,7 +117,7 @@ export const LOGISTICS_SERVICE_SPECS = {
     one('custom', 'Can you source or produce custom quantities?', [
       c('catalogue', 'Catalogue quantities only'),
       c('bulk', 'Bulk custom quantities'), c('bespoke', 'Bespoke sourcing / production'),
-    ]),
+    ], { showWhen: { type: 'detailIncludes', field: 'stock', value: 'custom_source' } }),
   ],
 
   event_logistics: [
