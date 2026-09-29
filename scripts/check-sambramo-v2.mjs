@@ -25,6 +25,7 @@ assert(VENDOR_CATEGORIES.length === 34, `Expected 34 partner trades, got ${VENDO
 for (const trade of expectedTrades) assert(VENDOR_CATEGORIES.includes(trade), `Missing trade: ${trade}`)
 
 const mappedTrades = new Set(Object.values(TRADE_FOR_SERVICE))
+assert(!Object.keys(TRADE_FOR_SERVICE).includes('event_equipment_rental'), 'Dead event_equipment_rental dispatch alias must not be current')
 for (const trade of expectedTrades) {
   assert(mappedTrades.has(trade), `Trade has no customer-service mapping: ${trade}`)
 }
