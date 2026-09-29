@@ -174,6 +174,7 @@ export default function InstantBooking() {
    * request, so a guessed id renders nothing.
    */
   const resumeId = params.get('request')
+  const requestedService = params.get('service')
 
   /**
    * A date handed over by whoever sent us here.
@@ -246,6 +247,13 @@ export default function InstantBooking() {
    * An effect rather than a save button: somebody who leaves this screen
    * did not intend to save, and asking them to would be asking them to
    * predict that they were about to be interrupted. */
+  useEffect(() => {
+    if (resumeId || !requestedService) return
+    if (!OFFERED.includes(requestedService) || specModeFor(requestedService) === 'quote') return
+    setPicked(current => current.includes(requestedService) ? current : [...current, requestedService])
+    setOptions(current => current[requestedService] ? current : { ...current, [requestedService]: defaultOptions(requestedService) })
+  }, [resumeId, requestedService])
+
   useEffect(() => {
     if (step >= MATCHING_STEP) return          // dispatched — the booking id owns it now
     if (!picked.length && !where) return   // nothing worth keeping yet
