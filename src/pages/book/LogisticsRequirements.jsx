@@ -180,42 +180,44 @@ export default function LogisticsRequirements() {
     setSaving(true)
     setError(null)
     try {
-      const loc = {
-        city: city?.name ?? null,
-        pickup: form.pickup || form.location || null,
-        dropoff: form.dropoff || null,
-      }
+      const getPosition = () => new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('Location is required to find nearby logistics partners.'))
+        navigator.geolocation.getCurrentPosition(
+          p => resolve(p.coords),
+          () => reject(new Error('Please allow location access so Sambramo can find nearby logistics partners.')),
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 },
+        )
+      })
+      const coords = await getPosition()
       const demand = {
         service_id: serviceId,
         trade_id: definition.tradeId,
         ...Object.fromEntries(Object.entries(form).filter(([, v]) => String(v ?? '').trim() !== '')),
       }
-
-      const { data, error: dbError } = await supabase
-        .from('sambramo_quote_requests')
-        .insert({
-          customer_id: user.id,
-          trade_id: definition.tradeId,
-          offering_id: serviceId,
-          event_date: form.date || null,
-          start_time: form.startTime || null,
-          end_time: form.endTime || null,
-          service_location: loc,
-          canonical_demand: demand,
-          state: 'QUOTE_ACTION_REQUIRED',
-          missing_inputs: [],
-          required_actions: [{
-            type: 'partner_matching',
-            label: 'Match eligible logistics partners and calculate the quote',
-          }],
-        })
-        .select('id')
-        .single()
-
-      if (dbError) throw dbError
-      toast.success('Logistics request sent to Sambramo.')
-      navigate('/dashboard/customer/requests')
-      return data
+      const response = await fetch('/api/dispatch-booking', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          customerId: user.id,
+          occasionId: 'logistics',
+          occasionName: definition.title,
+          eventDate: form.date,
+          guestCount: Number(form.passengers || 0) || null,
+          radiusKm: 25,
+          lat: coords.latitude,
+          lng: coords.longitude,
+          addressText: [form.pickup || form.location, form.dropoff].filter(Boolean).join(' → '),
+          areaLabel: city?.name ?? 'Bengaluru',
+          city: city?.name ?? 'Bengaluru',
+          notes: form.access || form.setup || form.scope || null,
+          lines: [{ serviceId, demand, options: {} }],
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'We could not create the logistics booking.')
+      toast.success('Logistics request sent to matching.')
+      navigate('/book/instant?request=' + encodeURIComponent(payload.requestId))
+      return payload
     } catch (err) {
       setError(err?.message || 'We could not send the request. Please try again.')
     } finally {
