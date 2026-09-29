@@ -8,21 +8,21 @@
 
 BEGIN;
 
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-027', 'End-to-End Event Logistics', 0, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-027', 'End-to-End Event Logistics', 7, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-028', 'Event Equipment Rental', 1, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-028', 'Event Equipment Rental', 8, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-029', 'Event Materials Supplier', 2, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-029', 'Event Materials Supplier', 10, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-030', 'Loading & Unloading Crew', 3, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-030', 'Loading & Unloading Crew', 15, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-031', 'Medium / Large Goods Vehicle', 4, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-031', 'Medium / Large Goods Vehicle', 16, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-032', 'Mini Truck / Pickup', 5, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-032', 'Mini Truck / Pickup', 18, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-033', 'Passenger Transport', 6, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-033', 'Passenger Transport', 20, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
-INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-034', 'Warehouse / Storage', 7, TRUE)
+INSERT INTO public.listing_trades (id, name, sort_order, is_active) VALUES ('SBM-TRD-034', 'Warehouse / Storage', 31, TRUE)
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
 INSERT INTO public.listing_services (id, service_key, trade_id, name, sort_order, is_active) VALUES ('SBM-SVC-069', 'event_logistics', 'SBM-TRD-027', 'End-to-end event logistics', 0, TRUE)
   ON CONFLICT (id) DO UPDATE SET service_key = EXCLUDED.service_key, trade_id = EXCLUDED.trade_id, name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, is_active = EXCLUDED.is_active;
