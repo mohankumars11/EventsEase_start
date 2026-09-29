@@ -20,6 +20,7 @@ import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 import { specsForTrade } from '../../data/partnerSpecs'
 import { specsForServices } from '../../data/partnerServiceSpecs'
 import { listingAnswerIds } from '../../lib/listingAnswerIds'
+import { buildPartnerMatchProfile } from '../../lib/matchingReconciliation'
 import { menusFor, menuLines, menuLineCount, FOOD_COUNTERS, CATERING_NOTES } from '../../data/cateringMenus'
 import { ALL_DISH_GROUPS, TOTAL_DISHES } from '../../data/cateringDishes'
 import { SERVICE_UNITS } from '../../config/vendor'
@@ -707,10 +708,12 @@ export default function AddItemFlow({
       const ids = listingAnswerIds({
         trade, groups, opsScreens, detail, menus, counters, kitchen,
       })
+      const matchProfile = buildPartnerMatchProfile({ trade, picked, detail, opsScreens })
       if (ids.answers.length) specs.answers = ids.answers
       if (ids.menu_ids.length) specs.menu_ids = ids.menu_ids
       if (ids.counter_ids.length) specs.counter_ids = ids.counter_ids
       if (ids.unresolved.length) specs.answers_unresolved = ids.unresolved
+      specs.match_profile = matchProfile
 
       /* `picked` holds serviceIds; a vendor_services row stores the NAME.
          Writing the id here would put "welcome_drinks" on a partner's
