@@ -1,1 +1,119 @@
-import { supabase } from './supabase'\n\nconst TERMINAL_LINES = new Set(['paid', 'delivered', 'cancelled', 'expired'])\n\nconst REQUEST_SELECT = [\n  'id',\n  'booking_code',\n  'occasion_id',\n  'occasion_name',\n  'event_date',\n  'time_note',\n  'address_text',\n  'area_label',\n  'city',\n  'radius_km',\n  'guest_count',\n  'status',\n  'created_at',\n  'updated_at',\n  'venue_space_id',\n].join(', ')\n\nconst LINE_SELECT = [\n  'id',\n  'request_id',\n  'service_id',\n  'service_name',\n  'trade',\n  'status',\n  'dispatch_mode',\n  'expires_at',\n  'quoted_amount_paise',\n  'accepted_offer_id',\n  'accepted_at',\n  'paid_at',\n  'cancelled_at',\n  'created_at',\n  'updated_at',\n].join(', ')\n\nexport function lineIsLive(line) {\n  return !TERMINAL_LINES.has(String(line?.status ?? '').toLowerCase())\n}\n\nexport function lineLabel(line) {\n  const status = String(line?.status ?? '').toLowerCase()\n  if (status === 'paid') return 'Paid'\n  if (status === 'accepted') return 'Accepted · ready to pay'\n  if (status === 'dispatching') return 'Finding a partner'\n  if (status === 'expired') return 'Expired'\n  if (status === 'cancelled') return 'Cancelled'\n  if (status === 'delivered') return 'Delivered'\n  if (line?.dispatch_mode === 'standing') return 'Still sourcing'\n  return 'Received'\n}\n\n/**\n * One customer-owned booking projection.\n *\n * The three marketplace tables remain separate in the database. This read\n * side joins them into the object the mobile app actually needs and keeps\n * the API surface deliberately customer-scoped: every request query starts\n * with auth.uid ownership through RLS, then lines and offers are fetched by\n * ids that came from those owned requests.\n */\nexport async function fetchCustomerBookings(userId) {\n  if (!userId) return { bookings: [], error: null }\n\n  const { data: requests, error: requestError } = await supabase\n    .from('booking_requests')\n    .select(REQUEST_SELECT)\n    .eq('customer_id', userId)\n    .order('created_at', { ascending: false })\n    .limit(50)\n\n  if (requestError) return { bookings: [], error: requestError }\n\n  const requestRows = requests ?? []\n  if (requestRows.length === 0) return { bookings: [], error: null }\n\n  const requestIds = requestRows.map(r => r.id)\n  const { data: lines, error: lineError } = await supabase\n    .from('booking_lines')\n    .select(LINE_SELECT)\n    .in('request_id', requestIds)\n    .order('created_at', { ascending: true })\n\n  if (lineError) return { bookings: [], error: lineError }\n\n  const lineRows = lines ?? []\n  const lineIds = lineRows.map(l => l.id)\n  let offers = []\n\n  if (lineIds.length) {\n    const { data, error: offerError } = await supabase\n      .from('dispatch_offers')\n      .select('id, line_id, vendor_id, distance_m, status, offered_at, expires_at, accepted_at, vendors(id, business_name)')\n      .in('line_id', lineIds)\n\n    if (!offerError) offers = data ?? []\n  }\n\n  const offersByLine = new Map()\n  for (const offer of offers) {\n    const list = offersByLine.get(offer.line_id) ?? []\n    list.push(offer)\n    offersByLine.set(offer.line_id, list)\n  }\n\n  const linesByRequest = new Map()\n  for (const line of lineRows) {\n    const lineOffers = offersByLine.get(line.id) ?? []\n    const enriched = {\n      ...line,\n      offers: lineOffers,\n      acceptedOffer: lineOffers.find(o => (o.status === 'ACCEPTED' || o.id === line.accepted_offer_id)) ?? null,\n    }\n    const list = linesByRequest.get(line.request_id) ?? []\n    list.push(enriched)\n    linesByRequest.set(line.request_id, list)\n  }\n\n  return {\n    bookings: requestRows.map(request => ({\n      ...request,\n      lines: linesByRequest.get(request.id) ?? [],\n    })),\n    error: null,\n  }\n}\n\n/**\n * Subscribe to the exact customer rows that make a live booking change.\n *\n * A new request rebuilds the subscription set. Each booking line is filtered\n * to its own request id, while RLS remains the actual authorization boundary.\n * Polling is intentionally retained as the recovery floor for native WebViews\n * where a websocket can be interrupted without a user-visible error.\n */\nexport function subscribeToCustomerBookings({ userId, requestIds = [], onChange }) {\n  if (!userId) return () => {}\n\n  const channels = []\n  channels.push(\n    supabase\n      .channel('customer-bookings-' + userId + '-requests')\n      .on(\n        'postgres_changes',\n        { event: '*', schema: 'public', table: 'booking_requests', filter: 'customer_id=eq.' + userId },\n        onChange,\n      )\n      .subscribe(),\n  )\n\n  for (const requestId of requestIds) {\n    channels.push(\n      supabase\n        .channel('customer-bookings-' + requestId)\n        .on(\n          'postgres_changes',\n          { event: '*', schema: 'public', table: 'booking_lines', filter: 'request_id=eq.' + requestId },\n          onChange,\n        )\n        .subscribe(),\n    )\n  }\n\n  return () => {\n    for (const channel of channels) supabase.removeChannel(channel)\n  }\n}\n
+import { supabase } from './supabase'
+
+const TERMINAL_LINES = new Set(['paid', 'delivered', 'cancelled', 'expired'])
+
+const REQUEST_SELECT = [
+  'id', 'booking_code', 'occasion_id', 'occasion_name', 'event_date', 'time_note',
+  'address_text', 'area_label', 'city', 'radius_km', 'guest_count', 'status',
+  'created_at', 'updated_at', 'venue_space_id',
+].join(', ')
+
+const LINE_SELECT = [
+  'id', 'request_id', 'service_id', 'service_name', 'trade', 'status', 'dispatch_mode',
+  'expires_at', 'quoted_amount_paise', 'accepted_offer_id', 'accepted_at', 'paid_at',
+  'cancelled_at', 'created_at', 'updated_at',
+].join(', ')
+
+export function lineIsLive(line) {
+  return !TERMINAL_LINES.has(String(line?.status ?? '').toLowerCase())
+}
+
+export function lineLabel(line) {
+  const status = String(line?.status ?? '').toLowerCase()
+  if (status === 'paid') return 'Paid'
+  if (status === 'accepted') return 'Accepted · ready to pay'
+  if (status === 'dispatching') return 'Finding a partner'
+  if (status === 'expired') return 'Expired'
+  if (status === 'cancelled') return 'Cancelled'
+  if (status === 'delivered') return 'Delivered'
+  if (line?.dispatch_mode === 'standing') return 'Still sourcing'
+  return 'Received'
+}
+
+export async function fetchCustomerBookings(userId) {
+  if (!userId) return { bookings: [], error: null }
+
+  const { data: requests, error: requestError } = await supabase
+    .from('booking_requests')
+    .select(REQUEST_SELECT)
+    .eq('customer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (requestError) return { bookings: [], error: requestError }
+  const requestRows = requests ?? []
+  if (!requestRows.length) return { bookings: [], error: null }
+
+  const requestIds = requestRows.map(r => r.id)
+  const { data: lines, error: lineError } = await supabase
+    .from('booking_lines')
+    .select(LINE_SELECT)
+    .in('request_id', requestIds)
+    .order('created_at', { ascending: true })
+  if (lineError) return { bookings: [], error: lineError }
+
+  const lineRows = lines ?? []
+  const lineIds = lineRows.map(l => l.id)
+  let offers = []
+  if (lineIds.length) {
+    const { data, error: offerError } = await supabase
+      .from('dispatch_offers')
+      .select('id, line_id, vendor_id, distance_m, status, offered_at, expires_at, accepted_at, vendors(id, business_name)')
+      .in('line_id', lineIds)
+    if (!offerError) offers = data ?? []
+  }
+
+  const offersByLine = new Map()
+  for (const offer of offers) {
+    const list = offersByLine.get(offer.line_id) ?? []
+    list.push(offer)
+    offersByLine.set(offer.line_id, list)
+  }
+
+  const linesByRequest = new Map()
+  for (const line of lineRows) {
+    const lineOffers = offersByLine.get(line.id) ?? []
+    const enriched = {
+      ...line,
+      offers: lineOffers,
+      acceptedOffer: lineOffers.find(o => o.status === 'ACCEPTED' || o.id === line.accepted_offer_id) ?? null,
+    }
+    const list = linesByRequest.get(line.request_id) ?? []
+    list.push(enriched)
+    linesByRequest.set(line.request_id, list)
+  }
+
+  return {
+    bookings: requestRows.map(request => ({ ...request, lines: linesByRequest.get(request.id) ?? [] })),
+    error: null,
+  }
+}
+
+export function subscribeToCustomerBookings({ userId, requestIds = [], onChange }) {
+  if (!userId) return () => {}
+  const channels = []
+
+  channels.push(
+    supabase.channel('customer-bookings-' + userId + '-requests')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_requests', filter: 'customer_id=eq.' + userId }, onChange)
+      .subscribe(),
+  )
+
+  for (const requestId of requestIds) {
+    channels.push(
+      supabase.channel('customer-bookings-lines-' + requestId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_lines', filter: 'request_id=eq.' + requestId }, onChange)
+        .subscribe(),
+    )
+    channels.push(
+      supabase.channel('customer-booking-offers-' + requestId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_offers' }, (payload) => {
+          const lineId = payload?.new?.line_id ?? payload?.old?.line_id
+          if (lineId) onChange(payload)
+        })
+        .subscribe(),
+    )
+  }
+
+  return () => { for (const channel of channels) supabase.removeChannel(channel) }
+}
