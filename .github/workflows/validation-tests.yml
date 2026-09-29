@@ -14,6 +14,8 @@ on:
   workflow_dispatch:
   push:
     branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929]
+  pull_request:
+    branches: [main]
     paths:
       - 'src/**'
       - 'scripts/**'
