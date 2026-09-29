@@ -2,6 +2,7 @@ import { EVENT_DATA } from './eventServicesData'
 import { CELEBRATION_TIERS } from './celebrationTiers'
 import { entryPriceFor, PACKAGE_COUNT } from './occasionPackages'
 import { GENERATED_DECOR_PHOTOS } from '../config/generatedDecorSamples'
+import { SERVICE_GROUPS } from './servicePricing'
 
 /**
  * The photographs for one occasion, already resolved and committed.
@@ -62,6 +63,15 @@ export const SERVICES_BY_CATEGORY = (() => {
       } else {
         byId.set(svc.id, { ...svc, occasions: 1 })
       }
+    }
+  }
+
+  // Logistics is a first-class customer pillar, not an internal fallback.
+  // Keep its services in the same catalogue so the plan hub, single-service
+  // shelf and customer search share one source.
+  for (const group of SERVICE_GROUPS.filter(g => g.id === 'logistics')) {
+    for (const svc of group.services) {
+      if (!byId.has(svc.id)) byId.set(svc.id, { ...svc, occasions: 0, pillar: 'Logistics' })
     }
   }
 
