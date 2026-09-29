@@ -1711,14 +1711,20 @@ function PriceStep({
           the advance is paid. See VenueTerms. */}
       {isVenue && <VenueTerms value={venueTerms} onChange={setVenueTerms} showAll={showAll} />}
 
-      {/* ── The three objections, answered on the screen they surface ──
-          What does it cost me, can I say no, and do I actually get paid.
-          They are asked here and nowhere else in the flow — a promise
-          repeated on eleven screens is wallpaper, and wallpaper is not
-          believed. */}
-      <PromiseStrip />
+      {!LOGISTICS_TRADES.has(trade) && (
+        /* The generic price/unit/minimum-order panel is for the legacy
+           vendor_services price contract. Logistics has its own structured
+           Price Book above: base fare, included distance, waiting, handling,
+           crew, storage or project fees. Showing both would ask the partner
+           to price the same service twice, then leave the platform with two
+           competing sources of truth. */
+        <>
+          {/* ── The three objections, answered on the screen they surface ──
+              What does it cost me, can I say no, and do I actually get paid.
+              They are asked here and nowhere else in the flow. */}
+          <PromiseStrip />
 
-      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+          <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-extrabold text-ink">
             Your price
@@ -1759,8 +1765,11 @@ function PriceStep({
             </button>
           ))}
         </div>
-      </div>
+          </div>
+        </>
+      )}
 
+      {!LOGISTICS_TRADES.has(trade) && (
       {/* ── The smallest order YOU will take ──────────────────────────
           Asked once, here, next to the other numbers, in the caterer's
           own words. It used to be printed on twelve menu cards as
@@ -1810,7 +1819,7 @@ function PriceStep({
       </div>
       </>
       )}
-      
+
       {isCatering && (
         <div className="rounded-[20px] bg-ink/[0.02] p-4">
           <p className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">
