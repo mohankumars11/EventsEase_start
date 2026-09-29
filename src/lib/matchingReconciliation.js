@@ -10,8 +10,6 @@ export const TRADE_BOUNDARY_BY_SERVICE = {
   goods_vehicle: { code: 'L02', scope: ['heavy_goods_movement','bulk_event_cargo'], excludes: ['passenger_transport'] },
   passenger_transport: { code: 'L03', scope: ['bus','tempo_traveller','van','group_shuttle','multi_stop_guest_transport'], excludes: ['single_wedding_car'] },
   event_equipment: { code: 'L04', scope: ['event_equipment'], excludes: ['tent_furniture','lighting','sound_av','power_cooling','safety_facilities'] },
-  loading_crew: { code: 'L05', scope: ['event_loading','setup_crew','strike_crew'], excludes: ['transport','storage'] },
-  warehouse_storage: { code: 'L06', scope: ['event_storage','consolidation'], excludes: ['transport','crew_only'] },
   loading_crew: { code: 'L05', scope: ['loading_unloading_crew'], excludes: ['vehicle_transport','warehouse_storage'] },
   warehouse_storage: { code: 'L06', scope: ['event_storage','consolidation'], excludes: ['vehicle_transport','loading_crew'] },
   event_materials: { code: 'L07', scope: ['bulk_event_materials','consumables','raw_materials'], excludes: ['finished_gifts','invitations','food'] },
