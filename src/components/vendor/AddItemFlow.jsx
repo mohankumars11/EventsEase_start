@@ -49,6 +49,7 @@ import {
 } from '../../data/cateringFunnel'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { operationScreensFor } from '../../data/partnerOperations'
+import { reconcilePartnerQuestionGroups } from '../../data/sambramoPartnerQuestionnaireV2Rules'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -247,7 +248,9 @@ export default function AddItemFlow({
      the app does not know what they do and that the answers do not
      matter. Both were true. */
   const groups = useMemo(
-    () => (trade ? specsForServices(picked, specsForTrade(trade)) : []),
+    () => (trade
+      ? reconcilePartnerQuestionGroups(specsForServices(picked, specsForTrade(trade)))
+      : []),
     [trade, picked])
   const isCatering = trade === CATERING
 
