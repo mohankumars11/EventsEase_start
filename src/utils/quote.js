@@ -235,13 +235,19 @@ export function buildQuote({
   const decor = decorCostFor({ level, themeId, addonIds, guestCount: guests })
   const coordination = tier.coordinationFee
 
-  const services = serviceIds
+  const serviceRows = serviceIds
     .map(id => SERVICE_BY_ID[id])
     .filter(Boolean)
     .map(s => {
       const qty = serviceQty[s.id] ?? defaultQty(s, guests)
       return { service: s, qty, amount: serviceCost(s, guests, qty) }
     })
+
+  // Quote-only services are valid selections, but they must never masquerade
+  // as ₹0 lines. They stay out of arithmetic until their structured quote is
+  // resolved.
+  const quoteRequiredServices = serviceRows.filter(x => x.service.pricingMode === 'quote')
+  const services = serviceRows.filter(x => x.service.pricingMode !== 'quote')
   const servicesTotal = services.reduce((sum, s) => sum + s.amount, 0)
 
   /**
@@ -344,6 +350,11 @@ export function buildQuote({
     servicesTotal,
     extras: extraLines,
     extrasTotal,
+    quoteRequiredServices: quoteRequiredServices.map(({ service }) => ({
+      id: service.id,
+      name: service.name,
+      trade: service.trade ?? null,
+    })),
     coordination,
     subtotal,
     bundle: { applied: bundleRate > 0, rate: bundleRate, amount: bundleAmount },
