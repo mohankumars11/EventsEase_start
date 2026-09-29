@@ -57,6 +57,17 @@ export const VENDOR_CATEGORIES = [
      holds none and is paid for the hands. A family with forty sarees
      to wrap and nothing to buy was being sent to shops. */
   'Trousseau & Gift Packing',
+  /* Logistics trades are first-class partner trades. They are separate from
+     E12 Transportation so goods movement, group passenger movement and
+     event-project logistics do not collapse into one ambiguous match. */
+  'Mini Truck / Pickup',
+  'Medium / Large Goods Vehicle',
+  'Passenger Transport',
+  'Event Equipment Rental',
+  'Loading & Unloading Crew',
+  'Warehouse / Storage',
+  'Event Materials Supplier',
+  'End-to-End Event Logistics',
   /* ── 'Other' is gone, and it was a trap ─────────────────────────────
      match_partners joins on this exact string. A partner who picked
      'Other' — which is what somebody picks when they are not sure —
@@ -390,7 +401,12 @@ export const TRADE_FOR_SERVICE = {
   av_setup:       'Sound & AV',
 
   invitations:    'Invitation & Printing',
-  transport:      'Transportation',
+  wedding_car:    'Transportation',
+  vehicle_care:   'Transportation',
+  /* Legacy service ids remain readable but are no longer the preferred
+     customer routes. New logistics bookings use the dedicated ids below. */
+  goods_move:     'Mini Truck / Pickup',
+  house_shift:    'Medium / Large Goods Vehicle',
   bouncers:       'Security Services',
   venue:          'Venue',
   /* ── Stage 3 ─────────────────────────────────────────────────────── */
@@ -434,8 +450,6 @@ export const TRADE_FOR_SERVICE = {
   medical:        'Safety & Facilities',
 
   // Vehicles and the ground.
-  wedding_car:    'Transportation',
-  vehicle_care:   'Transportation',
   valet:          'Valet Parking',
 
   // Print.
