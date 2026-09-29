@@ -162,6 +162,9 @@ jobs:
       # CAPACITOR_BUILD turns off the service worker: precaching is
       # pointless when the assets are already local, and it is how a
       # relaunch ended up serving a stale copy of the app.
+      - name: Regenerate server pricing bundle
+        run: node scripts/build-api-bundle.mjs
+
       - name: Build the web app
         env:
           CAPACITOR_BUILD: 'true'
