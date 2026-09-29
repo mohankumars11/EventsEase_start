@@ -973,6 +973,8 @@ export default function AddItemFlow({
               distanceRates={distanceRates} setDistanceRates={setDistanceRates}
               isVenue={trade === 'Venue'}
               venueTerms={venueTerms} setVenueTerms={setVenueTerms}
+              logisticsRates={logisticsRates} setLogisticsRates={setLogisticsRates}
+              trade={trade}
               showAll={showChecks}
             />
           )}
@@ -1659,9 +1661,18 @@ function PriceStep({
   isCatering, menuRates, setMenuRates,
   chargesByDistance, distanceRates, setDistanceRates,
   isVenue, venueTerms, setVenueTerms, showAll = false,
+  logisticsRates, setLogisticsRates, trade,
 }) {
   return (
     <div className="space-y-4">
+      {LOGISTICS_TRADES.has(trade) && (
+        <LogisticsPriceBook
+          trade={trade}
+          value={logisticsRates}
+          onChange={setLogisticsRates}
+        />
+      )}
+
       {/* ── A rate per menu ────────────────────────────────────────────
           This used to be a read-only list of our own reference rates
           above a single "your price" field. It showed a caterer three
