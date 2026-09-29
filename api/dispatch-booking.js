@@ -151,7 +151,8 @@ export default async function handler(req, res) {
     const trade = tradeFor(l.serviceId)
     if (!trade) return res.status(400).json({ error: `${l.serviceId} is not instant-bookable` })
 
-    const q = logisticsServiceIds().includes(l.serviceId)
+    const isLogistics = logisticsServiceIds().includes(l.serviceId)
+    const q = isLogistics
       ? priceLogisticsLine({ serviceId: l.serviceId, demand: l.demand ?? {} })
       : priceLine({
           serviceId: l.serviceId,
@@ -160,7 +161,9 @@ export default async function handler(req, res) {
           durationId: l.durationId ?? null,
           cuisineId: l.cuisineId ?? null,
         })
+    if (!q?.ok && isLogistics) return res.status(400).json({ error: `cannot price ${l.serviceId}` })
     if (!q) return res.status(400).json({ error: `cannot price ${l.serviceId}` })
+    if (isLogistics) q.paise = q.amountPaise
 
     /* What the customer chose, priced HERE.
      *
