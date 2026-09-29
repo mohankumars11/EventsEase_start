@@ -10,7 +10,14 @@ For whoever tests the Partner app on a phone against the live backend. It says w
 - **Backend:** the live Supabase project (`twpsgrmoqxemxhrzbfwd`). Every account and row you create is real data. Name test partners so they are easy to find and remove (for example `QA Mini Truck 01`).
 
 <!-- build:start -->
-Build: _filled in after CI_
+| | |
+|---|---|
+| Commit | `f75becc811e376a4b10f8469feb44843f56d79c3` on `refactor/sambramo-workbook-pricing-20260929` |
+| Package | `com.sambramo.partner`, versionCode 391242, versionName 2026.09.29-2212 |
+| APK | 13,926,061 bytes, SHA-256 `3663477cf86adf332270feaabf773b9e5b1e28b99c53458e9b21fdd2df1c6ffa` |
+| Signed | Android Debug certificate, SHA-256 `1d6540f4…ce4e4086` (verified with apksigner) |
+| Built by | [Android APKs #283](https://github.com/mohankumars11/EventsEase_start/actions/runs/36599524614), green; [Field validation tests #168](https://github.com/mohankumars11/EventsEase_start/actions/runs/36599524501), green |
+| Checked inside the APK | build stamp names this commit and the partner surface; bundle carries the 34 trades (L01–L08 labels, SBM-TRD-034), price book 2026-09-29.1, and the live project |
 <!-- build:end -->
 
 ## Database
