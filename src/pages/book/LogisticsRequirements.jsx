@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useCity } from '../../context/CityContext'
 import { useToast } from '../../context/ToastContext'
 import { TOP_SERVICES } from '../../data/planCatalog'
+import { priceLogisticsLine } from '../../data/logisticsPricing'
 
 const RESUME_KEY = 'sambramo_logistics_quote_resume'
 
@@ -160,6 +161,11 @@ export default function LogisticsRequirements() {
     .filter(([key]) => !String(form[key] ?? '').trim())
     .map(([, label]) => label)
 
+  const quote = useMemo(
+    () => priceLogisticsLine({ serviceId, demand: form }),
+    [serviceId, form],
+  )
+
   async function submit() {
     if (saving || missingRequired.length) return
 
@@ -257,6 +263,15 @@ export default function LogisticsRequirements() {
         </div>
 
         <div className="space-y-3">
+          {quote.ok && (
+            <div className="card flex items-center justify-between p-4">
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-mute">Deterministic estimate</p>
+                <p className="mt-1 text-[22px] font-extrabold text-ink">₹{Math.round(quote.amountPaise / 100).toLocaleString('en-IN')}</p>
+              </div>
+              <span className="rounded-full bg-plum-100 px-2.5 py-1 text-[10px] font-extrabold text-plum-800">Price book {quote.basis.version}</span>
+            </div>
+          )}
           {definition.fields.map(([key, label, type, required]) => (
             <label key={key} className="block card p-4">
               <span className="mb-1.5 block text-[12px] font-extrabold text-ink">
