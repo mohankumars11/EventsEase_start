@@ -51,7 +51,8 @@ import { notifyForWave } from './_lib/fcm.js'
 import {
   optionMultiplier,
   optionSummary,
-  priceLine, lineSplit, tradeFor, specModeFor,
+  priceLine, priceLogisticsLine, logisticsServiceIds, customerMatchRequirements,
+  lineSplit, tradeFor, specModeFor,
   OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM, PLATFORM_FEE_RATE, POLICY_VERSION,
 } from './_lib/pricing.bundle.js'
 
@@ -150,13 +151,15 @@ export default async function handler(req, res) {
     const trade = tradeFor(l.serviceId)
     if (!trade) return res.status(400).json({ error: `${l.serviceId} is not instant-bookable` })
 
-    const q = priceLine({
-      serviceId: l.serviceId,
-      guestCount,
-      setupId: l.setupId ?? null,
-      durationId: l.durationId ?? null,
-      cuisineId: l.cuisineId ?? null,
-    })
+    const q = logisticsServiceIds().includes(l.serviceId)
+      ? priceLogisticsLine({ serviceId: l.serviceId, demand: l.demand ?? {} })
+      : priceLine({
+          serviceId: l.serviceId,
+          guestCount,
+          setupId: l.setupId ?? null,
+          durationId: l.durationId ?? null,
+          cuisineId: l.cuisineId ?? null,
+        })
     if (!q) return res.status(400).json({ error: `cannot price ${l.serviceId}` })
 
     /* What the customer chose, priced HERE.
@@ -251,6 +254,12 @@ export default async function handler(req, res) {
     reference_photo_url: input.photoUrl ?? null,
     ...lineSplit(quote.paise, PLATFORM_FEE_RATE),
     price_basis: quote.basis ?? {},
+    match_requirements: customerMatchRequirements({
+      serviceId: input.serviceId,
+      options: input.options ?? {},
+      logisticsDemand: input.demand ?? null,
+      guestCount,
+    }),
     status: 'pending',
     // Written here, from the server's own constant. Never client-supplied
     // and never set at accept — the cancellation ladder is read against
