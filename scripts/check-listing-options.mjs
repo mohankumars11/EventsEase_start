@@ -46,6 +46,7 @@ async function load(file) {
 
 const P = await load('src/data/partnerCatalogue.js')
 const S = await load('src/data/partnerSpecs.js')
+const SS = await load('src/data/partnerServiceSpecs.js')
 const OPS = await load('src/data/partnerOperations.js')
 
 const NOISE = new Set([
@@ -86,7 +87,9 @@ const pass = msg => console.log(`  ${tick} ${msg}`)
    came from — so a duplicate can be reported by its real address. */
 const questions = []
 for (const trade of P.TRADES) {
-  for (const g of (S.SPECS_BY_TRADE[trade] ?? [])) {
+  const picked = (P.offeringsForTrade(trade) ?? []).map(o => o.serviceId)
+  const detailGroups = SS.specsForServices(picked, S.specsForTrade(trade))
+  for (const g of detailGroups) {
     questions.push({ trade, where: 'detail', screen: 'detail', ...g })
   }
   for (const screen of OPS.operationScreensFor(trade)) {
