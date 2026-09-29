@@ -57,8 +57,8 @@ for (const trade of expectedTrades) {
   const ids = groups.map(g => g.canonicalField ?? g.id)
   ok(ids.length === new Set(ids).size, trade + ': duplicate canonical capability questions remain')
   const conditionalProbe = { id: trade + ':conditional_probe', showWhen: { type: 'detailPresent', field: '__probe' }, choices: [{ id: 'yes', label: 'Yes', showWhen: { type: 'detailIncludes', field: '__mode', value: 'on' } }] }
-  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked, detail: { __probe: '', __mode: 'on' } }).length === 0, trade + ': conditional group should hide when prerequisite is absent')
-  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked, detail: { __probe: 'x', __mode: 'off' } })[0]?.choices.length === 0, trade + ': conditional choice should hide when choice prerequisite is absent')
+  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked: [], detail: { __probe: '', __mode: 'on' } }).length === 0, trade + ': conditional group should hide when prerequisite is absent')
+  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked: [], detail: { __probe: 'x', __mode: 'off' } })[0]?.choices.length === 0, trade + ': conditional choice should hide when choice prerequisite is absent')
 }
 
 const logistics = Object.keys(LOGISTICS_SERVICE_SPECS)
