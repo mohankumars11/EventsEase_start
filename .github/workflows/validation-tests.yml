@@ -44,6 +44,8 @@ jobs:
         run: node scripts/check-referral-lifecycle.mjs
       - name: Trade Champion model
         run: node scripts/check-trade-champion.mjs
+      - name: Sambramo trade + questionnaire V2 contract
+        run: node scripts/check-sambramo-v2.mjs
 
       - name: Build the partner web app (for the harness stylesheet)
         env:
