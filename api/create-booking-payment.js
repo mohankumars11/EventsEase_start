@@ -59,8 +59,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 
-  const { customerId, lineIds } = req.body ?? {}
-  if (!customerId) return res.status(400).json({ error: 'customerId required' })
+  const authn = await authenticatedUser(req, db)
+  if (authn.error) return res.status(401).json({ error: 'Authentication required' })
+  const customerId = authn.user.id
+  if (bodyCustomerId && bodyCustomerId !== customerId) return res.status(403).json({ error: 'customer mismatch' })
+
+  const { customerId: bodyCustomerId, lineIds } = req.body ?? {}
   if (!Array.isArray(lineIds) || !lineIds.length) {
     return res.status(400).json({ error: 'lineIds required' })
   }
