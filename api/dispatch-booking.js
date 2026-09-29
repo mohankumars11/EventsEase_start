@@ -139,6 +139,7 @@ export default async function handler(req, res) {
 
   const customerId = authn.user.id
   if (bodyCustomerId && bodyCustomerId !== customerId) return res.status(403).json({ error: 'customer mismatch' })
+  const normalizedGuestCount = Number(guestCount) > 0 ? Number(guestCount) : 40
   if (!eventDate)           return res.status(400).json({ error: 'eventDate required' })
   if (lat == null || lng == null) return res.status(400).json({ error: 'lat and lng required' })
   if (!Array.isArray(lines) || lines.length === 0) return res.status(400).json({ error: 'at least one line required' })
@@ -182,6 +183,7 @@ export default async function handler(req, res) {
     q.paise  = Math.round(q.paise * optionMult)
     q.rupees = Math.round(q.paise / 100)
     q.optionSummary = optionSummary(l.serviceId, l.options ?? {})
+    q.basis = { ...(q.basis ?? {}), finalPaise: q.paise, optionMultiplier: optionMult }
 
     priced.push({ input: l, quote: q, trade })
   }
@@ -197,7 +199,7 @@ export default async function handler(req, res) {
     p_occasion_id:    occasionId ?? 'other',
     p_occasion_name:  occasionName ?? 'Celebration',
     p_event_date:     eventDate,
-    p_guest_count:    guestCount,
+    p_guest_count:    normalizedGuestCount,
     /* The radius the customer asked for, capped at what dispatch will
        actually reach.
 
@@ -254,7 +256,7 @@ export default async function handler(req, res) {
   const lineRows = priced.map(({ input, quote, trade }) => ({
     request_id: request.id,
     service_id: input.serviceId,
-    service_name: quote.serviceName,
+    service_name: quote.serviceName ?? input.serviceName ?? input.serviceId,
     trade,
     spec_mode: specModeFor(input.serviceId),
     customer_note: input.note ?? null,
@@ -265,7 +267,7 @@ export default async function handler(req, res) {
       serviceId: input.serviceId,
       options: input.options ?? {},
       logisticsDemand: input.demand ?? null,
-      guestCount,
+      guestCount: normalizedGuestCount,
     }),
     status: 'pending',
     // Written here, from the server's own constant. Never client-supplied
