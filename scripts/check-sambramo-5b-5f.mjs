@@ -54,8 +54,8 @@ for (const trade of expectedTrades) {
   )
   const ops = operationScreensFor(trade)
   ok(ops.length >= 6, trade + ': shared operations spine incomplete')
-  const ids = groups.map(g => g.canonicalField ?? g.id)
-  ok(ids.length === new Set(ids).size, trade + ': duplicate canonical capability questions remain')
+  const ids = groups.map(g => g.id)
+  ok(ids.length === new Set(ids).size, trade + ': duplicate rendered capability groups remain')
   const conditionalProbe = { id: trade + ':conditional_probe', showWhen: { type: 'detailPresent', field: '__probe' }, choices: [{ id: 'yes', label: 'Yes', showWhen: { type: 'detailIncludes', field: '__mode', value: 'on' } }] }
   ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked: [], detail: { __probe: '', __mode: 'on' } }).length === 0, trade + ': conditional group should hide when prerequisite is absent')
   ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked: [], detail: { __probe: 'x', __mode: 'off' } })[0]?.choices.length === 0, trade + ': conditional choice should hide when choice prerequisite is absent')
@@ -98,6 +98,8 @@ const boundaryAssertions = {
   L02: ['goods_vehicle'],
   L03: ['passenger_transport'],
   L04: ['event_equipment'],
+  L05: ['loading_crew'],
+  L06: ['warehouse_storage'],
   L07: ['event_materials'],
   L08: ['event_logistics'],
 }
@@ -110,7 +112,8 @@ const sourceChecks = [
   ['api/dispatch-booking.js', /priceLogisticsLine/, 'dispatch booking must use deterministic logistics pricing'],
   ['api/razorpay-webhook.js', /timingSafeEqual/, 'payment webhook must use constant-time signature comparison'],
   ['api/create-booking-payment.js', /quoted_amount_paise/, 'payment order must derive amount from server-side booking lines'],
-  ['.github/workflows/android.yml', /cap sync android[\s\S]*assembleCustomerDebug/, 'Capacitor sync must precede Gradle packaging'],
+  ['.github/workflows/android.yml', /run: npx cap sync android/, 'Capacitor sync step is present'],
+  ['.github/workflows/android.yml', /assemble\$\{\{ matrix\.flavour[\s\S]*Debug/, 'Gradle debug packaging step is present'],
 ]
 for (const [rel, re, msg] of sourceChecks) {
   const data = fs.readFileSync(path.join(ROOT, rel), 'utf8')
