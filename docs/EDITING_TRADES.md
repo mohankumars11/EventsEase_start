@@ -1,6 +1,6 @@
 # Editing trades, services and their questions
 
-The listing catalogue — 26 trades, 68 services, and every question a partner
+The listing catalogue — 34 trades, 73 dispatchable services, and every question a partner
 is asked — lives in **JavaScript under `src/`**, not in the database. The
 `listing_*` tables are a generated mirror of it.
 
