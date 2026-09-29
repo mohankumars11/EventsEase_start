@@ -59,6 +59,8 @@
  * would ask the same person the same question five times.
  */
 
+import { reconcilePartnerQuestionGroups } from './sambramoPartnerQuestionnaireV2Rules'
+
 export const SPECS_BY_TRADE = {
 
   /* ══════════════════════════════════════════════════════════════════
@@ -1295,7 +1297,7 @@ export const SPECS_BY_TRADE = {
 
 /** The spec groups for a trade, or an empty list. */
 export function specsForTrade(trade) {
-  return SPECS_BY_TRADE[trade] ?? []
+  return reconcilePartnerQuestionGroups(SPECS_BY_TRADE[trade] ?? [])
 }
 
 /**
