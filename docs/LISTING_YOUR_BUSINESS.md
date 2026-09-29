@@ -2,7 +2,7 @@
 
 Generated from the live catalogue in `src/` (the `listing_*` tables mirror it).
 
-The flow for every trade: **pick a trade → pick what you offer → questions about
+The flow for every trade, including the eight logistics trades: **pick a trade → pick what you offer → questions about
 what you offer → six "how you work" screens → photos of your work → your price →
 review.** Catering alone inserts a menu branch between the questions and the "how
 you work" screens; that branch is Appendix A.
@@ -8875,3 +8875,239 @@ _Donne biryani, nati koli, kaal soup · nonveg menu · from Rs 690 per plate · 
 
 ## A8 — Photograph your menu card _(upload, catering only)_
 
+
+
+---
+
+# Logistics trades — current 34-trade catalogue
+
+The eight logistics trades are first-class partner trades. Their capability questions are
+offering-specific; the shared Operations screens then capture scale, notice, service area,
+resources, limits and trust once per listing. Pricing is collected in the Logistics Price Book.
+
+## 27. Mini Truck / Pickup
+
+### Step 1 — Which of these do you offer?
+- **Mini truck / pickup**
+
+### Step 2 — Questions for what you picked
+
+**Q. Which small vehicles do you operate?** _(pick one)_
+- Tata Ace / mini truck
+- Bolero / pickup
+- Closed-body mini truck
+- Other small goods vehicle
+
+**Q. Maximum payload you accept** _(pick one)_
+- Up to 500 kg
+- Up to 750 kg
+- Up to 1.5 tonnes
+- _number box: Or exact (kg, max 5000)_
+
+**Q. What event cargo do you carry?** _(pick any)_
+- Décor and floral
+- Packed food and catering equipment
+- AV and event equipment
+- Chairs, tables and furniture
+- Bulk event materials
+
+## 28. Medium / Large Goods Vehicle
+
+### Step 1 — Which of these do you offer?
+- **Medium / large goods vehicle**
+
+### Step 2 — Questions for what you picked
+
+**Q. Which goods vehicles do you operate?** _(pick one)_
+- 14 ft
+- 17 ft
+- 19–20 ft
+- Closed container
+- Other medium/large vehicle
+
+**Q. Maximum payload you accept** _(pick one)_
+- Up to 2 tonnes
+- Up to 4 tonnes
+- Up to 7 tonnes
+- 10 tonnes or more
+- _number box: Or exact (kg, max 30000)_
+
+**Q. What special handling can you support?** _(pick any)_
+- Fragile / secured cargo
+- Oversized event structures
+- Heavy equipment
+- Closed-body protection
+- Tail lift / loading equipment
+
+## 29. Passenger Transport
+
+### Step 1 — Which of these do you offer?
+- **Group passenger transport**
+
+### Step 2 — Questions for what you picked
+
+**Q. Which passenger vehicles do you provide?** _(pick one)_
+- Tempo traveller
+- Force Urbania
+- Mini bus
+- Large bus
+- Mixed fleet
+
+**Q. Largest vehicle you can provide** _(pick one)_
+- Up to 9 seats
+- Up to 17 seats
+- Up to 26 seats
+- Up to 33 seats
+- 45+ seats
+- _number box: Or exact (seats, max 100)_
+
+**Q. What can the passenger vehicle provide?** _(pick any)_
+- Air conditioning
+- Dedicated luggage space
+- Charging points
+- First-aid kit
+- GPS tracking
+
+## 30. Event Equipment Rental
+
+### Step 1 — Which of these do you offer?
+- **Event operations equipment rental**
+
+### Step 2 — Questions for what you picked
+
+**Q. What general event equipment do you rent?** _(pick any)_
+- Crowd barriers
+- Queue stanchions
+- Utility tables
+- Transport trolleys
+- Display / storage racks
+- Other reusable event equipment
+
+**Q. How do you maintain rental equipment?** _(pick one)_
+- Checked before every dispatch
+- Scheduled maintenance
+- Both
+
+**Q. Do you deliver and set up?** _(pick one)_
+- Delivery only
+- Delivery + setup
+- Customer pickup
+- Delivery + setup + pickup
+
+## 31. Loading & Unloading Crew
+
+### Step 1 — Which of these do you offer?
+- **Loading & unloading crew**
+
+### Step 2 — Questions for what you picked
+
+**Q. What handling work can your crew do?** _(pick any)_
+- Loading
+- Unloading
+- Internal movement
+- Event setup / strike
+- Packing / consolidation
+
+**Q. Largest crew you can deploy for one shift** _(pick one)_
+- 2 people
+- 3–5 people
+- 6–10 people
+- 11–20 people
+- More than 20
+- _number box: Or exact (people, max 200)_
+
+**Q. What handling tools can you provide?** _(pick any)_
+- Trolleys
+- Platform dolly
+- Straps / securing gear
+- Forklift
+- Manpower only
+
+## 32. Warehouse / Storage
+
+### Step 1 — Which of these do you offer?
+- **Warehouse / storage**
+
+### Step 2 — Questions for what you picked
+
+**Q. What storage can you provide?** _(pick one)_
+- General warehouse
+- Lockable storage unit
+- Covered event-material storage
+- Secured yard / open storage
+
+**Q. Maximum storage capacity available to an event client** _(pick one)_
+- Up to 100 sq ft
+- Up to 500 sq ft
+- Up to 2,000 sq ft
+- Up to 5,000 sq ft
+- More than 5,000 sq ft
+- _number box: Or exact (sq ft, max 1000000)_
+
+**Q. What storage conditions do you support?** _(pick any)_
+- Dry / weather protected
+- CCTV monitored
+- Restricted access
+- Temperature controlled
+
+## 33. Event Materials Supplier
+
+### Step 1 — Which of these do you offer?
+- **Bulk event materials**
+
+### Step 2 — Questions for what you picked
+
+**Q. What event materials do you supply?** _(pick any)_
+- Packing materials
+- Paper / print inputs
+- Floral / decoration inputs
+- Textile / soft goods
+- Event consumables
+- Fixtures / hardware
+
+**Q. How is stock fulfilled?** _(pick any)_
+- Own stock
+- Warehouse stock
+- Supplier network
+- Custom sourcing
+
+**Q. Can you source or produce custom quantities?** _(pick one)_
+- Catalogue quantities only
+- Bulk custom quantities
+- Bespoke sourcing / production
+
+## 34. End-to-End Event Logistics
+
+### Step 1 — Which of these do you offer?
+- **End-to-end event logistics**
+
+### Step 2 — Questions for what you picked
+
+**Q. What parts of event logistics can you coordinate?** _(pick any)_
+- Vendor pickups
+- Consolidation
+- Temporary storage
+- Venue delivery
+- Setup / placement
+- Strike / reverse pickup
+- Loading crew
+
+**Q. Which resources do you own versus coordinate?** _(pick one)_
+- Own vehicles / crew / storage
+- Own + partner network
+- Partner network coordinated by us
+
+**Q. Largest event logistics project you manage** _(pick one)_
+- Single venue
+- Multiple vendors, one venue
+- Multiple sites
+- Large / complex event project
+
+### Shared screens used by all eight logistics trades
+
+After capability questions, each logistics listing continues through the shared partner
+Operations spine: **How big do you go? → How much notice do you need? → Where do you work?
+→ What do you bring? → What will you not do? → What should we know about you?**
+
+Price is then captured in the **Logistics Price Book**, followed by verification/evidence
+where the selected capability requires it, and the final review/publish gate.
