@@ -84,6 +84,8 @@ const dayLabel = (d, i) =>
     : d.toLocaleDateString('en-IN', { weekday: 'short' })
 
 /* Where the in-flight booking id is parked between visits. */
+async function authHeaders() { const { data } = await supabase.auth.getSession(); return { 'content-type': 'application/json', ...(data?.session?.access_token ? { Authorization: 'Bearer ' + data.session.access_token } : {}) } }
+
 const LIVE_BOOKING = 'sambramo_live_booking'
 
 /* And where the half-finished ANSWERS are kept.
@@ -459,7 +461,7 @@ export default function InstantBooking() {
       const res = await fetch(apiUrl('/api/dispatch-booking'), {
         method: 'POST',
         signal: ctl.signal,
-        headers: { 'content-type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           customerId: user.id,
           occasionId,
