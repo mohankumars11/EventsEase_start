@@ -48,6 +48,7 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
 const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
+const LogisticsRequirements = lazy(() => import('./pages/book/LogisticsRequirements'))
 
 // Customer
 const MyEvents       = lazy(() => import('./pages/customer/MyEvents'))
@@ -423,6 +424,7 @@ function AppRoutes() {
 
       {/* The occasion grid lands here: one question, then the fork. */}
       <Route path="/book/when" element={<BareShell><WhenStep /></BareShell>} />
+      <Route path="/book/logistics/:serviceId" element={<BareShell><LogisticsRequirements /></BareShell>} />
 
       <Route path="/plan/build" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
       <Route path="/plan/build/:eventId" element={<ScreenShell><CelebrationBuilder /></ScreenShell>} />
