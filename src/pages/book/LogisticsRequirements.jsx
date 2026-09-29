@@ -8,6 +8,8 @@ import { useToast } from '../../context/ToastContext'
 import { TOP_SERVICES } from '../../data/planCatalog'
 import { priceLogisticsLine } from '../../data/logisticsPricing'
 
+async function authHeaders() { const { data } = await supabase.auth.getSession(); return { 'content-type': 'application/json', ...(data?.session?.access_token ? { Authorization: 'Bearer ' + data.session.access_token } : {}) } }
+
 const RESUME_KEY = 'sambramo_logistics_quote_resume'
 
 const DEFINITIONS = {
@@ -196,7 +198,7 @@ export default function LogisticsRequirements() {
       }
       const response = await fetch('/api/dispatch-booking', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           customerId: user.id,
           occasionId: 'logistics',
