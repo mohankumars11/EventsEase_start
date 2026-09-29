@@ -45,6 +45,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
+import { authenticatedUser } from './_lib/auth.js'
 import { createOrder, providerName, enabledMethods } from './_lib/payments.js'
 import { testChargePaise } from './_lib/testCharge.js'
 
