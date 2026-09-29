@@ -68,14 +68,6 @@ export const VENDOR_CATEGORIES = [
   'Warehouse / Storage',
   'Event Materials Supplier',
   'End-to-End Event Logistics',
-  'Mini Truck / Pickup',
-  'Medium / Large Goods Vehicle',
-  'Passenger Transport',
-  'Event Equipment Rental',
-  'Loading & Unloading Crew',
-  'Warehouse / Storage',
-  'Event Materials Supplier',
-  'End-to-End Event Logistics',
   /* ── 'Other' is gone, and it was a trap ─────────────────────────────
      match_partners joins on this exact string. A partner who picked
      'Other' — which is what somebody picks when they are not sure —
@@ -501,8 +493,7 @@ export const TRADE_FOR_SERVICE = {
      for. Most of what a transporter carries at an event is not
      guests: it is chairs, sound, flowers and cooked food, and none
      of that was orderable. */
-  goods_move:     'Transportation',
-  house_shift:    'Transportation',
+  /* legacy goods_move/house_shift are intentionally not dispatchable here */
 
   // Effects and one-off setups.
   fireworks:      'Event Lighting',
