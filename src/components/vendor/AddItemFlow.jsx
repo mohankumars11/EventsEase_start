@@ -50,7 +50,7 @@ import {
 } from '../../data/cateringFunnel'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { operationScreensFor } from '../../data/partnerOperations'
-import { reconcilePartnerQuestionGroups } from '../../data/sambramoPartnerQuestionnaireV2Rules'
+import { reconcilePartnerQuestionGroups, filterPartnerQuestionGroups } from '../../data/sambramoPartnerQuestionnaireV2Rules'
 import { LOGISTICS_TRADES, logisticsSpecsForServices } from '../../data/logisticsPartnerSpecsV2'
 import LogisticsPriceBook from './LogisticsPriceBook'
 
@@ -252,13 +252,16 @@ export default function AddItemFlow({
      nothing to do with what they sell -- which teaches a partner that
      the app does not know what they do and that the answers do not
      matter. Both were true. */
-  const groups = useMemo(
-    () => (trade
-      ? (LOGISTICS_TRADES.has(trade)
-        ? reconcilePartnerQuestionGroups(logisticsSpecsForServices(picked))
-        : reconcilePartnerQuestionGroups(specsForServices(picked, specsForTrade(trade))))
-      : []),
-    [trade, picked])
+  const groups = useMemo(() => {
+    if (!trade) return []
+    const raw = LOGISTICS_TRADES.has(trade)
+      ? logisticsSpecsForServices(picked)
+      : specsForServices(picked, specsForTrade(trade))
+    return filterPartnerQuestionGroups(
+      reconcilePartnerQuestionGroups(raw),
+      { trade, picked, detail },
+    )
+  }, [trade, picked, detail])
   const isCatering = trade === CATERING
 
   /* A trade whose price is a distance, read from the partner's own
