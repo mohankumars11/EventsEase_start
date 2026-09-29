@@ -203,6 +203,18 @@ export default function LogisticsDemandPanel({ serviceId, value = {}, onChange }
   )
 }
 
+export function logisticsDemandSummary(serviceId, value = {}) {
+  const definition = DEFINITIONS[serviceId]
+  if (!definition) return []
+  return definition.fields
+    .flatMap(field => {
+      const v = value[field.id]
+      if (!validValue(field, v)) return []
+      if (Array.isArray(v)) return [field.label + ': ' + v.join(', ')]
+      return [field.label + ': ' + v]
+    })
+}
+
 export function logisticsDemandIsComplete(serviceId, value) {
   const definition = DEFINITIONS[serviceId]
   return !!definition && definition.fields.every(f => validValue(f, value?.[f.id]))
