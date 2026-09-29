@@ -224,6 +224,13 @@ export function useVendorAccount() {
   }, [])
 
   const removeService = useCallback(async id => {
+    await supabase
+      .from('sambramo_partner_price_books')
+      .update({ status: 'expired', effective_to: new Date().toISOString() })
+      .eq('vendor_service_id', id)
+      .eq('status', 'active')
+      .is('effective_to', null)
+
     const { error: err } = await supabase.from('vendor_services').delete().eq('id', id)
     if (err) throw err
     setServices(list => list.filter(s => s.id !== id))
