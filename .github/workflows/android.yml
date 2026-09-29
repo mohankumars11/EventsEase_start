@@ -270,6 +270,7 @@ jobs:
 
   # ══════════════════════════════════════════════════════════════════
   # A link that can actually be tapped
+  # 5G release validation: this push publishes the exact APKs built from the commit.
   # ══════════════════════════════════════════════════════════════════
   #
   # Workflow ARTIFACTS require the person downloading them to be signed
