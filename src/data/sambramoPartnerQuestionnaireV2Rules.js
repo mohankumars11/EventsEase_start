@@ -179,3 +179,30 @@ export function reconcilePartnerQuestionGroups(groups = []) {
   return out;
 }
 
+
+
+export function shouldShowPartnerQuestion(group, { detail = {}, picked = [] } = {}) {
+  const condition = group?.showWhen
+  if (!condition) return true
+  const values = value => Array.isArray(value) ? value : (value == null || value === '' ? [] : [value])
+  if (condition.type === 'detailIncludes') return values(detail[condition.field]).map(String).includes(String(condition.value))
+  if (condition.type === 'pickedIncludes') return values(picked).map(String).includes(String(condition.value))
+  if (condition.type === 'detailPresent') return String(detail[condition.field] ?? '').trim() !== ''
+  return true
+}
+
+export function filterPartnerQuestionGroups(groups = [], context = {}) {
+  return groups
+    .filter(group => shouldShowPartnerQuestion(group, context))
+    .map(group => ({
+      ...group,
+      choices: (group.choices ?? []).filter(choice => {
+        const when = choice?.showWhen
+        if (!when) return true
+        const values = value => Array.isArray(value) ? value : (value == null || value === '' ? [] : [value])
+        if (when.type === 'detailIncludes') return values(context.detail?.[when.field]).map(String).includes(String(when.value))
+        if (when.type === 'pickedIncludes') return values(context.picked).map(String).includes(String(when.value))
+        return true
+      }),
+    }))
+}
