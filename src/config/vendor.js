@@ -410,7 +410,9 @@ export const TRADE_FOR_SERVICE = {
 
   invitations:    'Invitation & Printing',
   wedding_car:    'Transportation',
-  vehicle_care:   'Transportation',
+  /* vehicle_care is retained for legacy data but is not a current dispatch
+     offering. */
+
   /* Legacy service ids remain readable but are no longer the preferred
      customer routes. New logistics bookings use the dedicated ids below. */
   goods_move:     'Mini Truck / Pickup',
@@ -419,6 +421,7 @@ export const TRADE_FOR_SERVICE = {
   goods_vehicle:  'Medium / Large Goods Vehicle',
   passenger_transport: 'Passenger Transport',
   event_equipment: 'Event Equipment Rental',
+  event_equipment_rental: 'Event Equipment Rental',
   loading_crew:   'Loading & Unloading Crew',
   warehouse_storage: 'Warehouse / Storage',
   event_materials: 'Event Materials Supplier',
@@ -486,7 +489,9 @@ export const TRADE_FOR_SERVICE = {
      to it, so partnerCatalogue derived no trade for it and a planner
      who signed up was asked nothing and offered nothing. */
   planner:        'Wedding Planning',
-  permits:        'Wedding Planning',
+  /* legacy permits service is not a customer trade; permissions stay in the
+     Verification/Safety workflow rather than becoming a billable planning trade. */
+
 
   /* Packing is hands, not stock. */
   trousseau:      'Trousseau & Gift Packing',
