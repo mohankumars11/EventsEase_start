@@ -72,3 +72,110 @@ export const PARTNER_QUESTIONNAIRE_V2_RULES = {
     L08: { scope: ['orchestration', 'multi_vendor_logistics'], fallbackMatch: false },
   },
 };
+
+// Runtime field aliases found in the legacy React questionnaire. These map
+// the old source vocabulary onto the v1.2 screen contract without requiring
+// a destructive data migration.
+const RUNTIME_SHARED_OPERATION_IDS = new Set([
+  'lead_time', 'notice', 'travel', 'service_area', 'team_size', 'events_per_day',
+]);
+const RUNTIME_PRICE_BOOK_IDS = new Set([
+  'rate_card', 'base_rate', 'tiers', 'addons', 'addon_rates', 'quantity_tiers',
+  'surcharges', 'fee_model', 'charge_metric', 'deposit_damage',
+]);
+const RUNTIME_VERIFICATION_IDS = new Set([
+  'fssai', 'vehicle_documents', 'psara', 'documents', 'damage_process',
+]);
+
+const CANONICAL_BY_ID = new Map([
+  ['durations', 'coverage_duration_options'],
+  ['setup_time', 'setup_soundcheck_duration'],
+  ['rigging', 'rigging_capability'],
+  ['operator', 'operator_included'],
+  ['personalization', 'personalization_options'],
+  ['minimum_order', 'minimum_order'],
+  ['vehicle_inventory', 'fleet_assets'],
+  ['loading_support', 'loading_support'],
+  ['travel', 'service_area'],
+  ['service_area', 'service_area'],
+]);
+
+const CROSS_OFFERING_DEDUP = new Set([
+  'coverage_duration_options',
+  'duration_options',
+  'setup_soundcheck_duration',
+  'rigging_capability',
+  'operator_included',
+  'personalization_options',
+  'minimum_order',
+  'fleet_assets',
+  'loading_support',
+]);
+
+function baseFieldId(groupId) {
+  const id = String(groupId ?? '');
+  const colon = id.lastIndexOf(':');
+  return colon >= 0 ? id.slice(colon + 1) : id;
+}
+
+export function canonicalPartnerFieldId(group) {
+  const base = baseFieldId(group?.id);
+  return CANONICAL_BY_ID.get(base) ?? base;
+}
+
+/**
+ * Apply v1.2 reconciliation at runtime.
+ *
+ * This is intentionally additive. Saved legacy answers are not deleted.
+ * The flow simply stops showing a question when its authoritative answer
+ * now belongs to shared Operations, Price Book or Verification. It also
+ * collapses cross-offering duplicate capability questions while retaining
+ * each offering's unique questions.
+ */
+export function reconcilePartnerQuestionGroups(groups = []) {
+  const out = [];
+  const seen = new Map();
+
+  for (const group of groups) {
+    const base = baseFieldId(group?.id);
+
+    if (
+      RUNTIME_SHARED_OPERATION_IDS.has(base) ||
+      RUNTIME_PRICE_BOOK_IDS.has(base) ||
+      RUNTIME_VERIFICATION_IDS.has(base)
+    ) {
+      continue;
+    }
+
+    const canonical = canonicalPartnerFieldId(group);
+    const dedupe = group?.forService && CROSS_OFFERING_DEDUP.has(canonical);
+    const key = dedupe ? canonical : group.id;
+
+    if (!seen.has(key)) {
+      out.push({ ...group, canonicalField: canonical });
+      seen.set(key, out.length - 1);
+      continue;
+    }
+
+    // Merge option sets for a cross-offering canonical field so the single
+    // visible question still retains any offering-specific choices.
+    const index = seen.get(key);
+    const prior = out[index];
+    const choices = [...(prior.choices ?? [])];
+    const choiceIds = new Set(choices.map(c => c.id));
+    for (const choice of group.choices ?? []) {
+      if (!choiceIds.has(choice.id)) {
+        choices.push(choice);
+        choiceIds.add(choice.id);
+      }
+    }
+    out[index] = {
+      ...prior,
+      choices,
+      mergedFrom: [...(prior.mergedFrom ?? []), group.id],
+    };
+  }
+
+  return out;
+}
+
