@@ -60,7 +60,7 @@ export function priceLogisticsLine({ serviceId, demand = {} }) {
     total = base + extra + weight
     components.push({ key: 'base', paise: base * 100 }, { key: 'extra_distance', paise: INR(extra) * 100 }, { key: 'payload', paise: weight * 100 })
   } else if (serviceId === 'goods_vehicle') {
-    const cls = String(demand.vehicleClass || '14ft')
+    const cls = String(demand.vehicleClass ?? demand.vehicle_class ?? '14ft')
     const base = p.baseByClass[cls] ?? p.baseByClass.other
     const extra = Math.max(0, km - p.includedKm) * p.extraKm
     const weight = payloadAdd(p.weightSurcharge, demand.weightKg)
