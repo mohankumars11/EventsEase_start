@@ -4608,7 +4608,7 @@ export const CATALOGUE_ID_BY_KEY = {
   "variant|photography|posedfamily": "SBM-VAR-010",
   "variant|videography|cinematic": "SBM-VAR-018",
   "variant|videography|fullcoverage": "SBM-VAR-017",
-  "variant|videography|highlightsreel": "SBM-VAR-016",,
+  "variant|videography|highlightsreel": "SBM-VAR-016",
   "trade|endtoendeventlogistics": "SBM-TRD-027",
   "trade|eventequipmentrental": "SBM-TRD-028",
   "trade|eventmaterialssupplier": "SBM-TRD-029",
