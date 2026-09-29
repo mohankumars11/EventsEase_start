@@ -3,7 +3,7 @@ import {
   Search, X, Check, UtensilsCrossed, Camera, Video, Flower2, Building2, Music,
   Sparkles, Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
   Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse, Flame,
-  Gift, Package, ClipboardList, PackageOpen, Truck, Warehouse, UsersRound,
+  Gift, Package, ClipboardList, PackageOpen, Warehouse, UsersRound,
 } from 'lucide-react'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
 
