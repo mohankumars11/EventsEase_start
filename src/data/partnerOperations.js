@@ -897,6 +897,150 @@ export const TRADE_OPERATIONS = {
     ])],
   },
 
+  'Mini Truck / Pickup': {
+    scale: [one('payload_max', 'Largest payload you accept', [
+      c('500', 'Up to 500 kg'), c('750', 'Up to 750 kg'), c('1500', 'Up to 1.5 tonnes'),
+    ], { exact: { label: 'Or exact', unit: 'kg', max: 5000 } }), PER_DAY],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('vehicle_resources', 'What does your vehicle arrive with?', [
+      c('driver', 'Driver included'), c('straps', 'Securing straps'), c('trolley', 'Trolley'),
+      c('blankets', 'Protective blankets'),
+    ])],
+    limits: [TIMING_LIMITS, many('cargo_limits', 'What will you not carry?', [
+      c('hazardous', 'Hazardous goods'), c('passengers', 'Passengers'), c('fragile_unpacked', 'Unpacked fragile goods'),
+      c('none', 'Nothing off limits within your declared capability'),
+    ])],
+    trust: [YEARS],
+  },
+
+  'Medium / Large Goods Vehicle': {
+    scale: [one('payload_max', 'Largest payload you accept', [
+      c('2000', 'Up to 2 tonnes'), c('4000', 'Up to 4 tonnes'),
+      c('7000', 'Up to 7 tonnes'), c('10000', '10 tonnes or more'),
+    ], { exact: { label: 'Or exact', unit: 'kg', max: 30000 } }), PER_DAY],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('vehicle_resources', 'What can your vehicle provide?', [
+      c('closed_body', 'Closed body'), c('tail_lift', 'Tail lift'),
+      c('straps', 'Securing gear'), c('helper', 'Helper'), c('gps', 'GPS tracking'),
+    ])],
+    limits: [TIMING_LIMITS, many('cargo_limits', 'What will you not carry?', [
+      c('passengers', 'Passengers'), c('hazardous', 'Hazardous goods'), c('oversize', 'Unsafe oversize loads'),
+      c('none', 'Nothing off limits within your declared capability'),
+    ])],
+    trust: [YEARS],
+  },
+
+  'Passenger Transport': {
+    scale: [one('seats_max', 'Largest passenger vehicle you can provide', [
+      c('9', 'Up to 9 seats'), c('17', 'Up to 17 seats'), c('26', 'Up to 26 seats'),
+      c('33', 'Up to 33 seats'), c('45', '45+ seats'),
+    ], { exact: { label: 'Or exact', unit: 'seats', max: 100 } }), PER_DAY],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('passenger_resources', 'What can the vehicle provide?', [
+      c('ac', 'Air conditioning'), c('luggage', 'Luggage space'),
+      c('charging', 'Charging points'), c('gps', 'GPS tracking'), c('first_aid', 'First-aid kit'),
+    ])],
+    limits: [TIMING_LIMITS, many('route_limits', 'What routes will you not accept?', [
+      c('night', 'Night operations'), c('outstation', 'Outstation'), c('hill', 'Hill routes'),
+      c('none', 'None of these'),
+    ])],
+    trust: [TEAM, YEARS],
+  },
+
+  'Event Equipment Rental': {
+    scale: [one('asset_capacity', 'Largest equipment order you can fulfil at once', [
+      c('10', 'Up to 10 items'), c('50', 'Up to 50 items'), c('100', 'Up to 100 items'),
+      c('250', '250+ items'),
+    ], { exact: { label: 'Or exact', unit: 'items', max: 10000 } })],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('delivery_setup', 'What do you handle?', [
+      c('delivery', 'Delivery'), c('setup', 'Setup'), c('pickup', 'Pickup / strike'),
+      c('testing', 'On-site testing'),
+    ])],
+    limits: [TIMING_LIMITS, many('asset_limits', 'What equipment will you not rent?', [
+      c('unsafe', 'Damaged or unsafe items'), c('specialist', 'Specialist engineered equipment'),
+      c('none', 'Nothing off limits within catalogue'),
+    ])],
+    trust: [TEAM, YEARS],
+  },
+
+  'Loading & Unloading Crew': {
+    scale: [one('crew_max', 'Largest crew you can deploy on one shift', [
+      c('2', '2 people'), c('5', '3–5 people'), c('10', '6–10 people'),
+      c('20', '11–20 people'), c('more', 'More than 20'),
+    ], { exact: { label: 'Or exact', unit: 'people', max: 200 } })],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('handling_resources', 'What can your crew bring?', [
+      c('trolley', 'Trolleys'), c('dolly', 'Dolly'), c('straps', 'Securing straps'),
+      c('forklift', 'Forklift'), c('ppe', 'Safety gear'),
+    ])],
+    limits: [TIMING_LIMITS, many('access_limits', 'Which access conditions will you not take?', [
+      c('no_lift', 'No lift for heavy loads'), c('long_carry', 'Long carry without vehicle access'),
+      c('stairs', 'Multiple flights of stairs'), c('none', 'None of these'),
+    ])],
+    trust: [TEAM, YEARS],
+  },
+
+  'Warehouse / Storage': {
+    scale: [one('storage_capacity', 'Total storage capacity you can accept', [
+      c('100', 'Up to 100 sq ft'), c('500', 'Up to 500 sq ft'), c('2000', 'Up to 2,000 sq ft'),
+      c('5000', 'Up to 5,000 sq ft'), c('more', 'More than 5,000 sq ft'),
+    ], { exact: { label: 'Or exact', unit: 'sq ft', max: 1000000 } }), PER_DAY],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('storage_resources', 'What handling/access do you provide?', [
+      c('cctv', 'CCTV'), c('restricted', 'Restricted access'), c('loading', 'Loading support'),
+      c('forklift', 'Forklift / equipment'), c('pickup', 'Pickup / delivery support'),
+    ])],
+    limits: [many('storage_limits', 'What storage conditions will you not accept?', [
+      c('perishable', 'Perishables'), c('hazardous', 'Hazardous goods'),
+      c('high_value', 'Unsecured high-value items'), c('none', 'None of these'),
+    ])],
+    trust: [YEARS],
+  },
+
+  'Event Materials Supplier': {
+    scale: [one('order_capacity', 'Largest order you can fulfil', [
+      c('50', 'Up to 50 units'), c('200', 'Up to 200'), c('500', 'Up to 500'),
+      c('1000', '1,000+'),
+    ], { exact: { label: 'Or exact', unit: 'units', max: 1000000 } })],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('material_resources', 'What can you supply?', [
+      c('packing', 'Packing materials'), c('print', 'Paper / print inputs'),
+      c('floral', 'Floral inputs'), c('fabric', 'Textiles'), c('consumables', 'Event consumables'),
+      c('hardware', 'Fixtures / hardware'),
+    ])],
+    limits: [TIMING_LIMITS, many('material_limits', 'What will you not supply?', [
+      c('food', 'Food products'), c('finished_gifts', 'Finished gifts'),
+      c('invitations', 'Finished invitations'), c('none', 'None of these'),
+    ])],
+    trust: [YEARS],
+  },
+
+  'End-to-End Event Logistics': {
+    scale: [one('project_scale', 'Largest logistics project you can manage', [
+      c('single', 'Single venue'), c('multi_vendor', 'Multiple vendor pickups'),
+      c('multi_site', 'Multiple sites'), c('complex', 'Complex multi-stage project'),
+    ])],
+    notice: [NOTICE],
+    where: [TRAVEL, VENUES],
+    brings: [many('resources', 'Which logistics resources can you provide?', [
+      c('vehicles', 'Vehicles'), c('crew', 'Loading crew'), c('storage', 'Storage'),
+      c('equipment', 'Handling equipment'), c('coordination', 'Project coordinator'),
+    ])],
+    limits: [TIMING_LIMITS, many('project_limits', 'Which projects will you not take?', [
+      c('hazardous', 'Hazardous goods'), c('restricted', 'Restricted-access sites without approval'),
+      c('overnight', 'Unplanned overnight work'), c('none', 'None of these'),
+    ])],
+    trust: [TEAM, YEARS],
+  },
+
   'Invitation & Printing': {
     scale: [one('print_qty', 'Largest print run', [
       c('100', '100'), c('500', '500'),
