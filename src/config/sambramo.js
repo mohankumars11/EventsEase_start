@@ -9,7 +9,7 @@ import { LIVE_CITIES, DEFAULT_CITY } from './cities'
 // The halves are the source and the sentences are derived, so the two forms
 // physically cannot disagree. Holding both as separate literals is how the
 // codebase ended up with four different wordings of the same sentence.
-const TAGLINE_PARTS   = ['Celebrations, arranged', 'Essentials, delivered']
+const TAGLINE_PARTS   = ['Celebrations, arranged', 'Nothing left to chance']
 const SIGNATURE_PARTS = ['Your Moment.', 'Our Magic.']
 
 export const BRAND = {
@@ -17,10 +17,11 @@ export const BRAND = {
   // Three lines, three jobs — they are not interchangeable.
   //
   // `tagline` is the descriptor that rides with the logo and answers "what is
-  // this?" in one read. It names both halves of the business deliberately:
-  // the concierge *arranges* (sources vendors, negotiates, coordinates) and
-  // the shop *delivers* (cakes, hampers, flowers, pooja and party essentials).
-  // "Arranged" also carries the floral sense, which ties back to the mark.
+  // this?" in one read. It used to name both halves of the business — the
+  // concierge *arranged* and the shop *delivered*. There is one half now, so
+  // the second line answers the objection the concierge model actually faces
+  // rather than advertising a shelf that no longer exists.
+  // "Arranged" still carries the floral sense, which ties back to the mark.
   //
   // `signature` is the emotional line used on hero panels, where the job is
   // feeling rather than explanation.
@@ -48,6 +49,65 @@ export const BRAND = {
   // under the wordmark on a 360px phone — which is why the caption no longer
   // has to be hidden there.
   emotion:   'Every emotion, valued',
+  /* ── The category line ────────────────────────────────────────────────
+     What rides under the wordmark in the app's own chrome.
+
+     `emotion` held this slot and is a feeling rather than an answer, which
+     is the wrong trade for a brand nobody has heard of: the feeling is
+     already carried by the photograph on every card below it, and the one
+     line under the name is the only place the category gets named.
+
+     ── Why not "India's" ──────────────────────────────────────────────
+     It was "India's event booking app" for a while, and it is the same
+     mistake as the cities on the splash, pointing the other way. Naming the
+     pilot closed a door on somebody in Hyderabad before they saw anything;
+     claiming the country opens one they cannot walk through — they tap,
+     and the app tells them we are live in two cities. A disappointed
+     stranger is worse than an uninformed one.
+
+     It also spends the line on geography. "India's" says nothing about what
+     the app does, it cannot be proved, and it never becomes true — at
+     fifteen cities it is just as unverifiable as at two.
+
+     ── Why not "an ... app" ───────────────────────────────────────────
+     "An event booking app, end to end" was the next proposal. Three things
+     are wrong with it: a descriptor is a label and labels do not take an
+     article; "app" is the one fact a reader already holds, since they are
+     inside it; and "end to end" then modifies the app, when the thing that
+     is end to end is the booking.
+
+     ── What is left ───────────────────────────────────────────────────
+     Two jobs in twenty-five characters. "Event booking" names the category
+     on sight, which is the whole point of the line. "End to end" is the
+     differentiator and the only part a competitor cannot also print: every
+     other service books you ONE vendor, and this one books the day.
+
+     It also has no expiry. It is as true in Bengaluru now as in fifteen
+     cities later, so the lockup never has to change because the footprint
+     did. And it takes the tagline's own `<noun>, <qualifier>` comma, so the
+     two lines read as one voice. */
+  categoryLine: 'Event booking, end to end',
+
+  /* The partner launch screen's line, and only that.
+   *
+   * Deliberately NOT an override of categoryLine above. That line is set on
+   * the customer home, and the paragraph above it is the argument for its
+   * exact wording; a conditional inside it would make one surface copy a
+   * side effect of another.
+   *
+   * A master is not booking an event, they are delivering one, and the
+   * launch screen is the one place the app says which of the two it is
+   * before anything else has loaded.
+   *
+   * An earlier draft read "India's first event delivery app". The
+   * superlative is gone: it is unverifiable, and an unsubstantiated
+   * "first" is what the ASCI code and the Consumer Protection Act 2019
+   * treat as a misleading claim. The category alone was doing the work.
+   *
+   * Sentence case here, uppercased by CSS, so the string stays readable
+   * anywhere else it is used and a screen reader does not spell it out.
+   */
+  partnerCategoryLine: 'Event delivery app',
   // The hero and both auth panels set the second sentence in saffron on its
   // own line, so every one of them had this string typed out by hand and split
   // around markup — three copies of the brand's most repeated line, each free
@@ -95,10 +155,10 @@ export const MVP_MODE = true  // Human-assisted concierge model
 /**
  * One string per role, not per surface.
  *
- * "Plan My Celebration" had drifted into two variants across five places and the
- * shop had four near-identical labels ("Shop essentials" / "Shop the essentials" /
- * "Browse the shop" / "See the full shop"), all pointing at the same destination.
- * Different words for one destination is what makes an app feel like several apps.
+ * "Plan My Celebration" had drifted into two variants across five places, and
+ * the shop had four near-identical labels for one destination before it left.
+ * Different words for one destination is what makes an app feel like several
+ * apps.
  *
  * The action/navigation split is deliberate rather than an oversight: a header
  * button is a wayfinding label and should stay plain, while a hero button is a
@@ -110,7 +170,6 @@ export const CTA = {
   planNav:    'Plan a celebration',       // header, footer, tab bar → the hub
   catalog:    'Browse services & packages',
   catalogNav: 'Services & packages',
-  shop:       'Shop the essentials',
 }
 
 /**

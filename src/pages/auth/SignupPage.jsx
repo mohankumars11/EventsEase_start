@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import { isPartnerSurface } from '../../config/surface'
+import { stashPartnerRef } from '../../lib/referrals'
 
 const RESEND_SECONDS = 60
 
@@ -22,7 +24,35 @@ const TRUST_POINTS = [
   'Transparent pricing, zero hidden fees',
 ]
 
+/**
+ * Google sign-in is not offered inside the app, and that is deliberate.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * OAUTH LEAVES THE APP AND DOES NOT COME BACK
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `signInWithOAuth` navigates to accounts.google.com. Capacitor hands
+ * any off-origin navigation to the system browser, so the person ends
+ * up in Chrome — and `redirectTo` is built from `window.location.origin`,
+ * which inside a bundled app is `https://localhost`. Google rejects that
+ * as a redirect URI, and even if it did not, the session would land in
+ * Chrome and the app would still be signed out.
+ *
+ * The reported symptom was exactly this: "the app is installed, but when
+ * I log in it opens in Chrome."
+ *
+ * Making it work natively means a custom URL scheme, a deep-link
+ * handler, and another OAuth client in the Google console — a project in
+ * itself. And it buys nothing, because the email code below has no
+ * redirect at all: it is two API calls, it never leaves the WebView, and
+ * it already works.
+ *
+ * So on native there is one way in, and it is the one that works.
+ */
 export default function SignupPage() {
+  /* Which of the two apps this bundle is. Stamped at build time by
+     VITE_SURFACE, so it is a constant, not a guess about the URL. */
+  const PARTNER = isPartnerSurface()
   const { sendEmailOtp, verifyEmailOtp, completeProfile, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,14 +61,48 @@ export default function SignupPage() {
   // Capture a referral code from a shared link (?ref=CODE) before the
   // signup flow (email OTP or Google) navigates away from this URL —
   // AuthContext resolves and applies it once the profile is created.
+  //
+  // On the partner app the code is a PARTNER invitation, kept under its
+  // own key: `ee_pending_ref` is spent by AuthContext on the customer
+  // programme the first time a profile loads, which would consume a
+  // partner's code and look it up in the wrong table.
   useEffect(() => {
     const ref = new URLSearchParams(location.search).get('ref')
-    if (ref) localStorage.setItem('ee_pending_ref', ref.toUpperCase())
-  }, [location.search])
+    if (!ref) return
+    if (PARTNER) stashPartnerRef(ref)
+    else localStorage.setItem('ee_pending_ref', ref.toUpperCase())
+  }, [location.search, PARTNER])
+
+  /* The role can arrive in the URL, and then the chooser is skipped.
+
+     A master reaching this from the partner landing page has already
+     answered "who are you?" — by reading a page headed "Work that comes
+     to you" and pressing "Join as a partner". Asking again is a step
+     that can only be got wrong, and getting it wrong here creates a
+     CUSTOMER account for somebody who came to sell. That is not visible
+     to them until the dashboard is empty.
+
+     Read once, at mount. Not a live read of the query string: changing
+     it mid-signup would move somebody between forms. */
+  const roleFromUrl = (() => {
+    const r = new URLSearchParams(location.search).get('role')
+    return r === 'vendor' || r === 'customer' ? r : null
+  })()
+
+  /* Parked before any button can leave this origin.
+
+     "Continue with Google" navigates to accounts.google.com and comes
+     back to /auth/callback, where the profile row is created. Nothing
+     in React state crosses that, so the intent has to be written down
+     somewhere the return trip can read it. */
+  useEffect(() => {
+    if (!roleFromUrl) return
+    try { localStorage.setItem('ee_pending_role', roleFromUrl) } catch { /* storage off */ }
+  }, [roleFromUrl])
 
   // steps: role → info → otp
-  const [step, setStep]               = useState('role')
-  const [role, setRole]               = useState(null)
+  const [step, setStep]               = useState(roleFromUrl ? 'info' : 'role')
+  const [role, setRole]               = useState(roleFromUrl)
   const [fullName, setFullName]       = useState('')
   const [email, setEmail]             = useState('')
   const [phone, setPhone]             = useState('')          // optional, for profile only
@@ -53,7 +117,11 @@ export default function SignupPage() {
   // Only auto-redirect if they land here already authenticated
   // Don't redirect mid-OTP flow
   useEffect(() => {
-    if (user && profile && step === 'role') redirectByRole(profile.role)
+    // 'info' as well as 'role'. Keying this on 'role' alone meant a
+    // signed-in partner arriving from /partner/join — who now skips
+    // straight to 'info' — was shown a signup form for the account they
+    // already have, instead of being sent to their dashboard.
+    if (user && profile && (step === 'role' || step === 'info')) redirectByRole(profile.role)
   }, [user, profile])
 
   useEffect(() => {
@@ -63,7 +131,17 @@ export default function SignupPage() {
   }, [resendTimer])
 
   function redirectByRole(r) {
-    if (r === 'vendor')     navigate('/onboarding/vendor', { replace: true })
+    /* A vendor goes to their DASHBOARD, not to the onboarding form.
+     *
+     * Onboarding prefills from the existing row, so sending an
+     * established partner there is not destructive — it is just wrong.
+     * They came to work, and they are shown a form asking for a
+     * business name they entered weeks ago.
+     *
+     * The dashboard is right for both cases: a partner with no vendor
+     * row gets its "Set up my profile" door, which is the same
+     * onboarding one tap further on. */
+    if (r === 'vendor')     navigate('/dashboard/vendor', { replace: true })
     else if (r === 'admin') navigate('/dashboard/admin',   { replace: true })
     else if (from)          navigate(from.pathname + (from.search ?? ''), { replace: true })
     else                    navigate('/dashboard/customer', { replace: true })
@@ -75,6 +153,11 @@ export default function SignupPage() {
 
   function handleRoleSelect(r) {
     setRole(r)
+    // Parked for the same reason as roleFromUrl above: the very next
+    // thing this person may press is "Continue with Google", which
+    // leaves the origin and comes back to a callback that has no idea
+    // what they chose.
+    try { localStorage.setItem('ee_pending_role', r) } catch { /* storage off */ }
     setStep('info')
     setError(null)
   }
@@ -128,13 +211,16 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
-      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      /* The session comes back from the verify. Handing it straight to
+         completeProfile removes a getUser round trip from the slowest
+         moment in the whole app. */
+      const verified = await verifyEmailOtp(email.trim().toLowerCase(), code)
       const phoneFormatted = phone.trim()
         ? (phone.trim().startsWith('+') ? phone.trim() : `+91${phone.replace(/\D/g, '')}`)
         : null
-      await completeProfile({ fullName, role, phone: phoneFormatted })
+      await completeProfile({ fullName, role, phone: phoneFormatted, user: verified?.user ?? verified?.data?.user })
       // Explicit redirect — don't wait for useEffect
-      const target = role === 'vendor' ? '/onboarding/vendor'
+      const target = role === 'vendor' ? '/partner/setup'
                    : role === 'admin'  ? '/dashboard/admin'
                    : from              ? from.pathname + (from.search ?? '')
                    :                     '/dashboard/customer'
@@ -204,12 +290,30 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white overflow-y-auto">
         <div className="w-full max-w-md">
 
-          {/* Mobile logo */}
-          <div className="flex md:hidden justify-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <SambramoLogo size={36} ground="onLight" caption />
-            </Link>
-          </div>
+          {/* Signing up wears the same identity as signing in. See
+              LoginPage for why the customer lockup was the wrong thing to
+              show somebody who deliberately installed the partner app. */}
+          {PARTNER ? (
+            <div className="mb-8 rounded-[22px] bg-plum-950 px-5 py-5 text-center">
+              <span className="flex items-baseline justify-center gap-2">
+                <span className="font-serif text-[26px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+                  Partners
+                </span>
+              </span>
+              <p className="mt-2 text-[12px] font-bold uppercase tracking-[0.12em] text-saffron-400">
+                Free to join · Free to stay
+              </p>
+            </div>
+          ) : (
+            <div className="flex md:hidden justify-center mb-8">
+              <Link to="/" className="inline-flex items-center gap-2">
+                <SambramoLogo size={36} ground="onLight" caption />
+              </Link>
+            </div>
+          )}
 
           {/* ── Step: Role selection ── */}
           {step === 'role' && (

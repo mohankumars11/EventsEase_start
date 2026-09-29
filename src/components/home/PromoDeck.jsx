@@ -10,18 +10,34 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  * above the fold, and the reason they all run one is that a home screen has
  * exactly one piece of prime real estate and more than one thing worth
  * putting in it. A static hero picks a winner forever; this one rotates
- * through the three that are actually live right now — plan a celebration,
- * the festival that is closest, the best coupon the checkout will honour.
+ * through the several things worth saying at once — on Home today, the live
+ * offer, the instant estimate, and "book one thing or all of it".
  *
  * Rules it follows so it doesn't become the thing people scroll past:
- *   — Slides are passed in, never invented here. A caller that has no
- *     festival within range or no live coupon passes two slides and the deck
- *     shows two.
+ *   — Slides are passed in, never invented here. This component knows nothing
+ *     about festivals, offers or estimates; a caller with two things to say
+ *     passes two slides and the deck shows two.
  *   — It stops advancing the moment it is touched. Swiping back to a slide
  *     the deck then pulls away from is the classic carousel injury.
  *   — Under reduced motion it does not auto-advance at all; the dots still
  *     work, so nothing is unreachable.
  */
+/**
+ * One slide's wrapper: a link when it has a destination, a button when
+ * it has an action.
+ *
+ * Both, deliberately, rather than always a button with a navigate
+ * inside it — a real <Link> is what makes long-press-to-open-in-new-tab
+ * and middle-click work on the web, and the customer home relies on
+ * that.
+ */
+function Slide({ to, onAction, children, ...rest }) {
+  if (onAction) {
+    return <button type="button" onClick={onAction} {...rest}>{children}</button>
+  }
+  return <Link to={to} {...rest}>{children}</Link>
+}
+
 export default function PromoDeck({ slides = [], interval = 5000 }) {
   const items = slides.filter(Boolean)
   const reduced = useReducedMotion()
@@ -51,18 +67,27 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
   }
 
   return (
-    <div className="px-4">
+    <div className="px-5">
       <div
-        className="relative overflow-hidden rounded-3xl"
+        className="a-raised relative overflow-hidden rounded-[32px]"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMouseEnter={() => setHeld(true)}
         onMouseLeave={() => setHeld(false)}
       >
-        <Link
+        {/* ── A slide that DOES something, not only goes somewhere ──
+            A referral card whose CTA says "Invite partners" must open
+            the phone's share sheet, and a <Link> can only navigate. So
+            a slide may carry `onAction` instead of `to`, and the
+            wrapper becomes a button.
+
+            `to` stays the default, because every slide on the customer
+            home is a destination and none of them should change. */}
+        <Slide
           key={slide.key}
           to={slide.to}
-          className="animate-fade-in block"
+          onAction={slide.onAction}
+          className="animate-fade-in block w-full text-left"
           style={{ background: slide.background }}
         >
           {/* ── Sizing ────────────────────────────────────────────────
@@ -73,32 +98,32 @@ export default function PromoDeck({ slides = [], interval = 5000 }) {
               the height; this is the utility rail (plan / festival / coupon)
               and only has to be a legible, tappable headline. Everything the
               trim saves goes straight into the panel underneath. */}
-          <div className="relative flex min-h-[118px] items-center gap-3 px-4 py-4">
+          <div className="relative flex min-h-[126px] items-center gap-3.5 px-5 py-5">
             {/* The art is a big soft emoji rather than a photograph: this deck
                 changes every five seconds and a stock photo that swaps that
                 often reads as a slideshow of adverts. */}
-            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[86px] leading-none opacity-25 blur-[0.5px]">
+            <span aria-hidden="true" className="pointer-events-none absolute -right-3 -top-3 text-[92px] leading-none opacity-25 blur-[0.5px]">
               {slide.art}
             </span>
 
             <div className="relative min-w-0 flex-1">
               {slide.eyebrow && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2.5 py-1 text-[9.5px] font-extrabold uppercase tracking-wider text-white/90 backdrop-blur-sm">
                   {slide.eyebrow}
                 </span>
               )}
-              <p className="mt-1.5 font-serif text-[21px] font-extrabold leading-[1.04] text-white drop-shadow-sm">
+              <p className="mt-2 font-serif text-[23px] font-extrabold leading-[1.06] tracking-tight text-white drop-shadow-sm">
                 {slide.title}
               </p>
-              <p className="mt-1 max-w-[86%] text-[11px] font-medium leading-snug text-white/85">
+              <p className="mt-1 max-w-[86%] text-[11.5px] font-medium leading-snug text-white/85">
                 {slide.body}
               </p>
-              <span className="mt-2.5 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-[11px] font-extrabold text-plum-900 shadow-sm">
+              <span className="mt-3 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3.5 py-2 text-[11.5px] font-extrabold text-plum-900 shadow-sm">
                 {slide.cta} <ArrowRight size={12} strokeWidth={3} />
               </span>
             </div>
           </div>
-        </Link>
+        </Slide>
 
         {/* The dot is the artwork; the button around it is the target.
             These were bare 6px buttons — far under Android's 48dp minimum,

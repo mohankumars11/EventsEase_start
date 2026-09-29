@@ -23,6 +23,7 @@ import MenuComposer from '../../components/service/MenuComposer'
 import GoesWithRail from '../../components/service/GoesWithRail'
 import BookBar from '../../components/service/BookBar'
 import EventDateSheet from '../../components/plan/EventDateSheet'
+import LogisticsDemandPanel, { logisticsDemandIsComplete, logisticsDemandSummary } from '../../components/service/LogisticsDemandPanel'
 
 /**
  * One service, bought end to end.
@@ -72,6 +73,7 @@ export default function ServiceDetail() {
   const [selectedPack, setSelectedPack] = useState(null)
   const [packQty, setPackQty] = useState({})
   const [menuConfig, setMenuConfig] = useState(null)
+  const [logisticsDemand, setLogisticsDemand] = useState({})
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
   // The add that is waiting on a date. See handleAdd.
   const [pendingAdd, setPendingAdd] = useState(null)
@@ -84,6 +86,7 @@ export default function ServiceDetail() {
     setOpenTheme(null)
     setPackQty({})
     setMenuConfig(null)
+    setLogisticsDemand({})
     setFamilyId('all')
     setQuery('')
   }, [serviceId])
@@ -144,8 +147,24 @@ export default function ServiceDetail() {
       }
     }
 
+    if (resolved.kind === 'logistics' && logisticsDemandIsComplete(resolved.service.id, logisticsDemand)) {
+      const signature = Object.entries(logisticsDemand)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => k + '=' + (Array.isArray(v) ? v.slice().sort().join(',') : v))
+        .join('|')
+      return {
+        optionId: 'request-' + encodeURIComponent(signature).slice(0, 120),
+        optionName: resolved.service.name,
+        price: null,
+        label: resolved.service.name,
+        detail: 'Structured quote after requirements review',
+        summary: logisticsDemandSummary(resolved.service.id, logisticsDemand),
+        logisticsDemand,
+      }
+    }
+
     return null
-  }, [resolved, selectedTheme, selectedPack, packQty, menuConfig, scaleId, guestCount])
+  }, [resolved, selectedTheme, selectedPack, packQty, menuConfig, logisticsDemand, scaleId, guestCount])
 
   const alreadyAdded = !!(selection && eventId && hasItem(eventId, `${resolved.service.id}:${selection.optionId}`))
 
@@ -203,12 +222,14 @@ export default function ServiceDetail() {
       guestCount,
       date: picked?.event_date ?? savedDate?.event_date ?? getEventDetails(eventId)?.date ?? null,
       slot: picked?.time_slot ?? savedDate?.time_slot ?? null,
-      location: getEventDetails(eventId)?.location
-        ?? (chosen && city?.name ? { city: city.name, area: '' } : null),
+      location: {
+        ...(getEventDetails(eventId)?.location ?? (chosen && city?.name ? { city: city.name, area: '' } : {})),
+        ...(sel.logisticsDemand ? { logisticsDemand: sel.logisticsDemand } : {}),
+      },
     }
 
     dispatch({ type: 'ADD_SERVICE', ...line, details })
-    toast.success(`Added — ${sel.optionName}, ${formatINR(sel.price)}`)
+    toast.success(sel.price == null ? `Added — ${sel.optionName}. We will quote this request.` : `Added — ${sel.optionName}, ${formatINR(sel.price)}`)
   }, [resolved, eventId, getEventDetails, guestCount, savedDate, chosen, city, dispatch, toast])
 
   /**
@@ -522,6 +543,15 @@ export default function ServiceDetail() {
           </section>
         )}
 
+        {/* ══════════════ LOGISTICS ══════════════ */}
+        {kind === 'logistics' && (
+          <LogisticsDemandPanel
+            serviceId={service.id}
+            value={logisticsDemand}
+            onChange={setLogisticsDemand}
+          />
+        )}
+
         {/* ══════════════ NOT YET PRICED ══════════════ */}
         {kind === 'enquiry' && (
           <section className="px-4">
@@ -639,6 +669,7 @@ export default function ServiceDetail() {
       {selection && !openTheme && (
         <BookBar
           total={selection.price}
+          totalLabel={selection.price == null ? 'Quote' : null}
           lineLabel={selection.label}
           detail={selection.detail}
           added={alreadyAdded}

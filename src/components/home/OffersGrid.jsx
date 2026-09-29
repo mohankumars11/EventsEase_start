@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Copy, Check, Ticket, Sparkles, ArrowRight } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { usePublicOffers } from '../../hooks/usePublicOffers'
 import { allOffers, accentOf } from '../../lib/allOffers'
 
 /**
@@ -59,26 +58,25 @@ const BEAT_MS = 4600
 const PER_PAGE = 2
 
 export default function OffersGrid() {
-  const coupons = usePublicOffers()
   const reduced = useReducedMotion()
   const [held, setHeld] = useState(false)
   const [onScreen, setOnScreen] = useState(false)
   const stage = useRef(null)
 
-  const offers = useMemo(() => allOffers(coupons), [coupons])
+  const offers = useMemo(() => allOffers(), [])
 
-  // Split by which half of the business the offer belongs to. A card with
-  // nothing in it falls back to the other half's list rather than rendering an
-  // empty box — before any coupon row exists, the right-hand card shows a
-  // celebration offer instead of a hole.
-  const { left, right } = useMemo(() => {
-    const celebration = offers.filter(o => o.scope === 'celebration')
-    const shop = offers.filter(o => o.scope === 'shop')
-    return {
-      left:  celebration.length ? celebration : shop,
-      right: shop.length ? shop : celebration,
-    }
-  }, [offers])
+  // Two cards, both rotating. This used to split by which half of the business
+  // an offer belonged to — celebrations on the left, shop coupons on the right
+  // — which is a distinction the customer no longer has to care about because
+  // there is only one half left.
+  //
+  // Dealt alternately rather than sliced down the middle, so the two cards are
+  // never showing consecutive offers from the same list, and an odd count
+  // leaves the extra on the left rather than emptying the right.
+  const { left, right } = useMemo(() => ({
+    left:  offers.filter((_, i) => i % 2 === 0),
+    right: offers.filter((_, i) => i % 2 === 1),
+  }), [offers])
 
   useEffect(() => {
     const el = stage.current
@@ -101,7 +99,7 @@ export default function OffersGrid() {
             Every offer, right now
           </h2>
           <p className="mt-0.5 text-[11px] text-ink-mute">
-            Celebrations and the shop — {offers.length} live.
+            {offers.length} live on every celebration.
           </p>
         </div>
       </div>
@@ -207,7 +205,7 @@ function OfferCard({ offer, onHold, animate = false }) {
       onClick={() => navigate(offer.to)}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(offer.to) } }}
       aria-label={`${offer.headline} — ${offer.name}`}
-      className={`${animate ? 'rise-in' : ''} relative flex min-h-[126px] cursor-pointer flex-col overflow-hidden rounded-2xl p-3 pb-4 text-left shadow-[0_10px_24px_-16px_rgba(0,0,0,0.6)] transition-transform active:scale-[0.98]`}
+      className={`${animate ? 'rise-in' : ''} relative flex min-h-[128px] cursor-pointer flex-col overflow-hidden rounded-[24px] p-3.5 pb-4 text-left shadow-[0_14px_30px_-16px_rgba(0,0,0,0.6)] transition-transform active:scale-[0.98]`}
       style={{ background: `linear-gradient(135deg, ${accent.from} 0%, ${accent.to} 100%)` }}
     >
       {/* Perforations, so the card reads as a coupon rather than an advert.
@@ -226,7 +224,7 @@ function OfferCard({ offer, onHold, animate = false }) {
           onLight ? 'bg-black/15 text-black/70' : 'bg-white/20 text-white/90'
         }`}
       >
-        {offer.scope === 'celebration' ? <Sparkles size={8} strokeWidth={3} /> : <Ticket size={8} strokeWidth={3} />}
+        <Sparkles size={8} strokeWidth={3} />
         {offer.scopeLabel}
       </span>
 
