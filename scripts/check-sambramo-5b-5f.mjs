@@ -41,7 +41,9 @@ for (const trade of expectedTrades) {
   ok(ops.length >= 6, trade + ': shared operations spine incomplete')
   const ids = groups.map(g => g.canonicalField ?? g.id)
   ok(ids.length === new Set(ids).size, trade + ': duplicate canonical capability questions remain')
-  ok(filterPartnerQuestionGroups(groups, { trade, picked: [] }).length <= groups.length, trade + ': conditional evaluator failed')
+  const conditionalProbe = { id: trade + ':conditional_probe', showWhen: { type: 'detailPresent', field: '__probe' }, choices: [{ id: 'yes', label: 'Yes', showWhen: { type: 'detailIncludes', field: '__mode', value: 'on' } }] }
+  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked, detail: { __probe: '', __mode: 'on' } }).length === 0, trade + ': conditional group should hide when prerequisite is absent')
+  ok(filterPartnerQuestionGroups([conditionalProbe], { trade, picked, detail: { __probe: 'x', __mode: 'off' } })[0]?.choices.length === 0, trade + ': conditional choice should hide when choice prerequisite is absent')
 }
 
 const logistics = Object.keys(LOGISTICS_SERVICE_SPECS)
@@ -100,7 +102,7 @@ for (const [rel, re, msg] of sourceChecks) {
   ok(re.test(data), msg)
 }
 
-const migration = fs.readFileSync(path.join(ROOT, 'supabase/migrations/162_dispatch_wave_uses_reconciled_matching.sql'), 'utf8')
+const migration = fs.readFileSync(path.join(ROOT, 'supabase/migrations/163_fix_legacy_match_profile_fallback.sql'), 'utf8')
 ok(/match_booking_line_partners/.test(migration), 'matching reconciliation migration missing')
 ok(/REVOKE ALL ON FUNCTION public\.dispatch_wave/.test(migration), 'dispatch_wave execution scope not explicitly tightened')
 
