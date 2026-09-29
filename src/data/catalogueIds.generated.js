@@ -4757,7 +4757,7 @@ export const CATALOGUE_ID_BY_KEY = {
   "choice|service:event_logistics|project_scale|single": "SBM-SPC-3297",
   "choice|service:event_logistics|project_scale|multi": "SBM-SPC-3298",
   "choice|service:event_logistics|project_scale|multi_site": "SBM-SPC-3299",
-  "choice|service:event_logistics|project_scale|complex": "SBM-SPC-3300"
+  "choice|service:event_logistics|project_scale|complex": "SBM-SPC-3300",
   "group|service:mini_truck|cargo_access": "SBM-SPG-651",
   "group|service:goods_vehicle|load_dimensions": "SBM-SPG-652",
   "group|service:goods_vehicle|access": "SBM-SPG-653",
