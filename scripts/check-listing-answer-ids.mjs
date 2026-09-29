@@ -16,7 +16,7 @@
  * readable later.
  *
  * So this ticks every choice of every question the way a partner would,
- * for all 24 trades, and asserts nothing lands unresolved.
+ * for all 34 trades, and asserts nothing lands unresolved.
  *
  *   node scripts/check-listing-answer-ids.mjs
  */
