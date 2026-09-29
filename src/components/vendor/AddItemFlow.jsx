@@ -119,7 +119,7 @@ const DERIVED_SPEC_KEYS = new Set([
   'menus', 'counters', 'dish_ids', 'dishes', 'dishes_typed', 'min_order_note',
   'uploads', 'menu_rates', 'distance_rates', 'venue_terms', 'signature',
   'kitchen_type', 'cuisines', 'answers', 'menu_ids', 'counter_ids',
-  'answers_unresolved',
+  'answers_unresolved', 'match_profile', 'logistics_rates',
 ])
 
 function seedFrom(row) {
