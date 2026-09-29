@@ -9,7 +9,7 @@
  */
 import { By } from 'selenium-webdriver'
 import { CASES } from '../../../scripts/validation/catalogue.mjs'
-import { type, paste, messageOf, valueOf, focused, until_, waitFor, field } from '../lib/field.mjs'
+import { type, paste, messageOf, valueOf, focused, until_, waitFor, field, byField } from '../lib/field.mjs'
 import { serveHarness } from '../lib/harness.mjs'
 import { loadSrc } from '../../../scripts/lib/loadSrc.mjs'
 
@@ -136,7 +136,7 @@ export async function fieldLab(t) {
     await t.test('bank', 'a letter in the account number is refused, never dropped; nothing is sent', async () => {
       await driver.executeScript('document.querySelector(\'[data-testid="bank-screen"]\').scrollIntoView()')
       const bankTab = await driver.findElements(By.xpath('//section[@data-testid="bank-screen"]//button[.//span[text()="Bank"]]'))
-      if (bankTab.length) await bankTab[0].click()
+      if (bankTab.length) await driver.executeScript('arguments[0].scrollIntoView({ block: "center" }); arguments[0].click()', bankTab[0])
       await type(driver, 'account_number', '12345abc6789')
       const m = await until_(driver, async () => { const x = await messageOf(driver, 'account_number'); return x.invalid ? x : null })
       t.assert(m?.invalid && /not a digit/.test(m.says), `expected a "not a digit" message, got ${m?.says}`)

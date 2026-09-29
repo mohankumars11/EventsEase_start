@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 4b1bf4c5b6925d62
+// inputs: 552e23ea7cba49bc
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -593,6 +593,130 @@ var SERVICE_GROUPS = [
         unit: "per_guest",
         base: 90,
         desc: "Something cold in everyone\u2019s hand as they arrive"
+      }
+    ]
+  },
+  {
+    id: "logistics",
+    label: "Event logistics",
+    hint: "Move, store, set up and coordinate the physical side of an event",
+    surface: "bg-gradient-to-br from-violet-50 via-white to-white",
+    spine: "bg-gradient-to-b from-violet-400 to-indigo-600",
+    tile: "bg-violet-50 text-violet-700 ring-violet-200/70",
+    ink: "text-violet-700",
+    services: [
+      {
+        id: "mini_truck",
+        name: "Mini truck / pickup",
+        emoji: "\u{1F6FB}",
+        unit: "fixed",
+        base: 800,
+        scales: false,
+        priceHint: "Quote after route & load details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Mini Truck / Pickup",
+        desc: "Small event cargo such as d\xE9cor, flowers, food containers and equipment"
+      },
+      {
+        id: "goods_vehicle",
+        name: "Medium / large goods vehicle",
+        emoji: "\u{1F69A}",
+        unit: "fixed",
+        base: 1800,
+        scales: false,
+        priceHint: "Quote after load & access details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Medium / Large Goods Vehicle",
+        desc: "Bulk or heavy event cargo with structured payload and access requirements"
+      },
+      {
+        id: "passenger_transport",
+        name: "Group passenger transport",
+        emoji: "\u{1F68C}",
+        unit: "fixed",
+        base: 5e3,
+        scales: false,
+        priceHint: "Quote after route & vehicle details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Passenger Transport",
+        desc: "Tempo traveller, mini-bus or bus for scheduled guest movement"
+      },
+      {
+        id: "event_equipment",
+        name: "Event operations equipment rental",
+        emoji: "\u{1F9F0}",
+        unit: "fixed",
+        base: 1200,
+        scales: false,
+        priceHint: "Quote after asset & quantity details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Event Equipment Rental",
+        desc: "General reusable event equipment; specialised AV, lighting, power and furniture remain in their own trades"
+      },
+      {
+        id: "loading_crew",
+        name: "Loading & unloading crew",
+        emoji: "\u{1F4E6}",
+        unit: "per_unit",
+        base: 1200,
+        unitLabel: "person",
+        qtyFor: () => 2,
+        priceHint: "Quote after crew & shift details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Loading & Unloading Crew",
+        desc: "Material handling labour by crew size and shift"
+      },
+      {
+        id: "warehouse_storage",
+        name: "Warehouse / storage",
+        emoji: "\u{1F3ED}",
+        unit: "per_unit",
+        base: 25,
+        unitLabel: "sq ft / month",
+        priceHint: "Quote after space & duration details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Warehouse / Storage",
+        desc: "Temporary event inventory storage with access and handling"
+      },
+      {
+        id: "event_materials",
+        name: "Bulk event materials",
+        emoji: "\u{1F9F1}",
+        unit: "fixed",
+        base: 1e3,
+        scales: false,
+        priceHint: "Quote after material & quantity details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "logistics",
+        trade: "Event Materials Supplier",
+        desc: "Bulk consumables, raw event materials and catalogue SKUs"
+      },
+      {
+        id: "event_logistics",
+        name: "End-to-end event logistics",
+        emoji: "\u{1F5FA}\uFE0F",
+        unit: "fixed",
+        base: 0,
+        scales: false,
+        priceHint: "Quote after project details",
+        priceMin: null,
+        priceMax: null,
+        pricingMode: "quote",
+        trade: "End-to-End Event Logistics",
+        desc: "Multi-vendor pickup, consolidation, storage, delivery, setup and strike"
       }
     ]
   },
@@ -4404,7 +4528,23 @@ var TRADE_FOR_SERVICE = {
   lighting: "Event Lighting",
   av_setup: "Sound & AV",
   invitations: "Invitation & Printing",
-  transport: "Transportation",
+  wedding_car: "Transportation",
+  /* vehicle_care is retained for legacy data but is not a current dispatch
+     offering. */
+  /* Legacy service ids remain readable but are no longer the preferred
+     customer routes. New logistics bookings use the dedicated ids below. */
+  goods_move: "Mini Truck / Pickup",
+  transport: "Passenger Transport",
+  mini_truck: "Mini Truck / Pickup",
+  goods_vehicle: "Medium / Large Goods Vehicle",
+  passenger_transport: "Passenger Transport",
+  event_equipment: "Event Equipment Rental",
+  loading_crew: "Loading & Unloading Crew",
+  warehouse_storage: "Warehouse / Storage",
+  event_materials: "Event Materials Supplier",
+  event_logistics: "End-to-End Event Logistics",
+  /* household shifting is intentionally not part of Sambramo's current
+     Events + Logistics customer catalogue */
   bouncers: "Security Services",
   venue: "Venue",
   /* ── Stage 3 ─────────────────────────────────────────────────────── */
@@ -4442,8 +4582,6 @@ var TRADE_FOR_SERVICE = {
   washrooms: "Safety & Facilities",
   medical: "Safety & Facilities",
   // Vehicles and the ground.
-  wedding_car: "Transportation",
-  vehicle_care: "Transportation",
   valet: "Valet Parking",
   // Print.
   signage: "Invitation & Printing",
@@ -4458,7 +4596,8 @@ var TRADE_FOR_SERVICE = {
      to it, so partnerCatalogue derived no trade for it and a planner
      who signed up was asked nothing and offered nothing. */
   planner: "Wedding Planning",
-  permits: "Wedding Planning",
+  /* legacy permits service is not a customer trade; permissions stay in the
+     Verification/Safety workflow rather than becoming a billable planning trade. */
   /* Packing is hands, not stock. */
   trousseau: "Trousseau & Gift Packing",
   gift_packing: "Trousseau & Gift Packing",
@@ -4466,8 +4605,7 @@ var TRADE_FOR_SERVICE = {
      for. Most of what a transporter carries at an event is not
      guests: it is chairs, sound, flowers and cooked food, and none
      of that was orderable. */
-  goods_move: "Transportation",
-  house_shift: "Transportation",
+  /* legacy goods_move/house_shift are intentionally not dispatchable here */
   // Effects and one-off setups.
   fireworks: "Event Lighting",
   candle_setup: "Decoration & Floral",
@@ -4764,6 +4902,183 @@ function defaultOptions(serviceId) {
   return out;
 }
 
+// src/data/logisticsPricing.js
+var LOGISTICS_PRICE_BOOK_VERSION = "2026-09-29.1";
+var INR = (n2) => Math.round(Number(n2) || 0);
+var LOGISTICS_PRICING = {
+  mini_truck: {
+    serviceName: "Mini truck / pickup",
+    tradeId: "L01",
+    base: 900,
+    includedKm: 10,
+    extraKm: 24,
+    weightSurcharge: [{ upto: 500, add: 0 }, { upto: 750, add: 180 }, { upto: 1500, add: 420 }]
+  },
+  goods_vehicle: {
+    serviceName: "Medium / large goods vehicle",
+    tradeId: "L02",
+    baseByClass: { "14ft": 2200, "17ft": 2800, "19ft": 3400, container: 3900, other: 3200 },
+    includedKm: 15,
+    extraKm: 34,
+    weightSurcharge: [{ upto: 2e3, add: 0 }, { upto: 4e3, add: 700 }, { upto: 7e3, add: 1500 }, { upto: 1e4, add: 2400 }]
+  },
+  passenger_transport: {
+    serviceName: "Group passenger transport",
+    tradeId: "L03",
+    packageBySeats: [{ upto: 9, rate: 2600 }, { upto: 17, rate: 3600 }, { upto: 26, rate: 4600 }, { upto: 33, rate: 5600 }, { upto: 45, rate: 7200 }],
+    includedKm: 100,
+    extraKm: 24,
+    driverAllowance: 450,
+    extraHour: 350,
+    stopCharge: 120
+  },
+  event_equipment: {
+    serviceName: "Event operations equipment rental",
+    tradeId: "L04",
+    dayRateByQty: [{ upto: 5, rate: 1200 }, { upto: 20, rate: 2200 }, { upto: 50, rate: 4e3 }, { upto: 100, rate: 6500 }],
+    deliveryFee: 650,
+    setupFee: 900,
+    pickupFee: 500
+  },
+  loading_crew: { serviceName: "Loading & unloading crew", tradeId: "L05", perPersonShift: 650, includedHours: 8, overtimeHour: 110, equipmentFee: 350 },
+  warehouse_storage: { serviceName: "Warehouse / storage", tradeId: "L06", sqftMonthRate: 22, inbound: 900, outbound: 900, pickupDelivery: 650 },
+  event_materials: { serviceName: "Bulk event materials", tradeId: "L07", minimumOrder: 2500, deliveryFee: 450, rushSurchargePct: 12, customizationFee: 750 },
+  event_logistics: { serviceName: "End-to-end event logistics", tradeId: "L08", minimumProjectFee: 6e3, coordinationFeePct: 8, transportManagementFee: 1800, siteSurveyFee: 1500 }
+};
+var kmBetween = (input) => {
+  const n2 = Number(input?.distanceKm);
+  return Number.isFinite(n2) ? Math.max(0, n2) : 0;
+};
+var tierRate = (tiers, n2) => {
+  const x = Math.max(1, Number(n2) || 1);
+  return tiers.find((t) => x <= t.upto)?.rate ?? tiers[tiers.length - 1].rate;
+};
+var payloadAdd = (tiers, kg) => {
+  const n2 = Math.max(0, Number(kg) || 0);
+  return (tiers.find((t) => n2 <= t.upto) ?? tiers[tiers.length - 1])?.add ?? 0;
+};
+function priceLogisticsLine({ serviceId, demand = {} }) {
+  const p = LOGISTICS_PRICING[serviceId];
+  if (!p) return { ok: false, reason: "unsupported_service" };
+  const km = kmBetween(demand);
+  let total = 0;
+  const components = [];
+  if (serviceId === "mini_truck") {
+    const base = p.base;
+    const extra = Math.max(0, km - p.includedKm) * p.extraKm;
+    const weight = payloadAdd(p.weightSurcharge, demand.weightKg);
+    total = base + extra + weight;
+    components.push({ key: "base", paise: base * 100 }, { key: "extra_distance", paise: INR(extra) * 100 }, { key: "payload", paise: weight * 100 });
+  } else if (serviceId === "goods_vehicle") {
+    const cls = String(demand.vehicleClass ?? demand.vehicle_class ?? "14ft");
+    const base = p.baseByClass[cls] ?? p.baseByClass.other;
+    const extra = Math.max(0, km - p.includedKm) * p.extraKm;
+    const weight = payloadAdd(p.weightSurcharge, demand.weightKg);
+    total = base + extra + weight;
+    components.push({ key: "base", paise: base * 100 }, { key: "extra_distance", paise: INR(extra) * 100 }, { key: "payload", paise: weight * 100 });
+  } else if (serviceId === "passenger_transport") {
+    const seats = Math.max(1, Number(demand.passengers) || 1);
+    const base = tierRate(p.packageBySeats, seats);
+    const extra = Math.max(0, km - p.includedKm) * p.extraKm;
+    const stops = Math.max(0, Number(demand.stops) || 0) * p.stopCharge;
+    const hours = Math.max(0, Number(demand.durationHours) || 0);
+    const extraHours = Math.max(0, hours - 8) * p.extraHour;
+    total = base + extra + p.driverAllowance + stops + extraHours;
+    components.push({ key: "package", paise: base * 100 }, { key: "extra_distance", paise: INR(extra) * 100 }, { key: "driver_allowance", paise: p.driverAllowance * 100 }, { key: "stops", paise: stops * 100 }, { key: "extra_hours", paise: INR(extraHours) * 100 });
+  } else if (serviceId === "event_equipment") {
+    const qty = Math.max(1, Number(demand.quantity) || 1);
+    const days = Math.max(1, Number(demand.durationDays) || 1);
+    const rate = tierRate(p.dayRateByQty, qty);
+    const setup = /setup|install/i.test(String(demand.setup || "")) ? p.setupFee : 0;
+    const pickup = /pickup|collection|strike/i.test(String(demand.setup || "")) ? p.pickupFee : 0;
+    total = rate * days + p.deliveryFee + setup + pickup;
+    components.push({ key: "rental", paise: rate * days * 100 }, { key: "delivery", paise: p.deliveryFee * 100 }, { key: "setup", paise: setup * 100 }, { key: "pickup", paise: pickup * 100 });
+  } else if (serviceId === "loading_crew") {
+    const workers = Math.max(1, Number(demand.workers) || 1);
+    const hours = Math.max(1, Number(demand.shiftHours) || p.includedHours);
+    const overtime = Math.max(0, hours - p.includedHours) * p.overtimeHour * workers;
+    const equip = /forklift|dolly|trolley|equipment|heavy/i.test(String(demand.access || "") + " " + String(demand.workScope || "")) ? p.equipmentFee : 0;
+    total = workers * p.perPersonShift + overtime + equip;
+    components.push({ key: "crew", paise: workers * p.perPersonShift * 100 }, { key: "overtime", paise: overtime * 100 }, { key: "equipment", paise: equip * 100 });
+  } else if (serviceId === "warehouse_storage") {
+    const sqft = Math.max(1, Number(demand.spaceSqFt) || 1);
+    const days = Math.max(1, Number(demand.durationDays) || 30);
+    const months = Math.max(1, Math.ceil(days / 30));
+    const storage = sqft * p.sqftMonthRate * months;
+    total = storage + p.inbound + p.outbound + p.pickupDelivery;
+    components.push({ key: "storage", paise: storage * 100 }, { key: "inbound", paise: p.inbound * 100 }, { key: "outbound", paise: p.outbound * 100 }, { key: "pickup_delivery", paise: p.pickupDelivery * 100 });
+  } else if (serviceId === "event_materials") {
+    const orderValue = Math.max(p.minimumOrder, Number(demand.orderValue ?? demand.value ?? 0));
+    const rush = /rush|urgent|same.?day|next.?day/i.test(String(demand.custom || "")) ? orderValue * p.rushSurchargePct / 100 : 0;
+    const custom = /custom|bespoke|special/i.test(String(demand.custom || "") + " " + String(demand.materials || "")) ? p.customizationFee : 0;
+    total = orderValue + p.deliveryFee + rush + custom;
+    components.push({ key: "materials", paise: INR(orderValue) * 100 }, { key: "delivery", paise: p.deliveryFee * 100 }, { key: "rush", paise: INR(rush) * 100 }, { key: "customization", paise: custom * 100 });
+  } else if (serviceId === "event_logistics") {
+    const project = Math.max(p.minimumProjectFee, Number(demand.projectValue ?? demand.value ?? 0));
+    const coordination = project * p.coordinationFeePct / 100;
+    const transport = Number(demand.shipments ?? 0) > 0 ? p.transportManagementFee : 0;
+    const survey = /survey|site|complex/i.test(String(demand.scope || "") + " " + String(demand.storage || "") + " " + String(demand.crew || "")) ? p.siteSurveyFee : 0;
+    total = project + coordination + transport + survey;
+    components.push({ key: "project", paise: INR(project) * 100 }, { key: "coordination", paise: INR(coordination) * 100 }, { key: "transport_management", paise: transport * 100 }, { key: "site_survey", paise: survey * 100 });
+  }
+  const rounded = Math.max(500, Math.round(total / 50) * 50);
+  return {
+    ok: true,
+    serviceId,
+    serviceName: p.serviceName,
+    tradeId: p.tradeId,
+    amountPaise: rounded * 100,
+    basis: { version: LOGISTICS_PRICE_BOOK_VERSION, engine: "sambramo-logistics-deterministic-v1", serviceId, input: demand, components, roundedInr: rounded }
+  };
+}
+function platformSplit(amountPaise, feeRate = 0.15) {
+  const gross = Math.max(0, Number(amountPaise) || 0);
+  const fee = Math.round(gross * Number(feeRate));
+  return { grossPaise: gross, platformFeePaise: fee, partnerPaise: gross - fee };
+}
+function logisticsServiceIds() {
+  return Object.keys(LOGISTICS_PRICING);
+}
+
+// src/lib/matchingReconciliation.js
+var MATCHING_CONTRACT_VERSION = "2026-09-29.1";
+var TRADE_BOUNDARY_BY_SERVICE = {
+  wedding_car: { code: "E12", scope: ["event_car", "chauffeur", "guest_transfer"], excludes: ["goods_movement", "group_shuttle"] },
+  mini_truck: { code: "L01", scope: ["small_goods_movement"], excludes: ["passenger_transport"] },
+  goods_move: { code: "L01", scope: ["small_goods_movement"], excludes: ["passenger_transport"] },
+  goods_vehicle: { code: "L02", scope: ["heavy_goods_movement", "bulk_event_cargo"], excludes: ["passenger_transport"] },
+  passenger_transport: { code: "L03", scope: ["bus", "tempo_traveller", "van", "group_shuttle", "multi_stop_guest_transport"], excludes: ["single_wedding_car"] },
+  event_equipment: { code: "L04", scope: ["event_equipment"], excludes: ["tent_furniture", "lighting", "sound_av", "power_cooling", "safety_facilities"] },
+  loading_crew: { code: "L05", scope: ["loading_unloading_crew"], excludes: ["vehicle_transport", "warehouse_storage"] },
+  warehouse_storage: { code: "L06", scope: ["event_storage", "consolidation"], excludes: ["vehicle_transport", "loading_crew"] },
+  event_materials: { code: "L07", scope: ["bulk_event_materials", "consumables", "raw_materials"], excludes: ["finished_gifts", "invitations", "food"] },
+  event_logistics: { code: "L08", scope: ["orchestration", "multi_vendor_logistics"], excludes: [] }
+};
+function boundaryForService(serviceId) {
+  return TRADE_BOUNDARY_BY_SERVICE[serviceId] ?? null;
+}
+var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
+function customerMatchRequirements({ serviceId, options = {}, logisticsDemand = null, guestCount = null }) {
+  const b = boundaryForService(serviceId);
+  const tags = [];
+  for (const [group, raw] of Object.entries(options ?? {})) {
+    for (const choice of arr(raw)) {
+      if (choice !== "" && choice != null) tags.push("option:" + group + ":" + choice);
+    }
+  }
+  const demand = logisticsDemand ? { ...logisticsDemand } : {};
+  if (Number(guestCount) > 0) demand.guests = Number(guestCount);
+  return {
+    contractVersion: MATCHING_CONTRACT_VERSION,
+    serviceId,
+    boundaryCode: b?.code ?? null,
+    scope: b?.scope ?? [],
+    excludes: b?.excludes ?? [],
+    requiredTags: [...new Set(tags)],
+    demand
+  };
+}
+
 // src/lib/istTime.js
 var LEAD_MS = 24 * 3600 * 1e3;
 var TRAIL_MS = 36 * 3600 * 1e3;
@@ -4857,6 +5172,8 @@ export {
   DEFAULT_RADIUS_KM,
   DISCUSS_SERVICES,
   INSTANT_RATE_MULTIPLIER,
+  LOGISTICS_PRICE_BOOK_VERSION,
+  MATCHING_CONTRACT_VERSION,
   MAX_RADIUS_KM,
   OFFER_WINDOW_SECONDS,
   PLATFORM_FEE_RATE2 as PLATFORM_FEE_RATE,
@@ -4866,15 +5183,19 @@ export {
   TRADE_FOR_SERVICE,
   WAVES,
   coverageOf,
+  customerMatchRequirements,
   defaultOptions,
   instantCancellationRung,
   lineSplit,
+  logisticsServiceIds,
   optionMultiplier,
   optionSummary,
   optionsFor,
   partnerEarnings,
+  platformSplit,
   priceBasis,
   priceLine,
+  priceLogisticsLine,
   setupSpec,
   specModeFor,
   tradeFor
