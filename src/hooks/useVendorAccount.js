@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { toDateKey } from '../config/vendor'
+import { syncPartnerPriceBook } from '../lib/sambramoPriceBookSync'
 
 /**
  * Everything the signed-in vendor owns, in one place.
@@ -206,7 +207,11 @@ export function useVendorAccount() {
       .select().single()
     if (err) throw err
     setServices(list => [...list, data])
-    return data
+    // Canonical pricing is a second write. Do not roll back a successfully
+    // saved listing if the pricing bridge is temporarily unavailable; retain
+    // the result so the partner can continue and surface the sync issue later.
+    const priceBook = await syncPartnerPriceBook(data)
+    return { ...data, priceBook }
   }, [vendor, services])
 
   const updateService = useCallback(async (id, patch) => {
@@ -214,7 +219,8 @@ export function useVendorAccount() {
       .from('vendor_services').update(patch).eq('id', id).select().single()
     if (err) throw err
     setServices(list => list.map(s => (s.id === id ? data : s)))
-    return data
+    const priceBook = await syncPartnerPriceBook(data)
+    return { ...data, priceBook }
   }, [])
 
   const removeService = useCallback(async id => {
