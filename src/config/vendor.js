@@ -68,6 +68,14 @@ export const VENDOR_CATEGORIES = [
   'Warehouse / Storage',
   'Event Materials Supplier',
   'End-to-End Event Logistics',
+  'Mini Truck / Pickup',
+  'Medium / Large Goods Vehicle',
+  'Passenger Transport',
+  'Event Equipment Rental',
+  'Loading & Unloading Crew',
+  'Warehouse / Storage',
+  'Event Materials Supplier',
+  'End-to-End Event Logistics',
   /* ── 'Other' is gone, and it was a trap ─────────────────────────────
      match_partners joins on this exact string. A partner who picked
      'Other' — which is what somebody picks when they are not sure —
@@ -76,7 +84,7 @@ export const VENDOR_CATEGORIES = [
      guaranteed to cost the partner every job, and it sat at the bottom
      of the list where an unsure person lands.
 
-     All 26 of the others are values of TRADE_FOR_SERVICE, so every
+     All current partner trades are values of TRADE_FOR_SERVICE, so every
      remaining choice is one dispatch can match. A trade genuinely
      missing from the list is a catalogue gap to fix in the catalogue,
      not a bucket to drop a real business into. */
