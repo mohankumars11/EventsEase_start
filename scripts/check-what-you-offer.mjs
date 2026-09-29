@@ -27,7 +27,7 @@ const out = (r.stdout ?? '') + (r.stderr ?? '')
 const tick = String.fromCharCode(10003)
 const lines = out.split('\n')
 
-console.log("\n  What you offer — 26 trades, multi-select\n")
+console.log("\n  What you offer — 34 trades, multi-select\n")
 
 if (r.status !== 0) {
   console.log('  x the harness did not finish\n')
@@ -51,5 +51,5 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`  ${tick} all 26 trades, each with what it covers, multi-select, honest count`)
+console.log(`  ${tick} all 34 trades, each with what it covers, multi-select, honest count`)
 console.log(`  ${tick} shots/what-you-offer.png\n`)
