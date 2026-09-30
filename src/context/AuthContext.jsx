@@ -10,6 +10,11 @@ import { isPartnerSurface } from '../config/surface'
    Supabase rather than of the onboarding form. */
 export const AuthContext = createContext(null)
 
+// Local-only walkthrough identity. Vite removes DEV branches from production builds.
+const DEV_AUTH_BYPASS = Boolean(import.meta.env.DEV)
+const DEV_PREVIEW_ID = '00000000-0000-4000-8000-000000000034'
+
+
 /**
  * Which role wins when a signup form and an existing row disagree.
  *
@@ -122,6 +127,14 @@ export function AuthProvider({ children }) {
   const completing = useRef(false)
 
   useEffect(() => {
+    if (DEV_AUTH_BYPASS) {
+      const role = isPartnerSurface() ? 'vendor' : 'customer'
+      const previewUser = { id: DEV_PREVIEW_ID, email: 'preview@sambramo.local', user_metadata: { full_name: 'Sambramo Preview' } }
+      setUser(previewUser)
+      setProfile({ id: DEV_PREVIEW_ID, email: previewUser.email, full_name: 'Sambramo Preview', role, city: 'Bengaluru' })
+      setLoading(false)
+      return () => {}
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
@@ -259,6 +272,7 @@ export function AuthProvider({ children }) {
 
   // ── Email OTP (primary auth — free, no SMS provider needed) ──
   async function sendEmailOtp(email, { shouldCreateUser = true } = {}) {
+    if (DEV_AUTH_BYPASS) throw new Error('Email sign-in is paused in local development. Use Continue in development.')
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -375,12 +389,14 @@ export function AuthProvider({ children }) {
 
   // ── Email / password (kept for admin access) ─────────
   async function signIn({ email, password }) {
+    if (DEV_AUTH_BYPASS) throw new Error('Email/password sign-in is paused in local development.')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }
 
   async function signUp({ email, password, fullName, phone, role, city }) {
+    if (DEV_AUTH_BYPASS) throw new Error('Account creation is paused in local development.')
     const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
 
@@ -416,6 +432,7 @@ export function AuthProvider({ children }) {
      WebView. See lib/googleAuth.js — that is where the reasoning lives,
      and why the button used to be hidden on native rather than broken. */
   async function signInWithGoogle() {
+    if (DEV_AUTH_BYPASS) throw new Error('Google sign-in is paused in local development.')
     await startGoogleSignIn()
   }
 
