@@ -71,9 +71,13 @@ export function cateringCapabilityFromListing(service) {
   const kitchen = KITCHEN_TYPES.some(k => k.id === specs.kitchen_type)
     ? specs.kitchen_type
     : 'pure_veg'
+  const dishIds = Array.isArray(specs.dish_ids)
+    ? specs.dish_ids.filter(id => typeof id === 'string' && id.startsWith('SBM-'))
+    : []
   return {
     cuisines,
     kitchenType: kitchen,
+    dishIds,
     diet: dietOf(kitchen),
     cuisineNames: cuisines.map(id => CUISINE_BY_ID[id]?.name).filter(Boolean),
   }
