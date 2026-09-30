@@ -48,7 +48,7 @@ export default function LoginPage() {
   /* Which of the two apps this bundle is. Stamped at build time by
      VITE_SURFACE, so it is a constant, not a guess about the URL. */
   const PARTNER = isPartnerSurface()
-  const DEV_PREVIEW = Boolean(import.meta.env.DEV)
+  const DEV_PREVIEW = Boolean(import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH_BYPASS === 'true')
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
