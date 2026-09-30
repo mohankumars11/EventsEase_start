@@ -725,7 +725,7 @@ function CustomerPreview({ draft, dishes }) {
           <div className="border-t border-ink/[0.07] pt-3">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Optional extras</p>
             <div className="mt-2 space-y-1.5">
-              {draft.addons.map(addon => <div key={addon.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-ink/[0.06]"><span className="text-[11px] font-bold text-ink">{addon.name || 'Extra service'}</span><span className="text-[10.5px] font-extrabold text-ink-soft">{addon.rate ? \`₹\${Number(addon.rate).toLocaleString('en-IN')} \${addonUnitLabel(addon.unit)}\` : 'Price configured by partner'}</span></div>)}
+              {draft.addons.map(addon => <div key={addon.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-ink/[0.06]"><span className="text-[11px] font-bold text-ink">{addon.name || 'Extra service'}</span><span className="text-[10.5px] font-extrabold text-ink-soft">Optional · {addonUnitLabel(addon.unit)}</span></div>)}
             </div>
           </div>
         )}
