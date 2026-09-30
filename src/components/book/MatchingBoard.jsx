@@ -13,6 +13,7 @@ import { IS_NATIVE_APP, APP_BUILD } from '../common/AppBadge'
 import CustomerAlerts from './CustomerAlerts'
 import CancelLine from './CancelLine'
 import MasterSticker from './MasterSticker'
+import SambramoPartnerCard from '../customer/SambramoPartnerCard'
 
 /**
  * "Three of five masters have accepted."
@@ -222,7 +223,7 @@ function LineRow({ line, offers, onCancel }) {
  * That is also the honest reason to pay promptly, which is why it is the
  * sentence rather than a nag.
  */
-function AwaitingPayment({ line, master, masterId, onPay, onCancel, paying }) {
+function AwaitingPayment({ line, master, masterId, masterVendor, onPay, onCancel, paying }) {
   return (
     <li className="border-b border-ink/[0.06] pb-3.5 last:border-0">
       <div className="rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200/70">
@@ -234,6 +235,7 @@ function AwaitingPayment({ line, master, masterId, onPay, onCancel, paying }) {
             question "who is this" actually gets asked. Renders nothing
             at all when the master has no approved work, so the button
             does not move down a blank frame. */}
+        {masterVendor && <SambramoPartnerCard vendor={masterVendor} serviceName={line.service_name} customerPrice={Math.round(line.quoted_amount_paise / 100)} />}
         <MasterWork vendorId={masterId} />
 
         <button
@@ -342,7 +344,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
         // information about a business, not about a person.
         /* The id as well as the name: the name is what the row SAYS,
            the id is what their work is fetched by. See MasterWork. */
-        .select('id, line_id, status, distance_m, vendors(id, business_name)')
+        .select('id, line_id, status, distance_m, vendors(id, business_name, avatar_url, city, area, years_experience, rating_avg, is_verified)')
         .in('line_id', ids)
       if (!dead) setOffers(o ?? [])
     }
@@ -819,6 +821,7 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
               line={l}
               master={won?.vendors?.business_name ?? null}
               masterId={won?.vendors?.id ?? null}
+              masterVendor={won?.vendors ?? null}
               paying={paying}
               onPay={() => pay([l])}
               onCancel={() => setCancelling(l)}
