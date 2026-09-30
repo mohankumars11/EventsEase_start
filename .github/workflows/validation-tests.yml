@@ -13,7 +13,7 @@ name: Field validation tests
 on:
   workflow_dispatch:
   push:
-    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929]
+    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, refactor/sambramo-customer-realtime-booking-20260929]
   pull_request:
     branches: [main]
     paths:
@@ -54,6 +54,8 @@ jobs:
         run: node scripts/check-sambramo-catalogue-v2.mjs
       - name: Sambramo 5B-5F regression + security gate
         run: node scripts/check-sambramo-5b-5f.mjs
+      - name: Customer realtime booking architecture gate
+        run: node scripts/check-customer-realtime-architecture.mjs
 
       - name: Build the partner web app (for the harness stylesheet)
         env:

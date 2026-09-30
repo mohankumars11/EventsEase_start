@@ -9,7 +9,8 @@ import { ToastProvider } from './context/ToastContext'
 import { ChatProvider } from './context/ChatContext'
 import CitySheet from './components/common/CitySheet'
 import Navbar from './components/layout/Navbar'
-import BottomNav from './components/layout/BottomNav'
+import CustomerBottomNav from './components/layout/CustomerBottomNav'
+import CustomerAppShell from './components/layout/CustomerAppShell'
 import ScrollRestoration from './components/layout/ScrollRestoration'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import JourneyTracker from './components/common/JourneyTracker'
@@ -57,6 +58,7 @@ const EventServices  = lazy(() => import('./pages/customer/EventServices'))
 const MyRequests     = lazy(() => import('./pages/customer/MyRequests'))
 const Cart           = lazy(() => import('./pages/customer/Cart'))
 const Account        = lazy(() => import('./pages/customer/Account'))
+const CustomerBookingCenter = lazy(() => import('./pages/customer/CustomerBookingCenter'))
 
 // Track — every celebration and every order, with the steps and the payments.
 const TrackHub            = lazy(() => import('./pages/track/TrackHub'))
@@ -297,7 +299,7 @@ function PageBoundary({ children }) {
  * nothing on top of that.
  */
 function ScreenShell({ children }) {
-  return <main><PageBoundary>{children}</PageBoundary></main>
+  return <CustomerAppShell><PageBoundary>{children}</PageBoundary></CustomerAppShell>
 }
 
 /**
@@ -492,7 +494,11 @@ function AppRoutes() {
           catalog that replaced it) so any bookmarked link still lands somewhere
           true rather than on the landing page's catch-all. */}
       <Route path="/dashboard/customer/browse"   element={<Navigate to="/services" replace />} />
-      <Route path="/dashboard/customer/bookings" element={<Navigate to="/dashboard/customer/events" replace />} />
+      <Route path="/dashboard/customer/bookings" element={
+        <ProtectedRoute allowedRoles={['customer']}>
+          <ScreenShell><CustomerBookingCenter /></ScreenShell>
+        </ProtectedRoute>
+      } />
       <Route path="/dashboard/customer/vendors/*" element={<Navigate to="/services" replace />} />
       {/* The catalog used to live under /dashboard/customer behind a login, so
           15 occasions, 39 services and every priced package were unreachable
@@ -761,7 +767,7 @@ export default function App() {
                   renders nothing and writes to sessionStorage only. */}
               <JourneyTracker />
               <AppRoutes />
-              <BottomNav />
+              <CustomerBottomNav />
               {/* The offer to go back to unfinished work. It shows itself only
                   on home, which is where an interrupted customer lands, and
                   only when there is genuinely something to return to. Mounted
