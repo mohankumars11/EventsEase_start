@@ -18,19 +18,32 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   const [included, setIncluded] = useState('0')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
+  const [loadError, setLoadError] = useState(null)
   const [query, setQuery] = useState('')
+  const serviceRows = Array.isArray(services) ? services : []
 
   const load = useCallback(async () => {
-    if (!vendor?.id) return
-    const { data } = await supabase
+    if (!vendor?.id) { setRows([]); return }
+    setLoadError(null)
+    const { data, error } = await supabase
       .from('sambramo_partner_price_books')
       .select('id, trade_id, offering_id, component_id, unit, rate_paise, minimum_quantity, included_quantity, status, version, updated_at')
       .eq('vendor_id', vendor.id)
       .order('updated_at', { ascending: false })
-    setRows(data ?? [])
+    if (error) throw error
+    setRows(Array.isArray(data) ? data : [])
   }, [vendor?.id])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let active = true
+    load().catch(error => {
+      if (!active) return
+      console.error('[Sambramo] Pricing Studio could not load:', error)
+      setRows([])
+      setLoadError(error?.message || 'We could not load your saved supply rates.')
+    })
+    return () => { active = false }
+  }, [load])
 
   const summaries = tradePricingSummary()
   const visible = useMemo(() => {
@@ -61,7 +74,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
 
   const readyCount = summaries.filter(p => byTrade.has(p.tradeId)).length
   const policy = pricingPolicyFor(selectedTrade)
-  const linkedService = services.find(s => {
+  const linkedService = serviceRows.find(s => {
     const category = String(s.category ?? '').trim().toLowerCase()
     return category === String(policy?.tradeName ?? '').trim().toLowerCase()
   })
@@ -144,6 +157,8 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           <Metric value="34" label="Total trades" icon={BarChart3} />
         </div>
       </section>
+
+      {loadError && <section role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-[12px] text-amber-950"><p className="font-extrabold">Saved rates could not be loaded</p><p className="mt-1 break-words">{loadError}</p><button type="button" onClick={() => load().catch(error => setLoadError(error?.message || 'Please try again.'))} className="mt-3 rounded-xl bg-white px-4 py-2 font-bold ring-1 ring-amber-200">Try loading again</button></section>}
 
       <section className="rounded-[24px] bg-white p-4 ring-1 ring-hairline/10">
         <div className="flex flex-col gap-3 sm:flex-row">
