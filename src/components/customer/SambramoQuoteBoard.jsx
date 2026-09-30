@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { BadgeCheck, Check, Clock3, Sparkles, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
 import { formatINR } from '../../utils/format'
 
 export default function SambramoQuoteBoard({ userId }) {
+  const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [busy, setBusy] = useState(null)
   const [message, setMessage] = useState(null)
@@ -47,7 +49,11 @@ export default function SambramoQuoteBoard({ userId }) {
       body: JSON.stringify({ quoteResponseId: responseId }),
     })
     setBusy(null)
-    setMessage(result.ok ? 'Quote locked. Payment stays inside Sambramo.' : result.error)
+    if (result.ok) {
+      navigate('/book/instant?request=' + encodeURIComponent(result.body?.bookingRequestId ?? ''))
+      return
+    }
+    setMessage(result.error)
   }
 
   if (!groups.length) return null
