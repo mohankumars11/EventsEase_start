@@ -684,6 +684,8 @@ export default function ServiceDetail() {
           cartPath={cartPath}
           cartCount={cartCount}
           onAdd={() => handleAdd(selection)}
+          instant={pricingState === PRICING_STATES.INSTANT_BOOK}
+          estimateNote={pricingState !== PRICING_STATES.INSTANT_BOOK}
         />
       )}
 
