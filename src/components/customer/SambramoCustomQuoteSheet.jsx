@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2, Loader2, MapPin, Sparkles, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
+import { useNavigate } from 'react-router-dom'
 import BookingSheet from './BookingSheet'
 
 export default function SambramoCustomQuoteSheet({
@@ -14,6 +15,7 @@ export default function SambramoCustomQuoteSheet({
   guestCount,
   summary = [],
 }) {
+  const navigate = useNavigate()
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(null)
   if (!open) return null
@@ -81,7 +83,7 @@ export default function SambramoCustomQuoteSheet({
             <Fact label="Partners contacted" value={String(done.partnersContacted ?? 0)} />
             <Fact label="Quote window" value="Up to 24h" />
           </div>
-          <button type="button" onClick={onClose} className="mt-4 w-full rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">Back to service</button>
+          <div className="grid grid-cols-2 gap-2 mt-4"><button type="button" onClick={onClose} className="rounded-2xl bg-surface py-3 text-[12.5px] font-extrabold text-ink-soft ring-1 ring-hairline/10">Back to service</button><button type="button" onClick={() => navigate('/dashboard/customer/requests')} className="rounded-2xl bg-saffron-400 py-3 text-[12.5px] font-extrabold text-plum-950">See my quotes</button></div>
         </section>
       </div>
     )
@@ -102,9 +104,7 @@ export default function SambramoCustomQuoteSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-[84] bg-black/55" />
-      <div className="relative z-[85]">
-        <BookingSheet
+      <BookingSheet
           title={'Make it custom · ' + serviceName}
           subtitle={tradeName + ' · Sambramo handles the quote'}
           guestCount={guestCount}
@@ -113,12 +113,7 @@ export default function SambramoCustomQuoteSheet({
           confirmLabel={sending ? 'Sending to Sambramo…' : 'Send custom request'}
           onConfirm={submit}
         />
-        {sending && (
-          <div className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-plum-950 px-4 py-2.5 text-[11px] font-extrabold text-white shadow-xl">
-            <Loader2 size={14} className="animate-spin" /> Finding eligible Sambramo partners
-          </div>
-        )}
-      </div>
+        {sending && <div className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-plum-950 px-4 py-2.5 text-[11px] font-extrabold text-white shadow-xl"><Loader2 size={14} className="animate-spin" /> Finding eligible Sambramo partners</div>}
     </>
   )
 }
