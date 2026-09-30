@@ -77,12 +77,26 @@ export function cateringCapabilityFromListing(service) {
   const dishIds = Array.isArray(specs.dish_ids)
     ? specs.dish_ids.filter(id => typeof id === 'string' && id.startsWith('SBM-'))
     : []
+  const legacyDishNames = Array.isArray(specs.dishes)
+    ? specs.dishes.filter(v => String(v ?? '').trim()).map(v => String(v).trim())
+    : []
+  const serviceStyle = CATERING_SERVICE_STYLES.some(x => x.id === specs.service_style)
+    ? specs.service_style
+    : 'buffet'
+  const sourcingMode = SOURCING_MODES.some(x => x.id === specs.sourcing_mode)
+    ? specs.sourcing_mode
+    : DEFAULT_SOURCING
+
   return {
     cuisines,
     kitchenType: kitchen,
     dishIds,
+    legacyDishNames,
+    dishCount: dishIds.length,
     diet: dietOf(kitchen),
     cuisineNames: cuisines.map(id => CUISINE_BY_ID[id]?.name).filter(Boolean),
+    serviceStyle,
+    sourcingMode,
   }
 }
 
