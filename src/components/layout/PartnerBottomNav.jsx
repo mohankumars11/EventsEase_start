@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, CalendarDays, LayoutGrid } from 'lucide-react'
+import { Bell, IndianRupee, CalendarDays, LayoutGrid, Calculator } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -51,6 +51,7 @@ import { useAuth } from '../../context/AuthContext'
  */
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
+  { id: 'pricing',      label: 'Pricing',  icon: Calculator },
   { id: 'availability', label: 'Calendar', icon: CalendarDays },
   { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
   /* Still `account` underneath. The id is in every ?tab= link, in the
