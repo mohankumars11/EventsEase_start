@@ -339,10 +339,6 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
 
 function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
-  const [dishOpen, setDishOpen] = useState(false)
-  const [dishCatalogue, setDishCatalogue] = useState([])
-  const [dishCatalogueLoading, setDishCatalogueLoading] = useState(true)
-  const [dishCatalogueError, setDishCatalogueError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
@@ -576,8 +572,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
 
       {step === 'menu' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={dishCatalogueLoading ? "Loading Sambramo's full menu library…" : `${dishes.length.toLocaleString('en-IN')} catalogued dishes are available across your selected cuisines and kitchen type.`} />
-          {dishCatalogueError && <p className="rounded-xl bg-amber-50 p-2.5 text-[10.5px] font-semibold text-amber-900 ring-1 ring-amber-100">{dishCatalogueError}</p>}
+          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={`${dishes.length.toLocaleString('en-IN')} dishes declared on this partner listing are available for this menu.`} />
 
           <div className="rounded-2xl bg-plum-50 p-3 ring-1 ring-plum-100">
             <div className="flex items-center justify-between gap-3">
