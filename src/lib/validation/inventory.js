@@ -120,6 +120,12 @@ export const FIELD_INVENTORY = [
       component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
   F({ id: 'catering_addon_maximum', screen: S.services, label: 'Catering add-on maximum quantity', rule: 'exact_quantity', kind: 'int',
       component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
+  F({ id: 'catering_package_notes', screen: S.services, label: 'Catering package notes', rule: 'description', kind: 'prose',
+      component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
+  F({ id: 'catering_choice_group', screen: S.services, label: 'Catering menu choice group', rule: 'other_choice', kind: 'short-text',
+      component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
+  F({ id: 'catering_addon_notes', screen: S.services, label: 'Catering add-on notes', rule: 'description', kind: 'prose',
+      component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
 
   /* ── 2 · Partner details ── */
   F({ id: 'business_name', screen: S.step2, step: 'details', label: 'Business name', rule: 'business_name', kind: 'name-business', required: true,
