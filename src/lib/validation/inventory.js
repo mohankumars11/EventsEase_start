@@ -304,6 +304,7 @@ export const NOT_FREE_ENTRY = {
   'src/components/vendor/VendorAvailability.jsx': 'not rendered anywhere (legacy); unreachable',
   'src/pages/partner/steps/ComplianceStep.jsx': 'choice of identity document, a fixed list',
   'src/components/vendor/SambramoPricingStudio.jsx': 'pricing studio fields are validated by the server write path; search/filter controls are local-only',
+  'src/components/vendor/CateringPricingStudio.jsx': 'dish search and controlled selectors are local controls; persisted menu, pricing and add-on fields are inventoried above and validated by the client schema plus the save RPC',
   'src/components/vendor/CustomQuoteInbox.jsx': 'custom-quote fields are validated by the authenticated submit-custom-quote server endpoint; the countdown and text areas are request data, not a second pricing source',
 }
 
