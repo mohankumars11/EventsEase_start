@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const eventDate = cleanText(body.eventDate, 20)
   const location = body.location && typeof body.location === 'object' ? body.location : {}
   const lat = Number(location.lat ?? location.latitude)
-  const lng = Number(location.lng ?? location.longitude)
+  const lng = Number(location.lng ?? location.longitude ?? location.lon)
   const guestCount = Math.max(1, Math.round(Number(body.guestCount) || 1))
   if (!tradeId || !serviceName || !eventDate || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ error: 'Trade, service, date and a resolved location are required.' })
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
     return res.status(422).json({ error: booking?.detail || 'That location could not be matched.' })
   }
 
-  const pointWkt = 'POINT(' + lng + ' ' + lat + ')'
+  const pointWkt = 'SRID=4326;POINT(' + lng + ' ' + lat + ')'
   const { data: matches, error: matchError } = await db.rpc('match_partners', {
     p_trade: tradeName,
     p_point: pointWkt,
