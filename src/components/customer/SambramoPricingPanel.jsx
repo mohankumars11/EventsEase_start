@@ -93,9 +93,9 @@ export default function SambramoPricingPanel({
           </button>
         )}
 
-        {customAction && state !== PRICING_STATES.VENDOR_QUOTE && (
+        {customAction && (
           <button type="button" onClick={customAction} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-plum-50 py-2.5 text-[12px] font-extrabold text-plum-700 ring-1 ring-plum-200">
-            <Sparkles size={14} /> Make it custom — Sambramo handles the quote
+            <Sparkles size={14} /> {state === PRICING_STATES.VENDOR_QUOTE ? 'Send requirement to Sambramo' : 'Make it custom — Sambramo handles the quote'}
           </button>
         )}
 
