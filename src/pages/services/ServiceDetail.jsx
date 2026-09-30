@@ -24,6 +24,11 @@ import GoesWithRail from '../../components/service/GoesWithRail'
 import BookBar from '../../components/service/BookBar'
 import EventDateSheet from '../../components/plan/EventDateSheet'
 import LogisticsDemandPanel, { logisticsDemandIsComplete, logisticsDemandSummary } from '../../components/service/LogisticsDemandPanel'
+import { priceLogisticsLine } from '../../data/logisticsPricing'
+import { SAMBRAMO_PRICING_POLICY, PRICING_STATES } from '../../data/sambramoPricingPolicy'
+import SambramoPricingPanel from '../../components/customer/SambramoPricingPanel'
+import SambramoCustomQuoteSheet from '../../components/customer/SambramoCustomQuoteSheet'
+import { tradeFor } from '../../config/vendor'
 
 /**
  * One service, bought end to end.
@@ -77,6 +82,7 @@ export default function ServiceDetail() {
   const [dateSheetOpen, setDateSheetOpen] = useState(false)
   // The add that is waiting on a date. See handleAdd.
   const [pendingAdd, setPendingAdd] = useState(null)
+  const [customQuoteOpen, setCustomQuoteOpen] = useState(false)
 
   // Arriving at a different service must not inherit the last one's choices —
   // a balloon arch selected on the previous page has no meaning on this one.
@@ -155,9 +161,9 @@ export default function ServiceDetail() {
       return {
         optionId: 'request-' + encodeURIComponent(signature).slice(0, 120),
         optionName: resolved.service.name,
-        price: null,
+        price: (() => { const priced = priceLogisticsLine({ serviceId: resolved.service.id, demand: logisticsDemand }); return priced?.ok ? Math.round(priced.amountPaise / 100) : null })(),
         label: resolved.service.name,
-        detail: 'Structured quote after requirements review',
+        detail: priceLogisticsLine({ serviceId: resolved.service.id, demand: logisticsDemand })?.ok ? 'Machine-calculated from your structured logistics inputs' : 'Custom Sambramo quote after requirements review',
         summary: logisticsDemandSummary(resolved.service.id, logisticsDemand),
         logisticsDemand,
       }
@@ -285,6 +291,15 @@ export default function ServiceDetail() {
   }
 
   const { service, kind } = resolved
+  const tradeProfile = useMemo(() => {
+    const category = tradeFor(service.id) ?? service.category
+    return Object.values(SAMBRAMO_PRICING_POLICY).find(p => p.tradeName === category) ?? null
+  }, [service.id, service.category])
+  const pricingState = kind === 'enquiry'
+    ? PRICING_STATES.VENDOR_QUOTE
+    : tradeProfile?.customFirst && !selection?.price
+      ? PRICING_STATES.VENDOR_QUOTE
+      : selection?.price != null ? PRICING_STATES.INSTANT_BOOK : PRICING_STATES.PROVISIONAL_QUOTE
 
   /* ── The décor grid, filtered ──────────────────────────────────── */
   const themes = kind === 'decor'
@@ -371,7 +386,7 @@ export default function ServiceDetail() {
                   />
                 )}
                 <Stat icon={ShieldCheck} label="No advance to enquire" />
-                <Stat icon={Clock} label="Coordinator replies same day" />
+                <Stat icon={Clock} label="Sambramo handles matching & booking" />
               </div>
 
               {resolved.unitHint && (
@@ -556,20 +571,13 @@ export default function ServiceDetail() {
         {kind === 'enquiry' && (
           <section className="px-4">
             <div className="home-card p-5">
-              <h2 className="text-[15px] font-extrabold text-gray-900">
-                This one is still quoted by hand
-              </h2>
+              <h2 className="text-[15px] font-extrabold text-gray-900">Built for custom work</h2>
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-gray-600">
-                We have not published fixed packages for {service.name.toLowerCase()} yet.
-                Tell us what you need and a coordinator comes back with real prices the
-                same day — no obligation, nothing charged.
+                Send the requirement once. Sambramo routes it to eligible partners, collects structured quotes and brings the final options back here.
               </p>
-              <Link
-                to={`/plan/custom?services=${encodeURIComponent(service.name)}`}
-                className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950"
-              >
-                Ask for a price <ArrowRight size={14} />
-              </Link>
+              <button type="button" onClick={() => setCustomQuoteOpen(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 px-4 py-3 text-[13px] font-extrabold text-plum-950">
+                Build my custom request <ArrowRight size={14} />
+              </button>
             </div>
           </section>
         )}
@@ -623,9 +631,9 @@ export default function ServiceDetail() {
             </h2>
             <ol className="mt-2 space-y-2">
               {[
-                ['1', 'You send it', 'Your choices, your date and your venue reach a coordinator — nothing is charged.'],
-                ['2', 'We confirm', 'They check availability for your date, price it against your venue, and come back the same day.'],
-                ['3', 'You approve', 'Only then is anything booked. Change or cancel before that at no cost.'],
+                ['1', 'You configure it', 'Your selections, date and location stay together as one Sambramo requirement.'],
+                ['2', 'Sambramo resolves it', 'Standard work is priced automatically; genuinely custom work is sent only to eligible partners.'],
+                ['3', 'You decide here', 'Quotes and scope return to Sambramo. Accept the option you want and pay here.'],
               ].map(([n, title, body]) => (
                 <li key={n} className="flex gap-2.5">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-400 text-[10px] font-extrabold text-plum-950">
@@ -666,7 +674,7 @@ export default function ServiceDetail() {
       )}
 
       {/* ── The sticky decision ────────────────────────────────────── */}
-      {selection && !openTheme && (
+      {selection && !openTheme && pricingState !== PRICING_STATES.VENDOR_QUOTE && (
         <BookBar
           total={selection.price}
           totalLabel={selection.price == null ? 'Quote' : null}
@@ -682,6 +690,17 @@ export default function ServiceDetail() {
       {/* The same calendar the home screen and the plan hub open, writing to
           the same shared store — so a date picked anywhere in the app is known
           everywhere in it, and this page never asks for one twice. */}
+      <SambramoCustomQuoteSheet
+        open={customQuoteOpen}
+        onClose={() => setCustomQuoteOpen(false)}
+        tradeId={tradeProfile?.tradeId}
+        tradeName={tradeProfile?.tradeName ?? service.category}
+        serviceName={service.name}
+        guestCount={guestCount}
+        summary={selection?.summary ?? (kind === 'logistics' ? logisticsDemandSummary(service.id, logisticsDemand) : [])}
+        onSubmitted={() => {}}
+      />
+
       <EventDateSheet
         open={dateSheetOpen}
         onClose={() => { setDateSheetOpen(false); setPendingAdd(null) }}
