@@ -608,6 +608,34 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
               className="w-full rounded-2xl bg-surface py-3 pl-10 pr-10 text-[12.5px] font-semibold outline-none ring-1 ring-ink/[0.07]" />
             {dishSearch && <button type="button" onClick={() => setDishSearch('')} className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink-mute ring-1 ring-ink/[0.07]"><X size={12} /></button>}
           </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+            <FilterChip label="All cuisines" active={dishCuisineFilter === 'all'} onClick={() => setDishCuisineFilter('all')} />
+            {capability.cuisines.map((id, index) => (
+              <FilterChip
+                key={id}
+                label={capability.cuisineNames[index] ?? id}
+                active={dishCuisineFilter === id}
+                onClick={() => setDishCuisineFilter(id)}
+              />
+            ))}
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+            <FilterChip label="All courses" active={dishCourseFilter === 'all'} onClick={() => setDishCourseFilter('all')} />
+            {[...new Set(dishes.map(d => d.courseId))].map(id => (
+              <FilterChip
+                key={id}
+                label={sectionLabel(sectionForCourse(id))}
+                active={dishCourseFilter === id}
+                onClick={() => setDishCourseFilter(id)}
+              />
+            ))}
+          </div>
+          {capability.kitchenType !== 'pure_veg' && (
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              <FilterChip label="Veg" active={dishDietFilter === 'veg'} onClick={() => setDishDietFilter(dishDietFilter === 'veg' ? 'all' : 'veg')} />
+              <FilterChip label="Non-veg" active={dishDietFilter === 'nonveg'} onClick={() => setDishDietFilter(dishDietFilter === 'nonveg' ? 'all' : 'nonveg')} />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             {visibleDishes.map(dish => {
@@ -836,6 +864,17 @@ function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
         )}
       </div>
     </div>
+  )
+}
+
+function FilterChip({ label, active, onClick }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={active
+        ? 'shrink-0 rounded-full bg-plum-700 px-3 py-1.5 text-[10.5px] font-extrabold text-white'
+        : 'shrink-0 rounded-full bg-surface px-3 py-1.5 text-[10.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.07]'}>
+      {label}
+    </button>
   )
 }
 
