@@ -1,5 +1,6 @@
 import { CUISINES, COURSES, dishesFor, CUISINE_BY_ID } from './cuisineMenus'
 import { KITCHEN_TYPES, dietOf } from './cateringFunnel'
+import { SOURCING_MODES, DEFAULT_SOURCING } from './cateringModel'
 
 export const CATERING_PRICING_UNIT = Object.freeze({
   id: 'per_guest',
@@ -63,6 +64,8 @@ export const CATERING_DIET_LABELS = Object.freeze({
   both: 'Vegetarian + non-vegetarian',
 })
 
+const normDish = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+
 export function cateringCapabilityFromListing(service) {
   const specs = service?.specs ?? {}
   const cuisines = Array.isArray(specs.cuisines)
@@ -83,10 +86,11 @@ export function cateringCapabilityFromListing(service) {
   }
 }
 
-export function cateringDishCatalogue(cuisineIds = [], kitchenType = 'pure_veg') {
+export function cateringDishCatalogue(cuisineIds = [], kitchenType = 'pure_veg', allowedDishIds = null) {
   const ids = cuisineIds.length ? cuisineIds : CUISINES.map(c => c.id)
   const diet = dietOf(kitchenType)
   const byId = new Map()
+  const allowed = Array.isArray(allowedDishIds) && allowedDishIds.length ? new Set(allowedDishIds) : null
 
   for (const cuisineId of ids) {
     const cuisine = CUISINE_BY_ID[cuisineId]
@@ -94,6 +98,7 @@ export function cateringDishCatalogue(cuisineIds = [], kitchenType = 'pure_veg')
     for (const course of COURSES) {
       for (const dish of dishesFor(cuisine, course.id, { vegOnly: false })) {
         if (!dish.sbmId) continue
+        if (allowed && !allowed.has(dish.sbmId)) continue
         if (diet === 'veg' && dish.veg === false) continue
         if (diet === 'nonveg' && dish.veg !== false) continue
         const prior = byId.get(dish.sbmId)
@@ -138,6 +143,7 @@ export function validateCateringPackage({ draft, requireActive = false } = {}) {
   if (!Array.isArray(draft?.cuisines) || draft.cuisines.length === 0) errors.cuisines = 'Select at least one cuisine.'
   if (!['pure_veg','pure_nonveg','both'].includes(draft?.kitchenType)) errors.kitchenType = 'Select the kitchen type.'
   if (!CATERING_SERVICE_STYLES.some(x => x.id === draft?.serviceStyle)) errors.serviceStyle = 'Select the service style.'
+  if (!SOURCING_MODES.some(x => x.id === draft?.sourcingMode)) errors.sourcingMode = 'Select how the food is sourced.'
   if (!Number.isFinite(min) || min < 1 || !Number.isInteger(min)) errors.minGuests = 'Minimum guests must be a whole number of at least 1.'
   if (max !== null && (!Number.isFinite(max) || !Number.isInteger(max) || max < min)) errors.maxGuests = 'Maximum guests must be a whole number at least as large as the minimum.'
   if (!Number.isFinite(hours) || hours <= 0 || hours > 24) errors.serviceHours = 'Service duration must be between 0 and 24 hours.'
@@ -156,6 +162,8 @@ export function validateCateringPackage({ draft, requireActive = false } = {}) {
     if (item?.id) duplicate.add(item.id)
     if (!CATERING_MENU_SECTIONS.some(x => x.id === item.section)) errors.items = 'One menu item has an unsupported section.'
     if (!['included','optional','replacement'].includes(item.selectionType)) errors.items = 'One menu item has an unsupported selection type.'
+    if (item.selectionType === 'replacement' && !String(item.choiceGroup ?? '').trim()) errors.items = 'Replacement dishes need a replacement group.'
+    if (Array.isArray(draft?.capabilityDishIds) && draft.capabilityDishIds.length && !draft.capabilityDishIds.includes(item.id)) errors.items = 'A menu can only include dishes you declared on this catering listing.'
   }
 
   for (const addon of draft?.addons ?? []) {
@@ -179,7 +187,9 @@ export function emptyCateringPackage(capability) {
     name: '',
     cuisines: capability?.cuisines?.length ? [...capability.cuisines] : [],
     kitchenType: capability?.kitchenType ?? 'pure_veg',
-    serviceStyle: 'buffet',
+    serviceStyle: capability?.serviceStyle ?? 'buffet',
+    sourcingMode: capability?.sourcingMode ?? DEFAULT_SOURCING,
+    capabilityDishIds: capability?.dishIds ?? [],
     minGuests: 100,
     maxGuests: 1000,
     serviceHours: 3,
