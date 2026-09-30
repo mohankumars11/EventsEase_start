@@ -113,7 +113,7 @@ export function validateCateringRateBands({ bands = [], minGuests = 1, maxGuests
       errors.push('Only the final pricing band can have no maximum.')
       break
     }
-    if (!Number.isFinite(bandRate) || bandRate <= 0) {
+    if (requireActive && (!Number.isFinite(bandRate) || bandRate <= 0)) {
       errors.push('Every active pricing band needs a supply rate greater than zero.')
       break
     }
