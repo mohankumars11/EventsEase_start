@@ -1,0 +1,24 @@
+# ══════════════════════════════════════════════════════════════════════
+# Line endings
+# ══════════════════════════════════════════════════════════════════════
+#
+# This repo is worked on from Windows and built on Ubuntu runners, and
+# that combination has already produced two real bugs:
+#
+#   · the api bundle hash differed between machines until it normalised
+#     CRLF before hashing
+#   · the invariant checker's comment stripper matched nothing on CRLF,
+#     so it reported a leak that was its own comment
+#
+# `gradlew` is the one where it would be fatal rather than confusing: a
+# shell script with CRLF fails on Linux with "bad interpreter", and the
+# error names a carriage return nobody can see.
+* text=auto
+
+*.sh        text eol=lf
+gradlew     text eol=lf
+*.gradle    text eol=lf
+*.jks       binary
+*.keystore  binary
+*.apk       binary
+*.aab       binary

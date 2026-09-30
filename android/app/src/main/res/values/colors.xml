@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      The colours the WINDOW is painted, as opposed to the ones the web app
+      paints for itself.
+
+      This file did not exist. AppTheme in styles.xml has referenced
+      @color/colorPrimary, @color/colorPrimaryDark and @color/colorAccent
+      since the project was generated, and they resolved only because
+      AppCompat ships colours by those names. Naming them here makes the
+      app's own chrome the app's own decision.
+    -->
+    <color name="colorPrimary">#2A085C</color>
+    <color name="colorPrimaryDark">#1B0340</color>
+    <color name="colorAccent">#B79AE8</color>
+
+    <!--
+      The launch ground: #25034B, and deliberately NOT the #2A085C the brand
+      nominally is.
+
+      This value exists for one job, making the handoff invisible, and what
+      it hands over to is the launch artwork, whose own ground is a vertical
+      gradient running #25034B at the top to #110033 at the bottom.
+      scripts/render-splash-art.mjs samples those corners on every run and
+      prints them. The native splash is one flat colour and the artwork is a
+      gradient, so they cannot agree everywhere; they are matched at the TOP,
+      where the status bar sits and a shift is most visible.
+
+      It has to stay in step with four other places or a cold start shows a
+      seam somewhere along the chain:
+
+        this file                      the Android 12+ splash window, and
+                                       the window behind the WebView
+        scripts/capacitor-config.mjs   the WebView's own background
+        SplashScreen.jsx               the gradient behind the artwork
+        brand/splash-source.png        the artwork itself, which is what
+                                       every other value is matching
+
+      Four copies is three more than anyone wants, and there is no mechanism
+      that would give us one: one is read by Gradle, one by a Node script,
+      one by a browser, and the last is a PNG. Nothing spans that set. So
+      they are listed, here, and they change together.
+
+      Both flavours are this colour, so it lives in main with no override.
+      The separate ic_launcher_background.xml files stay #2A085C: the icon
+      is a tile in a launcher, not part of this handoff.
+    -->
+    <color name="splash_background">#25034B</color>
+
+    <!--
+      The glyph on the launch ground. White on both flavours, which is the
+      other reason the animated icon needs no flavour override.
+    -->
+    <color name="splash_icon">#FFFFFF</color>
+</resources>

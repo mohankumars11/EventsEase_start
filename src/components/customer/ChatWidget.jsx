@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { X, Sparkles, Send } from 'lucide-react'
 import { BRAND, EVENT_TYPES } from '../../config/sambramo'
-import { SHOP_CATEGORIES } from '../../config/shop'
 import { FESTIVALS } from '../../data/festivals'
 import { useChat } from '../../context/ChatContext'
 import { isFocusedRoute } from '../../config/chrome'
@@ -20,29 +19,9 @@ const GREETING = "Hi! How can I help you today? 👋 Type what you need, or tap 
  * intents (a single product word like "cake") are listed before broad
  * ones ("shop") that would otherwise swallow them.
  */
-const SHOP_LINKS = SHOP_CATEGORIES.map(c => ({ label: c.label, emoji: c.emoji, path: `/shop/${encodeURIComponent(c.id)}` }))
 const FESTIVAL_LINKS = FESTIVALS.map(f => ({ label: f.name, emoji: f.emoji, path: `/festivals/${f.id}` }))
 
-const SHOP_CATEGORY_KEYWORDS = {
-  'Cakes':              ['cake', 'cakes'],
-  // Hamper words resolve to Gifts: the two categories are one shelf now
-  // (migration 031), so 'hamper' must not lead to a page that no longer exists.
-  'Gifts':               ['gift', 'gifts', 'present', 'hamper', 'hampers', 'basket'],
-  'Flowers':              ['flower', 'flowers', 'bouquet', 'rose', 'roses'],
-  'Party Essentials':      ['balloon', 'balloons', 'decoration', 'decorations', 'party essentials', 'banner'],
-  'Pooja & Essentials':     ['pooja', 'puja', 'diya', 'diyas', 'samagri', 'ritual'],
-}
-
 const RULES = [
-  // ── Specific shop categories — checked first so "cake" resolves to the
-  //    Cakes page directly instead of the generic 6-category shop menu.
-  ...SHOP_CATEGORIES.map(cat => ({
-    id: `shop-${cat.id}`,
-    keywords: SHOP_CATEGORY_KEYWORDS[cat.id] ?? [cat.label.toLowerCase()],
-    reply: `Here's ${cat.label} — real photos, ready to order:`,
-    links: [{ label: cat.label, emoji: cat.emoji, path: `/shop/${encodeURIComponent(cat.id)}` }],
-  })),
-
   // ── Specific occasions — route straight into the planning hub pre-filled.
   ...EVENT_TYPES.map(et => ({
     id: `event-${et.id}`,
@@ -54,8 +33,8 @@ const RULES = [
   {
     id: 'cart',
     keywords: ['cart', 'checkout', 'basket'],
-    reply: "Here's your cart:",
-    links: [{ label: 'View Cart', emoji: '🛒', path: '/shop/cart' }],
+    reply: "Here's what you've put together so far:",
+    links: [{ label: 'View my celebration', emoji: '🎉', path: '/dashboard/customer/cart' }],
   },
   {
     id: 'orders',
@@ -75,16 +54,16 @@ const RULES = [
   {
     id: 'payment',
     keywords: ['payment', 'upi', 'pay', 'google pay', 'phonepe', 'paytm', 'refund'],
-    reply: "Shop checkout accepts direct UPI — Google Pay, PhonePe, Paytm or any UPI app, plus a QR code. Full-celebration proposals are settled by UPI or bank transfer once you approve.",
-    links: [{ label: 'Go to Cart', emoji: '🛒', path: '/shop/cart' }],
+    reply: "Celebrations are settled by UPI or bank transfer once you approve the quote — Google Pay, PhonePe, Paytm or any UPI app, plus a QR code. Nothing is charged to enquire.",
+    links: [{ label: 'Plan a celebration', emoji: '🎉', path: '/plan' }],
   },
   {
     id: 'price',
     keywords: ['price', 'cost', 'how much', 'charges', 'pricing'],
-    reply: 'Shop items show a fixed price upfront. A full celebration is quoted after we know your date, guest count and budget — free to ask, no obligation.',
+    reply: 'Every service shows what it costs before you commit. A full celebration is quoted once we know your date, guest count and budget — free to ask, no obligation.',
     links: [
-      { label: 'Shop (fixed prices)',  emoji: '🛍️', path: '/shop' },
-      { label: 'Get a free quote',      emoji: '🎉', path: '/plan' },
+      { label: 'See service prices', emoji: '🔍', path: '/services' },
+      { label: 'Get a free quote',   emoji: '🎉', path: '/plan' },
     ],
   },
   {
@@ -98,12 +77,6 @@ const RULES = [
     keywords: ['service', 'services', 'package', 'packages', 'browse', 'individual', 'cook', 'cooks', 'decorator', 'photographer', 'caterer', 'catering', 'dj', 'makeup', 'mehendi', 'priest'],
     reply: 'Browse every service and ready-made package by occasion — pick only what you need:',
     links: [{ label: 'Browse Services & Packages', emoji: '🔍', path: '/services' }],
-  },
-  {
-    id: 'shop',
-    keywords: ['shop', 'buy', 'purchase', 'deliver', 'delivery'],
-    reply: "Here's everything in the Shop:",
-    links: SHOP_LINKS,
   },
   {
     id: 'plan',

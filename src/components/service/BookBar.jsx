@@ -41,8 +41,8 @@ import { formatINR } from '../../utils/format'
  * of this bar's own CTA.
  */
 export default function BookBar({
-  total, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
-  estimateNote = true,
+  total, totalLabel = null, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
+  estimateNote = true, instant = false,
 }) {
   return (
     <div className="animate-pop-in above-bottom-nav pr-chat-dock fixed inset-x-0 z-30 px-3 pb-2 md:pb-3">
@@ -63,8 +63,8 @@ export default function BookBar({
               <>
                 <p className="truncate text-[11px] font-bold text-ink-mute">{lineLabel}</p>
                 <p className="text-[20px] font-extrabold leading-tight text-ink">
-                  {formatINR(total)}
-                  {estimateNote && (
+                  {totalLabel ?? formatINR(total)}
+                  {totalLabel ? null : estimateNote && (
                     <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-saffron-700">
                       estimate
                     </span>
@@ -95,8 +95,9 @@ export default function BookBar({
         </div>
 
         <p className="mt-1.5 px-1 text-[9.5px] leading-snug text-ink-mute">
-          Nothing is charged now. A coordinator confirms availability and the final
-          figure before anything is booked.
+          {instant
+            ? 'Sambramo calculated this price from your structured requirement. Nothing is charged until you continue to checkout.'
+            : 'Nothing is charged now. Sambramo keeps the custom quote, scope and final decision inside the app.'}
         </p>
       </div>
     </div>

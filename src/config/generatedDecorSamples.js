@@ -10,9 +10,57 @@
 //   node scripts/resolve-decor-samples.mjs --dry-run
 //   node scripts/resolve-decor-samples.mjs
 //
-// Resolved 2026-08-10 from pexels. 60 setups.
+// Resolved 2026-08-26 from pexels. 100 setups.
 
 export const GENERATED_DECOR_PHOTOS = {
+  "aksharabhyasa/coverage": {
+    url:    "https://images.pexels.com/photos/7605894/pexels-photo-7605894.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Child writing on a small chalkboard, exploring creativity and education indoors.",
+    credit: "Photo by RDNE Stock project on Pexels",
+    source: "stock",
+  },
+  "aksharabhyasa/floral-corner": {
+    url:    "https://images.pexels.com/photos/34056635/pexels-photo-34056635.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Ornate oil lamp with vibrant flowers, capturing festive spirit and cultural essence.",
+    credit: "Photo by ViAn Photography on Pexels",
+    source: "stock",
+  },
+  "aksharabhyasa/lamp-slate": {
+    url:    "https://images.pexels.com/photos/36595224/pexels-photo-36595224.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Metal plate with marigold petals, rice grains, and grass used in traditional Indian rituals.",
+    credit: "Photo by ornob Sadi on Pexels",
+    source: "stock",
+  },
+  "aksharabhyasa/temple-morning": {
+    url:    "https://images.pexels.com/photos/18215013/pexels-photo-18215013.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A colorful Hindu ceremony with priests performing rituals amidst a large crowd during a vibrant evening festival.",
+    credit: "Photo by Yogendra  Singh on Pexels",
+    source: "stock",
+  },
+  "annaprashana/coverage": {
+    url:    "https://images.pexels.com/photos/7089820/pexels-photo-7089820.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A cultural baby blessing ceremony with family, showcasing rich traditions and rituals.",
+    credit: "Photo by Lensmagicians on Pexels",
+    source: "stock",
+  },
+  "annaprashana/floral-backdrop": {
+    url:    "https://images.pexels.com/photos/32138734/pexels-photo-32138734.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Adorable baby in white outfit sits in a cozy indoor setting with floral decor and a playful rainbow backdrop.",
+    credit: "Photo by Krishna Kids  Photography on Pexels",
+    source: "stock",
+  },
+  "annaprashana/leaf-lunch": {
+    url:    "https://images.pexels.com/photos/38816975/pexels-photo-38816975.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A vibrant spread of traditional Bengali dishes served on a banana leaf with rice and assorted curries.",
+    credit: "Photo by Jabir Ms on Pexels",
+    source: "stock",
+  },
+  "annaprashana/rice-setup": {
+    url:    "https://images.pexels.com/photos/31974555/pexels-photo-31974555.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Colorful ritual arrangement featuring rice and painted pot on a silver plate.",
+    credit: "Photo by SAMPARK FILMS SAMPARKFILMS.COM on Pexels",
+    source: "stock",
+  },
   "anniversary/candle-dinner": {
     url:    "https://images.pexels.com/photos/29616297/pexels-photo-29616297.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Couple enjoying a romantic dinner with rose petals and candlelight, creating a perfect evening setting.",
@@ -59,6 +107,30 @@ export const GENERATED_DECOR_PHOTOS = {
     url:    "https://images.pexels.com/photos/6463611/pexels-photo-6463611.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Excited friends celebrate a gender reveal with balloons and confetti indoors.",
     credit: "Photo by Tima Miroshnichenko on Pexels",
+    source: "stock",
+  },
+  "bhoomi_pooja/aerial": {
+    url:    "https://images.pexels.com/photos/25461690/pexels-photo-25461690.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Drone shot capturing aerial view of a large construction site with unfinished buildings.",
+    credit: "Photo by Greece-China  News on Pexels",
+    source: "stock",
+  },
+  "bhoomi_pooja/first-dig": {
+    url:    "https://images.pexels.com/photos/9148611/pexels-photo-9148611.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Black and white image capturing construction workers at a building site in Rasulpur, India.",
+    credit: "Photo by Nishant Aneja on Pexels",
+    source: "stock",
+  },
+  "bhoomi_pooja/homa-ground": {
+    url:    "https://images.pexels.com/photos/38670575/pexels-photo-38670575.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Brightly colored traditional Indian pooja setup with decorative pots and natural elements outdoors.",
+    credit: "Photo by Sharath G. on Pexels",
+    source: "stock",
+  },
+  "bhoomi_pooja/pandal": {
+    url:    "https://images.pexels.com/photos/28886690/pexels-photo-28886690.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Bird's-eye view of a lively outdoor event with multiple white tents and people.",
+    credit: "Photo by SINAL Multimédia on Pexels",
     source: "stock",
   },
   "birthday/balloon-arch": {
@@ -133,6 +205,30 @@ export const GENERATED_DECOR_PHOTOS = {
     credit: "Photo by Fotographiya Wedding Photography on Pexels",
     source: "stock",
   },
+  "farewell/coverage": {
+    url:    "https://images.pexels.com/photos/15551976/pexels-photo-15551976.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Group of women in elegant dresses posing happily indoors, showcasing joy and friendship.",
+    credit: "Photo by Luis Becerra  Fotógrafo on Pexels",
+    source: "stock",
+  },
+  "farewell/dinner-setting": {
+    url:    "https://images.pexels.com/photos/17527769/pexels-photo-17527769.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A dimly lit dinner table with a glass of juice and table setting, creating a warm atmosphere.",
+    credit: "Photo by Kha Ruxury on Pexels",
+    source: "stock",
+  },
+  "farewell/memory-wall": {
+    url:    "https://images.pexels.com/photos/11602715/pexels-photo-11602715.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Aesthetic display of photos and dried flowers hanging on a white wall.",
+    credit: "Photo by Feyza  Tuğba on Pexels",
+    source: "stock",
+  },
+  "farewell/speeches": {
+    url:    "https://images.pexels.com/photos/12613957/pexels-photo-12613957.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Woman speaking into microphone at indoor gathering in black and white image.",
+    credit: "Photo by Rene Terp on Pexels",
+    source: "stock",
+  },
   "first_birthday/floral-soft": {
     url:    "https://images.pexels.com/photos/34292277/pexels-photo-34292277.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Adorable baby boy celebrating first birthday with floral decorations indoors.",
@@ -205,6 +301,54 @@ export const GENERATED_DECOR_PHOTOS = {
     credit: "Photo by VIOLA STUDIO PHOTO on Pexels",
     source: "stock",
   },
+  "haldi/coverage": {
+    url:    "https://images.pexels.com/photos/33078527/pexels-photo-33078527.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Bride applying turmeric paste on groom during lively Haldi ceremony. Joyful cultural celebration.",
+    credit: "Photo by Amodita's Frame on Pexels",
+    source: "stock",
+  },
+  "haldi/marigold-matka": {
+    url:    "https://images.pexels.com/photos/35457633/pexels-photo-35457633.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Joyful moments from a traditional Indian Haldi ceremony with vibrant yellow decor and festivities.",
+    credit: "Photo by Aalap Creation on Pexels",
+    source: "stock",
+  },
+  "haldi/mehendi-seating": {
+    url:    "https://images.pexels.com/photos/14694819/pexels-photo-14694819.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of hands adorned with mehendi during an Indian wedding ceremony, highlighting cultural traditions.",
+    credit: "Photo by Mushtaq Hussain on Pexels",
+    source: "stock",
+  },
+  "haldi/photo-wall": {
+    url:    "https://images.pexels.com/photos/32009275/pexels-photo-32009275.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Joyful Indian wedding gathering with friends, vibrant decor, and traditional attire.",
+    credit: "Photo by Rina Islam on Pexels",
+    source: "stock",
+  },
+  "half_saree/floral-stage": {
+    url:    "https://images.pexels.com/photos/18156765/pexels-photo-18156765.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A joyful Indian bride in traditional attire enjoys a vibrant wedding ceremony in Hyderabad, India.",
+    credit: "Photo by Ravi Digital Studios AK PHOTOGRAPHY on Pexels",
+    source: "stock",
+  },
+  "half_saree/mehendi-corner": {
+    url:    "https://images.pexels.com/photos/17343891/pexels-photo-17343891.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A woman applying intricate henna design on another's arm, showcasing traditional artistry.",
+    credit: "Photo by Syed Qaarif Andrabi on Pexels",
+    source: "stock",
+  },
+  "half_saree/photo-coverage": {
+    url:    "https://images.pexels.com/photos/5856079/pexels-photo-5856079.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Portrait of a beautiful Indian woman in traditional saree, showcasing cultural jewelry and elegance.",
+    credit: "Photo by Sandeep Singh on Pexels",
+    source: "stock",
+  },
+  "half_saree/ritual-space": {
+    url:    "https://images.pexels.com/photos/29226142/pexels-photo-29226142.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Indian ritual setup with traditional offerings and decorations for a cultural ceremony.",
+    credit: "Photo by @Ali Photographer@ on Pexels",
+    source: "stock",
+  },
   "housewarming/entrance": {
     url:    "https://images.pexels.com/photos/8887264/pexels-photo-8887264.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Colorful floral garlands being arranged for a festive ceremony at a wooden doorway.",
@@ -229,6 +373,30 @@ export const GENERATED_DECOR_PHOTOS = {
     credit: "Photo by RDNE Stock project on Pexels",
     source: "stock",
   },
+  "mundan/coverage": {
+    url:    "https://images.pexels.com/photos/36874233/pexels-photo-36874233.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Man receiving a traditional shave and head massage at a barber shop in Varanasi, India.",
+    credit: "Photo by Mahmut Yılmaz on Pexels",
+    source: "stock",
+  },
+  "mundan/floral-entrance": {
+    url:    "https://images.pexels.com/photos/12191062/pexels-photo-12191062.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of a traditional Indian wedding ritual with banana leaf and floral garland in Kolkata, India.",
+    credit: "Photo by Ranadipta Sadhukhan on Pexels",
+    source: "stock",
+  },
+  "mundan/homa-setup": {
+    url:    "https://images.pexels.com/photos/19500263/pexels-photo-19500263.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Group of Indian people performing a traditional Hindu ritual around a sacred fire.",
+    credit: "Photo by Devansh Bose on Pexels",
+    source: "stock",
+  },
+  "mundan/kids-corner": {
+    url:    "https://images.pexels.com/photos/10577008/pexels-photo-10577008.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A playful teddy bear themed birthday setting with balloons and pastel colors, perfect for children's parties.",
+    credit: "Photo by TUBARONES PHOTOGRAPHY on Pexels",
+    source: "stock",
+  },
   "naming_ceremony/cradle": {
     url:    "https://images.pexels.com/photos/35094073/pexels-photo-35094073.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Vibrant balloons and 'Naming Ceremony' sign against a red backdrop, perfect for celebration-themed events.",
@@ -251,6 +419,30 @@ export const GENERATED_DECOR_PHOTOS = {
     url:    "https://images.pexels.com/photos/38720256/pexels-photo-38720256.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Vibrant family celebration for a baby's weaning ceremony, featuring traditional attire and joyful decorations indoors.",
     credit: "Photo by Photographer Gyanu on Pexels",
+    source: "stock",
+  },
+  "reception/coverage": {
+    url:    "https://images.pexels.com/photos/26558731/pexels-photo-26558731.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A lively moment at an Indian wedding with a couple dancing energetically amidst guests under glowing lights.",
+    credit: "Photo by Love Deep on Pexels",
+    source: "stock",
+  },
+  "reception/dining-hall": {
+    url:    "https://images.pexels.com/photos/33914522/pexels-photo-33914522.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Beautifully decorated wedding reception hall with round tables and floral arrangements.",
+    credit: "Photo by The Visionary Vows on Pexels",
+    source: "stock",
+  },
+  "reception/entrance": {
+    url:    "https://images.pexels.com/photos/35629355/pexels-photo-35629355.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A woman in a brown dress holding flowers stands at the entrance of a rustic wedding venue with open curtains.",
+    credit: "Photo by Qodak. stx on Pexels",
+    source: "stock",
+  },
+  "reception/reception-stage": {
+    url:    "https://images.pexels.com/photos/26559592/pexels-photo-26559592.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A beautiful couple in traditional clothing poses elegantly on a decorated wedding stage.",
+    credit: "Photo by Siam Chowdhury. on Pexels",
     source: "stock",
   },
   "retirement/dining-decor": {
@@ -325,6 +517,30 @@ export const GENERATED_DECOR_PHOTOS = {
     credit: "Photo by RDNE Stock project on Pexels",
     source: "stock",
   },
+  "shop_opening/branding": {
+    url:    "https://images.pexels.com/photos/30845624/pexels-photo-30845624.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Street scene featuring a storefront with new collection signage and a person walking by.",
+    credit: "Photo by Helena Jankovičová Kováčová on Pexels",
+    source: "stock",
+  },
+  "shop_opening/frontage": {
+    url:    "https://images.pexels.com/photos/11510813/pexels-photo-11510813.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A vendor in Mumbai sells marigold garlands near a Ganesha portrait, showcasing local culture.",
+    credit: "Photo by Ashish R on Pexels",
+    source: "stock",
+  },
+  "shop_opening/homa": {
+    url:    "https://images.pexels.com/photos/39004187/pexels-photo-39004187.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Vibrant Ganga Aarti ceremony at Varanasi's ghats with priests performing fire rituals by the river.",
+    credit: "Photo by Dipanjan Banerjee on Pexels",
+    source: "stock",
+  },
+  "shop_opening/ribbon": {
+    url:    "https://images.pexels.com/photos/25310897/pexels-photo-25310897.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A ribbon-cutting ceremony with three adults marking an official opening.",
+    credit: "Photo by CP Khanal on Pexels",
+    source: "stock",
+  },
   "thread_ceremony/floral-entrance": {
     url:    "https://images.pexels.com/photos/34056580/pexels-photo-34056580.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Stylish Hindu ceremony setup with ornate backdrop, symbolic decor, and vibrant textiles indoors.",
@@ -347,6 +563,30 @@ export const GENERATED_DECOR_PHOTOS = {
     url:    "https://images.pexels.com/photos/34357888/pexels-photo-34357888.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
     alt:    "Rows of stylish woven chairs arranged for an outdoor wedding ceremony under a tent.",
     credit: "Photo by Jonathan Borba on Pexels",
+    source: "stock",
+  },
+  "vehicle_pooja/bike-dressing": {
+    url:    "https://images.pexels.com/photos/17967779/pexels-photo-17967779.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A vibrant display of yellow and white scooters parked on a city street, showcasing urban mobility.",
+    credit: "Photo by Sergio Arteaga on Pexels",
+    source: "stock",
+  },
+  "vehicle_pooja/car-garland": {
+    url:    "https://images.pexels.com/photos/12718413/pexels-photo-12718413.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Close-up of a traditional Indian wedding ritual setup featuring bananas, coconuts, and flower garlands on an ornate carpet.",
+    credit: "Photo by BANU FILM  ADS on Pexels",
+    source: "stock",
+  },
+  "vehicle_pooja/handover-shoot": {
+    url:    "https://images.pexels.com/photos/6817034/pexels-photo-6817034.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "A couple exchanging car keys inside a showroom decorated with heart-shaped balloons, celebrating a new car purchase.",
+    credit: "Photo by Gustavo Fring on Pexels",
+    source: "stock",
+  },
+  "vehicle_pooja/temple-pooja": {
+    url:    "https://images.pexels.com/photos/31598124/pexels-photo-31598124.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    alt:    "Hindu priest conducting a traditional ritual ceremony with candles and incense in Deoghar, Jharkhand, India.",
+    credit: "Photo by Vikash Singh on Pexels",
     source: "stock",
   },
   "wedding/entrance": {
