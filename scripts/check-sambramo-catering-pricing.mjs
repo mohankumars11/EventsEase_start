@@ -34,7 +34,7 @@ const allDishes = cateringDishCatalogue([], 'both')
 const vegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','kerala'], 'pure_veg')
 const nonVegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','kerala'], 'pure_nonveg')
 
-ok('global catering catalogue is large', allDishes.length >= 500, String(allDishes.length))
+ok('global catering catalogue covers the 1000+ dish target', allDishes.length >= 1000, String(allDishes.length))
 ok('catalogue entries have stable dish IDs', allDishes.every(d => /^SBM-/.test(d.id)))
 ok('pure-veg filtering removes non-veg dishes', vegDishes.every(d => d.diet === 'veg'))
 ok('non-veg filtering removes vegetarian dishes', nonVegDishes.every(d => d.diet === 'nonveg'))
