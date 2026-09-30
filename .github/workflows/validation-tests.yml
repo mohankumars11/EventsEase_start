@@ -48,6 +48,8 @@ jobs:
         run: node scripts/check-trade-champion.mjs
       - name: Sambramo trade + questionnaire V2 contract
         run: node scripts/check-sambramo-v2.mjs
+      - name: Sambramo 34-trade pricing policy
+        run: node scripts/check-sambramo-pricing.mjs
       - name: Generated catalogue IDs are in sync
         run: node scripts/generate-catalogue-ids.mjs --check
       - name: 34-trade generated catalogue integrity
