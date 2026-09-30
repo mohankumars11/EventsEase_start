@@ -42,7 +42,7 @@ import { formatINR } from '../../utils/format'
  */
 export default function BookBar({
   total, totalLabel = null, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
-  estimateNote = true,
+  estimateNote = true, instant = false,
 }) {
   return (
     <div className="animate-pop-in above-bottom-nav pr-chat-dock fixed inset-x-0 z-30 px-3 pb-2 md:pb-3">
@@ -95,8 +95,9 @@ export default function BookBar({
         </div>
 
         <p className="mt-1.5 px-1 text-[9.5px] leading-snug text-ink-mute">
-          Nothing is charged now. A coordinator confirms availability and the final
-          figure before anything is booked.
+          {instant
+            ? 'Sambramo calculated this price from your structured requirement. Nothing is charged until you continue to checkout.'
+            : 'Nothing is charged now. Sambramo keeps the custom quote, scope and final decision inside the app.'}
         </p>
       </div>
     </div>
