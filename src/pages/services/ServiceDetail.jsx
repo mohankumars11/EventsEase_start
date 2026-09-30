@@ -291,13 +291,11 @@ export default function ServiceDetail() {
   }
 
   const { service, kind } = resolved
-  const tradeProfile = useMemo(() => {
-    const category = tradeFor(service.id) ?? service.category
-    return Object.values(SAMBRAMO_PRICING_POLICY).find(p => p.tradeName === category) ?? null
-  }, [service.id, service.category])
+  const category = tradeFor(service.id) ?? service.category
+  const tradeProfile = Object.values(SAMBRAMO_PRICING_POLICY).find(p => p.tradeName === category) ?? null
   const pricingState = kind === 'enquiry'
     ? PRICING_STATES.VENDOR_QUOTE
-    : tradeProfile?.customFirst && !selection?.price
+    : tradeProfile?.customFirst && service.id !== 'bar'
       ? PRICING_STATES.VENDOR_QUOTE
       : selection?.price != null ? PRICING_STATES.INSTANT_BOOK : PRICING_STATES.PROVISIONAL_QUOTE
 
