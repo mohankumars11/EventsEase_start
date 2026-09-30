@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BarChart3, CheckCircle2, CircleDollarSign, Clock3, Gauge, Save, Search, ShieldCheck, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -21,6 +21,14 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   const [loadError, setLoadError] = useState(null)
   const [query, setQuery] = useState('')
   const serviceRows = Array.isArray(services) ? services : []
+  const editorRef = useRef(null)
+
+  /* 34 trades sit above the editor, so a tap with no scroll changes
+     nothing the partner can see. */
+  function pickTrade(id) {
+    setSelectedTrade(id)
+    requestAnimationFrame(() => editorRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
+  }
 
   const load = useCallback(async () => {
     if (!vendor?.id) { setRows([]); return }
@@ -169,37 +177,37 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           {onOpenListings && <button type="button" onClick={onOpenListings} className="rounded-2xl bg-surface px-4 py-3 text-[12px] font-extrabold text-ink-soft ring-1 ring-hairline/10">Review my listings</button>}
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {visible.map(p => {
             const configured = byTrade.has(p.tradeId)
             const selected = selectedTrade === p.tradeId
             return (
-              <button key={p.tradeId} type="button" onClick={() => setSelectedTrade(p.tradeId)} className={selected ? 'rounded-2xl bg-plum-50 p-3 text-left ring-2 ring-plum-400' : 'rounded-2xl bg-surface p-3 text-left ring-1 ring-hairline/[0.08]'}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+              <button key={p.tradeId} type="button" onClick={() => pickTrade(p.tradeId)} className={(selected ? 'bg-plum-50 ring-2 ring-plum-400' : 'bg-surface ring-1 ring-hairline/[0.08]') + ' flex min-h-[88px] flex-col rounded-2xl p-3 text-left'}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">{p.tradeId}</p>
-                    <p className="mt-0.5 text-[13px] font-extrabold text-ink">{p.tradeName}</p>
+                    <p className="mt-0.5 text-[12.5px] font-extrabold leading-snug text-ink">{p.tradeName}</p>
                   </div>
-                  {configured ? <CheckCircle2 size={18} className="text-forest-600" /> : <CircleDollarSign size={18} className="text-ink-mute" />}
+                  {configured ? <CheckCircle2 size={16} className="shrink-0 text-forest-600" /> : <CircleDollarSign size={16} className="shrink-0 text-ink-mute" />}
                 </div>
-                <p className="mt-1 text-[10.5px] text-ink-mute">{p.standardLabel}</p>
+                <p className="mt-auto pt-1 text-[10px] text-ink-mute">{p.standardLabel}</p>
               </button>
             )
           })}
         </div>
       </section>
 
-      <section className="rounded-[24px] bg-white p-4 ring-1 ring-hairline/10">
+      <section ref={editorRef} className="scroll-mt-4 rounded-[24px] bg-white p-4 ring-1 ring-hairline/10">
         <div className="flex items-start gap-3">
           <Sparkles size={18} className="mt-0.5 shrink-0 text-plum-600" />
           <div>
             <p className="text-[13px] font-extrabold text-ink">Configure {policy?.tradeName ?? 'trade'}</p>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{policy?.determinants?.join(' · ')}</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-ink-mute">{Array.isArray(policy?.determinants) ? policy.determinants.join(' · ') : policy?.determinants}</p>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Field label="Partner supply rate" value={rate} onChange={setRate} suffix="₹" />
+          <Field label="Partner supply rate" value={rate} onChange={setRate} prefix="₹" type="number" />
           <Field label="Pricing unit" value={unit} onChange={setUnit} />
           <Field label="Minimum quantity" value={minimum} onChange={setMinimum} type="number" />
           <Field label="Included quantity" value={included} onChange={setIncluded} type="number" />
@@ -226,13 +234,13 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   )
 }
 
-function Field({ label, value, onChange, suffix = '', type = 'text' }) {
+function Field({ label, value, onChange, prefix = '', type = 'text' }) {
   return (
     <label className="rounded-2xl bg-surface p-3 ring-1 ring-hairline/[0.08]">
       <span className="block text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">{label}</span>
       <div className="mt-1.5 flex items-center gap-2">
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[15px] font-extrabold text-ink outline-none" />
-        {suffix && <span className="text-[11px] font-bold text-ink-mute">{suffix}</span>}
+        {prefix && <span className="text-[15px] font-extrabold text-ink-mute">{prefix}</span>}
+        <input type={type} inputMode={type === 'number' ? 'numeric' : undefined} value={value} onChange={e => onChange(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[15px] font-extrabold text-ink outline-none" />
       </div>
     </label>
   )
