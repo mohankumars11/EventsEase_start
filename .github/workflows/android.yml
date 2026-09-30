@@ -169,6 +169,9 @@ jobs:
         env:
           CAPACITOR_BUILD: 'true'
           VITE_SURFACE: ${{ matrix.flavour }}
+          # Development preview only: enable the local preview identity on feature/PR builds.
+          # The main branch remains authenticated for production builds.
+          VITE_DEV_AUTH_BYPASS: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           # Shown on the alerts card. Two apps with the same name and
           # icon can sit side by side on a home screen -- the installed
           # APK and a shortcut to the website -- and this is how anyone
