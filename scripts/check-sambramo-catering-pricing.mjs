@@ -28,7 +28,7 @@ if (idsBuild.status !== 0) {
 }
 const { DISH_ID_BY_KEY } = await import(pathToFileURL(IDS_OUT).href)
 const { cateringDishCatalogue, emptyCateringPackage, validateCateringPackage,
-  CATERING_SERVICE_STYLES, CATERING_ADDON_UNITS } = mod
+  cateringCapabilityFromListing, CATERING_SERVICE_STYLES, CATERING_ADDON_UNITS } = mod
 
 let bad = 0
 let ran = 0
@@ -45,7 +45,8 @@ const vegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','k
 const nonVegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','kerala'], 'pure_nonveg')
 
 ok('canonical dish ID source covers the 1000+ target', Object.keys(DISH_ID_BY_KEY).length >= 1000, String(Object.keys(DISH_ID_BY_KEY).length))
-ok('resolved static catalogue is available as a fallback', allDishes.length > 0, String(allDishes.length))
+ok('resolved static catalogue is available as an offline fallback', allDishes.length > 0, String(allDishes.length))
+ok('production-sized catalogue is sourced separately from the live database', Object.keys(DISH_ID_BY_KEY).length >= 1000)
 ok('catalogue entries have stable dish IDs', allDishes.every(d => /^SBM-/.test(d.id)))
 ok('pure-veg filtering removes non-veg dishes', vegDishes.every(d => d.diet === 'veg'))
 ok('non-veg filtering removes vegetarian dishes', nonVegDishes.every(d => d.diet === 'nonveg'))
@@ -58,11 +59,14 @@ ok('blank package cannot activate without a name', !!result.errors.name)
 ok('blank package cannot activate without dishes', !!result.errors.items)
 ok('blank package cannot activate without a rate', !!result.errors.rate)
 ok('new package has automatic per-guest defaults', blank.minGuests === 100 && blank.maxGuests === 1000)
+ok('new package defaults to the full food-sourcing mode', blank.sourcingMode === 'full')
+ok('catering capability is listing-driven', (() => { const x = cateringCapabilityFromListing({ specs: { cuisines: ['karnataka'], kitchen_type: 'pure_veg', dish_ids: ['SBM-KA-RA-001'], sourcing_mode: 'full' } }); return x.cuisines.length === 1 && x.dishIds.length === 1 && x.sourcingMode === 'full' })())
 
 const good = {
   ...blank,
   name: 'Wedding Plantain Leaf Feast',
   rate: '650',
+  capabilityDishIds: allDishes.slice(0, 3).map(d => d.id),
   items: allDishes.slice(0, 3).map((d, i) => ({ id: d.id, section: ['rice','curries','sweets'][i], selectionType: 'included' })),
   addons: [{ id: 'a1', name: 'Live dosa counter', unit: 'per_counter', rate: '12000', minimum: '1', maximum: '2', included: '0' }],
 }
@@ -76,6 +80,14 @@ ok('add-on validates max >= min', !!result.errors['addon:a2'])
 const duplicate = { ...good, items: [good.items[0], good.items[0]] }
 result = validateCateringPackage({ draft: duplicate, requireActive: true })
 ok('duplicate dish is rejected', !!result.errors.items)
+
+const unclaimed = { ...good, items: [{ id: allDishes[10].id, section: 'mains', selectionType: 'included' }] }
+result = validateCateringPackage({ draft: unclaimed, requireActive: true })
+ok('menu cannot activate with a dish outside the listing capability', !!result.errors.items)
+
+const replacement = { ...good, items: [{ id: good.items[0].id, section: 'starters', selectionType: 'replacement', choiceGroup: '' }] }
+result = validateCateringPackage({ draft: replacement, requireActive: true })
+ok('replacement dishes require a choice group', !!result.errors.items)
 
 console.log('\n' + (bad ? '✗' : '✓') + ' ' + (ran - bad) + '/' + ran + ' passed\n')
 process.exit(bad ? 1 : 0)
