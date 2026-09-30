@@ -192,7 +192,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         <div className="mt-4 flex flex-wrap gap-2">
           <MetaPill icon={Leaf} text={CATERING_DIET_LABELS[capability.kitchenType]} />
           {capability.cuisineNames.slice(0, 4).map(name => <MetaPill key={name} text={name} />)}
-          {capability.cuisineNames.length > 4 && <MetaPill text={\`+\${capability.cuisineNames.length - 4} more cuisines\`} />}
+          {capability.cuisineNames.length > 4 && <MetaPill text={`+${capability.cuisineNames.length - 4} more cuisines`} />}
         </div>
       </section>
 
@@ -274,13 +274,13 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
                         <span className="text-[15px] font-extrabold text-ink">{pkg.name}</span>
-                        <span className={\`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide \${pkg.status === 'ACTIVE' ? 'bg-forest-50 text-forest-700' : 'bg-ink/[0.05] text-ink-mute'}\`}>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${pkg.status === 'ACTIVE' ? 'bg-forest-50 text-forest-700' : 'bg-ink/[0.05] text-ink-mute'}`}>
                           {pkg.status === 'ACTIVE' ? 'Ready' : 'Draft'}
                         </span>
                       </span>
                       <span className="mt-1 block text-[11.5px] text-ink-mute">
                         {(pkg.items ?? []).length} dishes · {(pkg.addons ?? []).filter(a => a.active).length} extras
-                        {pkg.price ? \` · \${formatINR(Math.round(Number(pkg.price.supply_rate_paise) / 100))} / guest\` : ' · price not set'}
+                        {pkg.price ? ` · ${formatINR(Math.round(Number(pkg.price.supply_rate_paise) / 100))} / guest` : ' · price not set'}
                       </span>
                     </span>
                     <ChevronRight size={17} className="mt-1 shrink-0 text-ink-mute" />
@@ -467,7 +467,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
           ['addons','4 · Extras'],
         ].map(([id, label]) => (
           <button key={id} type="button" onClick={() => setStep(id)}
-            className={\`rounded-xl px-2 py-2 text-[10.5px] font-extrabold \${step === id ? 'bg-white text-plum-700 shadow-sm' : 'text-ink-mute'}\`}>
+            className={`rounded-xl px-2 py-2 text-[10.5px] font-extrabold ${step === id ? 'bg-white text-plum-700 shadow-sm' : 'text-ink-mute'}`}>
             {label}
           </button>
         ))}
@@ -484,7 +484,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
                 const active = draft.cuisines.includes(id)
                 return (
                   <button key={id} type="button" onClick={() => update('cuisines', active ? draft.cuisines.filter(x => x !== id) : [...draft.cuisines, id])}
-                    className={\`rounded-full px-3 py-2 text-[11.5px] font-extrabold \${active ? 'bg-plum-700 text-white' : 'bg-surface text-ink-soft ring-1 ring-ink/[0.08]'}\`}>
+                    className={`rounded-full px-3 py-2 text-[11.5px] font-extrabold ${active ? 'bg-plum-700 text-white' : 'bg-surface text-ink-soft ring-1 ring-ink/[0.08]'}`}>
                     {capability.cuisineNames[capability.cuisines.indexOf(id)] ?? id}
                   </button>
                 )
@@ -512,7 +512,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
 
       {step === 'menu' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={\`\${dishes.length.toLocaleString('en-IN')} catalogued dishes are available across your selected cuisines and kitchen type.\`} />
+          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={`${dishes.length.toLocaleString('en-IN')} catalogued dishes are available across your selected cuisines and kitchen type.`} />
           <div className="rounded-2xl bg-plum-50 p-3 ring-1 ring-plum-100">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -553,9 +553,9 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
               const on = selectedIds.has(dish.id)
               return (
                 <button key={dish.id} type="button" onClick={() => chooseDish(dish)}
-                  className={\`min-h-[86px] rounded-2xl p-3 text-left ring-1 transition active:scale-[0.99] \${on ? 'bg-forest-50 ring-forest-300' : 'bg-surface ring-ink/[0.07]'}\`}>
+                  className={`min-h-[86px] rounded-2xl p-3 text-left ring-1 transition active:scale-[0.99] ${on ? 'bg-forest-50 ring-forest-300' : 'bg-surface ring-ink/[0.07]'}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <span className={\`rounded-full px-2 py-0.5 text-[9.5px] font-extrabold \${on ? 'bg-forest-600 text-white' : 'bg-white text-ink-mute'}\`}>{dish.diet === 'veg' ? 'VEG' : 'NON-VEG'}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[9.5px] font-extrabold ${on ? 'bg-forest-600 text-white' : 'bg-white text-ink-mute'}`}>{dish.diet === 'veg' ? 'VEG' : 'NON-VEG'}</span>
                     {on ? <Check size={16} className="text-forest-700" /> : null}
                   </div>
                   <p className="mt-2 line-clamp-2 text-[12px] font-extrabold leading-snug text-ink">{dish.name}</p>
@@ -626,7 +626,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <InfoMetric label="Minimum order" value={\`\${draft.minGuests} guests\`} icon={Users} />
+            <InfoMetric label="Minimum order" value={`${draft.minGuests} guests`} icon={Users} />
             <InfoMetric label="Illustrative partner total" value={draft.rate ? formatINR(Number(draft.rate) * Number(draft.minGuests || 0)) : '—'} icon={WalletCards} />
           </div>
           <InfoCard icon={Sparkles} text="A package price is versioned whenever you activate a new rate. Existing bookings can retain the historical pricing snapshot." />
@@ -703,7 +703,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
             <InfoMetric label="Extras" value={String(draft.addons.length)} icon={CirclePlus} />
             <InfoMetric label="Base unit" value={CATERING_PRICING_UNIT.label} icon={WalletCards} />
-            <InfoMetric label="Minimum" value={\`\${draft.minGuests} guests\`} icon={Users} />
+            <InfoMetric label="Minimum" value={`${draft.minGuests} guests`} icon={Users} />
           </div>
         )}
       </section>
@@ -793,7 +793,7 @@ function ChoiceGrid({ label, value, options, onChange }) {
       <div className="grid grid-cols-2 gap-2">
         {options.map(x => (
           <button key={x.id} type="button" onClick={() => onChange(x.id)}
-            className={\`rounded-2xl p-3 text-left ring-1 \${value === x.id ? 'bg-plum-50 ring-2 ring-plum-400' : 'bg-surface ring-ink/[0.07]'}\`}>
+            className={`rounded-2xl p-3 text-left ring-1 ${value === x.id ? 'bg-plum-50 ring-2 ring-plum-400' : 'bg-surface ring-ink/[0.07]'}`}>
             <p className="text-[12px] font-extrabold text-ink">{x.label}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-ink-mute">{x.helper}</p>
           </button>
