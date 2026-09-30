@@ -10,7 +10,7 @@ import {
   CATERING_ADDON_CATALOGUE, CATERING_ADDON_UNITS, CATERING_MENU_SECTIONS,
   CATERING_PRICING_UNIT, CATERING_SERVICE_STYLES, cateringCapabilityFromListing,
   cateringDishCatalogue, emptyCateringPackage, sectionLabel, addonUnitLabel,
-  validateCateringPackage, CATERING_DIET_LABELS, addonDraftFrom,
+  validateCateringPackage, validateCateringRateBands, defaultCateringRateBands, rateFromBands, CATERING_DIET_LABELS, addonDraftFrom,
 } from '../../data/cateringPricing'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
@@ -151,6 +151,18 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
       includedStaff: pkg.included_staff,
       rate: pkg.price ? String(Math.round(Number(pkg.price.supply_rate_paise) / 100))
         : '',
+      rateBands: Array.isArray(pkg.rate_bands) && pkg.rate_bands.length
+        ? pkg.rate_bands.map((b, i) => ({
+            id: b.id ?? 'band-' + (i + 1),
+            minGuests: String(b.min_guests ?? b.minGuests ?? ''),
+            maxGuests: b.max_guests == null && b.maxGuests == null ? '' : String(b.max_guests ?? b.maxGuests),
+            rate: String(Math.round(Number(b.rate_paise ?? b.rate ?? 0) / (b.rate_paise != null ? 100 : 1))),
+          }))
+        : defaultCateringRateBands({
+            minGuests: pkg.min_guests,
+            maxGuests: pkg.max_guests,
+            rate: pkg.price ? String(Math.round(Number(pkg.price.supply_rate_paise) / 100)) : '',
+          }),
       items: (pkg.items ?? []).map(x => ({
         id: x.dish_id, section: x.section, selectionType: x.selection_type,
         choiceGroup: x.choice_group ?? '',
@@ -428,13 +440,64 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
     setDraft(d => ({ ...d, addons: d.addons.map(x => x.id === id ? { ...x, ...patch } : x) }))
   }
 
+  function updateRateBand(index, patch) {
+    setDraft(d => ({
+      ...d,
+      rateBands: (d.rateBands ?? []).map((x, i) => i === index ? { ...x, ...patch } : x),
+    }))
+  }
+
+  function addRateBand() {
+    const bands = draft.rateBands ?? []
+    const last = bands[bands.length - 1]
+    const lastMin = Number(last?.minGuests)
+    const lastMax = last?.maxGuests === '' || last?.maxGuests == null ? null : Number(last.maxGuests)
+
+    if (!last || !Number.isFinite(lastMin)) {
+      setSaveError('Set the first guest band before adding another.')
+      setStep('price')
+      return
+    }
+
+    if (lastMax == null) {
+      setSaveError('Set a maximum on the current band before adding another.')
+      setStep('price')
+      return
+    }
+
+    if (lastMax - lastMin < 2) {
+      setSaveError('Increase the current guest range before splitting it into another band.')
+      setStep('price')
+      return
+    }
+
+    const split = Math.floor((lastMin + lastMax) / 2)
+    setDraft(d => ({
+      ...d,
+      rateBands: [
+        ...(d.rateBands ?? []).slice(0, -1),
+        { ...last, maxGuests: String(split) },
+        { id: iid(), minGuests: String(split + 1), maxGuests: String(lastMax), rate: String(last.rate ?? '') },
+      ],
+    }))
+    setSaveError('')
+  }
+
   function removeAddon(id) {
     setDraft(d => ({ ...d, addons: d.addons.filter(x => x.id !== id) }))
   }
 
   async function save(status) {
     const requireActive = status === 'ACTIVE'
-    const check = validateCateringPackage({ draft, requireActive })
+    const rateBands = (draft.rateBands ?? []).map(b => ({
+      id: b.id ?? iid(),
+      minGuests: String(b.minGuests ?? ''),
+      maxGuests: b.maxGuests === '' || b.maxGuests == null ? '' : String(b.maxGuests),
+      rate: String(b.rate ?? ''),
+    }))
+    const baseRate = rateFromBands(rateBands) || Number(draft.rate || 0)
+    const effectiveDraft = { ...draft, rate: baseRate ? String(baseRate) : draft.rate, rateBands }
+    const check = validateCateringPackage({ draft: effectiveDraft, requireActive })
     if (!check.ok) {
       setSaveError(Object.values(check.errors)[0] ?? 'Please complete the highlighted fields.')
       setStep(Object.keys(check.errors).some(k => k === 'items' || k.startsWith('addon:')) ? 'menu' : 'package')
@@ -480,7 +543,12 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           sort_order: index,
         })),
         p_rate: {
-          supply_rate_paise: Math.round(Number(draft.rate || 0) * 100),
+          supply_rate_paise: Math.round(Number(baseRate || 0) * 100),
+          rate_bands: rateBands.map(b => ({
+            min_guests: Number(b.minGuests),
+            max_guests: b.maxGuests === '' ? null : Number(b.maxGuests),
+            rate_paise: Math.round(Number(b.rate || 0) * 100),
+          })),
         },
       })
       if (rpcError) throw rpcError
@@ -700,25 +768,49 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
 
       {step === 'price' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <SectionHeading icon={WalletCards} title="Set the menu price" helper="The unit is automatic for catering: this menu is priced per guest." />
-          <div className="rounded-[22px] bg-plum-950 p-5 text-white">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/60">Partner supply rate</p>
-            <div className="mt-2 flex items-end gap-2">
-              <span className="text-[36px] font-extrabold tabular-nums">₹</span>
-              <input data-field="catering_supply_rate" type="number" min="1" value={draft.rate} onChange={e => update('rate', e.target.value)}
-                placeholder="0"
-                className="min-w-0 flex-1 bg-transparent text-[36px] font-extrabold outline-none placeholder:text-white/35" />
-              <span className="pb-1 text-[14px] font-extrabold text-white/70">{CATERING_PRICING_UNIT.short}</span>
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-white/65">
-              You supply the underlying rate. Sambramo calculates the customer-facing commercial price separately.
+          <SectionHeading icon={WalletCards} title="Set guest-volume pricing" helper="Catering is always priced per guest. Add bands when your per-guest supply rate changes with event size." />
+
+          <div className="rounded-2xl bg-plum-50 p-3 ring-1 ring-plum-100">
+            <p className="text-[11.5px] font-extrabold text-plum-950">Automatic unit · {CATERING_PRICING_UNIT.label}</p>
+            <p className="mt-1 text-[10.5px] leading-relaxed text-plum-700/80">
+              Customers never enter the unit. Sambramo uses the guest count to select the applicable band.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <InfoMetric label="Minimum order" value={`${draft.minGuests} guests`} icon={Users} />
-            <InfoMetric label="Illustrative partner total" value={draft.rate ? formatINR(Number(draft.rate) * Number(draft.minGuests || 0)) : '—'} icon={WalletCards} />
+
+          <div className="space-y-2">
+            {(draft.rateBands ?? []).map((band, index) => (
+              <div key={band.id ?? index} className="rounded-[22px] bg-surface p-3 ring-1 ring-ink/[0.07]">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11.5px] font-extrabold text-ink">Guest band {index + 1}</p>
+                  {draft.rateBands.length > 1 && (
+                    <button type="button" onClick={() => setDraft(d => ({ ...d, rateBands: d.rateBands.filter((_, i) => i !== index) }))}
+                      className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-rose-700 ring-1 ring-rose-100">
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <Field fieldId="catering_band_min" label="From guests" type="number" value={band.minGuests}
+                    onChange={v => updateRateBand(index, { minGuests: v })} />
+                  <Field fieldId="catering_band_max" label="To guests" type="number" value={band.maxGuests}
+                    onChange={v => updateRateBand(index, { maxGuests: v })} placeholder="No upper limit" />
+                  <Field fieldId="catering_band_rate" label="Rate ₹ / guest" type="number" value={band.rate}
+                    onChange={v => updateRateBand(index, { rate: v })} />
+                </div>
+              </div>
+            ))}
           </div>
-          <InfoCard icon={Sparkles} text="A package price is versioned whenever you activate a new rate. Existing bookings can retain the historical pricing snapshot." />
+
+          <button type="button" onClick={addRateBand}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-extrabold text-plum-700 ring-1 ring-plum-200">
+            <Plus size={15} /> Add another guest-volume band
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <InfoMetric label="Starting rate" value={rateFromBands(draft.rateBands) ? formatINR(rateFromBands(draft.rateBands)) + ' / guest' : '—'} icon={WalletCards} />
+            <InfoMetric label="Menu range" value={draft.maxGuests ? draft.minGuests + '–' + draft.maxGuests + ' guests' : draft.minGuests + '+ guests'} icon={Users} />
+          </div>
+          <InfoCard icon={Sparkles} text="Rates are stored as versions with the exact guest bands used at activation, so existing bookings retain the historical price snapshot." />
         </section>
       )}
 
