@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { bookingLinesFor, captureBookingPayment } from './_lib/bookingCapture.js'
 
 /**
  * Razorpay's webhook — the only thing in this app that can say a milestone
@@ -44,7 +45,23 @@ function readRawBody(req) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  /* Test and live webhooks are separate objects with separate secrets.
+   *
+   * Razorpay keeps them per-mode: switching the API keys to live does
+   * NOT carry the test webhook over, and the live one is created by
+   * hand with its own secret. During the switch both may be delivering
+   * — a test payment retrying while a live one arrives — so both are
+   * accepted, and whichever verifies wins.
+   *
+   * The alternative is a window where one mode's deliveries all fail
+   * signature and the payments they describe go unrecorded. Money in,
+   * nothing written, is the single worst state this system has. */
+  const secrets = [
+    process.env.RAZORPAY_WEBHOOK_SECRET,
+    process.env.RAZORPAY_WEBHOOK_SECRET_LIVE,
+  ].filter(Boolean)
+
+  const secret = secrets[0]
   if (!secret) return res.status(503).json({ error: 'Webhook is not configured' })
 
   const raw = await readRawBody(req)
@@ -72,6 +89,31 @@ export default async function handler(req, res) {
   const gatewayOrderId = entity.order_id
   const gatewayPaymentId = entity.id
   if (!gatewayOrderId) return res.status(200).json({ ignored: true })
+
+  /* ── Instant booking, first ────────────────────────────────────────
+   *
+   * Two payment paths reach this one endpoint. The older one parks an
+   * `event_payments` row for a milestone on the pre-book journey; the
+   * newer one funds N booking lines with a single order and parks
+   * nothing, because the order's own notes carry the line ids.
+   *
+   * Booking is tested first because it is the path that ANSWERS: the
+   * milestone lookup below returns nothing for a booking order and used
+   * to fall straight through to `{ ignored: true }`, which is how a
+   * captured instant payment was recorded nowhere at all.
+   *
+   * Order-of-events note: `payment.captured` is the only event this path
+   * acts on. An `authorized` payment is not money. */
+  if (event === 'payment.captured') {
+    const booking = await bookingLinesFor(entity)
+    if (booking) {
+      const r = await captureBookingPayment(supabase, { entity, booking })
+      // A 5xx makes Razorpay retry, which is what we want when the write
+      // failed — the index makes the retry safe.
+      if (!r.ok) return res.status(500).json({ error: r.error })
+      return res.status(200).json(r)
+    }
+  }
 
   const { data: row } = await supabase
     .from('event_payments')

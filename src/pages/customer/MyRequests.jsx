@@ -9,6 +9,7 @@ import AppBar from '../../components/layout/AppBar'
 import ReviewModal from '../../components/reviews/ReviewModal'
 import ReasonModal from '../../components/customer/ReasonModal'
 import PriceLock from '../../components/plan/PriceLock'
+import SambramoQuoteBoard from '../../components/customer/SambramoQuoteBoard'
 import { LOCK_AMOUNT } from '../../data/celebrationTiers'
 
 const STATUS_CSS = {
@@ -115,6 +116,8 @@ export default function MyRequests() {
       />
       <div className="mx-auto max-w-3xl px-4 pb-8 pt-5">
         <h1 className="sr-only">My requests</h1>
+
+        <SambramoQuoteBoard userId={user?.id} />
 
         {loading ? (
           <div className="space-y-4" aria-busy="true" aria-label="Loading your requests">

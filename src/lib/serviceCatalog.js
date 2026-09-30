@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { compressImage } from './productImages'
+import { compressImage } from './imageUpload'
 import { SERVICE_GROUPS } from '../data/servicePricing'
 
 /**

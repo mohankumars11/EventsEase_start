@@ -37,6 +37,11 @@ import { DECOR_FAMILIES, THEMES_BY_FAMILY, themeFrom } from './decorThemes'
 import { CUISINES } from './cuisineMenus'
 import { batchBandFor } from './celebrationTiers'
 
+const LOGISTICS_CUSTOMER_IDS = new Set([
+  'mini_truck','goods_vehicle','passenger_transport','event_equipment',
+  'loading_crew','warehouse_storage','event_materials','event_logistics',
+])
+
 /**
  * Which decoration families a décor service opens on.
  *
@@ -132,6 +137,19 @@ export function resolveService(serviceId) {
     }
   }
 
+  if (LOGISTICS_CUSTOMER_IDS.has(serviceId)) {
+    return {
+      service,
+      kind: 'logistics',
+      blurb: service.desc,
+      unitHint: 'Structured request. We collect the load, route, quantity or project scope before quoting.',
+      optionCount: 0,
+      optionNoun: 'requirements',
+      from: null,
+      fromUnit: null,
+    }
+  }
+
   const shelf = SERVICE_PACKS[serviceId]
   if (shelf) {
     const entry = packsFrom(serviceId, 100)
@@ -164,7 +182,7 @@ export function resolveService(serviceId) {
 
 /** Is this service bookable on its own right now? Used by the shelf cards. */
 export function isBookable(serviceId) {
-  return serviceId in DECOR_ROUTES || serviceId in MENU_ROUTES || serviceId in SERVICE_PACKS
+  return serviceId in DECOR_ROUTES || serviceId in MENU_ROUTES || serviceId in SERVICE_PACKS || LOGISTICS_CUSTOMER_IDS.has(serviceId)
 }
 
 /**

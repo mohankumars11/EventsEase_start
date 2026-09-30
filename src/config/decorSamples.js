@@ -56,6 +56,7 @@ const ABSOLUTE_PRICED = new Set([
   'candle_setup', 'photobooth', 'memory_wall', 'tent', 'pooja', 'priest',
   'mehendi', 'kids_play', 'invitations', 'fireworks', 'av_setup',
   'photography', 'videography', 'makeup', 'choreography', 'emcee',
+  'vehicle_decor', 'vehicle_care', 'inauguration',
 ])
 
 /**
@@ -540,6 +541,325 @@ export const DECOR_SAMPLES = {
       query: 'corporate conference hall event setup seating stage lights',
     },
   ],
+
+  /* ── The ten the life-cycle audit added ────────────────────────────────
+     Four setups each, the same as the original fifteen, because
+     planCatalog.js builds every occasion card from exactly four cross-fading
+     photographs and an occasion with fewer looks broken beside one with
+     four. The `query` values lean hard on Indian phrasing — "vahana pooja
+     car garland marigold", "half saree function stage decoration" — because
+     a generic English search returns an American baby shower for every one
+     of these, which is precisely the failure this catalogue cannot afford. */
+
+  vehicle_pooja: [
+    {
+      id: 'car-garland',
+      title: 'Car Garland & Ribbon',
+      blurb: 'Bonnet garland, ribbon across the grille, lemons under the wheels and the dashboard idol placed.',
+      includes: ['vehicle_decor', 'floral'],
+      query: 'new car decorated flower garland marigold ribbon indian delivery',
+    },
+    {
+      id: 'bike-dressing',
+      title: 'Two-Wheeler Dressing',
+      blurb: 'Handlebar garland, ribbon on the mirrors and a rose on the tank, fitted at the showroom.',
+      includes: ['vehicle_decor'],
+      query: 'parked motorcycle scooter showroom new bike india street',
+    },
+    {
+      id: 'temple-pooja',
+      title: 'Temple Vahana Pooja',
+      blurb: 'Archana booked in your name, samagri carried in, and prasada packets for whoever came.',
+      includes: ['priest', 'pooja'],
+      query: 'hindu priest performing vehicle pooja temple coconut camphor ritual',
+    },
+    {
+      id: 'handover-shoot',
+      title: 'Handover Photography',
+      blurb: 'The keys, the first drive and the family beside it — shot in the forty minutes you actually have.',
+      includes: ['photography', 'videography'],
+      query: 'family new car keys handover photograph showroom celebration',
+    },
+  ],
+
+  half_saree: [
+    {
+      id: 'floral-stage',
+      title: 'Floral Stage & Seating',
+      blurb: 'A backdrop, a decorated seat and a floral arch for the entry and the family photographs.',
+      includes: ['stage', 'floral', 'decor'],
+      query: 'half saree function stage decoration flowers south indian ceremony',
+    },
+    {
+      id: 'ritual-space',
+      title: 'Ritual Corner',
+      blurb: 'Kalash, lamps, arati thalis and the seating for the elders who perform the blessings.',
+      includes: ['pooja', 'priest'],
+      query: 'south indian ritual pooja setup lamps kalash flowers ceremony',
+    },
+    {
+      id: 'mehendi-corner',
+      title: 'Mehendi & Getting Ready',
+      blurb: 'Artists, a lit corner and somewhere for forty women to sit through two hours of it.',
+      includes: ['mehendi', 'makeup'],
+      query: 'mehendi artist applying henna hands indian function women',
+    },
+    {
+      id: 'photo-coverage',
+      title: 'Entry & Portrait Coverage',
+      blurb: 'The entry, the rite and the portraits that end up in the wedding album a decade later.',
+      includes: ['photography', 'videography'],
+      query: 'south indian girl traditional saree portrait ceremony photography',
+    },
+  ],
+
+  mundan: [
+    {
+      id: 'homa-setup',
+      title: 'Homa & Ritual Space',
+      blurb: 'Havan kund, mats, kalash and the samagri, with a purohit booked for the full vidhi.',
+      includes: ['pooja', 'priest'],
+      query: 'hindu homa havan fire ritual setup kund samagri indian home',
+    },
+    {
+      id: 'floral-entrance',
+      title: 'Entrance & Toran',
+      blurb: 'Banana stems at the door and marigold strings along the approach for the return home.',
+      includes: ['floral', 'decor'],
+      query: 'indian house entrance banana leaf marigold toran decoration door',
+    },
+    {
+      id: 'kids-corner',
+      title: 'A Corner for the Children',
+      blurb: 'Balloons and a soft corner for the cousins, and a place the child of the hour can nap.',
+      includes: ['balloon_arch', 'decor'],
+      query: 'baby birthday balloon decoration soft pastel corner indian home',
+    },
+    {
+      id: 'coverage',
+      title: 'Tonsure Coverage',
+      blurb: 'The face at the first cut — one photograph, one chance, and the temple decides where you stand.',
+      includes: ['photography'],
+      query: 'barber shaving hair child head temple ritual india',
+    },
+  ],
+
+  annaprashana: [
+    {
+      id: 'rice-setup',
+      title: 'The First Rice Setting',
+      blurb: 'Silver bowl and spoon, the payasam, the decorated seat and the tray of objects.',
+      includes: ['pooja', 'decor'],
+      query: 'annaprashana first rice ceremony baby silver bowl indian ritual',
+    },
+    {
+      id: 'floral-backdrop',
+      title: 'Floral & Name Backdrop',
+      blurb: 'A soft backdrop the family photographs are taken against, with the baby’s name on it.',
+      includes: ['floral', 'decor', 'balloon_arch'],
+      query: 'baby naming ceremony floral backdrop pastel decoration indian',
+    },
+    {
+      id: 'leaf-lunch',
+      title: 'Leaf Meal Seating',
+      blurb: 'Banana-leaf service with chairs for the elders and floor seating for everybody else.',
+      includes: ['decor'],
+      query: 'banana leaf meal south indian lunch seated guests traditional',
+    },
+    {
+      id: 'coverage',
+      title: 'The First Mouthful',
+      blurb: 'The face when the payasam lands, and the family group nobody remembers to organise.',
+      includes: ['photography', 'videography'],
+      query: 'indian family baby feeding ceremony grandparents photograph',
+    },
+  ],
+
+  reception: [
+    {
+      id: 'reception-stage',
+      title: 'Reception Stage & Backdrop',
+      blurb: 'The thing four hundred people queue to be photographed in front of, lit for the camera.',
+      includes: ['stage', 'floral', 'lighting', 'decor'],
+      query: 'indian wedding reception stage decoration flowers lights couple',
+    },
+    {
+      id: 'entrance',
+      title: 'Entrance & Walkway',
+      blurb: 'A styled porch, a lit walkway and a welcome board, because the queue starts at the gate.',
+      includes: ['decor', 'lighting', 'floral'],
+      query: 'wedding venue entrance walkway decoration lights flowers evening',
+    },
+    {
+      id: 'dining-hall',
+      title: 'Dining & Counters',
+      blurb: 'Round tables, a buffet line and live counters placed to break the queue rather than feed it.',
+      includes: ['decor', 'lighting'],
+      query: 'indian wedding buffet dining hall round tables banquet setup',
+    },
+    {
+      id: 'coverage',
+      title: 'Evening Coverage',
+      blurb: 'Two photographers, the entry, the cake and the film that gets watched far more than the album.',
+      includes: ['photography', 'videography'],
+      query: 'indian wedding reception photographer couple stage guests evening',
+    },
+  ],
+
+  shop_opening: [
+    {
+      id: 'ribbon',
+      title: 'Ribbon & Nameplate',
+      blurb: 'Satin ribbon, ceremonial scissors, a brass lamp and the nameplate under a cloth.',
+      includes: ['inauguration', 'decor'],
+      query: 'shop opening ribbon cutting ceremony inauguration india new store',
+    },
+    {
+      id: 'frontage',
+      title: 'Frontage & Arch',
+      blurb: 'Banana stems, a marigold toran and an arch across the shutter, sized to your pavement.',
+      includes: ['floral', 'decor', 'balloon_arch'],
+      query: 'indian shop front decorated flowers garland opening day marigold',
+    },
+    {
+      id: 'homa',
+      title: 'Ganapati Homa',
+      blurb: 'The homa before the shutter goes up, set out in premises that have no kitchen yet.',
+      includes: ['pooja', 'priest'],
+      query: 'ganapati homa fire ritual business opening priest indian ceremony',
+    },
+    {
+      id: 'branding',
+      title: 'Signage & Standees',
+      blurb: 'Welcome board, offer standees and the flex on the road — the part still working next week.',
+      includes: ['decor', 'av_setup'],
+      query: 'new shop signage banner standee opening offers storefront india',
+    },
+  ],
+
+  bhoomi_pooja: [
+    {
+      id: 'pandal',
+      title: 'Pandal & Shade',
+      blurb: 'A shamiana over the rite and the seating, because a plot has no shade and no walls.',
+      includes: ['tent', 'decor'],
+      query: 'outdoor shamiana pandal tent canopy ground event india setup',
+    },
+    {
+      id: 'homa-ground',
+      title: 'Homa on the Plot',
+      blurb: 'Havan kund, kalash, navadhanya and the silver naga, carried to a site with nothing on it.',
+      includes: ['pooja', 'priest'],
+      query: 'bhoomi pooja ground breaking ceremony homa construction site india',
+    },
+    {
+      id: 'first-dig',
+      title: 'First Dig & Foundation Stone',
+      blurb: 'The corner the purohit chooses, the first stone, and the family standing on bare ground.',
+      includes: ['priest', 'decor'],
+      query: 'foundation stone laying ceremony construction site family india',
+    },
+    {
+      id: 'aerial',
+      title: 'Aerial of the Plot',
+      blurb: 'One overhead of the empty land, which cannot be taken again once the foundation goes in.',
+      includes: ['photography', 'videography'],
+      query: 'aerial drone view empty plot land construction site overhead',
+    },
+  ],
+
+  aksharabhyasa: [
+    {
+      id: 'lamp-slate',
+      title: 'Lamp, Slate & Rice Tray',
+      blurb: 'The lamp, the Saraswati photograph, a tray of raw rice and a new slate and chalk.',
+      includes: ['pooja', 'priest'],
+      query: 'saraswati pooja lamp books slate rice ritual indian vidyarambham',
+    },
+    {
+      id: 'floral-corner',
+      title: 'Floral Pooja Corner',
+      blurb: 'A small, still corner for a twenty-minute rite — flowers, a mat and good light.',
+      includes: ['floral', 'decor'],
+      query: 'small home pooja room decoration flowers lamp indian ritual corner',
+    },
+    {
+      id: 'temple-morning',
+      title: 'Temple Slot',
+      blurb: 'A booked slot on Vijayadashami morning, with a hundred other families in the queue.',
+      includes: ['priest'],
+      query: 'indian temple vijayadashami ceremony priest children ritual crowd',
+    },
+    {
+      id: 'coverage',
+      title: 'The First Letter',
+      blurb: 'A hand over a hand, writing in rice. Four seconds, and both parents are holding the child.',
+      includes: ['photography'],
+      query: 'indian child learning writing slate chalk hand parent teaching',
+    },
+  ],
+
+  haldi: [
+    {
+      id: 'marigold-matka',
+      title: 'Marigold & Matka Setup',
+      blurb: 'Matkas, marigold curtains, low seating and a floor that is allowed to get turmeric on it.',
+      includes: ['decor', 'floral', 'stage'],
+      query: 'haldi ceremony decoration marigold matka yellow indian wedding',
+    },
+    {
+      id: 'mehendi-seating',
+      title: 'Mehendi Seating & Light',
+      blurb: 'Cushions, low tables and the light artists actually need to work for four hours.',
+      includes: ['mehendi', 'decor', 'lighting'],
+      query: 'mehendi ceremony decoration seating cushions indian wedding yellow',
+    },
+    {
+      id: 'photo-wall',
+      title: 'Marigold Photo Wall',
+      blurb: 'A flower wall and props, which is the only thing the half of the room with wet hands can do.',
+      includes: ['photobooth', 'floral'],
+      query: 'marigold flower wall backdrop photo booth indian wedding decor',
+    },
+    {
+      id: 'coverage',
+      title: 'Haldi Coverage',
+      blurb: 'The best photographs of the whole wedding, taken by somebody who expects to lose a lens.',
+      includes: ['photography', 'videography'],
+      query: 'haldi ceremony turmeric bride laughing candid indian wedding photo',
+    },
+  ],
+
+  farewell: [
+    {
+      id: 'memory-wall',
+      title: 'Wall of the Years',
+      blurb: 'A timeline of photographs — where everybody ends up standing, telling each other stories.',
+      includes: ['memory_wall', 'decor'],
+      query: 'photo wall display memories timeline strings party decoration',
+    },
+    {
+      id: 'dinner-setting',
+      title: 'Dinner Setting',
+      blurb: 'Round tables at a size where people can actually hear the person they came to talk to.',
+      includes: ['decor', 'lighting'],
+      query: 'dinner party table setting warm lights restaurant gathering evening',
+    },
+    {
+      id: 'speeches',
+      title: 'Screen & Microphone',
+      blurb: 'The slideshow somebody made, and a mic so the speech is heard past the third table.',
+      includes: ['av_setup', 'emcee'],
+      query: 'farewell party speech microphone screen presentation gathering',
+    },
+    {
+      id: 'coverage',
+      title: 'The Last Photograph',
+      blurb: 'Everybody in one room, which is exactly the picture nobody remembers to take.',
+      includes: ['photography', 'photobooth'],
+      query: 'group of friends posing together photograph indoor gathering night',
+    },
+  ],
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -717,6 +1037,12 @@ const FEATURED_ORDER = [
   'anniversary', 'naming_ceremony', 'engagement', 'sangeet', 'seemantham',
   'get_together', 'graduation', 'retirement', 'thread_ceremony',
   'corporate_event',
+  // The ten the life-cycle audit added. After the original fifteen rather
+  // than interleaved, because the first three tiles decide whether anybody
+  // scrolls and a vahana pooja is not what a first-time visitor is looking
+  // for — but a family who scrolls should find it.
+  'reception', 'haldi', 'vehicle_pooja', 'half_saree', 'annaprashana',
+  'mundan', 'shop_opening', 'bhoomi_pooja', 'aksharabhyasa', 'farewell',
 ]
 
 export const FEATURED_SAMPLES = FEATURED_ORDER

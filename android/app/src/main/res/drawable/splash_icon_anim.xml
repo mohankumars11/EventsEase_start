@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <!--
+      ══════════════════════════════════════════════════════════════════
+      THE SPLASH GLYPH
+      ══════════════════════════════════════════════════════════════════
+
+      Android's splash slot is a circle maskable square, and this brand has
+      no monogram: the Spencerian S was retired for being illegible small
+      (see the docblock at the top of src/components/ui/SambramoWordmark.jsx)
+      and the mark is the WORD. A word cannot go here. Eight characters
+      across 192dp of safe canvas is the same five pixels per letter problem
+      the launcher tile already fights, plus a mask that would take the
+      first and last letter.
+
+      So the slot gets what every other small square in this app already
+      gets: the ground, with the four point spark on it in white. That is
+      BrandSeal's rule, argued at SambramoWordmark.jsx:99-127, and it means
+      the launch screen and the tab bar are visibly the same object. It is
+      also the glyph in the owner's reference screenshot.
+
+      The geometry is lucide's `sparkles`, copied from
+      node_modules/lucide-react/dist/esm/icons/sparkles.js so the native
+      glyph and the React one cannot drift apart. It is authored in lucide's
+      own 24x24 space and scaled by the inner group.
+
+      ── The canvas ─────────────────────────────────────────────────────
+      288x288 is what Android 12 gives an animated icon with NO icon
+      background. Of that, only the inner 192 is safe. The inner group puts
+      the 24 unit artwork at scale 8 (equals 192) offset 48 on both axes, so
+      every stroke is inside the safe circle with nothing wasted.
+
+      ── Why 900ms ──────────────────────────────────────────────────────
+      windowSplashScreenAnimationDuration is capped at 1000 and anything
+      longer is clamped, not honoured. 900 leaves a margin so a slow first
+      frame does not push the settle past the cap.
+    -->
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="288dp"
+            android:height="288dp"
+            android:viewportWidth="288"
+            android:viewportHeight="288">
+
+            <!-- The settle. Named so the animator below can find it.
+                 Scaled about the centre of the 288 canvas, not the origin. -->
+            <group
+                android:name="settle"
+                android:pivotX="144"
+                android:pivotY="144"
+                android:scaleX="0.88"
+                android:scaleY="0.88">
+
+                <!-- lucide's 24 unit space, placed in the safe 192. -->
+                <group
+                    android:name="fit"
+                    android:scaleX="8"
+                    android:scaleY="8"
+                    android:translateX="48"
+                    android:translateY="48">
+
+                    <!--
+                      The star. STROKED, not filled, and that is what makes
+                      trimPathEnd able to draw it as one gesture. Adding a
+                      fillColor here would paint the whole star instantly
+                      and defeat the animation.
+                    -->
+                    <path
+                        android:name="star"
+                        android:pathData="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                        android:strokeColor="@color/splash_icon"
+                        android:strokeWidth="2"
+                        android:strokeLineCap="round"
+                        android:strokeLineJoin="round"
+                        android:trimPathStart="0"
+                        android:trimPathEnd="0" />
+
+                    <!--
+                      The two small sparks. They arrive after the star,
+                      which is the same staggered grammar the web overlay
+                      uses between the wordmark and the tagline.
+                    -->
+                    <path
+                        android:name="spark_tr"
+                        android:pathData="M20 3v4 M22 5h-4"
+                        android:strokeColor="@color/splash_icon"
+                        android:strokeWidth="2"
+                        android:strokeLineCap="round"
+                        android:strokeAlpha="0" />
+                    <path
+                        android:name="spark_bl"
+                        android:pathData="M4 17v2 M5 18H3"
+                        android:strokeColor="@color/splash_icon"
+                        android:strokeWidth="2"
+                        android:strokeLineCap="round"
+                        android:strokeAlpha="0" />
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!--
+      The star draws itself, 0 to 560ms.
+
+      trimPathEnd is the only property in the whole VectorDrawable
+      vocabulary that reads as a hand rather than as a transition. The
+      path's first point is at (9.94, 15.5), mid left, so the stroke opens
+      downward into the lower point and comes round, which is the direction
+      anyone drawing a star by hand would take.
+    -->
+    <target android:name="star">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:duration="560"
+                android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+
+    <!--
+      The sparks, 420 to 780ms. They OVERLAP the star's last 140ms rather
+      than waiting for it: a strict sequence reads as two animations, an
+      overlap reads as one object completing.
+
+      A group has no alpha attribute, which is why the fade lives on the
+      paths' strokeAlpha rather than on a wrapping group. That omission is
+      the single most common reason a splash AVD silently does nothing.
+    -->
+    <target android:name="spark_tr">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="strokeAlpha"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:startOffset="420"
+                android:duration="280"
+                android:interpolator="@android:interpolator/decelerate_quad" />
+        </aapt:attr>
+    </target>
+    <target android:name="spark_bl">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="strokeAlpha"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:startOffset="500"
+                android:duration="280"
+                android:interpolator="@android:interpolator/decelerate_quad" />
+        </aapt:attr>
+    </target>
+
+    <!--
+      The settle, 0 to 900ms. 0.88 to 1.0 with a single overshoot.
+
+      Two separate scale animators would fight over the same property, so
+      this is one animator per axis with a keyframe set, which is the only
+      way to express an overshoot on a group.
+    -->
+    <target android:name="settle">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="900"
+                    android:interpolator="@android:interpolator/fast_out_slow_in">
+                    <propertyValuesHolder android:propertyName="scaleX">
+                        <keyframe android:fraction="0" android:value="0.88" />
+                        <keyframe android:fraction="0.72" android:value="1.035" />
+                        <keyframe android:fraction="1" android:value="1.0" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+                <objectAnimator
+                    android:duration="900"
+                    android:interpolator="@android:interpolator/fast_out_slow_in">
+                    <propertyValuesHolder android:propertyName="scaleY">
+                        <keyframe android:fraction="0" android:value="0.88" />
+                        <keyframe android:fraction="0.72" android:value="1.035" />
+                        <keyframe android:fraction="1" android:value="1.0" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

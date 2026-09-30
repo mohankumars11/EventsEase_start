@@ -23,18 +23,6 @@ function loadCheckoutScript() {
   return scriptPromise
 }
 
-/** Ask our server to create a Razorpay order for an already-inserted `orders` row. */
-export async function createRazorpayOrder(orderId) {
-  const res = await fetch('/api/create-razorpay-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderId }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Could not start payment')
-  return data // { razorpayOrderId, amount, currency, keyId }
-}
-
 /** Open the Razorpay checkout modal. Resolves with the raw success payload; never resolves on failure/dismiss. */
 export function openCheckout({ razorpayOrderId, amount, currency, keyId, name, email, contact, orderLabel }) {
   return loadCheckoutScript().then(() => new Promise((resolve, reject) => {
@@ -55,16 +43,4 @@ export function openCheckout({ razorpayOrderId, amount, currency, keyId, name, e
     rzp.on('payment.failed', (response) => reject(new Error(response?.error?.description || 'Payment failed')))
     rzp.open()
   }))
-}
-
-/** Server-side signature verification — the only step that can mark an order paid. */
-export async function verifyRazorpayPayment({ orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature }) {
-  const res = await fetch('/api/verify-razorpay-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Payment could not be verified')
-  return data // { verified: true }
 }

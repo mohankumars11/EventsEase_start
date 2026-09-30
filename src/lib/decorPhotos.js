@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { compressImage } from './productImages'
+import { compressImage } from './imageUpload'
 import { isMissingTable } from './serviceCatalog'
 
 /**

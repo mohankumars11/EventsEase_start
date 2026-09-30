@@ -1,10 +1,38 @@
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Check, X,
-  ChevronUp, ChevronDown, Clock, AlertCircle,
+  Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Lock,
+  ChevronUp, ChevronDown, Clock, Search, AlertCircle,
 } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
+import { TRADE_FOR_SERVICE } from '../../config/vendor'
+import AddItemFlow from './AddItemFlow'
+import { clearQueue } from '../../lib/tradeQueue'
+import VenueManager from './VenueManager'
+import ListingStatusCard from './ListingStatusCard'
+import WorkLibrary from './WorkLibrary'
+/* The three the Listing tab is now built from. All three imports were
+   lost to a patch that used replace() without asserting the anchor
+   matched: the file built clean and threw "ListingPitch is not
+   defined" at render — the same bare-identifier class as ListChecks,
+   which bundlers treat as a runtime global. */
+import TradeGrid from './TradeGrid'
+import ListingPitch from './ListingPitch'
+/* Not the tracker itself — its states, its beads and its "how long
+   ago". The tracker still renders on the Jobs tab, read-only, where a
+   partner asking "why are there no jobs" needs the answer and has no
+   business editing anything. Here, its row and the service row below it
+   were the same listing drawn twice, so they became one card. */
+import { STATE, stateOf, StatusBeads, ago } from './ListingTracker'
+
+/* The trades `match_partners` can match on, read from the same map
+   dispatch uses — so this list cannot drift from what actually works.
+   A hand-typed copy goes stale the first time a trade is added. */
+const DISPATCH_TRADES = [...new Set(Object.values(TRADE_FOR_SERVICE))].sort()
+
+/* The trade a venue partner's service row carries. */
+const VENUE_TRADE = TRADE_FOR_SERVICE.venue
 
 /**
  * The vendor's price list.
@@ -20,68 +48,57 @@ import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
  * against.
  */
 
-/**
- * First-item suggestions, keyed by the categories VendorOnboarding offers.
- *
- * An empty list with a lone "Add item" button is where vendor onboarding dies:
- * the vendor has to invent the shape of the answer before giving one. Three
- * real examples from their own trade turns a blank page into a pick.
- */
-const STARTERS = {
-  'Catering & Food':      [{ name: 'Veg buffet',        unit: 'per plate' }, { name: 'Non-veg buffet',    unit: 'per plate' }, { name: 'Live chaat counter', unit: 'per event' }],
-  'Photography':          [{ name: 'Half-day coverage', unit: 'per event' }, { name: 'Full-day coverage', unit: 'per event' }, { name: 'Candid add-on',      unit: 'per hour'  }],
-  'Videography':          [{ name: 'Event film',        unit: 'per event' }, { name: 'Highlight reel',    unit: 'per event' }, { name: 'Drone coverage',     unit: 'per hour'  }],
-  'Decoration & Floral':  [{ name: 'Balloon arch',      unit: 'per set'   }, { name: 'Stage backdrop',    unit: 'per event' }, { name: 'Floral centrepiece', unit: 'per piece' }],
-  'Venue':                [{ name: 'Hall booking',      unit: 'per day'   }, { name: 'Lawn booking',      unit: 'per day'   }, { name: 'Extra hours',        unit: 'per hour'  }],
-  'DJ & Music':           [{ name: 'DJ with setup',     unit: 'per event' }, { name: 'Extra hours',       unit: 'per hour'  }, { name: 'Dance floor lights', unit: 'per event' }],
-  'Cake & Desserts':      [{ name: 'Custom cake',       unit: 'per kg'    }, { name: 'Cupcakes',          unit: 'per piece' }, { name: 'Dessert table',      unit: 'per event' }],
-  'Bridal Makeup & Hair': [{ name: 'Bridal makeup',     unit: 'per event' }, { name: 'Guest makeup',      unit: 'per person'}, { name: 'Hair styling',       unit: 'per person'}],
-  'Mehendi Artist':       [{ name: 'Bridal mehendi',    unit: 'per event' }, { name: 'Guest mehendi',     unit: 'per person'}, { name: 'Simple hands',       unit: 'per person'}],
-  'Tent & Furniture':     [{ name: 'Chairs',            unit: 'per piece' }, { name: 'Round tables',      unit: 'per piece' }, { name: 'Shamiana / pandal',  unit: 'per event' }],
-}
 
-const DEFAULT_STARTERS = [
-  { name: 'Standard package', unit: 'per event' },
-  { name: 'Premium package',  unit: 'per event' },
-  { name: 'Hourly rate',      unit: 'per hour'  },
-]
+export default function VendorServiceList({
+  vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs,
+  startTrade = null, onStartConsumed,
+  /* Where to send the partner when the add flow closes. Set only when
+     they arrived from step 1 of onboarding — see VendorDashboard. */
+  returnTo = null,
+}) {
+  const navigate = useNavigate()
+  /* The catalogue picker replaces the free-text add. See
+     AddFromCatalogue and data/partnerCatalogue for why. */
+  /* Holds `true` for the full picker, or a trade name to start the
+     flow already on that trade. See TradeGrid. */
+  const [picking, setPicking] = useState(false)
+  const [q, setQ] = useState('')
 
-const BLANK = {
-  name: '', category: '', description: '',
-  price: '', unit: 'per event', min_quantity: 1, lead_time_days: '',
-}
+  /* ══════════════════════════════════════════════════════════════════
+     THE HAND-OFF FROM ONBOARDING
+     ══════════════════════════════════════════════════════════════════
 
-export default function VendorServiceList({ vendor, services, onAdd, onUpdate, onRemove }) {
+     The last button of onboarding lands here at ?tab=list&start=<trade>
+     and this is what reads it: the add-item flow opens on the trade the
+     partner named in step 1, so signing up and starting to list are one
+     continuous act rather than two things separated by an empty screen.
+
+     Consumed immediately. Left in the URL, closing the flow would drop
+     the partner back on this tab and reopen it under them — a screen
+     they cannot get out of is worse than one they never reached. */
+  useEffect(() => {
+    if (!startTrade) return
+    setPicking(startTrade)
+    onStartConsumed?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startTrade])
+
   const toast = useToast()
   // null = closed, 'new' = the add form, or an id being edited. One at a time:
   // two open forms on a phone is two half-finished items.
   const [editing, setEditing] = useState(null)
   const [busyId,  setBusyId]  = useState(null)
 
-  const starters = STARTERS[vendor?.category] ?? DEFAULT_STARTERS
+  /* STARTERS and DEFAULT_STARTERS are gone with the old empty state.
+     They offered three free-text suggestions per category -- exactly the
+     typed names AddFromCatalogue was built to end, and they would have
+     produced rows dispatch could not match. */
 
   async function guard(id, fn) {
     setBusyId(id)
     try { await fn() } catch (err) { toast.error(friendlyError(err)) } finally { setBusyId(null) }
   }
 
-  async function handleSave(fields, id) {
-    // Empty string is not zero and not null. An untouched price field must
-    // stay "quote on request" rather than becoming a free item.
-    const payload = {
-      name:        fields.name.trim(),
-      category:    fields.category.trim() || null,
-      description: fields.description.trim() || null,
-      price:        fields.price === '' ? null : Number(fields.price),
-      unit:         fields.unit,
-      min_quantity: Math.max(1, Number(fields.min_quantity) || 1),
-      lead_time_days: fields.lead_time_days === '' ? null : Number(fields.lead_time_days),
-    }
-    if (id === 'new') await onAdd(payload)
-    else              await onUpdate(id, payload)
-    setEditing(null)
-    toast.success(id === 'new' ? 'Added to your list.' : 'Saved.')
-  }
 
   /**
    * Swap sort_order with the neighbour. Two writes, and a partial failure is
@@ -107,127 +124,227 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
           <h2 className="text-lg font-display font-bold text-gray-900">What you offer</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {services.length === 0
-              ? 'Your list is what our coordinators quote from. Nothing here yet.'
+              ? 'What you list is what you get offered.'
               : `${activeCount} live${services.length !== activeCount ? ` · ${services.length - activeCount} hidden` : ''}`}
           </p>
         </div>
-        {editing !== 'new' && (
-          <button onClick={() => setEditing('new')} className="btn-plum text-sm">
-            <Plus size={16} /> Add an item
-          </button>
-        )}
       </header>
+      {/* ── Where a listing actually is ───────────────────────────────
+          Submitting and hearing nothing is where a partner loses
+          interest, and it is a silence we create. This shows the whole
+          journey — submitted, under review with a real timeframe, then
+          live — and hands them the one thing worth doing meanwhile.
+          See ListingStatusCard. */}
+      {(() => {
+        const rejected = services.filter(s => s.review_status === 'rejected')
+        const pending = services.filter(s => s.review_status === 'under_review')
+        const live = services.filter(s => s.review_status === 'live')
 
-      {editing === 'new' && (
-        <ServiceForm
-          initial={BLANK}
-          vendorCategory={vendor?.category}
-          onCancel={() => setEditing(null)}
-          onSave={fields => handleSave(fields, 'new')}
+        if (rejected.length) {
+          return (
+            <ListingStatusCard
+              status="rejected"
+              count={rejected.length}
+              note={rejected[0]?.review_note}
+            />
+          )
+        }
+        if (pending.length) {
+          /* The oldest one, because that is the wait a partner is
+             actually feeling. */
+          const first = pending.reduce(
+            (x, y) => (new Date(x.created_at) < new Date(y.created_at) ? x : y),
+            pending[0])
+          return (
+            <ListingStatusCard
+              status="review"
+              count={pending.length}
+              submittedAt={first?.created_at}
+              onOpenCalendar={onOpenCalendar}
+            />
+          )
+        }
+        /* Only right after a submission. An established partner opening
+           their listing does not need a card telling them they are live —
+           that is a moment, not a permanent badge. */
+        return null
+      })()}
+
+      {/* ── The flow itself ───────────────────────────────────────
+          Lost when the red card was replaced: the splice that removed
+          the empty state walked back to the preceding comment and took
+          this with it. `picking` was still set by the grid and nothing
+          read it, so tapping a trade did exactly nothing — no error, no
+          screen, no clue.
+
+          `picking` is `true` for the full picker or a trade name to open
+          on that trade. */}
+      {picking && (
+        <AddItemFlow
+          existing={services}
+          startTrade={typeof picking === 'string' ? picking : null}
+          /* partner_work is keyed on the vendor, not on a listing row:
+             one body of work, however many services they list. */
+          vendorId={vendor?.id}
+          onAdd={onAdd}
+          /* ── Straight on to the next trade they picked ─────────────
+             The flow hands back a trade name when the partner queued
+             several and this was not the last. Reopening on that trade
+             rather than closing is what makes "I do photography, video
+             and decoration" four taps instead of three separate visits
+             to Add Service — and a partner who wants to stop can still
+             close it, because every queued trade already exists as a
+             listing they can come back to. */
+          onClose={next => {
+            /* Another queued trade? Open it. Otherwise, if we came from
+               step 1, hand the partner back to the hub rather than
+               leaving them on the dashboard — the whole point of the
+               six-step redesign. */
+            if (typeof next === 'string') { setPicking(next); return }
+            /* ── The walk is over, either way ────────────────────────
+               Drained or abandoned, the queue must not survive: it
+               lives in localStorage and `clearQueue` was exported and
+               never called once, so a partner who backed out of a
+               three-trade walk had those trades still queued weeks
+               later — and the next single trade they added would chain
+               into one of them without explanation. */
+            clearQueue()
+            setPicking(false)
+            if (returnTo) navigate(returnTo)
+          }}
         />
       )}
 
-      {services.length === 0 && !editing && (
-        <div className="card p-6 sm:p-8 text-center">
-          <div className="text-3xl mb-3">🗒️</div>
-          <h3 className="font-display font-bold text-gray-900">Start with what you sell most</h3>
-          <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-            Three or four items is plenty to begin with. You can price them now or
-            leave a price blank and quote per enquiry.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
-            {starters.map(s => (
-              <button
-                key={s.name}
-                onClick={() => setEditing({ ...BLANK, ...s, category: vendor?.category ?? '' })}
-                className="text-xs font-semibold px-3 py-2 rounded-xl border border-plum-200 text-plum-700 bg-plum-50 hover:bg-plum-100 transition-colors"
-              >
-                + {s.name}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* ══════════════════════════════════════════════════════════════
+          EDIT OPENS THE TRADE, NOT A NAMING FORM
+          ══════════════════════════════════════════════════════════════
+
+          Edit used to swap the card for `ServiceForm` — item name, a
+          price, and a select headed "What kind of work is this?". That
+          is the ADD form, and on a listing that already exists it is the
+          wrong three questions: the name is the offering, the trade is
+          what dispatch joins on, and everything a partner might actually
+          want to change — their cuisines, their limits, their notice,
+          what the hall costs — was not on it at all. It lived on the
+          card as a separate fold, so editing a listing and editing its
+          answers were two different places.
+
+          Now Edit reopens the flow the listing was made in, on the
+          partner's own trade, seeded with what they already answered.
+          The trade and offering steps are skipped because those are the
+          row. Saving updates that row rather than adding another. */}
+      {typeof editing === 'string' && services.some(s => s.id === editing) && (
+        <AddItemFlow
+          existing={services}
+          editing={services.find(s => s.id === editing)}
+          vendorId={vendor?.id}
+          onUpdate={onUpdate}
+          /* Honours returnTo like the add flow above. Editing a listing
+             from step 1 has to come back to step 1; this instance used
+             to swallow it and strand the partner on the dashboard. */
+          onClose={() => {
+            setEditing(null)
+            if (returnTo) navigate(returnTo)
+          }}
+        />
       )}
 
       {/* A starter chip opens the form pre-filled — `editing` holds the draft
           object rather than an id, so the same form serves all three entries. */}
-      {editing && typeof editing === 'object' && (
-        <ServiceForm
-          initial={editing}
-          vendorCategory={vendor?.category}
-          onCancel={() => setEditing(null)}
-          onSave={fields => handleSave(fields, 'new')}
-        />
-      )}
 
-      <ul className="space-y-3">
+      {/* ══════════════════════════════════════════════════════════════
+          ONE CARD PER LISTING, AND EVERYTHING ABOUT IT IS ON IT
+          ══════════════════════════════════════════════════════════════
+
+          A listing appeared twice on this screen: as a row in the
+          tracker at the top, carrying its status and its four beads,
+          and again down here as a service row carrying its price and
+          the eye/pencil/bin. Same listing, same screen, two cards, and
+          nothing said they were the same thing — so a partner with
+          three listings met six cards and had to pair them up.
+
+          Now: one card. The name, what it is being read for, how far
+          along it is, the price, and the three things a partner can do
+          to it — edit, hide, delete — on the card itself rather than in
+          a separate row of controls somewhere else.
+
+          Two listings make two cards; six make six, in the order the
+          partner arranged them. The arrows move a card and the list
+          reorders under the finger. */}
+      <ul className="space-y-2.5">
         {services.map((s, i) => (
           <li key={s.id}>
-            {editing === s.id ? (
-              <ServiceForm
-                initial={{
-                  name: s.name, category: s.category ?? '', description: s.description ?? '',
-                  price: s.price ?? '', unit: s.unit, min_quantity: s.min_quantity,
-                  lead_time_days: s.lead_time_days ?? '',
-                }}
-                vendorCategory={vendor?.category}
-                onCancel={() => setEditing(null)}
-                onSave={fields => handleSave(fields, s.id)}
-              />
-            ) : (
-              <div className={`card p-4 flex items-start gap-3 transition-opacity ${s.is_active ? '' : 'opacity-60'}`}>
-                <div className="flex flex-col gap-0.5 pt-0.5 shrink-0">
-                  <IconButton label="Move up"   disabled={i === 0}                   onClick={() => move(i, -1)}><ChevronUp   size={14} /></IconButton>
-                  <IconButton label="Move down" disabled={i === services.length - 1} onClick={() => move(i,  1)}><ChevronDown size={14} /></IconButton>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-gray-900 text-sm">{s.name}</span>
-                    {!s.is_active && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                        Hidden
-                      </span>
-                    )}
-                    {s.price === null && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                        No price
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-plum-700 font-semibold mt-0.5">{describeService(s)}</div>
-                  {s.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.description}</p>
-                  )}
-                  {s.lead_time_days !== null && s.lead_time_days !== undefined && (
-                    <p className="text-xs text-gray-500 mt-1 inline-flex items-center gap-1">
-                      <Clock size={11} />
-                      {s.lead_time_days === 0 ? 'Same-day possible' : `${s.lead_time_days} day${s.lead_time_days === 1 ? '' : 's'} notice`}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <IconButton
-                    label={s.is_active ? 'Hide from coordinators' : 'Show to coordinators'}
-                    disabled={busyId === s.id}
-                    onClick={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
-                  >
-                    {s.is_active ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </IconButton>
-                  <IconButton label="Edit" onClick={() => setEditing(s.id)}>
-                    <Pencil size={15} />
-                  </IconButton>
-                  <DeleteButton
-                    busy={busyId === s.id}
-                    onConfirm={() => guard(s.id, () => onRemove(s.id))}
-                  />
-                </div>
-              </div>
-            )}
+            {/* Editing no longer swaps the card for a form in place —
+                it opens the trade's own flow over the top. See the
+                AddItemFlow above. */}
+            <ListingCard
+              listing={s}
+              first={i === 0}
+              last={i === services.length - 1}
+              busy={busyId === s.id}
+              dispatchable={DISPATCH_TRADES.includes(s.category)}
+              onMove={dir => move(i, dir)}
+              onEdit={() => setEditing(s.id)}
+              onToggle={() => guard(s.id, () => onUpdate(s.id, { is_active: !s.is_active }))}
+              onDelete={() => guard(s.id, () => onRemove(s.id))}
+              /* Read the row back: freeze_review_status reverts a
+                 refused transition silently, and the update reports
+                 success either way. */
+              onResubmit={() => guard(s.id, async () => {
+                const row = await onUpdate(s.id, { review_status: 'under_review' })
+                if (row && row.review_status !== 'under_review') {
+                  toast.error('That did not go through. Talk to our team and we will look at it.')
+                } else {
+                  toast.success('Sent back to our team. We read these by hand.')
+                }
+              })}
+            />
           </li>
         ))}
       </ul>
+
+      {/* ── The grid is the screen, but only when it needs to be ───
+          The argument below is true, and it is true about a partner
+          with NOTHING listed. For them the grid IS the screen and a
+          button in front of it is a toll gate on the one action the
+          screen exists for.
+
+          For everybody else it was 870px -- 66% of the whole tab --
+          permanently expanded under their listings, thirteen rows of
+          trades they have already chosen from. They have been through
+          the flow; they know what the button does; the toll-gate
+          argument does not survive the second visit.
+
+          So: zero listings keeps it inline and unchanged. One or more
+          gets a button that opens the SAME grid full-screen, because
+          AddItemFlow already renders TradeGrid on its first step. No
+          second component, no second search, no second copy of the
+          thing TradeGrid's own header argues should exist once. */}
+      {!editing && services.length === 0 && (
+        <>
+          <ListingPitch empty />
+          <TradeGrid
+            q={q}
+            setQ={setQ}
+            onPick={t => setPicking(t)}
+            placeholder="Search 26 trades — catering, generator, mehendi…"
+          />
+        </>
+      )}
+
+      {/* Between the listings and the way to add another: it is about
+          the listings, not about adding one. */}
+      {!editing && vendor?.id && <WorkLibrary vendor={vendor} />}
+
+      {!editing && services.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-[14px] font-extrabold text-royal-700 ring-1 ring-royal-200 transition active:scale-[0.99]"
+        >
+          <Plus size={16} /> Add something else you do
+        </button>
+      )}
 
       {services.length > 0 && (
         <p className="text-xs text-gray-500">
@@ -239,172 +356,395 @@ export default function VendorServiceList({ vendor, services, onAdd, onUpdate, o
   )
 }
 
-function ServiceForm({ initial, vendorCategory, onSave, onCancel }) {
-  const [f, setF]         = useState(initial)
-  const [saving, setSaving] = useState(false)
-  const [err, setErr]     = useState(null)
+function ListingCard({
+  listing: s, first, last, busy, dispatchable,
+  onMove, onEdit, onToggle, onDelete, onResubmit,
+}) {
+  const state = stateOf(s)
+  const meta = STATE[state]
+  const Icon = meta.icon
+  const when = ago(s.reviewed_at ?? s.created_at)
 
-  const unit = UNIT_BY_ID[f.unit] ?? UNIT_BY_ID['per event']
-  const set  = (k, v) => { setF(prev => ({ ...prev, [k]: v })); setErr(null) }
+  /* ══════════════════════════════════════════════════════════════════
+     COLLAPSED BY DEFAULT, EXCEPT WHEN IT IS WAITING ON THEM
+     ══════════════════════════════════════════════════════════════════
 
-  async function submit(e) {
-    e.preventDefault()
-    if (!f.name.trim())              return setErr('Give this item a name your customer would recognise.')
-    if (f.price !== '' && Number(f.price) < 0) return setErr('A price cannot be negative.')
-    setSaving(true)
-    try { await onSave(f) } catch (e2) { setErr(friendlyError(e2)) } finally { setSaving(false) }
-  }
+     This card was 205-360px and six of them made the tab four screens
+     of scrolling to reach a button. Almost all of that is reference: a
+     partner opens the Listing tab to check one thing, not to read six
+     listings end to end.
+
+     What stays open is exactly what ListingTracker already decided --
+     "anything waiting on the partner is never folded". Three things
+     qualify, and all three mean the partner is silently earning
+     nothing:
+
+       rejected        a review_note is the one sentence on this tab
+                       waiting on THEM rather than on us
+       no guide price  a blank nobody has told them about
+       never offered   a trade string dispatch cannot match
+
+     A rejected listing has no chevron at all. Folding away the note
+     that says what to change would be hiding the only actionable thing
+     on the screen. */
+  const needsThem =
+    state === 'rejected' || s.price === null || (s.is_active && !dispatchable)
+  const [open, setOpen] = useState(needsThem)
+  const locked = state === 'rejected'
+
+  /* Just the money, without the "· min 100 plates" tail -- on a
+     collapsed row that tail is what forces the name to truncate. */
+  const headline = describeService({ price: s.price, unit: s.unit, min_quantity: 1 })
+
+  /* Bold white on the brand blue for a live listing; amber and rose
+     carry white too, and nothing here is white on a pale ground. */
+  const head = state === 'live' ? 'bg-royal-600 text-white'
+    : state === 'under_review' ? 'bg-amber-500 text-white'
+    : state === 'rejected' ? 'bg-rose-600 text-white'
+    : 'bg-ink/[0.06] text-ink-soft'
 
   return (
-    <form onSubmit={submit} className="card p-4 sm:p-5 border-plum-200 ring-1 ring-plum-100 space-y-4">
-      <div>
-        <label className="label" htmlFor="svc-name">Item name</label>
-        <input
-          id="svc-name" className="input" value={f.name} autoFocus
-          onChange={e => set('name', e.target.value.slice(0, 80))}
-          placeholder="e.g. Veg buffet"
-        />
-      </div>
-
-      {/* Price and unit are one decision, so they sit on one row — the number
-          is meaningless without the thing it is per. */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="svc-price">
-            Price <span className="font-normal text-gray-500">(optional)</span>
-          </label>
-          <input
-            id="svc-price" className="input" inputMode="numeric" value={f.price}
-            onChange={e => set('price', e.target.value.replace(/[^\d.]/g, ''))}
-            placeholder="Leave blank to quote later"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="svc-unit">Per</label>
-          <select id="svc-unit" className="input" value={f.unit} onChange={e => set('unit', e.target.value)}>
-            {SERVICE_UNITS.map(u => (
-              <option key={u.id} value={u.id}>{u.id.replace('per ', '')}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="svc-min">{unit.quantityLabel}</label>
-          <input
-            id="svc-min" className="input" inputMode="numeric" value={f.min_quantity}
-            onChange={e => set('min_quantity', e.target.value.replace(/\D/g, ''))}
-            placeholder="1"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="svc-lead">
-            Notice needed <span className="font-normal text-gray-500">(days)</span>
-          </label>
-          <input
-            id="svc-lead" className="input" inputMode="numeric" value={f.lead_time_days}
-            onChange={e => set('lead_time_days', e.target.value.replace(/\D/g, ''))}
-            placeholder="Same as your profile"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="label" htmlFor="svc-desc">
-          What's included <span className="font-normal text-gray-500">(optional)</span>
-        </label>
-        <textarea
-          id="svc-desc" className="input resize-none h-20" value={f.description}
-          onChange={e => set('description', e.target.value.slice(0, 300))}
-          placeholder="Starters, two mains, dessert, staff and serving equipment…"
-        />
-      </div>
-
-      {/* The line a coordinator will actually read, shown while it is being
-          typed. It is the only way for the vendor to tell that "400" and
-          "per plate" combine into something sane. */}
-      <div className="rounded-xl bg-white border border-orange-100 px-3 py-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-0.5">
-          How this reads to us
-        </div>
-        <div className="text-sm text-gray-800">
-          <span className="font-semibold">{f.name.trim() || 'Untitled item'}</span>
-          {' — '}
-          <span className="text-plum-700 font-semibold">
-            {describeService({ price: f.price === '' ? null : f.price, unit: f.unit, min_quantity: Number(f.min_quantity) || 1 })}
+    <div className={`overflow-hidden rounded-[20px] bg-white ring-1 ${meta.ring} ${s.is_active ? '' : 'opacity-75'}`}>
+      {/* ── The whole card, collapsed ──────────────────────────────
+          A button, not a div with an onClick: this is the primary
+          control of the card and it has to be reachable by keyboard and
+          announce its state. The arrows moved into the action row
+          below -- a chevron, two 14px arrows and a truncating title
+          fighting over one gutter at 390px is three targets in the
+          space for one, and nesting buttons inside a button is invalid
+          besides. */}
+      <button
+        type="button"
+        onClick={() => { if (!locked) setOpen(o => !o) }}
+        aria-expanded={open}
+        disabled={locked}
+        className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left ${head}`}
+      >
+        <Icon size={15} className="shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14.5px] font-extrabold leading-tight">
+            {s.name}
           </span>
-        </div>
-      </div>
+          <span className="block truncate text-[11.5px] font-semibold opacity-85">
+            {meta.label}{when ? ` · ${when}` : ''}
+          </span>
+        </span>
+        {/* currentColor, never royal-700 -- a fixed dark token is
+            invisible on the royal band and a fixed light one disappears
+            on the pale hidden state. The same trap the arrows note
+            below already documents. */}
+        <span className="shrink-0 text-[12.5px] font-extrabold opacity-90">
+          {s.price === null ? 'No price' : headline}
+        </span>
+        {!locked && (
+          <ChevronDown
+            size={16}
+            className={`shrink-0 opacity-80 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+        )}
+      </button>
 
-      {err && (
-        <p className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
-          <AlertCircle size={15} className="mt-0.5 shrink-0" />{err}
-        </p>
+      {/* ── The alarm strip survives the fold ───────────────────────
+          These three are the only things on this card that mean the
+          partner is earning nothing and does not know it. Hiding them
+          behind a tap would make the collapse a way to not find out. */}
+      {(s.price === null || (s.is_active && !dispatchable) || !s.is_active) && (
+        <div className="flex flex-wrap gap-1.5 px-4 pt-2">
+          {!s.is_active && (
+            <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-bold text-ink-mute">
+              Hidden by you
+            </span>
+          )}
+          {s.price === null && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+              Guide price missing
+            </span>
+          )}
+          {s.is_active && !dispatchable && (
+            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+              Never offered — fix the work type
+            </span>
+          )}
+        </div>
       )}
 
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="btn-plum text-sm flex-1 sm:flex-none">
-          <Check size={16} /> {saving ? 'Saving…' : 'Save item'}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-secondary text-sm">
-          <X size={16} /> Cancel
-        </button>
-        {vendorCategory && !f.category && (
+      {/* `hidden`, never `{open && …}`. Unmounting would throw away a
+          half-typed edit inside anything the body grows later -- the
+          lesson Fold.jsx already records. */}
+      {/* Everything below the coloured row folds away together: the
+          beads, the detail, the reorder arrows and the actions. A
+          collapsed card is the row and the alarm strip, nothing else.
+
+          No display utility on this element -- see the note further
+          down on why a `flex` class here silently defeats `hidden`. */}
+      <div hidden={!open}>
+      <StatusBeads state={state} className="px-4 pt-2.5" />
+
+      <div className="px-4 pb-3 pt-2">
+        <p className="text-[13.5px] font-extrabold text-royal-700">{describeService(s)}</p>
+
+        {/* The handle a partner had no way to quote. Reading a UUID down
+            a phone is not a thing anybody does, so until 115 the only
+            way to say WHICH listing was to describe it. select-all so it
+            can be copied into a WhatsApp message in one gesture. */}
+        {s.listing_code && (
+          <p className="mt-0.5 select-all font-mono text-[11px] font-bold text-ink-mute">
+            {s.listing_code}
+          </p>
+        )}
+
+        {s.description && (
+          <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-ink-mute">{s.description}</p>
+        )}
+
+        {s.lead_time_days !== null && s.lead_time_days !== undefined && (
+          <p className="mt-1 inline-flex items-center gap-1 text-[11.5px] text-ink-mute">
+            <Clock size={11} />
+            {s.lead_time_days === 0 ? 'Same-day possible' : `${s.lead_time_days} day${s.lead_time_days === 1 ? '' : 's'} notice`}
+          </p>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════
+            The silence that cost a partner every job
+            ══════════════════════════════════════════════════════════
+
+            match_partners joins on `category`. A row whose category is
+            null, or is free text no trade matches, is offered to NOBODY
+            — and nothing said so anywhere. A real partner has a row
+            reading "videpgraphy" that has never once been dispatched,
+            and from this screen it looked identical to the row beside
+            it that works. */}
+
+        {/* ══════════════════════════════════════════════════════════
+            WHAT THE NUMBER IS, SAID ONCE, WHERE IT IS MISSING
+            ══════════════════════════════════════════════════════════
+
+            A partner who has left the price blank is usually protecting
+            it — they think naming a number publishes it, or ties their
+            hands on a job they have not seen. Both are wrong here and
+            neither was ever said on this screen.
+
+            So the sentence appears exactly where the gap is, and only
+            there: on a card that already has a price it would be noise. */}
+        {s.price === null && (
+          <p className="mt-2 rounded-xl bg-amber-50/70 px-3 py-2 text-[11.5px] leading-snug text-amber-900">
+            <span className="font-extrabold">A guide price is not a quote. </span>
+            It is what this work costs you, kept between you and us. Customers
+            never see it, and it never decides who is offered a job — it is how
+            we price a booking on something real instead of guessing.
+          </p>
+        )}
+
+        {/* Why it came back. A listing refused with no reason is a
+            partner who submits the same thing again. */}
+        {state === 'rejected' && s.review_note && (
+          <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[12px] leading-snug text-rose-900 ring-1 ring-rose-200">
+            <span className="font-extrabold">What to change: </span>{s.review_note}
+          </p>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════
+            THE WAY BACK
+            ══════════════════════════════════════════════════════════
+
+            Rejection used to be a dead end. freeze_review_status
+            reverted any change a partner made to review_status, and the
+            operator queue was built from 'under_review' only -- so a
+            partner who fixed exactly what the note asked for had no way
+            to say so and no queue to return to. The row sat at
+            'rejected' forever.
+
+            117 opens one door, rejected -> under_review, and this is
+            it. The note is cleared by the trigger, because it described
+            the version they have just changed. */}
+        {state === 'rejected' && (
           <button
             type="button"
-            onClick={() => set('category', vendorCategory)}
-            className="hidden sm:inline-flex text-xs text-gray-500 hover:text-plum-600 px-2"
+            disabled={busy}
+            onClick={onResubmit}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-forest-600 py-2.5 text-[12.5px] font-extrabold text-white disabled:opacity-50"
           >
-            Tag as {vendorCategory}
+            <Check size={14} /> I have fixed this — read it again
           </button>
         )}
       </div>
-    </form>
-  )
-}
 
-function IconButton({ label, children, disabled, onClick }) {
-  return (
-    <button
-      type="button" onClick={onClick} disabled={disabled}
-      aria-label={label} title={label}
-      className="p-1.5 rounded-lg text-gray-500 hover:text-plum-600 hover:bg-plum-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
-    >
-      {children}
-    </button>
+
+      {/* ── What they can do to it ──────────────────────────────────
+          Labelled, 44px tall, and Delete at the far end from Edit. It
+          was three round icon buttons stacked against the right edge of
+          the row, 32px each with 6px between them, the middle one Edit
+          and the bottom one Delete. */}
+      {/* ── Reordering, out of the header ──────────────────────────
+          The arrows lived in the coloured band and cost it a gutter,
+          next to a title that truncates. Reordering is rare; it belongs
+          beside the other rare actions, not competing with the name.
+
+          They still do NOT use IconButton -- that paints text-gray-500,
+          designed for a white row, and this row is white so it would be
+          fine here; but keeping them on currentColor means the block
+          survives being moved back onto a coloured ground. */}
+      {/* No display class on the element carrying `hidden`. The
+          attribute sets display:none from the UA sheet and ANY utility
+          that sets display -- flex, grid, block -- outranks it, so the
+          row stays visible and the collapse silently does nothing.
+          Fold.jsx works because its hidden div carries no such class.
+          The flex lives on the inner div instead. */}
+      <div className="border-t border-ink/[0.06]">
+      <div className="flex items-center justify-end gap-1 px-3 py-1.5">
+        <span className="mr-auto text-[11px] text-ink-mute">Order</span>
+        <button
+          type="button" aria-label="Move up" title="Move up"
+          disabled={first} onClick={() => onMove(-1)}
+          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-ink/[0.05] disabled:opacity-25"
+        >
+          <ChevronUp size={15} />
+        </button>
+        <button
+          type="button" aria-label="Move down" title="Move down"
+          disabled={last} onClick={() => onMove(1)}
+          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-ink/[0.05] disabled:opacity-25"
+        >
+          <ChevronDown size={15} />
+        </button>
+      </div>
+      </div>
+
+      <div className="grid grid-cols-3 border-t border-ink/[0.06] text-[12px] font-extrabold">
+        <button
+          type="button" onClick={onEdit}
+          className="flex items-center justify-center gap-1.5 py-3 text-ink-soft transition active:bg-ink/[0.04]"
+        >
+          <Pencil size={14} /> Edit
+        </button>
+        <CardHide s={s} state={state} busy={busy} onToggle={onToggle} />
+        <CardDelete busy={busy} onConfirm={onDelete} />
+      </div>
+
+      </div>
+    </div>
   )
 }
 
 /**
- * Two-tap delete instead of window.confirm().
+ * ══════════════════════════════════════════════════════════════════════
+ * HIDING IS THE QUIETEST WAY TO STOP EARNING
+ * ══════════════════════════════════════════════════════════════════════
  *
- * A price list is a vendor's own work and this is the only destructive control
- * on the page, but a blocking browser dialog on a phone is both ugly and easy
- * to dismiss the wrong way. The button becomes its own confirmation and reverts
- * if the vendor taps anywhere else.
+ * Hide sat in the middle cell in the same grey as Edit, one tap, no
+ * confirmation. Delete — which is recoverable, because the partner still
+ * has the trade and can list it again in a minute — took two taps and
+ * turned the row red.
+ *
+ * The weights were backwards. `match_partners()` requires
+ * `is_active = TRUE`: the moment this is tapped on a live listing the
+ * partner leaves the dispatch pool for that trade, silently, with the
+ * card still sitting there looking much as it did. Nothing tells them
+ * later. A partner who taps it to "tidy up" their list stops being
+ * offered work and has no reason to connect the two.
+ *
+ * So it warns, and it says the consequence in the words that matter —
+ * jobs — rather than in the word the database uses. Showing again is
+ * still one tap: putting a confirmation in front of somebody turning
+ * their income back ON would be a different kind of stupid.
  */
-function DeleteButton({ onConfirm, busy }) {
+function CardHide({ s, state, busy, onToggle }) {
+  const [armed, setArmed] = useState(false)
+
+  /* Coming back is safe and instant. No arming, no colour. */
+  if (!s.is_active) {
+    return (
+      <button
+        type="button" onClick={onToggle} disabled={busy}
+        className="flex items-center justify-center gap-1.5 border-x border-ink/[0.06] py-3 text-forest-700 transition active:bg-forest-50 disabled:opacity-50"
+      >
+        <Eye size={14} /> Show
+      </button>
+    )
+  }
+
+  if (!armed) {
+    return (
+      <button
+        type="button" onClick={() => setArmed(true)} disabled={busy}
+        className="flex items-center justify-center gap-1.5 border-x border-ink/[0.06] py-3 text-amber-700 transition active:bg-amber-50 disabled:opacity-50"
+      >
+        <EyeOff size={14} /> Hide
+      </button>
+    )
+  }
+
+  return (
+    <div className="col-span-3 bg-amber-50 px-4 py-3">
+      <p className="text-[12.5px] font-extrabold leading-snug text-amber-900">
+        {state === 'live'
+          ? 'This listing is live. Hiding it stops your jobs.'
+          : 'Hide this listing?'}
+      </p>
+      <p className="mt-1 text-[11.5px] leading-snug text-amber-800">
+        {state === 'live'
+          ? 'You will stop being offered work for it from the moment you tap Hide — customers looking for this today will not reach you. Nothing else changes, and Show puts it back instantly.'
+          : 'It stays on this screen for you, and it will not be offered to anybody. Show puts it back instantly.'}
+      </p>
+      <div className="mt-2.5 flex items-center justify-end gap-2">
+        <button
+          type="button" onClick={() => setArmed(false)}
+          className="rounded-full px-3 py-1.5 text-[12px] font-extrabold text-amber-900"
+        >
+          Keep it live
+        </button>
+        <button
+          type="button" disabled={busy}
+          onClick={() => { setArmed(false); onToggle() }}
+          className="rounded-full bg-amber-600 px-3 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-60"
+        >
+          Hide anyway
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Delete, in two taps, in the width of one button.
+ *
+ * The old DeleteButton swapped the bin for a tick-and-cross pair, which
+ * on a full-width footer cell puts the confirm exactly where the finger
+ * already is. So the confirmation takes over the whole row instead:
+ * "Delete this?" with the answer somewhere the finger is not.
+ */
+function CardDelete({ busy, onConfirm }) {
   const [armed, setArmed] = useState(false)
 
   if (!armed) {
     return (
-      <IconButton label="Delete" onClick={() => setArmed(true)}>
-        <Trash2 size={15} />
-      </IconButton>
+      <button
+        type="button" onClick={() => setArmed(true)} disabled={busy}
+        className="flex items-center justify-center gap-1.5 py-3 text-rose-700 transition active:bg-rose-50 disabled:opacity-50"
+      >
+        <Trash2 size={14} /> Delete
+      </button>
     )
   }
+
   return (
-    <span className="inline-flex items-center gap-1">
+    <div className="col-span-3 flex items-center gap-2 bg-rose-50 px-4 py-2.5">
+      <span className="min-w-0 flex-1 text-[12.5px] font-extrabold text-rose-900">
+        Delete this listing for good?
+      </span>
       <button
-        type="button" onClick={onConfirm} disabled={busy}
-        className="text-[11px] font-bold px-2 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+        type="button" onClick={() => setArmed(false)}
+        className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-extrabold text-rose-900"
       >
-        {busy ? '…' : 'Delete'}
+        Keep
       </button>
-      <IconButton label="Keep it" onClick={() => setArmed(false)}>
-        <X size={14} />
-      </IconButton>
-    </span>
+      <button
+        type="button" disabled={busy}
+        onClick={() => { setArmed(false); onConfirm() }}
+        className="shrink-0 rounded-full bg-rose-600 px-3 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-60"
+      >
+        Delete
+      </button>
+    </div>
   )
 }
