@@ -759,6 +759,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
                   </label>
                   <Field fieldId="catering_addon_minimum" label="Minimum qty" type="number" value={addon.minimum} onChange={v => updateAddon(addon.id, { minimum: v })} />
                   <Field fieldId="catering_addon_maximum" label="Maximum qty" type="number" value={addon.maximum} onChange={v => updateAddon(addon.id, { maximum: v })} placeholder="No limit" />
+                  <Field fieldId="catering_addon_included" label="Included qty" type="number" value={addon.included} onChange={v => updateAddon(addon.id, { included: v })} />
                 </div>
                 <textarea data-field="catering_addon_notes" value={addon.notes ?? ''} onChange={e => updateAddon(addon.id, { notes: e.target.value })}
                   rows="2" placeholder="Optional note for this extra" className="mt-2 w-full resize-none rounded-xl bg-white px-2.5 py-2 text-[10.5px] font-semibold text-ink outline-none ring-1 ring-ink/[0.07]" />
