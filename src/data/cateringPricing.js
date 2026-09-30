@@ -64,6 +64,83 @@ export const CATERING_DIET_LABELS = Object.freeze({
   both: 'Vegetarian + non-vegetarian',
 })
 
+export function defaultCateringRateBands({ minGuests = 100, maxGuests = 1000, rate = '' } = {}) {
+  return [{
+    id: 'band-1',
+    minGuests: String(minGuests),
+    maxGuests: maxGuests == null ? '' : String(maxGuests),
+    rate: rate === '' || rate == null ? '' : String(rate),
+  }]
+}
+
+export function validateCateringRateBands({ bands = [], minGuests = 1, maxGuests = null, requireActive = false } = {}) {
+  const errors = []
+  const list = Array.isArray(bands) ? bands : []
+  const min = Number(minGuests)
+  const cap = maxGuests === '' || maxGuests == null ? null : Number(maxGuests)
+
+  if (requireActive && list.length === 0) {
+    errors.push('Add at least one guest-volume price band.')
+    return errors
+  }
+
+  if (!list.length) return errors
+  let previousMax = null
+
+  for (let i = 0; i < list.length; i++) {
+    const band = list[i] ?? {}
+    const bandMin = Number(band.minGuests)
+    const bandMax = band.maxGuests === '' || band.maxGuests == null ? null : Number(band.maxGuests)
+    const bandRate = Number(band.rate)
+
+    if (!Number.isInteger(bandMin) || bandMin < min) {
+      errors.push('Every pricing band must start at or above the menu minimum.')
+      break
+    }
+    if (i === 0 && bandMin !== min) {
+      errors.push('The first pricing band must start at the menu minimum.')
+      break
+    }
+    if (i > 0 && (previousMax == null || bandMin !== previousMax + 1)) {
+      errors.push('Guest pricing bands must be contiguous with no gaps or overlaps.')
+      break
+    }
+    if (bandMax != null && (!Number.isInteger(bandMax) || bandMax < bandMin)) {
+      errors.push('A pricing band maximum must be a whole number at least its minimum.')
+      break
+    }
+    if (i < list.length - 1 && bandMax == null) {
+      errors.push('Only the final pricing band can have no maximum.')
+      break
+    }
+    if (!Number.isFinite(bandRate) || bandRate <= 0) {
+      errors.push('Every active pricing band needs a supply rate greater than zero.')
+      break
+    }
+    if (cap != null && bandMax != null && bandMax > cap) {
+      errors.push('A pricing band cannot exceed the menu maximum.')
+      break
+    }
+    previousMax = bandMax
+  }
+
+  if (requireActive) {
+    if (cap != null && previousMax !== cap) {
+      errors.push('Pricing bands must cover the full menu guest range.')
+    }
+    if (cap == null && previousMax != null) {
+      errors.push('With no menu maximum, the final pricing band must have no maximum.')
+    }
+  }
+  return errors
+}
+
+export function rateFromBands(bands = []) {
+  const first = Array.isArray(bands) ? bands[0] : null
+  const n = Number(first?.rate)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
 const normDish = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
 export function cateringCapabilityFromListing(service) {
@@ -164,9 +241,15 @@ export function validateCateringPackage({ draft, requireActive = false } = {}) {
   if (!Number.isFinite(staff) || !Number.isInteger(staff) || staff < 0 || staff > 500) errors.includedStaff = 'Enter a valid included staff count.'
   if (requireActive) {
     if (!Number.isFinite(rate) || rate <= 0) errors.rate = 'Enter a supply rate greater than zero.'
+    const bandErrors = validateCateringRateBands({ bands: draft?.rateBands, minGuests: min, maxGuests: max, requireActive: true })
+    if (bandErrors.length) errors.rateBands = bandErrors[0]
     if (!Array.isArray(draft?.items) || draft.items.length === 0) errors.items = 'Add at least one dish before activating.'
   } else if (draft?.rate !== '' && (!Number.isFinite(rate) || rate < 0)) {
     errors.rate = 'Supply rate cannot be negative.'
+  }
+  if (draft?.rateBands?.length && !requireActive) {
+    const bandErrors = validateCateringRateBands({ bands: draft.rateBands, minGuests: min, maxGuests: max, requireActive: false })
+    if (bandErrors.length) errors.rateBands = bandErrors[0]
   }
 
   const duplicate = new Set()
@@ -209,6 +292,7 @@ export function emptyCateringPackage(capability) {
     serviceHours: 3,
     includedStaff: 4,
     rate: '',
+    rateBands: defaultCateringRateBands({ minGuests: 100, maxGuests: 1000 }),
     items: [],
     addons: [],
     notes: '',
