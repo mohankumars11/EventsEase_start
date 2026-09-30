@@ -129,10 +129,10 @@ export default class ErrorBoundary extends Component {
 
           {/* Developer detail, collapsed. Real users skip past it; whoever
               is debugging gets the message and stack without a console. */}
-          {import.meta.env.DEV && (
+          {(import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH_BYPASS === 'true') && (
             <details className="mt-8 text-left">
               <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-600">
-                Error details
+                Development diagnostics
               </summary>
               <pre className="mt-2 p-3 bg-gray-900 text-gray-100 rounded-xl text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap">
                 {this.state.error?.stack ?? String(this.state.error)}
