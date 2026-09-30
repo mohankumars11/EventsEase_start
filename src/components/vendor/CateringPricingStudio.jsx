@@ -260,7 +260,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
                 <p className="mt-2 text-center text-[10.5px] text-ink-mute">
                   {legacyMenus.length} existing menu cards were found in your listing. Import one at a time and complete its dish structure here.
                 </p>
-              )
+              }
             </section>
           ) : (
             <div className="space-y-3">
