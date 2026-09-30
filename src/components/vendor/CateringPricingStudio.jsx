@@ -12,6 +12,7 @@ import {
   cateringDishCatalogue, emptyCateringPackage, sectionLabel, addonUnitLabel,
   validateCateringPackage, CATERING_DIET_LABELS, addonDraftFrom,
 } from '../../data/cateringPricing'
+import { SOURCING_MODES } from '../../data/cateringModel'
 
 const sectionForCourse = courseId => ({
   welcome: 'welcome',
@@ -28,6 +29,7 @@ const sectionForCourse = courseId => ({
 })[courseId] ?? 'other'
 
 const iid = () => crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + Math.random())
+const normDishName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
 export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings }) {
   const capability = useMemo(() => cateringCapabilityFromListing(service), [service])
@@ -36,23 +38,44 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(null)
   const [preview, setPreview] = useState(false)
+  const [catalogueDishes, setCatalogueDishes] = useState([])
+  const [catalogueError, setCatalogueError] = useState('')
 
   const load = useCallback(async () => {
     if (!service?.id) {
       setPackages([])
+      setCatalogueDishes([])
       setLoading(false)
       return
     }
     setLoading(true)
     setError('')
+    setCatalogueError('')
     try {
-      const { data: rows, error: pkgErr } = await supabase
-        .from('sambramo_catering_packages')
-        .select('*')
-        .eq('vendor_service_id', service.id)
-        .order('updated_at', { ascending: false })
-      if (pkgErr) throw pkgErr
-      const list = rows ?? []
+      const [pkgRes, dishRes] = await Promise.all([
+        supabase.from('sambramo_catering_packages')
+          .select('*')
+          .eq('vendor_service_id', service.id)
+          .order('updated_at', { ascending: false }),
+        supabase.from('catalogue_dishes')
+          .select('id, cuisine_id, course_id, name, note, diet')
+          .eq('is_active', true)
+          .order('name', { ascending: true }),
+      ])
+      if (pkgRes.error) throw pkgRes.error
+      const list = pkgRes.data ?? []
+      setCatalogueDishes((dishRes.data ?? []).map(d => ({
+        id: d.id,
+        cuisineId: d.cuisine_id,
+        courseId: d.course_id,
+        name: d.name,
+        note: d.note ?? '',
+        diet: d.diet,
+        cuisineName: capability.cuisineNames.find((name, index) => capability.cuisines[index] === d.cuisine_id) ?? d.cuisine_id,
+      })))
+      if (dishRes.error) {
+        setCatalogueError('The full dish catalogue could not be loaded. You can continue with the dishes already captured on your listing.')
+      }
       if (!list.length) {
         setPackages([])
         return
@@ -77,10 +100,13 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
       setPackages(list.map(x => ({ ...x, ...grouped(x.id) })))
     } catch (e) {
       setError(e?.message ?? 'Could not load catering pricing.')
+      if (!catalogueDishes.length) {
+        setCatalogueDishes(cateringDishCatalogue(capability.cuisines, capability.kitchenType))
+      }
     } finally {
       setLoading(false)
     }
-  }, [service?.id])
+  }, [service?.id, capability.cuisines.join('|'), capability.kitchenType, capability.cuisineNames.join('|')])
 
   useEffect(() => { load() }, [load])
 
@@ -117,6 +143,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
       cuisines: [...(pkg.cuisine_ids ?? [])],
       kitchenType: pkg.kitchen_type,
       serviceStyle: pkg.service_style,
+      sourcingMode: pkg.sourcing_mode ?? capability.sourcingMode,
       minGuests: pkg.min_guests,
       maxGuests: pkg.max_guests ?? '',
       serviceHours: pkg.service_hours,
@@ -151,6 +178,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         vendor={vendor}
         service={service}
         capability={capability}
+        catalogueDishes={catalogueDishes}
         draft={editing}
         setDraft={setEditing}
         preview={preview}
@@ -195,6 +223,8 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
           {capability.cuisineNames.length > 4 && <MetaPill text={`+${capability.cuisineNames.length - 4} more cuisines`} />}
         </div>
       </section>
+
+      {catalogueError && <p className="rounded-2xl bg-amber-50 p-3 text-[11.5px] font-semibold text-amber-900 ring-1 ring-amber-100">{catalogueError}</p>}
 
       {error && (
         <section role="alert" className="rounded-2xl bg-rose-50 p-4 text-[12px] text-rose-800 ring-1 ring-rose-200">
@@ -306,27 +336,55 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
   )
 }
 
-function CateringPackageEditor({ vendor, service, capability, draft, setDraft, preview, setPreview, onBack, onSaved }) {
+function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
   const [dishOpen, setDishOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
   const [step, setStep] = useState('package')
+  const [dishCuisineFilter, setDishCuisineFilter] = useState('all')
+  const [dishCourseFilter, setDishCourseFilter] = useState('all')
+  const [dishDietFilter, setDishDietFilter] = useState('all')
+  const [previewGuests, setPreviewGuests] = useState(draft.minGuests || 100)
+
+  const capabilityDishIds = useMemo(() => {
+    const explicit = new Set(capability.dishIds ?? [])
+    if (explicit.size) return explicit
+    const legacy = new Set((capability.legacyDishNames ?? []).map(normDishName))
+    if (!legacy.size) return explicit
+    return new Set(catalogueDishes.filter(d => legacy.has(normDishName(d.name))).map(d => d.id))
+  }, [capability.dishIds, capability.legacyDishNames, catalogueDishes])
+
+  const allAvailableDishes = useMemo(() => {
+    if (catalogueDishes.length) {
+      return catalogueDishes.filter(d => {
+        if (!capability.cuisines.includes(d.cuisineId)) return false
+        if (capability.diet === 'veg' && d.diet !== 'veg') return false
+        if (capability.diet === 'nonveg' && d.diet !== 'nonveg') return false
+        return capabilityDishIds.has(d.id)
+      })
+    }
+    return cateringDishCatalogue(draft.cuisines, draft.kitchenType, [...capabilityDishIds])
+  }, [catalogueDishes, capability.cuisines, capability.diet, capabilityDishIds, draft.cuisines, draft.kitchenType])
 
   const dishes = useMemo(
-    () => cateringDishCatalogue(draft.cuisines, draft.kitchenType),
-    [draft.cuisines, draft.kitchenType],
+    () => allAvailableDishes.filter(d => draft.cuisines.includes(d.cuisineId)),
+    [allAvailableDishes, draft.cuisines],
   )
+
   const visibleDishes = useMemo(() => {
     const q = dishSearch.trim().toLowerCase()
-    if (!q) return dishes.slice(0, 140)
-    return dishes.filter(d =>
-      d.name.toLowerCase().includes(q)
-      || d.cuisineName.toLowerCase().includes(q)
-      || d.courseId.toLowerCase().includes(q)
-    ).slice(0, 180)
-  }, [dishes, dishSearch])
+    return dishes.filter(d => {
+      if (dishCuisineFilter !== 'all' && d.cuisineId !== dishCuisineFilter) return false
+      if (dishCourseFilter !== 'all' && d.courseId !== dishCourseFilter) return false
+      if (dishDietFilter !== 'all' && d.diet !== dishDietFilter) return false
+      if (!q) return true
+      return d.name.toLowerCase().includes(q)
+        || d.cuisineName?.toLowerCase().includes(q)
+        || d.courseId?.toLowerCase().includes(q)
+    }).slice(0, 180)
+  }, [dishes, dishSearch, dishCuisineFilter, dishCourseFilter, dishDietFilter])
 
   const selectedIds = useMemo(() => new Set((draft.items ?? []).map(x => x.id)), [draft.items])
   const sectionCounts = useMemo(() => {
