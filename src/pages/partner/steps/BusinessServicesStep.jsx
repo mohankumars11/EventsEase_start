@@ -1,8 +1,11 @@
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ChevronRight, Loader2, Check } from 'lucide-react'
 import StepShell from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { iconForTrade } from '../../../components/vendor/TradeGrid'
+import { pendingTrades } from '../../../lib/tradeQueue'
+import { ensureListing } from '../../../lib/partnerListings'
 
 /**
  * Step 1 · the service hub.
@@ -29,6 +32,27 @@ import { iconForTrade } from '../../../components/vendor/TradeGrid'
 export default function BusinessServicesStep() {
   const navigate = useNavigate()
   const { loading, account, steps } = usePartnerOnboarding()
+  const [handoffError, setHandoffError] = useState('')
+  const handoffStarted = useRef(false)
+
+  // Picks made before the vendor row exists are kept in the trade queue.
+  // Once setup creates the row, resume that exact trade instead of showing
+  // an empty Step 1 and making the partner start over.
+  useEffect(() => {
+    const vendorId = account.vendor?.id
+    const [trade] = pendingTrades()
+    if (loading || !vendorId || !trade || handoffStarted.current) return
+    handoffStarted.current = true
+    ;(async () => {
+      try {
+        await ensureListing(vendorId, trade)
+        navigate(`/dashboard/vendor?tab=list&start=${encodeURIComponent(trade)}&return=setup`, { replace: true })
+      } catch (e) {
+        handoffStarted.current = false
+        setHandoffError(e?.message || 'Could not resume your selected service. Please try again.')
+      }
+    })()
+  }, [loading, account.vendor?.id, navigate])
 
   const listings = account.listings ?? []
   const configured = listings.filter(l => (l.offerings?.length ?? 0) > 0)
@@ -57,6 +81,8 @@ export default function BusinessServicesStep() {
         Select the services you provide on Sambramo. Each one has a few questions
         about how you work, so we can match you to the right jobs.
       </p>
+
+      {handoffError && <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-3 text-[12.5px] font-semibold text-rose-700">{handoffError}</p>}
 
       {!listings.length && (
         <div className="mt-6 rounded-[20px] bg-ink/[0.02] p-5 text-center">
