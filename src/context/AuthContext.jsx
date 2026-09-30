@@ -11,7 +11,7 @@ import { isPartnerSurface } from '../config/surface'
 export const AuthContext = createContext(null)
 
 // Local-only walkthrough identity. Vite removes DEV branches from production builds.
-const DEV_AUTH_BYPASS = Boolean(import.meta.env.DEV)
+const DEV_AUTH_BYPASS = Boolean(import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH_BYPASS === 'true')
 const DEV_PREVIEW_ID = '00000000-0000-4000-8000-000000000034'
 
 
