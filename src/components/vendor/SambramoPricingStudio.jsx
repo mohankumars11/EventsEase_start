@@ -127,14 +127,14 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
+      <section data-trade-count="34" className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
         <div className="flex items-start gap-3">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10"><Gauge size={22} /></span>
           <div className="flex-1">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Sambramo Pricing Studio</p>
             <h2 className="mt-1 text-[24px] font-extrabold leading-tight">Turn your rates into more instant jobs.</h2>
             <p className="mt-2 max-w-2xl text-[12px] leading-relaxed text-white/75">
-              Set the supply economics once. Sambramo keeps the customer-facing price and commercial calculation consistent across the marketplace.
+              Set the supply economics once. Sambramo keeps the customer-facing price and commercial calculation consistent across the marketplace. Every one of the 34 trade lanes is managed from this same place.
             </p>
           </div>
         </div>
