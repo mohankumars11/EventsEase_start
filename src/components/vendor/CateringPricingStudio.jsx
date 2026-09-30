@@ -476,7 +476,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
       {step === 'package' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={Sparkles} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
-          <Field label="Menu package name" value={draft.name} onChange={v => update('name', v)} placeholder="Wedding Plantain Leaf Feast" />
+          <Field fieldId="catering_package_name" label="Menu package name" value={draft.name} onChange={v => update('name', v)} placeholder="Wedding Plantain Leaf Feast" />
           <div>
             <p className="mb-2 text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Cuisine used in this package</p>
             <div className="flex flex-wrap gap-2">
@@ -493,13 +493,19 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
           </div>
           <ChoiceGrid label="Service style" value={draft.serviceStyle} options={CATERING_SERVICE_STYLES} onChange={v => update('serviceStyle', v)} />
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Minimum guests" type="number" value={draft.minGuests} onChange={v => update('minGuests', v)} />
-            <Field label="Maximum guests" type="number" value={draft.maxGuests} onChange={v => update('maxGuests', v)} placeholder="No upper limit" />
+            <Field fieldId="catering_min_guests" label="Minimum guests" type="number" value={draft.minGuests} onChange={v => update('minGuests', v)} />
+            <Field fieldId="catering_max_guests" label="Maximum guests" type="number" value={draft.maxGuests} onChange={v => update('maxGuests', v)} placeholder="No upper limit" />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Service hours" type="number" value={draft.serviceHours} onChange={v => update('serviceHours', v)} />
-            <Field label="Included staff" type="number" value={draft.includedStaff} onChange={v => update('includedStaff', v)} />
+            <Field fieldId="catering_service_hours" label="Service hours" type="number" value={draft.serviceHours} onChange={v => update('serviceHours', v)} />
+            <Field fieldId="catering_included_staff" label="Included staff" type="number" value={draft.includedStaff} onChange={v => update('includedStaff', v)} />
           </div>
+          <label className="block rounded-xl bg-surface p-2.5 ring-1 ring-ink/[0.07]">
+            <span className="block text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">Package notes</span>
+            <textarea value={draft.notes ?? ''} onChange={e => update('notes', e.target.value)} rows="3"
+              placeholder="Tell customers or coordinators anything material about this menu arrangement."
+              className="mt-1 w-full resize-none bg-transparent text-[12px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-mute" />
+          </label>
           <InfoCard icon={ShieldCheck} text={CATERING_DIET_LABELS[draft.kitchenType] + '. Dietary eligibility is inherited from your listing and is not customer-editable.'} />
         </section>
       )}
@@ -517,6 +523,21 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
                 {dishes.length.toLocaleString('en-IN')} available
               </span>
             </div>
+            {capability.dishIds?.length > 0 && (
+              <button type="button"
+                onClick={() => setDraft(d => ({
+                  ...d,
+                  items: [...new Map([
+                    ...(d.items ?? []).map(x => [x.id, x]),
+                    ...capability.dishIds
+                      .filter(id => dishes.some(x => x.id === id))
+                      .map(id => [id, { id, section: sectionForCourse(dishes.find(x => x.id === id)?.courseId), selectionType: 'included', choiceGroup: '' }]),
+                  ]).values()],
+                }))}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-200">
+                <Sparkles size={13} /> Start from the {capability.dishIds.length} dishes already on my listing
+              </button>
+            )}
           </div>
 
           <div className="relative">
@@ -575,6 +596,11 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
                         <option value="replacement">Replacement</option>
                       </select>
                     </div>
+                    {item.selectionType !== 'included' && (
+                      <input value={item.choiceGroup ?? ''} onChange={e => updateItem(item.id, { choiceGroup: e.target.value })}
+                        placeholder="Choice group — e.g. 'starter 1' or 'dessert 2'"
+                        className="mt-2 w-full rounded-xl bg-white px-2.5 py-2 text-[10.5px] font-semibold text-ink outline-none ring-1 ring-ink/[0.07]" />
+                    )}
                   </div>
                 )
               })}
@@ -590,7 +616,7 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
             <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/60">Partner supply rate</p>
             <div className="mt-2 flex items-end gap-2">
               <span className="text-[36px] font-extrabold tabular-nums">₹</span>
-              <input type="number" min="1" value={draft.rate} onChange={e => update('rate', e.target.value)}
+              <input data-field="catering_supply_rate" type="number" min="1" value={draft.rate} onChange={e => update('rate', e.target.value)}
                 placeholder="0"
                 className="min-w-0 flex-1 bg-transparent text-[36px] font-extrabold outline-none placeholder:text-white/35" />
               <span className="pb-1 text-[14px] font-extrabold text-white/70">{CATERING_PRICING_UNIT.short}</span>
@@ -628,23 +654,25 @@ function CateringPackageEditor({ vendor, service, capability, draft, setDraft, p
               <div key={addon.id} className="rounded-2xl bg-surface p-3 ring-1 ring-ink/[0.07]">
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
-                    <input value={addon.name} onChange={e => updateAddon(addon.id, { name: e.target.value })}
+                    <input data-field="catering_addon_name" value={addon.name} onChange={e => updateAddon(addon.id, { name: e.target.value })}
                       placeholder="Extra service" className="w-full bg-transparent text-[13px] font-extrabold text-ink outline-none" />
                     <p className="mt-1 text-[10.5px] text-ink-mute">Customers can add this to the menu package.</p>
                   </div>
                   <button type="button" onClick={() => removeAddon(addon.id)} aria-label="Remove add-on" className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink-mute ring-1 ring-ink/[0.07]"><Trash2 size={13} /></button>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <Field label="Rate ₹" type="number" value={addon.rate} onChange={v => updateAddon(addon.id, { rate: v })} />
+                  <Field fieldId="catering_addon_rate" label="Rate ₹" type="number" value={addon.rate} onChange={v => updateAddon(addon.id, { rate: v })} />
                   <label className="rounded-xl bg-white p-2.5 ring-1 ring-ink/[0.07]">
                     <span className="block text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">Unit</span>
                     <select value={addon.unit} onChange={e => updateAddon(addon.id, { unit: e.target.value })} className="mt-1 w-full bg-transparent text-[11.5px] font-extrabold text-ink outline-none">
                       {CATERING_ADDON_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
                     </select>
                   </label>
-                  <Field label="Minimum qty" type="number" value={addon.minimum} onChange={v => updateAddon(addon.id, { minimum: v })} />
-                  <Field label="Maximum qty" type="number" value={addon.maximum} onChange={v => updateAddon(addon.id, { maximum: v })} placeholder="No limit" />
+                  <Field fieldId="catering_addon_minimum" label="Minimum qty" type="number" value={addon.minimum} onChange={v => updateAddon(addon.id, { minimum: v })} />
+                  <Field fieldId="catering_addon_maximum" label="Maximum qty" type="number" value={addon.maximum} onChange={v => updateAddon(addon.id, { maximum: v })} placeholder="No limit" />
                 </div>
+                <textarea data-field="catering_addon_notes" value={addon.notes ?? ''} onChange={e => updateAddon(addon.id, { notes: e.target.value })}
+                  rows="2" placeholder="Optional note for this extra" className="mt-2 w-full resize-none rounded-xl bg-white px-2.5 py-2 text-[10.5px] font-semibold text-ink outline-none ring-1 ring-ink/[0.07]" />
               </div>
             ))}
           </div>
@@ -775,11 +803,11 @@ function ChoiceGrid({ label, value, options, onChange }) {
   )
 }
 
-function Field({ label, value, onChange, placeholder = '', type = 'text' }) {
+function Field({ fieldId, label, value, onChange, placeholder = '', type = 'text' }) {
   return (
     <label className="rounded-xl bg-surface p-2.5 ring-1 ring-ink/[0.07]">
       <span className="block text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">{label}</span>
-      <input type={type} value={value ?? ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      <input {...(fieldId ? { 'data-field': fieldId } : {})} type={type} value={value ?? ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         className="mt-1 w-full bg-transparent text-[12.5px] font-extrabold text-ink outline-none placeholder:font-normal placeholder:text-ink-mute" />
     </label>
   )
