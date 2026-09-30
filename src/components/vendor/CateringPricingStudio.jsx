@@ -453,6 +453,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           cuisine_ids: draft.cuisines,
           kitchen_type: draft.kitchenType,
           service_style: draft.serviceStyle,
+          sourcing_mode: draft.sourcingMode,
           min_guests: Number(draft.minGuests),
           max_guests: draft.maxGuests === '' ? null : Number(draft.maxGuests),
           service_hours: Number(draft.serviceHours),
@@ -550,6 +551,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             </div>
           </div>
           <ChoiceGrid label="Service style" value={draft.serviceStyle} options={CATERING_SERVICE_STYLES} onChange={v => update('serviceStyle', v)} />
+          <ChoiceGrid label="Food sourcing" value={draft.sourcingMode} options={SOURCING_MODES} onChange={v => update('sourcingMode', v)} />
           <div className="grid grid-cols-2 gap-2">
             <Field fieldId="catering_min_guests" label="Minimum guests" type="number" value={draft.minGuests} onChange={v => update('minGuests', v)} />
             <Field fieldId="catering_max_guests" label="Maximum guests" type="number" value={draft.maxGuests} onChange={v => update('maxGuests', v)} placeholder="No upper limit" />
@@ -755,7 +757,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           </button>
         </div>
         {preview ? (
-          <CustomerPreview draft={draft} dishes={dishes} />
+          <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests} />
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
@@ -782,7 +784,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
   )
 }
 
-function CustomerPreview({ draft, dishes }) {
+function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
   const byId = new Map(dishes.map(d => [d.id, d]))
   const sections = CATERING_MENU_SECTIONS
     .map(section => ({
@@ -797,6 +799,22 @@ function CustomerPreview({ draft, dishes }) {
         <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/60">Customer view</p>
         <p className="mt-1 text-[18px] font-extrabold">{draft.name || 'Menu package'}</p>
         <p className="mt-1 text-[11px] text-white/70">{draft.minGuests} guest minimum · final customer price calculated by Sambramo</p>
+        <p className="mt-1 text-[11px] font-extrabold text-white/90">Selected: {previewGuests} guests</p>
+      </div>
+      <div className="border-b border-ink/[0.07] bg-white p-3">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Customer preview quantity</p>
+        <div className="mt-2 flex gap-1.5 overflow-x-auto">
+          {[draft.minGuests, 150, 250, 500, draft.maxGuests]
+            .filter((v, i, a) => v && Number(v) >= Number(draft.minGuests) && a.indexOf(v) === i)
+            .map(v => (
+              <button key={v} type="button" onClick={() => setPreviewGuests(Number(v))}
+                className={previewGuests === Number(v)
+                  ? 'rounded-full bg-plum-700 px-3 py-1.5 text-[10.5px] font-extrabold text-white'
+                  : 'rounded-full bg-surface px-3 py-1.5 text-[10.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.07]'}>
+                {v} guests
+              </button>
+            ))}
+        </div>
       </div>
       <div className="space-y-3 p-4">
         {sections.map(section => (
@@ -853,7 +871,7 @@ function ChoiceGrid({ label, value, options, onChange }) {
           <button key={x.id} type="button" onClick={() => onChange(x.id)}
             className={`rounded-2xl p-3 text-left ring-1 ${value === x.id ? 'bg-plum-50 ring-2 ring-plum-400' : 'bg-surface ring-ink/[0.07]'}`}>
             <p className="text-[12px] font-extrabold text-ink">{x.label}</p>
-            <p className="mt-0.5 text-[10px] leading-snug text-ink-mute">{x.helper}</p>
+            <p className="mt-0.5 line-clamp-3 text-[10px] leading-snug text-ink-mute">{x.helper ?? x.desc}</p>
           </button>
         ))}
       </div>
