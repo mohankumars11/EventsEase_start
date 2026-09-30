@@ -28,7 +28,8 @@ if (idsBuild.status !== 0) {
 }
 const { DISH_ID_BY_KEY } = await import(pathToFileURL(IDS_OUT).href)
 const { cateringDishCatalogue, emptyCateringPackage, validateCateringPackage,
-  cateringCapabilityFromListing, CATERING_SERVICE_STYLES, CATERING_ADDON_UNITS } = mod
+  cateringCapabilityFromListing, CATERING_SERVICE_STYLES, CATERING_ADDON_UNITS,
+  validateCateringRateBands } = mod
 
 let bad = 0
 let ran = 0
