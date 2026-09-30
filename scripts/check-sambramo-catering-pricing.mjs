@@ -66,6 +66,7 @@ const good = {
   ...blank,
   name: 'Wedding Plantain Leaf Feast',
   rate: '650',
+  rateBands: [{ id: 'b1', minGuests: '100', maxGuests: '1000', rate: '650' }],
   capabilityDishIds: allDishes.slice(0, 3).map(d => d.id),
   items: allDishes.slice(0, 3).map((d, i) => ({ id: d.id, section: ['rice','curries','sweets'][i], selectionType: 'included' })),
   addons: [{ id: 'a1', name: 'Live dosa counter', unit: 'per_counter', rate: '12000', minimum: '1', maximum: '2', included: '0' }],
@@ -88,6 +89,18 @@ ok('menu cannot activate with a dish outside the listing capability', !!result.e
 const replacement = { ...good, items: [{ id: good.items[0].id, section: 'starters', selectionType: 'replacement', choiceGroup: '' }] }
 result = validateCateringPackage({ draft: replacement, requireActive: true })
 ok('replacement dishes require a choice group', !!result.errors.items)
+
+const bandGap = validateCateringRateBands({ bands: [
+  { minGuests: '100', maxGuests: '199', rate: '650' },
+  { minGuests: '201', maxGuests: '1000', rate: '600' },
+], minGuests: 100, maxGuests: 1000, requireActive: true })
+ok('guest pricing bands reject gaps', bandGap.length > 0)
+
+const bandGood = validateCateringRateBands({ bands: [
+  { minGuests: '100', maxGuests: '199', rate: '650' },
+  { minGuests: '200', maxGuests: '1000', rate: '600' },
+], minGuests: 100, maxGuests: 1000, requireActive: true })
+ok('contiguous guest pricing bands activate cleanly', bandGood.length === 0)
 
 console.log('\n' + (bad ? '✗' : '✓') + ' ' + (ran - bad) + '/' + ran + ' passed\n')
 process.exit(bad ? 1 : 0)
