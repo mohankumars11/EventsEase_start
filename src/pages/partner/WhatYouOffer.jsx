@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import TradeGrid from '../../components/vendor/TradeGrid'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { fetchListings, ensureListing } from '../../lib/partnerListings'
 import { queueTrades } from '../../lib/tradeQueue'
 
@@ -64,7 +66,8 @@ export default function WhatYouOffer() {
      false the next time routing moves. */
   const [params] = useSearchParams()
   const inSetup = params.get('from') === 'setup'
-  const { account } = usePartnerStage()
+  const { account, loading: stageLoading } = usePartnerStage()
+  const { user } = useAuth()
   const vendorId = account?.vendor?.id ?? null
 
   const [q, setQ] = useState('')
@@ -99,7 +102,20 @@ export default function WhatYouOffer() {
          navigating means the trade exists as an object the moment they
          are looking at its questions, so leaving halfway leaves
          something to come back to. */
-      for (const trade of picked) await ensureListing(vendorId, trade)
+      /* ── Never decide "no partner yet" from a hook still loading ─────
+         vendorId is null until usePartnerStage's query returns. A tap on
+         Continue inside that window took the no-vendor branch below and
+         sent a partner who HAS a vendors row back to /partner/setup --
+         reported as "after selecting Anchor & MC it goes back to step 1".
+         Ask the database directly when the hook has not answered yet. */
+      let vid = vendorId
+      if (!vid && user?.id) {
+        const { data } = await supabase
+          .from('vendors').select('id').eq('profile_id', user.id).maybeSingle()
+        vid = data?.id ?? null
+      }
+
+      for (const trade of picked) await ensureListing(vid, trade)
 
       const queue = fresh.length ? fresh : picked
       queueTrades(queue)
@@ -116,7 +132,7 @@ export default function WhatYouOffer() {
          queue is for — and the details form runs next, ending at the
          first trade's questions. Nothing is lost and nothing is written
          against a partner who does not exist yet. */
-      if (!vendorId) { navigate('/partner/setup'); return }
+      if (!vid) { navigate('/partner/setup'); return }
 
       /* ── Where the trade flow hands back ────────────────────────────
          During onboarding this screen is step 1s sub-flow, so the
@@ -177,13 +193,13 @@ export default function WhatYouOffer() {
         </p>
         <button
           type="button"
-          disabled={!picked.length || busy}
+          disabled={!picked.length || busy || stageLoading}
           onClick={onContinue}
           className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
                      bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold
                      text-white transition active:scale-[0.99] disabled:opacity-40"
         >
-          {busy && <Loader2 size={16} className="animate-spin" />}
+          {(busy || stageLoading) && <Loader2 size={16} className="animate-spin" />}
           Continue &rarr;
         </button>
       </div>

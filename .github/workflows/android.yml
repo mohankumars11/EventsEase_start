@@ -169,9 +169,11 @@ jobs:
         env:
           CAPACITOR_BUILD: 'true'
           VITE_SURFACE: ${{ matrix.flavour }}
-          # Development preview only: enable the local preview identity on feature/PR builds.
-          # The main branch remains authenticated for production builds.
-          VITE_DEV_AUTH_BYPASS: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
+          # Real sign-in on every build. The preview identity has no session,
+          # so it skipped the cards, location and login, and could never
+          # create a vendor row -- every trade picked in setup looped back
+          # to step 1.
+          VITE_DEV_AUTH_BYPASS: 'false'
           # Shown on the alerts card. Two apps with the same name and
           # icon can sit side by side on a home screen -- the installed
           # APK and a shortcut to the website -- and this is how anyone
