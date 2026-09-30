@@ -52,6 +52,8 @@ import { ROOT } from './lib/loadSrc.mjs'
 
 const target = process.argv[2]
 const passthrough = process.argv.slice(3)
+const devAuthBypass = passthrough.includes('--dev-auth')
+const capacitorArgs = passthrough.filter(arg => arg !== '--dev-auth')
 
 if (!['partner', 'customer'].includes(target)) {
   console.error('\n  Usage: node scripts/build-native.mjs <partner|customer> [--remote]\n')
@@ -106,6 +108,8 @@ const env = {
      be overridable by a checked-in file. */
   CAPACITOR_BUILD: 'true',
   VITE_SURFACE: target,
+  // Explicit opt-in for installable development APKs only. Never enabled by default or in CI/release builds.
+  VITE_DEV_AUTH_BYPASS: devAuthBypass ? 'true' : 'false',
 }
 
 if (Object.keys(androidEnv).length) {
@@ -223,6 +227,7 @@ const html = join(ROOT, 'dist/index.html')
 if (existsSync(html)) {
   const entry = readFileSync(html, 'utf8').match(/assets\/(index-[A-Za-z0-9_-]+\.js)/)?.[1]
   console.log(`\n✓ ${target} web assets built, no service worker`)
+  console.log(`  auth preview:  ${devAuthBypass ? 'ENABLED (development APK only)' : 'disabled'}`)
   if (entry) console.log(`  entry bundle: ${entry}`)
   if (existsSync(versionFile)) {
     const v = JSON.parse(readFileSync(versionFile, 'utf8'))
