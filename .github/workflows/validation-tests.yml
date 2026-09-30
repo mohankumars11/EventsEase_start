@@ -13,7 +13,7 @@ name: Field validation tests
 on:
   workflow_dispatch:
   push:
-    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929]
+    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-catering-pricing-20260930]
   pull_request:
     branches: [main]
     paths:
@@ -50,6 +50,8 @@ jobs:
         run: node scripts/check-sambramo-v2.mjs
       - name: Sambramo 34-trade pricing policy
         run: node scripts/check-sambramo-pricing.mjs
+      - name: Sambramo catering listing pricing contract
+        run: node scripts/check-sambramo-catering-pricing.mjs
       - name: Generated catalogue IDs are in sync
         run: node scripts/generate-catalogue-ids.mjs --check
       - name: 34-trade generated catalogue integrity
