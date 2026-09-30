@@ -1725,11 +1725,12 @@ function PriceStep({
       <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-extrabold text-ink">
-            Your price
+            Your supply rate
           </span>
           <span className="mb-2 block text-[12px] leading-snug text-ink-soft">
-            Leave it blank if you would rather quote each job. Nothing is
-            shown to a customer until our team has checked it.
+            This is your partner-side supply rate. Sambramo uses it with the
+            structured service inputs, availability and commercial rules to
+            calculate the customer-facing price.
           </span>
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-serif text-[20px] font-extrabold text-ink">₹</span>
@@ -1741,8 +1742,8 @@ function PriceStep({
               value={price}
               onChange={setPrice}
               inputMode="numeric"
-              placeholder="450"
-              aria-label="Your price"
+              placeholder="Enter your supply rate"
+              aria-label="Partner supply rate"
               className="min-w-0 flex-1 rounded-2xl bg-white px-4 py-3 text-[16px] font-extrabold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute"
             />
           </div>
@@ -1773,11 +1774,11 @@ function PriceStep({
           minimum is a separate decision that belongs to us. */}
       <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <p className="text-[13px] font-extrabold text-ink">
-          Smallest order you will take
+          Your supply minimum
         </p>
         <p className="mb-2 mt-0.5 text-[12px] leading-snug text-ink-soft">
-          Below this it is not worth your while. Leave it blank if you have
-          no floor.
+          Tell Sambramo the smallest quantity you will accept. This controls
+          eligibility; it does not become a customer-facing price.
         </p>
         <div className="flex flex-wrap gap-1.5">
           {['25', '50', '100', '200', '500'].map(n => {
