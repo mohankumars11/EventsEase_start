@@ -50,6 +50,8 @@ export default async function handler(req, res) {
     .maybeSingle()
   if (!claimed) return res.status(409).json({ error: 'Another quote is already being accepted' })
 
+  let createdLineId = null
+  let createdOfferId = null
   try {
     const quoted = Math.max(1, Math.round(Number(response.customer_amount_paise)))
     const fee = Math.max(0, Math.round(Number(response.platform_fee_paise)))
@@ -100,6 +102,7 @@ export default async function handler(req, res) {
       .select('id')
       .single()
     if (lineError) throw lineError
+    createdLineId = line.id
 
     const { data: offer, error: offerError } = await db
       .from('dispatch_offers')
@@ -118,6 +121,7 @@ export default async function handler(req, res) {
       .select('id')
       .single()
     if (offerError) throw offerError
+    createdOfferId = offer.id
 
     const { error: updateLineError } = await db
       .from('booking_lines')
@@ -138,8 +142,10 @@ export default async function handler(req, res) {
         .neq('id', response.id)
     }
 
-    return res.status(200).json({ ok: true, lineId: line.id, quoteResponseId: response.id, amountPaise: quoted })
+    return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: quoted })
   } catch (e) {
+    if (createdOfferId) await db.from('dispatch_offers').delete().eq('id', createdOfferId)
+    if (createdLineId) await db.from('booking_lines').delete().eq('id', createdLineId)
     await db.from('sambramo_quote_requests')
       .update({ state: request.state, updated_at: new Date().toISOString() })
       .eq('id', request.id)
