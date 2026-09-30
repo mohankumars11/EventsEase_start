@@ -34,7 +34,7 @@ export default function SambramoPricingPanel({
   const instant = state === PRICING_STATES.INSTANT_BOOK || state === PRICING_STATES.INSTANT_QUOTE
 
   return (
-    <section className={compact ? 'rounded-3xl bg-white p-4 ring-1 ring-hairline/10' : 'overflow-hidden rounded-[28px] bg-white shadow-[var(--shadow-1)] ring-1 ring-hairline/10'}>
+    <section data-sambramo-pricing-state={state} className={compact ? 'rounded-3xl bg-white p-4 ring-1 ring-hairline/10' : 'overflow-hidden rounded-[28px] bg-white shadow-[var(--shadow-1)] ring-1 ring-hairline/10'}>
       <div className={compact ? 'p-0' : 'bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white'}>
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15">
@@ -101,7 +101,7 @@ export default function SambramoPricingPanel({
 
         <div className="mt-3 flex items-center gap-2 text-[10.5px] text-ink-mute">
           <FileCheck2 size={13} className="shrink-0" />
-          {instant ? 'The partner sees the same agreed service scope.' : 'Quotes, scope, revisions and payment stay inside Sambramo.'}
+          {instant ? 'The selected partner sees the same agreed service scope. Sambramo keeps the booking context together.' : 'Quotes, scope, revisions and payment stay inside Sambramo.'}
         </div>
       </div>
     </section>
