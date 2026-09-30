@@ -48,6 +48,7 @@ export default function LoginPage() {
   /* Which of the two apps this bundle is. Stamped at build time by
      VITE_SURFACE, so it is a constant, not a guess about the URL. */
   const PARTNER = isPartnerSurface()
+  const DEV_PREVIEW = Boolean(import.meta.env.DEV)
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -106,6 +107,7 @@ export default function LoginPage() {
   async function handleSendOtp(e) {
     e?.preventDefault()
     setError(null)
+    if (DEV_PREVIEW) { redirectByRole(PARTNER ? 'vendor' : 'customer'); return }
     if (!isValidEmail(email)) { setError('Please enter a valid email address.'); return }
     setLoading(true)
     try {
@@ -187,6 +189,7 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
+    if (DEV_PREVIEW) { redirectByRole(PARTNER ? 'vendor' : 'customer'); return }
     setGoogleLoading(true)
     setError(null)
     try { await signInWithGoogle() }
@@ -275,6 +278,7 @@ export default function LoginPage() {
                 </div>
               )}
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
+              {DEV_PREVIEW && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">Development preview · Authentication is temporarily bypassed. This does not create or sign in to an account.</div>}
               <p className="text-gray-500 text-sm mb-8">
                 {PARTNER
                   ? 'Sign in to see the jobs near you.'
@@ -308,7 +312,7 @@ export default function LoginPage() {
                   className={`w-full py-3.5 text-base rounded-2xl font-extrabold disabled:opacity-60 disabled:cursor-not-allowed ${
                     PARTNER ? 'bg-saffron-400 text-plum-950' : 'btn-plum'
                   }`}>
-                  {loading ? 'Sending code…' : 'Send OTP →'}
+                  {DEV_PREVIEW ? 'Continue in development →' : loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
               </form>
 
