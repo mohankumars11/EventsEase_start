@@ -740,6 +740,16 @@ export default function VendorDashboard() {
           )
         )}
 
+        {tab === 'pricing' && (
+          <div className="space-y-5">
+            <SambramoPricingStudio
+              vendor={vendor}
+              services={services}
+              onOpenListings={() => setTab('list')}
+            />
+          </div>
+        )}
+
         {tab === 'earnings' && (
           /* `vendor` joins vendorId because a payment slip carries the
              business name, and the slip must not re-query for something
