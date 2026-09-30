@@ -12,6 +12,7 @@ import {
   cateringDishCatalogue, emptyCateringPackage, sectionLabel, addonUnitLabel,
   validateCateringPackage, CATERING_DIET_LABELS, addonDraftFrom,
 } from '../../data/cateringPricing'
+import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
 
 const sectionForCourse = courseId => ({
@@ -339,6 +340,9 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
 function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
   const [dishOpen, setDishOpen] = useState(false)
+  const [dishCatalogue, setDishCatalogue] = useState([])
+  const [dishCatalogueLoading, setDishCatalogueLoading] = useState(true)
+  const [dishCatalogueError, setDishCatalogueError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
@@ -572,7 +576,9 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
 
       {step === 'menu' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={`${dishes.length.toLocaleString('en-IN')} catalogued dishes are available across your selected cuisines and kitchen type.`} />
+          <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={dishCatalogueLoading ? "Loading Sambramo's full menu library…" : `${dishes.length.toLocaleString('en-IN')} catalogued dishes are available across your selected cuisines and kitchen type.`} />
+          {dishCatalogueError && <p className="rounded-xl bg-amber-50 p-2.5 text-[10.5px] font-semibold text-amber-900 ring-1 ring-amber-100">{dishCatalogueError}</p>}
+
           <div className="rounded-2xl bg-plum-50 p-3 ring-1 ring-plum-100">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -619,7 +625,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
                     {on ? <Check size={16} className="text-forest-700" /> : null}
                   </div>
                   <p className="mt-2 line-clamp-2 text-[12px] font-extrabold leading-snug text-ink">{dish.name}</p>
-                  <p className="mt-1 truncate text-[9.5px] text-ink-mute">{dish.cuisineName}</p>
+                  <p className="mt-1 truncate text-[9.5px] text-ink-mute">{dish.cuisineName} · {sectionLabel(sectionForCourse(dish.courseId))}</p>
                 </button>
               )
             })}
