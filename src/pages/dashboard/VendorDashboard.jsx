@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   Loader2, AlertCircle,
-  Bell, IndianRupee,
+  Bell, IndianRupee, Calculator,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -20,6 +20,8 @@ import PartnerAccount from '../../components/vendor/PartnerAccount'
 import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
+import SambramoPricingStudio from '../../components/vendor/SambramoPricingStudio'
+import CustomQuoteInbox from '../../components/vendor/CustomQuoteInbox'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
@@ -59,6 +61,7 @@ const TABS = [
   // An offer lives for 45 seconds; a partner who has to find the right
   // tab has already lost it. Everything else here can wait.
   { id: 'offers',       label: 'Jobs',         icon: Bell             },
+  { id: 'pricing',      label: 'Pricing',      icon: Calculator        },
   // Second only to Jobs. A partner opens this app to work and to find
   // out what they have earned, in that order.
   { id: 'earnings',     label: 'Earnings',     icon: IndianRupee     },
@@ -669,6 +672,10 @@ export default function VendorDashboard() {
                   that counts something must be able to take you to it. */}
               <div data-offer-inbox>
                 <OfferInbox vendorId={vendor.id} onOpenCalendar={() => setTab('availability')} />
+              </div>
+              <div>
+                <p className="mb-2 type-overline text-ink-mute">Custom work</p>
+                <CustomQuoteInbox vendorId={vendor.id} />
               </div>
 
               {/* Seven days, three rows. Between the expiring offers and
