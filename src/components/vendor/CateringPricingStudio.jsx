@@ -84,9 +84,29 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
 
   useEffect(() => { load() }, [load])
 
-  function openNew() {
+  function openNew(seed = null) {
     setPreview(false)
-    setEditing(emptyCateringPackage(capability))
+    setEditing(seed ? { ...emptyCateringPackage(capability), ...seed } : emptyCateringPackage(capability))
+  }
+
+  const legacyMenus = Array.isArray(service?.specs?.menus) ? service.specs.menus : []
+  const legacyRates = service?.specs?.menu_rates && typeof service.specs.menu_rates === 'object'
+    ? service.specs.menu_rates
+    : {}
+
+  function importLegacyMenu(menu) {
+    if (!menu) return
+    const style = menu.service === 'buffet' ? 'buffet'
+      : menu.service === 'plantain_leaf' ? 'plantain_leaf'
+      : 'custom'
+    openNew({
+      name: String(menu.name ?? '').trim(),
+      serviceStyle: style,
+      minGuests: Number(menu.minPax) > 0 ? Number(menu.minPax) : 100,
+      maxGuests: Number(menu.maxPax) > 0 ? Number(menu.maxPax) : 1000,
+      rate: legacyRates[menu.id] != null ? String(legacyRates[menu.id]) : (menu.fromPrice != null ? String(menu.fromPrice) : ''),
+      status: 'DRAFT',
+    })
   }
 
   function openExisting(pkg) {
@@ -226,9 +246,21 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">
                 Name the menu yourself. Pick its cuisines and dishes. Sambramo automatically keeps the base unit at {CATERING_PRICING_UNIT.label.toLowerCase()} and handles the customer-facing calculation separately.
               </p>
-              <button type="button" onClick={openNew} className="mt-4 w-full rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">
-                Create your first menu
-              </button>
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button type="button" onClick={openNew} className="rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">
+                  Create your first menu
+                </button>
+                {legacyMenus.length > 0 && (
+                  <button type="button" onClick={() => importLegacyMenu(legacyMenus[0])} className="rounded-2xl bg-white py-3 text-[13px] font-extrabold text-plum-700 ring-1 ring-plum-200">
+                    Import an existing menu
+                  </button>
+                )}
+              </div>
+              {legacyMenus.length > 1 && (
+                <p className="mt-2 text-center text-[10.5px] text-ink-mute">
+                  {legacyMenus.length} existing menu cards were found in your listing. Import one at a time and complete its dish structure here.
+                </p>
+              )
             </section>
           ) : (
             <div className="space-y-3">
