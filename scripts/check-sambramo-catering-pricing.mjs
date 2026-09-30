@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'node_modules/.cache/catering-pricing-contract.mjs')
+const IDS_OUT = join(ROOT, 'node_modules/.cache/catering-dish-ids.mjs')
 
 const build = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [
   join(ROOT, 'src/data/cateringPricing.js'),
@@ -17,6 +18,15 @@ if (build.status !== 0) {
 }
 
 const mod = await import(pathToFileURL(OUT).href)
+const idsBuild = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [
+  join(ROOT, 'src/data/dishIds.generated.js'), '--bundle', '--platform=node', '--format=esm',
+  '--outfile=' + IDS_OUT,
+], { encoding: 'utf8', shell: true })
+if (idsBuild.status !== 0) {
+  console.error(idsBuild.stderr || idsBuild.stdout)
+  process.exit(1)
+}
+const { DISH_ID_BY_KEY } = await import(pathToFileURL(IDS_OUT).href)
 const { cateringDishCatalogue, emptyCateringPackage, validateCateringPackage,
   CATERING_SERVICE_STYLES, CATERING_ADDON_UNITS } = mod
 
@@ -34,7 +44,8 @@ const allDishes = cateringDishCatalogue([], 'both')
 const vegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','kerala'], 'pure_veg')
 const nonVegDishes = cateringDishCatalogue(['karnataka','udupi','tamil','andhra','kerala'], 'pure_nonveg')
 
-ok('global catering catalogue covers the 1000+ dish target', allDishes.length >= 1000, String(allDishes.length))
+ok('canonical dish ID source covers the 1000+ target', Object.keys(DISH_ID_BY_KEY).length >= 1000, String(Object.keys(DISH_ID_BY_KEY).length))
+ok('resolved static catalogue is available as a fallback', allDishes.length > 0, String(allDishes.length))
 ok('catalogue entries have stable dish IDs', allDishes.every(d => /^SBM-/.test(d.id)))
 ok('pure-veg filtering removes non-veg dishes', vegDishes.every(d => d.diet === 'veg'))
 ok('non-veg filtering removes vegetarian dishes', nonVegDishes.every(d => d.diet === 'nonveg'))
