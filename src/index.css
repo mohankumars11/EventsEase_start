@@ -4822,3 +4822,14 @@
   .trade-pricing-secondary-action,
   .trade-pricing-primary-action { font-size: 10px; }
 }
+
+@media (max-width: 440px) {
+  .trade-pricing-section-action {
+    flex: 0 0 calc(100% - 48px);
+    width: calc(100% - 48px);
+    margin-left: 48px;
+  }
+  .trade-pricing-section-action .trade-pricing-template-select {
+    width: 100%;
+  }
+}
