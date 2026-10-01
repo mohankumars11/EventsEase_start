@@ -310,15 +310,8 @@ const TRADE_FIELD_OVERRIDES = {
 
 export function getFieldSchema(field, config) {
   const key = field?.key
-  const tradeOverride = TRADE_FIELD_OVERRIDES[config?.trade_id]?.[key]
-  if (tradeOverride) {
-    const [control, value] = tradeOverride
-    return {
-      ...field,
-      control,
-      ...(control === 'choice' ? { options: value } : { presets: value }),
-    }
-  }
+  const tradeOptions = TRADE_FIELD_OPTIONS[config?.trade_id]?.[key]
+  if (tradeOptions) return { ...field, control: 'choice', options: tradeOptions }
   const override = FIELD_OVERRIDES[key]
   if (override) return { ...field, ...override }
   if (COMMON_SELECTS[key]) return { ...field, control: 'choice', options: COMMON_SELECTS[key] }
