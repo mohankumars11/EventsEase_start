@@ -351,6 +351,7 @@ export default function BusinessPreview() {
         </div>
 
         {mode === 'customer' ? (
+          <>
           <CustomerWorkGallery vendor={vendor} />
           <section className="mt-4 space-y-3">
             {visibleListings.length === 0 ? (
@@ -361,6 +362,7 @@ export default function BusinessPreview() {
               return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} />)
             })}
           </section>
+          </>
         ) : (
           <section className="mt-4 space-y-3">
             <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
