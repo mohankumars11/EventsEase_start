@@ -2481,3 +2481,61 @@
   background: var(--a-canvas, #fff);
   box-shadow: 0 calc(100% + 14px) 0 0 var(--a-canvas, #fff);
 }
+
+
+/* Partner pricing studio: constrain every descendant to the actual WebView width.
+   Horizontal recommendation carousels became clipped on compact Android widths;
+   their controls now wrap into a measured grid rather than extending the canvas. */
+.trade-pricing-screen,
+.trade-pricing-catalog {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  color: #211735;
+}
+.trade-pricing-screen *,
+.trade-pricing-catalog * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+.trade-pricing-screen input,
+.trade-pricing-screen select,
+.trade-pricing-screen textarea,
+.trade-pricing-screen button {
+  max-width: 100%;
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+}
+.trade-pricing-screen select,
+.trade-pricing-screen input,
+.trade-pricing-screen textarea {
+  line-height: 1.35;
+}
+.trade-pricing-screen .trade-pricing-panel {
+  scroll-margin-top: 12px;
+}
+.trade-pricing-screen .trade-pricing-actions {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.trade-pricing-screen .trade-pricing-actions button {
+  min-height: 52px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.trade-pricing-screen .grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.trade-pricing-screen label,
+.trade-pricing-screen textarea,
+.trade-pricing-screen input,
+.trade-pricing-screen select {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 380px) {
+  .trade-pricing-screen { gap: 12px; }
+  .trade-pricing-screen .trade-pricing-panel { padding: 12px; border-radius: 20px; }
+  .trade-pricing-screen .trade-pricing-actions button { font-size: 12px; }
+}
