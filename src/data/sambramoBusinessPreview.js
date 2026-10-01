@@ -165,8 +165,8 @@ export const STATUS_META = {
 }
 
 export const PRICING_STATES = {
-  INSTANT_BOOK: { label: 'Instant book', detail: 'Structured, verified and available.' },
-  INSTANT_QUOTE: { label: 'Instant quote', detail: 'Structured scope can be priced immediately.' },
+  CONFIGURED: { label: 'Pricing configured', detail: 'Structured partner inputs are saved. Sambramo validates final eligibility at booking time.' },
+  INSTANT_QUOTE: { label: 'Instant quote lane', detail: 'This trade supports a controlled machine-generated quote lane when all determinants are known.' },
   PROVISIONAL_QUOTE: { label: 'Provisional quote', detail: 'A measurement or verification step remains.' },
   QUOTE_ACTION_REQUIRED: { label: 'Action required', detail: 'Sambramo needs more information before a final result.' },
   UNAVAILABLE: { label: 'Unavailable', detail: 'Eligibility, capacity or availability does not currently pass.' },
@@ -187,7 +187,7 @@ export function pricingReadiness(listing) {
   const active = offerings.filter(o => o.is_active !== false)
   if (!active.length) return { state: 'UNAVAILABLE', ready: false, blockers: ['No active offering is available.'] }
   if (['E09', 'E20', 'L08'].includes(normalizeTrade(listing.trade, listing.trade_id).trade_id)) {
-    return { state: 'INSTANT_QUOTE', ready: true, blockers: [], note: 'Structured scope can still require a controlled quote lane.' }
+    return { state: 'INSTANT_QUOTE', ready: true, blockers: [], note: 'The final quote is still controlled by the Sambramo server-side engine.' }
   }
-  return { state: 'INSTANT_BOOK', ready: true, blockers: [], note: 'Final customer eligibility is enforced server-side at booking time.' }
+  return { state: 'CONFIGURED', ready: true, blockers: [], note: 'Partner pricing is an input; Sambramo computes the final customer price.' }
 }
