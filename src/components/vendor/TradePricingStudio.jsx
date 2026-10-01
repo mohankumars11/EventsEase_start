@@ -233,7 +233,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   }
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="trade-pricing-catalog space-y-4 pb-6">
       <div className="flex items-center gap-2">
         {onBack && (
           <button type="button" onClick={onBack} aria-label="Back to pricing"
@@ -516,7 +516,7 @@ function TradePackageEditor({ service, config, units, draft, setDraft, step, set
   }
 
   return (
-    <div className="space-y-5 pb-[calc(9rem+env(safe-area-inset-bottom))]">
+    <div className="trade-pricing-screen space-y-5 pb-[calc(14rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-2">
         <button type="button" onClick={onBack} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-soft ring-1 ring-ink/[0.08]"><ChevronRight size={18} className="rotate-180" /></button>
         <div className="min-w-0 flex-1">
@@ -610,14 +610,14 @@ function TradePackageEditor({ service, config, units, draft, setDraft, step, set
       )}
 
       {!readOnly && (
-        <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-[#E9E4F1] bg-[#F9F8FC]/95 px-4 pb-3 pt-3 backdrop-blur-md sm:static sm:bg-transparent sm:p-0">
-          <div className="mx-auto flex max-w-3xl gap-2">
+        <div className="trade-pricing-actions fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-30 border-t border-[#E9E4F1] bg-[#F9F8FC]/[0.98] px-3 pb-3 pt-3 backdrop-blur-md sm:static sm:bg-transparent sm:p-0">
+          <div className="mx-auto flex w-full max-w-[560px] min-w-0 gap-2">
             <button type="button" onClick={() => save('DRAFT')} disabled={saving}
-              className="flex-1 rounded-2xl bg-white py-3.5 text-[14px] font-extrabold text-ink-soft ring-1 ring-ink/[0.1] disabled:opacity-50">
+              className="min-w-0 flex-1 rounded-2xl bg-white px-2 py-3.5 text-[13px] font-extrabold text-ink-soft ring-1 ring-ink/[0.1] disabled:opacity-50">
               {saving ? 'Saving…' : 'Save draft'}
             </button>
             <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={saving || validation.length > 0}
-              className="flex-[1.5] rounded-2xl bg-[#2A085C] py-3.5 text-[14px] font-extrabold text-white disabled:opacity-50">
+              className="min-w-0 flex-[1.5] rounded-2xl bg-[#2A085C] px-2 py-3.5 text-[13px] font-extrabold leading-tight text-white disabled:opacity-50">
               {saving ? 'Submitting…' : 'Submit pricing for review'}
             </button>
           </div>
@@ -644,18 +644,18 @@ function PackageSection({ config, units, draft, setDraft, readOnly, suggestions,
   const includedPresets = getIncludedQuantityPresets(config, draft.pricing_unit)
 
   return (
-    <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <SectionHeading icon={Sparkles} title="Package card" helper="Pick the words and commercial structure once. Keep partner spelling consistent with controlled choices." />
 
       <SuggestionRow label="Package name suggestions" items={suggestions} value={draft.name} disabled={readOnly} onPick={v => update('name', v)} />
 
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
         {config.templates.slice(0, 5).map(([id, label], index) => {
           const active = draft.template_id === id
           return (
             <button key={id} type="button" disabled={readOnly}
               onClick={() => { update('source', 'SAMBRAMO_TEMPLATE'); update('template_id', id); update('name', label); update('tier', inferTier(label)) }}
-              className={'min-w-[118px] max-w-[138px] shrink-0 rounded-2xl border p-3 text-left transition active:scale-[0.98] ' + (active ? 'border-[#8B6AE0] bg-[#EEE8FA] text-[#211735] shadow-[0_4px_14px_rgba(42,8,92,0.08)]' : 'border-[#E6E2ED] bg-[#FAF9FC] text-[#302A3D]')}>
+              className={'min-w-0 w-full max-w-none rounded-2xl border p-3 text-left transition active:scale-[0.98] ' + (active ? 'border-[#8B6AE0] bg-[#EEE8FA] text-[#211735] shadow-[0_4px_14px_rgba(42,8,92,0.08)]' : 'border-[#E6E2ED] bg-[#FAF9FC] text-[#302A3D]')}>
               <span className={'mb-2 grid h-8 w-8 place-items-center rounded-xl ' + (active ? 'bg-[#DCCFF5] text-[#2A085C]' : 'bg-white text-[#716A7D]')}><Sparkles size={16} /></span>
               <span className="block text-[13px] font-extrabold leading-snug">{label}</span>
               <span className="mt-1 block text-[10.5px] font-semibold text-ink-mute">{active ? 'Selected' : 'Package option ' + (index + 1)}</span>
@@ -712,7 +712,7 @@ function PackageSection({ config, units, draft, setDraft, readOnly, suggestions,
 
 function TradeDetailsSection({ fields, config, draft, readOnly, updateTradeField }) {
   return (
-    <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <SectionHeading icon={Calculator} title="Trade-specific fields" helper={'Only fields relevant to ' + config.name + ' are shown. Select common values instead of typing long descriptions.'} />
       {fields.length ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -737,7 +737,7 @@ function PricingSection({ config, units, draft, update, readOnly }) {
   const teardownIncluded = String(draft.teardown_fee || '0') === '0'
 
   return (
-    <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <SectionHeading icon={WalletCards} title="Pricing rules" helper="Use presets for speed, then edit exact amounts where your commercial model needs it. Every value remains partner-editable." />
 
       <div className="rounded-2xl bg-[#F1EDFA] p-3 text-[#211735]">
@@ -782,7 +782,7 @@ function PricingSection({ config, units, draft, update, readOnly }) {
 
 function AddonsSection({ config, addons, readOnly, suggestions, addSuggestedAddon, addAddon, updateAddon, removeAddon }) {
   return (
-    <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <div className="flex items-start justify-between gap-3">
         <SectionHeading icon={CirclePlus} title="Add-ons" helper="Tap a recommended extra to add it. Only price the extras you really provide." />
         {!readOnly && (
@@ -795,14 +795,14 @@ function AddonsSection({ config, addons, readOnly, suggestions, addSuggestedAddo
       {!readOnly && (
         <div>
           <p className="mb-2 text-[14px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Recommended for {config.name}</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
             {suggestions.map(template => {
               const already = addons.some(a => String(a.name).trim().toLowerCase() === template.name.toLowerCase())
               return (
                 <button key={template.id} type="button" disabled={already} onClick={() => addSuggestedAddon(template.name)}
                   className={already
-                    ? 'min-w-[165px] shrink-0 rounded-2xl bg-ink/[0.04] p-3 text-left text-ink-mute ring-1 ring-ink/[0.06]'
-                    : 'min-w-[165px] shrink-0 rounded-2xl bg-[#F1EDFA] p-3 text-left text-[#211735] ring-1 ring-[#2A085C]/20'}>
+                    ? 'min-w-0 w-full rounded-2xl bg-[#F7F5FC] p-3 text-left text-ink-mute ring-1 ring-ink/[0.06]'
+                     : 'min-w-0 w-full rounded-2xl bg-[#F1EDFA] p-3 text-left text-[#2A085C] ring-1 ring-[#D9CDED]'}>
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-[14px] font-extrabold">{template.name}</span>
                     {already ? <Check size={14} /> : <Plus size={14} />}
@@ -858,7 +858,7 @@ function AddonsSection({ config, addons, readOnly, suggestions, addSuggestedAddo
 function CustomerPreviewSection({ config, draft, fields, addons, onBack }) {
   const selectedFields = fields.filter(f => draft.trade_inputs?.[f.key] !== '' && draft.trade_inputs?.[f.key] != null)
   return (
-    <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <div className="flex items-start justify-between gap-3">
         <SectionHeading icon={Eye} title="Customer preview" helper="This is a clean preview of the values captured for this exact partner listing." />
         <button type="button" onClick={onBack} className="rounded-full bg-[#2A085C]/[0.07] px-3 py-1.5 text-[14px] font-extrabold text-[#2A085C]">Back to edit</button>
@@ -966,7 +966,7 @@ function RecommendationTextArea({ label, value, suggestions, onPick, onChange, d
       {!disabled && (
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {suggestions.slice(0, 5).map((text, index) => (
-            <button key={text} type="button" onClick={() => onPick(text)} className="rounded-2xl bg-[#2A085C] p-3 text-left text-white ring-1 ring-[#2A085C]/20">
+            <button key={text} type="button" onClick={() => onPick(text)} className="min-w-0 rounded-2xl bg-[#F7F5FC] p-3 text-left text-[#211735] ring-1 ring-[#E6E0F0] active:bg-[#EEE8FA]">
               <div className="flex items-start gap-2">
                 <Sparkles size={13} className="mt-0.5 shrink-0 text-white/70" />
                 <span className="text-[14px] font-semibold leading-relaxed">{index + 1}. {text}</span>
@@ -984,11 +984,11 @@ function SuggestionRow({ label, items, value, onPick, disabled }) {
   return (
     <div>
       <p className="mb-2 text-[14px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">{label}</p>
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
         {items.map(item => {
           const active = value === item
           return (
-            <button key={item} type="button" disabled={disabled} onClick={() => onPick(item)} className={active ? 'min-w-[150px] shrink-0 rounded-2xl bg-[#2A085C] p-3 text-left text-white' : 'min-w-[150px] shrink-0 rounded-2xl bg-surface p-3 text-left text-ink ring-1 ring-ink/[0.07]'}>
+            <button key={item} type="button" disabled={disabled} onClick={() => onPick(item)} className={active ? 'min-w-0 w-full rounded-2xl bg-[#EEE8FA] p-3 text-left text-[#2A085C] ring-1 ring-[#8B6AE0]' : 'min-w-0 w-full rounded-2xl bg-surface p-3 text-left text-ink ring-1 ring-ink/[0.07]'}>
               <span className="block text-[14px] font-extrabold">{item}</span>
               <span className={active ? 'mt-1 block text-[14px] text-white/65' : 'mt-1 block text-[14px] text-ink-mute'}>{active ? 'Selected' : 'Use this name'}</span>
             </button>
@@ -1075,7 +1075,7 @@ function CurrencyPresetField({ label, value, onChange, presets = PRICE_PRESETS, 
         <input type="number" min="0" disabled={disabled} value={value ?? ''} onChange={e => onChange(e.target.value)} placeholder="Enter amount" className="min-w-0 flex-1 bg-transparent text-[14px] font-black text-ink outline-none placeholder:font-normal placeholder:text-ink-mute" />
       </div>
       {!disabled && (
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+        <div className="mt-2 flex min-w-0 flex-wrap gap-1.5 pb-1">
           {presets.slice(0, 7).map(amount => (
             <button key={amount} type="button" onClick={() => onChange(String(amount))} className={presetHit && Number(numeric) === Number(amount) ? 'shrink-0 rounded-full bg-[#2A085C] px-2.5 py-1 text-[14px] font-extrabold text-white' : 'shrink-0 rounded-full bg-white px-2.5 py-1 text-[14px] font-extrabold text-ink-soft ring-1 ring-ink/[0.07]'}>
               {formatINR(Number(amount))}
