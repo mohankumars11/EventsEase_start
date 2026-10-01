@@ -868,7 +868,7 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
         <p className="text-[15px] font-black leading-tight text-[#211735]">{title}</p>
         <p className="mt-0.5 text-[11px] leading-relaxed text-[#6B5B85]">{subtitle}</p>
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="trade-pricing-section-action shrink-0">{action}</div> : null}
     </div>
   )
 }
