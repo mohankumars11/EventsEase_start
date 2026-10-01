@@ -715,7 +715,7 @@ function TradeDetailsSection({ fields, config, draft, readOnly, updateTradeField
     <section className="trade-pricing-panel min-w-0 space-y-3 rounded-[24px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
       <SectionHeading icon={Calculator} title="Trade-specific fields" helper={'Only fields relevant to ' + config.name + ' are shown. Select common values instead of typing long descriptions.'} />
       {fields.length ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="trade-pricing-fields grid min-w-0 grid-cols-2 gap-2">
           {fields.map(field => (
             field.key === 'sku'
               ? <Field key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => updateTradeField(field.key, v)} />
