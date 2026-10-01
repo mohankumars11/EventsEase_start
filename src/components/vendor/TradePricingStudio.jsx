@@ -649,7 +649,22 @@ function PackageSection({ config, units, draft, setDraft, readOnly, suggestions,
 
       <SuggestionRow label="Package name suggestions" items={suggestions} value={draft.name} disabled={readOnly} onPick={v => update('name', v)} />
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {config.templates.slice(0, 5).map(([id, label], index) => {
+          const active = draft.template_id === id
+          return (
+            <button key={id} type="button" disabled={readOnly}
+              onClick={() => { update('template_id', id); update('name', label); update('tier', inferTier(label)) }}
+              className={'min-w-[118px] max-w-[138px] shrink-0 rounded-2xl border p-3 text-left transition active:scale-[0.98] ' + (active ? 'border-[#8B6AE0] bg-[#EEE8FA] text-[#211735] shadow-[0_4px_14px_rgba(42,8,92,0.08)]' : 'border-[#E6E2ED] bg-[#FAF9FC] text-[#302A3D]')}>
+              <span className={'mb-2 grid h-8 w-8 place-items-center rounded-xl ' + (active ? 'bg-[#DCCFF5] text-[#2A085C]' : 'bg-white text-[#716A7D]')}><Sparkles size={16} /></span>
+              <span className="block text-[13px] font-extrabold leading-snug">{label}</span>
+              <span className="mt-1 block text-[10.5px] font-semibold text-ink-mute">{active ? 'Selected' : 'Package option ' + (index + 1)}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
         <Field label="Package name" required value={draft.name} disabled={readOnly} placeholder="Choose a suggestion or enter your own" onChange={v => update('name', v)} />
         <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={tierOptions} onChange={v => update('tier', v)} allowCustom />
         <CurrencyPresetField label={config.mode === 'CUSTOM' ? 'Reference rate (optional)' : 'Base commercial rate'} value={draft.base_price} disabled={readOnly} presets={PRICE_PRESETS} onChange={v => update('base_price', v)} />
@@ -752,7 +767,7 @@ function PricingSection({ config, units, draft, update, readOnly }) {
 
       <ChoiceField label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => update('travel_policy', v)} />
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2">
         <RulePill label="Unit" value={titleizeUnit(draft.pricing_unit)} />
         <RulePill label="Minimum" value={String(draft.minimum_order || 1) + ' ' + minimumSuffix(draft.pricing_unit)} />
         <RulePill label="Lead time" value={draft.lead_time === '' ? 'Not set' : String(draft.lead_time) + ' days'} />
