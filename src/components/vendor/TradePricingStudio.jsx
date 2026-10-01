@@ -20,6 +20,7 @@ import {
   getFieldSchema,
   getIncludedQuantityPresets,
   getMinimumOrderPresets,
+  getPackageNameSuggestions,
 } from '../../data/sambramoPricingCatalog'
 
 const ADDON_UNITS = [
