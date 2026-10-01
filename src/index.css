@@ -4833,3 +4833,7 @@
     width: 100%;
   }
 }
+
+@media (max-width: 440px) {
+  .trade-pricing-section-header { flex-wrap: wrap; }
+}
