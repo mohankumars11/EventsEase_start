@@ -419,20 +419,12 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   }, [draft, fields, config.mode, validation])
 
   function goTo(step) {
-    const idx = SECTION_META.findIndex(x => x[0] === step)
-    const currentIdx = SECTION_META.findIndex(x => x[0] === activeStep)
-    if (idx <= currentIdx || ready[SECTION_META[currentIdx]?.[0]] || step === 'package') {
-      setActiveStep(step)
-      setLocalError('')
-    }
+    setActiveStep(step)
+    setLocalError('')
   }
 
   function goNext() {
     const idx = SECTION_META.findIndex(x => x[0] === activeStep)
-    if (!ready[activeStep]) {
-      setLocalError('Complete the required selections on this screen to continue.')
-      return
-    }
     const next = SECTION_META[idx + 1]
     if (next) {
       setLocalError('')
@@ -582,7 +574,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
               {saving ? 'Submitting…' : 'Submit pricing for review'}
             </button>
           ) : (
-            <button type="button" onClick={goNext} disabled={saving || !ready[activeStep]} className="trade-pricing-primary-action">
+            <button type="button" onClick={goNext} disabled={saving} className="trade-pricing-primary-action">
               Continue to {next?.[1] ?? 'Preview'} <ArrowRight size={16} />
             </button>
           )}
@@ -598,7 +590,7 @@ function StepRail({ activeStep, ready, onSelect }) {
     <nav className="trade-pricing-steps" aria-label="Pricing setup steps">
       {SECTION_META.map(([id, label], index) => {
         const active = id === activeStep
-        const enabled = index <= currentIndex || ready[SECTION_META[index - 1]?.[0]] || id === 'package'
+        const enabled = true
         const complete = index < currentIndex || ready[id]
         return (
           <button key={id} type="button" disabled={!enabled} onClick={() => onSelect(id)} className={'trade-pricing-step ' + (active ? 'is-active' : '') + (!enabled ? ' is-locked' : '')}>
