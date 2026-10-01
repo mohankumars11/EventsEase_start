@@ -2539,3 +2539,6 @@
   .trade-pricing-screen .trade-pricing-panel { padding: 12px; border-radius: 20px; }
   .trade-pricing-screen .trade-pricing-actions button { font-size: 12px; }
 }
+
+@media (min-width: 400px) { .trade-pricing-screen .trade-pricing-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 340px) { .trade-pricing-screen .trade-pricing-fields { grid-template-columns: minmax(0, 1fr); } }
