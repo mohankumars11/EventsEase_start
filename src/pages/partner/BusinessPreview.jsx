@@ -25,8 +25,7 @@ function StatusPill({ status }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ring-1 ${meta.tone}`}>{meta.label}</span>
 }
 
-function CustomerOfferingCard({ listing, config }) {
-  const offering = listing?.offerings?.[0]
+function CustomerOfferingCard({ offering, config }) {
   const readiness = pricingReadiness(listing)
   const title = offering?.name || config.templates[0]?.[1] || 'Your service'
   const fields = config.fields
