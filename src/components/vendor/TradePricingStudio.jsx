@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Calculator, Check, ChevronRight, CirclePlus, Clock3, Eye,
-  Funnel, Loader2, Plus, Ruler, ShieldCheck, SlidersHorizontal,
+  Filter, Loader2, Plus, Ruler, ShieldCheck, SlidersHorizontal,
   Sparkles, Trash2, WalletCards, X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -526,7 +526,7 @@ function TradePackageEditor({ service, config, units, draft, setDraft, step, set
       <button type="button" onClick={() => setConfigureOpen(true)} className="flex w-full items-center gap-3 rounded-[22px] bg-[#2A085C] p-3.5 text-left text-white shadow-sm">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10"><Ruler size={18} /></span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/60"><Funnel size={11} /> Configure</span>
+          <span className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/60"><Filter size={11} /> Configure</span>
           <span className="mt-0.5 block truncate text-[14px] font-extrabold">{SECTION_NAV.find(x => x[0] === step)?.[1] ?? 'Package card'}</span>
         </span>
         <SlidersHorizontal size={18} className="text-white/75" />
