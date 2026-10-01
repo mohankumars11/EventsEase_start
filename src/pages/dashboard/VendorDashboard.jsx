@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   Loader2, AlertCircle,
-  Bell, IndianRupee, Calculator,
+  Bell, IndianRupee, Calculator, Eye, Sparkles, Store,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -770,7 +770,23 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'list' && (
-          <VendorServiceList
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => navigate('/partner/setup/preview')}
+              className="group flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-br from-plum-950 via-plum-900 to-plum-700 p-4 text-left text-white shadow-[0_14px_36px_rgba(42,8,92,0.18)]"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                <Store size={18} className="text-saffron-300" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-200">High-priority launch tool</span>
+                <span className="mt-0.5 block text-[15px] font-black">Preview your customer storefront</span>
+                <span className="mt-1 block text-[11.5px] leading-snug text-white/65">Review cards, pricing lanes, add-ons and trade details before Sambramo publishes them.</span>
+              </span>
+              <Eye size={17} className="shrink-0 transition-transform group-active:scale-90" />
+            </button>
+            <VendorServiceList
             vendor={vendor}
             services={services}
             onAdd={addService}
@@ -798,7 +814,8 @@ export default function VendorDashboard() {
               next.delete('start')
               return next
             }, { replace: true })}
-          />
+            />
+          </div>
         )}
 
         {/* ── What is actually booked, above the grid that says which
