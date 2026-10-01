@@ -149,11 +149,24 @@ export const TRADE_PREVIEW_CONFIG = [
 export const TRADE_BY_ID = Object.fromEntries(TRADE_PREVIEW_CONFIG.map(x => [x.trade_id, x]))
 export const TRADE_BY_NAME = Object.fromEntries(TRADE_PREVIEW_CONFIG.map(x => [x.name, x]))
 
-export const normalizeTrade = (tradeName, tradeId) =>
-  TRADE_BY_ID[tradeId] ??
-  TRADE_BY_NAME[tradeName] ??
-  TRADE_PREVIEW_CONFIG.find(x => x.name.toLowerCase() === String(tradeName ?? '').toLowerCase()) ??
-  TRADE_PREVIEW_CONFIG[0]
+const TRADE_ALIASES = {
+  'Emcee / anchor': 'Anchor & MC',
+  'Emcee / Anchor': 'Anchor & MC',
+  'Warehouse / storage': 'Warehouse / Storage',
+  'Warehouse / Storage': 'Warehouse / Storage',
+  'Transportation': 'Group Passenger Transport',
+}
+
+export const normalizeTrade = (tradeName, tradeId) => {
+  const alias = TRADE_ALIASES[tradeName] ?? TRADE_ALIASES[String(tradeName ?? '').trim()]
+  return (
+    TRADE_BY_ID[tradeId] ??
+    TRADE_BY_NAME[tradeName] ??
+    TRADE_BY_NAME[alias] ??
+    TRADE_PREVIEW_CONFIG.find(x => x.name.toLowerCase() === String(alias ?? tradeName ?? '').toLowerCase()) ??
+    TRADE_PREVIEW_CONFIG[0]
+  )
+}
 
 export const STATUS_META = {
   DRAFT: { label: 'Draft', tone: 'bg-white/10 text-white ring-white/15', description: 'Your customer storefront is still being prepared.' },
@@ -186,8 +199,31 @@ export function pricingReadiness(listing) {
   if (!offerings.length) return { state: 'UNAVAILABLE', ready: false, blockers: ['Add at least one sellable offering.'] }
   const active = offerings.filter(o => o.is_active !== false)
   if (!active.length) return { state: 'UNAVAILABLE', ready: false, blockers: ['No active offering is available.'] }
-  if (['E09', 'E20', 'L08'].includes(normalizeTrade(listing.trade, listing.trade_id).trade_id)) {
-    return { state: 'INSTANT_QUOTE', ready: true, blockers: [], note: 'The final quote is still controlled by the Sambramo server-side engine.' }
+
+  const packages = active.flatMap(o => Array.isArray(o.pricing_packages) ? o.pricing_packages : [])
+    .filter(p => p.status !== 'ARCHIVED')
+  const tradeId = normalizeTrade(listing.trade, listing.trade_id).trade_id
+
+  if (!packages.length) {
+    return { state: 'UNAVAILABLE', ready: false, blockers: ['Configure at least one pricing package for every listed service.'] }
   }
-  return { state: 'CONFIGURED', ready: true, blockers: [], note: 'Partner pricing is an input; Sambramo computes the final customer price.' }
+
+  if (['E09', 'E20', 'L08'].includes(tradeId)) {
+    return { state: 'INSTANT_QUOTE', ready: true, blockers: [], note: 'The final quote remains controlled by the Sambramo server-side engine.' }
+  }
+
+  const hasConfiguredRate = packages.some(p => Number(p?.price?.rate_paise ?? 0) > 0)
+  if (!hasConfiguredRate) {
+    return { state: 'QUOTE_ACTION_REQUIRED', ready: false, blockers: ['Add a positive commercial rate before pricing can be enabled.'] }
+  }
+
+  const hasLive = packages.some(p => p.status === 'LIVE')
+  return {
+    state: hasLive ? 'CONFIGURED' : 'CONFIGURED',
+    ready: true,
+    blockers: [],
+    note: hasLive
+      ? 'An approved pricing package is enabled for this listing.'
+      : 'Pricing is configured for this listing and will become customer-live after the required review.'
+  }
 }
