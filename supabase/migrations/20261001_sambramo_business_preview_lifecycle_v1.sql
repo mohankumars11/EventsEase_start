@@ -140,9 +140,9 @@ DECLARE
   v_previous uuid;
   v_id uuid;
   v_case_id uuid;
+  v_existing_snapshot uuid;
 BEGIN
-  SELECT *
-  INTO v_vendor
+  SELECT * INTO v_vendor
   FROM public.vendors
   WHERE profile_id = (SELECT auth.uid())
   LIMIT 1;
@@ -152,15 +152,13 @@ BEGIN
   END IF;
 
   v_open := public.open_verification_case();
-
   IF COALESCE(v_open->>'ok', 'false') <> 'true' THEN
     RETURN v_open;
   END IF;
 
   v_case_id := NULLIF(v_open->>'case_id', '')::uuid;
 
-  SELECT *
-  INTO v_case
+  SELECT * INTO v_case
   FROM public.verification_cases
   WHERE id = v_case_id
   FOR UPDATE;
@@ -169,21 +167,24 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'reason', 'no_case');
   END IF;
 
-  -- A submission already in the review queue is idempotent.
-  IF v_case.status IN ('submitted', 'verifying', 'manual_review') THEN
-    SELECT *
-    INTO v_revision
-    FROM (
-      SELECT revision_no
-      FROM public.sambramo_business_submissions
-      WHERE verification_case_id = v_case.id
-      ORDER BY revision_no DESC
-      LIMIT 1
-    ) q;
+  SELECT id INTO v_existing_snapshot
+  FROM public.sambramo_business_submissions
+  WHERE verification_case_id = v_case.id
+  ORDER BY revision_no DESC
+  LIMIT 1;
+
+  -- Idempotent only when this case already has a snapshot. A legacy or
+  -- interrupted first submission with no snapshot still gets one.
+  IF v_existing_snapshot IS NOT NULL
+     AND v_case.status IN ('submitted','verifying','manual_review') THEN
+    SELECT revision_no INTO v_revision
+    FROM public.sambramo_business_submissions
+    WHERE id = v_existing_snapshot;
 
     RETURN jsonb_build_object(
       'ok', true,
       'replayed', true,
+      'submission_id', v_existing_snapshot,
       'case_id', v_case.id,
       'revision_no', COALESCE(v_revision, 1),
       'status', v_case.status,
@@ -191,9 +192,7 @@ BEGIN
     );
   END IF;
 
-  -- A partner may correct and resubmit only a bounded number of times.
-  SELECT COUNT(*) + 1
-  INTO v_revision
+  SELECT COUNT(*) + 1 INTO v_revision
   FROM public.sambramo_business_submissions
   WHERE verification_case_id = v_case.id;
 
@@ -207,19 +206,24 @@ BEGIN
 
   v_payload := public.sambramo_build_business_snapshot(v_vendor.id);
 
-  SELECT id
-  INTO v_previous
+  SELECT id INTO v_previous
   FROM public.sambramo_business_submissions
   WHERE vendor_id = v_vendor.id
   ORDER BY created_at DESC
   LIMIT 1;
 
-  -- First submission or a correction submission. The case RPC owns the
-  -- verification deadline and the transition itself.
-  v_submitted := public.submit_verification_case();
+  -- If the case is not yet submitted, submit it and let the existing
+  -- state machine stamp the authoritative due time.
+  IF v_case.status NOT IN ('submitted','verifying','manual_review') THEN
+    v_submitted := public.submit_verification_case();
+    IF COALESCE(v_submitted->>'ok', 'false') <> 'true' THEN
+      RETURN v_submitted;
+    END IF;
 
-  IF COALESCE(v_submitted->>'ok', 'false') <> 'true' THEN
-    RETURN v_submitted;
+    SELECT * INTO v_case
+    FROM public.verification_cases
+    WHERE id = v_case.id
+    FOR UPDATE;
   END IF;
 
   INSERT INTO public.sambramo_business_submissions (
@@ -240,7 +244,7 @@ BEGIN
     'UNDER_REVIEW',
     v_payload,
     1,
-    now(),
+    COALESCE(v_case.submitted_at, now()),
     v_previous,
     (SELECT auth.uid())
   )
@@ -253,11 +257,10 @@ BEGIN
     'case_id', v_case.id,
     'revision_no', v_revision,
     'status', 'UNDER_REVIEW',
-    'review_due_at', v_submitted->'review_due_at'
+    'review_due_at', v_case.review_due_at
   );
 END;
 $$;
-
 REVOKE ALL ON FUNCTION public.submit_sambramo_business() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.submit_sambramo_business() TO authenticated;
 
