@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
+import WorkLibrary from '../../components/vendor/WorkLibrary'
+import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
 import {
   normalizeTrade, STATUS_META, PRICING_STATES, storefrontStatus, pricingReadiness
 } from '../../data/sambramoBusinessPreview'
@@ -349,6 +351,7 @@ export default function BusinessPreview() {
         </div>
 
         {mode === 'customer' ? (
+          <CustomerWorkGallery vendor={vendor} />
           <section className="mt-4 space-y-3">
             {visibleListings.length === 0 ? (
               <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.08]"><Layers3 className="mx-auto text-ink-mute" size={28} /><p className="mt-3 text-[14px] font-extrabold text-ink">Nothing ready to preview yet</p><p className="mt-1 text-[12px] leading-relaxed text-ink-mute">Complete a trade and its offering, then return here.</p></div>
@@ -364,6 +367,15 @@ export default function BusinessPreview() {
               <div className="flex items-center justify-between gap-3"><div><p className="text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-plum-600">Edit controls</p><h2 className="mt-1 text-[16px] font-black text-ink">Everything customers can see</h2></div><Sparkles size={19} className="text-saffron-500" /></div>
               <div className="mt-4 grid grid-cols-2 gap-2"><EditAction icon={Edit3} label="Business profile" detail="Name, description & media" onClick={editProfile} /><EditAction icon={Layers3} label="Services" detail="Trades & offerings" onClick={editServices} /><EditAction icon={BarChart3} label="Pricing" detail="Rates, packages & add-ons" onClick={editPricing} /><EditAction icon={Clock3} label="Availability" detail="Capacity & calendar" onClick={editAvailability} /></div>
             </div>
+
+            <section className="rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.08]">
+              <div className="mb-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-700">Partner catalog media</p>
+                <h3 className="mt-1 text-[16px] font-black text-ink">Photos & videos customers can explore</h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">Tap gallery or camera to add real work. Approved items appear in your customer catalog; new uploads wait for Sambramo review.</p>
+              </div>
+              <WorkLibrary vendor={vendor} />
+            </section>
 
             {visibleListings.map(listing => {
               const config = normalizeTrade(listing.trade, listing.trade_id)
@@ -406,4 +418,50 @@ function StatusPill({ status }) {
 
 function formatINR(value) {
   return '₹' + Number(value || 0).toLocaleString('en-IN')
+}
+
+
+function CustomerWorkGallery({ vendor }) {
+  const [items, setItems] = useState([])
+  const [urls, setUrls] = useState({})
+  const [selected, setSelected] = useState(null)
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      if (!vendor?.id) return
+      const { rows } = await fetchWork(vendor.id)
+      const live = (rows ?? []).filter(row => row.review_status === 'live' && ['photo','video'].includes(row.kind))
+      const signed = await signedUrlsFor(live.map(row => row.storage_path), 900)
+      if (alive) { setItems(live); setUrls(signed) }
+    }
+    load()
+    return () => { alive = false }
+  }, [vendor?.id])
+  if (!items.length) return null
+  return (
+    <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
+      <div className="flex items-center justify-between gap-2">
+        <div><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-700">Work catalog</p><h3 className="mt-1 text-[16px] font-black text-ink">Real work, photos & videos</h3></div>
+        <span className="rounded-full bg-plum-50 px-2.5 py-1 text-[11px] font-extrabold text-plum-700">{items.length} items</span>
+      </div>
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+        {items.map(item => urls[item.storage_path] ? (
+          <button key={item.id} type="button" onClick={() => setSelected(item)} className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-page-sunk ring-1 ring-ink/[0.08]">
+            {item.kind === 'video' ? <video src={urls[item.storage_path]} muted playsInline className="h-full w-full object-cover" /> : <img src={urls[item.storage_path]} alt={item.caption || 'Partner portfolio'} className="h-full w-full object-cover" />}
+            {item.kind === 'video' && <span className="absolute bottom-2 right-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-bold text-white">▶ Video</span>}
+            {item.caption && <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-2 py-1.5 text-left text-[10px] font-semibold text-white">{item.caption}</span>}
+          </button>
+        ) : null)}
+      </div>
+      {selected && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" onClick={() => setSelected(null)}>
+          <button type="button" aria-label="Close media preview" className="absolute right-4 top-6 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white">Close ✕</button>
+          <div className="max-h-[82dvh] w-full max-w-xl" onClick={e => e.stopPropagation()}>
+            {selected.kind === 'video' ? <video src={urls[selected.storage_path]} controls autoPlay playsInline className="max-h-[75dvh] w-full rounded-2xl bg-black object-contain" /> : <img src={urls[selected.storage_path]} alt={selected.caption || 'Partner work'} className="max-h-[75dvh] w-full rounded-2xl object-contain" />}
+            {selected.caption && <p className="mt-3 text-center text-sm font-semibold text-white">{selected.caption}</p>}
+          </div>
+        </div>
+      )}
+    </section>
+  )
 }
