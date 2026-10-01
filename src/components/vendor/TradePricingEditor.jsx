@@ -31,12 +31,23 @@ export default function TradePricingEditor({ vendor, service, onBack, onOpenList
     if(!service?.id){setPackages([]);setLoading(false);return}
     setLoading(true);setError('')
     try{
-      const {data,error}=await supabase.from('sambramo_trade_packages')
-        .select('*, addons:sambramo_trade_package_addons(*), price_versions:sambramo_trade_price_versions(*)')
-        .eq('vendor_service_id',service.id)
-        .order('updated_at',{ascending:false})
-      if(error) throw error
-      setPackages(data??[])
+      const [pkgRes, priceRes] = await Promise.all([
+        supabase.from('sambramo_trade_packages')
+          .select('*, addons:sambramo_trade_package_addons(*)')
+          .eq('vendor_service_id',service.id)
+          .order('updated_at',{ascending:false}),
+        supabase.from('sambramo_partner_price_books')
+          .select('id, offering_id, component_id, component_type, unit, rate_paise, minimum_quantity, included_quantity, inclusions, exclusions, quantity_formula, effective_from, effective_to, status, version')
+          .eq('vendor_service_id',service.id)
+          .order('version',{ascending:false}),
+      ])
+      if(pkgRes.error) throw pkgRes.error
+      if(priceRes.error) throw priceRes.error
+      const priceRows = priceRes.data ?? []
+      setPackages((pkgRes.data ?? []).map(p => ({
+        ...p,
+        price_book: priceRows.filter(row => row.offering_id === p.id),
+      })))
     }catch(e){setError(e?.message??'Could not load pricing for this listing.')}
     finally{setLoading(false)}
   },[service?.id])
@@ -52,10 +63,18 @@ export default function TradePricingEditor({ vendor, service, onBack, onOpenList
   }
 
   const openExisting=p=>{
-    const latest=(p.price_versions??[]).filter(v=>v.status!=='SUPERSEDED').sort((a,b)=>Number(b.version)-Number(a.version))[0]
+    const baseRow=(p.price_book??[]).find(v=>v.component_id==='base' && ['active','draft'].includes(v.status))
+    const storedCommercial=p.commercial_inputs??{}
+    const commercial_inputs={
+      pricing_unit:storedCommercial.pricing_unit || baseRow?.unit || 'package',
+      base_price:storedCommercial.base_price || (baseRow?.rate_paise ? String(Math.round(Number(baseRow.rate_paise)/100)) : ''),
+      minimum_order:storedCommercial.minimum_order || (baseRow?.minimum_quantity ?? '1'),
+      included_quantity:storedCommercial.included_quantity || (baseRow?.included_quantity ?? '1'),
+      ...storedCommercial,
+    }
     setNotice('');setPreview(false);setEditing({
       id:p.id,source:p.source,template_id:p.template_id,name:p.name,description:p.description??'',
-      commercial_inputs:p.commercial_inputs??{},trade_inputs:p.trade_inputs??{},
+      commercial_inputs,trade_inputs:p.trade_inputs??{},
       addons:(p.addons??[]).filter(x=>x.active!==false).map(x=>({name:x.name,unit:x.unit,rate:String(Math.round(Number(x.rate_paise||0)/100)),minimum_quantity:String(x.minimum_quantity??1),included_quantity:String(x.included_quantity??0)})),
       status:p.status,revision_round:Number(p.revision_round||0),price_version:latest?.version??0,
     })
