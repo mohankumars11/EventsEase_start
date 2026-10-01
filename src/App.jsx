@@ -89,6 +89,7 @@ const ReviewPublishStep    = lazy(() => import('./pages/partner/steps/ReviewPubl
 const BusinessPreview       = lazy(() => import('./pages/partner/BusinessPreview'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
+const BusinessSubmissionReview = lazy(() => import('./pages/dashboard/BusinessSubmissionReview'))
 
 function PageLoader() {
   return (
@@ -731,6 +732,12 @@ function AppRoutes() {
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <DashboardShell><AdminDashboard /></DashboardShell>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/dashboard/admin/submissions/:submissionId" element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <DashboardShell><BusinessSubmissionReview /></DashboardShell>
         </ProtectedRoute>
       } />
 
