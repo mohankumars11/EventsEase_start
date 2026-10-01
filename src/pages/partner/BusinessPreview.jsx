@@ -344,9 +344,16 @@ export default function BusinessPreview() {
                 <p className="mt-3 text-[14px] font-extrabold text-ink">Nothing ready to preview yet</p>
                 <p className="mt-1 text-[12px] leading-relaxed text-ink-mute">Complete a trade and its offering, then return here.</p>
               </div>
-            ) : visibleListings.map(listing => {
+            ) : visibleListings.flatMap(listing => {
               const config = normalizeTrade(listing.trade, listing.trade_id)
-              return <CustomerOfferingCard key={listing.id ?? listing.trade} listing={listing} config={config} />
+              const offerings = listing.offerings?.length ? listing.offerings : [null]
+              return offerings.map((offering, index) => (
+                <CustomerOfferingCard
+                  key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)}
+                  offering={offering}
+                  config={config}
+                />
+              ))
             })}
           </section>
         ) : (
