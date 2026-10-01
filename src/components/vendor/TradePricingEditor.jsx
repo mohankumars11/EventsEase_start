@@ -76,7 +76,7 @@ export default function TradePricingEditor({ vendor, service, onBack, onOpenList
       id:p.id,source:p.source,template_id:p.template_id,name:p.name,description:p.description??'',
       commercial_inputs,trade_inputs:p.trade_inputs??{},
       addons:(p.addons??[]).filter(x=>x.active!==false).map(x=>({name:x.name,unit:x.unit,rate:String(Math.round(Number(x.rate_paise||0)/100)),minimum_quantity:String(x.minimum_quantity??1),included_quantity:String(x.included_quantity??0)})),
-      status:p.status,revision_round:Number(p.revision_round||0),price_version:latest?.version??0,
+      status:p.status,revision_round:Number(p.revision_round||0),price_version:Number(baseRow?.version||0),
     })
   }
 
