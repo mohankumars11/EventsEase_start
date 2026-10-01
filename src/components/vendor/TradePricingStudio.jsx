@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, CirclePlus,
-  Clock3, Eye, Images, Info, Loader2, Pencil, Plus, Ruler, ShieldCheck,
-  Sparkles, Trash2, Upload, WalletCards, X,
+  ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
+  CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
+  Plus, Ruler, ShieldCheck, Sparkles, Trash2, WalletCards,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
-import WorkLibrary from './WorkLibrary'
 import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
 import {
   EXCLUSIONS_BY_MODE,
@@ -23,34 +22,110 @@ import {
   getPackageNameSuggestions,
 } from '../../data/sambramoPricingCatalog'
 
-const UNIT_OPTIONS = {
+const DEFAULT_UNITS = {
   PACKAGE: ['package', 'per event', 'per hour', 'per day', 'per function'],
-  RATE_CARD: ['per trip', 'per km', 'per hour', 'per day', 'per event'],
+  RATE_CARD: ['per trip', 'per hour', 'per day', 'per event'],
   CATALOG: ['per item', 'per piece', 'per batch', 'package', 'per event'],
-  HYBRID: ['package', 'per person', 'per guest', 'per hour', 'per event'],
+  HYBRID: ['package', 'per guest', 'per person', 'per hour', 'per day', 'per event'],
   CUSTOM: ['custom quote', 'per event', 'per day', 'per project'],
 }
 
-const ADDON_UNITS = [
-  ['per item', 'Per item'],
-  ['per piece', 'Per piece'],
-  ['per guest', 'Per guest'],
-  ['per hour', 'Per hour'],
-  ['per day', 'Per day'],
-  ['per trip', 'Per trip'],
-  ['per event', 'Per event'],
+const TRADE_UNITS = {
+  E01: ['per guest', 'per plate', 'per event'],
+  E02: ['per event', 'per hour', 'package'],
+  E03: ['per event', 'per hour', 'package'],
+  E04: ['per event', 'per function', 'package'],
+  E05: ['per day', 'per event', 'per plate'],
+  E06: ['per hour', 'per event', 'package'],
+  E07: ['per set', 'per hour', 'per event'],
+  E08: ['per function', 'per event', 'package'],
+  E09: ['custom quote', 'per event', 'per project'],
+  E10: ['per event', 'per day', 'package'],
+  E11: ['per piece', 'per set', 'per event'],
+  E12: ['per trip', 'per hour', 'per day'],
+  E13: ['per event', 'per day', 'package'],
+  E14: ['per kg', 'per cake', 'per item', 'package'],
+  E15: ['per bride', 'per hour', 'per event'],
+  E16: ['per hour', 'per event', 'package'],
+  E17: ['per event', 'per hour', 'package'],
+  E18: ['per vehicle', 'per hour', 'per event'],
+  E19: ['per guard', 'per hour', 'per event'],
+  E20: ['per guest', 'per event', 'package'],
+  E21: ['per staff', 'per hour', 'per event'],
+  E22: ['per day', 'per event', 'package'],
+  E23: ['per unit', 'per day', 'per event'],
+  E24: ['per ceremony', 'per event', 'package'],
+  E25: ['per item', 'per piece', 'per event'],
+  E26: ['per item', 'per set', 'per event'],
+  L01: ['per trip', 'per hour', 'per day'],
+  L02: ['per trip', 'per hour', 'per day'],
+  L03: ['per trip', 'per hour', 'per day'],
+  L04: ['per day', 'per item', 'package'],
+  L05: ['per worker', 'per shift', 'per hour'],
+  L06: ['per month', 'per day', 'per sq ft'],
+  L07: ['per item', 'per piece', 'per batch'],
+  L08: ['custom quote', 'per event', 'per project'],
+}
+
+const SECTION_META = [
+  ['package', 'Package', 'Package card'],
+  ['details', 'Trade Fields', 'Trade-specific details'],
+  ['pricing', 'Pricing', 'Price and conditions'],
+  ['addons', 'Add-ons', 'Optional extras'],
+  ['preview', 'Preview', 'Customer-facing catalog'],
 ]
 
-const STEPS = [
-  ['package', 'Package', 'Package card'],
-  ['details', 'Trade Fields', 'Trade-specific fields'],
-  ['pricing', 'Pricing', 'Pricing rules'],
-  ['addons', 'Add-ons', 'Optional extras'],
-  ['preview', 'Preview', 'Customer preview'],
-]
+const SITE_DEPENDENT = new Set(['E04', 'E05', 'E10', 'E13', 'E17', 'E22', 'E23', 'L08'])
+
+function unitsFor(config) {
+  return TRADE_UNITS[config.trade_id] ?? DEFAULT_UNITS[config.mode] ?? DEFAULT_UNITS.PACKAGE
+}
+
+function presetsForMinimum(config, unit) {
+  if (config.trade_id === 'L06') return unit === 'per month' ? [1, 3, 6, 12] : unit === 'per sq ft' ? [50, 100, 250, 500, 1000] : [1, 7, 14, 30]
+  if (config.trade_id === 'E01' || unit.includes('guest') || unit.includes('person')) return [10, 25, 50, 75, 100, 150, 200, 300]
+  if (unit.includes('hour')) return [1, 2, 4, 6, 8, 10]
+  if (unit.includes('day')) return [1, 2, 3, 5, 7, 14]
+  if (unit.includes('trip')) return [1, 2, 3, 4, 5]
+  if (unit.includes('item') || unit.includes('piece')) return [1, 5, 10, 25, 50, 100]
+  if (unit.includes('month')) return [1, 3, 6, 12]
+  return getMinimumOrderPresets(config, unit)
+}
+
+function presetsForIncluded(config, unit) {
+  if (config.trade_id === 'L06') return unit === 'per sq ft' ? [50, 100, 250, 500, 1000] : [0, 1, 3, 6, 12, 24]
+  if (unit.includes('guest') || unit.includes('person')) return [10, 25, 50, 75, 100, 150, 200, 300]
+  if (unit.includes('item') || unit.includes('piece')) return [0, 1, 5, 10, 25, 50, 100]
+  return getIncludedQuantityPresets(config, unit)
+}
+
+function durationPresets(config, unit) {
+  if (config.trade_id === 'L06' && unit === 'per month') return [1, 3, 6, 12, 24]
+  if (unit.includes('hour')) return [1, 2, 4, 6, 8, 10, 12, 24]
+  if (unit.includes('day')) return [1, 2, 3, 5, 7, 14, 30]
+  return [1, 2, 4, 6, 8, 12]
+}
+
+function minimumSuffix(unit) {
+  const u = String(unit ?? '')
+  if (u.includes('guest')) return 'guests'
+  if (u.includes('person')) return 'people'
+  if (u.includes('hour')) return 'hours'
+  if (u.includes('day')) return 'days'
+  if (u.includes('trip')) return 'trips'
+  if (u.includes('item')) return 'items'
+  if (u.includes('piece')) return 'pieces'
+  if (u.includes('month')) return 'months'
+  if (u.includes('sq ft')) return 'sq ft'
+  return 'units'
+}
+
+function titleizeUnit(value) {
+  return String(value ?? '').split(' ').map(x => x ? x[0].toUpperCase() + x.slice(1) : x).join(' ')
+}
 
 function blankPackage(config, service) {
-  const units = UNIT_OPTIONS[config.mode] ?? UNIT_OPTIONS.PACKAGE
+  const units = unitsFor(config)
   return {
     id: null,
     source: 'PARTNER_CUSTOM',
@@ -64,47 +139,44 @@ function blankPackage(config, service) {
       exclusions: EXCLUSIONS_BY_MODE[config.mode] ?? [],
     },
     trade_inputs: {},
-    base_price: service?.price != null ? String(service.price) : '',
+    base_price: '',
     pricing_unit: units.includes(service?.unit) ? service.unit : units[0],
-    minimum_order: String(service?.min_quantity ?? 1),
+    minimum_order: '',
     included_quantity: '',
     included_duration: '',
     additional_unit_rate: '',
     additional_duration_rate: '',
-    setup_fee: '',
-    teardown_fee: '',
+    setup_fee: '0',
+    teardown_fee: '0',
     travel_policy: '',
     lead_time: service?.lead_time_days ?? '',
     status: 'DRAFT',
-    revision_round: 0,
     addons: [],
   }
 }
 
-function normalizeLoaded(pkg, priceBook, service) {
+function normalizeLoaded(pkg, priceBook, service, config) {
   const q = priceBook?.quantity_formula ?? {}
-  const c = pkg.commercial_inputs ?? {}
+  const units = unitsFor(config)
   return {
     id: pkg.id,
     source: pkg.source ?? 'PARTNER_CUSTOM',
     template_id: pkg.template_id ?? '',
     name: pkg.name ?? '',
-    tier: c.tier ?? '',
+    tier: pkg.commercial_inputs?.tier ?? '',
     description: pkg.description ?? '',
     revision_round: pkg.revision_round ?? 0,
-    commercial_inputs: c,
+    commercial_inputs: pkg.commercial_inputs ?? {},
     trade_inputs: pkg.trade_inputs ?? {},
-    base_price: priceBook?.rate_paise != null
-      ? String(Number(priceBook.rate_paise) / 100)
-      : (service?.price != null ? String(service.price) : ''),
-    pricing_unit: priceBook?.unit ?? 'package',
-    minimum_order: priceBook?.minimum_quantity ?? 1,
+    base_price: priceBook?.rate_paise != null ? String(Number(priceBook.rate_paise) / 100) : '',
+    pricing_unit: units.includes(priceBook?.unit) ? priceBook.unit : (priceBook?.unit || units[0]),
+    minimum_order: priceBook?.minimum_quantity ?? '',
     included_quantity: priceBook?.included_quantity ?? '',
     included_duration: q.included_duration ?? '',
     additional_unit_rate: q.additional_unit_rate ?? '',
     additional_duration_rate: q.additional_duration_rate ?? '',
-    setup_fee: q.setup_fee ?? '',
-    teardown_fee: q.teardown_fee ?? '',
+    setup_fee: q.setup_fee ?? '0',
+    teardown_fee: q.teardown_fee ?? '0',
     travel_policy: q.travel_policy ?? '',
     lead_time: q.lead_time ?? service?.lead_time_days ?? '',
     status: pkg.status ?? 'DRAFT',
@@ -113,11 +185,11 @@ function normalizeLoaded(pkg, priceBook, service) {
 }
 
 function inferTier(name) {
-  const value = String(name ?? '').toLowerCase()
-  if (value.includes('luxury')) return 'luxury'
-  if (value.includes('premium')) return 'premium'
-  if (value.includes('classic')) return 'classic'
-  if (value.includes('basic') || value.includes('essential')) return 'essential'
+  const v = String(name ?? '').toLowerCase()
+  if (v.includes('luxury')) return 'luxury'
+  if (v.includes('premium')) return 'premium'
+  if (v.includes('classic')) return 'classic'
+  if (v.includes('basic') || v.includes('essential')) return 'essential'
   return 'standard'
 }
 
@@ -143,11 +215,11 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         .order('updated_at', { ascending: false })
       if (pkgError) throw pkgError
 
-      const ids = (rows ?? []).map(x => x.id)
+      const ids = (rows ?? []).map(row => row.id)
       const [pricesRes, addonsRes] = await Promise.all([
         ids.length
           ? supabase.from('sambramo_partner_price_books')
-              .select('id,vendor_service_id,offering_id,unit,rate_paise,minimum_quantity,included_quantity,quantity_formula,status,version,effective_from,effective_to')
+              .select('id,vendor_service_id,offering_id,unit,rate_paise,minimum_quantity,included_quantity,quantity_formula,status,version')
               .eq('vendor_service_id', service.id)
               .in('offering_id', ids.map(String))
               .order('version', { ascending: false })
@@ -161,14 +233,11 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
       ])
       if (pricesRes.error) throw pricesRes.error
       if (addonsRes.error) throw addonsRes.error
-
       const prices = pricesRes.data ?? []
       const addons = addonsRes.data ?? []
       setPackages((rows ?? []).map(pkg => ({
         ...pkg,
-        price: prices.find(p => p.offering_id === String(pkg.id) && p.status === 'draft')
-          ?? prices.find(p => p.offering_id === String(pkg.id))
-          ?? null,
+        price: prices.find(p => p.offering_id === String(pkg.id) && p.status === 'draft') ?? prices.find(p => p.offering_id === String(pkg.id)) ?? null,
         addons: addons.filter(a => a.package_id === pkg.id),
       })))
     } catch (e) {
@@ -181,15 +250,14 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
 
   useEffect(() => { load() }, [load])
 
-  function startCustom() {
-    const next = blankPackage(config, service)
-    setEditor(next)
+  function openNew(seed = null) {
+    setEditor(seed ? { ...blankPackage(config, service), ...seed } : blankPackage(config, service))
   }
 
-  function startTemplate(template) {
-    if (!template) return
+  function openTemplate(template) {
+    const base = blankPackage(config, service)
     setEditor({
-      ...blankPackage(config, service),
+      ...base,
       source: 'SAMBRAMO_TEMPLATE',
       template_id: template[0],
       name: template[1],
@@ -198,7 +266,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   }
 
   function openExisting(pkg) {
-    setEditor(normalizeLoaded(pkg, pkg.price, service))
+    setEditor(normalizeLoaded(pkg, pkg.price, service, config))
   }
 
   if (editor) {
@@ -209,81 +277,71 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         config={config}
         draft={editor}
         setDraft={setEditor}
+        readOnly={editor.status === 'LIVE'}
         onBack={() => setEditor(null)}
         onSaved={async () => { setEditor(null); await load() }}
-        readOnly={editor.status === 'LIVE'}
         onOpenListings={onOpenListings}
       />
     )
   }
 
   return (
-    <div className="trade-pricing-catalog w-full min-w-0 space-y-4 pb-5">
-      <header className="flex w-full min-w-0 items-center gap-3 px-1 pt-1">
-        <button type="button" onClick={onBack} aria-label="Back to pricing" className="trade-pricing-round-button">
-          <ArrowLeft size={20} />
+    <div className="trade-pricing-catalog w-full min-w-0 space-y-4 pb-6">
+      <header className="flex w-full items-center gap-3 px-1 pt-1">
+        <button type="button" onClick={onBack} aria-label="Back" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-[#2A085C] ring-1 ring-[#E5DFEB]">
+          <ChevronLeft size={21} />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="trade-pricing-overline">Pricing catalog</p>
-          <h2 className="trade-pricing-page-title">{config.name}</h2>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2A085C]">Pricing catalog</p>
+          <h2 className="truncate text-[24px] font-black leading-tight text-[#211735]">{service?.name || config.name}</h2>
         </div>
       </header>
 
-      <section className="trade-pricing-intro">
-        <span className="trade-pricing-icon-bubble"><WalletCards size={19} /></span>
-        <div className="min-w-0">
-          <p className="trade-pricing-overline">Listed service only</p>
-          <h3 className="trade-pricing-intro-title">{service?.name || config.name}</h3>
-          <p className="trade-pricing-intro-copy">Build a clean package catalog for this exact listing. Unrelated trades stay outside this pricing lane.</p>
+      <section className="rounded-[24px] bg-[#F6F2FB] p-4 ring-1 ring-[#E8E0F2]">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-[#5B21B6] ring-1 ring-[#E1D9EE]"><WalletCards size={19} /></span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#786A8A]">Listed service only</p>
+            <h3 className="mt-1 text-[20px] font-black text-[#211735]">{service?.name || config.name}</h3>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-[#6B5B85]">Create customer-ready packages using the fields and commercial model defined for this trade.</p>
+          </div>
         </div>
       </section>
 
-      {error ? (
-        <section className="trade-pricing-error">
-          <strong>Pricing could not be loaded</strong>
-          <span>{error}</span>
-          <button type="button" onClick={load}>Try again</button>
-        </section>
-      ) : null}
-
-      <section className="trade-pricing-list-card">
-        <div className="trade-pricing-list-head">
-          <div className="min-w-0">
-            <p className="trade-pricing-overline">Your packages</p>
-            <h3 className="trade-pricing-list-count">{packages.length} package{packages.length === 1 ? '' : 's'}</h3>
+      <section className="rounded-[24px] bg-white p-3.5 ring-1 ring-[#E7E2EF]">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#786A8A]">Your packages</p>
+            <h3 className="mt-1 text-[19px] font-black text-[#211735]">{packages.length} package{packages.length === 1 ? '' : 's'}</h3>
           </div>
-          <button type="button" onClick={startCustom} className="trade-pricing-light-button"><Plus size={15} /> Add</button>
+          <button type="button" onClick={() => openNew()} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#F0EAF8] px-4 text-[12px] font-extrabold text-[#2A085C] ring-1 ring-[#E0D5F0]"><Plus size={15} /> Add</button>
         </div>
-
         {loading ? (
-          <div className="trade-pricing-loader"><Loader2 className="animate-spin" size={23} /></div>
+          <div className="flex min-h-[100px] items-center justify-center"><Loader2 size={22} className="animate-spin text-[#6D28D9]" /></div>
         ) : packages.length ? (
-          <div className="space-y-2.5">
+          <div className="mt-3 space-y-2.5">
             {packages.map(pkg => (
-              <button key={pkg.id} type="button" onClick={() => openExisting(pkg)} className="trade-pricing-package-list-item">
-                <span className="trade-pricing-package-symbol">{pkg.source === 'SAMBRAMO_TEMPLATE' ? <Sparkles size={17} /> : <WalletCards size={17} />}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-extrabold text-[#211735]">{pkg.name || 'Unnamed package'}</span>
-                  <span className="mt-1 block truncate text-[11.5px] text-[#6B5B85]">
-                    {pkg.status === 'UNDER_REVIEW' ? 'Under review' : pkg.status === 'LIVE' ? 'Live' : 'Draft'}
-                    {pkg.price?.rate_paise != null ? ' · ' + formatINR(Math.round(Number(pkg.price.rate_paise) / 100)) + ' ' + pkg.price.unit : ' · price not set'}
+              <button key={pkg.id} type="button" onClick={() => openExisting(pkg)} className="w-full rounded-[20px] bg-[#FBFAFD] p-3.5 text-left ring-1 ring-[#E8E2EE]">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#EEE7FA] text-[#2A085C]">{pkg.source === 'SAMBRAMO_TEMPLATE' ? <Sparkles size={17} /> : <Package size={17} />}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-extrabold text-[#211735]">{pkg.name || 'Unnamed package'}</span>
+                    <span className="mt-1 block text-[11.5px] text-[#6B5B85]">
+                      {pkg.status === 'LIVE' ? 'Live' : pkg.status === 'UNDER_REVIEW' ? 'Under review' : 'Draft'}
+                      {pkg.price?.rate_paise != null ? ' · ' + formatINR(Math.round(Number(pkg.price.rate_paise) / 100)) + ' ' + titleizeUnit(pkg.price.unit) : ' · price not set'}
+                    </span>
                   </span>
-                </span>
-                <span className="trade-pricing-status-pill">{pkg.status === 'UNDER_REVIEW' ? 'Reviewing' : pkg.status === 'LIVE' ? 'Enabled' : 'Draft'}</span>
-                <ArrowRight className="shrink-0 text-[#6B5B85]" size={16} />
+                  <span className="shrink-0 rounded-full bg-[#F0EAF8] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5B21B6]">{pkg.status === 'UNDER_REVIEW' ? 'Reviewing' : pkg.status === 'LIVE' ? 'Enabled' : 'Draft'}</span>
+                </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="trade-pricing-empty">
-            <CirclePlus size={22} />
-            <p>No package yet</p>
-            <span>Choose a trade-specific starter or create your own package.</span>
-            <div className="flex flex-wrap justify-center gap-2">
-              {(config.templates ?? []).slice(0, 2).map(template => (
-                <button key={template[0]} type="button" onClick={() => startTemplate(template)} className="trade-pricing-empty-button">{template[1]}</button>
-              ))}
-            </div>
+          <div className="mt-3 rounded-[20px] border border-dashed border-[#DCCFEA] bg-[#FBFAFD] p-5 text-center">
+            <CirclePlus className="mx-auto text-[#6D28D9]" size={23} />
+            <p className="mt-2 text-[14px] font-extrabold text-[#211735]">No package yet</p>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-[#6B5B85]">Start from the first trade-specific template and complete it in five focused screens.</p>
+            <button type="button" onClick={() => openTemplate(config.templates?.[0])} disabled={!config.templates?.length} className="mt-3 rounded-2xl bg-[#EEE7FA] px-4 py-2.5 text-[11.5px] font-extrabold text-[#2A085C] disabled:opacity-50">Use first template</button>
           </div>
         )}
       </section>
@@ -291,29 +349,31 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, draft, setDraft, onBack, onSaved, readOnly, onOpenListings }) {
-  const [step, setStep] = useState('package')
+function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly, onBack, onSaved, onOpenListings }) {
+  const [activeStep, setActiveStep] = useState('package')
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [showMediaLibrary, setShowMediaLibrary] = useState(false)
+  const [localError, setLocalError] = useState('')
   const [addons, setAddons] = useState(draft.addons ?? [])
   const [media, setMedia] = useState([])
 
   const fields = config.fields ?? []
-  const nameSuggestions = useMemo(() => getPackageNameSuggestions(config), [config])
-  const descriptionSuggestions = useMemo(() => getDescriptionSuggestions(config), [config])
-  const addonSuggestions = useMemo(() => getAddonSuggestions(config), [config])
+  const units = unitsFor(config)
+  const descriptionSuggestions = useMemo(() => getDescriptionSuggestions(config).slice(0, 5), [config])
+  const nameSuggestions = useMemo(() => getPackageNameSuggestions(config).slice(0, 5), [config])
+  const addonSuggestions = useMemo(() => getAddonSuggestions(config).slice(0, 5), [config])
 
-  useEffect(() => { setAddons(draft.addons ?? []) }, [draft.id])
+  useEffect(() => {
+    setAddons(draft.addons ?? [])
+  }, [draft.id])
 
   useEffect(() => {
     let alive = true
     async function loadMedia() {
       if (!vendor?.id) return
       const { rows } = await fetchWork(vendor.id)
-      const approved = (rows ?? []).filter(x => x.review_status === 'live' && ['photo', 'video'].includes(x.kind)).slice(0, 8)
-      const urls = await signedUrlsFor(approved.map(x => x.storage_path), 900)
-      if (alive) setMedia(approved.map(x => ({ ...x, url: urls[x.storage_path] })).filter(x => x.url))
+      const approved = (rows ?? []).filter(row => row.review_status === 'live' && ['photo', 'video'].includes(row.kind)).slice(0, 8)
+      const urls = await signedUrlsFor(approved.map(row => row.storage_path), 900)
+      if (alive) setMedia(approved.map(row => ({ ...row, url: urls[row.storage_path] })).filter(row => row.url))
     }
     loadMedia()
     return () => { alive = false }
@@ -322,54 +382,98 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, onBack, 
   const update = (key, value) => setDraft(d => ({ ...d, [key]: value }))
   const updateTrade = (key, value) => setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
   const updateCommercial = (key, value) => setDraft(d => ({ ...d, commercial_inputs: { ...(d.commercial_inputs ?? {}), [key]: value } }))
+  const updateTemplate = template => setDraft(d => ({
+    ...d,
+    source: 'SAMBRAMO_TEMPLATE',
+    template_id: template[0],
+    name: template[1],
+    tier: inferTier(template[1]),
+  }))
 
   const validation = useMemo(() => {
-    const out = []
-    if (!String(draft.name ?? '').trim()) out.push('Choose a package name.')
-    if (!String(draft.description ?? '').trim()) out.push('Choose a customer-ready description.')
-    if (config.mode !== 'CUSTOM' && Number(draft.base_price || 0) <= 0) out.push('Enter a positive base price.')
-    if (Number(draft.minimum_order || 0) <= 0) out.push('Minimum order must be greater than zero.')
-    for (const field of fields) {
-      if (draft.trade_inputs?.[field.key] === '' || draft.trade_inputs?.[field.key] == null) {
-        out.push('Complete ' + field.label + '.')
+    const problems = []
+    if (!String(draft.name ?? '').trim()) problems.push('Choose a package name.')
+    if (!String(draft.description ?? '').trim()) problems.push('Choose a customer-ready description.')
+    if (!draft.tier) problems.push('Choose a package tier.')
+    if (!draft.pricing_unit) problems.push('Choose a pricing unit.')
+    if (Number(draft.minimum_order || 0) <= 0) problems.push('Choose a valid minimum order.')
+    if (config.mode !== 'CUSTOM' && Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
+    if (draft.status !== 'LIVE') {
+      for (const field of fields) {
+        if (field.required === false) continue
+        if (draft.trade_inputs?.[field.key] === '' || draft.trade_inputs?.[field.key] == null) problems.push('Complete ' + field.label + '.')
       }
     }
-    return [...new Set(out)]
+    return [...new Set(problems)]
   }, [draft, config.mode, fields])
 
-  const ready = useMemo(() => ({
-    package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim()),
-    details: fields.every(f => draft.trade_inputs?.[f.key] !== '' && draft.trade_inputs?.[f.key] != null),
-    pricing: config.mode === 'CUSTOM' || Number(draft.base_price || 0) > 0,
-    addons: true,
-    preview: validation.length === 0,
-  }), [draft, fields, config.mode, validation])
+  const ready = useMemo(() => {
+    const detailsReady = !fields.some(field => field.required !== false && (draft.trade_inputs?.[field.key] === '' || draft.trade_inputs?.[field.key] == null))
+    return {
+      package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
+      details: detailsReady,
+      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && (config.mode === 'CUSTOM' || Number(draft.base_price || 0) > 0)),
+      addons: true,
+      preview: validation.length === 0,
+    }
+  }, [draft, fields, config.mode, validation])
 
-  function changeStep(target) {
-    if (!target) return
-    setSaveError('')
-    setStep(target)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  function goTo(step) {
+    const idx = SECTION_META.findIndex(x => x[0] === step)
+    const currentIdx = SECTION_META.findIndex(x => x[0] === activeStep)
+    if (idx <= currentIdx || ready[SECTION_META[currentIdx]?.[0]] || step === 'package') {
+      setActiveStep(step)
+      setLocalError('')
+    }
   }
 
-  function continueStep() {
-    const idx = STEPS.findIndex(x => x[0] === step)
-    const next = STEPS[idx + 1]
-    if (next) changeStep(next[0])
+  function goNext() {
+    const idx = SECTION_META.findIndex(x => x[0] === activeStep)
+    if (!ready[activeStep]) {
+      setLocalError('Complete the required selections on this screen to continue.')
+      return
+    }
+    const next = SECTION_META[idx + 1]
+    if (next) {
+      setLocalError('')
+      setActiveStep(next[0])
+    }
   }
 
-  function previousStep() {
-    const idx = STEPS.findIndex(x => x[0] === step)
-    const prev = STEPS[idx - 1]
-    if (prev) changeStep(prev[0])
-    else onBack()
+  function goPrevious() {
+    const idx = SECTION_META.findIndex(x => x[0] === activeStep)
+    if (idx <= 0) return onBack()
+    setActiveStep(SECTION_META[idx - 1][0])
+    setLocalError('')
+  }
+
+  function addAddon(template = null) {
+    const item = {
+      id: globalThis.crypto?.randomUUID?.() ?? ('tmp-' + Date.now()),
+      name: template?.name ?? '',
+      rate_paise: '',
+      unit: template?.unit ?? defaultAddonUnit(config),
+      minimum_quantity: '1',
+      included_quantity: '0',
+      active: true,
+      sort_order: addons.length,
+    }
+    setAddons(current => [...current, item])
+  }
+
+  function updateAddon(id, patch) {
+    setAddons(current => current.map(item => item.id === id ? { ...item, ...patch } : item))
+  }
+
+  function removeAddon(id) {
+    setAddons(current => current.filter(item => item.id !== id))
   }
 
   async function save(status) {
     if (readOnly || saving) return
-    setSaveError('')
+    setLocalError('')
     if (status === 'UNDER_REVIEW' && validation.length) {
-      setSaveError(validation.join(' '))
+      setLocalError(validation.join(' '))
       return
     }
     setSaving(true)
@@ -397,7 +501,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, onBack, 
         travel_policy: draft.travel_policy || null,
         lead_time: draft.lead_time === '' ? null : Number(draft.lead_time),
       }
-      const payloadAddons = addons.filter(a => String(a.name ?? '').trim()).map((a, i) => ({ ...a, sort_order: i }))
+      const payloadAddons = addons.filter(item => String(item.name ?? '').trim()).map((item, index) => ({ ...item, sort_order: index }))
       const { data, error } = await supabase.rpc('save_sambramo_trade_package', {
         p_vendor_service_id: service.id,
         p_package_id: draft.id || null,
@@ -409,130 +513,96 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, onBack, 
       if (data?.ok === false) throw new Error(data.reason ?? 'Could not save this pricing package.')
       await onSaved()
     } catch (e) {
-      setSaveError(e?.message ?? 'Could not save this pricing package.')
+      setLocalError(e?.message ?? 'Could not save this pricing package.')
     } finally {
       setSaving(false)
     }
   }
 
-  const activeMeta = STEPS.find(x => x[0] === step)
-  const nextMeta = STEPS[Math.min(STEPS.length - 1, STEPS.findIndex(x => x[0] === step) + 1)]
-  const progress = Math.round(((STEPS.findIndex(x => x[0] === step) + 1) / STEPS.length) * 100)
+  const currentIndex = SECTION_META.findIndex(x => x[0] === activeStep)
+  const next = SECTION_META[currentIndex + 1]
+  const isPreview = activeStep === 'preview'
 
   return (
-    <div className="trade-pricing-screen">
-      <header className="trade-pricing-header">
-        <button type="button" onClick={previousStep} aria-label="Back" className="trade-pricing-round-button">
-          <ArrowLeft size={20} />
+    <div className="trade-pricing-screen w-full min-w-0 pb-[calc(9rem+env(safe-area-inset-bottom))]">
+      <header className="trade-pricing-editor-header">
+        <button type="button" onClick={goPrevious} aria-label={activeStep === 'package' ? 'Back to pricing list' : 'Previous step'} className="trade-pricing-back">
+          <ChevronLeft size={21} />
         </button>
         <div className="min-w-0 flex-1">
           <p className="trade-pricing-overline">Pricing · {config.name}</p>
-          <h1 className="trade-pricing-page-title">{draft.name || service?.name || 'New package'}</h1>
+          <h1>{draft.name || service?.name || 'New package'}</h1>
         </div>
-        <button type="button" onClick={() => changeStep('preview')} aria-label="Customer preview" className="trade-pricing-round-button">
+        <button type="button" onClick={() => setActiveStep('preview')} aria-label="Customer preview" className="trade-pricing-eye">
           <Eye size={20} />
         </button>
       </header>
 
-      <StepRail step={step} ready={ready} onSelect={changeStep} />
+      <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} />
 
-      <div className="trade-pricing-progress-copy">
-        <span>{activeMeta?.[1]}</span>
-        <span>{progress}%</span>
-      </div>
+      {localError ? <section className="trade-pricing-error">{localError}</section> : null}
 
-      {saveError ? (
-        <section className="trade-pricing-save-error" role="alert">
-          <Info size={16} />
-          <span>{saveError}</span>
-        </section>
-      ) : null}
-
-      {step === 'package' ? (
+      {activeStep === 'package' ? (
         <PackageStep
           config={config}
           draft={draft}
           readOnly={readOnly}
           nameSuggestions={nameSuggestions}
           descriptionSuggestions={descriptionSuggestions}
-          update={update}
-          updateCommercial={updateCommercial}
+          units={units}
+          onUpdate={update}
+          onUpdateCommercial={updateCommercial}
+          onSelectTemplate={updateTemplate}
         />
       ) : null}
 
-      {step === 'details' ? (
-        <DetailsStep
-          config={config}
-          fields={fields}
-          draft={draft}
-          readOnly={readOnly}
-          updateTrade={updateTrade}
-          onOpenListings={onOpenListings}
-        />
+      {activeStep === 'details' ? (
+        <DetailsStep config={config} fields={fields} draft={draft} readOnly={readOnly} onUpdate={updateTrade} />
       ) : null}
 
-      {step === 'pricing' ? (
-        <PricingStep config={config} draft={draft} readOnly={readOnly} update={update} />
+      {activeStep === 'pricing' ? (
+        <PricingStep config={config} units={units} draft={draft} readOnly={readOnly} onUpdate={update} />
       ) : null}
 
-      {step === 'addons' ? (
-        <AddonsStep config={config} addons={addons} readOnly={readOnly} suggestions={addonSuggestions} addAddon={(t) => setAddons(a => [...a, addonDraft(config, t, a.length)])} updateAddon={(id, patch) => setAddons(a => a.map(x => x.id === id ? { ...x, ...patch } : x))} removeAddon={id => setAddons(a => a.filter(x => x.id !== id))} />
+      {activeStep === 'addons' ? (
+        <AddonsStep config={config} addons={addons} suggestions={addonSuggestions} readOnly={readOnly} onAdd={addAddon} onUpdate={updateAddon} onRemove={removeAddon} />
       ) : null}
 
-      {step === 'preview' ? (
-        <PreviewStep
-          config={config}
-          draft={draft}
-          fields={fields}
-          addons={addons}
-          media={media}
-          onManageMedia={() => setShowMediaLibrary(true)}
-        />
+      {activeStep === 'preview' ? (
+        <PreviewStep config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} />
       ) : null}
 
-      <div className="trade-pricing-bottom">
-        <button type="button" onClick={() => save('DRAFT')} disabled={readOnly || saving} className="trade-pricing-secondary-action">
-          {saving ? 'Saving…' : 'Save draft'}
-        </button>
-        {step === 'preview' ? (
-          <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={readOnly || saving || validation.length > 0} className="trade-pricing-primary-action">
-            {saving ? 'Submitting…' : 'Submit pricing for review'}
+      {!readOnly ? (
+        <div className="trade-pricing-bottom">
+          <button type="button" onClick={() => save('DRAFT')} disabled={saving} className="trade-pricing-secondary-action">
+            {saving ? 'Saving…' : 'Save draft'}
           </button>
-        ) : (
-          <button type="button" onClick={continueStep} disabled={readOnly || saving || !ready[step]} className="trade-pricing-primary-action">
-            Continue to {nextMeta?.[1] ?? 'Preview'} <ArrowRight size={16} />
-          </button>
-        )}
-      </div>
-
-      {showMediaLibrary ? (
-        <div className="trade-pricing-sheet-backdrop" onMouseDown={() => setShowMediaLibrary(false)}>
-          <div className="trade-pricing-sheet" onMouseDown={e => e.stopPropagation()}>
-            <div className="trade-pricing-sheet-header">
-              <div>
-                <p className="trade-pricing-overline">Partner catalog</p>
-                <h3 className="trade-pricing-sheet-title">Photos & videos customers can explore</h3>
-                <p className="trade-pricing-sheet-copy">Add real work to your profile catalog. New uploads stay under Sambramo review until approved.</p>
-              </div>
-              <button type="button" onClick={() => setShowMediaLibrary(false)} className="trade-pricing-round-button"><X size={18} /></button>
-            </div>
-            <WorkLibrary vendor={vendor} />
-          </div>
+          {isPreview ? (
+            <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={saving || validation.length > 0} className="trade-pricing-primary-action">
+              {saving ? 'Submitting…' : 'Submit pricing for review'}
+            </button>
+          ) : (
+            <button type="button" onClick={goNext} disabled={saving || !ready[activeStep]} className="trade-pricing-primary-action">
+              Continue to {next?.[1] ?? 'Preview'} <ArrowRight size={16} />
+            </button>
+          )}
         </div>
       ) : null}
     </div>
   )
 }
 
-function StepRail({ step, ready, onSelect }) {
+function StepRail({ activeStep, ready, onSelect }) {
+  const currentIndex = SECTION_META.findIndex(x => x[0] === activeStep)
   return (
-    <nav className="trade-pricing-steps" aria-label="Pricing setup">
-      {STEPS.map(([id, label], index) => {
-        const active = id === step
-        const complete = ready[id] && !active
+    <nav className="trade-pricing-steps" aria-label="Pricing setup steps">
+      {SECTION_META.map(([id, label], index) => {
+        const active = id === activeStep
+        const enabled = index <= currentIndex || ready[SECTION_META[index - 1]?.[0]] || id === 'package'
+        const complete = index < currentIndex || ready[id]
         return (
-          <button key={id} type="button" onClick={() => onSelect(id)} className={'trade-pricing-step ' + (active ? 'is-active' : '') + (complete ? ' is-complete' : '')}>
-            <span className="trade-pricing-step-circle">{complete ? <Check size={14} strokeWidth={3} /> : index + 1}</span>
+          <button key={id} type="button" disabled={!enabled} onClick={() => onSelect(id)} className={'trade-pricing-step ' + (active ? 'is-active' : '') + (!enabled ? ' is-locked' : '')}>
+            <span className={'trade-pricing-step-circle ' + (complete ? 'is-complete' : '')}>{complete ? <Check size={13} strokeWidth={3} /> : index + 1}</span>
             <span className="trade-pricing-step-label">{label}</span>
           </button>
         )
@@ -541,17 +611,26 @@ function StepRail({ step, ready, onSelect }) {
   )
 }
 
-function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, update, updateCommercial }) {
+function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, units, onUpdate, onUpdateCommercial, onSelectTemplate }) {
   return (
-    <div className="space-y-3">
-      <section className="trade-pricing-card">
-        <SectionHeader icon={Sparkles} title="Package card" subtitle="Choose a package template or create your own." />
+    <section className="trade-pricing-panel">
+      <div className="trade-pricing-card">
+        <SectionHeader icon={Package} title="Package card" subtitle="Choose a package template or create your own." action={
+          <select value={draft.template_id || ''} disabled={readOnly} onChange={e => {
+            const template = (config.templates ?? []).find(item => item[0] === e.target.value)
+            if (template) onSelectTemplate(template)
+          }} className="trade-pricing-template-select">
+            <option value="">Use template</option>
+            {(config.templates ?? []).map(t => <option key={t[0]} value={t[0]}>{t[1]}</option>)}
+          </select>
+        } />
+
         <div className="trade-pricing-template-grid">
           {(config.templates ?? []).slice(0, 5).map(([id, label]) => {
             const selected = draft.template_id === id
             return (
-              <button key={id} type="button" disabled={readOnly} onClick={() => updateFromTemplate([id, label], update)} className={'trade-pricing-template-card ' + (selected ? 'is-selected' : '')}>
-                <span className="trade-pricing-template-icon"><Sparkles size={16} /></span>
+              <button key={id} type="button" disabled={readOnly} onClick={() => onSelectTemplate([id, label])} className={'trade-pricing-template-card ' + (selected ? 'is-selected' : '')}>
+                <span className="trade-pricing-template-icon"><Package size={16} /></span>
                 <span className="trade-pricing-template-name">{label}</span>
                 {selected ? <span className="trade-pricing-template-check"><Check size={12} /></span> : null}
               </button>
@@ -559,285 +638,254 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
           })}
         </div>
 
-        <div className="trade-pricing-field-row trade-pricing-field-row-2">
-          <ChoiceField label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => update('name', v)} />
-          <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => update('tier', v)} />
+        <div className="trade-pricing-subcard">
+          <div className="trade-pricing-field-row trade-pricing-field-row-2">
+            <ChoiceField label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => onUpdate('name', v)} />
+            <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
+          </div>
+          <div className="trade-pricing-field-row trade-pricing-field-row-2">
+            <ChoiceField label="Pricing unit" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
+            <CurrencyField label="Base commercial rate (optional here)" value={draft.base_price} disabled={readOnly} onChange={v => onUpdate('base_price', v)} />
+          </div>
         </div>
 
-        <div className="trade-pricing-field-row trade-pricing-field-row-2">
-          <ChoiceField label="Pricing unit" value={draft.pricing_unit} disabled={readOnly} options={(UNIT_OPTIONS[config.mode] ?? UNIT_OPTIONS.PACKAGE).map(x => [x, titleizeUnit(x)])} onChange={v => update('pricing_unit', v)} />
-          <CurrencyField label="Base commercial rate" value={draft.base_price} disabled={readOnly} onChange={v => update('base_price', v)} />
+        <div className="trade-pricing-description-head">
+          <div className="min-w-0">
+            <p className="trade-pricing-label">Recommended description</p>
+            <p className="trade-pricing-helper">Pick one, then edit it to match what you actually deliver.</p>
+          </div>
+          <Pencil size={16} className="shrink-0 text-[#6D28D9]" />
         </div>
-      </section>
 
-      <section className="trade-pricing-card">
-        <div className="trade-pricing-section-heading">
-          <SectionHeader icon={Pencil} title="Recommended description" subtitle="Choose one or edit it to match your business." />
-        </div>
         <div className="trade-pricing-description-grid">
-          {descriptionSuggestions.slice(0, 5).map((text, index) => {
+          {descriptionSuggestions.map((text, index) => {
             const selected = draft.description === text
             return (
-              <button key={text} type="button" disabled={readOnly} onClick={() => update('description', text)} className={'trade-pricing-description-card ' + (selected ? 'is-selected' : '')}>
+              <button key={text} type="button" disabled={readOnly} onClick={() => onUpdate('description', text)} className={'trade-pricing-description-card ' + (selected ? 'is-selected' : '')}>
                 <span className="trade-pricing-radio">{selected ? <Check size={12} /> : null}</span>
-                <span className="trade-pricing-description-text">{index + 1}. {text}</span>
+                <span className="trade-pricing-description-text">{text}</span>
               </button>
             )
           })}
         </div>
-        <div className="trade-pricing-edit-description">
-          <textarea value={draft.description ?? ''} disabled={readOnly} rows={3} onChange={e => update('description', e.target.value)} placeholder="Edit the selected description here…" />
-        </div>
-      </section>
 
-      <section className="trade-pricing-card">
-        <SectionHeader icon={Info} title="Commercial basics" subtitle="Set the quantities and lead time that customers should see." />
-        <div className="trade-pricing-field-row trade-pricing-field-row-2">
-          <PresetNumberField label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={getMinimumOrderPresets(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => update('minimum_order', v)} />
-          <PresetNumberField label="Included quantity" value={draft.included_quantity} disabled={readOnly} presets={getIncludedQuantityPresets(config, draft.pricing_unit)} suffix={quantitySuffix(draft.pricing_unit)} onChange={v => update('included_quantity', v)} />
+        <div className="trade-pricing-edit-description">
+          <textarea value={draft.description ?? ''} disabled={readOnly} rows={3} onChange={e => onUpdate('description', e.target.value)} placeholder="Edit the selected description here…" />
         </div>
-        <div className="trade-pricing-field-row trade-pricing-field-row-2">
-          <PresetNumberField label="Included duration" value={draft.included_duration} disabled={readOnly} presets={[1, 2, 4, 6, 8, 12, 24]} suffix="units" onChange={v => update('included_duration', v)} />
-          <PresetNumberField label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => update('lead_time', v)} />
-        </div>
-        <ChoiceField label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => update('travel_policy', v)} />
-        <StructuredList label="Inclusions" values={draft.commercial_inputs?.inclusions ?? []} suggested={INCLUSIONS_BY_MODE[config.mode] ?? []} disabled={readOnly} onChange={v => updateCommercial('inclusions', v)} />
-        <StructuredList label="Exclusions" values={draft.commercial_inputs?.exclusions ?? []} suggested={EXCLUSIONS_BY_MODE[config.mode] ?? []} disabled={readOnly} onChange={v => updateCommercial('exclusions', v)} />
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }
 
-function DetailsStep({ config, fields, draft, readOnly, updateTrade, onOpenListings }) {
+function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   return (
-    <div className="space-y-3">
-      <section className="trade-pricing-card">
-        <SectionHeader icon={Ruler} title={config.name + ' details'} subtitle="Only the controls that belong to this trade are shown here." />
-        <div className="trade-pricing-trade-tag">
-          <ShieldCheck size={14} />
-          <span>{config.mode === 'RATE_CARD' ? 'Rate-card trade' : config.mode === 'CATALOG' ? 'Catalog trade' : config.mode === 'CUSTOM' ? 'Custom quote trade' : 'Structured package trade'}</span>
-        </div>
-        <div className="trade-pricing-fields-grid">
-          {fields.map(field => {
-            const schema = getFieldSchema(field, config)
-            if (field.key === 'sku') return <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => updateTrade(field.key, v)} />
-            if (schema.control === 'currency') return <CurrencyField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => updateTrade(field.key, v)} />
-            if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} presets={schema.presets ?? [1,2,4,6,8,10]} suffix={schema.control === 'duration' ? 'units' : fieldUnit(field.key)} onChange={v => updateTrade(field.key, v)} />
-            return <ChoiceField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} options={schema.options ?? []} allowCustom onChange={v => updateTrade(field.key, v)} />
-          })}
+    <section className="trade-pricing-panel">
+      <div className="trade-pricing-card">
+        <SectionHeader icon={Ruler} title="Trade specific fields" subtitle={'Only the controls for ' + config.name + ' are shown.'} />
+        <div className="trade-pricing-fields-grid trade-specific-grid">
+          {fields.map(field => (
+            field.key === 'sku'
+              ? <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => onUpdate(field.key, v)} />
+              : <TradeFieldControl key={field.key} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
+          ))}
         </div>
         {SITE_DEPENDENT.has(config.trade_id) ? (
-          <div className="trade-pricing-info-box"><Info size={15} /><span>This trade can stay structured while site measurement, route complexity or physical verification is handled through a survey / quote step.</span></div>
+          <div className="trade-pricing-site-note">
+            <Info size={15} />
+            <span>Site measurements, access, route complexity or physical unknowns can move the final request into a survey / quote lane.</span>
+          </div>
         ) : null}
-        {onOpenListings ? <button type="button" onClick={onOpenListings} className="trade-pricing-link-button">Edit listing capabilities</button> : null}
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }
 
-function PricingStep({ config, draft, readOnly, update }) {
-  const units = UNIT_OPTIONS[config.mode] ?? UNIT_OPTIONS.PACKAGE
+function PricingStep({ config, units, draft, readOnly, onUpdate }) {
   return (
-    <div className="space-y-3">
-      <section className="trade-pricing-card">
-        <SectionHeader icon={WalletCards} title="Pricing rules" subtitle="Set your base pricing and customer-facing conditions." />
-        <div className="trade-pricing-base-card">
-          <div className="trade-pricing-price-preset-area">
+    <section className="trade-pricing-panel">
+      <div className="trade-pricing-card">
+        <SectionHeader icon={WalletCards} title="Pricing rules" subtitle={'Set the commercial rules for ' + config.name + '.'} />
+
+        <div className="trade-pricing-base-price">
+          <div className="min-w-0">
             <p className="trade-pricing-label">Base price</p>
             <div className="trade-pricing-price-presets">
               {PRICE_PRESETS.slice(0, 3).map(amount => (
-                <button key={amount} type="button" disabled={readOnly} onClick={() => update('base_price', String(amount))} className={'trade-pricing-price-chip ' + (Number(draft.base_price) === amount ? 'is-selected' : '')}>{formatINR(amount)}</button>
+                <button key={amount} type="button" disabled={readOnly} onClick={() => onUpdate('base_price', String(amount))} className={'trade-pricing-price-chip ' + (Number(draft.base_price) === amount ? 'is-selected' : '')}>{formatINR(amount)}</button>
               ))}
-              <button type="button" disabled={readOnly} onClick={() => update('base_price', '')} className="trade-pricing-price-chip">Custom</button>
+              <button type="button" disabled={readOnly} onClick={() => onUpdate('base_price', '')} className="trade-pricing-price-chip">Custom</button>
             </div>
           </div>
-          <CurrencyField label="Your price (₹)" value={draft.base_price} disabled={readOnly} onChange={v => update('base_price', v)} />
+          <CurrencyField label="Your price (₹)" value={draft.base_price} disabled={readOnly} onChange={v => onUpdate('base_price', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-3">
-          <ChoiceField label="Price applies to" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => update('pricing_unit', v)} />
-          <PresetNumberField label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={getMinimumOrderPresets(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => update('minimum_order', v)} />
-          <PresetNumberField label="Included duration" value={draft.included_duration} disabled={readOnly} presets={tradeDurationPresets(config)} suffix={durationLabel(config)} onChange={v => update('included_duration', v)} />
+          <ChoiceField label="Price applies to" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
+          <PresetNumberField label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={presetsForMinimum(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => onUpdate('minimum_order', v)} />
+          <PresetNumberField label="Included duration" value={draft.included_duration} disabled={readOnly} presets={durationPresets(config, draft.pricing_unit)} suffix={config.trade_id === 'L06' && draft.pricing_unit === 'per month' ? 'months' : 'value'} onChange={v => onUpdate('included_duration', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-4">
-          <PresetNumberField label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => update('lead_time', v)} />
-          <ChoiceField label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => update('travel_policy', v)} />
-          <FeeChoice label="Setup charge" value={draft.setup_fee} disabled={readOnly} onChange={v => update('setup_fee', v)} />
-          <FeeChoice label="Teardown charge" value={draft.teardown_fee} disabled={readOnly} onChange={v => update('teardown_fee', v)} />
+          <PresetNumberField label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
+          <ChoiceField label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
+          <FeeChoice label="Setup charge" value={draft.setup_fee} disabled={readOnly} onChange={v => onUpdate('setup_fee', v)} />
+          <FeeChoice label="Teardown charge" value={draft.teardown_fee} disabled={readOnly} onChange={v => onUpdate('teardown_fee', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
-          <CurrencyPresetField label="Additional unit rate" value={draft.additional_unit_rate} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500]} onChange={v => update('additional_unit_rate', v)} />
-          <CurrencyPresetField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} presets={[100,250,500,750,1000,1500,2500,5000]} onChange={v => update('additional_duration_rate', v)} />
+          <CurrencyField label={'Additional ' + titleizeUnit(draft.pricing_unit) + ' rate'} value={draft.additional_unit_rate} disabled={readOnly} onChange={v => onUpdate('additional_unit_rate', v)} />
+          <CurrencyField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} onChange={v => onUpdate('additional_duration_rate', v)} />
         </div>
-      </section>
-      <section className="trade-pricing-card">
-        <SectionHeader icon={Clock3} title="Commercial snapshot" subtitle="This is the rule Sambramo will store with the package version." />
-        <div className="trade-pricing-snapshot-grid">
-          <Snapshot label="Unit" value={titleizeUnit(draft.pricing_unit)} />
-          <Snapshot label="Minimum" value={(draft.minimum_order || '1') + ' ' + minimumSuffix(draft.pricing_unit)} />
-          <Snapshot label="Lead time" value={draft.lead_time === '' ? 'Not set' : draft.lead_time + ' days'} />
-          <Snapshot label="Quote lane" value={config.mode === 'CUSTOM' ? 'Custom quote' : 'Structured'} />
+
+        <div className="trade-pricing-rule-strip">
+          <span><strong>Unit</strong>{titleizeUnit(draft.pricing_unit)}</span>
+          <span><strong>Minimum</strong>{draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Select'}</span>
+          <span><strong>Lead time</strong>{draft.lead_time === '' ? 'Select' : draft.lead_time + ' days'}</span>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }
 
-function AddonsStep({ config, addons, readOnly, suggestions, addAddon, updateAddon, removeAddon }) {
+function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, onRemove }) {
   return (
-    <div className="space-y-3">
-      <section className="trade-pricing-card">
+    <section className="trade-pricing-panel">
+      <div className="trade-pricing-card">
         <div className="trade-pricing-section-heading">
-          <SectionHeader icon={CirclePlus} title="Add-ons" subtitle="Choose optional extras that belong to this trade." />
-          {!readOnly ? <button type="button" onClick={() => addAddon()} className="trade-pricing-small-action"><Plus size={14} /> Custom</button> : null}
+          <SectionHeader icon={CirclePlus} title="Add-ons" subtitle={'Optional extras for ' + config.name + '.'} />
+          {!readOnly ? <button type="button" onClick={() => onAdd()} className="trade-pricing-small-action"><Plus size={14} /> Add custom</button> : null}
         </div>
 
         <div className="trade-pricing-addon-grid">
           {suggestions.map(template => {
-            const selected = addons.some(x => String(x.name).trim().toLowerCase() === template.name.trim().toLowerCase())
+            const selected = addons.some(item => String(item.name).trim().toLowerCase() === template.name.trim().toLowerCase())
             return (
-              <button key={template.id} type="button" disabled={readOnly || selected} onClick={() => addAddon(template)} className={'trade-pricing-addon-card ' + (selected ? 'is-selected' : '')}>
-                <span className="trade-pricing-addon-check">{selected ? <Check size={12} /> : null}</span>
-                <span className="block min-w-0 truncate text-[11px] font-extrabold">{template.name}</span>
-                <span className="mt-0.5 block text-[10px] font-semibold text-[#6B5B85]">{selected ? 'Selected' : 'Tap to add'}</span>
+              <button key={template.id} type="button" disabled={readOnly || selected} onClick={() => onAdd(template)} className={'trade-pricing-addon-card ' + (selected ? 'is-selected' : '')}>
+                <span className="trade-pricing-addon-check">{selected ? <Check size={13} /> : null}</span>
+                <span className="block min-w-0 text-[11px] font-extrabold leading-snug">{template.name}</span>
+                <span className="mt-0.5 block text-[10px] font-bold text-[#6B5B85]">{selected ? 'Selected' : 'Tap to add'}</span>
               </button>
             )
           })}
         </div>
 
+        <div className="mt-3 space-y-2">
+          {addons.map(addon => (
+            <div key={addon.id} className="rounded-2xl bg-[#FBFAFD] p-3 ring-1 ring-[#E7E2EF]">
+              <div className="flex items-center gap-2">
+                <TextField label="Add-on name" value={addon.name} disabled={readOnly} placeholder="Custom add-on" onChange={v => onUpdate(addon.id, { name: v })} />
+                {!readOnly ? <button type="button" onClick={() => onRemove(addon.id)} aria-label="Remove add-on" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#6B5B85] ring-1 ring-[#E7E2EF]"><Trash2 size={13} /></button> : null}
+              </div>
+              <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
+                <CurrencyField label="Add-on rate (₹)" value={addon.rate_paise === '' ? '' : String(Number(addon.rate_paise || 0) / 100)} disabled={readOnly} onChange={v => onUpdate(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
+                <ChoiceField label="Unit" value={addon.unit} disabled={readOnly} options={[['per item','Per item'],['per piece','Per piece'],['per guest','Per guest'],['per hour','Per hour'],['per day','Per day'],['per trip','Per trip'],['per event','Per event']]} onChange={v => onUpdate(addon.id, { unit: v })} />
+              </div>
+            </div>
+          ))}
+        </div>
+
         {!addons.length ? (
-          <div className="trade-pricing-addon-empty">
-            <Plus size={19} />
-            <span>No optional extras selected yet.</span>
+          <div className="mt-3 rounded-2xl border border-dashed border-[#DCCFEA] bg-[#FBFAFD] p-4 text-center">
+            <Plus className="mx-auto text-[#6D28D9]" size={20} />
+            <p className="mt-1.5 text-[11.5px] font-extrabold text-[#211735]">No add-ons selected</p>
+            <p className="mt-1 text-[10.5px] text-[#6B5B85]">Add-ons are optional. Continue when you are ready.</p>
           </div>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {addons.map(addon => (
-              <div key={addon.id} className="trade-pricing-addon-editor">
-                <div className="flex min-w-0 items-center gap-2">
-                  <TextField label="Add-on" value={addon.name} disabled={readOnly} onChange={v => updateAddon(addon.id, { name: v })} placeholder="Custom add-on" />
-                  {!readOnly ? <button type="button" onClick={() => removeAddon(addon.id)} aria-label="Remove add-on" className="trade-pricing-delete-button"><Trash2 size={13} /></button> : null}
-                </div>
-                <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
-                  <CurrencyPresetField label="Rate" value={addon.rate_paise === '' ? '' : Number(addon.rate_paise || 0) / 100} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000]} onChange={v => updateAddon(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
-                  <ChoiceField label="Unit" value={addon.unit} disabled={readOnly} options={ADDON_UNITS} onChange={v => updateAddon(addon.id, { unit: v })} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+        ) : null}
+      </div>
+    </section>
   )
 }
 
-function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
-  const selectedFields = fields.filter(f => draft.trade_inputs?.[f.key] !== '' && draft.trade_inputs?.[f.key] != null)
+function PreviewStep({ config, draft, fields, addons, media, onOpenListings }) {
+  const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
+  const hero = media[0]
   return (
-    <div className="space-y-3">
-      <section className="trade-pricing-card trade-pricing-preview-wrapper">
-        <div className="trade-pricing-preview-heading">
+    <section className="trade-pricing-panel">
+      <div className="trade-pricing-card">
+        <div className="trade-pricing-preview-title">
           <div className="min-w-0">
-            <p className="trade-pricing-overline text-white/60">Customer preview</p>
-            <h2 className="trade-pricing-preview-title">This is how your package will appear to customers.</h2>
+            <p className="trade-pricing-label">Customer preview</p>
+            <p className="trade-pricing-helper">This is the catalog card your customer will see.</p>
           </div>
-          <button type="button" onClick={onManageMedia} className="trade-pricing-preview-media-button"><Upload size={14} /> Manage media</button>
+          {onOpenListings ? <button type="button" onClick={onOpenListings} className="trade-pricing-small-action"><Images size={14} /> Manage media</button> : null}
         </div>
 
-        <div className="trade-pricing-preview-main">
-          <div className="trade-pricing-preview-media-large">
-            {media[0]?.kind === 'video' ? (
-              <video src={media[0].url} muted playsInline controls className="h-full w-full object-cover" />
-            ) : media[0]?.url ? (
-              <img src={media[0].url} alt="Partner catalog" className="h-full w-full object-cover" />
-            ) : (
-              <div className="trade-pricing-preview-placeholder"><Images size={28} /><span>Add approved work to make this a richer catalog.</span></div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="trade-pricing-preview-overline">{config.name}</p>
-            <h3 className="trade-pricing-preview-package">{draft.name || 'Your package'}</h3>
-            <p className="trade-pricing-preview-description">{draft.description || 'Choose a customer-ready description above.'}</p>
-            <div className="trade-pricing-preview-metrics">
-              <PreviewMetric label="Price" value={draft.base_price ? formatINR(Number(draft.base_price)) + ' / ' + titleizeUnit(draft.pricing_unit) : 'Quote'} />
-              <PreviewMetric label="Minimum" value={(draft.minimum_order || 1) + ' ' + minimumSuffix(draft.pricing_unit)} />
-              <PreviewMetric label="Lead time" value={draft.lead_time === '' ? '—' : draft.lead_time + ' days'} />
-              {selectedFields.slice(0, 2).map(field => <PreviewMetric key={field.key} label={field.label} value={String(draft.trade_inputs[field.key])} />)}
-            </div>
-          </div>
-        </div>
-
-        {media.length > 1 ? (
-          <div className="trade-pricing-preview-strip">
-            {media.slice(0, 4).map(item => (
-              <div key={item.id} className="trade-pricing-preview-thumb">
-                {item.kind === 'video' ? <video src={item.url} muted playsInline className="h-full w-full object-cover" /> : <img src={item.url} alt="" className="h-full w-full object-cover" />}
+        <div className="trade-pricing-customer-preview">
+          <div className="trade-pricing-preview-heading">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white"><Eye size={17} /></span>
+              <div className="min-w-0">
+                <p className="text-[15px] font-extrabold text-white">Customer preview</p>
+                <p className="mt-0.5 text-[11.5px] leading-relaxed text-white/72">This is how your package will appear to customers.</p>
               </div>
-            ))}
-            <span>{media.length} catalog items</span>
+            </div>
+            <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold text-white">Review ready</span>
           </div>
-        ) : null}
 
-        <div className="trade-pricing-preview-tags">
-          <span><ShieldCheck size={13} /> Approved partner work can appear here</span>
-          <span><BadgeCheck size={13} /> Review-ready pricing</span>
-        </div>
-      </section>
+          <div className="trade-pricing-preview-body">
+            <div className="trade-pricing-preview-media">
+              {hero?.kind === 'video' ? (
+                <video src={hero.url} muted playsInline controls className="h-full w-full object-cover" />
+              ) : hero?.url ? (
+                <img src={hero.url} alt="Approved partner catalog" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-white/60"><Images size={28} /></div>
+              )}
+            </div>
 
-      <section className="trade-pricing-card">
-        <SectionHeader icon={Eye} title="Customer detail summary" subtitle="Only the values selected for this package are shown." />
-        {selectedFields.length ? (
-          <div className="trade-pricing-selected-values">
-            {selectedFields.map(field => <span key={field.key}><strong>{field.label}</strong>{String(draft.trade_inputs[field.key])}</span>)}
-          </div>
-        ) : (
-          <p className="trade-pricing-empty-copy">No trade-specific values selected yet.</p>
-        )}
-        {addons.length ? (
-          <div className="mt-3">
-            <p className="trade-pricing-label">Optional extras</p>
-            <div className="trade-pricing-selected-values">
-              {addons.filter(a => a.name && a.active !== false).map(a => <span key={a.id}><strong>{a.name}</strong>{a.rate_paise ? formatINR(Math.round(Number(a.rate_paise) / 100)) : 'Quote'} · {titleizeUnit(a.unit)}</span>)}
+            <div className="min-w-0">
+              <p className="trade-pricing-preview-overline">{config.name}</p>
+              <h2 className="mt-1 text-[21px] font-black leading-tight text-white">{draft.name || 'Your package'}</h2>
+              <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/80">{draft.description || 'Your customer-ready description will appear here.'}</p>
+
+              <div className="trade-pricing-preview-metrics">
+                <PreviewMetric label="Price" value={draft.base_price ? formatINR(Number(draft.base_price)) + ' / ' + titleizeUnit(draft.pricing_unit) : 'Quote'} />
+                <PreviewMetric label="Minimum" value={draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Select'} />
+                <PreviewMetric label="Lead time" value={draft.lead_time === '' ? '—' : draft.lead_time + ' days'} />
+                {selectedFields.slice(0, 1).map(field => <PreviewMetric key={field.key} label={field.label} value={String(draft.trade_inputs[field.key])} />)}
+              </div>
             </div>
           </div>
-        ) : null}
-      </section>
-    </div>
+
+          {media.length > 1 ? (
+            <div className="trade-pricing-preview-media-strip">
+              {media.slice(0, 4).map(item => (
+                <div key={item.id} className="relative h-14 w-14 overflow-hidden rounded-xl border border-white/10">
+                  {item.kind === 'video' ? <video src={item.url} muted playsInline className="h-full w-full object-cover" /> : <img src={item.url} alt="" className="h-full w-full object-cover" />}
+                </div>
+              ))}
+              <span className="self-center text-[10px] font-extrabold text-white/65">{media.length} catalog items</span>
+            </div>
+          ) : null}
+
+          <div className="trade-pricing-preview-footer">
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-white/80"><ShieldCheck size={13} /> Approved partner work can appear here.</span>
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-white/80"><BadgeCheck size={13} /> Trade-specific catalog</span>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
-function SectionHeader({ icon: Icon, title, subtitle }) {
+function SectionHeader({ icon: Icon, title, subtitle, action }) {
   return (
     <div className="trade-pricing-section-header">
       <span className="trade-pricing-section-icon"><Icon size={18} /></span>
       <div className="min-w-0 flex-1">
-        <p className="trade-pricing-section-title">{title}</p>
-        <p className="trade-pricing-section-subtitle">{subtitle}</p>
+        <p className="text-[15px] font-black leading-tight text-[#211735]">{title}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-[#6B5B85]">{subtitle}</p>
       </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   )
 }
 
-function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false }) {
-  const normalized = (options ?? []).map(x => Array.isArray(x) ? x : [x, x])
-  const isCustom = allowCustom && value !== '' && !normalized.some(x => x[0] === value)
-  return (
-    <label className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
-      <span className="trade-pricing-select-wrap">
-        <select value={isCustom ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => onChange(e.target.value === '__custom__' ? '' : e.target.value)}>
-          <option value="">Select</option>
-          {normalized.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
-          {allowCustom ? <option value="__custom__">Custom / type my own</option> : null}
-        </select>
-        <ChevronDown size={15} />
-      </span>
-      {allowCustom && isCustom ? <input className="trade-pricing-custom-inline" value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} placeholder="Custom value" /> : null}
-    </label>
-  )
+function TradeFieldControl({ field, config, value, disabled, onChange }) {
+  const schema = getFieldSchema(field, config)
+  if (schema.control === 'currency') return <CurrencyField label={field.label} value={value} disabled={disabled} onChange={onChange} />
+  if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
+  return <ChoiceField label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
 }
 
 function TextField({ label, value, onChange, placeholder = '', disabled = false }) {
@@ -845,6 +893,25 @@ function TextField({ label, value, onChange, placeholder = '', disabled = false 
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}</span>
       <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    </label>
+  )
+}
+
+function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false }) {
+  const normalized = (options ?? []).map(x => Array.isArray(x) ? x : [x, x])
+  const custom = allowCustom && value !== '' && !normalized.some(x => x[0] === value)
+  return (
+    <label className="trade-pricing-field">
+      <span className="trade-pricing-field-label">{label}</span>
+      <span className="trade-pricing-select-wrap">
+        <select value={custom ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => onChange(e.target.value === '__custom__' ? '' : e.target.value)}>
+          <option value="">Select</option>
+          {normalized.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
+          {allowCustom ? <option value="__custom__">Custom / type my own</option> : null}
+        </select>
+        <ChevronDown size={15} />
+      </span>
+      {custom ? <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} className="trade-pricing-custom-inline" placeholder="Custom value" /> : null}
     </label>
   )
 }
@@ -858,136 +925,46 @@ function CurrencyField({ label, value, onChange, disabled = false }) {
   )
 }
 
-function CurrencyPresetField({ label, value, onChange, presets = PRICE_PRESETS, disabled = false }) {
-  return (
-    <div className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
-      <CurrencyFieldInner value={value} disabled={disabled} onChange={onChange} />
-      {!disabled ? (
-        <div className="trade-pricing-chip-row">
-          {presets.slice(0, 5).map(amount => <button key={amount} type="button" onClick={() => onChange(String(amount))} className={'trade-pricing-mini-chip ' + (Number(value) === amount ? 'is-selected' : '')}>{formatINR(Number(amount))}</button>)}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function CurrencyFieldInner({ value, onChange, disabled }) {
-  return <span className="trade-pricing-currency-wrap"><span>₹</span><input type="number" min="0" value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} placeholder="Enter amount" /></span>
-}
-
 function PresetNumberField({ label, value, onChange, presets = [], suffix = '', disabled = false }) {
-  const numbers = presets.map(Number)
+  const numbers = (presets ?? []).map(Number)
   const current = value === '' || value == null ? '' : Number(value)
-  const selected = current !== '' && numbers.includes(Number(current))
+  const selected = numbers.includes(Number(current))
   return (
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}</span>
       <span className="trade-pricing-select-wrap">
         <select value={current === '' ? '' : selected ? String(current) : '__custom__'} disabled={disabled} onChange={e => onChange(e.target.value === '__custom__' ? '' : e.target.value)}>
           <option value="">Select</option>
-          {numbers.slice(0, 8).map(x => <option key={x} value={x}>{x} {suffix}</option>)}
+          {numbers.slice(0, 10).map(x => <option key={x} value={x}>{x} {suffix}</option>)}
           <option value="__custom__">Custom value</option>
         </select>
         <ChevronDown size={15} />
       </span>
-      {!disabled && current !== '' && !selected ? <input type="number" min="0" value={current} onChange={e => onChange(e.target.value)} className="trade-pricing-custom-inline" placeholder="Custom value" /> : null}
+      {!disabled && !selected && current !== '' ? <input type="number" min="0" value={current} onChange={e => onChange(e.target.value)} placeholder="Custom value" className="trade-pricing-custom-inline" /> : null}
     </label>
   )
 }
 
 function FeeChoice({ label, value, onChange, disabled = false }) {
-  const amount = Number(value || 0)
   return (
-    <ChoiceField label={label} value={amount === 0 ? 'included' : String(value)} disabled={disabled} options={[['included','Included'],['250','₹250'],['500','₹500'],['1000','₹1,000'],['2500','₹2,500']]} allowCustom onChange={v => onChange(v === 'included' ? '0' : v)} />
-  )
-}
-
-function StructuredList({ label, values, suggested, disabled, onChange }) {
-  const current = Array.isArray(values) ? values : []
-  function toggle(item) { onChange(current.includes(item) ? current.filter(x => x !== item) : [...current, item]) }
-  return (
-    <div className="trade-pricing-structured">
-      <p className="trade-pricing-label">{label}</p>
-      <div className="trade-pricing-pills">
-        {suggested.map(item => {
-          const active = current.includes(item)
-          return <button key={item} type="button" disabled={disabled} onClick={() => toggle(item)} className={'trade-pricing-pill ' + (active ? 'is-selected' : '')}>{active ? '✓ ' : '+ '}{item}</button>
-        })}
-      </div>
-    </div>
+    <ChoiceField
+      label={label}
+      value={Number(value || 0) === 0 ? 'included' : String(value)}
+      disabled={disabled}
+      options={[['included', 'Included'], ['250', '₹250'], ['500', '₹500'], ['1000', '₹1,000'], ['2500', '₹2,500']]}
+      allowCustom
+      onChange={v => onChange(v === 'included' ? '0' : v)}
+    />
   )
 }
 
 function PreviewMetric({ label, value }) {
-  return <div className="trade-pricing-preview-metric"><span>{label}</span><strong>{value}</strong></div>
-}
-
-function Snapshot({ label, value }) {
-  return <div className="trade-pricing-snapshot-item"><span>{label}</span><strong>{value}</strong></div>
-}
-
-function updateFromTemplate(template, update) {
-  if (!template) return
-  const [id, label] = template
-  update('source', 'SAMBRAMO_TEMPLATE')
-  update('template_id', id)
-  update('name', label)
-  update('tier', inferTier(label))
-}
-
-function addonDraft(config, template, sortOrder) {
-  return {
-    id: globalThis.crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + '-' + sortOrder),
-    name: template?.name ?? '',
-    rate_paise: '',
-    unit: template?.unit ?? defaultAddonUnit(config),
-    minimum_quantity: '1',
-    included_quantity: '0',
-    active: true,
-    sort_order: sortOrder,
-  }
-}
-
-function titleizeUnit(value) {
-  return String(value ?? '').split(' ').map(x => x ? x[0].toUpperCase() + x.slice(1) : x).join(' ')
-}
-
-function minimumSuffix(unit) {
-  const u = String(unit ?? '')
-  if (u.includes('guest')) return 'guests'
-  if (u.includes('person')) return 'people'
-  if (u.includes('hour')) return 'hours'
-  if (u.includes('day')) return 'days'
-  if (u.includes('trip')) return 'trips'
-  if (u.includes('item')) return 'items'
-  if (u.includes('piece')) return 'pieces'
-  return 'units'
-}
-
-function quantitySuffix(unit) { return minimumSuffix(unit) }
-
-function fieldUnit(key) {
-  const k = String(key ?? '')
-  if (k.includes('guest')) return 'guests'
-  if (k.includes('people') || k.includes('staff') || k.includes('guards') || k.includes('attendant')) return 'people'
-  if (k.includes('hour') || k === 'duration' || k === 'shift' || k === 'runtime') return 'hours'
-  if (k.includes('day')) return 'days'
-  if (k.includes('km')) return 'km'
-  if (k.includes('kg') || k === 'weight') return 'kg'
-  if (k.includes('qty') || k.includes('quantity') || k.includes('items')) return 'units'
-  return 'units'
-}
-
-function tradeDurationPresets(config) {
-  if (['L04','L06'].includes(config.trade_id)) return [1, 2, 3, 7, 14, 30]
-  if (['E09','L08'].includes(config.trade_id)) return [1, 2, 4, 8, 12, 24]
-  return [1, 2, 4, 6, 8, 10, 12, 24]
-}
-
-function durationLabel(config) {
-  if (['L04','L06'].includes(config.trade_id)) return 'days'
-  return 'hours'
+  return (
+    <div className="trade-pricing-preview-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  )
 }
 
 function defaultAddonUnit(config) {
@@ -996,5 +973,3 @@ function defaultAddonUnit(config) {
   if (config?.trade_id === 'E01') return 'per guest'
   return 'per event'
 }
-
-const SITE_DEPENDENT = new Set(['E04', 'E05', 'E10', 'E13', 'E17', 'E22', 'E23', 'L08'])
