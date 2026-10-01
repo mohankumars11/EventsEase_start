@@ -36,7 +36,6 @@ function CustomerOfferingCard({ listing, config }) {
   const offering = listing?.offerings?.[0]
   const readiness = pricingReadiness(listing)
   const title = offering?.name || config.templates[0]?.[1] || 'Your service'
-  const price = offering?.price
   const fields = config.fields
     .map(field => ({ field, value: offering?.specs?.[field.key] }))
     .filter(x => x.value !== undefined && x.value !== null && x.value !== '')
@@ -63,14 +62,14 @@ function CustomerOfferingCard({ listing, config }) {
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-ink-mute">Customer price</p>
-            <p className="mt-1 text-[25px] font-black tracking-tight text-plum-950">
-              {price != null ? money(price) : 'Calculated'}
+            <p className="mt-1 text-[25px] font-black tracking-tight text-plum-950">Calculated by Sambramo</p>
+            <p className="mt-0.5 text-[10.5px] font-semibold text-ink-mute">
+              {unitLabel(offering?.unit)} · final price depends on customer requirements
             </p>
-            <p className="mt-0.5 text-[10.5px] font-semibold text-ink-mute">{unitLabel(offering?.unit)}</p>
           </div>
           <div className="rounded-2xl bg-plum-950 px-3 py-2 text-right text-white">
             <p className="font-mono text-[8.5px] font-bold uppercase tracking-[0.15em] text-plum-200">SAMBRAMO</p>
-            <p className="text-[10.5px] font-extrabold">pricing engine</p>
+            <p className="text-[10.5px] font-extrabold">final price engine</p>
           </div>
         </div>
 
