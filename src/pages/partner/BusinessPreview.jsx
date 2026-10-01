@@ -11,13 +11,6 @@ import {
   normalizeTrade, STATUS_META, PRICING_STATES, storefrontStatus, pricingReadiness
 } from '../../data/sambramoBusinessPreview'
 
-const money = n => {
-  const value = Number(n)
-  return Number.isFinite(value) ? new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(value) : 'Calculated'
-}
-
 const unitLabel = unit => ({
   fixed: 'per booking',
   per_guest: 'per guest',
@@ -158,7 +151,7 @@ function Readiness({ vendor, listings, onEdit }) {
   )
 }
 
-function SubmissionPanel({ vendor, status, allDone, onSubmitted, error, setError }) {
+function SubmissionPanel({ status, allDone, onSubmitted, error, setError }) {
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
 
@@ -418,7 +411,6 @@ export default function BusinessPreview() {
 
         <section className="mt-4">
           <SubmissionPanel
-            vendor={vendor}
             status={status}
             allDone={launchReady}
             error={error}
