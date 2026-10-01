@@ -654,7 +654,7 @@ function PackageSection({ config, units, draft, setDraft, readOnly, suggestions,
           const active = draft.template_id === id
           return (
             <button key={id} type="button" disabled={readOnly}
-              onClick={() => { update('template_id', id); update('name', label); update('tier', inferTier(label)) }}
+              onClick={() => { update('source', 'SAMBRAMO_TEMPLATE'); update('template_id', id); update('name', label); update('tier', inferTier(label)) }}
               className={'min-w-[118px] max-w-[138px] shrink-0 rounded-2xl border p-3 text-left transition active:scale-[0.98] ' + (active ? 'border-[#8B6AE0] bg-[#EEE8FA] text-[#211735] shadow-[0_4px_14px_rgba(42,8,92,0.08)]' : 'border-[#E6E2ED] bg-[#FAF9FC] text-[#302A3D]')}>
               <span className={'mb-2 grid h-8 w-8 place-items-center rounded-xl ' + (active ? 'bg-[#DCCFF5] text-[#2A085C]' : 'bg-white text-[#716A7D]')}><Sparkles size={16} /></span>
               <span className="block text-[13px] font-extrabold leading-snug">{label}</span>
