@@ -550,14 +550,14 @@ function StepRail({ activeStep, ready, onSelect }) {
   )
 }
 
-function PackageSection({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, update, updateCommercial }) {
+function PackageSection({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, update, updateCommercial, onSelectTemplate }) {
   const selectedDescription = draft.description
   return (
     <div className="trade-pricing-card">
       <SectionHeader icon={Package} title="Package card" subtitle="Choose a package template or create your own." action={
         <select value={draft.template_id || ''} disabled={readOnly} onChange={e => {
           const template = config.templates.find(t => t[0] === e.target.value)
-          if (template) updateDraftFromTemplate(template, draft, updateDraft => update('name', updateDraft.name))
+          if (template) onSelectTemplate(template)
         }} className="trade-pricing-template-select">
           <option value="">Use template</option>
           {(config.templates ?? []).map(t => <option key={t[0]} value={t[0]}>{t[1]}</option>)}
@@ -568,12 +568,7 @@ function PackageSection({ config, draft, readOnly, nameSuggestions, descriptionS
         {(config.templates ?? []).slice(0, 5).map(([id, label]) => {
           const selected = draft.template_id === id
           return (
-            <button key={id} type="button" disabled={readOnly} onClick={() => updateDraftFromTemplate([id, label], draft, next => {
-              update('source', next.source)
-              update('template_id', next.template_id)
-              update('name', next.name)
-              update('tier', next.tier)
-            })} className={'trade-pricing-template-card ' + (selected ? 'is-selected' : '')}>
+            <button key={id} type="button" disabled={readOnly} onClick={() => onSelectTemplate([id, label])} className={'trade-pricing-template-card ' + (selected ? 'is-selected' : '')}>
               <span className="trade-pricing-template-icon"><Package size={16} /></span>
               <span className="trade-pricing-template-name">{label}</span>
               {selected ? <span className="trade-pricing-template-check"><Check size={12} /></span> : null}
