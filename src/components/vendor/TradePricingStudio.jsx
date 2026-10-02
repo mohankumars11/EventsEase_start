@@ -20,7 +20,9 @@ import {
   getIncludedQuantityPresets,
   getMinimumOrderPresets,
   getPackageNameSuggestions,
+  getTradePricingFields,
 } from '../../data/sambramoPricingCatalog'
+import WorkLibrary from './WorkLibrary'
 
 const DEFAULT_UNITS = {
   PACKAGE: ['package', 'per event', 'per hour', 'per day', 'per function'],
@@ -355,8 +357,9 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   const [localError, setLocalError] = useState('')
   const [addons, setAddons] = useState(draft.addons ?? [])
   const [media, setMedia] = useState([])
+  const [mediaOpen, setMediaOpen] = useState(false)
 
-  const fields = config.fields ?? []
+  const fields = useMemo(() => getTradePricingFields(config), [config])
   const units = unitsFor(config)
   const descriptionSuggestions = useMemo(() => getDescriptionSuggestions(config).slice(0, 5), [config])
   const nameSuggestions = useMemo(() => getPackageNameSuggestions(config).slice(0, 5), [config])
@@ -561,7 +564,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} />
+        <PreviewStep config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} />
       ) : null}
 
       {!readOnly ? (
@@ -578,6 +581,22 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
               Continue to {next?.[1] ?? 'Preview'} <ArrowRight size={16} />
             </button>
           )}
+        </div>
+      ) : null}
+
+      {mediaOpen ? (
+        <div className="trade-pricing-media-backdrop" role="dialog" aria-modal="true" aria-label="Partner media library" onMouseDown={() => setMediaOpen(false)}>
+          <div className="trade-pricing-media-sheet" onMouseDown={event => event.stopPropagation()}>
+            <div className="trade-pricing-media-head">
+              <div className="min-w-0">
+                <p className="trade-pricing-overline">Partner catalog</p>
+                <h3>Photos & videos</h3>
+                <p>Upload real work for the customer catalog. New media stays under review until approved.</p>
+              </div>
+              <button type="button" onClick={() => setMediaOpen(false)} className="trade-pricing-round-button" aria-label="Close">×</button>
+            </div>
+            <WorkLibrary vendor={vendor} />
+          </div>
         </div>
       ) : null}
     </div>
@@ -788,7 +807,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ config, draft, fields, addons, media, onOpenListings }) {
+function PreviewStep({ config, draft, fields, addons, media, onOpenListings, onManageMedia }) {
   const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
   const hero = media[0]
   return (
@@ -799,7 +818,7 @@ function PreviewStep({ config, draft, fields, addons, media, onOpenListings }) {
             <p className="trade-pricing-label">Customer preview</p>
             <p className="trade-pricing-helper">This is the catalog card your customer will see.</p>
           </div>
-          {onOpenListings ? <button type="button" onClick={onOpenListings} className="trade-pricing-small-action"><Images size={14} /> Manage media</button> : null}
+          {onManageMedia ? <button type="button" onClick={onManageMedia} className="trade-pricing-small-action"><Images size={14} /> Manage media</button> : null}
         </div>
 
         <div className="trade-pricing-customer-preview">
@@ -891,19 +910,21 @@ function TextField({ label, value, onChange, placeholder = '', disabled = false 
 
 function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false }) {
   const normalized = (options ?? []).map(x => Array.isArray(x) ? x : [x, x])
-  const custom = allowCustom && value !== '' && !normalized.some(x => x[0] === value)
+  const inferredCustom = allowCustom && value !== '' && !normalized.some(x => x[0] === value)
+  const [customMode, setCustomMode] = useState(inferredCustom)
+  useEffect(() => { if (inferredCustom) setCustomMode(true) }, [inferredCustom])
   return (
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}</span>
       <span className="trade-pricing-select-wrap">
-        <select value={custom ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => onChange(e.target.value === '__custom__' ? '' : e.target.value)}>
+        <select value={customMode ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => { const next = e.target.value; if (next === '__custom__') { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
           <option value="">Select</option>
           {normalized.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
           {allowCustom ? <option value="__custom__">Custom / type my own</option> : null}
         </select>
         <ChevronDown size={15} />
       </span>
-      {custom ? <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} className="trade-pricing-custom-inline" placeholder="Custom value" /> : null}
+      {customMode ? <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} className="trade-pricing-custom-inline" placeholder="Type custom value" /> : null}
     </label>
   )
 }
@@ -920,19 +941,21 @@ function CurrencyField({ label, value, onChange, disabled = false }) {
 function PresetNumberField({ label, value, onChange, presets = [], suffix = '', disabled = false }) {
   const numbers = (presets ?? []).map(Number)
   const current = value === '' || value == null ? '' : Number(value)
-  const selected = numbers.includes(Number(current))
+  const selected = current !== '' && numbers.includes(Number(current))
+  const [customMode, setCustomMode] = useState(current !== '' && !selected)
+  useEffect(() => { if (current !== '' && !selected) setCustomMode(true) }, [current, selected])
   return (
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}</span>
       <span className="trade-pricing-select-wrap">
-        <select value={current === '' ? '' : selected ? String(current) : '__custom__'} disabled={disabled} onChange={e => onChange(e.target.value === '__custom__' ? '' : e.target.value)}>
+        <select value={customMode ? '__custom__' : (current === '' ? '' : String(current))} disabled={disabled} onChange={e => { const next = e.target.value; if (next === '__custom__') { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
           <option value="">Select</option>
           {numbers.slice(0, 10).map(x => <option key={x} value={x}>{x} {suffix}</option>)}
           <option value="__custom__">Custom value</option>
         </select>
         <ChevronDown size={15} />
       </span>
-      {!disabled && !selected && current !== '' ? <input type="number" min="0" value={current} onChange={e => onChange(e.target.value)} placeholder="Custom value" className="trade-pricing-custom-inline" /> : null}
+      {!disabled && customMode ? <input type="number" min="0" value={current === '' ? '' : current} onChange={e => onChange(e.target.value)} placeholder={'Custom ' + (suffix || 'value')} className="trade-pricing-custom-inline" /> : null}
     </label>
   )
 }
