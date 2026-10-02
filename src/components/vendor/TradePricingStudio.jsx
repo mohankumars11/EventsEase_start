@@ -494,7 +494,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
     setSaving(true)
     try {
       const pPackage = {
-        name: draft.name,
+        name: String(draft.name ?? '').trim() || (config.name + ' draft'),
         source: draft.source,
         template_id: draft.template_id || null,
         description: draft.description || null,
@@ -824,7 +824,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
           {addons.map(addon => (
             <div key={addon.id} className="rounded-2xl bg-[#FBFAFD] p-3 ring-1 ring-[#E7E2EF]">
               <div className="flex items-center gap-2">
-                <ChoiceField label="Add-on name" value={addon.name} disabled={readOnly} options={suggestions.map(item => [item.name, item.name])} allowCustom onChange={v => onUpdate(addon.id, { name: v })} />
+                <ChoiceField required label="Add-on name" value={addon.name} disabled={readOnly} options={suggestions.map(item => [item.name, item.name])} allowCustom onChange={v => onUpdate(addon.id, { name: v })} />
                 {!readOnly ? <button type="button" onClick={() => onRemove(addon.id)} aria-label="Remove add-on" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#6B5B85] ring-1 ring-[#E7E2EF]"><Trash2 size={13} /></button> : null}
               </div>
               <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
@@ -976,16 +976,16 @@ function TradeFieldControl({ field, config, value, disabled, onChange, required 
   return <ChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
 }
 
-function TextField({ label, value, onChange, placeholder = '', disabled = false }) {
+function TextField({ label, value, onChange, placeholder = '', disabled = false, required = false }) {
   return (
     <label className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
+      <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}</span>
       <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
     </label>
   )
 }
 
-function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false }) {
+function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false, required = false }) {
   const normalized = (options ?? []).map(x => Array.isArray(x) ? x : [x, x])
   const isCustomOption = option => /^custom\b/i.test(String(option ?? '').trim())
   const inferredCustom = allowCustom && value !== '' && (
@@ -996,7 +996,7 @@ function ChoiceField({ label, value, onChange, options, disabled = false, allowC
   useEffect(() => { if (inferredCustom) setCustomMode(true) }, [inferredCustom])
   return (
     <label className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
+      <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}</span>
       <span className="trade-pricing-select-wrap">
         <select value={customMode ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => { const next = e.target.value; const customSelected = next === '__custom__' || normalized.some(x => x[0] === next && isCustomOption(x[1] ?? x[0])); if (customSelected) { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
           <option value="">Select</option>
@@ -1010,15 +1010,15 @@ function ChoiceField({ label, value, onChange, options, disabled = false, allowC
   )
 }
 
-function CurrencyPresetField({ label, value, onChange, presets = PRICE_PRESETS, disabled = false }) {
+function CurrencyPresetField({ label, value, onChange, presets = PRICE_PRESETS, disabled = false, required = false }) {
   const current = value === '' || value == null ? '' : Number(value)
   const chosen = current !== '' && presets.map(Number).includes(current)
   const [customMode, setCustomMode] = useState(current !== '' && !chosen)
   useEffect(() => { if (current !== '' && !chosen) setCustomMode(true) }, [current, chosen])
   return (
     <div className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
-      <span className="trade-pricing-currency-wrap"><span>₹</span><input type="number" min="0" value={value ?? ''} disabled={disabled} onChange={e => { setCustomMode(true); onChange(e.target.value) }} placeholder="Select or enter" /></span>
+      <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}</span>
+      <span className="trade-pricing-currency-wrap"><span>₹</span><input type="number" min="0" value={value ?? ''} disabled={disabled || !customMode} onChange={e => onChange(e.target.value)} placeholder={customMode ? "Enter custom amount" : "Select a preset"} /></span>
       {!disabled ? (
         <div className="trade-pricing-chip-row">
           {presets.slice(0, 6).map(amount => <button key={amount} type="button" onClick={() => { setCustomMode(false); onChange(String(amount)) }} className={'trade-pricing-mini-chip ' + (current === Number(amount) ? 'is-selected' : '')}>{formatINR(Number(amount))}</button>)}
@@ -1038,7 +1038,7 @@ function CurrencyField({ label, value, onChange, disabled = false }) {
   )
 }
 
-function PresetNumberField({ label, value, onChange, presets = [], suffix = '', disabled = false }) {
+function PresetNumberField({ label, value, onChange, presets = [], suffix = '', disabled = false, required = false }) {
   const numbers = (presets ?? []).map(Number)
   const current = value === '' || value == null ? '' : Number(value)
   const selected = current !== '' && numbers.includes(Number(current))
@@ -1046,7 +1046,7 @@ function PresetNumberField({ label, value, onChange, presets = [], suffix = '', 
   useEffect(() => { if (current !== '' && !selected) setCustomMode(true) }, [current, selected])
   return (
     <label className="trade-pricing-field">
-      <span className="trade-pricing-field-label">{label}</span>
+      <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}</span>
       <span className="trade-pricing-select-wrap">
         <select value={customMode ? '__custom__' : (current === '' ? '' : String(current))} disabled={disabled} onChange={e => { const next = e.target.value; if (next === '__custom__') { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
           <option value="">Select</option>
