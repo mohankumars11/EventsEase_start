@@ -41,3 +41,25 @@
 .trade-pricing-bottom button svg{flex:0 0 auto}
 @media(min-width:430px){.trade-pricing-field-row-2,.trade-pricing-pricing-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-pricing-grid-3,.trade-pricing-pricing-grid-4,.trade-specific-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-description-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(min-width:620px){.trade-pricing-card{padding:20px!important}.trade-pricing-template-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.trade-pricing-field-row-2,.trade-pricing-pricing-grid-2,.trade-pricing-pricing-grid-3,.trade-pricing-pricing-grid-4,.trade-specific-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-description-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-base-price{grid-template-columns:minmax(0,1fr) minmax(180px,.8fr)!important;align-items:end}.trade-pricing-preview-body{grid-template-columns:150px minmax(0,1fr)!important}}
+
+
+/* Screenshot fidelity pass: preserve the supplied 390–420px mobile composition. */
+@media (max-width: 429px) {
+  .trade-pricing-steps { grid-template-columns: repeat(5, minmax(0,1fr)) !important; gap: 0 !important; padding: 12px 5px 14px !important; }
+  .trade-pricing-step { gap: 6px !important; padding: 0 1px 8px !important; }
+  .trade-pricing-step-circle { flex-basis: 34px; width: 34px; height: 34px; }
+  .trade-pricing-step-label { font-size: 10px !important; line-height: 1.15 !important; overflow-wrap: normal; }
+  .trade-pricing-template-grid { grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 8px !important; }
+  .trade-pricing-template-card { min-height: 132px !important; padding: 10px 4px !important; }
+  .trade-pricing-template-name { font-size: 11px !important; line-height: 1.15 !important; }
+  .trade-pricing-fields-grid,
+  .trade-pricing-field-row-2,
+  .trade-pricing-pricing-grid-2,
+  .trade-pricing-pricing-grid-3,
+  .trade-pricing-pricing-grid-4,
+  .trade-specific-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 9px !important; }
+  .trade-pricing-field-row:has(> :last-child:nth-child(1)) { grid-template-columns: minmax(0,1fr) !important; }
+  .trade-pricing-description-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }
+  .trade-pricing-description-card { grid-template-columns: 20px minmax(0,1fr) !important; padding: 10px !important; gap: 8px !important; }
+  .trade-pricing-card { padding: 12px !important; }
+}
