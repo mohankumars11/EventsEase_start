@@ -152,6 +152,9 @@ function blankPackage(config, service) {
     teardown_fee: '0',
     travel_policy: '',
     lead_time: service?.lead_time_days ?? '',
+    availability_policy: 'instant',
+    cancellation_policy: 'standard',
+    payment_policy: 'full',
     status: 'DRAFT',
     addons: [],
   }
@@ -181,6 +184,9 @@ function normalizeLoaded(pkg, priceBook, service, config) {
     teardown_fee: q.teardown_fee ?? '0',
     travel_policy: q.travel_policy ?? '',
     lead_time: q.lead_time ?? service?.lead_time_days ?? '',
+    availability_policy: pkg.commercial_inputs?.availability_policy ?? 'instant',
+    cancellation_policy: pkg.commercial_inputs?.cancellation_policy ?? 'standard',
+    payment_policy: pkg.commercial_inputs?.payment_policy ?? 'full',
     status: pkg.status ?? 'DRAFT',
     addons: pkg.addons ?? [],
   }
@@ -490,7 +496,13 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
         template_id: draft.template_id || null,
         description: draft.description || null,
         revision_round: Number(draft.revision_round || 0),
-        commercial_inputs: { ...(draft.commercial_inputs ?? {}), tier: draft.tier || null },
+        commercial_inputs: {
+          ...(draft.commercial_inputs ?? {}),
+          tier: draft.tier || null,
+          availability_policy: draft.availability_policy || 'instant',
+          cancellation_policy: draft.cancellation_policy || 'standard',
+          payment_policy: draft.payment_policy || 'full',
+        },
         trade_inputs: draft.trade_inputs ?? {},
         status,
       }
@@ -765,6 +777,12 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
           <CurrencyPresetField label={'Additional ' + titleizeUnit(draft.pricing_unit) + ' rate'} value={draft.additional_unit_rate} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_unit_rate', v)} />
           <CurrencyPresetField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} presets={[100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_duration_rate', v)} />
+        </div>
+
+        <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-3">
+          <ChoiceField required label="Booking mode" value={draft.availability_policy} disabled={readOnly} options={[['instant','Instant booking'],['request','Request approval'],['schedule','Scheduled booking'],['quote','Quote before booking']]} onChange={v => onUpdate('availability_policy', v)} />
+          <ChoiceField required label="Cancellation policy" value={draft.cancellation_policy} disabled={readOnly} options={[['flexible','Flexible'],['standard','48-hour notice'],['strict','7-day notice'],['non_refundable','Non-refundable'],['custom','Custom policy']]} allowCustom onChange={v => onUpdate('cancellation_policy', v)} />
+          <ChoiceField required label="Payment requirement" value={draft.payment_policy} disabled={readOnly} options={[['full','Full payment at booking'],['deposit25','25% deposit'],['deposit50','50% deposit'],['completion','Pay on completion'],['custom','Custom']]} allowCustom onChange={v => onUpdate('payment_policy', v)} />
         </div>
 
         <div className="trade-pricing-rule-strip">
