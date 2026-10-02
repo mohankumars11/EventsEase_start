@@ -283,6 +283,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         vendor={vendor}
         service={service}
         config={config}
+        packages={packages}
         draft={editor}
         setDraft={setEditor}
         readOnly={editor.status === 'LIVE'}
@@ -357,7 +358,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly, onBack, onSaved, onOpenListings }) {
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings }) {
   const [activeStep, setActiveStep] = useState('package')
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -847,68 +848,244 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ config, draft, fields, addons, media, onManageMedia, vendor }) {
-  const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
+function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia }) {
+  const selectedFields = fields
+    .filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
+    .slice(0, 8)
+
+  const businessName = vendor?.business_name || vendor?.name || 'Partner business'
+  const location = [vendor?.city, vendor?.state].filter(Boolean).join(', ') || vendor?.location || service?.service_area || 'Service area not set'
+  const verificationState = String(vendor?.verification_status ?? '').toLowerCase()
+  const isVerified = vendor?.is_verified === true || vendor?.verified === true || verificationState === 'verified' || verificationState === 'approved'
   const hero = media[0]
-  const profileImage = hero?.url || vendor?.avatar_url || vendor?.profile_photo_url || vendor?.profile_image_url || ''
-  const price = draft.base_price !== '' && Number(draft.base_price) > 0 ? formatINR(Number(draft.base_price)) : 'Price not set'
-  const metrics = [
-    ['Package price', price],
-    ['Rate unit', draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : 'Select unit'],
-    ['Minimum order', draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Not set'],
-    ['Lead time', draft.lead_time === '' ? 'Not set' : draft.lead_time + ' days'],
+  const heroUrl = hero?.url || vendor?.profile_photo_url || vendor?.avatar_url || vendor?.profile_image_url || ''
+  const eventType = draft.trade_inputs?.event_type || draft.trade_inputs?.function || ''
+  const exactPrice = draft.base_price !== '' && Number(draft.base_price) > 0 ? formatINR(Number(draft.base_price)) : 'Price not set'
+  const packagesForPreview = [
+    ...packages
+      .filter(pkg => pkg?.id && pkg.status !== 'ARCHIVED' && pkg.status !== 'PAUSED')
+      .map(pkg => ({
+        id: pkg.id,
+        name: pkg.name,
+        tier: pkg.commercial_inputs?.tier || '',
+        description: pkg.description || '',
+        status: pkg.status,
+        price: pkg.price?.rate_paise != null ? Math.round(Number(pkg.price.rate_paise) / 100) : null,
+        unit: pkg.price?.unit || '',
+        minimum: pkg.price?.minimum_quantity ?? null,
+        duration: pkg.price?.quantity_formula?.included_duration ?? null,
+      })),
+    ...(draft.id || draft.name || draft.base_price ? [{
+      id: draft.id || 'current-draft',
+      name: draft.name || 'Current package',
+      tier: draft.tier || 'standard',
+      description: draft.description || '',
+      status: draft.status || 'DRAFT',
+      price: draft.base_price !== '' && Number(draft.base_price) > 0 ? Number(draft.base_price) : null,
+      unit: draft.pricing_unit || '',
+      minimum: draft.minimum_order || null,
+      duration: draft.included_duration || null,
+    }] : []),
   ]
-  const inclusions = (draft.commercial_inputs?.inclusions ?? []).filter(Boolean).slice(0, 6)
-  const activeAddons = (addons ?? []).filter(a => a.name && a.rate_paise !== '' && a.rate_paise != null)
+  const uniquePackages = Array.from(new Map(packagesForPreview.map(pkg => [pkg.id + '|' + pkg.name, pkg])).values()).slice(0, 5)
+  const activeAddons = (addons ?? []).filter(addon => String(addon.name ?? '').trim() && addon.active !== false && addon.rate_paise !== '' && addon.rate_paise != null).slice(0, 8)
+  const inclusions = (draft.commercial_inputs?.inclusions ?? []).filter(Boolean).slice(0, 8)
 
   return (
-    <section className="trade-pricing-panel trade-step-preview w-full min-w-0">
-      <div className="w-full min-w-0 space-y-3">
-        <div className="flex min-w-0 items-center justify-between gap-3 rounded-[20px] bg-white p-4 ring-1 ring-[#E7E0EF]">
-          <div className="min-w-0"><p className="text-[13px] font-black text-[#211735]">Customer preview</p><p className="mt-1 text-[11px] leading-relaxed text-[#746783]">A mobile-first storefront card with the exact package rate and what the customer receives.</p></div>
-          <button type="button" onClick={onManageMedia} className="inline-flex min-h-[42px] shrink-0 items-center gap-1.5 rounded-full bg-[#F2EDFA] px-3 text-[11px] font-extrabold text-[#4C1D95] ring-1 ring-[#E3D8F0]"><Images size={14} /> Media</button>
+    <section className="trade-pricing-panel trade-step-preview sambramo-preview-page">
+      <div className="sambramo-preview-toolbar">
+        <div className="min-w-0">
+          <p className="trade-pricing-overline">Partner preview · customer experience</p>
+          <h2>How {businessName} will be presented</h2>
+          <p>Real package data, exact pricing and approved portfolio media. Partner controls never appear inside the customer surface.</p>
         </div>
-
-        <article className="w-full min-w-0 overflow-hidden rounded-[26px] border border-[#E5DDED] bg-white shadow-[0_14px_34px_rgba(42,8,92,0.10)]">
-          <div className="flex items-center justify-between gap-2 bg-[#2A085C] px-4 py-3.5 text-white">
-            <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15"><Eye size={17} /></span><div className="min-w-0"><p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/65">SAMBRAMO · CUSTOMER CARD</p><p className="text-[13px] font-extrabold">Your service</p></div></div>
-            <span className="shrink-0 rounded-full bg-[#EAF7EF] px-2.5 py-1.5 text-[9px] font-extrabold text-[#176B42]">Preview</span>
-          </div>
-
-          <div className="relative w-full overflow-hidden bg-[#F2EDFA]">
-            {profileImage ? (hero?.kind === 'video' ? <video src={profileImage} muted playsInline controls className="block aspect-[16/9] w-full object-cover" /> : <img src={profileImage} alt="Partner business catalogue" className="block aspect-[16/9] w-full object-cover" />) : <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 text-[#6D28D9]"><Images size={30} /><span className="text-[11px] font-bold">Add real business photos or video</span></div>}
-            <span className="absolute bottom-3 left-3 rounded-full bg-[#2A085C]/90 px-3 py-1.5 text-[10px] font-extrabold text-white">{media.length ? media.length + ' portfolio item' + (media.length === 1 ? '' : 's') : 'Partner portfolio'}</span>
-          </div>
-
-          <div className="space-y-4 p-4">
-            <div className="flex min-w-0 items-start justify-between gap-2">
-              <div className="min-w-0"><p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#6D28D9]">{config.pillar || 'EVENT SERVICES'} · {config.name}</p><h3 className="mt-1 break-words text-[21px] font-black leading-tight text-[#211735]">{draft.name || 'Your package name'}</h3><p className="mt-1 text-[11px] font-semibold text-[#766A84]">{vendor?.business_name || 'Your business'}</p></div>
-              <span className="shrink-0 rounded-full bg-[#EFF8F4] px-2.5 py-1.5 text-[9px] font-extrabold text-[#176B42] ring-1 ring-[#D4EBDD]"><ShieldCheck size={11} className="mr-1 inline" /> Trusted</span>
-            </div>
-
-            <div className="rounded-[20px] bg-[#2A085C] p-4 text-white">
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/65">Exact package price</p>
-              <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1"><strong className="text-[32px] font-black leading-none tracking-tight">{price}</strong><span className="text-[11px] font-semibold text-white/75">{draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : ''}</span></div>
-              <p className="mt-2 text-[10px] font-semibold text-white/70">Final displayed rate for the selected package — not “starting at”.</p>
-            </div>
-
-            <p className="break-words text-[12px] leading-relaxed text-[#625572]">{draft.description || 'Your service description will appear here.'}</p>
-
-            <div className="grid grid-cols-2 gap-2">
-              {metrics.slice(1).map(([label, value], i) => <div key={label} className={'min-w-0 rounded-[15px] p-3 ring-1 ' + (i === 0 ? 'bg-[#F2EDFA] ring-[#E5D9F4]' : i === 1 ? 'bg-[#EFF8F4] ring-[#D8EDE2]' : 'bg-[#FFF7E9] ring-[#F2E5C9]')}><p className="text-[9px] font-extrabold uppercase tracking-wide text-[#766A84]">{label}</p><p className="mt-1 break-words text-[12px] font-extrabold leading-snug text-[#25183B]">{value}</p></div>)}
-            </div>
-
-            {selectedFields.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Service details</h4><div className="mt-2 grid grid-cols-2 gap-2">{selectedFields.slice(0, 8).map(field => <div key={field.key} className="min-w-0 rounded-[14px] border border-[#E8E2EF] bg-white p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#81758F]">{field.label}</p><p className="mt-1 break-words text-[11.5px] font-extrabold leading-snug text-[#30223F]">{String(draft.trade_inputs[field.key])}</p></div>)}</div></section>}
-
-            {inclusions.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Included in this package</h4><div className="mt-2 space-y-2">{inclusions.map((item, i) => <div key={i} className="flex min-w-0 items-start gap-2 rounded-xl bg-[#F3F8F5] px-3 py-2.5"><Check size={14} className="mt-0.5 shrink-0 text-[#23845A]" /><span className="min-w-0 break-words text-[11.5px] font-semibold leading-snug text-[#30483B]">{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span></div>)}</div></section>}
-
-            {activeAddons.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Optional extras</h4><div className="mt-2 space-y-2">{activeAddons.slice(0, 5).map(addon => <div key={addon.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E8E2EF] px-3 py-2.5"><span className="min-w-0 break-words text-[11.5px] font-semibold text-[#352744]">{addon.name}</span><strong className="shrink-0 text-[11.5px] text-[#4C1D95]">{addon.rate_paise ? formatINR(Math.round(Number(addon.rate_paise) / 100)) : 'Set price'}</strong></div>)}</div></section>}
-
-            <div className="flex items-center gap-2 rounded-xl bg-[#F2EDFA] px-3 py-2.5 text-[10px] font-bold text-[#4C1D95]"><BadgeCheck size={14} /> Partner-submitted details are reviewed before publishing.</div>
-            <button type="button" disabled className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6D28D9] px-4 text-[13px] font-extrabold text-white opacity-90">Continue to booking <ArrowRight size={16} /></button>
-          </div>
-        </article>
+        <button type="button" onClick={onManageMedia} className="sambramo-preview-manage">
+          <Images size={16} />
+          Manage media
+        </button>
       </div>
+
+      <article className="sambramo-storefront">
+        <header className="sambramo-storefront-header">
+          <button type="button" className="sambramo-icon-button" aria-label="Back preview"><ChevronLeft size={20} /></button>
+          <div className="sambramo-brand-lockup">
+            <span className="sambramo-brand-mark">S</span>
+            <span>SAMBRAMO</span>
+          </div>
+          <div className="sambramo-header-actions">
+            <button type="button" className="sambramo-icon-button" aria-label="Search"><span className="sambramo-search-glyph" /></button>
+            <button type="button" className="sambramo-icon-button" aria-label="Save"><span className="sambramo-heart-glyph">♡</span></button>
+          </div>
+        </header>
+
+        <section className="sambramo-gallery">
+          {heroUrl ? (
+            hero?.kind === 'video'
+              ? <video src={heroUrl} muted playsInline controls className="sambramo-gallery-hero" />
+              : <img src={heroUrl} alt={businessName + ' portfolio'} className="sambramo-gallery-hero" />
+          ) : (
+            <div className="sambramo-gallery-empty">
+              <Images size={34} />
+              <strong>Add approved business photos or video</strong>
+              <span>Your first approved portfolio item becomes the cover image.</span>
+            </div>
+          )}
+
+          {isVerified ? (
+            <span className="sambramo-verified-badge"><BadgeCheck size={15} /> Verified Partner</span>
+          ) : (
+            <span className="sambramo-status-badge"><ShieldCheck size={14} /> Partner profile</span>
+          )}
+
+          <div className="sambramo-gallery-counter"><Images size={14} /> {media.length ? '1 / ' + media.length : 'Portfolio'}</div>
+          {media.some(item => item.kind === 'video') ? <span className="sambramo-gallery-video"><span className="sambramo-play">▶</span> Watch video</span> : null}
+        </section>
+
+        <section className="sambramo-business-bar">
+          <div className="sambramo-business-avatar">
+            {vendor?.logo_url || vendor?.business_logo_url ? (
+              <img src={vendor.logo_url || vendor.business_logo_url} alt="" />
+            ) : (
+              <span>{businessName.slice(0, 1).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3>{businessName}</h3>
+              {isVerified ? <BadgeCheck size={16} className="text-[#6D28D9]" /> : null}
+            </div>
+            <p>{config.name} partner</p>
+            <p><span className="sambramo-pin">⌖</span> {location}</p>
+          </div>
+          <span className="sambramo-availability"><span className="sambramo-dot" /> {draft.availability_policy === 'instant' ? 'Available to book' : 'Booking by request'}</span>
+        </section>
+
+        <section className="sambramo-service-intro">
+          <div className="min-w-0">
+            <p className="sambramo-kicker">{config.pillar || 'EVENT SERVICES'} · {config.name}</p>
+            <h1>{draft.name || 'Your customer-ready package'}</h1>
+            <p className="sambramo-story">{draft.description || 'Choose a recommendation to tell customers exactly what you deliver and why it fits their celebration.'}</p>
+          </div>
+          <div className="sambramo-exact-price">
+            <span>Exact package price</span>
+            <strong>{exactPrice}</strong>
+            <em>{draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : 'Set pricing unit'}</em>
+          </div>
+        </section>
+
+        {eventType ? (
+          <div className="sambramo-emotion-strip"><Sparkles size={15} /><span>Designed for <strong>{eventType}</strong> moments</span></div>
+        ) : null}
+
+        <section className="sambramo-detail-grid">
+          {selectedFields.map((field, index) => (
+            <div key={field.key} className={'sambramo-detail-card tone-' + (index % 4)}>
+              <span>{field.label}</span>
+              <strong>{String(draft.trade_inputs[field.key])}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="sambramo-section">
+          <div className="sambramo-section-heading">
+            <div>
+              <h2>Choose your package</h2>
+              <p>Every package shows its exact configured rate.</p>
+            </div>
+            <span>{uniquePackages.length} option{uniquePackages.length === 1 ? '' : 's'}</span>
+          </div>
+
+          <div className="sambramo-package-list">
+            {uniquePackages.length ? uniquePackages.map((pkg, index) => (
+              <div key={pkg.id + '|' + pkg.name} className={'sambramo-package-option ' + ((pkg.id === draft.id || (index === 0 && pkg.name === draft.name)) ? 'is-selected' : '')}>
+                <span className="sambramo-package-radio">{pkg.id === draft.id || (index === 0 && pkg.name === draft.name) ? '●' : '○'}</span>
+                <div className="sambramo-package-copy">
+                  <div className="sambramo-package-title-row">
+                    <strong>{pkg.name || 'Package'}</strong>
+                    {index === 0 ? <span className="sambramo-popular">Recommended</span> : null}
+                  </div>
+                  <p>{pkg.description || 'Customer-ready package with clear scope and pricing.'}</p>
+                  <small>{pkg.duration ? String(pkg.duration) + ' included' : 'Configured service scope'}{pkg.minimum ? ' · minimum ' + pkg.minimum : ''}</small>
+                </div>
+                <div className="sambramo-package-price">
+                  <strong>{pkg.price != null && pkg.price > 0 ? formatINR(pkg.price) : 'Price not set'}</strong>
+                  <span>{pkg.unit ? titleizeUnit(pkg.unit) : 'Set unit'}</span>
+                </div>
+              </div>
+            )) : (
+              <div className="sambramo-empty-package">Complete the package price and trade details to build the comparison view.</div>
+            )}
+          </div>
+        </section>
+
+        <section className="sambramo-addons-section">
+          <div className="sambramo-section-heading">
+            <div>
+              <h2>Popular add-ons</h2>
+              <p>Optional upgrades with their own exact prices.</p>
+            </div>
+            <Plus size={18} />
+          </div>
+          <div className="sambramo-addon-grid">
+            {activeAddons.length ? activeAddons.map((addon, index) => (
+              <div key={addon.id} className={'sambramo-addon-card tone-' + (index % 4)}>
+                <div className="sambramo-addon-icon"><Plus size={16} /></div>
+                <div className="min-w-0">
+                  <strong>{addon.name}</strong>
+                  <span>+{formatINR(Math.round(Number(addon.rate_paise) / 100))}</span>
+                </div>
+              </div>
+            )) : (
+              <div className="sambramo-empty-package">No paid extras selected for this package.</div>
+            )}
+          </div>
+        </section>
+
+        <section className="sambramo-includes-section">
+          <div className="sambramo-section-heading">
+            <div>
+              <h2>What is included</h2>
+              <p>Make the promise easy to understand at a glance.</p>
+            </div>
+          </div>
+          <div className="sambramo-include-grid">
+            {(inclusions.length ? inclusions : ['Package-specific service coverage', 'Transparent pricing', 'Sambramo review before publishing']).map((item, index) => (
+              <div key={index} className="sambramo-include-card">
+                <Check size={15} />
+                <span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="sambramo-portfolio-section">
+          <div className="sambramo-section-heading">
+            <div>
+              <h2>Real work by this partner</h2>
+              <p>Only approved partner work belongs in the future customer catalogue.</p>
+            </div>
+            <span>{media.length ? 'View all ' + media.length : 'Add work'}</span>
+          </div>
+          <div className="sambramo-portfolio-grid">
+            {media.length ? media.slice(0, 6).map((item, index) => (
+              <div key={item.id || item.storage_path || index} className="sambramo-portfolio-thumb">
+                {item.kind === 'video'
+                  ? <video src={item.url} muted playsInline className="h-full w-full object-cover" />
+                  : <img src={item.url} alt="" className="h-full w-full object-cover" />}
+                {item.kind === 'video' ? <span className="sambramo-portfolio-video">▶</span> : null}
+              </div>
+            )) : (
+              <div className="sambramo-portfolio-empty"><Images size={22} /><span>Upload approved business photos or video to create the catalogue.</span></div>
+            )}
+          </div>
+        </section>
+
+        <div className="sambramo-preview-trust"><span><ShieldCheck size={15} /> Secure booking</span><span><Check size={15} /> Clear inclusions</span><span><BadgeCheck size={15} /> Partner-verified work</span></div>
+        <div className="sambramo-preview-cta-row">
+          <button type="button" className="sambramo-preview-secondary">Ask a question</button>
+          <button type="button" className="sambramo-preview-primary">Select package <ArrowRight size={17} /></button>
+        </div>
+      </article>
     </section>
   )
 }
