@@ -616,13 +616,20 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         <PreviewStep vendor={vendor} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} />
       ) : null}
 
+      {!readOnly && isPreview ? (
+        <div className="trade-pricing-review-summary">
+          <strong>{validation.length ? validation.length + ' required ' + (validation.length === 1 ? 'item' : 'items') + ' remaining' : 'Ready for Sambramo review'}</strong>
+          <span>{validation.length ? 'Tap Submit to see exactly what needs to be completed.' : 'All mandatory pricing inputs are complete.'}</span>
+        </div>
+      ) : null}
+
       {!readOnly ? (
         <div className="trade-pricing-bottom">
           <button type="button" onClick={() => save('DRAFT')} disabled={saving} className="trade-pricing-secondary-action">
             {saving ? 'Saving…' : 'Save draft'}
           </button>
           {isPreview ? (
-            <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={saving || validation.length > 0} className="trade-pricing-primary-action">
+            <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={saving} aria-disabled={saving} className="trade-pricing-primary-action">
               {saving ? 'Submitting…' : 'Submit pricing for review'}
             </button>
           ) : (
