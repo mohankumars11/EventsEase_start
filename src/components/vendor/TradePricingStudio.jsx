@@ -624,7 +624,7 @@ function StepRail({ activeStep, ready, onSelect }) {
 
 function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, units, onUpdate, onUpdateCommercial, onSelectTemplate }) {
   return (
-    <section className="trade-pricing-panel">
+    <section className="trade-pricing-panel trade-step-package">
       <div className="trade-pricing-card">
         <SectionHeader icon={Package} title="Package card" subtitle="Choose a package template or create your own." action={
           <select value={draft.template_id || ''} disabled={readOnly} onChange={e => {
@@ -683,7 +683,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   return (
-    <section className="trade-pricing-panel">
+    <section className="trade-pricing-panel trade-step-details">
       <div className="trade-pricing-card">
         <SectionHeader icon={Ruler} title="Trade specific fields" subtitle={'Only the controls for ' + config.name + ' are shown.'} />
         <div className="trade-pricing-fields-grid trade-specific-grid">
@@ -706,7 +706,7 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
 
 function PricingStep({ config, units, draft, readOnly, onUpdate }) {
   return (
-    <section className="trade-pricing-panel">
+    <section className="trade-pricing-panel trade-step-pricing">
       <div className="trade-pricing-card">
         <SectionHeader icon={WalletCards} title="Pricing rules" subtitle={'Set the commercial rules for ' + config.name + '.'} />
 
@@ -757,7 +757,7 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
 
 function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, onRemove }) {
   return (
-    <section className="trade-pricing-panel">
+    <section className="trade-pricing-panel trade-step-addons">
       <div className="trade-pricing-card">
         <div className="trade-pricing-section-heading">
           <SectionHeader icon={CirclePlus} title="Add-ons" subtitle={'Optional extras for ' + config.name + '.'} />
@@ -808,7 +808,7 @@ function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
   const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
   const hero = media[0]
   return (
-    <section className="trade-pricing-panel">
+    <section className="trade-pricing-panel trade-step-preview">
       <div className="trade-pricing-card">
         <div className="trade-pricing-preview-title">
           <div className="min-w-0">
