@@ -103,7 +103,7 @@ export async function fetchListings(vendorId) {
 
   const { data: services = [] } = await supabase
     .from('vendor_services')
-    .select('id, name, category, price, unit, review_status, is_active, listing_id, updated_at')
+    .select('id, name, category, description, price, unit, min_quantity, lead_time_days, review_status, is_active, listing_id, specs, updated_at')
     .eq('vendor_id', vendorId)
     .order('sort_order', { ascending: true })
 

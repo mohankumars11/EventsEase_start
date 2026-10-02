@@ -1,42 +1,66 @@
-import { useMemo, useState } from 'react'
-import { Calculator, ChevronRight, CircleCheck, Clock3, LockKeyhole, UtensilsCrossed } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Calculator, ChevronRight, CircleCheck, Clock3, UtensilsCrossed } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import CateringPricingStudio from './CateringPricingStudio'
+import TradePricingStudio from './TradePricingStudio'
+import { normalizeTrade } from '../../data/sambramoBusinessPreview'
 
 const CATERING = 'Catering & Food'
 
 export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null }) {
   const [selectedServiceId, setSelectedServiceId] = useState(null)
-  const serviceRows = Array.isArray(services) ? services : []
+  const [statusByService, setStatusByService] = useState({})
+  const [loadingStatus, setLoadingStatus] = useState(false)
 
-  const listed = useMemo(() => serviceRows.filter(s => String(s.category ?? '').trim()), [serviceRows])
-
+  const listed = useMemo(
+    () => (Array.isArray(services) ? services : []).filter(s => String(s.category ?? '').trim()),
+    [services],
+  )
   const selected = listed.find(s => s.id === selectedServiceId) ?? null
-  if (selected?.category === CATERING) {
-    return (
-      <CateringPricingStudio
-        vendor={vendor}
-        service={selected}
-        onBack={() => setSelectedServiceId(null)}
-        onOpenListings={onOpenListings}
-      />
-    )
+
+  useEffect(() => {
+    let alive = true
+    const ids = listed.map(s => s.id).filter(Boolean)
+    if (!ids.length) { setStatusByService({}); return }
+    setLoadingStatus(true)
+    Promise.all([
+      supabase.from('sambramo_trade_packages').select('id,vendor_service_id,status').in('vendor_service_id', ids),
+      supabase.from('sambramo_partner_price_books').select('vendor_service_id,status').in('vendor_service_id', ids),
+      supabase.from('sambramo_catering_packages').select('id,vendor_service_id,status').in('vendor_service_id', ids),
+    ]).then(([packagesRes, pricesRes, cateringRes]) => {
+      if (!alive) return
+      const out = {}
+      for (const id of ids) {
+        const p = (packagesRes.data ?? []).filter(x => x.vendor_service_id === id)
+        const pb = (pricesRes.data ?? []).filter(x => x.vendor_service_id === id && ['active','draft'].includes(x.status))
+        const cp = (cateringRes.data ?? []).filter(x => x.vendor_service_id === id)
+        out[id] = p.some(x => x.status === 'LIVE') || cp.some(x => x.status === 'ACTIVE')
+          ? 'ENABLED'
+          : p.some(x => x.status === 'UNDER_REVIEW')
+            ? 'REVIEWING'
+            : p.length || pb.length || cp.length ? 'CONFIGURED' : 'NOT_CONFIGURED'
+      }
+      setStatusByService(out)
+      setLoadingStatus(false)
+    }).catch(() => { if (alive) setLoadingStatus(false) })
+    return () => { alive = false }
+  }, [listed])
+
+  if (selected) {
+    const config = normalizeTrade(selected.category, selected.trade_id)
+    if (selected.category === CATERING) {
+      return <CateringPricingStudio vendor={vendor} service={selected} onBack={() => setSelectedServiceId(null)} onOpenListings={onOpenListings} />
+    }
+    return <TradePricingStudio vendor={vendor} service={selected} config={config} onBack={() => setSelectedServiceId(null)} onOpenListings={onOpenListings} />
   }
 
   if (!listed.length) {
     return (
       <section className="rounded-[28px] bg-white p-5 ring-1 ring-ink/[0.07]">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-plum-50 text-plum-700">
-          <Calculator size={22} />
-        </div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><Calculator size={22} /></div>
         <h2 className="mt-4 text-[21px] font-extrabold text-plum-950">Pricing starts with a listing.</h2>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">
-          Add the service you actually provide. Sambramo will then open the pricing controls that belong to that service.
-        </p>
-        {onOpenListings && (
-          <button type="button" onClick={onOpenListings} className="mt-4 w-full rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-white">
-            Go to my listings
-          </button>
-        )}
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">Add the service you actually provide. Sambramo will then open the pricing controls that belong to that service.</p>
+        {onOpenListings && <button type="button" onClick={onOpenListings} className="mt-4 w-full rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-white">Go to my listings</button>}
       </section>
     )
   }
@@ -49,52 +73,47 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
             <h2 className="mt-1 text-[23px] font-extrabold leading-tight">Price what you actually sell.</h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-white/75">
-              Pricing is attached to your own listing. Choose one service to configure its trade-specific pricing controls.
-            </p>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-white/75">Only services already listed by this partner appear below. Each one opens its own trade-specific pricing catalog.</p>
           </div>
         </div>
       </section>
-
       <div>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Your listed services</p>
         <h3 className="mt-0.5 text-[19px] font-extrabold text-ink">{listed.length} service{listed.length === 1 ? '' : 's'}</h3>
       </div>
-
       <div className="space-y-2.5">
         {listed.map(service => {
-          const catering = service.category === CATERING
+          const config = normalizeTrade(service.category, service.trade_id)
+          const status = statusByService[service.id] ?? 'NOT_CONFIGURED'
           return (
-            <button key={service.id} type="button" onClick={() => catering && setSelectedServiceId(service.id)} disabled={!catering}
-              className={`w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] ${catering ? 'transition active:scale-[0.995]' : 'opacity-80'}`}>
+            <button key={service.id} type="button" onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${catering ? 'bg-plum-50 text-plum-700' : 'bg-ink/[0.04] text-ink-mute'}`}>
-                  {catering ? <UtensilsCrossed size={18} /> : <LockKeyhole size={17} />}
-                </span>
+                <span className={'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ' + (service.category === CATERING ? 'bg-plum-50 text-plum-700' : 'bg-surface text-plum-700')}><Calculator size={18} /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
+                  <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[14.5px] font-extrabold text-ink">{service.name || service.category}</span>
-                    {catering && <span className="rounded-full bg-forest-50 px-2 py-0.5 text-[9.5px] font-extrabold text-forest-700">Pricing ready</span>}
+                    <StatusPill status={status} loading={loadingStatus} />
                   </span>
-                  <span className="mt-1 block text-[11.5px] text-ink-mute">
-                    {catering ? 'Menu packages · per-guest pricing · structured extras' : 'Trade-specific pricing lane will be added separately'}
-                  </span>
+                  <span className="mt-1 block text-[11.5px] text-ink-mute">{service.category === CATERING ? 'Menu packages · per-guest pricing · structured extras' : config.name + ' · trade-specific packages · pricing rules · add-ons'}</span>
                 </span>
-                {catering ? <ChevronRight size={17} className="mt-1 shrink-0 text-ink-mute" /> : <Clock3 size={16} className="mt-1 shrink-0 text-ink-mute" />}
+                <ChevronRight size={17} className="mt-1 shrink-0 text-ink-mute" />
               </div>
             </button>
           )
         })}
       </div>
-
       <section className="rounded-[24px] bg-surface p-4">
-        <div className="flex items-center gap-2 text-[12px] font-extrabold text-ink">
-          <CircleCheck size={15} className="text-plum-600" /> Listing-driven by design
-        </div>
-        <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-mute">
-          A partner never configures pricing for an unrelated trade. The pricing editor reads the exact service listing and its captured capabilities.
-        </p>
+        <div className="flex items-center gap-2 text-[12px] font-extrabold text-ink"><CircleCheck size={15} className="text-plum-600" /> Listing-driven by design</div>
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-mute">A partner never configures pricing for an unrelated trade. The editor reads the exact vendor service listing and its captured capabilities.</p>
       </section>
     </div>
   )
+}
+
+function StatusPill({ status, loading }) {
+  if (loading) return <span className="rounded-full bg-surface px-2 py-0.5 text-[9px] font-extrabold text-ink-mute">Checking</span>
+  if (status === 'ENABLED') return <span className="rounded-full bg-forest-50 px-2 py-0.5 text-[9px] font-extrabold text-forest-700">Pricing enabled</span>
+  if (status === 'REVIEWING') return <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-800">Pricing under review</span>
+  if (status === 'CONFIGURED') return <span className="rounded-full bg-plum-50 px-2 py-0.5 text-[9px] font-extrabold text-plum-700">Pricing configured</span>
+  return <span className="rounded-full bg-surface px-2 py-0.5 text-[9px] font-extrabold text-ink-mute">Not configured</span>
 }

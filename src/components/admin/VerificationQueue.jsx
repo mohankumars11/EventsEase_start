@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
-  AlertTriangle, BadgeCheck, Check, Clock, FileText, Loader2, ShieldAlert, X,
+  AlertTriangle, BadgeCheck, Check, Clock, FileText, Loader2, ShieldAlert, X, Eye,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAsyncData } from '../../hooks/useAsyncData'
@@ -128,6 +128,20 @@ function CaseCard({ row, onDecide, busy }) {
         </p>
       )}
 
+      {row.submission && (
+        <button
+          type="button"
+          onClick={() => { window.location.href = '/dashboard/admin/submissions/' + row.submission.id }}
+          className="mt-3 flex w-full items-center justify-between gap-2 rounded-[14px] bg-plum-50 px-3 py-2.5 text-left ring-1 ring-plum-100"
+        >
+          <span className="min-w-0">
+            <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Customer storefront</span>
+            <span className="mt-0.5 block text-[11.5px] font-bold text-plum-950">Exact submitted snapshot · revision {row.submission.revision_no}/3</span>
+          </span>
+          <span className="inline-flex min-h-[32px] shrink-0 items-center gap-1 rounded-full bg-plum-950 px-3 text-[10.5px] font-extrabold text-white"><Eye size={12} /> View card</span>
+        </button>
+      )}
+
       {/* Entered vs extracted. The pair is the point. */}
       <div className="mt-3 rounded-[14px] bg-page-sunk p-3">
         <div className="grid grid-cols-[88px_1fr_1fr] gap-2 pb-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-ink-mute">
@@ -243,17 +257,22 @@ export default function VerificationQueue() {
     const ids = (cases.data ?? []).map(c => c.vendor_id)
     if (!ids.length) return { rows: [], unavailable: false }
 
-    const [vendors, docs, signals] = await Promise.all([
+    const [vendors, docs, signals, submissions] = await Promise.all([
       supabase.from('vendors').select('id, business_name, contact_phone').in('id', ids),
       supabase.from('vendor_documents')
         .select('id, vendor_id, requirement_id, provider_status, checksum_ok, holder_name, number_last4')
         .in('vendor_id', ids),
       supabase.from('risk_signals').select('*').in('vendor_id', ids),
+      supabase.from('sambramo_business_submissions')
+        .select('id, vendor_id, revision_no, status, submitted_at')
+        .in('vendor_id', ids)
+        .order('revision_no', { ascending: false }),
     ])
 
     const byVendor = Object.fromEntries((vendors.data ?? []).map(v => [v.id, v]))
     const docsFor = id => (docs.data ?? []).filter(d => d.vendor_id === id)
     const signalsFor = id => (signals.data ?? []).filter(s => s.vendor_id === id)
+    const submissionFor = id => (submissions.data ?? []).find(s => s.vendor_id === id)
 
     return {
       unavailable: false,
@@ -269,6 +288,7 @@ export default function VerificationQueue() {
           ocr_number: null,
           number_last4: identity?.number_last4 ?? null,
           documents: d,
+          submission: submissionFor(c.vendor_id),
           signals: signalsFor(c.vendor_id).map(s => ({
             key: s.signal, label: s.signal, weight: s.weight, detail: s.detail,
             innocent: '',

@@ -1,0 +1,468 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  ArrowLeft, BadgeCheck, BarChart3, Check, ChevronRight, CircleAlert, Clock3,
+  Edit3, Eye, FileCheck2, Layers3, MapPin, Ruler, Send, ShieldCheck,
+  Sparkles, X
+} from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
+import WorkLibrary from '../../components/vendor/WorkLibrary'
+import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
+import {
+  normalizeTrade, STATUS_META, PRICING_STATES, storefrontStatus, pricingReadiness
+} from '../../data/sambramoBusinessPreview'
+
+const unitLabel = unit => ({
+  fixed: 'per booking',
+  package: 'per package',
+  per_guest: 'per guest',
+  per_unit: 'per unit',
+  per_hour: 'per hour',
+  per_day: 'per day',
+  per_trip: 'per trip',
+  per_event: 'per event',
+}[unit] ?? unit ?? 'per booking')
+
+function CustomerOfferingCard({ offering, config }) {
+  const packages = (offering?.pricing_packages ?? []).filter(pkg => pkg.status === 'LIVE' || pkg.status === 'UNDER_REVIEW' || pkg.status === 'DRAFT')
+  const readiness = pricingReadiness({ offerings: [{ ...offering, pricing_packages: packages }] })
+  const title = offering?.name || config.templates[0]?.[1] || 'Your service'
+  const fields = config.fields
+    .map(field => ({ field, value: offering?.specs?.[field.key] }))
+    .filter(x => x.value !== undefined && x.value !== null && x.value !== '')
+    .slice(0, 6)
+  const livePackages = packages.filter(pkg => pkg.status === 'LIVE')
+  const shownPackages = livePackages.length ? livePackages : packages
+  const included = pkg => {
+    const value = pkg.commercial_inputs?.inclusions ?? pkg.trade_inputs?.inclusions ?? []
+    return Array.isArray(value) ? value.filter(Boolean).slice(0, 6) : []
+  }
+  const activeAddons = pkg => (pkg.addons ?? []).filter(a => a.active !== false).slice(0, 4)
+
+  return (
+    <article className="w-full min-w-0 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#E7E0EF] shadow-[0_12px_34px_rgba(42,8,92,0.08)]">
+      <div className="h-1.5 bg-gradient-to-r from-[#2A085C] via-[#6D28D9] to-[#D9B45B]" />
+      <div className="p-4">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#6D28D9]">{config.pillar} · {config.name}</p>
+            <h3 className="mt-1 break-words text-[20px] font-black leading-tight text-[#211735]">{title}</h3>
+            <p className="mt-1 text-[12px] font-medium leading-relaxed text-[#746783]">{offering?.description || 'A service tailored to your event, with clear inclusions and transparent pricing.'}</p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF7EF] px-2.5 py-1.5 text-[10px] font-extrabold text-[#176B42] ring-1 ring-[#CBEAD7]"><BadgeCheck size={12} /> Verified</span>
+        </div>
+
+        {!!fields.length && (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {fields.map(({ field, value }, index) => (
+              <div key={field.key} className={'min-w-0 rounded-[15px] px-3 py-2.5 ring-1 ' + (index % 3 === 0 ? 'bg-[#F2EDFA] ring-[#E5D9F4]' : index % 3 === 1 ? 'bg-[#EFF8F4] ring-[#D8EDE2]' : 'bg-[#FFF7E9] ring-[#F2E5C9]')}>
+                <p className="text-[9px] font-extrabold uppercase tracking-wide text-[#766A84]">{field.label}</p>
+                <p className="mt-1 break-words text-[12px] font-extrabold leading-snug text-[#25183B]">{typeof value === 'boolean' ? (value ? 'Included' : 'Not included') : String(value)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <div><p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">Packages & exact rates</p><p className="mt-0.5 text-[11px] text-[#81758F]">Choose the package that fits your event</p></div>
+          <span className="shrink-0 rounded-full bg-[#F2EDFA] px-2.5 py-1.5 text-[10px] font-extrabold text-[#4C1D95]">{shownPackages.length} option{shownPackages.length === 1 ? '' : 's'}</span>
+        </div>
+
+        {shownPackages.length ? (
+          <div className="mt-3 space-y-3">
+            {shownPackages.map((pkg, index) => {
+              const price = pkg.price?.rate_paise != null ? Math.round(Number(pkg.price.rate_paise) / 100) : null
+              const unit = pkg.price?.unit ? unitLabel(pkg.price.unit) : 'per booking'
+              const inclusions = included(pkg)
+              const addons = activeAddons(pkg)
+              const detailRows = [
+                ['Minimum booking', pkg.price?.minimum_quantity != null ? String(pkg.price.minimum_quantity) + ' ' + (pkg.price.unit || 'units') : null],
+                ['Included quantity', pkg.price?.included_quantity != null ? String(pkg.price.included_quantity) : null],
+                ['Lead time', pkg.price?.quantity_formula?.lead_time != null ? String(pkg.price.quantity_formula.lead_time) + ' days' : null],
+                ['Duration', pkg.price?.quantity_formula?.included_duration != null ? String(pkg.price.quantity_formula.included_duration) : null],
+              ].filter(x => x[1])
+              return (
+                <section key={pkg.id} className="min-w-0 overflow-hidden rounded-[22px] border border-[#E7E0EF] bg-white shadow-[0_5px_18px_rgba(42,8,92,0.05)]">
+                  <div className={'px-4 py-3 ' + (index % 3 === 0 ? 'bg-[#F2EDFA]' : index % 3 === 1 ? 'bg-[#EFF8F4]' : 'bg-[#FFF7E9]')}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0"><p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">{pkg.tier || (index === 0 ? 'Recommended package' : 'Package option')}</p><h4 className="mt-1 break-words text-[16px] font-black leading-tight text-[#211735]">{pkg.name || 'Event package'}</h4></div>
+                      <span className="shrink-0 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-extrabold text-[#4C1D95] ring-1 ring-[#DDD1EC]">{pkg.status === 'LIVE' ? 'Bookable' : pkg.status === 'UNDER_REVIEW' ? 'In review' : 'Preview'}</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex min-w-0 items-end justify-between gap-2 rounded-[18px] bg-[#2A085C] px-4 py-3.5 text-white">
+                      <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/65">Fixed package price</p><p className="mt-1 break-words text-[28px] font-black leading-none tracking-tight">{price != null ? formatINR(price) : 'Price pending'}</p><p className="mt-1 text-[11px] font-semibold text-white/75">{unit}</p></div>
+                      <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1.5 text-[9px] font-extrabold text-white ring-1 ring-white/20">No “starting at”</span>
+                    </div>
+
+                    {pkg.description && <p className="mt-3 text-[12px] leading-relaxed text-[#625572]">{pkg.description}</p>}
+
+                    {inclusions.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Included in this package</p><div className="mt-2 grid grid-cols-1 gap-2">{inclusions.map((item, i) => <div key={i} className="flex min-w-0 items-start gap-2 rounded-xl bg-[#F6F3FA] px-3 py-2"><Check size={14} className="mt-0.5 shrink-0 text-[#23845A]" /><span className="min-w-0 break-words text-[11.5px] font-semibold leading-snug text-[#332546]">{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span></div>)}</div></div>}
+
+                    {detailRows.length > 0 && <div className="mt-3 grid grid-cols-2 gap-2">{detailRows.map(([label, value]) => <div key={label} className="min-w-0 rounded-xl bg-[#F8F6FA] px-3 py-2"><p className="text-[9px] font-bold uppercase tracking-wide text-[#81758F]">{label}</p><p className="mt-1 break-words text-[11.5px] font-extrabold text-[#2B203B]">{value}</p></div>)}</div>}
+
+                    {addons.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Optional extras</p><div className="mt-2 space-y-2">{addons.map(addon => <div key={addon.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E8E2EF] px-3 py-2.5"><span className="min-w-0 break-words text-[11.5px] font-semibold text-[#352744]">{addon.name}</span><span className="shrink-0 text-[11.5px] font-black text-[#4C1D95]">{addon.rate_paise != null ? formatINR(Math.round(Number(addon.rate_paise) / 100)) : 'Confirm'}</span></div>)}</div></div>}
+
+                    <button type="button" disabled={pkg.status !== 'LIVE'} className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6D28D9] px-4 text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(109,40,217,0.18)] disabled:bg-[#D9D2E1] disabled:text-[#70677C] disabled:shadow-none">{pkg.status === 'LIVE' ? 'Continue to booking' : 'Available after approval'} <ChevronRight size={16} /></button>
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl bg-[#FFF7E9] p-4 ring-1 ring-[#F2E5C9]"><p className="text-[12px] font-extrabold text-[#6B4B0C]">Pricing is being prepared</p><p className="mt-1 text-[11px] leading-relaxed text-[#756344]">{PRICING_STATES[readiness.state]?.detail || 'This service will show its exact package price once the partner completes pricing and Sambramo approves it.'}</p></div>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function EditAction({ icon: Icon, label, detail, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="flex min-h-[64px] items-center gap-2.5 rounded-2xl bg-page-sunk px-3 text-left ring-1 ring-ink/[0.06] transition active:scale-[0.99]">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-plum-700 ring-1 ring-ink/[0.06]"><Icon size={15} /></span>
+      <span className="min-w-0">
+        <span className="block text-[12px] font-extrabold text-ink">{label}</span>
+        <span className="mt-0.5 block text-[10px] text-ink-mute">{detail}</span>
+      </span>
+    </button>
+  )
+}
+
+function Readiness({ vendor, listings, onEdit }) {
+  const checks = useMemo(() => {
+    const tradeCheck = listings.length > 0 && listings.some(x => (x.offerings?.length ?? 0) > 0)
+    const pricingCheck = listings.length > 0 && listings.every(x => pricingReadiness(x).ready)
+    return [
+      ['Business profile', !!vendor?.business_name && !!vendor?.description, 'Customer-facing identity is complete.'],
+      ['At least one service', tradeCheck, 'A service must have something sellable underneath it.'],
+      ['Pricing lanes', pricingCheck, 'Every listed trade has a structured or controlled pricing lane.'],
+      ['Service area', !!vendor?.city && Number(vendor?.service_radius_km) > 0, 'Sambramo can match demand to your base.'],
+      ['Customer preview', true, 'This screen is generated from the same partner data model.'],
+    ]
+  }, [vendor, listings])
+
+  const done = checks.filter(x => x[1]).length
+  return (
+    <section>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-ink-mute">Launch readiness</p>
+          <p className="mt-1 text-[13px] font-black text-ink">{done} of {checks.length} checks ready</p>
+        </div>
+        <button type="button" onClick={onEdit} className="text-[11px] font-extrabold text-plum-700">Fix gaps</button>
+      </div>
+      <div className="mt-2 overflow-hidden rounded-[22px] bg-white ring-1 ring-ink/[0.08]">
+        {checks.map(([label, ok, detail]) => (
+          <div key={label} className="flex items-center gap-3 border-b border-ink/[0.06] px-4 py-3 last:border-0">
+            <span className={'grid h-7 w-7 shrink-0 place-items-center rounded-full ' + (ok ? 'bg-forest-600 text-white' : 'bg-amber-100 text-amber-800')}>
+              {ok ? <Check size={13} strokeWidth={3} /> : <CircleAlert size={13} />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-extrabold text-ink">{label}</p>
+              <p className="text-[10.5px] text-ink-mute">{detail}</p>
+            </div>
+            <span className={'text-[10px] font-extrabold uppercase ' + (ok ? 'text-forest-700' : 'text-amber-800')}>{ok ? 'Ready' : 'Fix'}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SubmissionPanel({ status, allDone, onSubmitted, error, setError }) {
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    if (busy) return
+    setBusy(true); setError('')
+    try {
+      const snapshot = await supabase.rpc('submit_sambramo_business')
+      if (!snapshot.error) {
+        if (snapshot.data?.ok === false) throw new Error(snapshot.data.says ?? snapshot.data.reason ?? 'Could not submit this business for review.')
+        await onSubmitted()
+        return
+      }
+
+      const missing = /Could not find the function|does not exist/i.test(snapshot.error.message ?? '')
+      if (!missing) throw snapshot.error
+
+      const opened = await supabase.rpc('open_verification_case')
+      if (opened.error && !/Could not find the function|does not exist/i.test(opened.error.message ?? '')) throw opened.error
+      const submitted = await supabase.rpc('submit_verification_case')
+      if (submitted.error) {
+        const oldMissing = /Could not find the function|does not exist/i.test(submitted.error.message ?? '')
+        if (!oldMissing) throw submitted.error
+        const fallback = await supabase.rpc('submit_for_review')
+        if (fallback.error) throw fallback.error
+      }
+      await onSubmitted()
+    } catch (e) {
+      setError(e?.message ?? 'Could not submit this business for review.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (status === 'UNDER_REVIEW') {
+    return <div className="rounded-[22px] bg-amber-50 p-4 ring-1 ring-amber-200"><div className="flex items-start gap-3"><Clock3 className="mt-0.5 shrink-0 text-amber-700" size={18} /><div className="min-w-0"><p className="text-[14px] font-extrabold text-amber-950">Sambramo is reviewing your business</p><p className="mt-1 text-[12px] leading-relaxed text-amber-900/75">Minimum review window: 2 hours. Publishing happens only after approval.</p></div></div></div>
+  }
+  if (status === 'ACTION_REQUIRED') {
+    return <div className="rounded-[22px] bg-rose-50 p-4 ring-1 ring-rose-200"><p className="flex items-center gap-2 text-[14px] font-extrabold text-rose-950"><CircleAlert size={17} /> Correction requested</p><p className="mt-1 text-[12px] leading-relaxed text-rose-800">Sambramo needs a change before this version can go live. Correct the marked details and resubmit within the remaining review rounds.</p><button type="button" onClick={() => window.location.assign('/partner/setup/review')} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-rose-700 px-3.5 py-2 text-[12px] font-extrabold text-white">Open review</button></div>
+  }
+  if (status === 'LIVE') {
+    return <div className="rounded-[22px] bg-forest-50 p-4 ring-1 ring-forest-200"><p className="flex items-center gap-2 text-[14px] font-extrabold text-forest-900"><BadgeCheck size={17} /> Your approved storefront is live</p><p className="mt-1 text-[12px] leading-relaxed text-forest-800/75">Customers see the approved version. Future material edits create a new reviewable version.</p></div>
+  }
+  return (
+    <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
+      <div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-plum-50 text-plum-700"><Send size={17} /></div><div className="min-w-0 flex-1"><p className="text-[14px] font-extrabold text-ink">Ready to go live?</p><p className="mt-1 text-[12px] leading-relaxed text-ink-soft">Send this exact storefront version to the Sambramo team. We review it before customers can see it.</p></div></div>
+      <button type="button" disabled={!allDone || busy} onClick={submit} className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-plum-950 px-4 text-[13.5px] font-extrabold text-white shadow-[0_10px_26px_rgba(42,8,92,0.18)] disabled:cursor-not-allowed disabled:opacity-40">{busy ? <Sparkles size={16} className="animate-spin" /> : <Send size={16} />}Submit for Sambramo Review</button>
+      <p className="mt-2 text-center text-[10.5px] leading-snug text-ink-mute">Minimum review window: 2 hours · Publishing requires Sambramo approval</p>
+      {!allDone && <p className="mt-2 text-center text-[11.5px] font-semibold text-amber-800">Complete pricing for every listed trade before submitting.</p>}
+    </div>
+  )
+}
+
+export default function BusinessPreview() {
+  const navigate = useNavigate()
+  const { loading, account, steps, refresh } = usePartnerOnboarding()
+  const [mode, setMode] = useState('customer')
+  const [selectedTrade, setSelectedTrade] = useState(null)
+  const [error, setError] = useState('')
+  const [pricingByService, setPricingByService] = useState({})
+  const [pricingLoading, setPricingLoading] = useState(true)
+
+  const vendor = account.vendor
+  const listings = account.listings ?? []
+
+  useEffect(() => {
+    let alive = true
+    const serviceIds = listings.flatMap(l => l.offerings ?? []).map(x => x.id).filter(Boolean)
+    if (!serviceIds.length) {
+      setPricingByService({})
+      setPricingLoading(false)
+      return
+    }
+    setPricingLoading(true)
+    Promise.all([
+      supabase.from('sambramo_trade_packages')
+        .select('id,vendor_service_id,template_id,source,name,description,commercial_inputs,trade_inputs,status,revision_round')
+        .in('vendor_service_id', serviceIds),
+      supabase.from('sambramo_partner_price_books')
+        .select('id,vendor_service_id,offering_id,unit,rate_paise,minimum_quantity,included_quantity,quantity_formula,status,version')
+        .in('vendor_service_id', serviceIds)
+        .order('version', { ascending: false }),
+      supabase.from('sambramo_trade_package_addons')
+        .select('id,package_id,name,unit,rate_paise,minimum_quantity,included_quantity,active,sort_order')
+        .in('package_id', listings.flatMap(l => l.offerings ?? []).map(o => o.id).filter(Boolean)),
+      supabase.from('sambramo_catering_packages')
+        .select('id,vendor_service_id,name,status,min_guests,max_guests,service_hours,service_style,notes')
+        .in('vendor_service_id', serviceIds),
+    ]).then(([packagesRes, pricesRes, addonsRes, cateringRes]) => {
+      if (!alive) return
+      const packages = packagesRes.data ?? []
+      const prices = pricesRes.data ?? []
+      const addons = addonsRes.data ?? []
+      const catering = cateringRes.data ?? []
+      const out = {}
+      for (const serviceId of serviceIds) {
+        const generic = packages.filter(p => p.vendor_service_id === serviceId).map(p => ({
+          ...p,
+          price: prices.find(x => x.offering_id === String(p.id)) ?? null,
+          addons: addons.filter(a => a.package_id === p.id),
+        }))
+        const cateringForService = catering.filter(p => p.vendor_service_id === serviceId).map(p => ({
+          id: p.id,
+          name: p.name,
+          source: 'PARTNER_CATERING',
+          status: p.status === 'ACTIVE' ? 'LIVE' : p.status,
+          min_guests: p.min_guests,
+          max_guests: p.max_guests,
+          service_hours: p.service_hours,
+          service_style: p.service_style,
+          description: p.notes ?? '',
+          price: null,
+          addons: [],
+        }))
+        out[serviceId] = [...generic, ...cateringForService]
+      }
+      setPricingByService(out)
+      setPricingLoading(false)
+    }).catch(() => {
+      if (alive) setPricingLoading(false)
+    })
+    return () => { alive = false }
+  }, [listings])
+
+  const enrichedListings = useMemo(() => listings.map(listing => ({
+    ...listing,
+    offerings: (listing.offerings ?? []).map(offering => ({
+      ...offering,
+      pricing_packages: pricingByService[offering.id] ?? [],
+    })),
+  })), [listings, pricingByService])
+
+  if (loading || pricingLoading && account.vendor) {
+    return <div className="native-screen grid place-items-center bg-white"><Sparkles className="animate-pulse text-plum-700" size={28} /></div>
+  }
+
+  const status = storefrontStatus(vendor, enrichedListings)
+  const visibleListings = selectedTrade ? enrichedListings.filter(l => l.trade === selectedTrade) : enrichedListings
+  const launchReady = steps.filter(s => s.id !== 'review').every(s => s.status === 'COMPLETE') &&
+    enrichedListings.length > 0 &&
+    enrichedListings.every(l => pricingReadiness(l).ready) &&
+    !!vendor?.city && Number(vendor?.service_radius_km) > 0
+
+  function editProfile() { navigate('/partner/setup/details') }
+  function editServices() { navigate('/partner/setup/services') }
+  function editPricing() { navigate('/dashboard/vendor?tab=pricing') }
+  function editAvailability() { navigate('/dashboard/vendor?tab=availability') }
+  function editTrade(trade) { navigate('/dashboard/vendor?tab=list&start=' + encodeURIComponent(trade) + '&return=preview') }
+  function editMeasurement(trade) { navigate('/dashboard/vendor?tab=list&start=' + encodeURIComponent(trade) + '&return=preview&focus=measurement') }
+
+  return (
+    <div className="min-h-[100dvh] bg-page">
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/85 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-xl items-center gap-2">
+          <button type="button" aria-label="Go back" onClick={() => navigate(-1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-ink ring-1 ring-ink/10"><ArrowLeft size={17} /></button>
+          <div className="min-w-0 flex-1"><p className="text-[9.5px] font-extrabold uppercase tracking-[0.16em] text-plum-600">Sambramo Partner Studio</p><h1 className="truncate text-[17px] font-black text-ink">Business Preview</h1></div>
+          <div className="flex items-center gap-1.5"><StatusPill status={status} /><button type="button" onClick={() => setMode(mode === 'customer' ? 'edit' : 'customer')} className="grid h-10 w-10 place-items-center rounded-2xl bg-plum-950 text-white" aria-label={mode === 'customer' ? 'Edit business' : 'Show customer view'}>{mode === 'customer' ? <Edit3 size={15} /> : <Eye size={15} />}</button></div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-xl px-4 pb-32 pt-4">
+        <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-plum-600 p-5 text-white shadow-[0_18px_52px_rgba(42,8,92,0.22)]">
+          <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-saffron-400/15 blur-2xl" />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-plum-200">Customer-facing storefront</p><h2 className="mt-1 break-words text-[25px] font-black tracking-tight">{vendor?.business_name || 'Your business'}</h2><p className="mt-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-white/70"><MapPin size={12} /> {vendor?.city || 'Bengaluru'}{vendor?.service_radius_km ? ' · within ' + vendor.service_radius_km + ' km' : ''}</p></div><ShieldCheck size={19} className="shrink-0 text-saffron-300" /></div>
+            <p className="mt-4 text-[12.5px] leading-relaxed text-white/80">{vendor?.description || 'Add a clear business description so customers understand what you provide.'}</p>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {enrichedListings.slice(0, 5).map(l => <span key={l.trade} className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold ring-1 ring-white/10">{l.trade}</span>)}
+              {enrichedListings.length > 5 && <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold ring-1 ring-white/10">+{enrichedListings.length - 5} more</span>}
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          <button type="button" onClick={() => setSelectedTrade(null)} className={'shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold ring-1 ' + (selectedTrade === null ? 'bg-plum-950 text-white ring-plum-950' : 'bg-white text-ink-soft ring-ink/10')}>All services</button>
+          {enrichedListings.map(l => <button key={l.trade} type="button" onClick={() => setSelectedTrade(l.trade)} className={'shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold ring-1 ' + (selectedTrade === l.trade ? 'bg-plum-950 text-white ring-plum-950' : 'bg-white text-ink-soft ring-ink/10')}>{l.trade}</button>)}
+        </div>
+
+        {mode === 'customer' ? (
+          <>
+          <CustomerWorkGallery vendor={vendor} />
+          <section className="mt-4 space-y-3">
+            {visibleListings.length === 0 ? (
+              <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.08]"><Layers3 className="mx-auto text-ink-mute" size={28} /><p className="mt-3 text-[14px] font-extrabold text-ink">Nothing ready to preview yet</p><p className="mt-1 text-[12px] leading-relaxed text-ink-mute">Complete a trade and its offering, then return here.</p></div>
+            ) : visibleListings.flatMap(listing => {
+              const config = normalizeTrade(listing.trade, listing.trade_id)
+              const offerings = listing.offerings?.length ? listing.offerings : [null]
+              return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} />)
+            })}
+          </section>
+          </>
+        ) : (
+          <section className="mt-4 space-y-3">
+            <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
+              <div className="flex items-center justify-between gap-3"><div><p className="text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-plum-600">Edit controls</p><h2 className="mt-1 text-[16px] font-black text-ink">Everything customers can see</h2></div><Sparkles size={19} className="text-saffron-500" /></div>
+              <div className="mt-4 grid grid-cols-2 gap-2"><EditAction icon={Edit3} label="Business profile" detail="Name, description & media" onClick={editProfile} /><EditAction icon={Layers3} label="Services" detail="Trades & offerings" onClick={editServices} /><EditAction icon={BarChart3} label="Pricing" detail="Rates, packages & add-ons" onClick={editPricing} /><EditAction icon={Clock3} label="Availability" detail="Capacity & calendar" onClick={editAvailability} /></div>
+            </div>
+
+            <section className="rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.08]">
+              <div className="mb-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-700">Partner catalog media</p>
+                <h3 className="mt-1 text-[16px] font-black text-ink">Photos & videos customers can explore</h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">Tap gallery or camera to add real work. Approved items appear in your customer catalog; new uploads wait for Sambramo review.</p>
+              </div>
+              <WorkLibrary vendor={vendor} />
+            </section>
+
+            {visibleListings.map(listing => {
+              const config = normalizeTrade(listing.trade, listing.trade_id)
+              const offering = listing.offerings?.[0]
+              return (
+                <article key={listing.id ?? listing.trade} className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
+                  <div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-ink-mute">{config.trade_id} · {config.name}</p><h3 className="mt-1 break-words text-[15px] font-extrabold text-ink">{offering?.name || 'Untitled offering'}</h3></div><button type="button" onClick={() => editTrade(listing.trade)} className="inline-flex h-9 items-center gap-1 rounded-full bg-plum-50 px-3 text-[11px] font-extrabold text-plum-700"><Edit3 size={13} /> Edit</button></div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {config.fields.slice(0, 6).map(field => <div key={field.key} className="rounded-xl bg-page-sunk px-3 py-2"><p className="text-[9px] font-bold uppercase tracking-wide text-ink-mute">{field.label}</p><p className="mt-0.5 truncate text-[11.5px] font-extrabold text-ink">{offering?.specs?.[field.key] ?? offering?.[field.key] ?? 'Not configured'}</p></div>)}
+                  </div>
+                  {offering?.pricing_packages?.length > 0 && (
+                    <div className="mt-3 rounded-2xl bg-page-sunk p-3">
+                      <div className="flex items-center justify-between"><p className="text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">Pricing catalog</p><span className="text-[9.5px] font-extrabold text-plum-700">{offering.pricing_packages.length} package{offering.pricing_packages.length === 1 ? '' : 's'}</span></div>
+                      <div className="mt-2 space-y-1.5">
+                        {offering.pricing_packages.map(pkg => <div key={pkg.id} className="flex items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-ink/[0.06]"><span className="min-w-0 truncate text-[11px] font-extrabold text-ink">{pkg.name}</span><span className="shrink-0 text-[10px] font-extrabold text-plum-700">{pkg.status === 'LIVE' ? 'Enabled' : pkg.status.replaceAll('_', ' ')}</span></div>)}
+                      </div>
+                    </div>
+                  )}
+                  {config.siteMode !== 'NONE' && <button type="button" onClick={() => editMeasurement(listing.trade)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-plum-300 bg-plum-50 py-2.5 text-[11.5px] font-extrabold text-plum-700"><Ruler size={14} /> Configure site measurements / survey</button>}
+                </article>
+              )
+            })}
+          </section>
+        )}
+
+        <section className="mt-5"><Readiness vendor={vendor} listings={enrichedListings} onEdit={() => setMode('edit')} /></section>
+        <section className="mt-4"><SubmissionPanel status={status} allDone={launchReady} error={error} setError={setError} onSubmitted={async () => { await refresh(); setMode('customer') }} /></section>
+
+        {error && <div className="fixed inset-x-4 bottom-24 z-40 rounded-2xl bg-rose-700 px-4 py-3 text-[12px] font-extrabold text-white shadow-xl" role="alert">{error}<button type="button" onClick={() => setError('')} className="float-right ml-3" aria-label="Close error"><X size={14} /></button></div>}
+        <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-semibold text-ink-mute"><FileCheck2 size={12} /> Submitted versions are reviewed before publication</div>
+      </main>
+    </div>
+  )
+}
+
+function StatusPill({ status }) {
+  const meta = STATUS_META[status] ?? STATUS_META.DRAFT
+  return <span className={'rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ring-1 ' + meta.tone}>{meta.label}</span>
+}
+
+function formatINR(value) {
+  return '₹' + Number(value || 0).toLocaleString('en-IN')
+}
+
+
+function CustomerWorkGallery({ vendor }) {
+  const [items, setItems] = useState([])
+  const [urls, setUrls] = useState({})
+  const [selected, setSelected] = useState(null)
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      if (!vendor?.id) return
+      const { rows } = await fetchWork(vendor.id)
+      const live = (rows ?? []).filter(row => row.review_status === 'live' && ['photo','video'].includes(row.kind))
+      const signed = await signedUrlsFor(live.map(row => row.storage_path), 900)
+      if (alive) { setItems(live); setUrls(signed) }
+    }
+    load()
+    return () => { alive = false }
+  }, [vendor?.id])
+  if (!items.length) return null
+  return (
+    <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
+      <div className="flex items-center justify-between gap-2">
+        <div><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-700">Work catalog</p><h3 className="mt-1 text-[16px] font-black text-ink">Real work, photos & videos</h3></div>
+        <span className="rounded-full bg-plum-50 px-2.5 py-1 text-[11px] font-extrabold text-plum-700">{items.length} items</span>
+      </div>
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+        {items.map(item => urls[item.storage_path] ? (
+          <button key={item.id} type="button" onClick={() => setSelected(item)} className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-page-sunk ring-1 ring-ink/[0.08]">
+            {item.kind === 'video' ? <video src={urls[item.storage_path]} muted playsInline className="h-full w-full object-cover" /> : <img src={urls[item.storage_path]} alt={item.caption || 'Partner portfolio'} className="h-full w-full object-cover" />}
+            {item.kind === 'video' && <span className="absolute bottom-2 right-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-bold text-white">▶ Video</span>}
+            {item.caption && <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-2 py-1.5 text-left text-[10px] font-semibold text-white">{item.caption}</span>}
+          </button>
+        ) : null)}
+      </div>
+      {selected && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" onClick={() => setSelected(null)}>
+          <button type="button" aria-label="Close media preview" className="absolute right-4 top-6 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white">Close ✕</button>
+          <div className="max-h-[82dvh] w-full max-w-xl" onClick={e => e.stopPropagation()}>
+            {selected.kind === 'video' ? <video src={urls[selected.storage_path]} controls autoPlay playsInline className="max-h-[75dvh] w-full rounded-2xl bg-black object-contain" /> : <img src={urls[selected.storage_path]} alt={selected.caption || 'Partner work'} className="max-h-[75dvh] w-full rounded-2xl object-contain" />}
+            {selected.caption && <p className="mt-3 text-center text-sm font-semibold text-white">{selected.caption}</p>}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
