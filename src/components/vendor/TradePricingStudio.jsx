@@ -907,14 +907,18 @@ function TextField({ label, value, onChange, placeholder = '', disabled = false 
 
 function ChoiceField({ label, value, onChange, options, disabled = false, allowCustom = false }) {
   const normalized = (options ?? []).map(x => Array.isArray(x) ? x : [x, x])
-  const inferredCustom = allowCustom && value !== '' && !normalized.some(x => x[0] === value)
+  const isCustomOption = option => /^custom\b/i.test(String(option ?? '').trim())
+  const inferredCustom = allowCustom && value !== '' && (
+    !normalized.some(x => x[0] === value) ||
+    normalized.some(x => x[0] === value && isCustomOption(x[1] ?? x[0]))
+  )
   const [customMode, setCustomMode] = useState(inferredCustom)
   useEffect(() => { if (inferredCustom) setCustomMode(true) }, [inferredCustom])
   return (
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}</span>
       <span className="trade-pricing-select-wrap">
-        <select value={customMode ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => { const next = e.target.value; if (next === '__custom__') { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
+        <select value={customMode ? '__custom__' : (value ?? '')} disabled={disabled} onChange={e => { const next = e.target.value; const customSelected = next === '__custom__' || normalized.some(x => x[0] === next && isCustomOption(x[1] ?? x[0])); if (customSelected) { setCustomMode(true); onChange('') } else { setCustomMode(false); onChange(next) } }}>
           <option value="">Select</option>
           {normalized.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
           {allowCustom ? <option value="__custom__">Custom / type my own</option> : null}
