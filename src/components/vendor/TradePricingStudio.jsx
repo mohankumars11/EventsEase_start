@@ -281,7 +281,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         setDraft={setEditor}
         readOnly={editor.status === 'LIVE'}
         onBack={() => setEditor(null)}
-        onSaved={async () => { setEditor(null); await load() }}
+        onSaved={async (result, status) => { await load(); if (status === 'UNDER_REVIEW') setEditor(null); else setEditor(prev => prev ? { ...prev, id: result?.package_id ?? prev.id, status: 'DRAFT' } : prev) }}
         onOpenListings={onOpenListings}
       />
     )
@@ -355,6 +355,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   const [activeStep, setActiveStep] = useState('package')
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [saveNotice, setSaveNotice] = useState('')
   const [addons, setAddons] = useState(draft.addons ?? [])
   const [media, setMedia] = useState([])
   const [mediaOpen, setMediaOpen] = useState(false)
@@ -400,7 +401,14 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
     if (!draft.tier) problems.push('Choose a package tier.')
     if (!draft.pricing_unit) problems.push('Choose a pricing unit.')
     if (Number(draft.minimum_order || 0) <= 0) problems.push('Choose a valid minimum order.')
-    if (config.mode !== 'CUSTOM' && Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
+    if (Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
+    if (draft.lead_time === '' || draft.lead_time == null) problems.push('Choose a lead time.')
+    if (!String(draft.travel_policy ?? '').trim()) problems.push('Choose a travel / service-area policy.')
+    for (const addon of addons) {
+      if (!String(addon.name ?? '').trim()) continue
+      if (addon.rate_paise === '' || addon.rate_paise == null || Number(addon.rate_paise) < 0) problems.push('Set a price for ' + addon.name + '.')
+      if (!String(addon.unit ?? '').trim()) problems.push('Choose a unit for ' + addon.name + '.')
+    }
     if (draft.status !== 'LIVE') {
       for (const field of fields) {
         if (field.required === false) continue
@@ -415,7 +423,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
     return {
       package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
       details: detailsReady,
-      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && (config.mode === 'CUSTOM' || Number(draft.base_price || 0) > 0)),
+      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && Number(draft.base_price || 0) > 0 && draft.lead_time !== '' && draft.lead_time != null && String(draft.travel_policy ?? '').trim()),
       addons: true,
       preview: validation.length === 0,
     }
@@ -424,6 +432,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   function goTo(step) {
     setActiveStep(step)
     setLocalError('')
+    setSaveNotice('')
   }
 
   function goNext() {
@@ -436,6 +445,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   }
 
   function goPrevious() {
+    setSaveNotice('')
     const idx = SECTION_META.findIndex(x => x[0] === activeStep)
     if (idx <= 0) return onBack()
     setActiveStep(SECTION_META[idx - 1][0])
@@ -467,6 +477,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
   async function save(status) {
     if (readOnly || saving) return
     setLocalError('')
+    setSaveNotice('')
     if (status === 'UNDER_REVIEW' && validation.length) {
       setLocalError(validation.join(' '))
       return
@@ -496,7 +507,15 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
         travel_policy: draft.travel_policy || null,
         lead_time: draft.lead_time === '' ? null : Number(draft.lead_time),
       }
-      const payloadAddons = addons.filter(item => String(item.name ?? '').trim()).map((item, index) => ({ ...item, sort_order: index }))
+      const payloadAddons = addons
+        .filter(item => String(item.name ?? '').trim())
+        .map((item, index) => ({
+          ...item,
+          rate_paise: item.rate_paise === '' || item.rate_paise == null ? 0 : Math.max(0, Math.round(Number(item.rate_paise))),
+          minimum_quantity: item.minimum_quantity === '' || item.minimum_quantity == null ? 1 : Math.max(1, Number(item.minimum_quantity)),
+          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.included_quantity)),
+          sort_order: index,
+        }))
       const { data, error } = await supabase.rpc('save_sambramo_trade_package', {
         p_vendor_service_id: service.id,
         p_package_id: draft.id || null,
@@ -506,8 +525,10 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
       })
       if (error) throw error
       if (data?.ok === false) throw new Error(data.reason ?? 'Could not save this pricing package.')
-      await onSaved()
+      setSaveNotice(status === 'DRAFT' ? 'Draft saved successfully. You can continue editing this package.' : 'Pricing submitted to Sambramo review.')
+      await onSaved(data, status)
     } catch (e) {
+      setSaveNotice('')
       setLocalError(e?.message ?? 'Could not save this pricing package.')
     } finally {
       setSaving(false)
@@ -536,6 +557,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
       <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} />
 
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
+      {saveNotice ? <section className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
 
       {activeStep === 'package' ? (
         <PackageStep
@@ -564,7 +586,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} />
+        <PreviewStep vendor={vendor} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} />
       ) : null}
 
       {!readOnly ? (
@@ -650,7 +672,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
         </div>
 
         <div className="trade-pricing-subcard">
-          <ChoiceField label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => onUpdate('name', v)} />
+          <ChoiceField required label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => onUpdate('name', v)} />
         </div>
 
         <div className="trade-pricing-description-head">
@@ -674,7 +696,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
         </div>
 
         <div className="trade-pricing-edit-description">
-          <textarea value={draft.description ?? ''} disabled={readOnly} rows={3} onChange={e => onUpdate('description', e.target.value)} placeholder="Edit the selected description here…" />
+          <textarea aria-label="Customer-ready description" value={draft.description ?? ''} disabled={readOnly} rows={3} onChange={e => onUpdate('description', e.target.value)} placeholder="Edit the selected description here…" />
         </div>
       </div>
     </section>
@@ -690,7 +712,7 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
           {fields.map(field => (
             field.key === 'sku'
               ? <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => onUpdate(field.key, v)} />
-              : <TradeFieldControl key={field.key} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
+              : <TradeFieldControl key={field.key} required={field.required !== false} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
           ))}
         </div>
         {SITE_DEPENDENT.has(config.trade_id) ? (
@@ -711,7 +733,7 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
         <SectionHeader icon={WalletCards} title="Pricing rules" subtitle={'Set the commercial rules for ' + config.name + '.'} />
 
         <div className="trade-pricing-field-row">
-          <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
+          <ChoiceField required label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
         </div>
 
         <div className="trade-pricing-base-price">
@@ -724,18 +746,18 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
               <button type="button" disabled={readOnly} onClick={() => onUpdate('base_price', '')} className="trade-pricing-price-chip">Custom</button>
             </div>
           </div>
-          <CurrencyField label="Your price (₹)" value={draft.base_price} disabled={readOnly} onChange={v => onUpdate('base_price', v)} />
+          <CurrencyPresetField required label="Your price (₹)" value={draft.base_price} disabled={readOnly} presets={[5000,10000,25000,50000,100000,250000,500000,1000000,2500000,5000000]} onChange={v => onUpdate('base_price', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-3">
-          <ChoiceField label="Price applies to" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
-          <PresetNumberField label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={presetsForMinimum(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => onUpdate('minimum_order', v)} />
+          <ChoiceField required label="Price applies to" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
+          <PresetNumberField required label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={presetsForMinimum(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => onUpdate('minimum_order', v)} />
           <PresetNumberField label="Included duration" value={draft.included_duration} disabled={readOnly} presets={durationPresets(config, draft.pricing_unit)} suffix={config.trade_id === 'L06' && draft.pricing_unit === 'per month' ? 'months' : 'value'} onChange={v => onUpdate('included_duration', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-4">
-          <PresetNumberField label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
-          <ChoiceField label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
+          <PresetNumberField required label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
+          <ChoiceField required label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
           <FeeChoice label="Setup charge" value={draft.setup_fee} disabled={readOnly} onChange={v => onUpdate('setup_fee', v)} />
           <FeeChoice label="Teardown charge" value={draft.teardown_fee} disabled={readOnly} onChange={v => onUpdate('teardown_fee', v)} />
         </div>
@@ -785,8 +807,8 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
                 {!readOnly ? <button type="button" onClick={() => onRemove(addon.id)} aria-label="Remove add-on" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#6B5B85] ring-1 ring-[#E7E2EF]"><Trash2 size={13} /></button> : null}
               </div>
               <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
-                <CurrencyPresetField label="Add-on rate (₹)" value={addon.rate_paise === '' ? '' : String(Number(addon.rate_paise || 0) / 100)} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
-                <ChoiceField label="Unit" value={addon.unit} disabled={readOnly} options={[['per item','Per item'],['per piece','Per piece'],['per guest','Per guest'],['per hour','Per hour'],['per day','Per day'],['per trip','Per trip'],['per event','Per event']]} onChange={v => onUpdate(addon.id, { unit: v })} />
+                <CurrencyPresetField required label="Add-on rate (₹)" value={addon.rate_paise === '' ? '' : String(Number(addon.rate_paise || 0) / 100)} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
+                <ChoiceField required label="Unit" value={addon.unit} disabled={readOnly} options={[['per item','Per item'],['per piece','Per piece'],['per guest','Per guest'],['per hour','Per hour'],['per day','Per day'],['per trip','Per trip'],['per event','Per event']]} onChange={v => onUpdate(addon.id, { unit: v })} />
               </div>
             </div>
           ))}
@@ -804,9 +826,10 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
+function PreviewStep({ config, draft, fields, addons, media, onManageMedia, vendor }) {
   const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
   const hero = media[0]
+  const profileImage = hero?.url || vendor?.avatar_url || vendor?.profile_photo_url || vendor?.profile_image_url || ''
   return (
     <section className="trade-pricing-panel trade-step-preview">
       <div className="trade-pricing-card">
@@ -835,7 +858,7 @@ function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
               {hero?.kind === 'video' ? (
                 <video src={hero.url} muted playsInline controls className="h-full w-full object-cover" />
               ) : hero?.url ? (
-                <img src={hero.url} alt="Approved partner catalog" className="h-full w-full object-cover" />
+                <img src={hero.url} alt="Partner business catalog" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-white/60"><Images size={28} /></div>
               )}
@@ -850,7 +873,7 @@ function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
                 <PreviewMetric label="Price" value={draft.base_price ? formatINR(Number(draft.base_price)) + ' / ' + titleizeUnit(draft.pricing_unit) : 'Quote'} />
                 <PreviewMetric label="Minimum" value={draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Select'} />
                 <PreviewMetric label="Lead time" value={draft.lead_time === '' ? '—' : draft.lead_time + ' days'} />
-                {selectedFields.slice(0, 1).map(field => <PreviewMetric key={field.key} label={field.label} value={String(draft.trade_inputs[field.key])} />)}
+                {selectedFields.slice(0, 3).map(field => <PreviewMetric key={field.key} label={field.label} value={String(draft.trade_inputs[field.key])} />)}
               </div>
             </div>
           </div>
@@ -889,11 +912,11 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
   )
 }
 
-function TradeFieldControl({ field, config, value, disabled, onChange }) {
+function TradeFieldControl({ field, config, value, disabled, onChange, required = false }) {
   const schema = getFieldSchema(field, config)
-  if (schema.control === 'currency') return <CurrencyPresetField label={field.label} value={value} disabled={disabled} presets={schema.presets ?? [50,100,250,500,1000,2500,5000,10000]} onChange={onChange} />
-  if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
-  return <ChoiceField label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
+  if (schema.control === 'currency') return <CurrencyPresetField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets ?? [50,100,250,500,1000,2500,5000,10000]} onChange={onChange} />
+  if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
+  return <ChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
 }
 
 function TextField({ label, value, onChange, placeholder = '', disabled = false }) {
