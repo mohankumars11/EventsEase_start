@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './TradePricingStudio.css'
+import './TradeCustomerPreview.css'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
   CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
@@ -368,6 +369,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const [media, setMedia] = useState([])
   const [mediaOpen, setMediaOpen] = useState(false)
   const [mediaRefresh, setMediaRefresh] = useState(0)
+  const [previewAction, setPreviewAction] = useState('')
 
   const fields = useMemo(() => getTradePricingFields(config), [config])
   const units = unitsFor(config)
@@ -448,9 +450,11 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     setActiveStep(step)
     setLocalError('')
     setSaveNotice('')
+    setPreviewAction('')
   }
 
   function goNext() {
+    setPreviewAction('')
     const idx = SECTION_META.findIndex(x => x[0] === activeStep)
     const next = SECTION_META[idx + 1]
     if (next) {
@@ -461,6 +465,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
 
   function goPrevious() {
     setSaveNotice('')
+    setPreviewAction('')
     const idx = SECTION_META.findIndex(x => x[0] === activeStep)
     if (idx <= 0) return onBack()
     setActiveStep(SECTION_META[idx - 1][0])
@@ -579,6 +584,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
 
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
       {saveNotice ? <section className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
+      {previewAction ? <section className="trade-pricing-preview-action-note"><Info size={15} /><span>{previewAction}</span></section> : null}
 
       {activeStep === 'package' ? (
         <PackageStep
@@ -607,7 +613,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} />
+        <PreviewStep vendor={vendor} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} />
       ) : null}
 
       {!readOnly ? (
