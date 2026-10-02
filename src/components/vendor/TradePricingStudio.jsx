@@ -410,6 +410,9 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
     if (Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
     if (draft.lead_time === '' || draft.lead_time == null) problems.push('Choose a lead time.')
     if (!String(draft.travel_policy ?? '').trim()) problems.push('Choose a travel / service-area policy.')
+    if (!String(draft.availability_policy ?? '').trim()) problems.push('Choose a booking mode.')
+    if (!String(draft.cancellation_policy ?? '').trim()) problems.push('Choose a cancellation policy.')
+    if (!String(draft.payment_policy ?? '').trim()) problems.push('Choose a payment requirement.')
     for (const addon of addons) {
       if (!String(addon.name ?? '').trim()) continue
       if (addon.rate_paise === '' || addon.rate_paise == null || Number(addon.rate_paise) < 0) problems.push('Set a price for ' + addon.name + '.')
@@ -429,7 +432,7 @@ function TradePackageEditor({ vendor, service, config, draft, setDraft, readOnly
     return {
       package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
       details: detailsReady,
-      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && Number(draft.base_price || 0) > 0 && draft.lead_time !== '' && draft.lead_time != null && String(draft.travel_policy ?? '').trim()),
+      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && Number(draft.base_price || 0) > 0 && draft.lead_time !== '' && draft.lead_time != null && String(draft.travel_policy ?? '').trim() && String(draft.availability_policy ?? '').trim() && String(draft.cancellation_policy ?? '').trim() && String(draft.payment_policy ?? '').trim()),
       addons: true,
       preview: validation.length === 0,
     }
