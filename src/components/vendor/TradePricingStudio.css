@@ -622,3 +622,45 @@
 .trade-step-pricing .trade-pricing-card{background:#fbfdf8}
 .trade-step-addons .trade-pricing-card{background:#fffaf5}
 .trade-step-preview .trade-pricing-card{background:#fff}
+
+/* Customer preview: Royal Amethyst is the frame, not the whole content surface. */
+.trade-pricing-customer-preview{width:100%;overflow:hidden;border-radius:24px;background:#2A085C;box-shadow:0 10px 28px rgba(42,8,92,.18)}
+.trade-preview-brandbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;background:linear-gradient(135deg,#2A085C 0%,#4c1d95 100%);color:#fff}
+.trade-preview-brandbar h2{margin-top:2px;color:#fff;font-size:15px;line-height:1.1;font-weight:900}
+.trade-preview-brand-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:13px;background:rgba(255,255,255,.12);color:#fff}
+.trade-preview-status{flex:0 0 auto;padding:7px 10px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(255,255,255,.10);color:#fff;font-size:9.5px;font-weight:900}
+.trade-preview-body{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;padding:12px;background:#fff}
+.trade-preview-media-card{position:relative;width:100%;height:100px;min-width:0;overflow:hidden;border-radius:16px;background:#f0ebf8;border:1px solid #e1d8ed}
+.trade-preview-media-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px;color:#796a8a;text-align:center;font-size:9px;line-height:1.2;font-weight:750}
+.trade-preview-media-badge{position:absolute;left:6px;bottom:6px;max-width:calc(100% - 12px);padding:4px 6px;overflow:hidden;border-radius:999px;background:rgba(42,8,92,.88);color:#fff;font-size:8px;font-weight:850;white-space:nowrap;text-overflow:ellipsis}
+.trade-preview-content-card{min-width:0;padding:10px;border:1px solid #e3dce9;border-radius:17px;background:#fff}
+.trade-preview-category{color:#6d28d9;font-size:9px;line-height:1.2;font-weight:900;letter-spacing:.12em;text-transform:uppercase;overflow-wrap:anywhere}
+.trade-preview-content-card h3{margin-top:3px;color:#24163d;font-size:18px;line-height:1.08;font-weight:950;overflow-wrap:anywhere}
+.trade-preview-tier{flex:0 0 auto;padding:5px 7px;border-radius:9px;background:#efe7fb;color:#5b21b6;font-size:8.5px;font-weight:900}
+.trade-preview-description{margin-top:6px;color:#6b5b7c;font-size:10px;line-height:1.35;font-weight:650}
+.trade-preview-metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}
+.trade-preview-metric-card{min-width:0;padding:7px 8px;border-radius:11px;border:1px solid transparent}
+.trade-preview-metric-card span{display:block;color:#6e6277;font-size:8px;line-height:1.15;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.trade-preview-metric-card strong{display:block;margin-top:3px;color:#24163d;font-size:10.5px;line-height:1.18;font-weight:950;overflow-wrap:anywhere}
+.trade-preview-metric-card.tone-0{background:#f0f8ef;border-color:#dbe9d8}
+.trade-preview-metric-card.tone-1{background:#fff7e8;border-color:#f0e2c8}
+.trade-preview-metric-card.tone-2{background:#eef6ff;border-color:#d8e8f8}
+.trade-preview-metric-card.tone-3{background:#fff0f2;border-color:#efd7dc}
+.trade-preview-highlight{margin-top:8px;padding:8px;border-radius:12px;background:#f7f3fb;border:1px solid #e5ddec}
+.trade-preview-highlight>p{color:#5b21b6;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.trade-preview-highlight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:6px}
+.trade-preview-highlight-grid span{min-width:0;padding:6px;border-radius:9px;background:#fff;color:#564a62;font-size:8.5px;line-height:1.25;overflow-wrap:anywhere}
+.trade-preview-highlight-grid b{display:block;color:#30213f;font-size:7.5px;margin-bottom:2px}
+.trade-preview-gallery{grid-column:1/-1;padding:11px 12px 10px;background:#fbf9fe;border-top:1px solid #e6dff0}
+.trade-preview-gallery-title{display:flex;justify-content:space-between;gap:8px;color:#655873;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+.trade-preview-gallery-row{display:flex;gap:6px;margin-top:7px;overflow-x:auto;scrollbar-width:none}
+.trade-preview-gallery-row::-webkit-scrollbar{display:none}
+.trade-preview-gallery-thumb{width:54px;height:54px;flex:0 0 54px;overflow:hidden;border-radius:10px;border:1px solid #e3d9ed;background:#f0ebf8}
+.trade-preview-trust-row{display:flex;flex-wrap:wrap;gap:6px 10px;padding:9px 12px 11px;background:#fff;border-top:1px solid #ebe6ef}
+.trade-preview-trust-row span{display:inline-flex;align-items:center;gap:5px;color:#5e526a;font-size:8.5px;font-weight:800}
+.trade-pricing-save-success{display:flex;align-items:flex-start;gap:7px;width:100%;margin-top:10px;padding:10px 11px;border:1px solid #cfe4d0;border-radius:15px;background:#f0fbf0;color:#246b2a;font-size:11px;line-height:1.35;font-weight:800}
+.trade-pricing-required{margin-left:2px;color:#c32645}
+.trade-pricing-addon-editor .trade-pricing-chip-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.trade-pricing-addon-editor .trade-pricing-chip-row::-webkit-scrollbar{display:none}
+.trade-pricing-addon-editor .trade-pricing-mini-chip{flex:0 0 auto}
+@media (max-width:389px){.trade-preview-body{grid-template-columns:1fr}.trade-preview-media-card{height:160px}.trade-pricing-bottom{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}.trade-pricing-primary-action{font-size:11px}}
