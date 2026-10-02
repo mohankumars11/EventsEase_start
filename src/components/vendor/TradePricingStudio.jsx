@@ -613,7 +613,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} />
       ) : null}
 
       {!readOnly && isPreview ? (
