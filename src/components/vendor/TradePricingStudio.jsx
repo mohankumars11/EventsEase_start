@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import './TradePricingStudio.css'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
   CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
