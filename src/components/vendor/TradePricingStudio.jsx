@@ -784,7 +784,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
           {addons.map(addon => (
             <div key={addon.id} className="rounded-2xl bg-[#FBFAFD] p-3 ring-1 ring-[#E7E2EF]">
               <div className="flex items-center gap-2">
-                <TextField label="Add-on name" value={addon.name} disabled={readOnly} placeholder="Custom add-on" onChange={v => onUpdate(addon.id, { name: v })} />
+                <ChoiceField label="Add-on name" value={addon.name} disabled={readOnly} options={suggestions.map(item => [item.name, item.name])} allowCustom onChange={v => onUpdate(addon.id, { name: v })} />
                 {!readOnly ? <button type="button" onClick={() => onRemove(addon.id)} aria-label="Remove add-on" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#6B5B85] ring-1 ring-[#E7E2EF]"><Trash2 size={13} /></button> : null}
               </div>
               <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
