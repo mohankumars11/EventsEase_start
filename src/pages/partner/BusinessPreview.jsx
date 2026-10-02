@@ -25,95 +25,94 @@ const unitLabel = unit => ({
 }[unit] ?? unit ?? 'per booking')
 
 function CustomerOfferingCard({ offering, config }) {
-  const packages = offering?.pricing_packages ?? []
+  const packages = (offering?.pricing_packages ?? []).filter(pkg => pkg.status === 'LIVE' || pkg.status === 'UNDER_REVIEW' || pkg.status === 'DRAFT')
   const readiness = pricingReadiness({ offerings: [{ ...offering, pricing_packages: packages }] })
   const title = offering?.name || config.templates[0]?.[1] || 'Your service'
   const fields = config.fields
     .map(field => ({ field, value: offering?.specs?.[field.key] }))
     .filter(x => x.value !== undefined && x.value !== null && x.value !== '')
-    .slice(0, 5)
+    .slice(0, 6)
+  const livePackages = packages.filter(pkg => pkg.status === 'LIVE')
+  const shownPackages = livePackages.length ? livePackages : packages
+  const included = pkg => {
+    const value = pkg.commercial_inputs?.inclusions ?? pkg.trade_inputs?.inclusions ?? []
+    return Array.isArray(value) ? value.filter(Boolean).slice(0, 6) : []
+  }
+  const activeAddons = pkg => (pkg.addons ?? []).filter(a => a.active !== false).slice(0, 4)
 
   return (
-    <article className="overflow-hidden rounded-[24px] bg-white ring-1 ring-ink/[0.08] shadow-[0_12px_34px_rgba(42,8,92,0.09)]">
-      <div className="h-1.5 bg-gradient-to-r from-plum-900 via-plum-600 to-saffron-400" />
-      <div className="p-4.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-ink-mute">{config.pillar} · {config.name}</p>
-            <h3 className="mt-1 text-[18px] font-black leading-tight text-ink">{title}</h3>
+    <article className="w-full min-w-0 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#E7E0EF] shadow-[0_12px_34px_rgba(42,8,92,0.08)]">
+      <div className="h-1.5 bg-gradient-to-r from-[#2A085C] via-[#6D28D9] to-[#D9B45B]" />
+      <div className="p-4">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#6D28D9]">{config.pillar} · {config.name}</p>
+            <h3 className="mt-1 break-words text-[20px] font-black leading-tight text-[#211735]">{title}</h3>
+            <p className="mt-1 text-[12px] font-medium leading-relaxed text-[#746783]">{offering?.description || 'A service tailored to your event, with clear inclusions and transparent pricing.'}</p>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-forest-50 px-2.5 py-1 text-[10px] font-extrabold text-forest-700 ring-1 ring-forest-200">
-            <BadgeCheck size={11} /> Preview
-          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF7EF] px-2.5 py-1.5 text-[10px] font-extrabold text-[#176B42] ring-1 ring-[#CBEAD7]"><BadgeCheck size={12} /> Verified</span>
         </div>
 
         {!!fields.length && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {fields.map(({ field, value }) => (
-              <span key={field.key} className="rounded-full bg-plum-50 px-2.5 py-1 text-[10.5px] font-bold text-plum-800 ring-1 ring-plum-100">
-                {field.label}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {packages.length ? (
-          <div className="mt-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-ink-mute">Pricing catalog</p>
-              <span className="text-[9.5px] font-extrabold text-plum-700">{packages.length} package{packages.length === 1 ? '' : 's'}</span>
-            </div>
-            {packages.map(pkg => (
-              <div key={pkg.id} className="rounded-2xl bg-page-sunk p-3 ring-1 ring-ink/[0.06]">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-black text-ink">{pkg.name}</p>
-                    <p className="mt-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ink-mute">
-                      {pkg.source === 'SAMBRAMO_TEMPLATE' ? 'Sambramo package' : 'Partner package'}
-                      {pkg.pricing_version ? ' · v' + pkg.pricing_version : ''}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[9.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.06]">
-                    {pkg.status === 'LIVE' ? 'Enabled' : pkg.status === 'UNDER_REVIEW' ? 'Under review' : 'Preview'}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-[8.5px] font-extrabold uppercase tracking-wide text-ink-mute">Customer price basis</p>
-                    <p className="mt-0.5 text-[16px] font-black text-plum-950">
-                      {pkg.price?.rate_paise != null
-                        ? formatINR(Math.round(Number(pkg.price.rate_paise) / 100))
-                        : 'Quote on request'}
-                    </p>
-                    <p className="text-[9.5px] text-ink-mute">{pkg.price?.unit ? unitLabel(pkg.price.unit) : 'Sambramo calculates the final price from customer requirements'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[8.5px] font-extrabold uppercase tracking-wide text-ink-mute">Add-ons</p>
-                    <p className="mt-0.5 text-[12px] font-extrabold text-ink">{(pkg.addons ?? []).filter(a => a.active !== false).length}</p>
-                  </div>
-                </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {fields.map(({ field, value }, index) => (
+              <div key={field.key} className={'min-w-0 rounded-[15px] px-3 py-2.5 ring-1 ' + (index % 3 === 0 ? 'bg-[#F2EDFA] ring-[#E5D9F4]' : index % 3 === 1 ? 'bg-[#EFF8F4] ring-[#D8EDE2]' : 'bg-[#FFF7E9] ring-[#F2E5C9]')}>
+                <p className="text-[9px] font-extrabold uppercase tracking-wide text-[#766A84]">{field.label}</p>
+                <p className="mt-1 break-words text-[12px] font-extrabold leading-snug text-[#25183B]">{typeof value === 'boolean' ? (value ? 'Included' : 'Not included') : String(value)}</p>
               </div>
             ))}
           </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <div><p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">Packages & exact rates</p><p className="mt-0.5 text-[11px] text-[#81758F]">Choose the package that fits your event</p></div>
+          <span className="shrink-0 rounded-full bg-[#F2EDFA] px-2.5 py-1.5 text-[10px] font-extrabold text-[#4C1D95]">{shownPackages.length} option{shownPackages.length === 1 ? '' : 's'}</span>
+        </div>
+
+        {shownPackages.length ? (
+          <div className="mt-3 space-y-3">
+            {shownPackages.map((pkg, index) => {
+              const price = pkg.price?.rate_paise != null ? Math.round(Number(pkg.price.rate_paise) / 100) : null
+              const unit = pkg.price?.unit ? unitLabel(pkg.price.unit) : 'per booking'
+              const inclusions = included(pkg)
+              const addons = activeAddons(pkg)
+              const detailRows = [
+                ['Minimum booking', pkg.price?.minimum_quantity != null ? String(pkg.price.minimum_quantity) + ' ' + (pkg.price.unit || 'units') : null],
+                ['Included quantity', pkg.price?.included_quantity != null ? String(pkg.price.included_quantity) : null],
+                ['Lead time', pkg.price?.quantity_formula?.lead_time != null ? String(pkg.price.quantity_formula.lead_time) + ' days' : null],
+                ['Duration', pkg.price?.quantity_formula?.included_duration != null ? String(pkg.price.quantity_formula.included_duration) : null],
+              ].filter(x => x[1])
+              return (
+                <section key={pkg.id} className="min-w-0 overflow-hidden rounded-[22px] border border-[#E7E0EF] bg-white shadow-[0_5px_18px_rgba(42,8,92,0.05)]">
+                  <div className={'px-4 py-3 ' + (index % 3 === 0 ? 'bg-[#F2EDFA]' : index % 3 === 1 ? 'bg-[#EFF8F4]' : 'bg-[#FFF7E9]')}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0"><p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">{pkg.tier || (index === 0 ? 'Recommended package' : 'Package option')}</p><h4 className="mt-1 break-words text-[16px] font-black leading-tight text-[#211735]">{pkg.name || 'Event package'}</h4></div>
+                      <span className="shrink-0 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-extrabold text-[#4C1D95] ring-1 ring-[#DDD1EC]">{pkg.status === 'LIVE' ? 'Bookable' : pkg.status === 'UNDER_REVIEW' ? 'In review' : 'Preview'}</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex min-w-0 items-end justify-between gap-2 rounded-[18px] bg-[#2A085C] px-4 py-3.5 text-white">
+                      <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/65">Fixed package price</p><p className="mt-1 break-words text-[28px] font-black leading-none tracking-tight">{price != null ? formatINR(price) : 'Price pending'}</p><p className="mt-1 text-[11px] font-semibold text-white/75">{unit}</p></div>
+                      <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1.5 text-[9px] font-extrabold text-white ring-1 ring-white/20">No “starting at”</span>
+                    </div>
+
+                    {pkg.description && <p className="mt-3 text-[12px] leading-relaxed text-[#625572]">{pkg.description}</p>}
+
+                    {inclusions.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Included in this package</p><div className="mt-2 grid grid-cols-1 gap-2">{inclusions.map((item, i) => <div key={i} className="flex min-w-0 items-start gap-2 rounded-xl bg-[#F6F3FA] px-3 py-2"><Check size={14} className="mt-0.5 shrink-0 text-[#23845A]" /><span className="min-w-0 break-words text-[11.5px] font-semibold leading-snug text-[#332546]">{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span></div>)}</div></div>}
+
+                    {detailRows.length > 0 && <div className="mt-3 grid grid-cols-2 gap-2">{detailRows.map(([label, value]) => <div key={label} className="min-w-0 rounded-xl bg-[#F8F6FA] px-3 py-2"><p className="text-[9px] font-bold uppercase tracking-wide text-[#81758F]">{label}</p><p className="mt-1 break-words text-[11.5px] font-extrabold text-[#2B203B]">{value}</p></div>)}</div>}
+
+                    {addons.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Optional extras</p><div className="mt-2 space-y-2">{addons.map(addon => <div key={addon.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E8E2EF] px-3 py-2.5"><span className="min-w-0 break-words text-[11.5px] font-semibold text-[#352744]">{addon.name}</span><span className="shrink-0 text-[11.5px] font-black text-[#4C1D95]">{addon.rate_paise != null ? formatINR(Math.round(Number(addon.rate_paise) / 100)) : 'Confirm'}</span></div>)}</div></div>}
+
+                    <button type="button" disabled={pkg.status !== 'LIVE'} className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6D28D9] px-4 text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(109,40,217,0.18)] disabled:bg-[#D9D2E1] disabled:text-[#70677C] disabled:shadow-none">{pkg.status === 'LIVE' ? 'Continue to booking' : 'Available after approval'} <ChevronRight size={16} /></button>
+                  </div>
+                </section>
+              )
+            })}
+          </div>
         ) : (
-          <div className="mt-4 rounded-2xl bg-page-sunk px-3 py-2.5">
-            <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-ink-mute">Pricing lane</p>
-            <p className="mt-0.5 text-[12px] font-extrabold text-ink">{PRICING_STATES[readiness.state]?.label}</p>
-            <p className="mt-0.5 text-[10.5px] leading-snug text-ink-mute">{readiness.note || PRICING_STATES[readiness.state]?.detail}</p>
-          </div>
+          <div className="mt-4 rounded-2xl bg-[#FFF7E9] p-4 ring-1 ring-[#F2E5C9]"><p className="text-[12px] font-extrabold text-[#6B4B0C]">Pricing is being prepared</p><p className="mt-1 text-[11px] leading-relaxed text-[#756344]">{PRICING_STATES[readiness.state]?.detail || 'This service will show its exact package price once the partner completes pricing and Sambramo approves it.'}</p></div>
         )}
-
-        {packages.length > 0 && (
-          <div className="mt-3 rounded-2xl bg-page-sunk px-3 py-2.5">
-            <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-ink-mute">Booking lane</p>
-            <p className="mt-0.5 text-[12px] font-extrabold text-ink">{PRICING_STATES[readiness.state]?.label}</p>
-            <p className="mt-0.5 text-[10.5px] leading-snug text-ink-mute">{readiness.note || PRICING_STATES[readiness.state]?.detail}</p>
-          </div>
-        )}
-
-        <button type="button" className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-extrabold text-plum-700">
-          View full customer details <ChevronRight size={13} />
-        </button>
       </div>
     </article>
   )
