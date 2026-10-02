@@ -741,8 +741,8 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
-          <CurrencyField label={'Additional ' + titleizeUnit(draft.pricing_unit) + ' rate'} value={draft.additional_unit_rate} disabled={readOnly} onChange={v => onUpdate('additional_unit_rate', v)} />
-          <CurrencyField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} onChange={v => onUpdate('additional_duration_rate', v)} />
+          <CurrencyPresetField label={'Additional ' + titleizeUnit(draft.pricing_unit) + ' rate'} value={draft.additional_unit_rate} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_unit_rate', v)} />
+          <CurrencyPresetField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} presets={[100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_duration_rate', v)} />
         </div>
 
         <div className="trade-pricing-rule-strip">
@@ -785,7 +785,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
                 {!readOnly ? <button type="button" onClick={() => onRemove(addon.id)} aria-label="Remove add-on" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#6B5B85] ring-1 ring-[#E7E2EF]"><Trash2 size={13} /></button> : null}
               </div>
               <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2 mt-2">
-                <CurrencyField label="Add-on rate (₹)" value={addon.rate_paise === '' ? '' : String(Number(addon.rate_paise || 0) / 100)} disabled={readOnly} onChange={v => onUpdate(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
+                <CurrencyPresetField label="Add-on rate (₹)" value={addon.rate_paise === '' ? '' : String(Number(addon.rate_paise || 0) / 100)} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate(addon.id, { rate_paise: v === '' ? '' : Math.round(Number(v) * 100) })} />
                 <ChoiceField label="Unit" value={addon.unit} disabled={readOnly} options={[['per item','Per item'],['per piece','Per piece'],['per guest','Per guest'],['per hour','Per hour'],['per day','Per day'],['per trip','Per trip'],['per event','Per event']]} onChange={v => onUpdate(addon.id, { unit: v })} />
               </div>
             </div>
@@ -891,7 +891,7 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
 
 function TradeFieldControl({ field, config, value, disabled, onChange }) {
   const schema = getFieldSchema(field, config)
-  if (schema.control === 'currency') return <CurrencyField label={field.label} value={value} disabled={disabled} onChange={onChange} />
+  if (schema.control === 'currency') return <CurrencyPresetField label={field.label} value={value} disabled={disabled} presets={schema.presets ?? [50,100,250,500,1000,2500,5000,10000]} onChange={onChange} />
   if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
   return <ChoiceField label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
 }
@@ -923,6 +923,25 @@ function ChoiceField({ label, value, onChange, options, disabled = false, allowC
       </span>
       {customMode ? <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} className="trade-pricing-custom-inline" placeholder="Type custom value" /> : null}
     </label>
+  )
+}
+
+function CurrencyPresetField({ label, value, onChange, presets = PRICE_PRESETS, disabled = false }) {
+  const current = value === '' || value == null ? '' : Number(value)
+  const chosen = current !== '' && presets.map(Number).includes(current)
+  const [customMode, setCustomMode] = useState(current !== '' && !chosen)
+  useEffect(() => { if (current !== '' && !chosen) setCustomMode(true) }, [current, chosen])
+  return (
+    <div className="trade-pricing-field">
+      <span className="trade-pricing-field-label">{label}</span>
+      <span className="trade-pricing-currency-wrap"><span>₹</span><input type="number" min="0" value={value ?? ''} disabled={disabled} onChange={e => { setCustomMode(true); onChange(e.target.value) }} placeholder="Select or enter" /></span>
+      {!disabled ? (
+        <div className="trade-pricing-chip-row">
+          {presets.slice(0, 6).map(amount => <button key={amount} type="button" onClick={() => { setCustomMode(false); onChange(String(amount)) }} className={'trade-pricing-mini-chip ' + (current === Number(amount) ? 'is-selected' : '')}>{formatINR(Number(amount))}</button>)}
+          <button type="button" onClick={() => { setCustomMode(true); onChange('') }} className={'trade-pricing-mini-chip ' + (customMode && current === '' ? 'is-selected' : '')}>Custom</button>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
