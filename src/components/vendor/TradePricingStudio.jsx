@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import './TradePricingStudio.css'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
   CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
@@ -366,6 +367,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const [addons, setAddons] = useState(draft.addons ?? [])
   const [media, setMedia] = useState([])
   const [mediaOpen, setMediaOpen] = useState(false)
+  const [mediaRefresh, setMediaRefresh] = useState(0)
 
   const fields = useMemo(() => getTradePricingFields(config), [config])
   const units = unitsFor(config)
@@ -382,13 +384,16 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     async function loadMedia() {
       if (!vendor?.id) return
       const { rows } = await fetchWork(vendor.id)
-      const approved = (rows ?? []).filter(row => row.review_status === 'live' && ['photo', 'video'].includes(row.kind)).slice(0, 8)
-      const urls = await signedUrlsFor(approved.map(row => row.storage_path), 900)
-      if (alive) setMedia(approved.map(row => ({ ...row, url: urls[row.storage_path] })).filter(row => row.url))
+      const available = (rows ?? [])
+        .filter(row => ['photo', 'video'].includes(row.kind))
+        .sort((a, b) => Number(b.review_status === 'live') - Number(a.review_status === 'live'))
+        .slice(0, 8)
+      const urls = await signedUrlsFor(available.map(row => row.storage_path), 900)
+      if (alive) setMedia(available.map(row => ({ ...row, url: urls[row.storage_path] })).filter(row => row.url))
     }
     loadMedia()
     return () => { alive = false }
-  }, [vendor?.id])
+  }, [vendor?.id, mediaRefresh])
 
   const update = (key, value) => setDraft(d => ({ ...d, [key]: value }))
   const updateTrade = (key, value) => setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
@@ -631,7 +636,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
                 <h3>Photos & videos</h3>
                 <p>Upload real work for the customer catalog. New media stays under review until approved.</p>
               </div>
-              <button type="button" onClick={() => setMediaOpen(false)} className="trade-pricing-round-button" aria-label="Close">×</button>
+              <button type="button" onClick={() => { setMediaOpen(false); setMediaRefresh(value => value + 1) }} className="trade-pricing-round-button" aria-label="Close">×</button>
             </div>
             <WorkLibrary vendor={vendor} />
           </div>
