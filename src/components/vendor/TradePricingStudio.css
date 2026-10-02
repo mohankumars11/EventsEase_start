@@ -1,0 +1,43 @@
+/* Mobile-first corrective layout for the Sambramo trade pricing wizard. */
+.trade-pricing-screen,.trade-pricing-panel,.trade-pricing-card,.trade-pricing-section-header,.trade-pricing-subcard{min-width:0;max-width:100%;box-sizing:border-box}
+.trade-pricing-editor-header{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:12px;width:100%;min-width:0;padding:8px 4px 12px}
+.trade-pricing-editor-header>div{min-width:0}
+.trade-pricing-editor-header h1{display:block;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-overflow:clip;font-size:clamp(21px,5.8vw,30px);line-height:1.12}
+.trade-pricing-overline{overflow-wrap:anywhere;line-height:1.35}
+.trade-pricing-back,.trade-pricing-eye{width:44px;height:44px;min-width:44px}
+.trade-pricing-steps{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start;gap:2px;width:100%;min-width:0;min-height:0!important;padding:12px 8px 14px!important;overflow:visible!important}
+.trade-pricing-step{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;width:100%;min-width:0!important;max-width:none!important;padding:0 2px 8px!important;text-align:center!important;white-space:normal!important;position:relative}
+.trade-pricing-step-circle{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;margin:0 auto}
+.trade-pricing-step-label{display:block!important;width:100%;min-width:0;max-width:100%;overflow:visible!important;text-overflow:clip!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;text-align:center;font-size:clamp(9px,2.8vw,12px)!important;line-height:1.2!important}
+.trade-pricing-step.is-active{border-bottom:0!important}
+.trade-pricing-panel{width:100%;min-width:0}
+.trade-pricing-card{width:100%;padding:14px!important;border-radius:22px!important}
+.trade-pricing-section-header{display:grid!important;grid-template-columns:42px minmax(0,1fr);align-items:start!important;gap:10px!important}
+.trade-pricing-section-header .trade-pricing-section-action{grid-column:1/-1;width:100%;min-width:0}
+.trade-pricing-template-select{width:100%;max-width:100%;min-height:46px}
+.trade-pricing-template-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%;min-width:0}
+.trade-pricing-template-card{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-width:0!important;width:100%;min-height:112px!important;height:auto!important;padding:12px 8px!important;text-align:center!important}
+.trade-pricing-template-name{display:block;width:100%;min-width:0;white-space:normal!important;overflow-wrap:anywhere;line-height:1.2!important;font-size:12px!important}
+.trade-pricing-subcard{width:100%;padding:12px!important}
+.trade-pricing-field-row,.trade-pricing-fields-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;width:100%;min-width:0}
+.trade-pricing-field{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.trade-pricing-field input,.trade-pricing-field select,.trade-pricing-select-wrap,.trade-pricing-currency-wrap{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.trade-pricing-description-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important;width:100%}
+.trade-pricing-description-card{display:grid!important;grid-template-columns:22px minmax(0,1fr);align-items:start!important;gap:10px!important;min-width:0;width:100%;padding:12px!important}
+.trade-pricing-description-text{min-width:0;overflow-wrap:anywhere;line-height:1.35!important}
+.trade-pricing-edit-description textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.trade-pricing-addon-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%;min-width:0}
+.trade-pricing-addon-card{min-width:0;width:100%;overflow-wrap:anywhere}
+.trade-pricing-base-price{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+.trade-pricing-price-presets{display:flex;flex-wrap:wrap;gap:7px}
+.trade-pricing-rule-strip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.trade-pricing-rule-strip>span{min-width:0;overflow-wrap:anywhere}
+.trade-pricing-customer-preview{width:100%;min-width:0;overflow:hidden}
+.trade-pricing-preview-body{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+.trade-pricing-preview-media{width:100%;max-width:100%;aspect-ratio:16/9}
+.trade-pricing-preview-metrics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.trade-pricing-bottom{display:grid!important;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:8px!important;padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important}
+.trade-pricing-bottom button{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-width:0;min-height:54px!important;height:auto!important;padding:10px 8px!important;white-space:normal!important;text-align:center;font-size:clamp(12px,3.4vw,15px)!important;line-height:1.2!important;overflow-wrap:anywhere}
+.trade-pricing-bottom button svg{flex:0 0 auto}
+@media(min-width:430px){.trade-pricing-field-row-2,.trade-pricing-pricing-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-pricing-grid-3,.trade-pricing-pricing-grid-4,.trade-specific-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-description-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(min-width:620px){.trade-pricing-card{padding:20px!important}.trade-pricing-template-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.trade-pricing-field-row-2,.trade-pricing-pricing-grid-2,.trade-pricing-pricing-grid-3,.trade-pricing-pricing-grid-4,.trade-specific-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-description-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.trade-pricing-base-price{grid-template-columns:minmax(0,1fr) minmax(180px,.8fr)!important;align-items:end}.trade-pricing-preview-body{grid-template-columns:150px minmax(0,1fr)!important}}
