@@ -133,7 +133,7 @@ function blankPackage(config, service) {
     source: 'PARTNER_CUSTOM',
     template_id: '',
     name: '',
-    tier: '',
+    tier: 'standard',
     description: '',
     revision_round: 0,
     commercial_inputs: {
@@ -650,14 +650,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
         </div>
 
         <div className="trade-pricing-subcard">
-          <div className="trade-pricing-field-row trade-pricing-field-row-2">
-            <ChoiceField label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => onUpdate('name', v)} />
-            <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
-          </div>
-          <div className="trade-pricing-field-row trade-pricing-field-row-2">
-            <ChoiceField label="Pricing unit" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
-            <CurrencyField label="Base commercial rate (optional here)" value={draft.base_price} disabled={readOnly} onChange={v => onUpdate('base_price', v)} />
-          </div>
+          <ChoiceField label="Package name" value={draft.name} disabled={readOnly} options={nameSuggestions.map(x => [x, x])} allowCustom onChange={v => onUpdate('name', v)} />
         </div>
 
         <div className="trade-pricing-description-head">
@@ -716,6 +709,10 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
     <section className="trade-pricing-panel">
       <div className="trade-pricing-card">
         <SectionHeader icon={WalletCards} title="Pricing rules" subtitle={'Set the commercial rules for ' + config.name + '.'} />
+
+        <div className="trade-pricing-field-row">
+          <ChoiceField label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
+        </div>
 
         <div className="trade-pricing-base-price">
           <div className="min-w-0">
@@ -807,7 +804,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ config, draft, fields, addons, media, onOpenListings, onManageMedia }) {
+function PreviewStep({ config, draft, fields, addons, media, onManageMedia }) {
   const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
   const hero = media[0]
   return (
