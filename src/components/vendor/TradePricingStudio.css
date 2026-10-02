@@ -881,3 +881,33 @@
   .sambramo-preview-trust{grid-template-columns:1fr}
   .sambramo-preview-cta-row{grid-template-columns:1fr}
 }
+
+/* Interactive storefront cards: tactile, clean and intentionally mobile-first. */
+.sambramo-storefront button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+.sambramo-storefront button:active{transform:translateY(1px)}
+.sambramo-storefront .sambramo-icon-button{transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
+.sambramo-storefront .sambramo-icon-button:hover{background:#f2ecf8;box-shadow:0 4px 12px rgba(42,8,92,.08)}
+.sambramo-storefront .sambramo-icon-button.is-favorite{background:#fff0f4;border-color:#f0cdd7;color:#b4234c}
+.sambramo-storefront .sambramo-heart-glyph{color:inherit}
+.sambramo-gallery-video{border:0;cursor:pointer}
+.sambramo-compare-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 10px;border:0;border-radius:999px;background:#f2edfa;color:#5b21b6;font-size:9.5px;font-weight:950;cursor:pointer}
+.sambramo-compare-link:hover{background:#ebe2f7}
+.sambramo-package-option{appearance:none;-webkit-appearance:none;text-align:left;color:inherit;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease,transform .15s ease}
+.sambramo-package-option:hover{border-color:#cbb5e1;box-shadow:0 6px 16px rgba(42,8,92,.06)}
+.sambramo-package-description{display:block;margin-top:4px;color:#746983;font-size:9.5px;line-height:1.3;overflow-wrap:anywhere}
+.sambramo-addon-card{appearance:none;-webkit-appearance:none;text-align:left;color:inherit;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.sambramo-addon-card:hover{box-shadow:0 6px 15px rgba(42,8,92,.05);border-color:#ccb8dd}
+.sambramo-portfolio-thumb{appearance:none;-webkit-appearance:none;padding:0;border:1px solid #e2d9eb;cursor:pointer}
+.sambramo-portfolio-thumb:hover{box-shadow:0 7px 16px rgba(42,8,92,.10)}
+.sambramo-preview-secondary,.sambramo-preview-primary{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.sambramo-preview-secondary:hover{background:#faf7ff;box-shadow:0 5px 14px rgba(109,40,217,.06)}
+.sambramo-preview-primary:hover{background:#7c3aed;box-shadow:0 9px 20px rgba(109,40,217,.22)}
+@media(max-width:430px){
+  .sambramo-preview-toolbar h2{font-size:18px}
+  .sambramo-brand-lockup{letter-spacing:.02em}
+  .sambramo-gallery-video{right:10px;bottom:10px}
+  .sambramo-package-option{grid-template-columns:18px minmax(0,1fr) 72px}
+  .sambramo-package-title-row{align-items:flex-start}
+  .sambramo-popular{font-size:7px}
+  .sambramo-package-description{font-size:9px}
+}
