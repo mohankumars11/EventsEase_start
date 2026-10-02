@@ -851,106 +851,63 @@ function PreviewStep({ config, draft, fields, addons, media, onManageMedia, vend
   const selectedFields = fields.filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
   const hero = media[0]
   const profileImage = hero?.url || vendor?.avatar_url || vendor?.profile_photo_url || vendor?.profile_image_url || ''
+  const price = draft.base_price !== '' && Number(draft.base_price) > 0 ? formatINR(Number(draft.base_price)) : 'Price not set'
   const metrics = [
-    ['Price', draft.base_price ? formatINR(Number(draft.base_price)) : 'Quote'],
-    ['Unit', draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : 'Select'],
-    ['Minimum', draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Select'],
-    ['Lead time', draft.lead_time === '' ? 'Select' : draft.lead_time + ' days'],
+    ['Package price', price],
+    ['Rate unit', draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : 'Select unit'],
+    ['Minimum order', draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Not set'],
+    ['Lead time', draft.lead_time === '' ? 'Not set' : draft.lead_time + ' days'],
   ]
-  selectedFields.slice(0, 4).forEach(field => metrics.push([field.label, String(draft.trade_inputs[field.key])]))
+  const inclusions = (draft.commercial_inputs?.inclusions ?? []).filter(Boolean).slice(0, 6)
+  const activeAddons = (addons ?? []).filter(a => a.name && a.rate_paise !== '' && a.rate_paise != null)
 
   return (
-    <section className="trade-pricing-panel trade-step-preview">
-      <div className="trade-pricing-card">
-        <div className="trade-pricing-preview-title">
-          <div className="min-w-0">
-            <p className="trade-pricing-label">Customer preview</p>
-            <p className="trade-pricing-helper">Your customer sees a clean, bookable service card—not the partner setup form.</p>
-          </div>
-          <button type="button" onClick={onManageMedia} className="trade-pricing-small-action"><Images size={14} /> Manage media</button>
+    <section className="trade-pricing-panel trade-step-preview w-full min-w-0">
+      <div className="w-full min-w-0 space-y-3">
+        <div className="flex min-w-0 items-center justify-between gap-3 rounded-[20px] bg-white p-4 ring-1 ring-[#E7E0EF]">
+          <div className="min-w-0"><p className="text-[13px] font-black text-[#211735]">Customer preview</p><p className="mt-1 text-[11px] leading-relaxed text-[#746783]">A mobile-first storefront card with the exact package rate and what the customer receives.</p></div>
+          <button type="button" onClick={onManageMedia} className="inline-flex min-h-[42px] shrink-0 items-center gap-1.5 rounded-full bg-[#F2EDFA] px-3 text-[11px] font-extrabold text-[#4C1D95] ring-1 ring-[#E3D8F0]"><Images size={14} /> Media</button>
         </div>
 
-        <div className="trade-pricing-customer-preview">
-          <div className="trade-preview-brandbar">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="trade-preview-brand-icon"><Eye size={18} /></span>
-              <div className="min-w-0">
-                <p className="trade-pricing-overline text-white/70">Sambramo customer card</p>
-                <h2>Ready to book</h2>
-              </div>
-            </div>
-            <span className="trade-preview-status">Review ready</span>
+        <article className="w-full min-w-0 overflow-hidden rounded-[26px] border border-[#E5DDED] bg-white shadow-[0_14px_34px_rgba(42,8,92,0.10)]">
+          <div className="flex items-center justify-between gap-2 bg-[#2A085C] px-4 py-3.5 text-white">
+            <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15"><Eye size={17} /></span><div className="min-w-0"><p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/65">SAMBRAMO · CUSTOMER CARD</p><p className="text-[13px] font-extrabold">Your service</p></div></div>
+            <span className="shrink-0 rounded-full bg-[#EAF7EF] px-2.5 py-1.5 text-[9px] font-extrabold text-[#176B42]">Preview</span>
           </div>
 
-          <div className="trade-preview-body">
-            <div className="trade-preview-media-card">
-              {profileImage ? (
-                hero?.kind === 'video' ? (
-                  <video src={profileImage} muted playsInline controls className="h-full w-full object-cover" />
-                ) : (
-                  <img src={profileImage} alt="Partner business catalog" className="h-full w-full object-cover" />
-                )
-              ) : (
-                <div className="trade-preview-media-empty">
-                  <Images size={26} />
-                  <span>Add a real business photo or video</span>
-                </div>
-              )}
-              <span className="trade-preview-media-badge">{media.length ? media.length + ' catalog item' + (media.length > 1 ? 's' : '') : 'Business media'}</span>
-            </div>
-
-            <div className="trade-preview-content-card">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="trade-preview-category">{config.name}</p>
-                  <h3>{draft.name || 'Your package'}</h3>
-                </div>
-                <span className="trade-preview-tier">{draft.tier || 'Standard'}</span>
-              </div>
-
-              <p className="trade-preview-description">{draft.description || 'Choose a customer-ready description to show what you deliver.'}</p>
-
-              <div className="trade-preview-metric-grid">
-                {metrics.slice(0, 6).map(([label, value], index) => (
-                  <div key={label + index} className={'trade-preview-metric-card tone-' + (index % 4)}>
-                    <span>{label}</span>
-                    <strong>{value}</strong>
-                  </div>
-                ))}
-              </div>
-
-              {selectedFields.length ? (
-                <div className="trade-preview-highlight">
-                  <p>What you provide</p>
-                  <div className="trade-preview-highlight-grid">
-                    {selectedFields.slice(0, 4).map(field => (
-                      <span key={field.key}><b>{field.label}</b>{String(draft.trade_inputs[field.key])}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+          <div className="relative w-full overflow-hidden bg-[#F2EDFA]">
+            {profileImage ? (hero?.kind === 'video' ? <video src={profileImage} muted playsInline controls className="block aspect-[16/9] w-full object-cover" /> : <img src={profileImage} alt="Partner business catalogue" className="block aspect-[16/9] w-full object-cover" />) : <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 text-[#6D28D9]"><Images size={30} /><span className="text-[11px] font-bold">Add real business photos or video</span></div>}
+            <span className="absolute bottom-3 left-3 rounded-full bg-[#2A085C]/90 px-3 py-1.5 text-[10px] font-extrabold text-white">{media.length ? media.length + ' portfolio item' + (media.length === 1 ? '' : 's') : 'Partner portfolio'}</span>
           </div>
 
-          {media.length > 1 ? (
-            <div className="trade-preview-gallery">
-              <div className="trade-preview-gallery-title"><span>Business catalogue</span><span>{media.length} items</span></div>
-              <div className="trade-preview-gallery-row">
-                {media.slice(0, 6).map(item => (
-                  <div key={item.id} className="trade-preview-gallery-thumb">
-                    {item.kind === 'video' ? <video src={item.url} muted playsInline className="h-full w-full object-cover" /> : <img src={item.url} alt="" className="h-full w-full object-cover" />}
-                  </div>
-                ))}
-              </div>
+          <div className="space-y-4 p-4">
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              <div className="min-w-0"><p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#6D28D9]">{config.pillar || 'EVENT SERVICES'} · {config.name}</p><h3 className="mt-1 break-words text-[21px] font-black leading-tight text-[#211735]">{draft.name || 'Your package name'}</h3><p className="mt-1 text-[11px] font-semibold text-[#766A84]">{vendor?.business_name || 'Your business'}</p></div>
+              <span className="shrink-0 rounded-full bg-[#EFF8F4] px-2.5 py-1.5 text-[9px] font-extrabold text-[#176B42] ring-1 ring-[#D4EBDD]"><ShieldCheck size={11} className="mr-1 inline" /> Trusted</span>
             </div>
-          ) : null}
 
-          <div className="trade-preview-trust-row">
-            <span><ShieldCheck size={14} /> Verified partner media</span>
-            <span><BadgeCheck size={14} /> Trade-specific pricing</span>
-            <span><WalletCards size={14} /> Booking-ready</span>
+            <div className="rounded-[20px] bg-[#2A085C] p-4 text-white">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/65">Exact package price</p>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1"><strong className="text-[32px] font-black leading-none tracking-tight">{price}</strong><span className="text-[11px] font-semibold text-white/75">{draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : ''}</span></div>
+              <p className="mt-2 text-[10px] font-semibold text-white/70">Final displayed rate for the selected package — not “starting at”.</p>
+            </div>
+
+            <p className="break-words text-[12px] leading-relaxed text-[#625572]">{draft.description || 'Your service description will appear here.'}</p>
+
+            <div className="grid grid-cols-2 gap-2">
+              {metrics.slice(1).map(([label, value], i) => <div key={label} className={'min-w-0 rounded-[15px] p-3 ring-1 ' + (i === 0 ? 'bg-[#F2EDFA] ring-[#E5D9F4]' : i === 1 ? 'bg-[#EFF8F4] ring-[#D8EDE2]' : 'bg-[#FFF7E9] ring-[#F2E5C9]')}><p className="text-[9px] font-extrabold uppercase tracking-wide text-[#766A84]">{label}</p><p className="mt-1 break-words text-[12px] font-extrabold leading-snug text-[#25183B]">{value}</p></div>)}
+            </div>
+
+            {selectedFields.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Service details</h4><div className="mt-2 grid grid-cols-2 gap-2">{selectedFields.slice(0, 8).map(field => <div key={field.key} className="min-w-0 rounded-[14px] border border-[#E8E2EF] bg-white p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#81758F]">{field.label}</p><p className="mt-1 break-words text-[11.5px] font-extrabold leading-snug text-[#30223F]">{String(draft.trade_inputs[field.key])}</p></div>)}</div></section>}
+
+            {inclusions.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Included in this package</h4><div className="mt-2 space-y-2">{inclusions.map((item, i) => <div key={i} className="flex min-w-0 items-start gap-2 rounded-xl bg-[#F3F8F5] px-3 py-2.5"><Check size={14} className="mt-0.5 shrink-0 text-[#23845A]" /><span className="min-w-0 break-words text-[11.5px] font-semibold leading-snug text-[#30483B]">{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span></div>)}</div></section>}
+
+            {activeAddons.length > 0 && <section><h4 className="text-[12px] font-black text-[#211735]">Optional extras</h4><div className="mt-2 space-y-2">{activeAddons.slice(0, 5).map(addon => <div key={addon.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E8E2EF] px-3 py-2.5"><span className="min-w-0 break-words text-[11.5px] font-semibold text-[#352744]">{addon.name}</span><strong className="shrink-0 text-[11.5px] text-[#4C1D95]">{addon.rate_paise ? formatINR(Math.round(Number(addon.rate_paise) / 100)) : 'Set price'}</strong></div>)}</div></section>}
+
+            <div className="flex items-center gap-2 rounded-xl bg-[#F2EDFA] px-3 py-2.5 text-[10px] font-bold text-[#4C1D95]"><BadgeCheck size={14} /> Partner-submitted details are reviewed before publishing.</div>
+            <button type="button" disabled className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6D28D9] px-4 text-[13px] font-extrabold text-white opacity-90">Continue to booking <ArrowRight size={16} /></button>
           </div>
-        </div>
+        </article>
       </div>
     </section>
   )
