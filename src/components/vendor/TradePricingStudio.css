@@ -615,3 +615,10 @@
   .trade-pricing-bottom{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
   .trade-pricing-primary-action{white-space:normal}
 }
+
+/* Gentle section accents: white remains the core surface; accent is only a small tint. */
+.trade-step-package .trade-pricing-card{background:#fff}
+.trade-step-details .trade-pricing-card{background:#fafdff}
+.trade-step-pricing .trade-pricing-card{background:#fbfdf8}
+.trade-step-addons .trade-pricing-card{background:#fffaf5}
+.trade-step-preview .trade-pricing-card{background:#fff}
