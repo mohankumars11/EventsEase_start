@@ -312,6 +312,7 @@ export const NOT_FREE_ENTRY = {
   'src/components/vendor/SambramoPricingStudio.jsx': 'pricing studio fields are validated by the server write path; search/filter controls are local-only',
   'src/components/vendor/CateringPricingStudio.jsx': 'catering pricing fields are validated by validateCateringPackage and save_sambramo_catering_package; search/filter controls are local-only',
   'src/components/vendor/CateringPricingStudio.jsx': 'dish search and controlled selectors are local controls; persisted menu, pricing and add-on fields are inventoried above and validated by the client schema plus the save RPC',
+  'src/components/vendor/TradePricingStudio.jsx': 'trade-specific pricing controls are validated by the editor schema before submit and by save_sambramo_trade_package on the server; search and option selectors are local controls',
   'src/components/vendor/CustomQuoteInbox.jsx': 'custom-quote fields are validated by the authenticated submit-custom-quote server endpoint; the countdown and text areas are request data, not a second pricing source',
 }
 
