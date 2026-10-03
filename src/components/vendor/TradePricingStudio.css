@@ -13,7 +13,7 @@
 }
 .trade-pricing-screen *,.trade-pricing-screen *::before,.trade-pricing-screen *::after{box-sizing:border-box;min-width:0}
 .trade-pricing-screen button,.trade-pricing-screen input,.trade-pricing-screen select,.trade-pricing-screen textarea{font:inherit}
-.trade-pricing-screen button{-webkit-tap-highlight-color:transparent}
+.trade-pricing-screen button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .trade-pricing-editor-header{
   display:grid;
   grid-template-columns:44px minmax(0,1fr) 44px;
@@ -561,7 +561,9 @@
   position:fixed;
   left:0;right:0;
   bottom:calc(64px + env(safe-area-inset-bottom));
-  z-index:60;
+  z-index:80;
+  pointer-events:auto;
+  isolation:isolate;
   display:grid;
   grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);
   gap:8px;
@@ -574,6 +576,8 @@
 }
 .trade-pricing-secondary-action,.trade-pricing-primary-action{
   width:100%;
+  pointer-events:auto;
+  touch-action:manipulation;
   min-width:0;
   min-height:52px;
   display:flex;
