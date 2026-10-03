@@ -118,9 +118,9 @@ export default function MarketCheck() {
             We&apos;ll be in touch
           </h1>
           <p className="mt-3 max-w-[19rem] text-[13.5px] leading-relaxed text-ink/65">
-            Thanks for telling us. We have saved your interest
-            {detected?.city ? ` for ${detected.city}` : ''}, and we will reach out
-            when Sambramo opens there.
+            {saved.ok
+              ? <>Thanks for telling us. We have saved your interest{detected?.city ? ` for ${detected.city}` : ''}. We will reach out when Sambramo opens there.</>
+              : <>We could not sync your city interest right now. You can still complete your partner profile, and try again later.</>}
           </p>
           {saved.code && (
             <p className="mt-3 font-mono text-[11.5px] text-ink-mute">{saved.code}</p>
