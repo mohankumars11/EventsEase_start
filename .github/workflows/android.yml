@@ -59,7 +59,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/jobs-perfect-mobile-alignment-20260927, feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-instant-custom-pricing-20260930, feature/sambramo-catering-pricing-20260930, feature/sambramo-business-preview-pricing-lifecycle-20261001]
+    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/jobs-perfect-mobile-alignment-20260927, feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-instant-custom-pricing-20260930, feature/sambramo-catering-pricing-20260930, feature/sambramo-business-preview-pricing-lifecycle-20261001, feature/sambramo-partner-full-ready-20261003]
     # Only when something that affects the native shell changes. A copy
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
