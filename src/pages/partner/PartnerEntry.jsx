@@ -595,8 +595,8 @@ export default function PartnerEntry() {
         <div className="mt-7 flex items-start gap-2.5 rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200/60">
           <ShieldCheck size={15} className="mt-0.5 shrink-0 text-forest-700" />
           <p className="text-[12px] font-semibold leading-snug text-forest-900">
-            Free to join and free to stay. You are paid once the work is done,
-            and you can decline any job without a penalty.
+            Your Skill. More Event Opportunities. Build your partner profile,
+            list your services, and manage pricing from one place.
           </p>
         </div>
 
