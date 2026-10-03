@@ -13,7 +13,7 @@ name: Field validation tests
 on:
   workflow_dispatch:
   push:
-    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-catering-pricing-20260930]
+    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-catering-pricing-20260930, feature/sambramo-partner-full-ready-20261003]
   pull_request:
     branches: [main]
     paths:
