@@ -498,14 +498,71 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     if (readOnly || saving) return
     setLocalError('')
     setSaveNotice('')
+
     if (status === 'UNDER_REVIEW' && validation.length) {
       setLocalError(validation.join(' '))
+      const first = validation[0] ?? ''
+      if (/package name/i.test(first)) {
+        setActiveStep('package')
+        requestAnimationFrame(() => document.querySelector('[data-pricing-package-name]')?.focus())
+      } else if (/description|package tier|pricing unit/i.test(first)) {
+        setActiveStep('package')
+      } else if (/complete /i.test(first)) {
+        setActiveStep('details')
+      } else if (/minimum order|base price|lead time|travel|booking mode|cancellation|payment requirement/i.test(first)) {
+        setActiveStep('pricing')
+      } else if (/add-on/i.test(first)) {
+        setActiveStep('addons')
+      }
       return
     }
+
     setSaving(true)
     try {
+      let packageName = String(draft.name ?? '').trim()
+
+      // A draft is allowed to be incomplete. Give an unnamed draft a
+      // deterministic, unique placeholder so repeated "Save draft" taps
+      // can never collide with the listing's unique package-name key.
+      if (!packageName) {
+        const baseName = config.name + ' draft'
+        const { data: existingNames, error: nameError } = await supabase
+          .from('sambramo_trade_packages')
+          .select('name')
+          .eq('vendor_service_id', service.id)
+          .neq('status', 'ARCHIVED')
+          .ilike('name', baseName + '%')
+        if (nameError) throw nameError
+        const taken = new Set((existingNames ?? []).map(row => String(row.name ?? '').trim().toLowerCase()))
+        packageName = baseName
+        let suffix = 2
+        while (taken.has(packageName.toLowerCase())) {
+          packageName = baseName + ' ' + suffix
+          suffix += 1
+        }
+      } else {
+        // The database intentionally enforces one package name per listing.
+        // Catch that before the RPC so the partner gets an actionable error
+        // instead of a dead-looking button / raw 23505 response.
+        const { data: duplicate, error: duplicateError } = await supabase
+          .from('sambramo_trade_packages')
+          .select('id,name')
+          .eq('vendor_service_id', service.id)
+          .neq('status', 'ARCHIVED')
+          .eq('name', packageName)
+          .limit(1)
+          .maybeSingle()
+        if (duplicateError) throw duplicateError
+        if (duplicate?.id && String(duplicate.id) !== String(draft.id ?? '')) {
+          setActiveStep('package')
+          setLocalError('A package named "' + packageName + '" already exists for this listing. Rename this package, then save or submit again.')
+          requestAnimationFrame(() => document.querySelector('[data-pricing-package-name]')?.focus())
+          return
+        }
+      }
+
       const pPackage = {
-        name: String(draft.name ?? '').trim() || (config.name + ' draft'),
+        name: packageName,
         source: draft.source,
         template_id: draft.template_id || null,
         description: draft.description || null,
@@ -539,7 +596,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
           ...item,
           rate_paise: item.rate_paise === '' || item.rate_paise == null ? 0 : Math.max(0, Math.round(Number(item.rate_paise))),
           minimum_quantity: item.minimum_quantity === '' || item.minimum_quantity == null ? 1 : Math.max(1, Number(item.minimum_quantity)),
-          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.included_quantity)),
+          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.minimum_quantity)),
           sort_order: index,
         }))
       const { data, error } = await supabase.rpc('save_sambramo_trade_package', {
@@ -549,8 +606,19 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         p_addons: payloadAddons,
         p_pricing: pPricing,
       })
-      if (error) throw error
+      if (error) {
+        const message = String(error.message ?? '')
+        if (/duplicate key value violates unique constraint/i.test(message)) {
+          throw new Error('A package with that name already exists for this listing. Rename the package and try again.')
+        }
+        throw error
+      }
       if (data?.ok === false) throw new Error(data.reason ?? 'Could not save this pricing package.')
+
+      // Keep the returned package id in editor state immediately. This makes
+      // a second save an UPDATE instead of accidentally starting a duplicate
+      // package, even before the parent dashboard finishes refreshing.
+      setDraft(d => ({ ...d, id: data?.package_id ?? d.id, name: packageName, status }))
       setSaveNotice(status === 'DRAFT' ? 'Draft saved successfully. You can continue editing this package.' : 'Pricing submitted to Sambramo review.')
       await onSaved(data, status)
     } catch (e) {
@@ -1073,10 +1141,17 @@ function TradeFieldControl({ field, config, value, disabled, onChange, required 
 }
 
 function TextField({ label, value, onChange, placeholder = '', disabled = false, required = false }) {
+  const packageNameField = label === 'Package name'
   return (
     <label className="trade-pricing-field">
       <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}</span>
-      <input value={value ?? ''} disabled={disabled} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+      <input
+        data-pricing-package-name={packageNameField ? 'true' : undefined}
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
     </label>
   )
 }
