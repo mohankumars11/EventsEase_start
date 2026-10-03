@@ -129,11 +129,11 @@ export default function MarketCheck() {
         <div className="safe-cta px-7">
           <button
             type="button"
-            onClick={() => navigate('/partner')}
+            onClick={() => navigate('/partner/login')}
             className="min-h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500
                        text-[15.5px] font-extrabold text-white"
           >
-            Done
+            Continue partner setup
           </button>
         </div>
       </div>
@@ -231,6 +231,17 @@ export default function MarketCheck() {
             >
               No, I&apos;m interested in my city
             </button>
+            <button
+              type="button"
+              data-market-continue="true"
+              onClick={() => navigate('/partner/login')}
+              className="mt-3 min-h-[48px] w-full rounded-full border border-plum-200 bg-white text-[13.5px] font-extrabold text-plum-700"
+            >
+              Continue partner setup
+            </button>
+            <p className="mt-2 text-center text-[11.5px] leading-relaxed text-ink-mute">
+              You can complete your profile now. Job availability depends on your selected service areas and Sambramo&apos;s operating coverage.
+            </p>
           </div>
         )}
 
@@ -265,10 +276,18 @@ export default function MarketCheck() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/partner')}
-              className="mt-1 min-h-[44px] w-full text-[13px] font-bold text-ink/45"
+              data-market-continue="true"
+              onClick={() => navigate('/partner/login')}
+              className="mt-1 min-h-[48px] w-full rounded-full border border-plum-200 bg-white text-[13.5px] font-extrabold text-plum-700"
             >
-              Not now
+              Continue partner setup
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/partner')}
+              className="mt-1 min-h-[40px] w-full text-[12.5px] font-semibold text-ink/45"
+            >
+              Leave for now
             </button>
           </div>
         )}
