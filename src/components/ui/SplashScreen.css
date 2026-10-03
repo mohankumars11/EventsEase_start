@@ -1,0 +1,50 @@
+/* Motion-only treatment: retain the approved flat Royal Amethyst canvas and supplied Archivo Black wordmark. */
+.splash-ground {
+  overflow: hidden;
+  isolation: isolate;
+  background: #2A085C !important;
+  background-image: none !important;
+}
+.splash-minimal-lockup {
+  animation: sambramo-lockup-arrive 900ms cubic-bezier(.2,.78,.2,1) both;
+  transform-origin: center;
+}
+.splash-minimal-wordmark {
+  font-family: 'Sambramo Display', 'Arial Black', Manrope, Inter, system-ui, sans-serif !important;
+  font-weight: 400;
+  letter-spacing: .025em;
+  animation: sambramo-wordmark-arrive 1050ms cubic-bezier(.16,1,.3,1) both;
+  will-change: transform, opacity, filter;
+}
+.splash-minimal-tagline {
+  font-family: Manrope, Inter, system-ui, sans-serif;
+  letter-spacing: .22em;
+  font-size: clamp(.62rem, 2.65vw, .92rem);
+  font-weight: 800;
+  animation: sambramo-tagline-arrive 950ms 420ms cubic-bezier(.2,.7,.2,1) both;
+  will-change: transform, opacity;
+}
+@keyframes sambramo-lockup-arrive {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sambramo-wordmark-arrive {
+  0% { opacity: 0; transform: translateY(24px) scale(.94); filter: blur(8px); }
+  65% { opacity: 1; filter: blur(0); }
+  82% { transform: translateY(-2px) scale(1.012); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes sambramo-tagline-arrive {
+  from { opacity: 0; transform: translateY(9px); letter-spacing: .38em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: .22em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-minimal-lockup,
+  .splash-minimal-wordmark,
+  .splash-minimal-tagline {
+    animation: none !important;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
