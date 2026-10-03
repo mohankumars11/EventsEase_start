@@ -5108,3 +5108,39 @@
   }
   .trade-pricing-screen .trade-pricing-step-label { font-size: 9px !important; }
 }
+
+
+/* Sambramo Partner minimal splash — Build 406 production lockup */
+.splash-ground{
+  background:#2A085C !important;
+  background-image:none !important;
+}
+.splash-minimal-lockup{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+  max-width:760px;
+}
+.splash-minimal-wordmark{
+  color:#fff;
+  font-family:'Sambramo Display','Arial Black',Manrope,Inter,system-ui,sans-serif;
+  font-size:clamp(2.5rem,12vw,6rem);
+  line-height:.95;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-align:center;
+  white-space:nowrap;
+}
+.splash-minimal-tagline{
+  color:#fff;
+  font-family:Manrope,Inter,system-ui,sans-serif;
+  font-size:clamp(.82rem,3.8vw,1.25rem);
+  line-height:1.25;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:none;
+  text-align:center;
+}
