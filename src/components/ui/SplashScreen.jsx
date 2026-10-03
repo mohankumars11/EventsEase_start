@@ -19,11 +19,11 @@ function SparkField({ reducedMotion = false }) {
     let dpr = 1
     let last = 0
     let running = true
-    const particles = Array.from({ length: 250 }, (_, i) => ({
-      angle: (i / 250) * Math.PI * 2 + Math.sin(i * 12.9898) * 0.13,
-      orbit: 0.57 + ((i * 37) % 42) / 100,
+    const particles = Array.from({ length: 168 }, (_, i) => ({
+      angle: (i / 168) * Math.PI * 2 + Math.sin(i * 12.9898) * 0.13,
+      orbit: 0.64 + ((i * 37) % 32) / 100,
       speed: (0.19 + ((i * 19) % 100) / 210) * (i % 3 === 0 ? -1 : 1),
-      size: 0.45 + ((i * 13) % 15) / 10,
+      size: 0.38 + ((i * 13) % 11) / 10,
       phase: (i * 7.13) % (Math.PI * 2),
       hue: i % 6 === 0 ? 45 : i % 3 === 0 ? 288 : 275,
       alpha: 0.38 + ((i * 23) % 55) / 100,
@@ -51,7 +51,7 @@ function SparkField({ reducedMotion = false }) {
       const cx = width / 2
       const cy = height * 0.49
       const rx = Math.min(width * 0.51, 440)
-      const ry = Math.min(height * 0.30, 330)
+      const ry = Math.min(height * 0.265, 300)
       const t = time / 1000
 
       // Clean, precise concentric orbital paths: a crisp hairline plus a
@@ -64,11 +64,23 @@ function SparkField({ reducedMotion = false }) {
         const tilt = (ring - 2) * 0.035
         context.beginPath()
         context.ellipse(0, 0, rx * scaleX, ry * scaleY, tilt, 0, Math.PI * 2)
-        context.lineWidth = ring === 2 ? 1.35 : 0.8
+        context.lineWidth = ring === 2 ? 1.45 : 0.9
         context.strokeStyle = ring === 2
-          ? 'rgba(210,142,255,.25)'
-          : `rgba(191,117,255,${0.075 + ring * 0.012})`
+          ? 'rgba(224,166,255,.42)'
+          : `rgba(205,139,255,${0.12 + ring * 0.018})`
         context.stroke()
+        if (ring === 1 || ring === 3) {
+          const sweep = t * (ring === 1 ? 0.34 : -0.27) + ring * 1.7
+          context.beginPath()
+          context.ellipse(0, 0, rx * scaleX, ry * scaleY, tilt, sweep, sweep + Math.PI * 0.38)
+          const sheen = context.createLinearGradient(-rx, -ry, rx, ry)
+          sheen.addColorStop(0, 'rgba(210,104,255,0)')
+          sheen.addColorStop(.48, 'rgba(245,193,255,.92)')
+          sheen.addColorStop(1, 'rgba(255,215,122,0)')
+          context.strokeStyle = sheen
+          context.lineWidth = ring === 1 ? 2.1 : 1.5
+          context.stroke()
+        }
       }
       context.restore()
 
@@ -84,8 +96,8 @@ function SparkField({ reducedMotion = false }) {
 
         // Subtle halo, then a sharp bright core for a polished glass-like spark.
         context.beginPath()
-        context.fillStyle = gold ? `rgba(255,190,68,${pulse * .18})` : `rgba(218,112,255,${pulse * .17})`
-        context.arc(x, y, radius * 4.2, 0, Math.PI * 2)
+        context.fillStyle = gold ? `rgba(255,190,68,${pulse * .12})` : `rgba(218,112,255,${pulse * .11})`
+        context.arc(x, y, radius * 2.25, 0, Math.PI * 2)
         context.fill()
         context.beginPath()
         context.fillStyle = gold ? `rgba(255,226,151,${p.alpha * pulse})` : `rgba(249,222,255,${p.alpha * pulse})`
@@ -112,11 +124,11 @@ function SparkField({ reducedMotion = false }) {
         const x = cx + Math.cos(a) * rx * (0.81 + (i % 2) * 0.1)
         const y = cy + Math.sin(a) * ry * (0.81 + (i % 2) * 0.1)
         const pulse = 0.5 + (Math.sin(t * 1.8 + i * 1.7) + 1) * 0.25
-        const radius = 11 + pulse * 13
+        const radius = 18 + pulse * 19
         const g = context.createRadialGradient(x, y, 0, x, y, radius)
         g.addColorStop(0, `rgba(255,255,240,${pulse})`)
-        g.addColorStop(0.12, `rgba(255,211,111,${pulse * .65})`)
-        g.addColorStop(0.42, `rgba(237,99,255,${pulse * .14})`)
+        g.addColorStop(0.12, `rgba(255,218,129,${pulse * .78})`)
+        g.addColorStop(0.42, `rgba(237,99,255,${pulse * .24})`)
         g.addColorStop(1, 'rgba(225,90,255,0)')
         context.fillStyle = g
         context.beginPath()
