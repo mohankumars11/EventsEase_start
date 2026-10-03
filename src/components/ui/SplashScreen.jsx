@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 
-const HOLD_MS = 2600
-const FADE_MS = 360
+const HOLD_MS = 2400
+const FADE_MS = 420
 
 /**
- * Minimal Sambramo launch screen.
- *
- * The app beneath it is mounted before this overlay appears, so the splash
- * cannot trap the partner. A tap dismisses it immediately; the timer is only
- * the normal cold-open handoff.
+ * Animated Sambramo launch lockup.
+ * The brand stays on a flat Royal Amethyst ground; motion is carried by the
+ * supplied bundled display face and a restrained wordmark/tagline entrance.
  */
 export default function SplashScreen() {
   const [state, setState] = useState('showing')
@@ -25,7 +23,6 @@ export default function SplashScreen() {
     <div
       role="presentation"
       data-splash=""
-      onClick={() => setState('done')}
       className="splash-ground fixed inset-0 z-[200] flex flex-col items-center justify-center px-6 text-center"
       style={{ opacity: state === 'leaving' ? 0 : 1, transition: `opacity ${FADE_MS}ms ease` }}
     >
@@ -34,7 +31,7 @@ export default function SplashScreen() {
           SAMBRAMO
         </div>
         <div className="splash-minimal-tagline">
-          Event Supply Chain &amp; Logistics App
+          EVENT SUPPLY CHAIN &amp; LOGISTICS
         </div>
       </div>
     </div>
