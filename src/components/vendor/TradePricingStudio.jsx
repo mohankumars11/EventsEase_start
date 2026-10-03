@@ -596,7 +596,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
           ...item,
           rate_paise: item.rate_paise === '' || item.rate_paise == null ? 0 : Math.max(0, Math.round(Number(item.rate_paise))),
           minimum_quantity: item.minimum_quantity === '' || item.minimum_quantity == null ? 1 : Math.max(1, Number(item.minimum_quantity)),
-          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.minimum_quantity)),
+          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.included_quantity)),
           sort_order: index,
         }))
       const { data, error } = await supabase.rpc('save_sambramo_trade_package', {
