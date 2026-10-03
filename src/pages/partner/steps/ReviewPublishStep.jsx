@@ -83,8 +83,8 @@ export default function ReviewPublishStep() {
       </div>
 
       <div className="mb-4 rounded-[20px] bg-plum-950 p-4 text-white">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-plum-200">Customer view is ready</p>
-        <p className="mt-1 text-[14px] font-extrabold">Preview first. Publish only the version you approve.</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-plum-200">Partner profile preview</p>
+        <p className="mt-1 text-[14px] font-extrabold">Review the information you have added. Pricing, verification and customer visibility follow their actual saved status.</p>
         <button
           type="button"
           onClick={() => navigate('/partner/setup/preview')}
@@ -167,6 +167,15 @@ export default function ReviewPublishStep() {
       {error && (
         <p role="alert" className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-[12.5px] font-bold text-rose-700">{error}</p>
       )}
+
+      <button
+        type="button"
+        data-review-home="true"
+        onClick={() => navigate('/dashboard/vendor?tab=jobs')}
+        className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-plum-200 bg-white px-4 text-[13.5px] font-extrabold text-plum-700"
+      >
+        Go to Partner Home
+      </button>
 
       {!allDone && !submitted && !live && !actionRequired && (
         <p className="mt-3 text-center text-[12px] text-ink-mute">
