@@ -217,29 +217,15 @@ export default function PartnerLanding() {
           <PartnerFigure trade="Decoration & Floral" live size={124} />
         </div>
 
-        {/* ══════════════════════════════════════════════════════════
-            THE NUMBER FIRST, THE SENTENCE SECOND
-            ══════════════════════════════════════════════════════════
-
-            This opened with "Work that comes to you." — true, warm, and
-            it asks somebody to read three more lines before learning
-            anything they could act on.
-
-            A decorator deciding whether to sign up wants one fact: what
-            does a job pay. So that is the headline, and it is a real
-            number: 6,587 is the median partner earning across the rate
-            card, and 1,071–49,447 is its actual range. Not a claim about
-            how many partners we have, which would be a claim about a
-            seeded network. */}
         <p className="mt-4 text-[11.5px] font-extrabold uppercase tracking-[0.16em] text-saffron-800">
-          A typical job pays
+          Built for event professionals
         </p>
-        <h1 className="mt-1 font-serif text-[44px] font-extrabold leading-[0.98] tracking-tight text-ink sm:text-[52px]">
-          ₹6,587
+        <h1 className="mt-1 font-serif text-[42px] font-extrabold leading-[0.98] tracking-tight text-ink sm:text-[50px]">
+          Your Skill. More Event Opportunities.
         </h1>
         <p className="mt-2 text-[14.5px] font-semibold leading-snug text-ink-soft">
-          Most fall between ₹1,000 and ₹50,000, and large functions go well
-          past ₹1 lakh. What you see on a job is what reaches you.
+          Build your Sambramo partner profile, list the services you actually provide,
+          set your pricing, and be ready for relevant event opportunities.
         </p>
 
         {/* ── Three facts, as cards ────────────────────────────────────
@@ -256,7 +242,7 @@ export default function PartnerLanding() {
              * headline above. It is set out in full in the partner terms,
              * which must be signed before any work is taken, so nobody
              * finds out at their first payout. */
-            { n: '₹0',   t: 'to join',        s: 'free, and free to stay' },
+            { n: '₹0',   t: 'to join',        s: 'no upfront partner fee' },
             { n: 'Paid', t: 'once it is done', s: 'no waiting on invoices' },
             { n: 'You',  t: 'pick the jobs',  s: 'decline anything' },
           ].map(c => (
