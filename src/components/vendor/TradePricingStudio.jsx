@@ -651,7 +651,8 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} />
 
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
-      {saveNotice ? <section className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
+      {saveNotice ? <section role="status" aria-live="polite" className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
+      {localError ? <section role="alert" aria-live="assertive" className="trade-pricing-save-error"><Info size={16} /><span>{localError}</span></section> : null}
       {previewAction ? <section className="trade-pricing-preview-action-note"><Info size={15} /><span>{previewAction}</span></section> : null}
 
       {activeStep === 'package' ? (
@@ -693,11 +694,11 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
 
       {!readOnly ? (
         <div className="trade-pricing-bottom">
-          <button type="button" onClick={() => save('DRAFT')} disabled={saving} className="trade-pricing-secondary-action">
+          <button type="button" data-pricing-action="save-draft" onClick={() => save('DRAFT')} disabled={saving} aria-disabled={saving} className="trade-pricing-secondary-action">
             {saving ? 'Saving…' : 'Save draft'}
           </button>
           {isPreview ? (
-            <button type="button" onClick={() => save('UNDER_REVIEW')} disabled={saving} aria-disabled={saving} className="trade-pricing-primary-action">
+            <button type="button" data-pricing-action="submit-review" onClick={() => save('UNDER_REVIEW')} disabled={saving} aria-disabled={saving} className="trade-pricing-primary-action">
               {saving ? 'Submitting…' : 'Submit pricing for review'}
             </button>
           ) : (
