@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import './SplashScreen.css'
 
 const HOLD_MS = 2400
 const FADE_MS = 420
