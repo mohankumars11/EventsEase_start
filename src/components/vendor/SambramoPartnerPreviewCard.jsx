@@ -135,7 +135,6 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
         <div className="sppc-thumb-stack">
           {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:null}{i===1&&displayMedia.length>3?<span className="sppc-photo-count">+{displayMedia.length-2} more</span>:null}</button>)}
           {!thumbs.length?<button type="button" className="sppc-thumb-placeholder" onClick={()=>onManageMedia?.('media')}><Images size={19}/><span>Add work</span></button>:null}
-          {displayMedia.length > 3 ? <button type="button" className="sppc-more-media" onClick={()=>setSelectedMediaIndex(3)}>+{displayMedia.length - 3} more</button> : null}
         </div>
       </section>
       <section className="sppc-package-hero"><button type="button" className="sppc-edit-button" onClick={()=>onEdit?.('package')}>Edit</button>
