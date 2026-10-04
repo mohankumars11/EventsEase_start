@@ -1041,6 +1041,7 @@ function hasFieldValue(value) {
 
 function TradeFieldControl({ field, config, value, disabled, onChange, required = false }) {
   const schema = getFieldSchema(field, config)
+  if (schema.multi) return <MultiChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} onChange={onChange} />
   if (schema.control === 'currency') return <CurrencyPresetField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets ?? [50,100,250,500,1000,2500,5000,10000]} onChange={onChange} />
   if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
   return <ChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
