@@ -24,6 +24,13 @@ jobs:
       - uses: android-actions/setup-android@v4
       - name: Install Android build packages
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Configure Expo public Supabase client
+        run: |
+          set -a
+          source ../../.env.android
+          set +a
+          printf 'EXPO_PUBLIC_SUPABASE_URL=%s\n' "$VITE_SUPABASE_URL" > .env
+          printf 'EXPO_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_ANON_KEY" >> .env
       - run: npm install
       - run: npx expo install --fix
       - run: npx expo prebuild --platform android --non-interactive
