@@ -986,10 +986,11 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
         packages={packages}
         addons={addons}
         media={media}
+        onEdit={step => onEditStep?.(step)}
         onManageMedia={value => {
           if (value === 'back') action('Preview stays on this pricing step.')
-          else if (value === 'events') action('Edit Events you serve in Trade specific fields.')
-          else if (String(value || '').startsWith('addon:')) action('Add-on preview interaction.')
+          else if (value === 'events') onEditStep?.('details')
+          else if (String(value || '').startsWith('addon:')) onEditStep?.('addons')
           else onManageMedia?.()
         }}
       />
