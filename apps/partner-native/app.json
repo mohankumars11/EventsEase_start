@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Sambramo Partner",
+    "slug": "sambramo-partner-native",
+    "scheme": "sambramopartner",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "android": {
+      "package": "in.sambramo.partner.native",
+      "edgeToEdgeEnabled": true
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
