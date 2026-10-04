@@ -7,16 +7,8 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "plugins": [
-      "expo-router",
-      "expo-secure-store"
-    ],
-    "android": {
-      "package": "in.sambramo.partner.native",
-      "edgeToEdgeEnabled": true
-    },
-    "experiments": {
-      "typedRoutes": true
-    }
+    "plugins": ["expo-router", "expo-secure-store"],
+    "android": {"package": "com.sambramo.partnernative", "edgeToEdgeEnabled": true},
+    "experiments": {"typedRoutes": true}
   }
 }
