@@ -140,7 +140,7 @@ function blankPackage(config, service) {
     description: '',
     revision_round: 0,
     commercial_inputs: {
-      inclusions: INCLUSIONS_BY_MODE[config.mode] ?? [],
+      inclusions: [],
       exclusions: EXCLUSIONS_BY_MODE[config.mode] ?? [],
     },
     trade_inputs: {},
@@ -430,14 +430,14 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     if (draft.status !== 'LIVE') {
       for (const field of fields) {
         if (field.required === false) continue
-        if (draft.trade_inputs?.[field.key] === '' || draft.trade_inputs?.[field.key] == null) problems.push('Complete ' + field.label + '.')
+        if (!hasFieldValue(draft.trade_inputs?.[field.key])) problems.push('Complete ' + field.label + '.')
       }
     }
     return [...new Set(problems)]
   }, [draft, fields, addons])
 
   const ready = useMemo(() => {
-    const detailsReady = !fields.some(field => field.required !== false && (draft.trade_inputs?.[field.key] === '' || draft.trade_inputs?.[field.key] == null))
+    const detailsReady = !fields.some(field => field.required !== false && !hasFieldValue(draft.trade_inputs?.[field.key]))
     return {
       package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
       details: detailsReady,
@@ -749,6 +749,15 @@ function StepRail({ activeStep, ready, onSelect }) {
 }
 
 function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSuggestions, units, onUpdate, onUpdateCommercial, onSelectTemplate }) {
+  const inclusions = Array.isArray(draft?.commercial_inputs?.inclusions) ? draft.commercial_inputs.inclusions : []
+  const suggestions = Array.from(new Set([
+    ...(INCLUSIONS_BY_MODE[config.mode] ?? []),
+    ...(config?.fields ?? []).map(field => 'Standard ' + String(field.label || '').toLowerCase()).filter(Boolean),
+  ])).slice(0, 10)
+  const toggleInclusion = item => {
+    const next = inclusions.includes(item) ? inclusions.filter(x => x !== item) : [...inclusions, item]
+    onUpdateCommercial('inclusions', next)
+  }
   return (
     <section className="trade-pricing-panel trade-step-package">
       <div className="trade-pricing-card">
@@ -801,6 +810,21 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 
         <div className="trade-pricing-edit-description">
           <textarea aria-label="Customer-ready description" value={draft.description ?? ''} disabled={readOnly} rows={3} onChange={e => onUpdate('description', e.target.value)} placeholder="Edit the selected description here…" />
+        </div>
+
+        <div className="trade-pricing-inclusions-editor">
+          <div className="trade-pricing-description-head">
+            <div><p className="trade-pricing-label">What is included?</p><p className="trade-pricing-helper">Select only what you will actually deliver in this package. Customers see these exact choices.</p></div>
+            <Pencil size={16} className="shrink-0 text-[#6D28D9]" />
+          </div>
+          <div className="trade-pricing-inclusion-chip-grid">
+            {suggestions.map(item => <button key={item} type="button" disabled={readOnly} onClick={() => toggleInclusion(item)} className={'trade-pricing-inclusion-chip ' + (inclusions.includes(item) ? 'is-selected' : '')}>{inclusions.includes(item) ? <Check size={12}/> : <Plus size={12}/>}<span>{item}</span></button>)}
+          </div>
+          <label className="trade-pricing-custom-inclusion">
+            <span>Add your own</span>
+            <input disabled={readOnly} placeholder="e.g. 2 proof rounds, delivery + setup" onKeyDown={e => { if(e.key==='Enter'){e.preventDefault(); const v=e.currentTarget.value.trim(); if(v&&!inclusions.includes(v)){onUpdateCommercial('inclusions',[...inclusions,v]);e.currentTarget.value=''}}}} />
+          </label>
+          {inclusions.length ? <div className="trade-pricing-selected-summary"><strong>{inclusions.length} included</strong><span>{inclusions.join(' · ')}</span></div> : <div className="trade-pricing-selected-summary is-empty"><strong>Nothing selected yet</strong><span>Add only the inclusions you truly provide.</span></div>}
         </div>
       </div>
     </section>
@@ -1011,11 +1035,40 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
   )
 }
 
+function hasFieldValue(value) {
+  return Array.isArray(value) ? value.length > 0 : value !== '' && value != null
+}
+
 function TradeFieldControl({ field, config, value, disabled, onChange, required = false }) {
   const schema = getFieldSchema(field, config)
   if (schema.control === 'currency') return <CurrencyPresetField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets ?? [50,100,250,500,1000,2500,5000,10000]} onChange={onChange} />
   if (schema.control === 'stepper' || schema.control === 'duration') return <PresetNumberField required={required} label={field.label} value={value} disabled={disabled} presets={schema.presets} suffix={schema.control === 'duration' ? 'value' : field.key.includes('km') ? 'km' : field.key.includes('hour') ? 'hours' : field.key.includes('day') ? 'days' : field.key.includes('people') || field.key.includes('staff') || field.key.includes('guards') ? 'people' : 'units'} onChange={onChange} />
   return <ChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} allowCustom onChange={onChange} />
+}
+
+function MultiChoiceField({ label, value, options, disabled = false, required = false, onChange }) {
+  const selected = Array.isArray(value) ? value : String(value ?? '').split(',').map(x => x.trim()).filter(Boolean)
+  const [custom, setCustom] = useState('')
+  const toggle = option => onChange(selected.includes(option) ? selected.filter(x => x !== option) : [...selected, option])
+  const addCustom = () => {
+    const v = custom.trim()
+    if (!v) return
+    if (!selected.includes(v)) onChange([...selected, v])
+    setCustom('')
+  }
+  return (
+    <label className="trade-pricing-field trade-multi-choice">
+      <span className="trade-pricing-field-label">{label}{required ? <span className="trade-pricing-required">*</span> : null}<small>Select all that apply</small></span>
+      <div className="trade-multi-choice-options">
+        {(options ?? []).map(option => {
+          const [id,text] = Array.isArray(option) ? option : [option, option]
+          const chosen = selected.includes(id)
+          return <button key={id} type="button" disabled={disabled} onClick={() => toggle(id)} className={'trade-multi-choice-chip ' + (chosen ? 'is-selected' : '')}>{chosen ? <Check size={12}/> : <Plus size={12}/>}<span>{text}</span></button>
+        })}
+      </div>
+      {!disabled ? <div className="trade-multi-custom"><input value={custom} onChange={e => setCustom(e.target.value)} onKeyDown={e => {if(e.key==='Enter'){e.preventDefault();addCustom()}}} placeholder="Add custom option" /><button type="button" onClick={addCustom}>Add</button></div> : null}
+    </label>
+  )
 }
 
 function TextField({ label, value, onChange, placeholder = '', disabled = false, required = false }) {
