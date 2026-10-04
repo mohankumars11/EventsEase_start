@@ -25,7 +25,7 @@ const unitLabel = unit => ({
   per_event: 'per event',
 }[unit] ?? unit ?? 'per booking')
 
-function CustomerOfferingCard({ offering, config, vendor, service, onManageMedia }) {
+function CustomerOfferingCard({ offering, config, vendor, service, onManageMedia, onEdit }) {
   const packages = (offering?.pricing_packages ?? []).filter(pkg => pkg && !['ARCHIVED', 'PAUSED'].includes(pkg.status))
   const first = packages[0] || null
   const draft = {
@@ -42,7 +42,7 @@ function CustomerOfferingCard({ offering, config, vendor, service, onManageMedia
     commercial_inputs: first?.commercial_inputs || { inclusions: [] },
     addons: first?.addons || [],
   }
-  return <SambramoPartnerPreviewCard vendor={vendor} service={service} config={config} draft={draft} packages={packages} addons={first?.addons || []} onManageMedia={onManageMedia} onEdit={step => onManageMedia?.('edit:' + step)} />
+  return <SambramoPartnerPreviewCard vendor={vendor} service={service} config={config} draft={draft} packages={packages} addons={first?.addons || []} onManageMedia={onManageMedia} onEdit={onEdit} />
 }
 function EditAction({ icon: Icon, label, detail, onClick }) {
   return (
@@ -283,7 +283,7 @@ export default function BusinessPreview() {
             ) : visibleListings.flatMap(listing => {
               const config = normalizeTrade(listing.trade, listing.trade_id)
               const offerings = listing.offerings?.length ? listing.offerings : [null]
-              return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} vendor={vendor} service={offering} onManageMedia={() => navigate('/dashboard/vendor?tab=portfolio&return=preview')} />)
+              return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} vendor={vendor} service={offering} onManageMedia={() => navigate('/dashboard/vendor?tab=portfolio&return=preview')} onEdit={() => editTrade(listing.trade)} />)
             })}
           </section>
           </>
