@@ -44,19 +44,27 @@ function iconFor(label,index){
   if(v.includes('image')||v.includes('album')||v.includes('deliver')) return <ImageIcon/>
   return [<CalendarDays/>,<Camera/>,<Clock3/>,<Users/>,<ImageIcon/>][index%5]
 }
-function MediaViewer({item,onClose}){
-  if(!item) return null
+function MediaViewer({items=[],index=0,onClose,onChange}){
+  if(!items.length) return null
+  const item=items[Math.max(0,Math.min(index,items.length-1))]
+  const prev=()=>onChange?.((index-1+items.length)%items.length)
+  const next=()=>onChange?.((index+1)%items.length)
   return <div className="sppc-media-modal" role="dialog" aria-modal="true" onClick={onClose}>
     <button type="button" className="sppc-media-close" onClick={onClose}>Close ✕</button>
     <div className="sppc-media-dialog" onClick={e=>e.stopPropagation()}>
-      {item.kind==='video'?<video src={mediaUrl(item)} controls autoPlay playsInline className="sppc-media-full"/>:<img src={mediaUrl(item)} alt={item.caption||'Partner portfolio'} className="sppc-media-full"/>}
+      <div className="sppc-media-stage">
+        <button type="button" className="sppc-media-nav left" onClick={prev} aria-label="Previous media"><ChevronLeft size={24}/></button>
+        {item.kind==='video'?<video src={mediaUrl(item)} controls autoPlay playsInline className="sppc-media-full"/>:<img src={mediaUrl(item)} alt={item.caption||'Partner portfolio'} className="sppc-media-full"/>}
+        <button type="button" className="sppc-media-nav right" onClick={next} aria-label="Next media"><ChevronRight size={24}/></button>
+      </div>
+      <div className="sppc-media-index">{index+1} / {items.length}</div>
       {item.caption?<p>{item.caption}</p>:null}
     </div>
   </div>
 }
 
-export default function SambramoPartnerPreviewCard({vendor,service,config,draft={},packages=[],addons=[],media=[],onManageMedia,compact=false}){
-  const [selectedMedia,setSelectedMedia]=useState(null)
+export default function SambramoPartnerPreviewCard({vendor,service,config,draft={},packages=[],addons=[],media=[],onManageMedia,onEdit,compact=false}){
+  const [selectedMediaIndex,setSelectedMediaIndex]=useState(null)
   const [loadedMedia,setLoadedMedia]=useState([])
   useEffect(()=>{
     let alive=true
@@ -96,7 +104,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   return <>
     <article className={'sambramo-partner-preview-card'+(compact?' is-compact':'')}>
       <header className="sppc-header">
-        <button type="button" className="sppc-icon-btn" onClick={()=>onManageMedia?.('back')} aria-label="Back"><ChevronLeft size={21}/></button>
+        <div className="sppc-header-spacer" />
         <div className="sppc-wordmark">SAMBRAMO</div><div className="sppc-header-spacer"/>
       </header>
       <section className="sppc-partner">
@@ -117,28 +125,28 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
       </section>
       <section className="sppc-gallery">
         <div className="sppc-hero-wrap">
-          {hero&&mediaUrl(hero)?hero.kind==='video'?<button type="button" className="sppc-media-button" onClick={()=>setSelectedMedia(hero)}><video src={mediaUrl(hero)} muted playsInline className="sppc-hero-image"/><span className="sppc-video-chip"><Play size={11} fill="currentColor"/>Video</span></button>:<button type="button" className="sppc-media-button" onClick={()=>setSelectedMedia(hero)}><img src={mediaUrl(hero)} alt={hero.caption||businessName+' work'} className="sppc-hero-image"/></button>:<button type="button" className="sppc-empty-media" onClick={()=>onManageMedia?.('media')}><Images size={30}/><b>Add approved business photos or video</b><span>Your first approved portfolio item becomes the featured cover.</span></button>}
+          {hero&&mediaUrl(hero)?hero.kind==='video'?<button type="button" className="sppc-media-button" onClick={()=>setSelectedMediaIndex(0)}><video src={mediaUrl(hero)} muted playsInline className="sppc-hero-image"/><span className="sppc-video-chip"><Play size={11} fill="currentColor"/>Video</span></button>:<button type="button" className="sppc-media-button" onClick={()=>setSelectedMedia(hero)}><img src={mediaUrl(hero)} alt={hero.caption||businessName+' work'} className="sppc-hero-image"/></button>:<button type="button" className="sppc-empty-media" onClick={()=>onManageMedia?.('media')}><Images size={30}/><b>Add approved business photos or video</b><span>Your first approved portfolio item becomes the featured cover.</span></button>}
           <span className="sppc-featured">FEATURED PACKAGE</span>
           <div className="sppc-hero-caption"><strong>{current?.name||draft?.name||'Featured Package'}</strong><span>{current?.description||draft?.description||'Professional event service with a clear scope, premium execution and coordinated event-day delivery.'}</span></div>
           {displayMedia.length?<span className="sppc-counter">1/{displayMedia.length}</span>:null}
         </div>
         <div className="sppc-thumb-stack">
-          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMedia(item)}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:i===1?<span className="sppc-photo-count">+{Math.max(1,media.length-2)} Photos</span>:null}</button>)}
+          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:i===1?<span className="sppc-photo-count">+{Math.max(1,media.length-2)} Photos</span>:null}</button>)}
           {!thumbs.length?<button type="button" className="sppc-thumb-placeholder" onClick={()=>onManageMedia?.('media')}><Images size={19}/><span>Add work</span></button>:null}
         </div>
       </section>
-      <section className="sppc-package-hero">
+      <section className="sppc-package-hero"><button type="button" className="sppc-edit-button" onClick={()=>onEdit?.('package')}>Edit</button>
         <div className="sppc-package-copy"><span className="sppc-popular-pill">{activePackages.length>1?'MOST POPULAR':'FEATURED PACKAGE'}</span><h3>{current?.name||draft?.name||'Featured Package'}</h3><p>{current?.description||draft?.description||'Premium event service, thoughtfully configured for your celebration.'}</p></div>
         <div className="sppc-price"><strong>{exactPrice!=null?formatINR(exactPrice):'Price not set'}</strong><span>{unitLabel(current?.unit||draft.pricing_unit)}</span></div>
       </section>
-      <section className="sppc-detail-grid">
+      <section className="sppc-detail-grid"><button type="button" className="sppc-floating-edit" onClick={()=>onEdit?.('details')}>Edit</button>
         <button type="button" className="sppc-detail-card tone-0" onClick={()=>onManageMedia?.('events')}><span className="sppc-detail-icon"><CalendarDays/></span><span><small>Event Type</small><b>{visibleEvents.slice(0,3).join(', ')}{visibleEvents.length>3?' +'+(visibleEvents.length-3)+' more':''}</b></span><ChevronRight size={16}/></button>
         {finalSpecs.map(([label,value],i)=><div key={label+i} className={'sppc-detail-card tone-'+((i+1)%5)}><span className="sppc-detail-icon">{iconFor(label,i)}</span><span><small>{label}</small><b>{String(value)}</b></span></div>)}
       </section>
-      <section className="sppc-section"><div className="sppc-section-heading"><div><h3>What’s included</h3><p>Everything your customer can understand at a glance.</p></div><span className="sppc-view-details">View all details<ChevronRight size={16}/></span></div><div className="sppc-inclusions">{inclusionItems.map((item,i)=><div key={i}><Check size={15}/><span>{typeof item==='string'?item:item?.label??item?.name??String(item)}</span></div>)}</div></section>
-      <section className="sppc-section sppc-addons"><div className="sppc-section-heading"><div><h3><Plus size={18}/> Popular add-ons</h3><p>Optional upgrades with their own exact prices.</p></div>{activeAddons.length?<span className="sppc-view-details">Customize add-ons<ChevronRight size={16}/></span>:null}</div><div className="sppc-addon-grid">{activeAddons.length?activeAddons.map((addon,i)=><button type="button" key={addon.id||i} className={'sppc-addon-card tone-'+(i%3)} onClick={()=>onManageMedia?.('addon:'+addon.name)}><span className="sppc-addon-icon"><Plus size={16}/></span><span><b>{addon.name}</b><strong>+{formatINR(Math.round(Number(addon.rate_paise??addon.rate??0)/(addon.rate_paise!=null?100:1)))}</strong></span></button>):<div className="sppc-addon-empty">No add-ons configured for this package.</div>}</div></section>
+      <section className="sppc-section"><div className="sppc-section-heading"><div><h3>What’s included</h3><p>Everything your customer can understand at a glance.</p></div><button type="button" className="sppc-view-details sppc-edit-link" onClick={()=>onEdit?.('details')}>Edit <ChevronRight size={16}/></button></div><div className="sppc-inclusions">{inclusionItems.map((item,i)=><div key={i}><Check size={15}/><span>{typeof item==='string'?item:item?.label??item?.name??String(item)}</span></div>)}</div></section>
+      <section className="sppc-section sppc-addons"><div className="sppc-section-heading"><div><h3><Plus size={18}/> Popular add-ons</h3><p>Optional upgrades with their own exact prices.</p></div><button type="button" className="sppc-view-details sppc-edit-link" onClick={()=>onEdit?.('addons')}>Edit add-ons<ChevronRight size={16}/></button></div><div className="sppc-addon-grid">{activeAddons.length?activeAddons.map((addon,i)=><button type="button" key={addon.id||i} className={'sppc-addon-card tone-'+(i%3)} onClick={()=>onManageMedia?.('addon:'+addon.name)}><span className="sppc-addon-icon"><Plus size={16}/></span><span><b>{addon.name}</b><strong>+{formatINR(Math.round(Number(addon.rate_paise??addon.rate??0)/(addon.rate_paise!=null?100:1)))}</strong></span></button>):<div className="sppc-addon-empty">No add-ons configured for this package.</div>}</div></section>
       <section className="sppc-trust"><div><ShieldCheck size={21}/><span><b>Secure bookings</b><small>Payments via Razorpay</small></span></div><div><BadgeCheck size={21}/><span><b>{verified?'Verified by Sambramo':'Sambramo review'}</b><small>{verified?'Documents & portfolio checked':'Verification before publish'}</small></span></div><div><Users size={21}/><span><b>{completedEvents!=null?'Trusted by '+completedEvents+'+ customers':'Trusted event partner'}</b><small>{rating!=null?Number(rating).toFixed(1)+' average rating':'Built for celebrations'}</small></span></div></section>
     </article>
-    <MediaViewer item={selectedMedia} onClose={()=>setSelectedMedia(null)}/>
+    <MediaViewer items={displayMedia} index={selectedMediaIndex ?? 0} onChange={setSelectedMediaIndex} onClose={()=>setSelectedMediaIndex(null)}/>
   </>
 }
