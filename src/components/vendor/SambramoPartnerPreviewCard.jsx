@@ -85,7 +85,9 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   const events=readSupportedEvents(draft?.trade_inputs??{})
   const visibleEvents=events.length?events:[draft?.trade_inputs?.event_type||draft?.trade_inputs?.function||'Celebrations']
   const hero=displayMedia[0]
-  const thumbs=displayMedia.slice(1,3)
+  const thumbCandidates=displayMedia.slice(1,3)
+  if(!thumbCandidates.some(item=>item?.kind==='video')){const video=displayMedia.find((item,i)=>i>2&&item?.kind==='video');if(video)thumbCandidates[1]=video}
+  const thumbs=thumbCandidates
   const activePackages=useMemo(()=>{
     const loaded=(packages??[]).filter(p=>p&&!['ARCHIVED','PAUSED'].includes(p.status))
     const current=draft?.id||draft?.name||draft?.base_price?[{id:draft.id||'current',name:draft.name||'Featured Package',description:draft.description||'',status:draft.status||'DRAFT',price:draft.base_price?Number(draft.base_price):null,unit:draft.pricing_unit||'',minimum:draft.minimum_order||null,duration:draft.included_duration||null,addons:draft.addons||[]}]:[]
@@ -131,7 +133,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
           {displayMedia.length?<span className="sppc-counter">1/{displayMedia.length}</span>:null}
         </div>
         <div className="sppc-thumb-stack">
-          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:null}</button>)}
+          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:null}{i===1&&displayMedia.length>3?<span className="sppc-photo-count">+{displayMedia.length-2} more</span>:null}</button>)}
           {!thumbs.length?<button type="button" className="sppc-thumb-placeholder" onClick={()=>onManageMedia?.('media')}><Images size={19}/><span>Add work</span></button>:null}
           {displayMedia.length > 3 ? <button type="button" className="sppc-more-media" onClick={()=>setSelectedMediaIndex(3)}>+{displayMedia.length - 3} more</button> : null}
         </div>
