@@ -25,6 +25,7 @@ import {
   getTradePricingFields,
 } from '../../data/sambramoPricingCatalog'
 import WorkLibrary from './WorkLibrary'
+import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
 
 const DEFAULT_UNITS = {
   PACKAGE: ['package', 'per event', 'per hour', 'per day', 'per function'],
@@ -807,10 +808,30 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 }
 
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
+  const selectedEvents = readSupportedEvents(draft?.trade_inputs ?? {})
+  const setEvents = next => onUpdate('supported_events', next)
+  const showEventSelector = config?.pillar === 'Events' && ['E02','E03','E04','E05','E06','E07','E08','E09','E10','E11','E13','E14','E15','E16','E17','E18','E19','E20','E21','E22','E23','E24','E25','E26'].includes(config.trade_id)
   return (
     <section className="trade-pricing-panel trade-step-details">
       <div className="trade-pricing-card">
         <SectionHeader icon={Ruler} title="Trade specific fields" subtitle={'Only the controls for ' + config.name + ' are shown.'} />
+        {showEventSelector ? (
+          <div className="trade-event-multiselect">
+            <div className="trade-event-multiselect-head">
+              <div>
+                <p className="trade-pricing-label">Events you serve</p>
+                <p className="trade-event-help">Select every occasion this package is suitable for. Customers will see the selected occasions in your preview.</p>
+              </div>
+              <span>{selectedEvents.length} selected</span>
+            </div>
+            <div className="trade-event-chips">
+              {SAMBRAMO_EVENT_OPTIONS.map(event => {
+                const selected = selectedEvents.includes(event)
+                return <button key={event} type="button" disabled={readOnly} onClick={() => setEvents(selected ? selectedEvents.filter(x => x !== event) : [...selectedEvents, event])} className={'trade-event-chip ' + (selected ? 'is-selected' : '')}>{event}</button>
+              })}
+            </div>
+          </div>
+        ) : null}
         <div className="trade-pricing-fields-grid trade-specific-grid">
           {fields.map(field => (
             field.key === 'sku'
@@ -936,125 +957,39 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
 }
 
 function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction }) {
-  const [favorite, setFavorite] = useState(false)
-  const [selectedPackageId, setSelectedPackageId] = useState(draft.id || 'current-draft')
-  const selectedFields = fields
-    .filter(field => draft.trade_inputs?.[field.key] !== '' && draft.trade_inputs?.[field.key] != null)
-    .slice(0, 8)
-
-  const businessName = vendor?.business_name || vendor?.name || 'Partner business'
-  const location = [vendor?.city, vendor?.state].filter(Boolean).join(', ') || vendor?.location || service?.service_area || 'Service area not set'
-  const verificationState = String(vendor?.verification_status ?? '').toLowerCase()
-  const isVerified = vendor?.is_verified === true || vendor?.verified === true || verificationState === 'verified' || verificationState === 'approved'
-  const hero = media[0]
-  const heroUrl = hero?.url || vendor?.profile_photo_url || vendor?.avatar_url || vendor?.profile_image_url || ''
-
-  const packagesForPreview = [
-    ...packages
-      .filter(pkg => pkg?.id && !['ARCHIVED', 'PAUSED'].includes(pkg.status))
-      .map(pkg => ({
-        id: pkg.id,
-        name: pkg.name,
-        tier: pkg.commercial_inputs?.tier || '',
-        description: pkg.description || '',
-        status: pkg.status,
-        price: pkg.price?.rate_paise != null ? Math.round(Number(pkg.price.rate_paise) / 100) : null,
-        unit: pkg.price?.unit || '',
-        minimum: pkg.price?.minimum_quantity ?? null,
-        duration: pkg.price?.quantity_formula?.included_duration ?? null,
-      })),
-    ...(draft.id || draft.name || draft.base_price ? [{
-      id: draft.id || 'current-draft',
-      name: draft.name || 'Current package',
-      tier: draft.tier || 'standard',
-      description: draft.description || '',
-      status: draft.status || 'DRAFT',
-      price: draft.base_price !== '' && Number(draft.base_price) > 0 ? Number(draft.base_price) : null,
-      unit: draft.pricing_unit || '',
-      minimum: draft.minimum_order || null,
-      duration: draft.included_duration || null,
-    }] : []),
-  ]
-  const uniquePackages = Array.from(new Map(packagesForPreview.map(pkg => [pkg.id + '|' + pkg.name, pkg])).values()).slice(0, 5)
-  const currentPackage = uniquePackages.find(pkg => String(pkg.id) === String(selectedPackageId)) || uniquePackages[0]
-  const exactPrice = currentPackage?.price != null && currentPackage.price > 0 ? formatINR(currentPackage.price) : 'Price not set'
-  const currentUnit = currentPackage?.unit ? titleizeUnit(currentPackage.unit) : (draft.pricing_unit ? titleizeUnit(draft.pricing_unit) : 'Set unit')
-  const currentName = currentPackage?.name || draft.name || 'Your customer-ready package'
-  const activeAddons = (addons ?? []).filter(addon => String(addon.name ?? '').trim() && addon.active !== false && addon.rate_paise !== '' && addon.rate_paise != null).slice(0, 8)
-  const inclusions = (draft.commercial_inputs?.inclusions ?? []).filter(Boolean).slice(0, 8)
-
   const action = message => onPreviewAction?.(message)
-
   return (
     <section className="trade-pricing-panel trade-step-preview sambramo-preview-page">
       <div className="sambramo-preview-toolbar">
         <div className="min-w-0">
-          <p className="trade-pricing-overline">Partner preview · future customer experience</p>
-          <h2>How {businessName} can be discovered and booked</h2>
-          <p>Real package data, exact rates and approved portfolio media are assembled into a customer-ready storefront.</p>
+          <p className="trade-pricing-overline">Partner preview · customer storefront</p>
+          <h2>Preview your customer-facing catalog</h2>
+          <p>The card below is generated from the package, event types, pricing, inclusions, add-ons and approved portfolio media you have entered.</p>
         </div>
         <button type="button" onClick={onManageMedia} className="sambramo-preview-manage">
-          <Images size={16} />
-          Manage media
+          <Images size={16} /> Manage media
         </button>
       </div>
+      <SambramoPartnerPreviewCard
+        vendor={vendor}
+        service={service}
+        config={config}
+        draft={draft}
+        packages={packages}
+        addons={addons}
+        media={media}
+        onManageMedia={value => {
+          if (value === 'back') action('Preview stays on this pricing step.')
+          else if (value === 'events') action('Edit Events you serve in Trade specific fields.')
+          else if (String(value || '').startsWith('addon:')) action('Add-on preview interaction.')
+          else onManageMedia?.()
+        }}
+      />
+    </section>
+  )
+}
 
-      <article className="sambramo-storefront">
-        <header className="sambramo-storefront-header">
-          <button type="button" onClick={() => action('Preview back is connected to the previous pricing step.')} className="sambramo-icon-button" aria-label="Back preview"><ChevronLeft size={20} /></button>
-          <div className="sambramo-brand-lockup">
-            <span className="sambramo-brand-mark">S</span>
-            <span>SAMBRAMO</span>
-          </div>
-          <div className="sambramo-header-actions">
-            <button type="button" onClick={() => action('Customer search controls will connect in the Customer app.')} className="sambramo-icon-button" aria-label="Search"><span className="sambramo-search-glyph" /></button>
-            <button type="button" onClick={() => { setFavorite(v => !v); action(favorite ? 'Removed from preview favourites.' : 'Added to preview favourites.') }} className={'sambramo-icon-button ' + (favorite ? 'is-favorite' : '')} aria-label="Save"><span className="sambramo-heart-glyph">{favorite ? '♥' : '♡'}</span></button>
-          </div>
-        </header>
-
-        <section className="sambramo-gallery">
-          {heroUrl ? (
-            hero?.kind === 'video'
-              ? <video src={heroUrl} muted playsInline controls className="sambramo-gallery-hero" />
-              : <img src={heroUrl} alt={businessName + ' portfolio'} className="sambramo-gallery-hero" />
-          ) : (
-            <div className="sambramo-gallery-empty">
-              <Images size={34} />
-              <strong>Add approved business photos or video</strong>
-              <span>Your first approved portfolio item becomes the cover image.</span>
-            </div>
-          )}
-          {isVerified ? <span className="sambramo-verified-badge"><BadgeCheck size={15} /> Verified Partner</span> : <span className="sambramo-status-badge"><ShieldCheck size={14} /> Partner profile</span>}
-          <div className="sambramo-gallery-counter"><Images size={14} /> {media.length ? '1 / ' + media.length : 'Portfolio'}</div>
-          {media.some(item => item.kind === 'video') ? <button type="button" onClick={() => action('Video preview selected. The customer gallery will open videos in the Customer app.')} className="sambramo-gallery-video"><span className="sambramo-play">▶</span> Watch video</button> : null}
-        </section>
-
-        <section className="sambramo-business-bar">
-          <div className="sambramo-business-avatar">
-            {vendor?.logo_url || vendor?.business_logo_url ? <img src={vendor.logo_url || vendor.business_logo_url} alt="" /> : <span>{businessName.slice(0, 1).toUpperCase()}</span>}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2"><h3>{businessName}</h3>{isVerified ? <BadgeCheck size={16} className="text-[#6D28D9]" /> : null}</div>
-            <p>{config.name} partner</p>
-            <p><span className="sambramo-pin">⌖</span> {location}</p>
-          </div>
-          <button type="button" onClick={() => action('Availability is shown from the future customer availability service.')} className="sambramo-availability"><span className="sambramo-dot" /> {draft.availability_policy === 'instant' ? 'Available to book' : 'Booking by request'}</button>
-        </section>
-
-        <section className="sambramo-service-intro">
-          <div className="min-w-0">
-            <p className="sambramo-kicker">{config.pillar || 'EVENT SERVICES'} · {config.name}</p>
-            <h1>{currentName}</h1>
-            <p className="sambramo-story">{currentPackage?.description || draft.description || 'Choose a recommendation to tell customers exactly what you deliver and why it fits their celebration.'}</p>
-          </div>
-          <div className="sambramo-exact-price">
-            <span>Exact package price</span>
-            <strong>{exactPrice}</strong>
-            <em>{currentUnit}</em>
-          </div>
-        </section>
-
-        {draft.trade_inputs?.event_type || draft.trade_inputs?.function ? <div className="sambramo-emotion-strip"><Sparkles size={15} /><span>Built for <strong>{draft.trade_inputs?.event_type || draft.trade_inputs?.function}</strong> moments</span></div> : null}
+function ? <div className="sambramo-emotion-strip"><Sparkles size={15} /><span>Built for <strong>{draft.trade_inputs?.event_type || draft.trade_inputs?.function}</strong> moments</span></div> : null}
 
         <section className="sambramo-detail-grid">
           {selectedFields.map((field, index) => (
