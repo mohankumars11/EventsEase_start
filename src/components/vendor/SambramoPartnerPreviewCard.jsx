@@ -96,8 +96,8 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   const current=activePackages[0]||null
   const exactPrice=packagePrice(current)
   const specs=(Array.isArray(config?.fields)?config.fields:[]).map(f=>[f.label,draft?.trade_inputs?.[f.key]]).filter(([,v])=>v!==''&&v!=null&&!Array.isArray(v)).slice(0,7)
-  const finalSpecs=specs.length?specs:[['Coverage',draft?.included_duration?String(draft.included_duration):'As configured'],['Lead time',draft?.lead_time?String(draft.lead_time)+' days':'As configured'],['Booking mode',draft?.availability_policy==='instant'?'Instant booking':'Booking by request']]
-  const inclusionItems=Array.from(new Set([...(Array.isArray(draft?.commercial_inputs?.inclusions)?draft.commercial_inputs.inclusions:[]),'Clear package inclusions','Sambramo-reviewed storefront'].filter(Boolean))).slice(0,8)
+  const finalSpecs=specs
+  const inclusionItems=Array.from(new Set((Array.isArray(draft?.commercial_inputs?.inclusions)?draft.commercial_inputs.inclusions:[]).filter(Boolean))).slice(0,8)
   const activeAddons=(addons?.length?addons:(current?.addons??draft?.addons??[])).filter(a=>a?.active!==false&&a?.name).slice(0,3)
   const rating=vendor?.rating??vendor?.average_rating
   const reviewCount=vendor?.review_count??vendor?.reviews_count
