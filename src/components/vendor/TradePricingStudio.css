@@ -922,3 +922,14 @@
 .trade-pricing-review-summary span{display:block;margin-top:2px;color:#786b83;font-size:8.5px;line-height:1.25;font-weight:700}
 .trade-pricing-preview-action-note{display:flex;align-items:flex-start;gap:7px;width:100%;margin-top:10px;padding:9px 11px;border:1px solid #d7e9de;border-radius:14px;background:#f1faf5;color:#276546;font-size:9px;line-height:1.35;font-weight:800}
 .trade-pricing-preview-action-note svg{flex:0 0 auto;margin-top:1px}
+
+.trade-event-multiselect{margin:0 0 14px;padding:12px;border:1px solid #e7def1;border-radius:18px;background:linear-gradient(135deg,#fbf8ff,#fffdfd)}
+.trade-event-multiselect-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.trade-event-multiselect-head .trade-pricing-label{margin:0;color:#25183c;font-weight:800}
+.trade-event-multiselect-head p.trade-event-help{margin:4px 0 0;color:#746681;font-size:10.5px;line-height:1.4}
+.trade-event-multiselect-head>span{flex:0 0 auto;border-radius:999px;background:#eee5fb;color:#5b21b6;padding:6px 9px;font-size:9px;font-weight:800}
+.trade-event-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;max-height:190px;overflow:auto;padding-right:2px}
+.trade-event-chip{min-height:34px;padding:7px 10px;border:1px solid #e3d9ef;border-radius:999px;background:#fff;color:#5f536e;font-size:10px;font-weight:700;transition:.15s}
+.trade-event-chip.is-selected{border-color:#6d28d9;background:#6d28d9;color:#fff;box-shadow:0 5px 12px rgba(109,40,217,.16)}
+.trade-event-chip:disabled{opacity:.65}
+@media(max-width:380px){.trade-event-multiselect{padding:10px}.trade-event-multiselect-head{flex-direction:column;gap:7px}.trade-event-multiselect-head>span{align-self:flex-start}.trade-event-chip{font-size:9px;padding:6px 9px}}
