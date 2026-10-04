@@ -42,7 +42,7 @@ function CustomerOfferingCard({ offering, config, vendor, service, onManageMedia
     commercial_inputs: first?.commercial_inputs || { inclusions: [] },
     addons: first?.addons || [],
   }
-  return <SambramoPartnerPreviewCard vendor={vendor} service={service} config={config} draft={draft} packages={packages} addons={first?.addons || []} onManageMedia={onManageMedia} />
+  return <SambramoPartnerPreviewCard vendor={vendor} service={service} config={config} draft={draft} packages={packages} addons={first?.addons || []} onManageMedia={onManageMedia} onEdit={step => onManageMedia?.('edit:' + step)} />
 }
 function EditAction({ icon: Icon, label, detail, onClick }) {
   return (
