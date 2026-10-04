@@ -1,0 +1,26 @@
+name: Sambramo Partner Native Validation
+on:
+  push:
+    branches: [feature/sambramo-partner-expo-migration]
+    paths:
+      - 'apps/partner-native/**'
+      - '.github/workflows/partner-native.yml'
+  pull_request:
+    paths:
+      - 'apps/partner-native/**'
+      - '.github/workflows/partner-native.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/partner-native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run typecheck
+      - run: npx expo-doctor
