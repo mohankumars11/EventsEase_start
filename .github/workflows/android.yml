@@ -243,10 +243,12 @@ jobs:
         run: node scripts/check-android-manifest.mjs
 
       - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Ensure optional Cordova variables file
         run: |
-          npx cap sync android
-          # Capacitor's generated Gradle include references this optional Cordova variables file.
-          # Keep a valid empty file when no Cordova plugins generate it.
+          # Capacitor may not generate this optional file when no Cordova plugin
+          # contributes variables, but the generated Gradle script still includes it.
           mkdir -p android/capacitor-cordova-android-plugins
           touch android/capacitor-cordova-android-plugins/cordova.variables.gradle
 
