@@ -824,7 +824,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
             <span>Add your own</span>
             <input disabled={readOnly} placeholder="e.g. 2 proof rounds, delivery + setup" onKeyDown={e => { if(e.key==='Enter'){e.preventDefault(); const v=e.currentTarget.value.trim(); if(v&&!inclusions.includes(v)){onUpdateCommercial('inclusions',[...inclusions,v]);e.currentTarget.value=''}}}} />
           </label>
-          {inclusions.length ? <div className="trade-pricing-selected-summary"><strong>{inclusions.length} included</strong><span>{inclusions.join(' · ')}</span></div> : <div className="trade-pricing-selected-summary is-empty"><strong>Nothing selected yet</strong><span>Add only the inclusions you truly provide.</span></div>}
+          {inclusions.length ? <div className="trade-pricing-selected-summary"><strong>{inclusions.length} included</strong><div className="trade-pricing-selected-list">{inclusions.map(item => <button key={item} type="button" disabled={readOnly} onClick={() => onUpdateCommercial('inclusions', inclusions.filter(x => x !== item))}>{item}<span>×</span></button>)}</div></div> : <div className="trade-pricing-selected-summary is-empty"><strong>Nothing selected yet</strong><span>Add only the inclusions you truly provide.</span></div>}
         </div>
       </div>
     </section>
@@ -834,7 +834,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   const selectedEvents = readSupportedEvents(draft?.trade_inputs ?? {})
   const setEvents = next => onUpdate('supported_events', next)
-  const showEventSelector = String(config?.trade_id ?? '').startsWith('E')
+  const showEventSelector = String(config?.trade_id ?? '').startsWith('E') || config?.trade_id === 'L08'
   return (
     <section className="trade-pricing-panel trade-step-details">
       <div className="trade-pricing-card">
@@ -857,7 +857,7 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
           </div>
         ) : null}
         <div className="trade-pricing-fields-grid trade-specific-grid">
-          {fields.map(field => (
+          {fields.filter(field => !(showEventSelector && field.key === 'event_type')).map(field => (
             field.key === 'sku'
               ? <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => onUpdate(field.key, v)} />
               : <TradeFieldControl key={field.key} required={field.required !== false} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
