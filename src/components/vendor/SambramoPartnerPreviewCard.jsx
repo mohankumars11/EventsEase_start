@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BadgeCheck, CalendarDays, Camera, Check, ChevronLeft, ChevronRight, Clock3, Image as ImageIcon, Images, MapPin, Play, Plus, ShieldCheck, Star, Truck, Users, Video } from 'lucide-react'
 import './SambramoPartnerPreviewCard.css'
+import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
 
 export const SAMBRAMO_EVENT_OPTIONS = [
   'Birthday','Wedding','Engagement','Reception','Baby Shower','Naming Ceremony',
@@ -56,13 +57,27 @@ function MediaViewer({item,onClose}){
 
 export default function SambramoPartnerPreviewCard({vendor,service,config,draft={},packages=[],addons=[],media=[],onManageMedia,compact=false}){
   const [selectedMedia,setSelectedMedia]=useState(null)
+  const [loadedMedia,setLoadedMedia]=useState([])
+  useEffect(()=>{
+    let alive=true
+    async function load(){
+      if(media?.length || !vendor?.id){setLoadedMedia(media||[]);return}
+      const {rows}=await fetchWork(vendor.id)
+      const live=(rows??[]).filter(row=>row.review_status==='live'&&['photo','video'].includes(row.kind))
+      const urls=await signedUrlsFor(live.map(row=>row.storage_path),900)
+      if(alive)setLoadedMedia(live.map(row=>({...row,url:urls[row.storage_path]||''})).filter(row=>row.url))
+    }
+    load().catch(()=>{if(alive)setLoadedMedia([])})
+    return()=>{alive=false}
+  },[vendor?.id,media])
+  const displayMedia=media?.length?media:loadedMedia
   const businessName=vendor?.business_name||vendor?.name||'Partner business'
   const location=[vendor?.city,vendor?.state].filter(Boolean).join(', ')||vendor?.location||'Bengaluru, Karnataka'
   const verified=isVerified(vendor)
   const events=readSupportedEvents(draft?.trade_inputs??{})
   const visibleEvents=events.length?events:[draft?.trade_inputs?.event_type||draft?.trade_inputs?.function||'Celebrations']
-  const hero=media[0]
-  const thumbs=media.slice(1,3)
+  const hero=displayMedia[0]
+  const thumbs=displayMedia.slice(1,3)
   const activePackages=useMemo(()=>{
     const loaded=(packages??[]).filter(p=>p&&!['ARCHIVED','PAUSED'].includes(p.status))
     const current=draft?.id||draft?.name||draft?.base_price?[{id:draft.id||'current',name:draft.name||'Featured Package',description:draft.description||'',status:draft.status||'DRAFT',price:draft.base_price?Number(draft.base_price):null,unit:draft.pricing_unit||'',minimum:draft.minimum_order||null,duration:draft.included_duration||null,addons:draft.addons||[]}]:[]
@@ -105,7 +120,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
           {hero&&mediaUrl(hero)?hero.kind==='video'?<button type="button" className="sppc-media-button" onClick={()=>setSelectedMedia(hero)}><video src={mediaUrl(hero)} muted playsInline className="sppc-hero-image"/><span className="sppc-video-chip"><Play size={11} fill="currentColor"/>Video</span></button>:<button type="button" className="sppc-media-button" onClick={()=>setSelectedMedia(hero)}><img src={mediaUrl(hero)} alt={hero.caption||businessName+' work'} className="sppc-hero-image"/></button>:<button type="button" className="sppc-empty-media" onClick={()=>onManageMedia?.('media')}><Images size={30}/><b>Add approved business photos or video</b><span>Your first approved portfolio item becomes the featured cover.</span></button>}
           <span className="sppc-featured">FEATURED PACKAGE</span>
           <div className="sppc-hero-caption"><strong>{current?.name||draft?.name||'Featured Package'}</strong><span>{current?.description||draft?.description||'Professional event service with a clear scope, premium execution and coordinated event-day delivery.'}</span></div>
-          {media.length?<span className="sppc-counter">1/{media.length}</span>:null}
+          {displayMedia.length?<span className="sppc-counter">1/{displayMedia.length}</span>:null}
         </div>
         <div className="sppc-thumb-stack">
           {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMedia(item)}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:i===1?<span className="sppc-photo-count">+{Math.max(1,media.length-2)} Photos</span>:null}</button>)}
