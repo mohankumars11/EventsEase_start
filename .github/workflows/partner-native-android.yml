@@ -28,10 +28,10 @@ jobs:
       - run: npx expo install --fix
       - run: npx expo prebuild --platform android --non-interactive
       - run: chmod +x android/gradlew
-      - run: cd android && ./gradlew assembleDebug
+      - run: cd android && ./gradlew assembleRelease
       - uses: actions/upload-artifact@v4
         with:
-          name: sambramo-partner-native-debug-apk
-          path: apps/partner-native/android/app/build/outputs/apk/debug/app-debug.apk
+          name: sambramo-partner-native-installable-apk
+          path: apps/partner-native/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
