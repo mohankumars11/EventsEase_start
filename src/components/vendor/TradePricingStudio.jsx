@@ -153,7 +153,7 @@ function blankPackage(config, service) {
     additional_duration_rate: '',
     setup_fee: '0',
     teardown_fee: '0',
-    travel_policy: '',
+    travel_policy: 'included',
     lead_time: service?.lead_time_days ?? '',
     availability_policy: 'instant',
     cancellation_policy: 'standard',
@@ -683,7 +683,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={goTo} />
       ) : null}
 
       {!readOnly && isPreview ? (
@@ -810,7 +810,7 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   const selectedEvents = readSupportedEvents(draft?.trade_inputs ?? {})
   const setEvents = next => onUpdate('supported_events', next)
-  const showEventSelector = config?.pillar === 'Events' && ['E02','E03','E04','E05','E06','E07','E08','E09','E10','E11','E13','E14','E15','E16','E17','E18','E19','E20','E21','E22','E23','E24','E25','E26'].includes(config.trade_id)
+  const showEventSelector = String(config?.trade_id ?? '').startsWith('E')
   return (
     <section className="trade-pricing-panel trade-step-details">
       <div className="trade-pricing-card">
@@ -851,56 +851,64 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
 }
 
 function PricingStep({ config, units, draft, readOnly, onUpdate }) {
+  const name = String(config?.name || '').toLowerCase()
+  const isCatalog = ['CATALOG'].includes(config?.mode) || /print|invitation|gift|cake|food|material|supplier/.test(name)
+  const usesDuration = units.some(u => /hour|day/.test(u))
+  const usesQuantity = units.some(u => /guest|person|plate|item|piece|set|unit|trip|vehicle|staff|guard/.test(u))
+  const usesSiteSetup = /venue|decor|rental|equipment|tent|stage|logistics|catering|crew|setup/.test(name) && !/print|invitation|photo|video/.test(name)
   return (
     <section className="trade-pricing-panel trade-step-pricing">
       <div className="trade-pricing-card">
-        <SectionHeader icon={WalletCards} title="Pricing rules" subtitle={'Set the commercial rules for ' + config.name + '.'} />
+        <SectionHeader icon={WalletCards} title="Set your price" subtitle="Only the pricing choices relevant to this service are shown." />
 
         <div className="trade-pricing-field-row">
-          <ChoiceField required label="Package tier" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
+          <ChoiceField required label="Package level" value={draft.tier} disabled={readOnly} options={PACKAGE_TIERS} allowCustom onChange={v => onUpdate('tier', v)} />
         </div>
 
         <div className="trade-pricing-base-price">
           <div className="min-w-0">
-            <p className="trade-pricing-label">Base price</p>
+            <p className="trade-pricing-label">What should customers pay?</p>
             <div className="trade-pricing-price-presets">
-              {PRICE_PRESETS.slice(0, 3).map(amount => (
+              {PRICE_PRESETS.slice(0, 4).map(amount => (
                 <button key={amount} type="button" disabled={readOnly} onClick={() => onUpdate('base_price', String(amount))} className={'trade-pricing-price-chip ' + (Number(draft.base_price) === amount ? 'is-selected' : '')}>{formatINR(amount)}</button>
               ))}
               <button type="button" disabled={readOnly} onClick={() => onUpdate('base_price', '')} className="trade-pricing-price-chip">Custom</button>
             </div>
           </div>
-          <CurrencyPresetField required label="Your price (₹)" value={draft.base_price} disabled={readOnly} presets={[5000,10000,25000,50000,100000,250000,500000,1000000,2500000,5000000]} onChange={v => onUpdate('base_price', v)} />
+          <CurrencyPresetField required label="Your price (₹)" value={draft.base_price} disabled={readOnly} presets={[500,1000,2500,5000,7500,10000,15000,25000,50000,100000,250000,500000]} onChange={v => onUpdate('base_price', v)} />
         </div>
 
         <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-3">
-          <ChoiceField required label="Price applies to" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
-          <PresetNumberField required label="Minimum order" value={draft.minimum_order} disabled={readOnly} presets={presetsForMinimum(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => onUpdate('minimum_order', v)} />
-          <PresetNumberField label="Included duration" value={draft.included_duration} disabled={readOnly} presets={durationPresets(config, draft.pricing_unit)} suffix={config.trade_id === 'L06' && draft.pricing_unit === 'per month' ? 'months' : 'value'} onChange={v => onUpdate('included_duration', v)} />
+          <ChoiceField required label="Charge as" value={draft.pricing_unit} disabled={readOnly} options={units.map(x => [x, titleizeUnit(x)])} onChange={v => onUpdate('pricing_unit', v)} />
+          <PresetNumberField required label={isCatalog ? 'Minimum quantity' : 'Minimum booking'} value={draft.minimum_order} disabled={readOnly} presets={presetsForMinimum(config, draft.pricing_unit)} suffix={minimumSuffix(draft.pricing_unit)} onChange={v => onUpdate('minimum_order', v)} />
+          {usesDuration ? <PresetNumberField label="Included time" value={draft.included_duration} disabled={readOnly} presets={durationPresets(config, draft.pricing_unit)} suffix="hours / days" onChange={v => onUpdate('included_duration', v)} /> : <div className="trade-pricing-optional-placeholder"><span>Included time</span><strong>Not needed for this service</strong></div>}
         </div>
 
-        <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-4">
-          <PresetNumberField required label="Lead time" value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
-          <ChoiceField required label="Travel policy" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
-          <FeeChoice label="Setup charge" value={draft.setup_fee} disabled={readOnly} onChange={v => onUpdate('setup_fee', v)} />
-          <FeeChoice label="Teardown charge" value={draft.teardown_fee} disabled={readOnly} onChange={v => onUpdate('teardown_fee', v)} />
+        <div className="trade-pricing-simple-rules">
+          <PresetNumberField required label={isCatalog ? 'Ready in' : 'How much notice?'} value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
+          <ChoiceField required label="Where do you serve?" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
+          <ChoiceField required label="How should customers book?" value={draft.availability_policy} disabled={readOnly} options={[['instant','Book instantly'],['request','Request approval'],['schedule','Choose a date'],['quote','Get a quote']]} onChange={v => onUpdate('availability_policy', v)} />
         </div>
 
-        <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
-          <CurrencyPresetField label={'Additional ' + titleizeUnit(draft.pricing_unit) + ' rate'} value={draft.additional_unit_rate} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_unit_rate', v)} />
-          <CurrencyPresetField label="Additional duration rate" value={draft.additional_duration_rate} disabled={readOnly} presets={[100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_duration_rate', v)} />
-        </div>
-
-        <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-3">
-          <ChoiceField required label="Booking mode" value={draft.availability_policy} disabled={readOnly} options={[['instant','Instant booking'],['request','Request approval'],['schedule','Scheduled booking'],['quote','Quote before booking']]} onChange={v => onUpdate('availability_policy', v)} />
-          <ChoiceField required label="Cancellation policy" value={draft.cancellation_policy} disabled={readOnly} options={[['flexible','Flexible'],['standard','48-hour notice'],['strict','7-day notice'],['non_refundable','Non-refundable'],['custom','Custom policy']]} allowCustom onChange={v => onUpdate('cancellation_policy', v)} />
-          <ChoiceField required label="Payment requirement" value={draft.payment_policy} disabled={readOnly} options={[['full','Full payment at booking'],['deposit25','25% deposit'],['deposit50','50% deposit'],['completion','Pay on completion'],['custom','Custom']]} allowCustom onChange={v => onUpdate('payment_policy', v)} />
-        </div>
+        {(usesQuantity || usesDuration) ? (
+          <details className="trade-pricing-advanced">
+            <summary>More pricing options</summary>
+            <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
+              {usesQuantity ? <CurrencyPresetField label="Extra unit price" value={draft.additional_unit_rate} disabled={readOnly} presets={[50,100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_unit_rate', v)} /> : null}
+              {usesDuration ? <CurrencyPresetField label="Extra time price" value={draft.additional_duration_rate} disabled={readOnly} presets={[100,250,500,750,1000,1500,2500,5000,10000]} onChange={v => onUpdate('additional_duration_rate', v)} /> : null}
+            </div>
+            {usesSiteSetup ? <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2"><FeeChoice label="Setup fee" value={draft.setup_fee} disabled={readOnly} onChange={v => onUpdate('setup_fee', v)} /><FeeChoice label="Pack-down / teardown" value={draft.teardown_fee} disabled={readOnly} onChange={v => onUpdate('teardown_fee', v)} /></div> : null}
+            <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
+              <ChoiceField required label="Cancellation" value={draft.cancellation_policy} disabled={readOnly} options={[['flexible','Flexible'],['standard','48-hour notice'],['strict','7-day notice'],['non_refundable','Non-refundable'],['custom','Custom']]} allowCustom onChange={v => onUpdate('cancellation_policy', v)} />
+              <ChoiceField required label="Payment" value={draft.payment_policy} disabled={readOnly} options={[['full','Full at booking'],['deposit25','25% deposit'],['deposit50','50% deposit'],['completion','Pay on completion'],['custom','Custom']]} allowCustom onChange={v => onUpdate('payment_policy', v)} />
+            </div>
+          </details>
+        ) : null}
 
         <div className="trade-pricing-rule-strip">
-          <span><strong>Unit</strong>{titleizeUnit(draft.pricing_unit)}</span>
+          <span><strong>Customer sees</strong>{formatINR(draft.base_price || 0)}</span>
           <span><strong>Minimum</strong>{draft.minimum_order ? draft.minimum_order + ' ' + minimumSuffix(draft.pricing_unit) : 'Select'}</span>
-          <span><strong>Lead time</strong>{draft.lead_time === '' ? 'Select' : draft.lead_time + ' days'}</span>
+          <span><strong>Ready in</strong>{draft.lead_time === '' ? 'Select' : draft.lead_time + ' days'}</span>
         </div>
       </div>
     </section>
@@ -956,7 +964,7 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction }) {
+function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction, onEditStep }) {
   const action = message => onPreviewAction?.(message)
   return (
     <section className="trade-pricing-panel trade-step-preview sambramo-preview-page">
