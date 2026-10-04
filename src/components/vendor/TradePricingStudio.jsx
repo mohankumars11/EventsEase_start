@@ -5,6 +5,7 @@ import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
   CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
   Plus, Ruler, ShieldCheck, Sparkles, Trash2, WalletCards,
+  Camera, Clock3, Truck, Users, Flower2, Music2, Utensils, Video, MapPin, Boxes, Zap,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -939,23 +940,42 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
   )
 }
 
+function addonArtwork(name) {
+  const text = String(name ?? '').toLowerCase()
+  if (/photo|camera|album|drone/.test(text)) return { Icon: Camera, tone: 'rose', note: 'Photo / visual upgrade' }
+  if (/video|film|reel|edit/.test(text)) return { Icon: Video, tone: 'blue', note: 'Video / content upgrade' }
+  if (/travel|trip|vehicle|pickup|truck|transport|fuel/.test(text)) return { Icon: Truck, tone: 'mint', note: 'Transport or route extra' }
+  if (/crew|staff|worker|guard|operator|person|host/.test(text)) return { Icon: Users, tone: 'lilac', note: 'Additional people or support' }
+  if (/flower|floral|decor|stage|backdrop|mandap/.test(text)) return { Icon: Flower2, tone: 'amber', note: 'Decor / setup upgrade' }
+  if (/music|sound|dj|artist|perform/.test(text)) return { Icon: Music2, tone: 'blue', note: 'Entertainment upgrade' }
+  if (/food|meal|menu|drink|catering|live counter/.test(text)) return { Icon: Utensils, tone: 'mint', note: 'Food / service extra' }
+  if (/time|hour|duration|overtime|extended|priority/.test(text)) return { Icon: Clock3, tone: 'amber', note: 'Extra time or priority' }
+  if (/box|item|material|equipment|inventory|rental|storage/.test(text)) return { Icon: Boxes, tone: 'lilac', note: 'Extra item or equipment' }
+  if (/location|venue|distance|coverage|travel/.test(text)) return { Icon: MapPin, tone: 'rose', note: 'Location / coverage extra' }
+  if (/power|electric|fast|express|upgrade/.test(text)) return { Icon: Zap, tone: 'amber', note: 'Service upgrade' }
+  return { Icon: Package, tone: 'lilac', note: 'Optional service extra' }
+}
+
 function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, onRemove }) {
   return (
     <section className="trade-pricing-panel trade-step-addons">
       <div className="trade-pricing-card">
         <div className="trade-pricing-section-heading">
-          <SectionHeader icon={CirclePlus} title="Add-ons" subtitle={'Optional extras for ' + config.name + '.'} />
+          <SectionHeader icon={CirclePlus} title="Add-ons" subtitle={'Optional extras for ' + config.name + '. Select only extras you can deliver.'} />
           {!readOnly ? <button type="button" onClick={() => onAdd()} className="trade-pricing-small-action"><Plus size={14} /> Add custom</button> : null}
         </div>
+        <div className="trade-pricing-addon-guidance"><ShieldCheck size={15} /><span>These are optional upgrades. Add a rate and unit only for extras you genuinely offer. Customers will see your selections and prices.</span></div>
 
         <div className="trade-pricing-addon-grid">
           {suggestions.map(template => {
             const selected = addons.some(item => String(item.name).trim().toLowerCase() === template.name.trim().toLowerCase())
+            const art = addonArtwork(template.name)
+            const ArtIcon = art.Icon
             return (
-              <button key={template.id} type="button" disabled={readOnly || selected} onClick={() => onAdd(template)} className={'trade-pricing-addon-card ' + (selected ? 'is-selected' : '')}>
-                <span className="trade-pricing-addon-check">{selected ? <Check size={13} /> : null}</span>
-                <span className="block min-w-0 text-[11px] font-extrabold leading-snug">{template.name}</span>
-                <span className="mt-0.5 block text-[10px] font-bold text-[#6B5B85]">{selected ? 'Selected' : 'Tap to add'}</span>
+              <button key={template.id} type="button" disabled={readOnly || selected} onClick={() => onAdd(template)} className={'trade-pricing-addon-card addon-tone-' + art.tone + (selected ? ' is-selected' : '')}>
+                <span className="trade-pricing-addon-art"><ArtIcon size={25} strokeWidth={1.8} /></span>
+                <span className="trade-pricing-addon-copy"><strong>{template.name}</strong><small>{art.note}</small><em>{selected ? <><Check size={11} /> Added to your package</> : <><Plus size={11} /> Add this extra</>}</em></span>
+                {selected ? <span className="trade-pricing-addon-check"><Check size={14} /></span> : null}
               </button>
             )
           })}
