@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
 import WorkLibrary from '../../components/vendor/WorkLibrary'
+import SambramoPartnerPreviewCard from '../../components/vendor/SambramoPartnerPreviewCard'
 import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
 import {
   normalizeTrade, STATUS_META, PRICING_STATES, storefrontStatus, pricingReadiness
@@ -24,100 +25,25 @@ const unitLabel = unit => ({
   per_event: 'per event',
 }[unit] ?? unit ?? 'per booking')
 
-function CustomerOfferingCard({ offering, config }) {
-  const packages = (offering?.pricing_packages ?? []).filter(pkg => pkg.status === 'LIVE' || pkg.status === 'UNDER_REVIEW' || pkg.status === 'DRAFT')
-  const readiness = pricingReadiness({ offerings: [{ ...offering, pricing_packages: packages }] })
-  const title = offering?.name || config.templates[0]?.[1] || 'Your service'
-  const fields = config.fields
-    .map(field => ({ field, value: offering?.specs?.[field.key] }))
-    .filter(x => x.value !== undefined && x.value !== null && x.value !== '')
-    .slice(0, 6)
-  const livePackages = packages.filter(pkg => pkg.status === 'LIVE')
-  const shownPackages = livePackages.length ? livePackages : packages
-  const included = pkg => {
-    const value = pkg.commercial_inputs?.inclusions ?? pkg.trade_inputs?.inclusions ?? []
-    return Array.isArray(value) ? value.filter(Boolean).slice(0, 6) : []
+function CustomerOfferingCard({ offering, config, vendor, service, onManageMedia }) {
+  const packages = (offering?.pricing_packages ?? []).filter(pkg => pkg && !['ARCHIVED', 'PAUSED'].includes(pkg.status))
+  const first = packages[0] || null
+  const draft = {
+    id: first?.id ?? offering?.id ?? null,
+    name: first?.name || offering?.name || config?.templates?.[0]?.[1] || 'Featured Package',
+    description: first?.description || offering?.description || '',
+    tier: first?.tier || first?.commercial_inputs?.tier || 'standard',
+    base_price: first?.price?.rate_paise != null ? Number(first.price.rate_paise) / 100 : '',
+    pricing_unit: first?.price?.unit || '',
+    minimum_order: first?.price?.minimum_quantity ?? '',
+    included_duration: first?.price?.quantity_formula?.included_duration ?? '',
+    availability_policy: offering?.availability_policy || 'request',
+    trade_inputs: offering?.specs || offering?.trade_inputs || {},
+    commercial_inputs: first?.commercial_inputs || { inclusions: [] },
+    addons: first?.addons || [],
   }
-  const activeAddons = pkg => (pkg.addons ?? []).filter(a => a.active !== false).slice(0, 4)
-
-  return (
-    <article className="w-full min-w-0 overflow-hidden rounded-[26px] bg-white ring-1 ring-[#E7E0EF] shadow-[0_12px_34px_rgba(42,8,92,0.08)]">
-      <div className="h-1.5 bg-gradient-to-r from-[#2A085C] via-[#6D28D9] to-[#D9B45B]" />
-      <div className="p-4">
-        <div className="flex min-w-0 items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#6D28D9]">{config.pillar} · {config.name}</p>
-            <h3 className="mt-1 break-words text-[20px] font-black leading-tight text-[#211735]">{title}</h3>
-            <p className="mt-1 text-[12px] font-medium leading-relaxed text-[#746783]">{offering?.description || 'A service tailored to your event, with clear inclusions and transparent pricing.'}</p>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF7EF] px-2.5 py-1.5 text-[10px] font-extrabold text-[#176B42] ring-1 ring-[#CBEAD7]"><BadgeCheck size={12} /> Verified</span>
-        </div>
-
-        {!!fields.length && (
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {fields.map(({ field, value }, index) => (
-              <div key={field.key} className={'min-w-0 rounded-[15px] px-3 py-2.5 ring-1 ' + (index % 3 === 0 ? 'bg-[#F2EDFA] ring-[#E5D9F4]' : index % 3 === 1 ? 'bg-[#EFF8F4] ring-[#D8EDE2]' : 'bg-[#FFF7E9] ring-[#F2E5C9]')}>
-                <p className="text-[9px] font-extrabold uppercase tracking-wide text-[#766A84]">{field.label}</p>
-                <p className="mt-1 break-words text-[12px] font-extrabold leading-snug text-[#25183B]">{typeof value === 'boolean' ? (value ? 'Included' : 'Not included') : String(value)}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <div><p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">Packages & exact rates</p><p className="mt-0.5 text-[11px] text-[#81758F]">Choose the package that fits your event</p></div>
-          <span className="shrink-0 rounded-full bg-[#F2EDFA] px-2.5 py-1.5 text-[10px] font-extrabold text-[#4C1D95]">{shownPackages.length} option{shownPackages.length === 1 ? '' : 's'}</span>
-        </div>
-
-        {shownPackages.length ? (
-          <div className="mt-3 space-y-3">
-            {shownPackages.map((pkg, index) => {
-              const price = pkg.price?.rate_paise != null ? Math.round(Number(pkg.price.rate_paise) / 100) : null
-              const unit = pkg.price?.unit ? unitLabel(pkg.price.unit) : 'per booking'
-              const inclusions = included(pkg)
-              const addons = activeAddons(pkg)
-              const detailRows = [
-                ['Minimum booking', pkg.price?.minimum_quantity != null ? String(pkg.price.minimum_quantity) + ' ' + (pkg.price.unit || 'units') : null],
-                ['Included quantity', pkg.price?.included_quantity != null ? String(pkg.price.included_quantity) : null],
-                ['Lead time', pkg.price?.quantity_formula?.lead_time != null ? String(pkg.price.quantity_formula.lead_time) + ' days' : null],
-                ['Duration', pkg.price?.quantity_formula?.included_duration != null ? String(pkg.price.quantity_formula.included_duration) : null],
-              ].filter(x => x[1])
-              return (
-                <section key={pkg.id} className="min-w-0 overflow-hidden rounded-[22px] border border-[#E7E0EF] bg-white shadow-[0_5px_18px_rgba(42,8,92,0.05)]">
-                  <div className={'px-4 py-3 ' + (index % 3 === 0 ? 'bg-[#F2EDFA]' : index % 3 === 1 ? 'bg-[#EFF8F4]' : 'bg-[#FFF7E9]')}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#766A84]">{pkg.tier || (index === 0 ? 'Recommended package' : 'Package option')}</p><h4 className="mt-1 break-words text-[16px] font-black leading-tight text-[#211735]">{pkg.name || 'Event package'}</h4></div>
-                      <span className="shrink-0 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-extrabold text-[#4C1D95] ring-1 ring-[#DDD1EC]">{pkg.status === 'LIVE' ? 'Bookable' : pkg.status === 'UNDER_REVIEW' ? 'In review' : 'Preview'}</span>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex min-w-0 items-end justify-between gap-2 rounded-[18px] bg-[#2A085C] px-4 py-3.5 text-white">
-                      <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/65">Fixed package price</p><p className="mt-1 break-words text-[28px] font-black leading-none tracking-tight">{price != null ? formatINR(price) : 'Price pending'}</p><p className="mt-1 text-[11px] font-semibold text-white/75">{unit}</p></div>
-                      <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1.5 text-[9px] font-extrabold text-white ring-1 ring-white/20">No “starting at”</span>
-                    </div>
-
-                    {pkg.description && <p className="mt-3 text-[12px] leading-relaxed text-[#625572]">{pkg.description}</p>}
-
-                    {inclusions.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Included in this package</p><div className="mt-2 grid grid-cols-1 gap-2">{inclusions.map((item, i) => <div key={i} className="flex min-w-0 items-start gap-2 rounded-xl bg-[#F6F3FA] px-3 py-2"><Check size={14} className="mt-0.5 shrink-0 text-[#23845A]" /><span className="min-w-0 break-words text-[11.5px] font-semibold leading-snug text-[#332546]">{typeof item === 'string' ? item : item?.label ?? item?.name ?? String(item)}</span></div>)}</div></div>}
-
-                    {detailRows.length > 0 && <div className="mt-3 grid grid-cols-2 gap-2">{detailRows.map(([label, value]) => <div key={label} className="min-w-0 rounded-xl bg-[#F8F6FA] px-3 py-2"><p className="text-[9px] font-bold uppercase tracking-wide text-[#81758F]">{label}</p><p className="mt-1 break-words text-[11.5px] font-extrabold text-[#2B203B]">{value}</p></div>)}</div>}
-
-                    {addons.length > 0 && <div className="mt-4"><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#4C1D95]">Optional extras</p><div className="mt-2 space-y-2">{addons.map(addon => <div key={addon.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E8E2EF] px-3 py-2.5"><span className="min-w-0 break-words text-[11.5px] font-semibold text-[#352744]">{addon.name}</span><span className="shrink-0 text-[11.5px] font-black text-[#4C1D95]">{addon.rate_paise != null ? formatINR(Math.round(Number(addon.rate_paise) / 100)) : 'Confirm'}</span></div>)}</div></div>}
-
-                    <button type="button" disabled={pkg.status !== 'LIVE'} className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6D28D9] px-4 text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(109,40,217,0.18)] disabled:bg-[#D9D2E1] disabled:text-[#70677C] disabled:shadow-none">{pkg.status === 'LIVE' ? 'Continue to booking' : 'Available after approval'} <ChevronRight size={16} /></button>
-                  </div>
-                </section>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl bg-[#FFF7E9] p-4 ring-1 ring-[#F2E5C9]"><p className="text-[12px] font-extrabold text-[#6B4B0C]">Pricing is being prepared</p><p className="mt-1 text-[11px] leading-relaxed text-[#756344]">{PRICING_STATES[readiness.state]?.detail || 'This service will show its exact package price once the partner completes pricing and Sambramo approves it.'}</p></div>
-        )}
-      </div>
-    </article>
-  )
+  return <SambramoPartnerPreviewCard vendor={vendor} service={service} config={config} draft={draft} packages={packages} addons={first?.addons || []} onManageMedia={onManageMedia} />
 }
-
 function EditAction({ icon: Icon, label, detail, onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex min-h-[64px] items-center gap-2.5 rounded-2xl bg-page-sunk px-3 text-left ring-1 ring-ink/[0.06] transition active:scale-[0.99]">
@@ -351,14 +277,13 @@ export default function BusinessPreview() {
 
         {mode === 'customer' ? (
           <>
-          <CustomerWorkGallery vendor={vendor} />
           <section className="mt-4 space-y-3">
             {visibleListings.length === 0 ? (
               <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.08]"><Layers3 className="mx-auto text-ink-mute" size={28} /><p className="mt-3 text-[14px] font-extrabold text-ink">Nothing ready to preview yet</p><p className="mt-1 text-[12px] leading-relaxed text-ink-mute">Complete a trade and its offering, then return here.</p></div>
             ) : visibleListings.flatMap(listing => {
               const config = normalizeTrade(listing.trade, listing.trade_id)
               const offerings = listing.offerings?.length ? listing.offerings : [null]
-              return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} />)
+              return offerings.map((offering, index) => <CustomerOfferingCard key={offering?.id ?? (String(listing.id ?? listing.trade) + '-' + index)} offering={offering} config={config} vendor={vendor} service={offering} onManageMedia={() => navigate('/dashboard/vendor?tab=portfolio&return=preview')} />)
             })}
           </section>
           </>
@@ -422,47 +347,3 @@ function formatINR(value) {
 }
 
 
-function CustomerWorkGallery({ vendor }) {
-  const [items, setItems] = useState([])
-  const [urls, setUrls] = useState({})
-  const [selected, setSelected] = useState(null)
-  useEffect(() => {
-    let alive = true
-    async function load() {
-      if (!vendor?.id) return
-      const { rows } = await fetchWork(vendor.id)
-      const live = (rows ?? []).filter(row => row.review_status === 'live' && ['photo','video'].includes(row.kind))
-      const signed = await signedUrlsFor(live.map(row => row.storage_path), 900)
-      if (alive) { setItems(live); setUrls(signed) }
-    }
-    load()
-    return () => { alive = false }
-  }, [vendor?.id])
-  if (!items.length) return null
-  return (
-    <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
-      <div className="flex items-center justify-between gap-2">
-        <div><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-700">Work catalog</p><h3 className="mt-1 text-[16px] font-black text-ink">Real work, photos & videos</h3></div>
-        <span className="rounded-full bg-plum-50 px-2.5 py-1 text-[11px] font-extrabold text-plum-700">{items.length} items</span>
-      </div>
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
-        {items.map(item => urls[item.storage_path] ? (
-          <button key={item.id} type="button" onClick={() => setSelected(item)} className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-page-sunk ring-1 ring-ink/[0.08]">
-            {item.kind === 'video' ? <video src={urls[item.storage_path]} muted playsInline className="h-full w-full object-cover" /> : <img src={urls[item.storage_path]} alt={item.caption || 'Partner portfolio'} className="h-full w-full object-cover" />}
-            {item.kind === 'video' && <span className="absolute bottom-2 right-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-bold text-white">▶ Video</span>}
-            {item.caption && <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-2 py-1.5 text-left text-[10px] font-semibold text-white">{item.caption}</span>}
-          </button>
-        ) : null)}
-      </div>
-      {selected && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" onClick={() => setSelected(null)}>
-          <button type="button" aria-label="Close media preview" className="absolute right-4 top-6 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white">Close ✕</button>
-          <div className="max-h-[82dvh] w-full max-w-xl" onClick={e => e.stopPropagation()}>
-            {selected.kind === 'video' ? <video src={urls[selected.storage_path]} controls autoPlay playsInline className="max-h-[75dvh] w-full rounded-2xl bg-black object-contain" /> : <img src={urls[selected.storage_path]} alt={selected.caption || 'Partner work'} className="max-h-[75dvh] w-full rounded-2xl object-contain" />}
-            {selected.caption && <p className="mt-3 text-center text-sm font-semibold text-white">{selected.caption}</p>}
-          </div>
-        </div>
-      )}
-    </section>
-  )
-}
