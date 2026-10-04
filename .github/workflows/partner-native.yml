@@ -22,5 +22,6 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npx expo install --fix
       - run: npm run typecheck
       - run: npx expo-doctor
