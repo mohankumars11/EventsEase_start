@@ -800,9 +800,45 @@ const TRADE_PRICING_FIELDS = {
   ],
 }
 
+// Fields where partners can legitimately select more than one option.
+// These are stored as arrays in trade_inputs and rendered back into the preview.
+export const MULTI_SELECT_FIELDS = {
+  E01: ['cuisine','service_style','dietary_mix'],
+  E02: ['deliverables'],
+  E03: ['deliverables'],
+  E04: ['scope','flowers','lighting'],
+  E05: ['facilities'],
+  E06: ['lighting'],
+  E07: ['genre'],
+  E08: ['function'],
+  E09: ['event_type','coordination','planning_deliverables'],
+  E10: ['flooring','cooling'],
+  E11: ['finish'],
+  E13: ['coverage'],
+  E16: ['language'],
+  E17: ['production_scope'],
+  E19: ['equipment'],
+  E20: ['menu'],
+  E21: ['language','scope'],
+  E22: ['equipment_type'],
+  E23: ['facility_type','waste','first_aid','cleaning'],
+  E25: ['packaging','personalization'],
+  E26: ['personalization','material','assembly'],
+  L01: ['loading'],
+  L02: ['loading'],
+  L04: ['equipment'],
+  L05: ['handling','equipment'],
+  L06: ['handling'],
+  L07: ['product'],
+  L08: ['functions','fleet','crew','coordination'],
+}
+
 export function getTradePricingFields(config) {
   const id = config?.trade_id
   const specific = TRADE_PRICING_FIELDS[id]
-  if (specific?.length) return specific
+  if (specific?.length) return specific.map(field => ({
+    ...field,
+    multi: MULTI_SELECT_FIELDS[id]?.includes(field.key) === true,
+  }))
   return (config?.fields ?? []).map(field => getFieldSchema(field, config))
 }
