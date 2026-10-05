@@ -32,15 +32,25 @@ function BaseSvg({ uid, children }) {
           <stop offset=".42" stopColor="#fff" stopOpacity=".3" />
           <stop offset="1" stopColor="#17052F" stopOpacity=".18" />
         </linearGradient>
-        <filter id={uid + '-shadow'} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3.2" floodColor="#2A085C" floodOpacity=".26" />
+        <filter id={uid + '-shadow'} x="-35%" y="-35%" width="170%" height="170%">
+          <feDropShadow dx="0" dy="5" stdDeviation="3.5" floodColor="#2A085C" floodOpacity=".28" />
+        </filter>
+        <filter id={uid + '-bevel'} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="blur"/>
+          <feSpecularLighting in="blur" surfaceScale="4" specularConstant=".75" specularExponent="22" lightingColor="#FFFFFF" result="spec">
+            <feDistantLight azimuth="225" elevation="55"/>
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specOut"/>
+          <feBlend in="SourceGraphic" in2="specOut" mode="screen"/>
         </filter>
       </defs>
       <g opacity=".42" transform="translate(0 4)" filter={'url(#' + uid + '-shadow)'}>
         {children('url(#' + grad + ')', 'url(#' + grad2 + ')')}
       </g>
       <g filter={'url(#' + uid + '-shadow)'}>
-        {children('url(#' + grad + ')', 'url(#' + grad2 + ')')}
+        <g filter={'url(#' + uid + '-bevel)'}>
+          {children('url(#' + grad + ')', 'url(#' + grad2 + ')')}
+        </g>
       </g>
       <g opacity=".34">
         <path d="M18 18H82" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
