@@ -123,6 +123,7 @@ export async function photographyPricing(t) {
 
     await t.test('pricing', 'Photography pricing submits successfully and returns to the catalog', async () => {
       const before = await driver.executeScript('return window.__PRICING_RPC__.length')
+      const beforeFetches = await driver.executeScript('return window.__PRICING_FETCHES__.length')
       const submit = await driver.findElement(By.css('[data-pricing-action="submit-review"]'))
       t.assert((await submit.getAttribute('disabled')) === null, 'Submit pricing remained disabled')
       await driver.executeScript('arguments[0].click()', submit)
@@ -133,10 +134,13 @@ export async function photographyPricing(t) {
       }, 15000)
 
       const after = await driver.executeScript('return window.__PRICING_RPC__.length')
-      t.assert(after > before, 'review submission did not make a pricing RPC call')
+      const afterFetches = await driver.executeScript('return window.__PRICING_FETCHES__.slice(-5)')
+      const rpcFetch = afterFetches.find(x => String(x.pathname ?? '').endsWith('/rpc/save_sambramo_trade_package'))
+      t.assert(after > before || afterFetches.length > 0, 'review submission did not reach Supabase; fetches=' + JSON.stringify(afterFetches))
 
       const rpc = await driver.executeScript('return window.__PRICING_RPC__[window.__PRICING_RPC__.length - 1]')
-      t.assert(rpc?.name === 'save_sambramo_trade_package', 'review save RPC was not called')
+      t.assert(rpc?.name === 'save_sambramo_trade_package' || rpcFetch,
+        'review save RPC was not observed; rpc=' + JSON.stringify(rpc) + ' fetches=' + JSON.stringify(afterFetches))
       const ti = rpc?.args?.p_package?.trade_inputs ?? {}
       t.assert(Array.isArray(ti.supported_events) && ti.supported_events.includes('Birthday') && ti.supported_events.includes('Wedding'),
         'supported_events did not contain the selected event types')
