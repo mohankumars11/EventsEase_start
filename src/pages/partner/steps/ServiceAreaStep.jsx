@@ -1,155 +1,60 @@
-import { useEffect, useState } from 'react'
-import ValidatedField from '../../../components/partner/ValidatedField'
-import { validateField, normalise, SEVERITY } from '../../../lib/validation/fieldRules'
-import { useServerErrors, focusFirstInvalid } from '../../../components/partner/FieldCheck'
-import { asFormError } from '../../../lib/validation/serverError'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarDays, CheckCircle2, Loader2, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, MapPin } from 'lucide-react'
-import StepShell, { Field, inputClass } from '../../../components/onboarding/StepShell'
+import StepShell, { Field } from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 import { readSavedAddress } from '../../../lib/partnerLocation'
 
-/**
- * Step 3 · where they work and when.
- *
- * ══════════════════════════════════════════════════════════════════════
- * THE FIX IS NOT ASKED FOR AGAIN
- * ══════════════════════════════════════════════════════════════════════
- *
- * The GPS fix was taken before the login and confirmed on its own
- * screen. Asking a partner to type their city here would be the third
- * time the app has raised the subject, and the typed answer would be
- * worse than the one already held.
- *
- * So the confirmed location is shown as a fact, with a way to change
- * it, and this step asks the two things that are genuinely still
- * unknown: how far they will travel, and when they work.
- *
- * ── Radius is chips, and the range goes to 150 km ──────────────────
- * A slider gives about three pixels per kilometre on a 360px phone, so
- * somebody aiming for 25 lands on 23 and cannot tell. The range reaches
- * 150 because a partner in Mysuru who serves Bengaluru is a real case —
- * capping the honest answer at 60 would make them undispatchable.
- */
 const RADII = [5, 10, 15, 25, 40, 60, 100, 150]
-
-/* ── The label is Monday-first; the VALUE is getDay() ────────────────
-   This list used to be a bare array of names whose INDEX was stored, so
-   Monday went into the database as 0. Every reader — MonthGrid,
-   config/vendor.js WEEKDAYS, and now vendor_weekly_rules — uses
-   getDay(), where 0 is SUNDAY. A partner ticking Monday got Sunday
-   dashed in their calendar, silently, for as long as the screen has
-   existed.
-
-   The week still READS Monday-first, because that is how a working week
-   is read in India. Only the stored number changed, and it is now
-   written down next to the label so the two cannot drift apart again. */
-const DAYS = [
-  { label: 'Mon', weekday: 1 },
-  { label: 'Tue', weekday: 2 },
-  { label: 'Wed', weekday: 3 },
-  { label: 'Thu', weekday: 4 },
-  { label: 'Fri', weekday: 5 },
-  { label: 'Sat', weekday: 6 },
-  { label: 'Sun', weekday: 0 },
-]
 
 export default function ServiceAreaStep() {
   const navigate = useNavigate()
   const { loading, account, refresh } = usePartnerOnboarding()
-  const v = account.vendor
-  const addr = readSavedAddress()
+  const vendor = account.vendor
+  const availability = account.availability ?? {}
+  const weeklyRules = account.weeklyRules ?? []
+  const address = readSavedAddress()
 
   const [radius, setRadius] = useState(15)
-  const [offDays, setOffDays] = useState([])
-  const [lead, setLead] = useState('2')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!v) return
-    setRadius(Number(v.service_radius_km) || 15)
-    setLead(String(v.lead_time_days ?? 2))
+    if (vendor?.service_radius_km) setRadius(Number(vendor.service_radius_km))
+  }, [vendor?.service_radius_km])
 
-    /* The standing week lives in vendor_weekly_rules (131). Until that
-       migration is applied the table is not there, and the read fails
-       rather than throwing — so the legacy column is used instead, with
-       its ORIGINAL Mon=0 numbering converted for display. The column is
-       never written again, which is what keeps 131's backfill honest. */
-    let live = true
-    ;(async () => {
-      const { data, error: err } = await supabase
-        .from('vendor_weekly_rules')
-        .select('weekday, is_available, effective_from, effective_to')
-        .eq('vendor_id', v.id)
-      if (!live) return
-      if (err) {
-        const legacy = Array.isArray(v.weekly_days_off) ? v.weekly_days_off : []
-        setOffDays(legacy.map(i => (i + 1) % 7))
-        return
-      }
-      const today = new Date().toISOString().slice(0, 10)
-      setOffDays((data ?? [])
-        .filter(r => r.is_available === false
-          && (r.effective_from ?? '') <= today
-          && (!r.effective_to || r.effective_to >= today))
-        .map(r => r.weekday))
-    })()
-    return () => { live = false }
-  }, [v])
+  const calendarConfigured = useMemo(() => (
+    weeklyRules.length > 0
+    || Object.keys(availability).length > 0
+    || !!vendor?.calendar_reviewed_through
+  ), [weeklyRules.length, availability, vendor?.calendar_reviewed_through])
 
-  const toggleDay = w => setOffDays(d => (d.includes(w) ? d.filter(x => x !== w) : [...d, w]))
-  const located = !!v?.city && !!v?.pincode
-
-  const [showAll, setShowAll] = useState(false)
-  const server = useServerErrors()
-
-  async function save() {
-    if (!v?.id || busy) return
-    /* This saved `Math.max(0, Number(lead) || 0)` without asking the
-       rule: "1e3" went in as 1000 days. Refused now, and said. */
-    if (validateField('lead_time_days', lead).severity === SEVERITY.ERROR) {
-      setShowAll(true); setTimeout(() => focusFirstInvalid(), 0); return
+  async function saveAreaAndContinue() {
+    if (!vendor?.id || saving) return
+    if (!Number.isFinite(Number(radius)) || Number(radius) < 1) {
+      setError('Choose a service radius before continuing.')
+      return
     }
-    setBusy(true); setError(null)
+    setSaving(true)
+    setError('')
     try {
-      const { error: err } = await supabase.from('vendors').update({
-        service_radius_km: Math.min(200, Math.max(1, radius)),
-        lead_time_days: normalise('lead_time_days', lead) === '' ? 0 : Number(normalise('lead_time_days', lead)),
-      }).eq('id', v.id)
-      if (err) throw asFormError(err)
-
-      /* One row per weekday, so unticking a day is a row that says
-         "available", not a row that vanished — the distinction
-         weekday_is_open() depends on. */
-      const today = new Date().toISOString().slice(0, 10)
-      const rows = [0, 1, 2, 3, 4, 5, 6].map(weekday => ({
-        vendor_id: v.id,
-        weekday,
-        is_available: !offDays.includes(weekday),
-        effective_from: today,
-      }))
-      const { error: wkErr } = await supabase
-        .from('vendor_weekly_rules')
-        .upsert(rows, { onConflict: 'vendor_id,weekday,effective_from' })
-
-      /* Pre-131 the table is absent. Fall back to the legacy column in
-         its ORIGINAL Mon=0 numbering — deliberately writing the old
-         convention, because 131's backfill reads it that way and a row
-         written in the new convention would be remapped wrong. */
-      if (wkErr) {
-        const legacy = offDays.map(w => (w + 6) % 7)
-        const { error: legacyErr } = await supabase.from('vendors')
-          .update({ weekly_days_off: legacy }).eq('id', v.id)
-        if (legacyErr) throw legacyErr
-      }
+      const { error: err } = await supabase
+        .from('vendors')
+        .update({ service_radius_km: Math.min(150, Math.max(1, Number(radius))) })
+        .eq('id', vendor.id)
+      if (err) throw err
       await refresh()
-      navigate('/partner/setup/compliance')
+
+      if (calendarConfigured) {
+        navigate('/partner/setup/compliance')
+      } else {
+        navigate('/dashboard/vendor?tab=availability&return=setup')
+      }
     } catch (e) {
-      if (!server.take(e)) setError(e?.message ?? 'Could not save. Try once more.')
+      setError(e?.message ?? 'Could not save your service area.')
     } finally {
-      setBusy(false)
+      setSaving(false)
     }
   }
 
@@ -162,90 +67,93 @@ export default function ServiceAreaStep() {
   }
 
   return (
-    <StepShell stepId="area" canContinue={located} busy={busy} onContinue={save}>
+    <StepShell
+      stepId="area"
+      cta={calendarConfigured ? 'Continue to verification' : 'Open Calendar & set availability'}
+      canContinue={!!vendor}
+      busy={saving}
+      onContinue={saveAreaAndContinue}
+    >
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
         Service area &amp; availability
       </h1>
-      <p className="mb-6 mt-2 text-[13.5px] leading-relaxed text-ink/65">
-        We only offer you jobs inside the circle you set here.
+      <p className="mt-2 text-[13.5px] leading-relaxed text-ink/65">
+        Set where you work here. Your existing Calendar is the master control for when Sambramo can offer you jobs.
       </p>
 
-      {/* The fix already taken, stated rather than re-asked. */}
-      <div className="mb-6 rounded-[20px] bg-plum-50 p-4 ring-1 ring-plum-200">
-        <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-plum-600">
-          Starting location
-        </p>
-        <p className="mt-1.5 flex items-start gap-1.5 text-[14.5px] font-extrabold leading-snug text-plum-950">
+      <section className="mt-5 rounded-[22px] bg-plum-50 p-4 ring-1 ring-plum-100">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-plum-600">Starting location</p>
+        <p className="mt-2 flex items-start gap-1.5 text-[14px] font-extrabold leading-snug text-plum-950">
           <MapPin size={15} className="mt-0.5 shrink-0" />
-          {addr?.line ?? (located ? `${v.city} ${v.pincode}` : 'Not set')}
+          {address?.line ?? ([vendor?.city, vendor?.pincode].filter(Boolean).join(' ') || 'Location not set')}
         </p>
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-mute">
+          This is the location Sambramo uses when checking which jobs are within your service radius.
+        </p>
+      </section>
+
+      <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+        <Field
+          label="How far will you travel?"
+          hint="Only jobs within this radius can be offered to you."
+        >
+          <div className="flex flex-wrap gap-2">
+            {RADII.map(km => (
+              <button
+                key={km}
+                type="button"
+                onClick={() => { setRadius(km); setError('') }}
+                aria-pressed={radius === km}
+                className={'rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ' +
+                  (radius === km
+                    ? 'bg-plum-600 text-white'
+                    : 'bg-white text-ink-soft ring-1 ring-ink/[0.10]')}
+              >
+                {km} km
+              </button>
+            ))}
+          </div>
+        </Field>
+      </section>
+
+      <section className="mt-4 overflow-hidden rounded-[24px] bg-[#FFF8ED] p-4 ring-1 ring-[#F1DFBA]">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2A085C] text-white">
+            <CalendarDays size={18} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-black text-plum-950">Your calendar controls your jobs.</p>
+            <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink/70">
+              Set your usual working week once in Calendar, then block busy dates or open exceptions.
+              Sambramo only offers scheduled work when your calendar and capacity allow it.
+            </p>
+            <p className="mt-2 text-[10.5px] font-extrabold text-plum-700">
+              You do not need to manually fill every day. The standing week covers the normal pattern; the calendar is for exceptions and real bookings.
+            </p>
+          </div>
+        </div>
         <button
           type="button"
-          onClick={() => navigate('/partner/location')}
-          className="mt-2 text-[12px] font-extrabold text-plum-700 underline"
+          onClick={saveAreaAndContinue}
+          disabled={!vendor || saving}
+          className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-plum-700 text-[13px] font-extrabold text-white disabled:opacity-45"
         >
-          Change location
+          <CalendarDays size={15} />
+          {calendarConfigured ? 'Review calendar' : 'Open Calendar now'}
         </button>
-      </div>
+      </section>
 
-      <Field label="How far will you travel?"
-             hint="Widen it to see more work; narrow it to stop being sent across the city.">
-        <div className="flex flex-wrap gap-2">
-          {RADII.map(km => (
-            <button
-              key={km} type="button" data-radius={km}
-              onClick={() => setRadius(km)}
-              aria-pressed={radius === km}
-              className={`rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ${
-                radius === km
-                  ? 'bg-plum-600 text-white'
-                  : 'bg-white text-ink-soft ring-1 ring-ink/[0.10]'
-              }`}
-            >
-              {km} km
-            </button>
-          ))}
+      {calendarConfigured && (
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-forest-50 px-3.5 py-3 text-[12px] font-bold text-forest-800 ring-1 ring-forest-200">
+          <CheckCircle2 size={15} />
+          Availability has been configured. Sambramo will use it when matching scheduled jobs.
         </div>
-      </Field>
-
-      <Field label="Days you do not work" hint="Leave all unticked if you work every day.">
-        <div className="flex flex-wrap gap-2">
-          {DAYS.map(d => (
-            <button
-              key={d.weekday} type="button"
-              onClick={() => toggleDay(d.weekday)}
-              aria-pressed={offDays.includes(d.weekday)}
-              className={`rounded-full px-3 py-2 text-[12.5px] font-extrabold transition ${
-                offDays.includes(d.weekday)
-                  ? 'bg-ink text-white'
-                  : 'bg-white text-ink-soft ring-1 ring-ink/[0.10]'
-              }`}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-      </Field>
-
-      {/* `lead_time_days` has had a rule since the validation engine was
-          written and this was still a bare input stripping non-digits.
-          The rule knows the column's CHECK is 0-365, so a partner who
-          types 400 is told why here rather than by Postgres later. */}
-      <ValidatedField
-        field="lead_time_days" value={lead} onChange={val => { server.clear('lead_time_days'); setLead(val) }}
-        showAll={showAll} serverError={server.errors.lead_time_days}
-        label="Notice you need" inputMode="numeric"
-        hint="The shortest warning you can take a job on, in days."
-        placeholder="2" />
-
-      {!located && (
-        <p className="rounded-2xl bg-amber-50 px-3 py-2.5 text-[12.5px] font-semibold leading-snug text-amber-900">
-          We do not have a confirmed location for you yet. Set it above — dispatch
-          measures every job from that point.
-        </p>
       )}
+
       {error && (
-        <p className="rounded-2xl bg-rose-50 px-3 py-2 text-[12.5px] font-bold text-rose-700">{error}</p>
+        <p role="alert" className="mt-4 rounded-2xl bg-rose-50 px-3.5 py-3 text-[12px] font-bold text-rose-700">
+          {error}
+        </p>
       )}
     </StepShell>
   )
