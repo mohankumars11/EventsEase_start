@@ -39,7 +39,7 @@ const trades = [
   'Wedding Planning',
 ]
 
-const missing = trades.filter(trade => !source.includes(`'\${trade}':`))
+const missing = trades.filter(trade => !source.includes(`'${trade}':`))
 const fallback = source.match(/ICONS\s*=\s*\{[\s\S]*?\n\}/)?.[0] ?? ''
 
 if (missing.length) {
