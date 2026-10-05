@@ -205,7 +205,7 @@ function inferTier(name) {
   return 'standard'
 }
 
-export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings }) {
+export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false }) {
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -292,6 +292,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         setDraft={setEditor}
         readOnly={false}
         onBack={() => setEditor(null)}
+        onboarding={onboarding}
         onSaved={async (result, status) => { await load(); if (status === 'UNDER_REVIEW') setEditor(null); else setEditor(prev => prev ? { ...prev, id: result?.package_id ?? prev.id, status: 'DRAFT' } : prev) }}
         onOpenListings={onOpenListings}
       />
@@ -365,7 +366,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings }) {
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false }) {
   const [activeStep, setActiveStep] = useState('package')
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -420,7 +421,9 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     if (!draft.tier) problems.push('Choose a package tier.')
     if (!draft.pricing_unit) problems.push('Choose a pricing unit.')
     if (Number(draft.minimum_order || 0) <= 0) problems.push('Choose a valid minimum order.')
-    if (Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
+    const quoteFirst = String(draft.pricing_unit || '').toLowerCase() === 'custom quote'
+    if (!quoteFirst && Number(draft.base_price || 0) <= 0) problems.push('Set a positive base price.')
+    if (quoteFirst && Number(draft.minimum_order || 0) <= 0) problems.push('Choose a valid quote minimum.')
     if (draft.lead_time === '' || draft.lead_time == null) problems.push('Choose a lead time.')
     if (!String(draft.travel_policy ?? '').trim()) problems.push('Choose a travel / service-area policy.')
     if (!String(draft.availability_policy ?? '').trim()) problems.push('Choose a booking mode.')
@@ -445,7 +448,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     return {
       package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
       details: detailsReady,
-      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && Number(draft.base_price || 0) > 0 && draft.lead_time !== '' && draft.lead_time != null && String(draft.travel_policy ?? '').trim() && String(draft.availability_policy ?? '').trim() && String(draft.cancellation_policy ?? '').trim() && String(draft.payment_policy ?? '').trim()),
+      pricing: Boolean(Number(draft.minimum_order || 0) > 0 && (String(draft.pricing_unit || '').toLowerCase() === 'custom quote' || Number(draft.base_price || 0) > 0) && draft.lead_time !== '' && draft.lead_time != null && String(draft.travel_policy ?? '').trim() && String(draft.availability_policy ?? '').trim() && String(draft.cancellation_policy ?? '').trim() && String(draft.payment_policy ?? '').trim()),
       addons: true,
       preview: validation.length === 0,
     }
@@ -846,7 +849,11 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
             {usesSiteSetup ? <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2"><FeeChoice label="Setup fee" value={draft.setup_fee} disabled={readOnly} onChange={v => onUpdate('setup_fee', v)} /><FeeChoice label="Pack-down / teardown" value={draft.teardown_fee} disabled={readOnly} onChange={v => onUpdate('teardown_fee', v)} /></div> : null}
             <div className="trade-pricing-fields-grid trade-pricing-pricing-grid-2">
               <ChoiceField required label="Cancellation" value={draft.cancellation_policy} disabled={readOnly} options={[['flexible','Flexible'],['standard','48-hour notice'],['strict','7-day notice'],['non_refundable','Non-refundable'],['custom','Custom']]} allowCustom onChange={v => onUpdate('cancellation_policy', v)} />
-              <ChoiceField required label="Payment" value={draft.payment_policy} disabled={readOnly} options={[['full','Full at booking'],['deposit25','25% deposit'],['deposit50','50% deposit'],['completion','Pay on completion'],['custom','Custom']]} allowCustom onChange={v => onUpdate('payment_policy', v)} />
+              <div className="trade-pricing-field">
+                <span className="trade-pricing-field-label">Customer payment</span>
+                <div className="rounded-2xl bg-[#F6F2FB] px-3.5 py-3 text-[12px] font-extrabold text-[#2A085C] ring-1 ring-[#E2D6F0]">Instant · Pay at booking</div>
+                <span className="mt-1 block text-[10.5px] leading-snug text-[#6B5B85]">Sambramo chooses the transaction lane automatically. Partners do not select customer payment terms.</span>
+              </div>
             </div>
           </details>
         ) : null}
