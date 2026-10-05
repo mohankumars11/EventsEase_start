@@ -12,6 +12,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [statusByService, setStatusByService] = useState({})
   const [revisionByService, setRevisionByService] = useState({})
+  const [packageSummary, setPackageSummary] = useState({ live: 0, draft: 0, review: 0, revisions: 0 })
   const [loadingStatus, setLoadingStatus] = useState(false)
 
   const listed = useMemo(
@@ -28,7 +29,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
     Promise.all([
       supabase.from('sambramo_trade_packages').select('id,vendor_service_id,status,parent_package_id,revision_round').in('vendor_service_id', ids),
       supabase.from('sambramo_partner_price_books').select('vendor_service_id,status').in('vendor_service_id', ids),
-      supabase.from('sambramo_catering_packages').select('id,vendor_service_id,status').in('vendor_service_id', ids),
+      supabase.from('sambramo_catering_packages').select('id,vendor_service_id,status,parent_package_id').in('vendor_service_id', ids),
     ]).then(([packagesRes, pricesRes, cateringRes]) => {
       if (!alive) return
       const out = {}
@@ -43,7 +44,14 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
             : p.length || pb.length || cp.length ? 'CONFIGURED' : 'NOT_CONFIGURED'
       }
       setStatusByService(out)
-      setRevisionByService(Object.fromEntries(ids.map(id => [id, (packagesRes.data ?? []).filter(x => x.vendor_service_id === id && (x.parent_package_id || Number(x.revision_round || 0) > 0)).length])))
+      setRevisionByService(Object.fromEntries(ids.map(id => [id, (packagesRes.data ?? []).filter(x => x.vendor_service_id === id && (x.parent_package_id || Number(x.revision_round || 0) > 0)).length + (cateringRes.data ?? []).filter(x => x.vendor_service_id === id && x.parent_package_id).length])))
+      const allPackages = [...(packagesRes.data ?? []), ...(cateringRes.data ?? [])]
+      setPackageSummary({
+        live: allPackages.filter(x => ['LIVE','ACTIVE'].includes(x.status)).length,
+        draft: allPackages.filter(x => x.status === 'DRAFT').length,
+        review: allPackages.filter(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status)).length,
+        revisions: allPackages.filter(x => x.parent_package_id || Number(x.revision_round || 0) > 0).length,
+      })
       setLoadingStatus(false)
     }).catch(() => { if (alive) setLoadingStatus(false) })
     return () => { alive = false }
@@ -86,10 +94,10 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
         </div>
       </section>
       <section className="grid grid-cols-4 gap-2">
-        <StatusSummary label="Live" count={Object.values(statusByService).filter(x => x === 'ENABLED').length} tone="bg-forest-50 text-forest-800" />
-        <StatusSummary label="Draft" count={Object.values(statusByService).filter(x => x === 'CONFIGURED').length} tone="bg-surface text-ink-soft" />
-        <StatusSummary label="Review" count={Object.values(statusByService).filter(x => x === 'REVIEWING').length} tone="bg-amber-50 text-amber-800" />
-        <StatusSummary label="Revisions" count={Object.values(revisionByService).reduce((n, v) => n + Number(v || 0), 0)} tone="bg-plum-50 text-plum-700" />
+        <StatusSummary label="Live" count={packageSummary.live} tone="bg-forest-50 text-forest-800" />
+        <StatusSummary label="Draft" count={packageSummary.draft} tone="bg-surface text-ink-soft" />
+        <StatusSummary label="Review" count={packageSummary.review} tone="bg-amber-50 text-amber-800" />
+        <StatusSummary label="Revisions" count={packageSummary.revisions} tone="bg-plum-50 text-plum-700" />
       </section>
       <div>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Your listed services</p>
