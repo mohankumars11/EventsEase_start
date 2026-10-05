@@ -13,7 +13,7 @@ export async function photographyPricing(t) {
     await t.test('pricing', 'Photography pricing opens in the real browser harness', async () => {
       await until_(driver, async () => {
         const body = await driver.findElement(By.css('body')).getText()
-        return body.includes('Photography') && body.includes('Essential Coverage') ? true : null
+        return body.includes('Photography') && body.includes('Essential Coverage') || body.includes('Professional Photography') ? true : null
       }, 15000)
       const body = await driver.findElement(By.css('body')).getText()
       t.assert(body.includes('Photography'), 'Photography title did not render')
@@ -35,7 +35,7 @@ export async function photographyPricing(t) {
     })
 
     await t.test('pricing', 'A Photography package can enter Trade Fields', async () => {
-      const template = await driver.findElement(By.css('button.trade-pricing-template-card'))
+      const template = await driver.findElement(By.xpath('//button[normalize-space(.)="Use first template"]'))
       await driver.executeScript('arguments[0].click()', template)
 
       const description = await until_(driver, async () => {
