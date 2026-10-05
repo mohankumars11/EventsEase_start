@@ -40,7 +40,7 @@ export function usePartnerOnboarding() {
         .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()
       if (run !== runId.current) return
 
-      let listings = [], documents = {}, payout = null, weeklyRules = [], generic = [], catering = []
+      let listings = [], documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
       if (vendor?.id) {
         const [ls, docs, pay, week, genericRes, cateringRes] = await Promise.all([
           fetchListings(vendor.id),
@@ -57,6 +57,9 @@ export function usePartnerOnboarding() {
           supabase.from('sambramo_catering_packages')
             .select('id, vendor_service_id, name, status, parent_package_id, rate_bands')
             .eq('vendor_id', vendor.id),
+          supabase.from('sambramo_partner_price_books')
+            .select('offering_id, vendor_service_id, unit, rate_paise, status, version')
+            .eq('vendor_id', vendor.id),
         ])
         if (run !== runId.current) return
         listings = ls ?? []
@@ -65,8 +68,9 @@ export function usePartnerOnboarding() {
         weeklyRules = week?.error ? [] : (week?.data ?? [])
         generic = genericRes?.error ? [] : (genericRes?.data ?? [])
         catering = cateringRes?.error ? [] : (cateringRes?.data ?? [])
+        priceBooks = priceRes?.error ? [] : (priceRes?.data ?? [])
       }
-      setAccount({ vendor: vendor ?? null, listings, documents, payout, weeklyRules, pricing: { byService: indexPricing(generic, catering), generic, catering } })
+      setAccount({ vendor: vendor ?? null, listings, documents, payout, weeklyRules, pricing: { byService: indexPricing(generic, catering, priceBooks), generic, catering, priceBooks } })
     } catch {
       /* A partner we cannot read is left at the start rather than
          pushed somewhere by a half-answer. */
