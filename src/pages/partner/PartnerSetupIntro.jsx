@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Briefcase, User, MapPin, ShieldCheck, Landmark, Send,
+  Briefcase, MapPin, ShieldCheck, Landmark, Send,
   Check, Lock, Loader2, TriangleAlert, ArrowRight,
 } from 'lucide-react'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
@@ -39,7 +39,6 @@ import InviteCodeEntry from '../../components/partner/referrals/InviteCodeEntry'
 
 const ICON = {
   business: Briefcase,
-  details: User,
   area: MapPin,
   compliance: ShieldCheck,
   bank: Landmark,
@@ -48,7 +47,6 @@ const ICON = {
 
 const ROUTE = {
   business: '/partner/setup/services',
-  details: '/partner/setup/details',
   area: '/partner/setup/area',
   compliance: '/partner/setup/compliance',
   bank: '/partner/setup/bank',
