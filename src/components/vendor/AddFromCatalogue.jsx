@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search, Check, X, Loader2, Plus } from 'lucide-react'
 import { TRADES, offeringsForTrade, allOfferings } from '../../data/partnerCatalogue'
+import SambramoTradePictogram from './SambramoTradePictogram'
 
 /**
  * Pick what you do. Do not type it.
@@ -122,7 +123,10 @@ export default function AddFromCatalogue({ existing = [], onAdd, onClose }) {
                   onClick={() => setTrade(t)}
                   className="flex w-full items-center justify-between gap-2 rounded-2xl bg-white p-3.5 text-left ring-1 ring-ink/[0.07] active:scale-[0.99]"
                 >
-                  <span className="text-[13.5px] font-extrabold leading-snug text-ink">{t}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} />
+                    <span className="text-[13.5px] font-extrabold leading-snug text-ink">{t}</span>
+                  </span>
                   <Plus size={15} className="shrink-0 text-saffron-700" />
                 </button>
               </li>
@@ -165,10 +169,13 @@ export default function AddFromCatalogue({ existing = [], onAdd, onClose }) {
                     {on && <Check size={13} strokeWidth={3} />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14.5px] font-extrabold leading-snug text-ink">
+                    <span className="flex items-center gap-2">
+                      <SambramoTradePictogram trade={o.trade} size="xs" showSparkle={false} title={false} />
+                      <span className="text-[14.5px] font-extrabold leading-snug text-ink">
                       {o.name}
+                      </span>
                     </span>
-                    <span className="block text-[11.5px] font-bold uppercase tracking-wide text-ink-mute">
+                    <span className="block pl-8 text-[11.5px] font-bold uppercase tracking-wide text-ink-mute">
                       {o.trade}
                     </span>
                     {/* What a customer can actually ask for inside this
