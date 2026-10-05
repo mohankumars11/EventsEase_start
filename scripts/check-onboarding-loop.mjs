@@ -124,5 +124,20 @@ ok('the trade queue is cleared when a walk ends',
    /clearQueue\(\)/.test(list),
    'clearQueue was exported and never called, so a localStorage queue survived')
 
+console.log('\nFIRST SERVICE ENTRY MUST BE A REAL ACTION\n')
+
+ok('the empty Step 1 first-service card is a button',
+   /data-action=["']choose-first-service["']/.test(hub),
+   'the old empty-state card was a non-interactive div')
+ok('the first-service button uses the same picker handler as Add service',
+   /onClick=\{openServicePicker\}/.test(hub),
+   'the empty state and Add service must not have different navigation paths')
+ok('Add service preserves typed business basics before leaving Step 1',
+   /openServicePicker/.test(hub) && /vendors.*update/.test(hub),
+   'business details were previously local-only and could reset on return')
+ok('service completion returns with an explicit success marker',
+   /serviceAdded=1/.test(list),
+   'returning to Step 1 must not look like a reset')
+
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0
