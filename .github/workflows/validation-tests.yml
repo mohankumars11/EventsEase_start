@@ -75,6 +75,11 @@ jobs:
           BROWSER: chrome
         run: node tests/selenium/run.mjs lab
 
+      - name: Photography pricing browser E2E
+        env:
+          BROWSER: chrome
+        run: node tests/selenium/run.mjs photographyPricing
+
       - name: Database suites
         run: echo "Server parity, direct writes and the end-to-end journey run locally against the database; SKIPPED here."
 
