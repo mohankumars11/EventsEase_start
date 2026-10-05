@@ -1,6 +1,6 @@
 begin;
-drop index if exists public.sambramo_trade_packages_vendor_service_id_name_key;
-drop index if exists public.sambramo_catering_packages_vendor_service_id_name_key;
+alter table public.sambramo_trade_packages drop constraint if exists sambramo_trade_packages_vendor_service_id_name_key;
+alter table public.sambramo_catering_packages drop constraint if exists sambramo_catering_packages_vendor_service_id_name_key;
 create unique index if not exists sambramo_trade_packages_live_name_key on public.sambramo_trade_packages(vendor_service_id,name) where status='LIVE';
 create unique index if not exists sambramo_catering_packages_live_name_key on public.sambramo_catering_packages(vendor_service_id,name) where status in ('LIVE','ACTIVE');
 drop policy if exists sambramo_catering_packages_public_active on public.sambramo_catering_packages;
