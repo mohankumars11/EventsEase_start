@@ -222,7 +222,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
     try {
       const { data: rows, error: pkgError } = await supabase
         .from('sambramo_trade_packages')
-        .select('id,vendor_id,vendor_service_id,template_id,source,name,description,commercial_inputs,trade_inputs,status,revision_round,submitted_at,reviewed_at,review_note,created_at,updated_at')
+        .select('id,vendor_id,vendor_service_id,parent_package_id,template_id,source,name,description,commercial_inputs,trade_inputs,status,revision_round,submitted_at,reviewed_at,review_note,created_at,updated_at')
         .eq('vendor_service_id', service.id)
         .order('updated_at', { ascending: false })
       if (pkgError) throw pkgError
@@ -290,7 +290,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         packages={packages}
         draft={editor}
         setDraft={setEditor}
-        readOnly={editor.status === 'LIVE'}
+        readOnly={false}
         onBack={() => setEditor(null)}
         onSaved={async (result, status) => { await load(); if (status === 'UNDER_REVIEW') setEditor(null); else setEditor(prev => prev ? { ...prev, id: result?.package_id ?? prev.id, status: 'DRAFT' } : prev) }}
         onOpenListings={onOpenListings}
@@ -321,6 +321,9 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         </div>
       </section>
 
+      <section className="grid grid-cols-3 gap-2">
+        {[["Live", packages.filter(p => p.status === 'LIVE').length, 'bg-forest-50 text-forest-800'], ["Draft", packages.filter(p => p.status === 'DRAFT').length, 'bg-surface text-ink-soft'], ["Review", packages.filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status)).length, 'bg-amber-50 text-amber-800']].map(([label,count,tone]) => <div key={label} className={`rounded-2xl p-3 ring-1 ring-ink/[0.06] ${tone}`}><p className="text-[9px] font-extrabold uppercase tracking-wide opacity-70">{label}</p><p className="mt-1 text-[18px] font-black">{count}</p></div>)}
+      </section>
       <section className="rounded-[24px] bg-white p-3.5 ring-1 ring-[#E7E2EF]">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -497,140 +500,58 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   }
 
   async function save(status) {
-    if (readOnly || saving) return
+    if (saving) return
     setLocalError('')
     setSaveNotice('')
-
     if (status === 'UNDER_REVIEW' && validation.length) {
       setLocalError(validation.join(' '))
       const first = validation[0] ?? ''
-      if (/package name/i.test(first)) {
-        setActiveStep('package')
-        requestAnimationFrame(() => document.querySelector('[data-pricing-package-name]')?.focus())
-      } else if (/description|package tier|pricing unit/i.test(first)) {
-        setActiveStep('package')
-      } else if (/complete /i.test(first)) {
-        setActiveStep('details')
-      } else if (/minimum order|base price|lead time|travel|booking mode|cancellation|payment requirement/i.test(first)) {
-        setActiveStep('pricing')
-      } else if (/add-on/i.test(first)) {
-        setActiveStep('addons')
-      }
+      if (/package name|description|package tier|pricing unit/i.test(first)) setActiveStep('package')
+      else if (/complete /i.test(first)) setActiveStep('details')
+      else if (/minimum order|base price|lead time|travel|booking mode|cancellation|payment requirement/i.test(first)) setActiveStep('pricing')
+      else if (/add-on/i.test(first)) setActiveStep('addons')
       return
     }
-
     setSaving(true)
     try {
-      let packageName = String(draft.name ?? '').trim()
-
-      // A draft is allowed to be incomplete. Give an unnamed draft a
-      // deterministic, unique placeholder so repeated "Save draft" taps
-      // can never collide with the listing's unique package-name key.
-      if (!packageName) {
-        const baseName = config.name + ' draft'
-        const { data: existingNames, error: nameError } = await supabase
-          .from('sambramo_trade_packages')
-          .select('name')
-          .eq('vendor_service_id', service.id)
-          .neq('status', 'ARCHIVED')
-          .ilike('name', baseName + '%')
-        if (nameError) throw nameError
-        const taken = new Set((existingNames ?? []).map(row => String(row.name ?? '').trim().toLowerCase()))
-        packageName = baseName
-        let suffix = 2
-        while (taken.has(packageName.toLowerCase())) {
-          packageName = baseName + ' ' + suffix
-          suffix += 1
-        }
-      } else {
-        // The database intentionally enforces one package name per listing.
-        // Catch that before the RPC so the partner gets an actionable error
-        // instead of a dead-looking button / raw 23505 response.
-        const { data: duplicate, error: duplicateError } = await supabase
-          .from('sambramo_trade_packages')
-          .select('id,name')
-          .eq('vendor_service_id', service.id)
-          .neq('status', 'ARCHIVED')
-          .eq('name', packageName)
-          .limit(1)
-          .maybeSingle()
-        if (duplicateError) throw duplicateError
-        if (duplicate?.id && String(duplicate.id) !== String(draft.id ?? '')) {
-          setActiveStep('package')
-          setLocalError('A package named "' + packageName + '" already exists for this listing. Rename this package, then save or submit again.')
-          requestAnimationFrame(() => document.querySelector('[data-pricing-package-name]')?.focus())
-          return
-        }
-      }
-
+      let packageName = String(draft.name ?? '').trim() || (config.name + ' draft')
+      const isLiveRevision = draft.status === 'LIVE'
       const pPackage = {
-        name: packageName,
-        source: draft.source,
-        template_id: draft.template_id || null,
-        description: draft.description || null,
-        revision_round: Number(draft.revision_round || 0),
-        commercial_inputs: {
-          ...(draft.commercial_inputs ?? {}),
-          tier: draft.tier || null,
-          availability_policy: draft.availability_policy || 'instant',
-          cancellation_policy: draft.cancellation_policy || 'standard',
-          payment_policy: draft.payment_policy || 'full',
-        },
-        trade_inputs: draft.trade_inputs ?? {},
-        status,
+        name: packageName, source: draft.source, template_id: draft.template_id || null,
+        description: draft.description || null, revision_round: isLiveRevision ? Number(draft.revision_round || 0) + 1 : Number(draft.revision_round || 0),
+        commercial_inputs: { ...(draft.commercial_inputs ?? {}), tier: draft.tier || null, availability_policy: 'instant', cancellation_policy: draft.cancellation_policy || 'standard', payment_policy: 'full' },
+        trade_inputs: draft.trade_inputs ?? {}, status,
       }
       const pPricing = {
-        base_price: draft.base_price === '' ? 0 : Number(draft.base_price),
-        pricing_unit: draft.pricing_unit,
-        minimum_order: Number(draft.minimum_order || 1),
-        included_quantity: Number(draft.included_quantity || 0),
+        base_price: draft.base_price === '' ? 0 : Number(draft.base_price), pricing_unit: draft.pricing_unit,
+        minimum_order: Number(draft.minimum_order || 1), included_quantity: Number(draft.included_quantity || 0),
         included_duration: draft.included_duration === '' ? null : Number(draft.included_duration),
-        additional_unit_rate: Number(draft.additional_unit_rate || 0),
-        additional_duration_rate: Number(draft.additional_duration_rate || 0),
-        setup_fee: Number(draft.setup_fee || 0),
-        teardown_fee: Number(draft.teardown_fee || 0),
-        travel_policy: draft.travel_policy || null,
-        lead_time: draft.lead_time === '' ? null : Number(draft.lead_time),
+        additional_unit_rate: Number(draft.additional_unit_rate || 0), additional_duration_rate: Number(draft.additional_duration_rate || 0),
+        setup_fee: Number(draft.setup_fee || 0), teardown_fee: Number(draft.teardown_fee || 0),
+        travel_policy: draft.travel_policy || null, lead_time: draft.lead_time === '' ? null : Number(draft.lead_time),
       }
-      const payloadAddons = addons
-        .filter(item => String(item.name ?? '').trim())
-        .map((item, index) => ({
-          ...item,
-          rate_paise: item.rate_paise === '' || item.rate_paise == null ? 0 : Math.max(0, Math.round(Number(item.rate_paise))),
-          minimum_quantity: item.minimum_quantity === '' || item.minimum_quantity == null ? 1 : Math.max(1, Number(item.minimum_quantity)),
-          included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0, Number(item.included_quantity)),
-          sort_order: index,
-        }))
-      const { data, error } = await supabase.rpc('save_sambramo_trade_package', {
-        p_vendor_service_id: service.id,
-        p_package_id: draft.id || null,
-        p_package: pPackage,
-        p_addons: payloadAddons,
-        p_pricing: pPricing,
-      })
-      if (error) {
-        const message = String(error.message ?? '')
-        if (/duplicate key value violates unique constraint/i.test(message)) {
-          throw new Error('A package with that name already exists for this listing. Rename the package and try again.')
-        }
-        throw error
+      const payloadAddons = addons.filter(item => String(item.name ?? '').trim()).map((item,index)=>({
+        ...item, rate_paise: item.rate_paise === '' || item.rate_paise == null ? 0 : Math.max(0,Math.round(Number(item.rate_paise))),
+        minimum_quantity: item.minimum_quantity === '' || item.minimum_quantity == null ? 1 : Math.max(1,Number(item.minimum_quantity)),
+        included_quantity: item.included_quantity === '' || item.included_quantity == null ? 0 : Math.max(0,Number(item.included_quantity)), sort_order:index,
+      }))
+      let data; let error
+      if (isLiveRevision) {
+        const res=await supabase.rpc('create_sambramo_trade_package_revision',{p_parent_package_id:draft.id,p_package:pPackage,p_addons:payloadAddons,p_pricing:pPricing})
+        data=res.data; error=res.error
+        if(!error) setSaveNotice(status==='UNDER_REVIEW' ? 'New pricing revision submitted. Your current live package stays unchanged until Sambramo approves it.' : 'New pricing revision saved. Your current live package stays unchanged.')
+      } else {
+        const res=await supabase.rpc('save_sambramo_trade_package',{p_vendor_service_id:service.id,p_package_id:draft.id||null,p_package:pPackage,p_addons:payloadAddons,p_pricing:pPricing})
+        data=res.data; error=res.error
+        if(!error) setSaveNotice(status==='DRAFT' ? 'Draft saved successfully.' : 'Pricing submitted to Sambramo review.')
       }
-      if (data?.ok === false) throw new Error(data.reason ?? 'Could not save this pricing package.')
-
-      // Keep the returned package id in editor state immediately. This makes
-      // a second save an UPDATE instead of accidentally starting a duplicate
-      // package, even before the parent dashboard finishes refreshing.
-      setDraft(d => ({ ...d, id: data?.package_id ?? d.id, name: packageName, status }))
-      setSaveNotice(status === 'DRAFT' ? 'Draft saved successfully. You can continue editing this package.' : 'Pricing submitted to Sambramo review.')
-      await onSaved(data, status)
-    } catch (e) {
-      setSaveNotice('')
-      setLocalError(e?.message ?? 'Could not save this pricing package.')
-    } finally {
-      setSaving(false)
-    }
+      if(error){const message=String(error.message??''); if(/duplicate key value violates unique constraint/i.test(message)) throw new Error('A live package with that name already exists for this listing.'); throw error}
+      if(data?.ok===false) throw new Error(data.reason??'Could not save this pricing package.')
+      setDraft(d=>({...d,id:data?.package_id??d.id,name:packageName,status:data?.status??status}))
+      await onSaved(data,status)
+    } catch(e){ setSaveNotice(''); setLocalError(e?.message??'Could not save this pricing package.') }
+    finally { setSaving(false) }
   }
-
   const currentIndex = SECTION_META.findIndex(x => x[0] === activeStep)
   const next = SECTION_META[currentIndex + 1]
   const isPreview = activeStep === 'preview'
