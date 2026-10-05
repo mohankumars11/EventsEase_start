@@ -4,7 +4,8 @@ import { authenticatedUser } from './_lib/auth.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const POLICY_VERSION = 'sambramo-custom-quote-v1'
+const POLICY_VERSION = 'sambramo-custom-quote-v2'
+const PARTNER_RESPONSE_MINUTES = 7
 const DEFAULT_RADIUS_KM = 40
 const MAX_PARTNERS = 5
 
@@ -133,7 +134,7 @@ export default async function handler(req, res) {
       state: 'VENDOR_QUOTE',
       missing_inputs: [],
       required_actions: [],
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + PARTNER_RESPONSE_MINUTES * 60 * 1000).toISOString(),
       quote_group_id: groupId,
       booking_request_id: booking.request_id,
       reference_photo_url: cleanText(body.referencePhotoUrl, 1000),
@@ -152,6 +153,7 @@ export default async function handler(req, res) {
     bookingRequestId: booking.request_id,
     quoteGroupId: groupId,
     partnersContacted: inserted?.length ?? 0,
+    partnerResponseWindowMinutes: PARTNER_RESPONSE_MINUTES,
     quoteRequestIds: (inserted ?? []).map(x => x.id),
   })
 }
