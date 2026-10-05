@@ -198,7 +198,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         preview={preview}
         setPreview={setPreview}
         onBack={() => setEditing(null)}
-        onSaved={async () => { setEditing(null); await load() }}
+        onSaved={async status => { setEditing(null); await load(); if (onboarding) onBack?.() }}
       />
     )
   }
@@ -322,7 +322,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
                       <span className="flex items-center justify-between gap-2">
                         <span className="text-[15px] font-extrabold text-ink">{pkg.name}</span>
                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${pkg.status === 'ACTIVE' ? 'bg-forest-50 text-forest-700' : 'bg-ink/[0.05] text-ink-mute'}`}>
-                          {pkg.status === 'ACTIVE' ? 'Ready' : 'Draft'}
+                          {['ACTIVE','LIVE'].includes(pkg.status) ? 'Live' : ['UNDER_REVIEW','ACTION_REQUIRED'].includes(pkg.status) ? 'Review' : 'Draft'}
                         </span>
                       </span>
                       <span className="mt-1 block text-[11.5px] text-ink-mute">
