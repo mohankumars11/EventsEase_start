@@ -27,6 +27,7 @@ import {
 } from '../../data/sambramoPricingCatalog'
 import WorkLibrary from './WorkLibrary'
 import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import { transactionLaneFor, transactionLaneCopy, TRANSACTION_LANES } from '../../lib/sambramoTransactionLane'
 
 const DEFAULT_UNITS = {
   PACKAGE: ['package', 'per event', 'per hour', 'per day', 'per function'],
@@ -143,6 +144,8 @@ function blankPackage(config, service) {
     commercial_inputs: {
       inclusions: [],
       exclusions: EXCLUSIONS_BY_MODE[config.mode] ?? [],
+      availability_policy: 'instant',
+      payment_policy: 'full',
     },
     trade_inputs: {},
     base_price: '',
@@ -434,9 +437,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     if (quoteFirst && Number(draft.minimum_order || 0) <= 0) problems.push('Choose a valid quote minimum.')
     if (draft.lead_time === '' || draft.lead_time == null) problems.push('Choose a lead time.')
     if (!String(draft.travel_policy ?? '').trim()) problems.push('Choose a travel / service-area policy.')
-    if (!String(draft.availability_policy ?? '').trim()) problems.push('Choose a booking mode.')
     if (!String(draft.cancellation_policy ?? '').trim()) problems.push('Choose a cancellation policy.')
-    if (!String(draft.payment_policy ?? '').trim()) problems.push('Choose a payment requirement.')
     for (const addon of addons) {
       if (!String(addon.name ?? '').trim()) continue
       if (addon.rate_paise === '' || addon.rate_paise == null || Number(addon.rate_paise) < 0) problems.push('Set a price for ' + addon.name + '.')
@@ -527,10 +528,11 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     try {
       let packageName = String(draft.name ?? '').trim() || (config.name + ' draft')
       const isLiveRevision = draft.status === 'LIVE'
+      const transactionLane = transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' })
       const pPackage = {
         name: packageName, source: draft.source, template_id: draft.template_id || null,
         description: draft.description || null, revision_round: isLiveRevision ? Number(draft.revision_round || 0) + 1 : Number(draft.revision_round || 0),
-        commercial_inputs: { ...(draft.commercial_inputs ?? {}), tier: draft.tier || null, availability_policy: 'instant', cancellation_policy: draft.cancellation_policy || 'standard', payment_policy: 'full' },
+        commercial_inputs: { ...(draft.commercial_inputs ?? {}), tier: draft.tier || null, availability_policy: 'instant', payment_policy: 'full', cancellation_policy: draft.cancellation_policy || 'standard', transaction_lane: transactionLane, transaction_lane_label: transactionLaneCopy(transactionLane, { concise: true }) },
         trade_inputs: draft.trade_inputs ?? {}, status,
       }
       const pPricing = {
@@ -844,7 +846,13 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
         <div className="trade-pricing-simple-rules">
           <PresetNumberField required label={isCatalog ? 'Ready in' : 'How much notice?'} value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
           <ChoiceField required label="Where do you serve?" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
-          <ChoiceField required label="How should customers book?" value={draft.availability_policy} disabled={readOnly} options={[['instant','Book instantly'],['request','Request approval'],['schedule','Choose a date'],['quote','Get a quote']]} onChange={v => onUpdate('availability_policy', v)} />
+          <div className="trade-pricing-platform-lane" role="status">
+            <div className="trade-pricing-platform-lane-icon">{transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' }) === TRANSACTION_LANES.INSTANT_QUOTE_PAY ? <Sparkles size={16} /> : <Zap size={16} />}</div>
+            <div>
+              <strong>{transactionLaneCopy(transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' }), { concise: true })}</strong>
+              <span>Sambramo decides the final lane from the customer requirement. You do not choose a payment method.</span>
+            </div>
+          </div>
         </div>
 
         {(usesQuantity || usesDuration) ? (
