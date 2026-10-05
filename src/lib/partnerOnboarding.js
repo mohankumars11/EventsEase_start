@@ -39,43 +39,12 @@ import { evaluateAll } from './verification/satisfaction'
  */
 
 export const STEPS = [
-  {
-    id: 'business',
-    n: '01',
-    title: 'Business & Services',
-    blurb: 'What you offer and the services you provide.',
-  },
-  {
-    id: 'details',
-    n: '02',
-    title: 'Partner Details',
-    blurb: 'Your identity, business and experience.',
-  },
-  {
-    id: 'area',
-    n: '03',
-    title: 'Service Area & Availability',
-    blurb: 'Where you work, how far you travel and when you are available.',
-  },
-  {
-    id: 'compliance',
-    n: '04',
-    title: 'Verification & Compliance',
-    blurb: 'Only the verification required for your selected services.',
-  },
-  {
-    id: 'bank',
-    n: '05',
-    title: 'Bank & Payments',
-    blurb: 'Where your Sambramo earnings are paid.',
-  },
-  {
-    id: 'review',
-    n: '06',
-    title: 'Review & Publish',
-    blurb: 'Review everything and submit your profile for approval.',
-  },
-]
+  { id: 'business', n: '01', title: 'Business, Services & Pricing', blurb: 'Business basics, services, packages and customer-ready pricing.' },
+  { id: 'area', n: '02', title: 'Service Area & Availability', blurb: 'Where you work and when Sambramo can offer you scheduled jobs.' },
+  { id: 'compliance', n: '03', title: 'Verification & Compliance', blurb: 'Only the verification required for your selected services.' },
+  { id: 'bank', n: '04', title: 'Payout Setup', blurb: 'Where your Sambramo earnings are paid.' },
+  { id: 'review', n: '05', title: 'Review & Submit', blurb: 'Review your business, services, pricing, calendar, verification and payout once.' },
+];
 
 export const STEP_IDS = STEPS.map(s => s.id)
 export const STEP_BY_ID = Object.fromEntries(STEPS.map(s => [s.id, s]))
@@ -107,106 +76,22 @@ export const STATUS = {
  * somebody reaches Review & Publish with nothing to sell. §17: one
  * complete service; the others may sit in draft.
  */
-function businessDone({ listings = [] }) {
+function businessDone({ vendor, listings = [], pricing = {} }) {
   const configured = listings.filter(l => (l.offerings?.length ?? 0) > 0)
+  const businessReady = !!String(vendor?.business_name ?? '').trim()
+  const readyByService = pricing?.byService ?? {}
+  const servicesReady = configured.length > 0 && configured.every(l =>
+    l.offerings.every(s => readyByService[s.id]?.ready))
+  const allReady = businessReady && configured.length > 0 && servicesReady
   return {
-    done: configured.length > 0,
-    partial: listings.length > 0,
-    detail: configured.length
-      ? `${configured.length} service${configured.length === 1 ? '' : 's'} configured`
-      : listings.length ? 'Started — no service finished yet' : null,
+    done: allReady,
+    partial: !!vendor || listings.length > 0,
+    detail: allReady
+      ? `${configured.length} service${configured.length === 1 ? '' : 's'} ready with pricing`
+      : configured.length
+        ? `${configured.length} service${configured.length === 1 ? '' : 's'} selected — finish listing + pricing`
+        : listings.length ? 'Started — finish at least one service' : null,
   }
-}
-
-/**
- * Step 2 · who they are.
- *
- * `business_name` is created by the onboarding form, so its presence is
- * not evidence of anything. The fields below are the ones a coordinator
- * needs before ringing somebody on the day.
- */
-function detailsDone({ vendor }) {
-  if (!vendor) return { done: false, partial: false, detail: null }
-  const have = [
-    vendor.business_name,
-    vendor.contact_phone,
-    vendor.description,
-    vendor.years_active ?? vendor.years_experience,
-  ]
-  const filled = have.filter(v => v !== null && v !== undefined && String(v).trim() !== '')
-  return {
-    done: filled.length === have.length,
-    partial: filled.length > 0,
-    detail: filled.length === have.length ? null : `${filled.length} of ${have.length} filled`,
-  }
-}
-
-/**
- * Step 3 · where and when.
- *
- * `location` is the geography point set by set_partner_location, and it
- * is the one dispatch actually measures from — a pincode with no point
- * is the bug that made a fully onboarded partner undispatchable twice.
- */
-function areaDone({ vendor }) {
-  if (!vendor) return { done: false, partial: false, detail: null }
-  const located = !!vendor.city && !!vendor.pincode
-  const radius = Number(vendor.service_radius_km) > 0
-  return {
-    done: located && radius,
-    partial: located || radius,
-    detail: located && radius ? `${vendor.city} · ${vendor.service_radius_km} km` : null,
-  }
-}
-
-/**
- * Step 4 · only what their trades actually require.
- *
- * The requirement list is computed from the trades in step 1, so a
- * photographer is never blocked by a food licence. A requirement that is
- * not applicable is not in the list at all — see data/compliance.js.
- */
-function complianceDone({ listings = [], documents = {}, vendor }) {
-  const trades = listings.map(l => l.trade)
-  const reqs = requirementsFor(trades)
-
-  /* ── Counted by requirement, never by kind ────────────────────────
-     This used to be `documents[r.documentKind]` — truthy if any row
-     existed under that kind. Five trade requirements share the kind
-     'shop_licence', so a partner listing Catering AND Venue uploaded
-     one food licence and BOTH read as satisfied. It showed as a tick,
-     which is worse than showing as a gap.
-
-     `evaluateAll` asks each requirement what it declares — two sides,
-     a number, a holder name, an expiry — and checks the row has it,
-     and that it has not expired. A photograph on its own is no longer
-     a satisfied requirement. */
-  const byRequirement = documents.byRequirement ?? documents
-  const evaluated = evaluateAll(reqs, byRequirement)
-
-  /* ── Why this step needs an acknowledgement and the others do not ──
-     Every other step is proved by its own data: a phone number is
-     there or it is not. This step can be satisfied by an empty list —
-     `MANDATORY_FROM` is unset, so nothing is required of anybody yet,
-     and "zero of zero required documents are missing" is true for a
-     partner who has never seen the screen.
-
-     Auto-completing on that would skip the step entirely: the
-     individual requirements are dynamic, the STEP is mandatory. So the
-     partner has to have been here and said so, and that act is
-     recorded in `completed_steps` (119) — which is what a persisted
-     marker is legitimately for, as opposed to recording something the
-     data already knows. */
-  const acknowledged = (vendor?.completed_steps ?? []).includes('compliance')
-
-  return {
-    done: evaluated.canSubmit && acknowledged,
-    partial: evaluated.satisfied > 0 || acknowledged,
-    detail: evaluated.requiredTotal
-      ? `${evaluated.requiredSatisfied} of ${evaluated.requiredTotal} required`
-      : `${evaluated.satisfied} of ${reqs.length} added`,
-  }
-
 }
 
 /** Step 5 · somewhere to pay them. */
