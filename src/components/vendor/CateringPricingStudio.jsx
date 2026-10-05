@@ -32,7 +32,7 @@ const sectionForCourse = courseId => ({
 const iid = () => crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + Math.random())
 const normDishName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
-export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings }) {
+export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false }) {
   const capability = useMemo(() => cateringCapabilityFromListing(service), [service])
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -140,6 +140,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
     setPreview(false)
     setEditing({
       id: pkg.id,
+      parentPackageId: pkg.parent_package_id ?? null,
       name: pkg.name,
       cuisines: [...(pkg.cuisine_ids ?? [])],
       kitchenType: pkg.kitchen_type,
@@ -247,6 +248,9 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         </section>
       )}
 
+      <section className="grid grid-cols-3 gap-2">
+        {[['Live', packages.filter(p => ['LIVE','ACTIVE'].includes(p.status)).length, 'bg-forest-50 text-forest-800'], ['Draft', packages.filter(p => p.status === 'DRAFT').length, 'bg-surface text-ink-soft'], ['Review', packages.filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status)).length, 'bg-amber-50 text-amber-800']].map(([label,count,tone]) => <div key={label} className={'rounded-2xl p-3 ring-1 ring-ink/[0.06] '+tone}><p className="text-[9px] font-extrabold uppercase tracking-wide opacity-70">{label}</p><p className="mt-1 text-[18px] font-black">{count}</p></div>)}
+      </section>
       <section className="rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -488,7 +492,8 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
   }
 
   async function save(status) {
-    const requireActive = status === 'ACTIVE'
+    const targetStatus = status === 'ACTIVE' ? 'UNDER_REVIEW' : status
+    const requireActive = targetStatus === 'UNDER_REVIEW'
     const rateBands = (draft.rateBands ?? []).map(b => ({
       id: b.id ?? iid(),
       minGuests: String(b.minGuests ?? ''),
@@ -508,53 +513,92 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
     setSaveError('')
     setSavedMessage('')
     try {
-      const { data, error: rpcError } = await supabase.rpc('save_sambramo_catering_package', {
-        p_vendor_service_id: service.id,
-        p_package_id: draft.id || null,
-        p_package: {
-          name: draft.name.trim(),
-          cuisine_ids: draft.cuisines,
-          kitchen_type: draft.kitchenType,
-          service_style: draft.serviceStyle,
-          sourcing_mode: draft.sourcingMode,
-          min_guests: Number(draft.minGuests),
-          max_guests: draft.maxGuests === '' ? null : Number(draft.maxGuests),
-          service_hours: Number(draft.serviceHours),
-          included_staff: Number(draft.includedStaff),
-          notes: draft.notes?.trim() || null,
-          status,
-        },
-        p_items: (draft.items ?? []).map((x, index) => ({
-          dish_id: x.id,
-          section: x.section,
-          selection_type: x.selectionType,
-          choice_group: x.choiceGroup || null,
-          sort_order: index,
+      const pPackage = {
+        name: draft.name.trim(),
+        cuisine_ids: draft.cuisines,
+        kitchen_type: draft.kitchenType,
+        service_style: draft.serviceStyle,
+        sourcing_mode: draft.sourcingMode,
+        min_guests: Number(draft.minGuests),
+        max_guests: draft.maxGuests === '' ? null : Number(draft.maxGuests),
+        service_hours: Number(draft.serviceHours),
+        included_staff: Number(draft.includedStaff),
+        notes: draft.notes?.trim() || null,
+        status: targetStatus,
+      }
+      const pItems = (draft.items ?? []).map((x, index) => ({
+        dish_id: x.id,
+        section: x.section,
+        selection_type: x.selectionType,
+        choice_group: x.choiceGroup || null,
+        sort_order: index,
+      }))
+      const pAddons = (draft.addons ?? []).filter(x => x.active !== false).map((x, index) => ({
+        name: x.name.trim(),
+        unit: x.unit,
+        rate_paise: Math.round(Number(x.rate || 0) * 100),
+        minimum_quantity: Number(x.minimum || 1),
+        maximum_quantity: x.maximum === '' ? null : Number(x.maximum),
+        included_quantity: Number(x.included || 0),
+        notes: x.notes?.trim() || null,
+        active: true,
+        sort_order: index,
+      }))
+      const pRate = {
+        supply_rate_paise: Math.round(Number(baseRate || 0) * 100),
+        rate_bands: rateBands.map(b => ({
+          min_guests: Number(b.minGuests),
+          max_guests: b.maxGuests === '' ? null : Number(b.maxGuests),
+          rate_paise: Math.round(Number(b.rate || 0) * 100),
         })),
-        p_addons: (draft.addons ?? []).filter(x => x.active !== false).map((x, index) => ({
-          name: x.name.trim(),
-          unit: x.unit,
-          rate_paise: Math.round(Number(x.rate || 0) * 100),
-          minimum_quantity: Number(x.minimum || 1),
-          maximum_quantity: x.maximum === '' ? null : Number(x.maximum),
-          included_quantity: Number(x.included || 0),
-          notes: x.notes?.trim() || null,
-          active: true,
-          sort_order: index,
-        })),
-        p_rate: {
-          supply_rate_paise: Math.round(Number(baseRate || 0) * 100),
-          rate_bands: rateBands.map(b => ({
-            min_guests: Number(b.minGuests),
-            max_guests: b.maxGuests === '' ? null : Number(b.maxGuests),
-            rate_paise: Math.round(Number(b.rate || 0) * 100),
-          })),
-        },
-      })
+      }
+
+      let data
+      let rpcError
+      const isLive = ['ACTIVE', 'LIVE'].includes(draft.status)
+      if (isLive) {
+        const res = await supabase.rpc('create_sambramo_catering_package_revision', {
+          p_parent_package_id: draft.id,
+          p_package: { ...pPackage, status: targetStatus },
+          p_items: pItems,
+          p_addons: pAddons,
+          p_rate: pRate,
+        })
+        data = res.data
+        rpcError = res.error
+        if (!rpcError) {
+          setSavedMessage(targetStatus === 'UNDER_REVIEW'
+            ? 'New pricing revision submitted. Your current live package stays unchanged until Sambramo approves it.'
+            : 'New pricing revision saved. Your current live package stays unchanged.')
+        }
+      } else {
+        const res = await supabase.rpc('save_sambramo_catering_package', {
+          p_vendor_service_id: service.id,
+          p_package_id: draft.id || null,
+          p_package: { ...pPackage, status: 'DRAFT' },
+          p_items: pItems,
+          p_addons: pAddons,
+          p_rate: pRate,
+        })
+        data = res.data
+        rpcError = res.error
+        if (!rpcError && targetStatus === 'UNDER_REVIEW' && data?.package_id) {
+          const moved = await supabase
+            .from('sambramo_catering_packages')
+            .update({ status: 'UNDER_REVIEW' })
+            .eq('id', data.package_id)
+            .select('id,status')
+            .single()
+          if (moved.error) throw moved.error
+        }
+        if (!rpcError) {
+          setSavedMessage(targetStatus === 'UNDER_REVIEW' ? 'Pricing submitted to Sambramo review.' : 'Draft saved.')
+        }
+      }
+
       if (rpcError) throw rpcError
-      setSavedMessage(status === 'ACTIVE' ? 'Menu pricing is live for this listing.' : 'Draft saved. You can finish it later.')
-      setDraft(d => ({ ...d, status }))
-      setTimeout(() => onSaved(), 500)
+      setDraft(d => ({ ...d, id: data?.package_id ?? d.id, status: targetStatus }))
+      setTimeout(() => onSaved(), 350)
     } catch (e) {
       setSaveError(e?.message ?? 'Could not save the catering package.')
     } finally {
