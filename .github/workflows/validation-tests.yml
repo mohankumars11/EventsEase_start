@@ -56,6 +56,8 @@ jobs:
         run: node scripts/generate-catalogue-ids.mjs --check
       - name: 34-trade generated catalogue integrity
         run: node scripts/check-sambramo-catalogue-v2.mjs
+      - name: 34-trade glossy pictogram integrity
+        run: node scripts/check-trade-pictograms.mjs
       - name: Sambramo 5B-5F regression + security gate
         run: node scripts/check-sambramo-5b-5f.mjs
       - name: Partner onboarding + pricing/listing routing contract

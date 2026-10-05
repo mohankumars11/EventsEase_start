@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react'
-import {
-  Search, X, Check, UtensilsCrossed, Camera, Video, Flower2, Building2, Music,
-  Sparkles, Brush, Hand, Tent, Printer, Truck, Lightbulb, CakeSlice, Mic,
-  Speaker, ParkingSquare, Shield, Wine, HandHeart, Zap, HeartPulse, Flame,
-  Gift, Package, ClipboardList, PackageOpen, Warehouse, UsersRound,
-} from 'lucide-react'
+import { Search, X, Check } from 'lucide-react'
 import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
+import SambramoTradePictogram from './SambramoTradePictogram'
 
 /**
  * Every trade, searchable, as the way in.
@@ -36,47 +32,8 @@ import { TRADES, offeringsForTrade } from '../../data/partnerCatalogue'
  * it as well as the trade's own name.
  */
 
-const TRADE_ICON = {
-  'Anchor & MC': Mic,
-  'Bar & Beverages': Wine,
-  'Bridal Makeup & Hair': Brush,
-  'Cake & Desserts': CakeSlice,
-  'Catering & Food': UtensilsCrossed,
-  'DJ & Music': Music,
-  'Decoration & Floral': Flower2,
-  'Event Lighting': Lightbulb,
-  'Gifts & Favours': Gift,
-  'Guest Services': HandHeart,
-  'Invitation & Printing': Printer,
-  'Live Entertainment': Sparkles,
-  'Mehendi Artist': Hand,
-  'Photography': Camera,
-  'Power & Cooling': Zap,
-  'Priest & Rituals': Flame,
-  'Safety & Facilities': HeartPulse,
-  'Security Services': Shield,
-  'Sound & AV': Speaker,
-  'Tent & Furniture': Tent,
-  'Transportation': Truck,
-  'Mini Truck / Pickup': Truck,
-  'Medium / Large Goods Vehicle': Truck,
-  'Passenger Transport': UsersRound,
-  'Event Equipment Rental': Package,
-  'Loading & Unloading Crew': UsersRound,
-  'Warehouse / Storage': Warehouse,
-  'Event Materials Supplier': PackageOpen,
-  'End-to-End Event Logistics': ClipboardList,
-  'Valet Parking': ParkingSquare,
-  'Venue': Building2,
-  'Videography': Video,
-  /* Two trades added later had no icon and fell back to a generic box —
-     on a grid where every other card is a picture of the work, that reads
-     as "we have not thought about you yet". */
-  'Wedding Planning': ClipboardList,
-  'Trousseau & Gift Packing': PackageOpen,
-}
+export const iconForTrade = trade => props => <SambramoTradePictogram trade={trade} {...props} />
 
-export const iconForTrade = t => TRADE_ICON[t] ?? Package
 
 /** The trades matching a query, looking inside each one. */
 export function tradesMatching(q) {
@@ -185,7 +142,6 @@ export default function TradeGrid({
       {layout === 'rows' ? (
         <ul className="flex flex-col gap-2">
           {list.map(t => {
-            const Icon = iconForTrade(t)
             const on = isOn(t)
             const already = disabledTrades.includes(t)
             return (
@@ -202,7 +158,7 @@ export default function TradeGrid({
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                     on ? 'bg-forest-600 text-white' : 'bg-plum-950 text-white'
                   }`}>
-                    <Icon size={17} />
+                    <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
@@ -234,7 +190,6 @@ export default function TradeGrid({
       ) : (
       <div className="grid grid-cols-2 gap-2">
         {list.map(t => {
-          const Icon = iconForTrade(t)
           const n = offeringsForTrade(t).length
           const on = isOn(t)
           return (
@@ -252,9 +207,7 @@ export default function TradeGrid({
                 on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
               }`}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-plum-950 text-white">
-                <Icon size={15} />
-              </span>
+              <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-extrabold leading-tight text-ink">{t}</span>
                 <span className="block text-[10.5px] leading-tight text-ink-mute">
