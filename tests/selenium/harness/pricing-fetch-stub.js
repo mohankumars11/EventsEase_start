@@ -3,12 +3,18 @@
    after importing a component is too late for this browser harness. */
 const realFetch = globalThis.fetch.bind(globalThis)
 globalThis.__PRICING_RPC__ = []
+globalThis.__PRICING_FETCHES__ = []
 
 globalThis.fetch = async (input, init = {}) => {
   const url = typeof input === 'string' ? input : input?.url ?? ''
   if (!url.startsWith('http://127.0.0.1:9/stub')) return realFetch(input, init)
 
   const u = new URL(url)
+  globalThis.__PRICING_FETCHES__.push({
+    method: init?.method ?? 'GET',
+    pathname: u.pathname,
+    body: init?.body ?? null,
+  })
   const json = (body, status = 200) => new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json' },
