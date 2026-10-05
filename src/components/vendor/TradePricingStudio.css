@@ -959,3 +959,13 @@
 .trade-pricing-addon-card.is-selected .trade-pricing-addon-copy em{color:#23764f}
 .trade-pricing-addon-check{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:21px;height:21px;border-radius:999px;background:#287b54;color:#fff}
 @media(max-width:390px){.trade-pricing-addon-grid{gap:7px}.trade-pricing-addon-card{min-height:91px;padding:9px;gap:8px;border-radius:15px}.trade-pricing-addon-art{width:39px;height:39px;flex-basis:39px;border-radius:12px}.trade-pricing-addon-art svg{width:21px;height:21px}.trade-pricing-addon-copy strong{font-size:10.5px}.trade-pricing-addon-copy small{font-size:8.5px}.trade-pricing-addon-copy em{font-size:8px}}
+
+
+.trade-pricing-platform-lane{display:flex;align-items:center;gap:10px;min-height:68px;padding:10px 12px;border-radius:16px;background:linear-gradient(90deg,#f5edff,#fff8ed);border:1px solid #e6d8f5;color:#2a1740}
+.trade-pricing-platform-lane-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:11px;background:#2A085C;color:#fff}
+.trade-pricing-platform-lane strong{display:block;font-size:12px;font-weight:900;line-height:1.2;color:#2A085C}
+.trade-pricing-platform-lane span{display:block;margin-top:3px;font-size:10px;line-height:1.35;color:#6B5B85;font-weight:650}
+.trade-pricing-control-note{display:flex;align-items:flex-start;gap:10px;padding:12px 13px;border-radius:18px;background:#fff8ed;border:1px solid #f1dfba;color:#5c4721}
+.trade-pricing-control-note-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:10px;background:#2A085C;color:#fff}
+.trade-pricing-control-note strong{display:block;font-size:12px;font-weight:900;color:#2A085C}
+.trade-pricing-control-note span{display:block;margin-top:3px;font-size:10.5px;line-height:1.4;color:#6f5a30}
