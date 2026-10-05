@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Loader2, PackagePlus, Pencil, Plus, Store } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import StepShell from '../../../components/onboarding/StepShell'
 import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
@@ -8,6 +8,7 @@ import SambramoPricingStudio from '../../../components/vendor/SambramoPricingStu
 
 export default function BusinessServicesStep() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const { loading, account, refresh } = usePartnerOnboarding()
   const vendor = account.vendor
   const listings = account.listings ?? []
@@ -16,6 +17,7 @@ export default function BusinessServicesStep() {
   const [description, setDescription] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [saving, setSaving] = useState(false)
+  const [serviceNavBusy, setServiceNavBusy] = useState(false)
   const [error, setError] = useState('')
   const [pricingService, setPricingService] = useState(null)
 
@@ -36,6 +38,36 @@ export default function BusinessServicesStep() {
     && serviceRows.length > 0
     && serviceRows.every(row => ['live','under_review'].includes(row.listing.derived))
     && serviceRows.every(row => row.pricing.ready)
+
+  async function openServicePicker() {
+    if (serviceNavBusy || saving || !vendor?.id) return
+    if (!String(businessName).trim()) {
+      setError('Enter your business name before adding a service.')
+      return
+    }
+
+    setServiceNavBusy(true)
+    setError('')
+    try {
+      const { error: err } = await supabase.from('vendors').update({
+        business_name: businessName.trim(),
+        description: description.trim() || null,
+        contact_phone: contactPhone.trim() || null,
+      }).eq('id', vendor.id)
+      if (err) throw err
+
+      // Persist the basics before leaving this screen. Previously the form
+      // kept them only in component state, so opening Add service and coming
+      // back remounted the page and made the partner believe the app had
+      // reset their business details.
+      await refresh()
+      navigate('/partner/services?from=setup')
+    } catch (e) {
+      setError(e?.message ?? 'Could not save your business details before adding a service.')
+    } finally {
+      setServiceNavBusy(false)
+    }
+  }
 
   async function saveAndContinue() {
     if (saving || !vendor?.id) return
@@ -85,9 +117,25 @@ export default function BusinessServicesStep() {
         {error && <p className="mt-3 rounded-2xl bg-rose-50 px-3.5 py-3 text-[12px] font-bold text-rose-700">{error}</p>}
       </section>
 
+      {params.get('serviceAdded') && (
+        <section className="mt-4 rounded-[20px] bg-forest-50 p-4 ring-1 ring-forest-200">
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
+              <Check size={14} strokeWidth={3} />
+            </span>
+            <div>
+              <p className="text-[13px] font-extrabold text-forest-800">Service added successfully</p>
+              <p className="mt-0.5 text-[11.5px] leading-relaxed text-forest-800/80">
+                Your service is back on Step 1. Configure its pricing below, then continue to Partner Details.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="mt-4 rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.07]">
-        <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Customer-ready services</p><h2 className="mt-1 text-[18px] font-extrabold text-ink">{serviceRows.length} service{serviceRows.length === 1 ? '' : 's'} configured</h2></div><button type="button" onClick={() => navigate('/partner/services?from=setup')} className="flex h-9 items-center gap-1.5 rounded-full bg-plum-50 px-3 text-[11px] font-extrabold text-plum-700"><Plus size={14} /> Add service</button></div>
-        {!serviceRows.length ? <div className="mt-4 rounded-2xl border border-dashed border-plum-200 bg-plum-50/40 p-5 text-center"><PackagePlus size={22} className="mx-auto text-plum-600" /><p className="mt-2 text-[13px] font-extrabold text-ink">Choose your first service</p><p className="mt-1 text-[11.5px] leading-relaxed text-ink-mute">Each service gets its own listing setup, pricing package and customer preview.</p></div> : <ul className="mt-4 space-y-2.5">{listings.map(listing => (listing.offerings ?? []).map(offering => { const pricing = pricingByService[offering.id] ?? {}; const listingReady = ['live','under_review'].includes(listing.derived); const priceReady = !!pricing.ready; return <li key={offering.id}><div className="rounded-[20px] bg-surface p-3.5 ring-1 ring-ink/[0.06]"><div className="flex items-start gap-3"><span className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-xl " + (listingReady && priceReady ? 'bg-forest-600 text-white' : 'bg-plum-700 text-white')}>{listingReady && priceReady ? <Check size={17} strokeWidth={3} /> : <PackagePlus size={17} />}</span><div className="min-w-0 flex-1"><p className="text-[13.5px] font-extrabold text-ink">{offering.name || listing.trade}</p><p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink-mute">{listing.trade}</p><div className="mt-2 flex flex-wrap gap-1.5"><span className={"rounded-full px-2 py-1 text-[9.5px] font-extrabold " + (listingReady ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800')}>{listingReady ? 'Listing ready' : 'Listing needs setup'}</span><span className={"rounded-full px-2 py-1 text-[9.5px] font-extrabold " + (priceReady ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800')}>{priceReady ? 'Pricing ready' : 'Pricing needed'}</span></div></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => navigate('/dashboard/vendor?tab=list&start=' + encodeURIComponent(listing.trade) + '&return=setup')} className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-2xl bg-white text-[11.5px] font-extrabold text-plum-700 ring-1 ring-ink/[0.08]"><Pencil size={14} /> {listingReady ? 'Edit listing' : 'Configure listing'}</button><button type="button" disabled={!listingReady} onClick={() => setPricingService({ ...offering, category: listing.trade, trade: listing.trade })} className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-2xl bg-plum-700 text-[11.5px] font-extrabold text-white disabled:opacity-40"><PackagePlus size={14} /> {priceReady ? 'Manage pricing' : 'Set pricing'}</button></div></div></li> }))}</ul>}
+        <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Customer-ready services</p><h2 className="mt-1 text-[18px] font-extrabold text-ink">{serviceRows.length} service{serviceRows.length === 1 ? '' : 's'} configured</h2></div><button type="button" disabled={serviceNavBusy} onClick={openServicePicker} className="flex h-9 items-center gap-1.5 rounded-full bg-plum-50 px-3 text-[11px] font-extrabold text-plum-700 disabled:opacity-50"><Plus size={14} /> {serviceNavBusy ? 'Opening…' : 'Add service'}</button></div>
+        {!serviceRows.length ? <button type="button" data-action="choose-first-service" disabled={serviceNavBusy} onClick={openServicePicker} className="mt-4 w-full rounded-2xl border border-dashed border-plum-200 bg-plum-50/40 p-5 text-center transition active:scale-[0.99] disabled:opacity-50"><PackagePlus size={22} className="mx-auto text-plum-600" /><p className="mt-2 text-[13px] font-extrabold text-ink">Choose your first service</p><p className="mt-1 text-[11.5px] leading-relaxed text-ink-mute">Tap here to choose Photography, Catering, Logistics or any other service you provide.</p><span className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-full bg-plum-700 px-4 text-[12px] font-extrabold text-white">Choose a service</span></button> : <ul className="mt-4 space-y-2.5">{listings.map(listing => (listing.offerings ?? []).map(offering => { const pricing = pricingByService[offering.id] ?? {}; const listingReady = ['live','under_review'].includes(listing.derived); const priceReady = !!pricing.ready; return <li key={offering.id}><div className="rounded-[20px] bg-surface p-3.5 ring-1 ring-ink/[0.06]"><div className="flex items-start gap-3"><span className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-xl " + (listingReady && priceReady ? 'bg-forest-600 text-white' : 'bg-plum-700 text-white')}>{listingReady && priceReady ? <Check size={17} strokeWidth={3} /> : <PackagePlus size={17} />}</span><div className="min-w-0 flex-1"><p className="text-[13.5px] font-extrabold text-ink">{offering.name || listing.trade}</p><p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink-mute">{listing.trade}</p><div className="mt-2 flex flex-wrap gap-1.5"><span className={"rounded-full px-2 py-1 text-[9.5px] font-extrabold " + (listingReady ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800')}>{listingReady ? 'Listing ready' : 'Listing needs setup'}</span><span className={"rounded-full px-2 py-1 text-[9.5px] font-extrabold " + (priceReady ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800')}>{priceReady ? 'Pricing ready' : 'Pricing needed'}</span></div></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => navigate('/dashboard/vendor?tab=list&start=' + encodeURIComponent(listing.trade) + '&return=setup')} className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-2xl bg-white text-[11.5px] font-extrabold text-plum-700 ring-1 ring-ink/[0.08]"><Pencil size={14} /> {listingReady ? 'Edit listing' : 'Configure listing'}</button><button type="button" disabled={!listingReady} onClick={() => setPricingService({ ...offering, category: listing.trade, trade: listing.trade })} className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-2xl bg-plum-700 text-[11.5px] font-extrabold text-white disabled:opacity-40"><PackagePlus size={14} /> {priceReady ? 'Manage pricing' : 'Set pricing'}</button></div></div></li> }))}</ul>}
       </section>
 
       <section className="mt-4 rounded-[20px] bg-plum-50 p-4 ring-1 ring-plum-100"><div className="flex items-center gap-2 text-[12px] font-extrabold text-plum-950"><Check size={14} /> One customer-ready offer per listed service</div><p className="mt-1.5 text-[11.5px] leading-relaxed text-plum-900/75">A partner can add more packages after going live. Onboarding needs one usable customer offer for every listed service that will be submitted.</p></section>
