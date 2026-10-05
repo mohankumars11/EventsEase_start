@@ -58,6 +58,8 @@ jobs:
         run: node scripts/check-sambramo-catalogue-v2.mjs
       - name: Sambramo 5B-5F regression + security gate
         run: node scripts/check-sambramo-5b-5f.mjs
+      - name: Partner onboarding + pricing/listing routing contract
+        run: node scripts/check-onboarding-loop.mjs
 
       - name: Build the partner web app (for the harness stylesheet)
         env:
