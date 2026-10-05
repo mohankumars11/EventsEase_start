@@ -477,7 +477,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         if (field.required === false) continue
         /* event_type is rendered as the visible multi-select above, so a
            non-empty supported_events array satisfies the required field. */
-        if (field.key === 'event_type' && showEventSelector) {
+        if (showEventSelector && isEventTypeField(field)) {
           if (!supportedEventTypes.length) problems.push('Select at least one event type.')
           continue
         }
@@ -490,7 +490,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const ready = useMemo(() => {
     const detailsReady = !fields.some(field => {
       if (field.required === false) return false
-      if (field.key === 'event_type' && showEventSelector) return supportedEventTypes.length === 0
+      if (showEventSelector && isEventTypeField(field)) return supportedEventTypes.length === 0
       return !hasFieldValue(draft.trade_inputs?.[field.key])
     })
     return {
@@ -836,7 +836,7 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
           </div>
         ) : null}
         <div className="trade-pricing-fields-grid trade-specific-grid">
-          {fields.filter(field => !(showEventSelector && field.key === 'event_type')).map(field => (
+          {fields.filter(field => !(showEventSelector && isEventTypeField(field))).map(field => (
             field.key === 'sku'
               ? <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => onUpdate(field.key, v)} />
               : <TradeFieldControl key={field.key} required={field.required !== false} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
@@ -1047,6 +1047,19 @@ function hasFieldValue(value) {
   return Array.isArray(value) ? value.length > 0 : value !== '' && value != null
 }
 
+/* One visible event selector represents every legacy event-type field name.
+   This prevents schema aliases from creating an invisible validation gate. */
+function isEventTypeField(field) {
+  const key = String(field?.key ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  const label = String(field?.label ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  return key === 'event_type'
+    || key === 'event_types'
+    || key === 'events'
+    || key === 'supported_events'
+    || key === 'function'
+    || label === 'event_type'
+    || label === 'event_types'
+}
 function TradeFieldControl({ field, config, value, disabled, onChange, required = false }) {
   const schema = getFieldSchema(field, config)
   if (schema.multi) return <MultiChoiceField required={required} label={field.label} value={value} disabled={disabled} options={schema.options ?? []} onChange={onChange} />
