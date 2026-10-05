@@ -6,6 +6,7 @@ import { usePartnerStage } from '../../hooks/usePartnerStage'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { fetchListings, ensureListing } from '../../lib/partnerListings'
+import { ensureVendorRow } from '../../lib/ensureVendor'
 import { queueTrades } from '../../lib/tradeQueue'
 
 /**
@@ -67,7 +68,7 @@ export default function WhatYouOffer() {
   const [params] = useSearchParams()
   const inSetup = params.get('from') === 'setup'
   const { account, loading: stageLoading } = usePartnerStage()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const vendorId = account?.vendor?.id ?? null
 
   const [q, setQ] = useState('')
@@ -115,24 +116,26 @@ export default function WhatYouOffer() {
         vid = data?.id ?? null
       }
 
+      // The picker is also reachable directly from More/My Services. Do not
+      // send a partner back to setup just because the vendor row is still
+      // being created. Create/resolve it once, then create the listing
+      // containers against that real vendor.
+      if (!vid && profile) {
+        const ensured = await ensureVendorRow({ profile })
+        vid = ensured?.vendor?.id ?? ensured?.id ?? null
+      }
+
+      if (!vid) throw new Error('We could not prepare your partner profile. Please try again.')
+
       for (const trade of picked) await ensureListing(vid, trade)
 
       const queue = fresh.length ? fresh : picked
       queueTrades(queue)
 
-      /* ── No vendors row yet, on purpose ─────────────────────────────
-         §59 puts "what you offer" before "partner details", and that is
-         the right order for the partner: choosing the work is the part
-         they came to do, and a name-and-pincode form is the part they
-         tolerate. But a container is a row with a foreign key to
-         `vendors`, and that row is not written until the details form
-         is submitted.
-
-         So the picks are held in the queue — which is exactly what the
-         queue is for — and the details form runs next, ending at the
-         first trade's questions. Nothing is lost and nothing is written
-         against a partner who does not exist yet. */
-      if (!vid) { navigate('/partner/setup'); return }
+      /* A real vendor now always exists before the listing containers are
+         created. The old no-vendor branch could navigate back to setup
+         after a perfectly valid service selection, which looked like the
+         first-service button had done nothing. */
 
       /* ── Where the trade flow hands back ────────────────────────────
          During onboarding this screen is step 1s sub-flow, so the
