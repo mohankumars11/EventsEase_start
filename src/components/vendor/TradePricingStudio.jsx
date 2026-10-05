@@ -437,7 +437,27 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   }
   const updateTrade = (key, value) => {
     setLocalError('')
-    setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
+    setDraft(d => {
+      const current = { ...(d.trade_inputs ?? {}) }
+      const normalizedKey = String(key ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+      /* Event selection has one customer-facing source of truth. Write both
+         the current and legacy representations in the SAME state update so
+         rapid taps can never leave one alias behind. */
+      if (['event_type', 'event_types', 'events', 'supported_events', 'function'].includes(normalizedKey)) {
+        const eventTypes = Array.isArray(value)
+          ? Array.from(new Set(value.filter(Boolean).map(String)))
+          : String(value ?? '').split(',').map(x => x.trim()).filter(Boolean)
+        return {
+          ...d,
+          trade_inputs: {
+            ...current,
+            supported_events: eventTypes,
+            event_type: eventTypes,
+          },
+        }
+      }
+      return { ...d, trade_inputs: { ...current, [key]: value } }
+    })
   }
   const updateCommercial = (key, value) => {
     setLocalError('')
@@ -572,7 +592,16 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         name: packageName, source: draft.source, template_id: draft.template_id || null,
         description: draft.description || null, revision_round: isLiveRevision ? Number(draft.revision_round || 0) + 1 : Number(draft.revision_round || 0),
         commercial_inputs: { ...(draft.commercial_inputs ?? {}), tier: draft.tier || null, availability_policy: 'instant', payment_policy: 'full', cancellation_policy: draft.cancellation_policy || 'standard', transaction_lane: transactionLane, transaction_lane_label: transactionLaneCopy(transactionLane, { concise: true }) },
-        trade_inputs: draft.trade_inputs ?? {}, status,
+        trade_inputs: (() => {
+          const tradeInputs = { ...(draft.trade_inputs ?? {}) }
+          if (showEventSelector) {
+            const eventTypes = readSupportedEvents(tradeInputs)
+            tradeInputs.supported_events = eventTypes
+            tradeInputs.event_type = eventTypes
+          }
+          return tradeInputs
+        })(),
+        status,
       }
       const pPricing = {
         base_price: draft.base_price === '' ? 0 : Number(draft.base_price), pricing_unit: draft.pricing_unit,
@@ -808,10 +837,10 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   const selectedEvents = readSupportedEvents(draft?.trade_inputs ?? {})
   const setEvents = next => {
+    /* One functional state update in TradePackageEditor keeps the two
+       persisted representations synchronized even on rapid consecutive
+       taps. */
     onUpdate('supported_events', next)
-    /* Keep the legacy key synchronized for RPCs / older preview readers,
-       while the multi-select remains the user-facing source of truth. */
-    onUpdate('event_type', next)
   }
   const showEventSelector = String(config?.trade_id ?? '').startsWith('E') || config?.trade_id === 'L08'
   return (
