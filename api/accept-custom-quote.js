@@ -4,7 +4,7 @@ import { authenticatedUser } from './_lib/auth.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const VERSION = 'sambramo-custom-quote-v1'
+const VERSION = 'sambramo-custom-quote-v2'
 const FEE_RATE = 0.15
 
 export default async function handler(req, res) {
@@ -37,6 +37,31 @@ export default async function handler(req, res) {
   if (!['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(request.state)) return res.status(409).json({ error: 'Quote request is already resolved' })
   if (!request.booking_request_id) return res.status(409).json({ error: 'Quote request has no booking container' })
 
+  // Calendar is the final eligibility gate for a quote as well as an instant book.
+  // A partner can become unavailable in the minutes between receiving a quote and
+  // the customer accepting it. Re-run the same matcher used for dispatch so a
+  // stale quote can never reserve an unavailable partner/date.
+  async function partnerStillEligible() {
+    const loc = request.service_location ?? {}
+    const lat = Number(loc.lat)
+    const lng = Number(loc.lng)
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false
+    const tradeName = request.canonical_demand?.tradeName || request.service_name
+    if (!tradeName) return false
+    const pointWkt = 'SRID=4326;POINT(' + lng + ' ' + lat + ')'
+    const { data: matches, error: matchError } = await db.rpc('match_partners', {
+      p_trade: tradeName,
+      p_point: pointWkt,
+      p_radius_m: 100000,
+      p_date: request.event_date,
+      p_allow_synthetic: false,
+      p_limit: 25,
+      p_exclude: [],
+    })
+    if (matchError) throw matchError
+    return (matches ?? []).some(m => String(m.vendor_id) === String(response.vendor_id))
+  }
+
   // Claim the quote request first. The conditional update makes the
   // accept operation single-winner even when two quotes are tapped nearly
   // simultaneously.
@@ -49,6 +74,22 @@ export default async function handler(req, res) {
     .select('id')
     .maybeSingle()
   if (!claimed) return res.status(409).json({ error: 'Another quote is already being accepted' })
+
+  try {
+    if (!(await partnerStillEligible())) {
+      await db.from('sambramo_quote_requests')
+        .update({ state: request.state, updated_at: new Date().toISOString() })
+        .eq('id', request.id)
+        .eq('customer_id', authn.user.id)
+      return res.status(409).json({ error: 'That partner is no longer available for this date. Please choose another quote.' })
+    }
+  } catch (e) {
+    await db.from('sambramo_quote_requests')
+      .update({ state: request.state, updated_at: new Date().toISOString() })
+      .eq('id', request.id)
+      .eq('customer_id', authn.user.id)
+    return res.status(503).json({ error: 'We could not confirm live availability. Please try again.' })
+  }
 
   let createdLineId = null
   let createdOfferId = null
