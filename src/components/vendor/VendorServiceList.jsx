@@ -210,7 +210,10 @@ export default function VendorServiceList({
                into one of them without explanation. */
             clearQueue()
             setPicking(false)
-            if (returnTo) navigate(returnTo)
+            if (returnTo) {
+              const sep = returnTo.includes('?') ? '&' : '?'
+              navigate(`${returnTo}${sep}serviceAdded=1`)
+            }
           }}
         />
       )}
@@ -244,7 +247,10 @@ export default function VendorServiceList({
              to swallow it and strand the partner on the dashboard. */
           onClose={() => {
             setEditing(null)
-            if (returnTo) navigate(returnTo)
+            if (returnTo) {
+              const sep = returnTo.includes('?') ? '&' : '?'
+              navigate(`${returnTo}${sep}serviceAdded=1`)
+            }
           }}
         />
       )}
