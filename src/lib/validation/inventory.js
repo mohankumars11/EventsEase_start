@@ -128,14 +128,14 @@ export const FIELD_INVENTORY = [
       component: 'src/components/vendor/CateringPricingStudio.jsx', save: 'rpc(save_sambramo_catering_package)', serverNote: 'Validated transactionally by the catering pricing save RPC.' }),
 
   /* ── 2 · Partner details ── */
-  F({ id: 'business_name', screen: S.step2, step: 'details', label: 'Business name', rule: 'business_name', kind: 'name-business', required: true,
-      component: 'src/pages/partner/steps/PartnerDetailsStep.jsx', save: 'vendors.business_name', server: 'business_name' }),
-  F({ id: 'contact_phone', screen: S.step2, step: 'details', label: 'Contact number', rule: 'contact_phone', kind: 'phone', required: true,
-      component: 'src/pages/partner/steps/PartnerDetailsStep.jsx', save: 'vendors.contact_phone', server: 'contact_phone' }),
+  F({ id: 'business_name', screen: S.step1, step: 'business', label: 'Business name', rule: 'business_name', kind: 'name-business', required: true,
+      component: 'src/pages/partner/steps/BusinessServicesStep.jsx', save: 'vendors.business_name', server: 'business_name' }),
+  F({ id: 'contact_phone', screen: S.step1, step: 'business', label: 'Contact number', rule: 'contact_phone', kind: 'phone', required: false,
+      component: 'src/pages/partner/steps/BusinessServicesStep.jsx', save: 'vendors.contact_phone', server: 'contact_phone' }),
   F({ id: 'years_active', screen: S.step2, step: 'details', label: 'Years doing this', rule: 'years_active', kind: 'int',
       component: 'src/pages/partner/steps/PartnerDetailsStep.jsx', save: 'vendors.years_active', server: 'years_active' }),
-  F({ id: 'description', screen: S.step2, step: 'details', label: 'About your business', rule: 'description', kind: 'prose',
-      component: 'src/pages/partner/steps/PartnerDetailsStep.jsx', save: 'vendors.description', server: 'description' }),
+  F({ id: 'description', screen: S.step1, step: 'business', label: 'About your business', rule: 'description', kind: 'prose',
+      component: 'src/pages/partner/steps/BusinessServicesStep.jsx', save: 'vendors.description', server: 'description' }),
   F({ id: 'instagram_url', screen: S.step2, step: 'details', label: 'Instagram', rule: 'instagram_url', kind: 'handle',
       component: 'src/pages/partner/steps/PartnerDetailsStep.jsx', save: 'vendors.instagram_url', server: 'instagram_url' }),
 
