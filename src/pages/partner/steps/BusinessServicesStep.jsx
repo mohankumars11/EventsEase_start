@@ -6,6 +6,7 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 import SambramoPricingStudio from '../../../components/vendor/SambramoPricingStudio'
 import { ensureVendorRow } from '../../../lib/ensureVendor'
+import SambramoTradePictogram from '../../../components/vendor/SambramoTradePictogram'
 
 export default function BusinessServicesStep() {
   const navigate = useNavigate()
