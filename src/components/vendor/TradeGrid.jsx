@@ -32,7 +32,7 @@ import SambramoTradePictogram from './SambramoTradePictogram'
  * it as well as the trade's own name.
  */
 
-export const iconForTrade = SambramoTradePictogram
+export const iconForTrade = trade => props => <SambramoTradePictogram trade={trade} {...props} />
 
 
 /** The trades matching a query, looking inside each one. */
@@ -142,7 +142,6 @@ export default function TradeGrid({
       {layout === 'rows' ? (
         <ul className="flex flex-col gap-2">
           {list.map(t => {
-            const Icon = iconForTrade(t)
             const on = isOn(t)
             const already = disabledTrades.includes(t)
             return (
@@ -191,7 +190,6 @@ export default function TradeGrid({
       ) : (
       <div className="grid grid-cols-2 gap-2">
         {list.map(t => {
-          const Icon = iconForTrade(t)
           const n = offeringsForTrade(t).length
           const on = isOn(t)
           return (
@@ -209,9 +207,7 @@ export default function TradeGrid({
                 on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
               }`}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-plum-950 text-white">
-                <SambramoTradePictogram trade={t} size="xs" showSparkle={false} title={false} />
-              </span>
+              <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-extrabold leading-tight text-ink">{t}</span>
                 <span className="block text-[10.5px] leading-tight text-ink-mute">
