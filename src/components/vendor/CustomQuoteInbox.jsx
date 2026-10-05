@@ -90,7 +90,6 @@ function QuoteSheet({ request, busy, onClose, onSubmit }) {
   const [equipment, setEquipment] = useState('')
   const [inclusions, setInclusions] = useState('')
   const [exclusions, setExclusions] = useState('')
-  const [validity, setValidity] = useState('60')
   const [notes, setNotes] = useState('')
 
   async function send() {
@@ -108,7 +107,6 @@ function QuoteSheet({ request, busy, onClose, onSubmit }) {
         },
         inclusions: inclusions.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 50),
         exclusions: exclusions.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 50),
-        validityMinutes: Math.max(15, Number(validity) || 60),
         notes: notes.trim() || null,
       },
     })
@@ -132,12 +130,14 @@ function QuoteSheet({ request, busy, onClose, onSubmit }) {
           <Area label="Equipment / production" value={equipment} onChange={setEquipment} placeholder="What you are bringing" />
           <Area label="Included" value={inclusions} onChange={setInclusions} placeholder="One item per line" />
           <Area label="Excluded" value={exclusions} onChange={setExclusions} placeholder="One item per line" />
-          <Field label="Quote validity" value={validity} onChange={setValidity} suffix="minutes" type="number" />
+          <div className="rounded-2xl bg-amber-50 p-3 text-[11.5px] leading-relaxed text-amber-900 ring-1 ring-amber-200">
+            <strong>Instant Quote lane:</strong> after you submit, the customer has 10 minutes to review, accept and pay. Sambramo controls this window.
+          </div>
           <Area label="Notes" value={notes} onChange={setNotes} placeholder="Lead time, constraints, important assumptions" />
         </div>
         <div className="border-t border-gray-100 p-4">
           <button disabled={busy || Number(amount) <= 0} onClick={send} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 font-extrabold text-[13px] text-plum-950 disabled:opacity-50">
-            <CheckCircle2 size={15} /> {busy ? 'Sending…' : 'Submit quote to Sambramo'}
+            <CheckCircle2 size={15} /> {busy ? 'Sending…' : 'Send quote to customer'}
           </button>
         </div>
       </div>
