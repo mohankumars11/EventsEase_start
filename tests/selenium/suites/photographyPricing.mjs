@@ -121,13 +121,19 @@ export async function photographyPricing(t) {
       t.assert(!body.includes('Complete Event type.'), 'Preview still contains the hidden Event type validation')
     })
 
-    await t.test('pricing', 'Photography pricing submits successfully to Sambramo review', async () => {
+    await t.test('pricing', 'Photography pricing submits successfully and returns to the catalog', async () => {
+      const before = await driver.executeScript('return window.__PRICING_RPC__.length')
       const submit = await driver.findElement(By.css('[data-pricing-action="submit-review"]'))
+      t.assert((await submit.getAttribute('disabled')) === null, 'Submit pricing remained disabled')
       await driver.executeScript('arguments[0].click()', submit)
 
-      await until_(driver, async () =>
-        (await driver.findElement(By.css('body')).getText()).includes('Pricing submitted to Sambramo review.')
-          ? true : null, 15000)
+      await until_(driver, async () => {
+        const catalog = await driver.findElements(By.css('.trade-pricing-catalog'))
+        return catalog[0] ?? null
+      }, 15000)
+
+      const after = await driver.executeScript('return window.__PRICING_RPC__.length')
+      t.assert(after > before, 'review submission did not make a pricing RPC call')
 
       const rpc = await driver.executeScript('return window.__PRICING_RPC__[window.__PRICING_RPC__.length - 1]')
       t.assert(rpc?.name === 'save_sambramo_trade_package', 'review save RPC was not called')
