@@ -80,12 +80,19 @@ export async function photographyPricing(t) {
       const priceChip = await driver.findElement(By.css('.trade-step-pricing button.trade-pricing-price-chip'))
       await driver.executeScript('arguments[0].click()', priceChip)
 
-      const min = await driver.findElement(By.css('.trade-step-pricing select'))
-      await driver.executeScript(
-        'const el=arguments[0]; const option=[...el.options].find(o=>o.value); el.value=option ? option.value : ""; el.dispatchEvent(new Event("change",{bubbles:true}));',
-        min,
-      )
-      await driver.sleep(200)
+      /* The pricing step has several required selects (tier, charge unit,
+         minimum, lead time, travel/cancellation/payment rules). Setting only
+         the first select previously made the browser test look like a pricing
+         bug even though the real screen still had legitimate gates. Fill each
+         required select in the real component tree. */
+      const pricingSelects = await driver.findElements(By.css('.trade-step-pricing select'))
+      for (const select of pricingSelects) {
+        await driver.executeScript(
+          'const el=arguments[0]; if(!el.value){const option=[...el.options].find(o=>o.value); if(option){el.value=option.value; el.dispatchEvent(new Event("change",{bubbles:true}));}}',
+          select,
+        )
+      }
+      await driver.sleep(250)
 
       const primary = await driver.findElement(By.css('.trade-pricing-primary-action'))
       t.assert(!(await primary.getAttribute('disabled')), 'Continue to Add-ons stayed disabled')
