@@ -13,17 +13,37 @@ export async function photographyPricing(t) {
     await t.test('pricing', 'Photography pricing opens in the real browser harness', async () => {
       await until_(driver, async () => {
         const body = await driver.findElement(By.css('body')).getText()
-        return body.includes('Photography') && body.includes('Essential Coverage') || body.includes('Professional Photography') ? true : null
+        return body.includes('Photography') && body.includes('Use first template') ? true : null
       }, 15000)
       const body = await driver.findElement(By.css('body')).getText()
       t.assert(body.includes('Photography'), 'Photography title did not render')
-      t.assert(body.includes('Essential Coverage'), 'Photography package template did not render')
+      t.assert(body.includes('Use first template'), 'Photography empty-state template control did not render')
     })
 
-    await t.test('pricing', 'A Photography package can enter Trade Fields', async () => {
+    await t.test('pricing', 'A Photography package can enter the real editor', async () => {
       const template = await driver.findElement(By.xpath('//button[normalize-space(.)="Use first template"]'))
       await driver.executeScript('arguments[0].click()', template)
+      await until_(driver, async () => {
+        const xs = await driver.findElements(By.css('[data-pricing-action="save-draft"]'))
+        return xs[0] ?? null
+      }, 15000)
+    })
 
+    await t.test('pricing', 'Save draft works without requiring completed Event type or all trade fields', async () => {
+      const save = await driver.findElement(By.css('[data-pricing-action="save-draft"]'))
+      await driver.executeScript('arguments[0].click()', save)
+
+      await until_(driver, async () => {
+        const body = await driver.findElement(By.css('body')).getText()
+        return body.includes('Draft saved successfully.') ? true : null
+      }, 15000)
+
+      const rpc = await driver.executeScript('return window.__PRICING_RPC__[window.__PRICING_RPC__.length - 1]')
+      t.assert(rpc?.name === 'save_sambramo_trade_package', 'draft save RPC was not called')
+      t.assert(rpc?.args?.p_package?.status === 'DRAFT', 'draft save did not send DRAFT status')
+    })
+
+    await t.test('pricing', 'The saved Photography package can continue to Trade Fields', async () => {
       const description = await until_(driver, async () => {
         const xs = await driver.findElements(By.css('button.trade-pricing-description-card'))
         return xs[0] ?? null
