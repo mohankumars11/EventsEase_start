@@ -273,13 +273,11 @@ export function nextAvailabilityState(current) {
 /**
  * How far ahead a partner is asked to answer for.
  *
- * Six months, because that is how far ahead this market books the events that
- * pay best: a wedding date is fixed at the engagement and the muhurtham is
- * often set a season in advance, so the Saturday somebody is enquiring about
- * today is routinely in February. A calendar that only knows about the next
- * four weeks is silent on exactly the bookings worth the most.
+ * Twelve months for the partner control center. Customers normally book inside
+ * 180 days at launch, but a partner should be able to state genuine availability
+ * for the full year without rebuilding their weekly pattern every season.
  */
-export const CALENDAR_HORIZON_MONTHS = 6
+export const CALENDAR_HORIZON_MONTHS = 12
 
 /** 0 = Sunday, matching JS getDay() and vendors.weekly_days_off. */
 export const WEEKDAYS = [
