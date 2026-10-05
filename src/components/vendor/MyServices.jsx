@@ -105,9 +105,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
               onClick={() => onOpenTrade?.(row.trade)}
               className="flex w-full items-center gap-3 text-left"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-plum-950 text-white">
-                <Icon size={17} />
-              </span>
+              <Icon size="md" showSparkle={false} title={false} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-extrabold leading-tight text-ink">{row.trade}</span>
                 <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
