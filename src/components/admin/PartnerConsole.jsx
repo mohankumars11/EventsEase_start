@@ -123,18 +123,20 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], docs: [], payouts: [], work: [],
+    vendors: [], services: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, d, p, w] = await Promise.all([
+      const [v, s, d, p, w, tp, cp] = await Promise.all([
         supabase.from('vendors').select('*').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('vendor_documents').select('*'),
         supabase.from('vendor_payout_details').select('*'),
         supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
+        supabase.from('sambramo_trade_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,revision_round,commercial_inputs,submitted_at,review_note').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
+        supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
       ])
       if (v.error) throw v.error
       setState({
@@ -157,6 +159,8 @@ function usePartnerData() {
         /* Write-only since 110 shipped -- nothing has ever read this,
            so day one of the queue is every row ever inserted. */
         work: w.data ?? [],
+        tradePackages: tp.error ? [] : (tp.data ?? []),
+        cateringPackages: cp.error ? [] : (cp.data ?? []),
       })
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err }))
@@ -249,6 +253,7 @@ export default function PartnerConsole() {
           payout={data.payouts.find(p => p.vendor_id === open.id) ?? null}
           payoutsReadable={data.payoutsReadable}
           work={data.work.filter(w => w.vendor_id === open.id)}
+          pricing={{ trade: data.tradePackages.filter(p => p.vendor_id === open.id), catering: data.cateringPackages.filter(p => p.vendor_id === open.id) }}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
         />
@@ -429,6 +434,8 @@ function PartnerTable({ data, byVendor, onOpen }) {
 function ListingReview({ data, onOpen }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
+  const pricingPending = [...pricing.trade, ...pricing.catering].filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status))
+  const pricingUnderReview = pricingPending.filter(p => p.status === 'UNDER_REVIEW')
   const [sendingBack, setSendingBack] = useState(null)   // listing id
   const [note, setNote] = useState('')
 
@@ -869,7 +876,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
 
@@ -887,6 +894,35 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
   }
   const dispatchable = readiness.approved && readiness.located && readiness.listing_live
 
+  async function approveApplication() {
+    setBusy('approve-application')
+    try {
+      const { data: res, error } = await supabase.rpc('set_vendor_verification', {
+        p_vendor_id: v.id, p_status: 'approved', p_note: null,
+      })
+      if (error) throw error
+      if (!res?.ok) throw new Error(res?.reason === 'not_permitted' ? 'You do not have permission to approve partners.' : 'Partner approval could not be completed.')
+      let pricingApproved = 0
+      for (const pkg of pricingUnderReview) {
+        const type = pricing.trade.some(p => p.id === pkg.id) ? 'trade' : 'catering'
+        const decision = await supabase.rpc('review_sambramo_pricing_revision', {
+          p_package_type: type, p_package_id: pkg.id, p_decision: 'approve', p_note: null,
+        })
+        if (decision.error) throw decision.error
+        if (decision.data?.ok !== false) pricingApproved += 1
+      }
+      const listingsMadeLive = res.listings_made_live ?? 0
+      const parts = ['Partner approved']
+      if (listingsMadeLive) parts.push(listingsMadeLive + ' listing' + (listingsMadeLive === 1 ? '' : 's') + ' live')
+      if (pricingApproved) parts.push(pricingApproved + ' pricing package' + (pricingApproved === 1 ? '' : 's') + ' live')
+      toast.success(parts.join(' · '))
+      if (pricingPending.length > pricingUnderReview.length) toast.info('Some pricing items still need changes and remain in the pricing review queue.')
+      await onChanged()
+      onClose()
+    } catch (err) {
+      toast.error(friendlyError(err, 'Application approval was not completed.'))
+    } finally { setBusy(null) }
+  }
   async function setStatus(status) {
     setBusy(status)
     try {
@@ -1055,6 +1091,19 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
             ))}
           </Section>
 
+          <Section title="Pricing submitted with this application">
+            {pricingPending.length === 0 ? (
+              <p className="text-[12px] italic text-ink-mute">No pricing package is waiting for review.</p>
+            ) : pricingPending.map(p => (
+              <div key={p.id} className="flex items-center gap-2 rounded-xl bg-ink/[0.02] px-3 py-2">
+                <IndianRupee size={14} className="shrink-0 text-ink-mute" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12.5px] font-extrabold text-ink">{p.name}</span>
+                  <span className="block text-[11px] text-ink-mute">{p.parent_package_id ? "Revision v" + (p.revision_round || 1) : "Initial package"} · {p.status.replaceAll("_"," ")}</span>
+                </span>
+              </div>
+            ))}
+          </Section>
           <Section title="Getting paid">
             {!payoutsReadable ? (
               <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-snug text-amber-900">
@@ -1096,7 +1145,14 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
               accepted is untouched, because a family is expecting somebody.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
-              {[
+                          {v.verification_status === 'submitted' && pricingUnderReview.length === pricingPending.length && pricingPending.length > 0 && (
+              <button type="button" disabled={!!busy} onClick={approveApplication}
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-plum-700 px-4 py-2.5 text-[12.5px] font-extrabold text-white disabled:opacity-50">
+                {busy === 'approve-application' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Approve partner + submitted pricing
+              </button>
+            )}
+{[
                 { s: 'approved',  label: 'Approve',  cls: 'bg-forest-600 text-white' },
                 { s: 'rejected',  label: 'Reject',   cls: 'bg-white text-rose-700 ring-1 ring-rose-200' },
                 /* "Close" rather than "Suspend": it is the same act and
