@@ -7,6 +7,7 @@ import PartnerConsole from '../../components/admin/PartnerConsole'
 import VerificationQueue from '../../components/admin/VerificationQueue'
 import MarketInterest from '../../components/admin/MarketInterest'
 import LiveOperations from '../../components/admin/LiveOperations'
+import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 
 /**
  * The admin console: a frame and one screen.
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
   const { profile } = useAuth()
   const [activeNav, setActiveNav] = useState('partners')
   const [waiting, setWaiting] = useState(0)
+  const [pricingWaiting, setPricingWaiting] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
 
   /* Two counts, no rows: businesses waiting to be approved, and listings
@@ -52,13 +54,18 @@ export default function AdminDashboard() {
   const loadBadge = useCallback(async () => {
     setRefreshing(true)
     try {
-      const [v, s] = await Promise.all([
+      const [v, s, tp, cp] = await Promise.all([
         supabase.from('vendors').select('id', { count: 'exact', head: true })
           .eq('verification_status', 'submitted').eq('is_synthetic', false),
         supabase.from('vendor_services').select('id', { count: 'exact', head: true })
           .eq('review_status', 'under_review'),
+        supabase.from('sambramo_trade_packages').select('id', { count: 'exact', head: true })
+          .in('status', ['UNDER_REVIEW','ACTION_REQUIRED']),
+        supabase.from('sambramo_catering_packages').select('id', { count: 'exact', head: true })
+          .in('status', ['UNDER_REVIEW','ACTION_REQUIRED']),
       ])
       setWaiting((v.count ?? 0) + (s.count ?? 0))
+      setPricingWaiting((tp.count ?? 0) + (cp.count ?? 0))
     } catch {
       /* A badge is an ornament. It must never be the reason the console
          fails to open. */
@@ -79,7 +86,7 @@ export default function AdminDashboard() {
     <AdminShell
       activeNav={activeNav}
       onNavigate={go}
-      badges={{ vendors: waiting }}
+      badges={{ vendors: waiting, pricing: pricingWaiting }}
       profile={profile}
       onRefresh={loadBadge}
       refreshing={refreshing}
@@ -93,6 +100,7 @@ export default function AdminDashboard() {
       {activeNav === 'city-interest' ? <MarketInterest />
         : activeNav === 'live-ops' ? <LiveOperations />
         : activeNav === 'verification' ? <VerificationQueue />
+        : activeNav === 'pricing-review' ? <PricingReviewQueue />
         : <PartnerConsole />}
     </AdminShell>
   )
