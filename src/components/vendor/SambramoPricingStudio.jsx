@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import CateringPricingStudio from './CateringPricingStudio'
 import TradePricingStudio from './TradePricingStudio'
 import { normalizeTrade } from '../../data/sambramoBusinessPreview'
+import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTransactionLane'
 
 const CATERING = 'Catering & Food'
 
@@ -36,7 +37,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
         const cp = (cateringRes.data ?? []).filter(x => x.vendor_service_id === id)
         out[id] = p.some(x => x.status === 'LIVE') || cp.some(x => x.status === 'ACTIVE')
           ? 'ENABLED'
-          : p.some(x => x.status === 'UNDER_REVIEW')
+          : p.some(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status))
             ? 'REVIEWING'
             : p.length || pb.length || cp.length ? 'CONFIGURED' : 'NOT_CONFIGURED'
       }
@@ -100,6 +101,9 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
                     <StatusPill status={status} loading={loadingStatus} />
                   </span>
                   <span className="mt-1 block text-[11.5px] text-ink-mute">{service.category === CATERING ? 'Menu packages · per-guest pricing · structured extras' : config.name + ' · trade-specific packages · pricing rules · add-ons'}</span>
+                  <span className="mt-1.5 inline-flex rounded-full bg-plum-50 px-2 py-1 text-[9.5px] font-extrabold text-plum-700 ring-1 ring-plum-100">
+                    {transactionLaneCopy(transactionLaneFor({ tradeId: service.trade_id, pricingUnit: service.unit }), { concise: true })}
+                  </span>
                 </span>
                 <ChevronRight size={17} className="mt-1 shrink-0 text-ink-mute" />
               </div>
