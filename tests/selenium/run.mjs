@@ -26,6 +26,7 @@ const SUITES = {
   lab: async () => (await import('./suites/fieldLab.mjs')).fieldLab,
   e2e: async () => (await import('./suites/partnerE2E.mjs')).partnerE2E,
   logistics: async () => (await import('./suites/logisticsE2E.mjs')).logisticsE2E,
+  photographyPricing: async () => (await import('./suites/photographyPricing.mjs')).photographyPricing,
 }
 const run = which === 'all' ? Object.keys(SUITES) : [which]
 

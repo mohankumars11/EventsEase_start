@@ -403,6 +403,13 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const descriptionSuggestions = useMemo(() => getDescriptionSuggestions(config).slice(0, 5), [config])
   const nameSuggestions = useMemo(() => getPackageNameSuggestions(config).slice(0, 5), [config])
   const addonSuggestions = useMemo(() => getAddonSuggestions(config).slice(0, 5), [config])
+  /* Photography and the other event-facing trades use a multi-select
+     event selector in Trade Fields. The pricing catalogue still carries a
+     legacy single-value event_type field for matching, so the validator must
+     treat the visible multi-select as the source of truth instead of asking
+     the partner to answer the hidden legacy field a second time. */
+  const showEventSelector = String(config?.trade_id ?? '').startsWith('E') || config?.trade_id === 'L08'
+  const supportedEventTypes = readSupportedEvents(draft?.trade_inputs ?? {})
 
   useEffect(() => {
     setAddons(draft.addons ?? [])
@@ -424,16 +431,28 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     return () => { alive = false }
   }, [vendor?.id, mediaRefresh])
 
-  const update = (key, value) => setDraft(d => ({ ...d, [key]: value }))
-  const updateTrade = (key, value) => setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
-  const updateCommercial = (key, value) => setDraft(d => ({ ...d, commercial_inputs: { ...(d.commercial_inputs ?? {}), [key]: value } }))
-  const updateTemplate = template => setDraft(d => ({
+  const update = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, [key]: value }))
+  }
+  const updateTrade = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
+  }
+  const updateCommercial = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, commercial_inputs: { ...(d.commercial_inputs ?? {}), [key]: value } }))
+  }
+  const updateTemplate = template => {
+    setLocalError('')
+    setDraft(d => ({
     ...d,
     source: 'SAMBRAMO_TEMPLATE',
     template_id: template[0],
     name: template[1],
     tier: inferTier(template[1]),
-  }))
+    }))
+  }
 
   const validation = useMemo(() => {
     const problems = []
@@ -456,6 +475,12 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     if (draft.status !== 'LIVE') {
       for (const field of fields) {
         if (field.required === false) continue
+        /* event_type is rendered as the visible multi-select above, so a
+           non-empty supported_events array satisfies the required field. */
+        if (field.key === 'event_type' && showEventSelector) {
+          if (!supportedEventTypes.length) problems.push('Select at least one event type.')
+          continue
+        }
         if (!hasFieldValue(draft.trade_inputs?.[field.key])) problems.push('Complete ' + field.label + '.')
       }
     }
@@ -463,7 +488,11 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   }, [draft, fields, addons])
 
   const ready = useMemo(() => {
-    const detailsReady = !fields.some(field => field.required !== false && !hasFieldValue(draft.trade_inputs?.[field.key]))
+    const detailsReady = !fields.some(field => {
+      if (field.required === false) return false
+      if (field.key === 'event_type' && showEventSelector) return supportedEventTypes.length === 0
+      return !hasFieldValue(draft.trade_inputs?.[field.key])
+    })
     return {
       package: Boolean(String(draft.name ?? '').trim() && String(draft.description ?? '').trim() && draft.tier && draft.pricing_unit),
       details: detailsReady,
@@ -778,7 +807,12 @@ function PackageStep({ config, draft, readOnly, nameSuggestions, descriptionSugg
 
 function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
   const selectedEvents = readSupportedEvents(draft?.trade_inputs ?? {})
-  const setEvents = next => onUpdate('supported_events', next)
+  const setEvents = next => {
+    onUpdate('supported_events', next)
+    /* Keep the legacy key synchronized for RPCs / older preview readers,
+       while the multi-select remains the user-facing source of truth. */
+    onUpdate('event_type', next)
+  }
   const showEventSelector = String(config?.trade_id ?? '').startsWith('E') || config?.trade_id === 'L08'
   return (
     <section className="trade-pricing-panel trade-step-details">

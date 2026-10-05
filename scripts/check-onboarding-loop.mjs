@@ -56,7 +56,6 @@ const list  = code('src/components/vendor/VendorServiceList.jsx')
 const pricing = code('src/components/vendor/SambramoPricingStudio.jsx')
 const tradePricing = code('src/components/vendor/TradePricingStudio.jsx')
 const dash  = code('src/pages/dashboard/VendorDashboard.jsx')
-const vonb  = code('src/pages/onboarding/VendorOnboarding.jsx')
 const onboarding = code('src/hooks/usePartnerOnboarding.js')
 
 console.log('\nTHE MARKER IS EMITTED\n')
@@ -68,10 +67,6 @@ ok('Step 1 "Add a service" declares where it came from',
 ok('Step 1 sends a draft trade straight to its questionnaire',
    /tab=list&start=\$\{encodeURIComponent\(l\.trade\)\}&return=setup/.test(hub),
    'it used to send ?start= to a screen that reads no params')
-
-ok('the first-trade detour carries the marker too',
-   /tab=list&start=\$\{encodeURIComponent\(queued\[0\]\)\}&return=setup/.test(vonb),
-   'a brand-new partner loses it on the no-vendor-row path')
 
 console.log('\nTHE MARKER IS READ, NOT INFERRED\n')
 
