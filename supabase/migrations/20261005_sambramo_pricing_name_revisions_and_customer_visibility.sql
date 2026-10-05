@@ -1,0 +1,14 @@
+begin;
+drop index if exists public.sambramo_trade_packages_vendor_service_id_name_key;
+drop index if exists public.sambramo_catering_packages_vendor_service_id_name_key;
+create unique index if not exists sambramo_trade_packages_live_name_key on public.sambramo_trade_packages(vendor_service_id,name) where status='LIVE';
+create unique index if not exists sambramo_catering_packages_live_name_key on public.sambramo_catering_packages(vendor_service_id,name) where status in ('LIVE','ACTIVE');
+drop policy if exists sambramo_catering_packages_public_active on public.sambramo_catering_packages;
+create policy sambramo_catering_packages_public_active on public.sambramo_catering_packages for select to anon, authenticated using (status in ('ACTIVE','LIVE'));
+drop policy if exists sambramo_catering_items_public_active on public.sambramo_catering_package_items;
+create policy sambramo_catering_items_public_active on public.sambramo_catering_package_items for select to anon, authenticated using (exists (select 1 from public.sambramo_catering_packages p where p.id=package_id and p.status in ('ACTIVE','LIVE')));
+drop policy if exists sambramo_catering_addons_public_active on public.sambramo_catering_package_addons;
+create policy sambramo_catering_addons_public_active on public.sambramo_catering_package_addons for select to anon, authenticated using (exists (select 1 from public.sambramo_catering_packages p where p.id=package_id and p.status in ('ACTIVE','LIVE')));
+drop policy if exists sambramo_catering_versions_public_active on public.sambramo_catering_price_versions;
+create policy sambramo_catering_versions_public_active on public.sambramo_catering_price_versions for select to anon, authenticated using (status='ACTIVE' and exists (select 1 from public.sambramo_catering_packages p where p.id=package_id and p.status in ('ACTIVE','LIVE')));
+commit;
