@@ -47,13 +47,20 @@ if (missing.length) {
   process.exit(1)
 }
 
-if (!source.includes('sambramo-trade-pictogram-glow')
+if (!source.includes('sambramo-trade-art')
+  || !source.includes('sambramo-trade-pictogram-glow')
   || !source.includes('sambramo-trade-pictogram-sheen')
-  || !source.includes('sambramo-trade-pictogram-depth')
-  || !source.includes('sambramo-trade-pictogram-face')) {
-  console.error('Glossy 3D pictogram visual layers are incomplete.')
+  || !source.includes('linearGradient')
+  || !source.includes('feDropShadow')) {
+  console.error('Glossy 3D pictogram layers are incomplete.')
   process.exit(1)
 }
 
-console.log(`✓ All ${trades.length} Sambramo trades have explicit premium pictogram mappings.`)
-console.log('✓ Gloss, depth, sheen and highlight layers are present.')
+if (source.includes("from 'lucide-react'") || source.includes('lucide-react')) {
+  console.error('Trade pictogram component must not fall back to Lucide icons.')
+  process.exit(1)
+}
+
+console.log(`✓ All ${trades.length} Sambramo trades have explicit original 3D pictogram mappings.`)
+console.log('✓ Gloss, depth, sheen, gradient and drop-shadow layers are present.')
+
