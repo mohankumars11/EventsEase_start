@@ -18,29 +18,18 @@ alter table public.sambramo_catering_packages
   check (status in ('DRAFT','UNDER_REVIEW','ACTION_REQUIRED','APPROVED','LIVE','ACTIVE','PAUSED','ARCHIVED'));
 
 -- A partner may never mutate a live pricing object in place.
-create or replace function public.guard_live_pricing_package_update()
-returns trigger
-language plpgsql
-security invoker
-set search_path = public
+create or replace function public.guard_live_trade_package_update()
+returns trigger language plpgsql security invoker set search_path = public
 as $$
 begin
   if public.get_my_role() = 'vendor'
-     and old.status in ('LIVE','ACTIVE')
+     and old.status = 'LIVE'
      and (
        new.name is distinct from old.name
        or new.description is distinct from old.description
        or new.commercial_inputs is distinct from old.commercial_inputs
        or new.trade_inputs is distinct from old.trade_inputs
        or new.status is distinct from old.status
-       or new.rate_bands is distinct from old.rate_bands
-       or new.cuisine_ids is distinct from old.cuisine_ids
-       or new.service_style is distinct from old.service_style
-       or new.min_guests is distinct from old.min_guests
-       or new.max_guests is distinct from old.max_guests
-       or new.service_hours is distinct from old.service_hours
-       or new.included_staff is distinct from old.included_staff
-       or new.notes is distinct from old.notes
        or new.source is distinct from old.source
        or new.template_id is distinct from old.template_id
      ) then
@@ -53,12 +42,37 @@ $$;
 drop trigger if exists trg_guard_live_trade_package_update on public.sambramo_trade_packages;
 create trigger trg_guard_live_trade_package_update
 before update on public.sambramo_trade_packages
-for each row execute function public.guard_live_pricing_package_update();
+for each row execute function public.guard_live_trade_package_update();
+
+create or replace function public.guard_live_catering_package_update()
+returns trigger language plpgsql security invoker set search_path = public
+as $$
+begin
+  if public.get_my_role() = 'vendor'
+     and old.status in ('ACTIVE','LIVE')
+     and (
+       new.name is distinct from old.name
+       or new.cuisine_ids is distinct from old.cuisine_ids
+       or new.kitchen_type is distinct from old.kitchen_type
+       or new.service_style is distinct from old.service_style
+       or new.min_guests is distinct from old.min_guests
+       or new.max_guests is distinct from old.max_guests
+       or new.service_hours is distinct from old.service_hours
+       or new.included_staff is distinct from old.included_staff
+       or new.notes is distinct from old.notes
+       or new.status is distinct from old.status
+       or new.rate_bands is distinct from old.rate_bands
+     ) then
+    raise exception 'Live catering pricing cannot be edited in place. Create a pricing revision instead.';
+  end if;
+  return new;
+end;
+$$;
 
 drop trigger if exists trg_guard_live_catering_package_update on public.sambramo_catering_packages;
 create trigger trg_guard_live_catering_package_update
 before update on public.sambramo_catering_packages
-for each row execute function public.guard_live_pricing_package_update();
+for each row execute function public.guard_live_catering_package_update();
 
 -- Partner-side revision creator for generic trades.
 create or replace function public.create_sambramo_trade_package_revision(
