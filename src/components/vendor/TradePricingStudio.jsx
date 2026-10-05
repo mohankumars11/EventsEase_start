@@ -802,7 +802,7 @@ function DetailsStep({ config, fields, draft, readOnly, onUpdate }) {
           </div>
         ) : null}
         <div className="trade-pricing-fields-grid trade-specific-grid">
-          {fields.filter(field => !(showEventSelector && field.key === 'event_type')).map(field => (
+          {fields.filter(field => !(showEventSelector && isEventTypeField(field))).map(field => (
             field.key === 'sku'
               ? <TextField key={field.key} label={field.label} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} placeholder="Partner SKU" onChange={v => onUpdate(field.key, v)} />
               : <TradeFieldControl key={field.key} required={field.required !== false} field={field} config={config} value={draft.trade_inputs?.[field.key] ?? ''} disabled={readOnly} onChange={v => onUpdate(field.key, v)} />
@@ -1011,6 +1011,21 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
 
 function hasFieldValue(value) {
   return Array.isArray(value) ? value.length > 0 : value !== '' && value != null
+}
+
+/* Event type is rendered as one visible multi-select for event-facing
+   trades. Keep every legacy field spelling out of the validation gate so a
+   saved/older schema cannot ask the partner to fill a hidden duplicate. */
+function isEventTypeField(field) {
+  const key = String(field?.key ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  const label = String(field?.label ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  return key === 'event_type'
+    || key === 'event_types'
+    || key === 'events'
+    || key === 'supported_events'
+    || key === 'function'
+    || label === 'event_type'
+    || label === 'event_types'
 }
 
 function TradeFieldControl({ field, config, value, disabled, onChange, required = false }) {
