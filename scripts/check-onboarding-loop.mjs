@@ -168,10 +168,10 @@ ok('Step 1 Edit listing targets an exact vendor service id',
    'Edit listing must not reopen the add-service flow by trade name')
 
 ok('Vendor dashboard forwards the exact edit target',
-   /editListing=\\{params\.get\\(\\x27edit\\x27\\)\\}/.test(dash))
+   dash.includes('editListing={params.get(\'edit\')}'))
 
 ok('Listing tab consumes the edit target and opens editing mode',
-   /setEditing\\(current => current === editListing \? current : editListing\\)/.test(list))
+   list.includes('setEditing(current => current === editListing ? current : editListing)'))
 
 
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
