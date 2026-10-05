@@ -87,7 +87,7 @@ function QuoteGroup({ group, busy, onChoose }) {
     <button type="button" onClick={() => setOpen(x => !x)} className="flex w-full items-start gap-3 p-4 text-left">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><Sparkles size={19} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Sambramo custom quote</span>
+        <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Instant Quote &amp; Pay</span>
         <span className="mt-0.5 block text-[16px] font-extrabold text-ink">{r.service_name ?? r.trade_id}</span>
         <span className="mt-1 block text-[11px] text-ink-mute">{group.responses.length ? group.responses.length + ' responses inside Sambramo' : 'Waiting for responses'}</span>
       </span>
@@ -121,7 +121,7 @@ function ResponseCard({ response, busy, onChoose }) {
     </div>
     {response.status === 'SUBMITTED'
       ? <div className="mt-3">
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-[10.5px] font-extrabold text-amber-900 ring-1 ring-amber-200"><span>Quote expires soon</span><span className="tabular-nums">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span></div>
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-[10.5px] font-extrabold text-amber-900 ring-1 ring-amber-200"><span>Customer quote expires soon</span><span className="tabular-nums">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span></div>
           <button type="button" disabled={busy || seconds <= 0} onClick={onChoose} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 disabled:opacity-50"><Check size={14}/>{busy ? 'Preparing payment…' : 'Accept & Pay'}</button>
           {seconds <= 0 && <p className="mt-1 text-center text-[10.5px] font-bold text-rose-700">This quote expired. Sambramo can request a fresh quote from eligible partners.</p>}
         </div>
