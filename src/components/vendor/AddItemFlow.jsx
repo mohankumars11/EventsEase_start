@@ -187,8 +187,12 @@ export default function AddItemFlow({
      could not resolve it would ask the trade's generic set instead. */
   const [picked, setPicked] = useState(() => {
     if (!isEdit) return []
-    const hit = offeringsForTrade(seed.trade ?? '')
-      .find(o => o.name === editing.name)
+    const normalizeOfferingName = value =>
+      String(value ?? '').trim().toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ')
+    const catalogue = offeringsForTrade(seed.trade ?? '')
+    const target = normalizeOfferingName(editing.name)
+    const hit = catalogue.find(o => normalizeOfferingName(o.name) === target)
+      ?? (catalogue.length === 1 ? catalogue[0] : null)
     return hit ? [hit.serviceId] : []
   })
   const [detail, setDetail] = useState(isEdit ? seed.detail : {})
