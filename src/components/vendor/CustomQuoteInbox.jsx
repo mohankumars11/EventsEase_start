@@ -66,7 +66,7 @@ function QuoteCard({ request, onRespond }) {
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-[var(--shadow-1)] ring-1 ring-hairline/10">
       <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-plum-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-plum-700">Custom Sambramo request</span>
+        <span className="rounded-full bg-plum-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-plum-700">Instant Quote &amp; Pay</span>
         {seconds != null && <span className="flex items-center gap-1 text-[11px] font-extrabold text-amber-700"><Clock3 size={12} /> {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>}
       </div>
       <h3 className="mt-2 text-[19px] font-extrabold text-ink">{request.service_name ?? request.offering_id ?? request.trade_id}</h3>
@@ -123,7 +123,7 @@ function QuoteSheet({ request, busy, onClose, onSubmit }) {
           <button onClick={onClose} aria-label="Close"><X size={19} /></button>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-          <div className="rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft">Enter your <strong>supply quote</strong>. Sambramo calculates and displays the customer commercial result.</div>
+          <div className="rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft">Enter your <strong>supply quote</strong>. Sambramo calculates the customer price, keeps the request inside the quote lane, and gives the customer 10 minutes to accept and pay.</div>
           <Field label="Your quote" value={amount} onChange={setAmount} suffix="₹" type="number" />
           <Field label="Travel included" value={travel} onChange={setTravel} suffix="₹" type="number" />
           <Area label="Crew / labour" value={crew} onChange={setCrew} placeholder="e.g. 3 people · 8 hours" />
