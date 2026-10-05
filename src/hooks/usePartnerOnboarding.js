@@ -42,7 +42,7 @@ export function usePartnerOnboarding() {
 
       let listings = [], documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
       if (vendor?.id) {
-        const [ls, docs, pay, week, genericRes, cateringRes] = await Promise.all([
+        const [ls, docs, pay, week, genericRes, cateringRes, priceRes] = await Promise.all([
           fetchListings(vendor.id),
           fetchDocuments(vendor.id),
           supabase.from('vendor_payout_details')
