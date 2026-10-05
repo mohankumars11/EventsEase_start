@@ -11,6 +11,7 @@ const CATERING = 'Catering & Food'
 export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false }) {
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [statusByService, setStatusByService] = useState({})
+  const [revisionByService, setRevisionByService] = useState({})
   const [loadingStatus, setLoadingStatus] = useState(false)
 
   const listed = useMemo(
@@ -25,7 +26,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
     if (!ids.length) { setStatusByService({}); return }
     setLoadingStatus(true)
     Promise.all([
-      supabase.from('sambramo_trade_packages').select('id,vendor_service_id,status').in('vendor_service_id', ids),
+      supabase.from('sambramo_trade_packages').select('id,vendor_service_id,status,parent_package_id,revision_round').in('vendor_service_id', ids),
       supabase.from('sambramo_partner_price_books').select('vendor_service_id,status').in('vendor_service_id', ids),
       supabase.from('sambramo_catering_packages').select('id,vendor_service_id,status').in('vendor_service_id', ids),
     ]).then(([packagesRes, pricesRes, cateringRes]) => {
@@ -42,6 +43,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
             : p.length || pb.length || cp.length ? 'CONFIGURED' : 'NOT_CONFIGURED'
       }
       setStatusByService(out)
+      setRevisionByService(Object.fromEntries(ids.map(id => [id, p.filter(x => x.parent_package_id || Number(x.revision_round || 0) > 0).length])))
       setLoadingStatus(false)
     }).catch(() => { if (alive) setLoadingStatus(false) })
     return () => { alive = false }
@@ -103,6 +105,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
                   <span className="mt-1 block text-[11.5px] text-ink-mute">{service.category === CATERING ? 'Menu packages · per-guest pricing · structured extras' : config.name + ' · trade-specific packages · pricing rules · add-ons'}</span>
                   <span className="mt-1.5 inline-flex rounded-full bg-plum-50 px-2 py-1 text-[9.5px] font-extrabold text-plum-700 ring-1 ring-plum-100">
                     {transactionLaneCopy(transactionLaneFor({ tradeId: service.trade_id, pricingUnit: service.unit }), { concise: true })}
+                    {revisionByService[service.id] ? ` · ${revisionByService[service.id]} revision${revisionByService[service.id] === 1 ? '' : 's'}` : ''}
                   </span>
                 </span>
                 <ChevronRight size={17} className="mt-1 shrink-0 text-ink-mute" />
