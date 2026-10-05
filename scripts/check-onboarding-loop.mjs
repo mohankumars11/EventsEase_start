@@ -157,11 +157,11 @@ ok('Step 1 can self-heal a missing vendor row before opening services',
 console.log('\nPRICING AND EDITING CONTRACTS\n')
 
 ok('SambramoPricingStudio passes the trade config into TradePricingStudio',
-   /<TradePricingStudio[\\s\\S]*?config=\\{config\\}/.test(pricing),
+   /<TradePricingStudio[\s\S]*?config=\{config\}/.test(pricing),
    'without config the pricing screen crashes when it renders config.name')
 
 ok('TradePricingStudio requires its trade config',
-   /function TradePricingStudio\\(\\{ vendor, service, config,/.test(tradePricing))
+   /function TradePricingStudio\(\{ vendor, service, config,/.test(tradePricing))
 
 ok('Step 1 Edit listing targets an exact vendor service id',
    /tab=list&edit=.*listing\.id/.test(hub),
