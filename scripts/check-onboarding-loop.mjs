@@ -65,7 +65,7 @@ ok('Step 1 "Add a service" declares where it came from',
    'without ?from=setup the trade flow cannot know to come back')
 
 ok('Step 1 sends a draft trade straight to its questionnaire',
-   /tab=list&start=\$\{encodeURIComponent\(l\.trade\)\}&return=setup/.test(hub),
+   /tab=list&start=.*encodeURIComponent\(pricingService\.category\).*return=setup/.test(hub),
    'it used to send ?start= to a screen that reads no params')
 
 console.log('\nTHE MARKER IS READ, NOT INFERRED\n')
