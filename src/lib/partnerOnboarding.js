@@ -94,7 +94,40 @@ function businessDone({ vendor, listings = [], pricing = {} }) {
   }
 }
 
-/** Step 5 · somewhere to pay them. */
+function areaDone({ vendor, weeklyRules = [] }) {
+  if (!vendor) return { done: false, partial: false, detail: null }
+  const located = !!vendor.city && !!vendor.pincode
+  const radius = Number(vendor.service_radius_km) > 0
+  const calendarConfigured = weeklyRules.length > 0 || !!vendor.calendar_reviewed_through
+  return {
+    done: located && radius && calendarConfigured,
+    partial: located || radius || calendarConfigured,
+    detail: located && radius && calendarConfigured
+      ? `${vendor.city} · ${vendor.service_radius_km} km · calendar set`
+      : null,
+  }
+}
+
+/**
+ * Verification is still trade-specific. A photographer must not be asked
+ * for a catering document simply because another service on the account needs it.
+ */
+function complianceDone({ listings = [], documents = {}, vendor }) {
+  const trades = listings.map(l => l.trade)
+  const reqs = requirementsFor(trades)
+  const byRequirement = documents.byRequirement ?? documents
+  const evaluated = evaluateAll(reqs, byRequirement)
+  const acknowledged = (vendor?.completed_steps ?? []).includes('compliance')
+  return {
+    done: evaluated.canSubmit && acknowledged,
+    partial: evaluated.satisfied > 0 || acknowledged,
+    detail: evaluated.requiredTotal
+      ? `${evaluated.requiredSatisfied} of ${evaluated.requiredTotal} required`
+      : `${evaluated.satisfied} of ${reqs.length} required added`,
+  }
+}
+
+/** Step 4 · somewhere to pay them. */
 function bankDone({ payout }) {
   return {
     done: !!payout,
@@ -103,7 +136,7 @@ function bankDone({ payout }) {
   }
 }
 
-/** Step 6 · they have asked us to look. */
+/** Step 5 · they have asked us to look. */
 function reviewDone({ vendor }) {
   const status = vendor?.verification_status
   return {
@@ -115,7 +148,6 @@ function reviewDone({ vendor }) {
 
 const PREDICATE = {
   business: businessDone,
-  details: detailsDone,
   area: areaDone,
   compliance: complianceDone,
   bank: bankDone,
@@ -177,7 +209,7 @@ export function onboardingComplete(account = {}) {
   return onboardingSteps(account).every(s => s.status === STATUS.COMPLETE)
 }
 
-/** 0–6, for the progress line. Counts only genuinely finished steps. */
+/** 0–5, for the progress line. Counts only genuinely finished steps. */
 export function completedCount(account = {}) {
   return onboardingSteps(account).filter(s => s.status === STATUS.COMPLETE).length
 }
