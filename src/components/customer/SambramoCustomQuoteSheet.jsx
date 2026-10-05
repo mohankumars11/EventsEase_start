@@ -77,11 +77,11 @@ export default function SambramoCustomQuoteSheet({
           <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Sambramo is on it</p>
           <h2 className="mt-1 text-[23px] font-extrabold leading-tight text-ink">Your requirement is now with the right partners.</h2>
           <p className="mt-2 text-[12px] leading-relaxed text-ink-mute">
-            Quotes will arrive inside Sambramo. You do not need to contact vendors separately.
+            Sambramo is collecting partner quotes now. Eligible partners have a short response window; once a quote arrives, you get 10 minutes to accept and pay. You do not need to contact vendors separately.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Fact label="Partners contacted" value={String(done.partnersContacted ?? 0)} />
-            <Fact label="Quote window" value="Up to 24h" />
+            <Fact label="Partner response" value="7 min" />
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4"><button type="button" onClick={onClose} className="rounded-2xl bg-surface py-3 text-[12.5px] font-extrabold text-ink-soft ring-1 ring-hairline/10">Back to service</button><button type="button" onClick={() => navigate('/dashboard/customer/requests')} className="rounded-2xl bg-saffron-400 py-3 text-[12.5px] font-extrabold text-plum-950">See my quotes</button></div>
         </section>
@@ -110,7 +110,7 @@ export default function SambramoCustomQuoteSheet({
           guestCount={guestCount}
           onClose={onClose}
           defaults={{}}
-          confirmLabel={sending ? 'Sending to Sambramo…' : 'Send custom request'}
+          confirmLabel={sending ? 'Finding eligible partners…' : 'Get instant quote'}
           onConfirm={submit}
         />
         {sending && <div className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-plum-950 px-4 py-2.5 text-[11px] font-extrabold text-white shadow-xl"><Loader2 size={14} className="animate-spin" /> Finding eligible Sambramo partners</div>}
