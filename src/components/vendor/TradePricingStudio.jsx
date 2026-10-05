@@ -431,16 +431,28 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
     return () => { alive = false }
   }, [vendor?.id, mediaRefresh])
 
-  const update = (key, value) => setDraft(d => ({ ...d, [key]: value }))
-  const updateTrade = (key, value) => setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
-  const updateCommercial = (key, value) => setDraft(d => ({ ...d, commercial_inputs: { ...(d.commercial_inputs ?? {}), [key]: value } }))
-  const updateTemplate = template => setDraft(d => ({
+  const update = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, [key]: value }))
+  }
+  const updateTrade = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, trade_inputs: { ...(d.trade_inputs ?? {}), [key]: value } }))
+  }
+  const updateCommercial = (key, value) => {
+    setLocalError('')
+    setDraft(d => ({ ...d, commercial_inputs: { ...(d.commercial_inputs ?? {}), [key]: value } }))
+  }
+  const updateTemplate = template => {
+    setLocalError('')
+    setDraft(d => ({
     ...d,
     source: 'SAMBRAMO_TEMPLATE',
     template_id: template[0],
     name: template[1],
     tier: inferTier(template[1]),
-  }))
+    }))
+  }
 
   const validation = useMemo(() => {
     const problems = []
