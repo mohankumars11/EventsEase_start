@@ -59,6 +59,8 @@ export default function CalendarMonth({
   onSetRange,
   onClearDays,
   onSaveWeeklyRules,
+  setupMode = false,
+  onSetupContinue = null,
 }) {
   const todayISO = istTodayISO()
 
@@ -184,6 +186,19 @@ export default function CalendarMonth({
         </div>
       </section>
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
+      {setupMode && onSetupContinue && (
+        <section className="rounded-[20px] bg-plum-50 px-4 py-3.5 ring-1 ring-plum-200">
+          <div className="flex items-start gap-2.5">
+            <CalendarCheck size={16} className="mt-0.5 shrink-0 text-plum-700" />
+            <div className="min-w-0">
+              <p className="text-[12.5px] font-black text-plum-950">Onboarding · availability is the dispatch gate</p>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-plum-900/75">Mark your usual week and any busy dates. Once you finish this, Sambramo will use this calendar when deciding which scheduled jobs can reach you.</p>
+              <button type="button" onClick={onSetupContinue} disabled={!configured} className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center rounded-full bg-plum-700 px-4 text-[12px] font-black text-white disabled:opacity-40">Continue to verification</button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-3.5 pt-4 text-white shadow-[0_12px_28px_rgba(63,25,130,0.20)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 right-16 h-28 w-28 rounded-full bg-violet-300/15 blur-2xl" />
