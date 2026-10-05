@@ -170,7 +170,7 @@ const ICONS = {
     <circle cx="30" cy="75" r="8" fill={b}/><circle cx="72" cy="75" r="8" fill={b}/>
     <path d="M22 34l5-10h43l6 10" fill="none" stroke={a} strokeWidth="5" strokeLinejoin="round"/>
   </>,
-  Photography: ({a,b,g,g2}) => <>
+  'Photography': ({a,b,g,g2}) => <>
     <rect x="17" y="33" width="66" height="40" rx="8" fill={g} stroke={b} strokeWidth="3"/>
     <path d="M30 33l5-8h15l5 8" fill={a} stroke={b} strokeWidth="3"/>
     <circle cx="50" cy="53" r="16" fill={g2} stroke={b} strokeWidth="3"/>
@@ -213,7 +213,7 @@ const ICONS = {
     <path d="M31 62h15v10H31zM54 62h15v10H54z" fill={g2} stroke={a} strokeWidth="2"/>
     <path d="M50 25v47" stroke={a} strokeWidth="4"/>
   </>,
-  Transportation: ({a,b,g,g2}) => <>
+  'Transportation': ({a,b,g,g2}) => <>
     <path d="M15 49l9-18h42l12 18v21H15z" fill={g} stroke={b} strokeWidth="3"/>
     <path d="M27 35h34l7 12H20z" fill={g2}/>
     <circle cx="29" cy="73" r="8" fill={b}/><circle cx="70" cy="73" r="8" fill={b}/>
@@ -231,12 +231,12 @@ const ICONS = {
     <path d="M18 70h64M25 78h50" stroke={a} strokeWidth="5" strokeLinecap="round"/>
     <path d="M78 52l6 6-6 6M84 58h-9" fill="none" stroke={b} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
   </>,
-  Venue: ({a,b,g,g2}) => <>
+  'Venue': ({a,b,g,g2}) => <>
     <path d="M16 77h68M23 77V39h54v38M18 39l32-20 32 20z" fill={g} stroke={b} strokeWidth="3" strokeLinejoin="round"/>
     <path d="M35 77V56h11v21M54 77V56h11v21" fill={g2} stroke={a} strokeWidth="2"/>
     <path d="M28 47h44" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".7"/>
   </>,
-  Videography: ({a,b,g,g2}) => <>
+  'Videography': ({a,b,g,g2}) => <>
     <rect x="18" y="36" width="49" height="37" rx="7" fill={g} stroke={b} strokeWidth="3"/>
     <path d="M67 45l18-8v35l-18-8z" fill={a} stroke={b} strokeWidth="3" strokeLinejoin="round"/>
     <circle cx="42" cy="55" r="11" fill={g2} stroke={b} strokeWidth="3"/><circle cx="42" cy="55" r="5" fill={b}/>
