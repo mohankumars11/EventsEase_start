@@ -17,7 +17,15 @@ export async function photographyPricing(t) {
       }, 15000)
       const body = await driver.findElement(By.css('body')).getText()
       t.assert(body.includes('Photography'), 'Photography title did not render')
-      t.assert(body.includes('Essential Coverage'), 'Photography package template did not render')
+      t.assert(body.includes('No package yet'), 'Photography pricing catalog did not render its empty state')
+      t.assert((await driver.findElements(By.xpath('//button[normalize-space(.)="Use first template"]'))).length === 1,
+        'Use first template action did not render')
+    })
+
+    await t.test('pricing', 'A Photography package can open from the pricing catalog', async () => {
+      const useTemplate = await driver.findElement(By.xpath('//button[normalize-space(.)="Use first template"]'))
+      await driver.executeScript('arguments[0].click()', useTemplate)
+      await until_(driver, async () => (await driver.findElements(By.css('button.trade-pricing-template-card')))[0] ?? null, 15000)
     })
 
     await t.test('pricing', 'Save draft works without requiring completed Event type or all trade fields', async () => {
