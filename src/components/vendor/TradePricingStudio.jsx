@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './TradePricingStudio.css'
 import './TradeCustomerPreview.css'
 import {
@@ -410,6 +410,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
      the partner to answer the hidden legacy field a second time. */
   const showEventSelector = String(config?.trade_id ?? '').startsWith('E') || config?.trade_id === 'L08'
   const supportedEventTypes = readSupportedEvents(draft?.trade_inputs ?? {})
+  const eventSelectionRef = useRef(supportedEventTypes)
 
   useEffect(() => {
     setAddons(draft.addons ?? [])
@@ -447,6 +448,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         const eventTypes = Array.isArray(value)
           ? Array.from(new Set(value.filter(Boolean).map(String)))
           : String(value ?? '').split(',').map(x => x.trim()).filter(Boolean)
+        eventSelectionRef.current = eventTypes
         return {
           ...d,
           trade_inputs: {
@@ -595,9 +597,14 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
         trade_inputs: (() => {
           const tradeInputs = { ...(draft.trade_inputs ?? {}) }
           if (showEventSelector) {
-            const eventTypes = readSupportedEvents(tradeInputs)
-            tradeInputs.supported_events = eventTypes
-            tradeInputs.event_type = eventTypes
+            /* Read the last user selection directly as well as the draft
+               state. The ref survives every step transition and prevents
+               the final RPC from ever seeing a stale closure snapshot. */
+            const eventTypes = eventSelectionRef.current.length
+              ? eventSelectionRef.current
+              : readSupportedEvents(tradeInputs)
+            tradeInputs.supported_events = [...eventTypes]
+            tradeInputs.event_type = [...eventTypes]
           }
           return tradeInputs
         })(),
