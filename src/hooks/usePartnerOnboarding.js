@@ -27,7 +27,7 @@ export function usePartnerOnboarding() {
 
   const [loading, setLoading] = useState(true)
   const [account, setAccount] = useState({
-    vendor: null, listings: [], documents: {}, payout: null, weeklyRules: [], pricing: { byService: {}, generic: [], catering: [] },
+    vendor: null, listings: [], availability: {}, documents: {}, payout: null, weeklyRules: [], pricing: { byService: {}, generic: [], catering: [] },
   })
   const runId = useRef(0)
 
@@ -40,10 +40,11 @@ export function usePartnerOnboarding() {
         .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()
       if (run !== runId.current) return
 
-      let listings = [], documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
+      let listings = [], availability = {}, documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
       if (vendor?.id) {
         const [ls, docs, pay, week, genericRes, cateringRes, priceRes] = await Promise.all([
           fetchListings(vendor.id),
+          supabase.from('vendor_availability').select('slot_date,status,slots_total').eq('vendor_id', vendor.id).gte('slot_date', new Date().toISOString().slice(0, 10)),
           fetchDocuments(vendor.id),
           supabase.from('vendor_payout_details')
             .select('method, upi_id, account_number, verified_at')
@@ -63,6 +64,7 @@ export function usePartnerOnboarding() {
         ])
         if (run !== runId.current) return
         listings = ls ?? []
+        availability = Array.isArray(avail?.data) ? Object.fromEntries(avail.data.map(row => [row.slot_date, row])) : {}
         documents = docs ?? {}
         payout = pay?.data ?? null
         weeklyRules = week?.error ? [] : (week?.data ?? [])
@@ -70,7 +72,7 @@ export function usePartnerOnboarding() {
         catering = cateringRes?.error ? [] : (cateringRes?.data ?? [])
         priceBooks = priceRes?.error ? [] : (priceRes?.data ?? [])
       }
-      setAccount({ vendor: vendor ?? null, listings, documents, payout, weeklyRules, pricing: { byService: indexPricing(generic, catering, priceBooks), generic, catering, priceBooks } })
+      setAccount({ vendor: vendor ?? null, listings, availability, documents, payout, weeklyRules, pricing: { byService: indexPricing(generic, catering, priceBooks), generic, catering, priceBooks } })
     } catch {
       /* A partner we cannot read is left at the start rather than
          pushed somewhere by a half-answer. */
