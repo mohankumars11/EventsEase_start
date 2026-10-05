@@ -36,7 +36,16 @@ function BaseSvg({ uid, children }) {
           <feDropShadow dx="0" dy="4" stdDeviation="3.2" floodColor="#2A085C" floodOpacity=".26" />
         </filter>
       </defs>
-      <g filter={'url(#' + uid + '-shadow)'}>{children('url(#' + grad + ')', 'url(#' + grad2 + ')')}</g>
+      <g opacity=".42" transform="translate(0 4)" filter={'url(#' + uid + '-shadow)'}>
+        {children('url(#' + grad + ')', 'url(#' + grad2 + ')')}
+      </g>
+      <g filter={'url(#' + uid + '-shadow)'}>
+        {children('url(#' + grad + ')', 'url(#' + grad2 + ')')}
+      </g>
+      <g opacity=".34">
+        <path d="M18 18H82" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M22 22H58" stroke="#fff" strokeWidth="1.4" strokeLinecap="round"/>
+      </g>
     </svg>
   )
 }
