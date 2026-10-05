@@ -90,13 +90,14 @@ export default function CalendarMonth({
        the whole year, but the demand read only needs to cover the active
        booking window. */
     const horizon = new Date(`${todayISO}T00:00:00Z`)
-    horizon.setUTCMonth(horizon.getUTCMonth() + CALENDAR_HORIZON_MONTHS)
+    horizon.setUTCDate(horizon.getUTCDate() + 365)
 
     const [jobsRes, offersRes, demandRes] = await Promise.all([
       supabase.from('partner_jobs')
         .select('line_id, service_name, occasion_name, trade, status, event_date, time_note, area_label, city, distance_m, partner_amount_paise, is_funded')
         .eq('vendor_id', vendorId)
         .gte('event_date', fromISO)
+        .lte('event_date', horizon.toISOString().slice(0, 10))
         .order('event_date', { ascending: true }),
       supabase.from('partner_offer_feed')
         .select('offer_id, line_id, occasion_name, service_name, event_date, time_note, area_label, expires_at, partner_amount_paise')
@@ -176,6 +177,9 @@ export default function CalendarMonth({
             </p>
             <p className="mt-2 text-[10.5px] font-bold text-amber-900/70">
               Before changing dates: check your accepted and pending jobs so you do not reduce your own availability.
+            </p>
+            <p className="mt-2 text-[10.5px] font-black text-amber-950/70">
+              Keep this calendar current. Scheduled customer bookings normally open up to 180 days ahead; maintain your partner availability up to 365 days.
             </p>
           </div>
         </div>
