@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 import {
-  CalendarPlus, CalendarRange, Repeat, ChevronRight, ChevronDown, MapPin, CalendarDays, RotateCw, CalendarCheck,
+  CalendarPlus, CalendarRange, Repeat, ChevronRight, ChevronDown, MapPin, CalendarDays, RotateCw, CalendarCheck, CalendarClock,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
 import { useAsyncData } from '../../hooks/useAsyncData'
 import { istTodayISO } from '../../lib/istTime'
+import { CALENDAR_HORIZON_MONTHS } from '../../config/vendor'
 import { STATUS, dayStatus } from '../../lib/availability'
 import { indexInterestRows } from '../../lib/demand'
 import ScreenState from '../ui/ScreenState'
@@ -84,11 +85,12 @@ export default function CalendarMonth({
     from.setUTCDate(from.getUTCDate() - 120)
     const fromISO = from.toISOString().slice(0, 10)
 
-    /* How far ahead the demand read goes. Matches the 90-day cap on a
-       range, so every date the partner can reach in one save has an
-       answer. */
+    /* Customer booking horizon: six rolling months. The partner's standing
+       weekly schedule and date exceptions remain the source of truth across
+       the whole year, but the demand read only needs to cover the active
+       booking window. */
     const horizon = new Date(`${todayISO}T00:00:00Z`)
-    horizon.setUTCDate(horizon.getUTCDate() + 120)
+    horizon.setUTCMonth(horizon.getUTCMonth() + CALENDAR_HORIZON_MONTHS)
 
     const [jobsRes, offersRes, demandRes] = await Promise.all([
       supabase.from('partner_jobs')
