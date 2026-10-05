@@ -66,6 +66,7 @@ export default function SambramoQuoteBoard({ userId }) {
     })
     setBusy(null)
     if (result.ok) {
+      try { sessionStorage.setItem('sambramo_quote_auto_pay', String(result.body?.bookingRequestId ?? '')) } catch { /* storage unavailable */ }
       navigate('/book/instant?request=' + encodeURIComponent(result.body?.bookingRequestId ?? ''))
       return
     }
