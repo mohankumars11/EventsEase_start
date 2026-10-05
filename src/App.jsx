@@ -81,7 +81,6 @@ const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
    cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
 const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
 const BusinessServicesStep = lazy(() => import('./pages/partner/steps/BusinessServicesStep'))
-const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
 const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAreaStep'))
 const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
 const BankPaymentsStep     = lazy(() => import('./pages/partner/steps/BankPaymentsStep'))
@@ -612,7 +611,7 @@ function AppRoutes() {
 
       {/* ── The partner entry flow ──────────────────────────────
 
-          Nine screens between the splash and the dashboard, each its own
+          The onboarding flow is a compact five-step activation journey, each its own
           route so the Android back button walks them in order rather than
           leaving the app.
 
@@ -662,18 +661,13 @@ function AppRoutes() {
           <PageBoundary><WhatYouOffer /></PageBoundary>
         </ProtectedRoute>
       } />
-{/* ── The six steps ────────────────────────────────────────────
+{/* ── The five steps ────────────────────────────────────────────
           Each wrapped in StepGate, which sends a partner back to the
           home if the step ahead of them is still locked. The disabled
           buttons on the home are a courtesy; this is the rule. */}
       <Route path="/partner/setup/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
           <PageBoundary><StepGate stepId="business"><BusinessServicesStep /></StepGate></PageBoundary>
-        </ProtectedRoute>
-      } />
-      <Route path="/partner/setup/details" element={
-        <ProtectedRoute allowedRoles={['vendor']}>
-          <PageBoundary><StepGate stepId="details"><PartnerDetailsStep /></StepGate></PageBoundary>
         </ProtectedRoute>
       } />
       <Route path="/partner/setup/area" element={
