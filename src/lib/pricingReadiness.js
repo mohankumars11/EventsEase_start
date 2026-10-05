@@ -1,41 +1,48 @@
-export function genericPackageReady(pkg) {
-  if (!pkg) return false
-  const base = Number(pkg?.commercial_inputs?.base_price ?? 0)
+export function genericPackageReady(pkg, priceBook = null) {
+  if (!pkg || ['ARCHIVED','PAUSED'].includes(pkg.status)) return false
   const name = String(pkg?.name ?? '').trim()
-  return !!name && base > 0 && !['ARCHIVED','PAUSED'].includes(pkg.status)
+  const unit = String(priceBook?.unit ?? pkg?.commercial_inputs?.pricing_unit ?? '').toLowerCase()
+  const rate = Number(priceBook?.rate_paise ?? pkg?.commercial_inputs?.base_price_paise ?? 0)
+  return !!name && !!priceBook && (rate > 0 || unit === 'custom quote')
 }
 
 export function cateringPackageReady(pkg) {
-  if (!pkg) return false
+  if (!pkg || ['ARCHIVED','PAUSED'].includes(pkg.status)) return false
   const name = String(pkg?.name ?? '').trim()
   const bands = Array.isArray(pkg?.rate_bands) ? pkg.rate_bands : []
-  const rated = bands.some(b => Number(b?.rate ?? b?.rate_paise ?? 0) > 0)
-  return !!name && rated && !['ARCHIVED','PAUSED'].includes(pkg.status)
+  const rated = bands.some(b => Number(b?.rate ?? 0) > 0 || Number(b?.rate_paise ?? 0) > 0)
+  return !!name && rated
 }
 
-export function indexPricing(packages = [], cateringPackages = []) {
+export function indexPricing(packages = [], cateringPackages = [], priceBooks = []) {
   const byService = {}
+  const bookByPackage = {}
+  for (const p of priceBooks) {
+    const key = String(p.offering_id ?? '')
+    if (key && !bookByPackage[key]) bookByPackage[key] = p
+  }
   for (const p of packages) {
     const id = p.vendor_service_id
     if (!id) continue
-    const current = byService[id] ?? { packages: [], ready: false, live: 0, draft: 0, review: 0 }
-    current.packages.push({ ...p, type: 'trade' })
-    if (genericPackageReady(p)) current.ready = true
-    if (p.status === 'LIVE') current.live += 1
-    else if (p.status === 'UNDER_REVIEW' || p.status === 'ACTION_REQUIRED') current.review += 1
-    else if (p.status === 'DRAFT') current.draft += 1
-    byService[id] = current
+    const row = byService[id] ?? { packages: [], ready: false, live: 0, draft: 0, review: 0 }
+    const priceBook = bookByPackage[String(p.id)] ?? null
+    row.packages.push({ ...p, type: 'trade', price_book: priceBook })
+    if (genericPackageReady(p, priceBook)) row.ready = true
+    if (p.status === 'LIVE') row.live += 1
+    else if (p.status === 'UNDER_REVIEW' || p.status === 'ACTION_REQUIRED') row.review += 1
+    else if (p.status === 'DRAFT') row.draft += 1
+    byService[id] = row
   }
   for (const p of cateringPackages) {
     const id = p.vendor_service_id
     if (!id) continue
-    const current = byService[id] ?? { packages: [], ready: false, live: 0, draft: 0, review: 0 }
-    current.packages.push({ ...p, type: 'catering' })
-    if (cateringPackageReady(p)) current.ready = true
-    if (p.status === 'LIVE' || p.status === 'ACTIVE') current.live += 1
-    else if (p.status === 'UNDER_REVIEW' || p.status === 'ACTION_REQUIRED') current.review += 1
-    else if (p.status === 'DRAFT') current.draft += 1
-    byService[id] = current
+    const row = byService[id] ?? { packages: [], ready: false, live: 0, draft: 0, review: 0 }
+    row.packages.push({ ...p, type: 'catering' })
+    if (cateringPackageReady(p)) row.ready = true
+    if (p.status === 'LIVE' || p.status === 'ACTIVE') row.live += 1
+    else if (p.status === 'UNDER_REVIEW' || p.status === 'ACTION_REQUIRED') row.review += 1
+    else if (p.status === 'DRAFT') row.draft += 1
+    byService[id] = row
   }
   return byService
 }
