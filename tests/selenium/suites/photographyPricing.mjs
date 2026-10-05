@@ -16,6 +16,20 @@ export async function photographyPricing(t) {
       t.assert(body.includes('Essential Coverage'), 'Photography package template did not render')
     })
 
+    await t.test('pricing', 'Save draft works without requiring completed Event type or all trade fields', async () => {
+      const save = await driver.findElement(By.css('[data-pricing-action="save-draft"]'))
+      await driver.executeScript('arguments[0].click()', save)
+
+      await until_(driver, async () => {
+        const body = await driver.findElement(By.css('body')).getText()
+        return body.includes('Draft saved successfully.') ? true : null
+      }, 15000)
+
+      const rpc = await driver.executeScript('return window.__PRICING_RPC__[window.__PRICING_RPC__.length - 1]')
+      t.assert(rpc?.name === 'save_sambramo_trade_package', 'draft save RPC was not called')
+      t.assert(rpc?.args?.p_package?.status === 'DRAFT', 'draft save did not send DRAFT status')
+    })
+
     await t.test('pricing', 'A Photography package can enter Trade Fields', async () => {
       const template = await driver.findElement(By.css('button.trade-pricing-template-card'))
       await driver.executeScript('arguments[0].click()', template)
