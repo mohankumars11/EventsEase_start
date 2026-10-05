@@ -375,7 +375,8 @@ export function coverageOf({ availability = {}, weeklyRules = [], todayISO, hori
   const cursor = parse(todayISO)
   cursor.setUTCDate(1)
 
-  for (let i = 0; i < 6; i++) {
+  const horizonMonths = Math.max(1, Math.ceil(Number(horizonDays) / 30.45))
+  for (let i = 0; i < horizonMonths; i++) {
     const y = cursor.getUTCFullYear()
     const m = cursor.getUTCMonth()
     const first = new Date(Date.UTC(y, m, 1))
