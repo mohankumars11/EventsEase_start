@@ -11,6 +11,10 @@ export async function photographyPricing(t) {
     await waitFor(driver, By.css('[data-testid="photography-pricing-lab"]'), 30000)
 
     await t.test('pricing', 'Photography pricing opens in the real browser harness', async () => {
+      await until_(driver, async () => {
+        const body = await driver.findElement(By.css('body')).getText()
+        return body.includes('Photography') && body.includes('Essential Coverage') ? true : null
+      }, 15000)
       const body = await driver.findElement(By.css('body')).getText()
       t.assert(body.includes('Photography'), 'Photography title did not render')
       t.assert(body.includes('Essential Coverage'), 'Photography package template did not render')
