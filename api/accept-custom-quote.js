@@ -124,7 +124,7 @@ export default async function handler(req, res) {
           exclusions: response.exclusions,
           quote_valid_until: response.quote_valid_until,
         },
-        pricing_state: 'INSTANT_BOOK',
+        pricing_state: 'INSTANT_QUOTE',
         pricing_version: VERSION,
         pricing_snapshot: {
           pricing_state: 'VENDOR_QUOTE_ACCEPTED',
