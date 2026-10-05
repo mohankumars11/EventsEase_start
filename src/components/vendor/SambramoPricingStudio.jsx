@@ -43,7 +43,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
             : p.length || pb.length || cp.length ? 'CONFIGURED' : 'NOT_CONFIGURED'
       }
       setStatusByService(out)
-      setRevisionByService(Object.fromEntries(ids.map(id => [id, p.filter(x => x.parent_package_id || Number(x.revision_round || 0) > 0).length])))
+      setRevisionByService(Object.fromEntries(ids.map(id => [id, (packagesRes.data ?? []).filter(x => x.vendor_service_id === id && (x.parent_package_id || Number(x.revision_round || 0) > 0)).length])))
       setLoadingStatus(false)
     }).catch(() => { if (alive) setLoadingStatus(false) })
     return () => { alive = false }
@@ -84,6 +84,12 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
             <p className="mt-1.5 text-[12px] leading-relaxed text-white/75">Only services already listed by this partner appear below. Each one opens its own trade-specific pricing catalog.</p>
           </div>
         </div>
+      </section>
+      <section className="grid grid-cols-4 gap-2">
+        <StatusSummary label="Live" count={Object.values(statusByService).filter(x => x === 'ENABLED').length} tone="bg-forest-50 text-forest-800" />
+        <StatusSummary label="Draft" count={Object.values(statusByService).filter(x => x === 'CONFIGURED').length} tone="bg-surface text-ink-soft" />
+        <StatusSummary label="Review" count={Object.values(statusByService).filter(x => x === 'REVIEWING').length} tone="bg-amber-50 text-amber-800" />
+        <StatusSummary label="Revisions" count={Object.values(revisionByService).reduce((n, v) => n + Number(v || 0), 0)} tone="bg-plum-50 text-plum-700" />
       </section>
       <div>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Your listed services</p>
@@ -129,6 +135,13 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
       </section>
     </div>
   )
+}
+
+function StatusSummary({ label, count, tone }) {
+  return <div className={`rounded-2xl p-3 ring-1 ring-ink/[0.06] ${tone}`}>
+    <p className="text-[9px] font-extrabold uppercase tracking-wide opacity-70">{label}</p>
+    <p className="mt-1 text-[18px] font-black">{count}</p>
+  </div>
 }
 
 function StatusPill({ status, loading }) {
