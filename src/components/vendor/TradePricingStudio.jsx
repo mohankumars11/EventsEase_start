@@ -293,7 +293,15 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         readOnly={false}
         onBack={() => setEditor(null)}
         onboarding={onboarding}
-        onSaved={async (result, status) => { await load(); if (status === 'UNDER_REVIEW') setEditor(null); else setEditor(prev => prev ? { ...prev, id: result?.package_id ?? prev.id, status: 'DRAFT' } : prev) }}
+        onSaved={async (result, status) => {
+          await load()
+          if (onboarding) {
+            onBack?.()
+            return
+          }
+          if (status === 'UNDER_REVIEW') setEditor(null)
+          else setEditor(prev => prev ? { ...prev, id: result?.package_id ?? prev.id, status: 'DRAFT' } : prev)
+        }}
         onOpenListings={onOpenListings}
       />
     )
