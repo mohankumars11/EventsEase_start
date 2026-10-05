@@ -163,6 +163,21 @@ export default function CalendarMonth({
 
   return (
     <div className="space-y-3 pb-2">
+      <section className="rounded-[20px] bg-amber-50 px-4 py-3.5 ring-1 ring-amber-200">
+        <div className="flex items-start gap-2.5">
+          <CalendarCheck size={16} className="mt-0.5 shrink-0 text-amber-700" />
+          <div>
+            <p className="text-[12.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</p>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-amber-900/80">
+              Sambramo offers scheduled jobs only when this calendar shows you available and your capacity allows it.
+              Blocking or reducing availability can stop new offers for those dates.
+            </p>
+            <p className="mt-2 text-[10.5px] font-bold text-amber-900/70">
+              Before changing dates: check your accepted and pending jobs so you do not reduce your own availability.
+            </p>
+          </div>
+        </div>
+      </section>
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
       <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-3.5 pt-4 text-white shadow-[0_12px_28px_rgba(63,25,130,0.20)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
