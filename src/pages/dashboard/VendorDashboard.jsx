@@ -849,6 +849,8 @@ export default function VendorDashboard() {
               onSetRange={setRangeStatus}
               onClearDays={clearDays}
               onSaveWeeklyRules={saveWeeklyRules}
+              setupMode={params.get('return') === 'setup'}
+              onSetupContinue={() => navigate('/partner/setup/compliance')}
             />
           </div>
         )}
