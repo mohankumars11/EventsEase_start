@@ -607,6 +607,20 @@ export default function MatchingBoard({ requestId, onPay, pending = [], area = n
     () => accepted.filter(l => l.status === 'accepted'), [accepted])
   const payTotal = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
   const stillLooking = live.length - accepted.length
+
+  // The custom-quote lane is intentionally one customer action: Accept & Pay.
+  // The quote board records that intent, and this board opens the same server-verified
+  // Razorpay payment flow as ordinary instant booking as soon as the accepted line exists.
+  const autoQuotePayRef = useRef(false)
+  useEffect(() => {
+    if (!requestId || !payable.length || autoQuotePayRef.current) return
+    let target = null
+    try { target = sessionStorage.getItem('sambramo_quote_auto_pay') } catch { /* storage unavailable */ }
+    if (target !== String(requestId)) return
+    autoQuotePayRef.current = true
+    try { sessionStorage.removeItem('sambramo_quote_auto_pay') } catch { /* storage unavailable */ }
+    void pay(payable)
+  }, [requestId, payable.length])
   // Fed to the wave nudge above. A booking where everybody has answered
   // has nothing left to widen for, and should stop asking the server to.
   huntingRef.current = stillLooking > 0
