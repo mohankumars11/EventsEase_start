@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useCalendarCoverage } from '../../hooks/useCalendarCoverage'
 import {
-  CalendarPlus, CalendarRange, Repeat, ChevronRight, ChevronDown, MapPin, CalendarDays, RotateCw, CalendarCheck, CalendarClock,
+  CalendarPlus, CalendarRange, Repeat, ChevronRight, ChevronDown, MapPin, CalendarDays, RotateCw, CalendarCheck
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { daySeverity } from '../../lib/calendarConflicts'
