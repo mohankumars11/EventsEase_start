@@ -893,34 +893,31 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
     can_be_paid:  !!payout?.verified_at,
   }
   const dispatchable = readiness.approved && readiness.located && readiness.listing_live
+  const pricingPending = [...(pricing.trade ?? []), ...(pricing.catering ?? [])]
+    .filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status))
+  const pricingUnderReview = pricingPending.filter(p => p.status === 'UNDER_REVIEW')
 
   async function approveApplication() {
     setBusy('approve-application')
     try {
-      const { data: res, error } = await supabase.rpc('set_vendor_verification', {
-        p_vendor_id: v.id, p_status: 'approved', p_note: null,
+      const { data: res, error } = await supabase.rpc('approve_sambramo_partner_application', {
+        p_vendor_id: v.id,
+        p_note: null,
       })
       if (error) throw error
-      if (!res?.ok) throw new Error(res?.reason === 'not_permitted' ? 'You do not have permission to approve partners.' : 'Partner approval could not be completed.')
-      let pricingApproved = 0
-      for (const pkg of pricingUnderReview) {
-        const type = pricing.trade.some(p => p.id === pkg.id) ? 'trade' : 'catering'
-        const decision = await supabase.rpc('review_sambramo_pricing_revision', {
-          p_package_type: type, p_package_id: pkg.id, p_decision: 'approve', p_note: null,
-        })
-        if (decision.error) throw decision.error
-        if (decision.data?.ok !== false) pricingApproved += 1
+      if (!res?.ok) {
+        if (res?.reason === 'not_permitted') throw new Error('You do not have permission to approve partner applications.')
+        if (res?.reason === 'missing_requirements') throw new Error('This application is missing a required onboarding section.')
+        throw new Error('Partner application approval could not be completed.')
       }
-      const listingsMadeLive = res.listings_made_live ?? 0
-      const parts = ['Partner approved']
-      if (listingsMadeLive) parts.push(listingsMadeLive + ' listing' + (listingsMadeLive === 1 ? '' : 's') + ' live')
-      if (pricingApproved) parts.push(pricingApproved + ' pricing package' + (pricingApproved === 1 ? '' : 's') + ' live')
+      const parts = ['Partner application approved']
+      if (res.listings_made_live) parts.push(res.listings_made_live + ' listing' + (res.listings_made_live === 1 ? ' live' : 's live'))
+      if (res.pricing_made_live) parts.push(res.pricing_made_live + ' pricing package' + (res.pricing_made_live === 1 ? ' live' : 's live'))
       toast.success(parts.join(' · '))
-      if (pricingPending.length > pricingUnderReview.length) toast.info('Some pricing items still need changes and remain in the pricing review queue.')
       await onChanged()
       onClose()
     } catch (err) {
-      toast.error(friendlyError(err, 'Application approval was not completed.'))
+      toast.error(friendlyError(err, 'Application approval was not completed. No partial approval was applied.'))
     } finally { setBusy(null) }
   }
   async function setStatus(status) {
