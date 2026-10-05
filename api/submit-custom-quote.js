@@ -5,7 +5,8 @@ import { authenticatedUser } from './_lib/auth.js'
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const FEE_RATE = 0.15
-const VERSION = 'sambramo-custom-quote-v1'
+const VERSION = 'sambramo-custom-quote-v2'
+const CUSTOMER_ACCEPT_MINUTES = 10
 
 const money = value => {
   const n = Number(value)
@@ -48,8 +49,7 @@ export default async function handler(req, res) {
 
   const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - FEE_RATE)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
-  const validityMinutes = Math.max(15, Math.min(1440, Number(body.validityMinutes) || 60))
-  const validUntil = new Date(Date.now() + validityMinutes * 60 * 1000).toISOString()
+  const validUntil = new Date(Date.now() + CUSTOMER_ACCEPT_MINUTES * 60 * 1000).toISOString()
 
   const { data, error } = await db
     .from('sambramo_quote_responses')
@@ -77,6 +77,7 @@ export default async function handler(req, res) {
     responseId: data.id,
     customerAmountPaise: data.customer_amount_paise,
     quoteValidUntil: data.quote_valid_until,
+    customerAcceptWindowMinutes: CUSTOMER_ACCEPT_MINUTES,
     status: data.status,
     quoteGroupId: request.quote_group_id,
   })
