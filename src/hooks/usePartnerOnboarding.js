@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { fetchListings } from '../lib/partnerListings'
 import { fetchDocuments } from '../lib/partnerDocuments'
+import { indexPricing } from '../lib/pricingReadiness'
 import {
   onboardingSteps, currentStep, canOpen, completedCount,
   onboardingComplete, partnerLifecycle, STEPS, STATUS, LIFECYCLE,
@@ -26,7 +27,7 @@ export function usePartnerOnboarding() {
 
   const [loading, setLoading] = useState(true)
   const [account, setAccount] = useState({
-    vendor: null, listings: [], documents: {}, payout: null,
+    vendor: null, listings: [], documents: {}, payout: null, weeklyRules: [], pricing: { byService: {}, generic: [], catering: [] },
   })
   const runId = useRef(0)
 
@@ -39,26 +40,33 @@ export function usePartnerOnboarding() {
         .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()
       if (run !== runId.current) return
 
-      let listings = [], documents = {}, payout = null
+      let listings = [], documents = {}, payout = null, weeklyRules = [], generic = [], catering = []
       if (vendor?.id) {
-        const [ls, docs, pay] = await Promise.all([
+        const [ls, docs, pay, week, genericRes, cateringRes] = await Promise.all([
           fetchListings(vendor.id),
           fetchDocuments(vendor.id),
           supabase.from('vendor_payout_details')
             .select('method, upi_id, account_number, verified_at')
             .eq('vendor_id', vendor.id).maybeSingle(),
+          supabase.from('vendor_weekly_rules')
+            .select('weekday, is_available, start_time, end_time, effective_from, effective_to')
+            .eq('vendor_id', vendor.id),
+          supabase.from('sambramo_trade_packages')
+            .select('id, vendor_service_id, name, status, revision_round, parent_package_id, commercial_inputs')
+            .eq('vendor_id', vendor.id),
+          supabase.from('sambramo_catering_packages')
+            .select('id, vendor_service_id, name, status, parent_package_id, rate_bands')
+            .eq('vendor_id', vendor.id),
         ])
         if (run !== runId.current) return
         listings = ls ?? []
-        /* The whole shape, not just byKind. Everything downstream now
-           keys on requirement_id — five trade requirements share the
-           kind 'shop_licence', so byKind cannot tell a food licence
-           from a venue lease. byKind rides along for the screens not
-           yet moved across. */
         documents = docs ?? {}
         payout = pay?.data ?? null
+        weeklyRules = week?.error ? [] : (week?.data ?? [])
+        generic = genericRes?.error ? [] : (genericRes?.data ?? [])
+        catering = cateringRes?.error ? [] : (cateringRes?.data ?? [])
       }
-      setAccount({ vendor: vendor ?? null, listings, documents, payout })
+      setAccount({ vendor: vendor ?? null, listings, documents, payout, weeklyRules, pricing: { byService: indexPricing(generic, catering), generic, catering } })
     } catch {
       /* A partner we cannot read is left at the start rather than
          pushed somewhere by a half-answer. */
