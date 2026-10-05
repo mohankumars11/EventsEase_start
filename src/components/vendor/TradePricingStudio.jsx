@@ -336,6 +336,13 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
       <section className="grid grid-cols-3 gap-2">
         {[["Live", packages.filter(p => p.status === 'LIVE').length, 'bg-forest-50 text-forest-800'], ["Draft", packages.filter(p => p.status === 'DRAFT').length, 'bg-surface text-ink-soft'], ["Review", packages.filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status)).length, 'bg-amber-50 text-amber-800']].map(([label,count,tone]) => <div key={label} className={`rounded-2xl p-3 ring-1 ring-ink/[0.06] ${tone}`}><p className="text-[9px] font-extrabold uppercase tracking-wide opacity-70">{label}</p><p className="mt-1 text-[18px] font-black">{count}</p></div>)}
       </section>
+      <section className="trade-pricing-control-note">
+        <div className="trade-pricing-control-note-icon"><Zap size={15} /></div>
+        <div>
+          <strong>Sambramo controls how customers pay</strong>
+          <span>Standard requests use <b>Instant Book &amp; Pay</b>. Complex or customized requests can move to <b>Instant Quote &amp; Pay</b>. You never select the payment lane.</span>
+        </div>
+      </section>
       <section className="rounded-[24px] bg-white p-3.5 ring-1 ring-[#E7E2EF]">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -355,8 +362,11 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-extrabold text-[#211735]">{pkg.name || 'Unnamed package'}</span>
                     <span className="mt-1 block text-[11.5px] text-[#6B5B85]">
-                      {pkg.status === 'LIVE' ? 'Live' : pkg.status === 'UNDER_REVIEW' ? 'Under review' : 'Draft'}
+                      {pkg.status === 'LIVE' ? 'Live' : pkg.status === 'UNDER_REVIEW' ? 'Under review' : pkg.status === 'ACTION_REQUIRED' ? 'Changes requested' : 'Draft'}
                       {pkg.price?.rate_paise != null ? ' · ' + formatINR(Math.round(Number(pkg.price.rate_paise) / 100)) + ' ' + titleizeUnit(pkg.price.unit) : ' · price not set'}
+                    </span>
+                    <span className="mt-1.5 inline-flex max-w-full rounded-full bg-white px-2 py-1 text-[9.5px] font-extrabold text-plum-700 ring-1 ring-ink/[0.06]">
+                      {transactionLaneCopy(transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: pkg.price?.unit }), { concise: true })}
                     </span>
                   </span>
                   <span className="shrink-0 rounded-full bg-[#F0EAF8] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5B21B6]">{pkg.status === 'UNDER_REVIEW' ? 'Reviewing' : pkg.status === 'LIVE' ? 'Enabled' : 'Draft'}</span>
