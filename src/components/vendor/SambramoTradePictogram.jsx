@@ -4,7 +4,7 @@ import {
   Building2, CakeSlice, Camera, ClipboardCheck, ClipboardList, Flower2,
   Gift, HandHeart, HeartPulse, Lightbulb, Mail, Megaphone, Mic, Music,
   Package, PackageOpen, ParkingSquare, Printer, Shield, SprayCan, Speaker,
-  Sparkles, Store, Tent, Toilet, Truck, UserRound, UsersRound, Video,
+  Sparkles, Store, Tent, Bath, Truck, UserRound, UsersRound, Video,
   Warehouse, Zap,
 } from 'lucide-react'
 import './SambramoTradePictogram.css'
@@ -54,7 +54,7 @@ const ICONS = {
   'Medical & Safety': HeartPulse,
   'Fire Safety & Compliance': BadgeAlert,
   'Parking & Traffic Management': ParkingSquare,
-  'Toilets & Sanitation': Toilet,
+  'Toilets & Sanitation': Bath,
   'Signage & Branding': Megaphone,
   'Live Counters & Food Stalls': Store,
 }
