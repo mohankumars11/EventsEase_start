@@ -7,7 +7,7 @@ import { normalizeTrade } from '../../data/sambramoBusinessPreview'
 
 const CATERING = 'Catering & Food'
 
-export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null }) {
+export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false }) {
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [statusByService, setStatusByService] = useState({})
   const [loadingStatus, setLoadingStatus] = useState(false)
