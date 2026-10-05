@@ -94,11 +94,11 @@ function businessDone({ vendor, listings = [], pricing = {} }) {
   }
 }
 
-function areaDone({ vendor, weeklyRules = [] }) {
+function areaDone({ vendor, weeklyRules = [], availability = {} }) {
   if (!vendor) return { done: false, partial: false, detail: null }
   const located = !!vendor.city && !!vendor.pincode
   const radius = Number(vendor.service_radius_km) > 0
-  const calendarConfigured = weeklyRules.length > 0 || !!vendor.calendar_reviewed_through
+  const calendarConfigured = weeklyRules.length > 0 || Object.keys(availability ?? {}).length > 0 || !!vendor.calendar_reviewed_through
   return {
     done: located && radius && calendarConfigured,
     partial: located || radius || calendarConfigured,
