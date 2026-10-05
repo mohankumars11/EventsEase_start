@@ -53,6 +53,8 @@ const code = p => readFileSync(p, 'utf8')
 const hub   = code('src/pages/partner/steps/BusinessServicesStep.jsx')
 const offer = code('src/pages/partner/WhatYouOffer.jsx')
 const list  = code('src/components/vendor/VendorServiceList.jsx')
+const pricing = code('src/components/vendor/SambramoPricingStudio.jsx')
+const tradePricing = code('src/components/vendor/TradePricingStudio.jsx')
 const dash  = code('src/pages/dashboard/VendorDashboard.jsx')
 const vonb  = code('src/pages/onboarding/VendorOnboarding.jsx')
 const onboarding = code('src/hooks/usePartnerOnboarding.js')
@@ -151,6 +153,26 @@ ok('Step 1 service actions are not disabled just because the vendor query is lat
 ok('Step 1 can self-heal a missing vendor row before opening services',
    /ensureVendorRow/.test(hub) && /activeVendor/.test(hub),
    'the service action needs a real vendor id before navigation')
+
+console.log('\nPRICING AND EDITING CONTRACTS\n')
+
+ok('SambramoPricingStudio passes the trade config into TradePricingStudio',
+   /<TradePricingStudio[\\s\\S]*?config=\\{config\\}/.test(pricing),
+   'without config the pricing screen crashes when it renders config.name')
+
+ok('TradePricingStudio requires its trade config',
+   /function TradePricingStudio\\(\\{ vendor, service, config,/.test(tradePricing))
+
+ok('Step 1 Edit listing targets an exact vendor service id',
+   /tab=list&edit=.*listing\.id/.test(hub),
+   'Edit listing must not reopen the add-service flow by trade name')
+
+ok('Vendor dashboard forwards the exact edit target',
+   dash.includes('editListing={params.get(\'edit\')}'))
+
+ok('Listing tab consumes the edit target and opens editing mode',
+   list.includes('setEditing(current => current === editListing ? current : editListing)'))
+
 
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0

@@ -52,6 +52,10 @@ const VENUE_TRADE = TRADE_FOR_SERVICE.venue
 export default function VendorServiceList({
   vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs,
   startTrade = null, onStartConsumed,
+  /* Exact row to edit when Step 1 sends the partner back to Listing.
+     This is an id, never a trade/category, so Edit opens the saved row's
+     own questionnaire instead of reopening the picker with a trade preselected. */
+  editListing = null, onEditConsumed,
   /* Where to send the partner when the add flow closes. Set only when
      they arrived from step 1 of onboarding — see VendorDashboard. */
   returnTo = null,
@@ -83,10 +87,25 @@ export default function VendorServiceList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTrade])
 
+  /* Step 1's Edit listing arrives here with the exact vendor_services id.
+     Wait for services to load, resolve that row, and open AddItemFlow in
+     edit mode. We intentionally do not pass it through startTrade: that
+     path is for adding a new service and is the source of the previously
+     reported "already selected" behaviour. */
+  useEffect(() => {
+    if (!editListing || !services.length) return
+    const row = services.find(s => s.id === editListing)
+    if (!row) return
+    setEditing(current => current === editListing ? current : editListing)
+    onEditConsumed?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editListing, services])
+
   const toast = useToast()
   // null = closed, 'new' = the add form, or an id being edited. One at a time:
   // two open forms on a phone is two half-finished items.
   const [editing, setEditing] = useState(null)
+
   const [busyId,  setBusyId]  = useState(null)
 
   /* STARTERS and DEFAULT_STARTERS are gone with the old empty state.

@@ -62,7 +62,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
     if (selected.category === CATERING) {
       return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
     }
-    return <TradePricingStudio vendor={vendor} service={selected} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
+    return <TradePricingStudio vendor={vendor} service={selected} config={config} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
   }
 
   if (!listed.length) {

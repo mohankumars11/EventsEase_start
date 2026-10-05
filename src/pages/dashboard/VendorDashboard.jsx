@@ -803,6 +803,9 @@ export default function VendorDashboard() {
                the flow and comes back to this tab would have it thrown
                at them again. */
             startTrade={params.get('start')}
+            /* Exact-listing edit from Step 1. This is deliberately a listing id,
+               not a trade/category, so Edit cannot reopen the generic picker. */
+            editListing={params.get('edit')}
             /* Step 1's sub-flow hands back here. When the partner came
                from onboarding the questionnaire must return them to the
                Business and Services hub rather than leaving them on the
@@ -812,6 +815,11 @@ export default function VendorDashboard() {
             onStartConsumed={() => setParams(prev => {
               const next = new URLSearchParams(prev)
               next.delete('start')
+              return next
+            }, { replace: true })}
+            onEditConsumed={() => setParams(prev => {
+              const next = new URLSearchParams(prev)
+              next.delete('edit')
               return next
             }, { replace: true })}
             />
