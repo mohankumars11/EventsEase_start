@@ -270,6 +270,8 @@ export default async function handler(req, res) {
       guestCount: normalizedGuestCount,
     }),
     status: 'pending',
+    pricing_state: 'INSTANT_BOOK',
+    pricing_version: POLICY_VERSION,
     // Written here, from the server's own constant. Never client-supplied
     // and never set at accept — the cancellation ladder is read against
     // it, so it decides what a customer is refunded.
