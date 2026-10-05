@@ -49,9 +49,9 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   if (selected) {
     const config = normalizeTrade(selected.category, selected.trade_id)
     if (selected.category === CATERING) {
-      return <CateringPricingStudio vendor={vendor} service={selected} onBack={() => setSelectedServiceId(null)} onOpenListings={onOpenListings} />
+      return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
     }
-    return <TradePricingStudio vendor={vendor} service={selected} config={config} onBack={() => setSelectedServiceId(null)} onOpenListings={onOpenListings} />
+    return <TradePricingStudio vendor={vendor} service={selected} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
   }
 
   if (!listed.length) {
@@ -67,6 +67,11 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
 
   return (
     <div className="space-y-4 pb-6">
+      {onboarding && onExit ? (
+        <button type="button" onClick={onExit} className="rounded-full bg-plum-50 px-3 py-1.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-100">
+          ← Back to Business, Services & Pricing
+        </button>
+      ) : null}
       <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10"><Calculator size={20} /></span>
@@ -102,6 +107,15 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           )
         })}
       </div>
+      <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+        <div className="flex items-start gap-2.5">
+          <Clock3 size={16} className="mt-0.5 shrink-0 text-plum-700" />
+          <div>
+            <p className="text-[12.5px] font-black text-ink">Pricing Control Center</p>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-ink-mute">Live packages stay customer-live while any edited version becomes a new revision. Sambramo reviews the revision before the new price replaces the current one.</p>
+          </div>
+        </div>
+      </section>
       <section className="rounded-[24px] bg-surface p-4">
         <div className="flex items-center gap-2 text-[12px] font-extrabold text-ink"><CircleCheck size={15} className="text-plum-600" /> Listing-driven by design</div>
         <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-mute">A partner never configures pricing for an unrelated trade. The editor reads the exact vendor service listing and its captured capabilities.</p>
