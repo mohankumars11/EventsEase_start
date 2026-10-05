@@ -11,7 +11,7 @@ import { supabase } from '../../../lib/supabase'
 import { destinationShort } from '../../../lib/documents/mask'
 
 /**
- * Step 5 · where the money goes.
+ * Step 4 · where the money goes.
  *
  * ══════════════════════════════════════════════════════════════════════
  * THE LEAST INFORMATION THAT CAN PAY SOMEBODY
@@ -125,7 +125,7 @@ export default function BankPaymentsStep() {
     return (
       <StepShell stepId="bank" cta="Continue to review" onContinue={() => navigate('/partner/setup/review')}>
         <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-          Bank &amp; payments
+          Payout setup
         </h1>
         <div className="mt-6 rounded-[20px] bg-forest-50 p-4 ring-1 ring-forest-200">
           <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-forest-800">
@@ -153,7 +153,7 @@ export default function BankPaymentsStep() {
         Bank &amp; payments
       </h1>
       <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">
-        Add the account where your Sambramo earnings will be paid.
+        Add the account where Sambramo will send your earnings. Customer payment method is controlled by Sambramo.
       </p>
 
       <div className="mb-5 flex gap-2">
