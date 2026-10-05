@@ -42,7 +42,7 @@ export function usePartnerOnboarding() {
 
       let listings = [], availability = {}, documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
       if (vendor?.id) {
-        const [ls, docs, pay, week, genericRes, cateringRes, priceRes] = await Promise.all([
+        const [ls, avail, docs, pay, week, genericRes, cateringRes, priceRes] = await Promise.all([
           fetchListings(vendor.id),
           supabase.from('vendor_availability').select('slot_date,status,slots_total').eq('vendor_id', vendor.id).gte('slot_date', new Date().toISOString().slice(0, 10)),
           fetchDocuments(vendor.id),

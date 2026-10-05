@@ -55,6 +55,7 @@ const offer = code('src/pages/partner/WhatYouOffer.jsx')
 const list  = code('src/components/vendor/VendorServiceList.jsx')
 const dash  = code('src/pages/dashboard/VendorDashboard.jsx')
 const vonb  = code('src/pages/onboarding/VendorOnboarding.jsx')
+const onboarding = code('src/hooks/usePartnerOnboarding.js')
 
 console.log('\nTHE MARKER IS EMITTED\n')
 
@@ -138,6 +139,18 @@ ok('Add service preserves typed business basics before leaving Step 1',
 ok('service completion returns with an explicit success marker',
    /serviceAdded=1/.test(list),
    'returning to Step 1 must not look like a reset')
+
+console.log('\nTHE ONBOARDING ACCOUNT READ MUST NOT CRASH\n')
+
+ok('the vendor availability result is captured before it is read',
+   /const \[ls, avail, docs, pay, week, genericRes, cateringRes, priceRes\]/.test(onboarding),
+   'an undefined availability variable makes the whole onboarding load throw and leaves the service buttons disabled')
+ok('Step 1 service actions are not disabled just because the vendor query is late',
+   !/disabled=\{serviceNavBusy \|\| !vendor\?\.id\}/.test(hub),
+   'the service entry must resolve/create the vendor row instead of rendering a dead control')
+ok('Step 1 can self-heal a missing vendor row before opening services',
+   /ensureVendorRow/.test(hub) && /activeVendor/.test(hub),
+   'the service action needs a real vendor id before navigation')
 
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0
