@@ -86,7 +86,7 @@ const REASONS = [
  * told why.
  */
 const MAX_DAYS = 90
-const MAX_DAYS_OPENING = 190
+const MAX_DAYS_OPENING = 365
 
 /* The fourth entry has `status: null`, which every write path already
    reads as "delete these rows". */
