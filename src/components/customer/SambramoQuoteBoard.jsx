@@ -5,6 +5,22 @@ import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
 import { formatINR } from '../../utils/format'
 
+function remainingSeconds(iso) {
+  if (!iso) return 0
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000))
+}
+
+function useRemaining(iso) {
+  const [left, setLeft] = useState(() => remainingSeconds(iso))
+  useEffect(() => {
+    const tick = () => setLeft(remainingSeconds(iso))
+    tick()
+    const timer = setInterval(tick, 500)
+    return () => clearInterval(timer)
+  }, [iso])
+  return left
+}
+
 export default function SambramoQuoteBoard({ userId }) {
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
@@ -86,6 +102,7 @@ function QuoteGroup({ group, busy, onChoose }) {
 
 function ResponseCard({ response, busy, onChoose }) {
   const v = response.vendor
+  const seconds = useRemaining(response.quote_valid_until)
   const rating = Number(v?.rating_avg)
   return <div className="rounded-[22px] bg-surface p-3">
     <div className="flex items-center gap-3">
@@ -102,7 +119,11 @@ function ResponseCard({ response, busy, onChoose }) {
       <List title="Excluded" items={response.exclusions} />
     </div>
     {response.status === 'SUBMITTED'
-      ? <button type="button" disabled={busy} onClick={onChoose} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 disabled:opacity-50"><Check size={14}/>{busy ? 'Locking…' : 'Choose this quote'}</button>
+      ? <div className="mt-3">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-[10.5px] font-extrabold text-amber-900 ring-1 ring-amber-200"><span>Quote expires soon</span><span className="tabular-nums">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span></div>
+          <button type="button" disabled={busy || seconds <= 0} onClick={onChoose} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 disabled:opacity-50"><Check size={14}/>{busy ? 'Preparing payment…' : 'Accept & Pay'}</button>
+          {seconds <= 0 && <p className="mt-1 text-center text-[10.5px] font-bold text-rose-700">This quote expired. Sambramo can request a fresh quote from eligible partners.</p>}
+        </div>
       : <div className="mt-3 rounded-2xl bg-forest-50 py-3 text-center text-[12px] font-extrabold text-forest-700">Locked in Sambramo</div>}
   </div>
 }
