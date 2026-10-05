@@ -1,6 +1,10 @@
 import React from 'react'
 import './pricing-fetch-stub.js'
-import TradePricingStudio from '../../../src/components/vendor/TradePricingStudio'
+
+/* Load TradePricingStudio only after the fetch stub has evaluated. This
+   guarantees supabase-js captures the deterministic harness fetch rather
+   than its original browser fetch. */
+const TradePricingStudio = React.lazy(() => import('../../../src/components/vendor/TradePricingStudio'))
 
 const CONFIG = {
   trade_id: 'E02',
@@ -27,14 +31,15 @@ const VENDOR = {
 export default function PhotographyPricingHarness() {
   return (
     <div data-testid="photography-pricing-lab" style={{ width: 412, margin: '0 auto' }}>
-      <TradePricingStudio
-        vendor={VENDOR}
-        service={SERVICE}
-        config={CONFIG}
-        onBack={() => { window.__PRICING_BACK__ = true }}
-        onOpenListings={() => { window.__PRICING_LISTINGS__ = true }}
-      />
+      <React.Suspense fallback={<div style={{ padding: 24 }}>Loading Photography pricing…</div>}>
+        <TradePricingStudio
+          vendor={VENDOR}
+          service={SERVICE}
+          config={CONFIG}
+          onBack={() => { window.__PRICING_BACK__ = true }}
+          onOpenListings={() => { window.__PRICING_LISTINGS__ = true }}
+        />
+      </React.Suspense>
     </div>
   )
 }
-
