@@ -50,6 +50,11 @@ export const NAV = [
         description: 'Every partner, their listings, their documents and what they can be offered.',
       },
       {
+        id: 'pricing-review', label: 'Pricing review', emoji: '💰',
+        badge: 'pricing',
+        description: 'Submitted partner pricing revisions. Approve the new version or request changes without changing the live customer price.',
+      },
+      {
         id: 'verification', label: 'Verification queue', emoji: '🪪',
         description: 'Applications waiting on a decision, oldest deadline first, with what was entered beside what was read off the document.',
       },
