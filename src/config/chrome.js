@@ -12,6 +12,15 @@
  */
 export const FOCUSED_ROUTES = [
   '/plan/custom',
+  // The guided journey. One question per screen for up to thirty screens —
+  // a tab bar under that is a permanent offer to give up, and the chat
+  // bubble sits exactly where its Continue button is.
+  '/celebrate',
+  // Instant booking, for the same two reasons and one more. Its pinned
+  // action bar occupies exactly the strip the tab bar wants, so both
+  // render and the lower one is unreachable — and on the matching screen
+  // that lower control is "Pay for 3 · ₹31,200".
+  '/book',
   '/plan/confirmation',
   '/login',
   '/signup',

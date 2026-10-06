@@ -40,6 +40,8 @@
 // estimates everywhere they surface and must be re-checked against real
 // vendor rate cards before anybody is held to one.
 
+import { dishIdFor } from './dishIds.generated'
+
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 /** A vegetarian dish. `delta` is the per-plate premium over the base spread. */
@@ -71,9 +73,26 @@ export const CUISINES = [
     localName: 'Uta',
     emoji: '🍛',
     region: 'South Indian',
-    blurb: 'The Mysuru–Bengaluru home spread. Bisi bele bath, holige, and a proper leaf meal.',
+    blurb: 'The Mysuru–Bengaluru home spread. Bisi bele bath, holige, and a proper leaf meal — and the nati koli side of it.',
     basePlate: 420,
-    hasNonVeg: false,
+    /* ── This said false, and that was a real hole ─────────────────────
+       Karnataka is the one South Indian cuisine here whose non-veg
+       tradition is the LOUDEST — nati koli saaru, donne biryani, the
+       whole old Mysore and Mandya kitchen. cateringDishes.js carries
+       eighteen nati dishes and cateringMenus.js carries a non-veg
+       Beegara Oota.
+
+       With hasNonVeg false, cuisinesFor('pure_nonveg') dropped Karnataka
+       entirely: a Mandya nati caterer said their kitchen is non-veg,
+       opened South Indian, and was offered Udupi, Tamil, Andhra and
+       Kerala — every state except their own. Nothing errored. The option
+       simply was not there, which reads as an app that does not know
+       what it sells.
+
+       Royal Mysuru stays veg-only next to it, and that one is correct:
+       Arasu Uta is a banana-leaf vegetarian feast by tradition, not an
+       oversight. */
+    hasNonVeg: true,
     courses: {
       welcome: [
         v('Panaka (jaggery & lemon)'), v('Majjige / spiced buttermilk'), v('Tender coconut water'),
@@ -83,21 +102,29 @@ export const CUISINES = [
         v('Mysore bonda'), v('Goli baje / Mangaluru bajji'), v('Medu vada'), v('Masala vada'),
         v('Aloo bonda'), v('Nippattu & kodubale'), v('Sabudana vada'), v('Cut mirchi bajji'),
         v('Paneer 65'), v('Gobi Manchurian'),
+        n('Nati koli kabab', 90), n('Koli sukka', 85), n('Kane / anjal tawa fry', 120),
+        n('Mutton chops', 130), n('Boti fry', 70), n('Motte bonda', 25),
       ],
       mains: [
         v('Bisi bele bath'), v('Vangi bath'), v('Puliyogare'), v('Chitranna (lemon rice)'),
         v('Ghee rice'), v('Coconut rice'), v('Steamed rice & saaru'), v('Curd rice'),
         v('Chapati'), v('Poori'), v('Akki roti'), v('Ragi mudde'), v('Jolada rotti'),
+        n('Nati koli donne biryani', 140), n('Mutton donne biryani', 190),
+        n('Koli pulao', 120), n('Motte rice', 60),
       ],
       curries: [
         v('Saaru / rasam'), v('Huli (sambar)'), v('Majjige huli'), v('Gojju (mango or tomato)'),
         v('Kootu'), v('Bassaru'), v('Menthya soppu palya gojju'), v('Paneer butter masala'),
         v('Mixed vegetable kurma'),
+        n('Nati koli saaru', 110), n('Mutton saaru', 160), n('Koli kaal soup', 80),
+        n('Motte curry', 55), n('Fish curry (Mangaluru style)', 130),
+        n('Mutton bone bassaru', 150),
       ],
       accompaniments: [
         v('Beans palya'), v('Cabbage palya'), v('Gasagase / carrot kosambari'), v('Hesarubele kosambari'),
         v('Sandige & happala'), v('Uppinakayi (pickle)'), v('Mosaru (curd)'), v('Tuppa (ghee)'),
         v('Raita'), v('Green salad'), v('Nimbe uppinakayi'),
+        n('Boiled motte', 20),
       ],
       sweets: [
         v('Obbattu / holige'), v('Mysore pak'), v('Kesari bath'), v('Payasa (semiya or shavige)'),
@@ -107,6 +134,7 @@ export const CUISINES = [
       counters: [
         v('Live dosa counter', 65), v('Chaat counter', 55), v('Live obbattu counter', 70),
         v('Ice cream counter', 50), v('Filter coffee counter', 30), v('Pani puri counter', 40),
+        n('Live nati koli fry counter', 130), n('Donne biryani counter', 150),
       ],
     },
   },
@@ -790,7 +818,26 @@ export const CUISINE_GROUPS = [
 /** Dishes in a course, filtered to what this order's diet allows. */
 export function dishesFor(cuisine, courseId, { vegOnly = false } = {}) {
   const items = cuisine?.courses?.[courseId] ?? []
-  return vegOnly ? items.filter(d => d.veg) : items
+  const shown = vegOnly ? items.filter(d => d.veg) : items
+
+  /* ── sbmId is what makes a menu card matchable ────────────────────
+     `d.id` is a slug of the name, unique only within its own cuisine —
+     "ghee-rice" exists under four of them and means a different line on
+     each. It was never an identity, and matching a customer's card
+     against a caterer's listing on it would quietly pair the wrong ones.
+
+     sbmId is the catalogue-wide id from dishIds.generated.js, shared
+     with dishRegistry.js wherever the same dish appears in both. It is
+     attached here rather than stored in the arrays above so the dish
+     definitions stay readable — 915 inline ids would bury the food.
+
+     Null means a dish added since the generator last ran. Callers must
+     treat that as "cannot be matched" rather than falling back to the
+     name; check-dish-registry fails the build before it can happen. */
+  return shown.map(d => ({
+    ...d,
+    sbmId: dishIdFor(cuisine?.id, courseId, d.name),
+  }))
 }
 
 /**

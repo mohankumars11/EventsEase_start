@@ -131,6 +131,80 @@ const THEME = {
     glow: '#7dd3fc',
     ink: '#334155',
   },
+
+  /* ── The ten the life-cycle audit added ───────────────────────────────
+     Hues taken from each occasion's own Tailwind gradient in EVENT_DATA, so
+     the card on the home grid and the page it opens are lit the same way. */
+  vehicle_pooja: {
+    a: 'rgba(2, 132, 199, 0.12)',    // sky-600
+    b: 'rgba(59, 130, 246, 0.07)',   // blue-500
+    c: 'rgba(99, 102, 241, 0.05)',   // indigo-500
+    glow: '#38bdf8',
+    ink: '#0284c7',
+  },
+  half_saree: {
+    a: 'rgba(192, 38, 211, 0.11)',   // fuchsia-600
+    b: 'rgba(236, 72, 153, 0.07)',   // pink-500
+    c: 'rgba(251, 113, 133, 0.05)',  // rose-400
+    glow: '#e879f9',
+    ink: '#c026d3',
+  },
+  mundan: {
+    a: 'rgba(245, 158, 11, 0.12)',   // amber-500
+    b: 'rgba(251, 146, 60, 0.07)',   // orange-400
+    c: 'rgba(251, 113, 133, 0.05)',  // rose-400
+    glow: '#fbbf24',
+    ink: '#b45309',
+  },
+  annaprashana: {
+    a: 'rgba(132, 204, 22, 0.11)',   // lime-500
+    b: 'rgba(52, 211, 153, 0.07)',   // emerald-400
+    c: 'rgba(45, 212, 191, 0.05)',   // teal-400
+    glow: '#a3e635',
+    ink: '#4d7c0f',
+  },
+  reception: {
+    a: 'rgba(124, 58, 237, 0.12)',   // violet-600
+    b: 'rgba(168, 85, 247, 0.07)',   // purple-500
+    c: 'rgba(217, 70, 239, 0.05)',   // fuchsia-500
+    glow: '#a78bfa',
+    ink: '#7c3aed',
+  },
+  shop_opening: {
+    a: 'rgba(234, 179, 8, 0.12)',    // yellow-500
+    b: 'rgba(245, 158, 11, 0.08)',   // amber-500
+    c: 'rgba(249, 115, 22, 0.05)',   // orange-500
+    glow: '#facc15',
+    ink: '#a16207',
+  },
+  bhoomi_pooja: {
+    a: 'rgba(120, 113, 108, 0.12)',  // stone-500
+    b: 'rgba(217, 119, 6, 0.07)',    // amber-600
+    c: 'rgba(249, 115, 22, 0.05)',   // orange-500
+    glow: '#d97706',
+    ink: '#78716c',
+  },
+  aksharabhyasa: {
+    a: 'rgba(79, 70, 229, 0.11)',    // indigo-600
+    b: 'rgba(59, 130, 246, 0.07)',   // blue-500
+    c: 'rgba(34, 211, 238, 0.05)',   // cyan-400
+    glow: '#818cf8',
+    ink: '#4f46e5',
+  },
+  haldi: {
+    a: 'rgba(250, 204, 21, 0.13)',   // yellow-400
+    b: 'rgba(251, 191, 36, 0.08)',   // amber-400
+    c: 'rgba(163, 230, 53, 0.05)',   // lime-400
+    glow: '#fbbf24',
+    ink: '#a16207',
+  },
+  farewell: {
+    a: 'rgba(8, 145, 178, 0.11)',    // cyan-600
+    b: 'rgba(14, 165, 233, 0.07)',   // sky-500
+    c: 'rgba(37, 99, 235, 0.05)',    // blue-600
+    glow: '#22d3ee',
+    ink: '#0891b2',
+  },
 }
 
 /** The house plum, for an occasion the table has not been taught yet. */

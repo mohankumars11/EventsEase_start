@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import SambramoLogo from '../../components/ui/SambramoLogo'
+import { isPartnerSurface } from '../../config/surface'
 
 const RESEND_SECONDS = 60
 
@@ -18,11 +19,58 @@ function otpErrorMessage(msg = '') {
   return msg || 'Something went wrong. Please try again.'
 }
 
+/**
+ * Google sign-in is not offered inside the app, and that is deliberate.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * OAUTH LEAVES THE APP AND DOES NOT COME BACK
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * `signInWithOAuth` navigates to accounts.google.com. Capacitor hands
+ * any off-origin navigation to the system browser, so the person ends
+ * up in Chrome — and `redirectTo` is built from `window.location.origin`,
+ * which inside a bundled app is `https://localhost`. Google rejects that
+ * as a redirect URI, and even if it did not, the session would land in
+ * Chrome and the app would still be signed out.
+ *
+ * The reported symptom was exactly this: "the app is installed, but when
+ * I log in it opens in Chrome."
+ *
+ * Making it work natively means a custom URL scheme, a deep-link
+ * handler, and another OAuth client in the Google console — a project in
+ * itself. And it buys nothing, because the email code below has no
+ * redirect at all: it is two API calls, it never leaves the WebView, and
+ * it already works.
+ *
+ * So on native there is one way in, and it is the one that works.
+ */
 export default function LoginPage() {
+  /* Which of the two apps this bundle is. Stamped at build time by
+     VITE_SURFACE, so it is a constant, not a guess about the URL. */
+  const PARTNER = isPartnerSurface()
+  const DEV_PREVIEW = Boolean(import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH_BYPASS === 'true')
   const { sendEmailOtp, verifyEmailOtp, signInWithGoogle, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  /* Where to go once signed in.
+   *
+   * Router state is how a redirected route asks for this, and it works
+   * until the page is reloaded or arrived at cold, when state is gone and
+   * a partner lands on the dashboard root instead of the tab they tapped.
+   * `?next=` survives both, and is what the partner tab bar sends when a
+   * signed out tap needs an account first.
+   *
+   * Same-origin paths only. An open redirect on a login page is how a
+   * phishing link gets to wear your domain: sign in on the real site,
+   * get bounced somewhere else entirely, with the trust already spent. */
+  const rawNext = new URLSearchParams(location.search).get('next')
+  const safeNext = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+    ? rawNext
+    : null
   const from = location.state?.from
+    ?? (safeNext
+      ? { pathname: safeNext.split('?')[0], search: safeNext.includes('?') ? `?${safeNext.split('?')[1]}` : '' }
+      : null)
 
   const [step, setStep]               = useState('email')   // email | sent | otp
   const [email, setEmail]             = useState('')
@@ -59,6 +107,7 @@ export default function LoginPage() {
   async function handleSendOtp(e) {
     e?.preventDefault()
     setError(null)
+    if (DEV_PREVIEW) { redirectByRole(PARTNER ? 'vendor' : 'customer'); return }
     if (!isValidEmail(email)) { setError('Please enter a valid email address.'); return }
     setLoading(true)
     try {
@@ -107,7 +156,10 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      await verifyEmailOtp(email.trim().toLowerCase(), code)
+      /* The session comes back from the verify. Handing it straight to
+         completeProfile removes a getUser round trip from the slowest
+         moment in the whole app. */
+      const verified = await verifyEmailOtp(email.trim().toLowerCase(), code)
       // If redirected here from a gated page (e.g. /plan), go back there.
       // Otherwise /dashboard — DashboardRedirect will route by role once profile loads.
       if (from) navigate(from.pathname + (from.search ?? ''), { replace: true })
@@ -137,6 +189,7 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
+    if (DEV_PREVIEW) { redirectByRole(PARTNER ? 'vendor' : 'customer'); return }
     setGoogleLoading(true)
     setError(null)
     try { await signInWithGoogle() }
@@ -173,12 +226,43 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
         <div className="w-full max-w-md">
 
-          {/* Mobile logo */}
-          <div className="flex md:hidden justify-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <SambramoLogo size={36} ground="onLight" caption />
-            </Link>
-          </div>
+          {/* ══════════════════════════════════════════════════════════
+              THE PARTNER APP SIGNS YOU IN AS THE PARTNER APP
+              ══════════════════════════════════════════════════════════
+
+              One codebase serves two apps, and this screen was showing
+              both of them the customer's front door: the teal wordmark
+              over "CELEBRATIONS, ARRANGED · NOTHING LEFT TO CHANCE". A
+              decorator who downloaded Sambramo Partners, tapped the
+              saffron icon and got that has every reason to think they
+              opened the wrong app — and sign-in is the worst screen in
+              the product to make somebody doubt where they are.
+
+              So the partner app signs in under its own navy lockup, with
+              a line about work rather than about celebrations. Same form,
+              same Google button, same code path. Only the identity
+              changes, because only the identity was wrong. */}
+          {PARTNER ? (
+            <div className="mb-8 rounded-[22px] bg-plum-950 px-5 py-5 text-center">
+              <span className="flex items-baseline justify-center gap-2">
+                <span className="font-serif text-[26px] font-extrabold leading-none tracking-tight text-white">
+                  Sambramo
+                </span>
+                <span className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-white/85">
+                  Partners
+                </span>
+              </span>
+              <p className="mt-2 text-[12px] font-bold uppercase tracking-[0.12em] text-saffron-400">
+                Work near you · Paid after every event
+              </p>
+            </div>
+          ) : (
+            <div className="flex md:hidden justify-center mb-8">
+              <Link to="/" className="inline-flex items-center gap-2">
+                <SambramoLogo size={36} ground="onLight" caption />
+              </Link>
+            </div>
+          )}
 
           {/* ── Step 1: Email input ── */}
           {step === 'email' && (
@@ -194,7 +278,12 @@ export default function LoginPage() {
                 </div>
               )}
               <h1 className="text-3xl font-display font-bold text-gray-900 mb-1">Welcome back.</h1>
-              <p className="text-gray-500 text-sm mb-8">Enter your email — we'll send you a login code.</p>
+              {DEV_PREVIEW && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">Development preview · Authentication is temporarily bypassed. This does not create or sign in to an account.</div>}
+              <p className="text-gray-500 text-sm mb-8">
+                {PARTNER
+                  ? 'Sign in to see the jobs near you.'
+                  : "Enter your email — we'll send you a login code."}
+              </p>
 
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
@@ -217,11 +306,19 @@ export default function LoginPage() {
                 {error && <ErrorBox message={error} />}
 
                 <button type="submit" disabled={loading}
-                  className="btn-plum w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed">
-                  {loading ? 'Sending code…' : 'Send OTP →'}
+                  /* Saffron on the partner app: it is the accept colour on
+                     every job card, so the button that starts the session
+                     matches the button that earns the money. */
+                  className={`w-full py-3.5 text-base rounded-2xl font-extrabold disabled:opacity-60 disabled:cursor-not-allowed ${
+                    PARTNER ? 'bg-saffron-400 text-plum-950' : 'btn-plum'
+                  }`}>
+                  {DEV_PREVIEW ? 'Continue in development →' : loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
               </form>
 
+              {/* The divider belongs to the Google button, so it goes
+                  with it. A rule saying "or" above nothing is a screen
+                  that looks broken. */}
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-gray-100" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>

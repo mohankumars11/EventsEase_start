@@ -1,7 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="15" fill="#2e1065"/>
-  <g transform="translate(32 32) scale(.74) translate(-32 -32)">
-    <path fill="#fbbf24" d="M38 26C48 22 60 28 60 32C60 36 48 42 38 38C42 48 36 60 32 60C28 60 22 48 26 38C16 42 4 36 4 32C4 28 16 22 26 26C22 16 28 4 32 4C36 4 42 16 38 26Z"/>
-    <circle cx="32" cy="32" r="5.5" fill="#2e1065"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sambramo">
+  <!-- The browser-tab mark, on the Comfortable Aqua ground.
+
+       ── Why this one keeps a letter when nothing else does ──────────────
+       The app icon and the splash carry the full wordmark now; the gold
+       Spencerian S is retired everywhere. This is the single exception, and
+       it is a mechanical one rather than a design choice: a favicon is drawn
+       at 16 CSS pixels. "Sambramo" is eight characters, so each would get
+       two pixels of width — not small type, no type at all. Anything legible
+       in a browser tab is one glyph or a shape.
+
+       So it is one glyph, and deliberately NOT the retired mark: a plain
+       bold sans S in the wordmark's own voice, white on the ground, rather
+       than the ornate gold script the brand has moved off. It reads as the
+       app icon's little sibling, which is what a favicon should be.
+
+       ── Why the gradient is written out ─────────────────────────────────
+       A standalone SVG cannot resolve a Tailwind class or load a webfont, so
+       the stops are literal and the face is a system stack. These values are
+       the same ramp as `.brand-aqua-chip` in src/index.css — if that changes,
+       change this in the same commit. -->
+  <defs>
+    <linearGradient id="aqua" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#17566C"/>
+      <stop offset="55%"  stop-color="#2F8AA0"/>
+      <stop offset="100%" stop-color="#55B2AF"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.85" cy="0.9" r="1.1">
+      <stop offset="0%"   stop-color="#96E6DC" stop-opacity="0.5"/>
+      <stop offset="70%"  stop-color="#55B2AF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="15" fill="url(#aqua)"/>
+  <rect width="64" height="64" rx="15" fill="url(#sheen)"/>
+
+  <text x="32" y="33.5" text-anchor="middle" dominant-baseline="central"
+        font-family="'Manrope', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="38" font-weight="800" letter-spacing="-1.5" fill="#FFFFFF">S</text>
 </svg>
