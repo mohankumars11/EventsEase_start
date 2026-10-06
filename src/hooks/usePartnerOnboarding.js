@@ -59,8 +59,9 @@ export function usePartnerOnboarding() {
             status: 'PENDING_REVIEW',
           })
           .select('*')
-          .single()
-        if (created) vendor = created
+          .maybeSingle()
+        vendor = created ?? (await supabase
+          .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()).data
       }
 
       if (run !== runId.current) return
