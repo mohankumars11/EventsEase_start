@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Bell, IndianRupee, CalendarDays, LayoutGrid, Calculator } from 'lucide-react'
+import { Bell, IndianRupee, CalendarDays, LayoutGrid, Tags } from 'lucide-react'
 import { isPartnerSurface } from '../../config/surface'
 import { useAuth } from '../../context/AuthContext'
 
@@ -51,7 +51,7 @@ import { useAuth } from '../../context/AuthContext'
  */
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
-  { id: 'pricing',      label: 'Pricing',  icon: Calculator },
+  { id: 'pricing',      label: 'Pricing',  icon: Tags },
   { id: 'availability', label: 'Calendar', icon: CalendarDays },
   { id: 'earnings',     label: 'Earnings', icon: IndianRupee },
   /* Still `account` underneath. The id is in every ?tab= link, in the
@@ -179,7 +179,7 @@ export default function PartnerBottomNav() {
          screen that must never look like it is doing something.
          Reported exactly that way: "the navigation bar is completely
          transparent, whenever scrolling I can see the buttons". */
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.10] bg-white shadow-[0_-4px_16px_rgba(36,16,67,0.06)]"
+      className="partner-v2-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.10] bg-white shadow-[0_-4px_16px_rgba(36,16,67,0.06)]"
       /* The home-indicator strip on a gesture-navigation phone sits under
          the bar; without this the last row of labels is behind it. */
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -195,7 +195,7 @@ export default function PartnerBottomNav() {
               <Link
                 to={to}
                 aria-current={on ? 'page' : undefined}
-                className="flex flex-col items-center gap-0.5 py-2 pt-2.5"
+                className="flex min-h-[60px] flex-col items-center justify-center gap-0.5 py-1.5 pt-2"
               >
                 {/* The active pill sits behind the icon rather than
                     colouring the whole cell: a full-width fill at this
