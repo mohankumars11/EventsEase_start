@@ -155,11 +155,7 @@ export default function TradeGrid({
                     on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.06]'
                   }`}
                 >
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    on ? 'bg-forest-600 text-white' : 'bg-plum-950 text-white'
-                  }`}>
-                    <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} />
-                  </span>
+                  <SambramoTradePictogram trade={t} size="sm" showSparkle={false} title={false} className="shrink-0" />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="text-[14px] font-extrabold leading-tight text-ink">{t}</span>
