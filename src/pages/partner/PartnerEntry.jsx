@@ -61,7 +61,7 @@ import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRu
  */
 export default function PartnerEntry() {
   const navigate = useNavigate()
-  const { user, profile, sendEmailOtp, verifyEmailOtp, signInWithGoogle } = useAuth()
+  const { user, profile, sendEmailOtp, verifyEmailOtp } = useAuth()
   /* Renamed on the way in: `stage` is already this screen's own
      email-or-code state, and two things called stage in one component is
      how the wrong one gets read six months from now. */
@@ -74,10 +74,9 @@ export default function PartnerEntry() {
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy]     = useState(false)
   const [error, setError]   = useState(null)
-  const [googleBusy, setGoogleBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [showTerms, setShowTerms] = useState(false)
-  /* Email is the fallback route now, folded away until asked for. */
+  /* Email is the pilot sign-in route; production can swap this identifier to mobile OTP without changing the flow. */
   const [emailOpen, setEmailOpen] = useState(true)
 
   /* An invitation link is /partner/join?ref=CODE, opened by somebody
@@ -345,12 +344,6 @@ export default function PartnerEntry() {
 
             {/* Email is the only partner sign-in method in the current pilot. */}
             <div className="mt-6 rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
-            <div className="hidden my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-ink/[0.08]" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute">or</span>
-              <span className="h-px flex-1 bg-ink/[0.08]" />
-            </div>
-
             {!emailOpen ? (
               <button
                 type="button"
