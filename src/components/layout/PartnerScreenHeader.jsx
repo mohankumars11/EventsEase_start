@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-export default function PartnerScreenHeader({ title, subtitle = null, onAction = null, actionLabel = null, back = false }) {
+export default function PartnerScreenHeader({ title, subtitle = null, onAction = null, actionLabel = null, back = false, onBack = null }) {
   const navigate = useNavigate()
   return (
     <header className="partner-mobile sticky top-0 z-30 border-b border-ink/[0.08] bg-white/96 backdrop-blur">
@@ -9,7 +9,7 @@ export default function PartnerScreenHeader({ title, subtitle = null, onAction =
         {back && (
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => (onBack ? onBack() : navigate(-1))
             aria-label="Go back"
             className="sp-touch grid shrink-0 place-items-center rounded-full text-ink-soft active:bg-ink/[0.04]"
           >
