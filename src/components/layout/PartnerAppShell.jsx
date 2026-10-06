@@ -43,9 +43,9 @@
  */
 export default function PartnerAppShell({ children }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-page">
+    <div className="partner-v2-screen partner-v2-noise-reduction flex min-h-[100dvh] flex-col bg-page">
       <main
-        className="flex-1"
+        className="partner-v2-bottom-space flex-1"
         style={{
           /* Tab bar (56) + label row (12) + the device's own gesture
              inset, whatever it is on this handset. */
