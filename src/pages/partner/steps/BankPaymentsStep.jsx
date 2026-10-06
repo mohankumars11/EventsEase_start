@@ -124,9 +124,8 @@ export default function BankPaymentsStep() {
       : destinationShort(existing)
     return (
       <StepShell stepId="bank" cta="Continue to review" onContinue={() => navigate('/partner/setup/review')}>
-        <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-          Payout setup
-        </h1>
+        <div className="partner-v2-feature p-4"><p className="partner-v2-meta">Partner onboarding</p><h2 className="partner-v2-section-title mt-1">
+          Payout setup</h2></div>
         <div className="mt-6 rounded-[20px] bg-forest-50 p-4 ring-1 ring-forest-200">
           <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-forest-800">
             <Check size={14} /> Payout account added
@@ -150,19 +149,18 @@ export default function BankPaymentsStep() {
   return (
     <StepShell stepId="bank" canContinue busy={busy} onContinue={save}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Bank &amp; payments
-      </h1>
+        Payout setup</h2><p className="mt-1.5 partner-v2-body">Choose where Sambramo should send your earnings.</p></div>
       <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">
         Add the account where Sambramo will send your earnings. Customer payment method is controlled by Sambramo.
       </p>
 
-      <div className="mb-5 flex gap-2">
+      <div className="mt-4 partner-v2-status-grid">
         {[['upi', 'UPI'], ['bank', 'Bank account']].map(([id, label]) => (
           <button
             key={id} type="button" data-method={id}
             onClick={() => setMethod(id)}
             aria-pressed={method === id}
-            className={`flex-1 rounded-2xl py-3 text-[13.5px] font-extrabold transition ${
+            className={`partner-v2-secondary flex items-center justify-center ${
               method === id ? 'bg-plum-600 text-white' : 'bg-white text-ink-soft ring-1 ring-ink/[0.10]'
             }`}
           >
