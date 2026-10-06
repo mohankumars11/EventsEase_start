@@ -166,16 +166,16 @@ export default function CalendarMonth({
   }
 
   return (
-    <div className="space-y-3 pb-2">
+    <div className="partner-v2-screen space-y-3 pb-2">
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
       {setupMode && onSetupContinue && (
-        <section className="rounded-[20px] bg-plum-50 px-4 py-3.5 ring-1 ring-plum-200">
+        <section className="partner-v2-feature px-4 py-3">
           <div className="flex items-start gap-2.5">
             <CalendarCheck size={16} className="mt-0.5 shrink-0 text-plum-700" />
             <div className="min-w-0">
               <p className="text-[12.5px] font-black text-plum-950">Onboarding · availability is the dispatch gate</p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-plum-900/75">Mark your usual week and any busy dates. Once you finish this, Sambramo will use this calendar when deciding which scheduled jobs can reach you.</p>
-              <button type="button" onClick={onSetupContinue} disabled={!configured} className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center rounded-full bg-plum-700 px-4 text-[12px] font-black text-white disabled:opacity-40">Continue to verification</button>
+              <button type="button" onClick={onSetupContinue} disabled={!configured} className="partner-v2-primary mt-3 flex w-full items-center justify-center disabled:opacity-40">Continue to verification</button>
             </div>
           </div>
         </section>
