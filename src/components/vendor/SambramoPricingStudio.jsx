@@ -86,7 +86,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
       ) : null}
       <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
         <div className="flex items-start gap-3">
-          <SambramoTradePictogram trade={listed[0]?.category || "End-to-End Event Logistics"} size="sm" showSparkle={false} title={false} />
+          <SambramoTradePictogram trade={listed[0]?.category || "End-to-End Event Logistics"} size="md" showSparkle={false} title={false} />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
             <h2 className="mt-1 text-[23px] font-extrabold leading-tight">Price what you actually sell.</h2>
@@ -111,7 +111,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           return (
             <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
-                <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
+                <SambramoTradePictogram trade={service.category || service.trade} size="md" showSparkle={false} title={false} />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[14.5px] font-extrabold text-ink">{service.name || service.category}</span>
