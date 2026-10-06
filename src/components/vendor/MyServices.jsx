@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ChevronRight, Loader2, Pause, Play } from 'lucide-react'
 import { fetchListings, LISTING_STATUS, pauseListing, resubmitListing } from '../../lib/partnerListings'
-import { iconForTrade } from './TradeGrid'
+import SambramoTradePictogram from './SambramoTradePictogram'
 
 /**
  * My Services — the trades this partner has, one row each.
@@ -94,7 +94,6 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
       )}
 
       {rows.map(row => {
-        const Icon = iconForTrade(row.trade)
         const meta = LISTING_STATUS[row.status] ?? LISTING_STATUS.draft
         const waiting = row.offerings.filter(o => o.review_status === 'under_review').length
         return (
@@ -105,7 +104,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
               onClick={() => onOpenTrade?.(row.trade)}
               className="flex w-full items-center gap-3 text-left"
             >
-              <Icon size="md" showSparkle={false} title={false} />
+              <SambramoTradePictogram trade={row.trade} size="sm" showSparkle={false} title={false} className="shrink-0" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-extrabold leading-tight text-ink">{row.trade}</span>
                 <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
