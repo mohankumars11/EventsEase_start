@@ -59,7 +59,7 @@ export function Group({ title, hint, children }) {
       {/* One card, rows divided inside it — rather than a stack of
           separate cards, which at eleven rows reads as eleven things to
           decide between instead of one list to scan. */}
-      <div className="mt-1.5 divide-y divide-ink/[0.06] overflow-hidden rounded-[18px] bg-white ring-1 ring-ink/[0.07]">
+      <div className="partner-v2-settings-list mt-1.5 divide-y divide-ink/[0.06] overflow-hidden rounded-[18px] bg-white ring-1 ring-ink/[0.07]">
         {children}
       </div>
     </section>
@@ -97,7 +97,7 @@ export function Row({ to, onClick, icon: Icon, label, badge, tone = 'count', dan
   /* The separators come from the Group's divide-y, not from the row:
      a sibling selector keyed on an arbitrary class string is a rule
      nobody can grep for when it stops matching. */
-  const cls = 'flex w-full items-center gap-3 px-3.5 py-3 text-left '
+  const cls = 'partner-v2-settings-row flex w-full items-center gap-3 px-3.5 py-3 text-left '
     + 'transition-colors active:bg-ink/[0.03]'
 
   if (to) return <Link to={to} className={cls}>{inner}</Link>
