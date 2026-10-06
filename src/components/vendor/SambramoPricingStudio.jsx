@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calculator, ChevronRight, CircleCheck, Clock3, UtensilsCrossed } from 'lucide-react'
+import { ChevronRight, CircleCheck, Clock3, UtensilsCrossed } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import CateringPricingStudio from './CateringPricingStudio'
+import SambramoTradePictogram from './SambramoTradePictogram'
 import TradePricingStudio from './TradePricingStudio'
 import { normalizeTrade } from '../../data/sambramoBusinessPreview'
 import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTransactionLane'
@@ -68,7 +69,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   if (!listed.length) {
     return (
       <section className="rounded-[28px] bg-white p-5 ring-1 ring-ink/[0.07]">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><Calculator size={22} /></div>
+        <SambramoTradePictogram trade="End-to-End Event Logistics" size="md" showSparkle={false} title={false} />
         <h2 className="mt-4 text-[21px] font-extrabold text-plum-950">Pricing starts with a listing.</h2>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">Add the service you actually provide. Sambramo will then open the pricing controls that belong to that service.</p>
         {onOpenListings && <button type="button" onClick={onOpenListings} className="mt-4 w-full rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-white">Go to my listings</button>}
@@ -85,7 +86,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
       ) : null}
       <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
         <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10"><Calculator size={20} /></span>
+          <SambramoTradePictogram trade={listed[0]?.category || "End-to-End Event Logistics"} size="sm" showSparkle={false} title={false} />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
             <h2 className="mt-1 text-[23px] font-extrabold leading-tight">Price what you actually sell.</h2>
@@ -110,7 +111,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           return (
             <button key={service.id} type="button" onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
-                <span className={'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ' + (service.category === CATERING ? 'bg-plum-50 text-plum-700' : 'bg-surface text-plum-700')}><Calculator size={18} /></span>
+                <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[14.5px] font-extrabold text-ink">{service.name || service.category}</span>
