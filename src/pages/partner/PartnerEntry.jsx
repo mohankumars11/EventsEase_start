@@ -529,9 +529,9 @@ export default function PartnerEntry() {
               Type the six digits from the mail — that is the quickest way
               back. It can take a minute, and it sometimes lands in spam.
             </p>
-            </div>
           </>
         )}
+            </div>
 
         {error && (
           <p className="mt-4 rounded-xl bg-rose-50 px-3.5 py-2.5 text-[12.5px] font-semibold leading-snug text-rose-800 ring-1 ring-rose-200">
