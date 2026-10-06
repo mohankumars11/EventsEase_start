@@ -138,6 +138,7 @@ export default function PartnerSetupIntro() {
             {done} of {steps.length}
           </span>
         </div>
+        </div>
 
         <ol className="mt-5 flex flex-col gap-2.5 pb-4">
           {steps.map(step => {
