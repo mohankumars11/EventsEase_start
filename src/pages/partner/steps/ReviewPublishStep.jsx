@@ -6,6 +6,7 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 
 const ROUTES = {
+  details: '/partner/setup/details',
   business: '/partner/setup/services',
   area: '/partner/setup/area',
   compliance: '/partner/setup/compliance',
@@ -47,7 +48,7 @@ export default function ReviewPublishStep() {
   if (loading) return <div className="native-screen flex items-center justify-center bg-white"><Loader2 size={26} className="animate-spin text-plum-600" /></div>
 
   return (
-    <StepShell stepId="review" cta={submitted ? 'View partner dashboard' : 'Review & submit application'} canContinue={submitted || allDone} busy={busy} onContinue={submitted ? () => navigate('/dashboard/vendor') : submit}>
+    <div className="partner-mobile"><StepShell stepId="review" cta={submitted ? 'View partner dashboard' : 'Review & submit application'} canContinue={submitted || allDone} busy={busy} onContinue={submitted ? () => navigate('/dashboard/vendor') : submit}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">Review &amp; submit</h1>
       <p className="mt-2 text-[13.5px] leading-relaxed text-ink/65">One final review. Your business, services, pricing, calendar, verification and payout are submitted together.</p>
 
@@ -80,6 +81,6 @@ export default function ReviewPublishStep() {
       </section>
 
       {error && <p role="alert" className="mt-4 rounded-2xl bg-rose-50 px-3.5 py-3 text-[12px] font-bold text-rose-700">{error}</p>}
-    </StepShell>
+    </StepShell></div>
   )
 }
