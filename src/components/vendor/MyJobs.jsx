@@ -161,7 +161,7 @@ export default function MyJobs({ vendorId }) {
 
   if (missing) {
     return (
-      <div className="rounded-[22px] bg-amber-50 p-4 ring-1 ring-amber-200">
+      <div className="partner-mobile rounded-[18px] bg-amber-50 p-4 ring-1 ring-amber-200">
         <p className="text-[14px] font-extrabold text-amber-900">Your jobs list is not switched on yet</p>
         {/* "Migration 080 has not been applied to the database" was
             shipped to partners. It is true, it is our problem, and it
@@ -178,7 +178,7 @@ export default function MyJobs({ vendorId }) {
 
   if (!jobs.length) {
     return (
-      <div className="rounded-[22px] bg-white p-5 text-center ring-1 ring-ink/[0.06]">
+      <div className="partner-mobile rounded-[18px] bg-white p-5 text-center ring-1 ring-ink/[0.06]">
         {/* An empty list is the screen a master sees most often before
             their first job, and a bare sentence on it reads as a dead
             app. The figure is what makes waiting feel like being part of
