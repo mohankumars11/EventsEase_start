@@ -122,7 +122,7 @@ export default function JobLifecycle({ job }) {
   ]
 
   return (
-    <ol className="mt-3 space-y-0">
+    <ol className="partner-mobile mt-3 space-y-0">
       {steps.map((s, i) => {
         const Icon = s.icon
         const tone = s.done ? DONE : s.now ? NOW : WAIT
