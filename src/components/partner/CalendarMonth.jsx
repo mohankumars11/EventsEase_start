@@ -264,7 +264,7 @@ export default function CalendarMonth({
       </div>
 
       <section className="rounded-[18px] bg-amber-50/95 px-3.5 py-3 ring-1 ring-amber-200">
-        <button type="button" className="flex w-full items-start gap-2.5 text-left" onClick={() => setRecurring(true)}>
+        <button type="button" className="flex min-h-[46px] w-full items-center gap-2.5 rounded-[16px] px-1 text-left" onClick={() => setRecurring(true)}>
           <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-amber-100 text-amber-700">
             <CalendarCheck size={15} />
           </span>
