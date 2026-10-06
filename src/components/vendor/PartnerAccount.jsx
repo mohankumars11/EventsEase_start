@@ -475,8 +475,7 @@ export default function PartnerAccount({
   if (open) {
     return (
       <div className="partner-mobile">
-        {/* The shared PartnerScreenHeader owns the visual hierarchy and back
-            behavior so child screens match Calendar, Pricing and Earnings. */}
+        <PartnerScreenHeader title={open.title} back onBack={() => (onUp ? onUp(open.parent ?? null) : onOpenScreen?.(null))} />
         {open.render()}
       </div>
     )
