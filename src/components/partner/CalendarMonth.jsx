@@ -264,19 +264,6 @@ export default function CalendarMonth({
         </button>
       </div>
 
-      <section className="rounded-[18px] bg-amber-50/95 px-3.5 py-3 ring-1 ring-amber-200">
-        <button type="button" className="flex w-full items-start gap-2.5 text-left" onClick={() => setRecurring(true)}>
-          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-amber-100 text-amber-700">
-            <CalendarCheck size={15} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</span>
-            <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-900/75">Keep dates current so Sambramo can offer scheduled work only when you have capacity.</span>
-          </span>
-          <ChevronRight size={15} className="mt-1 shrink-0 text-amber-800" />
-        </button>
-      </section>
-
       {availabilityError && (
         <p className="flex items-start gap-2 rounded-[16px] bg-rose-50 px-3.5 py-3 text-[11.5px] font-bold leading-snug text-rose-800 ring-1 ring-rose-200">
           <RotateCw size={14} className="mt-px shrink-0" />
@@ -403,6 +390,21 @@ export default function CalendarMonth({
 
         {view === 'list' && <AgendaView vendorId={vendorId} />}
       </ScreenState>
+
+      {/* Guidance is deliberately below the primary calendar. It must never push
+          the partner's actual availability grid below the fold. */}
+      <section className="rounded-[18px] bg-amber-50/95 px-3.5 py-3 ring-1 ring-amber-200">
+        <button type="button" className="flex w-full items-start gap-2.5 text-left" onClick={() => setRecurring(true)}>
+          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-amber-100 text-amber-700">
+            <CalendarCheck size={15} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</span>
+            <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-900/75">Keep dates current so Sambramo can offer scheduled work only when you have capacity.</span>
+          </span>
+          <ChevronRight size={15} className="mt-1 shrink-0 text-amber-800" />
+        </button>
+      </section>
 
       {!configured && !loading && !error && (
         <div className="rounded-[22px] bg-gradient-to-br from-violet-50 to-white px-5 py-5 text-center ring-1 ring-violet-100">
