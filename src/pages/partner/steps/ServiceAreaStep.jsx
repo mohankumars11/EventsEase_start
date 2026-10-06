@@ -74,14 +74,13 @@ export default function ServiceAreaStep() {
       busy={saving}
       onContinue={saveAreaAndContinue}
     >
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Service area &amp; availability
-      </h1>
-      <p className="mt-2 text-[13.5px] leading-relaxed text-ink/65">
-        Set where you work here. Your existing Calendar is the master control for when Sambramo can offer you jobs.
-      </p>
+      <div className="partner-v2-feature p-4">
+        <p className="partner-v2-meta">Step 3 · service area & availability</p>
+        <h2 className="mt-1 partner-v2-section-title">Where and when do you work?</h2>
+        <p className="mt-1.5 partner-v2-body">Set your travel radius here. Your Calendar controls the dates and capacity Sambramo can offer.</p>
+      </div>
 
-      <section className="mt-5 rounded-[22px] bg-plum-50 p-4 ring-1 ring-plum-100">
+      <section className="mt-4 partner-v2-card p-4">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-plum-600">Starting location</p>
         <p className="mt-2 flex items-start gap-1.5 text-[14px] font-extrabold leading-snug text-plum-950">
           <MapPin size={15} className="mt-0.5 shrink-0" />
@@ -92,7 +91,7 @@ export default function ServiceAreaStep() {
         </p>
       </section>
 
-      <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+      <section className="mt-3 partner-v2-card p-4">
         <Field
           label="How far will you travel?"
           hint="Only jobs within this radius can be offered to you."
@@ -116,7 +115,7 @@ export default function ServiceAreaStep() {
         </Field>
       </section>
 
-      <section className="mt-4 overflow-hidden rounded-[24px] bg-[#FFF8ED] p-4 ring-1 ring-[#F1DFBA]">
+      <section className="mt-3 partner-v2-feature overflow-hidden p-4">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2A085C] text-white">
             <CalendarDays size={18} />
