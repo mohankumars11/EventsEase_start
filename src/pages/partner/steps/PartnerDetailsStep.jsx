@@ -10,7 +10,7 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 
 /**
- * Step 2 · who they are.
+ * Step 1 · who they are.
  *
  * ══════════════════════════════════════════════════════════════════════
  * ONLY WHAT WE DO NOT ALREADY KNOW
@@ -86,7 +86,7 @@ export default function PartnerDetailsStep() {
       }).eq('id', v.id)
       if (err) throw asFormError(err)
       await refresh()
-      navigate('/partner/setup/area')
+      navigate('/partner/setup/services')
     } catch (e) {
       /* A refusal from the server goes under its box; only a network or
          other failure uses the banner. */
