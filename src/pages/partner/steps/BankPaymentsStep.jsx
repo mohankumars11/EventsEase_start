@@ -148,8 +148,11 @@ export default function BankPaymentsStep() {
 
   return (
     <StepShell stepId="bank" canContinue busy={busy} onContinue={save}>
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Payout setup</h2><p className="mt-1.5 partner-v2-body">Choose where Sambramo should send your earnings.</p></div>
+      <div className="partner-v2-feature p-4">
+        <p className="partner-v2-meta">Step 5 · payout setup</p>
+        <h2 className="partner-v2-section-title mt-1">Where should we send your earnings?</h2>
+        <p className="mt-1.5 partner-v2-body">Choose UPI or a bank account. You can change the destination later.</p>
+      </div>
       <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">
         Add the account where Sambramo will send your earnings. Customer payment method is controlled by Sambramo.
       </p>
