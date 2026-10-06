@@ -3,7 +3,6 @@ import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
-import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
 import { usePartnerStage } from '../../hooks/usePartnerStage'
 import { stashPartnerRef } from '../../lib/referrals'
@@ -62,7 +61,7 @@ import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRu
  */
 export default function PartnerEntry() {
   const navigate = useNavigate()
-  const { user, profile, sendEmailOtp, verifyEmailOtp, signInWithGoogle } = useAuth()
+  const { user, profile, sendEmailOtp, verifyEmailOtp } = useAuth()
   /* Renamed on the way in: `stage` is already this screen's own
      email-or-code state, and two things called stage in one component is
      how the wrong one gets read six months from now. */
@@ -75,11 +74,10 @@ export default function PartnerEntry() {
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy]     = useState(false)
   const [error, setError]   = useState(null)
-  const [googleBusy, setGoogleBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [showTerms, setShowTerms] = useState(false)
-  /* Email is the fallback route now, folded away until asked for. */
-  const [emailOpen, setEmailOpen] = useState(false)
+  /* Email is the only authentication method in the current Partner APK. */
+  const emailOpen = true
 
   /* An invitation link is /partner/join?ref=CODE, opened by somebody
      with no partner row yet. The code waits in storage until there is
@@ -204,18 +202,6 @@ export default function PartnerEntry() {
     }
   }
 
-  async function handleGoogle() {
-    setGoogleBusy(true); setError(null)
-    parkRole()
-    try {
-      await signInWithGoogle()
-    } catch (err) {
-      setError(err?.message ?? 'Google sign-in failed. Use your email instead.')
-    } finally {
-      setGoogleBusy(false)
-    }
-  }
-
   return (
     /* ── White, not plum-950 ──────────────────────────────────────────
        This wrapper was dark because a full-bleed hero used to sit above
@@ -234,7 +220,7 @@ export default function PartnerEntry() {
 
        So this is a leftover being removed rather than a design being
        overridden, and the content needs no changes to follow it. */
-    <div className="flex min-h-screen flex-col bg-page">
+    <div className="partner-v2-screen flex min-h-[100dvh] flex-col bg-page">
 
       {/* The cards used to be the hero of this screen and the location
           gate used to sit over it. Both are their own routes now --
@@ -256,7 +242,7 @@ export default function PartnerEntry() {
           So no overlap, and no top radius either: the hero already curves
           at its bottom edge, and two opposing curves meeting would pinch.
           One rounded edge, one flat, which is how the reference does it. */}
-      <main className="relative z-10 flex-1 bg-white px-6 pb-10 pt-6">
+      <main className="relative z-10 flex-1 bg-white partner-v2-container pb-12 pt-6">
         {stage === 'email' ? (
           <>
             {/* Two words, decided before anything is typed. Kept because
@@ -355,43 +341,6 @@ export default function PartnerEntry() {
               </div>
             )}
             </>)}
-
-            {/* ══════════════════════════════════════════════════════════
-                GOOGLE IS THE BUTTON NOW
-                ══════════════════════════════════════════════════════════
-
-                It was below an email field and an "or" rule, which made
-                typing an address the default and tapping a name the
-                afterthought. For a decorator on a phone that is backwards:
-                Google is one tap with no address to spell, no inbox to
-                switch to and no six digits to copy back.
-
-                Email has not gone anywhere -- it is the fallback below,
-                one tap away, and it is still the only route that works for
-                somebody whose phone has no Google account on it. It just
-                is not the thing being offered first. */}
-            <div className="mt-6">
-              <GoogleSignInButton
-                onClick={handleGoogle}
-                loading={googleBusy}
-                disabled={isNew && !agreed}
-                fullWidth
-                label="Continue with Google"
-              />
-            </div>
-
-            {/* Said once it can actually be the reason. */}
-            {isNew && !agreed && (
-              <p className="mt-2 text-center text-[11.5px] font-semibold text-amber-700">
-                Tick the box above to continue.
-              </p>
-            )}
-
-            <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-ink/[0.08]" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute">or</span>
-              <span className="h-px flex-1 bg-ink/[0.08]" />
-            </div>
 
             {!emailOpen ? (
               <button
