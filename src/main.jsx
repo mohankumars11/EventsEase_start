@@ -3,11 +3,19 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import { evictAndRefresh, handleChunkFailures, clearReloadFlag } from './lib/nativeBoot'
+import { currentSurface } from './config/surface'
 import './index.css'
+import './styles/partner-ui-v2.css'
 
 /* A missing code chunk becomes one reload rather than the error screen.
    Registered before anything can import lazily. See lib/nativeBoot.js. */
 handleChunkFailures()
+
+// Stamp the Partner UI design system at the document root. The CSS stays
+// scoped to the Partner surface so the customer app keeps its own language.
+if (currentSurface() === 'partner') {
+  document.documentElement.dataset.sambramoPartnerUi = 'v2'
+}
 
 /* Every apk built before scripts/build-native.mjs existed shipped a
    service worker, and a WebView's worker survives installing a new apk
