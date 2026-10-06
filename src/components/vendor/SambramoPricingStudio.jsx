@@ -109,7 +109,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           const config = normalizeTrade(service.category, service.trade_id)
           const status = statusByService[service.id] ?? 'NOT_CONFIGURED'
           return (
-            <button key={service.id} type="button" onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
+            <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
                 <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
                 <span className="min-w-0 flex-1">
