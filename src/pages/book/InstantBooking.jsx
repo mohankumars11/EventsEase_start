@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiUrl } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Camera, Info, PencilLine } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
