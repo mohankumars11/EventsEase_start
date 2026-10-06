@@ -53,7 +53,7 @@ export default function LocationConfirm() {
   const haveSomething = !!fix
 
   return (
-    <div className="native-screen flex flex-col bg-white">
+    <div className="native-screen partner-v2-screen flex flex-col bg-white">
       <div className="safe-top px-5 pt-3">
         <button
           type="button"
@@ -118,7 +118,7 @@ export default function LocationConfirm() {
         <button
           type="button"
           onClick={() => navigate('/partner/market')}
-          className="min-h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500
+          className="min-h-[52px] w-full rounded-full bg-plum-700
                      text-[15.5px] font-extrabold text-white transition active:scale-[0.99]"
         >
           Continue
