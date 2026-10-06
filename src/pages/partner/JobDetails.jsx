@@ -109,7 +109,7 @@ export default function JobDetails() {
     : null
 
   return (
-    <div className="native-screen flex flex-col bg-page">
+    <div className="partner-mobile native-screen flex flex-col bg-page">
       <Header onBack={() => navigate(-1)} title="Job details" />
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-8">
