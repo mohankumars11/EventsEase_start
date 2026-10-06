@@ -5330,18 +5330,20 @@
 
 .partner-mobile .sambramo-trade-pictogram {
   width: 72px !important;
-  height: 72px !important;
-  aspect-ratio: 1 !important;
+  height: auto !important;
+  aspect-ratio: 3 / 2 !important;
   border-radius: 16px !important;
 }
 .partner-mobile .sambramo-trade-pictogram-md,
 .partner-mobile .sambramo-trade-pictogram-lg {
   width: 72px !important;
-  height: 72px !important;
+  height: auto !important;
+  aspect-ratio: 3 / 2 !important;
 }
 .partner-mobile .sambramo-trade-pictogram-sm {
   width: 58px !important;
-  height: 58px !important;
+  height: auto !important;
+  aspect-ratio: 3 / 2 !important;
 }
 .partner-mobile .sambramo-trade-art {
   width: 100%;
