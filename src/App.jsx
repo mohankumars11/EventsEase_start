@@ -80,6 +80,7 @@ const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
 /* The six onboarding steps. Each is gated by StepGate, so a typed URL
    cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
 const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
+const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
 const BusinessServicesStep = lazy(() => import('./pages/partner/steps/BusinessServicesStep'))
 const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAreaStep'))
 const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
