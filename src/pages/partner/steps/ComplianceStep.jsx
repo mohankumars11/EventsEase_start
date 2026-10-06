@@ -200,7 +200,7 @@ export default function ComplianceStep() {
       onContinue={finish}
       subProgress={`${reqs.length} requirement${reqs.length === 1 ? '' : 's'} apply to your services`}
     >
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
+      <div className="partner-v2-feature p-4"><p className="partner-v2-meta">Partner onboarding</p><h2 className="partner-v2-section-title mt-1">
         Verify what applies to you
       </h1>
       <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">
