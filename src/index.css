@@ -5359,3 +5359,30 @@
 @media (prefers-reduced-motion: reduce) {
   .partner-mobile .sp-skeleton::after { animation: none; }
 }
+
+
+/* Partner screens inherit one control contract even when older components
+   still use local Tailwind classes. */
+.partner-mobile input:not([type="checkbox"]):not([type="radio"]),
+.partner-mobile textarea,
+.partner-mobile select {
+  border-radius: 15px;
+  min-height: 52px;
+  font-size: 15px;
+}
+.partner-mobile textarea { min-height: 96px; }
+.partner-mobile button {
+  -webkit-tap-highlight-color: transparent;
+}
+.partner-mobile [class*="rounded-[24px]"][class*="bg-white"],
+.partner-mobile [class*="rounded-[28px]"][class*="bg-white"] {
+  box-shadow: var(--sp-shadow);
+}
+.partner-mobile .safe-cta {
+  box-shadow: 0 -8px 24px rgba(42,8,92,.04);
+}
+.partner-mobile h1,
+.partner-mobile h2,
+.partner-mobile h3 {
+  text-wrap: balance;
+}
