@@ -49,17 +49,17 @@ export default function ReviewPublishStep() {
 
   return (
     <StepShell stepId="review" cta={submitted ? 'View partner dashboard' : 'Review & submit application'} canContinue={submitted || allDone} busy={busy} onContinue={submitted ? () => navigate('/dashboard/vendor') : submit}>
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">Review &amp; submit</h1>
+      <div className="partner-v2-feature p-4"><p className="partner-v2-meta">Partner onboarding</p><h2 className="partner-v2-section-title mt-1">Review &amp; submit</h2><p className="mt-1.5 partner-v2-body">Everything is ready for one final review before you submit.</p></div>
       <p className="mt-2 text-[13.5px] leading-relaxed text-ink/65">One final review. Your business, services, pricing, calendar, verification and payout are submitted together.</p>
 
-      <div className="mt-5 space-y-2.5">
+      <div className="mt-4 space-y-2.5">
         {earlier.map(s => {
           const tone = s.status === 'COMPLETE' ? 'bg-forest-50 text-forest-800 ring-forest-200' : s.status === 'REQUIRES_ACTION' ? 'bg-amber-50 text-amber-900 ring-amber-200' : 'bg-white text-ink ring-ink/[0.08]'
           return <button key={s.id} type="button" onClick={() => ROUTES[s.id] && navigate(ROUTES[s.id])} className={'flex w-full items-center gap-3 rounded-2xl p-3.5 text-left ring-1 ' + tone}><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70">{s.status === 'COMPLETE' ? <Check size={16} strokeWidth={3} /> : <Edit3 size={15} />}</span><span className="min-w-0 flex-1"><span className="block text-[13.5px] font-extrabold">{s.title}</span><span className="mt-0.5 block text-[11px] opacity-75">{s.detail || s.blurb}</span></span>{s.id !== 'review' && <ChevronRight size={16} className="shrink-0" />}</button>
         })}
       </div>
 
-      <section className="mt-5 rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.07]">
+      <section className="mt-4 partner-v2-card bg-white p-4 ring-1 ring-ink/[0.07]">
         <div className="flex items-center justify-between"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Customer-ready services</p><h2 className="mt-1 text-[18px] font-extrabold text-ink">{serviceRows.length} service{serviceRows.length === 1 ? '' : 's'}</h2></div><ShieldCheck size={19} className="text-plum-700" /></div>
         <ul className="mt-3 space-y-2">
           {serviceRows.map(row => <li key={row.offering.id} className="rounded-2xl bg-surface p-3"><div className="flex items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-600 text-white"><Check size={15} /></span><div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-extrabold text-ink">{row.offering.name || row.listing.trade}</p><p className="text-[10.5px] text-ink-mute">{row.listing.trade} · {row.pricing.live ? 'Live' : row.pricing.review ? 'Pricing ready for review' : 'Pricing ready'}</p></div></div></li>)}
@@ -67,7 +67,7 @@ export default function ReviewPublishStep() {
         {!serviceRows.length && <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-[11.5px] font-bold text-amber-900">Add at least one service and one customer-ready pricing package.</p>}
       </section>
 
-      <section className="mt-4 rounded-[24px] bg-plum-950 p-4 text-white">
+      <section className="mt-3 partner-v2-card bg-plum-950 p-4 text-white">
         <p className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-plum-300">Availability controls dispatch</p>
         <p className="mt-2 text-[14px] font-extrabold">{account.vendor?.city || 'Your service area'} · {account.vendor?.service_radius_km || '—'} km</p>
         <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/70">Your Calendar is the availability authority. Sambramo only offers scheduled work when the partner is available and capacity permits.</p>
