@@ -145,7 +145,7 @@ export default function LocationCapture() {
   const copy = COPY[state] ?? COPY.unavailable
 
   return (
-    <div className="native-screen flex flex-col items-center justify-center bg-white px-8">
+    <div className="partner-mobile native-screen flex flex-col items-center justify-center bg-white px-4">
       <div className="relative mb-10 h-40 w-40">
         <span aria-hidden="true" className="loc-pulse absolute inset-0 rounded-full bg-plum-500/25" />
         <span aria-hidden="true" className="loc-pulse loc-pulse-late absolute inset-0 rounded-full bg-plum-500/25" />
