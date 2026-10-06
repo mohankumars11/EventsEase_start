@@ -1,3 +1,5 @@
+import '../../styles/partnerNative.css'
+
 /**
  * The one shell the partner app renders inside.
  *
@@ -43,9 +45,9 @@
  */
 export default function PartnerAppShell({ children }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-page">
+    <div className="partner-shell flex min-h-[100dvh] flex-col bg-white">
       <main
-        className="flex-1"
+        className="flex-1 partner-bottom-safe"
         style={{
           /* Tab bar (56) + label row (12) + the device's own gesture
              inset, whatever it is on this handset. */
