@@ -439,7 +439,7 @@ export default function PartnerAccount({
       <PartnerTermsScreen />
     ) },
     settings:     { title: 'Settings',               render: () => (
-      <div className="space-y-4">
+      <div className="partner-v2-screen space-y-4">
         {/* ── Only what genuinely exists ───────────────────────────
             The spec asks for Terms, Privacy, About and a version row
             here. Three of those are real and one is not: there is no
@@ -610,7 +610,7 @@ function Identity({ vendor, profile, statusMeta, plan }) {
   const live = vendor?.status === 'APPROVED' && !vendor?.suspended_at
 
   return (
-    <section className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+    <section className="partner-v2-card p-4">
       <div className="flex items-center gap-3">
         <PartnerAvatar url={vendor?.avatar_url} name={name} size={48} />
         <div className="min-w-0 flex-1">
