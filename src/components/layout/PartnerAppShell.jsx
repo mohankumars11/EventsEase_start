@@ -43,13 +43,13 @@
  */
 export default function PartnerAppShell({ children }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-page">
+    <div className="partner-mobile flex min-h-[100dvh] flex-col bg-page">
       <main
         className="flex-1"
         style={{
           /* Tab bar (56) + label row (12) + the device's own gesture
              inset, whatever it is on this handset. */
-          paddingBottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         {children}
