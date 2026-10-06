@@ -10,7 +10,7 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 
 /**
- * Step 2 · who they are.
+ * Step 1 · business profile.
  *
  * ══════════════════════════════════════════════════════════════════════
  * ONLY WHAT WE DO NOT ALREADY KNOW
@@ -86,7 +86,7 @@ export default function PartnerDetailsStep() {
       }).eq('id', v.id)
       if (err) throw asFormError(err)
       await refresh()
-      navigate('/partner/setup/area')
+      navigate('/partner/setup/services')
     } catch (e) {
       /* A refusal from the server goes under its box; only a network or
          other failure uses the banner. */
@@ -109,10 +109,10 @@ export default function PartnerDetailsStep() {
       onBlocked={reveal}
       onContinue={() => { setShowAll(true); save() }}>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Partner details
+        Business profile
       </h1>
       <p className="mb-6 mt-2 text-[13.5px] leading-relaxed text-ink/65">
-        This is what a customer and our coordinators see about your business.
+        Set the business profile customers and Sambramo coordinators will see.
       </p>
 
       {/* Already known, and shown rather than asked for again. */}
