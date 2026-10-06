@@ -105,7 +105,7 @@ export default function PartnerDetailsStep() {
   }
 
   return (
-    <StepShell stepId="details" canContinue={ready} busy={busy}
+    <StepShell stepId="business" canContinue={ready} busy={busy}
       onBlocked={reveal}
       onContinue={() => { setShowAll(true); save() }}>
       <div className="partner-v2-feature mb-5 p-4">
