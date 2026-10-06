@@ -4,6 +4,7 @@ import App from './App'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import { evictAndRefresh, handleChunkFailures, clearReloadFlag } from './lib/nativeBoot'
 import './index.css'
+import './styles/partnerNative.css'
 
 /* A missing code chunk becomes one reload rather than the error screen.
    Registered before anything can import lazily. See lib/nativeBoot.js. */
