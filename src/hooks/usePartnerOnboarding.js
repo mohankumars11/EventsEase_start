@@ -36,8 +36,33 @@ export function usePartnerOnboarding() {
     const run = ++runId.current
     setLoading(true)
     try {
-      const { data: vendor } = await supabase
+      let { data: vendor } = await supabase
         .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()
+      if (run !== runId.current) return
+
+      /* A newly verified partner has a profile before they have a vendor row.
+         Create the draft shell here, once, so the six-step setup has a real
+         backend record to save into. This is intentionally the only bootstrap
+         write: every later field is saved by its own step. */
+      if (!vendor && profile?.role === 'vendor') {
+        const fallbackName =
+          profile?.full_name?.trim() ||
+          user.email?.split('@')[0]?.trim() ||
+          'Sambramo Partner'
+        const { data: created } = await supabase
+          .from('vendors')
+          .insert({
+            profile_id: user.id,
+            business_name: fallbackName,
+            contact_phone: profile?.phone || null,
+            verification_status: 'draft',
+            status: 'PENDING_REVIEW',
+          })
+          .select('*')
+          .single()
+        if (created) vendor = created
+      }
+
       if (run !== runId.current) return
 
       let listings = [], availability = {}, documents = {}, payout = null, weeklyRules = [], generic = [], catering = [], priceBooks = []
