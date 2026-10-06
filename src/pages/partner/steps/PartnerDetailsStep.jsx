@@ -108,16 +108,14 @@ export default function PartnerDetailsStep() {
     <StepShell stepId="details" canContinue={ready} busy={busy}
       onBlocked={reveal}
       onContinue={() => { setShowAll(true); save() }}>
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Partner details
-      </h1>
-      <p className="mb-6 mt-2 text-[13.5px] leading-relaxed text-ink/65">
+      <h1 className="partner-title">Your business profile</h1>
+      <p className="partner-subtitle mb-5">
         This is what a customer and our coordinators see about your business.
       </p>
 
       {/* Already known, and shown rather than asked for again. */}
       {(profile?.email || profile?.full_name) && (
-        <div className="mb-5 rounded-2xl bg-forest-50 p-3.5 ring-1 ring-forest-200">
+        <div className="partner-card-soft mb-5 p-3.5">
           <p className="text-[12px] font-extrabold text-forest-800">Already verified</p>
           {profile?.full_name && <p className="mt-1 text-[12.5px] text-forest-900">{profile.full_name}</p>}
           {profile?.email && <p className="text-[12.5px] text-forest-900">{profile.email}</p>}
