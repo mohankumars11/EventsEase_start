@@ -374,3 +374,52 @@ html[data-sambramo-partner-ui="v2"] .partner-v2-settings-row > span:first-child 
   height: 38px;
   border-radius: 13px;
 }
+
+html[data-sambramo-partner-ui="v2"] .card {
+  background: #fff;
+  border: 1px solid rgba(31,16,51,.08);
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(42,8,92,.055);
+}
+html[data-sambramo-partner-ui="v2"] .btn-primary,
+html[data-sambramo-partner-ui="v2"] .btn-plum,
+html[data-sambramo-partner-ui="v2"] .btn-cta {
+  min-height: 50px;
+  border-radius: 16px;
+  font-weight: 850;
+  box-shadow: 0 10px 22px rgba(91,33,182,.14);
+}
+html[data-sambramo-partner-ui="v2"] .btn-secondary {
+  min-height: 48px;
+  border-radius: 15px;
+}
+html[data-sambramo-partner-ui="v2"] .input {
+  min-height: 52px;
+  border-radius: 16px;
+  background: #F7F5FC;
+  border-color: rgba(31,16,51,.10);
+}
+html[data-sambramo-partner-ui="v2"] .label {
+  font-size: 12px;
+  font-weight: 850;
+  color: #2A085C;
+}
+html[data-sambramo-partner-ui="v2"] .type-h1 {
+  font-size: 26px;
+  letter-spacing: -.03em;
+}
+html[data-sambramo-partner-ui="v2"] .type-h2 {
+  font-size: 17px;
+}
+html[data-sambramo-partner-ui="v2"] .type-body {
+  font-size: 13.5px;
+  line-height: 1.48;
+}
+html[data-sambramo-partner-ui="v2"] .partner-v2-screen [class*="rounded-[22px]"],
+html[data-sambramo-partner-ui="v2"] .partner-v2-screen [class*="rounded-[23px]"],
+html[data-sambramo-partner-ui="v2"] .partner-v2-screen [class*="rounded-[24px]"] {
+  box-shadow: 0 6px 22px rgba(42,8,92,.05);
+}
+html[data-sambramo-partner-ui="v2"] .partner-v2-screen [class*="rounded-[28px]"] {
+  border-radius: 22px;
+}
