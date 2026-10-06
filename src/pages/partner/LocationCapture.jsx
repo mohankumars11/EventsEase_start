@@ -145,7 +145,7 @@ export default function LocationCapture() {
   const copy = COPY[state] ?? COPY.unavailable
 
   return (
-    <div className="native-screen flex flex-col items-center justify-center bg-white px-8">
+    <div className="native-screen partner-v2-screen flex flex-col items-center justify-center bg-white px-8">
       <div className="relative mb-10 h-40 w-40">
         <span aria-hidden="true" className="loc-pulse absolute inset-0 rounded-full bg-plum-500/25" />
         <span aria-hidden="true" className="loc-pulse loc-pulse-late absolute inset-0 rounded-full bg-plum-500/25" />
@@ -199,7 +199,7 @@ export default function LocationCapture() {
               onClick={() => act(copy)}
               data-loc-cta={state}
               className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
-                         bg-gradient-to-r from-plum-700 to-plum-500 text-[15px] font-extrabold text-white
+                         bg-plum-700 text-[15px] font-extrabold text-white
                          transition active:scale-[0.99]"
             >
               {copy.target ? <Settings size={17} /> : <RefreshCw size={17} />}
