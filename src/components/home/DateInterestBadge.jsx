@@ -109,13 +109,15 @@ export default function DateInterestBadge() {
         />
       )}
 
-      {/* `pr-chat-dock` is the clearance the chat launcher owns in this corner
-          (index.css). The pill is centred, so on a 390px phone its right edge
-          reaches into the corner the bubble sits in — and the bubble is the one
-          thing in the app allowed to float there. Without this the launcher
-          landed squarely on the pill's own text, which is the same fault
-          StickyCartBar carries this class for. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center pb-bottom-nav pr-chat-dock">
+      {/* Centred, and nothing reserved beside it.
+
+          It carried `pr-chat-dock` — the right-hand clearance a full-width
+          bottom bar keeps so its buttons never sit under the chat launcher.
+          The launcher moved to Account, so on this screen that padding was
+          reserving 60px for something that is not there, and a pill centred
+          inside a container with 60px of right padding is a pill 30px left
+          of centre. Which is exactly how it looked. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center pb-bottom-nav">
         {open && (
           <div
             ref={panelRef}

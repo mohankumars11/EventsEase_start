@@ -41,7 +41,7 @@ import { formatINR } from '../../utils/format'
  * of this bar's own CTA.
  */
 export default function BookBar({
-  total, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
+  total, totalLabel = null, lineLabel, detail, onAdd, added, cartPath, cartCount, disabled,
   estimateNote = true,
 }) {
   return (
@@ -63,8 +63,8 @@ export default function BookBar({
               <>
                 <p className="truncate text-[11px] font-bold text-ink-mute">{lineLabel}</p>
                 <p className="text-[20px] font-extrabold leading-tight text-ink">
-                  {formatINR(total)}
-                  {estimateNote && (
+                  {totalLabel ?? formatINR(total)}
+                  {totalLabel ? null : estimateNote && (
                     <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-saffron-700">
                       estimate
                     </span>

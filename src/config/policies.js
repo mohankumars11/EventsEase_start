@@ -323,3 +323,123 @@ export const CANCELLATION_TERMS = {
   points: CANCELLATION.lines,
   confirm: 'I understand and want to cancel this order.',
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   INSTANT BOOKINGS CANCEL DIFFERENTLY, BECAUSE A PERSON IS WAITING
+   ══════════════════════════════════════════════════════════════════════
+
+   Everything above is about a PARCEL. Cancelling one costs us packing
+   materials and a courier trip, which is why the ladder there is about
+   how far along the box is.
+
+   An instant booking is a PERSON who cleared a day. A decorator who
+   accepted your Saturday turned down other work for it, and at twelve
+   hours' notice they cannot fill it again. The cost of a late
+   cancellation is not materials — it is that partner's entire trading
+   day, and it lands on them, not on us.
+
+   So the money follows the harm: the deduction goes TO THE PARTNER, not
+   to Sambramo. A platform that kept a cancellation fee would be charging
+   a customer for the privilege of wasting somebody's Saturday and then
+   pocketing it. `escrow_ledger.PENALTY_PARTNER` (migration 062) is a
+   separate movement kind from `RELEASE_PLATFORM` precisely so the two can
+   never be quietly conflated in a report.
+
+   ── Why it tightens rather than staying at 10% ───────────────────────
+   10% is the right number the day after booking and an insult twelve
+   hours out. The partner's loss is not linear in time — it is close to
+   zero while they can still refill the day, and total once they cannot.
+   A flat rate has to pick one, and whichever it picks is wrong for the
+   other end. This is standard banquet and events trade practice in India
+   and is what a partner will recognise as fair.
+
+   ── Free until somebody accepts ──────────────────────────────────────
+   The first rung is 100% back, and it matters more than it looks: it is
+   what makes "book instantly" safe to tap. Before a partner accepts,
+   nobody has cleared anything and there is no harm to compensate.
+*/
+export const CANCELLATION_LADDER = {
+  version: POLICY_VERSION,
+
+  /**
+   * Ordered most-generous first; the first rung whose condition holds
+   * wins. `hoursBefore: null` means "regardless of the date" — it is the
+   * pre-acceptance rung, and it is about state, not time.
+   */
+  rungs: [
+    {
+      id: 'before_accept',
+      hoursBefore: null,
+      requiresAccepted: false,
+      refundPct: 100,
+      partnerPct: 0,
+      scan: 'Full refund',
+      why: 'No master has accepted yet, so nobody has cleared their day.',
+    },
+    {
+      id: 'over_48h',
+      hoursBefore: 48,
+      requiresAccepted: true,
+      refundPct: 90,
+      partnerPct: 10,
+      scan: '10% goes to your master',
+      why: 'They can still fill the day, but they turned work down for you.',
+    },
+    {
+      id: 'within_48h',
+      hoursBefore: 12,
+      requiresAccepted: true,
+      refundPct: 75,
+      partnerPct: 25,
+      scan: '25% goes to your master',
+      why: 'Two days out, most of the good work for that day is already taken.',
+    },
+    {
+      id: 'within_12h',
+      hoursBefore: 0,
+      requiresAccepted: true,
+      refundPct: 50,
+      partnerPct: 50,
+      scan: 'Half goes to your master',
+      why: 'They have almost certainly bought materials and cannot refill the day.',
+    },
+    {
+      id: 'after_start',
+      hoursBefore: -1,
+      requiresAccepted: true,
+      refundPct: 0,
+      partnerPct: 100,
+      scan: 'No refund',
+      why: 'The day has started. If something went wrong, raise an issue instead.',
+    },
+  ],
+}
+
+/**
+ * Which rung applies, for ONE line.
+ *
+ * Per line and never per booking: dropping the dhol troupe you never
+ * really wanted must not be scored against the decorator you booked a
+ * week earlier. Each line carries its own `accepted_at` and its own
+ * `policy_version` (migration 059) for exactly this.
+ */
+export function instantCancellationRung({ eventDate, accepted, now = new Date() }) {
+  const ladder = CANCELLATION_LADDER.rungs
+
+  if (!accepted) return ladder.find(r => r.id === 'before_accept')
+
+  const when = eventDate instanceof Date ? eventDate : new Date(eventDate)
+  if (Number.isNaN(when.getTime())) {
+    // An unparseable date must not silently become "no refund". Fall to
+    // the most generous accepted rung and let a human look at it.
+    return ladder.find(r => r.id === 'over_48h')
+  }
+
+  const hoursOut = (when.getTime() - now.getTime()) / 3_600_000
+  if (hoursOut < 0) return ladder.find(r => r.id === 'after_start')
+
+  return (
+    ladder.find(r => r.requiresAccepted && r.hoursBefore >= 0 && hoursOut >= r.hoursBefore)
+    ?? ladder.find(r => r.id === 'within_12h')
+  )
+}

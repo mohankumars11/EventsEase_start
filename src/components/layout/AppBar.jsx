@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 import CityButton from '../common/CityButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
@@ -73,7 +73,11 @@ export default function AppBar({
   // destination for that case — a shared link, a refresh, a push notification.
   const canGoBack = (window.history.state?.idx ?? 0) > 0
 
-  const barClass = tone === 'forest' ? 'shop-appbar' : 'home-appbar'
+  // `a-appbar` paints itself from --a-canvas, so on an Aurora screen the bar
+  // is the same tone as the page under it and separates on its hairline
+  // alone. On a screen still using the old system those vars are unset and
+  // the fallback keeps the previous white bar. One class, both grounds.
+  const barClass = tone === 'forest' ? 'shop-appbar a-appbar' : 'home-appbar a-appbar'
   // The cart badge overlaps the bag icon, and the ring is what separates the
   // two — it has to be painted the BAR's colour so the badge reads as cut out
   // of it rather than as a coloured donut sitting on top.
@@ -118,7 +122,7 @@ export default function AppBar({
               </Link>
             )
           ) : (
-            <SambramoMark size={30} className="shrink-0" />
+            <Monogram size={28} className="shrink-0" />
           )}
 
           {title ? (

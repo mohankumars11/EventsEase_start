@@ -69,6 +69,7 @@ export default function ServicePicker({
               const fromTier = includedByTier.includes(service.id)
               const qty = serviceQty[service.id] ?? defaultQty(service, guestCount)
               const amount = serviceCost(service, guestCount, qty)
+              const displayAmount = service.pricingMode === 'quote' ? 'Quote' : formatINR(amount)
 
               return (
                 <div key={service.id} className={picked ? 'bg-green-50/40' : ''}>
@@ -100,7 +101,7 @@ export default function ServicePicker({
                     </span>
 
                     <span className="shrink-0 text-right">
-                      <span className="block text-sm font-bold text-plum-700">{formatINR(amount)}</span>
+                      <span className="block text-sm font-bold text-plum-700">{displayAmount}</span>
                       <span className="block text-[10px] text-gray-500 leading-tight max-w-[92px]">
                         {serviceUnitLabel(service)}
                       </span>

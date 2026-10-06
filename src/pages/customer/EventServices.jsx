@@ -4,6 +4,7 @@ import {
   ArrowLeft, ShoppingCart, Sparkles, Pencil, LayoutGrid, Package,
   Search, ChevronRight, MapPin, ShieldCheck, X,
 } from 'lucide-react'
+import { defaultGuestsFor } from '../../data/celebrationBlueprints'
 import { EVENT_DATA } from '../../data/eventServicesData'
 import { toWizardType } from '../../data/occasionMap'
 import {
@@ -95,8 +96,9 @@ import { supabase } from '../../lib/supabase'
 // visit's intent, not a standing order.
 const CART_INTENT_KEY = 'sambramo_cart_intent'
 
-/** The headcount the page opens on before anyone has said anything. */
-const DEFAULT_GUESTS = 120
+/* The headcount this page opens on belongs to the occasion — see the table
+   in data/celebrationBlueprints.js for why a vahana pooja must not open on
+   the same number a reception does. */
 
 /** Run once the state change that preceded it has been committed and painted. */
 function afterPaint(fn) {
@@ -134,13 +136,13 @@ export default function EventServices() {
   const [activeTab, setActiveTab] = useState(
     () => (new URLSearchParams(location.search).get('tab') === 'services' ? 'services' : 'packages')
   ) // 'packages' | 'services'
-  const [guestCount, setGuestCount] = useState(DEFAULT_GUESTS)
+  const [guestCount, setGuestCount] = useState(() => defaultGuestsFor(eventId))
   const [tierTouched, setTierTouched] = useState(false)
   // Seeded from the default headcount rather than left null for the effect
   // below to fill in. Null meant the header rendered "tell us the headcount"
   // for one frame before the estimate replaced it — a flash of the empty
   // state on a page that already knows the answer.
-  const [selectedTier, setSelectedTier] = useState(() => tierForGuests(DEFAULT_GUESTS)?.id ?? null)
+  const [selectedTier, setSelectedTier] = useState(() => tierForGuests(defaultGuestsFor(eventId))?.id ?? null)
   const [tierPrompt, setTierPrompt]  = useState(null)
   const [query, setQuery]           = useState('')
   const [pendingAdd, setPendingAdd] = useState(null)
@@ -385,7 +387,7 @@ export default function EventServices() {
   useEffect(() => {
     setQuery('')
     setTierTouched(false)
-    setGuestCount(DEFAULT_GUESTS)
+    setGuestCount(defaultGuestsFor(eventId))
     // A scale dialog left open across an occasion change would be asking the
     // customer to agree to a griha pravesh's Special Day while the page
     // behind it has become a birthday.
@@ -587,6 +589,38 @@ export default function EventServices() {
           />
         </div>
 
+        {/* ── The third door, for the customer who has not decided ──
+            TwoDoors above asks "the whole celebration, or just one thing?"
+            and both of its answers assume somebody who already knows roughly
+            what they want. Most people arriving on this page do not: they
+            tapped an occasion because a birthday is coming, and the first
+            thing this screen does is quote them.
+
+            Occasion cards on home and /plan open the guided journey now, so
+            this page is reached mainly by people who came looking for the
+            catalogue — but it is also where EventFooter's occasion links and
+            every old bookmark land, and those visitors deserve the same door.
+            One quiet line, under the two that were already here rather than
+            above them: somebody who came to browse prices should not have a
+            nine-minute flow put in front of the prices. */}
+        <Link
+          to={`/celebrate/${event.id}`}
+          className="rise-in mt-3 flex items-center gap-3 rounded-[22px] bg-surface-sunk/[0.05] px-4 py-3.5 transition-transform active:scale-[0.99]"
+          style={{ '--rise-delay': '360ms' }}
+        >
+          <span aria-hidden="true" className="text-[20px] leading-none">🧭</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px] font-extrabold leading-snug text-ink">
+              Not sure where to start?
+            </span>
+            <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
+              We'll walk you through it one question at a time — the food, the look, the
+              photographs — and show you the price at the end.
+            </span>
+          </span>
+          <ChevronRight size={17} className="shrink-0 text-ink-mute" />
+        </Link>
+
         {/* ── See it, price it, pick it ──────────────────────
             "What does it look like and what does it cost" is the question
             people ask before "what is in the package", and the tabs below
@@ -620,8 +654,11 @@ export default function EventServices() {
       <div
         ref={contentRef}
         className="sticky z-20 mt-6 border-y border-hairline/10 bg-surface/90 backdrop-blur"
-        style={{ top: 'var(--event-appbar-h, 3.5rem)' }}
-        style={{ scrollMarginTop: '56px' }}
+        // One `style`, not two. JSX keeps the LAST duplicate attribute and
+        // silently drops the rest, so `top` was never applied and this
+        // sticky tab bar sat under the app bar rather than below it. The
+        // build warned; nothing at runtime could.
+        style={{ top: 'var(--event-appbar-h, 3.5rem)', scrollMarginTop: '56px' }}
       >
         <div className="mx-auto flex max-w-3xl gap-1 px-4 py-2">
           <TabButton
@@ -806,7 +843,7 @@ export default function EventServices() {
                         key={svc.id}
                         service={svc}
                         eventId={eventId}
-                        guestCount={guestCount || DEFAULT_GUESTS}
+                        guestCount={guestCount || defaultGuestsFor(eventId)}
                         vegOnly={profile.vegOnly}
                         index={i}
                         inCart={hasItem(eventId, svc.id)}

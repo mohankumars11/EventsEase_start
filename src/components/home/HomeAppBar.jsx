@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ShoppingBag, X } from 'lucide-react'
-import SambramoMark from '../ui/SambramoMark'
+import { Search, X, ShoppingBag } from 'lucide-react'
+import SambramoWordmark from '../ui/SambramoWordmark'
 import CityButton from '../common/CityButton'
 import ProfileDropdown from '../ui/ProfileDropdown'
 import { useAuth } from '../../context/AuthContext'
@@ -35,11 +35,11 @@ function dashboardLinkFor(profile) {
 
 const SEARCH_HINTS = [
   'birthday party',
-  'chocolate cake',
-  'housewarming pooja',
   'wedding decoration',
-  'rose bouquet',
-  'baby shower',
+  'housewarming pooja',
+  'naming ceremony',
+  'catering for 200',
+  'mehendi artist',
 ]
 
 export default function HomeAppBar({ query = '', onQueryChange }) {
@@ -78,46 +78,96 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
   }, [reduced, focused, query])
 
   return (
-    <header ref={barRef} className="home-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
-      <div className="mx-auto max-w-3xl px-4 pb-3 pt-3">
-        <div className="flex items-center gap-3">
-          <SambramoMark size={30} className="shrink-0" />
+    <header ref={barRef} className="home-appbar a-appbar sticky top-0 z-40 pt-safe backdrop-blur-md">
+      <div className="mx-auto max-w-3xl px-4 pb-2.5 pt-2">
+        {/* ── The lockup, top left ─────────────────────────────────────
+            The brand goes where a brand goes. It used to be a 30px kolam
+            glyph sharing a row with the city, the cart and the account menu
+            — four controls of equal weight, none of which was the name of
+            the app.
 
-          {/* The city, and now actually a control. This used to be a <p> with
-              a ChevronDown drawn beside it — the icon promised a picker that
-              did not exist, and the city itself was the hardcoded
-              BRAND.primaryCity, so a Mysore customer was told "Bengaluru" on
-              the app's front screen.
+            Now the identity owns the first line on its own, and the
+            wayfinding sits under it. That ordering is what every consumer
+            app converges on for the same reason: the first thing a person
+            who arrived from a link needs is to know whose app this is. */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <SambramoWordmark size={28} layout="inline" />
 
-              The subtitle is still the greeting, which is this surface's line
-              to give; CityButton overrides it only when the chosen city is
-              one we cannot serve. */}
-          <CityButton
-            subtitle={
-              firstName
-                ? `Welcome back, ${firstName}`
-                /* Short enough to survive a 360px screen. The long version
-                   ("Arranging celebrations in Bengaluru & Mysore") truncated
-                   mid-city, which turned a statement of coverage into a
-                   statement of one city and an ellipsis. */
-                : `Live in ${BRAND.pilotCities.join(' & ')}`
-            }
-          />
+            {/* ── The caption, revealed left to right ──────────────────
+                It said "Every emotion, valued", which is a feeling and not
+                an answer. Nobody has heard of Sambramo yet, so the one line
+                under the name has to say what the app IS before it says how
+                it feels — the feeling is already carried by the photography
+                on every card below.
 
-          <Link
-            to={cartPath}
-            aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk/[0.07] text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
-          >
-            <ShoppingBag size={18} />
-            {cartCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-saffron-400 px-1 text-[10px] font-extrabold text-plum-950 ring-2 ring-plum-950">
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
-          </Link>
+                "India's event booking app" and not "India's FIRST event
+                booking app": the superlative is the kind of claim a
+                competitor screenshots, and it is not needed. Naming the
+                category is the whole job.
 
-          {user ? (
+                There was a short gold rule leading it. It read as a
+                flourish and measured as a gap: five pixels of rule plus
+                eight of flex gap pushed the line thirteen pixels right of
+                the S it belongs to, so the lockup and its caption no longer
+                shared a left edge. A caption that does not align with the
+                name above it is not a caption, it is a second element. */}
+            <p className="brand-wipe -mt-0.5 truncate text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-royal-800/70">
+              {BRAND.categoryLine}
+            </p>
+          </div>
+
+          {/* ── The controls, as ONE group ────────────────────────────
+              This row is `justify-between`: the lockup on the left, the
+              controls on the right. The basket used to be a sibling of both,
+              which made three children — and `justify-between` spreads three
+              children across the full width, so the bag was pinned to the
+              middle of the bar with forty points of nothing either side of
+              it. It looked like a spacing value; it was a count.
+
+              One wrapper, and the pair travels together at 6px. */}
+          <span className="flex shrink-0 items-center gap-1.5">
+            {/* ── The basket ───────────────────────────────────────────
+                This was folded into the Plan tab when the shop left, on the
+                argument that a bag icon is a promise of a till and what is left
+                is an enquiry. That was half right and the wrong half won:
+                services ARE bought one at a time here — somebody short only a
+                photographer adds one thing and checks out — and hiding the
+                basket behind a tab labelled "Plan" hides it from exactly that
+                person.
+
+                So it comes back, in the app bar rather than as a fifth tab.
+                A tab bar holds places; a basket is a state, and every catalogue
+                app in the country puts it top right. It renders only when there
+                is something in it.
+
+                It was briefly hidden while empty, on the reasoning that an
+                always-empty bag teaches the eye to skip the spot. That is true
+                of a bag that only ever holds what you already chose — and wrong
+                here, because this bag is also the way IN to buying a single
+                service. Somebody who wants only a photographer has no reason to
+                open "Plan"; the bag is the affordance they already understand,
+                and it cannot recruit anyone while invisible.
+
+                So it is always here, and the basket it opens is a browse
+                surface when it is empty rather than an apology. The badge is
+                what appears and disappears. */}
+            <Link
+              to={cartPath}
+              aria-label={cartCount > 0
+                ? `Your basket, ${cartCount} item${cartCount === 1 ? '' : 's'}`
+                : 'Your basket — browse individual services'}
+              className="relative tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink outline outline-1 -outline-offset-1 outline-ink/12 transition-transform active:scale-95"
+            >
+              <ShoppingBag size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-aqua-700 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
+
+            {user ? (
             /* ProfileDropdown takes all three of these — it calls `onSignOut`
                directly and reads `profile` for the initials and the role-based
                menu. Rendering it bare (as this did at first) hands a signed-in
@@ -130,11 +180,31 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
           ) : (
             <Link
               to="/login"
-              className="tap-tall shrink-0 rounded-full bg-surface-sunk/[0.07] px-3.5 py-2 text-xs font-bold text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+              className="tap-tall shrink-0 brand-aqua-chip rounded-full px-4 py-2 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(12,53,67,0.9)] transition-transform active:scale-95"
             >
               Sign in
             </Link>
           )}
+          </span>
+        </div>
+
+        {/* ── The city, on its own line under the brand ─────────────────
+            It was competing with the wordmark for the same row and losing —
+            truncated to an ellipsis on a 360px screen the moment a name was
+            long. Given the full width it is a real control again.
+
+            The cart that used to sit beside it is gone with the shop. What
+            is left is one basket of services reached from Plan, and a bag
+            icon in the app bar for it would be the e-commerce metaphor
+            surviving the commerce. */}
+        <div className="mt-2">
+          <CityButton
+            subtitle={
+              firstName
+                ? `Welcome back, ${firstName}`
+                : `Live in ${BRAND.pilotCities.join(' & ')}`
+            }
+          />
         </div>
 
         {onQueryChange && (
@@ -148,15 +218,15 @@ export default function HomeAppBar({ query = '', onQueryChange }) {
               onBlur={() => setFocused(false)}
               type="search"
               enterKeyHint="search"
-              aria-label="Search celebrations and shop"
-              placeholder={focused ? 'Search celebrations, cakes, decor…' : `Search "${SEARCH_HINTS[hint]}"`}
-              className="h-12 w-full rounded-2xl bg-white pl-11 pr-11 text-sm font-medium text-gray-900 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.9)] outline-none ring-2 ring-transparent placeholder:text-gray-400 focus:ring-saffron-400"
+              aria-label="Search celebrations and services"
+              placeholder={focused ? 'Search celebrations, services, festivals…' : `Search "${SEARCH_HINTS[hint]}"`}
+              className="a-field h-12 pl-11 pr-11 font-medium"
             />
             {query && (
               <button
                 onClick={() => { onQueryChange(''); inputRef.current?.focus() }}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500"
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-ink/[0.08] text-ink-mute"
               >
                 <X size={14} />
               </button>

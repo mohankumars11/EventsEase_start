@@ -30,8 +30,28 @@ function walk(dir, out = []) {
 
 let problems = 0
 
+/* Comments are not code, and this file's own house style is long
+   explanatory headers that name components in prose -- "the obvious
+   reading is an automatic `<Navigate>`", "a `<Link>` wrapping a
+   `<button>`". Read as JSX those are two undefined components, and the
+   check reported both as crashes that throw at render.
+
+   A guard that reports things that are fine is a guard people learn to
+   run past, which is worse than not having it: the two false positives
+   here sat in front of a real deployment decision.
+
+   Block comments and line comments go first, then the scan. String
+   literals are left alone -- a component name inside a string is not
+   something this can crash on either, but stripping strings would need
+   a parser and the comment cases are the ones that actually occur. */
+function withoutComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^\s*\/\/.*$/gm, ' ')
+}
+
 for (const file of walk('src')) {
-  const src = readFileSync(file, 'utf8')
+  const src = withoutComments(readFileSync(file, 'utf8'))
 
   // `<Foo`, `<Foo.Bar` — only capitalised tags; lowercase ones are HTML.
   const used = new Set(
@@ -86,6 +106,37 @@ for (const file of walk('src')) {
     if (defined.has(name)) continue
     console.error(`${relative('.', file)}: <${name}> is used but never imported or declared`)
     problems++
+  }
+
+  /* ── The same bug, one letter lower ─────────────────────────────────
+     A React hook is not capitalised, so the rule above cannot see it.
+     useEffect used with only { useMemo, useState } imported compiles
+     exactly as happily as an undefined component and throws the same
+     ReferenceError at render.
+
+     It happened here: adding a fetch-on-open to AddItemFlow used
+     useEffect and left the import line alone. The build was green, the
+     JSX check passed, and the whole listing flow would have thrown the
+     moment a partner opened it.
+
+     Only hooks React exports, and only when the file imports something
+     from react at all — a file with its own `useSomething` helper is
+     not this bug. */
+  const REACT_HOOKS = [
+    'useState', 'useEffect', 'useMemo', 'useRef', 'useCallback',
+    'useContext', 'useReducer', 'useLayoutEffect', 'useId',
+    'useTransition', 'useDeferredValue', 'useSyncExternalStore',
+  ]
+  const reactImport = src.match(/import\s*\{([^}]*)\}\s*from\s*['"]react['"]/)
+  if (reactImport) {
+    const imported = new Set(reactImport[1].split(',').map(t => t.trim().split(/\s+as\s+/)[0]))
+    for (const hook of REACT_HOOKS) {
+      if (imported.has(hook)) continue
+      /* A call, not a mention in a comment or a longer identifier. */
+      if (!new RegExp(`(?<![A-Za-z0-9_.])${hook}\\s*\\(`).test(src)) continue
+      console.error(`${relative('.', file)}: ${hook}() is called but not imported from react`)
+      problems++
+    }
   }
 }
 

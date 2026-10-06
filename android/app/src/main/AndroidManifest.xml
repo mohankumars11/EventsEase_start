@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ══════════════════════════════════════════════════════════════
+         WHAT THIS APP IS ALLOWED TO SEE
+         ══════════════════════════════════════════════════════════════
+
+         Since Android 11 an app cannot enumerate other installed apps
+         unless it declares what it is looking for. Without this,
+         Razorpay checkout asks the system "is there a UPI app here",
+         gets an empty answer, and does not offer UPI at all — which is
+         why the sheet showed only cards, netbanking and wallets in the
+         APK while the identical checkout in Chrome showed UPI first and
+         took a real rupee.
+
+         Declared by INTENT rather than by package name on purpose: a
+         list of packages goes stale the day a new UPI app matters, and
+         picking which wallets a customer may use is not a decision this
+         manifest should be making. Anything that can handle a upi: link
+         qualifies.
+
+         Capacitor already hands the link over: Bridge.launchIntent fires
+         an ACTION_VIEW intent for any scheme that is not the app own.
+         It just could not RESOLVE one without this. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+    </queries>
+
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                Google sign in comes home through here.
+
+                Google refuses OAuth from an embedded WebView, so the app
+                hands the sign in to a Custom Tab (a real Chrome) and
+                Google redirects back to com.sambramo.partner://auth or
+                com.sambramo.app://auth. This filter is what makes Android
+                reopen the app on that URL instead of offering a browser.
+
+                The scheme is ${applicationId} because the two flavours
+                have two different ids, and each app must claim only its
+                own. Both URLs also have to be listed under Supabase,
+                Authentication, URL Configuration, Redirect URLs.
+
+                launchMode is singleTask above, which is what makes
+                appUrlOpen fire on the running activity rather than
+                starting a second copy of the app.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${applicationId}" android:host="auth" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Android 13 (API 33) made notifications an explicit runtime
+         permission. targetSdk here is 36, so without this the OS silently
+         drops every notification and the app has no way to ask.
+
+         A master would install the app, be approved, receive offers the
+         server thinks were delivered, and see none of them — which is the
+         exact failure the whole Capacitor migration exists to fix, arriving
+         through a different door. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Lets a job alert wake the screen. A 45-second offer that arrives
+         silently in a pocket is an offer that expires. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         WHY "USE MY LOCATION" COULD NEVER HAVE WORKED IN THE APK
+         ══════════════════════════════════════════════════════════════
+
+         The partner app asks for a location twice: on the onboarding
+         step headed "Your location", and on the Account tab. Both call
+         navigator.geolocation through lib/pincodeDirectory.
+
+         In a browser that prompts. Inside a Capacitor WebView it does
+         not: the system checks the app manifest first, finds no location
+         permission declared, and returns PERMISSION_DENIED immediately
+         WITHOUT showing the user anything. So the button appeared to do
+         nothing, or reported that we could not find them, on every
+         installed copy — and the partner could not fix it from Settings
+         either, because a permission the app never asked for does not
+         appear in the app's permission list.
+
+         FINE is what the radius filter needs. match_partners measures
+         from a point and compares it against service_radius_km; a coarse
+         fix is a cell-tower estimate, which in this city can be two
+         kilometres out and is no better than the pincode centroid it
+         was meant to replace.
+
+         COARSE is declared beside it because Android 12 and later let
+         the user grant "Approximate" instead of "Precise" from the
+         system dialog. An app that declares only FINE gets nothing at
+         all from that choice; declaring both means an approximate grant
+         still gives us something to work with.
+
+         Neither is required to use the app. The pincode box beside the
+         button does the same job less exactly, and every message on
+         those screens now says so. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+</manifest>
