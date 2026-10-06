@@ -85,9 +85,9 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {!rows.length && (
-        <p className="rounded-2xl bg-ink/[0.02] p-4 text-[13px] leading-relaxed text-ink-mute">
+        <p className="partner-card-soft p-4 text-[13px] leading-relaxed text-ink-mute">
           You have not listed anything yet. Add what you do and we will start
           matching you with events.
         </p>
@@ -97,14 +97,14 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
         const meta = LISTING_STATUS[row.status] ?? LISTING_STATUS.draft
         const waiting = row.offerings.filter(o => o.review_status === 'under_review').length
         return (
-          <div key={row.trade} className="rounded-2xl bg-white p-3 ring-1 ring-ink/[0.06]">
+          <div key={row.trade} className="partner-card p-3.5">
             <button
               type="button"
               data-my-service={row.trade}
               onClick={() => onOpenTrade?.(row.trade)}
               className="flex w-full items-center gap-3 text-left"
             >
-              <SambramoTradePictogram trade={row.trade} size="sm" showSparkle={false} title={false} className="shrink-0" />
+              <span className="partner-art-box shrink-0 bg-plum-50"><SambramoTradePictogram trade={row.trade} size="sm" showSparkle={false} title={false} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-extrabold leading-tight text-ink">{row.trade}</span>
                 <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-mute">
@@ -127,8 +127,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
                 type="button"
                 onClick={() => toggle(row)}
                 disabled={busy === row.trade}
-                className="mt-2 flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-xl
-                           bg-ink/[0.04] text-[12.5px] font-bold text-ink-soft disabled:opacity-50"
+                className="partner-action partner-action-secondary mt-2 w-full min-h-[42px] text-[12px] disabled:opacity-50"
               >
                 {busy === row.trade
                   ? <Loader2 size={13} className="animate-spin" />
@@ -143,8 +142,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
       <button
         type="button"
         onClick={() => navigate('/partner/services')}
-        className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl
-                   bg-plum-50 text-[13.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
+        className="partner-action partner-action-secondary w-full min-h-[48px] bg-plum-50 text-[13px]"
       >
         <Plus size={16} /> Add a service
       </button>
