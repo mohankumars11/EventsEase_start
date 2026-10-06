@@ -86,7 +86,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
         </button>
       ) : null}
       <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <PricingPictogram />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
@@ -110,12 +110,12 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           const config = normalizeTrade(service.category, service.trade_id)
           const status = statusByService[service.id] ?? 'NOT_CONFIGURED'
           return (
-            <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
+            <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="sp-card w-full rounded-[18px] bg-white p-3.5 text-left transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
                 <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-[14.5px] font-extrabold text-ink">{service.name || service.category}</span>
+                    <span className="text-[14px] font-extrabold text-ink">{service.name || service.category}</span>
                     <StatusPill status={status} loading={loadingStatus} />
                   </span>
                   <span className="mt-1 block text-[11.5px] text-ink-mute">{service.category === CATERING ? 'Menu packages · per-guest pricing · structured extras' : config.name + ' · trade-specific packages · pricing rules · add-ons'}</span>
