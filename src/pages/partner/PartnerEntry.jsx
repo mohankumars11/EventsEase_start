@@ -77,7 +77,6 @@ export default function PartnerEntry() {
   const [resendIn, setResendIn] = useState(0)
   const [showTerms, setShowTerms] = useState(false)
   /* Email is the pilot sign-in route; production can swap this identifier to mobile OTP without changing the flow. */
-  const [emailOpen, setEmailOpen] = useState(true)
 
   /* An invitation link is /partner/join?ref=CODE, opened by somebody
      with no partner row yet. The code waits in storage until there is
@@ -342,87 +341,58 @@ export default function PartnerEntry() {
             )}
             </>)}
 
-            {/* Email is the only partner sign-in method in the current pilot. */}
-            <div className="mt-6 rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
-            {!emailOpen ? (
+            <section className="mt-6 rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
+              <p className="text-[13px] leading-snug text-ink-mute">
+                {isNew
+                  ? 'Use your email to create the partner account. We send a six-digit code.'
+                  : 'Use the email you signed up with. We send a six-digit code.'}
+              </p>
+
+              <label className="mt-4 block">
+                <span className="text-[12px] font-extrabold uppercase tracking-wide text-ink-mute">
+                  Your email
+                </span>
+                <div className="relative mt-1.5">
+                  <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(null); setEmailSays(null) }}
+                    onBlur={() => {
+                      const result = validateField('login_email', email)
+                      setEmailSays(email.trim() ? result : null)
+                    }}
+                    data-field="login_email"
+                    data-testid="field-login_email"
+                    aria-invalid={emailSays?.severity === SEVERITY.ERROR ? true : undefined}
+                    aria-describedby={emailSays?.says ? 'entry-email-msg' : undefined}
+                    onKeyDown={e => e.key === 'Enter' && requestCode()}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    inputMode="email"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoFocus
+                    className="sp-input w-full pl-10 pr-4"
+                  />
+                </div>
+                {emailSays?.says && emailSays.severity !== 'ok' && (
+                  <p id="entry-email-msg" className={`mt-1.5 text-[12px] font-semibold leading-snug ${emailSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'}`}>
+                    {emailSays.says}
+                  </p>
+                )}
+              </label>
+
               <button
                 type="button"
-                onClick={() => setEmailOpen(true)}
-                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl
-                           bg-ink/[0.04] text-[14px] font-extrabold text-ink ring-1 ring-ink/[0.08]
-                           transition active:scale-[0.99]"
+                onClick={requestCode}
+                disabled={!canContinue || busy}
+                className="sp-button sp-button-primary mt-4 w-full disabled:opacity-40"
               >
-                <Mail size={16} />
-                Continue with email
+                {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowRight size={17} />}
+                {busy ? 'Sending…' : isNew ? 'Sign up' : 'Log in'}
               </button>
-            ) : (
-              <>
-                <p className="text-[13px] leading-snug text-ink-mute">
-                  {isNew
-                    ? 'One address, a six-digit code, and you are in. No password to invent.'
-                    : 'The email you signed up with. We send a six-digit code.'}
-                </p>
-
-                <label className="mt-4 block">
-                  <span className="text-[12px] font-extrabold uppercase tracking-wide text-ink-mute">
-                    Your email
-                  </span>
-                  <div className="relative mt-1.5">
-                    <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-mute" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => { setEmail(e.target.value); setError(null); setEmailSays(null) }}
-                      /* ── Checked when they LEAVE the field, not as they
-                         type ────────────────────────────────────────────
-                         Every address is invalid while it is being typed,
-                         so validating on each keystroke tells somebody
-                         their email is wrong six times before it is
-                         right. React routes onBlur through focusout. */
-                      onBlur={() => {
-                        const r = validateField('login_email', email)
-                        setEmailSays(email.trim() ? r : null)
-                      }}
-                      data-field="login_email" data-testid="field-login_email"
-                      aria-invalid={emailSays?.severity === SEVERITY.ERROR ? true : undefined}
-                      aria-describedby={emailSays?.says ? 'entry-email-msg' : undefined}
-                      onKeyDown={e => e.key === 'Enter' && requestCode()}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      inputMode="email"
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      autoFocus
-                      className="sp-input w-full py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
-                    />
-                  </div>
-                  {/* A typo here IS the failure: the code goes to an
-                      address nobody reads and the partner waits for a
-                      message that arrived somewhere else. The rule warns
-                      on gmial.com and friends with the correction rather
-                      than blocking, because it might be right. */}
-                  {emailSays?.says && emailSays.severity !== 'ok' && (
-                    <p id="entry-email-msg" data-field-message="login_email" className={`mt-1.5 text-[12px] font-semibold leading-snug ${
-                      emailSays.severity === 'warn' ? 'text-saffron-800' : 'text-rose-700'
-                    }`}>
-                      {emailSays.says}
-                    </p>
-                  )}
-                </label>
-
-                <button
-                  type="button"
-                  onClick={requestCode}
-                  disabled={!canContinue || busy}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-4 text-[15.5px] font-extrabold text-plum-950 transition active:scale-[0.99] disabled:bg-ink/[0.08] disabled:text-ink-mute"
-                >
-                  {busy ? <Loader2 size={17} className="animate-spin" /> : null}
-                  {busy ? 'Sending…' : isNew ? 'Sign up' : 'Log in'}
-                  {!busy && <ArrowRight size={17} />}
-                </button>
-              </>
-            )}
-          </div>
+            </section>
           </>
         ) : (
           <>
