@@ -17,7 +17,7 @@ import ResumePrompt from './components/common/ResumePrompt'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import HomeScreen from './pages/HomeScreen'
+import HomeScreen from './pages/SumramoProductHome'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
@@ -222,6 +222,24 @@ function DashboardShell({ children }) {
  */
 function BareShell({ children }) {
   return <div className="min-h-screen"><PageBoundary>{children}</PageBoundary></div>
+}
+
+// BottomNav belongs to the authenticated customer application surfaces, not
+// the public SAMBRAMO product website. The marketing homepage is a responsive
+// website on every viewport, so it must never acquire an app-style tab bar.
+function CustomerAppNavigation() {
+  const { pathname } = useLocation()
+  const appRoots = [
+    '/dashboard/customer',
+    '/dashboard/customer/orders',
+    '/dashboard/customer/requests',
+    '/dashboard/customer/cart',
+    '/dashboard/customer/events',
+    '/account',
+    '/track',
+  ]
+  const isCustomerApp = appRoots.some(root => pathname === root || pathname.startsWith(root + '/'))
+  return isCustomerApp ? <BottomNav /> : null
 }
 
 function AppRoutes() {
@@ -549,7 +567,7 @@ export default function App() {
                   renders nothing and writes to sessionStorage only. */}
               <JourneyTracker />
               <AppRoutes />
-              <BottomNav />
+              <CustomerAppNavigation />
               {/* The offer to go back to unfinished work. It shows itself only
                   on home, which is where an interrupted customer lands, and
                   only when there is genuinely something to return to. Mounted

@@ -9,11 +9,11 @@ import { LIVE_CITIES, DEFAULT_CITY } from './cities'
 // The halves are the source and the sentences are derived, so the two forms
 // physically cannot disagree. Holding both as separate literals is how the
 // codebase ended up with four different wordings of the same sentence.
-const TAGLINE_PARTS   = ['Celebrations, arranged', 'Essentials, delivered']
-const SIGNATURE_PARTS = ['Your Moment.', 'Our Magic.']
+const TAGLINE_PARTS   = ['From Supply', 'to Celebration']
+const SIGNATURE_PARTS = ['Everything connected.', 'From supply to celebration.']
 
 export const BRAND = {
-  name: 'Sambramo',
+  name: 'Sumramo',
   // Three lines, three jobs — they are not interchangeable.
   //
   // `tagline` is the descriptor that rides with the logo and answers "what is
