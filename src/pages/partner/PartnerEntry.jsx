@@ -393,7 +393,7 @@ export default function PartnerEntry() {
                       autoCapitalize="off"
                       autoCorrect="off"
                       autoFocus
-                      className="w-full rounded-2xl bg-ink/[0.03] py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
+                      className="sp-input w-full py-3.5 pl-10 pr-4 text-[15px] font-semibold text-ink ring-1 ring-ink/[0.08] placeholder:font-normal placeholder:text-ink-mute focus:bg-white focus:ring-2 focus:ring-royal-500"
                     />
                   </div>
                   {/* A typo here IS the failure: the code goes to an
@@ -453,7 +453,7 @@ export default function PartnerEntry() {
               inputMode="numeric"
               autoComplete="one-time-code"
               aria-label="Six-digit code"
-              className="mt-6 w-full rounded-2xl bg-ink/[0.03] py-4 text-center text-[26px] font-extrabold tracking-[0.5em] text-ink ring-1 ring-ink/[0.08] placeholder:tracking-[0.4em] placeholder:text-ink-mute/40 focus:bg-white focus:ring-2 focus:ring-royal-500"
+              className="sp-input mt-6 w-full py-4 text-center text-[26px] font-extrabold tracking-[0.5em] text-ink ring-1 ring-ink/[0.08] placeholder:tracking-[0.4em] placeholder:text-ink-mute/40 focus:bg-white focus:ring-2 focus:ring-royal-500"
             />
 
             {codeTouched && !codeOk && (
@@ -529,6 +529,7 @@ export default function PartnerEntry() {
               Type the six digits from the mail — that is the quickest way
               back. It can take a minute, and it sometimes lands in spam.
             </p>
+            </div>
           </>
         )}
 
