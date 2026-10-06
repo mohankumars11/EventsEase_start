@@ -57,19 +57,19 @@ export default function StepShell({
   if (!step) return null
 
   return (
-    <div className="native-screen flex flex-col bg-white">
-      <div className="safe-top px-5 pt-3">
+    <div className="partner-mobile native-screen flex flex-col bg-white">
+      <div className="safe-top border-b border-ink/[0.06] bg-white px-4 pt-2 pb-2">
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate('/partner/setup'))}
           aria-label="Back to setup"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink/70"
+          className="sp-touch flex h-11 w-11 items-center justify-center rounded-full text-ink/70 active:bg-ink/[0.04]"
         >
           <ArrowLeft size={20} />
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6">
         {/* The outer position, always. */}
         <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-plum-600">
           {step.title} · Step {index + 1} of {STEPS.length}
@@ -91,10 +91,10 @@ export default function StepShell({
           <p className="mt-2 text-[11.5px] font-semibold text-ink-mute">{subProgress}</p>
         )}
 
-        <div className="pb-6 pt-5">{children}</div>
+        <div className="pb-8 pt-5">{children}</div>
       </div>
 
-      <div className="safe-cta border-t border-ink/[0.06] px-6 pt-3">
+      <div className="safe-cta border-t border-ink/[0.08] bg-white px-4 pt-3 sm:px-6">
         <button
           type="button"
           data-cta="step-continue"
@@ -102,8 +102,8 @@ export default function StepShell({
           aria-disabled={!canContinue || busy ? true : undefined}
           data-blocked={!canContinue ? 'true' : undefined}
           onClick={!canContinue && onBlocked ? onBlocked : onContinue}
-          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
-                     bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[15px]
+                     bg-plum-700 text-[14px] font-extrabold
                      text-white transition active:scale-[0.99] disabled:opacity-40 aria-disabled:opacity-40"
         >
           {busy && <Loader2 size={16} className="animate-spin" />}
@@ -126,6 +126,6 @@ export function Field({ label, hint, children }) {
 }
 
 export const inputClass =
-  'w-full rounded-2xl bg-white px-4 py-3 text-[14.5px] font-semibold text-ink ' +
+  'w-full min-h-[52px] rounded-[15px] bg-white px-4 py-3 text-[15px] font-semibold text-ink ' +
   'ring-1 ring-ink/[0.10] placeholder:font-normal placeholder:text-ink-mute ' +
   'focus:outline-none focus:ring-2 focus:ring-plum-500'
