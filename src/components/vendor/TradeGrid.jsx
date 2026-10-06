@@ -184,7 +184,7 @@ export default function TradeGrid({
           })}
         </ul>
       ) : (
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="partner-v2-trade-grid">
         {list.map((t, index) => {
           const n = offeringsForTrade(t).length
           const on = isOn(t)
@@ -195,11 +195,11 @@ export default function TradeGrid({
               type="button"
               data-trade={t}
               onClick={() => onPick(t)}
-              className={`relative flex min-h-[146px] flex-col items-center justify-center rounded-[22px] p-3 text-center ring-1 transition active:scale-[0.98] ${
+              className={`partner-v2-trade-card ${
                 on ? 'bg-forest-50 ring-2 ring-forest-600' : 'bg-white ring-ink/[0.07]'
               }`}
             >
-              <span className="absolute left-2.5 top-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-plum-50 px-1.5 text-[9px] font-black text-plum-700 ring-1 ring-plum-100">
+              <span className="absolute left-2.5 top-2.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-plum-50 px-1.5 text-[9px] font-black text-plum-700 ring-1 ring-plum-100">
                 {index + 1}
               </span>
               {already && (
@@ -207,8 +207,10 @@ export default function TradeGrid({
                   Added
                 </span>
               )}
-              <SambramoTradePictogram trade={t} size="md" showSparkle={false} title={false} />
-              <span className="mt-2 block w-full text-[12.5px] font-extrabold leading-tight text-ink">
+              <span className="partner-v2-trade-art-box">
+                <SambramoTradePictogram trade={t} size="md" showSparkle={false} title={false} />
+              </span>
+              <span className="mt-1 block w-full text-[12.5px] font-extrabold leading-tight text-ink">
                 {t}
               </span>
               <span className="mt-1 block text-[9.5px] leading-tight text-ink-mute">
