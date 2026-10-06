@@ -9,7 +9,7 @@ export default function PartnerScreenHeader({ title, subtitle = null, onAction =
         {back && (
           <button
             type="button"
-            onClick={() => (onBack ? onBack() : navigate(-1))
+            onClick={() => (onBack ? onBack() : navigate(-1))}
             aria-label="Go back"
             className="sp-touch grid shrink-0 place-items-center rounded-full text-ink-soft active:bg-ink/[0.04]"
           >
