@@ -11,6 +11,7 @@ import ScreenState from '../ui/ScreenState'
 import PayoutHistory from './PayoutHistory'
 import EarningsStatement from './EarningsStatement'
 import EarningsHero from './earnings/EarningsHero'
+import PartnerScreenHeader from '../layout/PartnerScreenHeader'
 import RangeFilter from './earnings/RangeFilter'
 import KpiCards from './earnings/KpiCards'
 import EarningsChart from './earnings/EarningsChart'
@@ -176,7 +177,7 @@ export default function Earnings({ vendorId, vendor, onAddPayout, onOpenReferral
   )
 
   return (
-    <div className="partner-mobile space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0">
+    <div className="partner-mobile space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0"><PartnerScreenHeader title="Earnings" subtitle="Money earned, pending and paid" />
       {stale && (
         <div className="flex items-start gap-2 rounded-[16px] bg-saffron-400/10 px-3.5 py-2.5 ring-1 ring-saffron-300/50 lg:col-span-12">
           <CloudOff size={14} className="mt-0.5 shrink-0 text-saffron-800" />
