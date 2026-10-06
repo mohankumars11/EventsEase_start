@@ -39,11 +39,12 @@ import { evaluateAll } from './verification/satisfaction'
  */
 
 export const STEPS = [
-  { id: 'business', n: '01', title: 'Business, Services & Pricing', blurb: 'Business basics, services, packages and customer-ready pricing.' },
-  { id: 'area', n: '02', title: 'Service Area & Availability', blurb: 'Where you work and when Sambramo can offer you scheduled jobs.' },
-  { id: 'compliance', n: '03', title: 'Verification & Compliance', blurb: 'Only the verification required for your selected services.' },
-  { id: 'bank', n: '04', title: 'Payout Setup', blurb: 'Where your Sambramo earnings are paid.' },
-  { id: 'review', n: '05', title: 'Review & Submit', blurb: 'Review your business, services, pricing, calendar, verification and payout once.' },
+  { id: 'business', n: '01', title: 'Business Profile', blurb: 'Business identity, contact details and customer-facing description.' },
+  { id: 'services', n: '02', title: 'Services & Pricing', blurb: 'Choose your trades, build customer-ready packages and set pricing.' },
+  { id: 'area', n: '03', title: 'Service Area & Availability', blurb: 'Where you work and when Sambramo can offer you scheduled jobs.' },
+  { id: 'compliance', n: '04', title: 'Verification & Compliance', blurb: 'Only the verification required for your selected services.' },
+  { id: 'bank', n: '05', title: 'Payout Setup', blurb: 'Where your Sambramo earnings are paid.' },
+  { id: 'review', n: '06', title: 'Review & Submit', blurb: 'Review your business, services, pricing, calendar, verification and payout once.' },
 ];
 
 export const STEP_IDS = STEPS.map(s => s.id)
@@ -76,21 +77,29 @@ export const STATUS = {
  * somebody reaches Review & Publish with nothing to sell. §17: one
  * complete service; the others may sit in draft.
  */
-function businessDone({ vendor, listings = [], pricing = {} }) {
-  const configured = listings.filter(l => (l.offerings?.length ?? 0) > 0)
-  const businessReady = !!String(vendor?.business_name ?? '').trim()
-  const readyByService = pricing?.byService ?? {}
-  const servicesReady = configured.length > 0 && configured.every(l =>
-    l.offerings.every(s => readyByService[s.id]?.ready))
-  const allReady = businessReady && configured.length > 0 && servicesReady
+function businessDone({ vendor }) {
+  const name = String(vendor?.business_name ?? '').trim()
+  const phone = String(vendor?.contact_phone ?? '').trim()
   return {
-    done: allReady,
-    partial: !!vendor || listings.length > 0,
-    detail: allReady
-      ? `${configured.length} service${configured.length === 1 ? '' : 's'} ready with pricing`
-      : configured.length
-        ? `${configured.length} service${configured.length === 1 ? '' : 's'} selected — finish listing + pricing`
-        : listings.length ? 'Started — finish at least one service' : null,
+    done: Boolean(name && phone),
+    partial: Boolean(vendor && (name || phone)),
+    detail: name && phone ? 'Business profile complete' : 'Add your business name and contact number',
+  }
+}
+
+function servicesDone({ listings = [], pricing = {} }) {
+  const configured = listings.filter(l => (l.offerings?.length ?? 0) > 0)
+  const readyByService = pricing?.byService ?? {}
+  const pricingReady = configured.length > 0 && configured.every(l =>
+    l.offerings.every(s => readyByService[s.id]?.ready))
+  return {
+    done: configured.length > 0 && pricingReady,
+    partial: listings.length > 0,
+    detail: configured.length > 0
+      ? (pricingReady
+        ? String(configured.length) + ' service' + (configured.length === 1 ? '' : 's') + ' ready with pricing'
+        : String(configured.length) + ' service' + (configured.length === 1 ? '' : 's') + ' selected — finish listing + pricing')
+      : null,
   }
 }
 
@@ -148,6 +157,7 @@ function reviewDone({ vendor }) {
 
 const PREDICATE = {
   business: businessDone,
+  services: servicesDone,
   area: areaDone,
   compliance: complianceDone,
   bank: bankDone,
