@@ -152,7 +152,7 @@ export default function WhatYouOffer() {
   }
 
   return (
-    <div className="native-screen flex flex-col bg-white">
+    <div className="partner-mobile native-screen flex flex-col bg-white">
       <div className="safe-top px-5 pt-3">
         <button
           type="button"
