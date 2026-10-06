@@ -105,7 +105,7 @@ export function usePartnerOnboarding() {
     } finally {
       if (run === runId.current) setLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, profile?.role, profile?.full_name, profile?.phone])
 
   useEffect(() => { load() }, [load])
 
