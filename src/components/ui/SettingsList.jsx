@@ -91,13 +91,12 @@ export function Row({ to, onClick, icon: Icon, label, badge, tone = 'count', dan
     </>
   )
 
-  /* 52px of row. Below about 48 a thumb misses it, and every row on the
-     screen has to be the same height or the list stops reading as a
-     list. */
+  /* 64px keeps the complete row comfortable on a phone while preserving
+     scanability across grouped settings. */
   /* The separators come from the Group's divide-y, not from the row:
      a sibling selector keyed on an arbitrary class string is a rule
      nobody can grep for when it stops matching. */
-  const cls = 'flex w-full items-center gap-3 px-3.5 py-3 text-left '
+  const cls = 'flex min-h-[64px] w-full items-center gap-3 px-3.5 py-3 text-left '
     + 'transition-colors active:bg-ink/[0.03]'
 
   if (to) return <Link to={to} className={cls}>{inner}</Link>
