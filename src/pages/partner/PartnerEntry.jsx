@@ -422,6 +422,7 @@ export default function PartnerEntry() {
                 </button>
               </>
             )}
+          </div>
           </>
         ) : (
           <>
@@ -531,7 +532,6 @@ export default function PartnerEntry() {
             </p>
           </>
         )}
-            </div>
 
         {error && (
           <p className="mt-4 rounded-xl bg-rose-50 px-3.5 py-2.5 text-[12.5px] font-semibold leading-snug text-rose-800 ring-1 ring-rose-200">
