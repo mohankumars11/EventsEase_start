@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { fetchListings } from '../lib/partnerListings'
 import { fetchDocuments } from '../lib/partnerDocuments'
 import { indexPricing } from '../lib/pricingReadiness'
+import { ensureVendorRow } from '../lib/ensureVendor'
 import {
   onboardingSteps, currentStep, canOpen, completedCount,
   onboardingComplete, partnerLifecycle, STEPS, STATUS, LIFECYCLE,
@@ -40,28 +41,14 @@ export function usePartnerOnboarding() {
         .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()
       if (run !== runId.current) return
 
-      /* A newly verified partner has a profile before they have a vendor row.
-         Create the draft shell here, once, so the six-step setup has a real
-         backend record to save into. This is intentionally the only bootstrap
-         write: every later field is saved by its own step. */
+      /* Vendor bootstrap already has a single canonical helper. Reuse it
+         here instead of creating a second creation path. */
       if (!vendor && profile?.role === 'vendor') {
-        const fallbackName =
-          profile?.full_name?.trim() ||
-          user.email?.split('@')[0]?.trim() ||
-          'Sambramo Partner'
-        const { data: created } = await supabase
-          .from('vendors')
-          .insert({
-            profile_id: user.id,
-            business_name: fallbackName,
-            contact_phone: profile?.phone || null,
-            verification_status: 'draft',
-            status: 'PENDING_REVIEW',
-          })
-          .select('*')
-          .maybeSingle()
-        vendor = created ?? (await supabase
-          .from('vendors').select('*').eq('profile_id', user.id).maybeSingle()).data
+        const ensured = await ensureVendorRow({ user, profile })
+        if (ensured?.id) {
+          vendor = (await supabase
+            .from('vendors').select('*').eq('id', ensured.id).maybeSingle()).data ?? null
+        }
       }
 
       if (run !== runId.current) return
