@@ -248,7 +248,7 @@ export default function BusinessPreview() {
   function editMeasurement(trade) { navigate('/dashboard/vendor?tab=list&start=' + encodeURIComponent(trade) + '&return=preview&focus=measurement') }
 
   return (
-    <div className="min-h-[100dvh] bg-page">
+    <div className="partner-mobile min-h-[100dvh] bg-page">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/85 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-xl items-center gap-2">
           <button type="button" aria-label="Go back" onClick={() => navigate(-1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-ink ring-1 ring-ink/10"><ArrowLeft size={17} /></button>
