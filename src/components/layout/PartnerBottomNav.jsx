@@ -179,7 +179,7 @@ export default function PartnerBottomNav() {
          screen that must never look like it is doing something.
          Reported exactly that way: "the navigation bar is completely
          transparent, whenever scrolling I can see the buttons". */
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.10] bg-white shadow-[0_-4px_16px_rgba(36,16,67,0.06)]"
+      className="partner-mobile fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.08] bg-white shadow-[0_-8px_24px_rgba(42,8,92,0.06)]"
       /* The home-indicator strip on a gesture-navigation phone sits under
          the bar; without this the last row of labels is behind it. */
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -195,7 +195,7 @@ export default function PartnerBottomNav() {
               <Link
                 to={to}
                 aria-current={on ? 'page' : undefined}
-                className="flex flex-col items-center gap-0.5 py-2 pt-2.5"
+                className="flex min-h-[64px] flex-col items-center justify-center gap-0.5 py-1.5"
               >
                 {/* The active pill sits behind the icon rather than
                     colouring the whole cell: a full-width fill at this
@@ -210,10 +210,10 @@ export default function PartnerBottomNav() {
                     genuinely need somebody.
 
                     Sambramo is purple. The selected tab is purple. */}
-                <span className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
+                <span className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors active:scale-95 ${
                   on ? 'bg-plum-600' : 'bg-transparent'
                 }`}>
-                  <Icon size={17} className={on ? 'text-white' : 'text-ink-mute'} />
+                  <Icon size={18} className={on ? 'text-white' : 'text-ink-mute'} />
                 </span>
                 <span className={`text-[10.5px] leading-none ${
                   on ? 'font-extrabold text-plum-700' : 'font-bold text-ink-mute'
