@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext'
  * The partner app's tab bar.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY THE BOTTOM, AND WHY FOUR
+ * WHY THE BOTTOM, AND WHY FIVE
  * ══════════════════════════════════════════════════════════════════════
  *
  * These destinations have now been a horizontal strip that scrolled
@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext'
  * survives scrolling, and it means the answer to "where is Earnings" is
  * never "scroll up".
  *
- * Five was the ceiling and four is the number: see the note on TABS for
+ * Five destinations is the ceiling and the reference uses five: see the note on TABS for
  * why Listing is not one of them, and what it costs a marketplace when
  * an add-anything button sits one tap from every screen.
  *
@@ -32,7 +32,7 @@ import { useAuth } from '../../context/AuthContext'
  * and it is the address bar.
  */
 
-/* ── Four, and Listing is deliberately not one of them ──────────────
+/* ── Five, and Listing is deliberately not one of them
  *
  * It was five, with "Listing" third. That tab was an unrestricted way
  * into the add flow from anywhere in the app, one tap from every screen
@@ -46,8 +46,7 @@ import { useAuth } from '../../context/AuthContext'
  * each, and Add Service goes to the same twenty-six with the ones they
  * own already marked. The rule and the screen now arrive together.
  *
- * Four also buys every target ~90px on a 360px phone, which is the size
- * a thumb hits without looking — the thing this bar exists for.
+ * Five still gives each destination a thumb-sized target on a 360px phone.
  */
 const TABS = [
   { id: 'offers',       label: 'Jobs',     icon: Bell },
@@ -179,7 +178,7 @@ export default function PartnerBottomNav() {
          screen that must never look like it is doing something.
          Reported exactly that way: "the navigation bar is completely
          transparent, whenever scrolling I can see the buttons". */
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/[0.10] bg-white shadow-[0_-4px_16px_rgba(36,16,67,0.06)]"
+      className="partner-bottom-nav fixed inset-x-0 bottom-0 z-40 bg-white"
       /* The home-indicator strip on a gesture-navigation phone sits under
          the bar; without this the last row of labels is behind it. */
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -195,7 +194,7 @@ export default function PartnerBottomNav() {
               <Link
                 to={to}
                 aria-current={on ? 'page' : undefined}
-                className="flex flex-col items-center gap-0.5 py-2 pt-2.5"
+                className="flex flex-col items-center justify-center gap-0.5"
               >
                 {/* The active pill sits behind the icon rather than
                     colouring the whole cell: a full-width fill at this
@@ -210,14 +209,10 @@ export default function PartnerBottomNav() {
                     genuinely need somebody.
 
                     Sambramo is purple. The selected tab is purple. */}
-                <span className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                  on ? 'bg-plum-600' : 'bg-transparent'
-                }`}>
+                <span className="partner-tab-icon flex items-center justify-center transition-colors" data-active={on}>
                   <Icon size={17} className={on ? 'text-white' : 'text-ink-mute'} />
                 </span>
-                <span className={`text-[10.5px] leading-none ${
-                  on ? 'font-extrabold text-plum-700' : 'font-bold text-ink-mute'
-                }`}>
+                <span className="partner-tab-label leading-none" data-active={on}>
                   {label}
                 </span>
               </Link>
