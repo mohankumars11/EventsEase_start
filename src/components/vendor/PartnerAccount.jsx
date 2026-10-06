@@ -475,19 +475,8 @@ export default function PartnerAccount({
   if (open) {
     return (
       <div className="partner-mobile">
-        {/* Up one level, not always to More: from a referral to its
-            trade, from a trade to the dashboard. `onUp` pops history when
-            that is where the partner came from, so this button and
-            Android's back button agree. */}
-        <button
-          type="button"
-          onClick={() => (onUp ? onUp(open.parent ?? null) : onOpenScreen?.(null))}
-          data-testid="screen-back"
-          className="mb-3 flex min-h-[40px] items-center gap-1.5 text-[13px] font-extrabold text-ink-soft"
-        >
-          <ArrowLeft size={16} /> {open.parent ? 'Back' : 'More'}
-        </button>
-        <h1 className="mb-3 text-[20px] font-extrabold leading-tight text-ink">{open.title}</h1>
+        {/* The shared PartnerScreenHeader owns the visual hierarchy and back
+            behavior so child screens match Calendar, Pricing and Earnings. */}
         {open.render()}
       </div>
     )
