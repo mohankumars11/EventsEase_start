@@ -100,7 +100,7 @@ export default function PartnerOnboarding() {
   }, [index])
 
   return (
-    <div className="native-screen relative bg-[#16012E]">
+    <div className="partner-mobile native-screen relative bg-[#16012E]">
       <div ref={railRef} onScroll={onScroll} className="native-rail">
         {CARDS.map((c, i) => (
           <section
