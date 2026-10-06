@@ -17,7 +17,7 @@ import ResumePrompt from './components/common/ResumePrompt'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import HomeScreen from './pages/HomeScreen'
+import HomeScreen from './pages/SumramoProductHome'
 
 // Everything else is split per route. Previously all 25 pages shipped in
 // one ~1 MB bundle: a first-time visitor on a phone downloaded the entire
