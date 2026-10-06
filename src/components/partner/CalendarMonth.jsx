@@ -166,7 +166,7 @@ export default function CalendarMonth({
   }
 
   return (
-    <div className="space-y-3 pb-2">
+    <div className="partner-mobile space-y-3 pb-2">
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
       {setupMode && onSetupContinue && (
         <section className="rounded-[20px] bg-plum-50 px-4 py-3.5 ring-1 ring-plum-200">
@@ -181,7 +181,7 @@ export default function CalendarMonth({
         </section>
       )}
 
-      <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-3.5 pt-4 text-white shadow-[0_12px_28px_rgba(63,25,130,0.20)]">
+      <section className="relative overflow-hidden rounded-[22px] bg-white px-4 pb-3.5 pt-4 text-ink shadow-[0_6px_22px_rgba(42,8,92,0.06)] ring-1 ring-ink/[0.08]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 right-16 h-28 w-28 rounded-full bg-violet-300/15 blur-2xl" />
         <div className="pointer-events-none absolute -left-16 top-12 h-28 w-40 -rotate-[24deg] rounded-[48px] bg-violet-300/10 blur-xl" />
@@ -189,14 +189,14 @@ export default function CalendarMonth({
         <div className="relative flex min-h-[92px] items-start justify-between gap-3">
           <div className="min-w-0 pt-1">
             <h1 className="text-[27px] font-black leading-none tracking-[-0.04em]">Calendar</h1>
-            <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-white/80">
+            <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-ink-mute">
               Manage your availability, block dates and stay in control of your bookings.
             </p>
           </div>
 
           {/* Lightweight CSS illustration so the APK remains self-contained. */}
           <div className="relative mt-0.5 mr-1 h-[76px] w-[94px] shrink-0">
-            <div className="absolute right-0 top-0 h-[67px] w-[76px] -rotate-[4deg] rounded-[16px] bg-gradient-to-br from-fuchsia-400 to-violet-200 p-2 shadow-[0_10px_18px_rgba(24,7,70,0.28)]">
+            <div className="absolute right-0 top-0 h-[67px] w-[76px] -rotate-[4deg] rounded-[16px] bg-gradient-to-br from-plum-700 to-violet-300 p-2 shadow-[0_10px_18px_rgba(24,7,70,0.28)]">
               <div className="h-full rounded-[11px] bg-white/90 p-1.5">
                 <div className="mb-1 flex gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
