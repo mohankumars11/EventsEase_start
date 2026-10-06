@@ -181,60 +181,29 @@ export default function CalendarMonth({
         </section>
       )}
 
-      <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#24104f] via-[#4f20a8] to-[#7c3aed] px-4 pb-3.5 pt-4 text-white shadow-[0_12px_28px_rgba(63,25,130,0.20)]">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-10 right-16 h-28 w-28 rounded-full bg-violet-300/15 blur-2xl" />
-        <div className="pointer-events-none absolute -left-16 top-12 h-28 w-40 -rotate-[24deg] rounded-[48px] bg-violet-300/10 blur-xl" />
-
-        <div className="relative flex min-h-[92px] items-start justify-between gap-3">
-          <div className="min-w-0 pt-1">
-            <h1 className="text-[27px] font-black leading-none tracking-[-0.04em]">Calendar</h1>
-            <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-white/80">
-              Manage your availability, block dates and stay in control of your bookings.
-            </p>
+      <header className="partner-v2-topbar -mx-1 rounded-b-[18px]">
+        <div className="partner-v2-topbar-inner px-1.5">
+          <div className="min-w-0 flex-1">
+            <p className="partner-v2-meta">Partner availability</p>
+            <h1 className="mt-0.5 text-[24px] font-black tracking-[-0.03em] text-ink">Calendar</h1>
           </div>
-
-          {/* Lightweight CSS illustration so the APK remains self-contained. */}
-          <div className="relative mt-0.5 mr-1 h-[76px] w-[94px] shrink-0">
-            <div className="absolute right-0 top-0 h-[67px] w-[76px] -rotate-[4deg] rounded-[16px] bg-gradient-to-br from-fuchsia-400 to-violet-200 p-2 shadow-[0_10px_18px_rgba(24,7,70,0.28)]">
-              <div className="h-full rounded-[11px] bg-white/90 p-1.5">
-                <div className="mb-1 flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="h-2 rounded bg-violet-200" /><span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-violet-200" />
-                  <span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-white" /><span className="h-2 rounded bg-violet-200" />
-                  <span className="h-2 rounded bg-violet-200" /><span className="h-2 rounded bg-violet-300" /><span className="h-2 rounded bg-white" />
-                </div>
-              </div>
-            </div>
-            <span className="absolute -bottom-1 right-0 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-300 to-violet-600 shadow-[0_8px_16px_rgba(24,7,70,0.32)]">
-              <span className="h-5 w-5 rounded-full border-[3px] border-white/90 border-t-transparent" />
-            </span>
-            <span className="absolute left-1 top-3 h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(253,224,71,0.9)]" />
-            <span className="absolute left-10 top-0 text-[16px] text-yellow-200">✦</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => setRange({ from: null, mode: 'OPEN' })}
+            aria-label="Set dates"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-plum-50 text-plum-700 ring-1 ring-plum-200"
+          >
+            <CalendarPlus size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={goToday}
+            className="flex min-h-[40px] items-center gap-1 rounded-full bg-white px-3 text-[11.5px] font-black text-plum-700 ring-1 ring-plum-200"
+          >
+            <CalendarDays size={13} /> Today
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setRange({ from: null, mode: 'OPEN' })}
-          className="relative mt-2 flex min-h-[58px] w-full items-center gap-3 rounded-[17px] bg-white px-3.5 text-left text-plum-950 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition active:scale-[0.99]"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-violet-600 text-white shadow-sm">
-            <CalendarPlus size={19} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13.5px] font-black leading-tight">Set dates</span>
-            <span className="mt-0.5 block text-[10.5px] font-medium leading-tight text-ink-mute">
-              Mark available, limited or blocked dates in just a few taps.
-            </span>
-          </span>
-          <ChevronRight size={20} className="shrink-0 text-plum-800" />
-        </button>
-      </section>
+      </header>
 
       <div className="flex items-center gap-2">
         <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 rounded-full bg-ink/[0.055] p-1">
@@ -263,14 +232,14 @@ export default function CalendarMonth({
         </button>
       </div>
 
-      <section className="rounded-[18px] bg-amber-50/95 px-3.5 py-3 ring-1 ring-amber-200">
+      <section className="rounded-full bg-amber-50/95 px-3 py-2 ring-1 ring-amber-200">
         <button type="button" className="flex w-full items-start gap-2.5 text-left" onClick={() => setRecurring(true)}>
           <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-amber-100 text-amber-700">
             <CalendarCheck size={15} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[11.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</span>
-            <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-900/75">Keep dates current so Sambramo can offer scheduled work only when you have capacity.</span>
+            <span className="block text-[10.8px] font-black text-amber-950">Calendar controls which scheduled jobs can reach you.</span>
+            <span className="mt-0.5 block truncate text-[9.8px] leading-snug text-amber-900/75">Keep availability current and avoid missed opportunities.</span>
           </span>
           <ChevronRight size={15} className="mt-1 shrink-0 text-amber-800" />
         </button>
