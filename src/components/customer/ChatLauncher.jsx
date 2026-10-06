@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X } from 'lucide-react'
-import SambramoMark from '../ui/SambramoMark'
+import { Monogram } from '../ui/SambramoWordmark'
 
 /**
  * The assistant's launcher — draggable, dismissible, and it remembers.
@@ -221,8 +221,8 @@ export default function ChatLauncher({ open, onToggle }) {
                 `solid` because the mark's monoline centre closes up below ~24px;
                 the knockout is painted the disc's own saffron so it reads as a
                 hole in the mark rather than a white dot on it. */}
-            <span style={{ '--sambramo-knockout': '#fbbf24' }} className="flex items-center justify-center">
-              <SambramoMark size={26} variant="solid" title="" />
+            <span className="flex items-center justify-center">
+              <Monogram size={26} />
             </span>
             <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-plum-900 ring-2 ring-white">
               <MessageCircle size={11} className="text-saffron-300" strokeWidth={2.8} />

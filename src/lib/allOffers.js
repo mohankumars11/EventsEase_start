@@ -1,43 +1,28 @@
 import { OFFERS } from '../data/celebrationOffers'
-import { formatINR } from '../utils/format'
 
 /**
  * Every saving in the app, in one shape.
  *
- * ── Why this exists ───────────────────────────────────────────────────────
- * Sambramo has two completely separate offer systems and a customer has no
- * idea they are separate:
+ * ── Why this still exists with one system ─────────────────────────────────
+ * There were two offer systems and a customer had no idea they were separate:
+ * `coupons` (migration 019) held self-serve shop codes in the database, and
+ * `OFFERS` (celebrationOffers) held celebration savings declared in code,
+ * because they are promises a coordinator honours on a quote rather than
+ * arithmetic a checkout does.
  *
- *   `coupons` (migration 019)   Shop codes. Live rows in the database, filtered
- *                               to exactly what `validate_coupon` will accept at
- *                               checkout. Percent or flat, with a minimum and a
- *                               cap. Fetched by usePublicOffers.
- *   `OFFERS` (celebrationOffers) Celebration savings. Declared in code because
- *                               they are promises a coordinator honours on a
- *                               quote rather than arithmetic a checkout does.
+ * The shop went, and its coupons with it. What is left is the half that was
+ * always worth more — the first-booking 10%, the early-bird 7%, the
+ * repeat-customer 15% and the ₹1,000 referral — and this module is kept
+ * rather than inlined because the normalising it does is still load-bearing.
  *
- * The home screen showed the first and not the second, so the four biggest
- * savings in the business — the first-booking 10%, the early-bird 7%, the
- * repeat-customer 15% and the ₹1,000 referral — appeared nowhere a customer
- * would find them. Those are the ones attached to the half of the business the
- * revenue comes from.
+ * ── The `action` a tile renders ───────────────────────────────────────────
+ * A celebration offer is not self-serve: the code travels with the enquiry and
+ * comes off the quote a human sends back. Rendering it as a "COPY CODE" tile
+ * would promise instant money off a wedding and turn a saving into a
+ * complaint, which is the failure celebrationOffers documents at length.
  *
- * ── They are not the same kind of promise, and the card must say so ───────
- * This is the reason this file normalises rather than concatenates. A shop
- * coupon is self-serve: copy the code, paste it at checkout, the discount is
- * arithmetic and immediate. A celebration offer is not — the code travels with
- * the enquiry and comes off the quote a human sends back. Showing both as
- * identical "COPY CODE" tiles would promise instant money off a wedding and
- * turn a saving into a complaint, which is the exact failure celebrationOffers
- * documents at length.
- *
- * So every offer carries `action`:
- *
- *   'copy'   there is a code and copying it does something right now
  *   'claim'  there is a code and it is quoted against, not deducted
  *   'auto'   it applies itself; there is nothing to copy
- *
- * and the tile renders a different control for each.
  */
 
 /** Palette per offer, by name rather than hex, so tiles stay on-brand. */
@@ -48,43 +33,9 @@ const ACCENTS = {
   rose:    { from: '#e879f9', to: '#a21caf', ink: '#ffffff' },
   chilli:  { from: '#e03c2d', to: '#a11f20', ink: '#ffffff' },
 }
-const ACCENT_ORDER = ['chilli', 'saffron', 'plum', 'emerald', 'rose']
 
 export function accentOf(name) {
   return ACCENTS[name] ?? ACCENTS.chilli
-}
-
-/**
- * A shop coupon, as a tile.
- *
- * The condition is on the tile rather than in fine print: "15% off" that turns
- * out to need ₹1,499 is the moment a customer stops believing the next banner.
- */
-function fromCoupon(row, i) {
-  const percent = row.discount_type === 'percent'
-  const headline = percent
-    ? `${Number(row.discount_value)}% OFF`
-    : `${formatINR(row.discount_value)} OFF`
-
-  const min = Number(row.min_order_amount ?? 0)
-  const cap = percent && row.max_discount ? Number(row.max_discount) : null
-
-  return {
-    id: `coupon-${row.id}`,
-    scope: 'shop',
-    scopeLabel: 'Shop',
-    headline,
-    cap: cap ? `up to ${formatINR(cap)}` : null,
-    name: row.description || 'On the shop',
-    condition: min > 0 ? `on orders above ${formatINR(min)}` : 'on any order',
-    code: row.code,
-    action: 'copy',
-    // Deterministic rather than random: the same coupon keeps the same colour
-    // across renders and reloads, so the grid does not reshuffle its palette
-    // every time somebody opens the app.
-    accent: ACCENT_ORDER[i % ACCENT_ORDER.length],
-    to: '/shop',
-  }
 }
 
 /** A celebration offer, as a tile. */
@@ -107,17 +58,7 @@ function fromCelebration(offer) {
   }
 }
 
-/**
- * Everything, celebration savings first.
- *
- * That order is deliberate and it is a business decision rather than a visual
- * one: celebrations are the primary revenue line and their offers are worth
- * thousands of rupees against a shop coupon's tens, so they lead. Within the
- * shop coupons the hook has already sorted by discount value.
- */
-export function allOffers(coupons = []) {
-  return [
-    ...OFFERS.map(fromCelebration),
-    ...coupons.map(fromCoupon),
-  ]
+/** Every celebration saving, as tiles. */
+export function allOffers() {
+  return OFFERS.map(fromCelebration)
 }

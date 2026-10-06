@@ -37,12 +37,26 @@
 import {
   PLATFORM_FEE_RATE, BUNDLE_DISCOUNT_RATE, TIER_BY_ID, BOOKING_MODES, batchBandFor,
 } from '../data/celebrationTiers'
+import { plateShareFor, excludedPartsFor, DEFAULT_SOURCING } from '../data/cateringModel'
+import { rateFactor } from '../data/marketRates'
 import { CUISINE_BY_ID, COURSES, dishesFor } from '../data/cuisineMenus'
 import { DECOR_LEVEL_BY_ID, DECOR_THEMES, DECOR_ADDONS, decorStretch } from '../data/decorPackages'
 import { SERVICE_BY_ID, serviceCost, defaultQty } from '../data/servicePricing'
 import { taxFor, TAX_LABEL } from '../data/taxes'
 
 const round10 = n => Math.round(n / 10) * 10
+
+/**
+ * How much of a plate is raw ingredient, and therefore how much of it the
+ * market index is allowed to move.
+ *
+ * Re-declared from data/cateringModel.js rather than imported as a live
+ * value, because it is used in arithmetic here and a reader following the
+ * multiplication needs the number in front of them. If the split there ever
+ * changes, this is the second place to change — the check script asserts they
+ * agree.
+ */
+const PLATE_PROVISION_SHARE = 0.58
 const round500 = n => Math.round(n / 500) * 500
 
 /**
@@ -168,7 +182,16 @@ export function buildQuote({
   serviceQty = {},
   mode = 'full',
   includeCatering = true,
+  /**
+   * Who is buying the groceries. See data/cateringModel.js — a very large
+   * share of Indian families buy the provisions themselves and hire a cook,
+   * and a quote that assumes otherwise is wrong for them by more than half
+   * the food cost, in a way they cannot see until the confirmation.
+   */
+  cateringMode = DEFAULT_SOURCING,
   includeDecor = true,
+  extras = [],
+  menuAllowance = null,
 }) {
   const tier = TIER_BY_ID[tierId]
   const guests = Number(guestCount) || 0
@@ -177,8 +200,38 @@ export function buildQuote({
   const cuisine = includeCatering ? CUISINE_BY_ID[cuisineId] : null
   const level = includeDecor ? DECOR_LEVEL_BY_ID[decorLevelId] : null
 
-  const plate = perPlateFor({ cuisine, menu, menuAllowance: tier.menuAllowance, vegOnly, guestCount: guests })
-  const cateringTotal = cuisine ? plate.perPlate * guests : 0
+  // The allowance the SURFACE showed, when it differs from the tier's own.
+  //
+  // The guided journey groups the eight pricing rungs into four circles and
+  // states one dish allowance per circle (see data/guestCircles.js). The
+  // resolved rung underneath can include fewer dishes — so without this
+  // override the engine would charge ₹30 a plate as a surcharge on dishes the
+  // app itself pre-ticked and called "included". Being surprised by a charge
+  // for something you were told came as standard is the single fastest way to
+  // lose a customer at the reveal.
+  const allowance = menuAllowance ?? tier.menuAllowance
+  const plate = perPlateFor({ cuisine, menu, menuAllowance: allowance, vegOnly, guestCount: guests })
+
+  /**
+   * Two adjustments, in this order, and both are visible in the result.
+   *
+   * `provisionFactor` moves the INGREDIENT part of the plate with mandi
+   * rates — the only genuinely live input this engine has (see
+   * data/marketRates.js). It resolves to exactly 1 whenever the index is
+   * missing, stale or has never been refreshed, so the default behaviour is
+   * the committed baseline rather than a silent drift.
+   *
+   * `plateShare` then bills only the parts of the plate this customer is
+   * actually buying. A family sourcing their own groceries pays for the
+   * cooking and the serving and not for the provisions.
+   */
+  const provisionFactor = rateFactor('provisions')
+  const marketedPerPlate = cuisine
+    ? round10(plate.perPlate * (1 + PLATE_PROVISION_SHARE * (provisionFactor - 1)))
+    : 0
+  const plateShare = cuisine ? plateShareFor(cateringMode) : 0
+  const billedPerPlate = round10(marketedPerPlate * plateShare)
+  const cateringTotal = cuisine ? billedPerPlate * guests : 0
   const decor = decorCostFor({ level, themeId, addonIds, guestCount: guests })
   const coordination = tier.coordinationFee
 
@@ -191,7 +244,43 @@ export function buildQuote({
     })
   const servicesTotal = services.reduce((sum, s) => sum + s.amount, 0)
 
-  const subtotal = coordination + decor.total + cateringTotal + servicesTotal
+  /**
+   * Already-priced lines the caller worked out for itself.
+   *
+   * ── Why this exists ───────────────────────────────────────────────────
+   * `serviceIds` prices against `servicePricing.js`, which carries ONE base
+   * rate per service — right for the builder's tick-list, and not enough for
+   * the guided journey, which sells the named packages in `servicePacks.js`:
+   * "Half day — one photographer" and "Wedding — multi-day coverage" are the
+   * same `photography` service and a ten-fold difference in price. Collapsing
+   * them onto one base rate would mean the estimate at the end of the journey
+   * described a booking nobody made.
+   *
+   * So the journey resolves its own packs — it is the surface that knows the
+   * quantity, the unit and which pack was chosen — and hands the results in
+   * here as finished lines. They join the subtotal exactly where `services`
+   * does, which is what keeps the bundle discount, the platform fee and the
+   * GST split all correct without either side knowing about the other.
+   *
+   * Each entry is `{ key, label, detail, amount }`. Anything without a
+   * positive numeric amount is dropped rather than trusted: a NaN reaching
+   * the subtotal turns the whole quote into "₹NaN", which is the one output
+   * worse than no price at all.
+   */
+  const extraLines = (extras ?? [])
+    .filter(e => e && Number.isFinite(Number(e.amount)) && Number(e.amount) > 0)
+    .map(e => ({
+      key: e.key ?? `extra_${e.label}`,
+      label: e.label,
+      detail: e.detail ?? '',
+      amount: Math.round(Number(e.amount)),
+      serviceId: e.serviceId ?? null,
+      packId: e.packId ?? null,
+      qty: e.qty ?? 1,
+    }))
+  const extrasTotal = extraLines.reduce((sum, e) => sum + e.amount, 0)
+
+  const subtotal = coordination + decor.total + cateringTotal + servicesTotal + extrasTotal
 
   // The discount is only real when there is actually a bundle to discount.
   // Applying it to a decor-only booking would be a 10% price cut in exchange
@@ -223,7 +312,7 @@ export function buildQuote({
   const share = subtotal > 0 ? discountedSubtotal / subtotal : 1
   const tax = taxFor({
     cateringBase: cateringTotal * share,
-    servicesBase: (decor.total + servicesTotal) * share,
+    servicesBase: (decor.total + servicesTotal + extrasTotal) * share,
     platformBase: coordination * share + platformFeeAmount,
   })
 
@@ -234,10 +323,27 @@ export function buildQuote({
     guests,
     cuisine,
     plate,
-    catering: { perPlate: plate.perPlate, guests, total: cateringTotal },
+    catering: {
+      // `perPlate` is what the customer is BILLED per plate, which is the
+      // number that has to match the total. `fullPerPlate` is what the whole
+      // plate would cost if we did all of it — kept so the estimate can show
+      // what choosing to buy your own groceries actually saved, which is the
+      // entire reason for asking.
+      perPlate: billedPerPlate,
+      fullPerPlate: marketedPerPlate,
+      basePerPlate: plate.perPlate,
+      guests,
+      total: cateringTotal,
+      mode: cateringMode,
+      share: plateShare,
+      excludes: excludedPartsFor(cateringMode),
+      provisionFactor,
+    },
     decor: { level, ...decor },
     services,
     servicesTotal,
+    extras: extraLines,
+    extrasTotal,
     coordination,
     subtotal,
     bundle: { applied: bundleRate > 0, rate: bundleRate, amount: bundleAmount },
@@ -270,7 +376,8 @@ export function quoteLines(quote) {
     lines.push({
       key: 'catering',
       label: `Catering — ${quote.cuisine.name}`,
-      detail: `${quote.guests} guests × ₹${quote.plate.perPlate}/plate (${quote.plate.band.label.toLowerCase()})`,
+      detail: `${quote.guests} guests × ₹${quote.catering.perPlate}/plate (${quote.plate.band.label.toLowerCase()})`
+        + (quote.catering.share < 1 ? ` — ${Math.round(quote.catering.share * 100)}% of a full plate, you are buying the rest` : ''),
       amount: quote.catering.total,
     })
   }
@@ -301,6 +408,10 @@ export function quoteLines(quote) {
           : service.scales ? `Scaled to ${quote.guests} guests` : 'For the event',
       amount,
     })
+  }
+
+  for (const extra of quote.extras ?? []) {
+    lines.push({ key: extra.key, label: extra.label, detail: extra.detail, amount: extra.amount })
   }
 
   lines.push({

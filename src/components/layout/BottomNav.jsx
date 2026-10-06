@@ -1,11 +1,11 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Store, Sparkles, Route, ShoppingBag, User, Lock } from 'lucide-react'
+import { Home, Sparkles, Route, User, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { isPartnerSurface } from '../../config/surface'
 import { useCart } from '../../context/CartContext'
 import { useCustomerActivity } from '../../hooks/useCustomerActivity'
 import { isFocusedRoute } from '../../config/chrome'
-import SambramoMark from '../ui/SambramoMark'
 
 /**
  * Phone-first primary navigation.
@@ -96,7 +96,7 @@ function usePublishedHeight(ref, enabled) {
 
 export default function BottomNav() {
   const { user, profile } = useAuth()
-  const { cartCount, cartPath } = useCart()
+  const { cartPath } = useCart()
   const { pathname } = useLocation()
   const barRef = useRef(null)
   // Three counts, no row payload — see the hook. It self-gates on role, so
@@ -104,11 +104,26 @@ export default function BottomNav() {
   const activity = useCustomerActivity()
 
   const role = profile?.role
-  const hidden = role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
+
+  /* The partner app has no Home, Plan, Track or Cart.
+   *
+   * The role test below catches a signed-in master, but the person most
+   * likely to see this bar is a decorator who has just opened the partner
+   * link and has no account yet — no role, so no guard. They were being
+   * shown the customer app's tab bar on the page asking them to join,
+   * with a Cart in it.
+   *
+   * Keyed to the surface rather than the path, because every partner
+   * route is reachable on the customer host too and the bar is correct
+   * there. */
+  const onPartnerApp = isPartnerSurface()
+
+  const hidden = onPartnerApp || role === 'vendor' || role === 'admin' || isFocusedRoute(pathname)
   // Hooks cannot sit behind the early returns below, so the visibility test is
   // computed first and passed in.
   usePublishedHeight(barRef, !hidden)
 
+  if (onPartnerApp) return null
   if (role === 'vendor' || role === 'admin') return null
 
   // Full-screen focused flows own the whole viewport — a tab bar under a
@@ -187,9 +202,17 @@ export default function BottomNav() {
    */
   const tabs = [
     { to: home,            icon: Home,          label: 'Home' },
-    { to: '/shop',         icon: Store,         label: 'Shop' },
     // `icon` is the fallback for this row; a primary tab renders the
     // kolam instead and never reaches it.
+    /* Plan carries the basket now. The Cart tab held `cart_items` and
+       `cart_packages` — services and packages, not goods — and its terminal
+       action is an enquiry with an estimate band, not a checkout. A bag icon
+       in a tab bar is a promise of a till.
+
+       The count is not on this tab. It briefly was, and it meant the tab bar
+       and the app bar both carried the same number — two badges for one
+       basket, which is one of them lying the moment they disagree. The app
+       bar owns it; this tab owns the destination. */
     { to: '/plan',         icon: Sparkles,      label: 'Plan', primary: true },
     // The badge counts only what is WAITING ON THE CUSTOMER — a plan to
     // approve, an answered enquiry. An order awaiting payment confirmation is
@@ -214,7 +237,6 @@ export default function BottomNav() {
       // the one audience it must never tell "you have nothing with us".
       locked: activity.loaded && !tracking,
     },
-    { to: cartPath,        icon: ShoppingBag,   label: 'Cart', badge: cartCount },
     { to: '/account',      icon: User,          label: 'Account' },
   ]
 
@@ -242,16 +264,17 @@ export default function BottomNav() {
   // occasion catalogue, reached from the Plan hub's own shelves, and it is
   // certainly not part of Track.
   const ADOPTED = [
-    { tab: '/plan',  prefixes: ['/service/', '/festivals/', '/services'] },
+    // `/dashboard/customer/cart` is on this list because the basket lives
+    // under Plan now and its own tab is gone — without it, opening the
+    // basket lights nothing at all.
+    { tab: '/plan',  prefixes: ['/service/', '/festivals/', '/services', cartPath] },
   ]
 
   function isActive(to) {
     if (!to) return false
-    // The cart is the most specific claim on its own URL; nothing else may
-    // match it, which is what stops Shop lighting up on /shop/cart.
-    if (to !== cartPath && (pathname === cartPath || pathname.startsWith(cartPath + '/'))) {
-      return false
-    }
+    // There used to be a guard here stopping Shop lighting up on /shop/cart,
+    // because two tabs both had a claim on that URL. One tab owns the basket
+    // now, so the ambiguity it existed for is gone.
     if (HOME_PATHS.includes(to)) return HOME_PATHS.includes(pathname)
     if (pathname === to || pathname.startsWith(to + '/')) return true
     const adopted = ADOPTED.find(a => a.tab === to)
@@ -261,7 +284,7 @@ export default function BottomNav() {
   return (
     <nav
       ref={barRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-safe shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-lg border-t border-ink/[0.07] pb-safe shadow-[0_-4px_24px_-10px_rgba(70,30,120,0.18)]"
       aria-label="Primary"
     >
       {/* `flex-1 basis-0` on every item, not `justify-around`: equal columns
@@ -285,11 +308,11 @@ export default function BottomNav() {
                   saturated thing on screen and it was saying nothing — a
                   sparkle is what every app puts on its "magic" button.
 
-                  The kolam is the product's own mark, and its ramp was
-                  drawn to sit on plum (see SambramoMark) — so the chip is
-                  plum, which makes the one branded object in the navigation
-                  also the one dark object on a light bar. That is exactly
-                  the weight a primary action wants, and it reads as
+                  The monogram is the product's own mark, and it is gold —
+                  so the chip is navy, which is the ground the mark is drawn
+                  to sit on. It also makes the one branded object in the
+                  navigation the one dark object on a light bar, which is
+                  exactly the weight a primary action wants, and it reads as
                   Sambramo rather than as a generic accent.
 
                   `solid` because below ~24px the monoline centre closes up;
@@ -300,22 +323,42 @@ export default function BottomNav() {
                   chip colour is the same in both states for that reason —
                   selection is carried by the ring and the lift, so the
                   knockout can never disagree with its ground. */}
+              {/* ── The active pill ──────────────────────────────────────
+                  Material 3's navigation bar marks the selected tab with a
+                  filled pill behind its icon rather than a line above the
+                  column, and the reason is mechanical: on a 6-tab bar at
+                  phone width each column is ~62px, so a 32px underline is
+                  reading as a mark on the BAR rather than on the tab. The
+                  pill is attached to the thing it selects.
+
+                  The primary tab keeps its navy disc — it is branded rather
+                  than selected — so it never takes the pill. */}
               <span
                 className={`flex h-8 w-11 items-center justify-center rounded-full transition-all ${
                   primary
                     ? active
-                      ? 'bg-plum-700 ring-2 ring-saffron-400 shadow-md shadow-plum-700/35'
-                      : 'bg-plum-700 shadow-sm shadow-plum-700/25'
-                    : ''
+                      ? 'brand-aqua-chip ring-2 ring-aqua-200 shadow-md shadow-aqua-900/35'
+                      : 'brand-aqua-chip shadow-sm shadow-aqua-900/25'
+                    : active && !locked
+                      ? 'bg-accent/[0.12]'
+                      : ''
                 }`}
-                style={primary ? { '--sambramo-knockout': '#6d28d9' } : undefined}
               >
                 {/* The badge anchors to the icon, not to the 32px row, so it
                     sits on the bag's corner rather than floating above it. */}
                 <span className="relative flex items-center justify-center">
-                  {primary
-                    ? <SambramoMark size={21} variant="solid" title="" />
-                    : <Icon size={20} strokeWidth={active ? 2.4 : 2} />}
+                  {/* The primary tab used to hold a 22px Spencerian S. A
+                      Spencerian capital is defined by its hairlines, and at
+                      22px those fall below a device pixel — so the mark the
+                      app showed on every screen was a gold smudge. The chip
+                      carries the brand now (the aqua ground), and the tab
+                      carries its own icon, white, like every other tab.
+                      One system instead of one exception. */}
+                  <Icon
+                    size={20}
+                    strokeWidth={active ? 2.4 : 2}
+                    className={primary ? 'text-white' : undefined}
+                  />
                   {/* A locked tab carries neither. Both are claims that
                       something is happening, and nothing is. */}
                   {!locked && badge > 0 && (
@@ -339,33 +382,30 @@ export default function BottomNav() {
                   {locked && (
                     <span
                       aria-hidden="true"
-                      className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-200 text-gray-500 ring-2 ring-white"
+                      className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-ink/[0.12] text-ink-mute ring-2 ring-white"
                     >
                       <Lock size={7} strokeWidth={3.5} />
                     </span>
                   )}
                 </span>
               </span>
-              <span className={`whitespace-nowrap text-[10px] leading-none ${
-                locked ? 'font-medium text-gray-400'
-                  : primary ? 'font-bold text-plum-700'
-                  : active ? 'font-bold' : 'font-medium'
+              <span className={`whitespace-nowrap text-[10.5px] leading-none ${
+                locked ? 'font-medium text-ink-mute/70'
+                  : primary ? 'font-bold text-royal-800'
+                  : active ? 'font-extrabold' : 'font-medium'
               }`}>
                 {label}
               </span>
-              {active && !locked && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-saffron-400" />
-              )}
             </>
           )
 
           // One class for all six. The primary tab differs in what it paints
           // INSIDE this box, never in the box — which is what keeps the
           // baseline, the height and the tap target identical across the row.
-          const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1 min-h-[58px] py-2 rounded-xl transition-colors ${
-            locked ? 'text-gray-400'
-              : active ? 'text-plum-700'
-              : 'text-gray-500 active:text-plum-600'
+          const tabClass = `relative flex h-full w-full flex-col items-center justify-center gap-1.5 min-h-[60px] py-2 rounded-xl transition-colors ${
+            locked ? 'text-ink-mute/70'
+              : active ? 'text-accent'
+              : 'text-ink-mute active:text-accent'
           }`
 
           // Said rather than implied: a screen reader gets the same sentence
@@ -378,7 +418,7 @@ export default function BottomNav() {
                 aria-current={active && !locked ? 'page' : undefined}
                 aria-label={
                   primary ? 'Plan my celebration'
-                    : locked ? 'Track — unlocks once you place an event order with us'
+                    : locked ? 'Track — unlocks once you book a celebration with us'
                     : undefined
                 }
                 className={tabClass}

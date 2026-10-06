@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import AppBadge from '../../components/common/AppBadge'
+import InstallTheApp from '../../components/vendor/InstallTheApp'
 import { Link } from 'react-router-dom'
 import {
   ChevronRight, ChevronDown, CalendarHeart, ClipboardList, Route as RouteIcon,
@@ -14,7 +16,7 @@ import { BRAND } from '../../config/sambramo'
 import { CANCELLATION, RETURN_TERMS, CATEGORY_RULES } from '../../config/policies'
 import AppBar from '../../components/layout/AppBar'
 import SambramoLogo from '../../components/ui/SambramoLogo'
-import SambramoMark from '../../components/ui/SambramoMark'
+import ChatWidget from '../../components/customer/ChatWidget'
 import ReferAndEarn from '../../components/customer/ReferAndEarn'
 import AccountSettings from '../../components/customer/AccountSettings'
 
@@ -150,13 +152,6 @@ export default function Account() {
               label="My orders" sub="Deliveries, returns and refunds"
               meta={fmtCount(counts.orders)} i={0}
             />
-            {productCount > 0 && (
-              <Row
-                to="/shop/cart" icon={ShoppingBag}
-                label="Shop basket" sub="Cakes, gifts, flowers and essentials"
-                badge={productCount} i={1}
-              />
-            )}
             {totalCount > 0 && (
               <Row
                 to="/dashboard/customer/cart" icon={LayoutGrid}
@@ -219,6 +214,7 @@ export default function Account() {
         <Policies />
 
         <Support />
+        <ChatWidget />
 
         {user ? (
           <section className="px-4">
@@ -242,7 +238,22 @@ export default function Account() {
 
         <BrandFoot />
       </div>
-    </div>
+
+      {/* Which app this is, and how current. See components/common/AppBadge.
+          On the customer side this was missing entirely, so there was no
+          way to tell an installed app from a Chrome shortcut with the
+          same icon. */}
+      {/* Clear of the furniture below it.
+          `pb-bottom-nav` on the page wrapper accounts for the tab bar and
+          nothing else — the chat button is a separate fixed element in
+          the bottom-right corner, and this block was landing underneath
+          both of them. The last thing on a page has to clear everything
+          floating over it, not just the tallest one. */}
+      <div className="mt-8 space-y-3 pb-24">
+        <InstallTheApp app="customer" />
+        <AppBadge className="text-center" />
+      </div>
+</div>
   )
 }
 
@@ -276,7 +287,13 @@ function Identity({ profile, user }) {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <SambramoMark size={172} title="" />
+          {/* A watermark, not a mark. This was a 172px Spencerian S at 13%
+              opacity, slowly rotating off the corner. With the S retired,
+              rendering the brand SEAL here would put a rotating filled
+              square in the corner — a square is the one shape that looks
+              wrong turning, because its corners sweep. A single open glyph
+              rotates cleanly and is what a watermark wants to be. */}
+          <Sparkles size={172} strokeWidth={1.1} className="text-white" />
         </span>
 
         <div className="relative flex items-center gap-3.5">
@@ -321,7 +338,13 @@ function GuestPanel() {
           aria-hidden="true"
           className="animate-spin-slow pointer-events-none absolute -right-10 -top-10 opacity-[0.13]"
         >
-          <SambramoMark size={172} title="" />
+          {/* A watermark, not a mark. This was a 172px Spencerian S at 13%
+              opacity, slowly rotating off the corner. With the S retired,
+              rendering the brand SEAL here would put a rotating filled
+              square in the corner — a square is the one shape that looks
+              wrong turning, because its corners sweep. A single open glyph
+              rotates cleanly and is what a watermark wants to be. */}
+          <Sparkles size={172} strokeWidth={1.1} className="text-white" />
         </span>
 
         <div className="relative">
@@ -579,6 +602,23 @@ function Support() {
   )
 }
 
+/* ── The assistant ────────────────────────────────────────────────────────
+   It used to be mounted in App and therefore live on every screen, as a
+   floating dock in the bottom-right corner. On Home that corner is busy —
+   ResumePrompt and the date badge both want it, the tab bar is directly
+   under it, and the assistant sat over the last row of celebration cards.
+   A support control that covers merchandise is a support control that costs
+   money.
+
+   So it lives here, on the one screen whose whole job is "I need something
+   from Sambramo, not from the catalogue". It sits directly under the human
+   contacts above it deliberately: the order is phone, WhatsApp, then bot,
+   because that is the order of how much a person actually wants.
+
+   It keeps its own floating dock rather than being inlined into the page:
+   the panel is a conversation and wants the height, and on THIS screen the
+   bottom-right corner is empty. That is the whole difference — the dock was
+   never the problem, the screen it was docked to was. */
 /* ── The sign-off ─────────────────────────────────────────────────────────
    The one place in the app where the lockup gets to sit on its own with air
    around it. `caption="emotion"` rather than the descriptor: somebody on their
@@ -602,12 +642,6 @@ function BrandFoot() {
             className="flex items-center gap-1.5 rounded-xl bg-plum-900 px-3.5 py-2 text-[11px] font-extrabold text-white"
           >
             <Sparkles size={12} /> Plan a celebration
-          </Link>
-          <Link
-            to="/shop"
-            className="flex items-center gap-1.5 rounded-xl bg-surface px-3.5 py-2 text-[11px] font-extrabold text-ink ring-1 ring-hairline/10"
-          >
-            <Store size={12} /> Shop the essentials
           </Link>
         </div>
       </div>

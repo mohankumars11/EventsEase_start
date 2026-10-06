@@ -58,7 +58,7 @@ export default function CelebrationReviews({ subjectType, subjectId, ledger, cla
   const rated = reviews ? Object.keys(reviews).length : 0
 
   return (
-    <section className={`overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08] ${className}`}>
+    <section className={`overflow-hidden a-card ${className}`}>
       <div className="border-b border-hairline/[0.08] px-4 py-3.5">
         <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-ink">
           <Star size={15} className="text-saffron-500" /> How did it go?

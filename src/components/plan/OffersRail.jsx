@@ -161,17 +161,23 @@ function Ticket({ offer, index, applied, availability, onApply, onCopy, copied }
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => onApply(applied ? null : offer.id)}
-              disabled={blocked}
-              aria-pressed={applied}
-              className={`shrink-0 min-h-[44px] rounded-lg px-3 py-3 text-xs font-extrabold text-ink transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
-                applied ? 'bg-gray-800 active:bg-gray-900' : accent.btn
-              }`}
-            >
-              {applied ? 'Remove' : 'Claim'}
-            </button>
+            {/* Claim needs somewhere to apply the offer to. On the plan hub
+                there is no basket yet — the rail is there to say the offer
+                exists — so the code stays copyable and the button is simply
+                absent, rather than present and inert. */}
+            {onApply && (
+              <button
+                type="button"
+                onClick={() => onApply(applied ? null : offer.id)}
+                disabled={blocked}
+                aria-pressed={applied}
+                className={`shrink-0 min-h-[44px] rounded-lg px-3 py-3 text-xs font-extrabold text-ink transition-colors disabled:cursor-not-allowed disabled:bg-gray-300 ${
+                  applied ? 'bg-gray-800 active:bg-gray-900' : accent.btn
+                }`}
+              >
+                {applied ? 'Remove' : 'Claim'}
+              </button>
+            )}
           </>
         ) : (
           <p className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">

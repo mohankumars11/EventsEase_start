@@ -51,7 +51,40 @@ export const PROVIDERS = {
      *   qwen/qwen3.5-flash-02-23      $0.07/$0.26 per M — 1M context, fast
      *   google/gemma-4-26b-a4b-it     $0.07/$0.34 per M — the paid same model
      */
-    defaultModel: 'google/gemma-4-26b-a4b-it:free',
+    defaultModel: 'qwen/qwen3.8-27b:free',
+
+    /**
+     * ── Because a free model's 429 is not an outage ──────────────────
+     * The default used to be `google/gemma-4-26b-a4b-it:free`, and on
+     * 2026-09-24 it returned 429 "temporarily rate-limited upstream" on
+     * every attempt, three in a row, with a three-second gap. So did
+     * `gemma-4-31b-it:free`. The endpoint reported itself unavailable,
+     * the ladder fell through to human review exactly as designed, and
+     * from the partner's side that is indistinguishable from having no
+     * classifier at all -- which is what it was reported as.
+     *
+     * A free tier is shared, so this is normal weather and not a fault.
+     * The answer is a list, not a better single guess: these are tried
+     * in order and the first that answers wins. All four were verified
+     * against a real image on the day this was written -- each one
+     * refused a screenshot of a web page and NAMED it, which is the
+     * behaviour the whole ladder rests on.
+     *
+     * AI_MODEL still overrides everything and skips the list; set it
+     * when a paid model is wanted.
+     */
+    fallbackModels: [
+      /* Ordered by MEASURED latency, not by preference. A rate-limited
+         model refuses in under a second, so a long list is cheap -- but
+         a slow one that answers is expensive, because every model after
+         it waits. dots-studio took 38 seconds on the day this was
+         measured and sits last for that reason alone. */
+      'qwen/qwen3.8-27b:free',                            //  ~1s
+      'nex-agi/nex-n2.5-mini:free',                       //  ~1s
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', //  ~1s
+      'google/gemma-4-26b-a4b-it:free',                   //  rate-limited 2026-09-24
+      'dots-studio/dots-3-note-preview:free',             // ~38s
+    ],
     pdf: true,
     images: true,
     webSearch: 'plugin',
@@ -174,4 +207,20 @@ export function resolveProvider(env = process.env, prefer = null) {
     error:
       'AI is not switched on yet. Get a free key at openrouter.ai/keys, add it as OPENROUTER_API_KEY in the Vercel project settings, and redeploy.',
   }
+}
+
+/**
+ * The models to try, in order, for one resolved provider.
+ *
+ * An explicit AI_MODEL is a decision somebody made, so it is honoured
+ * alone -- silently falling back from a paid model a user chose to a
+ * free one would be the wrong kind of helpful. Otherwise the provider's
+ * own list is used, deduplicated and with the default first.
+ */
+export function modelLadder(picked, env = process.env) {
+  if (!picked?.provider) return []
+  const explicit = env.AI_MODEL?.trim()
+  if (explicit) return [explicit]
+  const list = [picked.model, ...(picked.provider.fallbackModels ?? [])]
+  return [...new Set(list.filter(Boolean))]
 }

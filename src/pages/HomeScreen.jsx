@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Clock, ChevronRight, PhoneCall,
@@ -7,31 +7,29 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BRAND, CTA, EVENT_TYPES } from '../config/sambramo'
-import { useShopCategories } from '../hooks/useShopCategories'
 import { FESTIVALS } from '../data/festivals'
 import { UPCOMING_FESTIVALS } from '../data/eventServicesData'
-import { OCCASIONS } from '../data/planCatalog'
-import { usePublicOffers, bestOfferFor } from '../hooks/usePublicOffers'
+import { OCCASIONS, CATALOG_STATS } from '../data/planCatalog'
+import { ALL_SERVICES } from '../data/servicePricing'
+import { allOffers } from '../lib/allOffers'
+import { OFFER_BY_ID } from '../data/celebrationOffers'
 import { useAutoScrollRail } from '../hooks/useAutoScrollRail'
+import OccasionCard from '../components/home/OccasionCard'
+import MarketRateCard from '../components/home/MarketRateCard'
+import IntroCards from '../components/home/IntroCards'
 import DateCheckCard from '../components/home/DateCheckCard'
 import DateInterestBadge from '../components/home/DateInterestBadge'
 import { formatINR } from '../utils/format'
-import ProductImage from '../components/shop/ProductImage'
+import RemoteImage from '../components/common/RemoteImage'
 import OffersGrid from '../components/home/OffersGrid'
-import StickyCartBar from '../components/shop/StickyCartBar'
-import { useCart } from '../context/CartContext'
 import HomeAppBar from '../components/home/HomeAppBar'
+import LiveBookingStrip from '../components/home/LiveBookingStrip'
 import LiveEventStrip from '../components/home/LiveEventStrip'
 import { fetchCelebrations, isLive } from '../lib/celebrations'
 import PromoDeck from '../components/home/PromoDeck'
-import BrandFilm from '../components/home/BrandFilm'
-import BrandBanner from '../components/home/BrandBanner'
-import ServiceMosaic from '../components/home/ServiceMosaic'
-import PhotoReelFilm from '../components/home/PhotoReelFilm'
 import TierRail from '../components/home/TierRail'
-import ShopPicksRail from '../components/home/ShopPicksRail'
-import { QuickRail, SquareGrid } from '../components/gifting/GiftSections'
-import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
+import DoorstepFilm from '../components/home/DoorstepFilm'
+import SourcingSlider from '../components/home/SourcingSlider'
 
 /**
  * Home — one screen, signed in or signed out.
@@ -66,20 +64,23 @@ import { QUICK_RAIL, TILE_COLOURS } from '../data/giftingHome'
    a request raised in the celebration builder or the services cart never
    appeared on the customer's own front door. */
 
-const FESTIVAL_DETAIL_IDS = new Set(FESTIVALS.map(f => f.id))
-const FESTIVAL_SHOP_ROUTE = {
-  'independence-day': { category: 'Party Essentials', occasion: 'Independence Day' },
-  'raksha-bandhan':   { category: 'Gifts', occasion: 'Rakhi' },
-  'janmashtami':      { category: 'Pooja & Essentials', occasion: 'Janmashtami' },
-  'dussehra':         { category: 'Pooja & Essentials', occasion: 'Navratri' },
-  'new-years-eve':    { category: 'Gifts', occasion: 'New Year' },
-}
+/* Every festival goes to its own page, and every one of those pages is a
+   locked door that asks whether the customer is waiting for it.
+
+   This forked twice before. First it sent five of the eight into shop
+   shelves, because they had no detail page and Gifts was somewhere to put
+   them. Then, with the shop gone, it sent those five to the planner — which
+   was honest but threw away the reason they tapped: they wanted Diwali, and
+   the planner does not know what Diwali is.
+
+   There is no fork now. FestivalDetailPage handles a festival it has content
+   for and one it does not identically, because the answer is the same for
+   both — we are not open for this yet — and it captures the intent either
+   way. See the page for why the question has a NO button. */
 function festivalHref(f) {
-  if (FESTIVAL_DETAIL_IDS.has(f.id)) return `/festivals/${f.id}`
-  const route = FESTIVAL_SHOP_ROUTE[f.id] ?? { category: 'Gifts' }
-  const qs = route.occasion ? `?occasion=${encodeURIComponent(route.occasion)}` : ''
-  return `/shop/${encodeURIComponent(route.category)}${qs}`
+  return `/festivals/${f.id}`
 }
+
 function daysUntil(dateStr) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -95,8 +96,7 @@ export default function HomeScreen() {
   const { user, profile } = useAuth()
   const [celebrations, setCelebrations] = useState([])
   const [query, setQuery] = useState('')
-  const offers = usePublicOffers()
-  const { productCount } = useCart()
+  const offers = allOffers()
 
   const firstName =
     profile?.full_name?.split(' ')[0] ??
@@ -126,108 +126,108 @@ export default function HomeScreen() {
     .sort((a, b) => a.days - b.days)
     .slice(0, 8), [])
 
-  // The deck is assembled from what is true today, in the order that matters
-  // to whoever is looking. A returning customer with a celebration underway
-  // does not need the "plan a celebration" pitch first.
-  /**
-   * The celebration occasions, as square tiles.
-   *
-   * The colour is assigned by position rather than stored per occasion, so
-   * the palette cycles evenly down the grid and adding a sixteenth occasion
-   * cannot leave it colourless. `photos` is up to four real, committed
-   * photographs (see planCatalog), which is what lets the tile deal them —
-   * the emoji underneath is only reached when an occasion has none.
-   */
-  const occasionTiles = useMemo(() => {
-    const keys = Object.keys(TILE_COLOURS)
-    return OCCASIONS.map((o, i) => ({
-      id: o.id,
-      to: `/services/${o.id}`,
-      label: o.label ?? o.name,
-      meta: Number.isFinite(o.fromPrice) ? `from ${formatINR(o.fromPrice)}` : null,
-      emoji: o.emoji,
-      // The whole set, not the first: several photographs is what makes
-      // the tile a deck rather than a still. See PhotoDeck.
-      photos: o.photos ?? [],
-      colour: keys[i % keys.length],
-    }))
-  }, [])
+  // The claimable one leads — an offer that applies itself is not news.
+  const bestOffer = offers.find(o => o.action === 'claim') ?? offers[0]
 
-  const nextFestival = upcoming[0]
-  const bestOffer = offers[0]
+  /* ── What the deck carries, and why the festival slide left ─────────────
+     This used to open on whichever festival was closest — today that is
+     Raksha Bandhan, nine days out — and the slide is gone at the product
+     owner's call. The reasoning is sound and worth writing down, because the
+     obvious reading is that a countdown is the most time-sensitive thing on
+     the page and therefore belongs first.
 
-  /* ── The deck carries what is TIME-SENSITIVE, and nothing else ──────────
-     There used to be a permanent "Tell us what's being celebrated / Plan a
-     celebration" slide at the front of this deck, and removing it is the
-     single biggest fix on this screen.
+     It is time-sensitive; it is just not OURS. A festival slide sells a date
+     the customer already knows about, against a deadline we did not set, into
+     a week when every decorator in the city is quoting the same thing. It also
+     duplicated a whole rail: "Coming up" further down this page already lists
+     eight festivals with the same countdown and the same link, so the deck was
+     spending its first slide restating a section the customer had not scrolled
+     to yet.
 
-     It was the second of five identical "Plan a celebration" buttons above
-     the fold — the brand band had two doors, this deck had one, the drawn
-     film's first beat had one, the mosaic's hero had one, and the signed-out
-     tail had one. Repeating a button five times is not emphasis. It teaches
-     the eye that this shape is wallpaper, so the one at the bottom — placed
-     after the argument has actually been made, which is the moment it is most
-     likely to be pressed — is the one that gets skipped.
+     What replaced it is the three things that are true about US rather than
+     about the calendar: the standing 10% off a first celebration, the estimate
+     you can have in two minutes without speaking to anyone, and the fact that
+     one resource is as bookable as the whole event. Those are the arguments
+     that survive a week when there is no festival in range at all — which is
+     most weeks, and which is exactly when the old deck was thinnest.
 
-     Worse, it was a permanent slide in a rotating panel. The whole point of a
-     deck is that it shows what is true TODAY: a festival that is nine days
-     away, a coupon that expires. "You can plan a celebration" is true every
-     day forever, so it was a slide that never told anyone anything new while
-     occupying a third of the rotation.
+     Note what this does to the earlier doctrine here: the deck was "TIME-
+     SENSITIVE, and nothing else", and two of these three slides are permanent
+     truths. That rule was written to keep a fifth "Plan a celebration" button
+     out of the rotation, and it still does — none of these three is that
+     button. They are three different offers with three different destinations,
+     which is what a rotating panel is for. A deck of one slide is a banner.
 
-     The planner is not harder to reach for its absence — it is the left-hand
-     door in the band directly above, the hero of the mosaic below, and a tab
-     in the bar. It has simply stopped being said five times.
-
-     The fallback below matters: with no festival in range and no live coupon
-     the deck would render nothing, so it keeps ONE slide rather than leaving a
-     hole where the hero was. */
+     The fallback below matters: with no live offer the deck would render only
+     two slides, so it keeps its floor rather than leaving a hole where the
+     hero was. */
   const slides = [
-    nextFestival && {
-      key: `fest-${nextFestival.id}`,
-      eyebrow: `${urgency(nextFestival.days)} to go`,
-      title: nextFestival.name,
-      body: 'Sweets, decor, pooja essentials and the whole celebration — sorted before the day arrives.',
-      cta: FESTIVAL_DETAIL_IDS.has(nextFestival.id) ? 'Plan this festival' : 'Shop the festival',
-      to: festivalHref(nextFestival),
-      art: nextFestival.emoji,
-      background: 'linear-gradient(120deg,#b45309 0%,#d97706 45%,#c62828 100%)',
-    },
     bestOffer && {
       key: `offer-${bestOffer.id}`,
       eyebrow: 'Live offer',
-      title: bestOffer.discount_type === 'percent'
-        ? `${Number(bestOffer.discount_value)}% off the shop`
-        : `${formatINR(bestOffer.discount_value)} off the shop`,
-      body: `Use code ${bestOffer.code} at checkout${
-        Number(bestOffer.min_order_amount) > 0 ? ` on orders above ${formatINR(bestOffer.min_order_amount)}` : ''
-      }.`,
-      cta: 'Start shopping',
-      to: '/shop',
+      title: `${bestOffer.headline} your celebration`,
+      body: `${bestOffer.condition} Quote the code ${bestOffer.code} on your enquiry.`,
+      cta: 'Start planning',
+      to: bestOffer.to,
       art: '🎁',
-      background: 'linear-gradient(120deg,#0e523c 0%,#12694c 50%,#1c8560 100%)',
+      background: 'linear-gradient(120deg,#4c1d95 0%,#6d28d9 50%,#7c3aed 100%)',
+    },
+    /* The estimate. Deliberately promises a RANGE and says why it moves —
+       utils/quote.js returns a range rather than a figure because there is no
+       signed supplier behind this catalogue yet, and a number to the rupee
+       would imply a rate card that does not exist. "Priced at this week's
+       rates" is the honest version of that limitation and reads as a feature,
+       which it also genuinely is: a quote built on last quarter's costs is
+       worth less, not more. */
+    {
+      key: 'estimate',
+      eyebrow: 'No call, no wait',
+      title: 'Your price in two minutes',
+      body: 'Build the celebration and see a real range at this week’s market rates — not “contact us”.',
+      cta: 'Get my estimate',
+      to: '/plan/build',
+      art: '🧮',
+      background: 'linear-gradient(120deg,#0b3d2e 0%,#1c8560 52%,#38a47b 100%)',
+    },
+    /* Individuals and businesses, one resource or all of them. The catalogue
+       has carried `corporate_event` and thirty individually bookable services
+       for a long time; Home simply never said so, so anyone who wanted a
+       purohit for Thursday read a page of wedding packages and left. The
+       SourcingSlider below makes the same argument at length — this slide is
+       the one line of it that reaches somebody who never scrolls that far. */
+    {
+      key: 'audience',
+      eyebrow: 'Individuals & businesses',
+      title: 'One purohit, or a launch for 400',
+      body: 'A cook, a sound system, a decorator — take one resource, or hand us the whole celebration.',
+      cta: 'See what we source',
+      to: '/plan#services-heading',
+      art: '🧑‍🍳',
+      background: 'linear-gradient(120deg,#b45309 0%,#d97706 48%,#e8720c 100%)',
     },
   ].filter(Boolean)
 
-  /* Nothing timely to show — no festival within range, no live coupon. Rather
-     than render an empty band where the deck was, fall back to the one thing
-     that is always true. This is the ONLY path on which the planner CTA
-     appears in the deck, so on any ordinary day it does not. */
-  if (slides.length === 0) {
-    slides.push({
-      key: 'plan',
-      eyebrow: 'Concierge',
-      title: activeEvents.length > 0 ? 'Planning another one?' : 'Tell us what’s being celebrated',
-      body: 'Venue, decor, food, photography — one team arranges all of it and one number answers for it.',
-      cta: CTA.planNav,
-      to: '/plan',
-      art: '🎊',
-      background: 'linear-gradient(120deg,#6d28d9 0%,#a21caf 55%,#c026d3 100%)',
-    })
-  }
+  /* The empty-deck fallback that used to sit here is gone with the reason for
+     it. Two of the three slides above are unconditional, so `slides` can no
+     longer be empty and the guard was dead code — and dead code that pushes a
+     fifth "Plan a celebration" button into the rotation is the specific thing
+     the note above says this deck must not do. If both literal slides ever
+     become conditional, the floor has to come back. */
 
-  // A returning customer sees what's next for them before the pitch.
-  if (activeEvents.length > 0) slides.reverse()
+  /* A returning customer sees the offer LAST rather than first, which is the
+     opposite of what this line used to do and the correct way round.
+
+     The reverse() it replaces was written when the deck was a festival and an
+     offer, and it meant "show the timely thing first". With three slides it
+     only shuffled them. The real point is narrower and worth stating: the
+     leading offer is `first_booking`, which celebrationOffers marks one per
+     customer. Opening a returning customer's deck on a discount they have
+     already spent is the one arrangement here that can actively annoy
+     somebody, so they get the estimate first and the offer at the back. */
+  if (activeEvents.length > 0 && bestOffer) {
+    const led = slides.findIndex(s => s.key === `offer-${bestOffer.id}`)
+    if (led === 0) slides.push(slides.shift())
+  }
 
   // The festival rail advances itself; `upcoming` is capped at 8.
   const festivalRail = useAutoScrollRail(upcoming.length)
@@ -235,56 +235,20 @@ export default function HomeScreen() {
   const searching = query.trim().length >= 2
 
   return (
-    <div className="home-canvas min-h-screen pb-bottom-nav">
+    <div className="a-canvas min-h-screen pb-bottom-nav">
       <HomeAppBar query={query} onQueryChange={setQuery} />
+
+      {/* Above everything, and only when there is a live booking.
+          A customer who dispatched four services and came back to the
+          home screen had no way of knowing three masters were waiting
+          to be paid -- the only screen that knew was the matching
+          board, reachable only by remembering it existed. */}
+      <LiveBookingStrip />
 
       {searching ? (
         <SearchResults query={query.trim()} onClear={() => setQuery('')} />
       ) : (
-        /* The tail padding exists to clear StickyCartBar, so it is only spent
-           when that bar is on screen. Reserved unconditionally it left roughly
-           300px of empty plum under the support strip for every visitor with an
-           empty cart, which reads as a page that failed to finish loading.
-
-           ── The vertical rhythm ─────────────────────────────────────────
-           One `space-y-8` used to separate everything, and 32px between every
-           pair is not a rhythm — it is the absence of one. On a 390px phone it
-           also reads as much more than 32px, because each neighbour is a
-           rounded card with its own padding and a soft shadow, so the eye
-           measures card-edge to card-edge and sees the gap plus two inner
-           margins.
-
-           The page now spaces by *relationship* rather than by default:
-
-             8px    inside a block that is one idea (the hero pair below)
-             24px   between two sections that are different ideas
-             +8px   only before the closing explanatory tail
-
-           Everything the trim saves is real screen: the occasion grid, which
-           is the thing people are here to tap, arrives most of a phone-height
-           earlier than it did. */
-        <div className={`mx-auto max-w-3xl space-y-4 pt-0 ${productCount > 0 ? 'pb-32' : 'pb-8'}`}>
-
-          {/* ── The name, once, properly ──────────────────────────────
-              Nobody has heard of Sambramo yet: there is no rating, no order
-              count and no ad recall, so a visitor arriving from a link met a
-              search box and a gradient and had no idea whose app this was.
-
-              This is the only section on Home that carries no price, no coupon
-              and no live data, which is exactly the cost of putting it first —
-              see the component for why that trade is worth making now and why
-              it is written to expire once there is recall to trade on. */}
-          <BrandBanner />
-
-          {/* ── The seven ways in ─────────────────────────────────────
-              The same square rail the storefront opens with, in the same
-              place, for the same reason: most people arriving here want a
-              thing rather than a celebration, and the fastest route to a
-              thing should not be below three sections of argument.
-
-              Square tiles with the name underneath — see SquareTile for why
-              the caption sits below the photograph rather than over it. */}
-          <QuickRail items={QUICK_RAIL} />
+        <div className="mx-auto max-w-3xl space-y-4 pt-0 pb-8">
 
           {activeEvents.length > 0 && (
             <div className="space-y-2.5">
@@ -295,81 +259,148 @@ export default function HomeScreen() {
             </div>
           )}
 
-          {/* ── The hero pair ─────────────────────────────────────────
-              The deck and the film are one unit and are now spaced like
-              one: 8px, so they stack as a single above-the-fold block
-              instead of two cards floating a full gap apart.
+          {/* ── The hero ──────────────────────────────────────────────
+              Three slides, and all three are arguments about us rather than
+              about the calendar: the live offer, the two-minute estimate,
+              and the fact that one resource is as bookable as the whole
+              event. The festival countdown that used to lead is gone — see
+              the note where `slides` is built for why, and for what that
+              costs the old "nothing permanent in the deck" rule.
 
-              They were the worst offender for exactly the reason they
-              belong together — both are full-bleed rounded panels of
-              almost the same height, so a 32px trough between them read
-              as two unrelated adverts with dead ground in between rather
-              than as "here is what's on" followed by "here is what it's
-              for". Adjacent, the film reads as the deck's answer.
+              The brand film used to be welded underneath it for signed-out
+              visitors. It now sits below the catalogue with the rest of
+              the story, so this is one panel for everyone. */}
+          <PromoDeck slides={slides} />
 
-              Signed-in customers keep the film lower down the page (see
-              below), so this pair only exists when there is no session —
-              which is also the only time the film is the argument rather
-              than a re-pitch. */}
-          {user ? (
-            <PromoDeck slides={slides} />
-          ) : (
-            <div className="space-y-2.5">
-              <PromoDeck slides={slides} />
-              <BrandFilm />
+          {/* ══ COMMERCE, THEN STORY ══════════════════════════════════
+              The order below is the one change on this page that is worth
+              more than all the styling.
+
+              It used to run: brand banner → quick rail → hero → service
+              mosaic → photo film → tier rail → date check → brand film →
+              occasion grid → offers → priced products. So a customer had to
+              scroll past FOUR editorial panels — two of them full-bleed
+              films — before this app showed them a single thing they could
+              buy at a stated price. Every storefront that sells anything
+              does the opposite, and not for fashion reasons: the panels
+              that convert are the ones carrying a price, a discount or a
+              date, and on a phone each film costs roughly a screen height
+              of everything underneath it.
+
+              Commerce first now — what you are shopping for, what is
+              discounted, what you can buy right now — and the story after
+              it, for the people still reading. Nothing is deleted; the
+              films still do their job, one screen further down, for an
+              audience that has already seen the goods. ══════════════ */}
+
+          {/* ── Every celebration we arrange ─────────────────────────
+              The whole point of the screen. Fifteen occasions, each its own
+              card: four real photographs of that occasion cross-fading, the
+              honest entry price, what it includes, and the offer that
+              applies — the same OccasionCard the planner uses, so one
+              occasion does not look like two different products depending on
+              which screen you met it on.
+
+              This used to be a tile grid of names on colour, sitting fourth
+              behind a shortcut rail of shop shelves, a promo deck and a
+              banner. It is first now, and it is cards rather than tiles,
+              because a photographed card with a price on it is the thing a
+              customer is here to browse. Two to a row on a phone, which is
+              what every catalogue app settled on — three made the
+              photographs too small to be evidence of anything. */}
+          <section aria-labelledby="occasions-heading">
+            <div className="px-5">
+              <h2 id="occasions-heading" className="text-[19px] font-extrabold tracking-tight text-ink">
+                What are we celebrating?
+              </h2>
+              <p className="mt-0.5 text-[12px] text-ink-mute">
+                {CATALOG_STATS.occasions} occasions, arranged end to end — every price real.
+              </p>
             </div>
-          )}
 
-          {/* ── Everything we do ──────────────────────────────────────
-              The answer to the first question a new visitor actually has,
-              which is not "what does a wedding cost" but "what can I even get
-              here?". It is a broad answer and it is the product's real
-              strength — whole celebrations, single services, cakes, flowers,
-              decor, pooja, gifting, and a heritage-crafts shelf nobody else in
-              these two cities lists — and a range is shown as a grid rather
-              than said in a sentence.
+            {/* ── What the prices are pegged to ──────────────────────────
+                Directly under "every price real", because that sentence is
+                a claim and this is the evidence for it. It expands to name
+                the commodities the food rate is read from and, just as
+                importantly, to say which costs do NOT move with a daily
+                index — see the header of MarketRateCard for why the smaller
+                claim is the durable one. */}
+            <div className="mt-3.5">
+              <MarketRateCard />
+            </div>
+            <div className="mt-3.5 grid grid-cols-2 gap-3.5 px-4">
+              {OCCASIONS.map((o, i) => (
+                <OccasionCard
+                  key={o.id}
+                  occasion={o}
+                  stagger={i * 260}
+                />
+              ))}
+            </div>
+          </section>
 
-              Placed directly under the hero pair, before the tier rail and the
-              date check. Those two are the best things on this page for
-              somebody who has already decided to plan a celebration; the
-              mosaic is for everybody who hasn't, which on a pre-launch app is
-              almost everybody. Fourteen tiles, mixed spans, every one of them a
-              real shelf with real photography behind it — see
-              config/homeMosaic.js. */}
-          <ServiceMosaic />
+          {/* ── Or just one thing ─────────────────────────────────────
+              Directly under the occasion grid, because the grid is what
+              raises the objection: fifteen cards, every one of them a whole
+              celebration, and nothing on the page yet saying that a purohit
+              for Thursday morning or a company annual day is also a thing we
+              do. Both already are — `corporate_event` is one of the fifteen,
+              and PlanHub has listed the individually bookable services since
+              it was rebuilt — so this panel is not a new promise, it is Home
+              finally making one it could always keep.
 
-          {/* ── The same story, in photographs ────────────────────────
-              The mosaic above says what the shelves ARE; this says that they
-              exist. A drawn hamper is our idea of gifting, and a photograph of
-              gold zari on crepe silk is a thing you can buy — a pre-launch
-              brand needs both, and the drawn film at the top of the page is the
-              other half of this pair.
+              It is a rail rather than a grid on purpose: the claim is the
+              range, which a rail demonstrates by moving through it. See
+              SourcingSlider for why it names the work rather than the price,
+              and for why it does NOT say "just the cook" — IntroCards, the
+              panel immediately below, already owns that sentence, so the two
+              deliberately split the argument rather than repeat it. */}
+          <SourcingSlider />
 
-              Seven beats, each with its own button pointing at its own shelf,
-              plus a standing "Everything in the shop" underneath. Deliberately
-              placed below the mosaic rather than beside the drawn film: two
-              films back to back is one film too many, and this one works as the
-              evidence for the grid it follows. See config/homeReel.js. */}
-          <PhotoReelFilm />
+          {/* ── What this app is ─────────────────────────────────────
+              Under the grid rather than above it. A first-time visitor
+              scrolls the merchandise first whatever the page says, so the
+              explanation sits where they arrive after it has raised the
+              question. */}
+          <IntroCards />
+
+          {/* ── Every offer, four at a time ───────────────────────────
+              Moved up with the rest of commerce. The four celebration
+              savings live in code rather than the `coupons` table, so
+              before OffersGrid existed they appeared nowhere on this
+              screen at all — those are the offers worth thousands of
+              rupees, on the half of the business the revenue comes from.
+              See lib/allOffers for why the two kinds of promise get
+              different controls. */}
+          <OffersGrid />
 
           {/* ── The six scales of celebration ─────────────────────────
-              Replaces PackageRail, which put "Grand Celebration Birthday,
-              ₹75,000–₹1,50,000 — Popular" on the front page. That is the third
-              screen of a birthday decision shown to someone who has not said
-              they are planning a birthday, repeated once per occasion.
+              The tiers are the axis customers actually start on: nobody
+              thinks "I want the premium package", they think "there'll be
+              about sixty people". One rail serves every occasion, and it
+              carries a real scale, a real price and a live coupon. */}
+          <TierRail offer={OFFER_BY_ID.first_booking} />
 
-              The tiers are the axis customers actually start on: nobody thinks
-              "I want the premium package", they think "there'll be about sixty
-              people". One rail serves every occasion.
+          {/* ── What the price lock actually buys ─────────────────────
+              Immediately under the tier rail, because the rail is where the
+              lock is first mentioned — its footer reads "Build it, then hold
+              the price for ₹1,000" and then the page moves on. That is the
+              mechanic with the offer left out.
 
-              Moved above the date check. It used to sit fourth, behind the
-              deck, the film and the date card, which on a phone put the only
-              thing on Home carrying a real scale, a real price and a live
-              coupon below the fold — so the page asked for a date before it
-              had once said what the thing costs. Sequence now runs the way
-              the decision does: what this is (film) → what it costs
-              (tiers) → when is it (date). */}
-          <TierRail offer={bestOfferFor(50000, offers)} />
+              The offer is the visit: a Bandhu arrives at your door with the
+              proposal, reads it with you and changes what does not fit,
+              before anything is booked and while the money is still
+              refundable. It is the most unusual thing this business does and
+              it was stated nowhere a browsing customer would meet it.
+
+              A clip rather than a card because a card can only assert a
+              sequence and this one has to show it — the whole persuasion is
+              that the visit HAPPENS, in order, with you in the room. Drawn
+              rather than filmed for the reason every film in this app is
+              drawn: pre-launch, no supplier, and stock footage of somebody
+              else's coordinator is the borrowed-brand problem the Bandhu name
+              exists to avoid. */}
+          <DoorstepFilm />
 
           {/* ── Check the date ────────────────────────────────────────
               The date was question two of a six-step form, so the single
@@ -379,87 +410,11 @@ export default function HomeScreen() {
               not something you live next to on a phone screen. */}
           <DateCheckCard />
 
-          {/* ── The gifting film, for a signed-in customer ────────────
-              Everything else on this page argues — a tier, a price, a
-              coupon, a countdown. None of it shows what any of it is for.
-              The film does, in five beats, and its tap target moves with
-              the story: the planner on beat one, a hamper you can send
-              tonight by beat five. It carries no section heading, unlike
-              everything below it: the panel opens with its own chapter
-              label, and a hero that has to be introduced isn't a hero.
+          {/* ══ THE STORY ═════════════════════════════════════════════
+              Everything below carries no price and no date. It is the
+              argument for the brand rather than the catalogue, and it now
+              runs after the catalogue rather than in front of it. ══ */}
 
-              Where it sits depends on who is looking. Signed out it is
-              welded to the deck as the hero pair above, because a cold
-              visitor has to want the thing before being asked for a date.
-              Signed in it waits until after the date check — they have
-              already bought the pitch, and pushing their most useful
-              control down to re-pitch them would be a straight loss. */}
-          {user && <BrandFilm />}
-
-          {/* ── What are we celebrating ───────────────────────────────
-              Was a horizontal rail of 72×72 thumbnails with a caption under
-              each. At that size the photograph was a smudge, so fifteen
-              occasions read as fifteen identical grey squares; nothing said
-              what one costs or included; and being a scroller, eleven of them
-              were behind a swipe most people never make.
-
-              A two-per-row grid fixes all three at once — the photo becomes
-              legible, there is room for the price and a live coupon, and every
-              occasion is reachable by scrolling the page you are already
-              scrolling. */}
-          <section aria-labelledby="occasions-heading">
-            <div className="px-4">
-              <h2 id="occasions-heading" className="text-[15px] font-extrabold text-ink">
-                What are we celebrating?
-              </h2>
-              <p className="mt-0.5 text-[11px] text-ink-mute">
-                Every one of these, arranged end to end — pick yours.
-              </p>
-            </div>
-            {/* Square tiles, three to a row, with the name and the entry
-                price underneath.
-
-                This was a two-per-row grid of OccasionCard — a tall panel
-                that cycled four photographs and carried a coupon badge. Two
-                things were wrong with it once the rest of the app moved to
-                squares. Fifteen occasions at two per row is eight rows of
-                scrolling before the page moves on, so the sections under it
-                were effectively unreachable; and a card that reflows its own
-                photograph every few seconds means the grid is never still
-                while somebody is trying to read down it.
-
-                Three squares to a row halves the height, the photograph is
-                still large enough to read at 110px, and the from-price — the
-                one number that was worth keeping off that card — moves under
-                the name where every tile states it on the same baseline. */}
-            <SquareGrid className="mt-3" items={occasionTiles} />
-          </section>
-
-          {/* ── Every offer, four at a time ───────────────────────────
-              Was OffersRail, which showed SHOP COUPONS ONLY as a sideways
-              drifting strip of 248px tiles. Two faults, one of them
-              commercial:
-
-              The four celebration savings — first booking 10%, early bird 7%,
-              repeat 15%, the ₹1,000 referral — live in code rather than the
-              `coupons` table, so they appeared nowhere on this screen. Those
-              are the offers worth thousands of rupees, attached to the half of
-              the business the revenue comes from, and Home was advertising
-              none of them.
-
-              And a 248px tile on a 390px phone means the second one is always
-              cut in half, which reads as an overflow rather than as an
-              invitation to swipe.
-
-              A page of four fixes both: everything on screen is whole, one
-              glance takes in four offers instead of one and a half, and the
-              page swaps rather than slides so nothing moves while it is being
-              read. See lib/allOffers for why the two kinds of promise get
-              different controls. */}
-          <OffersGrid />
-
-          {/* ── Real products, priced, one tap from the front door ──── */}
-          <ShopPicksRail />
 
           {/* ── Festivals, counting down ────────────────────────────── */}
           {upcoming.length > 0 && (
@@ -484,7 +439,7 @@ export default function HomeScreen() {
                     to={festivalHref(f)}
                     className="group relative h-36 w-[148px] shrink-0 snap-start overflow-hidden rounded-2xl ring-1 ring-hairline/10"
                   >
-                    <ProductImage
+                    <RemoteImage
                       query={`${f.name} festival India celebration`}
                       emoji={f.emoji}
                       className="absolute inset-0 h-full w-full"
@@ -508,7 +463,7 @@ export default function HomeScreen() {
                           only words telling you the tile is tappable — was
                           effectively not printed. */}
                       <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-saffron-300">
-                        {FESTIVAL_DETAIL_IDS.has(f.id) ? 'Plan it' : 'Shop it'}
+                        Tell us you want it
                         <ArrowRight size={10} />
                       </span>
                     </span>
@@ -545,25 +500,17 @@ export default function HomeScreen() {
         </div>
       )}
 
-      {/* ── One occupant of the bottom strip at a time ──────────────────
-          Three separate components can float in this band on Home —
-          ResumePrompt (App.jsx), StickyCartBar, and DateInterestBadge — and
-          all three used to be z-40, in the same place, with no knowledge of
-          each other. Which one you could actually read came down to DOM
-          order, and with a cart AND an unfinished journey the corner was
-          three cards stacked on top of one another.
+      {/* ── The bottom strip ────────────────────────────────────────
+          Three components used to float in this band — ResumePrompt
+          (App.jsx), StickyCartBar and DateInterestBadge — all at z-40, in the
+          same place, with no knowledge of each other. Which one you could
+          actually read came down to DOM order.
 
-          The order is by how much the customer has already committed:
-
-            ResumePrompt      they started a celebration and stopped
-            StickyCartBar     they have items waiting
-            DateInterestBadge an ambient nudge, and the first to yield
-
-          ResumePrompt self-gates to Home, so this file only has to arbitrate
-          its own two — and the cart bar's condition is the same `productCount`
-          it gates itself on, read here rather than duplicated. */}
-      <StickyCartBar />
-      {productCount === 0 && <DateInterestBadge />}
+          The cart bar left with the shop, so the arbitration is gone too:
+          ResumePrompt self-gates to Home, and the badge is the only other
+          occupant. It no longer waits for an empty cart, because there is no
+          cart on this screen to be full. */}
+      <DateInterestBadge />
     </div>
   )
 }
@@ -578,7 +525,7 @@ const STEPS = [
 function HowItWorks() {
   return (
     <section className="px-4" aria-labelledby="how-heading">
-      <div className="home-glass p-5">
+      <div className="a-card p-5">
         <h2 id="how-heading" className="text-[15px] font-extrabold text-ink">How Sambramo works</h2>
         <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
           A human-assisted concierge — not a directory you have to phone yourself.
@@ -609,7 +556,7 @@ function HowItWorks() {
             glass panel that is already a tint of the ground, and a second
             tint on top of the first is a smudge — the trust line is the one
             thing in this block someone actually needs to read. */}
-        <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-surface p-3.5 ring-1 ring-hairline/[0.08]">
+        <div className="a-well mt-5 flex items-start gap-2.5 p-4">
           <ShieldCheck size={16} className="mt-0.5 shrink-0 text-forest-600" />
           <p className="text-[11px] leading-relaxed text-ink-soft">
             Nothing is charged until you approve a plan, and we're live in{' '}
@@ -633,8 +580,8 @@ function HowItWorks() {
 function SupportStrip() {
   return (
     <section className="px-4">
-      <div className="home-glass flex items-center gap-3 p-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-xl ring-1 ring-hairline/[0.08]">💬</span>
+      <div className="a-card flex items-center gap-3 p-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-xl">💬</span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-extrabold text-ink">Talk to a person</p>
           <p className="text-[11px] text-ink-mute">Mon–Sat, 9am–8pm. A human, not a bot.</p>
@@ -651,7 +598,7 @@ function SupportStrip() {
         <a
           href={`tel:${BRAND.supportPhone}`}
           aria-label="Call support"
-          className="tap-48 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink ring-1 ring-hairline/10 transition-transform active:scale-95"
+          className="tap-48 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-ink transition-transform active:scale-95"
         >
           <PhoneCall size={16} />
         </a>
@@ -662,41 +609,35 @@ function SupportStrip() {
 
 /* ── Search ───────────────────────────────────────────────────────────── */
 /**
- * One search box over both halves of the business.
+ * One search box over everything we arrange.
  *
- * Someone typing "birthday" might want a cake delivered tomorrow or a party
- * arranged next month, and the app has no way to know which — so it answers
- * both, labelled, rather than guessing and being wrong half the time. The
- * local matches (occasions, festivals, categories) render instantly; the
- * product query is debounced behind them.
+ * This used to answer for both halves of the business — a debounced `products`
+ * query alongside the local matches, because somebody typing "birthday" might
+ * have wanted a cake tomorrow or a party next month.
+ *
+ * With the shop gone the obvious move is to delete the query and keep the
+ * local lists, and that would have been a mistake: it leaves a search box on
+ * the front door matching eleven occasions and eight festivals, so "catering",
+ * "photographer", "mehendi" and "mandap" all return nothing. A search that
+ * finds nothing is worse than no search.
+ *
+ * So it searches the services too. They are local — SERVICE_GROUPS is what the
+ * quote engine itself prices from — which means no query, no debounce, no
+ * loading state and no dependency on a migration having been applied.
  */
 function SearchResults({ query, onClear }) {
   const navigate = useNavigate()
-  const shopCategories = useShopCategories()
-  const [products, setProducts] = useState(null)
-  const reqId = useRef(0)
   const needle = query.toLowerCase()
 
   const occasions = EVENT_TYPES.filter(t => t.label.toLowerCase().includes(needle) || t.tagline?.toLowerCase().includes(needle))
   const festivals = FESTIVALS.filter(f => f.name.toLowerCase().includes(needle))
-  const categories = shopCategories.filter(c => c.label.toLowerCase().includes(needle) || c.tagline?.toLowerCase().includes(needle))
+  const services = ALL_SERVICES.filter(
+    v => v.name.toLowerCase().includes(needle) || v.desc?.toLowerCase().includes(needle),
+  ).slice(0, 8)
 
-  useEffect(() => {
-    const id = ++reqId.current
-    setProducts(null)
-    const t = setTimeout(() => {
-      const term = query.replace(/[%,]/g, ' ')
-      supabase.from('products').select('id, name, price, emoji, image_url, category')
-        .or(`name.ilike.%${term}%,description.ilike.%${term}%,occasion.ilike.%${term}%`)
-        .limit(8)
-        .then(({ data }) => { if (id === reqId.current) setProducts(data ?? []) })
-    }, 260)
-    return () => clearTimeout(t)
-  }, [query])
 
   const nothing =
-    occasions.length === 0 && festivals.length === 0 &&
-    categories.length === 0 && products !== null && products.length === 0
+    occasions.length === 0 && festivals.length === 0 && services.length === 0
 
   if (nothing) {
     return (
@@ -711,7 +652,7 @@ function SearchResults({ query, onClear }) {
           <Link to="/plan" className="rounded-xl bg-saffron-400 px-4 py-2.5 text-xs font-extrabold text-plum-950">
             Plan a celebration
           </Link>
-          <button onClick={onClear} className="rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-ink ring-1 ring-hairline/10">
+          <button onClick={onClear} className="a-chip">
             Clear
           </button>
         </div>
@@ -732,28 +673,15 @@ function SearchResults({ query, onClear }) {
         </Group>
       )}
 
-      {categories.length > 0 && (
-        <Group title="Browse the shop" hint="Delivered, no planning needed">
-          {categories.map(c => (
-            <Row key={c.id} emoji={c.emoji} label={c.label} sub={c.tagline}
-                 onClick={() => navigate(`/shop/${encodeURIComponent(c.id)}`)} />
+      {services.length > 0 && (
+        <Group title="Book just this one thing" hint="No whole celebration required">
+          {services.map(v => (
+            <Row key={v.id} emoji={v.emoji} label={v.name} sub={v.desc}
+                 onClick={() => navigate(`/service/${v.id}`)} />
           ))}
         </Group>
       )}
 
-      <Group title="Buy this" hint={products === null ? 'Searching…' : `${products.length} item${products.length === 1 ? '' : 's'}`}>
-        {products === null
-          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface-sunk/[0.07]" />)
-          : products.map(p => (
-              <Row
-                key={p.id}
-                emoji={p.emoji}
-                label={p.name}
-                sub={`${p.category} · ${formatINR(p.price)}`}
-                onClick={() => navigate(`/shop/product/${p.id}`)}
-              />
-            ))}
-      </Group>
     </div>
   )
 }
@@ -774,9 +702,9 @@ function Row({ emoji, label, sub, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="home-glass flex w-full items-center gap-3 p-3 text-left transition-transform active:scale-[0.99]"
+      className="a-card flex w-full items-center gap-3 p-4 text-left transition-transform active:scale-[0.99]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-base ring-1 ring-hairline/[0.08]">{emoji}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-ink/[0.05] text-base">{emoji}</span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-ink">{label}</span>
         {sub && <span className="block truncate text-[11px] text-ink-mute">{sub}</span>}
