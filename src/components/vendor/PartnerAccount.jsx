@@ -473,7 +473,7 @@ export default function PartnerAccount({
 
   if (open) {
     return (
-      <div>
+      <div className="partner-mobile">
         {/* Up one level, not always to More: from a referral to its
             trade, from a trade to the dashboard. `onUp` pops history when
             that is where the partner came from, so this button and
@@ -503,7 +503,7 @@ export default function PartnerAccount({
     : null
 
   return (
-    <div className="space-y-4">
+    <div className="partner-mobile space-y-4">
 
       <Identity vendor={vendor} profile={profile} statusMeta={statusMeta} plan={plan} />
 
