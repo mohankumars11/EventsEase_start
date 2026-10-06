@@ -35,7 +35,7 @@ export default function LocationPermission() {
   const navigate = useNavigate()
 
   return (
-    <div className="native-screen flex flex-col bg-white">
+    <div className="partner-mobile native-screen flex flex-col bg-white">
       <div className="safe-top flex-1 overflow-hidden px-7 pt-10">
         {/* The map hint. A drawn suggestion of a map rather than a real
             one: there is nothing to plot yet, and loading a tile provider
