@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Briefcase, MapPin, ShieldCheck, Landmark, Send,
+  UserRound, Briefcase, MapPin, ShieldCheck, Landmark, Send,
   Check, Lock, Loader2, TriangleAlert, ArrowRight,
 } from 'lucide-react'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
@@ -38,6 +38,7 @@ import InviteCodeEntry from '../../components/partner/referrals/InviteCodeEntry'
  */
 
 const ICON = {
+  details: UserRound,
   business: Briefcase,
   area: MapPin,
   compliance: ShieldCheck,
@@ -46,6 +47,7 @@ const ICON = {
 }
 
 const ROUTE = {
+  details: '/partner/setup/details',
   business: '/partner/setup/services',
   area: '/partner/setup/area',
   compliance: '/partner/setup/compliance',
@@ -103,20 +105,19 @@ export default function PartnerSetupIntro() {
   }
 
   return (
-    <div className="native-screen flex flex-col bg-white">
+    <div className="partner-mobile native-screen flex flex-col bg-white">
       <div className="safe-top min-h-0 flex-1 overflow-y-auto px-6 pt-8">
 
         <h1 className="text-[clamp(1.5rem,7vw,2rem)] font-extrabold leading-[1.05] tracking-tight text-plum-950">
           {returning ? <>Welcome back{firstName ? `, ${firstName}` : ''}<br />Let&apos;s finish setting up</>
-                     : <>Great!<br />Let&apos;s get started</>}
+                     : <>Great!<br />Let&apos;s get you live</>}
         </h1>
 
         <p className="mt-3 text-[14px] leading-relaxed text-ink/70">
-          Your Sambramo partner profile is almost ready.
+          Your Sambramo partner profile is a few focused steps away from going live.
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-ink/55">
-          Tell us about your business and the services you provide. We&apos;ll use this
-          information to match you with the right customers and event opportunities.
+          Complete the essentials below. You can edit everything later from your Partner Studio.
         </p>
 
         {/* Claims a code that came with an invitation link, once the
@@ -126,7 +127,7 @@ export default function PartnerSetupIntro() {
         {/* ── How much is left, said once ───────────────────────────
             A partner on step 4 of 6 is most of the way there, and a
             number is the cheapest way to say so. */}
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 rounded-2xl bg-plum-50 p-3.5 ring-1 ring-plum-100"><p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-700">Setup progress</p><div className="mt-2 flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/[0.07]">
             <div
               className="h-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500 transition-all"
@@ -138,7 +139,7 @@ export default function PartnerSetupIntro() {
           </span>
         </div>
 
-        <ol className="mt-6 flex flex-col gap-2.5 pb-4">
+        <ol className="mt-5 flex flex-col gap-2.5 pb-4">
           {steps.map(step => {
             const Icon = ICON[step.id]
             const tone = TONE[step.status] ?? TONE.LOCKED
@@ -153,11 +154,11 @@ export default function PartnerSetupIntro() {
                   data-status={step.status}
                   disabled={locked}
                   onClick={() => navigate(ROUTE[step.id])}
-                  className={`flex w-full items-start gap-3.5 rounded-[20px] bg-white p-4 text-left
+                  className={`flex w-full items-center gap-3 rounded-[18px] bg-white p-3.5 text-left
                               ring-1 transition active:scale-[0.99] disabled:active:scale-100
                               ${tone.ring} ${isCurrent ? 'ring-2' : ''} ${locked ? 'opacity-60' : ''}`}
                 >
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${tone.icon}`}>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
                     {step.status === 'COMPLETE' ? <Check size={19} strokeWidth={3} />
                       : locked ? <Lock size={16} />
                       : step.status === 'REQUIRES_ACTION' ? <TriangleAlert size={18} />
@@ -167,7 +168,7 @@ export default function PartnerSetupIntro() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
                       <span className="font-mono text-[11px] font-bold text-ink-mute">{step.n}</span>
-                      <span className="text-[14.5px] font-extrabold leading-tight text-plum-950">
+                      <span className="text-[14px] font-extrabold leading-tight text-plum-950">
                         {step.title}
                       </span>
                     </span>
