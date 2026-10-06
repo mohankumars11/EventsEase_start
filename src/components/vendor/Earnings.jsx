@@ -176,7 +176,7 @@ export default function Earnings({ vendorId, vendor, onAddPayout, onOpenReferral
   )
 
   return (
-    <div className="space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0">
+    <div className="partner-mobile space-y-3.5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:space-y-0">
       {stale && (
         <div className="flex items-start gap-2 rounded-[16px] bg-saffron-400/10 px-3.5 py-2.5 ring-1 ring-saffron-300/50 lg:col-span-12">
           <CloudOff size={14} className="mt-0.5 shrink-0 text-saffron-800" />
