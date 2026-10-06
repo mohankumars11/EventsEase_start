@@ -39,11 +39,12 @@ import { evaluateAll } from './verification/satisfaction'
  */
 
 export const STEPS = [
-  { id: 'business', n: '01', title: 'Business, Services & Pricing', blurb: 'Business basics, services, packages and customer-ready pricing.' },
-  { id: 'area', n: '02', title: 'Service Area & Availability', blurb: 'Where you work and when Sambramo can offer you scheduled jobs.' },
-  { id: 'compliance', n: '03', title: 'Verification & Compliance', blurb: 'Only the verification required for your selected services.' },
-  { id: 'bank', n: '04', title: 'Payout Setup', blurb: 'Where your Sambramo earnings are paid.' },
-  { id: 'review', n: '05', title: 'Review & Submit', blurb: 'Review your business, services, pricing, calendar, verification and payout once.' },
+  { id: 'details', n: '01', title: 'Business Profile', blurb: 'Tell customers who you are and what your business does.' },
+  { id: 'business', n: '02', title: 'Services & Pricing', blurb: 'Choose your trades, create an offer and set customer-ready pricing.' },
+  { id: 'area', n: '03', title: 'Service Area & Availability', blurb: 'Where you work and when Sambramo can offer you scheduled jobs.' },
+  { id: 'compliance', n: '04', title: 'Verification & Compliance', blurb: 'Only the verification required for your selected services.' },
+  { id: 'bank', n: '05', title: 'Payout Setup', blurb: 'Where your Sambramo earnings are paid.' },
+  { id: 'review', n: '06', title: 'Review & Submit', blurb: 'Review everything once, then send your application to Sambramo.' },
 ];
 
 export const STEP_IDS = STEPS.map(s => s.id)
@@ -76,6 +77,16 @@ export const STATUS = {
  * somebody reaches Review & Publish with nothing to sell. §17: one
  * complete service; the others may sit in draft.
  */
+function detailsDone({ vendor }) {
+  const businessName = String(vendor?.business_name ?? '').trim().length >= 3
+  const phone = String(vendor?.contact_phone ?? '').replace(/\D/g, '').length >= 10
+  return {
+    done: businessName && phone,
+    partial: !!vendor && (businessName || phone || !!String(vendor?.description ?? '').trim()),
+    detail: businessName && phone ? 'Business profile ready' : null,
+  }
+}
+
 function businessDone({ vendor, listings = [], pricing = {} }) {
   const configured = listings.filter(l => (l.offerings?.length ?? 0) > 0)
   const businessReady = !!String(vendor?.business_name ?? '').trim()
@@ -147,6 +158,7 @@ function reviewDone({ vendor }) {
 }
 
 const PREDICATE = {
+  details: detailsDone,
   business: businessDone,
   area: areaDone,
   compliance: complianceDone,
