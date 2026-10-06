@@ -69,24 +69,26 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
 
   if (!listed.length) {
     return (
-      <section className="rounded-[28px] bg-white p-5 ring-1 ring-ink/[0.07]">
-        <SambramoTradePictogram trade="End-to-End Event Logistics" size="md" showSparkle={false} title={false} />
+      <section className="partner-card p-5">
+        <div className="partner-art-box bg-plum-50">
+          <SambramoTradePictogram trade="End-to-End Event Logistics" size="md" showSparkle={false} title={false} />
+        </div>
         <h2 className="mt-4 text-[21px] font-extrabold text-plum-950">Pricing starts with a listing.</h2>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-mute">Add the service you actually provide. Sambramo will then open the pricing controls that belong to that service.</p>
-        {onOpenListings && <button type="button" onClick={onOpenListings} className="mt-4 w-full rounded-2xl bg-plum-700 py-3 text-[13px] font-extrabold text-white">Go to my listings</button>}
+        {onOpenListings && <button type="button" onClick={onOpenListings} className="partner-action partner-action-primary mt-4 w-full">Go to my listings</button>}
       </section>
     )
   }
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="partner-content space-y-5 pb-8">
       {onboarding && onExit ? (
-        <button type="button" onClick={onExit} className="rounded-full bg-plum-50 px-3 py-1.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-100">
+        <button type="button" onClick={onExit} className="partner-action partner-action-secondary min-h-[40px] rounded-full px-3 text-[11px]">
           ← Back to Business, Services & Pricing
         </button>
       ) : null}
-      <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
-        <div className="flex items-start gap-3">
+      <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white shadow-[0_12px_30px_rgba(42,8,92,.14)]">
+        <div className="flex items-center gap-3">
           <PricingPictogram />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
@@ -110,9 +112,11 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           const config = normalizeTrade(service.category, service.trade_id)
           const status = statusByService[service.id] ?? 'NOT_CONFIGURED'
           return (
-            <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="w-full rounded-[24px] bg-white p-4 text-left ring-1 ring-ink/[0.07] transition active:scale-[0.995]">
+            <button key={service.id} type="button" data-pricing-trade={service.category || service.trade || "trade"} onClick={() => setSelectedServiceId(service.id)} className="partner-card w-full p-4 text-left transition active:scale-[0.995]">
               <div className="flex items-start gap-3">
-                <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
+                <div className="partner-art-box shrink-0 bg-plum-50">
+                  <SambramoTradePictogram trade={service.category || service.trade} size="sm" showSparkle={false} title={false} />
+                </div>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[14.5px] font-extrabold text-ink">{service.name || service.category}</span>
@@ -130,7 +134,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           )
         })}
       </div>
-      <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+      <section className="partner-card p-4">
         <div className="flex items-start gap-2.5">
           <Clock3 size={16} className="mt-0.5 shrink-0 text-plum-700" />
           <div>
@@ -139,7 +143,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           </div>
         </div>
       </section>
-      <section className="rounded-[24px] bg-surface p-4">
+      <section className="partner-card-soft p-4">
         <div className="flex items-center gap-2 text-[12px] font-extrabold text-ink"><CircleCheck size={15} className="text-plum-600" /> Listing-driven by design</div>
         <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-mute">A partner never configures pricing for an unrelated trade. The editor reads the exact vendor service listing and its captured capabilities.</p>
       </section>
@@ -148,7 +152,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
 }
 
 function StatusSummary({ label, count, tone }) {
-  return <div className={`rounded-2xl p-3 ring-1 ring-ink/[0.06] ${tone}`}>
+  return <div className={`partner-card-soft min-h-[70px] p-3 ${tone}`}>
     <p className="text-[9px] font-extrabold uppercase tracking-wide opacity-70">{label}</p>
     <p className="mt-1 text-[18px] font-black">{count}</p>
   </div>
