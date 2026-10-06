@@ -87,48 +87,32 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    <div className="-mx-4 bg-white px-2.5 pb-2 pt-2 sm:-mx-6 sm:px-6">
-      <div className="grid grid-cols-4 gap-1 sm:gap-2">
-        {tiles.map((t, index) => {
+    <div className="partner-content pb-1 pt-1">
+      <div className="grid grid-cols-2 gap-2.5">
+        {tiles.map(t => {
           const Icon = t.icon
-          const palettes = [
-            'bg-[#E8CCFF] text-[#16002E] ring-[#D4A8FF]',
-            'bg-[#D8F6E2] text-[#071C12] ring-[#B9E8C9]',
-            'bg-[#D8EEFF] text-[#071B45] ring-[#B8DDFF]',
-            'bg-[#FFD9E7] text-[#350016] ring-[#FFBBD0]',
-          ]
-          const iconTones = [
-            'bg-[#F7EFFF] text-[#16002E]',
-            'bg-[#F2FFF6] text-[#071C12]',
-            'bg-[#F2F9FF] text-[#071B45]',
-            'bg-[#FFF2F7] text-[#350016]',
-          ]
+          const activeTone = t.id === 'offers' && t.value > 0
           return (
             <button
               key={t.id}
               type="button"
               onClick={() => onOpen?.(t.id)}
-              className={`group relative flex h-[82px] min-w-0 flex-col overflow-hidden rounded-[14px] p-2 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[112px] sm:rounded-[18px] sm:p-3 ${palettes[index]}`}
+              className={`partner-card min-h-[78px] p-3 text-left transition active:scale-[0.985] ${activeTone ? 'ring-2 ring-saffron-300' : ''}`}
             >
-              <span className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-white/25 blur-xl" />
-              <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] shadow-sm sm:h-10 sm:w-10 sm:rounded-[12px] ${iconTones[index]}`}>
-                <Icon size={18} strokeWidth={2.4} />
-              </span>
-
-              <span className="relative mt-auto text-[25px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[32px]">
-                {t.value}
-              </span>
-
-              <span className="relative mt-0 min-w-0 pr-6 whitespace-nowrap text-[11px] font-black leading-tight sm:pr-9 sm:text-[15px]">
-                {t.label}
-              </span>
-              <span className="absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/45 sm:bottom-3 sm:right-3 sm:h-8 sm:w-8">
-                <span className="text-[17px] leading-none sm:text-xl">›</span>
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${activeTone ? 'bg-saffron-100 text-saffron-800' : 'bg-plum-50 text-plum-700'}`}>
+                  <Icon size={17} strokeWidth={2.4} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[22px] font-black leading-none tracking-[-0.04em] text-ink">{t.value}</span>
+                  <span className="mt-1 block text-[11px] font-extrabold text-ink-mute">{t.label}</span>
+                </span>
+                <span className="ml-auto text-[18px] font-bold text-ink-faint">›</span>
+              </div>
             </button>
           )
         })}
-      </div>
+      </div>>
     </div>
   )
 }
