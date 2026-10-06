@@ -11,6 +11,7 @@ import { STATUS, dayStatus } from '../../lib/availability'
 import { indexInterestRows } from '../../lib/demand'
 import ScreenState from '../ui/ScreenState'
 import MonthGrid, { CalendarLegend } from './MonthGrid'
+import PartnerScreenHeader from '../layout/PartnerScreenHeader'
 import DayDetailSheet from './DayDetailSheet'
 import AvailabilityRangeSheet from './AvailabilityRangeSheet'
 import RecurringAvailability from './RecurringAvailability'
@@ -166,7 +167,7 @@ export default function CalendarMonth({
   }
 
   return (
-    <div className="partner-mobile space-y-3 pb-2">
+    <div className="partner-mobile space-y-3 pb-2"><PartnerScreenHeader title="Calendar" subtitle="Set when you can take scheduled work" />
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
       {setupMode && onSetupContinue && (
         <section className="rounded-[20px] bg-plum-50 px-4 py-3.5 ring-1 ring-plum-200">
@@ -188,7 +189,7 @@ export default function CalendarMonth({
 
         <div className="relative flex min-h-[92px] items-start justify-between gap-3">
           <div className="min-w-0 pt-1">
-            <h1 className="text-[27px] font-black leading-none tracking-[-0.04em]">Calendar</h1>
+            <h1 className="text-[20px] font-black leading-tight tracking-[-0.03em] text-ink">Your availability, at a glance</h1>
             <p className="mt-2 max-w-[245px] text-[12px] font-medium leading-[1.35] text-ink-mute">
               Manage your availability, block dates and stay in control of your bookings.
             </p>
