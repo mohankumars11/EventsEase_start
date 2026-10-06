@@ -5144,3 +5144,218 @@
   text-transform:none;
   text-align:center;
 }
+
+
+/* ==========================================================================
+   SAMBRAMO PARTNER MOBILE DESIGN SYSTEM v1
+   Phone-first visual contract for the Partner APK.
+   ========================================================================== */
+.partner-mobile {
+  --sp-canvas: #FFFFFF;
+  --sp-surface: #FFFFFF;
+  --sp-sunk: #F7F5FC;
+  --sp-plum: #2A085C;
+  --sp-plum-700: #4B168B;
+  --sp-plum-soft: #F3EEFA;
+  --sp-ink: #1F1033;
+  --sp-ink-soft: #4A3A63;
+  --sp-ink-mute: #6B5B85;
+  --sp-line: rgba(31,16,51,.08);
+  --sp-shadow: 0 6px 22px rgba(42,8,92,.06);
+  --sp-shadow-lift: 0 14px 34px rgba(42,8,92,.09);
+  background: var(--sp-canvas);
+  color: var(--sp-ink);
+}
+
+.partner-mobile .sp-container {
+  width: min(100%, 520px);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.partner-mobile .sp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid var(--sp-line);
+  backdrop-filter: blur(12px);
+}
+
+.partner-mobile .sp-screen-title {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  color: var(--sp-ink);
+}
+
+.partner-mobile .sp-section-title {
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 850;
+  letter-spacing: -.015em;
+  color: var(--sp-ink);
+}
+
+.partner-mobile .sp-body {
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 550;
+  color: var(--sp-ink-soft);
+}
+
+.partner-mobile .sp-card {
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-line);
+  border-radius: 18px;
+  box-shadow: var(--sp-shadow);
+}
+
+.partner-mobile .sp-card-lg {
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-line);
+  border-radius: 22px;
+  box-shadow: var(--sp-shadow);
+}
+
+.partner-mobile .sp-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #2A085C 0%, #4B168B 70%, #6A35B0 100%);
+  color: #fff;
+  box-shadow: 0 14px 34px rgba(42,8,92,.16);
+}
+
+.partner-mobile .sp-input {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 15px;
+  border: 1px solid rgba(31,16,51,.12);
+  background: #fff;
+  color: var(--sp-ink);
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 650;
+  outline: none;
+  transition: box-shadow .16s ease, border-color .16s ease;
+}
+.partner-mobile .sp-input:focus {
+  border-color: #6E38AE;
+  box-shadow: 0 0 0 3px rgba(110,56,174,.12);
+}
+
+.partner-mobile .sp-button {
+  min-height: 48px;
+  border-radius: 15px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 850;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.partner-mobile .sp-button-primary {
+  background: var(--sp-plum);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(42,8,92,.16);
+}
+.partner-mobile .sp-button-primary:active { transform: scale(.99); }
+.partner-mobile .sp-button-secondary {
+  background: #fff;
+  color: var(--sp-plum);
+  border: 1px solid rgba(42,8,92,.12);
+}
+.partner-mobile .sp-button-attention {
+  background: #F6C84A;
+  color: #24124B;
+}
+
+.partner-mobile .sp-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 850;
+  letter-spacing: .01em;
+}
+
+.partner-mobile .sp-touch {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.partner-mobile .sp-sticky-action {
+  position: sticky;
+  bottom: 0;
+  z-index: 25;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, #fff 75%, rgba(255,255,255,0));
+}
+
+.partner-mobile .sp-list-row {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.partner-mobile .sp-divider {
+  border-top: 1px solid var(--sp-line);
+}
+
+.partner-mobile .sp-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #F2EEF7;
+}
+.partner-mobile .sp-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent);
+  animation: sp-skeleton 1.15s infinite;
+}
+@keyframes sp-skeleton { to { transform: translateX(100%); } }
+
+.partner-mobile .sambramo-trade-pictogram {
+  width: 72px !important;
+  height: 72px !important;
+  aspect-ratio: 1 !important;
+  border-radius: 16px !important;
+}
+.partner-mobile .sambramo-trade-pictogram-md,
+.partner-mobile .sambramo-trade-pictogram-lg {
+  width: 72px !important;
+  height: 72px !important;
+}
+.partner-mobile .sambramo-trade-pictogram-sm {
+  width: 58px !important;
+  height: 58px !important;
+}
+.partner-mobile .sambramo-trade-art {
+  width: 100%;
+  height: 100%;
+}
+.partner-mobile .partner-trade-grid-card {
+  min-height: 154px;
+  padding: 12px;
+}
+
+@media (min-width: 600px) {
+  .partner-mobile .sp-container { padding-inline: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-mobile .sp-skeleton::after { animation: none; }
+}
