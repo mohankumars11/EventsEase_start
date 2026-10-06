@@ -3,6 +3,12 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
+      /* Tailwind's smallest default breakpoint is sm:640px, which is
+         useless on phones -- every handset this app runs on is below
+         it, so a layout that needs to differ between a 360px Redmi and
+         a 430px iPhone had no way to say so. 380 is the line where four
+         stat tiles stop fitting comfortably across. */
+      screens: { xs: '380px' },
       colors: {
         marigold: {
           50:  '#fffbeb',
@@ -29,6 +35,26 @@ export default {
           900: '#4c0519',
         },
         cream: '#FFF8F0',
+        /* ── The colour the empty listing is painted ─────────────
+           The most important screen in the app was plum-950, which
+           on a phone in daylight reads as navy — the colour of a
+           bank app, and the one thing this screen must not feel
+           like. A partner reaches it once, in their first two
+           minutes, and it has to look like something is being
+           offered rather than something being administered.
+
+           Kumkuma red: the red of the thread, the invitation card
+           and the marigold border, and the only colour on that
+           card. Used nowhere else, so it never becomes decoration.
+           600 is the card; 700 is the pressed state. */
+        kumkuma: {
+          50:  '#fff1f2',
+          100: '#ffe0e3',
+          500: '#f43248',
+          600: '#ec1c38',
+          700: '#c8112a',
+          900: '#7d0a1a',
+        },
         plum: {
           50:  '#f5f0ff',
           100: '#ede0ff',
@@ -133,12 +159,86 @@ export default {
         'ink-faint':    'rgb(var(--ink-faint) / <alpha-value>)',
         surface:        'rgb(var(--surface) / <alpha-value>)',
         'surface-sunk': 'rgb(var(--surface-sunk) / <alpha-value>)',
+        /* Opaque page colours. Unlike surface-sunk these are safe to
+           use bare -- see the note beside them in index.css. */
+        page:           'rgb(var(--page) / <alpha-value>)',
+        'page-sunk':    'rgb(var(--page-sunk) / <alpha-value>)',
         hairline:       'rgb(var(--hairline) / <alpha-value>)',
         accent:         'rgb(var(--accent) / <alpha-value>)',
 
         // The savings colour. Never used for anything that isn't money off
         // or genuinely urgent — the moment it decorates a heading it stops
         // meaning "offer".
+        /* ── The brand blue ──────────────────────────────────────────
+           Sambramo's wordmark colour. Deep enough to read as ceremonial
+           rather than corporate — a royal indigo-blue, the colour of a
+           wedding invitation card rather than a bank. 800 is the ink the
+           wordmark is set in on white; 950 is for the rare dark surface.
+
+           It sits beside plum rather than replacing it: plum stays the
+           product's interaction colour (buttons, the Plan tab, selection),
+           and royal is the *identity* colour. Two jobs, two ramps — the
+           moment a brand colour also means "tap this", every logo on the
+           page starts looking like a button. */
+        /* ── Comfortable Aqua — the brand ground ─────────────────────
+           Replaces navy as the colour the brand is *stood on*: the app
+           icon, the splash, the tab bar's primary chip, the seal on a
+           celebration card. Sampled from the reference tile the owner
+           supplied — a deep teal-blue at the top-left corner running out to
+           a light turquoise at the bottom-right.
+
+           Why a whole ramp rather than the two stops the gradient needs:
+           the ground is not only ever a gradient. It is also a 40px seal, a
+           32px tab chip, a text colour for the wordmark on white, and a
+           focus ring — and each of those wants a different point on the
+           same curve. Two hex codes and a pile of one-off `opacity`
+           modifiers is how a brand colour turns into eleven slightly
+           different brand colours.
+
+           `800` is the wordmark's colour on a white ground. It is the
+           darkest stop that still reads as aqua rather than as navy — the
+           thing this ramp exists to stop being — and it clears 4.5:1 on
+           white, which the lighter stops do not. Never letter a wordmark in
+           500 or above on white; it is a surface colour, not an ink. */
+        aqua: {
+          50:  '#EDF8F7',
+          100: '#D2EDEA',
+          200: '#A8DBD5',
+          300: '#7CC7C0',
+          400: '#55B2AF',   // the gradient's far corner
+          500: '#3D96A4',
+          600: '#2F8AA0',   // the gradient's midpoint
+          700: '#256F8A',
+          800: '#1B5C73',   // the gradient's near corner, and the ink on white
+          900: '#134A5E',
+          950: '#0C3543',
+        },
+        royal: {
+          50:  '#eff4ff',
+          100: '#dbe6fe',
+          200: '#bfd3fe',
+          300: '#93b4fd',
+          400: '#608cfa',
+          500: '#3b66f6',
+          600: '#2546eb',
+          700: '#1d34d8',
+          800: '#102a8f',   // the wordmark
+          900: '#0b1f6b',
+          950: '#061448',
+        },
+        /* Leaf gold for the monogram. Metallic gold is three stops — a pale
+           highlight, a saturated body, a burnt shadow — and a single flat
+           yellow reads as plastic. These are the three the gradient runs
+           through. */
+        gold: {
+          100: '#fdf3c8',
+          200: '#f7e3a1',
+          300: '#eccd74',
+          400: '#e0b44f',
+          500: '#c9973a',
+          600: '#a8762b',
+          700: '#7d551d',
+        },
         chilli: {
           50:  '#fef3f2',
           100: '#fde0dd',
@@ -159,6 +259,10 @@ export default {
         // different from the rest of the page.
         sans:    ['Manrope', 'system-ui', 'sans-serif'],
         serif:   ['Playfair Display', 'Georgia', 'serif'],
+        /* The monogram only. A Spencerian capital — the flag at the top and
+           the open lower curl are what make the mark, and neither exists in a
+           book serif. One glyph is loaded, not a text face. */
+        script:  ['Pinyon Script', 'Snell Roundhand', 'Apple Chancery', 'cursive'],
         display: ['Playfair Display', 'Georgia', 'serif'],
         body:    ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
       },
@@ -166,6 +270,15 @@ export default {
         xl:   '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
+        // Hero-scale cards only (occasion mosaic tiles, plan CTA card) —
+        // the redesign's "soft depth" reads better with one size up from
+        // the previous ceiling at that scale.
+        '4xl': '2.5rem',
+        // Aurora geometry. Material 3 Expressive moved Android away from the
+        // 8–16px corner era; at phone scale a 28px card reads as an object you
+        // could pick up, where a 12px one reads as a div. These are the two
+        // sizes the Aurora surfaces use — everything else keeps the old scale.
+        '5xl': '3rem',
       },
       keyframes: {
         'fade-up': {
@@ -215,6 +328,34 @@ export default {
           '80%':  { transform: 'scale(1.9)',  opacity: '0' },
           '100%': { transform: 'scale(1.9)',  opacity: '0' },
         },
+        // The soft bloom behind .glow-ring — breathes rather than blinks,
+        // so a hero CTA reads as lit rather than as an alert.
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.55', transform: 'scale(1)' },
+          '50%':      { opacity: '0.9',  transform: 'scale(1.06)' },
+        },
+        // A barely-there drift for hero-scale decorative shapes — same
+        // transform-only compositor budget as `float`, slower and smaller
+        // so it reads as depth rather than as a bounce.
+        'drift-soft': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%':      { transform: 'translate(6px, -6px)' },
+        },
+        // Aurora spring entrances — overshoot, then settle.
+        'spring-up': {
+          '0%':   { opacity: '0', transform: 'translateY(18px) scale(0.97)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'spring-in': {
+          '0%':   { opacity: '0', transform: 'scale(0.92)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        // The slow drift of the aurora wash behind a hero. Background-position
+        // only, so it stays off the main thread.
+        'aurora-pan': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%':      { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
         'fade-up':   'fade-up 0.6s ease forwards',
@@ -225,6 +366,15 @@ export default {
         'spin-slow': 'spin-slow 8s linear infinite',
         sheen:       'sheen 3.2s ease-in-out infinite',
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',
+        'glow-pulse': 'glow-pulse 2.4s ease-in-out infinite',
+        'drift-soft': 'drift-soft 6s ease-in-out infinite',
+        // Aurora entrances. The overshoot is the point: Material 3
+        // Expressive's spring curves are what make a screen feel like it
+        // arrived rather than appeared, and it is the single cheapest thing
+        // that separates a native-feeling app from a website in a shell.
+        'spring-up':  'spring-up 0.52s cubic-bezier(0.2, 0.9, 0.25, 1.12) both',
+        'spring-in':  'spring-in 0.44s cubic-bezier(0.2, 0.9, 0.25, 1.12) both',
+        'aurora-pan': 'aurora-pan 14s ease-in-out infinite',
       },
     },
   },

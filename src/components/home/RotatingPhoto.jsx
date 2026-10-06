@@ -15,7 +15,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
  * exactly four per occasion for all fifteen, as static Pexels URLs. So the
  * rotation costs nothing at runtime.
  *
- * Doing the same through ProductImage's `query` prop would not have worked —
+ * Doing the same through RemoteImage's `query` prop would not have worked —
  * that fires a live Unsplash search per instance and the app caps those at 24
  * per page load. Fifteen occasions times four frames is sixty searches, so
  * roughly two-thirds of the grid would have quietly fallen back to emoji
@@ -81,7 +81,7 @@ export default function RotatingPhoto({
     <span className={`relative block overflow-hidden bg-plum-100 ${className}`}>
       {/* The emoji sits underneath permanently, so a photo that fails to load
           leaves a finished tile instead of a hole. Same contract as
-          ProductImage. */}
+          RemoteImage. */}
       {emoji && (
         <span
           aria-hidden="true"

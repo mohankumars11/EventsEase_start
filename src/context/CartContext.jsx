@@ -183,8 +183,19 @@ export function CartProvider({ children }) {
     }
   })
 
+  /* Wrapped, like the reader above it.
+     This provider mounts on every launch and sits OUTSIDE every per-route
+     boundary, so a throw here takes down the whole app rather than one
+     page — and it throws for real reasons: blocked DOM storage, a
+     private window, a full quota. Losing a saved basket is a bad
+     afternoon; losing the app on launch is the app not working. */
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+    } catch {
+      /* The cart still works for this session; it just will not survive
+         a restart. Nothing downstream reads the write back. */
+    }
   }, [cart])
 
   // Load the customer's saved cart from Supabase once they're known.
@@ -266,7 +277,20 @@ export function CartProvider({ children }) {
           package_name: action.pkg.name,
           price_min:    action.pkg.price_min ?? null,
           price_max:    action.pkg.price_max ?? null,
-          complimentary: !!action.complimentary,
+          /* ── `complimentary` is NOT sent ─────────────────────────────
+             `cart_packages` has no such column and never did, so this
+             upsert was failing in full — not dropping one field, failing
+             — and it is fired with a bare .then() and no error handler,
+             so every ADD_PACKAGE silently did not persist. Found by
+             scripts/check-column-names.mjs.
+
+             It is removed rather than added as a column because the
+             feature behind it is already gone: see the note in
+             EventServices.jsx, where the complimentary-hamper
+             auto-attach was deleted with the hampers themselves.
+             Nothing sets it true any more. The read below keeps its
+             `?? false` default, so a row without it behaves exactly as
+             an un-complimentary one. */
           booking_date: action.details?.date ?? null,
           booking_time: action.details?.time || null,
           guest_count:  action.details?.guestCount ?? null,
@@ -334,27 +358,18 @@ export function CartProvider({ children }) {
   // adding a cake to the shop cart used to leave the badge reading 0.
   const cartCount = totalCount + productCount
 
-  // The app has two genuinely different carts — shop products (delivered
-  // goods) and event services/packages (quoted work) — and one cart icon
-  // in the header. Send people to whichever one actually has their stuff
-  // in it, preferring products since that's the checkout-now flow.
+  // There is one cart now, and one place it lives.
   //
-  // ── Guests go to the services cart too, now ─────────────────────────
-  // This used to send every signed-out visitor to /shop/cart, because the
-  // services cart was customer-only and a tap on the cart icon would have
-  // bounced them to /login. That was the right call for the guard that
-  // existed and the wrong shape for the funnel: a guest who had just added
-  // a decoration setup tapped the cart, saw an empty *shop* basket, and
-  // reasonably concluded the add had failed.
+  // This used to fork three ways between /shop/cart and the services cart,
+  // preferring products because that was the checkout-now flow — and it fell
+  // back to /shop/cart when both were empty. With the storefront leaving,
+  // that fallback is a cart icon pointing at a route that will not exist.
   //
-  // The services cart is public now — browse and fill it freely, sign in at
-  // send, exactly as the shop does — so the honest answer is to point at
-  // whichever cart holds their things regardless of who they are.
-  const cartPath = productCount > 0
-    ? '/shop/cart'
-    : totalCount > 0
-      ? '/dashboard/customer/cart'
-      : '/shop/cart'
+  // Repointed ahead of the removal rather than with it, so "the cart icon
+  // goes somewhere real" and "the shop is gone" are two changes that can be
+  // verified separately. The services cart has been public since the guard
+  // came off, so there is no signed-out case to special-case either.
+  const cartPath = '/dashboard/customer/cart'
 
   return (
     <CartContext.Provider value={{

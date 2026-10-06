@@ -7,7 +7,7 @@ import { perPlateFor } from '../../utils/quote'
 import { formatINR } from '../../utils/format'
 import { CUISINE_PHOTOS } from '../../config/generatedServicePhotos'
 import OptionArt from './OptionArt'
-import ImageSourceBadge from '../shop/ImageSourceBadge'
+import ImageSourceBadge from '../common/ImageSourceBadge'
 
 /**
  * The menu, actually built.

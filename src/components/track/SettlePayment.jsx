@@ -50,7 +50,7 @@ export default function SettlePayment({
   const row = settlement.settlement
 
   return (
-    <section className={`overflow-hidden rounded-2xl bg-surface ring-1 ring-hairline/[0.08] ${className}`}>
+    <section className={`overflow-hidden a-card ${className}`}>
       <div className="border-b border-hairline/[0.08] px-4 py-3.5">
         <h3 className="text-[14px] font-extrabold text-ink">How you pay for this</h3>
         <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-mute">

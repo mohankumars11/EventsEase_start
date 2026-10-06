@@ -1,0 +1,76 @@
+/* The sourcing slider's motion.
+ *
+ * Deliberately much smaller than DoorstepFilm.css, and that is the point. Home
+ * already carries one drawn film in the commerce block; a second panel at the
+ * same weight is the "two adverts rather than a hierarchy" problem PromoDeck's
+ * own header documents. This is a rail — one resource at a time, sliding — so
+ * it needs a transition and a scan, not an engine.
+ *
+ * Transform and opacity only, so it stays on the compositor.
+ */
+
+/* ── The slide ────────────────────────────────────────────────────────────
+   Horizontal, because the panel is called a slider and reads as one: the
+   resource leaving and the resource arriving travel the same axis the rail
+   implies. A vertical or cross-fade swap here reads as content being replaced
+   rather than as a list being advanced through. */
+@keyframes ss-slide-in {
+  0%   { opacity: 0; transform: translateX(26px); }
+  100% { opacity: 1; transform: none; }
+}
+.ss-slide { animation: ss-slide-in 0.52s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* The three parts of a slide arrive in reading order rather than together —
+   the tile is the subject, the name identifies it, the sourcing line is the
+   claim, and a simultaneous entrance gives the eye no order to take them in. */
+.ss-stagger-1 { animation-delay: 0.04s; }
+.ss-stagger-2 { animation-delay: 0.11s; }
+.ss-stagger-3 { animation-delay: 0.18s; }
+
+/* ── The market scan ──────────────────────────────────────────────────────
+   Three bars that grow to different heights and settle. This is the only
+   drawing in the panel and it carries the panel's second claim — that a price
+   here is the market's price today, not a rate card. Three quotes, unequal,
+   and the range that falls out of them.
+
+   Bars scale from the bottom so they grow the way a bar chart grows; the
+   default fill-box origin is the centre, which reads as a bar inflating. */
+@keyframes ss-bar {
+  0%   { transform: scaleY(0.08); opacity: 0; }
+  55%  { opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+.ss-bar {
+  transform-origin: bottom center;
+  animation: ss-bar 0.7s cubic-bezier(0.34, 1.25, 0.5, 1) both;
+}
+
+/* The sweep that crosses them — a scan in progress rather than a finished
+   chart. Slow and low-contrast: at any more than this it becomes the subject
+   of the panel instead of the texture behind it. */
+@keyframes ss-sweep {
+  0%   { opacity: 0; transform: translateX(-120%); }
+  18%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(320%); }
+}
+.ss-sweep { animation: ss-sweep 2.8s ease-in-out infinite; }
+
+/* ── The audience pill ────────────────────────────────────────────────────
+   Individuals ⇄ Businesses, alternating on its own beat rather than the
+   resource's, so the two never change in the same frame. Two things swapping
+   in unison reads as the whole panel reloading. */
+@keyframes ss-pill {
+  0%   { opacity: 0; transform: translateY(-7px); }
+  100% { opacity: 1; transform: none; }
+}
+.ss-pill { animation: ss-pill 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* The settled frame must not be still. A very slow drift on the tile is the
+   cheapest way to keep the panel alive between slides without competing with
+   the entrance. */
+@keyframes ss-drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3.5px); }
+}
+.ss-drift { animation: ss-drift 3.4s ease-in-out infinite; }
