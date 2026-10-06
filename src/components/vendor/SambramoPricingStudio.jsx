@@ -79,7 +79,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   }
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="partner-mobile space-y-4 pb-6">
       {onboarding && onExit ? (
         <button type="button" onClick={onExit} className="rounded-full bg-plum-50 px-3 py-1.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-100">
           ← Back to Business, Services & Pricing
@@ -95,7 +95,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
           </div>
         </div>
       </section>
-      <section className="grid grid-cols-4 gap-2">
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatusSummary label="Live" count={packageSummary.live} tone="bg-forest-50 text-forest-800" />
         <StatusSummary label="Draft" count={packageSummary.draft} tone="bg-surface text-ink-soft" />
         <StatusSummary label="Review" count={packageSummary.review} tone="bg-amber-50 text-amber-800" />
