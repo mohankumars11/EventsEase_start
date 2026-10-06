@@ -13,7 +13,7 @@ import { queueTrades } from '../../lib/tradeQueue'
  * What you offer — the 26 trades, as a decision rather than a dropdown.
  *
  * ══════════════════════════════════════════════════════════════════════
- * WHY ROWS AND NOT THE GRID
+ * WHY TWO-UP VISUAL CARDS
  * ══════════════════════════════════════════════════════════════════════
  *
  * The compact two-up grid is right on the Listing tab, where a partner
@@ -179,7 +179,7 @@ export default function WhatYouOffer() {
         <div className="mt-4 pb-4">
           <TradeGrid
             q={q} setQ={setQ}
-            layout="rows"
+            layout="grid"
             selected={picked}
             disabledTrades={have}
             onPick={toggle}
