@@ -319,7 +319,7 @@ export default function VendorDashboard() {
        Earnings is the only tab with a desktop layout: a two-column
        dashboard needs more than 1024px to be worth having, and every
        other tab is a phone column by design. */
-    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pt-5`}>
+    <div className={`partner-mobile w-full ${tab === 'earnings' ? 'lg:max-w-6xl' : 'max-w-[520px]'} mx-auto px-4 pt-3 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pt-4`}>
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
