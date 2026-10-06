@@ -217,7 +217,7 @@ export default function TradeGrid({
             </button>
           )
         })}
-      </div>, { useMemo } from 'react'
+      </div>
       )}
 
       {!list.length && (
