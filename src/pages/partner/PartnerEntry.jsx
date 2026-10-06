@@ -219,7 +219,7 @@ export default function PartnerEntry() {
 
        So this is a leftover being removed rather than a design being
        overridden, and the content needs no changes to follow it. */
-    <div className="partner-mobile flex min-h-[100dvh] flex-col bg-white">
+    <div className="partner-mobile flex min-h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-white">
 
       {/* The cards used to be the hero of this screen and the location
           gate used to sit over it. Both are their own routes now --
@@ -241,7 +241,7 @@ export default function PartnerEntry() {
           So no overlap, and no top radius either: the hero already curves
           at its bottom edge, and two opposing curves meeting would pinch.
           One rounded edge, one flat, which is how the reference does it. */}
-      <main className="relative z-10 mx-auto flex w-full max-w-[520px] flex-1 bg-white px-4 pb-10 pt-5">
+      <main className="relative z-10 mx-auto flex min-h-0 w-full max-w-[520px] flex-1 flex-col overflow-y-auto bg-white px-4 pb-8 pt-5 overscroll-contain">
         {stage === 'email' ? (
           <>
             {/* Two words, decided before anything is typed. Kept because
@@ -341,7 +341,7 @@ export default function PartnerEntry() {
             )}
             </>)}
 
-            <section className="mt-6 rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
+            <section className="mt-5 rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
               <p className="text-[13px] leading-snug text-ink-mute">
                 {isNew
                   ? 'Use your email to create the partner account. We send a six-digit code.'
@@ -372,7 +372,6 @@ export default function PartnerEntry() {
                     inputMode="email"
                     autoCapitalize="off"
                     autoCorrect="off"
-                    autoFocus
                     className="sp-input w-full pl-10 pr-4"
                   />
                 </div>
