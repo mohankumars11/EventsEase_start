@@ -3,6 +3,7 @@ import { ChevronRight, CircleCheck, Clock3, UtensilsCrossed } from 'lucide-react
 import { supabase } from '../../lib/supabase'
 import CateringPricingStudio from './CateringPricingStudio'
 import SambramoTradePictogram from './SambramoTradePictogram'
+import PricingPictogram from './PricingPictogram'
 import TradePricingStudio from './TradePricingStudio'
 import { normalizeTrade } from '../../data/sambramoBusinessPreview'
 import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTransactionLane'
@@ -86,7 +87,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
       ) : null}
       <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-plum-950 via-plum-800 to-violet-700 p-5 text-white">
         <div className="flex items-start gap-3">
-          <SambramoTradePictogram trade={listed[0]?.category || "End-to-End Event Logistics"} size="sm" showSparkle={false} title={false} />
+          <PricingPictogram />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">Partner pricing</p>
             <h2 className="mt-1 text-[23px] font-extrabold leading-tight">Price what you actually sell.</h2>
