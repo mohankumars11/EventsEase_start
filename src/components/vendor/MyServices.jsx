@@ -85,7 +85,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
   }
 
   return (
-    <div className="space-y-2">
+    <div className="partner-mobile space-y-2">
       {!rows.length && (
         <p className="rounded-2xl bg-ink/[0.02] p-4 text-[13px] leading-relaxed text-ink-mute">
           You have not listed anything yet. Add what you do and we will start
@@ -97,12 +97,12 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
         const meta = LISTING_STATUS[row.status] ?? LISTING_STATUS.draft
         const waiting = row.offerings.filter(o => o.review_status === 'under_review').length
         return (
-          <div key={row.trade} className="rounded-2xl bg-white p-3 ring-1 ring-ink/[0.06]">
+          <div key={row.trade} className="rounded-[18px] bg-white p-3.5 ring-1 ring-ink/[0.06]">
             <button
               type="button"
               data-my-service={row.trade}
               onClick={() => onOpenTrade?.(row.trade)}
-              className="flex w-full items-center gap-3 text-left"
+              className="flex w-full min-h-[64px] items-center gap-3 text-left"
             >
               <SambramoTradePictogram trade={row.trade} size="sm" showSparkle={false} title={false} className="shrink-0" />
               <span className="min-w-0 flex-1">
