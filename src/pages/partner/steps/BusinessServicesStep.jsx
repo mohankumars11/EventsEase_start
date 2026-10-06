@@ -6,6 +6,7 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 import SambramoPricingStudio from '../../../components/vendor/SambramoPricingStudio'
 import { ensureVendorRow } from '../../../lib/ensureVendor'
+import SambramoTradePictogram from '../../../components/vendor/SambramoTradePictogram'
 
 export default function BusinessServicesStep() {
   const navigate = useNavigate()
@@ -141,8 +142,8 @@ export default function BusinessServicesStep() {
               return (
                 <li key={offering.id}>
                   <div className="partner-v2-list-row">
-                    <div className="partner-v2-mini-art bg-plum-50">
-                      <img src="/assets/sambramo/trades/fallback.webp" alt="" aria-hidden="true" />
+                    <div className="partner-v2-mini-art">
+                      <SambramoTradePictogram trade={listing.trade} size="sm" showSparkle={false} title={false} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-extrabold text-ink">{offering.name || listing.trade}</p>
