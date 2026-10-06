@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import CateringPricingStudio from './CateringPricingStudio'
 import SambramoTradePictogram from './SambramoTradePictogram'
 import PricingPictogram from './PricingPictogram'
+import PartnerScreenHeader from '../layout/PartnerScreenHeader'
 import TradePricingStudio from './TradePricingStudio'
 import { normalizeTrade } from '../../data/sambramoBusinessPreview'
 import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTransactionLane'
@@ -79,7 +80,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   }
 
   return (
-    <div className="partner-mobile space-y-4 pb-6">
+    <div className="partner-mobile space-y-4 pb-6"><PartnerScreenHeader title="Pricing" subtitle="Packages, rates and customer-ready offers" />
       {onboarding && onExit ? (
         <button type="button" onClick={onExit} className="rounded-full bg-plum-50 px-3 py-1.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-100">
           ← Back to Business, Services & Pricing
