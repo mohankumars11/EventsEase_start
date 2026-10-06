@@ -87,44 +87,31 @@ export default function JobsStats({ vendorId, onOpen }) {
   ]
 
   return (
-    <div className="-mx-4 bg-white px-2.5 pb-2 pt-2 sm:-mx-6 sm:px-6">
-      <div className="grid grid-cols-4 gap-1 sm:gap-2">
+    <div className="bg-white pb-3 pt-2">
+      <div className="grid grid-cols-2 gap-2">
         {tiles.map((t, index) => {
           const Icon = t.icon
-          const palettes = [
-            'bg-[#E8CCFF] text-[#16002E] ring-[#D4A8FF]',
-            'bg-[#D8F6E2] text-[#071C12] ring-[#B9E8C9]',
-            'bg-[#D8EEFF] text-[#071B45] ring-[#B8DDFF]',
-            'bg-[#FFD9E7] text-[#350016] ring-[#FFBBD0]',
-          ]
-          const iconTones = [
-            'bg-[#F7EFFF] text-[#16002E]',
-            'bg-[#F2FFF6] text-[#071C12]',
-            'bg-[#F2F9FF] text-[#071B45]',
-            'bg-[#FFF2F7] text-[#350016]',
+          const tones = [
+            'bg-plum-50 text-plum-800 ring-plum-100',
+            'bg-amber-50 text-amber-900 ring-amber-100',
+            'bg-blue-50 text-blue-900 ring-blue-100',
+            'bg-forest-50 text-forest-900 ring-forest-100',
           ]
           return (
             <button
               key={t.id}
               type="button"
               onClick={() => onOpen?.(t.id)}
-              className={`group relative flex h-[82px] min-w-0 flex-col overflow-hidden rounded-[14px] p-2 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[112px] sm:rounded-[18px] sm:p-3 ${palettes[index]}`}
+              className={`relative flex min-h-[86px] items-center gap-3 overflow-hidden rounded-[18px] p-3.5 text-left ring-1 shadow-[0_5px_18px_rgba(42,8,92,0.05)] transition active:scale-[0.99] ${tones[index]}`}
             >
-              <span className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-white/25 blur-xl" />
-              <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] shadow-sm sm:h-10 sm:w-10 sm:rounded-[12px] ${iconTones[index]}`}>
-                <Icon size={18} strokeWidth={2.4} />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 ring-1 ring-white/70">
+                <Icon size={19} strokeWidth={2.4} />
               </span>
-
-              <span className="relative mt-auto text-[25px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[32px]">
-                {t.value}
+              <span className="min-w-0">
+                <span className="block text-[24px] font-black leading-none tracking-[-0.04em] tabular-nums">{t.value}</span>
+                <span className="mt-1 block truncate text-[11.5px] font-extrabold opacity-80">{t.label}</span>
               </span>
-
-              <span className="relative mt-0 min-w-0 pr-6 whitespace-nowrap text-[11px] font-black leading-tight sm:pr-9 sm:text-[15px]">
-                {t.label}
-              </span>
-              <span className="absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/45 sm:bottom-3 sm:right-3 sm:h-8 sm:w-8">
-                <span className="text-[17px] leading-none sm:text-xl">›</span>
-              </span>
+              <span className="ml-auto text-[20px] opacity-45" aria-hidden="true">›</span>
             </button>
           )
         })}
