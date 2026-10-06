@@ -167,24 +167,6 @@ export default function CalendarMonth({
 
   return (
     <div className="space-y-3 pb-2">
-      <section className="rounded-[20px] bg-amber-50 px-4 py-3.5 ring-1 ring-amber-200">
-        <div className="flex items-start gap-2.5">
-          <CalendarCheck size={16} className="mt-0.5 shrink-0 text-amber-700" />
-          <div>
-            <p className="text-[12.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</p>
-            <p className="mt-1 text-[11.5px] leading-relaxed text-amber-900/80">
-              Sambramo offers scheduled jobs only when this calendar shows you available and your capacity allows it.
-              Blocking or reducing availability can stop new offers for those dates.
-            </p>
-            <p className="mt-2 text-[10.5px] font-bold text-amber-900/70">
-              Before changing dates: check your accepted and pending jobs so you do not reduce your own availability.
-            </p>
-            <p className="mt-2 text-[10.5px] font-black text-amber-950/70">
-              Keep this calendar current. Scheduled customer bookings normally open up to 180 days ahead; maintain your partner availability up to 365 days.
-            </p>
-          </div>
-        </div>
-      </section>
       {/* Reference-matched calendar hero: compact, edge-aligned and mobile-first. */}
       {setupMode && onSetupContinue && (
         <section className="rounded-[20px] bg-plum-50 px-4 py-3.5 ring-1 ring-plum-200">
@@ -280,6 +262,19 @@ export default function CalendarMonth({
           Today
         </button>
       </div>
+
+      <section className="rounded-[18px] bg-amber-50/95 px-3.5 py-3 ring-1 ring-amber-200">
+        <button type="button" className="flex w-full items-start gap-2.5 text-left" onClick={() => setRecurring(true)}>
+          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-amber-100 text-amber-700">
+            <CalendarCheck size={15} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11.5px] font-black text-amber-950">Your calendar controls the jobs you receive.</span>
+            <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-900/75">Keep dates current so Sambramo can offer scheduled work only when you have capacity.</span>
+          </span>
+          <ChevronRight size={15} className="mt-1 shrink-0 text-amber-800" />
+        </button>
+      </section>
 
       {availabilityError && (
         <p className="flex items-start gap-2 rounded-[16px] bg-rose-50 px-3.5 py-3 text-[11.5px] font-bold leading-snug text-rose-800 ring-1 ring-rose-200">
