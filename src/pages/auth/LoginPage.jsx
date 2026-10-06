@@ -310,7 +310,7 @@ export default function LoginPage() {
                      every job card, so the button that starts the session
                      matches the button that earns the money. */
                   className={`w-full py-3.5 text-base rounded-2xl font-extrabold disabled:opacity-60 disabled:cursor-not-allowed ${
-                    PARTNER ? 'bg-saffron-400 text-plum-950' : 'btn-plum'
+                    'btn-plum'
                   }`}>
                   {DEV_PREVIEW ? 'Continue in development →' : loading ? 'Sending code…' : 'Send OTP →'}
                 </button>
