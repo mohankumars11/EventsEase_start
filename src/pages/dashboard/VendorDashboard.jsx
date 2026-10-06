@@ -57,23 +57,16 @@ import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
  */
 
 const TABS = [
-  // Jobs first, and it is the only tab whose position is load-bearing.
-  // An offer lives for 45 seconds; a partner who has to find the right
-  // tab has already lost it. Everything else here can wait.
-  { id: 'offers',       label: 'Jobs',         icon: Bell             },
-  { id: 'pricing',      label: 'Pricing',      icon: Calculator        },
-  // Second only to Jobs. A partner opens this app to work and to find
-  // out what they have earned, in that order.
-  { id: 'earnings',     label: 'Earnings',     icon: IndianRupee     },
-  /* Overview is NOT here on purpose. It is absent from
-     PartnerBottomNav, so listing it made a tab reachable only by
-     typing a URL — and TABS is what validates ?tab=, so a stale link
-     to it rendered a screen with no way back to the others. The
-     component stays; nothing routes to it. */
-  { id: 'list',         label: 'Listing',      icon: ClipboardList   },
-  { id: 'availability', label: 'Calendar',     icon: CalendarDays    },
-  { id: 'account',      label: 'Account',      icon: UserCog         },
+  { id: 'offers',       label: 'Jobs',      icon: Bell },
+  { id: 'pricing',      label: 'Pricing',   icon: Calculator },
+  { id: 'availability', label: 'Calendar',  icon: CalendarDays },
+  { id: 'earnings',     label: 'Earnings',  icon: IndianRupee },
+  { id: 'account',      label: 'More',      icon: UserCog },
 ]
+
+/* Internal states reached from More/My Services and trade flows. They are
+   routable but intentionally not competing with the five primary tabs. */
+const INTERNAL_TABS = new Set(['list'])
 
 /* TONES and whatsappHref lived here for the blocking status card that
    this screen used to render. Both went with it -- the card was their
@@ -106,7 +99,8 @@ export default function VendorDashboard() {
   // The tab lives in the URL so the checklist can link straight at the thing
   // it is asking for, and so a vendor who reloads mid-edit lands back where
   // they were rather than on Overview.
-  const tab = TABS.some(t => t.id === params.get('tab')) ? params.get('tab') : 'offers'
+  const requestedTab = params.get('tab')
+  const tab = TABS.some(t => t.id === requestedTab) || INTERNAL_TABS.has(requestedTab) ? requestedTab : 'offers'
   /* ── Switching tabs must not drop `return` ────────────────────────
      Both of these replaced the ENTIRE query string, so a partner who
      was mid-trade-flow (?tab=list&start=X&return=setup) and touched any
