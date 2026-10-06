@@ -71,7 +71,7 @@ export default function ClaimPayment({ lineId, onClaimed, hasPan = false, annual
 
   if (done) {
     return (
-      <div className="mt-3 rounded-[18px] bg-forest-50 p-4 ring-1 ring-forest-200">
+      <div className="partner-mobile mt-3 rounded-[18px] bg-forest-50 p-4 ring-1 ring-forest-200">
         <p className="inline-flex items-center gap-1.5 text-[14px] font-extrabold text-forest-800">
           <Check size={15} /> Claimed
         </p>
@@ -86,7 +86,7 @@ export default function ClaimPayment({ lineId, onClaimed, hasPan = false, annual
   /* Owed, and everything is in place. The only state with a button. */
   if (state.ok) {
     return (
-      <div className="mt-3 rounded-[20px] bg-saffron-400/12 p-4 ring-1 ring-saffron-300/60">
+      <div className="partner-mobile mt-3 rounded-[18px] bg-saffron-400/12 p-4 ring-1 ring-saffron-300/60">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-saffron-800">
           Yours to claim
         </p>
