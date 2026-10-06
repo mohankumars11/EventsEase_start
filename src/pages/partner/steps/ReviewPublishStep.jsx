@@ -6,7 +6,8 @@ import { usePartnerOnboarding } from '../../../hooks/usePartnerOnboarding'
 import { supabase } from '../../../lib/supabase'
 
 const ROUTES = {
-  business: '/partner/setup/services',
+  business: '/partner/setup/details',
+  services: '/partner/setup/services',
   area: '/partner/setup/area',
   compliance: '/partner/setup/compliance',
   bank: '/partner/setup/bank',
