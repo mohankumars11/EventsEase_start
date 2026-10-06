@@ -48,7 +48,7 @@ export default function CustomQuoteInbox({ vendorId }) {
   }
 
   return (
-    <section className="space-y-3" data-custom-quote-inbox>
+    <section className="partner-mobile space-y-3" data-custom-quote-inbox>
       {flash && <p className="rounded-2xl bg-surface p-3 text-[12px] font-bold text-ink-soft">{flash}</p>}
       {requests.length > 0 && requests.map(r => (
         <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} />
@@ -64,7 +64,7 @@ function QuoteCard({ request, onRespond }) {
   const loc = request.service_location ?? {}
   const scope = demand.summary ?? demand.note ?? demand.scope ?? 'Open the request to review the structured requirement.'
   return (
-    <article className="rounded-[24px] bg-white p-4 shadow-[var(--shadow-1)] ring-1 ring-hairline/10">
+    <article className="rounded-[18px] bg-white p-3.5 shadow-[var(--shadow-1)] ring-1 ring-hairline/10">
       <div className="flex items-center justify-between gap-3">
         <span className="rounded-full bg-plum-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-plum-700">Instant Quote &amp; Pay</span>
         {seconds != null && <span className="flex items-center gap-1 text-[11px] font-extrabold text-amber-700"><Clock3 size={12} /> {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>}
