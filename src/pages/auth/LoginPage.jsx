@@ -197,7 +197,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className={PARTNER ? "partner-mobile min-h-[100dvh] flex" : "min-h-screen flex"}>
 
       {/* Left brand panel */}
       <div className="hidden md:flex md:w-5/12 flex-col justify-between p-12 bg-plum-900">
@@ -316,16 +316,16 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* The divider belongs to the Google button, so it goes
-                  with it. A rule saying "or" above nothing is a screen
-                  that looks broken. */}
-              <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
-                <div className="flex-1 h-px bg-gray-100" />
-              </div>
-
-              <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
+              {!PARTNER && (
+                <>
+                  <div className="flex items-center gap-3 my-6">
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
+                    <div className="flex-1 h-px bg-gray-100" />
+                  </div>
+                  <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} fullWidth label="Continue with Google" />
+                </>
+              )}
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 New to Sambramo?{' '}
