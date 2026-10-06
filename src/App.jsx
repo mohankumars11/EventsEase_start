@@ -80,6 +80,7 @@ const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
 /* The six onboarding steps. Each is gated by StepGate, so a typed URL
    cannot walk into step 5 — see pages/partner/steps/StepGate.jsx. */
 const StepGate             = lazy(() => import('./pages/partner/steps/StepGate'))
+const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
 const BusinessServicesStep = lazy(() => import('./pages/partner/steps/BusinessServicesStep'))
 const ServiceAreaStep      = lazy(() => import('./pages/partner/steps/ServiceAreaStep'))
 const ComplianceStep       = lazy(() => import('./pages/partner/steps/ComplianceStep'))
@@ -649,7 +650,14 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      {/* ── Step 1's sub-flow, and the Add Service door ──────────────
+      {/* ── Six-step setup flow ───────────────────────────────────── */}
+      <Route path="/partner/setup/details" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="details"><PartnerDetailsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Services & Add Service door ───────────────────────────────
           `/partner/setup/services` is step 1 of the six.
           `/partner/services` is the same screen reached later from
           More → My Services → Add Service. One component, so the
