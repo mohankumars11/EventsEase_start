@@ -35,8 +35,8 @@ export default function LocationPermission() {
   const navigate = useNavigate()
 
   return (
-    <div className="native-screen flex flex-col bg-white">
-      <div className="safe-top flex-1 overflow-hidden px-7 pt-10">
+    <div className="native-screen partner-v2-screen flex flex-col bg-white">
+      <div className="safe-top flex-1 overflow-hidden partner-v2-container pt-8">
         {/* The map hint. A drawn suggestion of a map rather than a real
             one: there is nothing to plot yet, and loading a tile provider
             to decorate a permission screen spends a network round trip on
@@ -69,11 +69,11 @@ export default function LocationPermission() {
         </ul>
       </div>
 
-      <div className="safe-cta px-7 pt-2">
+      <div className="partner-v2-sticky-cta">
         <button
           type="button"
           onClick={() => navigate('/partner/location')}
-          className="min-h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500
+          className="min-h-[52px] w-full rounded-full bg-plum-700
                      text-[15.5px] font-extrabold text-white transition active:scale-[0.99]"
         >
           Allow Location Access
