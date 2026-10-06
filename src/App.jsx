@@ -72,6 +72,7 @@ const LocationPermission   = lazy(() => import('./pages/partner/LocationPermissi
 const LocationCapture      = lazy(() => import('./pages/partner/LocationCapture'))
 const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'))
 const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
+const PartnerDetailsStep   = lazy(() => import('./pages/partner/steps/PartnerDetailsStep'))
 const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
 const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
 /* One job, in full. A route rather than a taller card so a notification
@@ -661,13 +662,18 @@ function AppRoutes() {
           <PageBoundary><WhatYouOffer /></PageBoundary>
         </ProtectedRoute>
       } />
-{/* ── The five steps ────────────────────────────────────────────
+{/* ── The six onboarding steps ────────────────────────────────────────────
           Each wrapped in StepGate, which sends a partner back to the
           home if the step ahead of them is still locked. The disabled
           buttons on the home are a courtesy; this is the rule. */}
+      <Route path="/partner/setup/details" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><StepGate stepId="business"><PartnerDetailsStep /></StepGate></PageBoundary>
+        </ProtectedRoute>
+      } />
       <Route path="/partner/setup/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <PageBoundary><StepGate stepId="business"><BusinessServicesStep /></StepGate></PageBoundary>
+          <PageBoundary><StepGate stepId="services"><BusinessServicesStep /></StepGate></PageBoundary>
         </ProtectedRoute>
       } />
       <Route path="/partner/setup/area" element={
