@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Briefcase, MapPin, ShieldCheck, Landmark, Send,
+  UserRound, BriefcaseBusiness, MapPin, ShieldCheck, Landmark, Send,
   Check, Lock, Loader2, TriangleAlert, ArrowRight,
 } from 'lucide-react'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
@@ -38,7 +38,8 @@ import InviteCodeEntry from '../../components/partner/referrals/InviteCodeEntry'
  */
 
 const ICON = {
-  business: Briefcase,
+  details: UserRound,
+  business: BriefcaseBusiness,
   area: MapPin,
   compliance: ShieldCheck,
   bank: Landmark,
@@ -46,6 +47,7 @@ const ICON = {
 }
 
 const ROUTE = {
+  details: '/partner/setup/details',
   business: '/partner/setup/services',
   area: '/partner/setup/area',
   compliance: '/partner/setup/compliance',
@@ -195,9 +197,7 @@ export default function PartnerSetupIntro() {
           type="button"
           data-cta="continue"
           onClick={() => navigate(ROUTE[current.id])}
-          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full
-                     bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold
-                     text-white transition active:scale-[0.99]"
+          className="partner-action partner-action-primary flex min-h-[54px] w-full active:scale-[0.99]"
         >
           {returning ? `Continue — ${current.title}` : 'Start setup'}
           <ArrowRight size={17} />
