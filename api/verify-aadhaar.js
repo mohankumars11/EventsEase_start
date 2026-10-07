@@ -55,6 +55,15 @@ async function providerStart(aadhaar) {
   const d = await r.json()
   return { providerStatus: normaliseStatus(d?.status || d?.data?.status || d?.result?.status), provider: PROVIDER_NAME, requestId: d?.requestId || d?.request_id || d?.data?.requestId || d?.data?.request_id || null, maskedMobile: d?.maskedMobile || d?.masked_mobile || d?.data?.maskedMobile || d?.data?.masked_mobile || 'your Aadhaar-linked mobile', says: d?.message || d?.data?.message || 'OTP sent to your Aadhaar-linked mobile.' }
 }
+async function providerResend(requestId) {
+  if (MODE === 'mock') return { providerStatus: 'pending', provider: 'mock-aadhaar', requestId: crypto.randomUUID(), maskedMobile: '******1234', says: 'A new test OTP was sent.' }
+  if (MODE !== 'generic' || !PROVIDER_URL || !PROVIDER_KEY) return { providerStatus: 'unavailable', provider: PROVIDER_NAME, says: 'Aadhaar OTP verification is not connected yet.' }
+  const r = await fetch(PROVIDER_URL, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + PROVIDER_KEY }, body: JSON.stringify({ action: 'resend', mode: 'otp', request_id: requestId, consent: true }), signal: AbortSignal.timeout(20000) })
+  if (!r.ok) throw new Error('Aadhaar provider returned ' + r.status)
+  const d = await r.json()
+  return { providerStatus: normaliseStatus(d?.status || d?.data?.status || d?.result?.status), provider: PROVIDER_NAME, requestId: d?.requestId || d?.request_id || d?.data?.requestId || d?.data?.request_id || requestId, maskedMobile: d?.maskedMobile || d?.masked_mobile || d?.data?.maskedMobile || d?.data?.masked_mobile || 'your Aadhaar-linked mobile', says: d?.message || d?.data?.message || 'A new OTP has been sent.' }
+}
+
 async function providerVerify(requestId, otp) {
   if (MODE === 'mock') return otp === String(process.env.AADHAAR_MOCK_OTP || '123456') ? { providerStatus: 'verified', provider: 'mock-aadhaar', reference: requestId, says: 'Identity verified.' } : { providerStatus: 'mismatch', provider: 'mock-aadhaar', reference: requestId, says: 'The OTP is not correct.' }
   if (MODE !== 'generic' || !PROVIDER_URL || !PROVIDER_KEY) return { providerStatus: 'unavailable', provider: PROVIDER_NAME, reference: requestId, says: 'Aadhaar OTP verification is not connected yet.' }
@@ -117,7 +126,7 @@ export default async function handler(req, res) {
     const ch = readChallenge(body.challenge)
     if (!ch || ch.vendorId !== vendor.id) return fail(res, 400, 'That verification session has expired. Start again.')
     if (action === 'resend') {
-      const result = await providerStart('')
+      const result = await providerResend(ch.requestId)
       if (result.providerStatus === 'unavailable') return fail(res, 503, result.says)
       const next = sign({ ...ch, requestId: result.requestId, exp: Date.now() + 10 * 60 * 1000 })
       await event(vendor.id, result.provider, 'request', result.requestId, { action: 'resend', requirementId: ch.requirementId, aadhaar_last4: ch.last4, consent: true })
