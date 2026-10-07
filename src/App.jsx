@@ -86,6 +86,7 @@ const ComplianceStep       = lazy(() => import('./pages/partner/steps/Compliance
 const BankPaymentsStep     = lazy(() => import('./pages/partner/steps/BankPaymentsStep'))
 const ReviewPublishStep    = lazy(() => import('./pages/partner/steps/ReviewPublishStep'))
 const BusinessPreview       = lazy(() => import('./pages/partner/BusinessPreview'))
+const AnchorMcTradeSetup = lazy(() => import('./pages/partner/AnchorMcTradeSetup'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
 const BusinessSubmissionReview = lazy(() => import('./pages/dashboard/BusinessSubmissionReview'))
@@ -690,6 +691,12 @@ function AppRoutes() {
           <PageBoundary><StepGate stepId="review"><ReviewPublishStep /></StepGate></PageBoundary>
         </ProtectedRoute>
       } />
+      <Route path="/partner/setup/anchor-mc" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><AnchorMcTradeSetup /></PageBoundary>
+        </ProtectedRoute>
+      } />
+
       <Route path="/partner/setup/preview" element={
         <ProtectedRoute allowedRoles={['vendor']}>
           <PageBoundary><BusinessPreview /></PageBoundary>
