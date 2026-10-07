@@ -52,6 +52,9 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
     setBusy(true); setError(''); setMessage('')
     try {
       const out = await post({ action: 'aadhaar_start', aadhaar: cleaned, vendorId, requirementId: requirement?.id || 'VER-ID-IDENTITY', consent: true })
+      if (out.providerStatus === 'unavailable') {
+        throw new Error(out.says || 'Aadhaar OTP service is not connected.')
+      }
       if (!out.challenge) throw new Error(out.says || 'Aadhaar OTP service is not ready.')
       setChallenge(out.challenge)
       setMaskedMobile(out.maskedMobile || 'your Aadhaar-linked mobile')
@@ -78,6 +81,7 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
         checksumRule: 'aadhaar',
       })
       const out = await post({ action: 'aadhaar_verify', challenge, otp, vendorId, requirementId: requirement?.id || 'VER-ID-IDENTITY' })
+      if (out.providerStatus === 'unavailable') throw new Error(out.says || 'Aadhaar verification service is unavailable.')
       if (out.providerStatus !== 'verified') throw new Error(out.says || 'The OTP did not verify this identity.')
       setPhase('verified')
       setMessage('Aadhaar authentication completed successfully.')
@@ -90,7 +94,7 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
     if (busy || seconds > 0 || !challenge) return
     setBusy(true); setError('')
     try {
-      const out = await post({ action: 'aadhaar_resend', challenge, vendorId })
+      const out = await post({ action: 'aadhaar_resend', challenge, vendorId, requirementId: requirement?.id || 'VER-ID-IDENTITY' })
       setChallenge(out.challenge || challenge)
       setMaskedMobile(out.maskedMobile || maskedMobile)
       setSeconds(OTP_SECONDS)
