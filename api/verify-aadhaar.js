@@ -77,9 +77,10 @@ async function event(vendorId, provider, direction, reference, payload) {
   try { const db = createClient(SUPABASE_URL, SUPABASE_SERVICE, { auth: { persistSession: false } }); await db.from('verification_events').insert({ vendor_id: vendorId || null, provider, direction, reference: reference || null, payload }) } catch {}
 }
 async function stamp(vendorId, status, provider, reference, last4) {
-  if (!SUPABASE_SERVICE) return
+  if (!SUPABASE_SERVICE) throw new Error('Result storage is not configured.')
   const db = createClient(SUPABASE_URL, SUPABASE_SERVICE, { auth: { persistSession: false } })
-  await db.from('vendor_documents').upsert({ vendor_id: vendorId, requirement_id: 'VER-ID-IDENTITY', kind: 'aadhaar', storage_path: '', number_last4: last4 || null, checksum_ok: true, checksum_rule: 'aadhaar', checked_at: new Date().toISOString(), provider_status: status, provider_name: provider || null, provider_ref: reference || null, provider_at: new Date().toISOString() }, { onConflict: 'vendor_id,requirement_id' })
+  const { error } = await db.from('vendor_documents').upsert({ vendor_id: vendorId, requirement_id: 'VER-ID-IDENTITY', kind: 'aadhaar', storage_path: '', number_last4: last4 || null, checksum_ok: true, checksum_rule: 'aadhaar', checked_at: new Date().toISOString(), provider_status: status, provider_name: provider || null, provider_ref: reference || null, provider_at: new Date().toISOString() }, { onConflict: 'vendor_id,requirement_id' })
+  if (error) throw error
 }
 export default async function handler(req, res) {
   if (cors(req, res)) return
