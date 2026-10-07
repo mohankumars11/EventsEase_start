@@ -145,6 +145,16 @@ export default function WhatYouOffer() {
          the URL so the dashboard tab that hosts the flow knows where
          to send them back to. */
       const back = inSetup ? '&return=setup' : ''
+
+      // Anchor & MC has a controlled trade-specific setup. Do not send it
+      // through the generic service questionnaire: the partner needs the
+      // standardized Anchor/MC templates, language/event fields, durations,
+      // add-ons and Instant Book vs Quote rules on the trade contract.
+      if (picked.length === 1 && picked[0] === 'Anchor & MC') {
+        navigate('/partner/setup/anchor-mc')
+        return
+      }
+
       navigate(`/dashboard/vendor?tab=list&start=${encodeURIComponent(queue[0])}${back}`)
     } finally {
       setBusy(false)
