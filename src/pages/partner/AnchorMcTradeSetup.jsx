@@ -72,9 +72,14 @@ export default function AnchorMcTradeSetup(){
      setService(s)
      const trade_inputs={trade:'Anchor & MC',templateId:active,languages:cur.languages,eventTypes:cur.eventTypes,hostingStyles:cur.hostingStyles,inclusions:cur.inclusions,durations:cur.durations,serviceArea:cur.serviceArea,serviceRadiusKm:Number(cur.radius),bookingNoticeDays:Number(cur.bookingNotice),maxEventsPerDay:Number(cur.maxEventsPerDay),workingDays:cur.workingDays,workingHours:{start:cur.startTime,end:cur.endTime},outstation:cur.outstation,instantBookingEligible:!cur.outstation&&!cur.addons.some(a=>a.key==='custom_script'&&a.enabled),contractVersion:'2026-10-07.anchor-mc.v1'}
      const commercial_inputs={currency:'INR',pricingUnit:'event_variant',durations:Object.fromEntries(Object.entries(cur.durations).map(x=>[x[0],Number(x[1])*100]))}
-     const pr=await supabase.from('sambramo_trade_packages').insert({vendor_id:vendor.id,vendor_service_id:s.id,template_id:active,source:'SAMBRAMO_TEMPLATE',name:tpl.name,description:tpl.desc,commercial_inputs,trade_inputs,status:submit?'UNDER_REVIEW':'DRAFT',revision_round:submit?1:0,submitted_at:submit?new Date().toISOString():null}).select().single()
-     if(pr.error)throw pr.error
-     const addons=cur.addons.filter(a=>a.enabled&&Number(a.price)>0).map((a,i)=>({package_id:pr.data.id,name:a.name,unit:a.unit,rate_paise:Number(a.price)*100,minimum_quantity:1,included_quantity:0,active:true,sort_order:i}))
+     const existing=await supabase.from('sambramo_trade_packages').select('id,revision_round,status').eq('vendor_id',vendor.id).eq('vendor_service_id',s.id).eq('template_id',active).order('created_at',{ascending:false}).limit(1).maybeSingle()
+     if(existing.error)throw existing.error
+     const packagePayload={vendor_id:vendor.id,vendor_service_id:s.id,template_id:active,source:'SAMBRAMO_TEMPLATE',name:tpl.name,description:tpl.desc,commercial_inputs,trade_inputs,status:submit?'UNDER_REVIEW':'DRAFT',revision_round:submit?Number(existing.data?.revision_round||0)+1:Number(existing.data?.revision_round||0),submitted_at:submit?new Date().toISOString():existing.data?.submitted_at||null}
+     let pkg
+     if(existing.data){const pr=await supabase.from('sambramo_trade_packages').update(packagePayload).eq('id',existing.data.id).select().single();if(pr.error)throw pr.error;pkg=pr.data}
+     else{const pr=await supabase.from('sambramo_trade_packages').insert(packagePayload).select().single();if(pr.error)throw pr.error;pkg=pr.data}
+     await supabase.from('sambramo_trade_package_addons').delete().eq('package_id',pkg.id)
+     const addons=cur.addons.filter(a=>a.enabled&&Number(a.price)>0).map((a,i)=>({package_id:pkg.id,name:a.name,unit:a.unit,rate_paise:Number(a.price)*100,minimum_quantity:1,included_quantity:0,active:true,sort_order:i}))
      if(addons.length){const ar=await supabase.from('sambramo_trade_package_addons').insert(addons);if(ar.error)throw ar.error}
      setStatus(submit?'UNDER_REVIEW':'DRAFT');setMsg(submit?'Submitted to Sambramo for review.':'Package saved as draft.');setStep(6)
    }catch(e){setMsg(e.message||'Could not save package.')}finally{setBusy(false)}
