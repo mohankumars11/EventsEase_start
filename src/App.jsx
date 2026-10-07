@@ -53,6 +53,7 @@ const OrderTracker        = lazy(() => import('./pages/track/OrderTracker'))
 const CelebrationTracker  = lazy(() => import('./pages/track/CelebrationTracker'))
 
 // Vendor & Admin
+const AnchorMcTradeSetup = lazy(() => import('./pages/partner/AnchorMcTradeSetup'))
 const VendorOnboarding = lazy(() => import('./pages/onboarding/VendorOnboarding'))
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -495,6 +496,13 @@ function AppRoutes() {
       <Route path="/track/enquiry/:enquiryId" element={
         <ProtectedRoute allowedRoles={['customer']}>
           <ScreenShell><CelebrationTracker /></ScreenShell>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Partner trade setup ─────────────────────── */}
+      <Route path="/partner/anchor-mc-setup" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <BareShell><AnchorMcTradeSetup /></BareShell>
         </ProtectedRoute>
       } />
 
