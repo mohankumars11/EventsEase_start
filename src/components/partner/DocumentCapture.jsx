@@ -335,26 +335,6 @@ export default function DocumentCapture({
          in with a misread digit is worse than an empty one. */
       if (read?.extracted) suggestFrom(read.extracted)
 
-      /* ── The face comparison, if it was agreed to ─────────────────
-         Only when the partner said yes, and only ever advisory. A
-         mismatch routes to the review queue; it never rejects anybody,
-         because the cost of being wrong is somebody losing their
-         livelihood over a bad photograph in bad light. */
-      if (requirement.documentType === 'dl' && saved?.id) {
-        try {
-          const result = await verificationCall({
-            action: 'verify_dl',
-            documentId: saved.id,
-            vendorId,
-            dlNumber: number,
-            holderName: holderName?.trim() || null,
-          })
-          if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
-        } catch (e) {
-          setError(e?.message ?? 'Driving licence verification could not be completed.')
-        }
-      }
-
       if (requirement.needsConsent && consented === true && saved?.id) {
         matchFace(file, saved.id).catch(() => {})
       }
