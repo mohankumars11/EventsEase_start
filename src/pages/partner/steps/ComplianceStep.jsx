@@ -138,9 +138,15 @@ export default function ComplianceStep() {
   )
   const reqs = useMemo(() => {
     const local = requirementsFor({ trades, policy, answers })
-    if (!serverRequirements?.length) return local
+    if (!serverRequirements?.length) return local.filter(r => !['VER-TAX-PAN', 'VER-BUSINESS-PROOF', 'VER-BUSINESS-GST'].includes(r.id))
     const allowed = new Set(serverRequirements.map(r => r.id))
-    return local.filter(r => allowed.has(r.id))
+    /* Keep onboarding focused: identity + trade-specific checks only.
+       Universal business proofs remain optional and are not put in the
+       partner's face while they are completing trade verification. */
+    return local.filter(r =>
+      allowed.has(r.id) &&
+      !['VER-TAX-PAN', 'VER-BUSINESS-PROOF', 'VER-BUSINESS-GST'].includes(r.id)
+    )
   }, [trades, policy, answers, serverRequirements])
   /* Keyed by requirement, not by kind. `evaluateAll` decides whether
      each one is actually satisfied — two sides where declared, a
@@ -236,7 +242,7 @@ export default function ComplianceStep() {
         </div>
       </section>
       <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">Verify what applies to you</h1>
-      <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">We&apos;ve selected these from the services you added — nothing here is asked of every partner.</p>
+      <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">We&apos;ve selected only the checks your services need. Unrelated IDs are kept off this screen so setup stays simple.</p>
 
       {/* What is true right now, rather than what a constant says.
           `requiredCount` counts the requirements the policy table
