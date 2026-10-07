@@ -293,7 +293,7 @@ export const DOCUMENT_TYPES = {
     kind: 'dl',
     detectAs: ['driving_licence'],
     label: 'Driving licence',
-    hint: 'Both sides, with the validity dates readable.',
+    hint: 'Capture front + back in good light with all edges visible. We can request an RTO/Parivahan verification after upload.',
     frontRequired: true, backRequired: true,
     numberRequired: true, checksumKind: 'dl',
     expiryRequired: true, minimumValidityDays: 30,
