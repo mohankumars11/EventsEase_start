@@ -116,6 +116,7 @@ export const VisionProvider = {
       whatYouSee: json.whatYouSee ?? null,
       legible: json.legible !== false,
       extracted: json.extracted ?? {},
+      readTicket: json.readTicket ?? null,
       says: null,
     }
   },
