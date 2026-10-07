@@ -63,7 +63,7 @@ export const TIER_WHY = {
 }
 
 /**
- * All 26 trades, from `listing_trades` (seeded in migration 107).
+ * All 34 Sambramo trades (26 Events + 8 Logistics) from the canonical trade registry.
  *
  * The names are exact. A typo here is silent: the trade falls through to
  * baseline and a caterer is never asked about food. `check-verification-
@@ -96,6 +96,18 @@ export const TRADE_TIERS = {
   'Venue':                    [TIER.BASELINE, TIER.PREMISES],
   'Videography':              [TIER.BASELINE, TIER.ALONE_WITH_CUSTOMER],
   'Wedding Planning':         [TIER.BASELINE, TIER.ALONE_WITH_CUSTOMER],
+
+  // Logistics pillar: the vehicle-operating trades inherit the same
+  // DL + RC + insurance verification as Transportation. The non-driving
+  // logistics trades stay on baseline identity/business checks only.
+  'Mini Truck / Pickup':             [TIER.BASELINE, TIER.DRIVES],
+  'Medium / Large Goods Vehicle':    [TIER.BASELINE, TIER.DRIVES],
+  'Passenger Transport':             [TIER.BASELINE, TIER.DRIVES],
+  'Event Equipment Rental':          [TIER.BASELINE],
+  'Loading & Unloading Crew':        [TIER.BASELINE],
+  'Warehouse / Storage':             [TIER.BASELINE],
+  'Event Materials Supplier':        [TIER.BASELINE],
+  'End-to-End Event Logistics':      [TIER.BASELINE],
 }
 
 const req = (id, documentType, over = {}) => ({
@@ -140,8 +152,7 @@ const BASELINE = [
   req('VER-BUSINESS-PROOF', 'shop_licence', { enforceable: false }),
   req('VER-BUSINESS-GST', 'gst', {
     enforceable: false,
-    why: 'Only if your turnover is above the registration threshold.',
-    conditional: 'gst_registered',
+    why: 'Optional business check. Add this only if your business is GST-registered; no GST registration is fine.',
   }),
 ]
 
@@ -223,6 +234,11 @@ export const MANDATORY_FROM = null
  * the actual gate; a partner wrongly locked out is just locked out.
  */
 function requiredBy(policy, requirementId, trade, mandatoryFrom, enforceable) {
+  /* Sambramo's first identity check is the universal onboarding gate.
+     This is our marketplace policy, not a claim that Indian law makes
+     Aadhaar mandatory for every service. Aadhaar remains the recommended
+     default, while the selector keeps other viable IDs available. */
+  if (requirementId === 'VER-ID-IDENTITY') return true
   if (!enforceable) return false
   if (!policy) return !!mandatoryFrom
   return policy.isMandatory(requirementId, trade)
