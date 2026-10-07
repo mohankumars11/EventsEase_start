@@ -159,14 +159,10 @@ const BASELINE = [
 
 /** What each tier adds. Baseline is handled above. */
 const BY_TIER = {
-  [TIER.ALONE_WITH_CUSTOMER]: [
-    req('VER-SAFETY-PCC', 'police_clearance', {
-      enforceable: false,
-      declinable: true,
-      tier: TIER.ALONE_WITH_CUSTOMER,
-      why: 'You are often alone with a customer. You may decline — it limits which work reaches you rather than closing your account.',
-    }),
-  ],
+  /* High-contact trades do not get a separate PCC row in the first release.
+     Keep the tier for future policy work, but do not put an optional screening
+     document in front of a partner during basic onboarding. */
+  [TIER.ALONE_WITH_CUSTOMER]: [],
   [TIER.FOOD]: [
     req('VER-TRADE-FSSAI', 'fssai', {
       enforceable: true,
@@ -284,9 +280,25 @@ export function requirementsFor(input = {}) {
        so a stale or hand-edited value cannot smuggle in a document
        type this requirement never offered. */
     let documentType = r.documentType
+    let accepts = r.accepts
     if (Array.isArray(r.accepts) && r.accepts.length) {
+      /* Driving licence is an identity option only for driving trades.
+         Non-driving partners should never see it as a second choice. */
+      if (r.id === 'VER-ID-IDENTITY') {
+        const driveTrade = trades.some(t => (TRADE_TIERS[t] ?? []).includes(TIER.DRIVES))
+        accepts = r.accepts.filter(kind => kind !== 'dl' || driveTrade)
+      }
       const picked = answers?.[r.chooseWith]
-      documentType = r.accepts.includes(picked) ? picked : r.accepts[0]
+      documentType = accepts.includes(picked) ? picked : accepts[0]
+    }
+    /* When a partner uses their DL as the universal identity proof and they
+       also operate a driving trade, that same verified DL is the driving
+       licence requirement. Never ask for the exact same document twice. */
+    if (r.id === 'VER-TRADE-DL' &&
+        answers?.identity_document === 'dl' &&
+        trade &&
+        (TRADE_TIERS[trade] ?? []).includes(TIER.DRIVES)) {
+      return
     }
 
     const type = DOCUMENT_TYPES[documentType]
@@ -300,8 +312,8 @@ export function requirementsFor(input = {}) {
       documentType,
       /* What the chooser renders, resolved to real types so a caller
          never has to reach back into DOCUMENT_TYPES itself. */
-      acceptsTypes: Array.isArray(r.accepts)
-        ? r.accepts.map(k => ({ kind: k, label: DOCUMENT_TYPES[k]?.label ?? k, hint: DOCUMENT_TYPES[k]?.hint ?? null }))
+      acceptsTypes: Array.isArray(accepts)
+        ? accepts.map(k => ({ kind: k, label: DOCUMENT_TYPES[k]?.label ?? k, hint: DOCUMENT_TYPES[k]?.hint ?? null }))
         : null,
       trade: trade ?? r.trade,
       required: requiredBy(policy, r.id, trade ?? r.trade, mandatoryFrom, r.enforceable),
