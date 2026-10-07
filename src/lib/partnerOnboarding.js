@@ -114,7 +114,13 @@ function areaDone({ vendor, weeklyRules = [], availability = {} }) {
  */
 function complianceDone({ listings = [], documents = {}, vendor }) {
   const trades = listings.map(l => l.trade)
-  const reqs = requirementsFor(trades)
+  /* The selected identity type is persisted on the vendor. The status
+     predicate must evaluate the same ID the partner actually chose; using
+     the default Aadhaar here would mark a completed DL identity as incomplete. */
+  const reqs = requirementsFor({
+    trades,
+    answers: { identity_document: vendor?.identity_document ?? null },
+  })
   const byRequirement = documents.byRequirement ?? documents
   const evaluated = evaluateAll(reqs, byRequirement)
   const acknowledged = (vendor?.completed_steps ?? []).includes('compliance')
