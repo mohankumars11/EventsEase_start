@@ -309,11 +309,17 @@ export default function DocumentCapture({
          operator reviews by eye, which is where it was heading anyway. */
       if (saved?.id) {
         const nameMatch = compareTyped(read, holderName)
-        try {
-          const result = await stamp(saved.id, number, nameMatch)
-          if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
-        } catch (e) {
-          setError(e?.message ?? 'Instant verification could not be completed.')
+        /* Documents with no additional required fields can be verified immediately
+           after capture. Documents that need a number/name/expiry are verified
+           after the partner saves those details below. */
+        const needsDetails = !!(requirement.numberRequired || requirement.holderNameRequired || requirement.issuingAuthorityRequired || requirement.expiryRequired)
+        if (!needsDetails) {
+          try {
+            const result = await stamp(saved.id, number, nameMatch)
+            if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
+          } catch (e) {
+            setError(e?.message ?? 'Instant verification could not be completed.')
+          }
         }
         if (nameMatch === MATCH.MISMATCH) {
           /* Said, never blocked. Indian names reorder, abbreviate,
@@ -444,16 +450,14 @@ export default function DocumentCapture({
     }
     setProviderCheck({ status: 'checking', says: 'Checking with the configured RTO verification service…' })
     try {
-      const { data: session } = await supabase.auth.getSession()
-      const token = session?.session?.access_token
-      if (!token) throw new Error('Please sign in again.')
-      const r = await fetch(apiUrl('/api/verify-dl'), {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
-        body: JSON.stringify({ documentId, vendorId, dlNumber: cleaned, holderName: holderName || null }),
+      const out = await verificationCall({
+        action: 'verify_dl',
+        documentId,
+        vendorId,
+        dlNumber: cleaned,
+        holderName: holderName || null,
       })
-      const out = await r.json().catch(() => ({}))
-      const status = out?.providerStatus || (r.ok ? 'unavailable' : 'error')
+      const status = out?.providerStatus || 'unavailable'
       setProviderCheck({ status, says: out?.says || 'Driving licence verification result received.' })
       if (status !== 'unavailable' && status !== 'error') onUploaded?.()
       return out
@@ -494,13 +498,22 @@ export default function DocumentCapture({
         checksumRule: requirement.checksumKind ?? undefined,
       })
       onUploaded?.(saved)
-      /* A DL is the one capture that gets a live registry/provider seam. Keep
-         the panel open so the partner can see the RTO result instead of
-         snapping the form shut immediately after saving the number. */
-      const canRunDlCheck = requirement.documentType === 'dl' && !!saved?.storage_path && !!saved?.back_path
-      if (requirement.documentType === 'dl' && canRunDlCheck) {
-        await verifyDrivingLicence(saved.id, number)
+      /* Verify every document immediately after its details are saved.
+         DL also gets the RTO/provider seam after the instant structural check. */
+      const nameMatch = requirement.holderNameRequired && holderName?.trim() && row?.holder_name
+        ? compareNames(holderName, row.holder_name).result
+        : MATCH.NOT_AVAILABLE
+      try {
+        const instant = await stamp(saved.id, normalise('doc_number', number) || null, nameMatch)
+        if (requirement.documentType === 'dl' && saved?.storage_path && saved?.back_path) {
+          await verifyDrivingLicence(saved.id, number)
+        } else {
+          setProviderCheck({ status: instant?.providerStatus || 'verified', says: instant?.says || 'Instant Sambramo checks passed.' })
+        }
+      } catch (e) {
+        setError(e?.message ?? 'Instant verification could not be completed.')
       }
+      onUploaded?.(saved)
       if (requirement.documentType !== 'dl') onClose?.()
     } catch (e) {
       if (!server.take(e)) setError(e?.message ?? 'Could not save those details.')
