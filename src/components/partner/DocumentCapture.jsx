@@ -249,7 +249,8 @@ export default function DocumentCapture({
    * have let it through.
    */
   async function send(file, side) {
-    setBusySide(side); setError(null); setQuality(null); setReading(null); setReadTicket(null)
+    setBusySide(side); setError(null); setQuality(null); setReading(null)
+    if (side === 'front') setReadTicket(null)
     try {
       /* ── 1 · Judged before it leaves the device ─────────────────────
          A blurred or dark photograph is caught here, while the card is
@@ -494,6 +495,24 @@ export default function DocumentCapture({
         if (requirement.documentType === 'dl' && saved?.storage_path && saved?.back_path) {
           const provider = await verifyDrivingLicence(saved.id, number)
           verifiedNow = provider?.providerStatus === 'verified' || verifiedNow
+        } else if (requirement.documentType === 'fssai' && saved?.storage_path) {
+          try {
+            const provider = await verificationCall({
+              action: 'verify_fssai',
+              documentId: saved.id,
+              vendorId,
+              fssaiNumber: normalise('doc_number', number),
+              holderName: holderName || null,
+            })
+            if (provider?.providerStatus && provider.providerStatus !== 'unavailable') {
+              setProviderCheck({ status: provider.providerStatus, says: provider.says || 'FSSAI verification result received.' })
+              verifiedNow = provider.providerStatus === 'verified' || verifiedNow
+            } else {
+              setProviderCheck({ status: instant?.providerStatus || 'verified', says: instant?.says || 'Instant Sambramo checks passed.' })
+            }
+          } catch {
+            setProviderCheck({ status: instant?.providerStatus || 'verified', says: instant?.says || 'Instant Sambramo checks passed.' })
+          }
         } else {
           setProviderCheck({ status: instant?.providerStatus || 'verified', says: instant?.says || 'Instant Sambramo checks passed.' })
         }
@@ -714,7 +733,7 @@ export default function DocumentCapture({
         </p>
       )}
 
-      {requirement.documentType === 'dl' && providerCheck && (
+      {['dl', 'fssai'].includes(requirement.documentType) && providerCheck && (
         <div className={"mt-3 rounded-[14px] px-3 py-2.5 ring-1 " + (
           providerCheck.status === 'verified' ? 'bg-forest-50 text-forest-800 ring-forest-200' :
           providerCheck.status === 'checking' ? 'bg-plum-50 text-plum-800 ring-plum-200' :
@@ -723,7 +742,7 @@ export default function DocumentCapture({
           <div className="flex items-start gap-2">
             {providerCheck.status === 'checking' ? <Loader2 size={14} className="mt-0.5 shrink-0 animate-spin" /> : <ShieldCheck size={14} className="mt-0.5 shrink-0" />}
             <div className="min-w-0">
-              <p className="text-[11.5px] font-extrabold">{providerCheck.status === 'verified' ? 'Driving licence verified' : providerCheck.status === 'checking' ? 'Checking licence' : 'RTO check'}</p>
+              <p className="text-[11.5px] font-extrabold">{providerCheck.status === 'verified' ? (requirement.documentType === 'fssai' ? 'FSSAI check complete' : 'Driving licence verified') : providerCheck.status === 'checking' ? (requirement.documentType === 'fssai' ? 'Checking FSSAI' : 'Checking licence') : (requirement.documentType === 'fssai' ? 'FSSAI check' : 'RTO check')}</p>
               <p className="mt-0.5 text-[11px] leading-snug opacity-80">{providerCheck.says}</p>
             </div>
           </div>
