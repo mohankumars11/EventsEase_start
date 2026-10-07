@@ -67,6 +67,8 @@ on:
       # The apk now CONTAINS the web app, so a change to src/ is a change
       # to the app. Everything that ships inside it belongs here.
       - 'src/**'
+      - 'api/**'
+      # Verification API changes are included in branch-triggered validation; server credentials remain outside the APK.
       # Catering pricing UI/schema updates are packaged into the latest test APK.
       - 'public/**'
       - 'index.html'
