@@ -423,3 +423,5 @@ jobs:
             --title "Sambramo Partners — test build" \
             --notes-file partner/notes.md
           echo "Partner test link: https://github.com/${{ github.repository }}/releases/download/partner-latest/sambramo-partner.apk"
+
+# CI trigger: build the current Anchor & MC Partner branch head.
