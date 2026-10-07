@@ -57,6 +57,8 @@ jobs:
         env:
           CAPACITOR_BUILD: 'true'
           VITE_SURFACE: partner
+          VITE_SUPABASE_URL: https://twpsgrmoqxemxhrzbfwd.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_bGvf7MW02OCmxC963N1-uw_stJZSYL7
           VITE_DEV_AUTH_BYPASS: 'false'
           VITE_BUILD: ${{ github.sha }}
         run: npm run build
