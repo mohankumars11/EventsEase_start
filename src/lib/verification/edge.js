@@ -1,7 +1,7 @@
 import { supabase } from '../supabase'
 
 const FALLBACK_SUPABASE_URL = 'https://twpsgrmoqxemxhrzbfwd.supabase.co'
-const BASE = (import.meta.env?.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL) + '/functions/v1/sambramo-verification-v2'
+const BASE = ((import.meta.env?.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL).replace(/\/+$/, '')) + '/functions/v1/sambramo-verification-v2'
 
 export async function verificationCall(body, { timeoutMs = 30000 } = {}) {
   const { data } = await supabase.auth.getSession()
@@ -12,7 +12,11 @@ export async function verificationCall(body, { timeoutMs = 30000 } = {}) {
   try {
     const response = await fetch(BASE, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer ' + token,
+        apikey: import.meta.env?.VITE_SUPABASE_ANON_KEY || '',
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
