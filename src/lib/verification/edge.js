@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../supabase'
 
 const FALLBACK_SUPABASE_URL = 'https://twpsgrmoqxemxhrzbfwd.supabase.co'
 const BASE = (import.meta.env?.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL) + '/functions/v1/sambramo-verification-v2'
