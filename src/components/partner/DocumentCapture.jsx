@@ -497,24 +497,28 @@ export default function DocumentCapture({
         checksumOk: numberCheck ? numberCheck.ok : undefined,
         checksumRule: requirement.checksumKind ?? undefined,
       })
-      onUploaded?.(saved)
       /* Verify every document immediately after its details are saved.
          DL also gets the RTO/provider seam after the instant structural check. */
-      const nameMatch = requirement.holderNameRequired && holderName?.trim() && row?.holder_name
-        ? compareNames(holderName, row.holder_name).result
-        : MATCH.NOT_AVAILABLE
+      let verifiedNow = false
+      const nameMatch = MATCH.NOT_AVAILABLE
       try {
         const instant = await stamp(saved.id, normalise('doc_number', number) || null, nameMatch)
+        verifiedNow = instant?.providerStatus === 'verified'
         if (requirement.documentType === 'dl' && saved?.storage_path && saved?.back_path) {
-          await verifyDrivingLicence(saved.id, number)
+          const provider = await verifyDrivingLicence(saved.id, number)
+          verifiedNow = provider?.providerStatus === 'verified' || verifiedNow
         } else {
           setProviderCheck({ status: instant?.providerStatus || 'verified', says: instant?.says || 'Instant Sambramo checks passed.' })
         }
       } catch (e) {
         setError(e?.message ?? 'Instant verification could not be completed.')
       }
-      onUploaded?.(saved)
-      if (requirement.documentType !== 'dl') onClose?.()
+      if (verifiedNow) {
+        onUploaded?.(saved)
+        if (requirement.documentType !== 'dl') onClose?.()
+      } else {
+        onUploaded?.(saved)
+      }
     } catch (e) {
       if (!server.take(e)) setError(e?.message ?? 'Could not save those details.')
     } finally {
