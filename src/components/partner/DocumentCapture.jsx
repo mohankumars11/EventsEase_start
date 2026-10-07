@@ -307,9 +307,14 @@ export default function DocumentCapture({
          Not this component. See the header. Best-effort by design: a
          document that is uploaded but unstamped is a document an
          operator reviews by eye, which is where it was heading anyway. */
-      if (read?.stampToken && saved?.id) {
+      if (saved?.id) {
         const nameMatch = compareTyped(read, holderName)
-        stamp(saved.id, number, nameMatch).then(result => { if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev) }).catch(e => setError(e?.message ?? 'Instant verification could not be completed.'))
+        try {
+          const result = await stamp(saved.id, number, nameMatch)
+          if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
+        } catch (e) {
+          setError(e?.message ?? 'Instant verification could not be completed.')
+        }
         if (nameMatch === MATCH.MISMATCH) {
           /* Said, never blocked. Indian names reorder, abbreviate,
              expand initials and transliterate two ways, and a person is
@@ -330,17 +335,18 @@ export default function DocumentCapture({
          because the cost of being wrong is somebody losing their
          livelihood over a bad photograph in bad light. */
       if (requirement.documentType === 'dl' && saved?.id) {
-        verificationCall({
-          action: 'verify_dl',
-          documentId: saved.id,
-          vendorId,
-          dlNumber: number,
-          holderName: holderName?.trim() || null,
-        }).then(result => {
-          if (result?.says && result.providerStatus === 'verified') {
-            setReading(prev => prev ? { ...prev, stamp: result } : prev)
-          }
-        }).catch(() => {})
+        try {
+          const result = await verificationCall({
+            action: 'verify_dl',
+            documentId: saved.id,
+            vendorId,
+            dlNumber: number,
+            holderName: holderName?.trim() || null,
+          })
+          if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
+        } catch (e) {
+          setError(e?.message ?? 'Driving licence verification could not be completed.')
+        }
       }
 
       if (requirement.needsConsent && consented === true && saved?.id) {

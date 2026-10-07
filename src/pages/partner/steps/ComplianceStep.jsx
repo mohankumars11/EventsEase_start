@@ -343,8 +343,10 @@ function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, lis
                     <p className="mt-1 text-[11.5px] italic leading-snug text-ink-mute">{r.why}</p>
                   )}
                   <p className="mt-1.5 text-[11px] font-bold uppercase tracking-wide text-ink-mute">
-                    {STATE_CAPTION[state]
-                      ?? `Not started · ${KIND_BY_ID[r.documentKind]?.label ?? 'document'}`}
+                    {state === 'verified' && have?.provider_name === 'sambramo-instant-check'
+                      ? 'Instantly checked by Sambramo'
+                      : (STATE_CAPTION[state]
+                        ?? `Not started · ${KIND_BY_ID[r.documentKind]?.label ?? 'document'}`)}
                   </p>
                   {/* An unfinished document is not a failed one, and the
                       difference is whether the partner is told what is

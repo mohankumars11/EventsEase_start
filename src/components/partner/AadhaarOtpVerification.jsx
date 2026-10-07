@@ -66,8 +66,8 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
     if (busy || !challenge || !/^\d{6}$/.test(otp)) return
     setBusy(true); setError(''); setMessage('')
     try {
-      const out = await post({ action: 'aadhaar_verify', challenge, otp, vendorId, requirementId: requirement?.id || 'VER-ID-IDENTITY' })
-      if (out.providerStatus !== 'verified') throw new Error(out.says || 'The OTP did not verify this identity.')
+      /* Create the identity row before the provider result so the backend
+         can stamp the exact requirement row immediately. */
       await saveDocumentDetails({
         vendorId,
         requirementId: requirement?.id || 'VER-ID-IDENTITY',
@@ -77,6 +77,8 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
         checksumOk: true,
         checksumRule: 'aadhaar',
       })
+      const out = await post({ action: 'aadhaar_verify', challenge, otp, vendorId, requirementId: requirement?.id || 'VER-ID-IDENTITY' })
+      if (out.providerStatus !== 'verified') throw new Error(out.says || 'The OTP did not verify this identity.')
       setPhase('verified')
       setMessage('Aadhaar authentication completed successfully.')
       await onVerified?.()

@@ -96,7 +96,6 @@ export const VisionProvider = {
       vendorId: vendorId ?? null,
     })
 
-    const json = await r.json()
 
     if (json.providerStatus === 'unavailable' || json.providerStatus === 'not_checked') {
       return {
