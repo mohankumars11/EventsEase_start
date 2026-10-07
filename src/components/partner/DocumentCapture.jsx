@@ -209,6 +209,10 @@ export default function DocumentCapture({
      needs to be told which: "too blurry" and "that is a laptop" call
      for completely different next actions. */
   const [reading, setReading] = useState(null)
+  /* Signed by the verification edge after the image is classified. It is
+     passed back when the saved document is stamped, so the backend never
+     trusts a client-only "this is the right document" flag. */
+  const [readTicket, setReadTicket] = useState(null)
   const [stage, setStage] = useState(null)
   const [suggested, setSuggested] = useState(null)
 
@@ -245,7 +249,7 @@ export default function DocumentCapture({
    * have let it through.
    */
   async function send(file, side) {
-    setBusySide(side); setError(null); setQuality(null); setReading(null)
+    setBusySide(side); setError(null); setQuality(null); setReading(null); setReadTicket(null)
     try {
       /* ── 1 · Judged before it leaves the device ─────────────────────
          A blurred or dark photograph is caught here, while the card is
@@ -280,6 +284,7 @@ export default function DocumentCapture({
         })
         judged = judgeReading(read, requirement)
         setReading({ ...read, judged })
+        setReadTicket(read?.readTicket ?? null)
 
         /* The only thing that stops an upload. Everything softer is said
            and then allowed through, because a human still reviews it and
@@ -315,7 +320,7 @@ export default function DocumentCapture({
         const needsDetails = !!(requirement.numberRequired || requirement.holderNameRequired || requirement.issuingAuthorityRequired || requirement.expiryRequired)
         if (!needsDetails) {
           try {
-            const result = await stamp(saved.id, number, nameMatch)
+            const result = await stamp(saved.id, number, nameMatch, readTicket)
             if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev)
           } catch (e) {
             setError(e?.message ?? 'Instant verification could not be completed.')
@@ -387,13 +392,15 @@ export default function DocumentCapture({
   }
 
   /** Ask the verification backend to stamp its own result. */
-  async function stamp(documentId, numberValue, nameMatch) {
+  async function stamp(documentId, numberValue, nameMatch, ticket = readTicket) {
     return verificationCall({
       action: 'stamp_document',
       documentId,
+      requirementId: requirement.id,
       vendorId,
       number: numberValue || null,
       nameMatch: nameMatch || null,
+      readTicket: ticket || null,
     })
   }
 
@@ -482,7 +489,7 @@ export default function DocumentCapture({
       let verifiedNow = false
       const nameMatch = MATCH.NOT_AVAILABLE
       try {
-        const instant = await stamp(saved.id, normalise('doc_number', number) || null, nameMatch)
+        const instant = await stamp(saved.id, normalise('doc_number', number) || null, nameMatch, readTicket)
         verifiedNow = instant?.providerStatus === 'verified'
         if (requirement.documentType === 'dl' && saved?.storage_path && saved?.back_path) {
           const provider = await verifyDrivingLicence(saved.id, number)
