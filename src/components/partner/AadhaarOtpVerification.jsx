@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle2, Loader2, RefreshCw, ShieldCheck, Smartphone, LockKeyhole, TriangleAlert } from 'lucide-react'
 import { apiUrl } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 import { checkIdentity } from '../../lib/validation/identity'
 import { saveDocumentDetails } from '../../lib/partnerDocuments'
 
@@ -43,9 +44,12 @@ export default function AadhaarOtpVerification({ requirement, verdict, vendorId,
   }, [verified])
 
   async function post(body) {
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    if (!token) throw new Error('Please sign in again.')
     const r = await fetch(apiUrl('/api/verify-aadhaar'), {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify(body),
     })
     const json = await r.json().catch(() => ({}))
