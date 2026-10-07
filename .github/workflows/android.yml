@@ -400,7 +400,7 @@ jobs:
       # A pre-release, so it never becomes the repository's "Latest", and
       # its tag points at the commit that was built.
       - name: Publish the partner test build (partner-latest)
-        if: github.ref_name == 'feature/sambramo-business-preview-pricing-lifecycle-20261001' || github.ref_name == 'feature/sambramo-partner-full-ready-20261003'
+        if: github.ref_name == 'feature/sambramo-business-preview-pricing-lifecycle-20261001' || github.ref_name == 'feature/sambramo-partner-full-ready-20261003' || github.ref_name == 'feature/sambramo-verification-build558-34pictograms-final-20261007'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

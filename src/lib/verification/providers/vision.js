@@ -1,5 +1,5 @@
 import { PROVIDER_STATUS, notChecked } from './index'
-import { apiUrl } from '../../api'
+import { verificationCall } from '../edge'
 
 /**
  * The provider that looks at the photograph.
@@ -87,32 +87,14 @@ export const VisionProvider = {
 
     const imageBase64 = await toBase64(file)
 
-    const r = await fetch(apiUrl(ENDPOINT), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        imageBase64,
-        mimeType: file.type,
-        requirementId: requirementId ?? null,
-        expectedType: expectedType ?? null,
-        vendorId: vendorId ?? null,
-      }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    const json = await verificationCall({
+      action: 'verify_document',
+      imageBase64,
+      mimeType: file.type,
+      requirementId: requirementId ?? null,
+      expectedType: expectedType ?? null,
+      vendorId: vendorId ?? null,
     })
-
-    /* A non-200 is OUR failure. It is reported as such, in the partner's
-       words, and it never touches the document's standing. */
-    if (!r.ok) {
-      return {
-        providerStatus: PROVIDER_STATUS.UNAVAILABLE,
-        provider: 'vision',
-        reference: null,
-        says: 'We could not check that just now. A person will look at it instead.',
-      }
-    }
 
     const json = await r.json()
 

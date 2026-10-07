@@ -38,13 +38,13 @@ import { Check, Loader2, ShieldCheck, ScanLine } from 'lucide-react'
 const STRENGTH = {
   aadhaar: {
     tone: 'strong',
-    says: 'The number is checked as you type it.',
-    note: 'Both sides. We store only the last four digits.',
+    says: 'Recommended: verify in minutes with an Aadhaar-linked OTP.',
+    note: 'No card upload needed for the OTP path. We keep only the last four digits.',
   },
   dl: {
     tone: 'strong',
-    says: 'The state, RTO and issue year are checked as you type.',
-    note: 'The card itself, front and back.',
+    says: 'Good alternative: capture both sides and request an RTO/Parivahan check.',
+    note: 'Front + back, with the licence number and validity.',
   },
   voter_id: {
     tone: 'shape',

@@ -11,7 +11,7 @@ import { compareNames, MATCH } from '../../lib/verification/matching'
 import BiometricConsent from './BiometricConsent'
 import { CONSENT, fetchConsents, hasConsent } from '../../lib/partnerConsent'
 import { supabase } from '../../lib/supabase'
-import { apiUrl } from '../../lib/api'
+import { verificationCall } from '../../lib/verification/edge'
 
 /**
  * One requirement, and everything it says it needs.
@@ -171,6 +171,7 @@ export default function DocumentCapture({
   const [busySide, setBusySide] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [providerCheck, setProviderCheck] = useState(null)
 
   const [number, setNumber] = useState(row?.number_last4 ? '' : '')
   const [holderName, setHolderName] = useState(row?.holder_name ?? '')
@@ -308,7 +309,7 @@ export default function DocumentCapture({
          operator reviews by eye, which is where it was heading anyway. */
       if (read?.stampToken && saved?.id) {
         const nameMatch = compareTyped(read, holderName)
-        stamp(saved.id, read.stampToken, nameMatch).catch(() => {})
+        stamp(saved.id, number, nameMatch).then(result => { if (result?.says) setReading(prev => prev ? { ...prev, stamp: result } : prev) }).catch(e => setError(e?.message ?? 'Instant verification could not be completed.'))
         if (nameMatch === MATCH.MISMATCH) {
           /* Said, never blocked. Indian names reorder, abbreviate,
              expand initials and transliterate two ways, and a person is
@@ -328,6 +329,20 @@ export default function DocumentCapture({
          mismatch routes to the review queue; it never rejects anybody,
          because the cost of being wrong is somebody losing their
          livelihood over a bad photograph in bad light. */
+      if (requirement.documentType === 'dl' && saved?.id) {
+        verificationCall({
+          action: 'verify_dl',
+          documentId: saved.id,
+          vendorId,
+          dlNumber: number,
+          holderName: holderName?.trim() || null,
+        }).then(result => {
+          if (result?.says && result.providerStatus === 'verified') {
+            setReading(prev => prev ? { ...prev, stamp: result } : prev)
+          }
+        }).catch(() => {})
+      }
+
       if (requirement.needsConsent && consented === true && saved?.id) {
         matchFace(file, saved.id).catch(() => {})
       }
@@ -364,35 +379,29 @@ export default function DocumentCapture({
     if (!compareWith?.storage_path) return
     const url = await signedUrlFor(compareWith.storage_path)
     if (!url) return
-
     const idBlob = await fetch(url).then(r => (r.ok ? r.blob() : null))
     if (!idBlob) return
 
-    await fetch(apiUrl('/api/verify-document'), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${await tokenNow()}`,
-      },
-      body: JSON.stringify({
+    try {
+      await verificationCall({
+        action: 'face_match',
         documentId,
-        compareFaces: true,
+        vendorId,
         selfieBase64: await blobBase64(selfie),
         idBase64: await blobBase64(idBlob),
         mimeType: selfie.type,
-      }),
-    })
+      })
+    } catch {}
   }
 
-  /** Ask the server to write what the server decided. */
-  async function stamp(documentId, stampToken, nameMatch) {
-    await fetch(apiUrl('/api/verify-document'), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${await tokenNow()}`,
-      },
-      body: JSON.stringify({ documentId, stampToken, nameMatch }),
+  /** Ask the verification backend to stamp its own result. */
+  async function stamp(documentId, numberValue, nameMatch) {
+    return verificationCall({
+      action: 'stamp_document',
+      documentId,
+      vendorId,
+      number: numberValue || null,
+      nameMatch: nameMatch || null,
     })
   }
 
@@ -418,6 +427,35 @@ export default function DocumentCapture({
       expiryDate: extracted.expiry ?? null,
       authority: extracted.authority ?? null,
     })
+  }
+
+  async function verifyDrivingLicence(documentId, numberToCheck = number) {
+    if (requirement.documentType !== 'dl' || !documentId) return null
+    const cleaned = String(numberToCheck || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    if (cleaned.length < 6 || cleaned.length > 20) {
+      setProviderCheck({ status: 'error', says: 'Enter the driving licence number before the RTO check.' })
+      return null
+    }
+    setProviderCheck({ status: 'checking', says: 'Checking with the configured RTO verification service…' })
+    try {
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      if (!token) throw new Error('Please sign in again.')
+      const r = await fetch(apiUrl('/api/verify-dl'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
+        body: JSON.stringify({ documentId, vendorId, dlNumber: cleaned, holderName: holderName || null }),
+      })
+      const out = await r.json().catch(() => ({}))
+      const status = out?.providerStatus || (r.ok ? 'unavailable' : 'error')
+      setProviderCheck({ status, says: out?.says || 'Driving licence verification result received.' })
+      if (status !== 'unavailable' && status !== 'error') onUploaded?.()
+      return out
+    } catch (e) {
+      const says = e?.message || 'The RTO check could not be completed. The document remains available for Sambramo review.'
+      setProviderCheck({ status: 'unavailable', says })
+      return null
+    }
   }
 
   async function saveDetails() {
@@ -450,7 +488,14 @@ export default function DocumentCapture({
         checksumRule: requirement.checksumKind ?? undefined,
       })
       onUploaded?.(saved)
-      onClose?.()
+      /* A DL is the one capture that gets a live registry/provider seam. Keep
+         the panel open so the partner can see the RTO result instead of
+         snapping the form shut immediately after saving the number. */
+      const canRunDlCheck = requirement.documentType === 'dl' && !!saved?.storage_path && !!saved?.back_path
+      if (requirement.documentType === 'dl' && canRunDlCheck) {
+        await verifyDrivingLicence(saved.id, number)
+      }
+      if (requirement.documentType !== 'dl') onClose?.()
     } catch (e) {
       if (!server.take(e)) setError(e?.message ?? 'Could not save those details.')
     } finally {
@@ -657,6 +702,22 @@ export default function DocumentCapture({
         <p className="mt-2.5 flex items-start gap-1.5 text-[11.5px] leading-snug text-saffron-800">
           <TriangleAlert size={12} className="mt-0.5 shrink-0" />{error}
         </p>
+      )}
+
+      {requirement.documentType === 'dl' && providerCheck && (
+        <div className={"mt-3 rounded-[14px] px-3 py-2.5 ring-1 " + (
+          providerCheck.status === 'verified' ? 'bg-forest-50 text-forest-800 ring-forest-200' :
+          providerCheck.status === 'checking' ? 'bg-plum-50 text-plum-800 ring-plum-200' :
+          providerCheck.status === 'unavailable' ? 'bg-amber-50 text-amber-900 ring-amber-200' :
+          'bg-rose-50 text-rose-800 ring-rose-200') }>
+          <div className="flex items-start gap-2">
+            {providerCheck.status === 'checking' ? <Loader2 size={14} className="mt-0.5 shrink-0 animate-spin" /> : <ShieldCheck size={14} className="mt-0.5 shrink-0" />}
+            <div className="min-w-0">
+              <p className="text-[11.5px] font-extrabold">{providerCheck.status === 'verified' ? 'Driving licence verified' : providerCheck.status === 'checking' ? 'Checking licence' : 'RTO check'}</p>
+              <p className="mt-0.5 text-[11px] leading-snug opacity-80">{providerCheck.says}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       <button

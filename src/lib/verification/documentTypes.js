@@ -72,16 +72,17 @@ export const DOCUMENT_TYPES = {
     kind: 'aadhaar',
     detectAs: ['aadhaar'],
     label: 'Aadhaar',
-    hint: 'The whole card, both sides, with the number readable.',
-    frontRequired: true,
-    backRequired: true,
+    hint: 'Recommended: verify with an Aadhaar-linked OTP. Card upload is not needed for the OTP path.',
+    frontRequired: false,
+    backRequired: false,
     numberRequired: true,
     checksumKind: 'aadhaar',
     expiryRequired: false,
-    holderNameRequired: true,
+    holderNameRequired: false,
     issuingAuthorityRequired: false,
-    verificationProvider: 'digilocker',
-    faceMatchRequired: true,
+    verificationProvider: 'uidai',
+    otpVerificationRequired: true,
+    faceMatchRequired: false,
     businessMatchRequired: false,
     manualReviewAllowed: true,
     allowedFileTypes: IMAGE,
@@ -292,7 +293,7 @@ export const DOCUMENT_TYPES = {
     kind: 'dl',
     detectAs: ['driving_licence'],
     label: 'Driving licence',
-    hint: 'Both sides, with the validity dates readable.',
+    hint: 'Capture front + back in good light with all edges visible. We can request an RTO/Parivahan verification after upload.',
     frontRequired: true, backRequired: true,
     numberRequired: true, checksumKind: 'dl',
     expiryRequired: true, minimumValidityDays: 30,
@@ -497,10 +498,14 @@ export const DOCUMENT_TYPES = {
  * Precise, and never "Government Verified" unless a licensed provider
  * returned a success for this exact document.
  */
-export function verificationLabel({ status, providerStatus, checksumOk, documentType }) {
+export function verificationLabel({ status, providerStatus, checksumOk, documentType, providerName }) {
   if (status === 'rejected') return 'Sent back'
   if (providerStatus === 'mismatch') return 'Does not match your details'
   if (providerStatus === 'not_found') return 'Not found at the issuer'
+
+  if (providerStatus === 'verified' && providerName === 'sambramo-instant-check') {
+    return 'Instantly checked by Sambramo'
+  }
 
   if (providerStatus === 'verified') {
     const t = DOCUMENT_TYPES[documentType]

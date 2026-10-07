@@ -7,8 +7,10 @@ import { requirementsFor } from '../../../data/compliance'
 import { evaluateAll } from '../../../lib/verification/satisfaction'
 import { fetchVerificationPolicy } from '../../../lib/verificationPolicy'
 import DocumentCapture from '../../../components/partner/DocumentCapture'
+import AadhaarOtpVerification from '../../../components/partner/AadhaarOtpVerification'
 import IdentityChoice from '../../../components/partner/IdentityChoice'
 import { KIND_BY_ID } from '../../../lib/partnerDocuments'
+import { fetchVerificationRequirements } from '../../../lib/verification/edge'
 
 /**
  * Step 4 · only what this partner's trades actually require.
@@ -102,6 +104,8 @@ export default function ComplianceStep() {
      mandatory", i.e. exactly today's behaviour. See the header of
      lib/verificationPolicy.js for why that is the safe direction. */
   const [policy, setPolicy] = useState(null)
+  const [serverRequirements, setServerRequirements] = useState(null)
+  const [serverIdentityOptions, setServerIdentityOptions] = useState(null)
   useEffect(() => {
     let cancelled = false
     fetchVerificationPolicy()
@@ -118,9 +122,18 @@ export default function ComplianceStep() {
      card again on their next sign-in. NULL means the default. */
   const identityChoice = account.vendor?.identity_document ?? null
   const answers = useMemo(
-    () => ({ identity_document: identityChoice }), [identityChoice])
-  const reqs = useMemo(
-    () => requirementsFor({ trades, policy, answers }), [trades, policy, answers])
+    () => ({
+      identity_document: identityChoice,
+      identity_needs_face: identityChoice === 'dl',
+    }),
+    [identityChoice]
+  )
+  const reqs = useMemo(() => {
+    const local = requirementsFor({ trades, policy, answers })
+    if (!serverRequirements?.length) return local
+    const allowed = new Set(serverRequirements.map(r => r.id))
+    return local.filter(r => allowed.has(r.id))
+  }, [trades, policy, answers, serverRequirements])
   /* Keyed by requirement, not by kind. `evaluateAll` decides whether
      each one is actually satisfied — two sides where declared, a
      number, a holder name, an expiry that has not passed — rather than
@@ -200,13 +213,22 @@ export default function ComplianceStep() {
       onContinue={finish}
       subProgress={`${reqs.length} requirement${reqs.length === 1 ? '' : 's'} apply to your services`}
     >
-      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">
-        Verify what applies to you
-      </h1>
-      <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">
-        We&apos;ve selected these from the services you added — nothing here is asked
-        of every partner.
-      </p>
+      <section className="mb-5 overflow-hidden rounded-[24px] bg-gradient-to-br from-plum-950 via-plum-900 to-plum-700 p-4 text-white shadow-[0_12px_30px_rgba(42,8,92,0.12)]">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15"><ShieldCheck size={21} /></span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[18px] font-extrabold tracking-tight">Get verified. Unlock the right work.</p>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-white/72">One identity check first. Then Sambramo asks only for documents that match the services you actually list.</p>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10.5px] font-extrabold">
+          <div className="rounded-2xl bg-white/8 px-2 py-2.5 ring-1 ring-white/10"><span className="block text-[16px]">01</span><span className="mt-0.5 block text-white/60">Identity</span></div>
+          <div className="rounded-2xl bg-white/8 px-2 py-2.5 ring-1 ring-white/10"><span className="block text-[16px]">02</span><span className="mt-0.5 block text-white/60">Trade checks</span></div>
+          <div className="rounded-2xl bg-white/8 px-2 py-2.5 ring-1 ring-white/10"><span className="block text-[16px]">03</span><span className="mt-0.5 block text-white/60">Sambramo review</span></div>
+        </div>
+      </section>
+      <h1 className="text-[clamp(1.4rem,6vw,1.75rem)] font-extrabold leading-tight tracking-tight text-plum-950">Verify what applies to you</h1>
+      <p className="mb-5 mt-2 text-[13.5px] leading-relaxed text-ink/65">We&apos;ve selected these from the services you added — nothing here is asked of every partner.</p>
 
       {/* What is true right now, rather than what a constant says.
           `requiredCount` counts the requirements the policy table
@@ -243,7 +265,15 @@ export default function ComplianceStep() {
           the wrong document first. */}
       <IdentityChoice
         value={identityChoice}
-        options={identityReq?.acceptsTypes ?? []}
+        options={serverIdentityOptions?.length
+          ? serverIdentityOptions.map(o => ({
+              kind: o.kind,
+              label: o.label,
+              hint: o.recommended
+                ? 'Recommended for the fastest identity verification.'
+                : 'Use this identity route for your driving trade.',
+            }))
+          : (identityReq?.acceptsTypes ?? [])}
         locked={!!identityUploaded}
         onChange={async kind => {
           await updateVendor({ identity_document: kind })
@@ -340,7 +370,16 @@ function Section({ title, items, docs, openId, onOpen, vendorId, onUploaded, lis
                 </div>
               </div>
 
-              {open && (
+              {r.documentType === 'aadhaar' ? (
+                <div className="mt-3">
+                  <AadhaarOtpVerification
+                    requirement={r}
+                    verdict={verdict}
+                    vendorId={vendorId}
+                    onVerified={onUploaded}
+                  />
+                </div>
+              ) : open && (
                 <div className="mt-3">
                   <DocumentCapture
                     requirement={r}
