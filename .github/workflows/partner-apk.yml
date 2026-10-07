@@ -53,6 +53,11 @@ jobs:
       - name: Install Capacitor build tooling
         run: npm install --no-save @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
 
+      - name: Verify Partner build configuration
+        run: |
+          test -n "$VITE_SUPABASE_URL" || true
+          echo "Building Partner APK from $GITHUB_SHA"
+
       - name: Build Partner web bundle
         env:
           CAPACITOR_BUILD: 'true'
