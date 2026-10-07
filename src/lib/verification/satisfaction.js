@@ -92,6 +92,21 @@ export function evaluateRequirement(requirement, row, today = istTodayISO()) {
      The order is the order a person would fix them in: the images
      first, because without those there is nothing to read the rest
      off. */
+  /* Aadhaar OTP is an identity authentication result, not a file upload.
+     When the licensed provider returns verified, the identity requirement is
+     satisfied even though no card image is stored. The database still keeps
+     only the last four digits and the provider audit reference. */
+  if (requirement.otpVerificationRequired && row.provider_status === 'verified') {
+    return {
+      state: DOC_STATE.VERIFIED,
+      satisfied: true,
+      missing: [],
+      expiresInDays: null,
+      says: 'Identity verified by Aadhaar authentication.',
+      row,
+    }
+  }
+
   const missing = []
   if (requirement.frontRequired && !row.storage_path) missing.push('front')
   if (requirement.backRequired && !row.back_path) missing.push('back')
