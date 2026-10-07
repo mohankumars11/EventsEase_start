@@ -1,0 +1,96 @@
+name: Sambramo Partner APK — Anchor MC
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/partner-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sambramo-partner-apk
+  cancel-in-progress: true
+
+jobs:
+  build-partner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Anchor MC main
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android platform
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install web dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Capacitor build tooling
+        run: npm install --no-save @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
+
+      - name: Build Partner web bundle
+        env:
+          CAPACITOR_BUILD: 'true'
+          VITE_SURFACE: partner
+          VITE_DEV_AUTH_BYPASS: 'false'
+          VITE_BUILD: ${{ github.sha }}
+        run: npm run build
+
+      - name: Create Capacitor Android project
+        run: |
+          printf '%s\n' '{"appId":"in.sambramo.partner","appName":"Sambramo Partners","webDir":"dist"}' > capacitor.config.json
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Partner debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx3g"
+
+      - name: Prepare APK
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk out/sambramo-partner-anchor-mc.apk
+          sha256sum out/sambramo-partner-anchor-mc.apk
+          ls -lh out/
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sambramo-partner-anchor-mc-apk
+          path: out/sambramo-partner-anchor-mc.apk
+          retention-days: 14
+
+      - name: Publish direct download release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s\n' '{"build":"${{ github.sha }}","feature":"Anchor & MC","appId":"in.sambramo.partner"}' > version.json
+          gh release delete partner-anchor-mc-latest --yes --cleanup-tag || true
+          gh release create partner-anchor-mc-latest             out/sambramo-partner-anchor-mc.apk             version.json             --target "${{ github.sha }}"             --prerelease             --title "Sambramo Partners — Anchor & MC test build"             --notes "Fresh Partner APK built from main commit ${{ github.sha }}. Contains the Anchor & MC trade setup implementation."
