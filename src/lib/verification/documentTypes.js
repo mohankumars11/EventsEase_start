@@ -507,6 +507,10 @@ export function verificationLabel({ status, providerStatus, checksumOk, document
     return 'Instantly checked by Sambramo'
   }
 
+  if (providerStatus === 'verified' && providerName === 'sambramo-instant-check') {
+    return 'Instantly checked by Sambramo'
+  }
+
   if (providerStatus === 'verified') {
     const t = DOCUMENT_TYPES[documentType]
     if (t?.businessMatchRequired) return 'Business registration verified'

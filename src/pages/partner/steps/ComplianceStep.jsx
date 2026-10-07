@@ -111,6 +111,14 @@ export default function ComplianceStep() {
     fetchVerificationPolicy()
       .then(r => { if (!cancelled) setPolicy(r.policy) })
       .catch(() => {})
+    fetchVerificationRequirements()
+      .then(r => {
+        if (!cancelled && r?.ok) {
+          setServerRequirements(r.requirements ?? null)
+          setServerIdentityOptions(r.identityOptions ?? null)
+        }
+      })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
