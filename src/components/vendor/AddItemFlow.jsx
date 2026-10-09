@@ -55,6 +55,11 @@ import { LOGISTICS_TRADES, logisticsSpecsForServices } from '../../data/logistic
 import LogisticsPriceBook from './LogisticsPriceBook'
 import AnchorOnboardingFlow from './anchor/AnchorOnboardingFlow'
 import { hasProfileFor } from '../../data/tradePricingProfiles'
+import ListingOnboardingFlow from './listing/ListingOnboardingFlow'
+import { configFor } from '../../data/trades'
+
+/* Every registry trade except Anchor & MC lists through the shared engine. */
+const onEngine = t => !!t && !hasProfileFor(t) && !!configFor(t) && configFor(t).id !== 'anchor_mc'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -172,8 +177,26 @@ function seedFrom(row) {
    the packages in one pass. It replaces this questionnaire for that trade
    entirely; it is not a few extra screens on the end of it. Every other
    trade continues below, unchanged. */
+/* The shared engine needs migrations 20261010_07/_08. Until the registry
+   table answers, every trade keeps the questionnaire below, so a build
+   shipped ahead of the paste never strands a partner on a submit that
+   cannot succeed. Asked once per app session. */
+let engineProbe = null
+function useEngineReady() {
+  const [ready, setReady] = useState(null)
+  useEffect(() => {
+    engineProbe ??= supabase.from('sambramo_trade_registry').select('id', { head: true, count: 'exact' })
+      .then(({ error, count }) => !error && count > 0, () => false)
+    let live = true
+    engineProbe.then(ok => { if (live) setReady(ok) })
+    return () => { live = false }
+  }, [])
+  return ready
+}
+
 export default function AddItemFlow(props) {
   const [profileTrade, setProfileTrade] = useState(null)
+  const engineReady = useEngineReady()
   const trade = props.editing?.category ?? profileTrade ?? props.startTrade
   if (trade && hasProfileFor(trade)) {
     const offering = offeringsForTrade(trade)[0]
@@ -189,11 +212,28 @@ export default function AddItemFlow(props) {
       />
     )
   }
-  return <GenericAddItemFlow {...props} onProfileTrade={setProfileTrade} />
+  if (engineReady === null && onEngine(trade)) return null
+  if (engineReady && onEngine(trade)) {
+    const offering = offeringsForTrade(configFor(trade).name)[0]
+    return (
+      <ListingOnboardingFlow
+        key={configFor(trade).id}
+        trade={trade}
+        vendorId={props.vendorId}
+        editing={props.editing}
+        onAdd={props.onAdd}
+        onUpdate={props.onUpdate}
+        onClose={props.onClose}
+        onSwitchTrade={props.editing ? undefined : setProfileTrade}
+        offeringName={offering?.name ?? configFor(trade).name}
+      />
+    )
+  }
+  return <GenericAddItemFlow {...props} onProfileTrade={setProfileTrade} engineReady={!!engineReady} />
 }
 
 function GenericAddItemFlow({
-  onProfileTrade = null,
+  onProfileTrade = null, engineReady = false,
   existing = [], onAdd, onClose, startTrade = null, vendorId = null,
   /* ── Editing one saved listing ─────────────────────────────────────
      The vendor_services row, or null for the add flow. When set, the
@@ -899,7 +939,7 @@ function GenericAddItemFlow({
             <TradeStep
               q={q} setQ={setQ}
               value={trade}
-              onPick={t => { if (onProfileTrade && hasProfileFor(t)) { onProfileTrade(t); return } setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
+              onPick={t => { if (onProfileTrade && (hasProfileFor(t) || (engineReady && onEngine(t)))) { onProfileTrade(t); return } setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
             />
           )}
 

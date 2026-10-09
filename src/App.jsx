@@ -48,6 +48,8 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
 const AnchorBrowse       = lazy(() => import('./pages/book/AnchorBrowse'))
 const AnchorBook         = lazy(() => import('./pages/book/AnchorBook'))
+const TradeBrowse        = lazy(() => import('./pages/book/TradeBrowse'))
+const TradeBook          = lazy(() => import('./pages/book/TradeBook'))
 const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
 const LogisticsRequirements = lazy(() => import('./pages/book/LogisticsRequirements'))
@@ -426,6 +428,8 @@ function AppRoutes() {
       {/* Anchor & MC at each partner's published price (resolve_anchor_booking). */}
       <Route path="/book/anchor" element={<BareShell><AnchorBrowse /></BareShell>} />
       <Route path="/book/anchor/:serviceId" element={<BareShell><AnchorBook /></BareShell>} />
+      <Route path="/book/s/:trade" element={<BareShell><TradeBrowse /></BareShell>} />
+      <Route path="/book/s/:trade/:serviceId" element={<BareShell><TradeBook /></BareShell>} />
 
       {/* The two doors, for a date that could honestly take either lane. */}
       <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />

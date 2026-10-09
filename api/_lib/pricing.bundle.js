@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 4f68f42b2a4871ed
+// inputs: b3a5c7ece968cd8f
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -5031,7 +5031,7 @@ function priceLogisticsLine({ serviceId, demand = {} }) {
     basis: { version: LOGISTICS_PRICE_BOOK_VERSION, engine: "sambramo-logistics-deterministic-v1", serviceId, input: demand, components, roundedInr: rounded }
   };
 }
-function platformSplit(amountPaise, feeRate = 0.15) {
+function platformSplit(amountPaise, feeRate = 0.08) {
   const gross = Math.max(0, Number(amountPaise) || 0);
   const fee = Math.round(gross * Number(feeRate));
   return { grossPaise: gross, platformFeePaise: fee, partnerPaise: gross - fee };

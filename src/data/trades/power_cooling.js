@@ -24,6 +24,8 @@ export default {
     q.single('placement', 'Indoor / outdoor', ['Indoor', 'Outdoor', 'Both'], { required: true }),
     q.toggle('cabling', 'Cabling included'),
     q.toggle('installation', 'Installation included'),
+    q.money('rate', 'Rental rate', { required: true }),
+    q.single('rate_period', 'Per', ['Hour', 'Day', 'Event'], { required: true }),
     q.date('last_service', 'Last maintenance'),
     q.photos('photos', 'Photos', { min: 1, max: 4 }),
   ]),

@@ -117,7 +117,10 @@ export function priceLogisticsLine({ serviceId, demand = {} }) {
     basis: { version: LOGISTICS_PRICE_BOOK_VERSION, engine: 'sambramo-logistics-deterministic-v1', serviceId, input: demand, components, roundedInr: rounded } }
 }
 
-export function platformSplit(amountPaise, feeRate = 0.15) {
+/* 8% is the platform fee everywhere else (sambramo_pricing_config, and the
+   per-trade policy rows of 20261010_07); 15% here charged logistics customers
+   a different fee for the same marketplace. Pass the trade's rate when known. */
+export function platformSplit(amountPaise, feeRate = 0.08) {
   const gross = Math.max(0, Number(amountPaise) || 0)
   const fee = Math.round(gross * Number(feeRate))
   return { grossPaise: gross, platformFeePaise: fee, partnerPaise: gross - fee }

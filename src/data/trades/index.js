@@ -101,6 +101,45 @@ export function complianceFlags(config, answers = {}) {
   return flags
 }
 
+/**
+ * What the booking engine does with a trade's money fields. A field with a
+ * role becomes a `booking_rules.charges` entry the server prices on its own;
+ * a field without one (extra function, design fee…) only pre-fills custom
+ * quotes. Amounts are take-home paise.
+ *   minimum      the booking total is topped up to this
+ *   fixed_fee    charged once on every booking
+ *   overtime     per hour beyond what the base includes
+ *   waiting      per hour of waiting the customer asks for
+ *   km_beyond    per km beyond `included_km`
+ *   per_stop     per extra stop
+ *   night        once, when the job runs past `night_after`
+ *   early_start  once, when the job starts before `early_before`
+ *   deposit      refundable, collected separately, never revenue
+ */
+export const FIELD_ROLES = {
+  min_charge: 'minimum', min_fare: 'minimum', min_engagement: 'minimum', min_booking_fee: 'minimum',
+  transport_fee: 'fixed_fee', setup_fee: 'fixed_fee', delivery_fee: 'fixed_fee', installation_fee: 'fixed_fee',
+  dismantling_fee: 'fixed_fee', dismantle_fee: 'fixed_fee', setup_teardown_fee: 'fixed_fee', signage_fee: 'fixed_fee',
+  equipment_fee: 'fixed_fee', cleaning_fee: 'fixed_fee', handling_in: 'fixed_fee', handling_out: 'fixed_fee',
+  loading_fee: 'fixed_fee',
+  overtime_per_hour: 'overtime', overtime_rate: 'overtime', extra_hour_rate: 'overtime', extra_hour: 'overtime',
+  waiting_per_hour: 'waiting', waiting_fee: 'waiting',
+  per_km_beyond: 'km_beyond',
+  extra_stop: 'per_stop',
+  night_charge: 'night', night_premium: 'night', night_surcharge: 'night',
+  early_start_fee: 'early_start',
+  deposit: 'deposit',
+}
+
+/** booking_rules.charges for a listing, from its answers. */
+export function chargesFrom(config, answers = {}) {
+  const fields = [...(config.screens ?? []).flatMap(s => s.questions), ...(config.pricing?.fields ?? [])]
+  return fields
+    .filter(f => f.type === 'money' && FIELD_ROLES[f.id] && holds(f.showWhen, answers))
+    .map(f => ({ id: f.id, label: f.label, role: FIELD_ROLES[f.id], take_home_paise: Math.round(Number(answers[f.id]) || 0) }))
+    .filter(c => c.take_home_paise > 0)
+}
+
 /** Where a Transportation partner should really be listed, if anywhere else. */
 export function redirectFor(config, answers = {}) {
   const pick = config.redirects && answers.service_type
