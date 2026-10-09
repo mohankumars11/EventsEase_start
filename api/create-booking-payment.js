@@ -59,7 +59,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 
-  const { customerId: bodyCustomerId, lineIds } = req.body ?? {}
+  const { customerId: bodyCustomerId, lineIds, part: partRaw } = req.body ?? {}
+  // 'advance' (default) pays what a line needs to be confirmed; 'balance'
+  // pays what is still owed on a confirmed (paid) line.
+  const part = partRaw === 'balance' ? 'balance' : 'advance'
   if (!Array.isArray(lineIds) || !lineIds.length) {
     return res.status(400).json({ error: 'lineIds required' })
   }
@@ -113,23 +116,44 @@ export default async function handler(req, res) {
   // the service role and RLS is not protecting anything on this path.
   const { data: lines, error } = await db
     .from('booking_lines')
-    .select('id, service_name, quoted_amount_paise, status, request_id, booking_requests!inner(customer_id, event_date, area_label)')
+    .select('id, service_name, quoted_amount_paise, pricing_snapshot, status, request_id, booking_requests!inner(customer_id, event_date, area_label)')
     .in('id', lineIds)
 
   if (error) return res.status(500).json({ error: error.message })
 
-  const payable = (lines ?? []).filter(
-    l => l.booking_requests?.customer_id === customerId && l.status === 'accepted',
-  )
+  const mine = (lines ?? []).filter(l => l.booking_requests?.customer_id === customerId)
+
+  /* What each line owes NOW.
+     advance: an accepted line owes its advance (pricing_snapshot.advance_paise,
+       written by book-anchor from the partner's advance %), or the full
+       quote for lines that carry no advance (every other trade, as before).
+     balance: a paid line owes its quote minus what escrow already holds. */
+  let payable = []
+  if (part === 'advance') {
+    payable = mine.filter(l => l.status === 'accepted').map(l => ({
+      ...l, due: Math.min(l.quoted_amount_paise, Number(l.pricing_snapshot?.advance_paise) || l.quoted_amount_paise),
+    }))
+  } else {
+    const paidLines = mine.filter(l => l.status === 'paid')
+    if (paidLines.length) {
+      const { data: holds } = await db.from('escrow_ledger').select('line_id, amount_paise')
+        .eq('kind', 'HOLD').in('line_id', paidLines.map(l => l.id))
+      const held = {}
+      for (const h of holds ?? []) held[h.line_id] = (held[h.line_id] ?? 0) + Number(h.amount_paise)
+      payable = paidLines.map(l => ({ ...l, due: l.quoted_amount_paise - (held[l.id] ?? 0) })).filter(l => l.due > 0)
+    }
+  }
 
   if (!payable.length) {
     return res.status(400).json({
       error: 'Nothing to pay for',
-      detail: 'Those lines are not yours, not accepted yet, or already paid.',
+      detail: part === 'balance'
+        ? 'Nothing is owed on those bookings.'
+        : 'Those lines are not yours, not accepted yet, or already paid.',
     })
   }
 
-  const quotedPaise = payable.reduce((n, l) => n + l.quoted_amount_paise, 0)
+  const quotedPaise = payable.reduce((n, l) => n + l.due, 0)
   const first = payable[0].booking_requests
 
   /* The ₹1 live-mode smoke test.
@@ -158,6 +182,7 @@ export default async function handler(req, res) {
       lines: String(payable.length),
       quotedPaise: String(quotedPaise),
       testCharge: testPaise ? 'true' : 'false',
+      part,
     },
   })
 

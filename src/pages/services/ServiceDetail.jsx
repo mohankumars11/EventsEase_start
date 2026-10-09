@@ -349,6 +349,19 @@ export default function ServiceDetail() {
         </div>
       </header>
 
+      {/* Anchor & MC: book a named partner at their own approved price. */}
+      {serviceId === 'emcee' && (
+        <div className="mx-auto max-w-3xl px-4 pt-3">
+          <Link to="/book/anchor" className="flex items-center gap-3 rounded-[20px] bg-gradient-to-r from-plum-700 to-fuchsia-600 p-4 text-white">
+            <span className="flex-1">
+              <span className="block text-[14.5px] font-extrabold">Choose your anchor</span>
+              <span className="block text-[12px] text-white/85">See each anchor's packages and book instantly at their price.</span>
+            </span>
+            <span className="text-[20px]">→</span>
+          </Link>
+        </div>
+      )}
+
       <div className="mx-auto max-w-3xl space-y-5 pb-44 pt-4">
         {/* ── The hero ──────────────────────────────────────────────── */}
         <section className="px-4">

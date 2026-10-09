@@ -46,6 +46,8 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 // Instant booking — the marketplace bucket. Short flow, real dispatch,
 // pay per master. The pre-book journey above is untouched.
 const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
+const AnchorBrowse       = lazy(() => import('./pages/book/AnchorBrowse'))
+const AnchorBook         = lazy(() => import('./pages/book/AnchorBook'))
 const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
 const LogisticsRequirements = lazy(() => import('./pages/book/LogisticsRequirements'))
@@ -419,6 +421,10 @@ function AppRoutes() {
           it: a flow with its own progress bar and its own action bar does
           not also want the app's tab bar competing at the bottom. */}
       <Route path="/book/instant" element={<BareShell><InstantBooking /></BareShell>} />
+
+      {/* Anchor & MC at each partner's published price (resolve_anchor_booking). */}
+      <Route path="/book/anchor" element={<BareShell><AnchorBrowse /></BareShell>} />
+      <Route path="/book/anchor/:serviceId" element={<BareShell><AnchorBook /></BareShell>} />
 
       {/* The two doors, for a date that could honestly take either lane. */}
       <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />
