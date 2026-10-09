@@ -10,6 +10,7 @@ import {
 } from '../../lib/availability'
 import { istTodayISO } from '../../lib/istTime'
 import { INTEREST_FLOOR } from '../../lib/demand'
+import DayPricing from './calendar/DayPricing'
 
 /**
  * One day, in full, and the only place a day is edited.
@@ -89,6 +90,9 @@ export default function DayDetailSheet({
   onClearDay,
   onApplyToRange,
   interestOnDay = null,
+  /* What can be booked this date and at what price, from the published
+     pricing. Null for trades without a pricing profile. */
+  pricing = null,
   onClose,
 }) {
   const row = availability[date] ?? null
@@ -295,6 +299,8 @@ export default function DayDetailSheet({
               Working hours <span className="font-extrabold text-ink">{hoursLabel(defaultHours)}</span>
             </span>
           </div>
+
+          <DayPricing info={pricing} />
 
           {jobsOnDay.length > 0 && (
             <Section title="Confirmed bookings">

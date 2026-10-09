@@ -61,18 +61,21 @@ export default async function handler(req, res) {
     process.env.RAZORPAY_WEBHOOK_SECRET_LIVE,
   ].filter(Boolean)
 
-  const secret = secrets[0]
-  if (!secret) return res.status(503).json({ error: 'Webhook is not configured' })
+  if (!secrets.length) return res.status(503).json({ error: 'Webhook is not configured' })
 
   const raw = await readRawBody(req)
-  const signature = req.headers['x-razorpay-signature']
-  const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex')
+  const signature = String(req.headers['x-razorpay-signature'] ?? '')
 
-  // Constant-time compare. A plain `!==` leaks timing, and this endpoint is
-  // public by necessity.
-  const ok = signature
-    && signature.length === expected.length
-    && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  /* EVERY secret is tried. This used to compute only secrets[0], so with
+     both set every live delivery was checked against the test secret and
+     rejected: the exact "money in, nothing written" case described above.
+     Constant-time compare each; a plain `!==` leaks timing, and this
+     endpoint is public by necessity. */
+  const ok = !!signature && secrets.some(secret => {
+    const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex')
+    return signature.length === expected.length
+      && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  })
   if (!ok) return res.status(400).json({ error: 'Signature mismatch' })
 
   let payload

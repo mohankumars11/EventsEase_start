@@ -101,3 +101,34 @@ export const STEPS = [
   { id: 'rules', label: 'Rules', short: 'Rules' },
   { id: 'publish', label: 'Publish', short: 'Publish' },
 ]
+
+/* The eleven stages of the full Anchor & MC listing (master spec §4). The
+   seven-step STEPS above stays the live flow until each stage is built. */
+export const STAGES = [
+  { id: 'about', label: 'About you', short: 'About' },
+  { id: 'location', label: 'Your location', short: 'Location' },
+  { id: 'events', label: 'Experience & events', short: 'Events' },
+  { id: 'languages', label: 'Languages & styles', short: 'Languages' },
+  { id: 'pricing', label: 'Pricing & booking types', short: 'Pricing' },
+  { id: 'extras', label: 'Extra services & charges', short: 'Extras' },
+  { id: 'packages', label: 'Essential, Signature & VIP', short: 'Packages' },
+  { id: 'availability', label: 'Availability & travel', short: 'Calendar' },
+  { id: 'rules', label: 'Booking & cancellation', short: 'Rules' },
+  { id: 'payout', label: 'Verification & payout', short: 'Payout' },
+  { id: 'review', label: 'Review & publish', short: 'Publish' },
+]
+
+export const TRAVEL_SCOPE = [
+  { id: '10', label: '10 km' }, { id: '25', label: '25 km' }, { id: '50', label: '50 km' },
+  { id: '100', label: '100 km' }, { id: 'state', label: 'My state' }, { id: 'india', label: 'All India' },
+  { id: 'intl', label: 'International' }, { id: 'custom', label: 'Custom' },
+]
+
+export const PRICING_MODELS = [
+  { id: 'hour', label: 'Per hour', hint: 'A rate for every hour on stage.' },
+  { id: 'session', label: 'Per session', hint: 'One function, one ceremony, one stage slot.' },
+  { id: 'event', label: 'Per event', hint: 'One fixed price for the whole event.' },
+  { id: 'half_day', label: 'Half-day', hint: 'Up to 4 hours.' },
+  { id: 'full_day', label: 'Full-day', hint: 'Up to 8 hours.' },
+  { id: 'multi_day', label: 'Multi-day', hint: 'Events over several days.' },
+]

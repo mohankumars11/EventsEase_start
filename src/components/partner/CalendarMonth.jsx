@@ -61,6 +61,9 @@ export default function CalendarMonth({
   onSaveWeeklyRules,
   setupMode = false,
   onSetupContinue = null,
+  /* iso -> what is bookable that day at what price (published pricing).
+     Optional: trades without a pricing profile pass nothing. */
+  dayPricing = null,
 }) {
   const todayISO = istTodayISO()
 
@@ -328,7 +331,10 @@ export default function CalendarMonth({
                 while (grid.length % 7 !== 0) grid.push(null)
                 return grid.map((date, i) => {
                   if (!date) return <div key={`blank-${i}`} className="aspect-square" />
-                  const iso = date.toISOString().slice(0, 10)
+                  /* The LOCAL date. toISOString() is UTC, and local midnight in
+                     India is 18:30 the previous day in UTC, so every cell read
+                     and saved the day before the one it showed. */
+                  const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
                   const isPast = iso < todayISO
                   const isToday = iso === todayISO
                   const jobsOnDay = byDay[iso] ?? []
@@ -509,6 +515,7 @@ export default function CalendarMonth({
           onSetDay={onSetDay}
           onClearDay={iso => onClearDays([iso])}
           interestOnDay={interestByDate.get(selected) ?? null}
+          pricing={dayPricing?.(selected) ?? null}
           onApplyToRange={mode => { setRange({ from: selected, mode }); setSelected(null) }}
           onClose={() => setSelected(null)}
         />

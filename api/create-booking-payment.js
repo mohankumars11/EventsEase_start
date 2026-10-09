@@ -106,7 +106,8 @@ export default async function handler(req, res) {
     })
   }
 
-  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+  // `db` was created above, before authentication. Declaring it a second
+  // time here was a SyntaxError that took down every instant payment.
 
   // Ownership is checked here rather than trusted, because this runs with
   // the service role and RLS is not protecting anything on this path.

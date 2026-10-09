@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
+import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
 import { authenticatedUser } from './_lib/auth.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const FEE_RATE = 0.15
+// One platform fee across instant bookings and quotes (was 0.15 here only).
+const FEE_RATE = PLATFORM_FEE_RATE
 const VERSION = 'sambramo-custom-quote-v2'
 const CUSTOMER_ACCEPT_MINUTES = 10
 
@@ -60,7 +62,9 @@ export default async function handler(req, res) {
   }
   const point = `SRID=4326;POINT(${lng} ${lat})`
   const { data: eligible, error: eligibilityError } = await db.rpc('match_partners', {
-    p_trade: request.trade_id,
+    // match_partners compares vendor_services.category, which is the trade
+    // NAME; the request stores the code. Passing the code matched nobody.
+    p_trade: tradeNameFor(request.trade_id),
     p_point: point,
     p_radius_m: 100000,
     p_date: request.event_date,

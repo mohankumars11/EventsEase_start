@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { authenticatedUser } from './_lib/auth.js'
+import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const VERSION = 'sambramo-custom-quote-v2'
-const FEE_RATE = 0.15
+const FEE_RATE = PLATFORM_FEE_RATE
 
 export default async function handler(req, res) {
   if (cors(req, res)) return
@@ -46,7 +47,8 @@ export default async function handler(req, res) {
     const lat = Number(loc.lat)
     const lng = Number(loc.lng)
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false
-    const tradeName = request.canonical_demand?.tradeName || request.service_name
+    // match_partners compares the trade NAME; service_name is the offering.
+    const tradeName = request.canonical_demand?.tradeName || tradeNameFor(request.trade_id)
     if (!tradeName) return false
     const pointWkt = 'SRID=4326;POINT(' + lng + ' ' + lat + ')'
     const { data: matches, error: matchError } = await db.rpc('match_partners', {
@@ -91,8 +93,6 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'We could not confirm live availability. Please try again.' })
   }
 
-  let createdLineId = null
-  let createdOfferId = null
   try {
     const quoted = Math.max(1, Math.round(Number(response.customer_amount_paise)))
     const fee = Math.max(0, Math.round(Number(response.platform_fee_paise)))
@@ -100,14 +100,16 @@ export default async function handler(req, res) {
     const now = new Date().toISOString()
     const demand = request.canonical_demand ?? {}
 
-    const { data: line, error: lineError } = await db
-      .from('booking_lines')
-      .insert({
+    /* One transaction in the database: insert the line, take the same
+       partner lock accept_offer takes, re-check the calendar and the day's
+       capacity, write the ACCEPTED offer. Any refusal writes nothing.
+       Migration 20261010_01. */
+    const { data: booked, error: bookError } = await db.rpc('book_accepted_quote', {
+      p_line: {
         request_id: request.booking_request_id,
         service_id: request.offering_id ?? request.trade_id,
         service_name: request.service_name ?? request.offering_id ?? request.trade_id,
         trade: request.trade_id,
-        spec_mode: 'quote',
         customer_note: demand.note ?? demand.summary ?? null,
         reference_photo_url: request.reference_photo_url ?? null,
         quoted_amount_paise: quoted,
@@ -136,39 +138,22 @@ export default async function handler(req, res) {
           platform_fee_paise: fee,
           captured_at: now,
         },
-        status: 'accepted',
-        accepted_at: now,
         policy_version: VERSION,
-      })
-      .select('id')
-      .single()
-    if (lineError) throw lineError
-    createdLineId = line.id
-
-    const { data: offer, error: offerError } = await db
-      .from('dispatch_offers')
-      .insert({
-        line_id: line.id,
-        vendor_id: response.vendor_id,
-        wave: 1,
-        distance_m: Number((request.service_location ?? {}).distance_m) || null,
-        partner_amount_paise: partner,
-        status: 'ACCEPTED',
-        offered_at: now,
-        expires_at: response.quote_valid_until ?? new Date(Date.now() + 3600000).toISOString(),
-        responded_at: now,
-        accepted_at: now,
-      })
-      .select('id')
-      .single()
-    if (offerError) throw offerError
-    createdOfferId = offer.id
-
-    const { error: updateLineError } = await db
-      .from('booking_lines')
-      .update({ accepted_offer_id: offer.id })
-      .eq('id', line.id)
-    if (updateLineError) throw updateLineError
+      },
+      p_vendor_id: response.vendor_id,
+      p_partner_paise: partner,
+      p_offer_expires_at: response.quote_valid_until ?? new Date(Date.now() + 3600000).toISOString(),
+      p_distance_m: Number((request.service_location ?? {}).distance_m) || null,
+    })
+    if (bookError) throw bookError
+    if (!booked?.ok) {
+      await db.from('sambramo_quote_requests')
+        .update({ state: request.state, updated_at: new Date().toISOString() })
+        .eq('id', request.id)
+        .eq('customer_id', authn.user.id)
+      return res.status(409).json({ error: 'That partner is no longer available for this date. Please choose another quote.', reason: booked?.reason })
+    }
+    const line = { id: booked.line_id }
 
     await db.from('sambramo_quote_responses').update({ status: 'ACCEPTED' }).eq('id', response.id)
     const { data: groupRequests } = request.quote_group_id
@@ -185,8 +170,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: quoted })
   } catch (e) {
-    if (createdOfferId) await db.from('dispatch_offers').delete().eq('id', createdOfferId)
-    if (createdLineId) await db.from('booking_lines').delete().eq('id', createdLineId)
     await db.from('sambramo_quote_requests')
       .update({ state: request.state, updated_at: new Date().toISOString() })
       .eq('id', request.id)
