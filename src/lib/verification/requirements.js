@@ -162,7 +162,14 @@ const BY_TIER = {
   /* High-contact trades do not get a separate PCC row in the first release.
      Keep the tier for future policy work, but do not put an optional screening
      document in front of a partner during basic onboarding. */
-  [TIER.ALONE_WITH_CUSTOMER]: [],
+  [TIER.ALONE_WITH_CUSTOMER]: [
+    req('VER-TRADE-DRONE', 'drone_permit', {
+      enforceable: false, tier: TIER.ALONE_WITH_CUSTOMER,
+      appliesToTrades: ['Photography', 'Videography'],
+      conditional: 'flies_drone',
+      why: 'Only if you fly a drone at events. Flying one unregistered is an offence.',
+    }),
+  ],
   [TIER.FOOD]: [
     req('VER-TRADE-FSSAI', 'fssai', {
       enforceable: true,
@@ -196,6 +203,12 @@ const BY_TIER = {
     }),
     req('VER-TRADE-LIABILITY', 'liability_insurance', {
       enforceable: false, tier: TIER.PUBLIC_SAFETY,
+    }),
+    req('VER-TRADE-SAFETY', 'safety_credential', {
+      enforceable: true, tier: TIER.PUBLIC_SAFETY,
+      appliesToTrades: ['Safety & Facilities'],
+      conditional: 'regulated_safety_subtype',
+      why: 'Inspection, emergency preparedness and crowd safety are only bookable once your authorisation is checked.',
     }),
   ],
   [TIER.PREMISES]: [
