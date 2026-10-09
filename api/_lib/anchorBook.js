@@ -145,7 +145,8 @@ export default async function handler(req, res) {
     service_location: { city: clean(venue.city, 120), area: clean(venue.area, 160), address: clean(venue.address), lat, lng,
       distance_m: resolution.distance_km != null ? Math.round(resolution.distance_km * 1000) : null },
     canonical_demand: { ...r, tradeId: TRADE_CODE, tradeName: TRADE, note: clean(body.note, 1000),
-      summary: (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION },
+      summary: (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION,
+      advance_pct: resolution.advance_pct ?? null },
     state: 'VENDOR_QUOTE', missing_inputs: resolution.reasons ?? [], required_actions: [],
     // The partner's own response window, set by the server clock.
     expires_at: new Date(Date.now() + hours * 3600 * 1000).toISOString(),

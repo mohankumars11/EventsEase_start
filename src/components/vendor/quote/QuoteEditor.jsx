@@ -88,9 +88,9 @@ export default function QuoteEditor({ request, lines: lines0, expiresAt, advance
         <p className="mt-1 text-right text-[11.5px] text-plum-200">{advancePct}% advance {rupees(t.advance)} · balance {rupees(t.balance)}</p>
       </div>
 
-      <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-2">
-        <button type="button" onClick={onReject} className="h-12 rounded-full text-[13px] font-extrabold text-rose-700 ring-1 ring-rose-200">Reject</button>
-        <button type="button" onClick={onAsk} className="h-12 rounded-full text-[13px] font-extrabold text-plum-700 ring-1 ring-plum-200">Ask</button>
+      <div className={`grid gap-2 ${onAsk ? 'grid-cols-[1fr_1fr_1.6fr]' : 'grid-cols-[1fr_1.8fr]'}`}>
+        {onReject && <button type="button" onClick={onReject} className="h-12 rounded-full text-[13px] font-extrabold text-rose-700 ring-1 ring-rose-200">Reject</button>}
+        {onAsk && <button type="button" onClick={onAsk} className="h-12 rounded-full text-[13px] font-extrabold text-plum-700 ring-1 ring-plum-200">Ask</button>}
         <button type="button" disabled={missing > 0 || ms <= 0} onClick={() => onSend?.(lines, t)}
           className="h-12 rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[13.5px] font-extrabold text-white disabled:from-ink/20 disabled:to-ink/20">
           {missing > 0 ? `Fill ${missing} more` : 'Send quote →'}

@@ -18,6 +18,10 @@ export default function PricingReviewQueue() {
         supabase.from('sambramo_trade_packages')
           .select('id,vendor_id,vendor_service_id,parent_package_id,name,description,commercial_inputs,status,revision_round,submitted_at,review_note')
           .in('status', ['UNDER_REVIEW','ACTION_REQUIRED'])
+          // Packages inside a listing version are reviewed as a whole in
+          // Anchor & MC pricing; approving one alone here would publish it
+          // outside its version.
+          .is('listing_version_id', null)
           .order('submitted_at', { ascending: true }),
         supabase.from('sambramo_catering_packages')
           .select('id,vendor_id,vendor_service_id,parent_package_id,name,notes,status,submitted_at')

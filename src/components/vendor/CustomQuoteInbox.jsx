@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Camera, CheckCircle2, Clock3, MapPin, Send, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
+import QuoteEditor from './quote/QuoteEditor'
+import { rupees } from '../../lib/tierPackages'
 
 const secondsLeft = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000))
 
@@ -42,7 +44,7 @@ export default function CustomQuoteInbox({ vendorId }) {
       setFlash(result.error)
       return
     }
-    setFlash('Quote sent to Sambramo. The customer compares it here.')
+    setFlash(payload.body?.decline ? 'Request declined. It has left your queue.' : 'Quote sent to Sambramo. The customer compares it here.')
     setOpen(null)
     read()
   }
@@ -53,7 +55,9 @@ export default function CustomQuoteInbox({ vendorId }) {
       {requests.length > 0 && requests.map(r => (
         <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} />
       ))}
-      {open && <QuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />}
+      {open && (String(open.canonical_demand?.engine ?? '').startsWith('anchor')
+        ? <DirectedQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />
+        : <QuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />)}
     </section>
   )
 }
@@ -80,6 +84,60 @@ function QuoteCard({ request, onRespond }) {
         <Send size={14} /> Respond with quote
       </button>
     </article>
+  )
+}
+
+/* An Anchor & MC request from the booking engine: every line it could
+   price from the partner's own rates arrives filled; the rest are flagged.
+   The partner finishes it, Sambramo computes the customer price (8%). */
+function DirectedQuoteSheet({ request, busy, onClose, onSubmit }) {
+  const [lines, setLines] = useState(null)
+  useEffect(() => {
+    supabase.from('sambramo_quote_line_items').select('*').eq('quote_request_id', request.id)
+      .order('quote_version', { ascending: false }).order('sort_order').then(({ data }) => {
+        const latest = data?.[0]?.quote_version
+        setLines((data ?? []).filter(l => l.quote_version === latest).map(l => ({
+          id: l.id, description: l.description, qty: Number(l.quantity), unit: l.unit,
+          unit_paise: Number(l.unit_take_home_paise), auto: l.generated, needs: l.needs_partner,
+          charged: l.charged, generated_unit_paise: l.generated_unit_paise,
+        })))
+      })
+  }, [request.id])
+  const d = request.canonical_demand ?? {}
+  const headers = async () => {
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    return { 'content-type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }
+  }
+  return (
+    <div className="fixed inset-0 z-[96] overflow-y-auto bg-[#fbfaff]">
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-white/90 px-4 pb-2.5 pt-[calc(0.6rem+env(safe-area-inset-top,0px))] backdrop-blur-xl ring-1 ring-ink/[0.05]">
+        <p className="text-[16px] font-extrabold text-ink">Quote request</p>
+        <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full"><X size={19} /></button>
+      </div>
+      <div className="mx-auto max-w-lg px-4 pb-8 pt-4">
+        {!lines ? <p className="py-10 text-center text-[13px] text-ink/50">Loading…</p> : (
+          <QuoteEditor expiresAt={request.expires_at} advancePct={Number(d.advance_pct) || 30}
+            request={{
+              title: `${request.service_name}${d.days > 1 ? ` · ${d.days} days` : ''}`,
+              dates: request.event_date, venue: request.service_location?.city || request.service_location?.area || '—',
+              guests: d.guests ?? '—', languages: (d.languages ?? []).join(', ') || '—', reason: d.summary || 'Outside your standard packages',
+            }}
+            lines={lines.length ? lines : [{ id: 'new-0', description: 'Hosting fee', qty: 1, unit: 'event', unit_paise: 0, needs: true }]}
+            onReject={async () => {
+              if (busy) return
+              await onSubmit(request.id, { headers: await headers(), body: { decline: true } })
+            }}
+            onSend={async ls => {
+              if (busy) return
+              await onSubmit(request.id, { headers: await headers(), body: { lines: ls.map(l => ({
+                description: l.description, quantity: l.qty, unit: l.unit, unit_take_home_paise: l.unit_paise || 0,
+                charged: l.charged !== false, generated: !!l.auto, generated_unit_paise: l.generated_unit_paise ?? null,
+              })) } })
+            }} />
+        )}
+      </div>
+    </div>
   )
 }
 

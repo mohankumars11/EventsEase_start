@@ -78,7 +78,11 @@ export default async function handler(req, res) {
   if (!claimed) return res.status(409).json({ error: 'Another quote is already being accepted' })
 
   try {
-    if (!(await partnerStillEligible())) {
+    /* A directed Anchor & MC quote may be outside the partner's area by
+       design; its date and capacity are re-checked inside
+       book_accepted_quote under the partner lock. */
+    const directed = String(request.canonical_demand?.engine ?? '').startsWith('anchor')
+    if (!directed && !(await partnerStillEligible())) {
       await db.from('sambramo_quote_requests')
         .update({ state: request.state, updated_at: new Date().toISOString() })
         .eq('id', request.id)

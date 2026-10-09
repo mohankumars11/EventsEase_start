@@ -27,8 +27,30 @@ export default async function handler(req, res) {
 
   const body = req.body ?? {}
   const quoteRequestId = String(body.quoteRequestId ?? '')
-  const partnerAmountPaise = money(body.partnerAmountPaise)
-  if (!quoteRequestId || partnerAmountPaise <= 0) return res.status(400).json({ error: 'Quote request and positive partner quote are required.' })
+
+  /* Line items, when sent, ARE the quote: the total is computed here from
+     them and any client total is ignored. Included lines are kept at ₹0;
+     an estimate must say why. */
+  const lines = Array.isArray(body.lines) ? body.lines.slice(0, 60).map((l, i) => ({
+    sort_order: i,
+    description: String(l.description ?? '').trim().slice(0, 200),
+    quantity: Math.max(0.01, Number(l.quantity) || 1),
+    unit: String(l.unit ?? 'item').trim().slice(0, 30) || 'item',
+    unit_take_home_paise: Math.max(0, Math.round(Number(l.unit_take_home_paise) || 0)),
+    charged: l.charged !== false,
+    generated: !!l.generated,
+    generated_unit_paise: l.generated_unit_paise != null ? Math.round(Number(l.generated_unit_paise)) : null,
+    is_estimate: !!l.is_estimate,
+    estimate_note: l.is_estimate ? String(l.estimate_note ?? '').trim().slice(0, 300) || null : null,
+  })) : null
+  if (lines) {
+    if (lines.some(l => !l.description)) return res.status(400).json({ error: 'Every line needs a description.' })
+    if (lines.some(l => l.is_estimate && !l.estimate_note)) return res.status(400).json({ error: 'Explain each line marked as an estimate.' })
+  }
+  const partnerAmountPaise = lines
+    ? Math.round(lines.filter(l => l.charged).reduce((t, l) => t + l.quantity * l.unit_take_home_paise, 0))
+    : money(body.partnerAmountPaise)
+  if (!quoteRequestId || (body.decline !== true && partnerAmountPaise <= 0)) return res.status(400).json({ error: 'Quote request and positive partner quote are required.' })
 
   const { data: vendor } = await db
     .from('vendors')
@@ -40,7 +62,7 @@ export default async function handler(req, res) {
 
   const { data: request } = await db
     .from('sambramo_quote_requests')
-    .select('id, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id')
+    .select('id, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id, canonical_demand')
     .eq('id', quoteRequestId)
     .eq('vendor_id', vendor.id)
     .maybeSingle()
@@ -49,10 +71,22 @@ export default async function handler(req, res) {
   if (!['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(request.state)) return res.status(409).json({ error: 'That request is no longer open.' })
   if (request.expires_at && new Date(request.expires_at).getTime() <= Date.now()) return res.status(409).json({ error: 'That quote window has closed.' })
 
+  // The partner declines: the request leaves their queue and the customer sees it closed.
+  if (body.decline === true) {
+    await db.from('sambramo_quote_requests').update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
+      .eq('id', request.id).eq('vendor_id', vendor.id)
+    return res.status(200).json({ ok: true, declined: true })
+  }
+
   /* Availability is a live promise. A partner can receive a request at 14:00,
      block the date at 14:02, and still have the request sitting in the inbox.
      Do the same server-side eligibility check again immediately before the
      quote is sent so the calendar remains the authority for dispatch. */
+  /* A directed Anchor & MC quote (from the booking engine) exists BECAUSE the
+     event may be outside the partner's area, so the distance re-match does
+     not apply; the date and capacity are re-checked under the partner lock
+     when the customer accepts (book_accepted_quote). */
+  const directed = String(request.canonical_demand?.engine ?? '').startsWith('anchor')
   const location = request.service_location && typeof request.service_location === 'object'
     ? request.service_location : {}
   const lat = Number(location.lat)
@@ -60,29 +94,34 @@ export default async function handler(req, res) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(409).json({ error: 'This request has no usable event location, so we cannot confirm live availability.' })
   }
-  const point = `SRID=4326;POINT(${lng} ${lat})`
-  const { data: eligible, error: eligibilityError } = await db.rpc('match_partners', {
-    // match_partners compares vendor_services.category, which is the trade
-    // NAME; the request stores the code. Passing the code matched nobody.
-    p_trade: tradeNameFor(request.trade_id),
-    p_point: point,
-    p_radius_m: 100000,
-    p_date: request.event_date,
-    p_allow_synthetic: false,
-    p_limit: 100,
-    p_exclude: [],
-  })
-  if (eligibilityError) return res.status(503).json({ error: 'We could not confirm your live calendar. Please try again.' })
-  if (!(eligible ?? []).some(row => String(row.vendor_id) === String(vendor.id))) {
-    await db.from('sambramo_quote_requests')
-      .update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
-      .eq('id', request.id).eq('vendor_id', vendor.id)
-    return res.status(409).json({ error: 'You are no longer available for this request on the selected date. Sambramo has removed it from your quote queue.' })
+  if (!directed) {
+    const point = `SRID=4326;POINT(${lng} ${lat})`
+    const { data: eligible, error: eligibilityError } = await db.rpc('match_partners', {
+      // match_partners compares vendor_services.category, which is the trade
+      // NAME; the request stores the code. Passing the code matched nobody.
+      p_trade: tradeNameFor(request.trade_id),
+      p_point: point,
+      p_radius_m: 100000,
+      p_date: request.event_date,
+      p_allow_synthetic: false,
+      p_limit: 100,
+      p_exclude: [],
+    })
+    if (eligibilityError) return res.status(503).json({ error: 'We could not confirm your live calendar. Please try again.' })
+    if (!(eligible ?? []).some(row => String(row.vendor_id) === String(vendor.id))) {
+      await db.from('sambramo_quote_requests')
+        .update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
+        .eq('id', request.id).eq('vendor_id', vendor.id)
+      return res.status(409).json({ error: 'You are no longer available for this request on the selected date. Sambramo has removed it from your quote queue.' })
+    }
+
   }
 
   const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - FEE_RATE)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
-  const validUntil = new Date(Date.now() + CUSTOMER_ACCEPT_MINUTES * 60 * 1000).toISOString()
+  // A directed quote is for a planned event: give the customer two days, not minutes.
+  const acceptMinutes = directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
+  const validUntil = new Date(Date.now() + acceptMinutes * 60 * 1000).toISOString()
 
   const { data, error } = await db
     .from('sambramo_quote_responses')
@@ -90,7 +129,7 @@ export default async function handler(req, res) {
       quote_request_id: quoteRequestId,
       vendor_id: vendor.id,
       partner_amount_paise: partnerAmountPaise,
-      partner_components: body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {},
+      partner_components: lines ? { lines } : (body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {}),
       inclusions: list(body.inclusions),
       exclusions: list(body.exclusions),
       quote_valid_until: validUntil,
@@ -105,12 +144,21 @@ export default async function handler(req, res) {
     .single()
 
   if (error) return res.status(500).json({ error: error.message })
+
+  /* Each send is a new version of the line items; earlier versions are kept. */
+  if (lines?.length) {
+    const { data: prev } = await db.from('sambramo_quote_line_items').select('quote_version')
+      .eq('quote_request_id', quoteRequestId).order('quote_version', { ascending: false }).limit(1)
+    const version = (prev?.[0]?.quote_version ?? 0) + 1
+    await db.from('sambramo_quote_line_items').insert(lines.map(l => ({ ...l, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
+  }
+
   return res.status(200).json({
     ok: true,
     responseId: data.id,
     customerAmountPaise: data.customer_amount_paise,
     quoteValidUntil: data.quote_valid_until,
-    customerAcceptWindowMinutes: CUSTOMER_ACCEPT_MINUTES,
+    customerAcceptWindowMinutes: acceptMinutes,
     status: data.status,
     quoteGroupId: request.quote_group_id,
   })
