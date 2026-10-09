@@ -218,8 +218,11 @@ export const ANCHOR_MC_PROFILE = {
  * Map of all trade profiles by trade_id.
  * Add new trades here as you enable the pattern for them.
  */
+/* Keyed by the trade NAME, because that is what AddItemFlow, vendor_services.category
+   and the trade picker all carry. Keying by 'emcee' meant getProfile('Anchor & MC')
+   returned null and the profile flow never opened. */
 export const TRADE_PRICING_PROFILES = {
-  emcee: ANCHOR_MC_PROFILE,
+  'Anchor & MC': ANCHOR_MC_PROFILE,
   // Photography, Catering, Decoration, etc. will be added here
   // as each trade is ported to the new pattern.
 }

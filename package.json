@@ -22,14 +22,17 @@
     "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/share": "^8.0.2",
     "@supabase/supabase-js": "^2.44.4",
+    "embla-carousel-react": "^8.6.0",
     "firebase": "^12.18.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.400.0",
+    "motion": "^14.0.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.24.0",
-    "recharts": "^3.10.1"
+    "recharts": "^3.10.1",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",

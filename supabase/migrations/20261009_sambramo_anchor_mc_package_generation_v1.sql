@@ -3,7 +3,9 @@ begin;
 -- Add calculation_snapshot to track how packages were generated (inputs, formula, outputs).
 -- This creates an audit trail so we can reconcile generated vs. vendor-edited prices.
 alter table public.sambramo_trade_packages
-  add column if not exists calculation_snapshot jsonb comment 'Server-generated packages store their generation inputs and math here for auditability.';
+  add column if not exists calculation_snapshot jsonb;
+
+comment on column public.sambramo_trade_packages.calculation_snapshot is 'Server-generated packages store their generation inputs and math here for auditability.';
 
 create index if not exists sambramo_trade_packages_calculation_snapshot_idx
   on public.sambramo_trade_packages(vendor_service_id, status)

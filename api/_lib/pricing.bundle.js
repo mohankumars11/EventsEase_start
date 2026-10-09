@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 574eb06134535c06
+// inputs: 4f68f42b2a4871ed
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -5114,7 +5114,8 @@ function coverageOf({ availability = {}, weeklyRules = [], todayISO, horizonDays
   const months = [];
   const cursor = parse(todayISO);
   cursor.setUTCDate(1);
-  for (let i = 0; i < 6; i++) {
+  const horizonMonths = Math.max(1, Math.ceil(Number(horizonDays) / 30.45));
+  for (let i = 0; i < horizonMonths; i++) {
     const y = cursor.getUTCFullYear();
     const m = cursor.getUTCMonth();
     const first = new Date(Date.UTC(y, m, 1));

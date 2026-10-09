@@ -53,10 +53,8 @@ import { operationScreensFor } from '../../data/partnerOperations'
 import { reconcilePartnerQuestionGroups, filterPartnerQuestionGroups } from '../../data/sambramoPartnerQuestionnaireV2Rules'
 import { LOGISTICS_TRADES, logisticsSpecsForServices } from '../../data/logisticsPartnerSpecsV2'
 import LogisticsPriceBook from './LogisticsPriceBook'
-import { getProfile, hasProfileFor } from '../../data/tradePricingProfiles'
-import BaselineInputStep from './BaselineInputStep'
-import GeneratedPackagesStep from './GeneratedPackagesStep'
-import { usePartnerDraft } from '../../hooks/usePartnerDraft'
+import AnchorOnboardingFlow from './anchor/AnchorOnboardingFlow'
+import { hasProfileFor } from '../../data/tradePricingProfiles'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -124,7 +122,6 @@ const DERIVED_SPEC_KEYS = new Set([
   'uploads', 'menu_rates', 'distance_rates', 'venue_terms', 'signature',
   'kitchen_type', 'cuisines', 'answers', 'menu_ids', 'counter_ids',
   'answers_unresolved', 'match_profile', 'logistics_rates',
-  'baseline_inputs', 'generated_packages', // Profile-based tier packages
 ])
 
 function seedFrom(row) {
@@ -163,12 +160,40 @@ function seedFrom(row) {
     signature: specs.signature ?? null,
     price: row?.price === null || row?.price === undefined ? '' : String(row.price),
     unit: row?.unit ?? 'per event',
-    baseline_inputs: specs.baseline_inputs ?? {},
-    generated_packages: specs.generated_packages ?? [],
   }
 }
 
-export default function AddItemFlow({
+/* ══════════════════════════════════════════════════════════════════════
+   TRADES WITH A PRICING PROFILE GET THEIR OWN FLOW
+   ══════════════════════════════════════════════════════════════════════
+
+   Anchor & MC (and each trade that gets a profile after it) is listed
+   through a seven-step flow that collects the profile, the take-home and
+   the packages in one pass. It replaces this questionnaire for that trade
+   entirely; it is not a few extra screens on the end of it. Every other
+   trade continues below, unchanged. */
+export default function AddItemFlow(props) {
+  const [profileTrade, setProfileTrade] = useState(null)
+  const trade = props.editing?.category ?? profileTrade ?? props.startTrade
+  if (trade && hasProfileFor(trade)) {
+    const offering = offeringsForTrade(trade)[0]
+    return (
+      <AnchorOnboardingFlow
+        trade={trade}
+        vendorId={props.vendorId}
+        editing={props.editing}
+        onAdd={props.onAdd}
+        onUpdate={props.onUpdate}
+        onClose={props.onClose}
+        offeringName={offering?.name ?? trade}
+      />
+    )
+  }
+  return <GenericAddItemFlow {...props} onProfileTrade={setProfileTrade} />
+}
+
+function GenericAddItemFlow({
+  onProfileTrade = null,
   existing = [], onAdd, onClose, startTrade = null, vendorId = null,
   /* ── Editing one saved listing ─────────────────────────────────────
      The vendor_services row, or null for the add flow. When set, the
@@ -251,15 +276,6 @@ export default function AddItemFlow({
   const [touched, setTouched] = useState(() => new Set(['trade']))
   const [busy, setBusy] = useState(false)
   const [q, setQ] = useState('')
-
-  // Profile-based tier package pricing (Anchor & MC, etc.)
-  const [baselineInputs, setBaselineInputs] = useState(isEdit ? seed.baseline_inputs : {})
-  const [generatedPackages, setGeneratedPackages] = useState(isEdit ? seed.generated_packages : [])
-  const [generatingPackages, setGeneratingPackages] = useState(false)
-  const [packageError, setPackageError] = useState(null)
-
-  // Draft store for resuming in-progress onboarding
-  const { saveDraft, loadDraft, clearDraft } = usePartnerDraft()
 
   const offerings = useMemo(() => (trade ? offeringsForTrade(trade) : []), [trade])
   /* The questions for what they actually ticked, falling back to the
@@ -370,56 +386,6 @@ export default function AddItemFlow({
 
      Computed rather than hardcoded so Back and Next can never walk into
      a screen with nothing on it. */
-  const profile = useMemo(() => trade ? getProfile(trade) : null, [trade])
-
-  // Generate preview packages when user reaches the packages step (during add flow)
-  useEffect(() => {
-    if (step === 'packages' && profile && !generatedPackages.length && !generatingPackages) {
-      // Generate a preview of what packages will look like
-      try {
-        const platformFeeRate = 0.08
-        const inputs = baselineInputs
-        const takeHome = parseInt(inputs.take_home_per_hour || 0)
-        const minHrs = parseInt(inputs.min_duration_hours || 2)
-        const maxHrs = parseInt(inputs.max_duration_hours || 8)
-        const vipMult = parseFloat(inputs.vip_multiplier || 4)
-
-        if (takeHome > 0) {
-          const essential = Math.round((takeHome * minHrs) / (1 - platformFeeRate) / 10) * 10
-          const signature = Math.round(essential * 1.75 / 10) * 10
-          const vip = Math.round((takeHome * maxHrs * vipMult) / (1 - platformFeeRate) / 10) * 10
-
-          setGeneratedPackages([
-            {
-              tier: 'ESSENTIAL',
-              name: 'Essential',
-              duration_hours: minHrs,
-              price_paise: essential * 100,
-              description: 'Single anchor or MC for your event',
-            },
-            {
-              tier: 'SIGNATURE',
-              name: 'Signature',
-              duration_hours: minHrs * 2,
-              price_paise: signature * 100,
-              description: 'Anchor or MC with added services (MOST POPULAR)',
-              badge: 'MOST POPULAR',
-            },
-            {
-              tier: 'VIP',
-              name: 'VIP',
-              duration_hours: maxHrs,
-              price_paise: vip * 100,
-              description: 'Premium anchor/MC experience',
-            },
-          ])
-        }
-      } catch (e) {
-        setPackageError(e.message || 'Failed to generate preview')
-      }
-    }
-  }, [step, profile, generatedPackages, baselineInputs])
-
   const flow = useMemo(() => {
     /* ── An edit has no trade step and no offerings step ─────────────
        Both of them ARE the row being edited. `category` is what
@@ -448,11 +414,6 @@ export default function AddItemFlow({
     /* Every trade, not only catering. */
     for (const screen of opsScreens) s.push(`ops:${screen.id}`)
 
-    /* Profile-based tier packages: insert baseline + packages before ops */
-    if (profile && !isEdit) {
-      s.splice(s.indexOf('detail') >= 0 ? s.indexOf('detail') + 1 : s.length, 0, 'baseline', 'packages')
-    }
-
     /* The menu-card upload is catering's. Asking a valet to photograph
        their menu is the kind of question that teaches a partner the app
        does not know what they do. */
@@ -468,7 +429,7 @@ export default function AddItemFlow({
 
     s.push('price', 'review')
     return s
-  }, [isEdit, groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens, profile])
+  }, [isEdit, groups.length, wantsMenus, isCatering, kitchen, cuisines, opsScreens])
 
   /* The opening step is guessed before `flow` exists, so on an edit with
      no spec questions 'detail' is not in it. Snapping rather than
@@ -518,8 +479,6 @@ export default function AddItemFlow({
     : id === 'cuisines' ? 'cuisines'
     : id.startsWith('cuisine:') || id.startsWith('lib:') || id === 'menus' || id === 'dishes' ? 'dishes'
     : id.startsWith('ops:') ? 'ops'
-    : id === 'baseline' ? 'pricing'
-    : id === 'packages' ? 'pricing'
     : id === 'upload' || id === 'work' || id === 'price' ? 'price'
     : 'submit'
 
@@ -740,14 +699,6 @@ export default function AddItemFlow({
         Object.entries(logisticsRates).filter(([, v]) => String(v ?? '').trim() !== ''))
       if (Object.keys(logistics).length) specs.logistics_rates = logistics
 
-      // Profile-based tier packages (Anchor & MC, etc.)
-      if (profile && Object.keys(baselineInputs).length) {
-        specs.baseline_inputs = baselineInputs
-        if (generatedPackages.length) {
-          specs.generated_packages = generatedPackages.map(p => ({ id: p.id, tier: p.tier, name: p.name }))
-        }
-      }
-
       /* Everything on top of the rent, kept as the separate numbers they
          are. Flattened into one figure they would be exactly the surprise
          this screen exists to remove. */
@@ -948,7 +899,7 @@ export default function AddItemFlow({
             <TradeStep
               q={q} setQ={setQ}
               value={trade}
-              onPick={t => { setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
+              onPick={t => { if (onProfileTrade && hasProfileFor(t)) { onProfileTrade(t); return } setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
             />
           )}
 
@@ -1055,23 +1006,6 @@ export default function AddItemFlow({
           {step === 'work' && (
             <WorkUpload value={work} onChange={setWork} trade={trade} showAll={showChecks}
               copy={workPromptsFor(trade)} />
-          )}
-
-          {step === 'baseline' && profile && (
-            <BaselineInputStep
-              profile={profile}
-              value={baselineInputs}
-              onChange={setBaselineInputs}
-              showAll={showChecks}
-            />
-          )}
-
-          {step === 'packages' && profile && (
-            <GeneratedPackagesStep
-              packages={generatedPackages}
-              loading={generatingPackages}
-              error={packageError}
-            />
           )}
 
           {step === 'dishes' && (
