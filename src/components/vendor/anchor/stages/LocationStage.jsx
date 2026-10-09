@@ -14,18 +14,27 @@ import { TRAVEL_SCOPE } from '../options'
 import PinMap from '../../../common/PinMap'
 import LocationAutocomplete from '../../../common/LocationAutocomplete'
 
-export default function LocationStage({ value, set, onLocate }) {
+export default function LocationStage({ value, set, onLocate, onReverse, onSettings }) {
   const v = value ?? {}
   const [busy, setBusy] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [denied, setDenied] = useState(null)
 
   async function locate() {
     if (!onLocate) return
-    setBusy(true)
+    setBusy(true); setDenied(null)
     try {
       const r = await onLocate()
+      if (r?.denied) { setDenied(r.denied); setSearching(true); return }
       if (r) set({ ...v, ...r, source: 'gps', confirmed: false })
     } finally { setBusy(false) }
+  }
+
+  async function moved(pt) {
+    const base = { ...v, lat: pt.lat, lng: pt.lng, source: v.source === 'gps' ? 'gps' : 'map', confirmed: false }
+    set(base)
+    const a = await onReverse?.(pt.lat, pt.lng)
+    if (a) set({ ...base, ...a })
   }
 
   return (
@@ -42,7 +51,7 @@ export default function LocationStage({ value, set, onLocate }) {
         {v.lat != null && (
           <div className="mt-3">
             <PinMap value={{ lat: v.lat, lng: v.lng }} verified={v.source === 'gps' && v.confirmed}
-              onChange={pt => set({ ...v, lat: pt.lat, lng: pt.lng, source: v.source === 'gps' ? 'gps' : 'map', confirmed: false })} />
+              onChange={moved} />
             <p className="mt-1.5 text-center text-[11.5px] font-semibold text-ink/45">Move the map so the pin sits on your address</p>
             <div className="mt-3 rounded-2xl bg-[#faf9fd] p-3 ring-1 ring-ink/[0.06]">
               <p className="text-[13.5px] font-extrabold text-ink">{v.formatted_address || 'Address will appear here'}</p>
@@ -52,6 +61,16 @@ export default function LocationStage({ value, set, onLocate }) {
                 {v.confirmed ? '✓ Location confirmed' : 'Yes, this is right'}
               </button>
             </div>
+          </div>
+        )}
+
+        {denied && (
+          <div className="mt-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
+            <p className="text-[12.5px] font-bold text-amber-900">
+              {denied === 'off' ? 'Location is switched off on this phone.' : 'Location permission was not given.'} You can search for your address instead, or turn it on and try again.
+            </p>
+            {onSettings && <button type="button" onClick={() => onSettings(denied === 'off' ? 'location' : 'app')}
+              className="mt-2 text-[12.5px] font-extrabold text-amber-900 underline">Open settings</button>}
           </div>
         )}
 

@@ -9,7 +9,7 @@ import { Award, Crown, Gem, Pencil, Check, X, RefreshCw, Inbox, Timer, FilePen, 
 import {
   Card, Label, TextField, Chip, ChipRow, Segmented, Toggle, OptionCard, Sheet, SectionTitle,
 } from './ui'
-import { ADDONS, SLA_HOURS, ADVANCE, CANCELLATION, TRAVEL_BILLING, RIDER, TIER_DEFAULTS } from './options'
+import { ADDONS, ADDONS_V3, SLA_HOURS, ADVANCE, CANCELLATION, TRAVEL_BILLING, RIDER, TIER_DEFAULTS } from './options'
 import { rupees, takeHomeOf } from '../../../lib/tierPackages'
 
 const TIER_LOOK = {
@@ -17,7 +17,7 @@ const TIER_LOOK = {
   SIGNATURE: { icon: Crown, from: 'from-plum-50', ring: 'ring-plum-500', tint: 'text-plum-700' },
   VIP: { icon: Gem, from: 'from-sky-50', ring: 'ring-sky-200', tint: 'text-sky-700' },
 }
-const label = id => ADDONS.find(a => a.id === id)?.label ?? id
+const label = id => ADDONS_V3.find(a => a.id === id)?.label ?? ADDONS.find(a => a.id === id)?.label ?? id
 
 /** Merge the generated tier with whatever the partner changed on it. */
 export function finalPackages(generated, overrides = {}, offered = {}) {

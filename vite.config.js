@@ -111,6 +111,11 @@ function devApi() {
 }
 
 export default defineConfig({
+  /* The gzip size table is informational only, and on a 3.9 GB build box it
+     is the step that runs out of memory ("[vite:reporter] insufficient
+     memory") after the bundle has already been written. Turning it off
+     changes nothing that is built or deployed. */
+  build: { reportCompressedSize: false },
   plugins: [
     react(),
     devApi(),
