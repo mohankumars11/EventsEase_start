@@ -20,7 +20,8 @@ import PartnerAccount from '../../components/vendor/PartnerAccount'
 import TermsGate from '../../components/vendor/TermsGate'
 import ClosedAccount from '../../components/vendor/ClosedAccount'
 import Earnings from '../../components/vendor/Earnings'
-import SambramoPricingStudio from '../../components/vendor/SambramoPricingStudio'
+import PricingTab from '../../components/vendor/pricing/PricingTab'
+import { usePublishedPricing } from '../../hooks/usePublishedPricing'
 import CustomQuoteInbox from '../../components/vendor/CustomQuoteInbox'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
@@ -102,6 +103,8 @@ export default function VendorDashboard() {
     stats, checklist, updateVendor, addService, updateService, removeService,
     setDayStatus, setRangeStatus, clearDays, saveWeeklyRules,
   } = account
+  /* Published package prices for the Calendar's day sheet (Anchor & MC). */
+  const dayPricing = usePublishedPricing({ services, availability, weeklyRules, vendor })
 
   // The tab lives in the URL so the checklist can link straight at the thing
   // it is asking for, and so a vendor who reloads mid-edit lands back where
@@ -742,10 +745,15 @@ export default function VendorDashboard() {
 
         {tab === 'pricing' && (
           <div className="space-y-5">
-            <SambramoPricingStudio
+            {/* Anchor & MC (any trade with a pricing profile) gets the
+                Pricing Control Center over its published listing version;
+                every other trade keeps SambramoPricingStudio. */}
+            <PricingTab
               vendor={vendor}
               services={services}
               onOpenListings={() => setTab('list')}
+              onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
+              onOpenPayout={() => openAccount('bank')}
             />
           </div>
         )}
@@ -857,6 +865,7 @@ export default function VendorDashboard() {
               onSetRange={setRangeStatus}
               onClearDays={clearDays}
               onSaveWeeklyRules={saveWeeklyRules}
+              dayPricing={dayPricing}
               setupMode={params.get('return') === 'setup'}
               onSetupContinue={() => navigate('/partner/setup/compliance')}
             />

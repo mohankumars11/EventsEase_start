@@ -55,7 +55,7 @@ const Row = ({ k, v }) => (
   </div>
 )
 
-export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayout, onPreview, onViewPackage }) {
+export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayout, onPreview, onViewPackage, banner }) {
   const d = data
   const locked = d.price_locked_until && new Date(d.price_locked_until) > new Date(d.now ?? Date.now())
   const [statusLabel, statusClass] = STATUS_LOOK[d.status] ?? STATUS_LOOK.DRAFT
@@ -94,6 +94,8 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
         </div>
       </div>
 
+      {banner}
+
       {d.seasonal && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-[22px] bg-gradient-to-r from-amber-50 to-rose-50 p-4 ring-1 ring-amber-200">
@@ -115,10 +117,10 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
               <div key={p.tier} className={`w-[72%] shrink-0 snap-center rounded-[22px] bg-gradient-to-b ${from} to-white p-4 ring-1 ${p.tier === 'SIGNATURE' ? 'ring-2 ring-plum-500' : 'ring-ink/[0.07]'}`}>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2"><span className={`flex h-8 w-8 items-center justify-center rounded-xl bg-white ${tint} shadow-sm`}><Icon size={16} /></span><span className="text-[15px] font-extrabold">{p.name}</span></span>
-                  <span className="rounded-full bg-forest-50 px-2 py-0.5 text-[10.5px] font-extrabold text-forest-700">Live</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-extrabold ${p.status === 'LIVE' ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800'}`}>{p.status === 'LIVE' ? 'Live' : p.status === 'ACTION_REQUIRED' ? 'Changes requested' : 'In review'}</span>
                 </div>
                 <p className="mt-3 text-[26px] font-extrabold leading-none tracking-tight">{rupees(p.price_paise)}</p>
-                <p className="mt-1 text-[11.5px] font-bold text-ink/50">{p.hours} hrs · {p.sessions} function{p.sessions > 1 ? 's' : ''}</p>
+                <p className="mt-1 text-[11.5px] font-bold text-ink/50">{p.hours} hrs{p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}</p>
                 <div className="mt-2.5 space-y-1">
                   {p.inclusions.slice(0, 3).map(i => <p key={i} className="flex items-center gap-1.5 text-[12px] font-semibold"><Check size={12} className="text-forest-600" strokeWidth={3} />{i}</p>)}
                 </div>
@@ -158,7 +160,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
             )
           })}
         </div>
-        <EditButton locked={locked} until={d.price_locked_until} onClick={() => onEdit?.('pricing')} />
+        <EditButton locked={locked && !d.editable} until={d.price_locked_until} onClick={() => onEdit?.('pricing')} />
       </Section>
 
       <Section title="Extra services" count={d.addons.length}>
