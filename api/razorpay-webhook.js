@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { bookingLinesFor, captureBookingPayment } from './_lib/bookingCapture.js'
+import { routeTransfersForCapture, routeWebhook } from './_lib/routeTransfers.js'
 
 /**
  * Razorpay's webhook — the only thing in this app that can say a milestone
@@ -83,6 +84,14 @@ export default async function handler(req, res) {
   catch { return res.status(400).json({ error: 'Unparseable body' }) }
 
   const event = payload?.event
+
+  /* Razorpay Route: linked-account activation and transfer outcomes. */
+  if (typeof event === 'string' && /^(account|product|transfer)\./.test(event)) {
+    const db = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const r = await routeWebhook(db, event, payload)
+    return res.status(200).json(r ?? { ignored: true })
+  }
+
   const entity = payload?.payload?.payment?.entity ?? payload?.payload?.refund?.entity
   if (!entity) return res.status(200).json({ ignored: true })
 
@@ -114,7 +123,10 @@ export default async function handler(req, res) {
       // A 5xx makes Razorpay retry, which is what we want when the write
       // failed — the index makes the retry safe.
       if (!r.ok) return res.status(500).json({ error: r.error })
-      return res.status(200).json(r)
+      /* Money is recorded; now move each Route partner's share, on hold
+         until delivery. Never fails the webhook — see routeTransfers.js. */
+      const route = await routeTransfersForCapture(supabase, { entity, lineIds: booking.lineIds })
+      return res.status(200).json({ ...r, route })
     }
   }
 

@@ -1,7 +1,7 @@
 /**
  * Book an Anchor & MC partner at their published price — or get a quote.
  *
- *   POST /api/book-anchor
+ *   POST /api/anchor?op=book
  *   { vendorServiceId, request: { tier?, event_date, start_time, hours, days?, guests,
  *     languages[], event_category, addons[], lat, lng }, venue: { address, area, city },
  *     note?, preview? }
@@ -18,9 +18,9 @@
  * Every non-preview decision is logged to sambramo_booking_decisions.
  */
 import { createClient } from '@supabase/supabase-js'
-import { cors } from './_lib/cors.js'
-import { authenticatedUser } from './_lib/auth.js'
-import { PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
+import { cors } from './cors.js'
+import { authenticatedUser } from './auth.js'
+import { PLATFORM_FEE_RATE } from './tradeNames.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

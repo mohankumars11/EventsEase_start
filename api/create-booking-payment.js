@@ -125,7 +125,7 @@ export default async function handler(req, res) {
 
   /* What each line owes NOW.
      advance: an accepted line owes its advance (pricing_snapshot.advance_paise,
-       written by book-anchor from the partner's advance %), or the full
+       written by api/anchor?op=book from the partner's advance %), or the full
        quote for lines that carry no advance (every other trade, as before).
      balance: a paid line owes its quote minus what escrow already holds. */
   let payable = []

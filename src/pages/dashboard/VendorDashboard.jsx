@@ -753,7 +753,8 @@ export default function VendorDashboard() {
               services={services}
               onOpenListings={() => setTab('list')}
               onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
-              onOpenPayout={() => openAccount('bank')}
+              onOpenPayout={() => (import.meta.env.VITE_FF_PAYOUT_FULLSCREEN === 'false'
+                ? openAccount('bank') : navigate('/partner/payouts'))}
             />
           </div>
         )}

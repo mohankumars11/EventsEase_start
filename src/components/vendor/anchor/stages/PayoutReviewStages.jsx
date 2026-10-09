@@ -34,12 +34,13 @@ export function usePayoutStatus(vendorId) {
 
 export function PayoutStage({ status, onOpenPayout }) {
   const navigate = useNavigate()
+  const openPayout = onOpenPayout ?? (() => navigate('/partner/payouts'))
   const rows = [
     { icon: ShieldCheck, label: 'Identity verification', ok: status.verified, pending: !status.verified,
       note: status.verified ? 'Verified' : 'Complete it in Compliance', go: () => navigate('/partner/setup/compliance') },
     { icon: Landmark, label: 'Bank or UPI details', ok: !!status.details, note: status.details ? (status.details.verified_at ? 'Verified' : 'Saved, being checked') : 'Not added yet',
       go: () => navigate('/partner/setup/bank') },
-    { icon: Sparkles, label: 'Razorpay payout account', ok: !!status.route, note: status.route ? 'Active' : 'Set up after your bank details are verified', go: onOpenPayout },
+    { icon: Sparkles, label: 'Razorpay payout account', ok: !!status.route, note: status.route ? 'Active' : 'Set up after your bank details are verified', go: openPayout },
   ]
   return (
     <>

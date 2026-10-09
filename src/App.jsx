@@ -76,6 +76,7 @@ const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'
 const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
 const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
 const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
+const PartnerPayouts     = lazy(() => import('./pages/partner/Payouts'))
 /* One job, in full. A route rather than a taller card so a notification
    can point AT a booking instead of dropping somebody on a list. */
 const JobDetails         = lazy(() => import('./pages/partner/JobDetails'))
@@ -665,6 +666,12 @@ function AppRoutes() {
       <Route path="/partner/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
           <PageBoundary><WhatYouOffer /></PageBoundary>
+        </ProtectedRoute>
+      } />
+      {/* Full-screen payouts (Razorpay Route): no tab bar, Back returns. */}
+      <Route path="/partner/payouts" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><PartnerPayouts /></PageBoundary>
         </ProtectedRoute>
       } />
 {/* ── The five steps ────────────────────────────────────────────

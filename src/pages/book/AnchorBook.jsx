@@ -1,7 +1,7 @@
 /**
  * Book one Anchor & MC partner.
  *
- * The customer describes the event; the SERVER (api/book-anchor →
+ * The customer describes the event; the SERVER (api/anchor?op=book →
  * resolve_anchor_booking) says, live, whether it can be booked now and at
  * exactly what price — every line shown before payment, nothing added
  * after. Instant → the line is created and the advance is paid through
@@ -65,7 +65,7 @@ export default function AnchorBook() {
     setResolving(true)
     const t = setTimeout(async () => {
       try {
-        const r = await fetch(apiUrl('/api/book-anchor'), { method: 'POST', headers: await authHeaders(),
+        const r = await fetch(apiUrl('/api/anchor?op=book'), { method: 'POST', headers: await authHeaders(),
           body: JSON.stringify({ vendorServiceId: serviceId, request, preview: true }) })
         const body = await r.json()
         if (n === seq.current) setRes(r.ok ? body : { path: 'ERROR', reasons_text: [body.error] })
@@ -80,7 +80,7 @@ export default function AnchorBook() {
     if (venue.lat == null) { setErr('Choose your venue so we can check travel.'); return }
     setBusy(true); setErr('')
     try {
-      const r = await fetch(apiUrl('/api/book-anchor'), { method: 'POST', headers: await authHeaders(),
+      const r = await fetch(apiUrl('/api/anchor?op=book'), { method: 'POST', headers: await authHeaders(),
         body: JSON.stringify({ vendorServiceId: serviceId, request, venue: { address: venue.label, area: venue.area, city: venue.city }, note: f.note }) })
       const body = await r.json()
       if (!r.ok) { setErr(body.reasons_text?.[0] ?? body.error ?? 'Could not book.'); setRes(body); return }
