@@ -746,7 +746,7 @@ declare
   v_date date; v_avail record; v_found boolean; v_booked integer; v_cap integer;
   v_line_id uuid; v_offer_id uuid;
   v_res jsonb := coalesce(p_line->'reservations', '[]'::jsonb);
-  x jsonb; v_free numeric;
+  rv jsonb; v_free numeric;
 begin
   if p_spec_mode not in ('standard','discuss','quote') then raise exception 'Bad spec mode.'; end if;
   select r.event_date into v_date from booking_requests r where r.id = v_request_id;
@@ -765,12 +765,12 @@ begin
     select coalesce(case when v_found then v_avail.slots_total end, v.max_events_per_day, 1) into v_cap from vendors v where v.id = p_vendor_id;
     if v_booked >= v_cap then return jsonb_build_object('ok', false, 'reason', 'day_full'); end if;
   else
-    for x in select * from jsonb_array_elements(v_res) loop
-      perform 1 from sambramo_resources where id = (x->>'resource_id')::uuid and vendor_id = p_vendor_id for update;
+    for rv in select * from jsonb_array_elements(v_res) loop
+      perform 1 from sambramo_resources where id = (rv->>'resource_id')::uuid and vendor_id = p_vendor_id for update;
       if not found then return jsonb_build_object('ok', false, 'reason', 'resource_missing'); end if;
-      v_free := public.sambramo_resource_free((x->>'resource_id')::uuid, (x->>'start_at')::timestamptz, (x->>'end_at')::timestamptz);
-      if coalesce(v_free, 0) < (x->>'qty')::numeric then
-        return jsonb_build_object('ok', false, 'reason', 'resource_full', 'resource_id', x->>'resource_id');
+      v_free := public.sambramo_resource_free((rv->>'resource_id')::uuid, (rv->>'start_at')::timestamptz, (rv->>'end_at')::timestamptz);
+      if coalesce(v_free, 0) < (rv->>'qty')::numeric then
+        return jsonb_build_object('ok', false, 'reason', 'resource_full', 'resource_id', rv->>'resource_id');
       end if;
     end loop;
   end if;

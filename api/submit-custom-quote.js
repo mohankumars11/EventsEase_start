@@ -117,7 +117,14 @@ export default async function handler(req, res) {
 
   }
 
-  const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - FEE_RATE)))
+  /* A directed quote (from the trades engine) is charged at its trade's own
+     fee policy, like the instant price would have been; others keep 8%. */
+  let feeRate = FEE_RATE
+  if (directed) {
+    const { data: tf } = await db.rpc('sambramo_trade_fee', { p_trade: request.canonical_demand?.tradeName ?? tradeNameFor(request.trade_id) ?? request.trade_id })
+    if (Number(tf) > 0 && Number(tf) < 0.5) feeRate = Number(tf)
+  }
+  const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - feeRate)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
   // A directed quote is for a planned event: give the customer two days, not minutes.
   const acceptMinutes = directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
@@ -135,7 +142,7 @@ export default async function handler(req, res) {
       quote_valid_until: validUntil,
       notes: String(body.notes ?? '').trim().slice(0, 4000) || null,
       customer_amount_paise: customerAmountPaise,
-      platform_fee_rate: FEE_RATE,
+      platform_fee_rate: feeRate,
       platform_fee_paise: platformFeePaise,
       pricing_version: VERSION,
       status: 'SUBMITTED',

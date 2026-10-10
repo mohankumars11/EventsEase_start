@@ -72,15 +72,23 @@ export default function TradeBook() {
   }, [serviceId])
 
   const picked = Object.entries(f.items).filter(([, q]) => q > 0).map(([item_key, qty]) => ({ item_key, qty }))
+  /* A coverage package, act or ceremony carries its own duration; the
+     customer is not asked "how long" for it (a 50-minute ceremony booked
+     as 3 hours would ask for overtime the partner never priced). */
+  const itemHours = (() => {
+    if (config?.archetype !== 'TIME_PERFORMER' || !picked[0]) return null
+    const at = listing?.catalogue?.find(i => i.item_key === picked[0].item_key)?.attributes ?? {}
+    return Number(at.hours) || (Number(at.minutes) ? Math.round((Number(at.minutes) / 60) * 100) / 100 : null)
+  })()
   const request = useMemo(() => ({
     event_date: f.date, end_date: ask.endDate ? f.end : undefined, start_time: f.start,
-    hours: ask.hours ? f.hours : undefined, guests: Number(f.guests) || 0, staff: ask.staff ? f.staff : undefined,
+    hours: ask.hours ? (itemHours ?? f.hours) : undefined, guests: Number(f.guests) || 0, staff: ask.staff ? f.staff : undefined,
     qty: ask.qty ? f.qty : undefined, package: f.pkg, items: picked, addons: f.addons,
     event_category: f.event, lat: venue.lat, lng: venue.lng,
     ...(ask.trip ? { pickup: venue.lat != null ? { lat: venue.lat, lng: venue.lng } : undefined,
       dropoff: drop.lat != null ? { lat: drop.lat, lng: drop.lng } : undefined,
       stops: f.stops, waiting_hours: f.waiting, return: f.ret, passengers: Number(f.guests) || 0 } : {}),
-  }), [f, venue, drop]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [f, venue, drop, itemHours]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!listing) return
@@ -192,7 +200,7 @@ export default function TradeBook() {
         </div>
         {!ask.endDate && <><div className="mt-4" /><Label required>Start time</Label>
           <ChipRow size="sm" options={START} value={f.start} onChange={x => setF({ ...f, start: x })} /></>}
-        {ask.hours && !f.pkg && <><div className="mt-4" /><Label required>How long</Label>
+        {ask.hours && !f.pkg && !itemHours && <><div className="mt-4" /><Label required>How long</Label>
           <ChipRow size="sm" options={[1, 2, 3, 4, 6, 8, 10, 12]} value={f.hours} onChange={x => setF({ ...f, hours: x })} format={h => `${h} hr${h > 1 ? 's' : ''}`} /></>}
         {ask.staff && <div className="mt-4 flex items-center justify-between"><Label required>People needed</Label><Qty value={f.staff} onChange={v => setF({ ...f, staff: Math.max(1, v) })} /></div>}
         {ask.qty && <div className="mt-4 flex items-center justify-between"><Label required>Quantity</Label>
