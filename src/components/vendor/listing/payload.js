@@ -25,7 +25,7 @@ export function stagesFor(config) {
   s.push({ id: 'availability', label: 'Availability & travel', short: 'Calendar' })
   if (config.compliance.conditional.length) s.push({ id: 'compliance', label: 'Licences & documents', short: 'Licences' })
   s.push({ id: 'booking', label: 'Booking & cancellation', short: 'Rules' })
-  s.push({ id: 'payout', label: 'Verification & payout', short: 'Payout' })
+  s.push({ id: 'payout', label: 'Identity & bank details', short: 'ID & Bank' })
   s.push({ id: 'review', label: 'Review & submit', short: 'Submit' })
   return s
 }

@@ -224,7 +224,7 @@ export default function ListingOnboardingFlow({
         }
       }
 
-      toast.success(`Your ${config.serviceNoun} has been submitted for review.`)
+      // The confirmation is the Jobs tab card (SubmittedCard), shown after this hands back.
       clearDraft()
       const nextTrade = completeTrade(config.name)
       onClose?.(nextTrade || undefined, data)
@@ -305,7 +305,7 @@ export default function ListingOnboardingFlow({
               {here.id === 'availability' && <AvailabilityStage value={a.availability} set={put('availability')} isTrip={isTrip} />}
               {here.id === 'compliance' && <ComplianceStage config={config} answers={a.answers} vendorId={vendorId} />}
               {here.id === 'booking' && <BookingStage value={a.booking} set={put('booking')} />}
-              {here.id === 'payout' && <PayoutStage status={payout} />}
+              {here.id === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
               {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested} />}
             </motion.div>
           </AnimatePresence>

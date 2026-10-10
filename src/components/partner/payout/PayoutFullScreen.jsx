@@ -6,6 +6,7 @@
  * earnings is. Every state shown is one the backend recorded from a
  * Razorpay response; nothing here says "paid" because a screen animated.
  */
+import RazorpayBadge from './RazorpayBadge'
 import { ArrowLeft, Check, Landmark, CircleAlert, Hourglass, Banknote, ArrowLeftRight, ShieldCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import { rupees } from '../../../lib/tierPackages'
@@ -77,6 +78,7 @@ export default function PayoutFullScreen({ setup, account, earnings, onBack, onF
             </div>
           ))}
         </div>
+        <div className="flex justify-center"><RazorpayBadge /></div>
         <p className="px-2 text-center text-[11.5px] leading-snug text-ink/45">Payouts are made by Razorpay to your linked bank account. Timing depends on Razorpay and your bank.</p>
       </div>
     </div>

@@ -114,7 +114,7 @@ export const STAGES = [
   { id: 'packages', label: 'Essential, Signature & VIP', short: 'Packages' },
   { id: 'availability', label: 'Availability & travel', short: 'Calendar' },
   { id: 'rules', label: 'Booking & cancellation', short: 'Rules' },
-  { id: 'payout', label: 'Verification & payout', short: 'Payout' },
+  { id: 'payout', label: 'Identity & bank details', short: 'ID & Bank' },
   { id: 'review', label: 'Review & publish', short: 'Publish' },
 ]
 

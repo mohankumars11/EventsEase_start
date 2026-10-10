@@ -8,7 +8,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 import { SERVICE_UNITS, UNIT_BY_ID, describeService } from '../../config/vendor'
 import { TRADE_FOR_SERVICE } from '../../config/vendor'
 import AddItemFlow from './AddItemFlow'
-import { clearQueue } from '../../lib/tradeQueue'
+import { afterSubmission, onboardPath } from '../../lib/tradeRoutes'
 import VenueManager from './VenueManager'
 import ListingStatusCard from './ListingStatusCard'
 import WorkLibrary from './WorkLibrary'
@@ -136,6 +136,30 @@ export default function VendorServiceList({
 
   const activeCount = services.filter(s => s.is_active).length
 
+  /* ══════════════════════════════════════════════════════════════════
+     A SUBMITTED SERVICE GOES STRAIGHT TO JOBS
+     ══════════════════════════════════════════════════════════════════
+
+     Both trade flows close with (nextTrade, result) only after the server
+     has accepted submit_listing_version / submit_anchor_listing_version;
+     Back and Save & exit close with nothing. So `result` is the proof of
+     a real submission, and only then does the partner leave for Jobs.
+
+     The account itself is put in the operator's queue with the existing
+     submit_for_review() — what the old five-section Review step did. It
+     is idempotent (an account already under review keeps its clock, an
+     approved one stays approved) and never blocks the hand-off: the
+     listing is already submitted whatever it answers.
+
+     The next queued trade is NOT opened automatically any more. The Jobs
+     confirmation offers it ("Continue setting up another service"), so
+     the partner chooses between more setup and their jobs. */
+  async function onSubmitted(trade, result) {
+    setPicking(false)
+    setEditing(null)
+    await afterSubmission(navigate, trade, result)
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -214,20 +238,17 @@ export default function VendorServiceList({
              to Add Service — and a partner who wants to stop can still
              close it, because every queued trade already exists as a
              listing they can come back to. */
-          onClose={next => {
+          onClose={(next, result) => {
+            if (result) { onSubmitted(typeof picking === 'string' ? picking : null, result); return }
             /* Another queued trade? Open it. Otherwise, if we came from
                step 1, hand the partner back to the hub rather than
                leaving them on the dashboard — the whole point of the
                six-step redesign. */
             if (typeof next === 'string') { setPicking(next); return }
-            /* ── The walk is over, either way ────────────────────────
-               Drained or abandoned, the queue must not survive: it
-               lives in localStorage and `clearQueue` was exported and
-               never called once, so a partner who backed out of a
-               three-trade walk had those trades still queued weeks
-               later — and the next single trade they added would chain
-               into one of them without explanation. */
-            clearQueue()
+            /* Save & exit or Back: the walk pauses. The remaining
+               selections stay queued — the Jobs confirmation and the
+               selector's Continue setup offer them; nothing chains on
+               its own any more, so a kept queue cannot surprise anyone. */
             setPicking(false)
             if (returnTo) {
               const sep = returnTo.includes('?') ? '&' : '?'
@@ -264,7 +285,9 @@ export default function VendorServiceList({
           /* Honours returnTo like the add flow above. Editing a listing
              from step 1 has to come back to step 1; this instance used
              to swallow it and strand the partner on the dashboard. */
-          onClose={() => {
+          onClose={(next, result) => {
+            const row = services.find(s => s.id === editing)
+            if (result) { onSubmitted(row?.category ?? null, result); return }
             setEditing(null)
             if (returnTo) {
               const sep = returnTo.includes('?') ? '&' : '?'
@@ -351,7 +374,7 @@ export default function VendorServiceList({
           <TradeGrid
             q={q}
             setQ={setQ}
-            onPick={t => setPicking(t)}
+            onPick={t => navigate(onboardPath(t))}
             placeholder="Search 26 trades — catering, generator, mehendi…"
           />
         </>
@@ -364,10 +387,11 @@ export default function VendorServiceList({
       {!editing && services.length > 0 && (
         <button
           type="button"
-          onClick={() => setPicking(true)}
+          onClick={() => navigate('/partner/services')}
+          data-cta="add-another-service"
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-[14px] font-extrabold text-royal-700 ring-1 ring-royal-200 transition active:scale-[0.99]"
         >
-          <Plus size={16} /> Add something else you do
+          <Plus size={16} /> Add Another Service
         </button>
       )}
 

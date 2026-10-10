@@ -85,10 +85,15 @@ export function partnerStage({ vendor, services = [] } = {}) {
 /**
  * The route a stage opens on.
  *
- * UNDER_REVIEW, REQUIRES_ACTION and LIVE all land on the dashboard: it
- * already renders the right thing for each of them (the review banner,
- * the rejection card, the jobs list). Only the two pre-dashboard stages
- * route somewhere else.
+ * UNDER_REVIEW, REQUIRES_ACTION and LIVE all land on the dashboard's
+ * Jobs tab: it already renders the right thing for each of them (the
+ * review banner, the rejection card, the jobs list).
+ *
+ * A partner who has not submitted any service yet — brand new, or picked
+ * trades and left drafts — lands on "What services do you offer?"
+ * (/partner/setup), which lists their drafts under Continue setup. The
+ * five-section overview that used to live there is gone; its sections
+ * are inside each trade's own flow.
  */
 export function routeForStage(stage) {
   switch (stage) {
@@ -99,7 +104,7 @@ export function routeForStage(stage) {
        this arm is unreachable today and kept only so an external caller
        passing the constant gets a real route rather than a 404. */
     case STAGE.ONBOARDING:    return '/partner/setup'
-    case STAGE.CHOOSE_TRADES: return '/dashboard/vendor?tab=list'
+    case STAGE.CHOOSE_TRADES: return '/partner/setup'
     default:                  return '/dashboard/vendor'
   }
 }

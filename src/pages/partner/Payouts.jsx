@@ -11,8 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import PayoutFullScreen from '../../components/partner/payout/PayoutFullScreen'
 import { supabase } from '../../lib/supabase'
-import { apiUrl } from '../../lib/api'
-import { authHeaders } from '../../lib/payLines'
+import { routeSetup } from '../../lib/payoutRoute'
 import { useToast } from '../../context/ToastContext'
 
 const STEP = { created: 'kyc', under_review: 'kyc', needs_clarification: 'kyc', activated: 'active', suspended: 'kyc', rejected: 'kyc' }
@@ -25,11 +24,7 @@ export default function Payouts() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
-  const route = useCallback(async action => {
-    const r = await fetch(apiUrl('/api/anchor?op=route-setup'), { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action }) })
-    const body = await r.json().catch(() => ({}))
-    return { ok: r.ok, body }
-  }, [])
+  const route = useCallback(action => routeSetup(action), [])
 
   useEffect(() => {
     let alive = true
@@ -70,7 +65,10 @@ export default function Payouts() {
     setBusy(false)
     if (!r.ok) {
       setErr(r.body.error ?? 'Razorpay could not set this up.')
-      if (r.body.step === 'bank' || r.body.step === 'pan') navigate('/partner/setup/bank')
+      /* More → Bank & payments (PayoutDetails) is the form that collects
+         the bank account AND the PAN Razorpay asks for. The old setup
+         step had no PAN field and sat behind the five-step hub's lock. */
+      if (r.body.step === 'bank' || r.body.step === 'pan') navigate('/dashboard/vendor?tab=account&screen=bank')
       return
     }
     setSt(r.body)
@@ -82,7 +80,7 @@ export default function Payouts() {
   const status = st.route_status
   const step = status ? STEP[status] ?? 'kyc' : 'started'
   const action = !status ? 'Set up Razorpay payouts to be paid automatically.'
-    : status === 'needs_clarification' ? 'Razorpay needs more details. Tap to retry after updating Bank & payments.'
+    : status === 'needs_clarification' ? 'Razorpay needs more details. Tap to retry after updating Bank & payments (More).'
     : status === 'rejected' || status === 'suspended' ? `Razorpay ${status} this account. Contact Sambramo support.`
     : status !== 'activated' ? 'Razorpay is verifying your account. Tap to refresh.' : null
 

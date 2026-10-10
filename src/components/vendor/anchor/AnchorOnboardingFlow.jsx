@@ -183,7 +183,7 @@ export default function AnchorOnboardingFlow({
       })
       if (error) { setSubmitError(friendlyError(error)); return }
 
-      toast.success('Your profile has been submitted for review.')
+      // The confirmation is the Jobs tab card (SubmittedCard), shown after this hands back.
       clearDraft()
       const nextTrade = completeTrade(trade)
       onClose?.(nextTrade || undefined, data)
@@ -204,7 +204,7 @@ export default function AnchorOnboardingFlow({
       { id: 'pricing', label: 'Pricing approved', status: 'pending', next: 'Submit to send your packages for review.' },
       { id: 'availability', label: 'Calendar & booking windows', status: done.has('availability') ? 'pass' : 'fail', next: 'Set your limits and open your calendar.' },
       { id: 'rules', label: 'Booking & cancellation rules', status: done.has('rules') ? 'pass' : 'fail', next: 'Finish Booking & cancellation.' },
-      { id: 'payout', label: 'Razorpay payout account', status: payout.route ? 'pass' : 'fail', next: 'Complete payout setup to be booked instantly.' },
+      { id: 'payout', label: 'Razorpay payout account', status: payout.active ? 'pass' : 'fail', next: 'Complete payout setup to be booked instantly.' },
     ],
   }), [done, payout])
 
@@ -243,7 +243,7 @@ export default function AnchorOnboardingFlow({
                 : <p className="rounded-2xl bg-amber-50 p-4 text-[13px] font-bold text-amber-900">Finish How you charge first. Your packages are built from it.</p>)}
               {step === 'availability' && <AvailabilityStage value={a.availability} set={put('availability')} />}
               {step === 'rules' && <RulesStage value={a.rules} set={put('rules')} />}
-              {step === 'payout' && <PayoutStage status={payout} />}
+              {step === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
               {step === 'review' && (
                 <ReviewStage items={readiness.items} state={readiness.state} quotesOk={false}
                   tiers={finalPackages(generated, a.overrides, offered)} name={a.about.stage_name}

@@ -132,6 +132,8 @@ export default function PartnerBottomNav() {
     /* What you offer. Its own sticky Continue sits exactly where the bar
        would be, and a partner mid-setup has one thing to do. */
     '/partner/services',
+    /* One trade's onboarding: full screen, its own Back and Save & exit. */
+    '/partner/onboard',
     '/partner/market',
   ]
   const preAccount  = PRE_ACCOUNT.some(r => pathname.startsWith(r))

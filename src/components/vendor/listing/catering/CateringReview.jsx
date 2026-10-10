@@ -43,7 +43,7 @@ export default function CateringReview({ a, done, go, fee, payout }) {
     ['At least one priced menu', menus.some(m => m.price_model !== 'quote' && m.price_paise > 0)],
     ['FSSAI details entered (verification by Sambramo after submit)', foodSafetyDone(a)],
     ['Capacity set (guests per day, events at once, staff)', s.guests_per_day > 0 && s.events_per_day > 0 && s.staff > 0],
-    ['Payout account ready for instant payments', !!payout?.route],
+    ['Payouts active with Razorpay (needed for Instant Book & Pay)', !!payout?.active],
   ]
   return (
     <>

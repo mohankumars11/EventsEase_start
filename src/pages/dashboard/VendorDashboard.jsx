@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   Loader2, AlertCircle,
-  Bell, IndianRupee, Calculator, Eye, Sparkles, Store,
+  Bell, IndianRupee, Calculator, Eye, Sparkles, Store, Plus,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -36,6 +36,8 @@ import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { usePendingPartnerReferral } from '../../hooks/usePendingPartnerReferral'
 import { useAccountScreens } from '../../hooks/useAccountScreens'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
+import SubmittedCard from '../../components/partner/SubmittedCard'
+import { onboardPath } from '../../lib/tradeRoutes'
 
 /**
  * The partner's console.
@@ -463,6 +465,11 @@ export default function VendorDashboard() {
         </div>
       )}
 
+      {/* ── "Your service has been submitted for review." ───────────
+          Where a successful trade submission lands (?submitted=), with
+          the server's status, the payout truth and the next service. */}
+      {tab === 'offers' && <SubmittedCard vendorId={vendor?.id} services={services} />}
+
       {/* ── The review clock, in full ─────────────────────────────────
           Below the scoreboard, in the content column, where it is one
           card among cards and aligned with every other. The header
@@ -538,6 +545,15 @@ export default function VendorDashboard() {
             }
           }}
         />
+      )}
+
+      {/* Adding a trade is one tap from Jobs, without reselecting the
+          ones already set up — the selector marks those with their status. */}
+      {tab === 'offers' && (services?.length ?? 0) > 0 && !params.get('submitted') && (
+        <button type="button" data-cta="add-another-service" onClick={() => navigate('/partner/services')}
+          className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3 text-[13.5px] font-extrabold text-plum-700 ring-1 ring-plum-200 active:scale-[0.99]">
+          <Plus size={16} /> Add Another Service
+        </button>
       )}
 
       {/* ══════════════════════════════════════════════════════════════
@@ -727,15 +743,15 @@ export default function VendorDashboard() {
                 <>
                   <p className="text-[14px] font-extrabold text-ink">Jobs open once you are approved</p>
                   <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
-                    We check every master before sending them work. Finish the six
-                    setup steps and we will take it from there.
+                    We check every master before sending them work. Set up a service
+                    and submit it for review — we will take it from there.
                   </p>
                   <button
                     type="button"
                     onClick={() => navigate('/partner/setup')}
                     className="mt-4 min-h-[44px] rounded-full bg-gradient-to-r from-plum-700 to-plum-500 px-5 text-[13px] font-extrabold text-white"
                   >
-                    Continue setup
+                    {(services?.length ?? 0) > 0 ? 'Add another service' : 'Set up a service'}
                   </button>
                 </>
               )}
@@ -927,7 +943,7 @@ export default function VendorDashboard() {
                listing, on the tab that already renders it. Switching the
                tab rather than routing keeps the partner inside the
                dashboard and keeps one implementation of the flow. */
-            onOpenTrade={trade => setParams(keepReturn({ tab: 'list', start: trade }))}
+            onOpenTrade={trade => navigate(onboardPath(trade))}
           />
         )}
 
