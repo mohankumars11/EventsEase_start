@@ -11,6 +11,7 @@ import {
 import { istTodayISO } from '../../lib/istTime'
 import { INTEREST_FLOOR } from '../../lib/demand'
 import DayPricing from './calendar/DayPricing'
+import DayCapacity from './calendar/DayCapacity'
 
 /**
  * One day, in full, and the only place a day is edited.
@@ -301,6 +302,7 @@ export default function DayDetailSheet({
           </div>
 
           <DayPricing info={pricing} />
+          <DayCapacity vendorId={vendor?.id} date={date} />
 
           {jobsOnDay.length > 0 && (
             <Section title="Confirmed bookings">

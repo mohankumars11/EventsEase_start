@@ -9,6 +9,8 @@
 import { useMemo, useState } from 'react'
 import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
+import TradePricing from './TradePricing'
+import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
 import SambramoPricingStudio from '../SambramoPricingStudio'
 import AnchorProfileCard from '../../customer/AnchorProfileCard'
 import { Sheet } from '../anchor/ui'
@@ -30,12 +32,16 @@ const label = id => ADDONS_V3.find(a => a.id === id)?.label ?? id
 const title = t => t.charAt(0) + t.slice(1).toLowerCase()
 
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
+  const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
-  const others = services.filter(s => !hasProfileFor(s.category))
-  if (!anchors.length) return <SambramoPricingStudio vendor={vendor} services={services} onOpenListings={onOpenListings} />
+  const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
+  const others = services.filter(s => !hasProfileFor(s.category) && !engine.includes(s))
+  if (engineReady === null && services.some(s => onEngine(s.category))) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-plum-600" /></div>
+  if (!anchors.length && !engine.length) return <SambramoPricingStudio vendor={vendor} services={services} onOpenListings={onOpenListings} />
   return (
     <div className="space-y-6">
       {anchors.map(s => <AnchorPricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
+      {engine.map(s => <TradePricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
       {others.length > 0 && (
         <div>
           <p className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Your other services</p>

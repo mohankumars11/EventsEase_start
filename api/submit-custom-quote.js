@@ -86,7 +86,7 @@ export default async function handler(req, res) {
      event may be outside the partner's area, so the distance re-match does
      not apply; the date and capacity are re-checked under the partner lock
      when the customer accepts (book_accepted_quote). */
-  const directed = String(request.canonical_demand?.engine ?? '').startsWith('anchor')
+  const directed = /^(anchor|trades)-engine/.test(String(request.canonical_demand?.engine ?? ''))
   const location = request.service_location && typeof request.service_location === 'object'
     ? request.service_location : {}
   const lat = Number(location.lat)

@@ -101,10 +101,10 @@ begin
   br := lv.booking_rules; tr := lv.travel_rules; prof := lv.profile;
 
   -- ── Can this partner do it at all? ─────────────────────────────────
-  if not coalesce(vd.is_verified, false) then hard := hard || 'partner_not_verified'; end if;
-  if coalesce(vd.accepting_jobs, true) = false then hard := hard || 'partner_paused'; end if;
+  if not coalesce(vd.is_verified, false) then hard := array_append(hard, 'partner_not_verified'); end if;
+  if coalesce(vd.accepting_jobs, true) = false then hard := array_append(hard, 'partner_paused'); end if;
   if v_event is not null and not (coalesce(prof->'events', '[]'::jsonb) ? v_event) then
-    hard := hard || 'event_not_hosted';
+    hard := array_append(hard, 'event_not_hosted');
   end if;
   for lang in select lower(jsonb_array_elements_text(coalesce(p_req->'languages', '[]'::jsonb))) loop
     if not exists (select 1 from jsonb_array_elements(coalesce(prof->'languages', '[]'::jsonb)) l where lower(l->>'name') = lang) then
@@ -112,22 +112,22 @@ begin
     end if;
   end loop;
   v_lead := d - current_date;
-  if v_lead < coalesce((br->>'min_notice_days')::integer, 0) then hard := hard || 'short_notice'; end if;
+  if v_lead < coalesce((br->>'min_notice_days')::integer, 0) then hard := array_append(hard, 'short_notice'); end if;
   if br ? 'horizon_months' and d > current_date + make_interval(months => (br->>'horizon_months')::integer) then
-    hard := hard || 'beyond_booking_window';
+    hard := array_append(hard, 'beyond_booking_window');
   end if;
 
   -- ── The date ───────────────────────────────────────────────────────
   select * into avail from public.vendor_availability where vendor_id = vd.id and slot_date = d;
   v_found := found;
-  if v_found and avail.status = 'BLOCKED' then hard := hard || 'date_blocked';
-  elsif not v_found and not public.weekday_is_open(vd.id, d) then hard := hard || 'weekday_closed';
+  if v_found and avail.status = 'BLOCKED' then hard := array_append(hard, 'date_blocked');
+  elsif not v_found and not public.weekday_is_open(vd.id, d) then hard := array_append(hard, 'weekday_closed');
   else
     select count(*) into v_booked from dispatch_offers o
       join booking_lines l on l.id = o.line_id join booking_requests r on r.id = l.request_id
      where o.vendor_id = vd.id and o.status = 'ACCEPTED' and r.event_date = d and l.status not in ('cancelled','expired');
     v_cap := coalesce(case when v_found then avail.slots_total end, vd.max_events_per_day, 1);
-    if v_booked >= v_cap then hard := hard || 'date_full'; end if;
+    if v_booked >= v_cap then hard := array_append(hard, 'date_full'); end if;
   end if;
 
   if cardinality(hard) > 0 then
@@ -136,10 +136,10 @@ begin
 
   -- ── Shape of the event ─────────────────────────────────────────────
   if nullif(prof->>'max_audience', '') is not null and v_guests > (prof->>'max_audience')::integer then
-    soft := soft || 'audience_over_capacity';
+    soft := array_append(soft, 'audience_over_capacity');
   end if;
   if (br->>'max_consecutive_hours') is not null and v_hours > (br->>'max_consecutive_hours')::numeric then
-    soft := soft || 'longer_than_partner_hosts';
+    soft := array_append(soft, 'longer_than_partner_hosts');
   end if;
 
   -- ── Base price: one explicit rule, never "cheapest" ────────────────
@@ -151,13 +151,13 @@ begin
       lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', v_days || ' days hosting',
         'qty', v_days, 'take_home_paise', v_base));
     else
-      soft := soft || 'multi_day_not_priced';
+      soft := array_append(soft, 'multi_day_not_priced');
     end if;
   elsif v_tier is not null then
     select p.id, p.name, p.commercial_inputs, p.trade_inputs into pkg from public.sambramo_trade_packages p
      where p.listing_version_id = lv.id and p.status = 'LIVE' and p.commercial_inputs->>'tier' = v_tier limit 1;
     if not found then
-      soft := soft || 'package_not_found';
+      soft := array_append(soft, 'package_not_found');
     else
       v_base := (pkg.trade_inputs->>'take_home_paise')::bigint;
       v_inc_hours := (pkg.trade_inputs->>'duration_hours')::numeric;
@@ -185,7 +185,7 @@ begin
         lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', replace(initcap(replace(rule.model,'_',' ')), ' ', '-') || ' rate',
           'qty', 1, 'take_home_paise', v_base, 'hours', v_inc_hours));
       else
-        soft := soft || 'no_rule_fits_duration';
+        soft := array_append(soft, 'no_rule_fits_duration');
       end if;
     end if;
   end if;
@@ -200,7 +200,7 @@ begin
       lines := lines || jsonb_build_array(jsonb_build_object('kind','extra_hours','description', v_extra || ' extra hour' || case when v_extra > 1 then 's' else '' end,
         'qty', v_extra, 'take_home_paise', (rule.extra_hour_take_home_paise * v_extra)::bigint));
     else
-      soft := soft || 'extra_hours_not_priced';
+      soft := array_append(soft, 'extra_hours_not_priced');
     end if;
   end if;
 
@@ -234,7 +234,7 @@ begin
         when 'customer_arranged' then
           lines := lines || jsonb_build_array(jsonb_build_object('kind','travel','description','Travel & stay arranged by you','qty',1,'take_home_paise',0));
         else
-          soft := soft || 'outside_travel_area';
+          soft := array_append(soft, 'outside_travel_area');
       end case;
     end if;
   end if;
@@ -247,10 +247,10 @@ begin
   end if;
 
   -- ── Ready to be booked AND paid instantly? ─────────────────────────
-  if coalesce((br->>'instant')::boolean, true) = false then soft := soft || 'instant_booking_off'; end if;
+  if coalesce((br->>'instant')::boolean, true) = false then soft := array_append(soft, 'instant_booking_off'); end if;
   if cfg.require_payout_for_instant and not exists (
        select 1 from public.partner_payout_accounts pa where pa.vendor_id = vd.id and pa.route_account_id is not null) then
-    soft := soft || 'partner_payout_not_active';
+    soft := array_append(soft, 'partner_payout_not_active');
   end if;
 
   select coalesce(sum((x->>'take_home_paise')::bigint), 0) into v_take from jsonb_array_elements(lines) x;

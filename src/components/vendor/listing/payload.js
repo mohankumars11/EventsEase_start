@@ -15,9 +15,9 @@ export function stagesFor(config) {
   const s = [
     { id: 'basics', label: 'About your service', short: 'About' },
     { id: 'location', label: 'Your location', short: 'Location' },
-    ...config.screens.map(x => ({ id: `screen:${x.id}`, label: x.title, short: shortOf(x.title) })),
+    ...config.screens.map((x, i) => ({ id: `screen:${x.id}`, label: x.title, short: config.screens.length > 1 ? `Details ${i + 1}` : 'Details' })),
   ]
-  if (config.catalogue) s.push({ id: 'catalogue', label: config.catalogue.title, short: cap(config.catalogue.nounPlural) })
+  if (config.catalogue) s.push({ id: 'catalogue', label: config.catalogue.title, short: 'Your list' })
   s.push({ id: 'pricing', label: 'How you charge', short: 'Pricing' })
   if (config.pricing.packages && config.tiers) s.push({ id: 'packages', label: config.pricing.packages.label, short: 'Packages' })
   if (config.addons.length) s.push({ id: 'extras', label: 'Extras & add-ons', short: 'Extras' })
@@ -30,7 +30,6 @@ export function stagesFor(config) {
   return s
 }
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
-const shortOf = t => cap(t.replace(/^(your|what|how)\s+/i, '').split(/\s+/).slice(0, 2).join(' '))
 
 /* ── Catalogue items: name, price, stock, limits from the trade's own fields ── */
 
@@ -185,9 +184,16 @@ function rulesOut(rules) {
 /** Essential / Signature / VIP suggested from the partner's own base rate. */
 export function suggestPackages(config, a, policy) {
   const rules = a.rules ?? {}
-  const basis = ['hour', 'session', 'event', 'per_person', 'per_guest', 'full_day', 'half_day'].find(k => rules[k]?.on && Number(rules[k].amount_paise) > 0)
-  if (!basis) return []
-  const r = rules[basis]
+  const preferred = ['hour', 'session', 'event', 'per_person', 'per_guest', 'full_day', 'half_day']
+  const priced = Object.keys(rules).filter(k => rules[k]?.on && Number(rules[k].amount_paise) > 0)
+  let basis = preferred.find(k => priced.includes(k)) ?? priced.find(k => k !== 'quote')
+  let r = basis ? rules[basis] : null
+  // Priced only item by item (per hand, per act…): start from the cheapest item.
+  if (!r && config.catalogue) {
+    const cheapest = (a.catalogue ?? []).map(it => itemPricePaise(config.catalogue, it.answers)).filter(x => x > 0).sort((x, y) => x - y)[0]
+    if (cheapest) { basis = 'item'; r = { amount_paise: cheapest, hours: 4 } }
+  }
+  if (!r) return []
   const hours = Number(r.min_qty ?? r.hours) || (basis === 'hour' ? 2 : 4)
   const unitQty = basis === 'hour' ? hours : basis === 'per_person' || basis === 'per_guest' ? Number(r.min_qty) || 1 : 1
   const essential = Math.round(Number(r.amount_paise) * unitQty)

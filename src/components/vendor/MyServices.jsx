@@ -146,7 +146,7 @@ export default function MyServices({ vendorId, onOpenTrade, initialRows = null }
         className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl
                    bg-plum-50 text-[13.5px] font-extrabold text-plum-700 ring-1 ring-plum-200"
       >
-        <Plus size={16} /> Add a service
+        <Plus size={16} /> {rows.length ? 'Add another service' : 'Add a service'}
       </button>
     </div>
   )

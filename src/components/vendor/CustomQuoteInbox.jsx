@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
 import QuoteEditor from './quote/QuoteEditor'
 import { rupees } from '../../lib/tierPackages'
+import { configFor } from '../../data/trades'
 
 const secondsLeft = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000))
 
@@ -55,7 +56,7 @@ export default function CustomQuoteInbox({ vendorId }) {
       {requests.length > 0 && requests.map(r => (
         <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} />
       ))}
-      {open && (String(open.canonical_demand?.engine ?? '').startsWith('anchor')
+      {open && (/^(anchor|trades)-engine/.test(String(open.canonical_demand?.engine ?? ''))
         ? <DirectedQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />
         : <QuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />)}
     </section>
@@ -87,7 +88,17 @@ function QuoteCard({ request, onRespond }) {
   )
 }
 
-/* An Anchor & MC request from the booking engine: every line it could
+/* The trade's own quote lines (src/data/trades/<id>.js quoteTemplate) that
+   the engine did not already price, as empty rows for the partner to fill —
+   a caterer sees per-plate, counters and staff; a truck sees fare, distance,
+   waiting and tolls. Rows left at ₹0 are dropped by the editor's own rules. */
+function withTemplate(lines, template) {
+  if (lines.length) return lines      // the engine's own priced + flagged lines win
+  return (template ?? ['Service fee'])
+    .map((t, i) => ({ id: `tpl-${i}`, description: t, qty: 1, unit: 'item', unit_paise: 0, needs: true }))
+}
+
+/* A request from the booking engine: every line it could
    price from the partner's own rates arrives filled; the rest are flagged.
    The partner finishes it, Sambramo computes the customer price (8%). */
 function DirectedQuoteSheet({ request, busy, onClose, onSubmit }) {
@@ -123,7 +134,7 @@ function DirectedQuoteSheet({ request, busy, onClose, onSubmit }) {
               dates: request.event_date, venue: request.service_location?.city || request.service_location?.area || '—',
               guests: d.guests ?? '—', languages: (d.languages ?? []).join(', ') || '—', reason: d.summary || 'Outside your standard packages',
             }}
-            lines={lines.length ? lines : [{ id: 'new-0', description: 'Hosting fee', qty: 1, unit: 'event', unit_paise: 0, needs: true }]}
+            lines={withTemplate(lines, configFor(d.tradeName ?? request.trade_id)?.quoteTemplate)}
             onReject={async () => {
               if (busy) return
               await onSubmit(request.id, { headers: await headers(), body: { decline: true } })

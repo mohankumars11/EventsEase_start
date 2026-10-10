@@ -55,7 +55,7 @@ export const NAV = [
         description: 'Submitted partner pricing revisions. Approve the new version or request changes without changing the live customer price.',
       },
       {
-        id: 'listing-review', label: 'Anchor & MC pricing', emoji: '🎤',
+        id: 'listing-review', label: 'Listing review · all trades', emoji: '🧾',
         description: 'Review and publish listing versions, open seasonal windows, tune the pricing settings, and see what the booking engine decided.',
       },
       {

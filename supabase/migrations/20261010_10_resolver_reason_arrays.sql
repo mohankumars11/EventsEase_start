@@ -1,34 +1,259 @@
--- The booking decision engine for every trade, and the atomic write that
--- reserves what a booking uses.
+-- Fix: both booking resolvers appended reasons as  arr := arr || 'reason',
+-- which Postgres reads as an ARRAY LITERAL ("malformed array literal") — so
+-- any partner who was unverified, paused, short-noticed, blocked … made the
+-- resolver ERROR instead of answering NOT_ELIGIBLE / QUOTE. Found by the live
+-- end-to-end test on 2026-10-10. Every append is now array_append(arr, 'x').
 --
--- resolve_booking(service, request) decides INSTANT / QUOTE / NOT_ELIGIBLE
--- against one partner's PUBLISHED listing version, exactly like
--- resolve_anchor_booking (20261010_05) — which it calls for Anchor & MC, so
--- Anchor's behaviour does not change by a paise.
---
--- Shared gates: live version, verified, not paused, notice, horizon, the date.
--- Then one pricer per archetype (time, personal service, staffing, per-guest,
--- catalogue, rental, trip, venue, storage, project), then the partner's
--- declared charges (booking_rules.charges: minimum, fixed fees, overtime,
--- waiting, km beyond, stops, night, early start, deposit), add-ons, travel,
--- and the instant-booking gates. It never invents an amount: anything it
--- cannot price is a QUOTE reason. Each line records its source rule / item.
---
--- What a booking uses (staff, a vehicle, stock, a space, capacity) is returned
--- as `reservations`; book_partner_line now takes them inside the same vendor
--- lock and refuses the booking if any would be over-committed.
---
--- Request (all optional unless the archetype needs it):
---   event_date, end_date, start_time 'HH:MM', hours, days, guests, staff,
---   items [{item_key, qty}], package (key), rule_kind, event_category,
---   addons [id | {id, qty}], lat/lng (venue), pickup {lat,lng}, dropoff {lat,lng},
---   stops, waiting_hours, return, passengers, weight_kg
---
--- Depends on 20261010_05, _07, _08.
+-- Re-creates only the two functions (same signatures, same grants); safe to
+-- paste after 05 and 09. Nothing else changes.
 
 begin;
 
--- ═══ The engine ═══════════════════════════════════════════════════════
+create or replace function public.resolve_anchor_booking(
+  p_vendor_service_id uuid,
+  p_req jsonb
+) returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, extensions
+as $$
+declare
+  cfg public.sambramo_pricing_config%rowtype;
+  s public.vendor_services%rowtype;
+  vd public.vendors%rowtype;
+  lv public.sambramo_listing_versions%rowtype;
+  br jsonb; tr jsonb; prof jsonb;
+  d date := nullif(p_req->>'event_date', '')::date;
+  v_tier text := upper(nullif(p_req->>'tier', ''));
+  v_hours numeric := coalesce(nullif(p_req->>'hours', '')::numeric, 0);
+  v_days integer := greatest(1, coalesce(nullif(p_req->>'days', '')::integer, 1));
+  v_guests integer := coalesce(nullif(p_req->>'guests', '')::integer, 0);
+  v_start text := nullif(p_req->>'start_time', '');
+  v_event text := nullif(p_req->>'event_category', '');
+  lang text;
+  a_id text;
+  hard text[] := '{}';     -- NOT_ELIGIBLE reasons
+  soft text[] := '{}';     -- QUOTE reasons
+  lines jsonb := '[]'::jsonb;
+  pkg record; rule record; ar record; avail record;
+  v_base bigint; v_inc_hours numeric; v_extra numeric; v_basis text;
+  v_rule_id uuid; v_pkg_id uuid; v_pkg_inclusions jsonb := '[]'::jsonb;
+  v_take bigint := 0;
+  v_km numeric; v_scope numeric;
+  v_booked integer; v_cap integer; v_found boolean;
+  v_adv integer; v_customer bigint; v_advance bigint;
+  v_lead integer;
+  v_path text;
+begin
+  select * into cfg from public.sambramo_pricing_config limit 1;
+  select * into s from public.vendor_services where id = p_vendor_service_id;
+  if not found then return jsonb_build_object('path','NOT_ELIGIBLE','reasons', array['listing_not_found']); end if;
+  select * into vd from public.vendors where id = s.vendor_id;
+  if d is null then return jsonb_build_object('path','NOT_ELIGIBLE','reasons', array['date_required']); end if;
+  if v_hours <= 0 then return jsonb_build_object('path','NOT_ELIGIBLE','reasons', array['hours_required']); end if;
+
+  -- The version that prices this DATE: an approved seasonal one covering it, else the ordinary live one.
+  select * into lv from public.sambramo_listing_versions
+   where vendor_service_id = s.id and status = 'LIVE' and seasonal_window_id is not null
+     and d between effective_from and effective_to
+   order by version desc limit 1;
+  if not found then
+    select * into lv from public.sambramo_listing_versions
+     where vendor_service_id = s.id and status = 'LIVE' and seasonal_window_id is null limit 1;
+  end if;
+  if not found then return jsonb_build_object('path','NOT_ELIGIBLE','reasons', array['not_live']); end if;
+  br := lv.booking_rules; tr := lv.travel_rules; prof := lv.profile;
+
+  -- ── Can this partner do it at all? ─────────────────────────────────
+  if not coalesce(vd.is_verified, false) then hard := array_append(hard, 'partner_not_verified'); end if;
+  if coalesce(vd.accepting_jobs, true) = false then hard := array_append(hard, 'partner_paused'); end if;
+  if v_event is not null and not (coalesce(prof->'events', '[]'::jsonb) ? v_event) then
+    hard := array_append(hard, 'event_not_hosted');
+  end if;
+  for lang in select lower(jsonb_array_elements_text(coalesce(p_req->'languages', '[]'::jsonb))) loop
+    if not exists (select 1 from jsonb_array_elements(coalesce(prof->'languages', '[]'::jsonb)) l where lower(l->>'name') = lang) then
+      hard := hard || ('language_' || lang);
+    end if;
+  end loop;
+  v_lead := d - current_date;
+  if v_lead < coalesce((br->>'min_notice_days')::integer, 0) then hard := array_append(hard, 'short_notice'); end if;
+  if br ? 'horizon_months' and d > current_date + make_interval(months => (br->>'horizon_months')::integer) then
+    hard := array_append(hard, 'beyond_booking_window');
+  end if;
+
+  -- ── The date ───────────────────────────────────────────────────────
+  select * into avail from public.vendor_availability where vendor_id = vd.id and slot_date = d;
+  v_found := found;
+  if v_found and avail.status = 'BLOCKED' then hard := array_append(hard, 'date_blocked');
+  elsif not v_found and not public.weekday_is_open(vd.id, d) then hard := array_append(hard, 'weekday_closed');
+  else
+    select count(*) into v_booked from dispatch_offers o
+      join booking_lines l on l.id = o.line_id join booking_requests r on r.id = l.request_id
+     where o.vendor_id = vd.id and o.status = 'ACCEPTED' and r.event_date = d and l.status not in ('cancelled','expired');
+    v_cap := coalesce(case when v_found then avail.slots_total end, vd.max_events_per_day, 1);
+    if v_booked >= v_cap then hard := array_append(hard, 'date_full'); end if;
+  end if;
+
+  if cardinality(hard) > 0 then
+    return jsonb_build_object('path','NOT_ELIGIBLE','reasons', hard, 'listing_version_id', lv.id);
+  end if;
+
+  -- ── Shape of the event ─────────────────────────────────────────────
+  if nullif(prof->>'max_audience', '') is not null and v_guests > (prof->>'max_audience')::integer then
+    soft := array_append(soft, 'audience_over_capacity');
+  end if;
+  if (br->>'max_consecutive_hours') is not null and v_hours > (br->>'max_consecutive_hours')::numeric then
+    soft := array_append(soft, 'longer_than_partner_hosts');
+  end if;
+
+  -- ── Base price: one explicit rule, never "cheapest" ────────────────
+  if v_days > 1 then
+    select * into rule from public.sambramo_rate_rules where listing_version_id = lv.id and model = 'multi_day';
+    if found and v_days <= coalesce((rule.multi_day->>'max_days')::integer, 0) and v_hours <= coalesce(rule.included_hours, 24) then
+      v_base := round(rule.take_home_paise * v_days * (1 - coalesce((rule.multi_day->>'consecutive_discount_pct')::numeric, 0) / 100.0))::bigint;
+      v_basis := 'multi_day'; v_rule_id := rule.id; v_inc_hours := v_hours;
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', v_days || ' days hosting',
+        'qty', v_days, 'take_home_paise', v_base));
+    else
+      soft := array_append(soft, 'multi_day_not_priced');
+    end if;
+  elsif v_tier is not null then
+    select p.id, p.name, p.commercial_inputs, p.trade_inputs into pkg from public.sambramo_trade_packages p
+     where p.listing_version_id = lv.id and p.status = 'LIVE' and p.commercial_inputs->>'tier' = v_tier limit 1;
+    if not found then
+      soft := array_append(soft, 'package_not_found');
+    else
+      v_base := (pkg.trade_inputs->>'take_home_paise')::bigint;
+      v_inc_hours := (pkg.trade_inputs->>'duration_hours')::numeric;
+      v_pkg_id := pkg.id; v_pkg_inclusions := coalesce(pkg.commercial_inputs->'inclusions', '[]'::jsonb);
+      v_basis := 'package';
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', pkg.name || ' package',
+        'qty', 1, 'take_home_paise', v_base, 'hours', v_inc_hours));
+    end if;
+  else
+    -- No package chosen: hourly first, then the smallest fixed model that fits.
+    select * into rule from public.sambramo_rate_rules where listing_version_id = lv.id and model = 'hour';
+    if found and v_hours <= coalesce(rule.max_hours, 24) then
+      v_inc_hours := greatest(v_hours, coalesce(rule.min_hours, 0));
+      v_base := round(rule.take_home_paise * v_inc_hours)::bigint;
+      v_basis := 'hour'; v_rule_id := rule.id;
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', v_inc_hours || ' hours hosting',
+        'qty', v_inc_hours, 'take_home_paise', v_base));
+    else
+      select * into rule from public.sambramo_rate_rules
+       where listing_version_id = lv.id and model in ('session','event','half_day','full_day')
+         and coalesce(included_hours, 0) >= v_hours
+       order by included_hours asc, take_home_paise asc limit 1;
+      if found then
+        v_base := rule.take_home_paise; v_inc_hours := rule.included_hours; v_basis := rule.model; v_rule_id := rule.id;
+        lines := lines || jsonb_build_array(jsonb_build_object('kind','base','description', replace(initcap(replace(rule.model,'_',' ')), ' ', '-') || ' rate',
+          'qty', 1, 'take_home_paise', v_base, 'hours', v_inc_hours));
+      else
+        soft := array_append(soft, 'no_rule_fits_duration');
+      end if;
+    end if;
+  end if;
+
+  -- ── Extra hours beyond what the base includes ──────────────────────
+  if v_base is not null and v_hours > coalesce(v_inc_hours, v_hours) then
+    v_extra := ceil(v_hours - v_inc_hours);
+    select * into rule from public.sambramo_rate_rules
+     where listing_version_id = lv.id and extra_hour_take_home_paise is not null
+     order by (model = 'hour') desc limit 1;
+    if found then
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','extra_hours','description', v_extra || ' extra hour' || case when v_extra > 1 then 's' else '' end,
+        'qty', v_extra, 'take_home_paise', (rule.extra_hour_take_home_paise * v_extra)::bigint));
+    else
+      soft := array_append(soft, 'extra_hours_not_priced');
+    end if;
+  end if;
+
+  -- ── Add-ons: included ones at ₹0, never charged twice ──────────────
+  for a_id in select jsonb_array_elements_text(coalesce(p_req->'addons', '[]'::jsonb)) loop
+    select * into ar from public.sambramo_addon_rules where listing_version_id = lv.id and addon_id = a_id;
+    if not found then
+      soft := soft || ('addon_not_offered_' || a_id);
+    elsif v_pkg_inclusions ? a_id or (v_tier is not null and v_tier = any(ar.included_in)) then
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','addon','addon_id', a_id, 'description', ar.label || ' (included)', 'qty', 1, 'take_home_paise', 0));
+    elsif ar.notice_days > v_lead then
+      soft := soft || ('addon_short_notice_' || a_id);
+    else
+      lines := lines || jsonb_build_array(jsonb_build_object('kind','addon','addon_id', a_id, 'description', ar.label,
+        'qty', case ar.unit when 'per_hour' then v_hours when 'per_day' then v_days else 1 end,
+        'take_home_paise', (ar.take_home_paise * case ar.unit when 'per_hour' then ceil(v_hours) when 'per_day' then v_days else 1 end)::bigint));
+    end if;
+  end loop;
+
+  -- ── Travel, from the partner's base to the venue ───────────────────
+  if (p_req ? 'lat') and (p_req ? 'lng') and vd.location is not null then
+    v_km := round((ST_Distance(vd.location, public.point_of((p_req->>'lat')::double precision, (p_req->>'lng')::double precision)) / 1000.0)::numeric, 1);
+    v_scope := case when coalesce(tr->>'scope', '') ~ '^\d+$' then (tr->>'scope')::numeric end;
+    if v_scope is not null and v_km > v_scope then
+      case coalesce(tr->>'model', 'custom')
+        when 'flat' then
+          lines := lines || jsonb_build_array(jsonb_build_object('kind','travel','description','Outstation travel','qty',1,'take_home_paise',(tr->>'flat_take_home_paise')::bigint));
+        when 'per_km' then
+          lines := lines || jsonb_build_array(jsonb_build_object('kind','travel','description', round(v_km - v_scope) || ' km beyond travel area',
+            'qty', round(v_km - v_scope), 'take_home_paise', ((tr->>'per_km_take_home_paise')::bigint * round(v_km - v_scope))::bigint));
+        when 'customer_arranged' then
+          lines := lines || jsonb_build_array(jsonb_build_object('kind','travel','description','Travel & stay arranged by you','qty',1,'take_home_paise',0));
+        else
+          soft := array_append(soft, 'outside_travel_area');
+      end case;
+    end if;
+  end if;
+
+  -- ── Explicit late-night surcharge (never automatic) ────────────────
+  if v_base is not null and br->'surcharge' is not null and jsonb_typeof(br->'surcharge') = 'object'
+     and v_start is not null and v_start >= coalesce(br->'surcharge'->>'after', '24:00') then
+    lines := lines || jsonb_build_array(jsonb_build_object('kind','surcharge','description','Late-night rate (+' || (br->'surcharge'->>'pct') || '%)',
+      'qty', 1, 'take_home_paise', round(v_base * (br->'surcharge'->>'pct')::numeric / 100)::bigint));
+  end if;
+
+  -- ── Ready to be booked AND paid instantly? ─────────────────────────
+  if coalesce((br->>'instant')::boolean, true) = false then soft := array_append(soft, 'instant_booking_off'); end if;
+  if cfg.require_payout_for_instant and not exists (
+       select 1 from public.partner_payout_accounts pa where pa.vendor_id = vd.id and pa.route_account_id is not null) then
+    soft := array_append(soft, 'partner_payout_not_active');
+  end if;
+
+  select coalesce(sum((x->>'take_home_paise')::bigint), 0) into v_take from jsonb_array_elements(lines) x;
+  v_customer := public.sambramo_customer_paise(v_take);
+  v_adv := coalesce((br->>'advance_pct')::integer, 100);
+  v_advance := least(v_customer, (round(v_customer * v_adv / 100.0 / 10) * 10)::bigint);
+
+  v_path := case when cardinality(soft) > 0 or v_base is null then 'QUOTE' else 'INSTANT' end;
+  if v_path = 'QUOTE' and coalesce((br->>'custom_quotes')::boolean, true) = false then
+    return jsonb_build_object('path','NOT_ELIGIBLE','reasons', soft || array['custom_quotes_off'], 'listing_version_id', lv.id);
+  end if;
+
+  return jsonb_build_object(
+    'path', v_path,
+    'reasons', soft,
+    'vendor_id', vd.id,
+    'listing_version_id', lv.id,
+    'seasonal', lv.seasonal_window_id is not null,
+    'package_id', v_pkg_id,
+    'rate_rule_id', v_rule_id,
+    'basis', v_basis,
+    'lines', (select coalesce(jsonb_agg(x || jsonb_build_object('customer_paise', public.sambramo_customer_paise((x->>'take_home_paise')::bigint))), '[]'::jsonb)
+                from jsonb_array_elements(lines) x),
+    'take_home_paise', v_take,
+    'customer_paise', v_customer,
+    'platform_fee_paise', v_customer - v_take,
+    'advance_pct', v_adv,
+    'advance_paise', v_advance,
+    'balance_paise', v_customer - v_advance,
+    'distance_km', v_km,
+    'cancellation', br->>'cancellation',
+    'quote_hours', br->>'quote_hours'
+  );
+end;
+$$;
+revoke all on function public.resolve_anchor_booking(uuid, jsonb) from public;
+grant execute on function public.resolve_anchor_booking(uuid, jsonb) to anon, authenticated, service_role;
+
 create or replace function public.resolve_booking(
   p_vendor_service_id uuid,
   p_req jsonb
@@ -725,187 +950,5 @@ end;
 $$;
 revoke all on function public.resolve_booking(uuid, jsonb) from public;
 grant execute on function public.resolve_booking(uuid, jsonb) to anon, authenticated, service_role;
-
--- ═══ Atomic booking write, now with reservations ══════════════════════
--- Same signature and behaviour as 20261010_05 for lines without
--- reservations. With p_line.reservations, every resource is locked and
--- re-checked inside the vendor lock; the day-count capacity is skipped
--- because the resources ARE the capacity.
-create or replace function public.book_partner_line(
-  p_line jsonb,
-  p_vendor_id uuid,
-  p_partner_paise bigint,
-  p_spec_mode text default 'standard'
-) returns jsonb
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_request_id uuid := (p_line->>'request_id')::uuid;
-  v_date date; v_avail record; v_found boolean; v_booked integer; v_cap integer;
-  v_line_id uuid; v_offer_id uuid;
-  v_res jsonb := coalesce(p_line->'reservations', '[]'::jsonb);
-  x jsonb; v_free numeric;
-begin
-  if p_spec_mode not in ('standard','discuss','quote') then raise exception 'Bad spec mode.'; end if;
-  select r.event_date into v_date from booking_requests r where r.id = v_request_id;
-  if not found then return jsonb_build_object('ok', false, 'reason', 'no_request'); end if;
-
-  perform 1 from vendors where id = p_vendor_id for update;
-  select * into v_avail from vendor_availability where vendor_id = p_vendor_id and slot_date = v_date;
-  v_found := found;
-  if v_found and v_avail.status = 'BLOCKED' then return jsonb_build_object('ok', false, 'reason', 'blocked'); end if;
-  if not v_found and not public.weekday_is_open(p_vendor_id, v_date) then return jsonb_build_object('ok', false, 'reason', 'weekday_closed'); end if;
-
-  if jsonb_array_length(v_res) = 0 then
-    select count(*) into v_booked from dispatch_offers o
-      join booking_lines l on l.id = o.line_id join booking_requests r on r.id = l.request_id
-     where o.vendor_id = p_vendor_id and o.status = 'ACCEPTED' and r.event_date = v_date and l.status not in ('cancelled','expired');
-    select coalesce(case when v_found then v_avail.slots_total end, v.max_events_per_day, 1) into v_cap from vendors v where v.id = p_vendor_id;
-    if v_booked >= v_cap then return jsonb_build_object('ok', false, 'reason', 'day_full'); end if;
-  else
-    for x in select * from jsonb_array_elements(v_res) loop
-      perform 1 from sambramo_resources where id = (x->>'resource_id')::uuid and vendor_id = p_vendor_id for update;
-      if not found then return jsonb_build_object('ok', false, 'reason', 'resource_missing'); end if;
-      v_free := public.sambramo_resource_free((x->>'resource_id')::uuid, (x->>'start_at')::timestamptz, (x->>'end_at')::timestamptz);
-      if coalesce(v_free, 0) < (x->>'qty')::numeric then
-        return jsonb_build_object('ok', false, 'reason', 'resource_full', 'resource_id', x->>'resource_id');
-      end if;
-    end loop;
-  end if;
-
-  insert into booking_lines (
-    request_id, service_id, service_name, trade, spec_mode, customer_note,
-    quoted_amount_paise, platform_fee_rate, platform_fee_paise, partner_amount_paise,
-    price_basis, pricing_state, pricing_version, pricing_snapshot, status, policy_version
-  ) values (
-    v_request_id, p_line->>'service_id', p_line->>'service_name', p_line->>'trade', p_spec_mode, p_line->>'customer_note',
-    (p_line->>'quoted_amount_paise')::bigint, (p_line->>'platform_fee_rate')::numeric,
-    (p_line->>'platform_fee_paise')::bigint, (p_line->>'partner_amount_paise')::bigint,
-    coalesce(p_line->'price_basis', '{}'::jsonb), p_line->>'pricing_state', p_line->>'pricing_version',
-    coalesce(p_line->'pricing_snapshot', '{}'::jsonb), 'pending', p_line->>'policy_version'
-  ) returning id into v_line_id;
-
-  insert into dispatch_offers (line_id, vendor_id, wave, partner_amount_paise, status, offered_at, expires_at, responded_at, accepted_at)
-  values (v_line_id, p_vendor_id, 1, p_partner_paise, 'ACCEPTED', now(), now() + interval '1 hour', now(), now())
-  returning id into v_offer_id;
-
-  insert into sambramo_resource_reservations (resource_id, vendor_id, booking_line_id, start_at, end_at, qty, status)
-  select (x->>'resource_id')::uuid, p_vendor_id, v_line_id, (x->>'start_at')::timestamptz, (x->>'end_at')::timestamptz,
-         (x->>'qty')::numeric, 'confirmed'
-    from jsonb_array_elements(v_res) x;
-
-  update booking_lines set status = 'accepted', accepted_offer_id = v_offer_id, accepted_at = now() where id = v_line_id;
-  return jsonb_build_object('ok', true, 'line_id', v_line_id, 'offer_id', v_offer_id);
-end;
-$$;
-revoke all on function public.book_partner_line(jsonb, uuid, bigint, text) from public, anon, authenticated;
-grant execute on function public.book_partner_line(jsonb, uuid, bigint, text) to service_role;
-
--- A cancelled or expired line gives its resources back.
-create or replace function public.release_line_reservations()
-returns trigger language plpgsql security definer set search_path = public
-as $$
-begin
-  if new.status in ('cancelled','expired') and old.status is distinct from new.status then
-    update public.sambramo_resource_reservations set status = 'released'
-     where booking_line_id = new.id and status <> 'released';
-  end if;
-  return new;
-end;
-$$;
-drop trigger if exists trg_release_line_reservations on public.booking_lines;
-create trigger trg_release_line_reservations after update of status on public.booking_lines
-for each row execute function public.release_line_reservations();
-
--- ═══ Public reads for every trade ══════════════════════════════════════
--- Only public fields: profile, public answers, priced catalogue, packages,
--- add-ons, terms. Never answers marked private, never resources' private_ref.
-create or replace function public.listing_public(p_vendor_service_id uuid)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select jsonb_build_object(
-    'vendor_service_id', s.id,
-    'version_id', lv.id,
-    'trade_id', lv.trade_id,
-    'profile', lv.profile,
-    'answers', lv.answers - coalesce((select array_agg(k) from jsonb_object_keys(lv.answers) k where k ~ '(registration|legal|private|bank|account)'), '{}'),
-    'city', coalesce(nullif(v.area, ''), v.city),
-    'rating', v.rating_avg,
-    'terms', jsonb_build_object(
-      'advance_pct', lv.booking_rules->>'advance_pct', 'cancellation', lv.booking_rules->>'cancellation',
-      'min_notice_days', lv.booking_rules->>'min_notice_days', 'instant', lv.booking_rules->>'instant',
-      'charges', (select coalesce(jsonb_agg(jsonb_build_object('label', c->>'label', 'role', c->>'role',
-                    'customer_paise', public.sambramo_customer_paise_for((c->>'take_home_paise')::bigint, lv.trade_id))), '[]'::jsonb)
-                  from jsonb_array_elements(coalesce(lv.booking_rules->'charges', '[]'::jsonb)) c),
-      'travel_model', lv.travel_rules->>'model', 'travel_scope', lv.travel_rules->>'scope'),
-    'packages', (select coalesce(jsonb_agg(jsonb_build_object(
-        'key', p.commercial_inputs->>'tier', 'name', p.name, 'description', p.description,
-        'hours', nullif(p.trade_inputs->>'duration_hours', '')::numeric,
-        'customer_paise', (p.trade_inputs->>'customer_paise')::bigint,
-        'inclusions', coalesce(p.commercial_inputs->'inclusions', '[]'::jsonb))
-        order by (p.trade_inputs->>'take_home_paise')::bigint), '[]'::jsonb)
-      from public.sambramo_trade_packages p where p.listing_version_id = lv.id and p.status = 'LIVE'),
-    'catalogue', (select coalesce(jsonb_agg(jsonb_build_object(
-        'item_key', c.item_key, 'collection', c.collection, 'name', c.name, 'category', c.category, 'unit', c.unit,
-        'customer_paise', c.customer_paise, 'min_qty', c.min_qty, 'max_qty', c.max_qty, 'lead_days', c.lead_days,
-        'qty_bands', (select coalesce(jsonb_agg((b || jsonb_build_object('customer_paise',
-                        public.sambramo_customer_paise_for((b->>'take_home_paise')::bigint, lv.trade_id))) - 'take_home_paise'), '[]'::jsonb)
-                      from jsonb_array_elements(c.qty_bands) b),
-        'deposit_paise', c.deposit_paise,
-        'attributes', c.attributes - coalesce((select array_agg(k) from jsonb_object_keys(c.attributes) k where k ~ '(registration|private)'), '{}'),
-        'media', c.media) order by c.sort_order), '[]'::jsonb)
-      from public.sambramo_catalogue_items c where c.listing_version_id = lv.id and c.active),
-    'rules', (select coalesce(jsonb_agg(jsonb_build_object('kind', r.rule_kind, 'label', r.label, 'unit', r.unit,
-        'customer_paise', r.customer_paise, 'min_qty', r.min_qty, 'max_qty', r.max_qty, 'included_qty', r.included_qty,
-        'included_hours', r.included_hours)), '[]'::jsonb)
-      from public.sambramo_rate_rules r where r.listing_version_id = lv.id),
-    'addons', (select coalesce(jsonb_agg(jsonb_build_object('addon_id', a.addon_id, 'label', a.label, 'unit', a.unit,
-        'customer_paise', a.customer_paise, 'included_in', a.included_in)), '[]'::jsonb)
-      from public.sambramo_addon_rules a where a.listing_version_id = lv.id)
-  )
-  from public.vendor_services s
-  join public.vendors v on v.id = s.vendor_id
-  join public.sambramo_listing_versions lv on lv.vendor_service_id = s.id and lv.status = 'LIVE' and lv.seasonal_window_id is null
-  where s.id = p_vendor_service_id
-$$;
-revoke all on function public.listing_public(uuid) from public;
-grant execute on function public.listing_public(uuid) to anon, authenticated;
-
--- Live listings of a trade near a point, nearest first, with the entry price.
-create or replace function public.public_listings(
-  p_trade text, p_lat double precision default null, p_lng double precision default null, p_limit integer default 30
-) returns table (vendor_service_id uuid, display_name text, avatar_url text, tagline text, city text, rating numeric,
-                 from_paise bigint, distance_km numeric)
-language sql
-stable
-security definer
-set search_path = public, extensions
-as $$
-  select s.id, coalesce(lv.profile->>'display_name', lv.profile->>'stage_name', s.name), lv.profile->>'avatar_url', lv.profile->>'tagline',
-         coalesce(nullif(v.area, ''), v.city), v.rating_avg,
-         (select min(x) from (
-            select min((p.trade_inputs->>'customer_paise')::bigint) x from public.sambramo_trade_packages p
-             where p.listing_version_id = lv.id and p.status = 'LIVE'
-            union all select min(c.customer_paise) from public.sambramo_catalogue_items c where c.listing_version_id = lv.id and c.active
-            union all select min(r.customer_paise) from public.sambramo_rate_rules r where r.listing_version_id = lv.id) m),
-         case when p_lat is not null and v.location is not null
-              then round((ST_Distance(v.location, public.point_of(p_lat, p_lng)) / 1000.0)::numeric, 1) end
-    from public.sambramo_listing_versions lv
-    join public.vendor_services s on s.id = lv.vendor_service_id
-    join public.vendors v on v.id = s.vendor_id
-   where lv.status = 'LIVE' and lv.seasonal_window_id is null
-     and lv.trade_id = public.sambramo_trade_id(p_trade)
-     and coalesce(v.is_verified, false) and coalesce(v.accepting_jobs, true)
-   order by 8 nulls last, v.rating_avg desc nulls last
-   limit greatest(1, least(p_limit, 100))
-$$;
-revoke all on function public.public_listings(text, double precision, double precision, integer) from public;
-grant execute on function public.public_listings(text, double precision, double precision, integer) to anon, authenticated;
 
 commit;
