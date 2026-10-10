@@ -19,7 +19,7 @@ import { TRADE_REGISTRY } from '../../data/trades/registry'
 import { RULE_KINDS } from '../../data/trades/schema'
 import { CONFIG_BY_ID, questionsOf } from '../../data/trades'
 
-const TABS = [['review', 'Listings to review'], ['seasons', 'Seasonal windows'], ['fees', 'Trade fees'], ['settings', 'Global settings'], ['decisions', 'Booking decisions']]
+const TABS = [['review', 'Listings to review'], ['dishes', 'Dish proposals'], ['seasons', 'Seasonal windows'], ['fees', 'Trade fees'], ['settings', 'Global settings'], ['decisions', 'Booking decisions']]
 const ruleName = r => (r.label ? `${RULE_KINDS[r.rule_kind ?? r.model]?.label ?? r.rule_kind} · ${r.label}` : RULE_KINDS[r.rule_kind ?? r.model]?.label ?? r.rule_kind)
 
 export default function AnchorListingAdmin() {
@@ -34,6 +34,7 @@ export default function AnchorListingAdmin() {
         ))}
       </div>
       {tab === 'review' && <Review />}
+      {tab === 'dishes' && <DishProposals />}
       {tab === 'seasons' && <Seasons />}
       {tab === 'fees' && <Fees />}
       {tab === 'settings' && <Settings />}
@@ -60,13 +61,16 @@ function Review() {
     if (!ids.length) { setRows([]); return }
     const sids = [...new Set(vs.map(v => v.vendor_service_id))]
     const vids = [...new Set(vs.map(v => v.vendor_id))]
-    const [{ data: rules }, { data: addons }, { data: pkgs }, cat, res, docs] = await Promise.all([
+    const [{ data: rules }, { data: addons }, { data: pkgs }, cat, res, docs, cmenus, ccounters] = await Promise.all([
       supabase.from('sambramo_rate_rules').select('*').in('listing_version_id', ids),
       supabase.from('sambramo_addon_rules').select('*').in('listing_version_id', ids),
       supabase.from('sambramo_trade_packages').select('id, listing_version_id, name, status, commercial_inputs, trade_inputs, calculation_snapshot').in('listing_version_id', ids),
       supabase.from('sambramo_catalogue_items').select('*').in('listing_version_id', ids),
       supabase.from('sambramo_resources').select('vendor_service_id, kind, label, quantity, unit, active').in('vendor_service_id', sids),
       supabase.from('vendor_documents').select('vendor_id, requirement_id, status').in('vendor_id', vids),
+      // Catering: menus with their dishes, and live counters (empty for other trades).
+      supabase.from('sambramo_catering_menus').select('*, sambramo_catering_menu_items(dish_key, course_group, included, extra_take_home_paise, sort_order)').in('listing_version_id', ids),
+      supabase.from('sambramo_live_counters').select('*').in('listing_version_id', ids),
     ])
     setRows(vs.map(v => ({
       ...v,
@@ -76,6 +80,8 @@ function Review() {
       items: (cat.data ?? []).filter(i => i.listing_version_id === v.id),
       resources: (res.data ?? []).filter(r => r.vendor_service_id === v.vendor_service_id && r.active),
       docs: Object.fromEntries((docs.data ?? []).filter(d => d.vendor_id === v.vendor_id).map(d => [d.requirement_id, d.status])),
+      menus: (cmenus.data ?? []).filter(m => m.listing_version_id === v.id),
+      counters: (ccounters.data ?? []).filter(c => c.listing_version_id === v.id),
     })))
   }, [])
   useEffect(() => { load() }, [load])
@@ -194,9 +200,23 @@ function VersionCard({ v, cfg, onDone }) {
           )) : <p className="text-[12.5px] text-ink/50">Priced from the catalogue only.</p>}
           {(br.charges ?? []).map(c => <p key={c.id} className="text-[12.5px] text-ink/70">{c.label} ({c.role}): {rupees(c.take_home_paise)}</p>)}
         </Box>
+        {v.menus?.length > 0 && (
+          <Box title={`Menus (${v.menus.length})`}>
+            {v.menus.map(m => {
+              const dish = k => v.items.find(i => i.item_key === k)
+              return <div key={m.id} className="mb-1.5"><p className="text-[12.5px]"><b>{m.name}</b> · {m.diet} · {m.price_model === 'quote' ? 'quote' : `${rupees(m.take_home_paise)} → ${rupees(m.customer_paise)} ${m.price_model === 'per_person' ? 'per guest' : 'fixed'}`} · min {m.min_guests ?? '—'}{m.max_guests ? `–${m.max_guests}` : ''}{m.child_take_home_paise ? ` · child ${rupees(m.child_take_home_paise)}` : ''}</p>
+                <p className="text-[11.5px] text-ink/60">{(m.sambramo_catering_menu_items ?? []).sort((a, b) => a.sort_order - b.sort_order).map(i => `${dish(i.dish_key)?.name ?? '?'}${dish(i.dish_key)?.attributes?.diet === 'non_veg' ? ' (NV)' : ''}${i.included ? '' : ` +${rupees(i.extra_take_home_paise)}`}`).join(', ')}</p></div>
+            })}
+          </Box>
+        )}
+        {v.counters?.length > 0 && (
+          <Box title={`Live counters (${v.counters.length})`}>
+            {v.counters.map(c => <p key={c.id} className="text-[12.5px]"><b>{c.name}</b> · {c.price_model}{c.take_home_paise ? ` ${rupees(c.take_home_paise)}` : ''} · {c.duration_hours ?? '—'} h · {c.included_servings ?? '—'} servings · ×{c.available_qty}</p>)}
+          </Box>
+        )}
         {v.items.length > 0 && (
           <Box title={`${config?.catalogue?.title ?? 'Catalogue'} (${v.items.length})`}>
-            {v.items.map(i => <p key={i.id} className="text-[12.5px]"><b>{i.name}</b> {i.take_home_paise != null ? `${rupees(i.take_home_paise)} → ${rupees(i.customer_paise)} / ${i.unit}` : 'quote only'}
+            {v.items.map(i => <p key={i.id} className="text-[12.5px]"><b>{i.name}</b>{i.attributes?.diet ? ` · ${i.attributes.diet}` : ''}{i.attributes?.allergens?.length ? ` · allergens: ${i.attributes.allergens.join(', ')}` : ''}{i.attributes?.legacy?.needs_review ? ' · ⚠ old value needs review' : ''} {i.take_home_paise != null ? `${rupees(i.take_home_paise)} → ${rupees(i.customer_paise)} / ${i.unit}` : (i.attributes?.menu_eligible ? 'in menus' : 'quote only')}
               {i.stock_qty != null ? ` · stock ${i.stock_qty}` : ''}{i.min_qty > 1 ? ` · min ${i.min_qty}` : ''}{i.lead_days ? ` · ${i.lead_days}d lead` : ''}</p>)}
           </Box>
         )}
@@ -232,6 +252,50 @@ const Box = ({ title, children }) => (
     <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-ink/45">{title}</p>{children}
   </div>
 )
+
+/* Partners' own dishes, proposed for the shared food catalogue. Accepting
+   adds a reviewed master dish; nothing reaches other partners before that. */
+function DishProposals() {
+  const [rows, setRows] = useState(null)
+  const [msg, setMsg] = useState('')
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.from('sambramo_dish_proposals').select('*, vendors(business_name)').eq('status', 'pending').order('created_at')
+    if (error) { setMsg(error.message); setRows([]); return }
+    setRows(data ?? [])
+  }, [])
+  useEffect(() => { load() }, [load])
+  async function decide(p, accept) {
+    setMsg('')
+    if (accept) {
+      const id = 'SBM-PR-' + p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const { error } = await supabase.from('sambramo_master_dishes').upsert({ id, name: p.name, aliases: p.aliases ?? [], cuisine_ids: p.cuisine_ids ?? [],
+        category_id: p.category_id, suggested_diet: p.suggested_diet, provenance: 'partner-proposal', review_status: 'reviewed', active: true }, { onConflict: 'id' })
+      if (error) { setMsg(error.message); return }
+      await supabase.from('sambramo_dish_proposals').update({ status: 'accepted', master_dish_id: id, reviewed_at: new Date().toISOString() }).eq('id', p.id)
+    } else {
+      await supabase.from('sambramo_dish_proposals').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', p.id)
+    }
+    load()
+  }
+  if (!rows) return <Loader2 className="animate-spin text-plum-600" />
+  return (
+    <div className="space-y-2">
+      {msg && <p className="text-[12.5px] font-bold text-rose-700">{msg}</p>}
+      {!rows.length && <p className="rounded-2xl bg-white p-6 text-center text-[13px] text-ink/55 ring-1 ring-ink/10">No dishes waiting.</p>}
+      {rows.map(p => (
+        <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-4 ring-1 ring-ink/10">
+          <div><p className="text-[14px] font-extrabold">{p.name}</p>
+            <p className="text-[12px] text-ink/55">{p.vendors?.business_name} · {p.category_id ?? 'no category'} · {p.suggested_diet ?? 'diet not given'}{p.cuisine_ids?.length ? ` · ${p.cuisine_ids.join(', ')}` : ''}</p>
+            {p.note && <p className="text-[12px] text-ink/60">{p.note}</p>}</div>
+          <div className="flex gap-2">
+            <button onClick={() => decide(p, true)} className="rounded-full bg-forest-600 px-4 py-2 text-[12.5px] font-extrabold text-white">Add to catalogue</button>
+            <button onClick={() => decide(p, false)} className="rounded-full bg-rose-50 px-4 py-2 text-[12.5px] font-extrabold text-rose-700">Reject</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function Seasons() {
   const [rows, setRows] = useState([])

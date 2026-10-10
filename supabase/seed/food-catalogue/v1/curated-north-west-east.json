@@ -1,0 +1,80 @@
+{
+  "note": "North, Western, Eastern and Northeastern India. Editorial (needs_review).",
+  "groups": [
+    { "cuisines": ["ni_punjabi", "ni_veg", "ni_wedding_buffet"], "category": "gr_paneer", "diet": "veg", "dishes": [
+      ["Paneer Butter Masala"], ["Shahi Paneer"], ["Kadai Paneer"], ["Palak Paneer"], ["Paneer Tikka Masala"], ["Matar Paneer"], ["Paneer Lababdar"],
+      ["Paneer Do Pyaza"], ["Paneer Makhani"], ["Methi Malai Paneer"], ["Paneer Bhurji"], ["Achari Paneer"]
+    ]},
+    { "cuisines": ["ni_punjabi", "ni_veg", "ni_wedding_buffet"], "category": "gr_north", "diet": "veg", "dishes": [
+      ["Malai Kofta"], ["Dum Aloo"], ["Kashmiri Dum Aloo"], ["Navratan Korma"], ["Veg Kolhapuri"], ["Mix Vegetable Curry"], ["Veg Jalfrezi"],
+      ["Baingan Bharta"], ["Bhindi Masala"], ["Aloo Gobi"], ["Jeera Aloo"], ["Aloo Matar"], ["Chana Masala"], ["Pindi Chole"], ["Amritsari Chole"],
+      ["Rajma Masala"], ["Sarson Ka Saag"], ["Kadhi Pakora"], ["Mushroom Matar"], ["Methi Matar Malai"], ["Corn Palak"]
+    ]},
+    { "cuisines": ["ni_punjabi", "ni_veg", "ni_wedding_buffet"], "category": "gr_dal", "diet": "veg", "dishes": [["Dal Makhani"], ["Dal Tadka"], ["Dal Fry"], ["Yellow Dal"], ["Dal Bukhara"], ["Panchmel Dal"], ["Moong Dal Tadka"], ["Langar Wali Dal"]] },
+    { "cuisines": ["ni_punjabi", "ni_non_veg", "ni_mughlai", "ni_delhi"], "category": "gr_chicken", "diet": "non_veg", "dishes": [
+      ["Butter Chicken", "Murgh Makhani"], ["Chicken Tikka Masala"], ["Kadai Chicken"], ["Chicken Curry (North Indian)"], ["Chicken Korma"], ["Chicken Do Pyaza"],
+      ["Methi Chicken"], ["Chicken Changezi"], ["Palak Chicken"], ["Murgh Musallam"]
+    ]},
+    { "cuisines": ["ni_mughlai", "ni_kashmiri", "ni_awadhi", "ni_non_veg"], "category": "gr_mutton", "diet": "non_veg", "dishes": [
+      ["Rogan Josh"], ["Mutton Korma"], ["Nihari"], ["Keema Matar"], ["Bhuna Gosht"], ["Laal Maas"], ["Gosht Do Pyaza"], ["Yakhni"], ["Rista"], ["Gushtaba"], ["Mutton Rara"]
+    ]},
+    { "cuisines": ["ni_tandoori", "ni_punjabi", "ni_non_veg"], "category": "st_tandoori", "diet": "non_veg", "dishes": [
+      ["Tandoori Chicken"], ["Chicken Tikka"], ["Malai Chicken Tikka", "Murgh Malai Tikka"], ["Reshmi Kebab"], ["Chicken Seekh Kebab"], ["Mutton Seekh Kebab"],
+      ["Tangdi Kebab"], ["Afghani Chicken"], ["Fish Tikka"], ["Tandoori Pomfret"], ["Amritsari Fish"], ["Tandoori Prawns"], ["Galouti Kebab"], ["Shami Kebab"], ["Kakori Kebab"]
+    ]},
+    { "cuisines": ["ni_tandoori", "ni_punjabi", "ni_veg"], "category": "st_tandoori", "diet": "veg", "dishes": [
+      ["Paneer Tikka"], ["Malai Paneer Tikka"], ["Achari Paneer Tikka"], ["Tandoori Mushroom"], ["Tandoori Aloo"], ["Tandoori Gobi"], ["Hara Bhara Kebab"],
+      ["Dahi Kebab", "Dahi Ke Kebab"], ["Veg Seekh Kebab"], ["Soya Chaap Tikka"], ["Tandoori Pineapple"], ["Corn Seekh Kebab"]
+    ]},
+    { "cuisines": ["ni_punjabi", "ni_veg", "ni_tandoori"], "category": "br_naan", "diet": "veg", "dishes": [["Plain Naan"], ["Butter Naan"], ["Garlic Naan"], ["Cheese Naan"], ["Kashmiri Naan"], ["Stuffed Kulcha"], ["Amritsari Kulcha"], ["Tandoori Roti"], ["Missi Roti"], ["Rumali Roti"], ["Lachha Paratha"], ["Aloo Paratha"], ["Gobi Paratha"], ["Paneer Paratha"], ["Makki Ki Roti"]] },
+    { "cuisines": ["ni_mughlai", "ni_awadhi", "ni_veg"], "category": "rc_pulao", "diet": "veg", "dishes": [["Jeera Rice"], ["Matar Pulao", "Peas Pulao"], ["Kashmiri Pulao"], ["Vegetable Pulao"], ["Navratan Pulao"], ["Saffron Rice"], ["Veg Biryani (North Indian)"], ["Subz Dum Biryani"]] },
+    { "cuisines": ["ni_mughlai", "ni_awadhi", "ni_non_veg"], "category": "rc_dum_biryani", "diet": "non_veg", "dishes": [["Lucknowi Chicken Biryani"], ["Awadhi Mutton Biryani"], ["Mughlai Chicken Biryani"], ["Delhi Chicken Biryani"], ["Kolkata Mutton Biryani"], ["Keema Pulao"]] },
+    { "cuisines": ["ni_delhi", "oi_street_food"], "category": "ch_regional", "diet": "veg", "dishes": [["Chole Kulche"], ["Chole Bhature"], ["Raj Kachori"], ["Ram Ladoo"], ["Aloo Chaat"], ["Fruit Chaat"], ["Matar Kulcha"], ["Dahi Bhalla"], ["Bedmi Puri Aloo"]] },
+    { "cuisines": ["ni_punjabi", "ni_veg", "oi_sweets"], "category": "ds_other", "diet": "veg", "dishes": [
+      ["Gajar Ka Halwa", "Gajar Halwa"], ["Moong Dal Halwa"], ["Rasmalai"], ["Gulab Jamun"], ["Kesar Phirni"], ["Rice Kheer"], ["Shahi Tukda"], ["Rabri"],
+      ["Jalebi with Rabri"], ["Malpua"], ["Kulfi Falooda"], ["Pinni"], ["Atte Ka Halwa"], ["Imarti"], ["Petha"], ["Balushahi"], ["Kaju Barfi"], ["Besan Laddu"], ["Motichoor Laddu"]
+    ]},
+    { "cuisines": ["ni_kashmiri"], "category": "gr_north", "diet": "veg", "dishes": [["Nadru Yakhni"], ["Haak Saag"], ["Chaman Kaliya"], ["Kashmiri Rajma"], ["Modur Pulao"]] },
+    { "cuisines": ["ni_kashmiri"], "category": "bev_tea", "diet": "veg", "dishes": [["Kahwa"], ["Noon Chai", "Sheer Chai"]] },
+    { "cuisines": ["ni_himachali", "ni_pahadi"], "category": "ml_component", "diet": "veg", "dishes": [["Siddu"], ["Madra"], ["Chha Gosht"], ["Kafuli"], ["Aloo Ke Gutke"], ["Bhatt Ki Churkani"], ["Mandua Ki Roti"], ["Bal Mithai"], ["Singori"]] },
+
+    { "cuisines": ["wi_gujarati", "wi_kathiawadi"], "category": "ml_gujarati", "diet": "veg", "dishes": [
+      ["Undhiyu"], ["Gujarati Kadhi"], ["Gujarati Dal"], ["Sev Tameta Nu Shaak"], ["Ringan No Olo"], ["Lasaniya Bataka"], ["Bhinda Nu Shaak"],
+      ["Kathiawadi Thali"], ["Gujarati Thali"], ["Khichdi Kadhi"], ["Vaghareli Khichdi"], ["Dal Dhokli"], ["Bajra No Rotlo"], ["Thepla"], ["Methi Thepla"], ["Puran Poli (Gujarati)"]
+    ]},
+    { "cuisines": ["wi_gujarati", "oi_snacks"], "category": "ch_regional", "diet": "veg", "dishes": [["Khaman Dhokla"], ["Khandvi"], ["Fafda"], ["Jalebi Fafda"], ["Patra"], ["Handvo"], ["Muthia"], ["Dabeli"], ["Sev Khamani"], ["Methi Na Gota"], ["Khakhra"]] },
+    { "cuisines": ["wi_gujarati", "oi_sweets"], "category": "ds_milk", "diet": "veg", "dishes": [["Shrikhand"], ["Amrakhand"], ["Basundi"], ["Mohanthal"], ["Ghughra"], ["Sukhdi"], ["Doodh Pak"]] },
+    { "cuisines": ["wi_rajasthani", "wi_marwari"], "category": "ml_rajasthani", "diet": "veg", "dishes": [
+      ["Dal Baati Churma"], ["Gatte Ki Sabzi"], ["Ker Sangri"], ["Papad Ki Sabzi"], ["Rajasthani Kadhi"], ["Bajre Ki Roti"], ["Missi Roti (Rajasthani)"],
+      ["Panchkuta"], ["Methi Dana Sabzi"], ["Rajasthani Thali"], ["Bikaneri Bhujia"], ["Pyaz Kachori"], ["Mirchi Vada (Jodhpur)"]
+    ]},
+    { "cuisines": ["wi_rajasthani", "oi_sweets"], "category": "ds_festival", "diet": "veg", "dishes": [["Ghevar"], ["Mawa Kachori"], ["Malpua (Rajasthani)"], ["Moong Dal Halwa (Rajasthani)"], ["Churma Laddu"]] },
+    { "cuisines": ["wi_rajasthani", "wi_marwari"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Laal Maas (Rajasthani)"], ["Safed Maas"], ["Jungli Maas"]] },
+    { "cuisines": ["wi_maharashtrian"], "category": "ml_maharashtrian", "diet": "veg", "dishes": [
+      ["Misal Pav"], ["Poha (Kanda Poha)"], ["Sabudana Khichdi"], ["Varan Bhaat"], ["Pithla Bhakri"], ["Bharli Vangi"], ["Zunka Bhakar"],
+      ["Masale Bhat"], ["Amti"], ["Batata Bhaji"], ["Thalipeeth"], ["Usal Pav"], ["Maharashtrian Thali"], ["Sol Kadhi"]
+    ]},
+    { "cuisines": ["wi_maharashtrian", "oi_sweets"], "category": "ds_festival", "diet": "veg", "dishes": [["Puran Poli"], ["Modak", "Ukadiche Modak"], ["Karanji"], ["Shrikhand Puri"], ["Basundi (Maharashtrian)"], ["Anarsa"]] },
+    { "cuisines": ["wi_malvani", "wi_konkani"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Malvani Fish Curry"], ["Bombil Fry", "Bombay Duck Fry"], ["Surmai Fry"], ["Kolambi Masala", "Prawn Masala (Malvani)"], ["Malvani Chicken"], ["Kombdi Vade"], ["Tisrya Masala", "Clam Masala"]] },
+    { "cuisines": ["wi_goan"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Goan Fish Curry"], ["Prawn Balchão", "Prawn Balchao"], ["Fish Recheado"], ["Goan Prawn Curry"], ["Ambot Tik"]] },
+    { "cuisines": ["wi_goan"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Pork Vindaloo"], ["Chicken Xacuti"], ["Sorpotel"], ["Chicken Cafreal"], ["Goan Sausage Pulao"]] },
+    { "cuisines": ["wi_goan", "oi_sweets"], "category": "ds_other", "diet": "veg", "dishes": [["Bebinca"], ["Dodol"], ["Serradura"], ["Patoleo"]] },
+    { "cuisines": ["wi_goan", "wi_konkani"], "category": "gr_south", "diet": "veg", "dishes": [["Khatkhate"], ["Goan Mushroom Xacuti"], ["Tondak", "Bean Curry (Goan)"], ["Sol Kadi (Konkani)"]] },
+
+    { "cuisines": ["ei_bengali"], "category": "ml_bengali", "diet": "veg", "dishes": [
+      ["Shukto"], ["Cholar Dal"], ["Aloo Posto"], ["Begun Bhaja"], ["Labra"], ["Dhokar Dalna"], ["Chhanar Dalna"], ["Aloo Phulkopir Dalna"],
+      ["Mochar Ghonto"], ["Echorer Dalna", "Raw Jackfruit Curry"], ["Basanti Pulao"], ["Luchi"], ["Radhaballavi"], ["Kochuri (Bengali)"], ["Bengali Khichuri"]
+    ]},
+    { "cuisines": ["ei_bengali"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Shorshe Ilish", "Hilsa in Mustard"], ["Macher Jhol"], ["Doi Maach"], ["Chingri Malai Curry"], ["Bhetki Paturi"], ["Fish Kalia"], ["Fish Fry (Kolkata)"]] },
+    { "cuisines": ["ei_bengali"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Kosha Mangsho"], ["Mutton Rezala"], ["Chicken Chaap"], ["Dak Bungalow Chicken"]] },
+    { "cuisines": ["ei_bengali", "oi_sweets"], "category": "ds_bengali", "diet": "veg", "dishes": [["Rasgulla (Bengali)", "Roshogolla"], ["Sandesh"], ["Mishti Doi"], ["Chhena Payesh"], ["Pantua"], ["Langcha"], ["Nolen Gurer Sandesh"], ["Kheer Kadam"], ["Rasabali"], ["Chamcham"]] },
+    { "cuisines": ["ei_odia"], "category": "ml_component", "diet": "veg", "dishes": [["Dalma"], ["Pakhala Bhata"], ["Santula"], ["Chhena Poda"], ["Besara"], ["Ghanta Tarkari"], ["Dahi Bara Aloo Dum"], ["Chhena Jhili"], ["Khaja (Odia)"]] },
+    { "cuisines": ["ei_bihari", "ei_jharkhandi"], "category": "ml_component", "diet": "veg", "dishes": [["Litti Chokha"], ["Sattu Paratha"], ["Dal Pitha"], ["Ghugni"], ["Thekua"], ["Khaja (Bihari)"], ["Dhuska"], ["Rugra"], ["Chilka Roti"]] },
+    { "cuisines": ["ei_assamese"], "category": "ml_component", "diet": "veg", "dishes": [["Khar"], ["Aloo Pitika"], ["Masor Tenga (vegetarian)"], ["Joha Rice"], ["Til Pitha"], ["Narikol Laru"]] },
+    { "cuisines": ["ei_assamese"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Masor Tenga", "Assamese Sour Fish Curry"], ["Duck Curry (Assamese)"], ["Pork with Bamboo Shoot (Assamese)"]] },
+    { "cuisines": ["ne_manipuri", "ne_naga", "ne_mizo", "ne_meghalaya", "ne_arunachal", "ne_tripuri", "ne_general"], "category": "gr_other", "dishes": [
+      ["Eromba"], ["Singju"], ["Chak-hao Kheer", "Black Rice Kheer"], ["Smoked Pork with Axone"], ["Galho"], ["Bai (Mizo)"], ["Jadoh"], ["Dohneiiong"],
+      ["Thukpa"], ["Momos (Northeast)"], ["Pika Pila"], ["Mui Borok"], ["Wahan Mosdeng"], ["Bamboo Shoot Fry"]
+    ]}
+  ]
+}

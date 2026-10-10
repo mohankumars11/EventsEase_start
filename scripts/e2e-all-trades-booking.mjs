@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
 
 const M = await import(pathToFileURL(resolve('node_modules/.cache/trade-payloads.mjs')).href)
-const { TRADE_CONFIGS, buildTradePayload, suggestPackages } = M
+const { TRADE_CONFIGS, buildTradePayload, suggestPackages, buildCateringPayload } = M
 const book = (await import(pathToFileURL(resolve('api/_lib/anchorBook.js')).href)).default
 const pay = (await import(pathToFileURL(resolve('api/create-booking-payment.js')).href)).default
 
@@ -92,7 +92,24 @@ function listingFor(c) {
   return a
 }
 
+/* Catering has its own flow: dishes → a menu → capacity (see e2e-catering-live for every case). */
+const CATERER = {
+  basics: { display_name: 'E2E Catering & Food', bio: 'End-to-end test listing — removed automatically.', legal_name: 'E2E Test' },
+  location: {}, cuisines: ['ka_udupi', 'sp_pure_veg'],
+  answers: { services: ['Wedding catering'], prep_location: 'At both locations', service_styles: ['Buffet'], service_area: '50',
+    max_guests: 500, guests_per_day: 500, events_per_day: 2, staff: 20, min_billable_guests: 50, child_policy: 'same',
+    fssai: { type: 'state_licence', number: '11219999000123', expiry: '2027-03-31', premises: 'E2E kitchen', responsible: 'E2E' },
+    declarations: ['dietary_accurate', 'allergens_shared', 'hygiene', 'temperature', 'special_requests'] },
+  dishes: [{ item_key: 'd1', name: 'Bisi Bele Bath', category_id: 'rc_flavoured', diet: 'veg', serving: { qty: 200, unit: 'g' }, allergens: [], menu_eligible: true, standalone: { on: false }, active: true }],
+  menus: [{ menu_key: 'm1', name: 'E2E Lunch', diet: 'veg', min_guests: 50, max_guests: 500, price_model: 'per_person', price_paise: 40000, status: 'active',
+    items: [{ dish_key: 'd1', course_group: 'rice_biryani', included: true }] }],
+  counters: [], packages: [], extras: [],
+  availability: { min_notice_days: 0, horizon_months: 12, menu_freeze_days: 0, guest_confirm_days: 0, travel_model: 'customer_arranged' },
+  booking: { instant: true, advance_pct: 30, cancellation: 'flexible', custom_quotes: true, quote_hours: 4 },
+}
+
 function requestFor(c, a, date) {
+  if (c.customFlow === 'catering') return { event_date: date, start_time: '12:00', lat: BLR.lat, lng: BLR.lng, menu_key: 'm1', adults: 80 }
   const key = a.catalogue[0]?.item_key
   const r = { event_date: date, start_time: '10:00', lat: BLR.lat, lng: BLR.lng }
   switch (c.archetype) {
@@ -158,8 +175,9 @@ try {
         travel_rules: { model: 'customer_arranged' }, location: {} } })
       submitErr = error
     } else {
-      a = listingFor(c)
-      const { error } = await partner.db.rpc('submit_listing_version', { p_vendor_service_id: svc.id, p_payload: buildTradePayload(c, a) })
+      a = c.customFlow === 'catering' ? CATERER : listingFor(c)
+      const payload = c.customFlow === 'catering' ? buildCateringPayload(c, a) : buildTradePayload(c, a)
+      const { error } = await partner.db.rpc('submit_listing_version', { p_vendor_service_id: svc.id, p_payload: payload })
       submitErr = error
     }
     if (!ok('submit is accepted', !submitErr, submitErr?.message)) continue

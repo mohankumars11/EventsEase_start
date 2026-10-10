@@ -41,6 +41,7 @@ export default async function handler(req, res) {
     generated: !!l.generated,
     generated_unit_paise: l.generated_unit_paise != null ? Math.round(Number(l.generated_unit_paise)) : null,
     is_estimate: !!l.is_estimate,
+    is_discount: !!l.is_discount,
     estimate_note: l.is_estimate ? String(l.estimate_note ?? '').trim().slice(0, 300) || null : null,
   })) : null
   if (lines) {
@@ -48,7 +49,8 @@ export default async function handler(req, res) {
     if (lines.some(l => l.is_estimate && !l.estimate_note)) return res.status(400).json({ error: 'Explain each line marked as an estimate.' })
   }
   const partnerAmountPaise = lines
-    ? Math.round(lines.filter(l => l.charged).reduce((t, l) => t + l.quantity * l.unit_take_home_paise, 0))
+    // A discount line subtracts; the quote can never go below zero.
+    ? Math.max(0, Math.round(lines.filter(l => l.charged).reduce((t, l) => t + (l.is_discount ? -1 : 1) * l.quantity * l.unit_take_home_paise, 0)))
     : money(body.partnerAmountPaise)
   if (!quoteRequestId || (body.decline !== true && partnerAmountPaise <= 0)) return res.status(400).json({ error: 'Quote request and positive partner quote are required.' })
 

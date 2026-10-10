@@ -115,6 +115,7 @@ function ResponseCard({ response, busy, onChoose }) {
       {Number.isFinite(rating) && rating > 0 && <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-extrabold text-amber-800"><Star size={10} fill="currentColor" />{rating.toFixed(1)}</span>}
     </div>
     <p className="mt-3 rounded-2xl bg-white p-3"><span className="block text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">Sambramo price</span><span className="mt-1 block text-[21px] font-extrabold tabular-nums text-ink">{formatINR(response.customer_amount_paise / 100)}</span></p>
+    <QuoteLines requestId={response.quote_request_id} vendorId={response.vendor_id} totalPaise={response.customer_amount_paise} />
     <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
       <List title="Included" items={response.inclusions} />
       <List title="Excluded" items={response.exclusions} />
@@ -126,6 +127,28 @@ function ResponseCard({ response, busy, onChoose }) {
           {seconds <= 0 && <p className="mt-1 text-center text-[10.5px] font-bold text-rose-700">This quote expired. Sambramo can request a fresh quote from eligible partners.</p>}
         </div>
       : <div className="mt-3 rounded-2xl bg-forest-50 py-3 text-center text-[12px] font-extrabold text-forest-700">Locked in Sambramo</div>}
+  </div>
+}
+
+/* The partner's itemised quote, latest version, at customer prices (the
+   partner's take-home grossed up by the same fee the total carries, so the
+   lines add up to the price shown). Discounts subtract. */
+function QuoteLines({ requestId, vendorId, totalPaise }) {
+  const [lines, setLines] = useState(null)
+  useEffect(() => {
+    supabase.from('sambramo_quote_line_items').select('description, quantity, unit, unit_take_home_paise, charged, is_discount, quote_version')
+      .eq('quote_request_id', requestId).eq('vendor_id', vendorId).order('quote_version', { ascending: false }).order('sort_order')
+      .then(({ data }) => { const v = data?.[0]?.quote_version; setLines((data ?? []).filter(l => l.quote_version === v)) })
+  }, [requestId, vendorId])
+  if (!lines?.length) return null
+  const amt = l => (l.charged === false ? 0 : Number(l.quantity) * Number(l.unit_take_home_paise)) * (l.is_discount ? -1 : 1)
+  const take = lines.reduce((t, l) => t + amt(l), 0)
+  const k = take > 0 ? totalPaise / take : 1
+  return <div className="mt-2 rounded-2xl bg-white p-3">
+    <p className="text-[9.5px] font-extrabold uppercase tracking-wide text-ink-mute">Quote details</p>
+    {lines.map((l, i) => <div key={i} className="mt-1 flex justify-between gap-2 text-[11px]">
+      <span className={l.is_discount ? 'text-forest-700' : 'text-ink-soft'}>{l.description}{Number(l.quantity) !== 1 ? ` × ${Number(l.quantity)}` : ''}{l.charged === false ? ' (included)' : ''}</span>
+      <span className={`font-bold tabular-nums ${l.is_discount ? 'text-forest-700' : 'text-ink'}`}>{l.is_discount ? '−' : ''}{formatINR(Math.abs(Math.round(amt(l) * k)) / 100)}</span></div>)}
   </div>
 }
 

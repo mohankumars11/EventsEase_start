@@ -81,7 +81,7 @@ export const RULE_KINDS = {
 
 export const ADDON_UNITS = [
   'per_event', 'per_session', 'per_hour', 'per_day', 'per_person', 'per_guest', 'per_item',
-  'per_piece', 'per_set', 'per_box', 'per_kg', 'per_km', 'per_trip', 'per_staff', 'per_counter', 'per_vehicle',
+  'per_piece', 'per_set', 'per_box', 'per_kg', 'per_km', 'per_trip', 'per_staff', 'per_counter', 'per_vehicle', 'per_staff_hour', 'per_counter_hour',
 ]
 
 /** Shared option lists, reused only where the meaning is genuinely the same. */

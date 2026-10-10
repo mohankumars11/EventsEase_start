@@ -1,0 +1,41 @@
+{
+  "note": "International cuisines: starters, mains, sides, rice/noodles, breads, desserts. Editorial (needs_review). Diet set only where the dish is unambiguous.",
+  "groups": [
+    { "cuisines": ["oi_indo_chinese", "in_chinese"], "category": "rc_fried_rice", "diet": "veg", "dishes": [["Veg Fried Rice"], ["Schezwan Fried Rice"], ["Burnt Garlic Fried Rice"], ["Paneer Fried Rice"], ["Triple Schezwan Rice"]] },
+    { "cuisines": ["oi_indo_chinese", "in_chinese"], "category": "rc_fried_rice", "diet": "non_veg", "dishes": [["Chicken Fried Rice"], ["Mixed Fried Rice"], ["Prawn Fried Rice"], ["Egg Fried Rice"]] },
+    { "cuisines": ["oi_indo_chinese", "in_chinese"], "category": "ad_other", "diet": "veg", "dishes": [["Hakka Noodles"], ["Schezwan Noodles"], ["Chilli Garlic Noodles"], ["American Chopsuey"], ["Singapore Noodles"], ["Pan-Fried Noodles"]] },
+    { "cuisines": ["oi_indo_chinese"], "category": "gr_other", "diet": "veg", "dishes": [["Veg Manchurian Gravy"], ["Chilli Paneer Gravy"], ["Paneer in Hot Garlic Sauce"], ["Mixed Veg in Black Bean Sauce"], ["Vegetable Hong Kong Style"], ["Tofu in Chilli Bean Sauce"]] },
+    { "cuisines": ["oi_indo_chinese"], "category": "st_manchurian", "diet": "veg", "dishes": [["Gobi Manchurian"], ["Veg Manchurian (Dry)"], ["Chilli Paneer (Dry)"], ["Chilli Mushroom"], ["Dragon Paneer"], ["Crispy Honey Chilli Lotus Stem"]] },
+    { "cuisines": ["oi_indo_chinese"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Chilli Chicken Gravy"], ["Chicken Manchurian"], ["Garlic Chicken"], ["Kung Pao Chicken"], ["Dragon Chicken"], ["Chicken in Black Bean Sauce"]] },
+    { "cuisines": ["in_thai", "in_pan_asian"], "category": "gr_other", "diet": "veg", "dishes": [["Thai Green Curry (Veg)"], ["Thai Red Curry (Veg)"], ["Massaman Curry (Veg)"], ["Pad Thai (Veg)"], ["Thai Basil Fried Rice"], ["Som Tam", "Raw Papaya Salad"], ["Thai Jasmine Rice"]] },
+    { "cuisines": ["in_thai"], "category": "gr_other", "diet": "non_veg", "dishes": [["Thai Green Curry (Chicken)"], ["Thai Red Curry (Chicken)"], ["Chicken Satay"], ["Pad Thai (Chicken)"], ["Tom Kha Gai"]] },
+    { "cuisines": ["in_japanese"], "category": "ad_other", "dishes": [["Vegetable Sushi"], ["Salmon Sushi"], ["Vegetable Tempura"], ["Prawn Tempura"], ["Teriyaki Chicken"], ["Miso Soup"], ["Yakisoba"], ["Edamame"], ["Gyoza"], ["Ramen"]] },
+    { "cuisines": ["in_korean"], "category": "ad_other", "dishes": [["Kimchi"], ["Bibimbap"], ["Korean Fried Chicken"], ["Tteokbokki"], ["Japchae"], ["Kimchi Fried Rice"]] },
+    { "cuisines": ["in_vietnamese", "in_indonesian", "in_malaysian", "in_singaporean", "in_filipino", "in_pan_asian"], "category": "ad_other", "dishes": [
+      ["Vietnamese Spring Rolls"], ["Pho"], ["Banh Mi"], ["Nasi Goreng"], ["Mee Goreng"], ["Satay"], ["Laksa"], ["Hainanese Chicken Rice"],
+      ["Singapore Chilli Crab"], ["Chicken Adobo"], ["Pancit"], ["Rendang"], ["Gado-Gado"]
+    ]},
+    { "cuisines": ["in_pan_asian", "in_chinese"], "category": "st_other", "dishes": [["Dim Sum (Veg)"], ["Chicken Dim Sum"], ["Crystal Dumplings"], ["Bao Buns (Veg)"], ["Chicken Bao"], ["Wontons (Veg)"], ["Salt and Pepper Tofu"]] },
+
+    { "cuisines": ["in_italian", "in_continental"], "category": "ad_other", "diet": "veg", "dishes": [
+      ["Penne Arrabbiata"], ["Pasta in White Sauce", "Penne Alfredo"], ["Pasta in Red Sauce"], ["Pink Sauce Pasta"], ["Pesto Pasta"], ["Spaghetti Aglio e Olio"],
+      ["Vegetable Lasagna"], ["Mac and Cheese"], ["Mushroom Risotto"], ["Vegetable Risotto"], ["Gnocchi"], ["Ravioli (Spinach Ricotta)"]
+    ]},
+    { "cuisines": ["in_italian"], "category": "ad_other", "diet": "non_veg", "dishes": [["Chicken Alfredo Pasta"], ["Spaghetti Bolognese"], ["Chicken Lasagna"], ["Chicken Risotto"]] },
+    { "cuisines": ["in_italian", "in_american"], "category": "br_other", "diet": "veg", "dishes": [["Margherita Pizza"], ["Farmhouse Pizza"], ["Paneer Tikka Pizza"], ["Garlic Bread"], ["Cheese Garlic Bread"], ["Bruschetta"], ["Focaccia"], ["Dinner Rolls"], ["Bread Basket"]] },
+    { "cuisines": ["in_italian", "in_american"], "category": "br_other", "diet": "non_veg", "dishes": [["Chicken Pizza"], ["Pepperoni Pizza"]] },
+    { "cuisines": ["in_continental", "in_french", "in_british"], "category": "gr_other", "diet": "veg", "dishes": [["Grilled Vegetables"], ["Baked Vegetables in White Sauce"], ["Vegetable au Gratin"], ["Ratatouille"], ["Stuffed Bell Peppers"], ["Mashed Potatoes"], ["Potato Wedges"], ["Sauteed Vegetables"], ["Stir-Fried Vegetables"], ["Mushroom Stroganoff"], ["Cottage Cheese Steak"]] },
+    { "cuisines": ["in_continental", "in_french", "in_british"], "category": "gr_other", "diet": "non_veg", "dishes": [["Grilled Chicken with Herb Sauce"], ["Chicken Stroganoff"], ["Fish and Chips"], ["Grilled Fish with Lemon Butter"], ["Roast Chicken"], ["Chicken Steak"], ["Shepherd's Pie"], ["Lamb Chops"]] },
+    { "cuisines": ["in_mediterranean", "in_middle_eastern", "in_lebanese", "in_greek", "in_turkish"], "category": "ad_other", "diet": "veg", "dishes": [
+      ["Hummus"], ["Falafel"], ["Pita Bread"], ["Baba Ganoush"], ["Tabbouleh"], ["Fattoush"], ["Mutabbal"], ["Muhammara"], ["Labneh"], ["Spanakopita"],
+      ["Tzatziki"], ["Dolma"], ["Mezze Platter"], ["Mujaddara"], ["Couscous Salad"]
+    ]},
+    { "cuisines": ["in_middle_eastern", "in_lebanese", "in_turkish", "in_persian"], "category": "ad_other", "diet": "non_veg", "dishes": [["Chicken Shawarma"], ["Shish Tawook"], ["Lamb Kofta"], ["Adana Kebab"], ["Doner Kebab"], ["Joojeh Kebab"], ["Chelo Kebab"]] },
+    { "cuisines": ["in_persian", "in_turkish", "in_middle_eastern"], "category": "ds_other", "diet": "veg", "dishes": [["Baklava"], ["Kunafa", "Kunafeh"], ["Turkish Delight", "Lokum"], ["Basbousa"], ["Umm Ali"], ["Saffron Rice Pudding (Persian)"]] },
+    { "cuisines": ["in_mexican"], "category": "ad_other", "diet": "veg", "dishes": [["Mexican Rice"], ["Veg Tacos"], ["Bean Burrito"], ["Veg Quesadilla"], ["Nachos with Salsa"], ["Guacamole"], ["Veg Enchiladas"], ["Burrito Bowl (Veg)"], ["Refried Beans"]] },
+    { "cuisines": ["in_mexican"], "category": "ad_other", "diet": "non_veg", "dishes": [["Chicken Tacos"], ["Chicken Burrito"], ["Chicken Quesadilla"], ["Chicken Fajitas"]] },
+    { "cuisines": ["in_american", "in_british", "in_australian"], "category": "ad_other", "dishes": [["Veg Burger"], ["Chicken Burger"], ["Club Sandwich"], ["Grilled Cheese Sandwich"], ["Coleslaw"], ["Buffalo Wings"], ["Hot Dog"], ["Pancakes"], ["Scrambled Eggs on Toast"], ["Meat Pie"]] },
+    { "cuisines": ["in_spanish"], "category": "ad_other", "dishes": [["Vegetable Paella"], ["Seafood Paella"], ["Patatas Bravas"], ["Spanish Omelette", "Tortilla Española"], ["Gazpacho"], ["Churros"]] },
+    { "cuisines": ["in_french", "in_european_desserts"], "category": "ds_bakery", "dishes": [["Crème Brûlée"], ["Macarons"], ["Éclairs"], ["Profiteroles"], ["Croissants"], ["Fruit Tart"], ["Panna Cotta"], ["Apple Pie"], ["Opera Cake"], ["Mille-Feuille"]] }
+  ]
+}

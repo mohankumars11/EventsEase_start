@@ -26,11 +26,13 @@ writeFileSync(ENTRY, [
   `export * from ${JSON.stringify(join(ROOT, 'src/data/trades/index.js'))}`,
   `export * from ${JSON.stringify(join(ROOT, 'src/components/vendor/listing/payload.js'))}`,
   `export { RULE_KINDS, ADDON_UNITS } from ${JSON.stringify(join(ROOT, 'src/data/trades/schema.js'))}`,
+  `export { buildCateringPayload, cateringDone, CATERING_STAGES } from ${JSON.stringify(join(ROOT, 'src/components/vendor/listing/catering/cateringFlow.js'))}`,
 ].join('\n'))
-const b = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [ENTRY, '--bundle', '--platform=node', '--format=esm', `--outfile=${OUT}`, '--log-level=error'], { encoding: 'utf8', shell: true })
+const b = spawnSync(join(ROOT, 'node_modules/.bin/esbuild'), [ENTRY, '--bundle', '--platform=node', '--format=esm', `--outfile=${OUT}`, '--log-level=error',
+  '--jsx=automatic', '--loader:.js=jsx', '--packages=external'], { encoding: 'utf8', shell: true })
 if (b.status !== 0) { console.error(b.stderr || b.stdout); process.exit(1) }
 const M = await import(pathToFileURL(OUT).href)
-const { TRADE_CONFIGS, buildTradePayload, resourcesFor, stagesFor, suggestPackages, RULE_KINDS, ADDON_UNITS, holds } = M
+const { TRADE_CONFIGS, buildTradePayload, resourcesFor, stagesFor, suggestPackages, RULE_KINDS, ADDON_UNITS, holds, buildCateringPayload, cateringDone, CATERING_STAGES } = M
 
 let ran = 0, bad = 0
 const ok = (name, cond, d = '') => { ran++; if (!cond) bad++; if (verbose || !cond) console.log(`  ${cond ? '✓' : '✗'} ${name}${cond ? '' : `   <-- ${d}`}`) }
@@ -61,7 +63,7 @@ ok('₹5,000 take-home at 8% → ₹5,435 customer', customerFrom(500000, 0.08) 
 ok('customer → take-home never pays the partner more than entered', [100000, 543480, 999990].every(c => customerFrom(takeFrom(c, 0.08), 0.08) <= c + 10))
 ok('round10 is to the nearest ₹0.10 (paise multiple of 10)', customerFrom(123457, 0.08) % 10 === 0)
 
-for (const c of TRADE_CONFIGS.filter(t => !t.legacyFlow)) {
+for (const c of TRADE_CONFIGS.filter(t => !t.legacyFlow && !t.customFlow)) {
   const qs = [...c.screens.flatMap(s => s.questions), ...(c.pricing.fields ?? []), ...(c.resources.fields ?? [])]
   const answers = fill(qs)
   // Redirecting options (Transportation) are not what a direct operator picks.
@@ -104,6 +106,52 @@ for (const c of TRADE_CONFIGS.filter(t => !t.legacyFlow)) {
   if (c.tiers && c.pricing.packages) ok(`${c.id} tier packages suggested from its own rate`, p.packages.length === 3 && p.packages.every(x => x.take_home_paise > 0))
   ok(`${c.id} compliance flags derive`, p.booking_rules.compliance.every(d => c.compliance.conditional.some(x => x.doc === d)))
   void holds; void RULE_KINDS
+}
+
+/* ── Catering & Food: its own flow and payload ─────────────────────── */
+{
+  const c = TRADE_CONFIGS.find(t => t.id === 'catering_food')
+  const a = {
+    basics: { display_name: 'Annapoorna', bio: 'x'.repeat(50), legal_name: 'Annapoorna Caterers' }, location: { lat: 12.97, lng: 77.59, confirmed: true, postal_code: '560001', source: 'gps' },
+    cuisines: ['ka_udupi', 'sp_jain'],
+    answers: { services: ['Wedding catering'], prep_location: 'At both locations', service_styles: ['Buffet'], service_area: '50',
+      max_guests: 800, guests_per_day: 1500, events_per_day: 2, staff: 30, staff_per_100: 4, min_billable_guests: 100, child_policy: 'per_menu',
+      fssai: { type: 'state_licence', number: '12345678901234', expiry: '2027-12-31', premises: 'Kitchen, Jayanagar', responsible: 'R. Rao' },
+      declarations: ['dietary_accurate', 'allergens_shared', 'hygiene', 'temperature', 'special_requests'] },
+    dishes: [
+      { item_key: 'd1', name: 'Bisi Bele Bath', category_id: 'rc_flavoured', diet: 'veg', serving: { qty: 200, unit: 'g' }, allergens: [], menu_eligible: true, standalone: { on: false }, active: true },
+      { item_key: 'd2', name: 'Badam Halwa', category_id: 'ds_halwa', diet: 'veg', serving: { qty: 100, unit: 'g' }, allergens: ['Nuts (tree nuts)', 'Milk / dairy'], menu_eligible: true,
+        standalone: { on: true, unit: 'per_kg', price_paise: 120000, min_qty: 2 }, active: true },
+      { item_key: 'd3', name: 'Masala Dosa', category_id: 'bf_dosa', diet: 'veg', serving: { qty: 1, unit: 'piece' }, menu_eligible: true, standalone: { on: false }, active: true },
+      { item_key: 'd4', name: 'Old dish', category_id: 'ad_other', diet: 'veg', serving: {}, active: false },
+    ],
+    menus: [{ menu_key: 'm1', name: 'Udupi Wedding Lunch', diet: 'veg', min_guests: 100, max_guests: 800, price_model: 'per_person', price_paise: 35000, child_price_paise: 20000,
+      items: [{ dish_key: 'd1', course_group: 'rice_biryani', sort: 0, included: true }, { dish_key: 'd2', course_group: 'desserts', sort: 1, included: false, extra_paise: 4000 }], status: 'active' }],
+    counters: [{ counter_key: 'c1', name: 'Dosa Counter', counter_type: 'Dosa Counter', dish_keys: ['d3'], price_model: 'per_event', price_paise: 800000,
+      duration_hours: 3, included_servings: 200, available_qty: 2, status: 'active' }],
+    packages: [{ key: 'pkg_a', name: 'Classic Wedding', menu_keys: ['m1'], counter_keys: ['c1'], included_addons: ['crockery'], guest_min: 200, guest_max: 600, hours: 5,
+      price_model: 'per_guest', price_paise: 45000, status: 'active' }],
+    extras: [{ id: 'crockery', label: 'Crockery and cutlery', unit: 'per_guest', on: true, take_home_paise: 1500 }, { id: 'extra_staff', label: 'Additional serving staff', unit: 'per_staff_hour', on: false }],
+    availability: { min_notice_days: 7, horizon_months: 12, menu_freeze_days: 5, guest_confirm_days: 3, travel_model: 'included_radius' },
+    booking: { instant: true, advance_pct: 30, cancellation: 'moderate', custom_quotes: true, quote_hours: 12 },
+  }
+  const done = cateringDone(a)
+  ok('catering: 13 stages, all complete for a full listing', CATERING_STAGES.length === 13 && CATERING_STAGES.every(st => done.has(st.id)), CATERING_STAGES.filter(st => !done.has(st.id)).map(st => st.id))
+  const p = buildCateringPayload(c, a)
+  const keys = new Set(p.catalogue.map(i => i.item_key))
+  ok('catering: every required answer the server checks is present', ['services', 'prep_location', 'service_styles', 'max_guests', 'guests_per_day', 'events_per_day', 'staff', 'min_billable_guests', 'child_policy'].every(k => p.answers[k] != null && p.answers[k] !== ''))
+  ok('catering: archived, unused dish is not submitted', !keys.has('d4'))
+  ok('catering: every menu dish is in the same submission', p.menus.every(m => m.items.every(i => keys.has(i.dish_key))))
+  ok('catering: every counter dish is in the same submission', p.counters.every(x => x.dish_keys.every(k => keys.has(k))))
+  ok('catering: packages name menus and counters that are sent', p.packages.every(pk => pk.meta.menu_keys.every(k => p.menus.some(m => m.menu_key === k)) && pk.meta.counter_keys.every(k => p.counters.some(x => x.counter_key === k))))
+  ok('catering: per-person menu carries its price; extra-cost dish its extra', p.menus[0].take_home_paise === 35000 && p.menus[0].items.find(i => i.dish_key === 'd2').extra_take_home_paise === 4000)
+  ok('catering: dish in menus only is not priced alone', p.catalogue.find(i => i.item_key === 'd1').quote_only === true)
+  ok('catering: standalone dish carries unit and price', p.catalogue.find(i => i.item_key === 'd2').take_home_paise === 120000 && p.catalogue.find(i => i.item_key === 'd2').unit === 'kg')
+  ok('catering: flat counter says hours and servings it covers', p.counters[0].duration_hours === 3 && p.counters[0].included_servings === 200)
+  ok('catering: included extra is linked to its package', p.addons.find(x => x.addon_id === 'crockery').included_in.includes('PKG_A'))
+  ok('catering: resources for guests/day, events, staff and each counter', ['guests', 'events', 'staff', 'c1'].every(k => p.resources.some(r => r.resource_key === k)))
+  ok('catering: FSSAI premises / responsible person kept private', !('premises' in p.answers.fssai) && p.answers.private_fssai.premises === 'Kitchen, Jayanagar')
+  ok('catering: add-on units are known', p.addons.every(x => ADDON_UNITS.includes(x.unit)))
 }
 
 console.log(`\ncheck-trade-payloads: ${ran - bad}/${ran} passed`)

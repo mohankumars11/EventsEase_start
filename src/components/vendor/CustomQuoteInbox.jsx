@@ -143,7 +143,7 @@ function DirectedQuoteSheet({ request, busy, onClose, onSubmit }) {
               if (busy) return
               await onSubmit(request.id, { headers: await headers(), body: { lines: ls.map(l => ({
                 description: l.description, quantity: l.qty, unit: l.unit, unit_take_home_paise: l.unit_paise || 0,
-                charged: l.charged !== false, generated: !!l.auto, generated_unit_paise: l.generated_unit_paise ?? null,
+                charged: l.charged !== false, generated: !!l.auto, generated_unit_paise: l.generated_unit_paise ?? null, is_discount: !!l.discount,
               })) } })
             }} />
         )}

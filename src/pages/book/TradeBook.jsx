@@ -18,6 +18,7 @@ import { payLines, authHeaders } from '../../lib/payLines'
 import { rupees } from '../../lib/tierPackages'
 import { useAuth } from '../../context/AuthContext'
 import { configFor } from '../../data/trades'
+import CateringBook from './CateringBook'
 
 const START = ['06:00', '08:00', '10:00', '12:00', '15:00', '17:00', '18:00', '19:00', '20:00']
 const day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10)
@@ -91,7 +92,7 @@ export default function TradeBook() {
   }), [f, venue, drop, itemHours]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!listing) return
+    if (!listing || config?.id === 'catering_food') return   // CateringBook prices its own request
     const n = ++seq.current
     setResolving(true)
     const t = setTimeout(async () => {
@@ -139,6 +140,9 @@ export default function TradeBook() {
       </div>
     </Shell>
   )
+
+  // Catering books menus, packages and counters — its own page.
+  if (config.id === 'catering_food') return <Shell back={() => navigate(-1)} title={name}><CateringBook listing={listing} serviceId={serviceId} trade={trade} /></Shell>
 
   const catalogue = listing.catalogue ?? []
   const packages = listing.packages ?? []

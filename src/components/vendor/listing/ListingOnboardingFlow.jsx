@@ -39,6 +39,14 @@ import { completeTrade } from '../../../lib/tradeQueue'
 import { captureLocation, reverseAddress, openDeviceSettings } from '../../../lib/partnerLocation'
 import { useToast, friendlyError } from '../../../context/ToastContext'
 import { usePartnerDraft } from '../../../hooks/usePartnerDraft'
+import { migrateCateringDraft } from '../../../lib/cateringDraft'
+import { dishesFromOldListing } from '../../../lib/cateringDraft'
+import { CATERING_STAGES, cateringDone, buildCateringPayload } from './catering/cateringFlow'
+import { ProfileStage, CuisineStage, CapacityStage, PricingRulesStage, PrepStage, FoodSafetyStage } from './catering/CateringStages'
+import DishCatalogue from './catering/DishCatalogue'
+import MenuBuilder from './catering/MenuBuilder'
+import { CounterBuilder, PackageBuilder, ExtrasBuilder } from './catering/Services'
+import CateringReview from './catering/CateringReview'
 
 const EMPTY = { basics: {}, location: {}, answers: {}, catalogue: [], rules: {}, packages: [], addons: {}, availability: {}, booking: { instant: true, custom_quotes: true } }
 const DEFAULT_POLICY = { platform_fee_rate: 0.08, signature_uplift: 1.75, vip_factor: 2 }
@@ -78,13 +86,16 @@ export default function ListingOnboardingFlow({
   const config = configFor(trade)
   const toast = useToast()
   const draftKey = editing?.id ?? `${vendorId ?? 'new'}:${config.id}`
-  const { saveDraft, loadDraft, clearDraft } = usePartnerDraft(draftKey)
-  const STAGES = useMemo(() => stagesFor(config), [config])
+  const { saveDraft, loadDraft, loadRemoteDraft, clearDraft } = usePartnerDraft(draftKey)
+  // Catering & Food walks its own 13 stages (dishes → menus → counters → packages).
+  const catering = config.id === 'catering_food'
+  const upgrade = x => (catering ? migrateCateringDraft(x) : x)
+  const STAGES = useMemo(() => (catering ? CATERING_STAGES : stagesFor(config)), [config, catering])
   const policy = useTradePolicy(config.id)
   const fee = policy.platform_fee_rate
   const account = useAccountPrefill(embedded ? null : vendorId)
 
-  const [a, setA] = useState(() => ({ ...EMPTY, ...(initialAnswers ?? editing?.specs?.trade_v1 ?? loadDraft()?.answers ?? {}) }))
+  const [a, setA] = useState(() => upgrade({ ...EMPTY, ...(initialAnswers ?? editing?.specs?.trade_v1 ?? loadDraft()?.answers ?? {}) }))
   const [step, setStep] = useState(() => initialStep ?? loadDraft()?.step ?? STAGES[0].id)
   const [dir, setDir] = useState(1)
   const [busy, setBusy] = useState(false)
@@ -94,6 +105,11 @@ export default function ListingOnboardingFlow({
   const payout = usePayoutStatus(embedded ? null : vendorId)
 
   useEffect(() => { setSeen(s => (s.has(step) ? s : new Set([...s, step]))) }, [step])
+  // A newer copy of this draft on the server (another phone, a reinstall) wins.
+  useEffect(() => {
+    if (embedded || initialAnswers || editing) return
+    loadRemoteDraft().then(remote => { if (remote?.answers) { setA(upgrade({ ...EMPTY, ...remote.answers })); if (remote.step) setStep(remote.step) } })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!embedded) saveDraft({ answers: a, step }) }, [a, step]) // eslint-disable-line react-hooks/exhaustive-deps
   // Shared details fill only what the partner has not typed for this service.
   useEffect(() => {
@@ -112,6 +128,7 @@ export default function ListingOnboardingFlow({
   const isTrip = config.archetype === 'TRIP_VEHICLE'
 
   const done = useMemo(() => {
+    if (catering) return cateringDone(a)
     const s = new Set()
     if (basicsDone(a.basics)) s.add('basics')
     if (locationDone(a.location)) s.add('location')
@@ -127,7 +144,7 @@ export default function ListingOnboardingFlow({
     if (seen.has('payout')) s.add('payout')
     if (STAGES.slice(0, -1).every(x => s.has(x.id))) s.add('review')
     return s
-  }, [a, config, seen, suggested, redirect, isTrip, STAGES])
+  }, [a, config, seen, suggested, redirect, isTrip, STAGES, catering])
 
   const idx = Math.max(0, STAGES.findIndex(s => s.id === step))
   const here = STAGES[idx]
@@ -160,18 +177,19 @@ export default function ListingOnboardingFlow({
     if (missing) { setTried(true); go(missing.id); return }
     setBusy(true); setSubmitError('')
     try {
-      const payload = buildTradePayload(config, a)
+      const payload = catering ? buildCateringPayload(config, a) : buildTradePayload(config, a)
       const prices = [
         ...payload.rules.map(r => r.take_home_paise ?? r.customer_paise ?? 0),
         ...payload.catalogue.map(c => c.take_home_paise ?? 0),
         ...payload.packages.map(p => p.take_home_paise),
+        ...(payload.menus ?? []).map(m => (m.price_model === 'per_person' ? m.take_home_paise : 0) ?? 0),
       ].filter(x => x > 0)
       const { legal_name, ...publicBasics } = a.basics // eslint-disable-line no-unused-vars
       const specs = {
         ...(editing?.specs ?? {}),
         trade_v1: { ...a, basics: { ...publicBasics, work: undefined } },
         trade_id: config.id,
-        events: a.answers.events ?? [],
+        events: catering ? [...new Set((a.menus ?? []).flatMap(m => m.event_types ?? []))] : a.answers.events ?? [],
       }
       const row = { price: prices.length ? Math.round(Math.min(...prices) / 100) : null, unit: 'per booking', min_quantity: 1,
         description: a.basics.bio || null, specs }
@@ -193,6 +211,18 @@ export default function ListingOnboardingFlow({
 
       const { data, error } = await supabase.rpc('submit_listing_version', { p_vendor_service_id: serviceId, p_payload: payload })
       if (error) { setSubmitError(friendlyError(error)); return }
+      // A dish the partner typed themselves is proposed for the shared catalogue (reviewed before it is shared).
+      if (catering && vendorId) {
+        const own = (a.dishes ?? []).filter(d => d.active !== false && !d.master_dish_id && d.name?.trim())
+        if (own.length) {
+          const { data: already } = await supabase.from('sambramo_dish_proposals').select('name').eq('vendor_id', vendorId)
+          const seen = new Set((already ?? []).map(x => x.name.trim().toLowerCase()))
+          const fresh = own.filter(d => !seen.has(d.name.trim().toLowerCase()))
+          if (fresh.length) await supabase.from('sambramo_dish_proposals').insert(fresh.map(d => ({ vendor_id: vendorId, name: d.name.trim(),
+            cuisine_ids: (d.cuisine_ids ?? []).filter(c => !c.startsWith('custom:')), category_id: d.category_id, suggested_diet: ['veg','non_veg','vegan','jain','egg'].includes(d.diet) ? d.diet : null,
+            note: d.description || null }))).then(() => {}, () => {})
+        }
+      }
 
       toast.success(`Your ${config.serviceNoun} has been submitted for review.`)
       clearDraft()
@@ -230,8 +260,27 @@ export default function ListingOnboardingFlow({
             <motion.div key={here.id} custom={dir}
               initial={{ opacity: 0, x: dir * 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -40 }}
               transition={{ type: 'spring', stiffness: 380, damping: 36 }}>
-              {here.id === 'basics' && <BasicsStage value={a.basics} set={put('basics')} vendorId={vendorId} config={config} />}
-              {here.id === 'location' && <LocationStage value={a.location} set={put('location')} onLocate={locate} onReverse={reverse} onSettings={openDeviceSettings} />}
+              {catering && (() => {
+                const ctx = { a, put, vendorId, config, fee, tried }
+                switch (here.id) {
+                  case 'cat_profile': return <ProfileStage {...ctx} />
+                  case 'location': return <LocationStage value={a.location} set={put('location')} onLocate={locate} onReverse={reverse} onSettings={openDeviceSettings} />
+                  case 'cat_cuisines': return <CuisineStage {...ctx} />
+                  case 'cat_capacity': return <CapacityStage {...ctx} />
+                  case 'cat_dishes': return <DishCatalogue {...ctx} legacyDishes={dishesFromOldListing(editing?.specs)} />
+                  case 'cat_menus': return <MenuBuilder {...ctx} />
+                  case 'cat_counters': return <CounterBuilder {...ctx} />
+                  case 'cat_packages': return <PackageBuilder {...ctx} />
+                  case 'cat_pricing': return <PricingRulesStage {...ctx} />
+                  case 'cat_extras': return <ExtrasBuilder {...ctx} />
+                  case 'cat_prep': return <PrepStage {...ctx} />
+                  case 'cat_safety': return <FoodSafetyStage {...ctx} />
+                  case 'review': return <CateringReview a={a} done={done} go={go} fee={fee} payout={payout} />
+                  default: return null
+                }
+              })()}
+              {!catering && here.id === 'basics' && <BasicsStage value={a.basics} set={put('basics')} vendorId={vendorId} config={config} />}
+              {!catering && here.id === 'location' && <LocationStage value={a.location} set={put('location')} onLocate={locate} onReverse={reverse} onSettings={openDeviceSettings} />}
               {screen && (
                 <>
                   <SectionTitle title={screen.title} sub={screen.sub} />
@@ -257,7 +306,7 @@ export default function ListingOnboardingFlow({
               {here.id === 'compliance' && <ComplianceStage config={config} answers={a.answers} vendorId={vendorId} />}
               {here.id === 'booking' && <BookingStage value={a.booking} set={put('booking')} />}
               {here.id === 'payout' && <PayoutStage status={payout} />}
-              {here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested} />}
+              {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested} />}
             </motion.div>
           </AnimatePresence>
         </div>

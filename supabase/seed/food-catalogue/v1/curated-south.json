@@ -1,0 +1,64 @@
+{
+  "note": "Tamil Nadu, Andhra Pradesh, Telangana and Kerala. Editorial (needs_review).",
+  "groups": [
+    { "cuisines": ["tn_traditional", "tn_tiffin", "tn_chennai"], "category": "bf_regional", "diet": "veg", "dishes": [
+      ["Ven Pongal", "Khara Pongal"], ["Sakkarai Pongal", "Sweet Pongal"], ["Kuzhi Paniyaram", "Paniyaram"], ["Adai Avial"], ["Idiyappam", "String Hoppers"],
+      ["Rava Kichadi"], ["Semiya Upma"], ["Kal Dosai"], ["Ghee Roast Dosai"], ["Podi Dosai"], ["Onion Uthappam"], ["Kothu Parotta"], ["Mini Tiffin"]
+    ]},
+    { "cuisines": ["tn_traditional", "tn_wedding"], "category": "gr_sambar", "diet": "veg", "dishes": [
+      ["Arachuvitta Sambar"], ["Vengaya Sambar", "Small Onion Sambar"], ["Murungakkai Sambar", "Drumstick Sambar"], ["Vatha Kuzhambu"], ["Puli Kuzhambu"],
+      ["Mor Kuzhambu"], ["Ennai Kathirikai Kuzhambu"], ["Poricha Kuzhambu"], ["Paruppu Urundai Kuzhambu"], ["Kara Kuzhambu"], ["Milagu Kuzhambu"]
+    ]},
+    { "cuisines": ["tn_traditional", "tn_wedding"], "category": "sp_rasam", "diet": "veg", "dishes": [["Tomato Rasam"], ["Milagu Rasam", "Pepper Rasam"], ["Paruppu Rasam"], ["Mysore Rasam"], ["Lemon Rasam"], ["Jeera Rasam"], ["Pineapple Rasam"], ["Poondu Rasam", "Garlic Rasam"]] },
+    { "cuisines": ["tn_traditional", "tn_wedding"], "category": "ml_component", "diet": "veg", "dishes": [
+      ["Avial (Tamil style)"], ["Kootu"], ["Poricha Kootu"], ["Keerai Masiyal"], ["Beans Paruppu Usili"], ["Vazhakkai Podimas"], ["Mor Kali"]
+    ]},
+    { "cuisines": ["tn_traditional"], "category": "dr_poriyal", "diet": "veg", "dishes": [["Beans Poriyal"], ["Cabbage Poriyal"], ["Vazhakkai Varuval", "Raw Banana Fry"], ["Urulaikizhangu Roast", "Potato Roast"], ["Senai Roast", "Yam Roast"], ["Vendakkai Poriyal"], ["Kovakkai Poriyal"]] },
+    { "cuisines": ["tn_traditional", "tn_wedding"], "category": "rc_flavoured", "diet": "veg", "dishes": [["Puliyodharai", "Tamarind Rice"], ["Thengai Sadam", "Coconut Rice"], ["Elumichai Sadam", "Lemon Rice"], ["Thakkali Sadam", "Tomato Rice"], ["Kalkandu Sadam"], ["Thayir Sadam", "Curd Rice"], ["Ellu Sadam", "Sesame Rice"]] },
+    { "cuisines": ["tn_traditional", "tn_wedding", "oi_sweets"], "category": "ds_payasam", "diet": "veg", "dishes": [["Paal Payasam"], ["Semiya Payasam"], ["Paruppu Payasam"], ["Ada Payasam"], ["Javvarisi Payasam", "Sago Payasam"]] },
+    { "cuisines": ["tn_traditional", "oi_sweets"], "category": "ds_festival", "diet": "veg", "dishes": [["Adhirasam"], ["Kesari"], ["Tirunelveli Halwa"], ["Milk Kova", "Palkova"], ["Kozhukattai"], ["Kaju Katli"], ["Badusha"], ["Rava Laddu"]] },
+    { "cuisines": ["tn_chettinad", "tn_non_veg"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Chettinad Chicken Curry"], ["Pepper Chicken (Chettinad)"], ["Chicken Kuzhambu"], ["Chicken Chettinad Varuval"]] },
+    { "cuisines": ["tn_chettinad", "tn_non_veg", "tn_madurai"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Mutton Chukka"], ["Mutton Kuzhambu"], ["Madurai Mutton Kola Urundai"], ["Nalli Elumbu Kuzhambu"], ["Kari Dosai"]] },
+    { "cuisines": ["tn_non_veg", "tn_nanjil_nadu"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Meen Kuzhambu", "Fish Kuzhambu"], ["Nanjil Nadu Fish Curry"], ["Meen Varuval", "Fish Fry (Tamil style)"], ["Nethili Fry", "Anchovy Fry"], ["Era Thokku", "Prawn Thokku"]] },
+    { "cuisines": ["tn_kongunadu", "tn_kongu_veg"], "category": "ml_component", "diet": "veg", "dishes": [["Arisi Paruppu Sadam"], ["Kongunadu Kara Kuzhambu"], ["Kollu Rasam", "Horse Gram Rasam"], ["Ragi Kali"], ["Thengai Paal Kuzhambu"]] },
+    { "cuisines": ["tn_kongunadu", "tn_non_veg"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Kongunadu Chicken Curry"], ["Pallipalayam Chicken"], ["Kongunadu Mutton Fry"]] },
+    { "cuisines": ["tn_tirunelveli"], "category": "ml_component", "diet": "veg", "dishes": [["Sodhi"], ["Ulundhu Kali"], ["Tirunelveli Sambar"]] },
+    { "cuisines": ["tn_madurai", "tn_chennai"], "category": "rc_biryani", "diet": "non_veg", "dishes": [["Dindigul Biryani"], ["Ambur Biryani"], ["Chennai Mutton Biryani"], ["Seeraga Samba Chicken Biryani"]] },
+    { "cuisines": ["tn_madurai"], "category": "bev_traditional", "diet": "veg", "dishes": [["Jigarthanda"], ["Panagam"], ["Nannari Sarbath"], ["Neer Mor"]] },
+
+    { "cuisines": ["ap_traditional", "ap_veg", "ap_coastal"], "category": "gr_dal", "diet": "veg", "dishes": [["Mudda Pappu"], ["Tomato Pappu"], ["Palakura Pappu", "Spinach Dal"], ["Gongura Pappu"], ["Dosakaya Pappu"], ["Mamidikaya Pappu", "Mango Dal"]] },
+    { "cuisines": ["ap_traditional", "ap_veg"], "category": "gr_sambar", "diet": "veg", "dishes": [["Pappu Charu"], ["Mukkala Pulusu", "Vegetable Pulusu"], ["Sorakaya Pulusu"], ["Majjiga Pulusu"], ["Ulavacharu", "Horse Gram Soup"]] },
+    { "cuisines": ["ap_traditional", "ap_veg", "ap_rayalaseema"], "category": "gr_south", "diet": "veg", "dishes": [["Gutti Vankaya Kura", "Stuffed Brinjal Curry"], ["Bendakaya Pulusu"], ["Aloo Kurma (Andhra)"], ["Senagala Kura"], ["Kakarakaya Pulusu"]] },
+    { "cuisines": ["ap_traditional", "ap_veg"], "category": "dr_regional_fry", "diet": "veg", "dishes": [["Bendakaya Vepudu", "Okra Fry"], ["Dondakaya Vepudu", "Ivy Gourd Fry"], ["Aloo Vepudu"], ["Kanda Bachali Kura"], ["Arati Kaya Vepudu", "Raw Banana Fry"], ["Cabbage Pesara Pappu Kura"]] },
+    { "cuisines": ["ap_pickles", "ap_traditional"], "category": "ac_pickle", "diet": "veg", "dishes": [["Avakaya", "Mango Pickle (Andhra)"], ["Gongura Pachadi"], ["Allam Pachadi", "Ginger Chutney"], ["Tomato Pachadi"], ["Pandu Mirchi Pachadi"], ["Kandi Podi"], ["Karivepaku Podi"]] },
+    { "cuisines": ["ap_traditional", "tg_traditional"], "category": "rc_flavoured", "diet": "veg", "dishes": [["Pulihora", "Tamarind Rice (Andhra)"], ["Bagara Rice", "Bagara Annam"], ["Daddojanam", "Curd Rice (Andhra)"], ["Kobbari Annam"], ["Pongali"]] },
+    { "cuisines": ["ap_non_veg", "ap_coastal"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Andhra Chicken Curry"], ["Kodi Kura"], ["Guntur Chicken"], ["Chicken Pulusu"], ["Andhra Chilli Chicken"]] },
+    { "cuisines": ["ap_non_veg", "tg_non_veg"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Gongura Mamsam", "Gongura Mutton"], ["Mamsam Kura"], ["Talakaya Kura"], ["Mutton Fry (Andhra)"]] },
+    { "cuisines": ["ap_coastal", "ap_non_veg"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Chepala Pulusu", "Andhra Fish Curry"], ["Nellore Fish Curry"], ["Royyala Iguru", "Prawn Masala (Andhra)"], ["Chepa Vepudu", "Fish Fry (Andhra)"]] },
+    { "cuisines": ["ap_traditional", "oi_sweets"], "category": "ds_festival", "diet": "veg", "dishes": [["Pootharekulu"], ["Bobbatlu", "Bakshalu"], ["Ariselu"], ["Kakinada Kaja"], ["Sunnundalu"], ["Pala Kova"], ["Bellam Paramannam"]] },
+    { "cuisines": ["tg_hyderabadi", "tg_hyderabadi_biryani"], "category": "rc_dum_biryani", "diet": "non_veg", "dishes": [["Hyderabadi Chicken Dum Biryani"], ["Hyderabadi Mutton Dum Biryani", "Kacchi Gosht Biryani"], ["Hyderabadi Egg Biryani"], ["Hyderabadi Prawn Biryani"]] },
+    { "cuisines": ["tg_hyderabadi", "tg_hyderabadi_biryani"], "category": "rc_dum_biryani", "diet": "veg", "dishes": [["Hyderabadi Veg Dum Biryani"], ["Hyderabadi Paneer Biryani"]] },
+    { "cuisines": ["tg_hyderabadi"], "category": "gr_north", "diet": "veg", "dishes": [["Mirchi Ka Salan"], ["Bagara Baingan"], ["Dalcha (vegetarian)"], ["Khatti Dal"]] },
+    { "cuisines": ["tg_hyderabadi", "tg_non_veg"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Haleem"], ["Paya"], ["Marag"], ["Mutton Dalcha"], ["Pathar Ka Gosht"], ["Nihari (Hyderabadi)"], ["Chicken 65 (Hyderabadi)"]] },
+    { "cuisines": ["tg_hyderabadi", "oi_sweets"], "category": "ds_other", "diet": "veg", "dishes": [["Double Ka Meetha"], ["Qubani Ka Meetha"], ["Shahi Tukda"], ["Sheer Khurma"], ["Gil-e-Firdaus"]] },
+    { "cuisines": ["tg_snacks", "tg_traditional"], "category": "ch_regional", "diet": "veg", "dishes": [["Sakinalu"], ["Sarva Pindi"], ["Garijalu"], ["Mirapakaya Bajji"], ["Punugulu"]] },
+    { "cuisines": ["tg_traditional"], "category": "ml_component", "diet": "veg", "dishes": [["Pachi Pulusu"], ["Sakinalu Charu"], ["Jonna Rotte", "Jowar Roti (Telangana)"], ["Telangana Thali"]] },
+
+    { "cuisines": ["kl_sadya", "kl_veg", "kl_travancore"], "category": "ml_sadya", "diet": "veg", "dishes": [
+      ["Avial"], ["Olan"], ["Kalan"], ["Erissery"], ["Pulissery"], ["Kootu Curry"], ["Thoran (Cabbage)"], ["Beans Thoran"], ["Pachadi (Pineapple)"],
+      ["Kichadi (Kerala)"], ["Inji Puli", "Puli Inji"], ["Sharkara Varatti"], ["Banana Chips (Kerala)"], ["Parippu Curry"], ["Kerala Sambar"],
+      ["Kerala Rasam"], ["Moru Curry"], ["Mango Pickle (Kerala)"], ["Kerala Sadya"]
+    ]},
+    { "cuisines": ["kl_sadya", "kl_veg", "oi_sweets"], "category": "ds_payasam", "diet": "veg", "dishes": [["Palada Pradhaman", "Palada Payasam"], ["Ada Pradhaman"], ["Parippu Pradhaman"], ["Chakka Pradhaman", "Jackfruit Payasam"], ["Pal Payasam (Ambalapuzha)"], ["Semiya Payasam (Kerala)"]] },
+    { "cuisines": ["kl_breakfast", "kl_veg"], "category": "bf_regional", "diet": "veg", "dishes": [["Appam with Vegetable Stew"], ["Puttu Kadala", "Puttu and Kadala Curry"], ["Idiyappam with Stew"], ["Kerala Parotta"], ["Nool Puttu"], ["Pathiri"], ["Unniyappam"], ["Pazham Pori", "Banana Fritters"]] },
+    { "cuisines": ["kl_veg", "kl_central"], "category": "gr_south", "diet": "veg", "dishes": [["Vegetable Stew (Kerala)"], ["Kadala Curry"], ["Mushroom Roast (Kerala)"], ["Kerala Vegetable Kurma"], ["Theeyal"]] },
+    { "cuisines": ["kl_malabar", "kl_thalassery", "kl_non_veg"], "category": "rc_biryani", "diet": "non_veg", "dishes": [["Malabar Chicken Biryani"], ["Thalassery Chicken Biryani"], ["Kozhikode Mutton Biryani"], ["Malabar Fish Biryani"]] },
+    { "cuisines": ["kl_malabar"], "category": "bf_regional", "diet": "veg", "dishes": [["Neypathiri"], ["Ghee Rice (Malabar)"], ["Kalathappam"]] },
+    { "cuisines": ["kl_malabar", "kl_non_veg"], "category": "st_chicken", "diet": "non_veg", "dishes": [["Unnakaya"], ["Chicken Samosa (Malabar)"], ["Kozhi Ada"], ["Erachi Pathiri"]] },
+    { "cuisines": ["kl_non_veg", "kl_central"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Kerala Chicken Curry"], ["Nadan Kozhi Curry"], ["Chicken Roast (Kerala)"], ["Chicken Ularthiyathu"]] },
+    { "cuisines": ["kl_non_veg", "kl_central"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Beef Ularthiyathu", "Beef Fry (Kerala)"], ["Mutton Stew (Kerala)"], ["Kerala Duck Roast", "Tharavu Roast"], ["Mutton Pepper Fry (Kerala)"]] },
+    { "cuisines": ["kl_seafood", "kl_non_veg"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Kerala Fish Curry", "Meen Curry"], ["Fish Moilee"], ["Meen Pollichathu"], ["Karimeen Fry", "Pearl Spot Fry"], ["Fish Mappas"], ["Kudampuli Fish Curry"]] },
+    { "cuisines": ["kl_seafood", "kl_non_veg"], "category": "gr_prawn", "diet": "non_veg", "dishes": [["Chemmeen Curry", "Prawn Curry (Kerala)"], ["Prawn Roast (Kerala)"], ["Kallummakkaya Fry", "Mussel Fry"], ["Njandu Roast", "Crab Roast"]] },
+    { "cuisines": ["kl_veg", "oi_sweets"], "category": "ds_festival", "diet": "veg", "dishes": [["Ela Ada"], ["Kozhukatta"], ["Achappam"], ["Kerala Halwa", "Kozhikode Halwa"], ["Neyyappam"]] }
+  ]
+}

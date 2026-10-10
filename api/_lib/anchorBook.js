@@ -77,6 +77,17 @@ const REASON_TEXT = {
   no_capacity_left: 'The partner is fully booked for that time.',
   vehicle_not_free: 'That vehicle is already booked for this time.',
   no_driver_free: 'No driver is free at that time.',
+  inside_menu_freeze: 'This date is inside the caterer’s menu deadline, so they will confirm it personally.',
+  menu_not_found: 'That menu is not available.',
+  menu_needs_quote: 'The caterer prices this menu for each event.',
+  menu_lead_time: 'This menu needs more notice.',
+  over_menu_capacity: 'More guests than this menu is offered for.',
+  over_fixed_scope: 'More guests than the fixed price covers.',
+  over_fixed_hours: 'Longer than the fixed price covers.',
+  over_package_scope: 'More guests than this package covers.',
+  menu_not_in_package: 'That menu is not part of this package.',
+  no_event_slot: 'The caterer has no more events free at that time.',
+  capacity_not_tracked: 'The caterer confirms capacity personally.',
 }
 const explain = r => REASON_TEXT[r]
   ?? (r.startsWith('language_') ? `This partner does not host in ${r.slice(9)}.`
@@ -87,6 +98,11 @@ const explain = r => REASON_TEXT[r]
     : r.startsWith('lead_time_') ? 'One item needs more time to make.'
     : r.startsWith('below_minimum_') ? 'One item has a larger minimum order.'
     : r.startsWith('item_not_offered_') ? 'One item is not offered by this partner.'
+    : r.startsWith('dietary_') ? 'A dietary need you chose is confirmed by the caterer personally.'
+    : r.startsWith('counter_needs_quote_') ? 'A live counter you chose is priced by the caterer.'
+    : r.startsWith('counter_unavailable_') ? 'A live counter you chose is already booked then.'
+    : r.startsWith('counter_hours_') || r.startsWith('counter_servings_') ? 'A counter runs longer or serves more than its price covers.'
+    : r.startsWith('counter_not_offered_') ? 'A live counter you chose is not offered.'
     : r)
 
 const clean = (v, n = 500) => String(v ?? '').trim().slice(0, n) || null
@@ -205,7 +221,9 @@ export default async function handler(req, res) {
   }))
   const flagged = (resolution.reasons ?? [])
     .filter(x => ['outside_travel_area', 'multi_day_not_priced', 'extra_hours_not_priced', 'no_rule_fits_duration', 'package_not_found',
-      'route_unresolved', 'route_needs_quote', 'stops_not_priced', 'custom_scope', 'km_beyond_not_priced', 'menu_not_priced'].includes(x)
+      'route_unresolved', 'route_needs_quote', 'stops_not_priced', 'custom_scope', 'km_beyond_not_priced', 'menu_not_priced',
+      'menu_needs_quote', 'over_fixed_scope', 'over_fixed_hours', 'over_package_scope', 'over_menu_capacity'].includes(x)
+      || x.startsWith('counter_needs_quote_') || x.startsWith('counter_hours_') || x.startsWith('counter_servings_') || x.startsWith('dietary_')
       || x.startsWith('addon_not_offered_') || x.startsWith('item_not_offered_') || x.startsWith('item_quote_only_'))
     .map((x, i) => ({
       quote_request_id: q.id, vendor_id: resolution.vendor_id ?? svc?.vendor_id, sort_order: priced.length + i,
