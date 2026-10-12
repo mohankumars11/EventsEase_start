@@ -8,6 +8,7 @@
  */
 import { RULE_KINDS } from '../../../data/trades/schema'
 import { holds, chargesFrom, complianceFor } from '../../../data/trades'
+import { PLATFORM_ADVANCE_PCT } from '../anchor/options'
 
 /* ── Stages ─────────────────────────────────────────────────────────── */
 
@@ -235,7 +236,7 @@ export function buildTradePayload(config, a) {
     })),
     resources: resourcesFor(config, a),
     booking_rules: {
-      instant: b.instant !== false, advance_pct: b.advance_pct, cancellation: b.cancellation,
+      instant: b.instant !== false, advance_pct: PLATFORM_ADVANCE_PCT, cancellation: b.cancellation,
       custom_quotes: b.custom_quotes !== false || enabledKinds(a.rules).includes('quote'), quote_hours: b.quote_hours,
       min_notice_days: av.min_notice_days, horizon_months: av.horizon_months,
       min_staff: Number(ans.min_staff ?? ans.min_crew ?? ans.min_valets) || undefined,

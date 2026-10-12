@@ -5,6 +5,7 @@
  */
 import { profileDone, cuisinesDone, capacityDone, pricingRulesDone, prepDone, foodSafetyDone, dishesDone, menusDone,
   countersDone, packagesDone, extrasDone, cateringLocationDone } from './rules'
+import { PLATFORM_ADVANCE_PCT } from '../../anchor/options'
 
 export const CATERING_STAGES = [
   { id: 'cat_profile', label: 'Business & service profile', short: 'Profile' },
@@ -117,7 +118,7 @@ export function buildCateringPayload(config, a) {
         buffer_minutes: (Number(c.setup_minutes) || 0) + (Number(c.dismantle_minutes) || 0), attributes: {}, private_ref: {} })),
     ].filter(r => r.quantity > 0),
     booking_rules: {
-      instant: b.instant !== false, advance_pct: b.advance_pct, cancellation: b.cancellation,
+      instant: b.instant !== false, advance_pct: PLATFORM_ADVANCE_PCT, cancellation: b.cancellation,
       custom_quotes: b.custom_quotes !== false, quote_hours: b.quote_hours,
       min_notice_days: av.min_notice_days, horizon_months: av.horizon_months,
       menu_freeze_days: av.menu_freeze_days, guest_confirm_days: av.guest_confirm_days,

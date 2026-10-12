@@ -5,7 +5,7 @@
  * so the two can never describe the same listing differently. Amounts go
  * out as take-home paise; the server computes every customer price.
  */
-import { ADDONS_V3 } from './options'
+import { ADDONS_V3, PLATFORM_ADVANCE_PCT } from './options'
 import { finalPackages } from './StepsCommercial'
 import { tiersFromModels, DEFAULT_CONFIG } from '../../../lib/tierPackages'
 
@@ -48,7 +48,7 @@ export function buildListingPayload(a, cfg = DEFAULT_CONFIG) {
     profile: { ...about, ...(a.events ?? {}), audience_band: a.events?.audience, ...(a.languages ?? {}) },
     models, addons, overrides,
     booking_rules: {
-      instant: r.instant !== false, advance_pct: r.advance_pct, cancellation: r.cancellation,
+      instant: r.instant !== false, advance_pct: PLATFORM_ADVANCE_PCT, cancellation: r.cancellation,
       custom_quotes: r.custom_quotes !== false, quote_hours: r.quote_hours, min_budget_paise: paise(r.min_budget) || null,
       rider: r.rider, min_notice_days: av.min_notice_days, horizon_months: av.horizon_months,
       max_consecutive_hours: av.max_consecutive_hours, rest_hours: av.rest_hours, multiple_per_day: !!av.multiple_per_day,

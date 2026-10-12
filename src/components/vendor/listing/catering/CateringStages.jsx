@@ -148,8 +148,6 @@ export function PricingRulesStage({ a, put }) {
           <div><p className="text-[14px] font-extrabold">Instant booking</p><p className="text-[12px] text-ink/55">When everything a customer asks for is priced and you have capacity.</p></div>
           <Toggle on={b.instant !== false} label="Instant booking" onChange={x => setB({ instant: x })} />
         </div>
-        <div className="mt-4" /><Label required>Advance at booking</Label>
-        <Segmented id="cat-adv" options={ADVANCE} value={b.advance_pct} onChange={x => setB({ advance_pct: x })} />
         <div className="mt-4" /><Label required>Cancellation policy</Label>
         <div className="space-y-2">{CANCELLATION_V3.map(c => <OptionCard key={c.id} on={b.cancellation === c.id} title={c.title} body={c.body} onClick={() => setB({ cancellation: c.id })} />)}</div>
       </Card>

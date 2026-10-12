@@ -19,7 +19,7 @@ export const cuisinesDone = a => (a.cuisines ?? []).length > 0
 export const capacityDone = a => { const s = a.answers ?? {}; return s.max_guests > 0 && s.guests_per_day >= s.max_guests && s.events_per_day > 0 && s.staff > 0 }
 
 export const pricingRulesDone = a => { const s = a.answers ?? {}, b = a.booking ?? {}
-  return s.min_billable_guests > 0 && !!s.child_policy && !!b.advance_pct && !!b.cancellation && (b.custom_quotes === false || !!b.quote_hours) }
+  return s.min_billable_guests > 0 && !!s.child_policy && !!b.cancellation && (b.custom_quotes === false || !!b.quote_hours) }
 
 export const prepDone = a => { const v = a.availability ?? {}
   return v.min_notice_days != null && !!v.horizon_months && v.menu_freeze_days != null && v.guest_confirm_days != null && !!v.travel_model }

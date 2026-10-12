@@ -285,7 +285,7 @@ export function AvailabilityStage({ value, set, isTrip }) {
 
 /* ── Booking & cancellation (no trade-specific rider) ───────────────── */
 
-export const bookingDone = v => !!v?.advance_pct && !!v?.cancellation && (v?.custom_quotes === false || !!v?.quote_hours)
+export const bookingDone = v => !!v?.cancellation && (v?.custom_quotes === false || !!v?.quote_hours)
 
 export function BookingStage({ value, set }) {
   const v = value ?? {}
@@ -299,8 +299,6 @@ export function BookingStage({ value, set }) {
           <Toggle on={v.instant !== false} label="Instant booking" onChange={x => set({ ...v, instant: x })} />
         </div>
       </Card>
-      <Card className="mt-3"><Label required>Advance at booking</Label>
-        <Segmented id="l-adv" options={ADVANCE} value={v.advance_pct} onChange={x => set({ ...v, advance_pct: x })} /></Card>
       <Card className="mt-3"><Label required>Cancellation policy</Label>
         <div className="space-y-2">{CANCELLATION_V3.map(c => <OptionCard key={c.id} on={v.cancellation === c.id} title={c.title} body={c.body} onClick={() => set({ ...v, cancellation: c.id })} />)}</div>
       </Card>

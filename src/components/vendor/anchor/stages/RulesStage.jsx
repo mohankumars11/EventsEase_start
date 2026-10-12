@@ -25,11 +25,6 @@ export default function RulesStage({ value, set }) {
       </Card>
 
       <Card className="mt-3">
-        <Label required>Advance at booking</Label>
-        <Segmented id="adv" options={ADVANCE} value={v.advance_pct} onChange={x => set({ ...v, advance_pct: x })} />
-      </Card>
-
-      <Card className="mt-3">
         <Label required>Cancellation policy</Label>
         <div className="space-y-2">
           {CANCELLATION_V3.map(c => <OptionCard key={c.id} on={v.cancellation === c.id} title={c.title} body={c.body} onClick={() => set({ ...v, cancellation: c.id })} />)}
@@ -81,5 +76,5 @@ export default function RulesStage({ value, set }) {
   )
 }
 
-export const rulesStageDone = v => !!v?.advance_pct && !!v?.cancellation
+export const rulesStageDone = v => !!v?.cancellation
   && (v?.custom_quotes === false || !!v?.quote_hours) && (v?.rider?.length ?? 0) === RIDER.length
