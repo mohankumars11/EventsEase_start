@@ -127,6 +127,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
             unit: 'per event',
             meta: `${p.hours} hrs${p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}`,
             status: (STATUS_LOOK[p.status] ?? [])[0] ?? 'In review',
+            base: `${p.hours} hours of hosting`,
             inclusions: p.inclusions.slice(0, 3).map(i => ({ id: i, label: i, included: true })),
           }))}
           onViewDetails={p => onViewPackage?.(p.key)}

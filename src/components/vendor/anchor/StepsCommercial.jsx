@@ -45,6 +45,7 @@ export function toCardPackages(pkgs, offered) {
     ratePaise: takeHomeOf(p.price_paise),
     unit: 'per event',
     meta: `${p.duration_hours} hours`,
+    base: `${p.duration_hours} hours of hosting`,
     badge: p.badge,
     edited: p.edited,
     inclusions: ids.map(id => ({ id, label: label(id), included: p.inclusions.includes(id) })),

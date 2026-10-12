@@ -106,8 +106,25 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
         </span>
       )}
 
+      {/* The core deliverable, always ticked, always first.
+          Essential's inclusion list is legitimately empty -- it is the
+          tier with no extras -- and an empty list rendered an empty
+          card: a package with a price and nothing under it. Naming what
+          the base tier actually buys is the difference between "no
+          add-ons" and "nothing". */}
+      {(pkg.base || !pkg.inclusions?.length) && (
+        <div className="mt-4">
+          <p className="flex items-center gap-2 text-[12.5px] font-bold text-ink">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
+              <Check size={10} strokeWidth={3.5} />
+            </span>
+            <span className="min-w-0">{pkg.base ?? 'Core service'}</span>
+          </p>
+        </div>
+      )}
+
       {!!pkg.inclusions?.length && (
-        <div className="mt-4 space-y-1.5">
+        <div className="mt-2 space-y-1.5">
           {pkg.inclusions.map(inc => (
             <p key={inc.id}
               className={`flex items-center gap-2 text-[12.5px] ${inc.included ? 'font-bold text-ink' : 'text-ink/35 line-through'}`}>

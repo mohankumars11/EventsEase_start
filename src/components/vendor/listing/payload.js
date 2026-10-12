@@ -200,10 +200,34 @@ export function suggestPackages(config, a, policy) {
   const essential = Math.round(Number(r.amount_paise) * unitQty)
   const up = Number(policy?.signature_uplift) || 1.75
   const vip = Number(policy?.vip_factor) || 2
+  /* ── Tiers have to differ by MORE than price ────────────────────
+     These three used to be the same package at three prices: no
+     inclusions at all, and Signature and VIP both at hours * 2. A
+     customer looking at them saw one offer billed three ways, which is
+     the "three differently priced tiers with identical contents" the
+     pricing rules forbid -- and the partner had nothing to publish.
+
+     So each tier now takes a widening slice of the add-ons the partner
+     actually offers, and VIP gets real extra time. `generated: true`
+     marks them as suggestions the partner is expected to review: these
+     are a starting point, not a claim about what they provide. */
+  const offeredAddons = (config.addons ?? [])
+    .filter(x => (a.addons ?? {})[x.id]?.on)
+    .map(x => x.id)
+  const slice = n => offeredAddons.slice(0, n)
+
   return [
-    { key: 'ESSENTIAL', name: 'Essential', take_home_paise: essential, generated_take_home_paise: essential, hours },
-    { key: 'SIGNATURE', name: 'Signature', badge: 'Most popular', take_home_paise: Math.round(essential * up), generated_take_home_paise: Math.round(essential * up), hours: hours * 2 },
-    { key: 'VIP', name: 'VIP', take_home_paise: Math.round(essential * vip), generated_take_home_paise: Math.round(essential * vip), hours: hours * 2 },
+    { key: 'ESSENTIAL', name: 'Essential', take_home_paise: essential,
+      generated_take_home_paise: essential, hours,
+      inclusions: [], generated: true },
+    { key: 'SIGNATURE', name: 'Signature', badge: 'Most popular',
+      take_home_paise: Math.round(essential * up), generated_take_home_paise: Math.round(essential * up),
+      hours: hours * 2,
+      inclusions: slice(Math.ceil(offeredAddons.length / 2)), generated: true },
+    { key: 'VIP', name: 'VIP',
+      take_home_paise: Math.round(essential * vip), generated_take_home_paise: Math.round(essential * vip),
+      hours: Math.round(hours * 3),
+      inclusions: slice(offeredAddons.length), generated: true },
   ]
 }
 

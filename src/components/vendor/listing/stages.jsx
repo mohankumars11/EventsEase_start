@@ -150,6 +150,7 @@ export function PackagesStage({ config, value, set, suggested, offered, onRegene
           ratePaise: Number(p.take_home_paise) || 0,
           unit,
           meta: p.hours ? `${p.hours} hours` : null,
+          base: p.hours ? `${p.hours} hours of ${config.name}` : `${config.name} for your event`,
           badge: p.badge,
           edited: p.generated_take_home_paise != null && p.generated_take_home_paise !== p.take_home_paise,
           inclusions: addonIds.map(id => ({ id, label: labelFor(id), included: (p.inclusions ?? []).includes(id) })),

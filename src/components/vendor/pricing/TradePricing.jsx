@@ -18,6 +18,7 @@ import { Sheet } from '../anchor/ui'
 import { supabase } from '../../../lib/supabase'
 import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
+import TradeListingCard from '../../customer/TradeListingCard'
 import { configFor } from '../../../data/trades'
 import { RULE_KINDS } from '../../../data/trades/schema'
 import { buildTradePayload } from '../listing/payload'
@@ -26,6 +27,14 @@ import { useToast, friendlyError } from '../../../context/ToastContext'
 /* The six moderation states a listing version can be in, said in words
    a partner can act on. The raw enum is DRAFT / UNDER_REVIEW /
    ACTION_REQUIRED / LIVE / ARCHIVED / REJECTED. */
+const PREVIEW_NOTE = {
+  DRAFT: 'A preview of your draft. Customers cannot see this yet.',
+  UNDER_REVIEW: 'This version is with our team. Customers still see your live listing, if you have one.',
+  ACTION_REQUIRED: 'This version needs a change before it can go live.',
+  REJECTED: 'This version was not accepted. Make the changes and send it again.',
+  ARCHIVED: 'This version is hidden from customers.',
+}
+
 const STATUS_LABEL = {
   DRAFT: 'Draft',
   UNDER_REVIEW: 'In review',
@@ -82,6 +91,31 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
   const d = useListingPricing(service)
   const toast = useToast()
   const [sheet, setSheet] = useState(null)
+
+  /* ── "Preview my customer listing", for every trade ───────────────
+     listing_preview() serves the version the partner should be looking
+     at -- the pending one while it is in review, the live one after --
+     and returns nothing to anyone but the owner.
+
+     Until 20261012_01 is pasted the function does not exist, so a
+     PGRST202 falls back to listing_public(), which answers only for a
+     live listing. The preview then works exactly as well as it did
+     before the migration and no better, which is the honest failure. */
+  const [preview, setPreview] = useState(false)
+  const [previewData, setPreviewData] = useState(null)
+  useEffect(() => {
+    if (!preview) return
+    let live = true
+    setPreviewData(null)
+    ;(async () => {
+      let { data, error } = await supabase.rpc('listing_preview', { p_vendor_service_id: service.id })
+      if (error?.code === 'PGRST202') {
+        ({ data } = await supabase.rpc('listing_public', { p_vendor_service_id: service.id }))
+      }
+      if (live) setPreviewData(data ?? { state: 'NONE' })
+    })()
+    return () => { live = false }
+  }, [preview, service.id])
   const [proposed, setProposed] = useState({})
   const [busy, setBusy] = useState(false)
   const answers = service.specs?.trade_v1 ?? null
@@ -167,7 +201,16 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
             className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-extrabold text-plum-800 disabled:opacity-60">
             {locked ? <><Lock size={14} /> Editable from {fmt(d.live.price_locked_until)}</> : <><Pencil size={14} /> Edit listing</>}
           </button>
-          {d.live && <a href={`/book/s/${config.id}/${service.id}`} className="flex h-10 items-center gap-1.5 rounded-full bg-white/15 px-4 text-[13px] font-extrabold"><Eye size={14} /> Preview</a>}
+          {/* Was <a href="/book/s/..."> -- in a Capacitor WebView that is a
+              full page reload onto the live customer route, leaving the
+              partner on a customer screen with the partner tab bar still
+              underneath. And it was gated on d.live, so a partner who had
+              not published yet -- the one most likely to want a preview --
+              never saw the button at all. */}
+          <button type="button" onClick={() => setPreview(true)}
+            className="flex h-10 items-center gap-1.5 rounded-full bg-white/15 px-4 text-[13px] font-extrabold">
+            <Eye size={14} /> Preview
+          </button>
         </div>
       </div>
 
@@ -232,6 +275,9 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
               unit: config.pricing?.unitLabel ?? 'per event',
               meta: p.trade_inputs?.duration_hours ? `${p.trade_inputs.duration_hours} hrs` : null,
               status: STATUS_LABEL[p.status] ?? p.status,
+              base: p.trade_inputs?.duration_hours
+                ? `${p.trade_inputs.duration_hours} hours of ${config.name}`
+                : `${config.name} for your event`,
             }))}
           />
         </Section>
@@ -242,6 +288,27 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
           {(v.booking_rules?.charges ?? []).map(c => <Line key={c.id} k={c.label} v={rupees(c.take_home_paise)} sub="Your rate" />)}
         </Section>
       )}
+
+      <Sheet open={preview} onOpenChange={o => !o && setPreview(false)} title="What customers see">
+        {!previewData
+          ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-plum-700" /></div>
+          : previewData.state === 'NONE'
+            ? <p className="py-6 text-center text-[13px] font-bold text-ink/55">
+                Finish your listing once and your customer page appears here.
+              </p>
+            : (
+              <>
+                {/* Which version this is. A preview that does not say it is
+                    showing a draft is a preview that implies you are live. */}
+                {previewData.is_live === false && (
+                  <p className="mb-3 rounded-2xl bg-saffron-50 px-3.5 py-2.5 text-[12.5px] font-bold text-saffron-900 ring-1 ring-saffron-200">
+                    {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
+                  </p>
+                )}
+                <TradeListingCard listing={previewData} tradeName={config.name} />
+              </>
+            )}
+      </Sheet>
 
       <Sheet open={sheet === 'seasonal'} onOpenChange={o => !o && setSheet(null)} title="Update seasonal prices">
         {d.window && (seasonalFields.length
