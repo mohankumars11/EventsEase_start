@@ -177,7 +177,7 @@ function DishEditor({ dish, set, tax, cuisines, fee, tried }) {
             <div className="min-w-0 flex-1"><p className="mb-1 text-[11.5px] font-extrabold text-ink/55">Step</p>
               <TextField inputMode="numeric" value={sa.increment ?? ''} onChange={x => putSa({ increment: Number(x.replace(/\D/g, '')) || null })} /></div>
           </div>
-          {sa.price_paise > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Customer pays {inr(customer(sa.price_paise, fee))}</p>}
+          {sa.price_paise > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Your rate</p>}
           <div className="mt-3 flex gap-2">
             <div className="min-w-0 flex-1"><p className="mb-1 text-[11.5px] font-extrabold text-ink/55">Lead time (days)</p>
               <TextField inputMode="numeric" value={sa.lead_days ?? ''} onChange={x => putSa({ lead_days: Number(x.replace(/\D/g, '')) || 0 })} /></div>

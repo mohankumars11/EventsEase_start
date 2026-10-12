@@ -16,7 +16,8 @@ import {
   ChevronDown, Lock, Sparkles, Zap, Wallet, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users,
   Clock, Mic2, CalendarCheck, Sun, SunMedium, CalendarRange, ArrowRight,
 } from 'lucide-react'
-import { rupees } from '../../../lib/tierPackages'
+import { rupees, takeHomeOf } from '../../../lib/tierPackages'
+import PackageCarousel from '../packages/PackageCarousel'
 
 const MODEL = {
   hour: ['Per hour', Clock], session: ['Per session', Mic2], event: ['Per event', CalendarCheck],
@@ -107,28 +108,29 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
         </motion.div>
       )}
 
-      {/* C · the three packages, swipeable */}
+      {/* C · the three packages, swipeable
+          Was a fourth hand-rolled copy of the tier card -- a w-[72%]
+          snap row with its own TIER map and its own status chip. It is
+          now the same PackageCarousel the onboarding step and every
+          other trade's Pricing tab use, so the partner meets one card.
+
+          The figure is the partner's rate. It used to be p.price_paise,
+          the customer price: a partner-facing screen printing a total
+          derived from the platform fee. */}
       <div>
         <p className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Your packages</p>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-          {d.packages.map(p => {
-            const [Icon, tint, from] = TIER[p.tier]
-            return (
-              <div key={p.tier} className={`w-[72%] shrink-0 snap-center rounded-[22px] bg-gradient-to-b ${from} to-white p-4 ring-1 ${p.tier === 'SIGNATURE' ? 'ring-2 ring-plum-500' : 'ring-ink/[0.07]'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2"><span className={`flex h-8 w-8 items-center justify-center rounded-xl bg-white ${tint} shadow-sm`}><Icon size={16} /></span><span className="text-[15px] font-extrabold">{p.name}</span></span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-extrabold ${p.status === 'LIVE' ? 'bg-forest-50 text-forest-700' : 'bg-amber-50 text-amber-800'}`}>{p.status === 'LIVE' ? 'Live' : p.status === 'ACTION_REQUIRED' ? 'Changes requested' : 'In review'}</span>
-                </div>
-                <p className="mt-3 text-[26px] font-extrabold leading-none tracking-tight">{rupees(p.price_paise)}</p>
-                <p className="mt-1 text-[11.5px] font-bold text-ink/50">{p.hours} hrs{p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}</p>
-                <div className="mt-2.5 space-y-1">
-                  {p.inclusions.slice(0, 3).map(i => <p key={i} className="flex items-center gap-1.5 text-[12px] font-semibold"><Check size={12} className="text-forest-600" strokeWidth={3} />{i}</p>)}
-                </div>
-                <button type="button" onClick={() => onViewPackage?.(p.tier)} className="mt-3 flex items-center gap-1 text-[12.5px] font-extrabold text-plum-700">View details <ArrowRight size={13} /></button>
-              </div>
-            )
-          })}
-        </div>
+        <PackageCarousel
+          packages={d.packages.map(p => ({
+            key: p.tier,
+            name: p.name,
+            ratePaise: takeHomeOf(p.price_paise),
+            unit: 'per event',
+            meta: `${p.hours} hrs${p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}`,
+            status: (STATUS_LOOK[p.status] ?? [])[0] ?? 'In review',
+            inclusions: p.inclusions.slice(0, 3).map(i => ({ id: i, label: i, included: true })),
+          }))}
+          onViewDetails={p => onViewPackage?.(p.key)}
+        />
       </div>
 
       <Section title="My listing">

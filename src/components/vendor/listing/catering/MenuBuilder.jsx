@@ -203,7 +203,7 @@ function MenuEditor({ menu: initial, dishes, tax, cuisines, fee, onSave, onCance
         {m.price_model !== 'quote' && <>
           <div className="mt-3" /><Label required>{m.price_model === 'fixed' ? 'Fixed price, you earn' : 'Price per guest, you earn'}</Label>
           <TextField prefix="₹" inputMode="numeric" value={toR(m.price_paise)} onChange={x => put({ price_paise: toP(x), status: m.status === 'draft' ? 'active' : m.status, needs_review: false })} />
-          {m.price_paise > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Customer pays {inr(customer(m.price_paise, fee))}{m.price_model === 'per_person' ? ' per guest' : ''}</p>}
+          {m.price_paise > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Your rate{m.price_model === 'per_person' ? ' per guest' : ''}</p>}
         </>}
         {m.price_model === 'fixed' && <div className="mt-3 flex gap-2">
           <div className="flex-1"><Label required>Covers guests</Label><TextField inputMode="numeric" value={m.fixed_scope?.guests ?? ''} onChange={x => put({ fixed_scope: { ...m.fixed_scope, guests: Number(x.replace(/\D/g, '')) || null } })} /></div>

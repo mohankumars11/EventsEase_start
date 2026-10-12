@@ -7,11 +7,12 @@
 import { useRef, useState } from 'react'
 import { CalendarDays, ChevronRight, Camera, Lock, Users, Truck, Boxes, Building2, Gauge, Briefcase, Check } from 'lucide-react'
 import { motion } from 'motion/react'
-import { Card, Label, TextField, ChipRow, Segmented, Toggle, OptionCard, SectionTitle } from '../anchor/ui'
+import { Card, Label, TextField, ChipRow, Segmented, Toggle, OptionCard, SectionTitle, Sheet } from '../anchor/ui'
 import { ADVANCE, CANCELLATION_V3, SLA_V3, NOTICE_DAYS, HORIZON_MONTHS, TRAVEL_MODELS } from '../anchor/options'
 import WorkUpload from '../WorkUpload'
 import QuestionRenderer, { questionsDone } from './QuestionRenderer'
 import { resourcesFor } from './payload'
+import PackageCarousel from '../packages/PackageCarousel'
 import { customerFrom } from './PricingRulesEditor'
 import CalendarFullScreen from '../../partner/calendar/CalendarFullScreen'
 import { useVendorAccount } from '../../../hooks/useVendorAccount'
@@ -105,7 +106,7 @@ export function ExtrasStage({ config, value, set, fee, tried }) {
                 <Label required>You earn</Label>
                 <TextField prefix="₹" inputMode="numeric" value={toR(x.take_home_paise)}
                   onChange={r => set({ ...v, [ad.id]: { ...x, take_home_paise: toP(r.replace(/\D/g, '').slice(0, 8)) } })} />
-                {Number(x.take_home_paise) > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Customer pays {inr(customerFrom(Number(x.take_home_paise), fee))}</p>}
+                {Number(x.take_home_paise) > 0 && <p className="mt-1.5 text-[12px] font-bold text-forest-700">Your rate</p>}
               </div>
             )}
           </Card>
@@ -119,44 +120,80 @@ export function ExtrasStage({ config, value, set, fee, tried }) {
 
 export const packagesDone = v => (v ?? []).length > 0 && v.every(p => Number(p.take_home_paise) > 0 && p.name)
 
-export function PackagesStage({ config, value, set, suggested, offered, fee, onRegenerate }) {
+/* ── The same packages step Anchor & MC has ───────────────────────────
+   This was a stack of inline-editable Cards while Anchor & MC had the
+   swipeable tier carousel with an edit pencil. Same product, same step,
+   two different screens depending on which trade you picked.
+
+   It is now the shared PackageCarousel plus an edit sheet, so all 34
+   trades meet one packages step. The inline "Customer pays ..." line is
+   gone with it: a partner-facing screen does not show a total derived
+   from the platform fee. */
+export function PackagesStage({ config, value, set, suggested, offered, onRegenerate }) {
   const pkgs = value?.length ? value : suggested
-  const put = (i, patch) => set(pkgs.map((p, j) => (j === i ? { ...p, ...patch } : p)))
+  const [editing, setEditing] = useState(null)
   if (!pkgs.length) return <p className="rounded-2xl bg-amber-50 p-4 text-[13px] font-bold text-amber-900">Set how you charge first. Your packages are suggested from it.</p>
   const addonIds = Object.entries(offered ?? {}).filter(([, x]) => x?.on).map(([id]) => id)
+  const labelFor = id => config.addons.find(a => a.id === id)?.label ?? id
+  const idx = pkgs.findIndex(p => p.key === editing)
+  const put = patch => { set(pkgs.map((p, j) => (j === idx ? { ...p, ...patch } : p))); }
+
+  const unit = config.pricing?.unitLabel ?? 'per event'
   return (
     <>
-      <SectionTitle title={config.pricing.packages.label} sub="Suggested from your own rates. Change any price — we keep the suggestion beside yours for review." />
-      {pkgs.map((p, i) => (
-        <Card key={p.key} className="mt-3">
-          <div className="flex items-baseline justify-between">
-            <p className="text-[16px] font-extrabold text-ink">{p.name}</p>
-            {p.badge && <span className="rounded-full bg-plum-100 px-2 py-0.5 text-[11px] font-extrabold text-plum-700">{p.badge}</span>}
-          </div>
-          <div className="mt-3 flex gap-2">
-            <div className="min-w-0 flex-[2]">
-              <p className="mb-1 text-[11.5px] font-extrabold text-ink/55">You earn</p>
-              <TextField prefix="₹" inputMode="numeric" value={toR(p.take_home_paise)} onChange={r => put(i, { take_home_paise: toP(r.replace(/\D/g, '').slice(0, 9)) })} />
+      <SectionTitle title={config.pricing.packages.label} sub="Suggested from your own rates. Swipe through, edit anything, then continue." />
+
+      <PackageCarousel
+        packages={pkgs.map(p => ({
+          key: p.key,
+          name: p.name,
+          ratePaise: Number(p.take_home_paise) || 0,
+          unit,
+          meta: p.hours ? `${p.hours} hours` : null,
+          badge: p.badge,
+          edited: p.generated_take_home_paise != null && p.generated_take_home_paise !== p.take_home_paise,
+          inclusions: addonIds.map(id => ({ id, label: labelFor(id), included: (p.inclusions ?? []).includes(id) })),
+        }))}
+        editable
+        onEdit={p => setEditing(p.key)}
+        onReset={onRegenerate}
+        resetLabel="Start again from my rates"
+      />
+
+      <Sheet open={idx >= 0} onOpenChange={o => { if (!o) setEditing(null) }}
+        title={idx >= 0 ? `Edit ${pkgs[idx].name}` : ''}
+        footer={<button type="button" onClick={() => setEditing(null)}
+          className="h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">Done</button>}>
+        {idx >= 0 && (
+          <>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-[2]">
+                <p className="mb-1 text-[11.5px] font-extrabold text-ink/55">Your rate · {unit}</p>
+                <TextField prefix="₹" inputMode="numeric" value={toR(pkgs[idx].take_home_paise)}
+                  onChange={r => put({ take_home_paise: toP(r.replace(/\D/g, '').slice(0, 9)) })} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 text-[11.5px] font-extrabold text-ink/55">Hours</p>
+                <TextField inputMode="decimal" value={pkgs[idx].hours ?? ''}
+                  onChange={r => put({ hours: Number(r.replace(/[^\d.]/g, '')) || null })} />
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[11.5px] font-extrabold text-ink/55">Hours</p>
-              <TextField inputMode="decimal" value={p.hours ?? ''} onChange={r => put(i, { hours: Number(r.replace(/[^\d.]/g, '')) || null })} />
-            </div>
-          </div>
-          <p className="mt-2 text-[12px] font-bold text-ink/55">
-            Customer pays {inr(customerFrom(Number(p.take_home_paise) || 0, fee))}
-            {p.generated_take_home_paise && p.generated_take_home_paise !== p.take_home_paise && <> · suggested {inr(p.generated_take_home_paise)}</>}
-          </p>
-          {addonIds.length > 0 && (
-            <div className="mt-3">
-              <p className="mb-1.5 text-[11.5px] font-extrabold text-ink/55">Included at no extra charge</p>
-              <ChipRow size="sm" multi options={addonIds} value={p.inclusions ?? []} onChange={x => put(i, { inclusions: x })}
-                format={id => config.addons.find(a => a.id === id)?.label ?? id} />
-            </div>
-          )}
-        </Card>
-      ))}
-      <button type="button" onClick={onRegenerate} className="mt-3 w-full text-center text-[12.5px] font-extrabold text-plum-700">Start again from my rates</button>
+            {pkgs[idx].generated_take_home_paise != null
+              && pkgs[idx].generated_take_home_paise !== pkgs[idx].take_home_paise && (
+              <p className="mt-2 text-[12px] font-bold text-ink/55">
+                Suggested {inr(pkgs[idx].generated_take_home_paise)}
+              </p>
+            )}
+            {addonIds.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-1.5 text-[11.5px] font-extrabold text-ink/55">Included at no extra charge</p>
+                <ChipRow size="sm" multi options={addonIds} value={pkgs[idx].inclusions ?? []}
+                  onChange={x => put({ inclusions: x })} format={labelFor} />
+              </div>
+            )}
+          </>
+        )}
+      </Sheet>
     </>
   )
 }

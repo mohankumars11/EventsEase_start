@@ -17,10 +17,23 @@ import { SeasonalUpdate } from './PricingControlCenter'
 import { Sheet } from '../anchor/ui'
 import { supabase } from '../../../lib/supabase'
 import { rupees } from '../../../lib/tierPackages'
+import PackageCarousel from '../packages/PackageCarousel'
 import { configFor } from '../../../data/trades'
 import { RULE_KINDS } from '../../../data/trades/schema'
 import { buildTradePayload } from '../listing/payload'
 import { useToast, friendlyError } from '../../../context/ToastContext'
+
+/* The six moderation states a listing version can be in, said in words
+   a partner can act on. The raw enum is DRAFT / UNDER_REVIEW /
+   ACTION_REQUIRED / LIVE / ARCHIVED / REJECTED. */
+const STATUS_LABEL = {
+  DRAFT: 'Draft',
+  UNDER_REVIEW: 'In review',
+  ACTION_REQUIRED: 'Action needed',
+  LIVE: 'Live',
+  REJECTED: 'Needs changes',
+  ARCHIVED: 'Hidden',
+}
 
 const fmt = d => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '')
 const STATUS = {
@@ -129,13 +142,14 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
   }
 
   const v = d.current
-  // The trade's fee as the server applied it to this version.
-  const priced = [...d.rules, ...d.items].find(r => r.take_home_paise > 0 && r.customer_paise > 0)
-  const fee = Number(d.packages[0]?.calculation_snapshot?.platform_fee_rate)
-    || (priced ? Math.round((1 - priced.take_home_paise / priced.customer_paise) * 1000) / 1000 : null)
+  /* The platform fee used to be read off calculation_snapshot here, and
+     inferred by dividing take-home by customer price when that was
+     missing, so this screen could print customer totals beside the
+     partner's rates. Partner screens show the partner's rate only, so
+     there is nothing left to derive the fee for -- and a rate a screen
+     never computes is a rate it cannot leak. */
   const locked = d.live?.price_locked_until && new Date(d.live.price_locked_until) > new Date()
   const [label, tone] = STATUS[v.status] ?? STATUS.DRAFT
-  const cust = take => (fee ? Math.round(take / (1 - fee) / 10) * 10 : null)
 
   return (
     <div className="space-y-3">
@@ -192,25 +206,40 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
       {d.rules.length > 0 && (
         <Section title="How you charge">
           {d.rules.map(r => <Line key={r.id} k={`${RULE_KINDS[r.rule_kind]?.label ?? r.rule_kind}${r.label ? ` · ${r.label}` : ''}`}
-            v={rupees(r.customer_paise)} sub={`You earn ${rupees(r.take_home_paise)}${r.min_qty ? ` · min ${r.min_qty}` : ''}${r.included_hours ? ` · ${r.included_hours} hrs incl.` : ''}${r.included_qty ? ` · ${r.included_qty} incl.` : ''}`} />)}
+            v={rupees(r.take_home_paise)} sub={`Your rate${r.min_qty ? ` · min ${r.min_qty}` : ''}${r.included_hours ? ` · ${r.included_hours} hrs incl.` : ''}${r.included_qty ? ` · ${r.included_qty} incl.` : ''}`} />)}
         </Section>
       )}
       {d.items.length > 0 && (
         <Section title={config.catalogue?.title ?? 'Your list'}>
-          {d.items.map(i => <Line key={i.id} k={i.name} v={i.customer_paise ? rupees(i.customer_paise) : 'On request'}
-            sub={[i.take_home_paise && `You earn ${rupees(i.take_home_paise)} / ${i.unit}`, i.stock_qty != null && `${i.stock_qty} in stock`, i.lead_days && `${i.lead_days} days lead`].filter(Boolean).join(' · ')} />)}
+          {d.items.map(i => <Line key={i.id} k={i.name} v={i.take_home_paise ? rupees(i.take_home_paise) : 'On request'}
+            sub={[i.take_home_paise && `Your rate / ${i.unit}`, i.stock_qty != null && `${i.stock_qty} in stock`, i.lead_days && `${i.lead_days} days lead`].filter(Boolean).join(' · ')} />)}
         </Section>
       )}
+      {/* ── The same card Anchor & MC has, for every other trade ──────
+          This was <Line k={name} v={customer_paise}> -- a flat text list,
+          headlining a customer total derived from the platform fee, while
+          Anchor & MC got the carousel in its Control Center. Same app,
+          same partner, two different ideas of what a package is.
+
+          Now one component, and the figure is the partner's own rate. */}
       {d.packages.length > 0 && (
-        <Section title="Packages">
-          {d.packages.map(p => <Line key={p.id} k={p.name} v={rupees(p.trade_inputs?.customer_paise)}
-            sub={`You earn ${rupees(p.trade_inputs?.take_home_paise)}${p.trade_inputs?.duration_hours ? ` · ${p.trade_inputs.duration_hours} hrs` : ''}`} />)}
+        <Section title="Your packages">
+          <PackageCarousel
+            packages={d.packages.map(p => ({
+              key: p.name?.toUpperCase(),
+              name: p.name,
+              ratePaise: p.trade_inputs?.take_home_paise,
+              unit: config.pricing?.unitLabel ?? 'per event',
+              meta: p.trade_inputs?.duration_hours ? `${p.trade_inputs.duration_hours} hrs` : null,
+              status: STATUS_LABEL[p.status] ?? p.status,
+            }))}
+          />
         </Section>
       )}
       {(d.addons.length > 0 || (v.booking_rules?.charges ?? []).length > 0) && (
         <Section title="Extras & charges">
-          {d.addons.map(a => <Line key={a.id} k={a.label} v={rupees(a.customer_paise)} sub={a.unit.replace('per_', 'per ')} />)}
-          {(v.booking_rules?.charges ?? []).map(c => <Line key={c.id} k={c.label} v={cust(c.take_home_paise) ? rupees(cust(c.take_home_paise)) : rupees(c.take_home_paise)} sub={`You earn ${rupees(c.take_home_paise)}`} />)}
+          {d.addons.map(a => <Line key={a.id} k={a.label} v={a.take_home_paise ? rupees(a.take_home_paise) : 'On request'} sub={`Your rate · ${a.unit.replace('per_', 'per ')}`} />)}
+          {(v.booking_rules?.charges ?? []).map(c => <Line key={c.id} k={c.label} v={rupees(c.take_home_paise)} sub="Your rate" />)}
         </Section>
       )}
 

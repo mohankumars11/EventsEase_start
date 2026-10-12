@@ -125,7 +125,7 @@ function RuleCard({ kind, r = {}, set, fee, unitLabels, tried, noun }) {
               {amt > 0 && (
                 <p className="mt-2 rounded-xl bg-forest-50 px-3 py-2 text-[12.5px] font-bold text-forest-800">
                   {mode === 'customer'
-                    ? <>Customer pays {inr(amt)} · you earn {inr(takeFrom(amt, fee))}</>
+                    ? <>Your rate {inr(takeFrom(amt, fee))}</>
                     : <>You earn {inr(amt)} · customer pays {inr(customerFrom(amt, fee))}</>}
                   <span className="font-semibold text-forest-700/70"> ({Math.round(fee * 100)}% Sambramo fee)</span>
                 </p>

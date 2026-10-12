@@ -43,7 +43,7 @@ export default function ExtrasStage({ value, set, hasHourlyOvertime }) {
                         <span className="w-[70px] text-[12px] font-bold text-ink/50">You earn</span>
                         <div className="flex-1"><TextField prefix="₹" inputMode="numeric" value={fee} onChange={x => put(a.id, { fee: digits(x) })} /></div>
                       </div>
-                      {Number(fee) > 0 && <p className="pl-[78px] text-[11.5px] font-bold text-plum-700">Customer pays {rupees(customerPaiseWith(Number(fee) * 100))}</p>}
+                      {Number(fee) > 0 && <p className="pl-[78px] text-[11.5px] font-bold text-plum-700">Your rate</p>}
                       <Segmented id={`unit-${a.id}`} options={ADDON_UNITS} value={on[a.id]?.unit ?? a.unit} onChange={x => put(a.id, { unit: x })} />
                       <div className="flex items-center gap-2">
                         <span className="text-[12px] font-bold text-ink/50">Notice needed</span>

@@ -22,7 +22,7 @@ function Money({ label, value, onChange, hint, required = true }) {
     <div>
       <Label required={required} hint={hint}>{label}</Label>
       <TextField prefix="₹" inputMode="numeric" value={value} onChange={x => onChange(digits(x))} placeholder="0" />
-      {n > 0 && <p className="mt-1.5 text-[12px] font-bold text-plum-700">Customer pays {rupees(customerPaise(n))}</p>}
+      {n > 0 && <p className="mt-1.5 text-[12px] font-bold text-plum-700">Your rate</p>}
     </div>
   )
 }

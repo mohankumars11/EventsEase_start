@@ -305,7 +305,7 @@ export default function ListingOnboardingFlow({
               )}
               {here.id === 'catalogue' && <CatalogueEditor cat={config.catalogue} items={a.catalogue} set={put('catalogue')} trade={config.name} tried={tried} />}
               {here.id === 'pricing' && <PricingRulesEditor config={config} rules={a.rules} setRules={put('rules')} answers={a.answers} setAnswers={answersSet} fee={fee} tried={tried} trade={config.name} />}
-              {here.id === 'packages' && <PackagesStage config={config} value={a.packages} set={put('packages')} suggested={suggested} offered={a.addons} fee={fee} onRegenerate={() => put('packages')(suggested)} />}
+              {here.id === 'packages' && <PackagesStage config={config} value={a.packages} set={put('packages')} suggested={suggested} offered={a.addons} onRegenerate={() => put('packages')(suggested)} />}
               {here.id === 'extras' && <ExtrasStage config={config} value={a.addons} set={put('addons')} fee={fee} tried={tried} />}
               {here.id === 'resources' && <ResourcesStage config={config} a={a} setAnswers={answersSet} tried={tried} />}
               {here.id === 'availability' && <AvailabilityStage value={a.availability} set={put('availability')} isTrip={isTrip} />}

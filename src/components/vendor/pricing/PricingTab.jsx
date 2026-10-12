@@ -152,7 +152,7 @@ function AnchorPricing({ service, onEdit, onOpenPayout }) {
           <div className="space-y-3">
             <div className="rounded-2xl bg-plum-50 p-4">
               <p className="text-[28px] font-extrabold text-ink">{rupees(pkg.price_paise)}</p>
-              <p className="text-[12.5px] font-bold text-ink/55">Customer pays · you receive {rupees(pkg.take_home_paise)}</p>
+              <p className="text-[12.5px] font-bold text-ink/55">Your rate · {rupees(pkg.take_home_paise)}</p>
               <p className="mt-1 text-[12px] font-bold text-plum-700">{pkg.edited ? 'Your price' : 'Recommended price'} · based on your {MODEL_LABEL[pkg.basis] ?? 'rate'}</p>
             </div>
             <Row k="Hours included" v={`${pkg.hours} hours`} />

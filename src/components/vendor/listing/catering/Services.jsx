@@ -42,7 +42,7 @@ function CounterEditor({ c, set, dishes, fee, tried }) {
         <ChipRow size="sm" options={COUNTER_PRICE_MODELS.map(x => x[0])} value={model} onChange={x => put({ price_model: x })} format={id => COUNTER_PRICE_MODELS.find(x => x[0] === id)[1]} /></Field>
       {model && model !== 'quote' && <Field label={{ per_event: 'Price per counter per event', per_hour: 'Price per counter per hour', per_guest: 'Price per guest', per_serving: 'Price per serving', fixed: 'Fixed package price' }[model] + ', you earn'} required>
         <Money value={c.price_paise} onChange={x => put({ price_paise: x })} />
-        {c.price_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Customer pays {inr(customer(c.price_paise, fee))}</p>}</Field>}
+        {c.price_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Your rate</p>}</Field>}
       <div className="flex gap-2">
         <div className="flex-1"><Field label={model === 'per_hour' ? 'Minimum hours' : 'Hours the price covers'} required={['per_event', 'fixed', 'per_hour'].includes(model)}><Int value={c.duration_hours} onChange={x => put({ duration_hours: x })} /></Field></div>
         <div className="flex-1"><Field label="Servings included" required={['per_event', 'fixed'].includes(model)}><Int value={c.included_servings} onChange={x => put({ included_servings: x })} /></Field></div>
@@ -147,8 +147,8 @@ function PackageEditor({ p, set, a, fee, tried }) {
       <Field label="How is this package priced?" required>
         <Segmented id="pkg-price" value={p.price_model} onChange={x => put({ price_model: x })} options={[{ value: 'per_guest', label: 'Per guest' }, { value: 'fixed', label: 'Fixed price' }]} /></Field>
       <Field label={p.price_model === 'fixed' ? 'Package price, you earn' : 'Price per guest, you earn'} required><Money value={p.price_paise} onChange={x => put({ price_paise: x })} />
-        {p.price_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Customer pays {inr(customer(p.price_paise, fee))}{p.price_model === 'per_guest' ? ' per guest' : ''}
-          {p.price_model === 'fixed' && p.guest_min ? ` · ≈ ${inr(customer(p.price_paise, fee) / p.guest_min)} per guest at ${p.guest_min}` : ''}</p>}</Field>
+        {p.price_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Your rate{p.price_model === 'per_guest' ? ' per guest' : ''}
+          {p.price_model === 'fixed' && p.guest_min ? ` · ≈ ${inr(p.price_paise / p.guest_min)} per guest at ${p.guest_min}` : ''}</p>}</Field>
       <div className="flex gap-2">
         <div className="flex-1"><Field label="Each extra guest"><Money value={p.extra_guest_paise} onChange={x => put({ extra_guest_paise: x })} /></Field></div>
         <div className="flex-1"><Field label="Child price"><Money value={p.child_price_paise} onChange={x => put({ child_price_paise: x })} /></Field></div>
@@ -219,7 +219,7 @@ export function ExtrasBuilder({ a, put, fee, tried }) {
                 <div className="flex-1"><Field label="Minimum"><Int value={x.min_qty} onChange={v => upd(x.id, { min_qty: v })} /></Field></div>
                 <div className="flex-1"><Field label="Lead days"><Int value={x.lead_days} onChange={v => upd(x.id, { lead_days: v })} /></Field></div>
               </div>
-              {x.take_home_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Customer pays {inr(customer(x.take_home_paise, fee))} {ADDON_UNIT_LABEL[x.unit]}</p>}
+              {x.take_home_paise > 0 && <p className="mt-1 text-[12px] font-bold text-forest-700">Your rate {ADDON_UNIT_LABEL[x.unit]}</p>}
               <Field label="Description"><TextField value={x.description} onChange={v => upd(x.id, { description: v })} max={120} /></Field>
               <Field label="Staff / equipment it needs"><TextField value={x.requires} onChange={v => upd(x.id, { requires: v })} max={80} /></Field>
             </div>}
