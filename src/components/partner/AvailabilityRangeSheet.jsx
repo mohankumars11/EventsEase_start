@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSheetLock } from '../../hooks/useSheetLock'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { useFieldCheck, FieldMessage, focusFirstInvalid, anyError } from './FieldCheck'
 import { normalise } from '../../lib/validation/fieldRules'
@@ -75,7 +76,8 @@ const REASONS = [
  *
  * ── The horizon for OPENING them ───────────────────────────────────
  * Opening is the opposite. It is what the coverage card on the Calendar
- * tab asks for in as many words: "open the next 181 days". Truncating
+ * tab asks for in as many words: "open the next N days", where N comes
+ * from CALENDAR_HORIZON_MONTHS. Truncating
  * that to 90 would write half of what the button promised and say
  * nothing about it, which is worse than either number.
  *
@@ -134,6 +136,10 @@ export default function AvailabilityRangeSheet({
   onClearDays,
   onClose,
 }) {
+  /* The sheet owns the page's scroll while it is open: without this,
+     dragging the sheet scrolled the month grid behind it. */
+  useSheetLock(true, onClose)
+
   const today = istTodayISO()
   const start = initialFrom && initialFrom >= today ? initialFrom : today
   /* ── Both ends, when the caller knows both ─────────────────────────
@@ -245,12 +251,12 @@ export default function AvailabilityRangeSheet({
   return (
     <>
       <div onClick={onClose} aria-hidden="true"
-           className="fixed inset-0 z-40 bg-ink/40 transition-opacity" />
+           className="fixed inset-0 z-[90] bg-ink/40 transition-opacity" />
       {/* No transform on this element or any ancestor of it — see the
           header of DayDetailSheet. */}
       <section
         role="dialog" aria-modal="true" aria-label="Set availability for a range of dates"
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:-ml-[230px] sm:mt-[-46vh] sm:w-[460px] sm:rounded-[26px]"
+        className="fixed inset-x-0 bottom-0 z-[91] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:-ml-[230px] sm:mt-[-46vh] sm:w-[460px] sm:rounded-[26px]"
       >
         <div className="sticky top-0 z-10 rounded-t-[26px] bg-white px-4 pb-2 pt-3">
           <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-ink/15 sm:hidden" />

@@ -137,8 +137,18 @@ ok('the range is expanded by the shared engine, not a local loop',
    ninety and opening reaches the horizon. */
 ok('closing a range is still capped at 90',
    /const MAX_DAYS = 90/.test(sheetSrc))
-ok('opening one reaches the six-month horizon',
-   /const MAX_DAYS_OPENING = 19\d/.test(sheetSrc))
+/* Derived, not spelled out. This asserted /MAX_DAYS_OPENING = 19\d/ --
+   six months -- and went red the day CALENDAR_HORIZON_MONTHS became 12
+   and the constant became 365. The rule is "opening reaches the
+   horizon", so read the horizon and compute it; then moving the horizon
+   again moves this with it instead of breaking it. */
+const horizonMonths = Number(
+  (read('src/config/vendor.js') ?? '').match(/CALENDAR_HORIZON_MONTHS = (\d+)/)?.[1])
+const openingCap = Number(sheetSrc.match(/const MAX_DAYS_OPENING = (\d+)/)?.[1])
+ok(`opening one reaches the ${horizonMonths}-month horizon`,
+   Number.isFinite(horizonMonths) && Number.isFinite(openingCap)
+     && Math.abs(openingCap - horizonMonths * 30.44) <= 16,
+   `MAX_DAYS_OPENING is ${openingCap} but CALENDAR_HORIZON_MONTHS is ${horizonMonths}`)
 ok('and the cap in force is chosen by the mode',
    /capNow = mode\.status === 'OPEN' \? MAX_DAYS_OPENING : MAX_DAYS/.test(sheetSrc))
 ok('the truncation notice prints the cap actually applied',

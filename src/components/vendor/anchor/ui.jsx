@@ -183,8 +183,14 @@ export function StopSlider({ stops, value, onChange, format = x => x }) {
   )
 }
 
-/** A bottom sheet. Drag down or tap outside to dismiss. */
-export function Sheet({ open, onOpenChange, title, children }) {
+/** A bottom sheet. Drag down or tap outside to dismiss.
+ *
+ *  `footer` is for the one action the sheet exists to perform. Put it
+ *  there and it stays pinned below the scroller instead of sitting at
+ *  the end of a long form, where on a small screen it is several swipes
+ *  past the last field and reads as missing. It is outside the scroll
+ *  container, so it cannot cover a field or a validation message. */
+export function Sheet({ open, onOpenChange, title, children, footer }) {
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
@@ -198,7 +204,10 @@ export function Sheet({ open, onOpenChange, title, children }) {
         <Drawer.Content className="fixed inset-x-0 bottom-0 z-[121] mx-auto flex max-h-[88dvh] max-w-lg flex-col rounded-t-[28px] bg-white outline-none">
           <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-ink/15" />
           <Drawer.Title className="px-5 pt-4 text-[17px] font-extrabold text-ink">{title}</Drawer.Title>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-3">{children}</div>
+          <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 ${footer ? 'pb-3' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]'}`}>{children}</div>
+          {footer && (
+            <div className="shrink-0 border-t border-ink/[0.06] bg-white px-5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-3">{footer}</div>
+          )}
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

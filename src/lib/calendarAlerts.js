@@ -368,9 +368,10 @@ export function coverageOf({ availability = {}, weeklyRules = [], todayISO, hori
      blanks to fill -- and makes "December is empty" a thing somebody can
      see rather than work out.
 
-     Six because CALENDAR_HORIZON_MONTHS is six, and because weddings are
-     booked that far out: a calendar that stops in three weeks is not
-     late for next week, it is invisible for the season. */
+     It tracks CALENDAR_HORIZON_MONTHS (now 12, src/config/vendor.js),
+     and the reason is weddings: they are booked that far out, so a
+     calendar that stops in three weeks is not late for next week, it is
+     invisible for the season. */
   const months = []
   const cursor = parse(todayISO)
   cursor.setUTCDate(1)
