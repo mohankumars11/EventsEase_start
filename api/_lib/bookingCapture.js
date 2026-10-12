@@ -48,8 +48,11 @@ import { sendPush } from './fcm.js'
 
 const RZP = 'https://api.razorpay.com/v1'
 
-/** Read an order back from Razorpay, for its notes. */
-async function fetchOrder(orderId) {
+/** Read an order back from Razorpay, for its notes.
+ *  Exported so materialsCapture reads notes the same way, rather than
+ *  keeping a second copy of the reason they cannot be trusted from the
+ *  payment entity. */
+export async function fetchOrder(orderId) {
   const id = process.env.RAZORPAY_KEY_ID
   const secret = process.env.RAZORPAY_KEY_SECRET
   if (!id || !secret) return null

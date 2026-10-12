@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { bookingLinesFor, captureBookingPayment } from './_lib/bookingCapture.js'
 import { routeTransfersForCapture, routeWebhook } from './_lib/routeTransfers.js'
+import { materialsQuoteFor, captureMaterialsPayment, refundMaterialsPayment } from './_lib/materialsCapture.js'
 
 /**
  * Razorpay's webhook — the only thing in this app that can say a milestone
@@ -127,6 +128,36 @@ export default async function handler(req, res) {
          until delivery. Never fails the webhook — see routeTransfers.js. */
       const route = await routeTransfersForCapture(supabase, { entity, lineIds: booking.lineIds })
       return res.status(200).json({ ...r, route })
+    }
+
+    /* ── Materials money ────────────────────────────────────────────
+       A separate order kind, a separate ledger, and DELIBERATELY NO
+       call to routeTransfersForCapture.
+
+       That omission is the enforcement of "a partner is never paid a
+       cash advance through the materials workflow". If this branch
+       transferred, routeTransfersForCapture would pay the partner on
+       capture (routeTransfers.js:25-58) and the customer's materials
+       money would become an early payout. It is asserted by
+       scripts/check-materials-no-partner-advance.mjs rather than left
+       to this comment, because a comment cannot fail a build. */
+    const materials = await materialsQuoteFor(entity)
+    if (materials) {
+      const r = await captureMaterialsPayment(supabase, { entity, quote: materials })
+      if (!r.ok) return res.status(500).json({ error: r.error })
+      return res.status(200).json(r)
+    }
+  }
+
+  /* A refund of materials money belongs on the procurement ledger, not
+     on escrow: it is the unspent remainder going back, and the solvency
+     trigger has to see it leave. */
+  if (event === 'refund.processed' || event === 'refund.created') {
+    const refunded = await materialsQuoteFor(entity)
+    if (refunded) {
+      const r = await refundMaterialsPayment(supabase, { entity, quote: refunded })
+      if (!r.ok) return res.status(500).json({ error: r.error })
+      return res.status(200).json(r)
     }
   }
 
