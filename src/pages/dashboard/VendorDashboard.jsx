@@ -306,25 +306,23 @@ export default function VendorDashboard() {
   }
 
   return (
-    /* ── Clear the tab bar, and only the tab bar ──────────────────────
-       This was `pb-28` -- 112px, a round number picked by eye. The bar
-       actually measures ~63px (py-2 + pt-2.5 around a 28px icon and its
-       label) plus whatever the gesture bar needs, which it adds to
-       itself as `env(safe-area-inset-bottom)`.
+    /* ── Clearing the tab bar is PartnerAppShell's job, not this one ──
+       This used to carry pb-[calc(76px+env(safe-area-inset-bottom))].
+       PartnerAppShell already pays calc(68px + the same inset) on the
+       <main> that wraps this screen, and its header says so in as many
+       words: "Set here and nowhere else — a screen that adds its own
+       gets double the gap." This was that screen, so every partner tab
+       reserved ~144px of dead strip.
 
-       So 112px was ~36px of dead space under every tab, on all four of
-       them, and it did not track the gesture bar: on a phone without one
-       it was too much, and the constant would have had to change to stay
-       right on one with a taller inset.
-
-       68px + 8px of breathing room, plus the same inset the bar uses, is
-       the height of the thing being cleared rather than a guess at it.
+       It mattered more after viewport-fit=cover: until then the inset
+       resolved to 0 on both, and the doubling was a flat 144px. Now each
+       one adds the real gesture inset too.
 
        ── And one width, only on Earnings ───────────────────────────────
        Earnings is the only tab with a desktop layout: a two-column
        dashboard needs more than 1024px to be worth having, and every
        other tab is a phone column by design. */
-    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pt-5`}>
+    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 sm:px-6 sm:pt-5`}>
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to

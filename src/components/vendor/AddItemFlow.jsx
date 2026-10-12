@@ -193,7 +193,19 @@ export default function AddItemFlow(props) {
       />
     )
   }
-  if (engineReady === null && onEngine(trade)) return null
+  /* Not `return null`. This branch is the window between tapping a trade
+     and the engine probe answering, and rendering nothing meant the tap
+     appeared to do nothing at all — the single thing this screen exists
+     to do. check-tabs-render has been failing on exactly this. The probe
+     now also times out (see lib/tradeEngine.js), so this state is bounded. */
+  if (engineReady === null && onEngine(trade)) {
+    return (
+      <div data-add-item-flow className="fixed inset-0 z-[96] flex flex-col items-center justify-center gap-3 bg-page">
+        <Loader2 size={26} className="animate-spin text-plum-700" />
+        <p className="text-[15px] font-semibold text-ink/70">Opening {trade}…</p>
+      </div>
+    )
+  }
   if (engineReady && onEngine(trade)) {
     const offering = offeringsForTrade(configFor(trade).name)[0]
     return (

@@ -211,7 +211,10 @@ export default function AnchorOnboardingFlow({
   const missing = tried && !canNext ? MISSING[step] : null
 
   const body = (
-    <div data-anchor-flow className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
+    /* See the note in ListingOnboardingFlow: data-add-item-flow is the
+       shared marker the render guards assert on, data-anchor-flow is the
+       specific one. */
+    <div data-add-item-flow data-anchor-flow className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
       <header className="shrink-0 bg-white/90 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] backdrop-blur-xl ring-1 ring-ink/[0.05]">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           <button type="button" onClick={back} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-ink/70 hover:bg-ink/[0.05]"><ArrowLeft size={20} /></button>

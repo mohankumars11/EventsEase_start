@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-512.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve to
+         anything but 0. Without it every pb-[env(safe-area-inset-bottom)] in
+         the app silently falls back to its minimum, which is why sheet
+         footers sat on the gesture pill and the tab bar overlapped it.
+         interactive-widget=resizes-content makes the Android soft keyboard
+         shrink the viewport, so a max-h-[88dvh] sheet gives up height to the
+         keyboard instead of hiding its own Save button behind it. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <!-- The Android status bar and the task-switcher card.
          White was right when the brand ground was navy and only the splash
          used it; now the launch screen, the app icon and the tab chip are

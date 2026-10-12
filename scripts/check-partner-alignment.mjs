@@ -121,9 +121,24 @@ ok('the header reaches the status bar',
 ok('and it adds the inset TO its padding rather than beside it',
    !/safe-top[^"]*pt-\d/.test(header),
    '.safe-top and pt-3 both set padding-top; the stylesheet decides which, silently')
-ok('the page clears the tab bar with the inset, not a round number',
-   /env\(safe-area-inset-bottom/.test(dash),
+/* The rule did not change; the file that keeps it did.
+   This read VendorDashboard, because that is where the bottom padding
+   used to be. It now lives on PartnerAppShell's <main>, whose own header
+   says "Set here and nowhere else -- a screen that adds its own gets
+   double the gap". VendorDashboard was that screen: it also paid
+   calc(76px + inset) inside a <main> already paying calc(68px + inset),
+   so every partner tab reserved ~144px plus twice the gesture inset.
+
+   So: assert the shell pays it with the inset, and assert the page does
+   NOT pay it a second time. The second half is the check that would have
+   caught the doubling. */
+const shell = read('src/components/layout/PartnerAppShell.jsx')
+ok('the shell clears the tab bar with the inset, not a round number',
+   /env\(safe-area-inset-bottom/.test(shell ?? ''),
    'a constant is too much on a phone without a gesture bar and too little on one with')
+ok('and the page inside it does not pay the gap twice',
+   !/pb-\[calc\([^\]]*safe-area-inset-bottom/.test(dash),
+   'PartnerAppShell already pads <main>; a screen that adds its own doubles the dead strip')
 
 const cropper = read('src/components/partner/ImageCropper.jsx')
 /* Spelled out rather than using the .safe-top / .safe-bottom helpers.

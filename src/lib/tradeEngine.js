@@ -13,9 +13,21 @@ import { hasProfileFor } from '../data/tradePricingProfiles'
 
 let probe = null
 
+/* A hanging request is not a pending answer.
+   The probe had no timeout, so on a request that never settles — a dead
+   zone, a captive portal, Supabase unreachable — it stayed pending for
+   the life of the session, and AddItemFlow's `engineReady === null`
+   branch rendered a blank screen behind it with nothing to tap. Falling
+   back to false after this long is the same answer the error path
+   already gives, and it is the safe one: the legacy flow still works. */
+const PROBE_TIMEOUT_MS = 8000
+
 export function engineReadyOnce() {
-  probe ??= supabase.from('sambramo_trade_registry').select('id', { head: true, count: 'exact' })
-    .then(({ error, count }) => !error && count > 0, () => false)
+  probe ??= Promise.race([
+    supabase.from('sambramo_trade_registry').select('id', { head: true, count: 'exact' })
+      .then(({ error, count }) => !error && count > 0, () => false),
+    new Promise(resolve => setTimeout(() => resolve(false), PROBE_TIMEOUT_MS)),
+  ])
   return probe
 }
 

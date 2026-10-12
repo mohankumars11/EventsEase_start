@@ -240,7 +240,13 @@ export default function ListingOnboardingFlow({
   const missingText = tried && !canNext ? 'Some answers on this step are still needed — they are marked in red.' : null
 
   const body = (
-    <div data-listing-flow={config.id} className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
+    /* data-add-item-flow is the shared "a listing flow is open" marker that
+       check-tabs-render, check-flow-renders and check-flow-walk assert on.
+       It used to live only on GenericAddItemFlow, so once the dispatcher
+       started routing 32 trades here those guards went blind — they were
+       looking for a marker no engine trade ever rendered. The per-flow
+       marker below stays for anything that needs to tell them apart. */
+    <div data-add-item-flow data-listing-flow={config.id} className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
       <header className="shrink-0 bg-white/90 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] backdrop-blur-xl ring-1 ring-ink/[0.05]">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           <button type="button" onClick={back} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-ink/70 hover:bg-ink/[0.05]"><ArrowLeft size={20} /></button>
