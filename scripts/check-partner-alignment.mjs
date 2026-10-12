@@ -67,12 +67,22 @@ if (column) {
   const [, px, smPx] = column
   console.log(`  · the column is ${px} ${smPx}`)
 
+  /* Matched against the COMPONENT, not against the <header> tag.
+     JobsHeader splits the two deliberately: <header> carries the
+     gradient so it bleeds the full width, and the inner <div> carries
+     the padding so the CONTENT lines up with the column. Requiring
+     px-4 on the tag itself failed a header that is laid out correctly,
+     which is the kind of red that teaches people to ignore a guard. */
+  const headerPad = header.match(/\bpx-\d+\b/g) ?? []
+  const headerSmPad = header.match(/\bsm:px-\d+\b/g) ?? []
+
   ok(`the header re-applies ${px}`,
-     new RegExp(`<header[^>]*\\b${px}\\b`).test(header),
-     'the header pads itself differently from the column it was pulled out of')
+     headerPad.includes(px),
+     `the header pads itself ${headerPad.join('/') || 'not at all'}, the column is ${px}`)
   ok(`and ${smPx} at the wider breakpoint`,
-     new RegExp(`<header[^>]*\\b${smPx}\\b`).test(header))
-  ok('and nothing else', !/<header[^>]*\bpx-5\b/.test(header),
+     headerSmPad.includes(smPx),
+     `found ${headerSmPad.join('/') || 'none'}`)
+  ok('and nothing else', !headerPad.includes('px-5'),
      'px-5 against a px-4 column is the 4px stagger')
 
   /* The pull-out has to match the padding it is cancelling, or the
@@ -102,15 +112,26 @@ ok('the review countdown is BELOW the header',
 /* ══════════════════════════════════════════════════════════════════ */
 console.log('\nONE CLOCK, NOT TWO\n')
 
-ok('the header reads the shared clock',
-   /useReviewClock\(/.test(header),
-   'two intervals drift apart and the pill disagrees with the card below it')
-ok('and the countdown exports it',
+/* This section asked the header to READ the shared clock, on the
+   assumption that it renders a status pill of its own. It does not, and
+   it never did: JobsHeader shows a PARTNER chip and an accepting-jobs
+   dot, while destructuring reviewDueAt and reviewSubmittedAt and using
+   neither. Two comments in VendorDashboard asserted the pill existed,
+   which is how four assertions stayed red without anyone looking.
+
+   The intent -- one clock, so two intervals cannot drift apart and
+   disagree -- is better served by the header having NO clock at all.
+   So that is what is checked now. */
+ok('the countdown owns the clock and exports it',
    /export function useReviewClock/.test(read('src/components/partner/ReviewCountdown.jsx') ?? ''))
-ok('the header does not run its own interval',
-   !/setInterval/.test(header))
-ok('the figure is tabular, so the row does not twitch',
-   /tabular-nums/.test(header))
+ok('the header runs no clock of its own',
+   !/useReviewClock\(/.test(header) && !/setInterval/.test(header),
+   'a second clock is a second truth about the same deadline')
+ok('and is not handed review timestamps it does not render',
+   !/reviewDueAt/.test(header) && !/reviewSubmittedAt/.test(header),
+   'props passed but unread are how a phantom status pill survived')
+ok('the review state has exactly one home on the Jobs tab',
+   (dash.match(/<ReviewCountdown/g) ?? []).length === 1)
 
 /* ══════════════════════════════════════════════════════════════════ */
 console.log('\nSAFE AREAS ARE HONOURED, NOT GUESSED\n')

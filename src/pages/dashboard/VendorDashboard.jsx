@@ -400,12 +400,17 @@ export default function VendorDashboard() {
           status bar. Nothing may be rendered ABOVE this on the Jobs tab:
           `-mt-4` pulls the header up over whatever precedes it, so a
           sibling above gets dragged half off the top edge with its
-          corners clipped. The review countdown was doing exactly that.
-          Its clock now lives inside the header's own status pill. */}
+          corners clipped. The review countdown was doing exactly that,
+          which is why it renders BELOW, in the content column.
+
+          It does not live in a header pill. This comment used to say it
+          did, and so did the one further down, while JobsHeader
+          destructured reviewDueAt and reviewSubmittedAt and used
+          neither -- there has never been a pill. One review card, in
+          the column, is the whole of it. */}
       {tab === 'offers' && (
         <div className="-mx-4 -mt-4 mb-0 sm:-mx-6">
           <JobsHeader
-            lifecycle={lifecycle}
             businessName={businessName}
             /* The PERSON, for the greeting. The h1 below it carries the
                business. `profiles.full_name` is free text, so
@@ -415,8 +420,6 @@ export default function VendorDashboard() {
             avatarUrl={vendor?.avatar_url}
             unreadAlerts={unreadAlerts}
             acceptingJobs={vendor?.accepting_jobs}
-            reviewDueAt={vendor?.review_due_at}
-            reviewSubmittedAt={vendor?.submitted_at}
             onAcceptingChange={() => refresh()}
             /* ── Three tap targets, three destinations ──────────────
                The avatar, the bell and the status pill all called
@@ -453,7 +456,13 @@ export default function VendorDashboard() {
                bell. */
             onOpen={key => {
               if (key === 'messages') openAccount('messages')
-              else if (key === 'confirmed' || key === 'accepted') setTab('availability')
+              /* These used to open the Calendar, a month grid that shows
+                 neither list. MyJobs -- "Your jobs" -- is on THIS tab,
+                 directly below the tiles, and is the thing being counted. */
+              else if (key === 'confirmed' || key === 'accepted') {
+                document.querySelector('[data-my-jobs]')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
               else if (key === 'offers') {
                 document.querySelector('[data-offer-inbox]')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -466,7 +475,15 @@ export default function VendorDashboard() {
       {/* ── "Your service has been submitted for review." ───────────
           Where a successful trade submission lands (?submitted=), with
           the server's status, the payout truth and the next service. */}
-      {tab === 'offers' && <SubmittedCard vendorId={vendor?.id} services={services} />}
+      {/* ONE review card, not two. ReviewCountdown owns the review
+          state whenever the account is under review, and it carries the
+          same facts plus the clock. Rendering both put two cards saying
+          "we are reading it" directly above each other, with different
+          icons and different tones, every time a partner submitted a
+          trade -- which is precisely the moment they are watching. */}
+      {tab === 'offers' && vendor?.verification_status !== 'submitted' && (
+        <SubmittedCard vendorId={vendor?.id} services={services} />
+      )}
 
       {/* ── The review clock, in full ─────────────────────────────────
           Below the scoreboard, in the content column, where it is one
@@ -584,19 +601,23 @@ export default function VendorDashboard() {
       {/* Only when something is WRONG.
 
           "You are live on Sambramo" was three lines of green congratulating
-          a partner for a state they can already read in one word: the Live
-          pill sits next to their business name at the top of every tab. A
-          card that repeats the pill is not reassurance, it is the app
-          talking about itself above the jobs somebody opened it to see.
+          a partner for a state that needs no card: being live is what the
+          absence of a review card means. A card celebrating the normal
+          state is the app talking about itself above the jobs somebody
+          opened it to see.
+
+          (This used to claim a "Live pill sits next to their business
+          name". There is no such pill -- JobsHeader renders a PARTNER
+          chip and an accepting-jobs dot, and nothing else.)
 
           Pending or rejected is the opposite — it changes what every other
           screen on the app means, and a partner who does not know they are
           not live will sit waiting for jobs that are never coming. That
           keeps its card, on every tab. */}
       {/* ── The blocking status card used to render here ────────────
-          Removed. It said the same thing as the status pill in
-          JobsHeader ("Your profile is with our team" against "Under
-          review / We are checking your profile"), and unlike the pill it
+          Removed. It said the same thing as ReviewCountdown below
+          ("Your profile is with our team" against "Under review / We are
+          checking your profile"), and unlike that card it
           rendered on every tab -- so a partner under review read it on
           Jobs, Calendar, Earnings and More.
 
@@ -706,7 +727,7 @@ export default function VendorDashboard() {
                   job next Saturday is not -- but on the SAME tab, because
                   a master who accepted a job and then could not find it
                   anywhere had no way to know the tap had worked. */}
-              <div>
+              <div data-my-jobs>
                 <p className="mb-2 type-overline text-ink-mute">Your jobs</p>
                 <MyJobs vendorId={vendor.id} />
               </div>

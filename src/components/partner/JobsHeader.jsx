@@ -22,9 +22,15 @@ function useGreeting(fullName) {
   return greetingFor({ fullName, date: now })
 }
 
+/* `lifecycle`, `reviewDueAt` and `reviewSubmittedAt` used to be
+   destructured here and used by nothing, while two comments in
+   VendorDashboard claimed the review clock lived in "the header's own
+   status pill". There is no such pill and there never was. The review
+   state has exactly one home: the ReviewCountdown card in the content
+   column. Props that are passed but unread are how that fiction
+   survived, so they are gone. */
 export default function JobsHeader({
-  lifecycle, businessName, fullName = null, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
-  reviewDueAt = null, reviewSubmittedAt = null,
+  businessName, fullName = null, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
   onAcceptingChange, onOpenProfile, onOpenAlerts,
 }) {
   const { wish, dayLine } = useGreeting(fullName)
