@@ -320,7 +320,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                     {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
                   </p>
                 )}
-                <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} />
+                <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} showBookingCtaPreview />
                 <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} /></div>
               </>
             )}
