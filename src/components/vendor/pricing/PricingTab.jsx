@@ -7,7 +7,7 @@
  * works today changes for them.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Image as ImageIcon, PlayCircle, FileText, Music2, ExternalLink } from 'lucide-react'
+import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Image as ImageIcon } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
@@ -22,7 +22,7 @@ import { rupees } from '../../../lib/tierPackages'
 import { supabase } from '../../../lib/supabase'
 import { useToast, friendlyError } from '../../../context/ToastContext'
 import SambramoTradePictogram from '../SambramoTradePictogram'
-import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
+import PartnerMediaLinks from './PartnerMediaLinks'
 
 const MODEL_UNIT = { hour: '/hr', multi_day: '/day' }
 const MODEL_LABEL = { hour: 'Per hour', session: 'Per session', event: 'Per event', half_day: 'Half-day', full_day: 'Full-day', multi_day: 'Multi-day' }
@@ -372,7 +372,7 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
           <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
             packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
             onPick={pkg => setSheet({ tier: pkg.tier })} />
-          <PartnerMediaPreview vendor={vendor} profile={d.current.profile} />
+          <PartnerMediaLinks vendor={vendor} profile={d.current.profile} />
           <PreviewSection title="What you can order" icon={Package}>
             {view.models.length ? view.models.map(m => {
               const [name, Icon] = MODEL[m.id] ?? [m.id, Package]
@@ -430,75 +430,6 @@ function PreviewSection({ title, icon: Icon, children }) {
   </section>
 }
 
-function PartnerMediaPreview({ vendor, profile = {} }) {
-  const [media, setMedia] = useState({ loading: true, rows: [], urls: {}, unavailable: false })
-  useEffect(() => {
-    let alive = true
-    async function load() {
-      if (!vendor?.id) { setMedia({ loading: false, rows: [], urls: {}, unavailable: false }); return }
-      try {
-        const result = await fetchWork(vendor.id)
-        const rows = (result.rows ?? []).filter(row => ['photo', 'document', 'video'].includes(row.kind))
-        const urls = await signedUrlsFor(rows.map(row => row.storage_path), 600)
-        if (alive) setMedia({ loading: false, rows, urls, unavailable: !!result.unavailable })
-      } catch {
-        if (alive) setMedia({ loading: false, rows: [], urls: {}, unavailable: false })
-      }
-    }
-    load()
-    return () => { alive = false }
-  }, [vendor?.id])
-
-  const photos = media.rows.filter(row => row.kind === 'photo')
-  const documents = media.rows.filter(row => row.kind === 'document')
-  const videos = media.rows.filter(row => row.kind === 'video')
-  const audioUrl = profile.audio_url || profile.audio_sample_url || profile.voice_sample_url || null
-  const catalogUrl = profile.catalog_url || profile.catalogue_url || profile.portfolio_url || null
-  const groups = [
-    { key: 'catalog', title: 'View photo catalog & portfolio', description: `${photos.length} photos · ${documents.length} catalog/document files`, icon: ImageIcon, rows: [...photos, ...documents] },
-    { key: 'audio', title: 'Listen to audio samples', description: 'Partner-provided audio sample', icon: Music2, direct: audioUrl },
-    { key: 'video', title: 'Watch performance video', description: `${videos.length} uploaded video${videos.length === 1 ? '' : 's'}`, icon: PlayCircle, rows: videos },
-    { key: 'catalog-link', title: 'Open external catalog', description: 'Catalog link saved in the listing profile', icon: ExternalLink, direct: catalogUrl },
-  ].filter(group => group.direct || group.rows?.some(row => media.urls[row.storage_path]))
-
-  return (
-    <PreviewSection title="Explore partner media" icon={ImageIcon}>
-      {media.loading
-        ? <div className="py-4 text-center text-[12px] text-ink/55"><Loader2 size={16} className="mr-2 inline animate-spin" />Loading uploaded media…</div>
-        : groups.length
-          ? <div className="space-y-2">
-            {groups.map(group => (
-              <div key={group.key} className="rounded-2xl bg-[#faf9fd] p-3 ring-1 ring-ink/[0.06]">
-                <div className="flex items-center gap-2.5">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-plum-50 text-plum-700"><group.icon size={17} /></span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12.5px] font-extrabold text-ink">{group.title}</p>
-                    <p className="text-[11px] text-ink/55">{group.description}</p>
-                  </div>
-                  {group.direct
-                    ? <a href={group.direct} target="_blank" rel="noreferrer" className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-200">Open</a>
-                    : <span className="shrink-0 text-[10.5px] font-bold text-ink/45">{group.rows.filter(row => media.urls[row.storage_path] && row.review_status === 'live').length} live</span>}
-                </div>
-                {!!group.rows?.length && (
-                  <div className="mt-2 space-y-1.5">
-                    {group.rows.filter(row => media.urls[row.storage_path]).map(row => (
-                      <a key={row.id} href={media.urls[row.storage_path]} target="_blank" rel="noreferrer"
-                        className="flex min-h-10 items-center gap-2 rounded-xl bg-white px-2.5 py-2 text-[11.5px] font-bold text-plum-800 ring-1 ring-ink/[0.05]">
-                        {row.kind === 'video' ? <PlayCircle size={14} /> : row.kind === 'document' ? <FileText size={14} /> : <ImageIcon size={14} />}
-                        <span className="min-w-0 flex-1 truncate">{row.caption || (row.kind === 'video' ? 'Performance video' : row.kind === 'document' ? 'Catalog document' : 'Portfolio photograph')}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold ${row.review_status === 'live' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>{row.review_status === 'live' ? 'Live' : 'In review'}</span>
-                        <ExternalLink size={13} className="shrink-0" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          : <div className="rounded-2xl bg-[#faf9fd] p-4 text-[12px] text-ink/55">{media.unavailable ? 'Media library is not enabled in this environment yet.' : 'No uploaded portfolio media is available for this listing yet.'}</div>}
-    </PreviewSection>
-  )
-}
 const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
 
 function toView(d, service) {
