@@ -370,7 +370,8 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
       <Sheet open={sheet === 'preview'} onOpenChange={o => !o && setSheet(null)} title="Customer preview">
         <div className="space-y-4">
           <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
-            packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))} />
+            packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
+            onPick={pkg => setSheet({ tier: pkg.tier })} />
           <PartnerMediaPreview vendor={vendor} profile={d.current.profile} />
           <PreviewSection title="What you can order" icon={Package}>
             {view.models.length ? view.models.map(m => {
@@ -566,7 +567,7 @@ function toView(d, service) {
       { k: 'Instant booking', v: br.instant === false ? 'Off' : 'On' },
       { k: 'Custom quotes', v: br.custom_quotes === false ? 'Off' : `On · reply within ${br.quote_hours ?? '—'} hrs` },
       { k: 'Advance', v: br.advance_pct ? `${br.advance_pct}% at booking` : '—' },
-      { k: 'Cancellation', v: CANCELLATION_V3.find(c => c.id === br.cancellation)?.title ?? '—' },
+      { k: 'Cancellation', v: CANCELLATION_V3.find(c => c.id === br.cancellation) ? `${CANCELLATION_V3.find(c => c.id === br.cancellation).title} · ${CANCELLATION_V3.find(c => c.id === br.cancellation).body}` : '—' },
       { k: 'Minimum notice', v: br.min_notice_days != null ? `${br.min_notice_days} days` : '—' },
     ],
   }
