@@ -7,7 +7,7 @@
  * works today changes for them.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee } from 'lucide-react'
+import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Eye, Pencil } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
