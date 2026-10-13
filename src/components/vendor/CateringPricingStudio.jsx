@@ -206,7 +206,8 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         setDraft={setEditing}
         preview={preview}
         setPreview={setPreview}
-        onBack={() => setEditing(null)}
+        previewOnly={startPreview}
+        onBack={() => { setEditing(null); if (startPreview) onBack?.() }}
         onSaved={async status => { setEditing(null); await load(); if (onboarding) onBack?.() }}
       />
     )
@@ -362,7 +363,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
   )
 }
 
-function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, onBack, onSaved }) {
+function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, previewOnly = false, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -623,7 +624,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           <ChevronRight size={18} className="rotate-180" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Catering menu pricing</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">{previewOnly ? "Customer preview" : "Catering menu pricing"}</p>
           <h2 className="truncate text-[20px] font-extrabold text-plum-950">{draft.name || 'New menu package'}</h2>
         </div>
       </div>
@@ -639,7 +640,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-ink/[0.04] p-1">
+      {!previewOnly && <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-ink/[0.04] p-1">
         {[
           ['package','1 · Menu'],
           ['menu','2 · Dishes'],
@@ -651,9 +652,9 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             {label}
           </button>
         ))}
-      </div>
+      </div>}
 
-      {step === 'package' && (
+      {!previewOnly && step === 'package' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={Sparkles} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
           <Field fieldId="catering_package_name" label="Menu package name" value={draft.name} onChange={v => update('name', v)} placeholder="Wedding Plantain Leaf Feast" />
@@ -691,7 +692,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'menu' && (
+      {!previewOnly && step === 'menu' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={`${dishes.length.toLocaleString('en-IN')} dishes declared on this partner listing are available for this menu.`} />
 
@@ -819,7 +820,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'price' && (
+      {!previewOnly && step === 'price' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={WalletCards} title="Set guest-volume pricing" helper="Catering is always priced per guest. Add bands when your per-guest supply rate changes with event size." />
 
@@ -867,7 +868,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'addons' && (
+      {!previewOnly && step === 'addons' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={CirclePlus} title="Add optional extras" helper="Each extra has its own controlled unit and quantity rules." />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -927,9 +928,11 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Customer preview</p>
             <h3 className="mt-0.5 text-[18px] font-extrabold text-ink">{draft.name || 'Your menu package'}</h3>
           </div>
-          <button type="button" onClick={() => setPreview(x => !x)} className="rounded-full bg-plum-50 px-3 py-1.5 text-[10.5px] font-extrabold text-plum-700">
-            {preview ? 'Partner setup' : 'Preview customer'}
-          </button>
+          {!previewOnly && (
+            <button type="button" onClick={() => setPreview(x => !x)} className="rounded-full bg-plum-50 px-3 py-1.5 text-[10.5px] font-extrabold text-plum-700">
+              {preview ? 'Partner setup' : 'Preview customer'}
+            </button>
+          )}
         </div>
         {preview ? (
           <>
@@ -949,7 +952,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         )}
       </section>
 
-      <div className="fixed inset-x-0 bottom-[64px] z-30 bg-white/92 px-4 pb-3 pt-2 backdrop-blur-md sm:static sm:bg-transparent sm:p-0">
+      <div className={"fixed inset-x-0 bottom-[64px] z-30 bg-white/92 px-4 pb-3 pt-2 backdrop-blur-md sm:static sm:bg-transparent sm:p-0 " + (previewOnly ? "hidden" : "")}>
         <div className="mx-auto flex max-w-3xl gap-2">
           <button type="button" onClick={() => save('DRAFT')} disabled={saving}
             className="flex-1 rounded-2xl bg-white py-3.5 text-[12.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.1] disabled:opacity-50">
