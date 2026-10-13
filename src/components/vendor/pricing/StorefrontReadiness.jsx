@@ -15,10 +15,12 @@ export default function StorefrontReadiness({ vendor, draft = {}, packages = [],
   const approvedMedia = media.filter(row => row.review_status === 'live')
   const pendingMedia = media.filter(row => row.review_status !== 'live' && row.review_status !== 'rejected')
   const price = Number(draft?.base_price ?? draft?.price ?? draft?.rate ?? 0) > 0
-    || packages.some(pkg => Number(pkg?.base_price ?? pkg?.price?.rate_paise ?? pkg?.trade_inputs?.customer_paise ?? 0) > 0)
+    || packages.some(pkg => Number(pkg?.customer_paise ?? pkg?.base_price ?? pkg?.price?.rate_paise ?? pkg?.trade_inputs?.customer_paise ?? 0) > 0)
+    || (Array.isArray(draft?.rules) && draft.rules.some(rule => Number(rule?.customer_paise ?? 0) > 0))
+    || (Array.isArray(draft?.catalogue) && draft.catalogue.some(item => Number(item?.customer_paise ?? 0) > 0))
   const namedPackage = Boolean(String(draft?.name || '').trim() || packages.some(pkg => String(pkg?.name || '').trim()))
-  const packagePending = String(draft?.status || '').toUpperCase() === 'UNDER_REVIEW' || packages.some(pkg => ['UNDER_REVIEW', 'ACTION_REQUIRED'].includes(String(pkg?.status || '').toUpperCase()))
-  const terms = Boolean(draft?.availability_policy || draft?.commercial_inputs?.availability_policy || draft?.payment_policy || draft?.commercial_inputs?.payment_policy || draft?.cancellation_policy)
+  const packagePending = ['UNDER_REVIEW', 'ACTION_REQUIRED'].includes(String(draft?.status || draft?.state || '').toUpperCase()) || packages.some(pkg => ['UNDER_REVIEW', 'ACTION_REQUIRED'].includes(String(pkg?.status || '').toUpperCase()))
+  const terms = Boolean(draft?.availability_policy || draft?.commercial_inputs?.availability_policy || draft?.payment_policy || draft?.commercial_inputs?.payment_policy || draft?.cancellation_policy || draft?.terms?.instant != null || draft?.terms?.payment_policy || draft?.terms?.cancellation || draft?.booking_rules?.instant != null || draft?.booking_rules?.advance_pct != null)
   const checks = [
     { key: 'profile', title: 'Partner profile photo', note: avatar ? 'A profile image is saved' : 'Add a real partner or business photo', state: itemState(Boolean(avatar), false), icon: Camera, action: () => onEditStep?.('details') },
     { key: 'portfolio', title: 'Portfolio gallery', note: approvedMedia.length ? approvedMedia.length + ' approved item(s) ready' : pendingMedia.length ? pendingMedia.length + ' item(s) waiting for review' : 'Add photos or videos from your own work', state: itemState(approvedMedia.length > 0, pendingMedia.length > 0), icon: ShieldCheck, action: () => onManageMedia?.() },
