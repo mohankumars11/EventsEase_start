@@ -80,7 +80,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
     return()=>{alive=false}
   },[vendor?.id,media])
   const displayMedia=media?.length?media:loadedMedia
-  const businessName=vendor?.business_name||vendor?.name||'Partner business'
+  const businessName=vendor?.business_name||vendor?.name||draft?.trade_inputs?.business_name||draft?.trade_inputs?.stage_name||draft?.profile?.stage_name||service?.name||'Your business'
   const location=[vendor?.area,vendor?.city,vendor?.state].filter(Boolean).join(', ')||vendor?.location||'Location not added'
   const verified=isVerified(vendor)
   const events=readSupportedEvents(draft?.trade_inputs??{})
@@ -100,7 +100,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   const finalSpecs=specs
   const inclusionItems=Array.from(new Set((Array.isArray(current?.commercial_inputs?.inclusions) && current.commercial_inputs.inclusions.length ? current.commercial_inputs.inclusions : Array.isArray(draft?.commercial_inputs?.inclusions) ? draft.commercial_inputs.inclusions : []).filter(Boolean)))
   const activeAddons=(addons?.length?addons:(current?.addons??draft?.addons??[])).filter(a=>a?.active!==false&&a?.name)
-  const rating=vendor?.rating??vendor?.average_rating
+  const rating=vendor?.rating??vendor?.rating_avg??vendor?.average_rating
   const reviewCount=vendor?.review_count??vendor?.reviews_count
   const completedEvents=vendor?.events_completed??vendor?.completed_events
   const yearsExperience=vendor?.years_experience??vendor?.years_active??draft?.trade_inputs?.years_experience??draft?.trade_inputs?.years_active
@@ -152,12 +152,13 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
                   ...(Array.isArray(pkg?.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []),
                   ...(Array.isArray(pkg?.inclusions) ? pkg.inclusions : []),
                 ].filter(Boolean)))
-                const popular = String(pkg?.tier ?? pkg?.commercial_inputs?.tier ?? pkg?.name ?? '').toLowerCase().includes('signature')
+                const popular = pkg?.is_popular === true || pkg?.is_featured === true || pkg?.commercial_inputs?.is_popular === true
                 const duration = pkg?.duration ?? pkg?.included_duration ?? pkg?.trade_inputs?.duration_hours
                 return (
                   <div key={pkg.id || pkg.name || i}
                     className={"relative flex w-[78%] max-w-[290px] shrink-0 snap-center flex-col rounded-[22px] p-4 ring-1 " + (popular ? "bg-gradient-to-b from-plum-50 to-white ring-plum-400" : "bg-white ring-ink/[0.08]")}>
-                    {popular && <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Popular</span>}
+                    <span className={'sppc-package-status status-'+String(pkg.status||'DRAFT').toLowerCase().replace(/[^a-z_]/g,'')}>{String(pkg.status||'DRAFT').replace(/_/g,' ')}</span>
+                    {popular && <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Partner pick</span>}
                     <p className="pr-14 text-[14px] font-extrabold text-[#211735]">{pkg.name || pkg.title || 'Package'}</p>
                     {duration ? <p className="mt-1 text-[11px] text-ink/55">{duration} {typeof duration === 'number' ? 'hours' : ''}</p> : null}
                     <p className="mt-3 text-[23px] font-extrabold tracking-tight text-[#211735]">{price != null ? formatINR(price) : 'Price not set'}</p>
@@ -170,7 +171,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
         </section>
       )}
       <section className="sppc-package-hero"><button type="button" className="sppc-edit-button" onClick={()=>onEdit?.('package')}>Edit</button>
-        <div className="sppc-package-copy"><span className="sppc-popular-pill">{activePackages.length>1?'MOST POPULAR':'FEATURED PACKAGE'}</span><h3>{current?.name||draft?.name||'Featured Package'}</h3><p>{current?.description||draft?.description||'Premium event service, thoughtfully configured for your celebration.'}</p></div>
+        <div className="sppc-package-copy"><span className="sppc-popular-pill">{current?.is_popular===true||current?.is_featured===true?'PARTNER PICK':'PACKAGE HIGHLIGHT'}</span><h3>{current?.name||draft?.name||'Featured Package'}</h3><p>{current?.description||draft?.description||'Premium event service, thoughtfully configured for your celebration.'}</p></div>
         <div className="sppc-price"><strong>{exactPrice!=null?formatINR(exactPrice):'Price not set'}</strong><span>{unitLabel(current?.unit||draft.pricing_unit)}</span></div>
       </section>
       <section className="sppc-detail-grid"><button type="button" className="sppc-floating-edit" onClick={()=>onEdit?.('details')}>Edit</button>
