@@ -116,7 +116,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       {packages.length > 0 && (
         <Section icon={Package} title="Packages & pricing">
           <div className="-mx-5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+            <div className="flex snap-x snap-mandatory items-start gap-3">
               {packages.map(pkg => {
                 const PackageSurface = onPick ? "button" : "div"
                 return (
