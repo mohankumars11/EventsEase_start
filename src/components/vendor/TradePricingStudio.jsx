@@ -312,7 +312,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         readOnly={false}
         previewOnly={launchEditorInPreview}
         initialStep={launchEditorInPreview ? 'preview' : 'package'}
-        onBack={() => { setEditor(null); setLaunchEditorInPreview(false) }}
+        onBack={() => { setEditor(null); setLaunchEditorInPreview(false); if (launchEditorInPreview) onBack?.() }}
         onboarding={onboarding}
         onSaved={async (result, status) => {
           await load()
